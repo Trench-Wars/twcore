@@ -1,7 +1,7 @@
 package twcore.core;
 
-public class WeaponFired extends PlayerPosition
-{
+public class WeaponFired extends PlayerPosition {
+
     public static int WEAPON_BULLET = 1;
     public static int WEAPON_BULLET_BOUNCING = 2;
     public static int WEAPON_BOMB = 3;
@@ -17,18 +17,15 @@ public class WeaponFired extends PlayerPosition
     public static int WEAPON_MINE = 11;
     public static int WEAPON_NOTMINE = 12;
 
-    private int m_weaponType;
-    private int m_weaponLevel;
-    private boolean m_weaponBouncyShrap;
-    private int m_weaponShrapLevel;
-    private int m_weaponShrapCount;
-    private boolean m_weaponAlternative;
+    private int         m_weaponType;
+    private int         m_weaponLevel;
+    private int         m_weaponShrapLevel;
+    private int         m_weaponShrapCount;
+    private boolean     m_weaponAlternative;
+    private boolean     m_weaponBouncyShrap;
 
-    public WeaponFired(ByteArray array)
-    {
-        super(array);
-
-        m_eventType = EventRequester.WEAPON_FIRED; //sets the event type in the superclass
+    public WeaponFired( ByteArray array ){
+        super( array );
         
         short wepinfo = getWeaponInfo();
         m_weaponType = wepinfo & 0x001f;
@@ -39,50 +36,39 @@ public class WeaponFired extends PlayerPosition
         m_weaponAlternative = (wepinfo & 0x8000) >> 15 == 1;
     }
 
-    public boolean isType(int type)
-    {
-        if (m_weaponType == type)
-        {
+    public boolean isType( int type ){
+        if( m_weaponType == type ){
+            return true;
+        } else if( m_weaponType == WEAPON_EMP_BOMB && type == WEAPON_BOMB ){
+            return true;
+        } else if( m_weaponType == WEAPON_BULLET_BOUNCING && type == WEAPON_BULLET ){
             return true;
         }
-        else if (m_weaponType == WEAPON_EMP_BOMB && type == WEAPON_BOMB)
-        {
-            return true;
-        }
-        else if (m_weaponType == WEAPON_BULLET_BOUNCING && type == WEAPON_BULLET)
-        {
-            return true;
-        }
+
         return false;
     }
 
-    public int getWeaponType()
-    {
+    public int getWeaponType(){
         return m_weaponType;
     }
 
-    public int getWeaponLevel()
-    {
+    public int getWeaponLevel(){
         return m_weaponLevel;
     }
 
-    public boolean isWeaponBouncyShrap()
-    {
+    public boolean isWeaponBouncyShrap(){
         return m_weaponBouncyShrap;
     }
 
-    public int getWeaponShrapLevel()
-    {
+    public int getWeaponShrapLevel(){
         return m_weaponShrapLevel;
     }
 
-    public int getWeaponShrapCount()
-    {
+    public int getWeaponShrapCount(){
         return m_weaponShrapCount;
     }
 
-    public boolean isMultifire()
-    {
+    public boolean isMultifire(){
         return m_weaponAlternative;
     }
 }

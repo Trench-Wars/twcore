@@ -8,10 +8,9 @@ package twcore.core;
 
 /**
  *
- * @author harvey, modified by FoN
+ * @author  harvey
  */
-public class EventRequester
-{
+public class EventRequester {
     //Changes to this are very detremental.  Please be careful
     //since the recordbot + lots of other classes depends on these numbers
     //Only change them if you know what you are doing!
@@ -43,50 +42,40 @@ public class EventRequester
     public static final int TURF_FLAG_UPDATE = 23;
     public static final int TURRET_EVENT = 24;
     public static final int PLAYER_BANNER = 25;
-
+   
     private boolean[] array;
-
+    
     /** Creates a new instance of EventRequester */
-    public EventRequester()
-    {
+    public EventRequester(){
         array = new boolean[TOTAL_NUMBER];
         declineAll();
     }
-
-    public void request(int packetType)
-    {
+    
+    public void request( int packetType ){
         array[packetType] = true;
     }
-
-    public void requestAll()
-    {
-        for (int i = 0; i < array.length; i++)
-        {
+    
+    public void requestAll(){
+        for( int i = 0; i < array.length; i++ ){
             array[i] = true;
-        }
+        }  
     }
-
-    public void declineAll()
-    {
-        for (int i = 0; i < array.length; i++)
-        {
+    
+    public void declineAll(){
+        for( int i = 0; i < array.length; i++ ){
             array[i] = false;
-        }
+        }        
     }
-
-    public void decline(int packetType)
-    {
+    
+    public void decline( int packetType ){
         array[packetType] = false;
     }
-
-    public boolean check(int packetType)
-    {
+    
+    public boolean check( int packetType ){
         return array[packetType];
     }
-
-    public void set(int packetType, boolean value)
-    {
+    
+    public void set( int packetType, boolean value ){
         array[packetType] = value;
     }
-
 }

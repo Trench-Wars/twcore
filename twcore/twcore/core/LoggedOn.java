@@ -1,11 +1,8 @@
 package twcore.core;
 
-public class LoggedOn extends SubspaceEvent
-{
+public class LoggedOn extends SubspaceEvent {
 
-    public LoggedOn(ByteArray array)
-    {
-        m_byteArray = array;
-        m_eventType = EventRequester.LOGGED_ON; //sets the event type in the superclass
+    public LoggedOn( ByteArray array ){
+
     }
 }

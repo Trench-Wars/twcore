@@ -9,16 +9,14 @@ package twcore.core;
  * </table><br></html>
  * This packet lets you know that you can start sending position packets
  */
-public class ArenaJoined extends SubspaceEvent
-{
+public class ArenaJoined extends SubspaceEvent {
+
     /**
      * Creates a new instance of ArenaJoined, this is called by GamePacketInterpreter
      * when it recieves the packet.
      * @param array the ByteArray containing the packet data
      */
-    public ArenaJoined(ByteArray array)
-    {
-        m_byteArray = array;
-        m_eventType = EventRequester.ARENA_JOINED; //sets the event type in the superclass
+    public ArenaJoined( ByteArray array ){
+
     }
 }

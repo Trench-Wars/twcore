@@ -1,32 +1,28 @@
 package twcore.core;
-public class TurfFlagUpdate extends SubspaceEvent
-{
 
-    int m_frequency;
-    int m_flagId;
-    boolean m_claimed = false;
+public class TurfFlagUpdate extends SubspaceEvent {
 
-    public TurfFlagUpdate(ByteArray array, int flagId)
-    {
-        m_byteArray = array;
-        m_eventType = EventRequester.TURF_FLAG_UPDATE; //sets the event type in the superclass
+    int         m_flagId;
+    int         m_frequency;
+    boolean     m_claimed = false;
 
+    public TurfFlagUpdate( ByteArray array, int flagId ){
         m_flagId = flagId;
-        m_frequency = (int) array.readLittleEndianShort(1);
-        if (m_frequency > -1)
+        m_frequency = (int)array.readLittleEndianShort( 1 );
+        if( m_frequency > -1 ){
             m_claimed = true;
+        }
     }
 
-    public int getFlagID()
-    {
+    public int getFlagID(){
         return m_flagId;
     }
-    public int getFrequency()
-    {
+
+    public int getFrequency(){
         return m_frequency;
     }
-    public boolean claimed()
-    {
+
+    public boolean claimed(){
         return m_claimed;
     }
 }

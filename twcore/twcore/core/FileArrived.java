@@ -12,30 +12,27 @@ package twcore.core;
   * If the file name isn't specified, it's the news.txt file and has to be
   * decompressed. All other files are sent uncompressed
   */
-public class FileArrived extends SubspaceEvent
-{
+public class FileArrived extends SubspaceEvent {
+
     //Variable Declarations
-    String fileName;
+    String          fileName;
 
     /**
      * Creates a new instance of FileArrived, this is called by GamePacketInterpreter
      * when it recieves the packet.
      * @param array the ByteArray containing the packet data
      */
-    public FileArrived(ByteArray array)
-    {
-        m_byteArray = array;
-        m_eventType = EventRequester.FILE_ARRIVED; //sets the event type in the superclass
+    public FileArrived( ByteArray array ){
 
-        fileName = array.readString(0, array.size());
+        fileName = array.readString( 0, array.size() );
     }
 
     /**
      * This gets the file name from the file that just downloaded
      * @return the file name of the file
      */
-    public String getFileName()
-    {
-        return new String(fileName);
+    public String getFileName(){
+
+        return new String( fileName );
     }
 }

@@ -13,30 +13,33 @@ Field    Length    Description
  */
 
 public class PlayerDeath extends SubspaceEvent {
-    int m_deathGreen;
-    int m_killerID;
-    int m_killeeID;
-    int m_score;
-    int m_flags;
+    int     m_score;
+    int     m_flags;
+    int     m_killerID;
+    int     m_killeeID;
+    int     m_deathGreen;
 
-    public PlayerDeath(ByteArray array){
-        m_deathGreen = (int)array.readByte(1);
-        m_killerID = (int)array.readLittleEndianShort(2);
-        m_killeeID = (int)array.readLittleEndianShort(4);
-        m_score = (int)array.readLittleEndianShort(6);
-        m_flags = (int)array.readLittleEndianShort(8);
+    public PlayerDeath( ByteArray array ){
+        m_deathGreen = (int)array.readByte( 1 );
+        m_killerID = (int)array.readLittleEndianShort( 2 );
+        m_killeeID = (int)array.readLittleEndianShort( 4 );
+        m_score = (int)array.readLittleEndianShort( 6 );
+        m_flags = (int)array.readLittleEndianShort( 8 );
     }
+
     public int getKillerID(){
         return m_killerID;
     }
+
     public int getKilleeID(){
         return m_killeeID;
     }
+
     public int getScore(){
         return m_score;
     }
+
     public int getFlagCount(){
         return m_flags;
     }
 }
-
