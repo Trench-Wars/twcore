@@ -331,7 +331,7 @@ public class BotAction
      * @param message The message to be sent
      * @param soundCode Sound code to be sent along with the message.
      */
-    public void sendOpposingTeamMessage(int frequency, String message, int soundCode)
+    /*public void sendOpposingTeamMessage(int frequency, String message, int soundCode)
     {
         Iterator i;
         int playerID;
@@ -349,6 +349,21 @@ public class BotAction
                     playerID = ((Integer) i.next()).intValue();
                     m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
                 }
+            }
+        }
+    }*/
+    
+    public void sendOpposingTeamMessage( int playerID, String message, int soundCode ) {
+    	
+        char firstChar;
+        String temp = message.trim();
+
+        if (temp.length() > 0)
+        {
+            firstChar = message.charAt(0);
+            if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')
+            {
+            	m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
             }
         }
     }
@@ -1854,6 +1869,16 @@ public class BotAction
     public void setPacketSendDelay(int milliseconds)
     {
         m_botSession.getGamePacketGenerator().setSendDelay(milliseconds);
+    }
+    
+     /** Turns automatic player position updating on and off. By default it is off.
+     * @param milliseconds - specified time to update player positions at
+     * 0 	 : turns tracking off and has the bot spectate its current area
+     * <200  : turns tracking on with 200 ms change rate
+     * >=200 : turns tracking on with specified rate
+     */
+    public void setPlayerPositionUpdating( int milliseconds ) {
+    	m_arenaTracker.setPlayerPositionUpdateDelay( milliseconds );
     }
 
 }
