@@ -720,9 +720,10 @@ public class robohelp extends SubspaceBot {
 	    } else if( opList.isSmod( playerName ) && opList.isZH( name ) ){
                         m_lastBanner = playerName;
                         m_banPending = true;
-                        m_botAction.sendRemotePrivateMessage( name, "You have been banned for abuse of the !ban command.  I am sorry this had to happen.  Your ban will likely expire in 24 hours.  Goodbye!" );
-                        m_botAction.sendUnfilteredPublicMessage( "?ban -e1 " + name );
-                        m_botAction.sendChatMessage( "Player \"" + name + "\" has been banned." );
+                        m_botAction.sendRemotePrivateMessage( name, "You have been banned for abuse as staff member. Depending on the Dean of Staff's decisions further action will be taken!" );
+			m_botAction.sendUnfilteredPublicMessage( "?removeop " + name );
+                        m_botAction.sendUnfilteredPublicMessage( "?ban -a3 -e30 " + name );
+                        m_botAction.sendChatMessage( "Staffer \"" + name + "\" has been banned for abuse." );
                         m_playerList.remove( name );
             } else if( opList.isZH( name ) ){
                 m_botAction.sendChatMessage( "Are you nuts?  You can't ban a staff member!" );
