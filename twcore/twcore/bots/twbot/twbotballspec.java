@@ -22,7 +22,7 @@ import twcore.core.*;
  * eliminator, who is the only person allowed to touch the ball -- everyone
  * else is spec'd when they do so.  Last remaining besides eliminator wins.
  *
- * @version 1.6
+ * @version 1.8
  * @author qan
  */
 public class twbotballspec extends TWBotExtension {
@@ -32,7 +32,7 @@ public class twbotballspec extends TWBotExtension {
 
 
     // Bot stats
-    final static String f_version = "1.6";         // Version of bot
+    final static String f_version = "1.8";         // Version of bot
     final static String f_modified = "7/25/04";    // Date of last modification
 
 
@@ -148,7 +148,7 @@ public class twbotballspec extends TWBotExtension {
                 m_botAction.sendPrivateMessage( name, "You must be a moderator to use this command." );                
             }
             
-            String[] parameters = Tools.stringChopper( message.substring( 8 ), ' ' );                
+            String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );                
             try {
                 int numballs = Integer.parseInt(parameters[0]);
                 m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=" + numballs );
