@@ -179,17 +179,19 @@ public class acrobot extends SubspaceBot {
 	    	int vote = 0;
 	    	try { vote = Integer.parseInt( message ); } catch (Exception e ) {}
 	    	if( vote > 0 && vote <= numIdeas ) {
-	    		if( true ) {//!playerVotes.containsKey( name ) ) {
-	    			String cur     = (String)phrases.elementAt( vote - 1);
-	    			String parts[] = Tools.stringChopper( cur, '%' );
+	    	    try {
+	    	        String cur     = (String)phrases.elementAt( vote - 1);
+    				String parts[] = Tools.stringChopper( cur, '%' );
 	    			
-	    			if( !parts[0].toLowerCase().equals( name.toLowerCase() ) ) {
-	    				votes[vote-1]++;
-	    				playerVotes.put( name, name );
-	    				if( votes[vote-1] > maxVote ) maxVote = votes[vote-1];
-	    				m_botAction.sendPrivateMessage( name, "Your vote has been counted." );
-	    			} else m_botAction.sendPrivateMessage( name, "You cannot vote for your own." );
-	    		} else m_botAction.sendPrivateMessage( name, "You have already voted." );
+    				if( !parts[0].toLowerCase().equals( name.toLowerCase() ) ) {
+    					votes[vote-1]++;
+    					playerVotes.put( name, name );
+    					if( votes[vote-1] > maxVote ) maxVote = votes[vote-1];
+    					m_botAction.sendPrivateMessage( name, "Your vote has been counted." );
+    				} else m_botAction.sendPrivateMessage( name, "You cannot vote for your own." );
+	    	    } catch (Exception e) {
+	    	        m_botAction.sendPrivateMessage( name, "Unable to process your vote!  Please notify the host." );	    	        
+	    	    }
 	    	} else m_botAction.sendPrivateMessage( name, "Please enter a valid vote." );
 	    }
     }
