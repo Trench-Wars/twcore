@@ -53,7 +53,6 @@ public class twbotdangerous extends TWBotExtension {
     
 
 
-
     /**
      * Initializes game with appropriate settings
      * @param starttime Time each player starts with.
@@ -61,6 +60,8 @@ public class twbotdangerous extends TWBotExtension {
      * @param deathtime Time subtracted for a death.
      */
     public void doInit( final int starttime, final int killtime, final int deathtime ){
+        // Let's get reliable.
+        m_botAction.setReliableKills( 1 );
 
         m_totalTime = 0;
         
@@ -69,16 +70,16 @@ public class twbotdangerous extends TWBotExtension {
         m_deathtime = deathtime;
                 
         m_botAction.sendArenaMessage( "--- Welcome to the MOST DANGEROUS GAME. ---" );
-        m_botAction.sendArenaMessage( "...You are about to die.  You have " + m_starttime + " left to live." );
-        m_botAction.sendArenaMessage( "Every kill extends your life " + m_killtime + " seconds, while every death reduces it by " + m_deathtime + ".");
+        m_botAction.sendArenaMessage( "...You are about to die.  In " + getTimeString( m_starttime ) + ", your life is mine." );
+        m_botAction.sendArenaMessage( "Every kill extends your meager life " + m_killtime + " seconds, while every death reduces it by " + m_deathtime + ".");
         m_botAction.sendArenaMessage( "It does not matter how much you 'die.'  When your timer reaches 0, you will cease to exist.", 2);
         
         giveStartWarning = new TimerTask() {
             public void run() {
-                m_botAction.sendArenaMessage( "10 seconds until the game begins ...", 2);
+                m_botAction.sendArenaMessage( "10 seconds until we begin ...", 2);
             }
         };
-        m_botAction.scheduleTask( giveStartWarning, 5000 );
+        m_botAction.scheduleTask( giveStartWarning, 8000 );
 
         startGame = new TimerTask() {
             public void run() {
@@ -92,14 +93,14 @@ public class twbotdangerous extends TWBotExtension {
                     
                     createPlayerRecords();
 
-                    m_botAction.sendArenaMessage( "Let the MOST DANGEROUS GAME begin.", 104);
-                    m_botAction.sendArenaMessage( "Granted " + getTimeString( m_starttime ) + " until you die.  My offer to you: +" + m_killtime + " per kill, -" + m_deathtime + " per death.");
-                    m_botAction.sendArenaMessage( "You may speak to me with:  !time  !lagout  !invest x  !help  !info  -" + m_botAction.getBotName());
+                    m_botAction.sendArenaMessage( "--- Let the MOST DANGEROUS GAME begin.. ---", 104);
+                    m_botAction.sendArenaMessage( "Granted " + getTimeString( m_starttime ) + " until death.  My offer: +" + m_killtime + " per kill, -" + m_deathtime + " per death.");
+                    m_botAction.sendArenaMessage( "PM " + m_botAction.getBotName() + " with:  !help  !time  !lagout  !invest x  !info" );
                 }
 
             }
         };
-        m_botAction.scheduleTask( startGame, 15000 );
+        m_botAction.scheduleTask( startGame, 18000 );
 
         timeUpdate = new TimerTask() {
             int minutes, seconds;
@@ -109,11 +110,11 @@ public class twbotdangerous extends TWBotExtension {
                 seconds = m_totalTime % 60;
                 if( seconds == 0 ) {
                     minutes = m_totalTime / 60;
-                    m_botAction.sendArenaMessage( "Time elapsed: " + minutes + ":00.  Time leader:  " + getTimeLeaderString() );
+                    m_botAction.sendArenaMessage( "Time elapsed: " + minutes + ":00.  Time leader: " + getTimeLeaderString() );
                 }
             }
         };
-        m_botAction.scheduleTaskAtFixedRate( giveStartWarning, 1000, 1000 );
+        m_botAction.scheduleTaskAtFixedRate( timeUpdate, 19000, 1000 );
     
     }
 
@@ -153,10 +154,15 @@ public class twbotdangerous extends TWBotExtension {
         }
         
         m_players = new HashMap();
+        timeUpdate.cancel();
     }
     
+
     
-    
+    /**
+     * Declares a winner to the game when there is only one person left.
+     *
+     */
     public void declareWinner() {
         isRunning = false;
 
@@ -168,14 +174,20 @@ public class twbotdangerous extends TWBotExtension {
 
         if( player != null )
             m_botAction.sendArenaMessage( winner.getPlayerName() + " still lives with " + player.getTime() + " to spare, and a high of " + player.getMaxTime() + "." );
-        m_botAction.sendArenaMessage( "This game's Time MVP is " + getMaxTimeLeaderString() + ", with " + getHighKiller() + " being quite the butcher..."  );
+        m_botAction.sendArenaMessage( "This game's Time MVP is " + getMaxTimeLeaderString() + ".  (It seems that " + getHighKiller() + " is quite the butcher...)"  );
         if( m_numStolen > 0 )
-            m_botAction.sendArenaMessage( "Today I've managed to cheat " + m_numStolen + " of you out of more than " + m_stolenTime + " seconds of your lives." );
+            m_botAction.sendArenaMessage( "Today I've cheated " + m_numStolen + " of you out of " + m_stolenTime + " seconds of your lives!" );
         m_botAction.sendArenaMessage( "Thank you for playing the MOST DANGEROUS GAME.", 102 );
+        
+        clearRecords();
     }
     
     
     
+    /**
+     * Gets info on highest current time.
+     * @return Name and time of person with highest current time.
+     */
     public String getTimeLeaderString() {
         Iterator i = m_players.values().iterator();
         PlayerInfo highPlayer;
@@ -198,6 +210,10 @@ public class twbotdangerous extends TWBotExtension {
     }
     
     
+    /**
+     * Gets info on highest max time.
+     * @return Name and time of person with highest max time.
+     */
     public String getMaxTimeLeaderString() {
         Iterator i = m_players.values().iterator();
         PlayerInfo highPlayer;
@@ -216,11 +232,15 @@ public class twbotdangerous extends TWBotExtension {
             }            
         }
         
-        return highPlayer + " (" + highPlayer.getTime() + ")";        
+        return highPlayer + " (" + highPlayer.getMaxTime() + ")";        
     }
 
     
     
+    /**
+     * Gets info on highest # kills.
+     * @return Name of person with highest # kills.
+     */
     public String getHighKiller() {
         Iterator i = m_players.values().iterator();
         String highPlayer = "";
@@ -257,6 +277,11 @@ public class twbotdangerous extends TWBotExtension {
     
     
     
+    /**
+     * Format an integer time as a String. 
+     * @param time Time in seconds.
+     * @return Formatted string in 0:00 format.
+     */
     public String getTimeString( int time ) {
         if( time <= 0 ) {
             return "0:00";            
@@ -268,6 +293,7 @@ public class twbotdangerous extends TWBotExtension {
     }
     
 
+    
     /**
      * This handleEvent accepts msgs from players as well as mods.
      * @event The Message event in question.
@@ -325,11 +351,12 @@ public class twbotdangerous extends TWBotExtension {
                     String[] parameters = Tools.stringChopper( message.substring( 8 ), ' ' );
                     try {
                         int amt = Integer.parseInt(parameters[0]);
-                        if( amt > player.getTimeInt() ) {
+                        if( amt < player.getTimeInt() ) {
                             if( amt >= 60 ) {
                                 Investment i = new Investment( name, amt );
+                                m_botAction.scheduleTask( i, amt * 1000);
                                 player.invest( amt );
-                                int total = amt + (amt / 15); 
+                                int total = (int) ( amt + (amt * .15) ); 
                                 m_botAction.sendPrivateMessage( name, "Done.  You will receive back " + getTimeString( total ) + " when my clock reaches " + getTimeString( m_totalTime + amt ) + "." );
                                 
                             } else {
@@ -395,7 +422,6 @@ public class twbotdangerous extends TWBotExtension {
             } else if( message.startsWith( "!start" )){
                 if(isRunning == false) {
                     doInit( 120, 20, 5 );
-                    m_botAction.sendPrivateMessage( name, "Beginning the story..." );
                 } else {
                     m_botAction.sendPrivateMessage( name, "The Most Dangerous Game has already begun." );
                 }
@@ -436,6 +462,7 @@ public class twbotdangerous extends TWBotExtension {
     }
     
 
+    
     /**
      * Counts arena leaves as DCs to be safe.
      * @param event Contains event information on player.
@@ -445,7 +472,7 @@ public class twbotdangerous extends TWBotExtension {
             Player p = m_botAction.getPlayer( event.getPlayerID() );
             
             if( p != null ) {
-                if( m_botAction.getNumPlayers() == 1 ) {
+                if( m_botAction.getNumPlayers() <= 1 ) {
                     declareWinner();
                 } else {
                     PlayerInfo player = (PlayerInfo) m_players.get( p.getPlayerName() );
@@ -459,6 +486,7 @@ public class twbotdangerous extends TWBotExtension {
     }
 
     
+    
     /**
      * Handles lagouts.
      * @param event Contains event information on player.
@@ -470,7 +498,7 @@ public class twbotdangerous extends TWBotExtension {
             if( p != null ) {
                 if( p.getShipType() == 0 ) {
 
-                    if( m_botAction.getNumPlayers() == 1 ) {
+                    if( m_botAction.getNumPlayers() <= 1 ) {
                         declareWinner();
                     } else {
                         PlayerInfo player = (PlayerInfo) m_players.get( p.getPlayerName() );
@@ -511,7 +539,10 @@ public class twbotdangerous extends TWBotExtension {
     }
     
     
-    
+    /**
+     * Essentially a TimerTask that stores info about each player. 
+     * 
+     */
     private class PlayerInfo extends TimerTask {
         
         private String name;
@@ -653,7 +684,7 @@ public class twbotdangerous extends TWBotExtension {
         
         
         public void invest( int amt ) {
-            time =- amt;
+            time -= amt;
         }
 
         
@@ -661,7 +692,7 @@ public class twbotdangerous extends TWBotExtension {
             if( !isPlaying )
                 return false;
             
-            int amtReturn = amt / 15;
+            int amtReturn = (int)(amt * .15);
             
             m_botAction.sendPrivateMessage( name, "INVESTMENT RETURN!  (" + getTimeString( amt ) + " + " + getTimeString( amtReturn ) + ") + " + getTimeString( time ) + " = " + getTimeString( amt + amtReturn + time ));
             time += amt + amtReturn;
@@ -672,6 +703,9 @@ public class twbotdangerous extends TWBotExtension {
     }
 
 
+    /**
+     * A TimerTask extended class that calculates "!invest"'s made. 
+     */
     public class Investment extends TimerTask {
         private String investor;
         private int time;
