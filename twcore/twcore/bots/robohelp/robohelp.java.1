@@ -60,7 +60,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!adv", acceptedMessages, this, "handleAdv" );
         m_commandInterpreter.registerCommand( "!time", acceptedMessages, this, "handleTime" );
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted" );
-        m_commandInterpreter.registerCommand( "!saychat", acceptedMessages, this, "handleSayChat" );
 
         acceptedMessages = Message.CHAT_MESSAGE;
 
@@ -69,7 +68,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell" );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan" );
         m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
-
 
         acceptedMessages = Message.ARENA_MESSAGE;
 
@@ -128,15 +126,6 @@ public class robohelp extends SubspaceBot {
         }
 
     }
-
-    public void handleSayChat( String name, String message ) {
-        if(!opList.isSmod( name )) {
-	  return;
-	  } else {
-          m_botAction.sendChatMessage( 1, message );
-	}
-    }
-
     public void handleEnableBackup( String name, String message ){
         if( !opList.isSmod( name )) return;
         if( backupAdvertiser ){
@@ -234,7 +223,6 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleEvent( LoggedOn event ){
-        m_botAction.sendUnfilteredPublicMessage( "?obscene" );
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
         m_botAction.sendUnfilteredPublicMessage("?blogin radiant482");
@@ -276,7 +264,7 @@ public class robohelp extends SubspaceBot {
             java.util.Date day = thisTime.getTime();
             String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
             //Adds to buffer of sorts.
-            if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) && !arena.equals( "tourny" ) ) {
+            if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) ) {
                 if( eventList.size() > 511 ) eventList.remove( 0 );
                 eventList.addElement( new EventData( arena, new java.util.Date().getTime() ) );
                 String query = "INSERT INTO `tblAdvert` (`fnAdvertID`, `fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
@@ -520,9 +508,7 @@ public class robohelp extends SubspaceBot {
         }
 
         if( name != null ){
-            if( messager.toLowerCase().compareTo( name.toLowerCase() ) == 0 ||
-                messager.toLowerCase().startsWith( name.toLowerCase() ) ){
-
+            if( messager.toLowerCase().compareTo( name.toLowerCase() ) == 0 ){
                 m_botAction.sendChatMessage( "Use :" + m_botAction.getBotName()
                 + ":!lookup <keyword> instead."  );
             } else if( keyword.toLowerCase().startsWith( "google " ) ){
@@ -594,7 +580,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendChatMessage( name + " hasn't done a help call yet." );
             } else {
                 if( helpRequest.getBeenWarned() == true ){
-                    m_botAction.sendChatMessage( "NOTICE: " + name + " has already been warned." );
+                    m_botAction.sendChatMessage( name + " has already been warned." );
                 } else {
                     helpRequest.setBeenWarned( true );
                     m_botAction.sendRemotePrivateMessage( name, "WARNING: We appreciate "
@@ -602,12 +588,9 @@ public class robohelp extends SubspaceBot {
                     +"not be tolerated further!", 1 );
                     m_botAction.sendChatMessage( name + " has been warned." );
 
-                    Calendar thisTime = Calendar.getInstance();
-                    java.util.Date day = thisTime.getTime();
-                    String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
                     String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
                     String date = new java.sql.Date( System.currentTimeMillis() ).toString();
-                    String[] data = { name.toLowerCase().trim(), new String( warntime + ": Warning to " + name + " from Robohelp for help/cheater abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
+                    String[] data = { name.toLowerCase().trim(), new String( "Warning to " + name + " from Robohelp for help/cheater abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
 
                     m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
                 }
@@ -636,13 +619,6 @@ public class robohelp extends SubspaceBot {
         } else {
             if( !opList.isER( playerName ) ){
                 m_botAction.sendChatMessage( "Only ER's and above are authorized to ban." );
-	    } else if( opList.isSmod( playerName ) && opList.isZH( name ) ){
-                        m_lastBanner = playerName;
-                        m_banPending = true;
-                        m_botAction.sendRemotePrivateMessage( name, "You have been banned for abuse of the !ban command.  I am sorry this had to happen.  Your ban will likely expire in 24 hours.  Goodbye!" );
-                        m_botAction.sendUnfilteredPublicMessage( "?ban -e1 " + name );
-                        m_botAction.sendChatMessage( "Player \"" + name + "\" has been banned." );
-                        m_playerList.remove( name );
             } else if( opList.isZH( name ) ){
                 m_botAction.sendChatMessage( "Are you nuts?  You can't ban a staff member!" );
             } else {
@@ -712,49 +688,23 @@ public class robohelp extends SubspaceBot {
                     if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 't' ) isIT = true;
                 }
             }
-
-            boolean isGOT = false, isIT2 = false;        
-            for( int i = 0; i < message.length(); i++ ) { 
-                if( message.charAt( i ) == 'g' ) {
-                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 'o' && message.charAt( Math.min( i+2, message.length() - 1 ) ) == 't') isGOT = true;
-                }
-                if( message.charAt( i ) == 'i' ) {
-                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 't' ) isIT2 = true;
-                }
-            }
-
             if( isON && isIT && !name.toLowerCase().equals( m_botAction.getBotName().toLowerCase() ) ) {
                 boolean recorded = false;
                 int i = 0;
                 while( !recorded && i < callList.size() ) {
                     EventData e = (EventData)callList.elementAt( i );
                     if( new java.util.Date().getTime() < e.getTime() + 60000 ) {
-                        updateStatRecordsONIT( name );
+                        updateStatRecords( name );
                         callList.removeElementAt( i );
                         recorded = true;
                     } else callList.removeElementAt( i );
                     i++;
                 }
             }
-
-            if( isGOT && isIT2 && !name.toLowerCase().equals( m_botAction.getBotName().toLowerCase() ) ) {
-                boolean recorded = false;
-                int i = 0;
-                while( !recorded && i < callList.size() ) {
-                    EventData e = (EventData)callList.elementAt( i );
-                    if( new java.util.Date().getTime() < e.getTime() + 60000 ) {
-                        updateStatRecordsGOTIT( name );                  
-                        callList.removeElementAt( i );
-                        recorded = true;        
-                    } else callList.removeElementAt( i );
-                    i++;
-                }
-            }
-
         } catch (Exception e) {}
     }
 
-    public void updateStatRecordsONIT( String name ) {
+    public void updateStatRecords( String name ) {
         if( !m_botAction.SQLisOperational() ){
             return;
         }
@@ -763,28 +713,10 @@ public class robohelp extends SubspaceBot {
             Calendar thisTime = Calendar.getInstance();
             java.util.Date day = thisTime.getTime();
             String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
-            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fdDate = '"+time+"'" );
             if(result.next()) {
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
-            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('', '"+name+"', '1', '0', '"+time+"')" );
-
-        } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
-    }
-
-    public void updateStatRecordsGOTIT( String name ) {
-        if( !m_botAction.SQLisOperational() ){             
-            return;
-        }
-
-        try {
-            Calendar thisTime = Calendar.getInstance();
-            java.util.Date day = thisTime.getTime();     
-            String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
-            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
-
-            if(result.next()) {
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
-            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('', '"+name+"', '1', '1', '"+time+"')" );
+                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fdDate = '"+time+"'" );
+            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fdDate`) VALUES ('', '"+name+"', '1', '"+time+"')" );
         } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
     }
 

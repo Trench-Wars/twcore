@@ -36,7 +36,20 @@ public class acrobot extends SubspaceBot {
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "doDie" );
+	m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "showHelp" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
+    }
+
+    public void showHelp( String playerName, String message ){
+        final String[] helpText = {
+		"!start - Starts a game of acromania",
+		"!die   - Kills me",
+		"NOTE: This event should only be hosted by Mod+!"
+        };
+
+        if( m_botAction.getOperatorList().isER( playerName ) ){
+            m_botAction.remotePrivateMessageSpam( playerName, helpText );
+        }
     }
     
     public void doDie( String name, String message ) {
@@ -44,6 +57,7 @@ public class acrobot extends SubspaceBot {
     		m_botAction.die();
     }
     
+
     public void doStartGame( String name, String message ) {
     	if( m_botAction.getOperatorList().isER( name ) ) {
 	    	if( gameState == 0 ) {

@@ -16,7 +16,7 @@ public class EventRequester
 	//since the recordbot + lots of other classes depends on these numbers
 	//Only change them if you know what you are doing!
 	//Adding new packets requires the total number to be changed as well
-	public static final int TOTAL_NUMBER = 25;
+	public static final int TOTAL_NUMBER = 26;
 	public static final int MESSAGE = 0;
 	public static final int PLAYER_ENTERED = 1;
 	public static final int ARENA_LIST = 2;
@@ -42,6 +42,7 @@ public class EventRequester
 	public static final int FLAG_CLAIMED = 22;
 	public static final int TURF_FLAG_UPDATE = 23;
 	public static final int TURRET_EVENT = 24;
+    public static final int PLAYER_BANNER = 25;
 
 	private boolean[] array;
 

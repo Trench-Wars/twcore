@@ -366,6 +366,15 @@ public class GamePacketGenerator {
 
         sendReliableMessage( bytearray );
     }
+    
+    public void sendBannerPacket( byte[] banner ) {
+    	
+    	ByteArray ba = new ByteArray( 97 );
+    	ba.addByte( 0x19 );
+    	ba.addByteArray( banner );
+    	
+    	sendReliableMessage( ba );
+    }
 
     public void sendShipChangePacket( short ship ) {
         ByteArray   bytearray = new ByteArray( 2 );

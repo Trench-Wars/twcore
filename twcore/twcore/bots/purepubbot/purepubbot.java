@@ -7,10 +7,15 @@ public class purepubbot extends SubspaceBot
 {
 
   public static final int SPEC = 0;
+  public static final int FREQ_0 = 0;
+  public static final int FREQ_1 = 1;
   public static final int LEVIATHAN = 4;
 
   private OperatorList opList;
+  private HashSet freq0List;
+  private HashSet freq1List;
   private boolean started;
+  private boolean privFreqs;
 
   /**
    * This method initializes the bot.
@@ -24,7 +29,10 @@ public class purepubbot extends SubspaceBot
 
     requestEvents();
     opList = m_botAction.getOperatorList();
+    freq0List = new HashSet();
+    freq1List = new HashSet();
     started = false;
+    privFreqs = true;
   }
 
   /**
@@ -35,8 +43,42 @@ public class purepubbot extends SubspaceBot
 
   public void handleEvent(FrequencyShipChange event)
   {
+    int playerID = event.getPlayerID();
+    int freq = event.getFrequency();
+
     if(started)
-      checkPlayer(event.getPlayerID(), true);
+    {
+      checkPlayer(playerID, true);
+      if(!privFreqs)
+        checkFreq(playerID, freq, true);
+    }
+  }
+
+  /**
+   * This method handles a PlayerLeft event.
+   *
+   * @param event is the event to handle.
+   */
+  public void handleEvent(PlayerLeft event)
+  {
+    int playerID = event.getPlayerID();
+    String playerName = m_botAction.getPlayerName(playerID);
+
+    removeFromLists(playerName);
+  }
+
+  /**
+   * This method handles the FrequencyChange event.
+   *
+   * @param event is the event to handle.
+   */
+  public void handleEvent(FrequencyChange event)
+  {
+    int playerID = event.getPlayerID();
+    int freq = event.getFrequency();
+
+    if(started && !privFreqs)
+      checkFreq(playerID, freq, true);
   }
 
   /**
@@ -50,9 +92,16 @@ public class purepubbot extends SubspaceBot
     if(started)
     {
       int playerID = event.getPlayerID();
+      Player player = m_botAction.getPlayer(playerID);
+      String playerName = m_botAction.getPlayerName(playerID);
 
-      m_botAction.sendPrivateMessage(playerID, "This arena has pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.");
+      m_botAction.sendSmartPrivateMessage(playerName, "This arena has pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.");
       checkPlayer(playerID, false);
+      if(!privFreqs)
+      {
+        m_botAction.sendSmartPrivateMessage(playerName, "Private Frequencies are currently disabled.");
+        checkFreq(playerID, player.getFrequency(), false);
+      }
     }
   }
 
@@ -114,6 +163,25 @@ public class purepubbot extends SubspaceBot
   }
 
   /**
+   * This method toggles if private frequencies are allowed or not.
+   *
+   * @param sender is the sender of the command.
+   */
+  public void doPrivFreqsCmd(String sender)
+  {
+    if(!started)
+      throw new RuntimeException("Bot is not currently running pure pub settings.");
+    if(!privFreqs)
+      m_botAction.sendArenaMessage("Private Frequencies enabled.", 2);
+    else
+    {
+      fixFreqs();
+      m_botAction.sendArenaMessage("Private Frequencies disabled.", 2);
+    }
+    privFreqs = !privFreqs;
+  }
+
+  /**
    * This method logs the bot off.
    *
    * @param sender is the person issuing the command.
@@ -144,6 +212,7 @@ public class purepubbot extends SubspaceBot
       "!Go <ArenaName>                  -- Moves the bot to <ArenaName>.",
       "!Start                           -- Starts pure pub settings.",
       "!Stop                            -- Stops pure pub settings.",
+      "!Privfreqs                       -- Toggles Private Frequencies.",
       "!Die                             -- Logs the bot off of the server.",
       "!Help                            -- Displays this help message."
     };
@@ -170,6 +239,8 @@ public class purepubbot extends SubspaceBot
         doStartCmd(sender);
       if(command.equals("!stop"))
         doStopCmd(sender);
+      if(command.equals("!privfreqs"))
+        doPrivFreqsCmd(sender);
       if(command.equals("!die"))
         doDieCmd(sender);
       if(command.equals("!help"))
@@ -193,7 +264,7 @@ public class purepubbot extends SubspaceBot
     int messageType = event.getMessageType();
     String message = event.getMessage().trim();
 
-    if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) && opList.isSmod(sender))
+    if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) && ( opList.isSmod(sender) || ( (sender.toLowerCase()).equals("rodge_rabbit") || (sender.toLowerCase()).equals("beasty") ) ))
       handleCommand(sender, message);
   }
 
@@ -220,7 +291,9 @@ public class purepubbot extends SubspaceBot
     EventRequester eventRequester = m_botAction.getEventRequester();
 
     eventRequester.request(EventRequester.MESSAGE);
+    eventRequester.request(EventRequester.PLAYER_LEFT);
     eventRequester.request(EventRequester.PLAYER_ENTERED);
+    eventRequester.request(EventRequester.FREQUENCY_CHANGE);
     eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
   }
 
@@ -260,7 +333,66 @@ public class purepubbot extends SubspaceBot
       m_botAction.spec(playerID);
       m_botAction.spec(playerID);
       if(specMessage)
-        m_botAction.sendPrivateMessage(playerID, "Leviathans are not allowed in this pub.  Please change pubs if you wish to be a levi.");
+        m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "Leviathans are not allowed in this pub.  Please change pubs if you wish to be a levi.");
+    }
+  }
+
+  /**
+   * This moethod removes a playerName from the freq lists.
+   */
+  private void removeFromLists(String playerName)
+  {
+    String lowerName = playerName.toLowerCase();
+
+    freq0List.remove(lowerName);
+    freq1List.remove(lowerName);
+  }
+
+  /**
+   * This method sets a player to a freq and updates the freq lists.
+   *
+   * @param playerName is the name of the player to add.
+   * @param freq is the new freq.
+   */
+  private void addToLists(String playerName, int freq)
+  {
+    String lowerName = playerName.toLowerCase();
+
+    if(freq == FREQ_0)
+      freq0List.add(lowerName);
+    if(freq == FREQ_1)
+      freq1List.add(lowerName);
+  }
+
+  /**
+   * This method checks to see if a player is on a private freq.  If they are
+   * then they are changed to the pub freq with the fewest number of players.
+   *
+   * @param Player player is the player to check.
+   * @param changeMessage is true if a changeMessage will be displayed.
+   */
+  private void checkFreq(int playerID, int freq, boolean changeMessage)
+  {
+    Player player = m_botAction.getPlayer(playerID);
+    String playerName = player.getPlayerName();
+    int ship = player.getShipType();
+    int newFreq = freq;
+
+    removeFromLists(playerName);
+
+    if(ship != SPEC)
+    {
+      if(player != null && freq != FREQ_0 && freq != FREQ_1)
+      {
+        if(freq0List.size() <= freq1List.size())
+          newFreq = FREQ_0;
+        else
+          newFreq = FREQ_1;
+        if(changeMessage)
+          m_botAction.sendSmartPrivateMessage(playerName, "Private Frequencies are currently disabled.  You have been placed on a public Frequency.");
+        m_botAction.setFreq(playerName, newFreq);
+      }
+      addToLists(playerName, newFreq);
     }
   }
 
@@ -277,6 +409,44 @@ public class purepubbot extends SubspaceBot
     {
       player = (Player) iterator.next();
       checkPlayer(player.getPlayerID(), false);
+    }
+  }
+
+  /**
+   * This method fills the freq lists for freqs 1 and 0.
+   */
+  private void fillFreqLists()
+  {
+    Iterator iterator = m_botAction.getPlayingPlayerIterator();
+    Player player;
+    String lowerName;
+
+    freq0List.clear();
+    freq1List.clear();
+    while(iterator.hasNext())
+    {
+      player = (Player) iterator.next();
+      lowerName = player.getPlayerName().toLowerCase();
+      if(player.getFrequency() == FREQ_0)
+        freq0List.add(lowerName);
+      if(player.getFrequency() == FREQ_1)
+        freq1List.add(lowerName);
+    }
+  }
+
+  /**
+   * This method fixes the freq of each player.
+   */
+  private void fixFreqs()
+  {
+    Iterator iterator = m_botAction.getPlayingPlayerIterator();
+    Player player;
+
+    fillFreqLists();
+    while(iterator.hasNext())
+    {
+      player = (Player) iterator.next();
+      checkFreq(player.getPlayerID(), player.getFrequency(), false);
     }
   }
 

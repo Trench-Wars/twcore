@@ -128,6 +128,10 @@ public abstract class SubspaceBot {
     public void handleEvent( SQLResultEvent event ){
         Tools.printLog( m_botAction.getBotName() + ": SQLResultEvent event not handled; ignored" );
     }
+    
+    public void handleEvent( PlayerBanner event ){
+        Tools.printLog( m_botAction.getBotName() + ": PlayerBanner event not handled; ignored" );
+    }
 
     public void handleDisconnect(){
     }

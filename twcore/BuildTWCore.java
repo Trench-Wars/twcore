@@ -14,7 +14,7 @@ import java.util.*;
  */
 public class BuildTWCore {
 
-    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.0.6-stable-bin.jar";
+    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.0.16-ga-bin.jar";
     Runtime runtime;
     
     // flags

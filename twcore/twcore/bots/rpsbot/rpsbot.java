@@ -77,7 +77,7 @@ public class rpsbot extends SubspaceBot
     String command = message.toLowerCase();
     OperatorList opList = m_botAction.getOperatorList();
 
-    if(opList.isModerator(sender))
+    if(opList.isER(sender))
     {
       if(command.equals("!help"))
         doHelp(sender);
@@ -95,7 +95,7 @@ public class rpsbot extends SubspaceBot
     String command = message.toLowerCase();
     OperatorList opList = m_botAction.getOperatorList();
 
-    if(opList.isModerator(sender))
+    if(opList.isER(sender))
     {
       if(command.equals("!help"))
         m_botAction.sendSmartPrivateMessage(sender, "!Killgame");

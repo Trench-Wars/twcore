@@ -21,22 +21,41 @@ public class twbotzombies extends TWBotExtension {
     }
 
     int m_srcfreq;
-    int m_srcship;
+    HashSet m_srcship = new HashSet();
+    int killerShip;
     int m_destfreq;
     int m_destship;
     int m_lives;
     StringBag killmsgs;
     boolean isRunning = false;
     boolean modeSet = false;
+    boolean killerShipSet = false;
 
-    public void setMode( int srcfreq, int srcship, int destfreq, int destship,
-    int lives ){
+    public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives ){
         m_srcfreq = srcfreq;
-        m_srcship = srcship;
+        m_srcship.add(new Integer(srcship));
         m_destfreq = destfreq;
         m_destship = destship;
         m_lives = lives;
         modeSet = true;
+    }
+    
+    public void addShip(int srcship, String name)
+    {
+    	if(!(m_srcship.contains(new Integer(srcship))))
+    	{
+    		m_botAction.sendPrivateMessage(name, "Ship added.");
+   			m_srcship.add(new Integer(srcship));
+   		}
+    }
+    
+    public void delShip(int srcship, String name)
+    {
+    	if(m_srcship.contains(new Integer(srcship)))
+    	{
+    		m_botAction.sendPrivateMessage(name, "Ship removed.");
+    		m_srcship.remove(new Integer(srcship));
+    	}
     }
 
     public void deleteKillMessage( String name, int index ){
@@ -127,15 +146,50 @@ public class twbotzombies extends TWBotExtension {
             isRunning = true;
             modeSet = true;
             m_botAction.sendPrivateMessage( name, "Zombies mode started" );
-        } else if( message.startsWith( "!del " )){
+        } else if( message.startsWith( "!del " ))
             deleteKillMessage( name, getInteger( message.substring( 5 )));
+          else if(message.startsWith("!addship "))
+          {
+          	String pieces[] = message.split(" ");
+          	int ship = 1;
+             try {
+             	ship = Integer.parseInt(pieces[1]);
+             } catch(Exception e) {}
+             if(ship > 8 || ship < 1)
+             	ship = 1;
+             addShip(ship, name);
+          }
+          else if(message.startsWith("!delship "))
+          {
+          	String pieces[] = message.split(" ");
+          	int ship = 1;
+          	try {
+          		ship = Integer.parseInt(pieces[1]);
+          	} catch(Exception e) {}
+          	if(ship > 8 || ship < 1)
+          		ship = 1;
+          	delShip(ship, name);
+          }
+          else if(message.startsWith("!killership "))
+          {
+          	String pieces[] = message.split(" ");
+          	int ship = 1;
+          	try {
+          		ship = Integer.parseInt(pieces[1]);
+          	} catch(Exception e) {}
+          	if(ship > 8 || ship < 1)
+          		ship = 1;
+          	killerShip = ship;
+          	killerShipSet = true;
+          	m_botAction.sendPrivateMessage(name, "Ship " + killerShip + " has been set for killing a zombie.");
+          }
+          
 /*        } else if( message.startsWith( "!setupwarp2" )){
             m_botAction.warpFreqToLocation( 0, 800, 240 );
             m_botAction.warpFreqToLocation( 2, 270, 840 );
         } else if( message.startsWith( "!setupwarp" )){
             m_botAction.warpFreqToLocation( 0, 870, 450 );
             m_botAction.warpFreqToLocation( 2, 900, 900 );*/
-        }
     }
 
 
@@ -147,7 +201,8 @@ public class twbotzombies extends TWBotExtension {
     public void handleEvent( PlayerDeath event ){
         if( modeSet && isRunning ){
             Player p = m_botAction.getPlayer( event.getKilleeID() );
-            if( p.getLosses() >= m_lives && p.getShipType() == m_srcship && p.getFrequency() == m_srcfreq ){
+            Player p2 = m_botAction.getPlayer( event.getKillerID() );
+            if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_srcfreq ){
                 m_botAction.setShip( event.getKilleeID(), m_destship );
                 m_botAction.setFreq( event.getKilleeID(), m_destfreq );
                 String killmsg = killmsgs.toString();
@@ -176,6 +231,11 @@ public class twbotzombies extends TWBotExtension {
 
                 //}
             }
+            if(m_srcship.contains(new Integer(p2.getShipType())) && p2.getShipType() != m_destship && killerShipSet)
+            {
+            	if(p2.getShipType() != killerShip)
+            		m_botAction.setShip(event.getKillerID(), killerShip);
+            }
         }
     }
 
@@ -188,7 +248,10 @@ public class twbotzombies extends TWBotExtension {
             "!del <index>        - Deletes a kill message.  The number for the index is taken from !list",
             "!stop               - Shuts down zombies mode",
             "!start              - Starts a standard zombies mode",
-            "!start <srcfreq> <srcship> <destfreq> <destship> <lives> - Starts a special zombies mode"
+            "!start <srcfreq> <srcship> <destfreq> <destship> <lives> - Starts a special zombies mode",
+            "!addship            - Adds a ship to the list of human ships.",
+            "!delship            - Deletes ship from list of human ships.",
+            "!killership         - Sets the ship for a human that kills a zombie."
         };
         return ZombiesHelp;
     }

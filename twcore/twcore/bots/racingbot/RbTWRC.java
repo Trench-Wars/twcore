@@ -1,0 +1,509 @@
+package twcore.bots.racingbot;
+
+import twcore.core.*;
+import java.util.*;
+import java.io.*;
+import java.sql.ResultSet;
+
+/** Bot for TWRC updates
+ *  Also allows ops to update points after races.
+ *  @author Jacen Solo
+ *  @version 2.3
+ */
+public class RbTWRC extends RacingBotExtension
+{
+	String sqlHost = "website";
+	File log = new File("log.txt");
+	File people = new File("people.txt");
+	HashSet signups = new HashSet();
+	boolean enableSignup = false;
+	int racePlayers;
+	Calendar calendar;
+	
+	/** Constructs a new instance of RbTWRC and sets up stuff for timestamp/logfile
+	 */
+	public RbTWRC() 
+	{
+		String[] ids = TimeZone.getAvailableIDs(-6 * 60 * 60 * 1000);
+		SimpleTimeZone pdt = new SimpleTimeZone(-6 * 60 * 60 * 1000, ids[0]);
+		pdt.setStartRule(Calendar.APRIL, 1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
+		pdt.setEndRule(Calendar.OCTOBER, -1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
+		
+		calendar = new GregorianCalendar(pdt);
+		
+		try {
+			if(!log.exists())
+				log.createNewFile();
+			if(!people.exists())
+				people.createNewFile();
+			updatePeopleFile();
+		} catch(Exception e) {}
+		
+		try {
+			BufferedReader signedup = new BufferedReader(new FileReader(people));
+			String inLine;
+			while((inLine = signedup.readLine()) != null)
+			{
+				signups.add(inLine);
+			}
+		} catch(IOException e) {}
+	}
+	
+	public void updatePeopleFile()
+	{
+		Iterator it = signups.iterator();
+		try {
+			FileWriter out = new FileWriter(people, true);
+			while(it.hasNext())
+			{
+				String name = (String)it.next();	
+				out.write(name + "\n");
+				out.flush();
+			}
+			out.close();
+		} catch(IOException e) {}
+	}
+	
+	public void sql(String name)
+	{
+		try {
+			m_botAction.SQLQuery("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
+		} catch(Exception e) {}
+	}
+	
+	/** Recieves a message event and handles it based on user permissions.
+	 */
+	public void handleEvent(Message event)
+	{
+		if(event.getMessageType() == event.PRIVATE_MESSAGE)
+		{
+			String name = m_botAction.getPlayerName(event.getPlayerID());
+			String message = event.getMessage();
+			if(m_bot.twrcOps.contains(name.toLowerCase()) || m_botAction.getOperatorList().isER(name))
+				handleCommand(name, message);
+			if(message.toLowerCase().startsWith("!signup"))
+			{
+				if(!signups.contains(name.toLowerCase()) && enableSignup)
+				{
+					m_botAction.sendPrivateMessage(name, "Sign up successfull! You may now participate in races.");
+					sql(name);
+					signups.add(name.toLowerCase());
+					updatePeopleFile();
+				}
+				else
+					m_botAction.sendPrivateMessage(name, "The bot is either deactivated or you have already signed up for TWRC, please contact Jacen Solo, Ice Storm, or SuperDAVE(postal) if you need assistance.");
+			}
+		}
+	}
+	
+	/** Handles the commands for updating a race or sending an arena message.
+	 */
+	public void handleCommand(String name, String message)
+	{
+		RbRace race = (RbRace)modules.get("Race");
+		
+		if(message.toLowerCase().startsWith("!help twrc"))
+			handleHelp(name);
+		else if(message.toLowerCase().startsWith("!help"))
+			m_botAction.sendPrivateMessage(name, "twrc        - Module for TWRC to update points at end of race.");
+		else if(message.toLowerCase().startsWith("!spec "))
+		{
+			try {
+				String pieces[] = message.split(" ", 2);
+				m_botAction.spec(pieces[1]);
+			} catch(Exception e) {}
+		}
+		else if(message.toLowerCase().startsWith("!arena "))
+		{
+			try {
+				String pieces[] = message.split(" ", 2);
+				m_botAction.sendArenaMessage(pieces[1] + " -" + name);
+			} catch(Exception e) {}
+		}
+//		else if(message.toLowerCase().startsWith("!enable"))
+//			enableSignup = true;
+//		else if(message.toLowerCase().startsWith("!disable"))
+//			enableSignup = false;
+		else if(!(race.updated))
+		{
+			if(message.toLowerCase().startsWith("!normal"))
+			{
+				handleNormal(name);
+				race.updated = true;
+			}
+			if(m_bot.twrcOps.contains(name.toLowerCase()) && m_botAction.getOperatorList().isSmod(name))
+			{
+				if(message.toLowerCase().startsWith("!big"))
+				{
+					handleBig(name);
+					race.updated = true;
+				}
+				else if(message.toLowerCase().startsWith("!marathon"))
+				{
+					handleMarathon(name);
+					race.updated = true;
+				}
+			}
+		}
+	}
+	
+	/** PM's the player with the module's help message.
+	 *  @param name - name of help message requester.
+	 */
+	public void handleHelp(String name)
+	{
+		m_botAction.sendPrivateMessage(name, "!normal           -Updates player standings after a normal race.");
+		m_botAction.sendPrivateMessage(name, "!big              -Updates player standings after a major race.");
+		m_botAction.sendPrivateMessage(name, "!marathon         -Updates player standings after a marathon.");
+		m_botAction.sendPrivateMessage(name, "!help             -Sends you this message...");
+	}
+	
+	/** Updates all the databases for the last normal race.
+	 *  2 points for leading a lap. 2 points for leading the most laps. top 10 get points
+	 *  1st = 10p, 2nd = 9p, 3rd = 8p......10th = 1p
+	 */
+	public void handleNormal(String opName)
+	{
+		raceStatsUpdate("Normal", opName);
+		writeLog(opName + " started a normal race update, points changes follow.");
+		RbRace race = (RbRace)modules.get("Race");
+		Track track = race.getTrack(race.currentTrack);
+		HashMap positions = track.positions;
+		HashMap leaders = track.lapLeaders;
+		Set set = leaders.keySet();
+		Collection col = leaders.values();
+		Iterator it = positions.keySet().iterator();
+		Iterator it2 = set.iterator();
+		Iterator it3 = col.iterator();
+		String leadName = "";
+		int mostLaps = 0;
+		while(it2.hasNext())
+		{
+			String name = (String)it2.next();
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 2 WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given 2 points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved 2 points for leading a lap and now have " + getPoints(name) + " points.");
+				pointChange(name, 2, "Lead a lap.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving bonus points.");}
+			int leadLaps = ((Integer)it3.next()).intValue();
+			if(leadLaps > mostLaps)
+			{
+				mostLaps = leadLaps;
+				leadName = name;
+			}
+		}
+		try {
+			m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 2 WHERE fldName = \'"+leadName+"\'");
+			writeLog(leadName + " given 2 points.");
+			m_botAction.sendSmartPrivateMessage(leadName, "You just recieved 2 points for leading the most laps and now have " + getPoints(leadName) + " points.");
+			pointChange(leadName, 2, "Lead most laps.");
+		} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving person with most lead laps points.");}
+		int k = 0;
+		while(it.hasNext() && k < 10)
+		{
+			it.next();
+			String name = (String)positions.get(new Integer(k + 1));
+			int points = 10 - k;
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given " + points + " points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
+				pointChange(name, points, "Top ten in normal race.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving points.");}
+			k++;
+		}
+		while(it.hasNext())
+		{
+			it.next();
+			String name = (String)positions.get(new Integer(k + 1));
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 1 WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given 1 point.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved 1 point and now have " + getPoints(name) + " points.");
+				pointChange(name, 1, "Finished normal race.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving points.");}
+			k++;
+		}
+		m_botAction.sendPrivateMessage(opName, "Done.");
+		track.lapLeaders = new HashMap();
+		track.positions = new HashMap();
+		writeLog("Normal race log done.");
+		writeLog("");
+		writeLog("");
+		race.currentTrack = -1;
+		race.loadArena();
+	}
+	
+	/** Updates all the databases for the last race if it was a big/major race.
+	 *  2 points for leading a lap. 2 points for leading the most. Points - Position + 1 for finishing.
+	 */
+	public void handleBig(String opName)
+	{
+		raceStatsUpdate("Major", opName);
+		writeLog(opName + " started a major race update, point changes follow.");
+		RbRace race = (RbRace)modules.get("Race");
+		Track track = race.getTrack(race.currentTrack);
+		HashMap positions = track.positions;
+		HashMap leaders = track.lapLeaders;
+		Set set = leaders.keySet();
+		Collection col = leaders.values();
+		Iterator it = positions.keySet().iterator();
+		Iterator it2 = set.iterator();
+		Iterator it3 = col.iterator();
+		String leadName = "";
+		int mostLaps = 0;
+		while(it2.hasNext())
+		{
+			String name = (String)it2.next();
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 3 WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given 3 points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved 3 points for leading a lap and now have " + getPoints(name) + " points.");
+				pointChange(name, 3, "Lead a lap.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving bonus points.");}
+			int leadLaps = ((Integer)it3.next()).intValue();
+			if(leadLaps > mostLaps)
+			{
+				mostLaps = leadLaps;
+				leadName = name;
+			}
+		}
+		try {
+			m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 5 WHERE fldName = \'"+leadName+"\'");
+			writeLog(leadName + " given 2 points.");
+			m_botAction.sendSmartPrivateMessage(leadName, "You just recieved 5 points for leading the most laps and now have " + getPoints(leadName) + " points.");
+			pointChange(leadName, 5, "Lead most laps.");
+		} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving person with most laps lead points.");}
+		int k = 0;
+		while(it.hasNext() && k < 10)
+		{
+			it.next();
+			String name = (String)positions.get(new Integer(k + 1));
+			int points = 20 - k;
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given " + points + " points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
+				pointChange(name, points, "Finished a major race.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving people points.");}
+			k++;
+		}
+		while(it.hasNext())
+		{
+			it.next();
+			String name = (String)positions.get(new Integer(k + 1));
+			int points = 2;
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given " + points + " points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
+				pointChange(name, points, "Finished a major race.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving people points.");}
+			k++;
+		}
+		m_botAction.sendPrivateMessage(opName, "Done.");
+		track.lapLeaders = new HashMap();
+		track.positions = new HashMap();
+		writeLog("Major race log done.");
+		writeLog("");
+		writeLog("");
+		race.currentTrack = -1;
+		race.loadArena();
+	}
+	
+	/** Updates all of the databases for the last race if it was a marathon
+	 *  2 points for leading a lap. 10 points for leading the most. 30 points for winning.
+	 */
+	public void handleMarathon(String opName)
+	{
+		raceStatsUpdate("Marathon", opName);
+		writeLog(opName + " started a marathon race update, point changes follow.");
+		RbRace race = (RbRace)modules.get("Race");
+		Track track = race.getTrack(race.currentTrack);
+		HashMap positions = track.positions;
+		HashMap leaders = track.lapLeaders;
+		Set set = leaders.keySet();
+		Collection col = leaders.values();
+		Iterator it = positions.keySet().iterator();
+		Iterator it2 = set.iterator();
+		Iterator it3 = col.iterator();
+		String leadName = "";
+		int mostLaps = 0;
+		while(it2.hasNext())
+		{
+			String name = (String)it2.next();
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 5 WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given 5 points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved 5 points for leading a lap and now have " + getPoints(name) + " points.");
+				pointChange(name, 5, "Lead a lap.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving people points for leading a lap.");}
+			int leadLaps = ((Integer)it3.next()).intValue();
+			if(leadLaps > mostLaps)
+			{
+				mostLaps = leadLaps;
+				leadName = name;
+			}
+		}
+		try {
+			m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 10 WHERE fldName = \'"+leadName+"\'");
+			writeLog(leadName + " given 10 points.");
+			m_botAction.sendSmartPrivateMessage(leadName, "You just recieved 10 points for leading the most laps and now have " + getPoints(leadName) + " points.");
+			pointChange(leadName, 10, "Lead most laps.");
+		} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while updating person with the most laps lead.");}
+		int k = 0;
+		while(it.hasNext() && k < 10)
+		{
+			it.next();
+			String name = (String)positions.get(new Integer(k + 1));
+			int points = 30 - k;
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given " + points + " points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
+				pointChange(name, points, "Finished a major race.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving people points.");}
+			k++;
+		}
+		while(it.hasNext())
+		{
+			it.next();
+			String name = (String)positions.get(new Integer(k + 1));
+			int points = 10;
+			try {
+				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+				writeLog(name + " given " + points + " points.");
+				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
+				pointChange(name, points, "Finished a major race.");
+			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving people points.");}
+			k++;
+		}
+		track.lapLeaders = new HashMap();
+		track.positions = new HashMap();
+		writeLog("Marathon race log done.");
+		writeLog("");
+		writeLog("");
+		race.currentTrack = -1;
+		race.loadArena();
+	}
+	
+	/** Writes point changes to log.txt
+	 *  @param message - message to be written to the log.txt file
+	 */
+	public void writeLog(String message)
+	{
+		try {
+			FileWriter out = new FileWriter(log, true);
+			String outLine = message;
+			out.write(outLine + "\n");
+			out.flush();
+			out.close();
+		} catch(IOException e) {}
+	}
+	
+	/** Returns the points of the requested player.
+	 *  @param name - name of player.
+	 *  @return points that player has.
+	 */
+	public int getPoints(String name)
+	{
+		try {
+			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldPoints FROM tblRacers WHERE fldName = \'"+name+"\'");
+			if(results.next())
+				return results.getInt("fldPoints");
+			else
+				return 0;
+		} catch(Exception e) {return 0;}
+	}
+	
+	/** Sets the racePlayers variable to the # of starters from the last race.
+	 */
+	public void getPlayers()
+	{
+		RbRace race = (RbRace)modules.get("Race");
+		Track track = race.getTrack(race.currentTrack);
+		int players = 0;
+		ArrayList trackPositions = track.playerPositions;
+		ArrayList currentLap;
+		for(int k = 0;k < trackPositions.size();k++)
+		{
+			currentLap = (ArrayList)trackPositions.get(k);
+			players += currentLap.size();
+		}
+		racePlayers = players;
+		track.playerPositions = new ArrayList();
+	}
+	
+	/** Inserts the last race's data into tblRaceData
+	 *  @param type - Type of race
+	 *  @param host - host of the race.
+	 */
+	public void raceStatsUpdate(String type, String host)
+	{
+		getPlayers();
+		RbRace race = (RbRace)modules.get("Race");
+		Track track = race.getTrack(race.currentTrack);
+		String trackName = track.trackName;
+		int laps = race.laps;
+		try {
+			m_botAction.SQLQuery("website", "INSERT INTO tblRaceData (fldID, fldDate, fldTrack, fldLaps, fldStarters, fldFinishers, fldType, fldFirst, fldSecond, fldThird, fldHost) VALUES (0, \""+getTimeStamp()+"\", \""+trackName+"\", "+laps+", "+racePlayers+", "+track.positions.size()+", \""+type+"\", \""+track.winner+"\", \""+track.second+"\", \""+track.third+"\", \""+host+"\") ");
+		} catch(Exception e) {e.printStackTrace();}
+	}
+	
+	/** Inserts point change data into the tblPointsData sql table.
+	 *  @param player - Name of player whose points were changed.
+	 *  @param points - Change in points.
+	 *  @param reason - reason for change.
+	 */
+	public void pointChange(String player, int points, String reason)
+	{
+		try {
+			m_botAction.SQLQuery("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0,  "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
+		} catch(Exception e) {}
+	}
+	
+	/** Returns the player's tblRacers fldID.
+	 *  @param name - Name of player.
+	 *  @return ID
+	 */
+	public int getID(String name)
+	{
+		try {
+			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldID FROM tblRacers WHERE fldName = \'"+name+"\'");
+			results.next();
+			return results.getInt("fldID");
+		} catch(Exception e) {}
+		return 0;
+	}
+	
+	/** Returns a timestamp for the database.
+	 *  @return Returns a timestamp in the format MM/DD/YYYY HH:MM
+	 */
+	public String getTimeStamp()
+	{
+		Date trialTime = new Date();
+		calendar.setTime(trialTime);
+		String date = "";
+		if(((int)calendar.get(Calendar.MONTH) < 9))
+			date += "0" + (calendar.get(Calendar.MONTH) + 1);
+		else
+			date += (calendar.get(Calendar.MONTH) + 1);
+		if(((int)calendar.get(Calendar.DAY_OF_MONTH) < 10))
+			date += "/" + "0" + (calendar.get(Calendar.DAY_OF_MONTH));
+		else
+			date += "/" + calendar.get(Calendar.DAY_OF_MONTH);
+		date += "/" + calendar.get(Calendar.YEAR);
+		date += " ";
+		if(((int)calendar.get(Calendar.HOUR_OF_DAY) < 10))
+			date += "0" + calendar.get(Calendar.HOUR_OF_DAY);
+		else
+			date += calendar.get(Calendar.HOUR_OF_DAY);
+		if(((int)calendar.get(Calendar.MINUTE) < 10))
+			date += ":0" + calendar.get(Calendar.MINUTE);
+		else
+			date += ":" + calendar.get(Calendar.MINUTE);
+		return date;
+	}
+	
+}
