@@ -18,15 +18,8 @@ public class twlbottwl extends TWLBotExtension
     private final String mySQLHost = "website";
     private final String mySQLRegister = "local";
     private LeagueMatch m_match;
-
-    //0 - off
-    //1 - match loaded
-    //2 - lineups requested
-    //3 - 30 seconds till start
-    //4 - game in progress
-    private int m_gameState = 0;
+    
     private int m_secondsOnStart = 0;
-
     private String m_timeStart;
     private String m_timeEnd;
     private int m_generalTime = 0;
@@ -38,10 +31,27 @@ public class twlbottwl extends TWLBotExtension
     private Objset m_myObjects;
     private java.util.Date m_lockDate;
     private java.util.Date m_lastRoundCutoffDate;
+    private int m_season = 0; //current twl season defined in constructor from config file
+    private BotSettings m_botSettings; //access to settings in the cfg file
 
     private String addingPlayer;
+    
+    //0 - off
+    //1 - match loaded
+    //2 - lineups requested
+    //3 - 30 seconds till start
+    //4 - game in progress
+    private int m_gameState = 0;
 
     //constants
+    
+    //m_gameState constants
+    private final int GAME_OFF = 0;
+    private final int MATCH_LOADED = 1;
+    private final int LINEUP_REQUESTED = 2;
+    private final int TIME_TO_START = 3;
+    private final int GAME_IN_PROGRESS = 4;
+    
     private final int EXTENSION_TIME = 2; //mins
     private final int BASE_PLAYOFF_TIMER = 41; //mins (for playoff mode)
     private final int BASE_TIMER = 31; //mins
@@ -59,27 +69,41 @@ public class twlbottwl extends TWLBotExtension
     private final int MINIMUM_DUEL_LIMIT = 3; //players
     private final int MINIMUM_BASE_LIMIT = 6; //players
 
-    private final double VERSION = 1.8;
+    private final double VERSION = 1.9;
 
     final static int TIME_RACE_TARGET = 900; //sec
     final static int TIME_RACE_PLAYOFF_TARGET = 1200; // sec (for playoff mode)
     final static int DUEL_TARGET = 50; //kills
+    
+    //matchTypeId constants
+    private final int TWLD = 1; //wb league 
+    private final int TWLJ = 2; //jav league
+    private final int TWLB = 3; //base league
 
     public twlbottwl()
     {
         m_laggers = new HashMap();
+        m_botSettings = m_botAction.getBotSettings();
+        m_season = m_botSettings.getInt("Season");
     }
 
-    //TEMPORARY///
+    /**
+     * Useful test function to test without database
+     */
     public void do_loadTestGame(String name, String message)
     {
         do_loadGame(name, "- " + 5852);
     }
 
-    ///Loads a match///
+    /**
+     * Loads a match from the database
+     * 
+     * @param name Person who loaded the match
+     * @param message Encripted matchId to get other data later
+     */
     public void do_loadGame(String name, String message)
     {
-        if (m_gameState != 0)
+        if (m_gameState != GAME_OFF)
         {
             m_botAction.sendPrivateMessage(name, "Cannot load game, a game is already running or loaded. If a game hasn't started use !unloadgame");
             return;
@@ -97,7 +121,7 @@ public class twlbottwl extends TWLBotExtension
                 m_botAction.sendArenaMessage(
                     m_match.getMatchType() + " " + m_match.getMatchId() + ": " + m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " loaded",
                     26);
-                m_gameState = 1;
+                m_gameState = MATCH_LOADED;
             }
             m_lockDate = sql_getLockDate();
             m_lastRoundCutoffDate = sql_getLastRoundCutoffDate();
@@ -110,7 +134,7 @@ public class twlbottwl extends TWLBotExtension
 
     public void do_reloadGame(String name, String message)
     {
-        if (m_gameState != 0)
+        if (m_gameState != GAME_OFF)
         {
             m_botAction.sendPrivateMessage(name, "Cannot load game, a game is already running or loaded. If a game hasn't started use !unloadgame");
             return;
@@ -124,7 +148,7 @@ public class twlbottwl extends TWLBotExtension
                 m_botAction.sendPrivateMessage(name, "Unable to reload the specified match.");
                 return;
             }
-            m_gameState = 3;
+            m_gameState = TIME_TO_START;
             m_match.setRef(name);
             m_botAction.toggleLocked();
             m_botAction.specAll();
@@ -143,7 +167,7 @@ public class twlbottwl extends TWLBotExtension
                     int team1Score;
                     int team2Score;
                     String mvp;
-                    if (m_match.getMatchTypeId() == 3)
+                    if (m_match.getMatchTypeId() == TWLB)
                     {
                         team1Score = m_match.getTeam1Score();
                         team2Score = m_match.getTeam2Score();
@@ -161,7 +185,7 @@ public class twlbottwl extends TWLBotExtension
                         else
                             mvp = m_match.getMVP(2);
                     }
-                    if (m_match.getMatchTypeId() < 3)
+                    if (m_match.getMatchTypeId() != TWLB)
                         m_match.displayScores(team1Score, team2Score, mvp, false);
                     else
                         m_match.displayBaseScores(team1Score, team2Score, mvp, false);
@@ -178,21 +202,21 @@ public class twlbottwl extends TWLBotExtension
                     m_botAction.resetFlagGame();
                     m_botAction.scoreResetAll();
                     m_botAction.shipResetAll();
-                    if (m_match.getMatchTypeId() == 1)
+                    if (m_match.getMatchTypeId() == TWLD)
                     {
                                                 m_botAction.setDoors(0);
                                         }
-                    if (m_match.getMatchTypeId() == 3)
+                    if (m_match.getMatchTypeId() == TWLB)
                     {
                                                 m_botAction.setDoors(0);
                                         }
                     m_botAction.sendArenaMessage("GO GO GO", 104);
-                    if (m_match.getMatchTypeId() == 2)
+                    if (m_match.getMatchTypeId() == TWLJ)
                     {
                         m_botAction.warpFreqToLocation(0, 446, 444);
                         m_botAction.warpFreqToLocation(1, 577, 444);
                     }
-                    if (m_match.getMatchTypeId() == 3)
+                    if (m_match.getMatchTypeId() == TWLB)
                     {
                         m_botAction.warpFreqToLocation(0, 486, 256);
                         m_botAction.warpFreqToLocation(1, 538, 256);
@@ -201,7 +225,7 @@ public class twlbottwl extends TWLBotExtension
                     int minutes = Integer.parseInt(m_match.getRestartTime().split(":")[0]);
                     int seconds = Integer.parseInt(m_match.getRestartTime().split(":")[1]);
                     m_generalTime = minutes * 60 + seconds;
-                    m_gameState = 4;
+                    m_gameState = GAME_IN_PROGRESS;
                     Calendar thisTime = Calendar.getInstance();
                     java.util.Date day = thisTime.getTime();
                     m_timeStart = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(day);
@@ -288,26 +312,38 @@ public class twlbottwl extends TWLBotExtension
         }
     }
 
+    /**
+     * Unloads a game once it is loaded
+     * 
+     * @param name The person who send the command
+     * @param message String after the command
+     */
     public void do_unloadGame(String name, String message)
     {
-        if (m_gameState != 1)
+        if (m_gameState != MATCH_LOADED)
         {
             m_botAction.sendPrivateMessage(name, "Can only unload a game if one is loaded or before !startpick");
             return;
         }
         m_match = null;
-        m_gameState = 0;
+        m_gameState = GAME_OFF;
         m_botAction.sendPrivateMessage(name, "Game unloaded.");
     }
 
+    /**
+     * Zones a game once it is loaded if it hasn't already been zoned
+     * 
+     * @param name The person who sent the command
+     * @param message Any parameters after the command
+     */
     public void do_zoneGame(String name, String message)
     {
-        if (m_gameState == 0)
+        if (m_gameState == GAME_OFF)
         {
             m_botAction.sendPrivateMessage(name, "A match must first be loaded before you can zone.");
             return;
         }
-        if (m_gameState != 1)
+        if (m_gameState != MATCH_LOADED)
         {
             m_botAction.sendPrivateMessage(name, "You can only zone after you have first loaded a match.");
             return;
@@ -317,9 +353,8 @@ public class twlbottwl extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "You may only zone one time per game.");
             return;
         }
-        m_match.zoned();
         m_botAction.sendZoneMessage(
-            "TWL Season 7 : "
+            "TWL Season " + m_season + ": "
                 + m_match.getMatchType()
                 + " - "
                 + m_match.getTeam1Name()
@@ -327,44 +362,58 @@ public class twlbottwl extends TWLBotExtension
                 + m_match.getTeam2Name()
                 + " Type ?go "
                 + m_botAction.getArenaName());
+        m_match.zoned();
     }
 
+    /**
+     * Starts the picking process for players to be assigned to teams
+     * 
+     * @param name The person who sent the command
+     * @param message Parameters along with the command
+     */
     public void do_startPick(String name, String message)
     {
-        if (m_gameState < 1)
+        if (m_gameState < MATCH_LOADED)
         {
             m_botAction.sendPrivateMessage(name, "You must load a match before you can set the teams.");
             return;
         }
-        if (m_gameState > 1)
+        if (m_gameState > MATCH_LOADED)
         {
             m_botAction.sendPrivateMessage(name, "You can only set teams before the game begins.");
             return;
         }
         m_botAction.sendArenaMessage("Captains you have approximately 10 minutes to submit your lineups to - " + name);
-        m_botAction.setTimer(10);
+        m_botAction.setTimer(10); //mins
         m_match.setRef(name);
-        m_gameState = 2;
+        m_gameState = LINEUP_REQUESTED;
         m_botAction.toggleLocked();
         m_botAction.specAll();
         m_botAction.setDoors(0);
     }
 
+    /**
+     * Adds players to respective teams
+     * 
+     * @param name The host who issues the command
+     * @param message Player name along with ship
+     * @param forced Player can be force added if within extension time
+     */
     public void do_addPlayer(String name, String message, boolean forced)
     {
-        if (m_gameState < 2)
+        if (m_gameState < LINEUP_REQUESTED)
         {
             m_botAction.sendPrivateMessage(name, "You must load a game and !startpick before you can add players.");
             return;
         }
-        if (m_gameState == 3)
+        if (m_gameState == TIME_TO_START)
         {
             m_botAction.sendPrivateMessage(name, "You can add after game starts.");
             return;
         }
-        if (m_gameState > 3 && !forced)
+        if (m_gameState > TIME_TO_START && !forced)
         {
-            if (m_match.getMatchTypeId() == 3)
+            if (m_match.getMatchTypeId() == TWLB)
             {
                 if( m_isBasePlayoff ) {
                     if( m_generalTime < (BASE_PLAYOFF_TIMER - EXTENSION_TIME) * 60 )
@@ -449,7 +498,7 @@ public class twlbottwl extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "Unable to add player, that player is already in game.");
             return;
         }
-        if (m_match.shipLimitMet(shipType, playerTeamId) && m_match.getMatchTypeId() == 3)
+        if (m_match.shipLimitMet(shipType, playerTeamId) && m_match.getMatchTypeId() == TWLB)
         {
             m_botAction.sendPrivateMessage(name, "Unable to add player, this team has reached the ship type limit for this ship.");
             return;
@@ -481,7 +530,7 @@ public class twlbottwl extends TWLBotExtension
 
         addingPlayer = player;
 
-        if (!forced && m_gameState != 4)
+        if (!forced && m_gameState != GAME_IN_PROGRESS)
         {
             m_botAction.sendSquadMessage(m_match.getTeamName(player), player + " has been placed in ship " + shipType);
             m_botAction.sendPrivateMessage(name, player + " has been placed in for " + m_match.getTeamName(player) + " in ship " + shipType);
@@ -494,14 +543,20 @@ public class twlbottwl extends TWLBotExtension
         }
     }
 
+    /**
+     * Removes a player once he's added before game starts
+     * 
+     * @param name The host who issued the command
+     * @param message Player name
+     */
     public void do_removePlayer(String name, String message)
     {
-        if (m_gameState < 2)
+        if (m_gameState < LINEUP_REQUESTED)
         {
             m_botAction.sendPrivateMessage(name, "You must load a game and !startpick before you can remove players.");
             return;
         }
-        if (m_gameState > 2)
+        if (m_gameState > LINEUP_REQUESTED)
         {
             m_botAction.sendPrivateMessage(name, "Players may only be removed before the game starts.");
             return;
@@ -528,21 +583,27 @@ public class twlbottwl extends TWLBotExtension
         m_botAction.sendSquadMessage(m_match.getTeamName(player), player + " has been removed.");
     }
 
+    /**
+     * Starts the game
+     * 
+     * @param name The host who issued the command
+     * @param message Any parameters along with the command
+     */
     public void do_startGame(String name, String message)
     {
-        if (m_gameState < 2)
+        if (m_gameState < LINEUP_REQUESTED)
         {
             m_botAction.sendPrivateMessage(name, "A game must be loaded before a game can start!");
             return;
         }
-        if (m_gameState > 2)
+        if (m_gameState > LINEUP_REQUESTED)
         {
             m_botAction.sendPrivateMessage(name, "There is a game currently running.");
             return;
         }
 
         boolean team1 = false, team2 = false;
-        if (m_match.getMatchTypeId() < 3)
+        if (m_match.getMatchTypeId() != TWLB)
         {
             if (m_match.getTeam1PlayerCount() < MINIMUM_DUEL_LIMIT)
                 team1 = true;
@@ -573,7 +634,7 @@ public class twlbottwl extends TWLBotExtension
         }
         if (team1 || team2)
         {
-            m_gameState = 0;
+            m_gameState = GAME_OFF;
             m_botAction.toggleLocked();
             m_botAction.cancelTasks();
             m_botAction.toggleBlueOut();
@@ -587,7 +648,7 @@ public class twlbottwl extends TWLBotExtension
         //Current roster check needs to be taken...
 
         m_botAction.setMessageLimit(3);
-        m_gameState = 3;
+        m_gameState = TIME_TO_START;
         m_botAction.setDoors(255);
         m_botAction.setTimer(0);
         m_match.placePlayersInGame();
@@ -626,7 +687,7 @@ public class twlbottwl extends TWLBotExtension
                 m_botAction.setDoors(0);
                 m_botAction.sendArenaMessage("GO GO GO", 104);
 
-                if (m_match.getMatchTypeId() == 2)
+                if (m_match.getMatchTypeId() == TWLJ)
                 {
                     m_botAction.warpFreqToLocation(0, 446, 444);
                     m_botAction.warpFreqToLocation(1, 577, 444);
@@ -636,7 +697,7 @@ public class twlbottwl extends TWLBotExtension
 
 
                 //base match
-                if (m_match.getMatchTypeId() == 3)
+                if (m_match.getMatchTypeId() == TWLB)
                 {
                     m_botAction.warpFreqToLocation(0, 486, 256);
                     m_botAction.warpFreqToLocation(1, 538, 256);
@@ -656,7 +717,7 @@ public class twlbottwl extends TWLBotExtension
                 }
 
                 m_botAction.showObject(52);
-                m_gameState = 4;
+                m_gameState = GAME_IN_PROGRESS;
                 Calendar thisTime = Calendar.getInstance();
                 java.util.Date day = thisTime.getTime();
                 m_timeStart = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(day);
@@ -665,7 +726,7 @@ public class twlbottwl extends TWLBotExtension
         };
 
         //base match
-        if (m_match.getMatchTypeId() == 3)
+        if (m_match.getMatchTypeId() == TWLB)
         {
             TimerTask timeRace = new TimerTask()
             {
@@ -757,7 +818,7 @@ public class twlbottwl extends TWLBotExtension
 
     public void do_toggleBlueOut(String name)
     {
-        if (m_gameState < 4)
+        if (m_gameState < GAME_IN_PROGRESS)
             return;
         m_match.toggleBlueOut();
         m_botAction.toggleBlueOut();
@@ -775,7 +836,7 @@ public class twlbottwl extends TWLBotExtension
         String team1Score;
         String team2Score;
 
-        if (m_match.getMatchTypeId() == 3)
+        if (m_match.getMatchTypeId() == TWLB)
         {
             team1Score = "" + m_match.getTeam1Score();
             team2Score = "" + m_match.getTeam2Score();
@@ -786,7 +847,7 @@ public class twlbottwl extends TWLBotExtension
             team2Score = "" + m_match.getTeam1Deaths();
         }
         //If dd or jd display on normal scoreboard
-        if( m_match.getMatchTypeId() < 3 ) {
+        if( m_match.getMatchTypeId() != TWLB) {
             for (int i = team1Score.length() - 1; i > -1; i--)
                 m_myObjects.showObject(Integer.parseInt("" + team1Score.charAt(i)) + 200 + (team1Score.length() - 1 - i) * 10);
             for (int i = team2Score.length() - 1; i > -1; i--)
@@ -869,7 +930,7 @@ public class twlbottwl extends TWLBotExtension
      */
     public void do_setCaptain(String name, String message)
     {
-        if (m_gameState < 2)
+        if (m_gameState < LINEUP_REQUESTED)
         {
             m_botAction.sendPrivateMessage(name, "Please load a game and do !startpick");
             return;
@@ -922,7 +983,7 @@ public class twlbottwl extends TWLBotExtension
     //Subs one player for another
     public void do_subPlayer(String name, String message)
     {
-        if (m_gameState < 4)
+        if (m_gameState < GAME_IN_PROGRESS)
         {
             m_botAction.sendPrivateMessage(name, "A game is not running or has not started.");
             return;
@@ -1020,7 +1081,7 @@ public class twlbottwl extends TWLBotExtension
     //Switches player ships
     public void do_switchPlayer(String name, String message)
     {
-        if (m_gameState < 4)
+        if (m_gameState < GAME_IN_PROGRESS)
         {
             m_botAction.sendPrivateMessage(name, "Switches can only be done during the game.");
             return;
@@ -1041,7 +1102,7 @@ public class twlbottwl extends TWLBotExtension
                 return;
             }
         }
-        if (m_match.getMatchTypeId() != 3)
+        if (m_match.getMatchTypeId() != TWLB)
         {
             m_botAction.sendPrivateMessage(name, "Switches can only be done in basing matches.");
             return;
@@ -1122,7 +1183,7 @@ public class twlbottwl extends TWLBotExtension
                 return;
             }
             int lives = m_match.subPlayer(m_playerOut, m_playerIn);
-            if (m_match.getMatchTypeId() != 3)
+            if (m_match.getMatchTypeId() != TWLB)
                 m_botAction.sendArenaMessage(m_playerOut + " subbed by " + m_playerIn + " with " + lives + " lives");
             else
                 m_botAction.sendArenaMessage(m_playerOut + " subbed by " + m_playerIn);
@@ -1140,7 +1201,7 @@ public class twlbottwl extends TWLBotExtension
 
     public void do_listPlayers(String name, String message)
     {
-        if (m_gameState == 0)
+        if (m_gameState == GAME_OFF)
             return;
         if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
         {
@@ -1155,7 +1216,7 @@ public class twlbottwl extends TWLBotExtension
 
     public void do_lagOut(String name, String Message)
     {
-        if (m_gameState < 3)
+        if (m_gameState < TIME_TO_START)
         {
             m_botAction.sendPrivateMessage(name, "A game has not started.");
             return;
@@ -1170,7 +1231,7 @@ public class twlbottwl extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "You are already in the game. ");
             return;
         }
-        if (m_gameState == 3)
+        if (m_gameState == TIME_TO_START)
         {
             m_botAction.setShip(name, m_match.getPlayer(name).getShip());
             m_botAction.setFreq(name, m_match.getPlayer(name).getFreq());
@@ -1191,7 +1252,7 @@ public class twlbottwl extends TWLBotExtension
         }
 
         int lagoutTime = TIME_BEFORE_LAGOUT[0];
-        if( m_match.getMatchTypeId() > 2 ) lagoutTime = TIME_BEFORE_LAGOUT[1];
+        if( m_match.getMatchTypeId() == TWLB ) lagoutTime = TIME_BEFORE_LAGOUT[1];
 
         //put a limit on when a player can get back in
         if (m_match.getPlayer(name).getTimeSinceLagout() < lagoutTime)
@@ -1218,7 +1279,7 @@ public class twlbottwl extends TWLBotExtension
 
     public void do_myFreq(String name, String message)
     {
-        if (m_gameState == 0)
+        if (m_gameState == GAME_OFF)
             return;
         int playerTeamId = sql_getPlayersTeam(name);
         if (m_match.isTeamOne(playerTeamId))
@@ -1230,12 +1291,12 @@ public class twlbottwl extends TWLBotExtension
     public void do_showScore(String name, String message)
     {
 
-        if( m_match == null || m_gameState == 0 )
+        if( m_match == null || m_gameState == GAME_OFF )
             return;
 
         if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name)) {
 
-            if (m_gameState < 4) {
+            if (m_gameState < GAME_IN_PROGRESS) {
                 m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (Has not started)");
                 return;
             }
@@ -1243,7 +1304,7 @@ public class twlbottwl extends TWLBotExtension
             int team1Score = 0;
             int team2Score = 0;
 
-            if (m_match.getMatchTypeId() == 3) {
+            if (m_match.getMatchTypeId() == TWLB) {
 
                 team1Score = m_match.getTeam1Score();
                 team2Score = m_match.getTeam2Score();
@@ -1285,7 +1346,7 @@ public class twlbottwl extends TWLBotExtension
     public void do_changeHost(String name, String message)
     {
 
-        if (m_gameState == 0)
+        if (m_gameState == GAME_OFF)
             return;
         if (name.equals(m_match.getRef()))
         {
@@ -1335,17 +1396,17 @@ public class twlbottwl extends TWLBotExtension
      */
     public void do_switchPlayoff( String name ) {
 
-        if ( m_gameState == 4 ) {
+        if ( m_gameState == GAME_IN_PROGRESS ) {
             m_botAction.sendPrivateMessage(name, "Game can not be running in order to switch Playoff mode." );
             return;
         }
 
-        if ( m_gameState == 0 ) {
+        if ( m_gameState == GAME_OFF ) {
             m_botAction.sendPrivateMessage(name, "Game must be loaded in order to switch Playoff mode." );
             return;
         }
 
-        if ( m_match.getMatchTypeId() != 3 ) {
+        if ( m_match.getMatchTypeId() != TWLB ) {
             m_botAction.sendPrivateMessage(name, "This mode only applies to base matches." );
             return;
         } 
@@ -1376,7 +1437,7 @@ public class twlbottwl extends TWLBotExtension
         Player player = m_botAction.getPlayer(event.getPlayerID());
         int freq = player.getFrequency();
 
-        if (m_gameState != 4)
+        if (m_gameState != GAME_IN_PROGRESS)
             return;
 
         /*
@@ -1393,11 +1454,11 @@ public class twlbottwl extends TWLBotExtension
 
     public void handleEvent(PlayerPosition event)
     {
-        if (m_gameState < 3)
+        if (m_gameState < TIME_TO_START)
             return;
         m_match.justSaw(m_botAction.getPlayerName(event.getPlayerID()));
 
-        if (m_gameState == 3)
+        if (m_gameState == TIME_TO_START)
         {
             m_match.warpPlayer(m_botAction.getPlayerName(event.getPlayerID()), event.getXLocation(), event.getYLocation());
             return;
@@ -1425,7 +1486,8 @@ public class twlbottwl extends TWLBotExtension
                 sharkPlayer.reportStatistic(Statistics.REPELS_USED);
         }
 
-        if (m_gameState != 4 || m_match.getMatchTypeId() != 2)
+        //if the game isn't a jav game don't do line check
+        if (m_gameState != GAME_IN_PROGRESS || m_match.getMatchTypeId() != TWLJ)
             return;
 
         if (event.getYLocation() > 470 * 16)
@@ -1458,7 +1520,7 @@ public class twlbottwl extends TWLBotExtension
 
     public void handleEvent(PlayerDeath event)
     {
-        if (m_gameState != 4)
+        if (m_gameState != GAME_IN_PROGRESS)
             return;
 
         Player killed = m_botAction.getPlayer(event.getKilleeID());
@@ -1553,7 +1615,7 @@ public class twlbottwl extends TWLBotExtension
         }
 
         //If gametype = wb/jav check if the player is out.
-        if (m_match.getMatchTypeId() > 2)
+        if (m_match.getMatchTypeId() == TWLB)
             return;
 
         //add to score
@@ -1571,12 +1633,16 @@ public class twlbottwl extends TWLBotExtension
         }
     }
 
+    /**
+     *  Stop the current game and determine the MVP
+     *
+     */
     public void do_endGame()
     {
         int team1Score;
         int team2Score;
         String mvp;
-        if (m_match.getMatchTypeId() == 3)
+        if (m_match.getMatchTypeId() == TWLB)
         {
             team1Score = m_match.getTeam1Score();
             team2Score = m_match.getTeam2Score();
@@ -1604,13 +1670,13 @@ public class twlbottwl extends TWLBotExtension
             return;
         }
 
-        if (m_match.getMatchTypeId() < 3)
+        if (m_match.getMatchTypeId() != TWLB)
             m_match.displayScores(team1Score, team2Score, mvp, true);
         else
             m_match.displayBaseScores(team1Score, team2Score, mvp, true);
 
         //reset game states
-        m_gameState = 0;
+        m_gameState = GAME_OFF;
         m_botAction.toggleLocked();
         m_botAction.cancelTasks();
         m_botAction.toggleBlueOut();
@@ -1639,16 +1705,16 @@ public class twlbottwl extends TWLBotExtension
 
     public void handleEvent(FlagReward event)
     {
-        if (m_gameState != 4)
+        if (m_gameState != GAME_IN_PROGRESS)
             return;
-        if (m_match.getMatchTypeId() != 3)
+        if (m_match.getMatchTypeId() != TWLB)
             return;
         m_match.addFlagReward(event.getFrequency(), event.getPoints());
     }
 
     public void handleEvent(FrequencyShipChange event)
     {
-        if (m_gameState != 4)
+        if (m_gameState != GAME_IN_PROGRESS)
             return;
         Player p = m_botAction.getPlayer(event.getPlayerID());
         String name = p.getPlayerName();
@@ -1674,7 +1740,7 @@ public class twlbottwl extends TWLBotExtension
                 m_botAction.sendSquadMessage(m_match.getTeamName(name), name + " has reached the lagout limit.");
                 m_botAction.sendPrivateMessage(m_match.getRef(), name + "has reached the lagout limit.");
             }
-            if (m_match.getMatchTypeId() != 3)
+            if (m_match.getMatchTypeId() != TWLB)
             {
                 if (m_laggers.containsKey(p.getPlayerName()))
                 {
@@ -1691,7 +1757,7 @@ public class twlbottwl extends TWLBotExtension
     public void handleEvent(PlayerLeft event)
     {
 
-        if (m_gameState != 4)
+        if (m_gameState != GAME_IN_PROGRESS)
             return;
 
         Player p = m_botAction.getPlayer(event.getPlayerID());
@@ -1718,7 +1784,7 @@ public class twlbottwl extends TWLBotExtension
             m_botAction.sendSquadMessage(m_match.getTeamName(name), name + " has reached the lagout limit.");
             m_botAction.sendPrivateMessage(m_match.getRef(), name + "has reached the lagout limit.");
         }
-        if (m_match.getMatchTypeId() != 3)
+        if (m_match.getMatchTypeId() != TWLB)
         {
             if (m_laggers.containsKey(p.getPlayerName()))
             {
@@ -1765,26 +1831,26 @@ public class twlbottwl extends TWLBotExtension
         if (event.getMessageType() == Message.PRIVATE_MESSAGE)
         {
             String name = m_botAction.getPlayerName(event.getPlayerID());
-            if (m_gameState < 2 && m_opList.isER(name))
+            if (m_gameState < LINEUP_REQUESTED && m_opList.isER(name))
                 handleCommand(name, message);
-            else if ((m_gameState > 1) && (name.equals(m_match.getRef()) || (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name)))
+            else if ((m_gameState > MATCH_LOADED) && (name.equals(m_match.getRef()) || (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name)))
                 handleCommand(name, message);
             else
                 handlePlayerCommand(name, message);
         }
         else if (event.getMessageType() == Message.ARENA_MESSAGE)
         {
-            if (message.equals("Arena UNLOCKED") && m_gameState > 1)
+            if (message.equals("Arena UNLOCKED") && m_gameState > MATCH_LOADED)
             {
                 m_botAction.toggleLocked();
             }
-            else if (message.equals("NOTICE: Game over") && m_gameState == 4)
+            else if (message.equals("NOTICE: Game over") && m_gameState == GAME_IN_PROGRESS)
             {
                 do_endGame();
             }
             else if (message.equals("Public Messages LOCKED"))
             {
-                if (m_gameState == 4)
+                if (m_gameState == GAME_IN_PROGRESS)
                 {
                     if (!m_match.blueOut())
                         m_botAction.toggleBlueOut();
@@ -1792,14 +1858,14 @@ public class twlbottwl extends TWLBotExtension
                 else
                     m_botAction.toggleBlueOut();
             }
-            else if (message.equals("Public Messages UNLOCKED") && m_gameState == 4)
+            else if (message.equals("Public Messages UNLOCKED") && m_gameState == GAME_IN_PROGRESS)
             {
                 if (m_match.blueOut())
                     m_botAction.toggleBlueOut();
             }
             else if (message.equals("Message lock applies to spectators only."))
             {
-                if (m_gameState == 4)
+                if (m_gameState == GAME_IN_PROGRESS)
                 {
                     if (!m_match.blueOut())
                         m_botAction.sendUnfilteredPublicMessage("*lockspec");
@@ -1807,23 +1873,23 @@ public class twlbottwl extends TWLBotExtension
                 else
                     m_botAction.sendUnfilteredPublicMessage("*lockspec");
             }
-            else if (message.equals("Message lock applies to everybody.") && m_gameState == 4)
+            else if (message.equals("Message lock applies to everybody.") && m_gameState == GAME_IN_PROGRESS)
             {
                 if (m_match.blueOut())
                     m_botAction.sendUnfilteredPublicMessage("*lockspec");
             }
-            else if (message.startsWith("Time left:") && m_gameState == 4)
+            else if (message.startsWith("Time left:") && m_gameState == GAME_IN_PROGRESS)
             {
                 sql_saveGameState(message);
             }
-            else if (message.startsWith("PING Current:") && m_gameState == 2)
+            else if (message.startsWith("PING Current:") && m_gameState == LINEUP_REQUESTED)
             {
                 parseLagInformation( message );
             }
         }
         else if (event.getMessageType() == Message.PUBLIC_MESSAGE || event.getMessageType() == Message.PUBLIC_MACRO_MESSAGE)
         {
-            if (m_gameState == 4)
+            if (m_gameState == GAME_IN_PROGRESS)
                 if (m_match.blueOut())
                 {
                     String name = m_botAction.getPlayerName(event.getPlayerID());
@@ -1909,7 +1975,7 @@ public class twlbottwl extends TWLBotExtension
         }
         else if (message.startsWith("!ref"))
         {
-            if (m_gameState == 0)
+            if (m_gameState == GAME_OFF)
                 return;
             m_botAction.sendPrivateMessage(name, "Match Ref: " + m_match.getRef());
         }
@@ -1982,7 +2048,7 @@ public class twlbottwl extends TWLBotExtension
         }
         else if (message.toLowerCase().startsWith("!ref"))
         {
-            if (m_gameState == 0)
+            if (m_gameState == GAME_OFF)
                 return;
             m_botAction.sendPrivateMessage(name, "Match Ref: " + m_match.getRef());
         }
@@ -2061,7 +2127,7 @@ public class twlbottwl extends TWLBotExtension
 
     public void cancel()
     {
-        m_gameState = 0;
+        m_gameState = GAME_OFF;
         m_botAction.cancelTasks();
         m_botAction.setMessageLimit(0);
         m_botAction.setTimer(0);
@@ -2139,7 +2205,7 @@ public class twlbottwl extends TWLBotExtension
                 if (!m_match.reloadPlayer(result))
                 {
                     String name = result.getString("fcPlayerName");
-                    if (m_match.getMatchTypeId() != 3)
+                    if (m_match.getMatchTypeId() != TWLB)
                     {
                         if (m_laggers.containsKey(name))
                         {
@@ -2803,7 +2869,7 @@ public class twlbottwl extends TWLBotExtension
     {
         int team1 = 0;
         int team2 = 0;
-        if (m_match.getMatchTypeId() < 3)
+        if (m_match.getMatchTypeId() != TWLB)
         {
             if (winner == 1)
                 team1 = DUEL_TARGET;

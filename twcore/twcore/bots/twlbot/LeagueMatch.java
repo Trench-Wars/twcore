@@ -54,6 +54,24 @@ public class LeagueMatch
     private int m_lagoutLimit;
 
     //constants
+    
+    //matchTypeId constants
+    private final int TWLD = 1; //wb league 
+    private final int TWLJ = 2; //jav league
+    private final int TWLB = 3; //base league
+    
+    //duel league constants
+    private final int DUEL_ROSTER_LIMIT = 5; //players
+    private final int DUEL_DEATH_LIMIT = 10; //deaths
+    private final int DUEL_SUB_LIMIT = 2; //times
+    private final int DUEL_LAGOUT_LIMIT = 3; //times
+    
+    //base league constants
+    private final int BASE_ROSTER_LIMIT = 8; //players
+    private final int BASE_SUB_LIMIT = 3; //times
+    private final int BASE_DEATH_LIMIT = 0; //deaths
+    private final int BASE_LAGOUT_LIMIT = 5; //times
+    
     private final int TEAM_ONE_FREQ = 0;
     private final int TEAM_TWO_FREQ = 1;
 
@@ -68,19 +86,20 @@ public class LeagueMatch
             m_team2Id = result.getInt("fnTeam2ID");
             m_team1Name = result.getString("fcTeam1Name");
             m_team2Name = result.getString("fcTeam2Name");
-            if (m_matchTypeId < 3)
+            
+            if (m_matchTypeId != TWLB)
             {
-                m_rosterLimit = 5;
-                m_deathLimit = 10;
-                m_subLimit = 2;
-                m_lagoutLimit = 3;
+                m_rosterLimit = DUEL_ROSTER_LIMIT;
+                m_deathLimit = DUEL_DEATH_LIMIT;
+                m_subLimit = DUEL_SUB_LIMIT;
+                m_lagoutLimit = DUEL_LAGOUT_LIMIT;
             }
             else
             {
-                m_rosterLimit = 8;
-                m_deathLimit = 0;
-                m_subLimit = 3;
-                m_lagoutLimit = 5;
+                m_rosterLimit = BASE_ROSTER_LIMIT;
+                m_deathLimit = BASE_DEATH_LIMIT;
+                m_subLimit = BASE_SUB_LIMIT;
+                m_lagoutLimit = BASE_LAGOUT_LIMIT;
             }
         }
         catch (Exception e)
