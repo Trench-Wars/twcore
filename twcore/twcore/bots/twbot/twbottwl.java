@@ -49,7 +49,7 @@ public class twbottwl extends TWBotExtension
 	private final int MINIMUM_DUEL_LIMIT = 3; //players
 	private final int MINIMUM_BASE_LIMIT = 6; //players
 	
-	private final double VERSION = 1.2;
+	private final double VERSION = 1.3;
 	
 	final static int TIME_RACE_TARGET = 900; //sec
 	final static int DUEL_TARGET = 50; //kills
@@ -1061,23 +1061,28 @@ public class twbottwl extends TWBotExtension
 			m_botAction.setFreq(name, m_match.getPlayer(name).getFreq());
 			return;
 		}
-		
+
 		//put a limit on when a player can get back in 
 		if (m_match.getPlayer(name).getTimeSinceLagout() < TIME_BEFORE_LAGOUT)
 		{
-			m_botAction.sendPrivateMessage(name, "You still have " + (TIME_BEFORE_LAGOUT - m_match.getPlayer(name).getTimeSinceLagout()) + " secs before you can get back in");
+			m_botAction.sendPrivateMessage(
+				name,
+				"You still have " + (TIME_BEFORE_LAGOUT - m_match.getPlayer(name).getTimeSinceLagout()) + " secs before you can get back in");
 		}
-		
-		if (m_laggers.containsKey(name))
+		else
 		{
-			Lagger l = (Lagger) m_laggers.get(name);
-			l.cancel();
-			m_laggers.remove(name);
+
+			if (m_laggers.containsKey(name))
+			{
+				Lagger l = (Lagger) m_laggers.get(name);
+				l.cancel();
+				m_laggers.remove(name);
+			}
+			m_match.getPlayer(name).updateTimer();
+			m_botAction.setShip(name, m_match.getPlayer(name).getShip());
+			m_botAction.setFreq(name, m_match.getPlayer(name).getFreq());
+			m_match.getPlayer(name).notLaggedOut();
 		}
-		m_match.getPlayer(name).updateTimer();
-		m_botAction.setShip(name, m_match.getPlayer(name).getShip());
-		m_botAction.setFreq(name, m_match.getPlayer(name).getFreq());
-		m_match.getPlayer(name).notLaggedOut();
 	}
 
 	public void do_myFreq(String name, String message)
@@ -1207,17 +1212,21 @@ public class twbottwl extends TWBotExtension
 			return;
 		}
 
+		String player = m_botAction.getPlayerName(event.getPlayerID());
 		if (event.isInSafe())
 		{
 			if ((int) (System.currentTimeMillis() / 1000) - m_secondsOnStart > 10)
 			{
-				m_match.getPlayer(m_botAction.getPlayerName(event.getPlayerID())).updateTimer();
+				m_match.getPlayer(player).updateTimer();
+				m_botAction.sendArenaMessage(player + " has been given 1 death for being in safe too long.");
 				m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*prize #7");
+				m_botAction.shipReset(event.getPlayerID());
+				m_match.getPlayer(player).reportStatistic(Statistics.DEATHS);
 				return;
 			}
 		}
 
-		LeaguePlayer sharkPlayer = m_match.getPlayer(m_botAction.getPlayerName(event.getPlayerID()));
+		LeaguePlayer sharkPlayer = m_match.getPlayer(player);
 		if(m_match.getMatchId() == 3 && sharkPlayer.getShip() == 8 && event.containsWeaponsInfo())
 		{
         	WeaponFired weapon = new WeaponFired(event.getByteArray());
@@ -1227,7 +1236,6 @@ public class twbottwl extends TWBotExtension
 
 		if (m_gameState != 4 || m_match.getMatchTypeId() != 2)
 			return;
-		String player = m_botAction.getPlayerName(event.getPlayerID());
 
 		if (event.getYLocation() > 470 * 16)
 		{
@@ -1549,7 +1557,7 @@ public class twbottwl extends TWBotExtension
 		{
 			if (m_match == null)
 				return;
-			m_botAction.sendArenaMessage(m_player + " has been out for over 3 minutes.");
+			m_botAction.sendArenaMessage(m_player + " has been out for over " + LAGOUT_LIMIT + " minutes.");
 			m_match.getPlayer(m_player).isOut();
 			m_match.getPlayer(m_player).changeStatistic(Statistics.DEATHS, m_match.getPlayer(m_player).getDeathLimit());
 			m_match.removeFromWatch(m_player);
@@ -1731,9 +1739,9 @@ public class twbottwl extends TWBotExtension
 		{
 			do_version(name,message);
 		}
-		else if (message.toLowerCase().startsWith("!setcaptain"))
+		else if (message.toLowerCase().startsWith("!setcaptain "))
 		{
-			do_setCaptain(name, message);
+			do_setCaptain(name, message.substring(12, message.length()));
 		}
 	}
 
@@ -2592,7 +2600,7 @@ public class twbottwl extends TWBotExtension
 	{
 		try
 		{
-			ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblTWLBan WHERE fnUserID = " + sql_getPlayerId(name) + " AND fnRoundsLeft > 0");
+			ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblTWLBan WHERE fnUserID = " + sql_getPlayerId(name) + " AND fnTillRounds < 0");
 			if (result.next())
 				return true;
 			else
