@@ -107,7 +107,7 @@ public class aliasbot extends SubspaceBot
 	public void commandCheckRegistered( String name, String message ) 
 	{
 		
-		DBPlayerData dbP = new DBPlayerData( m_botAction, "local", message );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, "server", message );
 		
 		if( dbP.isRegistered() )
 			m_botAction.sendSmartPrivateMessage( name, "The name '"+message+"' has been registered." );
@@ -118,7 +118,7 @@ public class aliasbot extends SubspaceBot
 	public void commandResetName( String name, String message, boolean player ) 
 	{
 
-		DBPlayerData dbP = new DBPlayerData( m_botAction, "local", message );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, "server", message );
 
 		if( !dbP.isRegistered() ) 
 		{
@@ -137,7 +137,13 @@ public class aliasbot extends SubspaceBot
 				m_botAction.sendSmartPrivateMessage( name, "Error resetting name '"+message+"'" );
 			return;
 		}
-        
+
+		if( !dbP.isEnabled() )
+		{
+			m_botAction.sendSmartPrivateMessage( name, "The name '"+message+"' is disabled and can't be reset." );    
+			return;
+		}        
+
 		if( player )
 			m_botAction.sendSmartPrivateMessage( name, "Your name has been reset." );
 		else
@@ -147,7 +153,7 @@ public class aliasbot extends SubspaceBot
 	public void commandEnableName( String name, String message ) 
 	{
 
-		DBPlayerData dbP = new DBPlayerData( m_botAction, "local", message );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, "server", message );
 
 		if( !dbP.isRegistered() ) 
 		{
@@ -172,7 +178,7 @@ public class aliasbot extends SubspaceBot
 	public void commandDisableName( String name, String message ) 
 	{
 
-		DBPlayerData dbP = new DBPlayerData( m_botAction, "local", message );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, "server", message );
 
 		if( !dbP.isRegistered() ) 
 		{
@@ -197,7 +203,7 @@ public class aliasbot extends SubspaceBot
 	public void commandDisplayInfo( String name, String message ) 
 	{
 
-		DBPlayerData dbP = new DBPlayerData( m_botAction, "local", message );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, "server", message );
 
 		if( !dbP.isRegistered() ) 
 		{
@@ -219,7 +225,7 @@ public class aliasbot extends SubspaceBot
 			return;
 		}
 
-		DBPlayerData dbP = new DBPlayerData( m_botAction, "local", player );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, "server", player );
 
 		if( dbP.isRegistered() ) 
 		{
@@ -241,7 +247,7 @@ public class aliasbot extends SubspaceBot
 		{
 			String query = "SELECT fcUserName, fcIP, fnMID FROM tblAliasSuppression AS A, ";
 			query += " tblUser AS U WHERE A.fnUserID = U.fnUserID AND fcIP LIKE '"+ip+"%'";
-			ResultSet result = m_botAction.SQLQuery( "local", query );
+			ResultSet result = m_botAction.SQLQuery( "server", query );
 			while( result.next () ) 
 			{
 				String out = result.getString( "fcUserName" ) + "  ";
@@ -264,7 +270,7 @@ public class aliasbot extends SubspaceBot
 		{
 			String query = "SELECT fcUserName, fcIP, fnMID FROM tblAliasSuppression AS A, ";
 			query += " tblUser AS U WHERE A.fnUserID = U.fnUserID AND fnMID = "+mid;
-			ResultSet result = m_botAction.SQLQuery( "local", query );
+			ResultSet result = m_botAction.SQLQuery( "server", query );
 			while( result.next () ) 
 			{
 				String out = result.getString( "fcUserName" ) + "  ";
@@ -320,7 +326,7 @@ public class aliasbot extends SubspaceBot
 		String ip = pieces[0].substring(3);
 		String mid = pieces[5].substring(10);
 
-		DBPlayerData dbP = new DBPlayerData( m_botAction, "local", name );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, "server", name );
 
 		//If an info action wasn't set don't handle it
 		if( !m_waitingAction.containsKey( name ) ) return;
