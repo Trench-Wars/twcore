@@ -1092,7 +1092,10 @@ public class robohelp extends SubspaceBot {
             if( m_responses == null ){
                 return null;
             } else {
-                return m_responses[0];
+                if( m_responses.length != 0 )
+                    return m_responses[0];
+                else
+                    return null;
             }
         }
 
