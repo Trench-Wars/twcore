@@ -21,7 +21,7 @@ public class StatisticRequester
 	public static final int WEASEL_KILL = 8;
 	public static final int LANCASTER_KILL = 9;
 	public static final int SHARK_KILL = 10;
-	public static final int WIRBIRD_TEAMKILL = 11;
+	public static final int WARBIRD_TEAMKILL = 11;
 	public static final int JAVELIN_TEAMKILL = 12;
 	public static final int SPIDER_TEAMKILL = 13;
 	public static final int LEVIATHAN_TEAMKILL = 14;

@@ -67,7 +67,7 @@ import java.util.Vector;
                         return m_lancKill;
                     case StatisticRequester.SHARK_KILL:
                         return m_sharkKill;
-                    case StatisticRequester.WIRBIRD_TEAMKILL:
+                    case StatisticRequester.WARBIRD_TEAMKILL:
                         return m_wbTeamKill;
                     case StatisticRequester.JAVELIN_TEAMKILL:
                         return m_javTeamKill;
