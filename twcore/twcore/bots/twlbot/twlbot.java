@@ -434,7 +434,9 @@ public class twlbot extends SubspaceBot
 		{
 			if (!locked)
 			{
+				m_botAction.sendChatMessage(1, "I'm dying at " + name + "'s request");
 				m_botAction.sendSmartPrivateMessage(name, "Goodbye!");
+				try { Thread.sleep(50); } catch (Exception e) {};
 				m_botAction.die();
 			}
 			else
