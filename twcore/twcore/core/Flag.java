@@ -23,6 +23,13 @@ public class Flag {
 		m_flagClaimed = true;
 	}
 	
+	public Flag( TurfFlagUpdate message ) {
+		
+		m_flagID = message.getFlagID();
+		m_team = message.getFrequency();
+		m_flagClaimed = message.claimed();
+	}
+	
 	public void processEvent( FlagPosition message ) {
 		
 		m_xLocation = message.getXLocation();
@@ -30,10 +37,17 @@ public class Flag {
 		m_team = message.getTeam();
 	}
 	
-	public void processEvent( FlagClaimed message ) {
+	public void processEvent( FlagClaimed message, int team ) {
 		
 		m_playerID = message.getPlayerID();
 		m_flagClaimed = true;
+		m_team = team;
+	}
+	
+	public void processEvent( TurfFlagUpdate message ) {
+		
+		m_team = message.getFrequency();
+		m_flagClaimed = message.claimed();
 	}
 	
 	public void dropped() {

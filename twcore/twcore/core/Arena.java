@@ -22,12 +22,19 @@ public class Arena {
     //Flag Integer wrapped ID# mapped to Flag objects;
     Map         m_flagIDList;
     
+    //Arena Tracker variables
+    private List m_tracker;
+    private int  m_currentTimer = 0;
+    private int  m_updateTimer = 0;
+    
     public Arena() {
         
         m_playerList = Collections.synchronizedMap( new HashMap() );
         m_playerIDList = Collections.synchronizedMap( new HashMap() );
         m_frequencyList = Collections.synchronizedMap( new HashMap() );
         m_flagIDList = Collections.synchronizedMap( new HashMap() );
+        
+        m_tracker = Collections.synchronizedList( new LinkedList() );
     }
     
     public void clear(){
@@ -210,6 +217,9 @@ public class Arena {
         }
         
         frequencyList.put( new Integer( message.getPlayerID() ), player );
+        
+        if( player.getShipType() != 0 ) addPlayerToTracker( new Integer( message.getPlayerID() ) );
+        else removePlayerFromTracker( new Integer( message.getPlayerID() ) );
     }
     
     public void processEvent( FrequencyShipChange message ){
@@ -238,6 +248,9 @@ public class Arena {
         }
         
         frequencyList.put( new Integer( message.getPlayerID() ), player );
+        
+        if( player.getShipType() != 0 ) addPlayerToTracker( new Integer( message.getPlayerID() ) );
+        else removePlayerFromTracker( new Integer( message.getPlayerID() ) );
     }
     
     public void processEvent( PlayerLeft message ){
@@ -257,6 +270,8 @@ public class Arena {
         
         m_playerIDList.remove( player.getPlayerName().toLowerCase() );
         m_playerList.remove( new Integer( message.getPlayerID() ) );
+        
+        removePlayerFromTracker( new Integer( message.getPlayerID() ) );
     }
     
     public void processEvent( PlayerDeath message ){
@@ -270,6 +285,8 @@ public class Arena {
         if( killee != null ){
             killee.updatePlayer( message );
         }
+        
+        addPlayerToTracker( new Integer( message.getKilleeID() ) );
     }
     
     public void processEvent( ScoreReset message ){
@@ -336,7 +353,7 @@ public class Arena {
     	} else
     		flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
     		
-    	flag.processEvent( message );
+    	flag.processEvent( message, getPlayer( message.getPlayerID() ).getFrequency() );
     }
     
     public void processEvent( FlagDropped message ) {
@@ -346,5 +363,82 @@ public class Arena {
     		if( flag.getPlayerID() == message.getPlayerID() )
     			flag.dropped();
     	}
+    }
+    
+    public void processEvent( TurfFlagUpdate message ) {
+    	Flag flag;
+    	if( !m_flagIDList.containsKey( new Integer( message.getFlagID() ) ) ) {
+    		flag = new Flag( message );
+    		m_flagIDList.put( new Integer( message.getFlagID() ), flag );
+    	} else
+    		flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
+    		
+    	flag.processEvent( message );
+    }
+    
+     /** Adds a playing player into the tracker Queue
+     * (PlayerEntered, PlayerPosition, FrequencyShipChange, PlayerDeath)
+     * @param playerID - unique ID of player to add to tracking system
+     */
+    public void addPlayerToTracker( Integer playerID ) {
+    	
+    	m_tracker.remove( playerID );
+    	m_tracker.add( playerID );
+    }
+    
+    /** Removes a playing player from the tracker Queue
+     * (FrequencyShipChange, PlayerLeft)
+     * @param playerID - unique ID of player to remove from tracking system
+     */
+    public void removePlayerFromTracker( Integer playerID ) {
+    	
+    	m_tracker.remove( playerID );
+    }
+      
+    /** Called every .100 from Session and used to maintain updating player positions
+     * on regular intervals.
+     * @param m_gen - GamePacketGenerator
+     */
+    public void checkPositionChange( GamePacketGenerator m_gen ) {
+    	
+    	m_currentTimer += 100;
+    	
+    	if( m_currentTimer > m_updateTimer && m_updateTimer != -1 ) {
+    		m_currentTimer = 0;
+
+    		if( m_updateTimer > 0 )
+    			m_gen.sendSpectatePacket( getNextPlayer().shortValue() );
+    		else if( m_updateTimer == 0 ) {
+    			m_gen.sendSpectatePacket( (short)-1 );
+    			m_updateTimer = -1;
+    		}	
+    	}
+    }
+    
+    /** Returns the next player in the queue - also updates the player to keep the 
+     * system moving. +)
+     * @return - The next player ID in the queue
+     */
+    public Integer getNextPlayer() {
+    	
+		if( m_tracker.size() > 0 )
+    		return (Integer)m_tracker.get( 0 );
+    	else return new Integer( -1 );
+    	
+    }
+    
+    /** Turns on/off the position updating system with specified 
+     * timeframe for switching to the next player in the queue.
+     * @param ms - time in ms to update the queue
+     * < 0 : off, < 200 : on w/200 delay, anything else is specified speed
+     */
+    public void setPlayerPositionUpdateDelay( int ms ) {
+    	
+    	if( ms <= 0 ) 
+    		m_updateTimer = 0;
+    	else if( ms < 200 )
+    		m_updateTimer = 200;
+    	else 
+    		m_updateTimer = ms;
     }
 }
