@@ -39,7 +39,7 @@ public class spaceballbot extends SubspaceBot {
 	int botVX = 0;
 	int botVY = 0;
 
-	int botMass = 100;
+	int botMass = 300;
 
 	int winner;
 
@@ -115,6 +115,10 @@ public class spaceballbot extends SubspaceBot {
 		if (message.startsWith("!speed")) {
 			BULLET_SPEED = Integer.parseInt(event.getMessage().substring(7));
 		}
+		if (message.startsWith("!mass")) {
+			botMass = Integer.parseInt(event.getMessage().substring(6));
+		}
+
 	}
 
 	public void handleEvent(PlayerEntered event) {
