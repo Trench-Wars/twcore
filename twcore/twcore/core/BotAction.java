@@ -569,6 +569,8 @@ public class BotAction
      */
     public void sendRemotePrivateMessage(String name, String message, int soundCode)
     {
+        if( message == null )
+            return;
         String temp = message.trim();
         char firstChar;
 
