@@ -36,6 +36,8 @@ public class twbothotspots extends TWBotExtension {
     	
     	if( message.toLowerCase().startsWith( "!addspot " ) ) {
     		do_addHotSpot( name, message.substring( 9, message.length() ) );
+    	} else if( message.toLowerCase().startsWith( "!help" ) ) {
+    	    m_botAction.privateMessageSpam( name, getHelpMessages() );
     	} else if( message.toLowerCase().startsWith( "!watch" ) ) {
 	    	TimerTask change = new TimerTask() {
 				public void run() {
@@ -138,11 +140,11 @@ public class twbothotspots extends TWBotExtension {
 	public void do_addHotSpot( String name, String message ) {
 		
 		String pieces[] = message.split( " " );
-		if( pieces.length != 6 ) return;
+		if( pieces.length != 5 ) return;
 		
-		int values[] = new int[6];
+		int values[] = new int[5];
 		try {
-			for( int i = 0; i < 6; i++ )
+			for( int i = 0; i < 5; i++ )
 				values[i] = Integer.parseInt( pieces[i] );
 		} catch (Exception e) { return; }
 		
@@ -152,6 +154,11 @@ public class twbothotspots extends TWBotExtension {
 	
 	public String[] getHelpMessages() {
 		String help[] = {
+		        "HotSpot Module - the neglected, forgotten module",
+		        "!addspot <warpx> <warpy> <radius> <destx> <desty>     - Adds a new hotspot.",
+		        "            Players will warp to the coord <destx>,<desty>",
+		        "            when they enter within <radius> of <warpx>,<warpy>.",
+		        "!watch    - Begin watching all hotspots."
 		};
 		return help;
 	}
@@ -167,7 +174,6 @@ class HotSpot {
 	int r;
 	int x2;
 	int y2;
-	int r2;
 	
 	public HotSpot( int values[] ) {
 		x = values[0];
@@ -175,7 +181,6 @@ class HotSpot {
 		r = values[2];
 		x2 = values[3];
 		y2 = values[4];
-		r2 = values[5];
 	}
 	
 	public boolean inside( int playerX, int playerY ) {
