@@ -14,7 +14,7 @@ import java.util.*;
  */
 public class BuildTWCore {
 
-    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.0.16-ga-bin.jar";
+    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.1.7-bin.jar";
     String nixBinDir = "/home/bots/java/current/bin/";  // Location of bin directory on a *nix system
     String bldCmd = "";
     Runtime runtime;
@@ -99,17 +99,6 @@ public class BuildTWCore {
         fullExec(new String[] {s});
     }
 
-    public void lincom() {
-	try {
-        if (!currentOS.startsWith("windows")) fullExec(new String[] {"/home/bots/twbots/compile_core.sh"});
-        } catch (Exception e) {
-            System.out.println("Couldn't build core: " + e.getMessage());
-            e.printStackTrace();
-        };
-    }
-
-    
-    
     public boolean createFileList(File dir, File fList) throws Exception {
         boolean isnotempty = false;
         if (fList.exists()) fList.delete();
@@ -178,7 +167,6 @@ public class BuildTWCore {
             else
                 bldCmd = nixBinDir + "javac";
             fullExec(new String[] { bldCmd, "-sourcepath", "core", "-d", "temp", "@flist.txt"});
-	        lincom();	    
             
             // create the jar
             if (currentOS.startsWith("windows"))
