@@ -43,12 +43,13 @@ public class twbottwl extends TWBotExtension
 	
 	private final int TIME_BEFORE_LAGOUT = 60; //sec
 	private final int TIME_BEFORE_SUB = 30; //sec
+	private final int TIME_BEFORE_SWITCH = 15; //sec
 	private final int LAGOUT_LIMIT = 4; //min
 	
 	private final int MINIMUM_DUEL_LIMIT = 3; //players
 	private final int MINIMUM_BASE_LIMIT = 6; //players
 	
-	private final double VERSION = 1.1;
+	private final double VERSION = 1.2;
 	
 	final static int TIME_RACE_TARGET = 900; //sec
 	final static int DUEL_TARGET = 50; //kills
@@ -757,6 +758,65 @@ public class twbottwl extends TWBotExtension
 
 	}
 
+	/**
+	 * This sets the captain of the team that is playing;
+	 * @author FoN
+	 * 
+	 * @param name, name of the person who messaged the bot
+	 * @param the rest of the message
+	 */
+	public void do_setCaptain(String name, String message)
+	{
+		if (m_gameState < 2)
+		{
+			m_botAction.sendPrivateMessage(name, "Please load a game and do !startpick");
+			return;
+		}
+			
+		String matchCaptain = m_botAction.getFuzzyPlayerName(message);
+		int playerTeamId = sql_getPlayersTeam(matchCaptain);
+		java.util.Date dateJoined = sql_getJoinDate(matchCaptain);
+		
+		if (matchCaptain == null)
+		{
+			m_botAction.sendPrivateMessage(name, "Unable to set captain, could not find player.");
+			return;
+		}
+		if (!m_match.isTeamMember(playerTeamId))
+		{
+			m_botAction.sendPrivateMessage(name, "Unable to set captain, " + matchCaptain + " is not rostered for either team.");
+			return;
+		}
+		if (dateJoined.after(m_lockDate))
+		{
+			m_botAction.sendPrivateMessage(name, "Unable to set captain, " + matchCaptain + " was rostered after the cutoff date.");
+			return;
+		}
+		if (sql_isBanned(matchCaptain))
+		{
+			m_botAction.sendPrivateMessage(name, "Unable to set captain, " + matchCaptain + " has been banned from this league.");
+			return;
+		}
+		if (m_match.isTeamCaptain(matchCaptain))
+		{
+			m_botAction.sendPrivateMessage(name, "Unable to set captain, that person is already captain.");
+			return;
+		}
+		
+		String teamName;	
+		if (m_match.isTeamOne(playerTeamId))
+		{
+			teamName = m_match.getTeam1Name();
+			m_match.setTeamOneCap(matchCaptain);
+		}
+		else
+		{
+			teamName = m_match.getTeam2Name();
+			m_match.setTeamTwoCap(matchCaptain);
+		}
+		m_botAction.sendArenaMessage(matchCaptain + " has been set captain of " + teamName);
+	}
+	
 	//Subs one player for another
 	public void do_subPlayer(String name, String message)
 	{
@@ -769,7 +829,7 @@ public class twbottwl extends TWBotExtension
 		boolean isCap = sql_isCap(name);
 		if (!name.equals(m_match.getRef()))
 		{
-			if (!m_match.isTeamMember(teamId) || !isCap)
+			if (!m_match.isTeamMember(teamId) || !isCap || !m_match.isTeamCaptain(name))
 			{
 				m_botAction.sendPrivateMessage(name, "You are not captain for either team.");
 				return;
@@ -860,7 +920,7 @@ public class twbottwl extends TWBotExtension
 		boolean isCap = sql_isCap(name);
 		if (!name.equals(m_match.getRef()))
 		{
-			if (!m_match.isTeamMember(teamId) || !isCap)
+			if (!m_match.isTeamMember(teamId) || !isCap || !m_match.isTeamCaptain(name))
 			{
 				m_botAction.sendPrivateMessage(name, "You are not captain for either team.");
 				return;
@@ -900,8 +960,8 @@ public class twbottwl extends TWBotExtension
 			return;
 		}
 		
-		m_botAction.scheduleTask(new SwitchTimer(pieces[0], pieces[1]), TIME_BEFORE_SUB * 1000);
-		m_botAction.sendPrivateMessage(name, "Switch will take place in " + TIME_BEFORE_SUB + " secs");
+		m_botAction.scheduleTask(new SwitchTimer(pieces[0], pieces[1]), TIME_BEFORE_SWITCH * 1000); //in milliseconds
+		m_botAction.sendPrivateMessage(name, "Switch will take place in " + TIME_BEFORE_SWITCH + " secs");
 	}
 	
 	private class SwitchTimer extends TimerTask
@@ -1525,10 +1585,12 @@ public class twbottwl extends TWBotExtension
 			else if (message.equals("Public Messages LOCKED"))
 			{
 				if (m_gameState == 4)
+				{
 					if (!m_match.blueOut())
 						m_botAction.toggleBlueOut();
-					else
-						m_botAction.toggleBlueOut();
+				}
+				else
+					m_botAction.toggleBlueOut();
 			}
 			else if (message.equals("Public Messages UNLOCKED") && m_gameState == 4)
 			{
@@ -1538,10 +1600,12 @@ public class twbottwl extends TWBotExtension
 			else if (message.equals("Message lock applies to spectators only."))
 			{
 				if (m_gameState == 4)
+				{
 					if (!m_match.blueOut())
 						m_botAction.sendUnfilteredPublicMessage("*lockspec");
-					else
-						m_botAction.sendUnfilteredPublicMessage("*lockspec");
+				}
+				else
+					m_botAction.sendUnfilteredPublicMessage("*lockspec");
 			}
 			else if (message.equals("Message lock applies to everybody.") && m_gameState == 4)
 			{
@@ -1558,9 +1622,14 @@ public class twbottwl extends TWBotExtension
 			if (m_gameState == 4)
 				if (m_match.blueOut())
 				{
-		            String name = m_botAction.getPlayerName(event.getPlayerID());
-		            m_botAction.sendUnfilteredPublicMessage("?cheater " + name + " talking in blueout: " + name + "> " + event.getMessage());
-    		        m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*warn Do not talk during blueout!");
+					String name = m_botAction.getPlayerName(event.getPlayerID());
+					int teamId = sql_getPlayersTeam(name);
+
+					if (!m_match.isTeamMember(teamId))
+					{
+						m_botAction.sendUnfilteredPublicMessage("?cheater " + name + " talking in blueout: " + name + "> " + event.getMessage());
+						m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*warn Do not talk during blueout!");
+					}
 				}
 		}
 	}
@@ -1662,6 +1731,10 @@ public class twbottwl extends TWBotExtension
 		{
 			do_version(name,message);
 		}
+		else if (message.toLowerCase().startsWith("!setcaptain"))
+		{
+			do_setCaptain(name, message);
+		}
 	}
 
 	public void handlePlayerCommand(String name, String message)
@@ -1714,6 +1787,7 @@ public class twbottwl extends TWBotExtension
 				"!score                              - shows the score of the match",
 				"!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut>",
 				"!switch <player1>:<player2>         - switches <player1> and <player2>",
+				"!setcaptain <player>                - sets the player as the captain of the squad he is on",
 				"-------------------- PLAYER COMMANDS -----------------------------------",
 				"!list                               - list the players for your team",
 				"!myfreq                             - puts you on your team freq",
@@ -2242,6 +2316,7 @@ public class twbottwl extends TWBotExtension
 
 	public void sql_storeResults(String mvp, int team1, int team2, int matchId)
 	{
+		//match results
 		String timeEnd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());
 
 		DBPlayerData player = new DBPlayerData(m_botAction, "local", m_match.getRef(), true);
@@ -2254,7 +2329,7 @@ public class twbottwl extends TWBotExtension
 		matchUpdate += ", fnTeam2Score = " + team2;
 		matchUpdate += ", fnMatchStateID = 3";
 		matchUpdate += " WHERE fnMatchID = " + matchId;
-		
+
 		try
 		{
 			m_botAction.SQLQuery(mySQLHost, matchUpdate);
@@ -2263,7 +2338,8 @@ public class twbottwl extends TWBotExtension
 		{
 			System.out.println(e);
 		}
-		
+
+		//round results		
 		String roundUpdate =
 			"INSERT INTO tblMatchRound (`fnMatchID`, `fnRoundStateID`, `fnRoundNumber`, `ftTimeStarted`, `ftTimeEnded`, `fnTeam1Score`, `fnTeam2Score`, `fnRemoteMatchRoundID`, `ftUpdated` ) VALUES (";
 		roundUpdate += matchId + ", ";
@@ -2276,7 +2352,8 @@ public class twbottwl extends TWBotExtension
 		roundUpdate += "0, ";
 		roundUpdate += "'" + timeEnd + "' )";
 		int matchRoundID = -1;
-		
+
+		//player results
 		try
 		{
 			m_botAction.SQLQuery(mySQLHost, roundUpdate);
@@ -2288,24 +2365,33 @@ public class twbottwl extends TWBotExtension
 		{
 			System.out.println(e);
 		}
-		
+
 		if (matchRoundID == -1)
 		{
 			m_botAction.sendPrivateMessage(m_match.getRef(), "Unable to store player stats, please write the stats down.");
 			return;
 		}
-		
+
 		Iterator i = m_match.getTeam1List();
 		while (i.hasNext())
 		{
 			String name = (String) i.next();
-			DBPlayerData p = new DBPlayerData(m_botAction, "website", name, true);
+			DBPlayerData p = new DBPlayerData(m_botAction, mySQLHost, name, true);
 			LeaguePlayer pp = m_match.getPlayer(name);
 			String playerQuery =
 				"INSERT INTO tblMatchRoundUser ( `fnMatchRoundID`, `fnTeamUserID`, `fnUserID`, `fcUserName`, `fnTeam`, `fnShipTypeID`, `fnValid`, `fnScore`, `fnWins`, `fnLosses`, `fnLagout`, `ftTimeStarted`, `ftTimeEnded`, `fnSubstituted`, `fnRemoteMatchRoundUserID`, `ftUpdated`, `fnTeamKills`, `fnTerrKills`) VALUES (";
 			playerQuery += matchRoundID + ", " + m_match.getTeamId(name) + ", " + p.getUserID() + ", ";
 			playerQuery += "'" + Tools.addSlashesToString(name) + "', 1, ";
-			playerQuery += pp.getShip() + ", 1, " + pp.getStatistic(Statistics.SCORE) + ", " + pp.getStatistic(Statistics.TOTAL_KILLS) + ", " + pp.getStatistic(Statistics.DEATHS) + ", " + pp.getLagouts() + ", ";
+			playerQuery += pp.getShip()
+				+ ", 1, "
+				+ pp.getTotalStatistic(Statistics.SCORE)
+				+ ", "
+				+ pp.getTotalStatistic(Statistics.TOTAL_KILLS)
+				+ ", "
+				+ pp.getTotalStatistic(Statistics.DEATHS)
+				+ ", "
+				+ pp.getLagouts()
+				+ ", ";
 			playerQuery += "'" + m_timeStart + "', '" + timeEnd + "', ";
 			playerQuery += "0, 0, '" + timeEnd + "', " + pp.getStatistic(Statistics.TOTAL_TEAMKILLS) + ", " + pp.getStatistic(Statistics.TERRIER_KILL) + " )";
 			try
@@ -2316,19 +2402,30 @@ public class twbottwl extends TWBotExtension
 			{
 				Tools.printStackTrace(e);
 			}
+			
+			sql_storeIndividualShipStatistics(name);
 		}
-		
+
 		i = m_match.getTeam2List();
 		while (i.hasNext())
 		{
 			String name = (String) i.next();
-			DBPlayerData p = new DBPlayerData(m_botAction, "website", name, true);
+			DBPlayerData p = new DBPlayerData(m_botAction, mySQLHost, name, true);
 			LeaguePlayer pp = m_match.getPlayer(name);
 			String playerQuery =
 				"INSERT INTO tblMatchRoundUser ( `fnMatchRoundID`, `fnTeamUserID`, `fnUserID`, `fcUserName`, `fnTeam`, `fnShipTypeID`, `fnValid`, `fnScore`, `fnWins`, `fnLosses`, `fnLagout`, `ftTimeStarted`, `ftTimeEnded`, `fnSubstituted`, `fnRemoteMatchRoundUserID`, `ftUpdated`, `fnTeamKills`, `fnTerrKills`) VALUES (";
 			playerQuery += matchRoundID + ", " + m_match.getTeamId(name) + ", " + p.getUserID() + ", ";
 			playerQuery += "'" + Tools.addSlashesToString(name) + "', 2, ";
-			playerQuery += pp.getShip() + ", 1, " + pp.getStatistic(Statistics.SCORE) + ", " + pp.getStatistic(Statistics.TOTAL_KILLS) + ", " + pp.getStatistic(Statistics.DEATHS) + ", " + pp.getLagouts() + ", ";
+			playerQuery += pp.getShip()
+				+ ", 1, "
+				+ pp.getTotalStatistic(Statistics.SCORE)
+				+ ", "
+				+ pp.getTotalStatistic(Statistics.TOTAL_KILLS)
+				+ ", "
+				+ pp.getTotalStatistic(Statistics.DEATHS)
+				+ ", "
+				+ pp.getLagouts()
+				+ ", ";
 			playerQuery += "'" + m_timeStart + "', '" + timeEnd + "', ";
 			playerQuery += "0, 0, '" + timeEnd + "', " + pp.getStatistic(Statistics.TOTAL_TEAMKILLS) + ", " + pp.getStatistic(Statistics.TERRIER_KILL) + " )";
 			try
@@ -2339,7 +2436,115 @@ public class twbottwl extends TWBotExtension
 			{
 				Tools.printStackTrace(e);
 			}
+			
+			sql_storeIndividualShipStatistics(name);			
 		}
+	}
+
+
+	/** 
+	 * stores individual ship stats
+	 * @param name the name of the player
+	 */
+	private void sql_storeIndividualShipStatistics(String name)
+	{
+		//player ship results
+		int fnMatchRoundUserID = -1;
+
+		try
+		{
+			ResultSet qryMatchRoundUserID = m_botAction.SQLQuery(mySQLHost, "SELECT MAX(fnMatchRoundUserID) as fnMatchRoundUserID FROM tblMatchRoundUser");
+
+			if (qryMatchRoundUserID.next())
+			{
+				fnMatchRoundUserID = qryMatchRoundUserID.getInt("fnMatchRoundUserID");
+			}
+		}
+		catch (Exception e)
+		{
+			m_botAction.sendPrivateMessage(m_match.getRef(), "Unable to store player stats, please write the stats down.");
+			Tools.printStackTrace(e);
+		}
+
+		//store for each ship
+		java.util.Date m_ftTimeStarted;
+		java.util.Date m_ftTimeEnded;
+		LeaguePlayer.LeaguePlayerShip LPS;
+		Iterator i = m_match.getPlayer(name).getPlayerShips();
+		String started, ended;
+
+		while (i.hasNext())
+		{
+			LPS = (LeaguePlayer.LeaguePlayerShip) i.next();
+			m_ftTimeStarted = LPS.getTimeStarted();
+			m_ftTimeEnded = LPS.getTimeEnded();
+
+			if (m_ftTimeStarted == null)
+				m_ftTimeStarted = new java.util.Date();
+			if (m_ftTimeEnded == null)
+				m_ftTimeEnded = new java.util.Date();
+
+			started = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(m_ftTimeStarted);
+			ended = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(m_ftTimeEnded);
+
+			String[] shipFields =
+				{
+					"fnMatchRoundUserID",
+					"fnShipTypeID",
+					"fnScore",
+					"fnDeaths",
+					"fnWarbirdKill",
+					"fnJavelinKill",
+					"fnSpiderKill",
+					"fnLeviathanKill",
+					"fnTerrierKill",
+					"fnWeaselKill",
+					"fnLancasterKill",
+					"fnSharkKill",
+					"fnWarbirdTeamKill",
+					"fnJavelinTeamKill",
+					"fnSpiderTeamKill",
+					"fnLeviathanTeamKill",
+					"fnTerrierTeamKill",
+					"fnWeaselTeamKill",
+					"fnLancasterTeamKill",
+					"fnSharkTeamKill",
+					"fnFlagClaimed",
+					"fnRating",
+					"fnRepelsUsed",
+					"ftTimeStarted",
+					"ftTimeEnded" };
+
+			String[] shipValues =
+				{
+					Integer.toString(fnMatchRoundUserID),
+					Integer.toString(LPS.getShipType()),
+					Integer.toString(LPS.getStatistic(Statistics.SCORE)),
+					Integer.toString(LPS.getStatistic(Statistics.DEATHS)),
+					Integer.toString(LPS.getStatistic(Statistics.WARBIRD_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.JAVELIN_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.SPIDER_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.LEVIATHAN_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.TERRIER_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.WEASEL_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.LANCASTER_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.SHARK_KILL)),
+					Integer.toString(LPS.getStatistic(Statistics.WARBIRD_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.JAVELIN_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.SPIDER_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.LEVIATHAN_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.TERRIER_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.WEASEL_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.LANCASTER_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.SHARK_TEAMKILL)),
+					Integer.toString(LPS.getStatistic(Statistics.FLAG_CLAIMED)),
+					Integer.toString(LPS.getStatistic(Statistics.RATING)),
+					Integer.toString(LPS.getStatistic(Statistics.REPELS_USED)),
+					started,
+					ended };
+
+			m_botAction.SQLInsertInto(mySQLHost, "tblMatchRoundUserShip", shipFields, shipValues);
+		}			
 	}
 
 	public void sql_storeForfeitResults(int winner)

@@ -6,7 +6,7 @@ import java.util.*;
 
 public class LeaguePlayer
 {
-	private class LeaguePlayerShip
+	class LeaguePlayerShip
 	{
 		private Statistics m_statisticTracker;
 
@@ -222,6 +222,15 @@ public class LeaguePlayer
 		{
 			return m_currentShip.getStatistic(statType);
 		}
+		
+		/**
+		 * Gets the linked list of ships
+		 * @return Iterator to the linked list of ships
+		 */
+		public Iterator getShips()
+		{
+			return m_ships.iterator();
+		}
 
 		/**
 		 * @return shipType the type of current ship
@@ -321,6 +330,16 @@ public class LeaguePlayer
 	public int getStatistic(int statType)
 	{
 		return m_statisticTracker.getStatistic(statType);
+	}
+	
+	public int getTotalStatistic(int statType)
+	{
+		return m_statisticTracker.getTotalStatistic(statType);
+	}
+	
+	public Iterator getPlayerShips()
+	{
+		return m_statisticTracker.getShips();
 	}
 	
 

@@ -29,6 +29,8 @@ public class LeagueMatch
 	private int m_team1Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private int m_team2Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private final int m_shipLimits[] = { 8, 8, 8, 0, 1, 8, 8, 2 };
+	private String m_team1Cap = "";
+	private String m_team2Cap = "";
 	private boolean m_team1Flag = false;
 	private boolean m_team2Flag = false;
 
@@ -456,6 +458,26 @@ public class LeagueMatch
 		return score;
 	}
 
+	public void setTeamOneCap(String name)
+	{
+		m_team1Cap = name;
+	}
+	
+	public String getTeamOneCap()
+	{
+		return m_team1Cap;
+	}
+	
+	public void setTeamTwoCap(String name)
+	{
+		m_team2Cap = name;
+	}
+	
+	public String getTeamTwoCap()
+	{
+		return m_team2Cap;
+	}
+	
 	public boolean gameOver()
 	{
 		boolean over1 = true, over2 = true;
@@ -884,6 +906,14 @@ public class LeagueMatch
 		return output;
 	}
 
+	public boolean isTeamCaptain(String name)
+	{
+		if (name.toLowerCase().equals(m_team1Cap) || name.toLowerCase().equals(m_team2Cap))
+			return true;
+		else
+			return false;
+	}
+	
 	public boolean isTeamOne(int id)
 	{
 		if (id == m_team1Id)
