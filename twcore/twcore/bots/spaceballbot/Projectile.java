@@ -17,6 +17,7 @@ class Projectile {
 	int vX;
 	int vY;
 	int type;
+	int level;
 
 
 	/**
@@ -28,9 +29,10 @@ class Projectile {
 	 * @param  tVX is the x velocity of the projectile
 	 * @param  tVY is the y velocity of the projectile
 	 * @param    t is the type of the projectile (1 = bullet, 2 = bomb)
+	 * @param    l is the weapon level
 	 */
 
-	public Projectile(SBPlayer tO, int tX, int tY, int tVX, int tVY, int t) {
+	public Projectile(SBPlayer tO, int tX, int tY, int tVX, int tVY, int t, int l) {
 		owner = tO;
 		birth = (int)(System.currentTimeMillis());
 
@@ -39,6 +41,7 @@ class Projectile {
 		vX = tVX;
 		vY = tVY;
 		type = t;
+		level = l;
 	}
 
 	public SBPlayer getOwner() { return owner; }
@@ -85,7 +88,7 @@ class Projectile {
 
 	public double getAge() { return (int)(System.currentTimeMillis()) - birth; }
 
-	public int getMass() { return 10; }
+	public int getMass() { return (type + level) * 3; }
 
 	public int getType() { return type; }
 }
