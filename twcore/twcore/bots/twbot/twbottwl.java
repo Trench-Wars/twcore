@@ -2530,7 +2530,7 @@ public class twbottwl extends TWBotExtension
                 Tools.printStackTrace(e);
             }
 
-            sql_storeIndividualShipStatistics(name,matchRoundID);
+            sql_storeIndividualShipStatistics(name, matchRoundID, p.getUserID());
         }
 
         i = m_match.getTeam2List();
@@ -2564,7 +2564,7 @@ public class twbottwl extends TWBotExtension
                 Tools.printStackTrace(e);
             }
 
-            sql_storeIndividualShipStatistics(name,matchRoundID);
+            sql_storeIndividualShipStatistics(name, matchRoundID, p.getUserID());
         }
     }
 
@@ -2573,7 +2573,7 @@ public class twbottwl extends TWBotExtension
      * stores individual ship stats
      * @param name the name of the player
      */
-    private void sql_storeIndividualShipStatistics(String name,int matchRoundID)
+    private void sql_storeIndividualShipStatistics(String name, int matchRoundID, int fnUserID)
     {
         //player ship results
         int fnMatchRoundUserID = -1;
@@ -2582,7 +2582,7 @@ public class twbottwl extends TWBotExtension
         {
 //          ResultSet qryMatchRoundUserID = m_botAction.SQLQuery(mySQLHost, "SELECT MAX(fnMatchRoundUserID) as fnMatchRoundUserID FROM tblMatchRoundUser");
 
-            ResultSet qryMatchRoundUserID = m_botAction.SQLQuery(mySQLHost, "SELECT fnMatchRoundUserID FROM tblMatchRoundUser where fcUserName='"+Tools.addSlashesToString(name)+"' and fnMatchRoundID=" + matchRoundID);
+            ResultSet qryMatchRoundUserID = m_botAction.SQLQuery(mySQLHost, "SELECT fnMatchRoundUserID FROM tblMatchRoundUser where fnUserID="+ fnUserID +" and fnMatchRoundID=" + matchRoundID);
             if (qryMatchRoundUserID.next())
             {
                 fnMatchRoundUserID = qryMatchRoundUserID.getInt("fnMatchRoundUserID");
@@ -2734,3 +2734,4 @@ public class twbottwl extends TWBotExtension
     }
 
 }
+
