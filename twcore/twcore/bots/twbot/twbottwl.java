@@ -11,6 +11,7 @@ import java.util.*;
 import java.text.*;
 import twcore.core.*;
 import twcore.misc.database.DBPlayerData;
+import twcore.misc.statistics.*;
 
 public class twbottwl extends TWBotExtension
 {
@@ -34,6 +35,12 @@ public class twbottwl extends TWBotExtension
 	Objset m_myObjects;
 	java.util.Date m_lockDate;
 	java.util.Date m_lastRoundCutoffDate;
+	
+	//constants
+	final int MINIMUM_DUEL_LIMIT = 3;
+	final int MINIMUM_BASE_LIMIT = 6;
+	final static int TIME_RACE_TARGET = 900;
+	final static int DUEL_TARGET = 50;
 
 	public twbottwl()
 	{
@@ -449,19 +456,20 @@ public class twbottwl extends TWBotExtension
 			m_botAction.sendPrivateMessage(name, "There is a game currently running.");
 			return;
 		}
+
 		boolean team1 = false, team2 = false;
 		if (m_match.getMatchTypeId() < 3)
 		{
-			if (m_match.getTeam1PlayerCount() < 3)
+			if (m_match.getTeam1PlayerCount() < MINIMUM_DUEL_LIMIT)
 				team1 = true;
-			if (m_match.getTeam2PlayerCount() < 3)
+			if (m_match.getTeam2PlayerCount() < MINIMUM_DUEL_LIMIT)
 				team2 = true;
 		}
 		else
 		{
-			if (m_match.getTeam1PlayerCount() < 5)
+			if (m_match.getTeam1PlayerCount() < MINIMUM_BASE_LIMIT)
 				team1 = true;
-			if (m_match.getTeam2PlayerCount() < 5)
+			if (m_match.getTeam2PlayerCount() < MINIMUM_BASE_LIMIT)
 				team2 = true;
 		}
 		if (team1 && team2)
@@ -506,10 +514,14 @@ public class twbottwl extends TWBotExtension
 			public void run()
 			{
 				m_match.warpAllPlayers();
-				m_botAction.sendArenaMessage("Game starts in 30 seconds", 2);
 			}
 		};
+
 		m_botAction.scheduleTask(warpPlayers, 5000);
+		m_botAction.sendArenaMessage("Game starts in 30 seconds", 2);
+
+		//second warp		
+		m_botAction.scheduleTask(warpPlayers, 10000);
 
 		TimerTask timerStartGame = new TimerTask()
 		{
@@ -521,13 +533,30 @@ public class twbottwl extends TWBotExtension
 				m_botAction.shipResetAll();
 				m_botAction.setDoors(0);
 				m_botAction.sendArenaMessage("GO GO GO", 104);
+
+				//base match
 				if (m_match.getMatchTypeId() == 3)
 				{
 					m_botAction.warpFreqToLocation(0, 486, 256);
 					m_botAction.warpFreqToLocation(1, 538, 256);
+					m_botAction.setTimer(31);
+
+					TimerTask timeRace = new TimerTask()
+					{
+						public void run()
+						{
+							m_match.addTimePoint();
+							if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) ||  (m_match.getTeam2Score() >= TIME_RACE_TARGET))
+								do_endGame();
+						}
+					};
+
+					m_botAction.scheduleTaskAtFixedRate(timeRace, 1000, 1000);
 				}
+				else
+					m_botAction.setTimer(30);
+
 				m_botAction.showObject(52);
-				m_botAction.setTimer(30);
 				m_gameState = 4;
 				Calendar thisTime = Calendar.getInstance();
 				java.util.Date day = thisTime.getTime();
@@ -544,6 +573,7 @@ public class twbottwl extends TWBotExtension
 				m_botAction.setDoors(255);
 			}
 		};
+
 		m_botAction.scheduleTask(timerDoors, 45000);
 		m_botAction.scheduleTask(timerStartGame, 35000);
 
@@ -769,6 +799,7 @@ public class twbottwl extends TWBotExtension
 			m_botAction.sendPrivateMessage(name, "Unable to sub out player, player is already out of the game.");
 			return;
 		}
+		
 		int lives = m_match.subPlayer(subOut, subIn);
 		if (m_match.getMatchTypeId() != 3)
 			m_botAction.sendArenaMessage(subOut + " subbed by " + subIn + " with " + lives + " lives");
@@ -793,7 +824,7 @@ public class twbottwl extends TWBotExtension
 		}
 		int teamId = sql_getPlayersTeam(name);
 		boolean isCap = sql_isCap(name);
-		if (!m_opList.isER(name))
+		if (!name.equals(m_match.getRef()))
 		{
 			if (!m_match.isTeamMember(teamId) || !isCap)
 			{
@@ -817,11 +848,6 @@ public class twbottwl extends TWBotExtension
 		if (pieces[0].equals(pieces[1]))
 		{
 			m_botAction.sendPrivateMessage(name, "Unable to switch players: Must specify 2 distinct players.");
-			return;
-		}
-		if (m_match.getTeamId(pieces[0]) != m_match.getTeamId(pieces[1]))
-		{
-			m_botAction.sendPrivateMessage(name, "Unable to switch players: Players must be on the same team.");
 			return;
 		}
 		if (m_match.getTeamId(pieces[0]) != m_match.getTeamId(pieces[1]))
@@ -932,13 +958,40 @@ public class twbottwl extends TWBotExtension
 		{
 			team1Score = m_match.getTeam1Score();
 			team2Score = m_match.getTeam2Score();
+
+			String team1leadingZero = "";
+			String team2leadingZero = "";
+
+			if (team1Score % 60 < 10)
+				team1leadingZero = "0";
+			if (team2Score % 60 < 10)
+				team2leadingZero = "0";
+
+			m_botAction.sendPrivateMessage(
+				name,
+				m_match.getTeam1Name()
+					+ " vs "
+					+ m_match.getTeam2Name()
+					+ " ("
+					+ team1Score / 60
+					+ ":"
+					+ team1leadingZero
+					+ team1Score % 60
+					+ " - "
+					+ team2Score / 60
+					+ ":"
+					+ team2leadingZero
+					+ team2Score % 60
+					+ ")"
+					);
 		}
 		else
 		{
 			team1Score = m_match.getTeam2Deaths();
 			team2Score = m_match.getTeam1Deaths();
+			m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (" + team1Score + "-" + team2Score + ")");
 		}
-		m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (" + team1Score + "-" + team2Score + ")");
+
 	}
 
 	public void do_changeHost(String name, String message)
@@ -956,6 +1009,22 @@ public class twbottwl extends TWBotExtension
 		m_match.setRef(name);
 	}
 
+    /**
+     * Parses the FlagClaimed event to the correct team
+     * It also check if any of the teams won the race
+     *
+     * @author Force of Nature
+     * @param event The flagClaimed event holding the playerId claiming the flag
+     */
+	public void handleEvent(FlagClaimed event)
+	{
+        Player player = m_botAction.getPlayer(event.getPlayerID());
+		int freq = (m_match.getPlayer(player.getPlayerName())).getFreq();
+		
+		m_match.setFlagOwner(freq);
+		m_match.getPlayer(player.getPlayerName()).reportStatistic(Statistics.FLAG_CLAIMED);
+	}
+	
 	public void handleEvent(PlayerPosition event)
 	{
 		if (m_gameState < 3)
@@ -978,6 +1047,14 @@ public class twbottwl extends TWBotExtension
 			}
 		}
 
+		LeaguePlayer sharkPlayer = m_match.getPlayer(m_botAction.getPlayerName(event.getPlayerID()));
+		if(m_match.getMatchId() == 3 && sharkPlayer.getShip() == 8 && event.containsWeaponsInfo())
+		{
+        	WeaponFired weapon = new WeaponFired(event.getByteArray());
+        	if (weapon.getWeaponType() == WeaponFired.WEAPON_REPEL)
+        		sharkPlayer.reportStatistic(Statistics.REPELS_USED);
+        }
+
 		if (m_gameState != 4 || m_match.getMatchTypeId() != 2)
 			return;
 		String player = m_botAction.getPlayerName(event.getPlayerID());
@@ -989,11 +1066,11 @@ public class twbottwl extends TWBotExtension
 				m_botAction.sendArenaMessage(player + " has been given 1 death for being out of base too long.");
 				m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*prize #7");
 				m_botAction.shipReset(event.getPlayerID());
-				m_match.getPlayer(player).addDeath();
-				if (m_match.getPlayer(player).getDeaths() >= m_match.getPlayer(player).getDeathLimit())
+				m_match.getPlayer(player).reportStatistic(Statistics.DEATHS);
+				if (m_match.getPlayer(player).getStatistic(Statistics.DEATHS) >= m_match.getPlayer(player).getDeathLimit())
 				{
 					m_botAction.sendArenaMessage(
-						player + " is out. " + m_match.getPlayer(player).getKills() + " wins " + m_match.getPlayer(player).getDeaths() + " losses ");
+						player + " is out. " + m_match.getPlayer(player).getStatistic(Statistics.TOTAL_KILLS) + " wins " + m_match.getPlayer(player).getStatistic(Statistics.DEATHS) + " losses ");
 					m_match.getPlayer(player).isOut();
 					m_botAction.spec(player);
 					m_botAction.spec(player);
@@ -1014,35 +1091,107 @@ public class twbottwl extends TWBotExtension
 	{
 		if (m_gameState != 4)
 			return;
+
 		Player killed = m_botAction.getPlayer(event.getKilleeID());
 		Player killer = m_botAction.getPlayer(event.getKillerID());
 		String killedName = killed.getPlayerName();
 		String killerName = killer.getPlayerName();
+		int killerFrequency = killer.getFrequency();
+		int killedFrequency = killed.getFrequency();
+		int killedShipType = killed.getShipType();
 
 		//Want to catch people who aren't recorded.
 		if (!m_match.hasPlayer(killedName) || !m_match.hasPlayer(killerName))
 			return;
 
 		//Store the stats.
-		m_match.getPlayer(killedName).addDeath();
-		m_match.getPlayer(killerName).addToScore(event.getScore());
-		if (m_match.getPlayer(killedName).getFreq() == m_match.getPlayer(killerName).getFreq())
-			m_match.getPlayer(killerName).addTeamKill();
+		m_match.getPlayer(killedName).reportStatistic(Statistics.DEATHS);
+		m_match.getPlayer(killerName).reportStatistic(Statistics.SCORE, event.getScore());
+
+		if (killedFrequency == killerFrequency)
+		{
+			switch (killedShipType)
+			{
+				case 1 : //wb
+					m_match.getPlayer(killerName).reportStatistic(Statistics.WARBIRD_TEAMKILL);
+					break;
+
+				case 2 : //jav
+					m_match.getPlayer(killerName).reportStatistic(Statistics.JAVELIN_TEAMKILL);
+					break;
+
+				case 3 : //spider
+					m_match.getPlayer(killerName).reportStatistic(Statistics.SPIDER_TEAMKILL);
+					break;
+
+				case 4 : //lev
+					m_match.getPlayer(killerName).reportStatistic(Statistics.LEVIATHAN_TEAMKILL);
+					break;
+
+				case 5 : //terr
+					m_match.getPlayer(killerName).reportStatistic(Statistics.TERRIER_TEAMKILL);
+					break;
+
+				case 6 : //x
+					m_match.getPlayer(killerName).reportStatistic(Statistics.WEASEL_TEAMKILL);
+					break;
+
+				case 7 : //lanc
+					m_match.getPlayer(killerName).reportStatistic(Statistics.LANCASTER_TEAMKILL);
+					break;
+
+				case 8 : //shark
+					m_match.getPlayer(killerName).reportStatistic(Statistics.SHARK_TEAMKILL);
+					break;
+			}
+		}
 		else
 		{
-			if (m_botAction.getPlayer(killedName).getShipType() == 5)
-				m_match.getPlayer(killerName).addTerrierKill();
-			m_match.getPlayer(killerName).addKill();
+			switch (killedShipType)
+			{
+				case 1 : //wb
+					m_match.getPlayer(killerName).reportStatistic(Statistics.WARBIRD_KILL);
+					break;
+
+				case 2 : //jav
+					m_match.getPlayer(killerName).reportStatistic(Statistics.JAVELIN_KILL);
+					break;
+
+				case 3 : //spider
+					m_match.getPlayer(killerName).reportStatistic(Statistics.SPIDER_KILL);
+					break;
+
+				case 4 : //lev
+					m_match.getPlayer(killerName).reportStatistic(Statistics.LEVIATHAN_KILL);
+					break;
+
+				case 5 : //terr
+					m_match.getPlayer(killerName).reportStatistic(Statistics.TERRIER_KILL);
+					break;
+
+				case 6 : //x
+					m_match.getPlayer(killerName).reportStatistic(Statistics.WEASEL_KILL);
+					break;
+
+				case 7 : //lanc
+					m_match.getPlayer(killerName).reportStatistic(Statistics.LANCASTER_KILL);
+					break;
+
+				case 8 : //shark
+					m_match.getPlayer(killerName).reportStatistic(Statistics.SHARK_KILL);
+					break;
+			}
 		}
 
 		//If gametype = wb/jav check if the player is out.
 		if (m_match.getMatchTypeId() > 2)
 			return;
 
-		if (m_match.getPlayer(killedName).getDeaths() >= m_match.getPlayer(killedName).getDeathLimit())
+		//add to score
+		if (m_match.getPlayer(killedName).getStatistic(Statistics.DEATHS) >= m_match.getPlayer(killedName).getDeathLimit())
 		{
 			m_botAction.sendArenaMessage(
-				killedName + " is out. " + m_match.getPlayer(killedName).getKills() + " wins " + m_match.getPlayer(killedName).getDeaths() + " losses ");
+				killedName + " is out. " + m_match.getPlayer(killedName).getStatistic(Statistics.TOTAL_KILLS) + " wins " + m_match.getPlayer(killedName).getStatistic(Statistics.DEATHS) + " losses ");
 			m_match.getPlayer(killedName).isOut();
 			m_botAction.spec(killedName);
 			m_botAction.spec(killedName);
@@ -1218,30 +1367,30 @@ public class twbottwl extends TWBotExtension
 
 	}
 
-	class Lagger extends TimerTask
+	private class Lagger extends TimerTask
 	{
-		String player;
-		LeagueMatch match;
-		HashMap laggers;
+		private String m_player;
+		private LeagueMatch m_match;
+		private HashMap m_laggers;
 
 		public Lagger(String name, LeagueMatch m, HashMap l)
 		{
-			player = name;
-			match = m;
-			laggers = l;
+			m_player = name;
+			m_match = m;
+			m_laggers = l;
 		}
 
 		public void run()
 		{
 			if (m_match == null)
 				return;
-			m_botAction.sendArenaMessage(player + " has been out for over 3 minutes.");
-			m_match.getPlayer(player).isOut();
-			m_match.getPlayer(player).setDeaths(m_match.getPlayer(player).getDeathLimit());
-			m_match.removeFromWatch(player);
+			m_botAction.sendArenaMessage(m_player + " has been out for over 3 minutes.");
+			m_match.getPlayer(m_player).isOut();
+			m_match.getPlayer(m_player).changeStatistic(Statistics.DEATHS, m_match.getPlayer(m_player).getDeathLimit());
+			m_match.removeFromWatch(m_player);
 			if (m_match.gameOver())
 				do_endGame();
-			laggers.remove(player);
+			m_laggers.remove(m_player);
 		}
 	}
 
@@ -1253,7 +1402,7 @@ public class twbottwl extends TWBotExtension
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 			if (m_gameState < 2 && m_opList.isER(name))
 				handleCommand(name, message);
-			else if ((m_gameState > 1) && (name.equals(m_match.getRef()) || m_opList.isSmod(name)))
+			else if ((m_gameState > 1) && (name.equals(m_match.getRef()) || (name.toLowerCase()).equals("roger <er>") || m_opList.isSmod(name)))
 				handleCommand(name, message);
 			else
 				handlePlayerCommand(name, message);
@@ -1406,6 +1555,10 @@ public class twbottwl extends TWBotExtension
 		{
 			do_subPlayer(name, message.substring(5, message.length()));
 		}
+		else if (message.toLowerCase().startsWith("!switch "))
+		{
+			do_switchPlayer(name, message.substring(8, message.length()));
+		}
 		else if (message.toLowerCase().startsWith("!lagout"))
 		{
 			do_lagOut(name, message);
@@ -1439,6 +1592,7 @@ public class twbottwl extends TWBotExtension
 				"!remove <name>                      - removes <name> from the lineup",
 				"!startgame                          - starts the match",
 				"!blueout                            - toggles spectator blueout",
+				"!score                              - shows the score of the match",
 				"!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut>",
 				"!switch <player1>:<player2>         - switches <player1> and <player2>",
 				"-------------------- PLAYER COMMANDS -----------------------------------",
@@ -1457,7 +1611,6 @@ public class twbottwl extends TWBotExtension
 				"!list                               - list the players for your team",
 				"!myfreq                             - puts you on your team freq",
 				"!lagout                             - places you back into the game",
-				"!score                              - shows the current game score",
 				"!ref                                - shows the match ref" };
 		m_botAction.privateMessageSpam(name, help);
 	}
@@ -1809,19 +1962,19 @@ public class twbottwl extends TWBotExtension
 							+ ", "
 							+ p.getFreq()
 							+ ", "
-							+ p.getKills()
+							+ p.getStatistic(Statistics.TOTAL_KILLS)
 							+ ", "
-							+ p.getDeaths()
+							+ p.getStatistic(Statistics.DEATHS)
 							+ ", "
 							+ p.getDeathLimit()
 							+ ", "
-							+ p.getTeamKills()
+							+ p.getStatistic(Statistics.TOTAL_TEAMKILLS)
 							+ ", "
-							+ p.getTerrierKills()
+							+ p.getStatistic(Statistics.TERRIER_KILL)
 							+ ", "
 							+ p.getLagouts()
 							+ ", "
-							+ p.getScore()
+							+ p.getStatistic(Statistics.SCORE)
 							+ ", "
 							+ outOfGame
 							+ ")");
@@ -1838,19 +1991,19 @@ public class twbottwl extends TWBotExtension
 							+ ", fnFreq = "
 							+ p.getFreq()
 							+ ", fnKills = "
-							+ p.getKills()
+							+ p.getStatistic(Statistics.TOTAL_KILLS)
 							+ ", fnDeaths ="
-							+ p.getDeaths()
+							+ p.getStatistic(Statistics.DEATHS)
 							+ ", fnLives ="
 							+ p.getDeathLimit()
 							+ ", fnTeamKills ="
-							+ p.getTeamKills()
+							+ p.getStatistic(Statistics.TOTAL_TEAMKILLS)
 							+ ", fnTerrierKills ="
-							+ p.getTerrierKills()
+							+ p.getStatistic(Statistics.TERRIER_KILL)
 							+ ", fnLagouts ="
 							+ p.getLagouts()
 							+ ", fnScore ="
-							+ p.getScore()
+							+ p.getStatistic(Statistics.SCORE)
 							+ ", fnState ="
 							+ outOfGame
 							+ " WHERE fnMatchStateID = "
@@ -1899,19 +2052,19 @@ public class twbottwl extends TWBotExtension
 							+ ", "
 							+ p.getFreq()
 							+ ", "
-							+ p.getKills()
+							+ p.getStatistic(Statistics.TOTAL_KILLS)
 							+ ", "
-							+ p.getDeaths()
+							+ p.getStatistic(Statistics.DEATHS)
 							+ ", "
 							+ p.getDeathLimit()
 							+ ", "
-							+ p.getTeamKills()
+							+ p.getStatistic(Statistics.TOTAL_TEAMKILLS)
 							+ ", "
-							+ p.getTerrierKills()
+							+ p.getStatistic(Statistics.TERRIER_KILL)
 							+ ", "
 							+ p.getLagouts()
 							+ ", "
-							+ p.getScore()
+							+ p.getStatistic(Statistics.SCORE)
 							+ ", "
 							+ outOfGame
 							+ ")");
@@ -1928,19 +2081,19 @@ public class twbottwl extends TWBotExtension
 							+ ", fnFreq = "
 							+ p.getFreq()
 							+ ", fnKills = "
-							+ p.getKills()
+							+ p.getStatistic(Statistics.TOTAL_KILLS)
 							+ ", fnDeaths ="
-							+ p.getDeaths()
+							+ p.getStatistic(Statistics.DEATHS)
 							+ ", fnLives ="
 							+ p.getDeathLimit()
 							+ ", fnTeamKills ="
-							+ p.getTeamKills()
+							+ p.getStatistic(Statistics.TOTAL_TEAMKILLS)
 							+ ", fnTerrierKills ="
-							+ p.getTerrierKills()
+							+ p.getStatistic(Statistics.TERRIER_KILL)
 							+ ", fnLagouts ="
 							+ p.getLagouts()
 							+ ", fnScore ="
-							+ p.getScore()
+							+ p.getStatistic(Statistics.SCORE)
 							+ ", fnState ="
 							+ outOfGame
 							+ " WHERE fnMatchStateID = "
@@ -2028,9 +2181,9 @@ public class twbottwl extends TWBotExtension
 				"INSERT INTO tblMatchRoundUser ( `fnMatchRoundID`, `fnTeamUserID`, `fnUserID`, `fcUserName`, `fnTeam`, `fnShipTypeID`, `fnValid`, `fnScore`, `fnWins`, `fnLosses`, `fnLagout`, `ftTimeStarted`, `ftTimeEnded`, `fnSubstituted`, `fnRemoteMatchRoundUserID`, `ftUpdated`, `fnTeamKills`, `fnTerrKills`) VALUES (";
 			playerQuery += matchRoundID + ", " + m_match.getTeamId(name) + ", " + p.getUserID() + ", ";
 			playerQuery += "'" + Tools.addSlashesToString(name) + "', 1, ";
-			playerQuery += pp.getShip() + ", 1, " + pp.getScore() + ", " + pp.getKills() + ", " + pp.getDeaths() + ", " + pp.getLagouts() + ", ";
+			playerQuery += pp.getShip() + ", 1, " + pp.getStatistic(Statistics.SCORE) + ", " + pp.getStatistic(Statistics.TOTAL_KILLS) + ", " + pp.getStatistic(Statistics.DEATHS) + ", " + pp.getLagouts() + ", ";
 			playerQuery += "'" + m_timeStart + "', '" + timeEnd + "', ";
-			playerQuery += "0, 0, '" + timeEnd + "', " + pp.getTeamKills() + ", " + pp.getTerrierKills() + " )";
+			playerQuery += "0, 0, '" + timeEnd + "', " + pp.getStatistic(Statistics.TOTAL_TEAMKILLS) + ", " + pp.getStatistic(Statistics.TERRIER_KILL) + " )";
 			try
 			{
 				m_botAction.SQLBackgroundQuery(mySQLHost, name, playerQuery);
@@ -2050,9 +2203,9 @@ public class twbottwl extends TWBotExtension
 				"INSERT INTO tblMatchRoundUser ( `fnMatchRoundID`, `fnTeamUserID`, `fnUserID`, `fcUserName`, `fnTeam`, `fnShipTypeID`, `fnValid`, `fnScore`, `fnWins`, `fnLosses`, `fnLagout`, `ftTimeStarted`, `ftTimeEnded`, `fnSubstituted`, `fnRemoteMatchRoundUserID`, `ftUpdated`, `fnTeamKills`, `fnTerrKills`) VALUES (";
 			playerQuery += matchRoundID + ", " + m_match.getTeamId(name) + ", " + p.getUserID() + ", ";
 			playerQuery += "'" + Tools.addSlashesToString(name) + "', 2, ";
-			playerQuery += pp.getShip() + ", 1, " + pp.getScore() + ", " + pp.getKills() + ", " + pp.getDeaths() + ", " + pp.getLagouts() + ", ";
+			playerQuery += pp.getShip() + ", 1, " + pp.getStatistic(Statistics.SCORE) + ", " + pp.getStatistic(Statistics.TOTAL_KILLS) + ", " + pp.getStatistic(Statistics.DEATHS) + ", " + pp.getLagouts() + ", ";
 			playerQuery += "'" + m_timeStart + "', '" + timeEnd + "', ";
-			playerQuery += "0, 0, '" + timeEnd + "', " + pp.getTeamKills() + ", " + pp.getTerrierKills() + " )";
+			playerQuery += "0, 0, '" + timeEnd + "', " + pp.getStatistic(Statistics.TOTAL_TEAMKILLS) + ", " + pp.getStatistic(Statistics.TERRIER_KILL) + " )";
 			try
 			{
 				m_botAction.SQLBackgroundQuery(mySQLHost, name, playerQuery);
@@ -2071,16 +2224,16 @@ public class twbottwl extends TWBotExtension
 		if (m_match.getMatchTypeId() < 3)
 		{
 			if (winner == 1)
-				team1 = 50;
+				team1 = DUEL_TARGET;
 			if (winner == 2)
-				team2 = 50;
+				team2 = DUEL_TARGET;
 		}
 		else
 		{
 			if (winner == 1)
-				team1 = 100000;
+				team1 = TIME_RACE_TARGET;
 			if (winner == 2)
-				team2 = 100000;
+				team2 = TIME_RACE_TARGET;
 		}
 		m_timeStart = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());
 		String timeEnd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());

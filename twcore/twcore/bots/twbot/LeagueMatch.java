@@ -3,6 +3,7 @@ package twcore.bots.twbot;
 import java.sql.*;
 import java.util.*;
 import twcore.core.*;
+import twcore.misc.statistics.*;
 
 public class LeagueMatch
 {
@@ -23,6 +24,10 @@ public class LeagueMatch
 	int m_team1Switches = 0;
 	int m_team2Switches = 0;
 
+	int m_team1Score = 0;
+	int m_team2Score = 0;
+	boolean m_team1Flag = false;
+	boolean m_team2Flag = false;
 	String m_ref = "";
 	int m_rosterLimit;
 	int m_deathLimit = 0;
@@ -41,7 +46,7 @@ public class LeagueMatch
 	final int m_shipLimits[] = { 8, 8, 8, 0, 1, 8, 8, 2 };
 	Vector m_playerList;
 	HashMap m_justSaw;
-
+	
 	public LeagueMatch(ResultSet result, BotAction botAction)
 	{
 
@@ -108,14 +113,14 @@ public class LeagueMatch
 			int freq = result.getInt("fnFreq");
 			int teamId = result.getInt("fnTeamId");
 			addPlayer(teamId, name, ship);
-			getPlayer(name).setKills(result.getInt("fnKills"));
-			getPlayer(name).setDeaths(result.getInt("fnDeaths"));
+			getPlayer(name).changeStatistic(Statistics.TOTAL_KILLS, result.getInt("fnKills"));
+			getPlayer(name).changeStatistic(Statistics.DEATHS, result.getInt("fnDeaths"));
 			getPlayer(name).setDeathLimit(result.getInt("fnLives"));
 			getPlayer(name).subbedBy(result.getString("fcSubbedBy"));
-			getPlayer(name).setTeamKills(result.getInt("fnTeamKills"));
-			getPlayer(name).setTerrierKills(result.getInt("fnTerrierKills"));
+			getPlayer(name).changeStatistic(Statistics.TOTAL_TEAMKILLS, result.getInt("fnTeamKills"));
+			getPlayer(name).changeStatistic(Statistics.TERRIER_KILL, result.getInt("fnTerrierKills"));
 			getPlayer(name).setLagouts(result.getInt("fnLagouts"));
-			getPlayer(name).setScore(result.getInt("fnScore"));
+			getPlayer(name).changeStatistic(Statistics.SCORE, result.getInt("fnScore"));
 			if (result.getInt("fnState") == 1)
 			{
 				getPlayer(name).isOut();
@@ -307,28 +312,107 @@ public class LeagueMatch
 			return false;
 	}
 
+	/**
+	 * @author FoN
+	 * 
+	 * This adds a sec point to team with flag
+	 * Also gives out time warnings.
+	 */
+	public void addTimePoint()
+	{
+		if (m_team1Flag)
+		{
+			m_team1Score++;
+			giveTimeWarning(3, m_team1Id);
+			giveTimeWarning(1, m_team1Id);
+		}
+		else if (m_team2Flag)
+		{
+			m_team2Score++;
+			giveTimeWarning(3, m_team2Id);
+			giveTimeWarning(1, m_team2Id);
+		}
+
+	}
+
+	/**
+	 * Displays warning depending on time remaining
+	 */
+	private void giveTimeWarning(int time, int team)
+	{
+
+		if (time <= twbottwl.TIME_RACE_TARGET)
+		{
+
+			int teamId = 0;
+			boolean warning = true;
+			String name = "";
+			int teamScore = 0;
+
+			if (team == m_team1Id)
+			{
+				teamId = m_team1Id;
+				name = getTeam1Name();
+				teamScore = getTeam1Score();
+			}
+			else
+			{
+				teamId = m_team2Id;
+				name = getTeam2Name();
+				teamScore = getTeam2Score();
+			}
+
+			if (twbottwl.TIME_RACE_TARGET - teamScore == time * 60) //3 mins * 60 secs
+			{
+				if (teamId == getFlagOwner()) //no multiple warning
+					m_botAction.sendArenaMessage(name + " needs " + time + " m of flag time to win");
+			}
+		}
+	}
+
+	/**
+	 * @author FoN
+	 * 
+	 * Sets the flag owner depending on the freq and disowns the other freq
+	 * @param freq The freq of the player who claimed the flag
+	 */
+	public void setFlagOwner(int freq)
+	{
+		if (isTeamOne(freq))
+		{
+			m_team1Flag = true;
+			m_team2Flag = false;
+		}
+		else if (isTeamTwo(freq))
+		{
+			m_team2Flag = true;
+			m_team1Flag = false;
+		}
+	}
+	
+	/**
+	 * @author FoN
+	 * 
+	 * @return the Id of the team (freq) who owns the flag, -1 if no one owns flag.
+	 */
+	public int getFlagOwner()
+	{
+		if(m_team1Flag)
+			return m_team1Id;
+		else if (m_team2Flag)
+			return m_team2Id; 
+		else
+			return -1;
+	}
+
 	public int getTeam1Score()
 	{
-		int score = 0;
-		Iterator it = m_team1List.keySet().iterator();
-		while (it.hasNext())
-		{
-			String player = (String) it.next();
-			score += getPlayer(player).getScore();
-		}
-		return score;
+		return m_team1Score;
 	}
 
 	public int getTeam2Score()
 	{
-		int score = 0;
-		Iterator it = m_team2List.keySet().iterator();
-		while (it.hasNext())
-		{
-			String player = (String) it.next();
-			score += getPlayer(player).getScore();
-		}
-		return score;
+		return m_team2Score;
 	}
 
 	public int getTeam1PlayerCount()
@@ -347,7 +431,7 @@ public class LeagueMatch
 		while (it.hasNext())
 		{
 			String player = (String) it.next();
-			score += getPlayer(player).getDeaths();
+			score += getPlayer(player).getStatistic(Statistics.DEATHS);
 		}
 		score += (5 - m_team1Size) * 10;
 		return score;
@@ -360,7 +444,7 @@ public class LeagueMatch
 		while (it.hasNext())
 		{
 			String player = (String) it.next();
-			score += getPlayer(player).getDeaths();
+			score += getPlayer(player).getStatistic(Statistics.DEATHS);
 		}
 		score += (5 - m_team2Size) * 10;
 		return score;
@@ -457,7 +541,7 @@ public class LeagueMatch
 		int shipType = getPlayer(playerOut).getShip();
 		int deathLimit = 0;
 		if (getMatchTypeId() < 3)
-			deathLimit = getPlayer(playerOut).getDeathLimit() - getPlayer(playerOut).getDeaths();
+			deathLimit = getPlayer(playerOut).getDeathLimit() - getPlayer(playerOut).getStatistic(Statistics.DEATHS);
 		//remove old player
 		getPlayer(playerOut).isOut();
 		m_botAction.spec(playerOut);
@@ -706,10 +790,10 @@ public class LeagueMatch
 		while (it.hasNext())
 		{
 			String name = (String) it.next();
-			if (score < getPlayer(name).getScore())
+			if (score < getPlayer(name).getStatistic(Statistics.RATING))
 			{
 				mvp = name;
-				score = getPlayer(name).getScore();
+				score = getPlayer(name).getStatistic(Statistics.RATING);
 			}
 		}
 		return mvp;
@@ -728,21 +812,21 @@ public class LeagueMatch
 		while (it.hasNext())
 		{
 			String player = (String) it.next();
-			int pRec = getPlayer(player).getKills() - getPlayer(player).getDeaths();
+			int pRec = getPlayer(player).getStatistic(Statistics.TOTAL_KILLS) - getPlayer(player).getStatistic(Statistics.TOTAL_KILLS) - getPlayer(player).getStatistic(Statistics.TOTAL_TEAMKILLS);
 			if (rec < pRec)
 			{
 				rec = pRec;
-				kills = getPlayer(player).getKills();
+				kills = getPlayer(player).getStatistic(Statistics.TOTAL_KILLS);
 				mvp = player;
 			}
 			else if (rec == pRec)
 			{
-				if (kills < getPlayer(player).getKills())
+				if (kills < getPlayer(player).getStatistic(Statistics.TOTAL_KILLS))
 				{
-					kills = getPlayer(player).getKills();
+					kills = getPlayer(player).getStatistic(Statistics.TOTAL_KILLS);
 					mvp = player;
 				}
-				else if (kills == getPlayer(player).getKills())
+				else if (kills == getPlayer(player).getStatistic(Statistics.TOTAL_KILLS))
 				{
 					mvp += " and " + player;
 				}
@@ -763,7 +847,7 @@ public class LeagueMatch
 			String player = (String) it.next();
 			if (m_botAction.getFuzzyPlayerName(player) != null)
 				if (m_botAction.getPlayer(player).getShipType() != 0)
-					getPlayer(player).addToScore(pts);
+					getPlayer(player).reportStatistic(Statistics.SCORE, pts);
 		}
 	}
 
@@ -850,9 +934,9 @@ public class LeagueMatch
 		{
 			String player = (String) i.next();
 			String out = Tools.formatString(player, 29);
-			out += Tools.formatString("" + getPlayer(player).getKills(), 8);
-			out += Tools.formatString("" + getPlayer(player).getDeaths(), 9);
-			out += Tools.formatString("" + getPlayer(player).getTeamKills(), 6);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_TEAMKILLS), 6);
 			out += Tools.formatString("" + getPlayer(player).getLagouts(), 6);
 			out += getPlayer(player).getSub();
 			m_botAction.sendArenaMessage(out);
@@ -873,9 +957,9 @@ public class LeagueMatch
 		{
 			String player = (String) i.next();
 			String out = Tools.formatString(player, 29);
-			out += Tools.formatString("" + getPlayer(player).getKills(), 8);
-			out += Tools.formatString("" + getPlayer(player).getDeaths(), 9);
-			out += Tools.formatString("" + getPlayer(player).getTeamKills(), 6);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_TEAMKILLS), 6);
 			out += Tools.formatString("" + getPlayer(player).getLagouts(), 6);
 			out += getPlayer(player).getSub();
 			m_botAction.sendArenaMessage(out);
@@ -908,12 +992,12 @@ public class LeagueMatch
 		{
 			String player = (String) i.next();
 			String out = "_" + Tools.formatString(player, 28);
-			out += Tools.formatString("" + getPlayer(player).getKills(), 8);
-			out += Tools.formatString("" + getPlayer(player).getDeaths(), 9);
-			out += Tools.formatString("" + getPlayer(player).getTeamKills(), 6);
-			out += Tools.formatString("" + getPlayer(player).getTerrierKills(), 6);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_TEAMKILLS), 6);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TERRIER_KILL), 6);
 			out += Tools.formatString("" + getPlayer(player).getLagouts(), 6);
-			out += Tools.formatString("" + getPlayer(player).getScore(), 8);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.SCORE), 8);
 			out += getPlayer(player).getSub();
 			m_botAction.sendArenaMessage(out);
 			//try {
@@ -929,12 +1013,12 @@ public class LeagueMatch
 		{
 			String player = (String) i.next();
 			String out = "_" + Tools.formatString(player, 28);
-			out += Tools.formatString("" + getPlayer(player).getKills(), 8);
-			out += Tools.formatString("" + getPlayer(player).getDeaths(), 9);
-			out += Tools.formatString("" + getPlayer(player).getTeamKills(), 6);
-			out += Tools.formatString("" + getPlayer(player).getTerrierKills(), 6);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_TEAMKILLS), 6);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TERRIER_KILL), 6);
 			out += Tools.formatString("" + getPlayer(player).getLagouts(), 6);
-			out += Tools.formatString("" + getPlayer(player).getScore(), 8);
+			out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.SCORE), 8);
 			out += getPlayer(player).getSub();
 			m_botAction.sendArenaMessage(out);
 			//try {
