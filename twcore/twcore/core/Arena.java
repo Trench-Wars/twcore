@@ -353,7 +353,12 @@ public class Arena {
         } else
             flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
             
-        flag.processEvent( message, getPlayer( message.getPlayerID() ).getFrequency() );
+        try {            
+            flag.processEvent( message, getPlayer( message.getPlayerID() ).getFrequency() );
+        } catch (Exception e) {
+            // Now we won't crash King, but will give bad data.
+            flag.processEvent( message, -1 );            
+        }
     }
     
     public void processEvent( FlagDropped message ) {
