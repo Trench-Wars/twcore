@@ -16,7 +16,6 @@ import java.sql.SQLException;
 public class alertbot extends SubspaceBot {
 
 
-    CommandInterpreter m_commandInterpreter;
     BotSettings config;
     boolean needsNotPlaying;
     String arena;
@@ -34,7 +33,6 @@ public class alertbot extends SubspaceBot {
     public alertbot( BotAction botAction ){
 
         super( botAction );
-        m_commandInterpreter = new CommandInterpreter( m_botAction );
         config = m_botAction.getBotSettings();
 
         // let's look for some magic here
@@ -108,7 +106,7 @@ public class alertbot extends SubspaceBot {
             handleCommand( messager , message);
         }
 
-        if(event.getMessageType() == Message.ARENA_MESSAGE){
+        else if(event.getMessageType() == Message.ARENA_MESSAGE){
             if(startPattern.matcher(message).matches()){
                 if ( needsNotPlaying ) {
                     // find our mysterious matchbot
@@ -129,17 +127,20 @@ public class alertbot extends SubspaceBot {
                         m_botAction.sendSmartPrivateMessage( set.getString("name"), startMessage );
                     }
                 } catch (SQLException e) {
-                  // shit :(
                   return;
                 }
             } else if (endPattern.matcher(message).matches()) {
-                m_botAction.sendChatMessage(1, endMessage);
-                m_botAction.sendChatMessage(2, endMessage);
+                String returnMessage = endPattern.matcher(message).replaceAll(endMessage);
+                m_botAction.sendChatMessage(1, returnMessage);
+                m_botAction.sendChatMessage(2, returnMessage);
             }
             else{ return;}
         }
 
-
+        // hack and a half, ty...ty
+        else if (event.getMessageType() == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("notplaying mode turned off, captains will be able to pick you") && m_botAction.getOperatorList().isSysop(m_botAction.getPlayerName(event.getPlayerID())) && m_botAction.getPlayerName(event.getPlayerID()).toLowerCase().startsWith("matchbot")) {
+            m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(event.getPlayerID()),"!notplaying");
+        }
     }
 
     public void handleCommand(String name, String message){
@@ -151,7 +152,6 @@ public class alertbot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name,"Unable to enable alerts at this time.");
                 return;
             }
-            System.out.println("outside try/catch");
         }
         else if ( message.equalsIgnoreCase("!off") ) {
             try {
