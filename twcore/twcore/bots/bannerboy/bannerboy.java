@@ -8,10 +8,16 @@ import java.util.*;
 public class bannerboy extends SubspaceBot {
 	
 	//mySQL database to use
-	private String sqlHost = "website";
+	private String m_sqlHost = "website";
 	
 	//Keep track of the time since last personal banner change
-	private long lastBannerSet = 0;
+	private long m_lastBannerSet = 0;
+	
+	//queue for banner checks
+	private Vector m_toCheck;
+	
+	//Boolean to track if 'talking' mode is on
+	private boolean m_talk; 
 	
 	public bannerboy( BotAction botAction ) {
 		super( botAction );
@@ -21,6 +27,9 @@ public class bannerboy extends SubspaceBot {
 		req.request( EventRequester.MESSAGE );
 		req.request( EventRequester.ARENA_LIST );
 
+		m_toCheck = new Vector();
+		
+		m_talk = false;
 	}
 	
 	public void handleEvent( PlayerBanner event ) {
@@ -28,17 +37,12 @@ public class bannerboy extends SubspaceBot {
 	 	String player = m_botAction.getPlayerName( event.getPlayerID() );
 	 	byte[] banner = event.getBanner();
 	 	
-	 	//If banner isn't in db save it
-	 	if( !bannerExists( banner ) )
-	 		saveBanner( player, banner);
-		markSeen( player, banner );
+	 	m_toCheck.add( new BannerCheck( player, banner ) );
 		
-		
-		
-		if( System.currentTimeMillis() - lastBannerSet < 30000 ) return;
+		if( System.currentTimeMillis() - m_lastBannerSet < 60000*5 ) return;
 		
 		m_botAction.setBanner( event.getBanner() );
-		lastBannerSet = System.currentTimeMillis();
+		m_lastBannerSet = System.currentTimeMillis();
 		
 		//m_botAction.sendSmartPrivateMessage( m_botAction.getPlayerName( event.getPlayerID() ), "Hope you don't mind if I wear your banner. Looks good on me doesn't it?" );
 		
@@ -61,7 +65,7 @@ public class bannerboy extends SubspaceBot {
 		String banner = getBannerString( b );
 		try {
 			String query = "SELECT * FROM tblBanner WHERE fcBanner = '"+banner+"'";
-			ResultSet result = m_botAction.SQLQuery( sqlHost, query );
+			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
 			if( result.next() ) return true;
 			else return false;
 		} catch (Exception e) {
@@ -78,7 +82,7 @@ public class bannerboy extends SubspaceBot {
 		try {
 			String query = "INSERT INTO tblBanner (fnUserID, fcBanner, fdDateFound) VALUES ";
 			query += "('"+fnUserID+"', '"+banner+"', NOW() )";
-			m_botAction.SQLQuery( sqlHost, query );
+			m_botAction.SQLQuery( m_sqlHost, query );
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
@@ -100,7 +104,8 @@ public class bannerboy extends SubspaceBot {
 		
 		createPlayer( player );
 		return getPlayerID( player );*/
-		DBPlayerData dbPlayer = new DBPlayerData( m_botAction, sqlHost, player, true );
+		
+		DBPlayerData dbPlayer = new DBPlayerData( m_botAction, m_sqlHost, player, true );
 		return dbPlayer.getUserID();
 	}
 	
@@ -110,7 +115,7 @@ public class bannerboy extends SubspaceBot {
 		
 		try {
 			String query = "SELECT fnBannerID FROM tblBanner WHERE fcBanner = '"+banner+"'";
-			ResultSet result = m_botAction.SQLQuery( sqlHost, query );
+			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
 			if( result.next() ) {
 				return result.getInt( "fnBannerID" );
 			} else return -1;
@@ -125,7 +130,7 @@ public class bannerboy extends SubspaceBot {
 		player = Tools.addSlashesToString( player );
 		try {
 			String query = "INSERT INTO tblUser (fcUserName) VALUES ('"+player+"')";
-			m_botAction.SQLQuery( sqlHost, query );
+			m_botAction.SQLQuery( m_sqlHost, query );
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
@@ -141,7 +146,7 @@ public class bannerboy extends SubspaceBot {
 		try {
 			String query = "INSERT into tblWore (fnUserId, fnBannerId) VALUES ";
 			query += "("+userId+", "+bannerId+")";
-			m_botAction.SQLQuery( sqlHost, query );
+			m_botAction.SQLQuery( m_sqlHost, query );
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
@@ -151,7 +156,7 @@ public class bannerboy extends SubspaceBot {
 		
 		try {
 			String query = "SELECT fnUserId FROM tblWore WHERE fnUserID = "+userId+" AND fnBannerID = "+bannerId;
-			ResultSet result = m_botAction.SQLQuery( sqlHost, query );
+			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
 			if( result.next() ) return true;
 			else return false;
 		} catch (Exception e) {
@@ -219,6 +224,37 @@ public class bannerboy extends SubspaceBot {
 			}
 		};
 		m_botAction.scheduleTaskAtFixedRate( changeArenas, 60000, 240000 );
+		
+		
+		//Every 3 seconds check another banner
+		TimerTask checkBanners = new TimerTask() {
+			public void run() {
+					 	
+				if( m_toCheck.size() <= 0 ) return;
+				BannerCheck bc = (BannerCheck)m_toCheck.remove(0);
+				byte banner[] = bc.getBanner();
+				String player = bc.getPlayer();	 	
+					
+			 	//If banner isn't in db save it
+			 	if( !bannerExists( banner ) )
+			 		saveBanner( player, banner);
+				markSeen( player, banner );
+			}
+		};
+		m_botAction.scheduleTaskAtFixedRate( checkBanners, 2000, 3000 );
 	}
-
 }
+
+	class BannerCheck {
+		
+		private String pName;
+		private byte[] banner;
+		
+		public BannerCheck( String player, byte[] b ) {
+			pName = player;
+			banner = b;
+		}
+		
+		public String getPlayer() { return pName; }
+		public byte[] getBanner() { return banner; }
+	}
