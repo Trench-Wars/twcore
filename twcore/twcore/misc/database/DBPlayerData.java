@@ -247,7 +247,7 @@ public class DBPlayerData {
     	ip = ip.substring( 0, ip.lastIndexOf( "." ) )+".%";
 
     	try {
-    		String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' AND fnMID = '"+mid+"'";
+    		String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' OR fnMID = '"+mid+"'";
     		ResultSet result = m_connection.SQLQuery( "server", query );
     		if( result.next() ) return true;
     		else return false;
