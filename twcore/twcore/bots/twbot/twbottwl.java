@@ -877,7 +877,9 @@ public class twbottwl extends TWBotExtension
 			m_botAction.sendPrivateMessage(name, "Unable to switch players: Switch limit reached.");
 			return;
 		}
+		
 		m_match.switchPlayers(pieces[0], pieces[1]);
+		m_botAction.sendArenaMessage(pieces[0] + " switched ships with " + pieces[1]);
 	}
 
 	public void do_listPlayers(String name, String message)
@@ -1031,7 +1033,7 @@ public class twbottwl extends TWBotExtension
 	public void handleEvent(FlagClaimed event)
 	{
         Player player = m_botAction.getPlayer(event.getPlayerID());
-		int freq = (m_match.getPlayer(player.getPlayerName())).getFreq();
+		int freq = player.getFrequency();
 		
 		m_match.setFlagOwner(freq);
 		m_match.getPlayer(player.getPlayerName()).reportStatistic(Statistics.FLAG_CLAIMED);
@@ -1237,6 +1239,8 @@ public class twbottwl extends TWBotExtension
 			else
 				mvp = m_match.getMVP(2);
 		}
+		
+		//overtime
 		if (team1Score == team2Score)
 		{
 			m_botAction.setTimer(5);
@@ -1244,20 +1248,25 @@ public class twbottwl extends TWBotExtension
 			m_match.incOverTime();
 			return;
 		}
+		
 		if (m_match.getMatchTypeId() < 3)
 			m_match.displayScores(team1Score, team2Score, mvp, true);
 		else
 			m_match.displayBaseScores(team1Score, team2Score, mvp, true);
 
+		//reset game states
 		m_gameState = 0;
-		//do_storeResults( mvp, team1Score, team2Score, m_match.getMatchId() );
 		m_botAction.toggleLocked();
 		m_botAction.cancelTasks();
 		m_botAction.toggleBlueOut();
 		m_botAction.sendUnfilteredPublicMessage("*lockspec");
 		m_botAction.setMessageLimit(0);
 		m_botAction.setTimer(0);
+		
+		//store results
 		sql_storeResults(mvp, team1Score, team2Score, m_match.getMatchId());
+		
+		//get rid of lvlz
 		TimerTask hideObjects = new TimerTask()
 		{
 			public void run()
@@ -2147,6 +2156,7 @@ public class twbottwl extends TWBotExtension
 		matchUpdate += ", fnTeam2Score = " + team2;
 		matchUpdate += ", fnMatchStateID = 3";
 		matchUpdate += " WHERE fnMatchID = " + matchId;
+		
 		try
 		{
 			m_botAction.SQLQuery(mySQLHost, matchUpdate);
@@ -2155,6 +2165,7 @@ public class twbottwl extends TWBotExtension
 		{
 			System.out.println(e);
 		}
+		
 		String roundUpdate =
 			"INSERT INTO tblMatchRound (`fnMatchID`, `fnRoundStateID`, `fnRoundNumber`, `ftTimeStarted`, `ftTimeEnded`, `fnTeam1Score`, `fnTeam2Score`, `fnRemoteMatchRoundID`, `ftUpdated` ) VALUES (";
 		roundUpdate += matchId + ", ";
@@ -2167,6 +2178,7 @@ public class twbottwl extends TWBotExtension
 		roundUpdate += "0, ";
 		roundUpdate += "'" + timeEnd + "' )";
 		int matchRoundID = -1;
+		
 		try
 		{
 			m_botAction.SQLQuery(mySQLHost, roundUpdate);
@@ -2178,11 +2190,13 @@ public class twbottwl extends TWBotExtension
 		{
 			System.out.println(e);
 		}
+		
 		if (matchRoundID == -1)
 		{
 			m_botAction.sendPrivateMessage(m_match.getRef(), "Unable to store player stats, please write the stats down.");
 			return;
 		}
+		
 		Iterator i = m_match.getTeam1List();
 		while (i.hasNext())
 		{
@@ -2205,6 +2219,7 @@ public class twbottwl extends TWBotExtension
 				Tools.printStackTrace(e);
 			}
 		}
+		
 		i = m_match.getTeam2List();
 		while (i.hasNext())
 		{
