@@ -13,12 +13,13 @@ import twcore.core.*;
  *  every time you die you get put down 1 ship until you get to ship 1.
  *  If you die as ship 1, you're out.
  *  @author - Jacen Solo
- *  @version 1.1
+ *  @version 1.0
  */
 public class twbotplatoon extends TWBotExtension
 {
 	HashSet exemptShips = new HashSet();
 	boolean isRunning = false;
+	boolean notReallyRunning = false;
 	
 	public twbotplatoon() {}
 	
@@ -47,6 +48,18 @@ public class twbotplatoon extends TWBotExtension
     		cancelGame(name);
     	else if(message.toLowerCase().startsWith("!exempt "))
     		updateExempt(name, message);
+    	else if(message.toLowerCase().startsWith("!demote") && !isRunning && !notReallyRunning)
+    	{
+    		isRunning = true; notReallyRunning = true;
+    		m_botAction.sendPrivateMessage(name, "Demoting now.");
+    		m_botAction.sendArenaMessage("Demoting - on");
+    	}
+    	else if(message.toLowerCase().startsWith("!stop") && isRunning && notReallyRunning)
+    	{
+    		isRunning = false; notReallyRunning = false;
+    		m_botAction.sendPrivateMessage(name, "No longer demoting.");
+    		m_botAction.sendArenaMessage("Demoting - off");
+    	}
     }
     
     public void updateExempt(String name, String message)
@@ -92,15 +105,11 @@ public class twbotplatoon extends TWBotExtension
     			m_botAction.sendArenaMessage(m_botAction.getPlayerName(event.getKilleeID()) + " is out!");
     			Iterator it = m_botAction.getPlayingPlayerIterator();
 		    	int players = 0;
-		    	int freqs = 0;
-		    	HashSet freqList = new HashSet();
 		    	
-		    	while(it.hasNext()) { it.next(); players++; Player p = (Player)it.next(); if(!freqList.contains(new Integer(p.getFrequency()))) freqList.add(new Integer(p.getFrequency()));}
+		    	while(it.hasNext()) { it.next(); players++; }
 		    	
-		    	if(players == 1)
-		    		gameOver(true);
-		    	else if(freqList.size() == 1)
-		    		gameOver(false);
+		    	if(players == 1 && !notReallyRunning)
+		    		gameOver();
 		    }
 		    else
 		    {
@@ -123,16 +132,12 @@ public class twbotplatoon extends TWBotExtension
     	if(!isRunning)
     		return;
     	Iterator it = m_botAction.getPlayingPlayerIterator();
-		int players = 0;
-		int freqs = 0;
-		HashSet freqList = new HashSet();
-		    	
-		while(it.hasNext()) { it.next(); players++; Player p = (Player)it.next(); if(!freqList.contains(new Integer(p.getFrequency()))) freqList.add(new Integer(p.getFrequency()));}
-		    	
-		if(players == 1)
-			gameOver(true);
-		else if(freqList.size() == 1)
-			gameOver(false);
+    	int players = 0;
+    	
+    	while(it.hasNext()) { it.next(); players++; }
+    	
+    	if(players == 1 && !notReallyRunning)
+    		gameOver();
     }
     
     public void handleEvent(FrequencyShipChange event)
@@ -142,16 +147,12 @@ public class twbotplatoon extends TWBotExtension
     	if(event.getShipType() == 0)
     	{
     		Iterator it = m_botAction.getPlayingPlayerIterator();
-		    int players = 0;
-		    int freqs = 0;
-		    HashSet freqList = new HashSet();
-		    
-		    while(it.hasNext()) { it.next(); players++; Player p = (Player)it.next(); if(!freqList.contains(new Integer(p.getFrequency()))) freqList.add(new Integer(p.getFrequency()));}
-		    
-		    if(players == 1)
-		    	gameOver(true);
-		    else if(freqList.size() == 1)
-		    	gameOver(false);
+	    	int players = 0;
+	    	
+	    	while(it.hasNext()) { it.next(); players++; }
+	    	
+	    	if(players == 1 && !notReallyRunning)
+	    		gameOver();
 	    }
 	}
 	
@@ -161,20 +162,17 @@ public class twbotplatoon extends TWBotExtension
 		isRunning = false;
 	}
 	
-	public void gameOver(boolean onePlayer)
+	public void gameOver()
 	{
 		Iterator it = m_botAction.getPlayingPlayerIterator();
     	String winner = "";
     	while(it.hasNext())
     	{
     		Player p = (Player)it.next();
-    		if(onePlayer)
-    			winner = p.getPlayerName();
-    		else
-    			winner = "Freq " + p.getFrequency();
+    		winner = p.getPlayerName();
     	}
     	
-    	m_botAction.sendArenaMessage(winner + " has won the game!", 5);
+    	m_botAction.sendArenaMessage(winner + " has won the game!", 104);
     	isRunning = false;
     }
     
@@ -219,6 +217,7 @@ public class twbotplatoon extends TWBotExtension
     			isRunning = true;
     		}
     	};
+    	notReallyRunning = false;
     	
     	m_botAction.scheduleTask(five, 5000);
     	m_botAction.scheduleTask(three, 7000);
@@ -235,7 +234,9 @@ public class twbotplatoon extends TWBotExtension
     		"!start a:b:c:etc       -Starts a game with ships a, b, and c exempt from ship changes.",
     		"!start                 -Starts a game with no ships exempt.",
     		"!cancel                -Cancels current game.",
-    		"!exempt a:b:c:d:etc    -Changes ships exempt to a, b, c, and d. You can add as many as you want, they just need to be seperated by :'s"
+    		"!exempt a:b:c:d:etc    -Changes ships exempt to a, b, c, and d. You can add as many as you want, they just need to be seperated by :'s",
+    		"!demote                -Demotes people even when game isn't going.",
+    		"!stop                  -Stops demoting people."
     	};
     	
     	return helps;
