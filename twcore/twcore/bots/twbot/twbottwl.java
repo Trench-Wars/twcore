@@ -49,7 +49,7 @@ public class twbottwl extends TWBotExtension
 	private final int MINIMUM_DUEL_LIMIT = 3; //players
 	private final int MINIMUM_BASE_LIMIT = 6; //players
 	
-	private final double VERSION = 1.3;
+	private final double VERSION = 1.4;
 	
 	final static int TIME_RACE_TARGET = 900; //sec
 	final static int DUEL_TARGET = 50; //kills
@@ -1190,11 +1190,13 @@ public class twbottwl extends TWBotExtension
 		if (m_gameState != 4)
 			return;		
 
+		/*
 		//trying to grab flag for the freq the flag was claimed on
 		int specFreq = m_botAction.getFuzzyPlayer(m_botAction.getBotName()).getFrequency();
 		m_botAction.setFreq(m_botAction.getBotName(), freq);
 		m_botAction.grabFlag(event.getFlagID());
 		m_botAction.setFreq(m_botAction.getBotName(), specFreq);
+		*/
 		
 		m_match.setFlagOwner(freq);
 		m_match.getPlayer(player.getPlayerName()).reportStatistic(Statistics.FLAG_CLAIMED);
@@ -1793,10 +1795,10 @@ public class twbottwl extends TWBotExtension
 				"!startgame                          - starts the match",
 				"!blueout                            - toggles spectator blueout",
 				"!score                              - shows the score of the match",
-				"!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut>",
-				"!switch <player1>:<player2>         - switches <player1> and <player2>",
 				"!setcaptain <player>                - sets the player as the captain of the squad he is on",
 				"-------------------- PLAYER COMMANDS -----------------------------------",
+				"!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut> if captain",
+				"!switch <player1>:<player2>         - switches <player1> and <player2> if captain",
 				"!list                               - list the players for your team",
 				"!myfreq                             - puts you on your team freq",
 				"!lagout                             - places you back into the game",
@@ -1809,6 +1811,8 @@ public class twbottwl extends TWBotExtension
 		String help[] =
 			{
 				"-------------------- PLAYER COMMANDS -----------------------------------",
+				"!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut> if captain",
+				"!switch <player1>:<player2>         - switches <player1> and <player2> if captain",
 				"!list                               - list the players for your team",
 				"!myfreq                             - puts you on your team freq",
 				"!lagout                             - places you back into the game",
@@ -2037,7 +2041,7 @@ public class twbottwl extends TWBotExtension
 		{
 			String pieces[] = message.split(":");
 			int team1Id = -1, team2Id = -1;
-			ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fnTeamID FROM tblTeam WHERE fcTeamName = '" + pieces[0] + "'");
+			ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fnTeamID FROM tblTeam WHERE fcTeamName = '" + pieces[0] + "' ORDER BY fnTeamID DESC LIMIT 1");
 			if (result.next())
 				team1Id = result.getInt("fnTeamID");
 			result = m_botAction.SQLQuery(mySQLHost, "SELECT fnTeamID FROM tblTeam WHERE fcTeamName = '" + pieces[1] + "' ORDER BY fnTeamID DESC LIMIT 1");
