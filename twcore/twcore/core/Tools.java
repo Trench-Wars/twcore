@@ -142,40 +142,7 @@ public class Tools {
     }
 
     public static String getTimeStamp(){
-        Calendar calendar = Calendar.getInstance();
-        String stamp = "";
-        switch( calendar.get( Calendar.DAY_OF_WEEK )){
-            case Calendar.MONDAY:
-                stamp += "Mon ";
-                break;
-            case Calendar.TUESDAY:
-                stamp += "Tue ";
-                break;
-            case Calendar.WEDNESDAY:
-                stamp += "Wed ";
-                break;
-            case Calendar.THURSDAY:
-                stamp += "Thu ";
-                break;
-            case Calendar.FRIDAY:
-                stamp += "Fri ";
-                break;
-            case Calendar.SATURDAY:
-                stamp += "Sat ";
-                break;
-            case Calendar.SUNDAY:
-                stamp += "Sun ";
-                break;
-        }
-        DecimalFormat format = new DecimalFormat( "00" );
-
-        stamp += format.format( calendar.get( Calendar.MONTH )) + "-";
-        stamp += format.format( calendar.get( Calendar.DAY_OF_MONTH )) + "-";
-        stamp += format.format( calendar.get( Calendar.YEAR )) + " ";
-        stamp += format.format( calendar.get( Calendar.HOUR )) + ":";
-        stamp += format.format( calendar.get( Calendar.MINUTE )) + ":";
-        stamp += format.format( calendar.get( Calendar.SECOND ));
-        return stamp;
+		return new SimpleDateFormat("EEE MM-dd-yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
     }
 
     public static String shipName( int shipNumber ){
@@ -220,6 +187,7 @@ public class Tools {
             return false;
         }
     }
+    
     public static String addSlashesToString( String t) {
         String n = null;
         if (t != null) {
@@ -229,10 +197,11 @@ public class Tools {
                     if (t.charAt(i) == '\"') n = n + "\\\\\""; else
                         if (t.charAt(i) == '\\') n = n + "\\\\\\\\"; else
                             n = n + t.charAt(i);
-            };
-        };
+            }
+        }
         return n;
-    };
+    }
+    
     //returns null if not found, a file if found
     public static File getRecursiveFileInDirectory( File directory, String fileName ){
         File[] files = directory.listFiles();
