@@ -243,12 +243,13 @@ public class LeaguePlayer
 
 	private int m_lagouts = 0;
 
+
 	private boolean m_outOfGame = false;
 	private boolean m_laggedOut = false;
 	private boolean m_warned = false;
 	private boolean m_inBase = false;
 	private boolean m_saveState = false;
-	private int m_timeOfLagout = 0;
+	private long m_timeOfLagout = 0;
 	private int m_timer = 0;
 	private String m_sub = "  -";
 
@@ -360,9 +361,11 @@ public class LeaguePlayer
 		return m_outOfGame;
 	}
 
+	//lagout related functions
 	public void laggedOut()
 	{
 		m_laggedOut = true;
+		m_timeOfLagout = System.currentTimeMillis();
 	}
 
 	public void notLaggedOut()
@@ -375,11 +378,11 @@ public class LeaguePlayer
 	{
 		return m_laggedOut;
 	}
-
-	public int getTimeBetweenLagouts()
+	
+	public int getTimeSinceLagout()
 	{
 		int time = (int) (System.currentTimeMillis() / 1000);
-		time -= m_timeOfLagout;
+		time -= m_timeOfLagout / 1000;
 		return time;
 	}
 
@@ -387,6 +390,7 @@ public class LeaguePlayer
 	{
 		m_sub = name;
 	}
+	
 	public String getSub()
 	{
 		return m_sub;
@@ -403,10 +407,12 @@ public class LeaguePlayer
 	{
 		return m_inBase;
 	}
+	
 	public void inBase()
 	{
 		m_inBase = true;
 	}
+	
 	public void notInBase()
 	{
 		m_inBase = false;
@@ -423,6 +429,7 @@ public class LeaguePlayer
 	{
 		return m_warned;
 	}
+	
 	public void haveWarned()
 	{
 		m_warned = true;

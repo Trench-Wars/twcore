@@ -37,11 +37,21 @@ public class twbottwl extends TWBotExtension
 	private java.util.Date m_lastRoundCutoffDate;
 	
 	//constants
-	private final int MINIMUM_DUEL_LIMIT = 3;
-	private final int MINIMUM_BASE_LIMIT = 1;
-	private final double VERSION = 1.0;
-	final static int TIME_RACE_TARGET = 900;
-	final static int DUEL_TARGET = 50;
+	private final int EXTENSION_TIME = 2; //mins
+	private final int BASE_TIMER = 31; //mins
+	private final int DUEL_TIMER = 30; //mins
+	
+	private final int TIME_BEFORE_LAGOUT = 60; //sec
+	private final int TIME_BEFORE_SUB = 30; //sec
+	private final int LAGOUT_LIMIT = 4; //min
+	
+	private final int MINIMUM_DUEL_LIMIT = 3; //players
+	private final int MINIMUM_BASE_LIMIT = 6; //players
+	
+	private final double VERSION = 1.1;
+	
+	final static int TIME_RACE_TARGET = 900; //sec
+	final static int DUEL_TARGET = 50; //kills
 
 	public twbottwl()
 	{
@@ -317,7 +327,7 @@ public class twbottwl extends TWBotExtension
 	}
 
 	public void do_addPlayer(String name, String message, boolean forced)
-	{
+	{	
 		if (m_gameState < 2)
 		{
 			m_botAction.sendPrivateMessage(name, "You must load a game and !startpick before you can add players.");
@@ -325,11 +335,22 @@ public class twbottwl extends TWBotExtension
 		}
 		if (m_gameState > 2 && !forced)
 		{
-			if (m_generalTime < 1500 || m_gameState != 4)
+			if (m_match.getMatchTypeId() == 3)
 			{
-				m_botAction.sendPrivateMessage(name, "Players may only be added before the game starts.");
-				return;
+				if (m_generalTime < (BASE_TIMER - EXTENSION_TIME) * 60)
+				{
+					m_botAction.sendPrivateMessage(name, "Players may only be added before extension expires.");
+					return;
+				}
 			}
+			else
+			{
+				if (m_generalTime < (DUEL_TIMER - EXTENSION_TIME) * 60)
+				{
+					m_botAction.sendPrivateMessage(name, "Players may only be added before extension expires.");
+					return;
+				}
+			}			
 		}
 
 		String pieces[] = message.split(":");
@@ -550,17 +571,20 @@ public class twbottwl extends TWBotExtension
 					m_botAction.warpFreqToLocation(0, 486, 256);
 					m_botAction.warpFreqToLocation(1, 538, 256);
 					m_botAction.moveToTile(513, 212);
-					m_botAction.setTimer(31);
+					m_botAction.setTimer(BASE_TIMER);
+					m_generalTime = BASE_TIMER * 60; //60 sec in a minute
 				}
 				else
-					m_botAction.setTimer(30);
+				{
+					m_botAction.setTimer(DUEL_TIMER);
+					m_generalTime = DUEL_TIMER * 60; //60 sec in a minute
+				}
 
 				m_botAction.showObject(52);
 				m_gameState = 4;
 				Calendar thisTime = Calendar.getInstance();
 				java.util.Date day = thisTime.getTime();
 				m_timeStart = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(day);
-				m_generalTime = 1800;
 				sql_startGame();
 			}
 		};
@@ -572,7 +596,6 @@ public class twbottwl extends TWBotExtension
 			{
 				public void run()
 				{
-					m_botAction.sendArenaMessage("-");
 					m_match.addTimePoint();
 					if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_TARGET))
 						do_endGame();
@@ -637,7 +660,6 @@ public class twbottwl extends TWBotExtension
 		{
 			public void run()
 			{
-				m_botAction.sendArenaMessage(".");
 				do_updateScoreBoard();
 			}
 		};
@@ -822,18 +844,8 @@ public class twbottwl extends TWBotExtension
 			return;
 		}
 		
-		int lives = m_match.subPlayer(subOut, subIn);
-		if (m_match.getMatchTypeId() != 3)
-			m_botAction.sendArenaMessage(subOut + " subbed by " + subIn + " with " + lives + " lives");
-		else
-			m_botAction.sendArenaMessage(subOut + " subbed by " + subIn);
-
-		if (m_laggers.containsKey(subOut))
-		{
-			Lagger l = (Lagger) m_laggers.get(subOut);
-			l.cancel();
-			m_laggers.remove(subOut);
-		}
+		m_botAction.scheduleTask(new SubstituteTimer(subOut, subIn), TIME_BEFORE_SUB * 1000);
+		m_botAction.sendPrivateMessage(name, "Substitution will take place in " + TIME_BEFORE_SUB + " secs");
 	}
 
 	//Switches player ships
@@ -888,8 +900,54 @@ public class twbottwl extends TWBotExtension
 			return;
 		}
 		
-		m_match.switchPlayers(pieces[0], pieces[1]);
-		m_botAction.sendArenaMessage(pieces[0] + " switched ships with " + pieces[1]);
+		m_botAction.scheduleTask(new SwitchTimer(pieces[0], pieces[1]), TIME_BEFORE_SUB * 1000);
+		m_botAction.sendPrivateMessage(name, "Switch will take place in " + TIME_BEFORE_SUB + " secs");
+	}
+	
+	private class SwitchTimer extends TimerTask
+	{
+		private String m_playerFrom;
+		private String m_playerTo;
+		
+		public SwitchTimer(String from, String to)
+		{
+			m_playerFrom = from;
+			m_playerTo = to;	
+		}
+		
+		public void run()
+		{
+			m_match.switchPlayers(m_playerFrom, m_playerTo);
+			m_botAction.sendArenaMessage(m_playerFrom + " switched ships with " + m_playerTo);
+		}
+	}
+	
+	private class SubstituteTimer extends TimerTask
+	{
+		private String m_playerOut;
+		private String m_playerIn;
+
+		public SubstituteTimer(String out, String in)
+		{
+			m_playerOut = out;
+			m_playerIn = in;
+		}
+
+		public void run()
+		{
+			int lives = m_match.subPlayer(m_playerOut, m_playerIn);
+			if (m_match.getMatchTypeId() != 3)
+				m_botAction.sendArenaMessage(m_playerOut + " subbed by " + m_playerIn + " with " + lives + " lives");
+			else
+				m_botAction.sendArenaMessage(m_playerOut + " subbed by " + m_playerIn);
+
+			if (m_laggers.containsKey(m_playerOut))
+			{
+				Lagger l = (Lagger) m_laggers.get(m_playerOut);
+				l.cancel();
+				m_laggers.remove(m_playerOut);
+			}
+		}
 	}
 
 	public void do_listPlayers(String name, String message)
@@ -943,6 +1001,13 @@ public class twbottwl extends TWBotExtension
 			m_botAction.setFreq(name, m_match.getPlayer(name).getFreq());
 			return;
 		}
+		
+		//put a limit on when a player can get back in 
+		if (m_match.getPlayer(name).getTimeSinceLagout() < TIME_BEFORE_LAGOUT)
+		{
+			m_botAction.sendPrivateMessage(name, "You still have " + (TIME_BEFORE_LAGOUT - m_match.getPlayer(name).getTimeSinceLagout()) + " secs before you can get back in");
+		}
+		
 		if (m_laggers.containsKey(name))
 		{
 			Lagger l = (Lagger) m_laggers.get(name);
@@ -1057,11 +1122,15 @@ public class twbottwl extends TWBotExtension
         Player player = m_botAction.getPlayer(event.getPlayerID());
 		int freq = player.getFrequency();
 
-		m_botAction.sendArenaMessage("flagclaimed by: " + player.getPlayerName());
-	
 		if (m_gameState != 4)
 			return;		
-	
+
+		//trying to grab flag for the freq the flag was claimed on
+		int specFreq = m_botAction.getFuzzyPlayer(m_botAction.getBotName()).getFrequency();
+		m_botAction.setFreq(m_botAction.getBotName(), freq);
+		m_botAction.grabFlag(event.getFlagID());
+		m_botAction.setFreq(m_botAction.getBotName(), specFreq);
+		
 		m_match.setFlagOwner(freq);
 		m_match.getPlayer(player.getPlayerName()).reportStatistic(Statistics.FLAG_CLAIMED);
 	}
@@ -1333,15 +1402,9 @@ public class twbottwl extends TWBotExtension
 				return;
 
 			String output;
-			if (m_match.getPlayer(name).getTimeBetweenLagouts() < 10)
-			{
-				output = name + " lagged out or specced, he/she has 3 minutes to return. This was NOT recorded as a lagout.";
-			}
-			else
-			{
-				output = name + " lagged out or specced, he/she has 3 minutes to return";
-				m_match.getPlayer(name).addLagout();
-			}
+			output = name + " lagged out or specced, he/she has " + LAGOUT_LIMIT + " minutes to return";
+			m_match.getPlayer(name).addLagout();
+
 			m_match.getPlayer(name).laggedOut();
 			m_botAction.sendPrivateMessage(m_match.getRef(), output);
 			m_botAction.sendSquadMessage(m_match.getTeamName(name), output);
@@ -1360,7 +1423,7 @@ public class twbottwl extends TWBotExtension
 				}
 				m_laggers.put(p.getPlayerName(), new Lagger(p.getPlayerName(), m_match, m_laggers));
 				Lagger l = (Lagger) m_laggers.get(p.getPlayerName());
-				m_botAction.scheduleTask(l, 180000);
+				m_botAction.scheduleTask(l, LAGOUT_LIMIT * 60000);// 60000 is the number of milliseconds in a minute
 			}
 		}
 	}
@@ -1383,15 +1446,9 @@ public class twbottwl extends TWBotExtension
 			return;
 
 		String output;
-		if (m_match.getPlayer(name).getTimeBetweenLagouts() < 10)
-		{
-			output = name + " lagged out or specced, he/she has 3 minutes to return. This was NOT recorded as a lagout.";
-		}
-		else
-		{
-			output = name + " lagged out or specced, he/she has 3 minutes to return";
-			m_match.getPlayer(name).addLagout();
-		}
+		output = name + " lagged out or specced, he/she has " + LAGOUT_LIMIT + " minutes to return";
+		m_match.getPlayer(name).addLagout();
+
 		m_match.getPlayer(name).laggedOut();
 		m_botAction.sendPrivateMessage(m_match.getRef(), output);
 		m_botAction.sendSquadMessage(m_match.getTeamName(name), output);
@@ -1410,7 +1467,7 @@ public class twbottwl extends TWBotExtension
 			}
 			m_laggers.put(p.getPlayerName(), new Lagger(p.getPlayerName(), m_match, m_laggers));
 			Lagger l = (Lagger) m_laggers.get(p.getPlayerName());
-			m_botAction.scheduleTask(l, 180000);
+			m_botAction.scheduleTask(l, LAGOUT_LIMIT * 60000); // 60000 is the number of milliseconds in a minute
 		}
 
 	}
@@ -1495,6 +1552,16 @@ public class twbottwl extends TWBotExtension
 			{
 				sql_saveGameState(message);
 			}
+		}
+		else if (event.getMessageType() == Message.PUBLIC_MESSAGE || event.getMessageType() == Message.PUBLIC_MACRO_MESSAGE)
+		{
+			if (m_gameState == 4)
+				if (m_match.blueOut())
+				{
+		            String name = m_botAction.getPlayerName(event.getPlayerID());
+		            m_botAction.sendUnfilteredPublicMessage("?cheater " + name + " talking in blueout: " + name + "> " + event.getMessage());
+    		        m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*warn Do not talk during blueout!");
+				}
 		}
 	}
 
