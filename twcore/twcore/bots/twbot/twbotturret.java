@@ -1,6 +1,6 @@
 package twcore.bots.twbot;
 
-//Attach Regulation TWBotExtension by D1st0rt v1.3
+//Attach Regulation TWBotExtension by D1st0rt v1.4
 
 import twcore.core.*;
 
@@ -47,7 +47,10 @@ public class twbotturret extends TWBotExtension
 		}
 		else //Detaching
 			if(warpBack)
+			{
 				m_botAction.sendUnfilteredPrivateMessage(tID,"*prize #7"); //prizes "warp!"
+				m_botAction.sendUnfilteredPrivateMessage(tID,"*prize #-13"); //takes away their energy
+			}
 	}
 
 	//The easy stuff, rule manipulation
