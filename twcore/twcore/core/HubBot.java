@@ -170,7 +170,7 @@ public class HubBot extends SubspaceBot
 	public void handleListBotTypes(String messager, String message)
 	{
 
-		if (m_botAction.getOperatorList().isHighmod(messager) == true)
+		if (m_botAction.getOperatorList().isSmod(messager) == true)
 		{
 			m_botQueue.listBotTypes(messager);
 		}
