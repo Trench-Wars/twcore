@@ -623,19 +623,6 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String queryCheck = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
-		try {
-			ResultSet results = m_botAction.SQLQuery("local", queryCheck);
-			if(results.next())
-			{
-				String player = results.getString("fcName");
-				if(!player.toLowerCase().equals(name))
-				{
-					m_botAction.sendSmartPrivateMessage(name, "That is not your message.");
-					return;
-				}
-			}
-		} catch(Exception e) { Tools.printStackTrace(e); }
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+name+"\" AND fnID = " + messageNumber;
 		try{
 			ResultSet results = m_botAction.SQLQuery("local", query);
@@ -670,19 +657,6 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String queryCheck = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
-		try {
-			ResultSet results = m_botAction.SQLQuery("local", queryCheck);
-			if(results.next())
-			{
-				String player = results.getString("fcName");
-				if(!player.toLowerCase().equals(name))
-				{
-					m_botAction.sendSmartPrivateMessage(name, "That is not your message.");
-					return;
-				}
-			}
-		} catch(Exception e) { Tools.printStackTrace(e); }
 		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
@@ -707,19 +681,6 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String queryCheck = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
-		try {
-			ResultSet results = m_botAction.SQLQuery("local", queryCheck);
-			if(results.next())
-			{
-				String player = results.getString("fcName");
-				if(!player.toLowerCase().equals(name))
-				{
-					m_botAction.sendSmartPrivateMessage(name, "That is not your message.");
-					return;
-				}
-			}
-		} catch(Exception e) { Tools.printStackTrace(e); }
 		String query = "DELETE FROM tblMessageSystem WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
