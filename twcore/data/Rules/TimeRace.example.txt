@@ -75,8 +75,8 @@ C2SPloss=5
 
 WeaponPloss=9
 
-SlowS2C=5
-SlowC2S=5
+SlowS2C=7
+SlowC2S=7
 
 Med=90
 SpikeCount=5
