@@ -21,13 +21,14 @@ captainsfixed=0
 maxping=700
 captain_can_start_game=1
 waitafterlagout=15
-specialaccess=arrogance <ZH>:Mantra-Slider:Yojo:Adman:Microstar:Divine Rides:warportal:Nockm:greven:fit of rage:zerzera:rodge <ZH>:force of nature:stabwound
+specialaccess=Adman:Microstar:Divine Rides:warportal:Nockm:greven:fit of rage:zerzera:force of nature:stabwound:nrg:Legionair:nethila:buja x:credit account:se><plosion:rz:da1andonly:fizzy:flared
 
 # assign the maximum number of ships allowed per shiptype.
 # -1 indicates that the ship is NOT allowed
 maxship5=1
 maxship8=2
 maxship4=-1
+maxship6=-1
 
 squadjoined=0
 

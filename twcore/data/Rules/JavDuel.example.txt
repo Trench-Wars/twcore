@@ -1,6 +1,6 @@
 [General]
 name=Javelin Dueling
-specialaccess=Rule,Force of Nature
+specialaccess=Rule:Force of Nature:ice storm:flared:Hydride:Sweeper:Detain:Spencer G:Cursory
 arena=javduel,javduel2,javduel3
 ship=2
 players=5

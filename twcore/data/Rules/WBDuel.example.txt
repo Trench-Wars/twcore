@@ -1,6 +1,6 @@
 [General]
 name=Warbird dueling
-specialaccess=Rule,Force of Nature:jebass:duclover
+specialaccess=Rule,Force of Nature:jebass:duclover:death row:antirice:nrg:bailey:dens:Ice Storm:killer soldier:amputate:lance:rund:flared:Due:Detain:ToK:veterin:veterin:cursory:selode:Azhar
 arena=wbduel,wbduel2,wbduel3
 ship=1
 players=5
