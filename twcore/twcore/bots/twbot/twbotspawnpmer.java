@@ -39,6 +39,7 @@ public class twbotspawnpmer extends TWBotExtension
             throw new IllegalArgumentException( "SpawnPMer module is already enabled." );
         enabled = true;
         controller = sender;
+        m_botAction.sendSmartPrivateMessage(sender,"SpawnPMer enabled.");
     }
 
     public void doAntiSpawnOffCmd( String sender )
@@ -48,12 +49,13 @@ public class twbotspawnpmer extends TWBotExtension
         enabled = false;
         controller = null;
         times.clear();
+        m_botAction.sendSmartPrivateMessage(sender,"SpawnPMer disabled.");
     }
 
     public void doNotifyStatusCmd( String sender )
     {
         m_botAction.sendSmartPrivateMessage( sender, "SpawnPMer module currently: " + (enabled ? "ON":"OFF") );
-        m_botAction.sendSmartPrivateMessage( sender,"Delay set at: " + (safeTime / 1000) + " seconds" );
+        m_botAction.sendSmartPrivateMessage( sender,"Delay set at: " + ((float)safeTime / 1000) + " seconds" );
         if ( enabled )
             m_botAction.sendSmartPrivateMessage( sender, "Controller is " + controller );
     }
@@ -70,7 +72,7 @@ public class twbotspawnpmer extends TWBotExtension
         }
         catch(NumberFormatException e)
         {
-            throw new NumberFormatException( "Please use the following format: !SafeTime <Time>" );
+            throw new NumberFormatException( "Please use the following format: !SpawnPMTime <Time>" );
         }
     }
 
@@ -80,13 +82,13 @@ public class twbotspawnpmer extends TWBotExtension
 
         try
         {
-            if ( command.toLowerCase().equals( "!spawnpm on" ) )
+            if ( command.equals( "!spawnpm on" ) )
                 doAntiSpawnOnCmd( sender );
-            if ( command.toLowerCase().equals( "!spawnpm off" ) )
+            if ( command.equals( "!spawnpm off" ) )
                 doAntiSpawnOffCmd( sender );
-            if ( command.toLowerCase().equals( "!spawnpm status" ) )
+            if ( command.equals( "!spawnpm status" ) )
                 doNotifyStatusCmd( sender );
-            if ( command.toLowerCase().startsWith( "!spawnpmtime " ) )
+            if ( command.startsWith( "!spawnpmtime " ) )
                 doSafeTimeCmd( sender, message.substring( 13 ) );
         }
             catch( Exception e )
@@ -114,12 +116,16 @@ public class twbotspawnpmer extends TWBotExtension
             Player killer = m_botAction.getPlayer( event.getKillerID() );
             if ( player.getFrequency() != killer.getFrequency() )
             {
+
                 long time = System.currentTimeMillis();
-                long difference = time - ( (Long)times.get( player ) ).longValue();
-                if ( times.containsKey( player ) && difference <= safeTime )
+
+                if ( times.get( player ) != null )
                 {
-                    difference /= 1000;
-                    m_botAction.sendSmartPrivateMessage( controller, player.getPlayerName() + " spawned by " + killer.getPlayerName() + ": " + difference + " seconds." );
+                    long difference = time - ( (Long)times.get( player ) ).longValue();
+                    if ( times.containsKey( player ) && difference <= safeTime )
+                    {
+                        m_botAction.sendSmartPrivateMessage( controller, player.getPlayerName() + " spawned by " + killer.getPlayerName() + ": " + ((float)difference / 1000) + " seconds." );
+                    }
                 }
 
                 times.put( player, new Long(time) );
