@@ -1,18 +1,13 @@
 /*
 * twbotballspec.java - BallSpec Module - qan (gdugwyler@hotmail.com)
 *
-* Created 6/09/2004 - Last modified 7/14/04
+* Created 6/09/2004 - Last modified 3/05/05
 *
 *
 *
-* (SHOULD HAVE) two game modes:
 *
-*   1) Only 1 player, the Eliminator, can touch the ball.  Anyone else who
-*      touches it is specced.  Last man standing wins.
-*
-*   ** NOT WORKING ** (MERVBot might do it, but currently TWBot can't)
-*   2) Ball can be touched only when not moving.  If you grab it while it's
-*      still moving, you'll be specced.  Last man standing wins.
+*      Only 1 player, the Eliminator, can touch the ball.  Anyone else who
+*      touches it is specced.  Last person standing wins.
 *
 */
 
@@ -27,7 +22,7 @@ import twcore.core.*;
  * eliminator, who is the only person allowed to touch the ball -- everyone
  * else is spec'd when they do so.  Last remaining besides eliminator wins.
  *
- * @version 1.41
+ * @version 1.6
  * @author qan
  */
 public class twbotballspec extends TWBotExtension {
@@ -36,19 +31,32 @@ public class twbotballspec extends TWBotExtension {
     }
 
 
-    // Misc data
+    // Bot stats
+    final static String f_version = "1.6";         // Version of bot
+    final static String f_modified = "7/25/04";    // Date of last modification
 
+
+    // Final declarations
+    final static int f_5seconds = 5000;      // 5000ms / 5 seconds
+    final static int f_specship = 0;         // the ship number representing spec
+    final static int f_startcmdlength = 7;   // number of chars before param in a !start cmd
+    final static int f_elimmsgcount = 9;     // total # elimination msgs
+
+    // Misc data
     TimerTask startGame;
     TimerTask giveStartWarning;
 
-    int m_eliminator_ID = -1;    // ID of THE ELIMINATOR (dun dun dun!)
-    int m_lastelim_ID = -1;      // ID of the person last eliminated
+    // Not using IDs as of 1.5 because they can change in the course of a game
+    String m_eliminator = "";  // Name of THE ELIMINATOR (dun dun dun!)
+    String m_lastelim = "";    // Name of the person last eliminated
     boolean isRunning = false;
+    boolean manual = false;
 
 
 
     /** Handles event received message, and if from an ER or above, 
-     * tries to parse it as a command.
+     * tries to parse it as an event mod command.  Otherwise, parses
+     * as a general command.
      * @param event Passed event.
      */
     public void handleEvent( Message event ){
@@ -56,9 +64,10 @@ public class twbotballspec extends TWBotExtension {
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
-
             if( m_opList.isER( name ))
                 handleCommand( name, message );
+            else
+                handleGeneralCommand( name, message );
         }
     }
 
@@ -90,11 +99,6 @@ public class twbotballspec extends TWBotExtension {
     */
    public void doInit() {
 
-
-        m_botAction.sendArenaMessage( "RULES: One person is designated to be the Eliminator, the only person who can touch the ball.  Anyone else touching it will be specced!" );
-        m_botAction.sendArenaMessage( "OBJECTIVE: Last person alive (excluding Eliminator) is declared the winner, and becomes the Eliminator in the next round." );
-
-
         startGame = new TimerTask() {
             public void run() {
                 if( isRunning == false ) {
@@ -103,25 +107,35 @@ public class twbotballspec extends TWBotExtension {
                     m_botAction.shipResetAll();
                     m_botAction.scoreResetAll();
 
-                    m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=1" );
                     m_botAction.sendArenaMessage( "GO GO GO !!", 104 );
+                    m_botAction.sendArenaMessage( m_eliminator + " is the Eliminator.  Run for your life!", 104 );
+
                 }
                 
             }
         };
-        m_botAction.scheduleTask( startGame, 15000 );
 
+        if( manual ) {
+            isRunning = true;
+            m_botAction.shipResetAll();
+            m_botAction.scoreResetAll();
 
-        // Wait 5 seconds before giving 10 seconds so players can read rules
-        giveStartWarning = new TimerTask() {
-            public void run() {
-                m_botAction.sendArenaMessage( "10 seconds until game begins...", 2);
-            }
-        };
-        m_botAction.scheduleTask( giveStartWarning, 5000 );
+        } else {
+           displayRules();    // show formatted rules
 
+           // Wait 5 seconds before giving 10 seconds so players can read rules
+            giveStartWarning = new TimerTask() {
+                public void run() {
+                    m_botAction.sendArenaMessage( "10 seconds until game begins...", 2);
+                }
+            };
+
+            m_botAction.scheduleTask( giveStartWarning, f_5seconds );
+            m_botAction.scheduleTask( startGame, 3 * f_5seconds );
+        }
 
     }
+
 
 
     /** Handles all commands given to the bot.
@@ -133,16 +147,18 @@ public class twbotballspec extends TWBotExtension {
         if( message.startsWith( "!stop" )){
             if( isRunning == true ) {
                 m_botAction.sendPrivateMessage( name, "BallSpec mode stopped." );
+                m_eliminator = "";
+                m_lastelim = "";
                 isRunning = false;
             } else
                 m_botAction.sendPrivateMessage( name, "BallSpec mode is not currently running." );
 
         } else if( message.startsWith( "!start " )){
             if( isRunning == false ) {
-                Player p = getPlayerFromParam( message, 7 );
+                Player p = getPlayerFromParam( message, f_startcmdlength );
 
                 if( p != null ) {
-                    m_eliminator_ID = p.getPlayerID();
+                    m_eliminator = p.getPlayerName();
                     m_botAction.sendPrivateMessage( name, "BallSpec mode started." );
                     m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=0" );
                     doInit();
@@ -154,12 +170,61 @@ public class twbotballspec extends TWBotExtension {
                 m_botAction.sendPrivateMessage( name, "BallSpec mode is already running." );
 
         } else if( message.startsWith( "!rules" )) {
-            m_botAction.sendArenaMessage( "RULES: One person is designated to be the Eliminator, the only person who can touch the ball.  Anyone else touching it will be specced!" );
-            m_botAction.sendArenaMessage( "OBJECTIVE: Last person alive (excluding Eliminator) is declared the winner, and becomes the Eliminator in the next round." );
+             displayRules();
+             
+        } else if( message.startsWith( "!balls " )) {
+            String[] parameters = Tools.stringChopper( message.substring( 8 ), ' ' );                
+            try {
+                int numballs = Integer.parseInt(parameters[0]);
+                m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=" + numballs );
+                m_botAction.sendPrivateMessage( name, "Ball count set to " + numballs + "." );                
+            } catch ( Exception e ) {
+                m_botAction.sendPrivateMessage( name, "Invalid input.  Please give a number." );
+            }
 
-        }
+        } else if( message.startsWith( "!manual" )) {
+            if( manual ) {
+                manual = false;
+                m_botAction.sendPrivateMessage( name, "Manual OFF.  !start will now do most of the work for you." );
+            } else {
+                manual = true;
+                m_botAction.sendPrivateMessage( name, "Manual OFF.  !start won't display rules, give 10 seconds, say GO, etc." );
+            }
+
+        } else
+            handleGeneralCommand( name, message );    // pass the buck
+
 
     }
+
+
+
+    /** Handles all general commands given to the bot.
+     * @param name Name of player who sent the command.
+     * @param message Message sent
+     */
+    public void handleGeneralCommand( String name, String message ) {
+        // Prevent double !help spam (don't be TOO helpful)
+        if( message.startsWith( "!bothelp" ) )
+            sendHelp( name );
+
+        else if( message.equals( "!whoiselim" ) ) {
+            if( isRunning )
+                m_botAction.sendPrivateMessage( name, "The Eliminator is " + m_eliminator + "." );
+            else
+                m_botAction.sendPrivateMessage( name, "Game not currently running." );
+
+        } else if( message.startsWith( "!botrules" ) )
+            sendRules( name );
+
+        else if( message.startsWith( "!about" ) )
+            sendAbout( name );
+
+        else if( message.equals( "!help" ) )
+            m_botAction.sendPrivateMessage( name, "Send !bothelp for help on the loaded bot module." );
+
+    }
+
 
 
     /** Handles player changing ship/freq events.  If we are down to the last 3 players,
@@ -169,7 +234,7 @@ public class twbotballspec extends TWBotExtension {
      */
     public void handleEvent( FrequencyShipChange event ) {
        
-        if( event.getShipType() == 0 && isRunning ) {
+        if( event.getShipType() == f_specship && isRunning ) {
 
             int numPlayers = 0;
             Iterator i = m_botAction.getPlayingPlayerIterator();
@@ -189,11 +254,13 @@ public class twbotballspec extends TWBotExtension {
                     // If the "winner" we're getting is the one who's being spec'd
                     // or the eliminator, get next
 
-                    if( winner.getPlayerID() == m_eliminator_ID )
+                    if( m_eliminator.equals( winner.getPlayerName() ) )
                         winner = (Player) i2.next();
 
                     m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " has escaped the wrath of the Eliminator and won the game!",5);
                     m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=0" );
+                    m_eliminator = "";
+                    m_lastelim = "";
                     isRunning = false;
 
                 } catch (Exception e) {
@@ -211,71 +278,128 @@ public class twbotballspec extends TWBotExtension {
      */
     public void handleEvent( BallPosition event ){
 
-        int pID; 
         Player p;
         int numPlayers = 0;
         Iterator i;
+        String pname;
 
         if( isRunning ) {
-            pID = event.getPlayerID();
-            p = m_botAction.getPlayer( pID );
+            p = m_botAction.getPlayer( event.getPlayerID() );
+            pname = m_botAction.getPlayerName( event.getPlayerID() );
 
             // Mode 1 check (w/ Eliminator)
-            if( m_eliminator_ID != -1) {
+            if( m_eliminator != "" ) {
 
                 // If you have the ball and are not the eliminator, you are specced
                 // (Also check if someone was just elim'd so there's no spam)
-                if ( p != null && m_eliminator_ID != pID && m_lastelim_ID != pID) {
+                if ( p != null && !( m_eliminator.equals( pname ) )
+                               && !( m_lastelim.equals( pname ) ) ) {
                     
-                    switch( p.getPlayerID() % 9 ) {
+                    switch( p.getPlayerID() % f_elimmsgcount ) {
                     case 0:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been obliterated by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been obliterated by the Eliminator!" );
                         break;
                     case 1:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been massacred by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been massacred by the Eliminator!" );
                         break;
                     case 2:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been destroyed by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been destroyed by the Eliminator!" );
                         break;
                     case 3:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been eviscerated by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been eviscerated by the Eliminator!" );
                         break;
                     case 4:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been decimated by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been decimated by the Eliminator!" );
                         break;
                     case 5:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been ...eliminated... by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been ...eliminated... by the Eliminator!" );
                         break;
                     case 6:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been violated by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been violated by the Eliminator!" );
                         break;
                     case 7:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been skewered by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been skewered by the Eliminator!" );
                         break;
                     case 8:
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( pID) + " has been ravaged by the Eliminator!" );
+                        m_botAction.sendArenaMessage( pname + " has been ravaged by the Eliminator!" );
                         break;
                     }
 
-                    m_botAction.spec( pID );
-                    m_botAction.spec( pID );
-                    m_lastelim_ID = pID;
+                    m_botAction.spec( pname );
+                    m_botAction.spec( pname  );
+                    m_lastelim = pname;
                 }             
             }
 
-
-
-            // Mode 2 (w/o Eliminator)
-            // NOT YET POSSIBLE W/ TWCORE (BALLPOSITION IS NOT ADEQUATE)
-
-            // Conclusion: since BallPosition fires only when the ball is moved,
-            //             you have to cleverly check position regularly and
-            //             record it until there is no movement.  However, you
-            //             will never get two BallPosition events firing w/ the
-            //             same coord (stopped) b/c it requires movement.  Thus
-            //             it won't currently work.
-
         }
+    }
+
+
+
+    // DISPLAY/INFO SECTION -- a handy layout.  To use, replace your module's
+    // handleEvent for Message events with the one in here, create f_version
+    // and f_lastmodified final static variables as seen above, copy/paste
+    // the handleGeneralCommand method, and copy/paste/edit the following
+    // methods below.  Makes a module much more user-friendly.
+
+    /** Displays the rules of the event module in readable form.
+     */
+    public void displayRules() {
+        String[] rules = getRules();
+        for( int i = 0; i < rules.length; i++ )
+            m_botAction.sendArenaMessage( rules[i] );
+    }
+
+
+
+    /** Sends rules privately to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendRules( String name ) {
+        m_botAction.privateMessageSpam( name, getRules() );
+    }
+
+
+
+    /** Sends about message to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendAbout(String name) {
+        String about = "Ball Elimination module, v" + f_version + ".  Created by qan.  Last modified " + f_modified;
+        m_botAction.sendPrivateMessage( name, about );
+    }
+
+
+
+    /** Sends general help to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendHelp( String name ) {
+        String[] help = {
+            "General Help for Ball Elimination Module",
+            "!whoiselim   - Tells you the name of the Eliminator.",
+            "!botrules    - Display built-in rules via private message.",
+            "!about       - Gives basic information about the bot module.",
+            "!bothelp     - This message."
+        };
+        m_botAction.privateMessageSpam( name, help );
+    }
+
+
+
+    /** Returns rules.
+     * @return A string array containing rules for this bot.
+     */
+    public String[] getRules() {
+        String[] rules = {
+          // | Max line length for rules to display correctly on 800x600.....................|
+            ".....              - RULES of BALL ELIMINATION -              .....",
+            "...  Only the Eliminator, chosen at start, can touch the ball.  ...",
+            "..   Anyone else is specced instantly if they touch it!          ..",
+            ".                          - OBJECTIVE -                          .",
+            ".    Escape from the Eliminator!  Last person standing wins.      ."
+        };
+        return rules;
     }
 
 
@@ -287,13 +411,15 @@ public class twbotballspec extends TWBotExtension {
         String[] ballspecHelp = {
             "!start <name>       - Starts BallSpec mode w/ <name> as Eliminator.",
             "!stop               - Ends BallSpec mode.",
-            "!rules              - Displays basic rules of BallSpec mode to the arena."
+            "!rules              - Displays basic rules of BallSpec mode to the arena.",
+            "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)",
+            "!bothelp            - Displays help on commands for players."
         };
         return ballspecHelp;
     }
 
 
-
+    
     /** (blank method)
      */
     public void cancel() {
