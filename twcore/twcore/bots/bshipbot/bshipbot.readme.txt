@@ -1,0 +1,48 @@
+Battleship Bot v2.5
+
+*****Info*****
+Made for ?go battleship in Trench
+Features:
+ - Regulates attaching of ships
+ - Hosts battleship games
+ - Manipulates LVZ to simulate day/night (night mode) 
+ 
+*****Hosting*****
+The first thing you need to do is make sure everyone who is playing is
+in the arena. Then teams need to be set up. You can do this manually, 
+or random with !teams <number of teams to make>. Once teams have been
+established, place everyone in the proper ships using !setup. Again, 
+if you want to change the ship numbers of people around you can do it
+manually, but after you !setup. Make sure the number of capital ships
+is the same. Once you are ready to begin, !start the game and sit back
+watching as they are warped to the arena to duke it out. If anything 
+happens where a capital ship leaves a team without dying, you can
+subtract one from the remaining ships counter with !remove <frequency>
+
+*****Files*****
+bshipbot.java
+bshipbot.cfg
+
+*****Commands*****
+!about		About this bot
+!allowed	Displays who is allowed to attach to who
+!quit		For people that want to leave, but have low energy
+!remaining	During a game, how many capital ships are left on each team
+!rules		Rules of the game
+
+<ZH>
+!go <arena>	Sends bot to <arena>
+!die		Terminates bot
+
+<ER>
+!say <message>	Makes bot say msg
+!setup <#>	Sets up game (#teams)
+!start		Starts game once it has been set up
+!stop		Stop any part of game
+!remove <team>	Remaining -1 for team (manual override if somebody leaves)
+!teams <#>	Makes # random teams
+!sethour <#>	Set game time to # (nightmode, 0-23)
+!night <on/off>	Turns night mode on or off (no parameter = status)
+
+*******************
+D1st0rt (d1st0rter@gmail.com)
