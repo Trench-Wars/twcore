@@ -1880,5 +1880,13 @@ public class BotAction
     public void setPlayerPositionUpdating( int milliseconds ) {
     	m_arenaTracker.setPlayerPositionUpdateDelay( milliseconds );
     }
+    
+    /** Sets the bots personal banner
+     * @param _banner A byte array containing the banner data
+     */
+    public void setBanner( byte[] _banner ) {
+    	
+    	m_packetGenerator.sendBannerPacket( _banner );
+    }
 
 }
