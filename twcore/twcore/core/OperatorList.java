@@ -22,7 +22,7 @@ public class OperatorList {
     }
 
     public Map getList() {
-    	return m_accessList;
+        return m_accessList;
     }
 
     int getAccessLevel( String name ){

@@ -86,27 +86,27 @@ public abstract class SubspaceBot {
     }
     
     public void handleEvent( FlagPosition event ){
-		Tools.printLog( m_botAction.getBotName() + ": FlagPosition event ignore" );
-	}
+        Tools.printLog( m_botAction.getBotName() + ": FlagPosition event ignore" );
+    }
 
     public void handleEvent( FlagClaimed event ) {
-    	Tools.printLog( m_botAction.getBotName() + ": FlagClaimed event not handled; ignored" );
+        Tools.printLog( m_botAction.getBotName() + ": FlagClaimed event not handled; ignored" );
     }
 
     public void handleEvent( FlagDropped event ){
-		Tools.printLog( m_botAction.getBotName() + ": FlagDropped event not handled; ignored" );
+        Tools.printLog( m_botAction.getBotName() + ": FlagDropped event not handled; ignored" );
     }  
     
     public void handleEvent( SoccerGoal event ) {
-    	Tools.printLog( m_botAction.getBotName() + ": SoccerGoal event not handled; ignored" );
+        Tools.printLog( m_botAction.getBotName() + ": SoccerGoal event not handled; ignored" );
     }
 
     public void handleEvent( BallPosition event ) {
-    	Tools.printLog( m_botAction.getBotName() + ": BallPosition event not handled; ignored" );
+        Tools.printLog( m_botAction.getBotName() + ": BallPosition event not handled; ignored" );
     }
     
     public void handleEvent( Prize event ) {
-    	Tools.printLog( m_botAction.getBotName() + ": Prize event not handled; ignored" );
+        Tools.printLog( m_botAction.getBotName() + ": Prize event not handled; ignored" );
     }
 
     public void handleEvent( LoggedOn event ){

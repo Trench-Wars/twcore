@@ -363,7 +363,7 @@ public class BotAction
             firstChar = message.charAt(0);
             if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')
             {
-            	m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
+                m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
             }
         }
     }
@@ -572,32 +572,32 @@ public class BotAction
      */
     public void createRandomTeams(int teamSize)
     {
-		StringBag plist = new StringBag();
-		int freq = 0;
-		String name;
+        StringBag plist = new StringBag();
+        int freq = 0;
+        String name;
 
-		//stick all of the players in randomizer
-		Iterator i = m_arenaTracker.getPlayingPlayerIterator();
-		while(i.hasNext())
-			plist.add(((Player)i.next()).getPlayerName());
+        //stick all of the players in randomizer
+        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        while(i.hasNext())
+            plist.add(((Player)i.next()).getPlayerName());
 
-		while(!plist.isEmpty() && freq > -1)
-		{
-			for(int x = 0; x < teamSize; x++)
-			{
-				name = plist.grabAndRemove();
-				if(name != null)
-					setFreq(name, freq);
-				else
-				{
-					freq = -2;
-					break;
-				}
-			}
-			freq++; //that freq is done, move on to the next
-		}
+        while(!plist.isEmpty() && freq > -1)
+        {
+            for(int x = 0; x < teamSize; x++)
+            {
+                name = plist.grabAndRemove();
+                if(name != null)
+                    setFreq(name, freq);
+                else
+                {
+                    freq = -2;
+                    break;
+                }
+            }
+            freq++; //that freq is done, move on to the next
+        }
 
-	}
+    }
 
     /** Creates a certain number of random teams from non-specced players
      * Starts with freq 0, goes up to number specified - 1, in an even distribution
@@ -605,26 +605,26 @@ public class BotAction
      */
     public void createNumberOfTeams(int howMany)
     {
-		StringBag plist = new StringBag();
-		int current = 0;
-		howMany -= 1;
-		String name;
+        StringBag plist = new StringBag();
+        int current = 0;
+        howMany -= 1;
+        String name;
 
-		//stick all of the players in randomizer
-		Iterator i = m_arenaTracker.getPlayingPlayerIterator();
-		while(i.hasNext())
-			plist.add(((Player)i.next()).getPlayerName());
+        //stick all of the players in randomizer
+        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        while(i.hasNext())
+            plist.add(((Player)i.next()).getPlayerName());
 
-		//assign players to teams
-		while(!plist.isEmpty())
-		{
-			if(current > howMany)
-				current = 0;
-			name = plist.grabAndRemove();
-			setFreq(name,current);
-			current++;
-		}
-	}
+        //assign players to teams
+        while(!plist.isEmpty())
+        {
+            if(current > howMany)
+                current = 0;
+            name = plist.grabAndRemove();
+            setFreq(name,current);
+            current++;
+        }
+    }
 
     /** Issues a /*spec command to the player supplied by the parameter.  Note that in
      * most cases the command must be issued twice, just as in the game.
@@ -824,7 +824,7 @@ public class BotAction
      */
     public void specificPrize(String playerName, int prizeNum)
     {
-		sendUnfilteredPrivateMessage(playerName, "*prize #" + prizeNum);
+        sendUnfilteredPrivateMessage(playerName, "*prize #" + prizeNum);
     }
 
 
@@ -1974,12 +1974,12 @@ public class BotAction
 
      /** Turns automatic player position updating on and off. By default it is off.
      * @param milliseconds - specified time to update player positions at
-     * 0 	 : turns tracking off and has the bot spectate its current area
+     * 0      : turns tracking off and has the bot spectate its current area
      * <200  : turns tracking on with 200 ms change rate
      * >=200 : turns tracking on with specified rate
      */
     public void setPlayerPositionUpdating( int milliseconds ) {
-    	m_arenaTracker.setPlayerPositionUpdateDelay( milliseconds );
+        m_arenaTracker.setPlayerPositionUpdateDelay( milliseconds );
     }
 
     /** Sets the bots personal banner
@@ -1987,6 +1987,6 @@ public class BotAction
      */
     public void setBanner( byte[] _banner ) {
 
-    	m_packetGenerator.sendBannerPacket( _banner );
+        m_packetGenerator.sendBannerPacket( _banner );
     }
 }

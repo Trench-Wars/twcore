@@ -197,31 +197,31 @@ public class ByteArray {
     }
     
     public void addPaddedString( String str, int totalLength ){
-		if( str == null ){
-			repeatAdd( 0x0, totalLength );
-		} else {
-			byte[] bytearr = str.getBytes();
+        if( str == null ){
+            repeatAdd( 0x0, totalLength );
+        } else {
+            byte[] bytearr = str.getBytes();
         
-			System.arraycopy( bytearr, 0, m_array, m_pointer, bytearr.length );
-			m_pointer += bytearr.length;
+            System.arraycopy( bytearr, 0, m_array, m_pointer, bytearr.length );
+            m_pointer += bytearr.length;
         
-			if( totalLength > str.length() ){
-				repeatAdd( 0x0, totalLength - str.length() );
-			}
-		}
+            if( totalLength > str.length() ){
+                repeatAdd( 0x0, totalLength - str.length() );
+            }
+        }
     }
     
     public void addPaddedString( String str, int index, int totalLength ){
-		if( str == null ){
-			repeatAdd( 0x0, totalLength, index );
-		} else {
-			byte[] bytearr = str.getBytes();
+        if( str == null ){
+            repeatAdd( 0x0, totalLength, index );
+        } else {
+            byte[] bytearr = str.getBytes();
         
-			System.arraycopy( bytearr, 0, m_array, index, bytearr.length );
-			if( totalLength > str.length() ){
-				repeatAdd( 0x0, totalLength - str.length(), index );
-			}
-		}
+            System.arraycopy( bytearr, 0, m_array, index, bytearr.length );
+            if( totalLength > str.length() ){
+                repeatAdd( 0x0, totalLength - str.length(), index );
+            }
+        }
     }
     
     public void addByteArray( ByteArray byteArray ){

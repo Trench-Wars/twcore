@@ -95,13 +95,13 @@ public class Arena {
     }
     
     public Iterator getFlagIDIterator() {
-    	
-    	return m_flagIDList.values().iterator();
+        
+        return m_flagIDList.values().iterator();
     }
     
     public Flag getFlag( int flagID ) {
-    	
-    	return (Flag)m_flagIDList.get( new Integer( flagID ) );
+        
+        return (Flag)m_flagIDList.get( new Integer( flagID ) );
     }
     
     public Player getPlayer( int playerID ){
@@ -335,45 +335,45 @@ public class Arena {
     }
     
     public void processEvent( FlagPosition message ) {
-    	Flag flag;
-    	if( !m_flagIDList.containsKey( new Integer( message.getFlagID() ) ) ) {
-    		flag = new Flag( message );
-    		m_flagIDList.put( new Integer( message.getFlagID() ), flag );
-    	} else
-    		flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
-    		
-    	flag.processEvent( message );
+        Flag flag;
+        if( !m_flagIDList.containsKey( new Integer( message.getFlagID() ) ) ) {
+            flag = new Flag( message );
+            m_flagIDList.put( new Integer( message.getFlagID() ), flag );
+        } else
+            flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
+            
+        flag.processEvent( message );
     }
     
     public void processEvent( FlagClaimed message ) {
-    	Flag flag;
-    	if( !m_flagIDList.containsKey( new Integer( message.getFlagID() ) ) ) {
-    		flag = new Flag( message );
-    		m_flagIDList.put( new Integer( message.getFlagID() ), flag );
-    	} else
-    		flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
-    		
-    	flag.processEvent( message, getPlayer( message.getPlayerID() ).getFrequency() );
+        Flag flag;
+        if( !m_flagIDList.containsKey( new Integer( message.getFlagID() ) ) ) {
+            flag = new Flag( message );
+            m_flagIDList.put( new Integer( message.getFlagID() ), flag );
+        } else
+            flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
+            
+        flag.processEvent( message, getPlayer( message.getPlayerID() ).getFrequency() );
     }
     
     public void processEvent( FlagDropped message ) {
-    	Iterator it = getFlagIDIterator();
-    	while( it.hasNext() ) {
-    		Flag flag = (Flag)it.next();
-    		if( flag.getPlayerID() == message.getPlayerID() )
-    			flag.dropped();
-    	}
+        Iterator it = getFlagIDIterator();
+        while( it.hasNext() ) {
+            Flag flag = (Flag)it.next();
+            if( flag.getPlayerID() == message.getPlayerID() )
+                flag.dropped();
+        }
     }
     
     public void processEvent( TurfFlagUpdate message ) {
-    	Flag flag;
-    	if( !m_flagIDList.containsKey( new Integer( message.getFlagID() ) ) ) {
-    		flag = new Flag( message );
-    		m_flagIDList.put( new Integer( message.getFlagID() ), flag );
-    	} else
-    		flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
-    		
-    	flag.processEvent( message );
+        Flag flag;
+        if( !m_flagIDList.containsKey( new Integer( message.getFlagID() ) ) ) {
+            flag = new Flag( message );
+            m_flagIDList.put( new Integer( message.getFlagID() ), flag );
+        } else
+            flag = (Flag)m_flagIDList.get( new Integer( message.getFlagID() ) );
+            
+        flag.processEvent( message );
     }
     
      /** Adds a playing player into the tracker Queue
@@ -381,9 +381,9 @@ public class Arena {
      * @param playerID - unique ID of player to add to tracking system
      */
     public void addPlayerToTracker( Integer playerID ) {
-    	
-    	m_tracker.remove( playerID );
-    	m_tracker.add( playerID );
+        
+        m_tracker.remove( playerID );
+        m_tracker.add( playerID );
     }
     
     /** Removes a playing player from the tracker Queue
@@ -391,8 +391,8 @@ public class Arena {
      * @param playerID - unique ID of player to remove from tracking system
      */
     public void removePlayerFromTracker( Integer playerID ) {
-    	
-    	m_tracker.remove( playerID );
+        
+        m_tracker.remove( playerID );
     }
       
     /** Called every .100 from Session and used to maintain updating player positions
@@ -400,19 +400,19 @@ public class Arena {
      * @param m_gen - GamePacketGenerator
      */
     public void checkPositionChange( GamePacketGenerator m_gen ) {
-    	
-    	m_currentTimer += 100;
-    	
-    	if( m_currentTimer > m_updateTimer && m_updateTimer != -1 ) {
-    		m_currentTimer = 0;
+        
+        m_currentTimer += 100;
+        
+        if( m_currentTimer > m_updateTimer && m_updateTimer != -1 ) {
+            m_currentTimer = 0;
 
-    		if( m_updateTimer > 0 )
-    			m_gen.sendSpectatePacket( getNextPlayer().shortValue() );
-    		else if( m_updateTimer == 0 ) {
-    			m_gen.sendSpectatePacket( (short)-1 );
-    			m_updateTimer = -1;
-    		}	
-    	}
+            if( m_updateTimer > 0 )
+                m_gen.sendSpectatePacket( getNextPlayer().shortValue() );
+            else if( m_updateTimer == 0 ) {
+                m_gen.sendSpectatePacket( (short)-1 );
+                m_updateTimer = -1;
+            }    
+        }
     }
     
     /** Returns the next player in the queue - also updates the player to keep the 
@@ -420,11 +420,11 @@ public class Arena {
      * @return - The next player ID in the queue
      */
     public Integer getNextPlayer() {
-    	
-		if( m_tracker.size() > 0 )
-    		return (Integer)m_tracker.get( 0 );
-    	else return new Integer( -1 );
-    	
+        
+        if( m_tracker.size() > 0 )
+            return (Integer)m_tracker.get( 0 );
+        else return new Integer( -1 );
+        
     }
     
     /** Turns on/off the position updating system with specified 
@@ -433,12 +433,12 @@ public class Arena {
      * < 0 : off, < 200 : on w/200 delay, anything else is specified speed
      */
     public void setPlayerPositionUpdateDelay( int ms ) {
-    	
-    	if( ms <= 0 ) 
-    		m_updateTimer = 0;
-    	else if( ms < 200 )
-    		m_updateTimer = 200;
-    	else 
-    		m_updateTimer = ms;
+        
+        if( ms <= 0 ) 
+            m_updateTimer = 0;
+        else if( ms < 200 )
+            m_updateTimer = 200;
+        else 
+            m_updateTimer = ms;
     }
 }

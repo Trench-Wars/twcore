@@ -241,33 +241,33 @@ public class Tools {
     }
 
     public static String formatString( String fragment, int length ) {
-    	return formatString( fragment, length, " " );
+        return formatString( fragment, length, " " );
     }
 
     public static String formatString( String fragment, int length, String padding ) {
-		String line;
-		if(fragment.length() > length)
-			fragment = fragment.substring(0,length-1);
-		else {
-			for(int i=fragment.length();i<length;i++)
-				fragment = fragment + padding;
-		}
-		return fragment;
-	}
+        String line;
+        if(fragment.length() > length)
+            fragment = fragment.substring(0,length-1);
+        else {
+            for(int i=fragment.length();i<length;i++)
+                fragment = fragment + padding;
+        }
+        return fragment;
+    }
 
-	public static String centerString (String fragment, int length) {
-		return centerString(fragment, length, ' ');
-	}
+    public static String centerString (String fragment, int length) {
+        return centerString(fragment, length, ' ');
+    }
 
-	public static String centerString (String fragment, int length, char padding) {
-		int curLength = fragment.length(),
-			startPos = (length / 2) - (curLength/2);
-		String result = "";
+    public static String centerString (String fragment, int length, char padding) {
+        int curLength = fragment.length(),
+            startPos = (length / 2) - (curLength/2);
+        String result = "";
 
-		for (int i=0; i < startPos; i++) result = result + padding;
-		result = result + fragment;
-		for (int j=result.length(); j < length; j++) result = result + padding;
+        for (int i=0; i < startPos; i++) result = result + padding;
+        result = result + fragment;
+        for (int j=result.length(); j < length; j++) result = result + padding;
 
-		return result;
-	}
+        return result;
+    }
 }

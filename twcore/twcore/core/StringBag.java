@@ -40,16 +40,16 @@ public class StringBag {
     }
 
     public String grabAndRemove(){
-		if( isEmpty() ){
-			return null;
-		} else {
-			int i = random( list.size() );
-			String grabbed;
+        if( isEmpty() ){
+            return null;
+        } else {
+            int i = random( list.size() );
+            String grabbed;
 
-			grabbed =(String)list.get( i ) ;
-			list.remove( i );
-			return grabbed;
-		}
+            grabbed =(String)list.get( i ) ;
+            list.remove( i );
+            return grabbed;
+        }
     }
 
     public int size(){

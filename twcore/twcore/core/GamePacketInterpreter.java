@@ -97,8 +97,8 @@ public class GamePacketInterpreter {
                 handleScoreUpdate( array, alreadyDecrypted );
                 break;
             case 0x0A:
-            	handlePasswordPacketResponse( array, alreadyDecrypted );
-            	break;
+                handlePasswordPacketResponse( array, alreadyDecrypted );
+                break;
             case 0x0B:
                 handleSoccerGoal( array, alreadyDecrypted );
                 break;
@@ -139,11 +139,11 @@ public class GamePacketInterpreter {
                 handleShipFreqChange( array, alreadyDecrypted );
                 break;
             case 0x1F:
-            	handlePlayerBanner( array, alreadyDecrypted );
-            	break;
+                handlePlayerBanner( array, alreadyDecrypted );
+                break;
             case 0x22:
-            	handleTurfFlagUpdate( array, alreadyDecrypted );
-            	break;
+                handleTurfFlagUpdate( array, alreadyDecrypted );
+                break;
             case 0x23:
                 handleFlagReward( array, alreadyDecrypted );
                 break;
@@ -526,18 +526,18 @@ public class GamePacketInterpreter {
     }
     
     void handlePlayerBanner( ByteArray message, boolean alreadyDecrypted ) {
-    	// Check for valid message
-    	if( message.size() < 99 ){ 
+        // Check for valid message
+        if( message.size() < 99 ){ 
             return;
         }
         
         if( alreadyDecrypted == false ){
             m_ssEncryption.decrypt( message, message.size()-1, 1 );
         }
-    	
-    	PlayerBanner banner = new PlayerBanner( message );
-    	
-    	if( m_requester.check( EventRequester.PLAYER_BANNER )){
+        
+        PlayerBanner banner = new PlayerBanner( message );
+        
+        if( m_requester.check( EventRequester.PLAYER_BANNER )){
             m_subspaceBot.handleEvent( banner );
         }
     }
@@ -642,26 +642,26 @@ public class GamePacketInterpreter {
 
     void handleTurfFlagUpdate( ByteArray message, boolean alreadyDecrypted ) {
 
-    	ByteArray subMessage;
+        ByteArray subMessage;
 
-    	if( message.size() < 3 ) {
-    		return;
-    	}
+        if( message.size() < 3 ) {
+            return;
+        }
 
-    	if( alreadyDecrypted == false ){
+        if( alreadyDecrypted == false ){
             m_ssEncryption.decrypt( message, message.size()-1, 1 );
         }
 
         subMessage = new ByteArray( 3 );
-    	for( int i = 1, j = 0; i < message.size(); i+=2, j++) {
-    		subMessage.addPartialByteArray( message, 1, i, 2 );
-    		TurfFlagUpdate turfFlagUpdate = new TurfFlagUpdate( subMessage, j );
-    		m_arenaTracker.processEvent( turfFlagUpdate );
+        for( int i = 1, j = 0; i < message.size(); i+=2, j++) {
+            subMessage.addPartialByteArray( message, 1, i, 2 );
+            TurfFlagUpdate turfFlagUpdate = new TurfFlagUpdate( subMessage, j );
+            m_arenaTracker.processEvent( turfFlagUpdate );
 
-    		if( m_requester.check( EventRequester.TURF_FLAG_UPDATE ) ) {
-    			m_subspaceBot.handleEvent( turfFlagUpdate );
-    		}
-    	}
+            if( m_requester.check( EventRequester.TURF_FLAG_UPDATE ) ) {
+                m_subspaceBot.handleEvent( turfFlagUpdate );
+            }
+        }
 
     }
 
@@ -682,7 +682,7 @@ public class GamePacketInterpreter {
     }
 
     void handlePasswordPacketResponse( ByteArray message, boolean alreadyDecrypted ){;
-    	 // Check for valid message
+         // Check for valid message
         if( message.size() < 36 ){
             return;
         }
@@ -694,7 +694,7 @@ public class GamePacketInterpreter {
         PasswordPacketResponse ppResponse = new PasswordPacketResponse( message );
 
         if( ppResponse.getResponseValue() > 0 )
-        	Tools.printLog( m_session.getBotName() + " log in response: " + ppResponse.getResponseMessage() );
+            Tools.printLog( m_session.getBotName() + " log in response: " + ppResponse.getResponseMessage() );
 
         if( ppResponse.isFatal() ) m_session.disconnect();
     }
@@ -739,8 +739,8 @@ public class GamePacketInterpreter {
     }
 
     void handleArenaSettings( ByteArray message, boolean alreadyDecrypted ){
-		if(message.size() < 1428) return;
-		//TODO: add this at some point, 2dragons said he had a settings class
+        if(message.size() < 1428) return;
+        //TODO: add this at some point, 2dragons said he had a settings class
     }
 }
 
