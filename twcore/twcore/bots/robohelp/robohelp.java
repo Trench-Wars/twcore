@@ -392,7 +392,7 @@ public class robohelp extends SubspaceBot {
         m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
                 +"command.  It is for staff members only, and is punishble by a ban. Further abuse "
                 +"will not be tolerated!", 1 );
-        m_botAction.sendChatMessage( "NOTICE:"+ playerName + " has been warned for ?advert abuse." );
+        m_botAction.sendChatMessage( "NOTICE: "+ playerName + " has been warned for ?advert abuse." );
 
         Calendar thisTime = Calendar.getInstance();
         java.util.Date day = thisTime.getTime();
