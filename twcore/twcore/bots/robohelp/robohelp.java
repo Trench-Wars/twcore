@@ -70,6 +70,9 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan" );
         m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
         m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "handleStatus" );
+        m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary" );
+        m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
+        m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs" );
 
 
         acceptedMessages = Message.ARENA_MESSAGE;
@@ -168,13 +171,46 @@ public class robohelp extends SubspaceBot {
         }
 
     }
-
+   
     public void handleGoogle( String name, String message ){
 
         m_botAction.sendChatMessage( "Google search results for " + message + ": " + doGoogleSearch( message ) );
 
     }
 
+    /**
+     * Forms an appropriate query to dictionary.reference.com. 
+     * @param name Name of individual querying
+     * @param message Query
+     */
+    public void handleDictionary( String name, String message ) {
+        
+        m_botAction.sendChatMessage( "Dictionary definition:  http://dictionary.reference.com/search?q=" + message );
+        
+    }
+    
+    /**
+     * Forms an appropriate query to thesaurus.reference.com. 
+     * @param name Name of individual querying
+     * @param message Query
+     */
+    public void handleThesaurus( String name, String message ) {
+        
+        m_botAction.sendChatMessage( "Thesaurus entry:  http://thesaurus.reference.com/search?q=" + message );
+        
+    }
+    
+    /**
+     * Forms an appropriate query to javadocs.org 
+     * @param name Name of individual querying
+     * @param message Query
+     */
+    public void handleJavadocs( String name, String message ) {
+        
+        m_botAction.sendChatMessage( "Javadocs entry:  http://javadocs.org/" + message );
+        
+    }
+    
     public String doGoogleSearch( String searchString ){
 
         try {
@@ -597,6 +633,36 @@ public class robohelp extends SubspaceBot {
                     String result = doGoogleSearch( query );
                     m_botAction.sendRemotePrivateMessage( name, "Google says: " + result );
                     m_botAction.sendChatMessage( "Told " + name + " that Google says: " + result );
+                }
+            } else if( keyword.toLowerCase().startsWith( "dictionary " ) ){
+                String     query;
+
+                query = keyword.substring( 10 ).trim();
+                if( query.length() == 0 ){
+                    m_botAction.sendChatMessage( "Specify a word to reference." );
+                } else {
+                    m_botAction.sendRemotePrivateMessage( name, "Definition of " + query + ":  http://dictionary.reference.com/search?q=" + query );
+                    m_botAction.sendChatMessage( "Gave " + name + " the definition of " + query + " at http://dictionary.reference.com/search?q=" + query );
+                }
+            } else if( keyword.toLowerCase().startsWith( "thesaurus " ) ){
+                String     query;
+
+                query = keyword.substring( 9 ).trim();
+                if( query.length() == 0 ){
+                    m_botAction.sendChatMessage( "Specify a word to reference." );
+                } else {
+                    m_botAction.sendRemotePrivateMessage( name, "Thesaurus entry for " + query + ":  http://thesaurus.reference.com/search?q=" + query );
+                    m_botAction.sendChatMessage( "Gave " + name + " the thesaurus entry for " + query + " at http://thesaurus.reference.com/search?q=" + query );
+                }
+            } else if( keyword.toLowerCase().startsWith( "javadocs " ) ){
+                String     query;
+
+                query = keyword.substring( 10 ).trim();
+                if( query.length() == 0 ){
+                    m_botAction.sendChatMessage( "Specify something to look up the JavaDocs on." );
+                } else {
+                    m_botAction.sendRemotePrivateMessage( name, "Javadocs for " + query + ":  http://javadocs.org/" + query );
+                    m_botAction.sendChatMessage( "Gave " + name + " the Javadocs entry for " + query + " at http://javadocs.org/" + query );
                 }
             } else {
                 String[] responses = search.search( keyword );
