@@ -55,9 +55,9 @@ public abstract class Statistic
 	public String toString()
 	{
 		if (m_variableType == INT)
-			return m_shortForm + ": " + m_intValue;
+			return m_shortForm + ": " + getIntValue() + " ";
 		else
-			return m_shortForm + ": " + m_doubleValue;
+			return m_shortForm + ": " + getDoubleValue() + " ";
 	}
 	
 	/**
@@ -89,14 +89,23 @@ public abstract class Statistic
 	 */
 	public int getIntValue()
 	{
-		//if derived
-		if (m_derived)
-			return derivedInt();
-			
+	
 		if (m_variableType == INT)
-			return m_intValue;
+		{
+			//if derived
+			if (m_derived)
+				return derivedInt() + m_intValue;
+			else
+				return m_intValue;
+		}
 		else
-			return (int)m_doubleValue;
+		{
+			//if derived
+			if (m_derived)
+				return derivedInt() + (int)m_doubleValue;
+			else
+				return (int)m_doubleValue;
+		}
 	}
 	
 	/**
@@ -104,14 +113,21 @@ public abstract class Statistic
 	 */
 	public double getDoubleValue()
 	{
-		//if derived
-		if (m_derived)
-			return derivedDouble();
-		
 		if (m_variableType == INT)
-			return (double)m_intValue;
+		{
+			//if derived
+			if (m_derived)
+				return derivedDouble() + (double)m_intValue;
+			else
+				return (double)m_intValue;
+		}
 		else
-			return m_doubleValue;
+		{
+			if (m_derived)
+				return derivedDouble() + m_doubleValue;
+			else
+				return m_doubleValue;
+		}
 	}
 	
 	/**

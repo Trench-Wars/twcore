@@ -81,57 +81,6 @@ import java.util.Vector;
 			public int getIntStatistic(int statType)
 			{
 					return ((Statistic) m_statistics.get(statType)).getIntValue();
-
-/*
-					TOTAL_KILLS :
-						return m_wbKill + m_javKill + m_spiderKill + m_levKill + m_terrKill + m_weaselKill + m_lancKill + m_sharkKill;
-					case DEATHS :
-						return m_deaths;
-					case SCORE :
-						return m_score;
-					case WARBIRD_KILL :
-						return m_wbKill;
-					case JAVELIN_KILL :
-						return m_javKill;
-					case SPIDER_KILL :
-						return m_spiderKill;
-					case LEVIATHAN_KILL :
-						return m_levKill;
-					case TERRIER_KILL :
-						return m_terrKill;
-					case WEASEL_KILL :
-						return m_weaselKill;
-					case LANCASTER_KILL :
-						return m_lancKill;
-					case SHARK_KILL :
-						return m_sharkKill;
-					case WARBIRD_TEAMKILL :
-						return m_wbTeamKill;
-					case JAVELIN_TEAMKILL :
-						return m_javTeamKill;
-					case SPIDER_TEAMKILL :
-						return m_spiderTeamKill;
-					case LEVIATHAN_TEAMKILL :
-						return m_levTeamKill;
-					case TERRIER_TEAMKILL :
-						return m_terrTeamKill;
-					case WEASEL_TEAMKILL :
-						return m_weaselTeamKill;
-					case LANCASTER_TEAMKILL :
-						return m_lancTeamKill;
-					case SHARK_TEAMKILL :
-						return m_sharkTeamKill;
-					case FLAG_CLAIMED :
-						return m_flagClaimed;
-					case TOTAL_TEAMKILLS :
-						return m_wbTeamKill + m_javTeamKill + m_spiderTeamKill + m_levTeamKill + m_terrTeamKill + m_weaselTeamKill + m_lancTeamKill + m_sharkTeamKill;
-					case RATING :
-						return getRating();
-					case REPELS_USED :
-						return m_repelsUsed;
-					default : //if errored
-						return 0;
-						*/
 			}
 			
 			public double getDoubleStatistic(int statType)
@@ -339,6 +288,7 @@ import java.util.Vector;
 								+ getStatistic(TOTAL_KILLS)
 								+ getStatistic(DEATHS)
 								+ getStatistic(TOTAL_TEAMKILLS)
+								+ getStatistic(REPELS_USED)
 								+ getStatistic(WARBIRD_KILL)
 								+ getStatistic(JAVELIN_KILL)
 								+ getStatistic(SPIDER_KILL)
@@ -579,7 +529,7 @@ import java.util.Vector;
 			{
 				public TotalTeamKills()
 				{
-					super(TOTAL_TEAMKILLS, "Tk", true);
+					super(TOTAL_TEAMKILLS, "TK", true);
 				}
 				
 				public int derivedInt()
