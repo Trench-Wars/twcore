@@ -200,13 +200,17 @@ public class twbot extends SubspaceBot
 
 	public void handleGo(String name, String arena)
 	{
-		if (!locked && !Tools.isAllDigits(arena))
+		if (!locked)
 		{
-			actualGo(arena);
+		    if( !Tools.isAllDigits(arena) || m_opList.isHighmod( name ) ) {
+			    actualGo(arena);
+		    } else {
+				m_botAction.sendSmartPrivateMessage( name, "Sorry, but you are not authorized to move TWBots into pubs." );
+		    }
 		}
 		else
 		{
-			m_botAction.sendSmartPrivateMessage(name, "Sorry, but I am currently " + "locked.  Please !unlock me first.");
+			m_botAction.sendSmartPrivateMessage(name, "Sorry, but I am currently locked.  Please !unlock me first.");
 		}
 	}
 
@@ -252,8 +256,12 @@ public class twbot extends SubspaceBot
 				else
 					m_botAction.sendPrivateMessage(name, "Your current host is: " + nameOfHost);
 			}
-			if (!m_opList.isER(name))
+			if (!m_opList.isER(name)) {
+				if (message.startsWith("!help")) {
+					m_botAction.privateMessageSpam(name, playerhelps );				    
+				}             
 				return;
+			}
 			lastUse = 0;
 			handleCommand(name, message);
 		}
@@ -290,8 +298,12 @@ public class twbot extends SubspaceBot
 					}
 				}
 			}
-			if (!m_opList.isER(rpmname))
+			if (!m_opList.isER(rpmname)) {
+				if (message.startsWith("!help")) {
+					m_botAction.remotePrivateMessageSpam(rpmname, playerhelps );
+				}
 				return;
+			}
 			lastUse = 0;
 			if (message.startsWith("!go "))
 			{
@@ -557,4 +569,11 @@ public class twbot extends SubspaceBot
 			"!die               - Tells the bot to take a hike... off a cliff.",
 			"!home              - Tells the bot to unlock and go home",
 			"!mybot             - Lets everyone know you are hosting instead of the former host." };
+
+	static final String[] playerhelps =
+	{
+			"Hello, I'm an event bot!  You can use the following commands with me:",
+			"!host              - Tells you who, if anyone, is hosting with this bot.",
+			"!games             - Tells you who's hosting w/ me and where. (remote cmd)"
+	};	
 }
