@@ -1,7 +1,7 @@
 [General]
-name=TWLD
-arena=twld,twld2,twld3,twld4,twld5,twld6,twld7,twld8
-ship=1
+name=TWLJ
+arena=twlj,twlj2,twlj3,twlj4,twlj5,twlj6,twlj7,twlj8
+ship=2
 players=5
 minplayers=4
 deaths=10
@@ -17,16 +17,15 @@ forfeit_loser_score=0
 forfeit_winner_score=50
 captainsfixed=1
 pingmax=300
-lagoutextension=60
 maxcurrping=300
 maxploss=3.0
 staffonly=1
 zoneok=1
-lagoutextension=60
 blueout=1
+lagoutextension=60
 aliascheck=1
 
-matchtype=1
+matchtype=2
 captain_can_start_game=0
 storegame=1
 loggame=1
@@ -38,18 +37,35 @@ substitutes=2
 lagouts=3
 
 [Arena]
-safe1x=315
-safe1y=365
-safe1xout=330
-safe1yout=380
-safe2x=709
-safe2y=659
-safe2xout=594
-safe2yout=644
+safe1x=447
+safe1y=412
+safe1xout=447
+safe1yout=400
+safe2x=577
+safe2y=412
+safe2xout=577
+safe2yout=400
+
+yborder=428
+outofbordertime=30
+
+pathcount=6
+path1x=604
+path1y=516
+path2x=500
+path2y=516
+path3x=412
+path3y=516
+path4x=604
+path4y=430
+path5x=500  
+path5y=430
+path6x=412
+path6y=430
 
 obj_countdown10=1
 obj_countdown54321=2
-obj_gogogo=3
+obj_gogogo=3   
 obj_gameover=4
 
 CurPing=
