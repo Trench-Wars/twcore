@@ -400,13 +400,13 @@ public class spaceballbot extends SubspaceBot {
 			if (mostHits == null || p.getTotalHits() > mostHits.getTotalHits()) {
 				mostHits = p;
 			}
-			if (bestAcc == null || p.getAccuracy() > mostHits.getAccuracy()) {
+			if (bestAcc == null || p.getAccuracy() > bestAcc.getAccuracy()) {
 				bestAcc = p;
 			}
-			if (mostKills == null || p.getKills() > mostHits.getKills()) {
+			if (mostKills == null || p.getKills() > mostKills.getKills()) {
 				mostKills = p;
 			}
-			if (mostDeaths == null || p.getDeaths() > mostHits.getDeaths()) {
+			if (mostDeaths == null || p.getDeaths() > mostDeaths.getDeaths()) {
 				mostDeaths = p;
 			}
 			if (p.getTeam() == 0) {
