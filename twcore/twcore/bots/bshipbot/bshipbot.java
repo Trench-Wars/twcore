@@ -1,6 +1,6 @@
 package twcore.bots.bshipbot;
 
-//Battleship Bot by D1st0rt v2.5.2
+//Battleship Bot by D1st0rt v2.5.3
 
 import twcore.core.*;
 import java.util.*;
@@ -12,7 +12,7 @@ public class bshipbot extends SubspaceBot
 	private OperatorList oplist;
 	private HashSet teamsLeft;
 	private static int MAX_TEAMS, TEAMS;
-	private int[] turrets, ships, X, Y;
+	private int[] ships, X, Y;
 	private int hour = 0;
 	private Objset objects;
 	private String objlist;
@@ -70,12 +70,20 @@ public class bshipbot extends SubspaceBot
 		teamsLeft = new HashSet();
 
 		//Arrays
-		turrets = new int[MAX_TEAMS];
 		ships = new int[MAX_TEAMS];
 		X = new int[MAX_TEAMS];
 		Y = new int[MAX_TEAMS];
 		m_botAction.scheduleTaskAtFixedRate(timeMode,1000,60000);
-		//m_botAction.setPlayerPositionUpdating(500);
+
+		//Spawn points
+		for(int x = 0; x < MAX_TEAMS; x++)
+		{
+			String coords = config.getString("Spawn"+x);
+			String[] spawn = coords.split(",");
+			X[x] = Integer.parseInt(spawn[0]);
+			Y[x] = Integer.parseInt(spawn[1]);
+		}
+
 	}
 
 	/**
@@ -132,7 +140,7 @@ public class bshipbot extends SubspaceBot
 		{"+-Battleship Bot by D1st0rt-------v2.5-+",
 		 "| -Make sure you n00bs don't attach to |",
 		 "|   the wrong ships.                   |",
-		 "| -Night Mode LVZ!                         |",
+		 "| -Night Mode LVZ!                     |",
 		 "| -Handle Battleship Games             |",
 		 "+--------------------------------------+"};
 
@@ -344,9 +352,7 @@ public class bshipbot extends SubspaceBot
 				m_botAction.sendPrivateMessage(name,"Game Stopped.",1);
 				state = IDLE;
 				teamsLeft.clear();
-				turrets = new int[MAX_TEAMS];
 				ships = new int[MAX_TEAMS];
-
 			}
 			else
 				m_botAction.sendPrivateMessage(name,"No game in progress");
@@ -445,22 +451,37 @@ public class bshipbot extends SubspaceBot
 	/********************************/
 
 	/**
-	 * Makes (well, sort of) random teams
+	 * Makes random teams, and warps them to safety areas
 	 * @param howmany how many teams to make
 	 */
 	public void makeTeams(int howmany)
 	{
 		TEAMS = howmany;
+		StringBag plist = new StringBag();
 		int current = 0;
 		howmany -= 1;
+
+		//stick all of the players in randomizer
 		Iterator i = m_botAction.getPlayingPlayerIterator();
 		while(i.hasNext())
+			plist.add(((Player)i.next()).getPlayerName());
+
+		//assign players to teams
+		for(int z = 0, s = plist.size(); z < s; z++)
 		{
 			if(current > howmany)
 				current = 0;
-			Player p = (Player)i.next();
-			m_botAction.setFreq(p.getPlayerID(),current);
+			String name = plist.grabAndRemove();
+			m_botAction.setFreq(name,current);
 			current++;
+		}
+
+		for(int x = 0; x <= TEAMS; x++)
+		{
+			if(x % 2 == 0) 	//even freq
+				m_botAction.warpFreqToLocation(x, 495, 752);
+			else 			//odd freq
+				m_botAction.warpFreqToLocation(x, 528, 752);
 		}
 
 		state = SETUP;
@@ -473,37 +494,42 @@ public class bshipbot extends SubspaceBot
 	{
 		m_botAction.toggleLocked();
 		state = PICKING;
+		StringBag[] plist = new StringBag[TEAMS];
+		for(int x = 0; x < plist.length; x++)
+		{
+			plist[x] = new StringBag();
+		}
+
+
+		//stick all of the players in randomizer
+		Iterator i = m_botAction.getPlayingPlayerIterator();
+		while(i.hasNext())
+		{
+			Player p = (Player)i.next();
+			plist[p.getFrequency()].add(p.getPlayerName());
+		}
 
 		for(int x = 0; x < TEAMS; x++) //Set up 5 players in ships
 		{
 			int index = 4;
-			Iterator I = m_botAction.getPlayingPlayerIterator();
-			while(I.hasNext())
+			for(int z = 0, s = plist[x].size(); z < s; z++)
 			{
-				Player p = (Player)I.next();
-				if(p.getFrequency() == x)
+				//get a random player
+				Player p = m_botAction.getPlayer(plist[x].grabAndRemove());
+
+				if(index < 9) //first 4
 				{
-					if(index < 9) //first 4
-					{
-						m_botAction.setShip(p.getPlayerName(),index);
-						ships[x]++;
-					}
-					else if(index < 12)//next 3
-						m_botAction.setShip(p.getPlayerName(),1);
-					else if(index < 15)//next 3
-						m_botAction.setShip(p.getPlayerName(),2);
-					else
-						m_botAction.setShip(p.getPlayerName(),3);
-					index++;
+					m_botAction.setShip(p.getPlayerName(),index);
+					ships[x]++;
 				}
-
+				else if(index < 12)//next 3
+					m_botAction.setShip(p.getPlayerName(),2);
+				else if(index < 15)//next 3
+					m_botAction.setShip(p.getPlayerName(),1);
+				else
+					m_botAction.setShip(p.getPlayerName(),3);
+				index++;
 			}
-			String coords = config.getString("Spawn"+x);
-
-			String Spawn[] = coords.split(",");
-			X[x] = Integer.parseInt(Spawn[0]);
-			Y[x] = Integer.parseInt(Spawn[1]);
-			turrets[x] = 0;
 			teamsLeft.add(new Integer(x));
 
 		}
@@ -523,10 +549,8 @@ public class bshipbot extends SubspaceBot
 			state = IDLE;
 			int team = 0;
 			Iterator i = teamsLeft.iterator();
-			while(i.hasNext())
-			{
-				team = ((Integer)(i.next())).intValue();
-			}
+			team = ((Integer)(i.next())).intValue();
+
 			m_botAction.sendArenaMessage("Team "+ team +" wins!!!!",5);
 			m_botAction.toggleLocked();
 			m_botAction.sendUnfilteredPublicMessage("*objon 2");
@@ -726,7 +750,7 @@ public class bshipbot extends SubspaceBot
 					}
 				break;
 				case PLANE:
-					if(bShip == BATTLESHIP || bShip == FRIGATE) //Tries to attach to Frigate/Battleship
+					if(bShip != CARRIER) //Tries to attach to Frigate/Battleship
 					{
 						m_botAction.setFreq(turret,100);
 						m_botAction.setFreq(turret,freq);
@@ -734,18 +758,18 @@ public class bshipbot extends SubspaceBot
 						m_botAction.sendUnfilteredPrivateMessage(turret,"*prize #-13");
 					}
 					//Taken out: too many issues, not that big of a deal
-					else if(bShip == CARRIER)
+					/*else if(bShip == CARRIER)
 					{
 						m_botAction.setFreq(turret,100);
 						m_botAction.setFreq(turret,freq);
 
 						//Note: This section won't work until position updates improve
-						/*int x = (m_botAction.getPlayer(boat).getXLocation())/16;
+						int x = (m_botAction.getPlayer(boat).getXLocation())/16;
 						int y = (m_botAction.getPlayer(boat).getYLocation())/16;
 						m_botAction.sendPrivateMessage(turret,"Cleared for takeoff!");
 						m_botAction.warpTo(turret,x,y); //Warps to last mine :p
-						//Detach them from carrier so they don't stay as a turret.*/
-					}
+						//Detach them from carrier so they don't stay as a turret.
+					}*/
 				break;
 				default:
 					m_botAction.setFreq(turret,100);
