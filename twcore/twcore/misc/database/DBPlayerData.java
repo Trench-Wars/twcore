@@ -30,6 +30,10 @@ public class DBPlayerData {
     java.sql.Date m_fdTeamSignedUp = null;
     String m_fcTeamName = "";
     
+    String m_fcIP = "";
+    int m_fnMID = 0;
+    int m_fnStatus = 0;
+    
     long m_lastQuery = 0;
     
     
@@ -91,6 +95,7 @@ public class DBPlayerData {
                 m_fnUserID = qryPlayerInfo.getInt("fnUserID");
                 m_fdSignedUp = qryPlayerInfo.getDate("fdSignedUp");
                 
+                getPlayerAliasData();
                 getPlayerSquadData();
                 return true;
             } else return false;
@@ -99,6 +104,22 @@ public class DBPlayerData {
             return false;
         }
     };
+    
+    public boolean getPlayerAliasData() {
+    	try {
+    		ResultSet qryPlayerAlias = m_connection.SQLQuery( m_connName,
+    		"SELECT fcIP, fnMID, fnStatus FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
+    		if( qryPlayerAlias.next() ) {
+    			m_fcIP = qryPlayerAlias.getString( "fcIP" );
+    			m_fnMID = qryPlayerAlias.getInt( "fnMID" );
+    			m_fnStatus = qryPlayerAlias.getInt( "fnStatus" );
+    			return true;
+    		} else return false;
+    	} catch (Exception e) {
+    		System.out.println("Database error! - " + e.getMessage());
+            return false;
+        }
+    }
     
     
     public boolean createPlayerData() {
@@ -205,6 +226,76 @@ public class DBPlayerData {
     	return false;
     };
     
+    public boolean register( String ip, String mid ) {
+    	if( m_fnUserID != 0 ) {
+    		try {
+    			String query = "INSERT INTO tblAliasSuppression (fnUserID, fcIP, fnMID, fnStatus) VALUES ";
+    			query += "("+m_fnUserID+", '"+ip+"', '"+mid+"', 1)";
+    			m_connection.SQLQuery( m_connName, query );
+    			m_lastQuery = System.currentTimeMillis();
+    			return true;
+    		} catch (Exception e) {
+    			System.out.println( e );
+    			return false;
+    		}
+    	}
+    	return false;
+    }
+    
+    public boolean aliasMatch( String ip, String mid ) {
+    	String pieces[] = ip.split(".");
+    	ip = ip.substring( 0, ip.lastIndexOf( "." ) )+".%";
+
+    	try {
+    		String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' OR fnMID = '"+mid+"'";
+    		ResultSet result = m_connection.SQLQuery( m_connName, query );
+    		if( result.next() ) return true;
+    		else return false;
+    	} catch (Exception e) {
+    		return true;
+    	}
+    }
+    
+    public boolean resetRegistration() {
+    	
+    	try {
+    		m_connection.SQLQuery( m_connName, "DELETE FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
+    		return true;
+    	} catch (Exception e) {
+    		return false;
+    	}
+    }
+    
+    public boolean enableName() {
+    	
+    	try {
+    		m_connection.SQLQuery( m_connName, "UPDATE tblAliasSuppression SET fnStatus = 1 WHERE fnUserID = "+m_fnUserID );
+    		return true;
+    	} catch (Exception e) {
+    		return false;
+    	}
+    }
+    
+    public boolean disableName() {
+    	
+    	try {
+    		m_connection.SQLQuery( m_connName, "UPDATE tblAliasSuppression SET fnStatus = 2 WHERE fnUserID = "+m_fnUserID );
+    		return true;
+    	} catch (Exception e) {
+    		return false;
+    	}
+    }
+    
+    public boolean isRegistered() {
+    	if( m_fnStatus != 0 ) return true;
+    	else return false;
+    }
+    
+    public boolean isEnabled() {
+    	if( m_fnStatus == 1 ) return true;
+    	else return false;
+    }
+    
     
     public BotAction getBotAction() { return m_connection; };
     
@@ -212,6 +303,9 @@ public class DBPlayerData {
     public int getUserID() { return m_fnUserID; };
     public String getUserName() { return m_fcUserName; };
     public String getPassword() { return m_fcPassword; };
+    public String getIP() { return m_fcIP; }
+    public int getMID() { return m_fnMID; }
+    public int getStatus() { return m_fnStatus; }
     public java.util.Date getSignedUp() { return (java.util.Date)m_fdSignedUp; };
     public java.util.Date getTeamSignedUp() { return (java.util.Date)m_fdTeamSignedUp; };
     public String getTeamName() { return m_fcTeamName; };
