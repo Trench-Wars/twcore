@@ -25,7 +25,7 @@ blueout=0
 aliascheck=0
 
 matchtype=4
-captain_can_start_game=0
+captain_can_start_game=1
 storegame=0
 loggame=0
 squadjoined=0
@@ -56,3 +56,20 @@ safe2yout=644
 obj_countdown10=51
 obj_gogogo=52
 obj_gameover=50
+
+CurPing=400
+
+AvePing=350
+
+S2CPloss=5
+
+C2SPloss=5
+
+WeaponPloss=9
+
+SlowS2C=5
+SlowC2S=5
+
+Med=90
+SpikeCount=5
+

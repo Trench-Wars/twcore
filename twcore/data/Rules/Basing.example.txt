@@ -15,6 +15,7 @@ forfeit_loser_score=0
 forfeit_winner_score=100000
 captainsfixed=0
 maxping=700
+captain_can_start_game=1
 waitafterlagout=15
 specialaccess=arrogance <ZH>:Mantra-Slider:Yojo:Adman:Microstar:Divine Rides:warportal:Nockm:greven
 aliascheck=0
@@ -49,3 +50,19 @@ obj_gameover=50
 storegame=0
 loggame=0
 matchtype=7
+
+CurPing=400
+
+AvePing=350
+
+S2CPloss=5
+
+C2SPloss=5
+
+WeaponPloss=9
+
+SlowS2C=5
+SlowC2S=5
+
+Med=90
+SpikeCount=5
