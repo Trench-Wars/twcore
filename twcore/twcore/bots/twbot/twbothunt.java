@@ -215,6 +215,10 @@ public class twbothunt extends TWBotExtension {
     public void handleEvent( PlayerDeath event ){
         Player pKilled = m_botAction.getPlayer( event.getKilleeID() );
         Player pKiller = m_botAction.getPlayer( event.getKillerID() );
+        
+        if( pKilled == null || pKiller == null )
+            return;
+        
         String killedName = pKilled.getPlayerName();
         String killerName = pKiller.getPlayerName();
         
