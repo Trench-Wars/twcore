@@ -1,6 +1,6 @@
 package twcore.bots.bshipbot;
 
-//Battleship Bot by D1st0rt v2.5
+//Battleship Bot by D1st0rt v2.5.2
 
 import twcore.core.*;
 import java.util.*;
@@ -75,7 +75,7 @@ public class bshipbot extends SubspaceBot
 		X = new int[MAX_TEAMS];
 		Y = new int[MAX_TEAMS];
 		m_botAction.scheduleTaskAtFixedRate(timeMode,1000,60000);
-		m_botAction.setPlayerPositionUpdating(500);
+		//m_botAction.setPlayerPositionUpdating(500);
 	}
 
 	/**
@@ -132,7 +132,7 @@ public class bshipbot extends SubspaceBot
 		{"+-Battleship Bot by D1st0rt-------v2.5-+",
 		 "| -Make sure you n00bs don't attach to |",
 		 "|   the wrong ships.                   |",
-		 "| -Night Mode!                         |",
+		 "| -Night Mode LVZ!                         |",
 		 "| -Handle Battleship Games             |",
 		 "+--------------------------------------+"};
 
@@ -298,8 +298,6 @@ public class bshipbot extends SubspaceBot
 		{
 			if(state == PICKING || state == PLAYING)
 				m_botAction.sendPrivateMessage(name,"A game is already in progress");
-			else if(state == IDLE)
-				m_botAction.sendPrivateMessage(name,"Please establish teams with !teams <number of teams>");
 			else
 				setUp();
 		}
@@ -608,7 +606,7 @@ public class bshipbot extends SubspaceBot
 		if(hr > 19)
 			id = (hr - 24) + 14;
 		else if(hr < 5 && hr > -1)
-			id = (10 - hr);
+			id = (13 - hr);
 
 		return id;
 	}
