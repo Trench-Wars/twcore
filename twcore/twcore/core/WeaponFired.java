@@ -9,7 +9,7 @@ public class WeaponFired extends PlayerPosition {
 
     public static int WEAPON_DECOY = 6;
     public static int WEAPON_BURST = 7;
-    public static int WEAPON_THOR = 7;
+    public static int WEAPON_THOR = 8;
 
     public static int WEAPON_MULTIFIRE = 9;
     public static int WEAPON_SINGLEFIRE = 10;
