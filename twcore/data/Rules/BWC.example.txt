@@ -1,0 +1,45 @@
+[General]
+name=Basing World Cup
+arena=base,base2,base3
+ship=0
+players=8
+minplayers=5
+deaths=-1
+time=30
+rounds=1
+maxrounds=1
+winby=score
+pickbyturn=1
+forfeit_loser_score=0
+forfeit_winner_score=100000
+captainsfixed=0
+maxping=700
+waitafterlagout=15
+specialaccess=arrogance <ZH>:Hellz<ZH>:Mantra-Slider:Yojo!:Adman:Microstar
+
+# assign the maximum number of ships allowed per shiptype.
+# -1 indicates that the ship is NOT allowed
+maxship5=1
+maxship8=2
+maxship4=-1
+
+squadjoined=0
+rosterjoined=0
+eligibleafter=3
+shipchanges=2
+shipswitches=3
+substitutes=3
+lagouts=-1
+
+[Arena]
+safe1x=312
+safe1y=482
+safe2x=712
+safe2y=482
+obj_countdown10=51
+obj_gogogo=52
+obj_gameover=50
+
+storegame=1
+loggame=1
+matchtype=7
