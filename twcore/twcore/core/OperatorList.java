@@ -7,12 +7,12 @@ public class OperatorList {
 
     Map             m_accessList;
 
-    static final int ZH_LEVEL = 1;
-    static final int ER_LEVEL = 2;
-    static final int MODERATOR_LEVEL = 3;
-    static final int SMOD_LEVEL = 4;
-    static final int SYSOP_LEVEL = 5;
-    static final int OWNER_LEVEL = 5;
+    public static final int ZH_LEVEL = 1;
+    public static final int ER_LEVEL = 2;
+    public static final int MODERATOR_LEVEL = 3;
+    public static final int SMOD_LEVEL = 4;
+    public static final int SYSOP_LEVEL = 5;
+    public static final int OWNER_LEVEL = 5;
 
     public OperatorList(){
 
@@ -47,6 +47,15 @@ public class OperatorList {
         }
     }
 
+    public boolean isZHExact( String name ){
+
+        if( getAccessLevel( name ) == ZH_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     public boolean isER( String name ){
 
         if( getAccessLevel( name ) >= ER_LEVEL ){
@@ -56,6 +65,15 @@ public class OperatorList {
         }
     }
 
+    public boolean isERExact( String name ){
+
+        if( getAccessLevel( name ) == ER_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     public boolean isModerator( String name ){
 
         if( getAccessLevel( name ) >= MODERATOR_LEVEL ){
@@ -65,9 +83,27 @@ public class OperatorList {
         }
     }
 
+    public boolean isModeratorExact( String name ){
+
+        if( getAccessLevel( name ) == MODERATOR_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     public boolean isSmod( String name ){
 
         if( getAccessLevel( name ) >= SMOD_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isSmodExact( String name ){
+
+        if( getAccessLevel( name ) == SMOD_LEVEL ){
             return true;
         } else {
             return false;
@@ -83,9 +119,27 @@ public class OperatorList {
         }
     }
 
+    public boolean isSysopExact( String name ){
+
+        if( getAccessLevel( name ) == SYSOP_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     public boolean isOwner( String name ){
 
         if( getAccessLevel( name ) >= OWNER_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isOwnerExact( String name ){
+
+        if( getAccessLevel( name ) == OWNER_LEVEL ){
             return true;
         } else {
             return false;
@@ -106,10 +160,10 @@ public class OperatorList {
         }
     }        
 
-    void parseFile( String filename, int accessLevel ){
+    public void parseFile( String filename, int accessLevel ){
         parseFile( new File( filename ), accessLevel );
     }
-    void parseFile( File file, int accessLevel ){
+    public void parseFile( File file, int accessLevel ){
 
         String             name;
         String             inBuffer; 
