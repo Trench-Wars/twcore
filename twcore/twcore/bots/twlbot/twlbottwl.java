@@ -30,7 +30,8 @@ public class twlbottwl extends TWLBotExtension
     private String m_timeStart;
     private String m_timeEnd;
     private int m_generalTime = 0;
-    private boolean m_isBasePlayoff = false;
+    private boolean m_isBasePlayoff = false;    // Switch for playoff mode
+    private boolean m_switchSubLock = false;    // To disallow multiple switch/sub cmds
 
     private HashMap m_laggers;
     private int m_watch;
@@ -926,6 +927,12 @@ public class twlbottwl extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "A game is not running or has not started.");
             return;
         }
+        
+        if( m_switchSubLock ) {
+            m_botAction.sendPrivateMessage(name, "A player switch or substitution is already active.  Try again later.");
+            return;
+        }
+        
         int teamId = sql_getPlayersTeam(name);
         boolean isCap = sql_isCap(name);
         if (!name.equals(m_match.getRef()))
@@ -1005,6 +1012,7 @@ public class twlbottwl extends TWLBotExtension
             return;
         }
 
+        m_switchSubLock = true;
         m_botAction.scheduleTask(new SubstituteTimer(subOut, subIn), TIME_BEFORE_SUB * 1000);
         m_botAction.sendPrivateMessage(name, "Substitution will take place in " + TIME_BEFORE_SUB + " secs");
     }
@@ -1017,6 +1025,12 @@ public class twlbottwl extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "Switches can only be done during the game.");
             return;
         }
+        
+        if( m_switchSubLock ) {
+            m_botAction.sendPrivateMessage(name, "A player switch or substitution is already active.  Try again later.");
+            return;
+        }
+        
         int teamId = sql_getPlayersTeam(name);
         boolean isCap = sql_isCap(name);
         if (!name.equals(m_match.getRef()))
@@ -1060,7 +1074,12 @@ public class twlbottwl extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "Unable to switch players: Switch limit reached.");
             return;
         }
+        if (m_match.getPlayer(pieces[0]).getShip() == 0 || m_match.getPlayer(pieces[1]).getShip() == 0) {
+            m_botAction.sendPrivateMessage(name, "Unable to switch players: One or more are in spec.");
+            return;
+        }            
 
+        m_switchSubLock = true;
         m_botAction.scheduleTask(new SwitchTimer(pieces[0], pieces[1]), TIME_BEFORE_SWITCH * 1000); //in milliseconds
         m_botAction.sendPrivateMessage(name, "Switch will take place in " + TIME_BEFORE_SWITCH + " secs");
     }
@@ -1080,6 +1099,7 @@ public class twlbottwl extends TWLBotExtension
         {
             m_match.switchPlayers(m_playerFrom, m_playerTo);
             m_botAction.sendArenaMessage(m_playerFrom + " switched ships with " + m_playerTo);
+            m_switchSubLock = false;    // Disable lock
         }
     }
 
@@ -1113,6 +1133,8 @@ public class twlbottwl extends TWLBotExtension
                 l.cancel();
                 m_laggers.remove(m_playerOut);
             }
+            
+            m_switchSubLock = false; // Disable lock
         }
     }
 
@@ -1331,9 +1353,11 @@ public class twlbottwl extends TWLBotExtension
         if ( m_isBasePlayoff ) {
             m_botAction.sendPrivateMessage( name, "This match will NO LONGER be played as a TWLB Playoff game." );
             m_isBasePlayoff = false;
+            m_match.setPlayoff( false );
         } else {
             m_botAction.sendPrivateMessage( name, "This match will be played as a TWLB PLAYOFF game." );
             m_isBasePlayoff = true;
+            m_match.setPlayoff( true );
         }
 
     }
