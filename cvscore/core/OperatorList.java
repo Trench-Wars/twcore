@@ -8,11 +8,13 @@ public class OperatorList {
     Map             m_accessList;
 
     public static final int ZH_LEVEL = 1;
-    public static final int ER_LEVEL = 2;
-    public static final int MODERATOR_LEVEL = 3;
-    public static final int SMOD_LEVEL = 4;
-    public static final int SYSOP_LEVEL = 5;
-    public static final int OWNER_LEVEL = 5;
+    public static final int REMOTE_LEVEL = 2;
+    public static final int ER_LEVEL = 3;
+    public static final int MODERATOR_LEVEL = 4;
+    public static final int HIGHMOD_LEVEL = 5;
+    public static final int SMOD_LEVEL = 6;
+    public static final int SYSOP_LEVEL = 7;
+    public static final int OWNER_LEVEL = 8;
 
     public OperatorList(){
 
@@ -56,6 +58,25 @@ public class OperatorList {
         }
     }
     
+    public boolean isRemote( String name ){
+
+        if( getAccessLevel( name ) >= REMOTE_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isRemoteExact( String name ){
+
+        if( getAccessLevel( name ) == REMOTE_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
     public boolean isER( String name ){
 
         if( getAccessLevel( name ) >= ER_LEVEL ){
@@ -92,6 +113,24 @@ public class OperatorList {
         }
     }
     
+    public boolean isHighmod( String name ){
+
+        if( getAccessLevel( name ) >= HIGHMOD_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isHighmodExact( String name ){
+
+        if( getAccessLevel( name ) == HIGHMOD_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public boolean isSmod( String name ){
 
         if( getAccessLevel( name ) >= SMOD_LEVEL ){
