@@ -182,6 +182,11 @@ public class acrobot extends SubspaceBot {
 	    	    try {
 	    	        String cur     = (String)phrases.elementAt( vote - 1);
     				String parts[] = Tools.stringChopper( cur, '%' );
+    				
+    				if( playerVotes.containsKey( name ) ) {
+    					m_botAction.sendPrivateMessage( name, "You have already voted!." );    				    
+    				    return;
+    				}
 	    			
     				if( !parts[0].toLowerCase().equals( name.toLowerCase() ) ) {
     					votes[vote-1]++;
