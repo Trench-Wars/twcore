@@ -30,6 +30,7 @@ public class twlbottwl extends TWLBotExtension
     private String m_timeStart;
     private String m_timeEnd;
     private int m_generalTime = 0;
+    private boolean m_isBasePlayoff = false;
 
     private HashMap m_laggers;
     private int m_watch;
@@ -41,6 +42,7 @@ public class twlbottwl extends TWLBotExtension
 
     //constants
     private final int EXTENSION_TIME = 2; //mins
+    private final int BASE_PLAYOFF_TIMER = 41; //mins (for playoff mode)
     private final int BASE_TIMER = 31; //mins
     private final int DUEL_TIMER = 30; //mins
 
@@ -59,6 +61,7 @@ public class twlbottwl extends TWLBotExtension
     private final double VERSION = 1.8;
 
     final static int TIME_RACE_TARGET = 900; //sec
+    final static int TIME_RACE_PLAYOFF_TARGET = 1200; // sec (for playoff mode)
     final static int DUEL_TARGET = 50; //kills
 
     public twlbottwl()
@@ -362,10 +365,18 @@ public class twlbottwl extends TWLBotExtension
         {
             if (m_match.getMatchTypeId() == 3)
             {
-                if (m_generalTime < (BASE_TIMER - EXTENSION_TIME) * 60)
-                {
-                    m_botAction.sendPrivateMessage(name, "Players may only be added before extension expires.");
-                    return;
+                if( m_isBasePlayoff ) {
+                    if( m_generalTime < (BASE_PLAYOFF_TIMER - EXTENSION_TIME) * 60 )
+                    {
+                        m_botAction.sendPrivateMessage(name, "Players may only be added before extension expires.");
+                        return;
+                    }
+                } else {
+                    if( m_generalTime < (BASE_TIMER - EXTENSION_TIME) * 60 )
+                    {
+                        m_botAction.sendPrivateMessage(name, "Players may only be added before extension expires.");
+                        return;
+                    }
                 }
             }
             else
@@ -629,9 +640,14 @@ public class twlbottwl extends TWLBotExtension
                     m_botAction.warpFreqToLocation(0, 486, 256);
                     m_botAction.warpFreqToLocation(1, 538, 256);
                     m_botAction.moveToTile(513, 212);
-                    m_botAction.setTimer(BASE_TIMER);
-                    m_generalTime = BASE_TIMER * 60; //60 sec in a minute
-                }
+                    if( m_isBasePlayoff ) {
+                        m_botAction.setTimer(BASE_PLAYOFF_TIMER);
+                        m_generalTime = BASE_PLAYOFF_TIMER * 60; //60 sec in a minute
+                    } else {
+                        m_botAction.setTimer(BASE_TIMER);
+                        m_generalTime = BASE_TIMER * 60; //60 sec in a minute
+                    }
+            }
                 else
                 {
                     m_botAction.setTimer(DUEL_TIMER);
@@ -655,8 +671,13 @@ public class twlbottwl extends TWLBotExtension
                 public void run()
                 {
                     m_match.addTimePoint();
-                    if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_TARGET))
-                        do_endGame();
+                    if( m_isBasePlayoff ) {
+                        if ((m_match.getTeam1Score() >= TIME_RACE_PLAYOFF_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_PLAYOFF_TARGET))
+                            do_endGame();
+                    } else {
+                        if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_TARGET))
+                            do_endGame();
+                    }
                 }
             };
 
@@ -839,7 +860,7 @@ public class twlbottwl extends TWLBotExtension
     }
 
     /**
-     * This sets the captain of the team that is playing;
+     * this sets the captain of the team that is playing;
      * @author FoN
      *
      * @param name, name of the person who messaged the bot
@@ -1186,55 +1207,57 @@ public class twlbottwl extends TWLBotExtension
 
     public void do_showScore(String name, String message)
     {
-        if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
-                if (m_gameState == 0)
+
+        if( m_match == null || m_gameState == 0 )
             return;
-        if (m_gameState < 4)
-        {
-            m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (Has not started)");
-            return;
+
+        if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name)) {
+
+            if (m_gameState < 4) {
+                m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (Has not started)");
+                return;
+            }
+
+            int team1Score = 0;
+            int team2Score = 0;
+
+            if (m_match.getMatchTypeId() == 3) {
+
+                team1Score = m_match.getTeam1Score();
+                team2Score = m_match.getTeam2Score();
+
+                String team1leadingZero = "";
+                String team2leadingZero = "";
+
+                if (team1Score % 60 < 10)
+                    team1leadingZero = "0";
+
+                if (team2Score % 60 < 10)
+                    team2leadingZero = "0";
+
+                m_botAction.sendPrivateMessage(
+                    name,
+                    m_match.getTeam1Name()
+                        + " vs "
+                        + m_match.getTeam2Name()
+                        + " ("
+                        + team1Score / 60
+                        + ":"
+                        + team1leadingZero
+                        + team1Score % 60
+                        + " - "
+                        + team2Score / 60
+                        + ":"
+                        + team2leadingZero
+                        + team2Score % 60
+                        + ")"
+                        );
+            } else {
+                team1Score = m_match.getTeam2Deaths();
+                team2Score = m_match.getTeam1Deaths();
+                m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (" + team1Score + "-" + team2Score + ")");
+            }
         }
-
-        int team1Score = 0;
-        int team2Score = 0;
-        if (m_match.getMatchTypeId() == 3)
-        {
-            team1Score = m_match.getTeam1Score();
-            team2Score = m_match.getTeam2Score();
-
-            String team1leadingZero = "";
-            String team2leadingZero = "";
-
-            if (team1Score % 60 < 10)
-                team1leadingZero = "0";
-            if (team2Score % 60 < 10)
-                team2leadingZero = "0";
-
-            m_botAction.sendPrivateMessage(
-                name,
-                m_match.getTeam1Name()
-                    + " vs "
-                    + m_match.getTeam2Name()
-                    + " ("
-                    + team1Score / 60
-                    + ":"
-                    + team1leadingZero
-                    + team1Score % 60
-                    + " - "
-                    + team2Score / 60
-                    + ":"
-                    + team2leadingZero
-                    + team2Score % 60
-                    + ")"
-                    );
-        }
-        else
-        {
-            team1Score = m_match.getTeam2Deaths();
-            team2Score = m_match.getTeam1Deaths();
-            m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (" + team1Score + "-" + team2Score + ")");
-        }
-
     }
 
     public void do_changeHost(String name, String message)
@@ -1255,14 +1278,14 @@ public class twlbottwl extends TWLBotExtension
     /**
      * @author FoN
      *
-     * This command just returns a version final variable to show if the bot is getting compiled or not
+     * this command just returns a version final variable to show if the bot is getting compiled or not
      *
      */
 
 // was trying to add module no succes yet.
     public void do_version(String name, String message)
     {
-        m_botAction.sendPrivateMessage(name, Double.toString(VERSION));
+        m_botAction.sendPrivateMessage(name, Double.toString(VERSION) );
     }
 //  /**
 //  * This is an lag check created by rodge_rabbit.
@@ -1281,6 +1304,41 @@ public class twlbottwl extends TWLBotExtension
 //            setShip(((Integer) i.next()).intValue(), shipType);
 //        }
 //  }
+
+
+
+    /** Switches into TWLB Playoff mode, with games 40 minutes max instead
+     * of the usual 30.                                        qan, 7/29/04
+     * @param name Name of mod executing command.
+     */
+    public void do_switchPlayoff( String name ) {
+
+        if ( m_gameState == 4 ) {
+            m_botAction.sendPrivateMessage(name, "Game can not be running in order to switch Playoff mode." );
+            return;
+        }
+
+        if ( m_gameState == 0 ) {
+            m_botAction.sendPrivateMessage(name, "Game must be loaded in order to switch Playoff mode." );
+            return;
+        }
+
+        if ( m_match.getMatchTypeId() != 3 ) {
+            m_botAction.sendPrivateMessage(name, "This mode only applies to base matches." );
+            return;
+        } 
+
+        if ( m_isBasePlayoff ) {
+            m_botAction.sendPrivateMessage( name, "This match will NO LONGER be played as a TWLB Playoff game." );
+            m_isBasePlayoff = false;
+        } else {
+            m_botAction.sendPrivateMessage( name, "This match will be played as a TWLB PLAYOFF game." );
+            m_isBasePlayoff = true;
+        }
+
+    }
+
+
 
     /**
      * Parses the FlagClaimed event to the correct team
@@ -1535,6 +1593,7 @@ public class twlbottwl extends TWLBotExtension
         m_botAction.sendUnfilteredPublicMessage("*lockspec");
         m_botAction.setMessageLimit(0);
         m_botAction.setTimer(0);
+        m_isBasePlayoff = false;
 
         //store results
         sql_storeResults(mvp, team1Score, team2Score, m_match.getMatchId());
@@ -1757,82 +1816,84 @@ public class twlbottwl extends TWLBotExtension
 
     public void handleCommand(String name, String message)
     {
-        if (message.toLowerCase().startsWith("!loadgame "))
+        message = message.toLowerCase();
+
+        if (message.startsWith("!loadgame "))
         {
             do_loadGame(name, message);
         }
-        else if (message.toLowerCase().startsWith("!reloadgame"))
+        else if (message.startsWith("!reloadgame"))
         {
             do_reloadGame(name, message);
         }
-        else if (message.toLowerCase().startsWith("!unloadgame"))
+        else if (message.startsWith("!unloadgame"))
         {
             do_unloadGame(name, message);
         }
-        else if (message.toLowerCase().startsWith("!zone"))
+        else if (message.startsWith("!zone"))
         {
             do_zoneGame(name, message);
         }
-        else if (message.toLowerCase().startsWith("!startpick"))
+        else if (message.startsWith("!startpick"))
         {
             do_startPick(name, message);
         }
-        else if (message.toLowerCase().startsWith("!add "))
+        else if (message.startsWith("!add "))
         {
             do_addPlayer(name, message.substring(5, message.length()), false);
         }
-        else if (message.toLowerCase().startsWith("!fadd "))
+        else if (message.startsWith("!fadd "))
         {
             if (m_opList.isSmod(name) || name.toLowerCase().equals( "rodge_rabbit" ) )
                 do_addPlayer(name, message.substring(6, message.length()), true);
         }
-        else if (message.toLowerCase().startsWith("!remove "))
+        else if (message.startsWith("!remove "))
         {
             do_removePlayer(name, message.substring(8, message.length()));
         }
-        else if (message.toLowerCase().startsWith("!startgame"))
+        else if (message.startsWith("!startgame"))
         {
             do_startGame(name, message);
         }
-        else if (message.toLowerCase().startsWith("!blueout"))
+        else if (message.startsWith("!blueout"))
         {
             do_toggleBlueOut(name);
         }
-        else if (message.toLowerCase().startsWith("!sub "))
+        else if (message.startsWith("!sub "))
         {
             do_subPlayer(name, message.substring(5, message.length()));
         }
-        else if (message.toLowerCase().startsWith("!switch "))
+        else if (message.startsWith("!switch "))
         {
             do_switchPlayer(name, message.substring(8, message.length()));
         }
-        else if (message.toLowerCase().startsWith("!list"))
+        else if (message.startsWith("!list"))
         {
             do_listPlayers(name, message);
         }
-        else if (message.toLowerCase().startsWith("!lagout"))
+        else if (message.startsWith("!lagout"))
         {
             do_lagOut(name, message);
         }
-        else if (message.toLowerCase().startsWith("!myfreq"))
+        else if (message.startsWith("!myfreq"))
         {
             do_myFreq(name, message);
         }
-        else if (message.toLowerCase().startsWith("!score"))
+        else if (message.startsWith("!score"))
         {
             do_showScore(name, message);
         }
-        else if (message.toLowerCase().startsWith("!ref"))
+        else if (message.startsWith("!ref"))
         {
             if (m_gameState == 0)
                 return;
             m_botAction.sendPrivateMessage(name, "Match Ref: " + m_match.getRef());
         }
-        else if (message.toLowerCase().startsWith("!newhost"))
+        else if (message.startsWith("!newhost"))
         {
             do_changeHost(name, message);
         }
-        else if (message.toLowerCase().startsWith("!creatematch "))
+        else if (message.startsWith("!creatematch "))
         {
             if (m_opList.isSmod(name)
                 || (name.toLowerCase()).equals("demonic")
@@ -1844,23 +1905,29 @@ public class twlbottwl extends TWLBotExtension
                 || (name.toLowerCase()).equals("wingzero"))
                 sql_createFakeMatch(name, message.substring(13, message.length()));
         }
-        else if (message.toLowerCase().startsWith("!loadtestgame"))
+        else if (message.startsWith("!loadtestgame"))
         {
             do_loadTestGame(name, message);
         }
 // DISABLED because not implented yet.
-//      else if (message.toLowerCase().startsWith("!lagcheck"))
+//      else if (message.startsWith("!lagcheck"))
 //      {
 //          do_lagcheck(name, message);
 //      }
-        else if (message.toLowerCase().startsWith("!version"))
+        else if (message.startsWith("!version"))
         {
             do_version(name, message);
         }
-        else if (message.toLowerCase().startsWith("!setcaptain "))
+        else if (message.startsWith("!setcaptain "))
         {
             do_setCaptain(name, message.substring(12, message.length()));
         }
+
+        else if ( message.startsWith( "!playoff" ) )
+        {
+            do_switchPlayoff(name);
+        }
+
     }
 
     public void handlePlayerCommand(String name, String message)
@@ -2590,7 +2657,7 @@ public class twlbottwl extends TWLBotExtension
             playerQuery += "0, 0, '" + timeEnd + "', " + pp.getStatistic(Statistics.TOTAL_TEAMKILLS) + ", " + pp.getStatistic(Statistics.TERRIER_KILL) + " )";
             try
             {
-                m_botAction.SQLBackgroundQuery(mySQLHost, name, playerQuery);
+                m_botAction.SQLQuery(mySQLHost, playerQuery);
             }
             catch (Exception e)
             {

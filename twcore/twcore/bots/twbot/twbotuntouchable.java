@@ -1,7 +1,7 @@
 /*
  * twbotuntouchable - The Untouchable module - qan (gdugwyler@hotmail.com)
  *
- * Created 5/30/04 - Last modified 7/14/04
+ * Created 5/30/04 - Last modified 7/24/04
  * 
  *
  *
@@ -28,9 +28,22 @@ import twcore.core.*;
  * is declared the winner.  Other than that, a normal elim.
  *
  * @author  qan
- * @version 1.5
+ * @version 1.7
  */
 public class twbotuntouchable extends TWBotExtension {
+
+
+    // Bot stats
+    final static String f_version = "1.7";         // Version of bot
+    final static String f_modified = "7/24/04";    // Date of last modification
+
+    // Final declarations
+    final static int f_5seconds = 5000;      // 5000ms / 5 seconds
+    final static int f_specship = 0;         // the ship number representing spec
+    final static int f_deflives = 10;        // the default number of deaths allowed
+    final static int f_teamsize = 1;         // Teams of 1 (standard DM style)
+    final static int f_startmsglength = 7;   // # chars in a !start msg until arg(s)
+
 
     public twbotuntouchable() {
     }
@@ -38,34 +51,27 @@ public class twbotuntouchable extends TWBotExtension {
     TimerTask startGame;
     TimerTask giveStartWarning;
 
-    int m_untouchableID;
+    String m_untouchable = "";
     int m_lives;
 
     boolean isRunning = false;
+    boolean manual = false;        // Manual toggle for more personal hosting style
 
 
-
-    /**This handleEvent accepts msgs from players as well as ERs.
-     * ER commands are passed to handleCommand
-     * @event The Message event in question.
+    /** Handles event received message, and if from an ER or above, 
+     * tries to parse it as an event mod command.  Otherwise, parses
+     * as a general command.
+     * @param event Passed event.
      */
     public void handleEvent( Message event ){
 
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
-
-            // Let everyone check who they are, not just mods
-            if( message.startsWith( "!whoami" )) {
-                if( m_botAction.getPlayerID( name ) == m_untouchableID ) {
-                    m_botAction.sendPrivateMessage( name, "You are the Untouchable.  Be careful not to give yourself away." );
-                } else {
-                    m_botAction.sendPrivateMessage( name, "You are not the Untouchable." );
-                }
-            }
-
             if( m_opList.isER( name ))
                 handleCommand( name, message );
+            else
+                handleGeneralCommand( name, message );
         }
     }
 
@@ -77,32 +83,19 @@ public class twbotuntouchable extends TWBotExtension {
      * @param UTName Name of player to be the starting Untouchable.  If
      *                   left blank, random starting UT.
      */    
-    public void doInit( int lives, String UTName ){
+    public void doInit( final int lives, String UTName ){
         m_lives = lives;
-        final int theLives = lives;
-
-        m_botAction.sendArenaMessage( "RULES OF UNTOUCHABLE: Elim, except one person is privately selected to be THE UNTOUCHABLE.  His or her identity should remain as secret as possible." );
-        m_botAction.sendArenaMessage( "The Untouchable can never die.  A person who shoots the Untouchable will be in for a painful surprise -- they're spec'd without warning." );
-        m_botAction.sendArenaMessage( "WINNING: The last person left alive, not including the Untouchable, is declared the winner." );
 
         if ( UTName == "" ) {
             makeNewRandomUntouchable();
         } else {
             Player p = m_botAction.getFuzzyPlayer( UTName );
             if( p != null) {
-                m_untouchableID = p.getPlayerID();
-                String name = m_botAction.getPlayerName( m_untouchableID );
-                m_botAction.sendPrivateMessage( name, "You have been selected to be the Untouchable!  You have no death limit, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
+                m_untouchable = p.getPlayerName();
+                m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You have no death limit, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
             }
         }
 
-        // Wait 5 seconds before giving 10 sec warning so players can read rules
-        giveStartWarning = new TimerTask() {
-            public void run() {
-                m_botAction.sendArenaMessage( "10 seconds until game begins...", 2);
-            }
-        };
-        m_botAction.scheduleTask( giveStartWarning, 5000 );
 
         startGame = new TimerTask() {
             public void run() {
@@ -112,16 +105,37 @@ public class twbotuntouchable extends TWBotExtension {
                     m_botAction.scoreResetAll();
                     m_botAction.shipResetAll();
 
-                    m_botAction.sendArenaMessage( "Removing players with " + theLives + " deaths (except the Untouchable)" );
+                    m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths (except the Untouchable)" );
                     m_botAction.sendArenaMessage( "GO GO GO!!", 104);
 
                     m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-                    m_botAction.sendArenaMessage( "Blueout enabled to protect the Untouchable.  Staff, please refrain from speaking in public chat." );
+                    m_botAction.sendArenaMessage( "Blueout enabled for secrecy.  Staff, please refrain from speaking in public chat." );
                 }
 
             }
         };
-        m_botAction.scheduleTask( startGame, 15000 );
+
+        if( manual ) {
+            isRunning = true;
+            m_botAction.scoreResetAll();
+            m_botAction.shipResetAll();
+            m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths (except the Untouchable)" );
+            m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
+
+        } else {
+            m_botAction.createRandomTeams( f_teamsize );
+
+            displayRules();
+
+            // Wait 5 seconds before giving 10 sec warning so players can read rules
+            giveStartWarning = new TimerTask() {
+                public void run() {
+                    m_botAction.sendArenaMessage( "10 seconds until game begins...", 2);
+                }
+            };
+            m_botAction.scheduleTask( giveStartWarning, f_5seconds );
+            m_botAction.scheduleTask( startGame, f_5seconds * 3 );
+        }
     }
 
 
@@ -130,15 +144,14 @@ public class twbotuntouchable extends TWBotExtension {
      * FIX: Feed all eligible players into a list and use a random number generator to choose one.
      */
     public void makeNewRandomUntouchable() {
-        m_untouchableID = -1;
+        m_untouchable = "";
 
         Iterator i = m_botAction.getPlayingPlayerIterator();
 
-        while ( m_untouchableID == -1 && i.hasNext() ) {
+        while ( m_untouchable == "" && i.hasNext() ) {
             if (i != null) {
-                m_untouchableID = ((Player) i.next()).getPlayerID();
-                String name = m_botAction.getPlayerName( m_untouchableID );
-                m_botAction.sendPrivateMessage( name, "You have been selected to be the Untouchable!  You can not die, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
+                m_untouchable = ((Player) i.next()).getPlayerName();
+                m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You can not die, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
             }
         }
     }
@@ -157,6 +170,7 @@ public class twbotuntouchable extends TWBotExtension {
 
             // Default: 10 lives, random starting Untouchable
             case 0: 
+                m_untouchable = "";
                 doInit( 10, "" );
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
                 break;
@@ -164,6 +178,7 @@ public class twbotuntouchable extends TWBotExtension {
             // User-defined number of lives, random starting Untouchable
             case 1: 
                 int lives = Integer.parseInt(params[0]);
+                m_untouchable = "";
                 doInit( lives, "" );
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
                 break;
@@ -201,14 +216,17 @@ public class twbotuntouchable extends TWBotExtension {
         if( message.startsWith( "!stop" )){
             if(isRunning == true) {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode stopped." );
+                m_untouchable = "";
                 isRunning = false;
+                if( ! manual )
+                    m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
             } else {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode is not currently enabled." );
             }
               
         } else if( message.startsWith( "!start " )){
             if(isRunning == false) {
-                String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
+                String[] parameters = Tools.stringChopper( message.substring( f_startmsglength ), ' ' );
                 start( name, parameters );
             } else {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode is already enabled." );
@@ -216,6 +234,7 @@ public class twbotuntouchable extends TWBotExtension {
 
         } else if( message.startsWith( "!start" )){
             if(isRunning == false) {
+                m_untouchable = "";
                 doInit( 10, "" );
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
             } else {
@@ -223,19 +242,53 @@ public class twbotuntouchable extends TWBotExtension {
             }
 
         } else if( message.startsWith( "!rules" )) {
-            m_botAction.sendArenaMessage( "RULES OF UNTOUCHABLE: Elim, except one person is privately selected to be THE UNTOUCHABLE.  His or her identity should remain as secret as possible." );
-            m_botAction.sendArenaMessage( "The Untouchable can never die.  A person who shoots the Untouchable will be in for a painful surprise -- they're spec'd without warning." );
-            m_botAction.sendArenaMessage( "WINNING: The last person left alive, not including the Untouchable, is declared the winner." );
-        } 
+            displayRules();
+
+        } else if( message.startsWith( "!manual" )) {
+            if( manual ) {
+                manual = false;
+                m_botAction.sendPrivateMessage( name, "Manual OFF.  !start will now do most of the work for you." );
+            } else {
+                manual = true;
+                m_botAction.sendPrivateMessage( name, "Manual ON.  !start won't display rules, give 10 seconds, say GO, etc." );
+            }
+
+        } else
+            handleGeneralCommand( name, message );    // pass the buck
     }
 
+
+
+    public void handleGeneralCommand( String name, String message ) {
+        // Prevent double !help spam (don't be TOO helpful)
+        if( message.startsWith( "!bothelp" ) )
+            sendHelp( name );
+
+        else if( message.startsWith( "!botrules" ) )
+            sendRules( name );
+
+        else if( message.startsWith( "!about" ) )
+            sendAbout( name );
+
+        else if( message.equals( "!help" ) )
+            m_botAction.sendPrivateMessage( name, "Send !bothelp for help on the loaded bot module." );
+
+        else if( message.startsWith( "!whoami" )) {
+            if( m_untouchable.equals( name ) ) {
+                m_botAction.sendPrivateMessage( name, "You are the Untouchable.  Be careful not to give yourself away." );
+            } else {
+                m_botAction.sendPrivateMessage( name, "You are not the Untouchable.  Watch who you shoot at!" );
+            }
+        }
+
+   }
 
     
     /** Handles player leaving events.  If player who left is UT, reassign UT.
      * @param event Contains event information on player who left.
      */
     public void handleEvent( PlayerLeft event ) {
-        if( event.getPlayerID() == m_untouchableID ) {
+        if( m_untouchable.equals( m_botAction.getPlayerName( event.getPlayerID() ) ) ) {
             makeNewRandomUntouchable();
         }
     }
@@ -248,9 +301,9 @@ public class twbotuntouchable extends TWBotExtension {
      */
     public void handleEvent( FrequencyShipChange event ) {
        
-        if( event.getShipType() == 0 && isRunning ) {
+        if( event.getShipType() == f_specship && isRunning ) {
 
-            if( event.getPlayerID() == m_untouchableID ) {
+            if( m_untouchable.equals( m_botAction.getPlayerName( event.getPlayerID() ) ) ) {
 
                 int numPs = 0;
                 Iterator i3 = m_botAction.getPlayingPlayerIterator();
@@ -280,11 +333,15 @@ public class twbotuntouchable extends TWBotExtension {
                         Player winner = (Player) i2.next();
 
                         // If the "winner" we're getting is actually the UT, get next
-                        if( winner.getPlayerID() == m_untouchableID )
+                        if( m_untouchable.equals( winner.getPlayerName() ) )
                             winner = (Player) i2.next();
 
-                        m_botAction.sendArenaMessage( "GAME OVER!  Winner:  " + winner.getPlayerName() + "!",5);
+                        m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " stayed on the Untouchable " + m_untouchable + "'s good side and triumphed!",5);
+                        m_untouchable = "";
                         isRunning = false;
+                        if( ! manual )
+                            m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
+
 
                     } catch (Exception e) {
                     }
@@ -303,11 +360,10 @@ public class twbotuntouchable extends TWBotExtension {
 
         if( isRunning ){
 
-            int pID = event.getKilleeID();
-            Player p = m_botAction.getPlayer( pID );
+            Player p = m_botAction.getPlayer( event.getKilleeID() );
 
             // If someone's shot the Untouchable . . .
-            if( pID == m_untouchableID ) { 
+            if( m_untouchable.equals( p.getPlayerName() ) ) { 
                 Player killer = m_botAction.getPlayer( event.getKillerID() );
                 String killerName = killer.getPlayerName();
 
@@ -333,6 +389,76 @@ public class twbotuntouchable extends TWBotExtension {
     
 
 
+    // DISPLAY/INFO SECTION -- a handy layout.  To use, replace your module's
+    // handleEvent for Message events with the one in here, create f_version
+    // and f_lastmodified final static variables as seen above, copy/paste
+    // the handleGeneralCommand method, and copy/paste/edit the following
+    // methods below.  Makes a module much more user-friendly.
+
+    /** Displays the rules of the event module in readable form.
+     */
+    public void displayRules() {
+        String[] rules = getRules();
+        for( int i = 0; i < rules.length; i++ )
+            m_botAction.sendArenaMessage( rules[i] );
+    }
+
+
+
+    /** Sends rules privately to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendRules( String name ) {
+        m_botAction.privateMessageSpam( name, getRules() );
+    }
+
+
+
+    /** Sends about message to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendAbout(String name) {
+        String about = "Untouchable module, v" + f_version + ".  Created by qan.  Last modified " + f_modified;
+        m_botAction.sendPrivateMessage( name, about );
+    }
+
+
+
+    /** Sends general help to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendHelp( String name ) {
+        String[] help = {
+            "General Help for Untouchable Module",
+            "!whoami       - Shows whether or not you are the Untouchable.",
+            "!botrules     - Display built-in rules via private message.",
+            "!about        - Gives basic information about the bot module.",
+            "!bothelp      - This message."
+        };
+        m_botAction.privateMessageSpam( name, help );
+    }
+
+
+
+    /** Returns the rules of the event in readable form.
+     * @return String array containing rules.
+     */
+    public String[] getRules() {
+        String[] rules = {
+          // | Max line length for rules to display correctly on 800x600.....................|
+            ".....                       - RULES of UNTOUCHABLE -                        .....",
+            "...   One person is, in secret, the Untouchable.  If anyone kills the         ...",
+            "..    Untouchable, they are specced.  Revealing the UT's identity = CHEATING.  ..",
+            ".     While normal elim rules apply, the UT can't be eliminated!                .",
+            ".     Note: send !whoami to the bot to check on your status.                    .",
+            ".                                 - OBJECTIVE -                                 .",
+            ".         - Be the last one standing, no matter the cost.                       .",
+        };
+        return rules;
+    }
+
+
+
     /** Returns help message.
      * @return A string array containing help msgs for this bot.
      */
@@ -343,7 +469,8 @@ public class twbotuntouchable extends TWBotExtension {
             "!start <lives> <UTname> - Specify number of lives and starting Untouchable.",
             "!stop               - Stops Untouchable mode.",
             "!rules              - Displays basic rules of the Untouchable to the arena.",
-            "!whoami             - PUBLIC COMMAND.  Tells you if you are the Untouchable."
+            "!whoami             - PUBLIC COMMAND.  Tells you if you are the Untouchable.",
+            "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)"
         };
         return untouchableHelp;
     }
