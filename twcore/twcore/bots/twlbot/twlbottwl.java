@@ -47,7 +47,7 @@ public class twlbottwl extends TWLBotExtension
     private final int DUEL_TIMER = 30; //mins
 
     private final int[] TIME_BEFORE_LAGOUT = { 60, 15 }; //sec [0]-d/j, [1]-b
-    private final int TIME_BEFORE_SUB = 5; //sec
+    private final int TIME_BEFORE_SUB = 15; //sec
     private final int TIME_BEFORE_SWITCH = 15; //sec
     private final int LAGOUT_LIMIT = 4; //min
 
