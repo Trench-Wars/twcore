@@ -128,5 +128,4 @@ public class SQLManager extends Thread {
             } catch( InterruptedException e ){}
         }
     }
-    
 }
