@@ -3,6 +3,7 @@ package twcore.bots.twbot;
 import java.sql.*;
 import java.util.*;
 import twcore.core.*;
+import twcore.bots.twlbot.*;
 import twcore.misc.statistics.*;
 
 public class LeagueMatch
@@ -349,7 +350,7 @@ public class LeagueMatch
     private void giveTimeWarning(int time, int team)
     {
 
-        if (time <= twbottwl.TIME_RACE_TARGET)
+        if (time <= twlbottwl.TIME_RACE_TARGET)
         {
 
             int teamId = 0;
@@ -370,7 +371,7 @@ public class LeagueMatch
                 teamScore = getTeam2Score();
             }
 
-            if (twbottwl.TIME_RACE_TARGET - teamScore == time * 60) //3 mins * 60 secs
+            if (twlbottwl.TIME_RACE_TARGET - teamScore == time * 60) //3 mins * 60 secs
             {
                 if (teamId == getFlagOwner()) //no multiple warning
                     m_botAction.sendArenaMessage(name + " needs " + time + " min of flag time to win");

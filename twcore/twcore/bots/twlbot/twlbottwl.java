@@ -61,9 +61,9 @@ public class twlbottwl extends TWLBotExtension
 
     private final double VERSION = 1.8;
 
-    final static int TIME_RACE_TARGET = 900; //sec
-    final static int TIME_RACE_PLAYOFF_TARGET = 1200; // sec (for playoff mode)
-    final static int DUEL_TARGET = 50; //kills
+    public final static int TIME_RACE_TARGET = 900; //sec
+    public final static int TIME_RACE_PLAYOFF_TARGET = 1200; // sec (for playoff mode)
+    public final static int DUEL_TARGET = 50; //kills
 
     public twlbottwl()
     {
