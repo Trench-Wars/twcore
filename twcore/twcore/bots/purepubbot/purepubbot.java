@@ -219,7 +219,7 @@ public class purepubbot extends SubspaceBot
    * @param sender is the person issuing the command.
    * @param argString is the number of minutes to hold the game to.
    */
-  public void doTimeCmd(String sender, String argString )
+  public void doStartTimeCmd(String sender, String argString )
   {
     if(flagTimeStarted)
       throw new RuntimeException( "Flag Time mode has already been started." );
@@ -240,8 +240,10 @@ public class purepubbot extends SubspaceBot
     m_botAction.sendSmartPrivateMessage(sender, "Flag Time mode enabled." );
     m_botAction.sendArenaMessage( "Flag Time mode has been enabled." );
       
-    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " minutes to win the round." );
+    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the round." );
     m_botAction.sendArenaMessage( "Next round will begin in 60 seconds." );
+    
+    flagTimeStarted = true;
     m_botAction.scheduleTask( new StartRoundTask(), 60000 );
   }
   
@@ -249,9 +251,8 @@ public class purepubbot extends SubspaceBot
    * Ends "flag time" mode.
    * 
    * @param sender is the person issuing the command.
-   * @param argString is the number of minutes to hold the game to.
    */
-  public void doEndTimeCmd(String sender )
+  public void doStopTimeCmd(String sender )
   {
     if(!flagTimeStarted)
       throw new RuntimeException("Flag Time mode is not currently running.");
@@ -267,6 +268,20 @@ public class purepubbot extends SubspaceBot
     flagTimeStarted = false;
   }
 
+  
+  /**
+   * Displays info about time remaining, if applicable.
+   * 
+   * @param sender is the person issuing the command.
+   */
+  public void doTimeCmd(String sender )
+  {   
+    if( flagTimer != null && flagTimeStarted )
+      flagTimer.sendTimeRemaining( sender );
+    else
+      throw new RuntimeException( "Flag time mode is not currently running." );
+  }
+  
   /**
    * This method logs the bot off.
    *
@@ -299,14 +314,27 @@ public class purepubbot extends SubspaceBot
       "!Start                           -- Starts pure pub settings.",
       "!Stop                            -- Stops pure pub settings.",
       "!Privfreqs                       -- Toggles Private Frequencies.",
-      "!Time #                          -- Starts Flag Time mode (a team wins",
+      "!StartTime #                     -- Starts Flag Time mode (a team wins",
       "                                    with # consecutive min of flagtime).",
-      "!Endtime                         -- Ends Flag Time mode.",
+      "!StopTime                        -- Ends Flag Time mode.",
+      "!Time                            -- Provides time remaining in Flag Time mode.",
       "!Die                             -- Logs the bot off of the server.",
       "!Help                            -- Displays this help message."
     };
+    
+    String[] playerHelpMessage =
+    {
+      "Hello!  I am a bot designed to enforce 'pure pub' rules.",
+      "When enabled, I may restrict levis from playing, prevent private frequencies, or run Flag Time mode.",
+      "Flag Time mode commands (a freq must hold flag for an amount of consecutive minutes to win):",
+      "!Help                            -- Displays this help message.",
+      "!Time                            -- Provides time remaining in Flag Time mode.",
+    };
 
-    m_botAction.smartPrivateMessageSpam(sender, helpMessage);
+    if( opList.isHighmod( sender ) )
+      m_botAction.smartPrivateMessageSpam(sender, helpMessage);
+    else
+      m_botAction.smartPrivateMessageSpam(sender, playerHelpMessage);
   }
 
   /**
@@ -322,22 +350,28 @@ public class purepubbot extends SubspaceBot
 
     try
     {
+      if(message.equals("!time"))
+        doTimeCmd(sender);
+      else if(command.equals("!help"))
+        doHelpCmd(sender);
+      
+      if ( !opList.isHighmod(sender) )
+        return;
+      
       if(command.startsWith("!go "))
         doGoCmd(sender, message.substring(4));
-      if(command.equals("!start"))
+      else if(command.equals("!start"))
         doStartCmd(sender);
-      if(command.equals("!stop"))
+      else if(command.equals("!stop"))
         doStopCmd(sender);
-      if(command.equals("!privfreqs"))
+      else if(command.equals("!privfreqs"))
         doPrivFreqsCmd(sender);
-      if(command.startsWith("!time "))
-        doTimeCmd(sender, message.substring(6));
-      if(command.startsWith("!endtime"))
-        doEndTimeCmd(sender);
-      if(command.equals("!die"))
+      else if(command.startsWith("!starttime "))
+        doStartTimeCmd(sender, message.substring(11));
+      else if(command.equals("!stoptime"))
+        doStopTimeCmd(sender);
+      else if(command.equals("!die"))
         doDieCmd(sender);
-      if(command.equals("!help"))
-        doHelpCmd(sender);
     }
     catch(RuntimeException e)
     {
@@ -357,8 +391,8 @@ public class purepubbot extends SubspaceBot
     int messageType = event.getMessageType();
     String message = event.getMessage().trim();
 
-    if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) && ( opList.isHighmod(sender) ))
-      handleCommand(sender, message);
+    if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )    
+        handleCommand(sender, message);
   }
 
   /**
@@ -562,9 +596,9 @@ public class purepubbot extends SubspaceBot
     if(!flagTimeStarted)
       return;
     
-    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " minutes to win the round." );
-    m_botAction.sendArenaMessage( "Next round will begin in 5 minutes." );
-    m_botAction.scheduleTask( new StartRoundTask(), 300000 );
+    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the round." );
+    m_botAction.sendArenaMessage( "Next round will begin in 3 minutes." );
+    m_botAction.scheduleTask( new StartRoundTask(), 3 * 60 * 1000 );
   }
   
   /**
@@ -582,6 +616,22 @@ public class purepubbot extends SubspaceBot
     m_botAction.sendArenaMessage( "END ROUND:  Freq " + winningFreq + " has emerged victorious.", 1 );
     m_botAction.scheduleTask( new IntermissionTask(), 10000 );
   }
+  
+  /**
+   * Formats an integer time as a String. 
+   * @param time Time in seconds.
+   * @return Formatted string in 0:00 format.
+   */
+  public String getTimeString( int time ) {
+    if( time <= 0 ) {
+      return "0:00";            
+  	}else {
+      int minutes = time / 60;
+      int seconds = time % 60;
+      return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+    }
+  }
+  
 
 
   
@@ -628,6 +678,7 @@ public class purepubbot extends SubspaceBot
   private class FlagCountTask extends TimerTask {
     int flagholdingFreq;
     int secondsHeld;
+    int preTimeCount;
     boolean isRunning;
     
     
@@ -638,6 +689,9 @@ public class purepubbot extends SubspaceBot
     }
       
     public void flagClaimed( int freq, int pid ) {
+      if( isRunning == false )
+        return;
+        
       if( freq != flagholdingFreq && freq != -1 ) {
         flagholdingFreq = freq;
         
@@ -654,24 +708,34 @@ public class purepubbot extends SubspaceBot
           }
         }
 
+        m_botAction.setTimer( flagMinutesRequired );
         secondsHeld = 0;              
+      }     
+    }
+    
+    public void sendTimeRemaining( String name ) {       
+      if( isRunning == false ) {
+        m_botAction.sendSmartPrivateMessage( name, "We are currently between games." );
+        return;
       }
-          
+      
+      m_botAction.sendSmartPrivateMessage( name, (flagholdingFreq == -1 ? "Nobody" : "Freq " + flagholdingFreq ) + " has held for " + getTimeString(secondsHeld) + " and needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more to win.");      
     }
     
     public void run()
     {
       if( isRunning == false ) {
-        if( secondsHeld == 0 )
-          m_botAction.sendArenaMessage( "Round begins in 10 seconds ..." );
-        secondsHeld++;			// Used for the first 10 seconds as dummy counter
+        if( preTimeCount == 0 )
+          m_botAction.sendArenaMessage( "Round begins in 10 seconds . . ." );
+        preTimeCount++;
 
-        if( secondsHeld >= 10 ) {
-          secondsHeld = 0;
-          isRunning = false;
-          m_botAction.sendArenaMessage( "ROUND START!  Hold the flag for " + flagMinutesRequired + " consecutive minutes to win!", 1 );
+        if( preTimeCount >= 10 ) {
+          isRunning = true;
+          m_botAction.sendArenaMessage( "ROUND START!" );
+          m_botAction.sendArenaMessage( "Hold the flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win.", 103 );
+          m_botAction.resetFlagGame();
+          return;
         }
-        return;
       }
         
         
@@ -680,12 +744,14 @@ public class purepubbot extends SubspaceBot
       
       secondsHeld++;
       
-      if( secondsHeld >= flagMinutesRequired * 60 )
+      if( secondsHeld >= flagMinutesRequired * 60 ) {
         doEndRound(flagholdingFreq);
-      else if( (flagMinutesRequired * 60) - secondsHeld == 60 )
-        m_botAction.sendArenaMessage( "UPDATE: 60 seconds more flag time for Freq " + flagholdingFreq + " to win." );
-      else if( (flagMinutesRequired * 60) - secondsHeld == 10 )
-        m_botAction.sendArenaMessage( "UPDATE: 10 seconds more flag time for Freq " + flagholdingFreq + " to win." );
+        isRunning = false;
+      } else if( (flagMinutesRequired * 60) - secondsHeld == 60 ) {
+        m_botAction.sendArenaMessage( "Freq " + flagholdingFreq + " will win in 60 seconds." );
+      } else if( (flagMinutesRequired * 60) - secondsHeld == 10 ) {
+        m_botAction.sendArenaMessage( "Freq " + flagholdingFreq + " will win in 10 seconds . . ." );
+      }
     }
   }  
 
