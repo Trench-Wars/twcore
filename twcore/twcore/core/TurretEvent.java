@@ -1,27 +1,28 @@
+//Updated 6/25/04 by D1st0rt
 package twcore.core;
 
-public class TurretEvent extends SubspaceEvent
-{
+public class TurretEvent extends SubspaceEvent {
 
-	private int m_attacher;
-	private int m_attachee;
+    private int m_attacher;
+    private int m_attachee;
+    private boolean isAttach; //True if attaching, false if detaching
 
-	public TurretEvent(ByteArray array)
-	{
-		m_byteArray = array;
-		m_eventType = EventRequester.TURRET_EVENT; //sets the event type in the superclass
-		
-		m_attacher = (int) array.readLittleEndianShort(1);
-		m_attachee = (int) array.readLittleEndianShort(3);
-	}
+    public TurretEvent(ByteArray array) {
+        m_attacher = (int)array.readLittleEndianShort( 1 );
+        m_attachee = (int)array.readLittleEndianShort( 3 );
 
-	public int getAttacherID()
-	{
-		return m_attacher;
-	}
+        isAttach = ( m_attachee == -1 ? false : true );
+    }
 
-	public int getAttacheeID()
-	{
-		return m_attachee;
-	}
+    public int getAttacherID() {
+        return m_attacher;
+    }
+
+    public int getAttacheeID() {
+        return m_attachee;
+    }
+
+    public boolean isAttaching() {
+        return isAttach;
+    }
 }
