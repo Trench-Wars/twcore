@@ -520,8 +520,17 @@ public class twbottwl extends TWBotExtension
 		m_botAction.scheduleTask(warpPlayers, 5000);
 		m_botAction.sendArenaMessage("Game starts in 30 seconds", 2);
 
+
 		//second warp		
-		m_botAction.scheduleTask(warpPlayers, 10000);
+		TimerTask secondWarp = new TimerTask()
+		{
+			public void run()
+			{
+				m_match.warpAllPlayers();
+			}
+
+		};
+		m_botAction.scheduleTask(secondWarp, 10000);
 
 		TimerTask timerStartGame = new TimerTask()
 		{
@@ -1402,7 +1411,7 @@ public class twbottwl extends TWBotExtension
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 			if (m_gameState < 2 && m_opList.isER(name))
 				handleCommand(name, message);
-			else if ((m_gameState > 1) && (name.equals(m_match.getRef()) || (name.toLowerCase()).equals("roger <er>") || m_opList.isSmod(name)))
+			else if ((m_gameState > 1) && (name.equals(m_match.getRef()) || (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name)))
 				handleCommand(name, message);
 			else
 				handlePlayerCommand(name, message);
@@ -1531,7 +1540,7 @@ public class twbottwl extends TWBotExtension
 		{
 			if (m_opList.isSmod(name)
 				|| (name.toLowerCase()).equals("demonic")
-				|| (name.toLowerCase()).equals("roger <er>")
+				|| (name.toLowerCase()).equals("rodge_rabbit")
 				|| (name.toLowerCase()).equals("wpe <er>")
 				|| (name.toLowerCase()).equals("randedl")
 				|| (name.toLowerCase()).equals("zeus!!")
