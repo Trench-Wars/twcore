@@ -44,7 +44,8 @@ public class bannerboy extends SubspaceBot {
 		m_botAction.setBanner( event.getBanner() );
 		m_lastBannerSet = System.currentTimeMillis();
 		
-		//m_botAction.sendSmartPrivateMessage( m_botAction.getPlayerName( event.getPlayerID() ), "Hope you don't mind if I wear your banner. Looks good on me doesn't it?" );
+		if( m_talk )
+			m_botAction.sendSmartPrivateMessage( m_botAction.getPlayerName( event.getPlayerID() ), "Hope you don't mind if I wear your banner. Looks good on me doesn't it?" );
 		
 	}
 	
@@ -89,22 +90,7 @@ public class bannerboy extends SubspaceBot {
 	}
 	
 	private int getPlayerID( String player ) {
-		/*
-		String name = Tools.addSlashesToString( player );
-		try {
-			String query = "SELECT fnUserID FROM tblUser WHERE fcUserName = '"+name+"'";
-			ResultSet result = m_botAction.SQLQuery( slqHost, query );
-			if( result.next() ) {
-				return result.getInt( "fnUserID" );
-			}
-		} catch (Exception e) {
-			System.out.println( "SELECT fnUserID FROM tblUser WHERE fcUserName = '"+name+"'" );
-			return 0;
-		}
-		
-		createPlayer( player );
-		return getPlayerID( player );*/
-		
+
 		DBPlayerData dbPlayer = new DBPlayerData( m_botAction, m_sqlHost, player, true );
 		return dbPlayer.getUserID();
 	}
@@ -140,6 +126,8 @@ public class bannerboy extends SubspaceBot {
 		
 		int bannerId = getBannerID( banner );
 		int userId = getPlayerID( player );
+		
+		if( bannerId <= 0 ) return;
 		
 		if( alreadyMarked( userId, bannerId ) ) return;
 		
@@ -183,17 +171,29 @@ public class bannerboy extends SubspaceBot {
 		if( event.getMessageType() != Message.PRIVATE_MESSAGE && 
 		    event.getMessageType() != Message.REMOTE_PRIVATE_MESSAGE) return;
 		
-		String player = m_botAction.getPlayerName( event.getPlayerID() );
+		String player = m_botAction.getPlayerName( event.getPlayerID() );		
 		
-		//if( player.equals( "2dragons" ) )
-		if( event.getMessage().startsWith( "!die" ) )
+		if( event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE )
+			player = event.getMessager();
+
+		
+		if( player.equals( "2dragons" ) ) {
+			if( event.getMessage().startsWith( "!die" ) )
 				m_botAction.die();
 			else if( event.getMessage().startsWith( "!go " ) )
 				m_botAction.joinArena( event.getMessage().substring( 4 ) );
+			else if( event.getMessage().startsWith( "!say " ) ) sayCommand( event.getMessage().substring( 5 ) );
+			else if( event.getMessage().startsWith( "!tsay ") ) sayTCommand( event.getMessage().substring( 6 ) );
+			else if( event.getMessage().startsWith( "!talk" ) ) toggleTalk( player );
+		}
+		else m_botAction.sendSmartPrivateMessage( "2dragons", player + "> "+event.getMessage() );
+	}
+	
+	private void toggleTalk( String _name ) {
 		
-		//if( event.getMessage().startsWith( "!say " ) ) sayCommand( event.getMessage().substring( 5 ) );
-		//else if( event.getMessage().startsWith( "!tsay ") ) sayTCommand( event.getMessage().substring( 6 ) );
-		//else m_botAction.sendSmartPrivateMessage( "2dragons", player + "> "+event.getMessage() );
+		m_talk = !m_talk;
+		if( m_talk ) m_botAction.sendSmartPrivateMessage( _name, "Talk on" );
+		else m_botAction.sendSmartPrivateMessage( _name, "Talk off" );
 	}
 	
 	private void sayCommand( String message ) {
