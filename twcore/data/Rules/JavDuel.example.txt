@@ -73,6 +73,8 @@ obj_countdown10=51
 obj_gogogo=52
 obj_gameover=50
 
+EnableLagLimits=1
+
 CurPing=400
 
 AvePing=350

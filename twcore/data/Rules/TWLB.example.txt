@@ -57,6 +57,8 @@ storegame=1
 loggame=1
 matchtype=3
 
+EnableLagLimits=1
+
 CurPing=
 AvePing=
 S2CPloss=

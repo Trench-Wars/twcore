@@ -52,6 +52,8 @@ obj_countdown54321=2
 obj_gogogo=3
 obj_gameover=4
 
+EnableLagLimits=1
+
 CurPing=
 AvePing=
 S2CPloss=
