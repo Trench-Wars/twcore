@@ -395,6 +395,7 @@ public class twbottwl extends TWBotExtension
 			m_botAction.sendPrivateMessage(name, "Unable to add player, this team has reached the ship type limit for this ship.");
 			return;
 		}
+		
 		//Should be good at this point, add the player. Lag check???
 		m_match.addPlayer(playerTeamId, player, shipType);
 		if (!forced && m_gameState != 4)
@@ -569,13 +570,14 @@ public class twbottwl extends TWBotExtension
 			{
 				public void run()
 				{
+					m_botAction.sendArenaMessage(".");
 					m_match.addTimePoint();
 					if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_TARGET))
 						do_endGame();
 				}
 			};
 
-			m_botAction.scheduleTaskAtFixedRate(timeRace, 35000, 1000);
+			m_botAction.scheduleTaskAtFixedRate(timeRace, 36000, 1000);
 		}
 
 		TimerTask timerDoors = new TimerTask()
@@ -620,6 +622,7 @@ public class twbottwl extends TWBotExtension
 		{
 			public void run()
 			{
+				m_botAction.sendArenaMessage("/");
 				String name = m_match.getNextPlayer();
 				m_botAction.spectatePlayer(name);
 			}
@@ -1034,7 +1037,12 @@ public class twbottwl extends TWBotExtension
 	{
         Player player = m_botAction.getPlayer(event.getPlayerID());
 		int freq = player.getFrequency();
-		
+
+		m_botAction.sendArenaMessage("flagclaimed by: " + player.getPlayerName());
+	
+		if (m_gameState != 4)
+			return;		
+	
 		m_match.setFlagOwner(freq);
 		m_match.getPlayer(player.getPlayerName()).reportStatistic(Statistics.FLAG_CLAIMED);
 	}

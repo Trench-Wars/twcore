@@ -299,6 +299,7 @@ public class LeaguePlayer
 				m_timer = (int) (System.currentTimeMillis() / 1000);
 				m_warned = false;
 				m_inBase = false;
+				m_statisticTracker.reportStatistic(statisticType);
 				break;
 			default:
 				m_statisticTracker.reportStatistic(statisticType);
