@@ -50,7 +50,7 @@ public class twbotsafes extends TWBotExtension {
 		
 		String name = m_botAction.getPlayerName( _event.getPlayerID() );
 		
-		if( m_safeSpec ) {
+		if( m_safeSpec && _event.isInSafe() ) {
 			
 			m_botAction.spec( _event.getPlayerID() );
 			m_botAction.spec( _event.getPlayerID() );
