@@ -158,6 +158,8 @@ public class GamePacketInterpreter {
                 m_subspaceBot.handleEvent( new LoggedOn( null ) );
                 m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,
                 "*energy" );
+                m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,
+                "?obscene" );
                 break;
             case 0x38:
                 handleWatchDamage( array, alreadyDecrypted );
