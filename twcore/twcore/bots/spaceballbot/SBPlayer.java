@@ -2,6 +2,11 @@ package twcore.bots.spaceballbot;
 
 import twcore.core.*;
 
+/**
+ * SpacelBall Player class
+ *
+ */
+
 class SBPlayer {
 
 	String name;
@@ -18,6 +23,14 @@ class SBPlayer {
 	boolean lagged = false;
 
 	Cannon c = null;
+
+
+	/**
+	 * Constructor
+	 *
+	 * @param   player is the name of the player
+	 * @param   team is the team # of the player
+	 */
 
 	public SBPlayer(String player, int team) {
 		name = player;

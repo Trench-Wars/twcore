@@ -2,6 +2,11 @@ package twcore.bots.spaceballbot;
 
 import twcore.core.*;
 
+/**
+ * SpaceBall Projectile class
+ *
+ */
+
 class Projectile {
 
 	SBPlayer owner;
@@ -12,6 +17,18 @@ class Projectile {
 	int vX;
 	int vY;
 	int type;
+
+
+	/**
+	 * Constructor
+	 *
+	 * @param   t0 is the owner of the projectile
+	 * @param   tX is the x location where the projectile was fired
+	 * @param   tY is the y location where the projectile was fired
+	 * @param  tVX is the x velocity of the projectile
+	 * @param  tVY is the y velocity of the projectile
+	 * @param    t is the type of the projectile (1 = bullet, 2 = bomb)
+	 */
 
 	public Projectile(SBPlayer tO, int tX, int tY, int tVX, int tVY, int t) {
 		owner = tO;
@@ -26,6 +43,15 @@ class Projectile {
 
 	public SBPlayer getOwner() { return owner; }
 
+
+	/**
+	 * This method is used to see if the projectile is colliding with the bot.
+	 *
+	 * @param    bX is bot's x location
+	 * @param    bY is bot's y location
+	 * @return   true is returned if the projectile is inside bots "circle"
+	 */
+
 	public boolean isHitting(int bX, int bY) {
 
 		if (getDistance(bX, bY) <= 32) {
@@ -34,6 +60,15 @@ class Projectile {
 			return false;
 		}
 	}
+
+
+	/**
+	 * This method is used to calculate the distance between the projectile and bot.
+	 *
+	 * @param    bX is bot's x location
+	 * @param    bY is bot's y location
+	 * @return   the distance between projectile & bot is returned
+	 */
 
 	public double getDistance(int bX, int bY) {
 		double dist = Math.sqrt( Math.pow(( bX - getXLocation() ), 2) + Math.pow(( bY - getYLocation() ), 2) );

@@ -4,6 +4,14 @@ import twcore.core.*;
 import java.util.*;
 import java.math.*;
 
+/**
+ * Hosts a game of SpaceBall. Objectives:
+ * Prevent the SpaceBall (bot) from reaching your planet's
+ * athmosphere by hitting it with bullets and cannonballs.
+ * Don't cross your planet's boundaries or your engines
+ * will malfunction!
+ */
+
 public class spaceballbot extends SubspaceBot {
 	
 	private BotSettings m_botSettings;
@@ -118,18 +126,32 @@ public class spaceballbot extends SubspaceBot {
 		if (message.startsWith("!mass")) {
 			botMass = Integer.parseInt(event.getMessage().substring(6));
 		}
-
 	}
+
+	/**
+	 * This method handles the PlayerEntered event and welcomes the players
+	 * if there is a game in progress.
+
+	 * @param event is the PlayerEntered event to handle
+	 */
 
 	public void handleEvent(PlayerEntered event) {
 		if (eventState != 0) {
-			String status = "Welcome to Spaceball!";
+			String status = "Welcome to Spaceball! Use !help for instructions";
 			if (eventState == 2) {
-				status += " Use !play to get in and !help for instructions";
+				status += " and !play to get in";
 			}
 			m_botAction.sendPrivateMessage(event.getPlayerID(), status);
 		}
 	}	
+
+
+	/**
+	 * This method handles the PlayerLeft event and updates players lagstatus
+	 * if they are in the event.
+	 *
+	 * @param event is the PlayerLeft event to handle
+	 */
 
 	public void handleEvent(PlayerLeft event) {
 		if (eventState == 0) {
@@ -142,6 +164,13 @@ public class spaceballbot extends SubspaceBot {
 		}
 	}
 
+
+	/**
+	 * This method handles the PlayerDeath event and updates players kill/death stats.
+	 *
+	 * @param event is the PlayerDeath event to handle
+	 */
+	
 	public void handleEvent(PlayerDeath event) {
 		if (eventState == 0) {
 			return;
@@ -158,6 +187,14 @@ public class spaceballbot extends SubspaceBot {
 		}
 	}
 
+
+	/**
+	 * This method handles the FrequencyShipChange event and if players change from a ship
+	 * to spectator mode, it instructs them how to get back in.
+	 *
+	 * @param event is the FrequencyShipChange event to handle
+	 */
+
 	public void handleEvent(FrequencyShipChange event) {
 		if (eventState == 0) {
 			return;
@@ -170,6 +207,17 @@ public class spaceballbot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(p2.getPlayerName(), "Use !return to get back in");
 		}
 	}
+
+
+	/**
+	 * This method handles the PlayerPosition event. If the player isn't in the
+	 * players HashMap, it registers him.
+	 *
+	 * It also checks if the player has crossed the planetary borders and handles
+	 * cannons.
+	 *
+	 * @param event is the PlayerPosition event to handle
+	 */
 
 	public void handleEvent(PlayerPosition event) {
 		if (eventState != 2 && eventState != 3) {
@@ -200,7 +248,7 @@ public class spaceballbot extends SubspaceBot {
 				}
 				while (it.hasNext()) {
 					Cannon c = (Cannon)it.next();
-					if (c.isInArea(event.getXLocation(), event.getYLocation()) && !c.inUse()) {
+					if (!c.inUse() && c.isInArea(event.getXLocation(), event.getYLocation())) {
 						c.attach(p);
 					}
 				}
@@ -208,6 +256,13 @@ public class spaceballbot extends SubspaceBot {
 		}
 	}
 
+
+	/**
+	 * This method handles the WeaponFired event. If the projectile is a bomb or bullet
+	 * it calculates the velocities and adds the projectile to fired_projectiles list.
+
+	 * @param event is the WeaponFired event to handle
+	 */
 
 	public void handleEvent(WeaponFired event) {
 		if (eventState != 2) {
@@ -258,6 +313,13 @@ public class spaceballbot extends SubspaceBot {
 		oShip = m_botAction.getShip();
 	}
 
+
+	/**
+	 * This method handles spamming players with the help/rules.
+
+	 * @param name is the messager
+	 */
+
 	public void handleHelp(String name) {
 		String[] out = {
 			"+------------------------------------------------------------+",
@@ -287,14 +349,19 @@ public class spaceballbot extends SubspaceBot {
 		}
 	}
 
+
+	/**
+	 * This method setups the game. 
+	 *
+	 */
+
 	public void setupGame() {
 		eventState = 1;
 		m_botAction.toggleLocked();
 		m_botAction.setDoors(255);
-
 		m_botAction.createNumberOfTeams(2);
-
 		m_botAction.warpAllRandomly();
+
 		m_botAction.sendArenaMessage("Get ready! Starting in 10 seconds..", 2);
 
 		team1_cannons.add(new Cannon(7216, 7840, m_botAction));
@@ -318,6 +385,12 @@ public class spaceballbot extends SubspaceBot {
 		m_botAction.scheduleTask(tenSeconds, 10000);
 	}
 
+
+	/**
+	 * This method starts the game.
+	 *
+	 */
+
 	public void startGame() {
 		Iterator i = m_botAction.getPlayingPlayerIterator();
 		while (i.hasNext())	{
@@ -338,6 +411,12 @@ public class spaceballbot extends SubspaceBot {
 		};
 	    m_botAction.scheduleTaskAtFixedRate(updateState, 1000, 100);
 	}
+
+
+	/**
+	 * This method finishes the game.
+	 *
+	 */
 
 	public void finishGame() {
 		if (updateState != null)
@@ -365,6 +444,12 @@ public class spaceballbot extends SubspaceBot {
 		eventState = 0;
 	}
 
+
+	/**
+	 * This method displays the end game stats .. quite messy :O
+	 *
+	 */
+
 	public void displayScores() {
 
 		Comparator a = new Comparator() {
@@ -381,7 +466,7 @@ public class spaceballbot extends SubspaceBot {
 		Object[] sorted_p = (Object[]) players.keySet().toArray(new Object[players.size()]);
 		Arrays.sort(sorted_p, a);
 
-		m_botAction.sendArenaMessage(",----------------+ Planet 1 has survived +----------------.");
+		m_botAction.sendArenaMessage(",----------------+ Planet "+winner+" has survived +----------------.");
 		m_botAction.sendArenaMessage("|  PLANET 1                                     PLANET 2  |");
 		m_botAction.sendArenaMessage("+---------------+-----------+ +---------------+-----------+");
 		m_botAction.sendArenaMessage("| Name          | Hits Acc% | | Name          | Hits Acc% |");
@@ -449,6 +534,7 @@ public class spaceballbot extends SubspaceBot {
 		if (mostDeaths != null) {m_botAction.sendArenaMessage("- Most Deaths: " + mostDeaths.getName() + " (" + mostDeaths.getDeaths() + ")"); }
 	}
 
+
 	public String rightenString(String fragment, int length) {
 		int curLength = fragment.length();
 		int startPos = length - curLength;
@@ -460,6 +546,12 @@ public class spaceballbot extends SubspaceBot {
 
 		return result;
 	}
+
+
+	/**
+	 * This method is called when the bot has crossed either of the planet's border.
+	 * It does the gay bursting..
+	 */
 
 	public void gameOver() {
 		eventState = 3;
@@ -483,7 +575,7 @@ public class spaceballbot extends SubspaceBot {
 //				oShip.fire(7);
 				if (c == 7) {
 					c = 0;
-					if (c2 == 2) {
+					if (c2 == 1) {
 						c = 0;
 						c2 = 0;
 						announceWinner();
@@ -497,6 +589,12 @@ public class spaceballbot extends SubspaceBot {
 		};
 	    m_botAction.scheduleTaskAtFixedRate(killLosers, 1000, 500);
 	}
+
+
+	/**
+	 * This method announces the winner and stalls the bot for 5 seconds
+	 * so the bursts wont disappear instantly.
+	 */
 
 	public void announceWinner() {
 		killLosers.cancel();
@@ -512,6 +610,12 @@ public class spaceballbot extends SubspaceBot {
 		};
 		m_botAction.scheduleTask(fiveSeconds, 5000);
 	}
+
+
+	/**
+	 * This method updates the bot location and detects collisions with 
+	 * walls/projectiles.
+	 */
 
 	public void updateState() {
 //		m_botAction.sendArenaMessage("BOTLOC: " + botX + " . " + botY + " VX: " + botVX + " VY: " + botVY + " AGE: " + getAge());
@@ -549,6 +653,13 @@ public class spaceballbot extends SubspaceBot {
 		}
 	}
 
+
+	/**
+	 * This method is called to detect collisions with walls/planet borders.
+	 * If there is a collision with a wall, the Y velocity is converted to the
+	 * opposite number and multiplied by 0.9 to slow down the bot a bit ..
+	 */
+
 	public void checkCollision() {
 		if (getBotX() < PLANET_1_BORDER) {
 			winner = 2;
@@ -561,9 +672,18 @@ public class spaceballbot extends SubspaceBot {
 			lBotX = (int)getBotX();
 			lBotY = (int)getBotY();
 			lastMove = (int)(System.currentTimeMillis());
-			botVY = (int)(botVY * (-1) / (double)1.2);
+			botVY = (int)(botVY * (-1) * (double)0.9);
 		}
 	}
+
+
+	/**
+	 * This method calculates the new velocities after a collision with a projectile.
+
+	 * @param b is the Projectile
+	 * @param bX is the current bot x location
+	 * @param bY is the current bot y location
+	 */
 
 	public void noteHit(Projectile b, int bX, int bY) {
 		lastMove = (int)(System.currentTimeMillis());
@@ -576,9 +696,30 @@ public class spaceballbot extends SubspaceBot {
 		botVY = (int)nYV;
 	}
 
+
+	/**
+	 * This method calculates the bot x location.
+
+	 * @return bX is the new bot x location
+	 */
+
 	public double getBotX() { double bX = lBotX + (botVX * getAge() / (double) 10000.0); return bX; }
 
+
+	/**
+	 * This method calculates the bot y location.
+
+	 * @return bY is the new bot y location
+	 */
+
 	public double getBotY() { double bY = lBotY + (botVY * getAge() / (double) 10000.0); return bY; }
+
+
+	/**
+	 * This method calculates the time from last collision with a wall/projectile.
+
+	 * @return is the age
+	 */
 
 	public double getAge() { return (int)(System.currentTimeMillis()) - lastMove; }
 }
