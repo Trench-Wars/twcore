@@ -657,7 +657,7 @@ public class robohelp extends SubspaceBot {
             } else if( keyword.toLowerCase().startsWith( "javadocs " ) ){
                 String     query;
 
-                query = keyword.substring( 10 ).trim();
+                query = keyword.substring( 8 ).trim();
                 if( query.length() == 0 ){
                     m_botAction.sendChatMessage( "Specify something to look up the JavaDocs on." );
                 } else {
