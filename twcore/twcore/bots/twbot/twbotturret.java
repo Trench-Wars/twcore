@@ -1,6 +1,6 @@
 package twcore.bots.twbot;
 
-//Attach Regulation TWBotExtension by D1st0rt v1.0
+//Attach Regulation TWBotExtension by D1st0rt v1.3
 
 import twcore.core.*;
 
@@ -13,9 +13,17 @@ public class twbotturret extends TWBotExtension
 	{
 		warpBack = false;
 		rules = new boolean[8][8];
+
+	//Set all rules initially to allow attaching as default
+		for(int i = 0; i < 8; i++)
+			for(int j = 0; j < 8; j++)
+				rules[i][j] = true;
 	}
 
 	//Enforcement
+	/**
+	 * What to do when the bot receives notification of an attach/detach
+	 */
 	public void handleEvent(TurretEvent event)
 	{
 		int tID = event.getAttacherID(); //turret ID
@@ -23,56 +31,74 @@ public class twbotturret extends TWBotExtension
 		Player attacher = m_botAction.getPlayer(tID);
 		Player attachee = m_botAction.getPlayer(aID);
 		int tShip = attacher.getShipType() - 1;
-
 		int freq = attacher.getFrequency();
 
-		if(attachee != null) //Attaching
+		if(event.isAttaching()) //Attaching
 		{
-			int aShip = attachee.getShipType() - 1;
-			boolean allowed = rules[aShip][tShip];
+			int aShip = attachee.getShipType() - 1; //convert to 0-7
+			boolean allowed = rules[aShip][tShip]; //check rule for attaching
 			if(!allowed) //not allowed
 			{
+				//change their freq to make them get off, then put them back
 				m_botAction.setFreq(tID,Math.abs(1-freq)); //Safe for arenas with only 2 freqs
 				m_botAction.setFreq(tID,freq);
 			}
 
 		}
 		else //Detaching
-		{
 			if(warpBack)
-			{
-				m_botAction.setFreq(tID,Math.abs(1-freq)); //Safe for arenas with only 2 freqs
-				m_botAction.setFreq(tID,freq);
-			}
-		}
+				m_botAction.sendUnfilteredPrivateMessage(tID,"*prize #7"); //prizes "warp!"
 	}
 
 	//The easy stuff, rule manipulation
 
+	/**
+	 * Turns all restrictions on or off
+	 * @param allowed value to assign rule as
+	 */
 	public void setAll(boolean allowed)
 	{
-		for(int x = 0; x < 8;x++)
-			for(int y = 0; y < 8;y++)
+		for(int x = 0; x < 8;x++) //anchor loop
+			for(int y = 0; y < 8;y++) //turret loop
 				rules[x][y] = allowed;
 	}
 
+	/**
+	 * Sets an individual restriction
+	 * @param anchor number of ship being attached to
+	 * @param turret number of ship attaching
+	 * @param allowed value to assign rule as
+	 */
 	public void setIndiv(int anchor, int turret, boolean allowed)
 	{
 		rules[anchor][turret] = allowed;
 	}
 
+	/**
+	 * Sets restrictions for all ships attaching to a ship
+	 * @param anchor number of ship being attached to
+	 * @param allowed value to assign rule as
+	 */
 	public void setAttachable(int anchor, boolean allowed)
 	{
-		for(int x = 0; x < 8; x++)
+		for(int x = 0; x < 8; x++) //turret loop
 			rules[anchor][x] = allowed;
 	}
 
+	/**
+	 * Sets restrictions for a ship attaching to all ships
+	 * @param turret number of ship attaching
+	 * @param allowed value to assign rule as
+	 */
 	public void setCanAttach(int turret, boolean allowed)
 	{
-		for(int x = 0; x < 8; x++)
+		for(int x = 0; x < 8; x++) //anchor loop
 			rules[x][turret] = allowed;
 	}
 
+	/**
+	 * Returns a list of commands specific to this extension
+	 */
 	public String[] getHelpMessages()
 	{
 		String help[] = {
@@ -80,6 +106,7 @@ public class twbotturret extends TWBotExtension
 		"!check <anchor>:<turret> - checks if turret can attach to anchor",
 		"!checka <anchor> - shows all ships allowed to attach to it",
 		"!checkt <turret> - shows all ships it can attach to",
+		"!checkall - displays all rules privately",
 		"!set <t/f>:<anchor>:<turret> - sets a rule of attaching",
 		"!seta <t/f>:<anchor> - sets rule for all ships attaching to anchor",
 		"!sett <t/f>:<turret> - sets rule for turret attaching to all ships",
@@ -91,16 +118,24 @@ public class twbotturret extends TWBotExtension
 
 	//The fun stuff: Command Interpretation :D
 
+	/**
+	 * What to do when the bot receives a chat message
+	 */
 	public void handleEvent(Message event)
 	{
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
 		{
 			String name = m_botAction.getPlayerName(event.getPlayerID());
-			if(m_opList.isER(name))
+			if(m_opList.isER(name)) //has credentials
 				delegateCommand(name,event.getMessage());
 		}
 	}
 
+	/**
+	 * Takes a command and passes it to the proper command function
+	 * @param name the name of the sender
+	 * @param message the text of the chat message
+	 */
 	public void delegateCommand(String name, String message)
 	{
 		message = message.toLowerCase(); //case insensitive
@@ -109,15 +144,17 @@ public class twbotturret extends TWBotExtension
 		try{
 		if(message.startsWith("!check "))
 			interpretCheck(name,message.substring(7));
-		else if(message.startsWith("!checka"))
+		else if(message.startsWith("!checka "))
 			interpretCheckA(name,message.substring(8));
-		else if(message.startsWith("!checkt"))
+		else if(message.startsWith("!checkt "))
 			interpretCheckT(name,message.substring(8));
+		else if(message.startsWith("!checkall"))
+			interpretCheckAll(name,message);
 		else if(message.startsWith("!set "))
 			interpretSet(name,message.substring(5));
 		else if(message.startsWith("!seta "))
 			interpretSetA(name,message.substring(6));
-		else if(message.startsWith("!sett"))
+		else if(message.startsWith("!sett "))
 			interpretSetT(name,message.substring(6));
 		else if(message.startsWith("!setall"))
 			interpretSetAll(name,message.substring(8));
@@ -125,20 +162,25 @@ public class twbotturret extends TWBotExtension
 			interpretWarpBack(name,message.substring(10));
 		else if(message.startsWith("!rules"))
 			showRules();
-		}catch(Exception e)
+		}catch(Exception e) //catches index exceptions for messages being too short
 		{
 			m_botAction.sendPrivateMessage(name,"Please check the syntax of your command with !help turret");
 		}
 	}
 
+	/**
+	 * Interprets a !check command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretCheck(String name, String message)
 	{
 		int anchor, turret;
 		try{
 			String[] pieces = message.split(":");
-			anchor = Integer.parseInt(pieces[0]) - 1;
+			anchor = Integer.parseInt(pieces[0]) - 1; //convert to 0-7
 			turret = Integer.parseInt(pieces[1]) - 1;
-			if(anchor > 7 || anchor < 0 || turret > 7 || turret < 0)
+			if(anchor > 7 || anchor < 0 || turret > 7 || turret < 0) //invalid ship #
 				throw new Exception();
 		}catch(Exception e)
 		{
@@ -146,18 +188,24 @@ public class twbotturret extends TWBotExtension
 			return;
 		}
 
-		if(rules[anchor][turret])
-			m_botAction.sendPrivateMessage(name, ""+ Tools.shipName(turret + 1) +"->"+ Tools.shipName(anchor + 1) +" Allowed");
-		else
-			m_botAction.sendPrivateMessage(name, ""+ Tools.shipName(turret + 1) +"->"+ Tools.shipName(anchor + 1) +" Not Allowed");
+		String msg = Tools.shipName(turret + 1) +"->"+ Tools.shipName(anchor + 1);
+		msg += (rules[anchor][turret] ? " Allowed" : " Not Allowed");
+
+		//grab rule and inform
+		m_botAction.sendPrivateMessage(name, msg);
 	}
 
+	/**
+	 * Interprets a !checka command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretCheckA(String name, String message)
 	{
 		int anchor;
 		try{
 			anchor = Integer.parseInt(message) - 1;
-			if(anchor > 7 || anchor < 0)
+			if(anchor > 7 || anchor < 0) //invalid ship #
 				throw new Exception();
 		}catch(Exception e)
 		{
@@ -167,22 +215,28 @@ public class twbotturret extends TWBotExtension
 
 		StringBuffer buf = new StringBuffer();
 		buf.append(Tools.shipName(anchor + 1)+ ": ");
-		for(int x = 0; x < 8; x++)
+		for(int x = 0; x < 8; x++) //turret loop
 			if(rules[anchor][x])
 				buf.append(Tools.shipName(x + 1) + " ");
 
-		if(buf.toString().endsWith(": "));
+		if(buf.toString().endsWith(": ")); //no ships appended, buf is unaltered
 			buf.append("none");
 
+		//grab rule and inform
 		m_botAction.sendPrivateMessage(name, buf.toString());
 	}
 
+	/**
+	 * Interprets a !checkt command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretCheckT(String name, String message)
 	{
 		int turret;
 		try{
 			turret = Integer.parseInt(message) - 1;
-			if(turret > 7 || turret < 0)
+			if(turret > 7 || turret < 0) //invalid ship #
 				throw new Exception();
 		}catch(Exception e)
 		{
@@ -192,16 +246,48 @@ public class twbotturret extends TWBotExtension
 
 		StringBuffer buf = new StringBuffer();
 		buf.append(Tools.shipName(turret + 1)+ ": ");
-		for(int x = 0; x < 8; x++)
+		for(int x = 0; x < 8; x++) //anchor loop
 			if(rules[x][turret])
 				buf.append(Tools.shipName(x + 1) + " ");
 
-		if(buf.toString().endsWith(": "));
+		if(buf.toString().endsWith(": ")); //no ships appended, buf is unaltered
 			buf.append("none");
 
+		//grab rule and inform
 		m_botAction.sendPrivateMessage(name, buf.toString());
 	}
 
+	/**
+	 * Interprets a !checkall command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
+	public void interpretCheckAll(String name, String message)
+	{
+		String disp[] = new String[9];
+		disp[0] = "=========ALLOWED ATTACHING=========";
+		for(int x = 1; x < 9; x++) //anchor loop
+		{
+			//Tools.shipName(x) requires 1-8 numbering
+			disp[x] = Tools.shipName(x).toUpperCase() + " can attach to: ";
+			for(int y = 0; y < 8; y++) //turret loop
+			{
+				if(rules[y][x-1]) //x-1 to access correct array
+					disp[x] += Tools.shipName(y+1) + " ";
+			}
+			if(disp[x].endsWith("to: ")) //no ships appended, disp[x] is unaltered
+				disp[x] += "none";
+		}
+
+		//grab rules and inform
+		m_botAction.privateMessageSpam(name, disp);
+	}
+
+	/**
+	 * Interprets a !set command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretSet(String name, String message)
 	{
 		boolean allowed;
@@ -211,14 +297,14 @@ public class twbotturret extends TWBotExtension
 			anchor = Integer.parseInt(pieces[1]) - 1;
 			turret = Integer.parseInt(pieces[2]) - 1;
 
-			if(pieces[0].equals("t"))
+			if(pieces[0].equals("t")) //allowed
 				allowed = true;
-			else if(pieces[0].equals("f"))
+			else if(pieces[0].equals("f")) //not allowed
 				allowed = false;
 			else
-				throw new Exception();
+				throw new Exception(); //didn't enter "t" or "f"
 
-			if(anchor > 7 || anchor < 0 || turret > 7 || turret < 0)
+			if(anchor > 7 || anchor < 0 || turret > 7 || turret < 0) //invalid ship #
 				throw new Exception();
 
 		}catch(Exception e)
@@ -227,16 +313,19 @@ public class twbotturret extends TWBotExtension
 			return;
 		}
 
-		setIndiv(anchor,turret,allowed);
+		setIndiv(anchor,turret,allowed); //update rule
 		String s = Tools.shipName(turret + 1) +"->"+ Tools.shipName(anchor + 1) +" is now ";
-		if(allowed)
-			s += "allowed";
-		else
-			s += "not allowed";
+		s += (allowed ? "allowed" : "not allowed");
 
+		//inform of change
 		m_botAction.sendPrivateMessage(name,s);
 	}
 
+	/**
+	 * Interprets a !seta command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretSetA(String name, String message)
 	{
 		boolean allowed;
@@ -245,14 +334,14 @@ public class twbotturret extends TWBotExtension
 			String[] pieces = message.split(":");
 			anchor = Integer.parseInt(pieces[1])- 1;
 
-			if(pieces[0].equals("t"))
+			if(pieces[0].equals("t")) //allowed
 				allowed = true;
-			else if(pieces[0].equals("f"))
+			else if(pieces[0].equals("f")) //not allowed
 				allowed = false;
 			else
-				throw new Exception();
+				throw new Exception(); //didn't enter "t" or "f"
 
-			if(anchor > 7 || anchor < 0)
+			if(anchor > 7 || anchor < 0) //invalid ship #
 				throw new Exception();
 		}catch(Exception e)
 		{
@@ -260,19 +349,21 @@ public class twbotturret extends TWBotExtension
 			return;
 		}
 
-		setAttachable(anchor,allowed);
+		setAttachable(anchor,allowed); //update rule
 
-		String s;
-		if(allowed)
-			s = "All ";
-		else
-			s = "None ";
+		String s = (allowed ? "All " : "None ");
 		s += "can attach to "+ Tools.shipName(anchor + 1);
 
+		//inform of change
 		m_botAction.sendPrivateMessage(name,s);
 
 	}
 
+	/**
+	 * Interprets a !sett command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretSetT(String name, String message)
 	{
 		boolean allowed;
@@ -281,14 +372,14 @@ public class twbotturret extends TWBotExtension
 			String[] pieces = message.split(":");
 			turret = Integer.parseInt(pieces[1])- 1;
 
-			if(pieces[0].equals("t"))
+			if(pieces[0].equals("t")) //allowed
 				allowed = true;
-			else if(pieces[0].equals("f"))
+			else if(pieces[0].equals("f")) //not allowed
 				allowed = false;
 			else
-				throw new Exception();
+				throw new Exception(); //didn't enter "t" or "f"
 
-			if(turret > 7 || turret < 0)
+			if(turret > 7 || turret < 0) //invalid ship #
 				throw new Exception();
 		}catch(Exception e)
 		{
@@ -296,24 +387,25 @@ public class twbotturret extends TWBotExtension
 			return;
 		}
 
-		setCanAttach(turret,allowed);
+		setCanAttach(turret,allowed); //update rule
 
-		String s = Tools.shipName(turret + 1);
-		if(allowed)
-			s += " can attach to all";
-		else
-			s += " cannot attach to any";
+		String s = Tools.shipName(turret + 1) + (allowed ? " can attach to all" : " cannot attach to any");
 
+		//inform of change
 		m_botAction.sendPrivateMessage(name, s);
-
 	}
 
+	/**
+	 * Interprets a !setall command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretSetAll(String name, String message)
 	{
 		boolean allowed;
-		if(message.startsWith("t"))
+		if(message.startsWith("t")) //no attach restrictions
 			allowed = true;
-		else if(message.startsWith("f"))
+		else if(message.startsWith("f")) //no attaching
 			allowed = false;
 		else
 		{
@@ -321,15 +413,17 @@ public class twbotturret extends TWBotExtension
 			return;
 		}
 
-		setAll(allowed);
+		setAll(allowed); //update rule
 
-		if(allowed)
-			m_botAction.sendPrivateMessage(name, "Everyone can attach to everyone");
-		else
-			m_botAction.sendPrivateMessage(name, "Nobody can attach");
-
+		//inform of change
+		m_botAction.sendPrivateMessage(name, (allowed ? "No attach restrictions" : "No attaching"));
 	}
 
+	/**
+	 * Interprets a !warpback command from the user
+	 * @param name the name of the sender
+	 * @param message the parameters of the command
+	 */
 	public void interpretWarpBack(String name, String message)
 	{
 		boolean active;
@@ -343,37 +437,41 @@ public class twbotturret extends TWBotExtension
 			return;
 		}
 
-		warpBack = active;
-		String s = "WarpBack is ";
-		if(warpBack)
-			s += "on.";
-		else
-			s += "off.";
+		warpBack = active; //update setting
+		String s = "WarpBack is "+ (warpBack ? "on.":"off.");
 
+		//inform of change
 		m_botAction.sendPrivateMessage(name, s);
 	}
 
-	//Oooh! Sparkly! :D
+	/**
+	 * Displays all of the attaching rules as an arena message
+	 */
 	public void showRules()
 	{
 		String disp[] = new String[9];
 		disp[0] = "=========ALLOWED ATTACHING=========";
-		for(int x = 1; x < 9; x++)
+		for(int x = 1; x < 9; x++) //anchor loop
 		{
+			//Tools.shipName(x) requires 1-8 numbering
 			disp[x] = Tools.shipName(x).toUpperCase() + " can attach to: ";
-			for(int y = 0; y < 8; y++)
+			for(int y = 0; y < 8; y++) //turret loop
 			{
-				if(rules[y][x-1])
+				if(rules[y][x-1]) //x-1 to access correct array
 					disp[x] += Tools.shipName(y+1) + " ";
 			}
-			if(disp[x].endsWith("to: "))
+			if(disp[x].endsWith("to: ")) //no ships appended, disp[x] is unaltered
 				disp[x] += "none";
 		}
 
+		//grab rules and inform
 		for(int x = 0; x < 9; x++)
 			m_botAction.sendArenaMessage(disp[x]);
 	}
 
+	/**
+	 * Not used except that it's an abstract method needed to compile
+	 */
 	public void cancel()
 	{
 	}
