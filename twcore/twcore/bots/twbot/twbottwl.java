@@ -39,6 +39,7 @@ public class twbottwl extends TWBotExtension
 	//constants
 	private final int MINIMUM_DUEL_LIMIT = 3;
 	private final int MINIMUM_BASE_LIMIT = 1;
+	private final double VERSION = 1.0;
 	final static int TIME_RACE_TARGET = 900;
 	final static int DUEL_TARGET = 50;
 
@@ -1031,6 +1032,18 @@ public class twbottwl extends TWBotExtension
 		m_botAction.sendArenaMessage("New Match Ref: " + name);
 		m_match.setRef(name);
 	}
+	
+	/**
+	 * @author FoN
+	 * 
+	 * This command just returns a version final variable to show if the bot is getting compiled or not
+	 * 
+	 */
+	
+	public void do_version(String name, String message)
+	{
+		m_botAction.sendPrivateMessage(name, Double.toString(VERSION));
+	}
 
     /**
      * Parses the FlagClaimed event to the correct team
@@ -1577,6 +1590,10 @@ public class twbottwl extends TWBotExtension
 		else if (message.toLowerCase().startsWith("!loadtestgame"))
 		{
 			do_loadTestGame(name, message);
+		}
+		else if (message.toLowerCase().startsWith("!version"))
+		{
+			do_version(name,message);
 		}
 	}
 
