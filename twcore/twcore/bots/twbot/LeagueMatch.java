@@ -339,7 +339,7 @@ public class LeagueMatch
 			giveTimeWarning(3, m_team2Id);
 			giveTimeWarning(1, m_team2Id);
 		}
-		m_botAction.sendArenaMessage("1:" + m_team1Score + " 1flag:" + m_team1Flag  + " 2: " + m_team2Score + " 2flag:" + m_team2Flag);
+		//m_botAction.sendArenaMessage("1:" + m_team1Score + " 1flag:" + m_team1Flag  + " 2: " + m_team2Score + " 2flag:" + m_team2Flag);
 	}
 
 	/**
@@ -385,16 +385,16 @@ public class LeagueMatch
 	 */
 	public void setFlagOwner(int freq)
 	{
-		m_botAction.sendArenaMessage("In setFlag, freq:" + freq);
+		//m_botAction.sendArenaMessage("In setFlag, freq:" + freq);
 		if (freq == TEAM_ONE_FREQ)
 		{
-			m_botAction.sendArenaMessage("team1flag");
+			//m_botAction.sendArenaMessage("team1flag");
 			m_team1Flag = true;
 			m_team2Flag = false;
 		}
 		else if (freq == TEAM_TWO_FREQ)
 		{
-			m_botAction.sendArenaMessage("team2flag");
+			//m_botAction.sendArenaMessage("team2flag");
 			m_team2Flag = true;
 			m_team1Flag = false;
 		}

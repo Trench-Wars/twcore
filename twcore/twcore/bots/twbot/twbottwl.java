@@ -570,7 +570,6 @@ public class twbottwl extends TWBotExtension
 			{
 				public void run()
 				{
-					m_botAction.sendArenaMessage(".");
 					m_match.addTimePoint();
 					if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_TARGET))
 						do_endGame();
@@ -622,7 +621,6 @@ public class twbottwl extends TWBotExtension
 		{
 			public void run()
 			{
-				m_botAction.sendArenaMessage("/");
 				String name = m_match.getNextPlayer();
 				m_botAction.spectatePlayer(name);
 			}
@@ -1038,7 +1036,7 @@ public class twbottwl extends TWBotExtension
         Player player = m_botAction.getPlayer(event.getPlayerID());
 		int freq = player.getFrequency();
 
-		m_botAction.sendArenaMessage("flagclaimed by: " + player.getPlayerName());
+		//m_botAction.sendArenaMessage("flagclaimed by: " + player.getPlayerName());
 	
 		if (m_gameState != 4)
 			return;		
