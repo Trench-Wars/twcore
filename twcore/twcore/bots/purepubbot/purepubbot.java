@@ -143,6 +143,7 @@ public class purepubbot extends SubspaceBot
     started = true;
     specLevis();
     m_botAction.sendArenaMessage("Pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.", 2);
+    m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully enabled.");
   }
 
   /**
@@ -160,6 +161,7 @@ public class purepubbot extends SubspaceBot
 
     started = false;
     m_botAction.sendArenaMessage("Pure pub settings disabled.  Leviathans (Ship 4) are allowed in this arena.", 2);
+    m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully disabled.");
   }
 
   /**
@@ -173,10 +175,12 @@ public class purepubbot extends SubspaceBot
       throw new RuntimeException("Bot is not currently running pure pub settings.");
     if(!privFreqs)
       m_botAction.sendArenaMessage("Private Frequencies enabled.", 2);
+      m_botAction.sendSmartPrivateMessage(sender, "Private frequencies succesfully enabled.");
     else
     {
       fixFreqs();
       m_botAction.sendArenaMessage("Private Frequencies disabled.", 2);
+      m_botAction.sendSmartPrivateMessage(sender, "Private frequencies succesfully disabled.");
     }
     privFreqs = !privFreqs;
   }
@@ -264,7 +268,7 @@ public class purepubbot extends SubspaceBot
     int messageType = event.getMessageType();
     String message = event.getMessage().trim();
 
-    if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) && ( opList.isSmod(sender) || ( (sender.toLowerCase()).equals("rodge_rabbit") || (sender.toLowerCase()).equals("beasty") || (sender.toLowerCase()).equals("m_m god") ) ))
+    if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) && ( opList.isHighmod(sender) ))
       handleCommand(sender, message);
   }
 
