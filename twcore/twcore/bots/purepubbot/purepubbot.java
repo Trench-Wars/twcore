@@ -36,12 +36,7 @@ public class purepubbot extends SubspaceBot
   public void handleEvent(FrequencyShipChange event)
   {
     if(started)
-    {
-      int playerID = event.getPlayerID();
-      String playerName = m_botAction.getPlayerName(playerID);
-
-      checkPlayer(playerName, true);
-    }
+      checkPlayer(event.getPlayerID(), true);
   }
 
   /**
@@ -55,10 +50,9 @@ public class purepubbot extends SubspaceBot
     if(started)
     {
       int playerID = event.getPlayerID();
-      String playerName = m_botAction.getPlayerName(playerID);
 
-      m_botAction.sendSmartPrivateMessage(playerName, "This arena has pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.");
-      checkPlayer(playerName, false);
+      m_botAction.sendPrivateMessage(playerID, "This arena has pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.");
+      checkPlayer(playerID, false);
     }
   }
 
@@ -257,16 +251,16 @@ public class purepubbot extends SubspaceBot
    * @param specMessage enables the spec message.
    */
 
-  private void checkPlayer(String playerName, boolean specMessage)
+  private void checkPlayer(int playerID, boolean specMessage)
   {
-    Player player = m_botAction.getPlayer(playerName);
+    Player player = m_botAction.getPlayer(playerID);
 
     if(player != null && player.getShipType() == LEVIATHAN)
     {
-      m_botAction.spec(playerName);
-      m_botAction.spec(playerName);
+      m_botAction.spec(playerID);
+      m_botAction.spec(playerID);
       if(specMessage)
-        m_botAction.sendSmartPrivateMessage(playerName, "Leviathans are not allowed in this pub.  Please change pubs if you wish to be a levi.");
+        m_botAction.sendPrivateMessage(playerID, "Leviathans are not allowed in this pub.  Please change pubs if you wish to be a levi.");
     }
   }
 
@@ -278,13 +272,11 @@ public class purepubbot extends SubspaceBot
   {
     Iterator iterator = m_botAction.getPlayingPlayerIterator();
     Player player;
-    String playerName;
 
     while(iterator.hasNext())
     {
       player = (Player) iterator.next();
-      playerName = player.getPlayerName();
-      checkPlayer(playerName, false);
+      checkPlayer(player.getPlayerID(), false);
     }
   }
 
