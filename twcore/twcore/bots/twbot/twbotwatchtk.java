@@ -113,6 +113,9 @@ public class twbotwatchtk extends TWBotExtension
 			Player killer = m_botAction.getPlayer(event.getKillerID());
 			Player killee = m_botAction.getPlayer(event.getKilleeID());
 			
+			if( killer == null || killee == null )
+			    return;
+			
 			if(killer.getFrequency() == killee.getFrequency())
 			{			
 				if(players.containsKey(killer))
