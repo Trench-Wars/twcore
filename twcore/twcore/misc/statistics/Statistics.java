@@ -282,7 +282,7 @@ import java.util.Vector;
 					case 8 : //shark
 						stats.add(
 							FORMULA,
-							"Shark: 0.5points(RepelUsedPerDeath) * (.12terr + sum(.06allotherships) - 0.006deaths - (.07(allothershipstks) + .15terrtk + ..09sharkTK))");
+							"shark: 0.5(repelsUsed/deaths)points * (.12terr + .5(spider + x) + sum(.07allotherships) - 0.006deaths - (.07(allothershipstks) + .5(spider + x) + .15terrtk + .08sharkTK)))");
 						stats.add(STATS,
 								""
 								+ getStatistic(TOTAL_KILLS)
@@ -577,7 +577,7 @@ import java.util.Vector;
 				 *
 				 * lanc: .6Points * (.07wb + .07jav + .05spid + 0.12terr + .05x + .06lanc + .08shark - .04deaths)
 				 *
-				 * shark: 0.5(repelsUsed/deaths)points * (.12terr + sum(.06allotherships) - 0.006deaths - (.07(allothershipstks) + .15terrtk + .09sharkTK)))
+				 * shark: 0.5(repelsUsed/deaths)points * (.12terr + .5(spider + x) + sum(.07allotherships) - 0.006deaths - (.07(allothershipstks) + .5(spider + x) + .15terrtk + .08sharkTK)))
 				 *
 				 * Original idea by Bleen and FoN
 				 *
@@ -673,17 +673,17 @@ import java.util.Vector;
 							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.05);
 							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.12);
 							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.06);
+							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.07);
 							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.08);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.04);											
+							((Statistic)m_statistics.get(DEATHS)).setWeight(0.006);											
 							
 							//teamkills
 							((Statistic)m_statistics.get(WARBIRD_TEAMKILL)).setWeight(0.07);
 							((Statistic)m_statistics.get(JAVELIN_TEAMKILL)).setWeight(0.07);
 							((Statistic)m_statistics.get(SPIDER_TEAMKILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(TERRIER_TEAMKILL)).setWeight(0.12);
+							((Statistic)m_statistics.get(TERRIER_TEAMKILL)).setWeight(0.15);
 							((Statistic)m_statistics.get(WEASEL_TEAMKILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(LANCASTER_TEAMKILL)).setWeight(0.06);
+							((Statistic)m_statistics.get(LANCASTER_TEAMKILL)).setWeight(0.07);
 							((Statistic)m_statistics.get(SHARK_TEAMKILL)).setWeight(0.08);							
 							break;
 					};
