@@ -838,11 +838,15 @@ public class robohelp extends SubspaceBot {
             if( helpRequest == null ){
                 m_botAction.sendChatMessage( name + " hasn't done a help call yet." );
             } else {
-                helpRequest.setAllowSummons( false );
-                m_botAction.sendRemotePrivateMessage( name, "I believe that the previous "
-                +"response you received was a sufficient answer to your question." );
-                m_botAction.sendRemotePrivateMessage( name, helpRequest.getFirstResponse() );
-                m_botAction.sendChatMessage( "The last response has been repeated to " + name );
+                if( helpRequest.getFirstResponse() != null ) {
+                    helpRequest.setAllowSummons( false );
+                    m_botAction.sendRemotePrivateMessage( name, "I believe that the previous "
+                            +"response you received was a sufficient answer to your question." );
+                    m_botAction.sendRemotePrivateMessage( name, helpRequest.getFirstResponse() );
+                    m_botAction.sendChatMessage( "The last response has been repeated to " + name );
+                } else {
+                    m_botAction.sendChatMessage( "Error repeating response to '" + name + "': response not found.  Please address this call manually.");                    
+                }
             }
         }
     }
