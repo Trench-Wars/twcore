@@ -42,6 +42,8 @@ public class lagHandler
     String playerName = "";
     String requester = "";
 
+    int[] serverTime = new int[2];
+    int[] userTime = new int[2];
     Vector tinfoValues;
 
     LinkedList m_lagRequest;
@@ -152,20 +154,25 @@ public class lagHandler
 
                     if (tinfoTokens.countTokens() == 3)
                     {
-                        int serverTime = Integer.parseInt(tinfoTokens.nextToken());
-                        int userTime = Integer.parseInt(tinfoTokens.nextToken());
+                        int sTime = Integer.parseInt(tinfoTokens.nextToken());
+                        int uTime = Integer.parseInt(tinfoTokens.nextToken());
                         int diff = Integer.parseInt(tinfoTokens.nextToken());
 
-                        if (serverTime - userTime == diff)
+                        if (sTime - uTime == diff)
                         {
+							if (tinfoValues.size() == 0) {
+								serverTime[0] = sTime;
+								userTime[0] = uTime;
+							}
                             tinfoValues.add(new Integer(diff));
 
                             if (tinfoValues.size() >= 32)
                             {
                                 tITimer.cancel();
-                                if (checkGrowing() || checkDiminishing()) {
-                                    adjustTinfoValues();
-                                }
+								serverTime[1] = sTime;
+								userTime[1] = uTime;
+                                adjustTinfoValues();
+
                                 spikeMean = calcSpikeMean();
                                 spikeSD = calcSpikeSD();
                                 numSpikes = calcNumSpikes();
@@ -412,7 +419,27 @@ public class lagHandler
         return nonDiminishing < 5;
     }
 
-    public void adjustTinfoValues()
+	public void adjustTinfoValues()
+	{
+		int deltaServerTime = serverTime[1] - serverTime[0];
+		int deltaUserTime = userTime[1] - userTime[0];
+
+		double delta = ((double)deltaServerTime - (double)deltaUserTime) / 32.0;
+
+//		m_botAction.sendPrivateMessage("Sika", "Adjusting: " + playerName + " Delta: " + delta + "("+deltaServerTime+"/"+deltaUserTime+")");
+
+        Integer tinfoValue;
+		for (int index = 1; index < tinfoValues.size(); index++)
+        {
+            tinfoValue = (Integer) tinfoValues.get(index);
+            int newValue = tinfoValue.intValue() - (int)(delta * index);
+//			m_botAction.sendPrivateMessage("Sika", tinfoValue.intValue() + " -> " + newValue);
+            tinfoValues.set(index, new Integer(newValue));
+        }
+	}
+
+
+/*    public void adjustTinfoValues()
     {
         double delta = 0;
         Integer tinfoValue = (Integer) tinfoValues.get(0);
@@ -437,7 +464,7 @@ public class lagHandler
             int newValue = tinfoValue.intValue() + (int)(delta * index);
             tinfoValues.set(index, new Integer(newValue));
         }
-    }
+    } */
 
     public void startLagRequest(String pName, String req)
     {
