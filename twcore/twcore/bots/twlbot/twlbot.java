@@ -20,10 +20,15 @@ public class twlbot extends SubspaceBot
 	static final String[] helps =
 	{
 		"The following commands are the base TWLBot:",
-		"!help twl          - Lists the !help for TWL",
-		"!off               - Cleans up the bot and shuts down all modules",
-		"!lock              - Locks bot so it can't be moved.",
-		"!unlock            - Unlocks bot so it can be moved.",
+		"!help <mocule>     - Lists the !help for module",
+		"!allhelp           - Lists help from all extensions if loaded",
+		"!lock              - Locks bot so it can't be moved and loads the standard module",
+		"!unlock            - Unlocks bot so it can be moved and removes all the modules",
+		"!modules           - Lists all the modules that can be loaded",
+		"!load <module>     - Loads a module",
+		"!unload <module>   - Unloads a module",
+		"!loaded            - Shows all the loaded modules",
+		"!mybot             - Change of host",
 		"!come, !go <arena> - Tells the bot to come to an arena",
 		"!die               - Tells the bot to take a hike... off a cliff.",
 		"!home              - Tells the bot to unlock and go home",
@@ -39,7 +44,7 @@ public class twlbot extends SubspaceBot
 
 	//state variables
 	private String m_currentArena;
-	private String m_defaultArena = "#robopark"; //initial value only used if initialized fails
+	private String m_defaultArena = "#robopark"; //initial value only used if initialization fails
 	private String m_nameOfHost;
 	private boolean locked = false;
 	private int m_lastUse = 0;
@@ -53,7 +58,7 @@ public class twlbot extends SubspaceBot
 	private File m_coreRoot;
 	
 	//constants
-	private final double VERSION = 2.01;
+	private final double VERSION = 2.02;
 
 	/** Creates a new instance of newportabot */
 	public twlbot(BotAction botAction)
@@ -91,16 +96,123 @@ public class twlbot extends SubspaceBot
 		};
 		m_botAction.scheduleTaskAtFixedRate(m_checkTime, 0, 30000); //30 secs
 		m_botAction.getEventRequester().requestAll();
-
 	}
 
+	/**
+	 * Commands that are issued as messages packets are parsed here
+	 * @param name The host
+	 * @param message command string
+	 */
+	public void do_command(String name, String message)
+	{
+
+		if (message.startsWith("!load "))
+		{
+			do_load(name, message.substring(6)); //remove !load from string
+		}
+		else if (message.startsWith("!modules"))
+		{
+			do_moduleList(name, message);
+		}
+		else if (message.startsWith("!unload "))
+		{
+			do_removeModule(name, message.substring(8));
+		}
+		else if (message.startsWith("!loaded"))
+		{
+			do_listLoaded(name);
+		}
+		else if (message.startsWith("!help "))
+		{
+		    do_help(name, message.substring(6)); //help for modules
+		}
+		else if (message.startsWith("!help"))
+		{
+			m_botAction.privateMessageSpam(name, helps);
+		}
+		else if (message.startsWith("!allhelp"))
+		{
+			do_allHelp(name);
+		}
+		else if (message.startsWith("!go "))
+		{
+			do_go(name, message.substring(4)); //arena name to follow
+		}
+		else if (message.startsWith("!come ")) //arena name to follow
+		{
+			do_go(name, message.substring(6));
+		}
+		else if (message.startsWith("!home"))
+		{
+			if (m_currentArena.equals(m_defaultArena) && !locked)
+			{
+				m_botAction.sendPrivateMessage(name, "I'm already home.");
+			}
+			else if (m_currentArena.equals(m_defaultArena) && locked)
+			{
+			    do_Unlock(name);
+				m_botAction.sendPrivateMessage(name,  "I'm already home, though.");
+			}
+			else
+			{
+				m_botAction.sendPrivateMessage(name, "Seeya! It's quittin' time!");
+				do_Unlock(name);
+				do_go(name, m_defaultArena);
+			}
+		}
+		else if (message.startsWith("!mybot"))
+		{
+			if (locked)
+			{
+				if (name.equals(m_nameOfHost))
+				{
+					m_botAction.sendPrivateMessage(name, "You already own this bot.");
+					return;
+				}
+				m_botAction.sendPrivateMessage(m_nameOfHost, "This bot now belongs to " + name);
+				m_botAction.sendPrivateMessage(name, "I'm yours.  Ownership transferred from " + m_nameOfHost);
+				m_nameOfHost = name;
+			}
+			else
+			{
+				m_botAction.sendPrivateMessage(name, "This bot is unowned, because the bot is unlocked.");
+			}
+		}
+		else if (message.startsWith("!lock"))
+		{
+		    do_lock(name);
+		}
+		else if (message.startsWith("!unlock"))
+		{
+		    do_Unlock(name);
+		}
+		else if (message.startsWith("!version"))
+		{
+		    m_botAction.sendPrivateMessage(name, "Version: " + VERSION);
+		}
+		else if (message.startsWith("!die"))
+		{
+			if (!locked)
+			{
+				m_botAction.sendChatMessage(1, "I'm dying at " + name + "'s request");
+				m_botAction.sendSmartPrivateMessage(name, "Goodbye!");
+				try { Thread.sleep(50); } catch (Exception e) {};
+				m_botAction.die();
+			}
+			else
+			{
+				m_botAction.sendPrivateMessage(name, "I am locked, sorry.");
+			}
+		}
+	}
+	
 	/**
 	 * Loads a extenstion module if there is one
 	 * 
 	 * @param name Name of the host loading the extension
 	 * @param extensionType Type of extension to be loaded
 	 */
-	public void load(String name, String extensionType)
+	public void do_load(String name, String extensionType)
 	{
 		if (locked)
 		{
@@ -126,28 +238,12 @@ public class twlbot extends SubspaceBot
 	}
 
 	/**
-	 * Distributes the subspace events to any extenstion that is registered
-	 * 
-	 * @param event The event to be distributed 
-	 */
-	private void distributeEvent(SubspaceEvent event)
-	{
-		Iterator i = m_extensions.entrySet().iterator();
-		while (i.hasNext())
-		{
-			Map.Entry entry = (Map.Entry) i.next();
-			TWLBotExtension ext = (TWLBotExtension) entry.getValue();
-			ext.handleEvent(event);
-		}
-	}
-
-	/**
 	 * Lists the modules that can be loaded in the twlbot
 	 * 
-	 * @param name
-	 * @param message
+	 * @param name The host
+	 * @param message the command issued
 	 */	
-	public void handleList(String name, String message)
+	public void do_moduleList(String name, String message)
 	{
 		String[] s = m_botRoot.list();
 		m_botAction.sendPrivateMessage(name, "I contain the following " + "modules:");
@@ -157,9 +253,10 @@ public class twlbot extends SubspaceBot
 			if (s[i].endsWith(".class"))
 			{
 				s[i] = s[i].substring(0, s[i].lastIndexOf('.'));
-				if (s[i].startsWith("twlbot") && !s[i].equals("twlbot") && s[i].indexOf('$') == -1)
+				String className = "twlbot";
+				if (s[i].startsWith(className) && !s[i].equals(className) && s[i].indexOf('$') == -1)
 				{
-					String reply = s[i].substring(5);
+					String reply = s[i].substring(className.length()); //size of "twlbot"
 					if (m_extensions.containsKey(reply))
 						reply = reply + " *";
 					m_botAction.sendPrivateMessage(name, reply);
@@ -168,24 +265,42 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
-	public void remove(String name, String key)
+	/**
+	 * Removes a module if installed
+	 * Cannot remove the standard module
+	 * @param name The host
+	 * @param key The module name
+	 */
+	public void do_removeModule(String name, String key)
 	{
-		if (m_extensions.containsKey(key))
-		{
-			((TWLBotExtension) m_extensions.remove(key)).cancel();
-			m_botAction.sendPrivateMessage(name, key + " Successfully Removed");
-		}
-		else
-		{
-			m_botAction.sendPrivateMessage(name, key + " is not loaded, so it cannot be removed.  Keep in mind the " + "names are case sensitive.");
-		}
+	    if (!key.toLowerCase().equals("standard"))
+	    {
+	        if (m_extensions.containsKey(key))
+	        {
+	            ((TWLBotExtension) m_extensions.remove(key)).cancel();
+	            m_botAction.sendPrivateMessage(name, key + " Successfully Removed");
+	        }
+	        else
+	        {
+	            m_botAction.sendPrivateMessage(name, key + " is not loaded, so it cannot be removed.  Keep in mind the " + "names are case sensitive.");
+	        }
+	    }
+	    else
+	    {
+	        m_botAction.sendPrivateMessage(name, "Cannot remove the standard module.  Use !unlock");
+	    }
 	}
 
-	public void listLoaded(String name)
+	/**
+	 * List the modules loaded
+	 * Standard should be loaded on default unless unlocked
+	 * @param name Host Name
+	 */
+	public void do_listLoaded(String name)
 	{
 		if (m_extensions.size() == 0)
 		{
-			m_botAction.sendPrivateMessage(name, "There are no loaded modules.");
+		    m_botAction.sendPrivateMessage(name, "There are no modules loaded.  Please !lock to load standard");
 		}
 		else
 		{
@@ -198,7 +313,12 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
-	public void help(String name, String key)
+	/**
+	 * Lists the help messages for a particular extension
+	 * @param name Host Name
+	 * @param key Extension Name
+	 */
+	public void do_help(String name, String key)
 	{
 		key = key.toLowerCase();
 		if (m_extensions.containsKey(key))
@@ -212,7 +332,11 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
-	public void allhelp(String name)
+	/**
+	 * List all the help messages from every extension loaded
+	 * @param name Name of Host
+	 */
+	public void do_allHelp(String name)
 	{
 		m_botAction.privateMessageSpam(name, helps);
 		Iterator i = m_extensions.keySet().iterator();
@@ -225,7 +349,13 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
-	public void handleGo(String name, String arena)
+	/**
+	 * Makes the bot go to a particular areana.
+	 * Can't go to pure number arenas
+	 * @param name Host Name
+	 * @param arena Arena Name
+	 */
+	public void do_go(String name, String arena)
 	{
 		if (!locked && !Tools.isAllDigits(arena))
 		{
@@ -237,9 +367,51 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
+	/**
+	 * Sets state to lock and loads default modules
+	 * @param name The host
+	 */
+	public void do_lock(String name)
+	{
+		if (locked)
+		{
+			m_botAction.sendPrivateMessage(name, "I'm already locked.  If you want to unlock me, use !unlock.");
+			return;
+		}
+		
+		loadDefaultModules(); //loads the twlstandard module
+		m_nameOfHost = name;
+		m_botAction.sendPrivateMessage(name, "Locked. TWL module loaded.");
+	
+		locked = true;
+	}
+	
+	/**
+	 * Unlocks the bot if it is locked
+	 * The bot is also reset and all extensions removed
+	 * @param name The name of the person who issued the command
+	 */
+	public void do_Unlock(String name)
+	{
+		if (!locked)
+		{
+			m_botAction.sendPrivateMessage(name, "I'm already unlocked.");
+			return;
+		}
+		
+		clear(); //reset the bot
+		m_botAction.sendPrivateMessage(name, "Unlocked");
+		m_nameOfHost = null;
+		locked = false;
+	}
+	
+	/**
+	 * Go to the arena specified
+	 * @param arena
+	 */
 	private void actualGo(String arena)
 	{
-		clear();
+		clear(); //reset the bot
 		m_currentArena = arena;
 
 		try
@@ -252,6 +424,10 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
+	/**
+	 * Removes all modules from the bot.
+	 * Used mainly after changing arenas to reset the bot
+	 */
 	private void clear()
 	{
 		Iterator i = m_extensions.values().iterator();
@@ -260,7 +436,6 @@ public class twlbot extends SubspaceBot
 			((TWLBotExtension) i.next()).cancel();
 		}
 		m_extensions.clear();
-		//loadDefaultModules();
 	}
 
 	/**
@@ -274,7 +449,6 @@ public class twlbot extends SubspaceBot
 	}
 
 	//Event Handlers
-	
 	/**
 	 * Handles arean joined events
 	 * This sets the kills packets to be recorded accurately
@@ -284,6 +458,9 @@ public class twlbot extends SubspaceBot
 		m_botAction.setReliableKills(1);
 	}
 	
+	/**
+	 * Handles the message Event
+	 */
 	public void handleEvent(Message event)
 	{
 		distributeEvent((SubspaceEvent) event);
@@ -298,10 +475,10 @@ public class twlbot extends SubspaceBot
 				else
 					m_botAction.sendPrivateMessage(name, "Your current host is: " + m_nameOfHost);
 			}
-			if (!m_opList.isER(name))
+			if (!m_opList.isER(name)) //if normal public quit
 				return;
 			m_lastUse = 0;
-			handleCommand(name, message);
+			do_command(name, message);
 		}
 		else if (event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
 		{
@@ -336,16 +513,16 @@ public class twlbot extends SubspaceBot
 					}
 				}
 			}
-			if (!m_opList.isER(rpmname))
+			if (!m_opList.isER(rpmname)) //if normal public quit
 				return;
 			m_lastUse = 0;
 			if (message.startsWith("!go "))
 			{
-				handleGo(rpmname, rpmmessage.substring(4));
+				do_go(rpmname, rpmmessage.substring(4)); //arena
 			}
 			else if (message.startsWith("!come "))
 			{
-				handleGo(rpmname, rpmmessage.substring(6));
+				do_go(rpmname, rpmmessage.substring(6)); //arena
 			}
 			else if (message.startsWith("!where"))
 			{
@@ -358,157 +535,6 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
-	public void handleCommand(String name, String message)
-	{
-
-		if (message.startsWith("!load "))
-		{
-			load(name, message.substring(6));
-		}
-		else if (message.startsWith("!modules"))
-		{
-			handleList(name, message);
-		}
-		else if (message.startsWith("!unload "))
-		{
-			remove(name, message.substring(8));
-		}
-		else if (message.startsWith("!loaded"))
-		{
-			listLoaded(name);
-		}
-		else if (message.startsWith("!off"))
-		{
-			clear();
-			m_botAction.sendPrivateMessage(name, "TWLBot Reset");
-		}
-		else if (message.startsWith("!help "))
-		{
-//                        help(name, message.substring(6));
-			help(name, "twl");
-		}
-/*
-		else if (message.startsWith("!help"))
-		{
-			m_botAction.privateMessageSpam(name, helps);
-		}
-		else if (message.startsWith("!allhelp"))
-		{
-			allhelp(name);
-		}
-*/
-		else if (message.startsWith("!go "))
-		{
-			handleGo(name, message.substring(4));
-		}
-		else if (message.startsWith("!come "))
-		{
-			handleGo(name, message.substring(6));
-		}
-		else if (message.startsWith("!home"))
-		{
-			if (m_currentArena.equals(m_defaultArena) && !locked)
-			{
-				m_botAction.sendPrivateMessage(name, "I'm already home.");
-			}
-			else if (m_currentArena.equals(m_defaultArena) && locked)
-			{
-				m_botAction.sendPrivateMessage(name, "Unlocked.  I'm already home, though.");
-			}
-			else
-			{
-				m_botAction.sendPrivateMessage(name, "Seeya! It's quittin' time!");
-				m_nameOfHost = null;
-				locked = false;
-				handleGo(name, m_defaultArena);
-			}
-		}
-		else if (message.startsWith("!mybot"))
-		{
-			if (locked)
-			{
-				if (name.equals(m_nameOfHost))
-				{
-					m_botAction.sendPrivateMessage(name, "You already own this bot.");
-					return;
-				}
-				m_botAction.sendPrivateMessage(m_nameOfHost, "This bot now belongs to " + name);
-				m_botAction.sendPrivateMessage(name, "I'm yours.  Ownership transferred from " + m_nameOfHost);
-				m_nameOfHost = name;
-			}
-			else
-			{
-				m_botAction.sendPrivateMessage(name, "This bot is unowned, because the bot is unlocked.");
-			}
-		}
-		else if (message.startsWith("!lock"))
-		{
-		    handleLock(name);
-		}
-		else if (message.startsWith("!unlock"))
-		{
-		    handleUnlock(name);
-		}
-		else if (message.startsWith("!version"))
-		{
-		    m_botAction.sendPrivateMessage(name, "Version: " + VERSION);
-		}
-/*
-		else if (message.startsWith("!whatsnew"))
-		{
-			handleWhatsNew(name);
-		}
-*/
-		else if (message.startsWith("!die"))
-		{
-			if (!locked)
-			{
-				m_botAction.sendChatMessage(1, "I'm dying at " + name + "'s request");
-				m_botAction.sendSmartPrivateMessage(name, "Goodbye!");
-				try { Thread.sleep(50); } catch (Exception e) {};
-				m_botAction.die();
-			}
-			else
-			{
-				m_botAction.sendPrivateMessage(name, "I am locked, sorry.");
-			}
-		}
-	}
-
-	/**
-	 * Sets state to lock and loads default modules
-	 * @param name The host
-	 */
-	public void handleLock(String name)
-	{
-		if (locked)
-		{
-			m_botAction.sendPrivateMessage(name, "I'm already locked.  If you want to unlock me, use !unlock.");
-			return;
-		}
-		
-		loadDefaultModules(); //loads the twlstandard module
-		m_nameOfHost = name;
-		m_botAction.sendPrivateMessage(name, "Locked. TWL module loaded.");
-		locked = true;
-	}
-	
-	/**
-	 * Unlocks the bot if it is locked
-	 * 
-	 * @param name The name of the person who issued the command
-	 */
-	public void handleUnlock(String name)
-	{
-		if (!locked)
-		{
-			m_botAction.sendPrivateMessage(name, "I'm already unlocked.");
-			return;
-		}
-		m_botAction.sendPrivateMessage(name, "Unlocked.  You may now move me with !go and !come or disconnect me with !die");
-		m_nameOfHost = null;
-		locked = false;
-	}
 	
 	/**
 	 * Steps done after the bot logs on
@@ -522,6 +548,9 @@ public class twlbot extends SubspaceBot
 		distributeEvent((SubspaceEvent) event);
 	}
 
+	/**
+	 * Handles player left event
+	 */
 	public void handleEvent(PlayerLeft event)
 	{
 		distributeEvent((SubspaceEvent) event);
@@ -607,28 +636,19 @@ public class twlbot extends SubspaceBot
 		distributeEvent((SubspaceEvent) event);
 	}
 
-	/*
-	public void handleWhatsNew(String name)
+	/**
+	 * Distributes the subspace events to any extenstion that is registered 
+	 * @param event The event to be distributed 
+	 */
+	private void distributeEvent(SubspaceEvent event)
 	{
-		try
+		Iterator i = m_extensions.entrySet().iterator();
+		while (i.hasNext())
 		{
-			BufferedReader in = new BufferedReader(new FileReader("whatsnew.txt"));
-			String line = "";
-			do
-			{
-				line = in.readLine();
-				if (line == null)
-					break;
-				m_botAction.sendPrivateMessage(name, line);
-			}
-			while (line != null);
-			in.close();
+			Map.Entry entry = (Map.Entry) i.next();
+			TWLBotExtension ext = (TWLBotExtension) entry.getValue();
+			ext.handleEvent(event);
 		}
-		catch (Exception e)
-		{
-			m_botAction.sendPrivateMessage(name, "Error reading whatsnew.txt file, try again later.");
-			Tools.printStackTrace("Error reading whatsnew.txt file", e);
-		}
-	}
-*/	
+	}	
 }
+

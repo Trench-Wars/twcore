@@ -8,6 +8,7 @@ import twcore.core.*;
 
 /**
  * @author harvey
+ * modified by Force of Nature (FoN)
  */
 public abstract class TWLBotExtension
 {
@@ -21,6 +22,12 @@ public abstract class TWLBotExtension
     {
     }
 
+    /**
+     * Sets the common variables
+     * @param action BotAction to be able to do various actions
+     * @param opList Operator list to be accessed by the module
+     * @param twBot Pointer to the calling class
+     */
     public void set(BotAction action, OperatorList opList, twlbot twBot)
     {
         m_botAction = action;
@@ -33,9 +40,14 @@ public abstract class TWLBotExtension
 
     public abstract void cancel();
 
+    /**
+     * Sends the command to the parent class
+     * @param name Host name
+     * @param message Command by host
+     */
     private final void sendBotCommand(String name, String message)
     {
-        m_twBot.handleCommand(name, message);
+        m_twBot.do_command(name, message);
     }
 
     public final void handleEvent(SubspaceEvent event)
