@@ -174,6 +174,7 @@ public class ModuleHandler
   {
     Vector repository = new Vector();
 
+    repository.add( new File( m_botAction.getGeneralSettings().getString( "Core Location" ) ) );
     moduleLocation = new File(modulePath);
     repository.add(moduleLocation);
     loader = new AdaptiveClassLoader(repository, getClass().getClassLoader());
