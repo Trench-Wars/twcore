@@ -53,7 +53,7 @@ public class twlbot extends SubspaceBot
 	private File m_coreRoot;
 	
 	//constants
-	private final double VERSION = 2.0;
+	private final double VERSION = 2.01;
 
 	/** Creates a new instance of newportabot */
 	public twlbot(BotAction botAction)
@@ -443,17 +443,7 @@ public class twlbot extends SubspaceBot
 		}
 		else if (message.startsWith("!lock"))
 		{
-			if (locked)
-			{
-				m_botAction.sendPrivateMessage(name, "I'm already locked.  If you want to unlock me, use !unlock.");
-				return;
-			}
-			twlbotstandard std = new twlbotstandard();
-			std.set(m_botAction, m_opList, this);
-			m_extensions.put("twl", std);
-			m_nameOfHost = name;
-			m_botAction.sendPrivateMessage(name, "Locked. TWL module loaded.");
-			locked = true;
+		    handleLock(name);
 		}
 		else if (message.startsWith("!unlock"))
 		{
@@ -485,6 +475,24 @@ public class twlbot extends SubspaceBot
 		}
 	}
 
+	/**
+	 * Sets state to lock and loads default modules
+	 * @param name The host
+	 */
+	public void handleLock(String name)
+	{
+		if (locked)
+		{
+			m_botAction.sendPrivateMessage(name, "I'm already locked.  If you want to unlock me, use !unlock.");
+			return;
+		}
+		
+		loadDefaultModules(); //loads the twlstandard module
+		m_nameOfHost = name;
+		m_botAction.sendPrivateMessage(name, "Locked. TWL module loaded.");
+		locked = true;
+	}
+	
 	/**
 	 * Unlocks the bot if it is locked
 	 * 

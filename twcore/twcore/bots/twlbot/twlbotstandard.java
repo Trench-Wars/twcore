@@ -93,7 +93,8 @@ public class twlbotstandard extends TWLBotExtension
     {   
         //call the super class to set these variables
         super.set(action,opList,twBot);
-        
+   
+        /*
         //obtain settings of staff and season
         m_season = m_botSettings.getInt("Season");
         
@@ -112,6 +113,7 @@ public class twlbotstandard extends TWLBotExtension
             playerName = staffTokens.nextToken().toLowerCase();
             m_twlStaff.add(playerName);
         }
+        */
     }
 
     /**
