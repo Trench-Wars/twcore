@@ -1456,6 +1456,35 @@ public class BotAction
         }
     }
 
+    /**
+     * Private message spam but with a gerneralized collection to allow for dynamic help statements
+     * This will not work remotely as in REMOTE.MESSAGE type
+     * @param playerID ID of the player to be spammed
+     * @param helpMessages The collection of messages (Need to be String Objects or typed to string objects)
+     */
+    public void privateMessageSpam(int playerID, Collection messages)
+    {
+        Iterator i = messages.iterator();
+        while (i.hasNext())
+        {
+            sendPrivateMessage(playerID, (String)i.next());
+        }
+    }
+  
+    /**
+     * Private message spam but with a gerneralized collection to allow for dynamic help statements
+     * @param playerName Name of the player to be spammed
+     * @param helpMessages The collection of messages (Need to be String Objects or typed to string objects)
+     */
+    public void privateMessageSpam(String playerName, Collection messages)
+    {
+        Iterator i = messages.iterator();
+        while (i.hasNext())
+        {
+            sendSmartPrivateMessage(playerName, (String)i.next());
+        }        
+    }
+    
     /** Sends the contents of the String array to the player in remote private messages.
      * Careful with this one, sending too many across the billing server can cause
      * trouble.
