@@ -15,6 +15,8 @@ import java.util.*;
 public class BuildTWCore {
 
     String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.0.16-ga-bin.jar";
+    String nixBinDir = "/home/bots/java/current/bin/";  // Location of bin directory on a *nix system
+    String bldCmd = "";
     Runtime runtime;
     
     // flags
@@ -36,7 +38,7 @@ public class BuildTWCore {
         runtime = Runtime.getRuntime();
         botList = new LinkedList();
         miscList = new LinkedList();
-        String currentOS = System.getProperty("os.name").toLowerCase();
+        currentOS = System.getProperty("os.name").toLowerCase();
         if (currentOS.startsWith("windows")) extraCP = extraCP.replace(':', ';'); 
         handleArguments(args);
     }
@@ -99,7 +101,6 @@ public class BuildTWCore {
 
     public void lincom() {
 	try {
-        String currentOS = System.getProperty("os.name").toLowerCase();
         if (!currentOS.startsWith("windows")) fullExec(new String[] {"/home/bots/twbots/compile_core.sh"});
         } catch (Exception e) {
             System.out.println("Couldn't build core: " + e.getMessage());
@@ -170,12 +171,21 @@ public class BuildTWCore {
             tempDir.mkdir();
             
             // compile all the files into there
+
             createFileList(new File("twcore/core"), new File("flist.txt"));
-            fullExec(new String[] {"/home/bots/java/current/bin/javac", "-sourcepath", "core", "-d", "temp", "@flist.txt"});
-	    lincom();	    
+            if (currentOS.startsWith("windows"))
+                bldCmd = "javac";
+            else
+                bldCmd = nixBinDir + "javac";
+            fullExec(new String[] { bldCmd, "-sourcepath", "core", "-d", "temp", "@flist.txt"});
+	        lincom();	    
             
             // create the jar
-            fullExec(new String[] {"/home/bots/java/current/bin/jar", "cf", "twcore.jar", "-C", "temp", "."});
+            if (currentOS.startsWith("windows"))
+                bldCmd = "jar";
+            else
+                bldCmd = nixBinDir + "jar";
+            fullExec(new String[] { bldCmd, "cf", "twcore.jar", "-C", "temp", "."});
             
             recursiveDelete(tempDir);
             
@@ -194,8 +204,14 @@ public class BuildTWCore {
             try {
                 System.out.println("Building " + f.getPath());
                 boolean hasContent = createFileList(f, new File("flist.txt"));
-                if (hasContent)
-                    fullExec(new String[] {"/home/bots/java/current/bin/javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
+                if (hasContent) {               	
+
+                    if (currentOS.startsWith("windows"))
+                        bldCmd = "javac";                    
+                    else
+                    	bldCmd = nixBinDir + "javac";
+                    fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
+                }
             } catch (Exception e) { System.out.println("error... " + e.getMessage()); }
             
             
@@ -232,9 +248,13 @@ public class BuildTWCore {
             };
 
             // create the jar
-            if (doneSomething)
-                fullExec(new String[] {"/home/bots/java/current/bin/jar", "uf", "twcore.jar", "-C", "temp", "."});
-            
+            if (doneSomething) {
+                if (currentOS.startsWith("windows"))
+                    bldCmd = "jar";                    
+                else
+                	bldCmd = nixBinDir + "jar";
+                fullExec(new String[] {bldCmd, "uf", "twcore.jar", "-C", "temp", "."});
+            }
             recursiveDelete(tempDir);
             
         } catch (Exception e) {
@@ -254,7 +274,12 @@ public class BuildTWCore {
                     hasContent = createFileList(botDirs[i], new File("flist.txt"));
 					if (hasContent) {
 						System.out.println("Building " + botDirs[i].getName());
-						fullExec(new String[] {"/home/bots/java/current/bin/javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
+
+	                    if (currentOS.startsWith("windows"))
+	                        bldCmd = "javac";                    
+	                    else
+	                    	bldCmd = nixBinDir + "javac";
+						fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
 					}
                 } catch (Exception e) {
                     System.out.println("Error.... " + e.getMessage());
