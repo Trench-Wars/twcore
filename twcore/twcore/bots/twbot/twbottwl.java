@@ -38,7 +38,7 @@ public class twbottwl extends TWBotExtension
 	
 	//constants
 	final int MINIMUM_DUEL_LIMIT = 3;
-	final int MINIMUM_BASE_LIMIT = 6;
+	final int MINIMUM_BASE_LIMIT = 4;
 	final static int TIME_RACE_TARGET = 900;
 	final static int DUEL_TARGET = 50;
 
