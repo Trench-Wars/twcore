@@ -30,6 +30,7 @@
  * !WarpShip <Ship>:<X>:<Y>:<Radius>         -- Warps ship <Ship> to <X>, <Y> within a distance of <Radius>."
  * !SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>."
  * !SetupWarpList                            -- Displays the setup warp information."
+ * !Where                                    -- Shows your current coords."
  *
  * NOTE: The !warpto command is removed from the standard module so please !load
  * warp first.
@@ -73,8 +74,9 @@ public class twbotwarp extends TWBotExtension
           "!WarpFreq <Freq>:<X>:<Y>:<Radius>         -- Warps freq <Freq> to <X>, <Y> within a distance of <Radius>.",
           "!WarpShip <Ship>:<X>:<Y>:<Radius>         -- Warps ship <Ship> to <X>, <Y> within a distance of <Radius>.",
           "!SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>.",
-          "!SetupWarpList                            -- Displays the setup warp information."
-    };
+          "!SetupWarpList                            -- Displays the setup warp information.",
+          "!Where                                    -- Shows your current coords."
+          };
     return message;
   }
 
@@ -226,6 +228,17 @@ public class twbotwarp extends TWBotExtension
     }
   }
 
+  /**
+   * PMs sender's current coords. 
+   * @param sender Host who wants desperately to know own position
+   */
+  public void doWhereCmd(String sender) {
+      Player p = m_botAction.getPlayer( sender );
+      if( p != null ) {
+          m_botAction.sendSmartPrivateMessage( sender, "You are at: (" + p.getXLocation() + "," + p.getYLocation() + ")" );
+      }
+  }  
+  
   public void doWarp(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup)
   {
     if(warpType < WARP_ALL || warpType > WARP_FIRST_FREQ)
@@ -288,6 +301,8 @@ public class twbotwarp extends TWBotExtension
         doSetupWarpCmd(sender, message.substring(11));
       if(command.equalsIgnoreCase("!setupwarplist"))
         doSetupWarpListCmd(sender);
+      if(command.equalsIgnoreCase("!where"))
+        doWhereCmd(sender);
     }
     catch(RuntimeException e)
     {
