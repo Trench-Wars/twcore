@@ -12,17 +12,19 @@ package twcore.core;
  */
 import java.util.*;
 public class InterProcessCommunicator {
-    private HashMap channels;
+
+    private Map channels;
+
     /** Creates a new instance of InterProcessCommunicator */
     public InterProcessCommunicator() {
-        channels = new HashMap();
+        channels = Collections.synchronizedMap(new HashMap());
     }
-    
+
     public synchronized boolean channelExists( String channelName ){
-        return channels.containsKey( channelName );        
+        return channels.containsKey( channelName );
     }
-    
-    public synchronized void broadcast( String channelName, String senderName, 
+
+    public synchronized void broadcast( String channelName, String senderName,
     SubspaceBot bot, Object o ){
         if( !channelExists( channelName )){
             subscribe( channelName, bot );
@@ -32,19 +34,21 @@ public class InterProcessCommunicator {
         IPCChannel channel = (IPCChannel)channels.get( channelName );
         channel.broadcast( event );
     }
-    
+
     public synchronized String[] getSubscribedChannels( SubspaceBot bot ){
-        Iterator i = channels.values().iterator();
-        ArrayList list = new ArrayList();
-        while( i.hasNext() ){
-            IPCChannel ipc = (IPCChannel)i.next();
-            if( ipc.isSubscribed( bot )){
-                list.add( ipc.getName() );
+        synchronized (channels) {
+            Iterator i = channels.values().iterator();
+            ArrayList list = new ArrayList();
+            while( i.hasNext() ){
+                IPCChannel ipc = (IPCChannel)i.next();
+                if( ipc.isSubscribed( bot )){
+                    list.add( ipc.getName() );
+                }
             }
+            return (String[])list.toArray( new String[ list.size() ]);
         }
-        return (String[])list.toArray( new String[ list.size() ]);
     }
-    
+
     public synchronized void subscribe( String channel, SubspaceBot bot ){
         if( bot == null ){
             Tools.printLog( "IPC Subscribe failed.  Please subscribe your bot "
@@ -59,60 +63,64 @@ public class InterProcessCommunicator {
             ipcChan.subscribe( bot );
         }
     }
-    
+
     public synchronized void unSubscribe( String channel, SubspaceBot bot ){
         if( !channelExists( channel )) return;
         ((IPCChannel)channels.get( channel )).unsubscribe( bot );
     }
-    
+
     public synchronized void destroy( String channel ){
         channels.remove( channel );
     }
-    
+
     public synchronized void removeFromAll( SubspaceBot bot ){
-        Iterator i = channels.values().iterator();
-        while( i.hasNext() ){
-            IPCChannel channel = (IPCChannel)i.next();
-            channel.unsubscribe( bot );
+        synchronized (channels) {
+            Iterator i = channels.values().iterator();
+            while( i.hasNext() ){
+                IPCChannel channel = (IPCChannel)i.next();
+                channel.unsubscribe( bot );
+            }
         }
     }
-    
+
     class IPCChannel {
-        private ArrayList bots;
+        private List bots;
         private String channel;
         public IPCChannel( String channelName ){
-            bots = new ArrayList();
+            bots = Collections.synchronizedList(new ArrayList());
             channel = channelName;
         }
 
         public boolean isSubscribed( SubspaceBot bot ){
             return bots.contains( bot );
         }
-        
+
         public String getName(){
             return channel;
         }
-        
+
         public void broadcast( InterProcessEvent e ){
-            Iterator i = bots.iterator();
-            while( i.hasNext() ){
-                ((SubspaceBot)i.next()).handleEvent( e );
+            synchronized (bots) {
+                Iterator i = bots.iterator();
+                while( i.hasNext() ){
+                    ((SubspaceBot)i.next()).handleEvent( e );
+                }
             }
         }
-        
+
         public void subscribe( SubspaceBot bot ){
             if( !bots.contains( bot )){
                 bots.add( bot );
             }
         }
-        
+
         public void unsubscribe( SubspaceBot bot ){
             bots.remove( bot );
             if( bots.size() == 0 ) {
                 destroy( channel );
             }
         }
-        
+
     }
-    
+
 }
