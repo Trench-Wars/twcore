@@ -60,6 +60,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!adv", acceptedMessages, this, "handleAdv" );
         m_commandInterpreter.registerCommand( "!time", acceptedMessages, this, "handleTime" );
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted" );
+        m_commandInterpreter.registerCommand( "!saychat", acceptedMessages, this, "handleSayChat" );
 
         acceptedMessages = Message.CHAT_MESSAGE;
 
@@ -68,6 +69,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell" );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan" );
         m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
+
 
         acceptedMessages = Message.ARENA_MESSAGE;
 
@@ -126,6 +128,15 @@ public class robohelp extends SubspaceBot {
         }
 
     }
+
+    public void handleSayChat( String name, String message ) {
+        if(!opList.isSmod( name )) {
+	  return;
+	  } else {
+          m_botAction.sendChatMessage( 1, message );
+	}
+    }
+
     public void handleEnableBackup( String name, String message ){
         if( !opList.isSmod( name )) return;
         if( backupAdvertiser ){
@@ -264,7 +275,7 @@ public class robohelp extends SubspaceBot {
             java.util.Date day = thisTime.getTime();
             String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
             //Adds to buffer of sorts.
-            if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) ) {
+            if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) && !arena.equals( "tourny" ) ) {
                 if( eventList.size() > 511 ) eventList.remove( 0 );
                 eventList.addElement( new EventData( arena, new java.util.Date().getTime() ) );
                 String query = "INSERT INTO `tblAdvert` (`fnAdvertID`, `fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
@@ -508,7 +519,9 @@ public class robohelp extends SubspaceBot {
         }
 
         if( name != null ){
-            if( messager.toLowerCase().compareTo( name.toLowerCase() ) == 0 ){
+            if( messager.toLowerCase().compareTo( name.toLowerCase() ) == 0 ||
+                messager.toLowerCase().startsWith( name.toLowerCase() ) ){
+
                 m_botAction.sendChatMessage( "Use :" + m_botAction.getBotName()
                 + ":!lookup <keyword> instead."  );
             } else if( keyword.toLowerCase().startsWith( "google " ) ){
