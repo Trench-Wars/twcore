@@ -45,6 +45,23 @@ public class Tools {
 
         return (String[])list.toArray(new String[list.size()]);
     }
+    
+    public static String[] cleanStringChopper ( String input, char delimiter ) {
+        ArrayList list = new ArrayList();
+        int startpos = 0;
+        
+        for (int i=0; i<input.length(); i++) {
+            if (input.charAt(i) == delimiter) {
+                list.add(input.substring(startpos, i));
+                startpos = i + 1;
+            }
+        }
+        
+        if (startpos != input.length()-1) list.add(input.substring(startpos));
+        
+        return (String[])list.toArray(new String[list.size()]);
+    }
+    
     public static LinkedList linkedStringChopper( String input, char deliniator ){
         LinkedList list = new LinkedList();
 
