@@ -92,7 +92,7 @@ public class messagebot extends SubspaceBot
     	String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES(\""+message.toLowerCase()+"\", \""+name.toLowerCase()+"\", 0)";
     	try {
     		m_botAction.SQLQuery("local", query);
-    	} catch(SQLException sqle) { sqle.printStackTrace(); }
+    	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     }
     
     /** Allows a channel owner or smod to delete a channel.
@@ -115,7 +115,7 @@ public class messagebot extends SubspaceBot
     		try {
     			m_botAction.SQLQuery("local", query);
     			m_botAction.SQLQuery("local", query2);
-    		} catch(SQLException sqle) { sqle.printStackTrace(); }
+    		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
     	}
     	c.messageChannel(name, "Channel deleted.");
@@ -442,7 +442,7 @@ public class messagebot extends SubspaceBot
 				c.reload();
 				channels.put(channelName.toLowerCase(), c);
 			}
-		} catch(Exception e) {e.printStackTrace();}
+		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 	
 	/** Reads a message from the database.
@@ -459,7 +459,7 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String query = "SELECT * FROM tblMessage WHERE fcName = \""+name+"\" AND fnID = " + messageNumber;
+		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+name+"\" AND fnID = " + messageNumber;
 		try{
 			ResultSet results = m_botAction.SQLQuery("local", query);
 			if(results.next())
@@ -469,14 +469,14 @@ public class messagebot extends SubspaceBot
 				
 				m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
 				
-				query = "UPDATE tblMessage SET fnRead = 1 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
+				query = "UPDATE tblMessageSystem SET fnRead = 1 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
 				m_botAction.SQLQuery("local", query);
 			}
 			else
 			{
 				m_botAction.sendSmartPrivateMessage(name, "Could not find that message.");
 			}
-		} catch(Exception e) {e.printStackTrace();}
+		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 	
 	/** Marks a message's status as unread.
@@ -489,16 +489,16 @@ public class messagebot extends SubspaceBot
 		try{
 			messageNumber = Integer.parseInt(message);
 		} catch(Exception e) {
-			e.printStackTrace();
+			Tools.printStackTrace( e );
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String query = "UPDATE tblMessage SET fnRead = 0 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
+		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
 			m_botAction.sendSmartPrivateMessage(name, "Message marked as unread.");
 		} catch(SQLException e) {
-			e.printStackTrace();
+			Tools.printStackTrace( e );
 			m_botAction.sendSmartPrivateMessage(name, "Unable to mark as read.");
 		}
 	}
@@ -517,13 +517,13 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String query = "DELETE FROM tblMessage WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
+		String query = "DELETE FROM tblMessageSystem WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
 			m_botAction.sendSmartPrivateMessage(name, "Message deleted.");
 		} catch(Exception e) {
 			m_botAction.sendSmartPrivateMessage(name, "Message unable to be deleted.");
-			e.printStackTrace();
+			Tools.printStackTrace( e );
 		}
 	}
 	
@@ -533,7 +533,7 @@ public class messagebot extends SubspaceBot
 	 */
 	public void myMessages(String name, String message)
 	{
-		String query = "SELECT * FROM tblMessage WHERE fcName = \""+name.toLowerCase()+"\"";
+		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+name.toLowerCase()+"\"";
 		String messageNumbers = "";
 		m_botAction.sendSmartPrivateMessage(name, "You have the following messages: ");
 		try {
@@ -550,7 +550,7 @@ public class messagebot extends SubspaceBot
 			}
 		} catch(Exception e) {
 			m_botAction.sendSmartPrivateMessage(name, "Error while reading message database.");
-			e.printStackTrace();
+			Tools.printStackTrace( e );
 		}
 		m_botAction.sendSmartPrivateMessage(name, "PM me with !read <num> to read a message.");
 	}
@@ -563,13 +563,13 @@ public class messagebot extends SubspaceBot
 		{
 			public void run()
 			{
-				String query = "DELETE FROM tblMessage WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 31 DAY) AND fnRead = 0";
-				String query2 = "DELETE FROM tblMessage WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 15 DAY) AND fnRead = 1";
+				String query = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 31 DAY) AND fnRead = 0";
+				String query2 = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 15 DAY) AND fnRead = 1";
 				try {
 					m_botAction.SQLQuery("local", query);
 					m_botAction.SQLQuery("local", query2);
 					System.out.println("Deleting messages.");
-				} catch(SQLException e) {}
+				} catch(SQLException e) { Tools.printStackTrace( e ); }
 			}
 		};
 	}
@@ -640,7 +640,7 @@ class Channel
 			updateSQL(player.toLowerCase(), 3);
 			try {
 				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = \""+player+"\" WHERE fcChannelName = \"" + channelName.toLowerCase() + "\"");
-			} catch(Exception e) {}
+			} catch(Exception e) { Tools.printStackTrace( e ); }
 			owner = player;
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been made the owner of " + channelName + " channel.");
@@ -673,7 +673,7 @@ class Channel
 	{
 		try {
 			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = \"" + channelName.toLowerCase() + "\"");
-		} catch(Exception e) {e.printStackTrace();}
+		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now private channel.");
 		isOpen = false;
 	}
@@ -685,7 +685,7 @@ class Channel
 	{
 		try {
 			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = \"" + channelName.toLowerCase() + "\"");
-		} catch(Exception e) {e.printStackTrace();}
+		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now public channel.");
 		isOpen = true;
 	}
@@ -769,7 +769,7 @@ class Channel
 			members.remove(name.toLowerCase());
 			try {
 				m_bA.SQLQuery("local", "DELETE FROM tblChannelUser WHERE fcName = \""+name.toLowerCase()+"\"");
-			} catch(Exception e) {e.printStackTrace();}
+			} catch(Exception e) { Tools.printStackTrace( e ); }
 			m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
 		}
 		else
@@ -897,7 +897,7 @@ class Channel
 				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES (\"" + channelName + "\", \"" + player.toLowerCase() + "\", " + level + ")";
 				m_bA.SQLQuery("local", query);
 			}
-		} catch(SQLException sqle) {sqle.printStackTrace();}
+		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 	
 	/** Leaves a message from for a player in the database.
@@ -907,10 +907,10 @@ class Channel
 	 */
 	public void leaveMessage(String name, String player, String message)
 	{
-		String query = "INSERT INTO tblMessage (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, \""+player.toLowerCase()+"\", \""+name + ": " + message+"\", 0, NOW())";
+		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, \""+player.toLowerCase()+"\", \""+name + ": " + message+"\", 0, NOW())";
 		try {
 			m_bA.SQLQuery("local", query);
-		} catch(SQLException sqle) { sqle.printStackTrace(); }
+		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 	
 	/** Reload is called when the bot respawns. Allows channel to resume from where it was before bot went offline.
@@ -929,6 +929,6 @@ class Channel
 				if(level < 0)
 					banned.add(name.toLowerCase());
 			}
-		} catch(Exception e) {e.printStackTrace();}
+		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 }
