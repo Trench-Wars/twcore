@@ -2523,7 +2523,7 @@ public class twbottwl extends TWBotExtension
             playerQuery += "0, 0, '" + timeEnd + "', " + pp.getStatistic(Statistics.TOTAL_TEAMKILLS) + ", " + pp.getStatistic(Statistics.TERRIER_KILL) + " )";
             try
             {
-                m_botAction.SQLQuery(mySQLHost, name, playerQuery);
+                m_botAction.SQLQuery(mySQLHost, playerQuery);
             }
             catch (Exception e)
             {
