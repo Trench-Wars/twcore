@@ -174,8 +174,10 @@ public class purepubbot extends SubspaceBot
     if(!started)
       throw new RuntimeException("Bot is not currently running pure pub settings.");
     if(!privFreqs)
+    {
       m_botAction.sendArenaMessage("Private Frequencies enabled.", 2);
       m_botAction.sendSmartPrivateMessage(sender, "Private frequencies succesfully enabled.");
+    }
     else
     {
       fixFreqs();
