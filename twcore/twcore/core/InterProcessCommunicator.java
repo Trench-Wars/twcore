@@ -79,6 +79,9 @@ public class InterProcessCommunicator {
             while( i.hasNext() ){
                 IPCChannel channel = (IPCChannel)i.next();
                 channel.unsubscribe( bot );
+                if ( channel.isEmpty() ) {
+                    i.remove( channel );
+                }
             }
         }
     }
@@ -116,9 +119,10 @@ public class InterProcessCommunicator {
 
         public void unsubscribe( SubspaceBot bot ){
             bots.remove( bot );
-            if( bots.size() == 0 ) {
-                destroy( channel );
-            }
+        }
+
+        public boolean isEmpty() {
+            return bots.size() == 0;
         }
 
     }
