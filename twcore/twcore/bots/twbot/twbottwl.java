@@ -1316,12 +1316,13 @@ public class twbottwl extends TWBotExtension
         }
 
         LeaguePlayer sharkPlayer = m_match.getPlayer(player);
-        if(m_match.getMatchId() == 3 && sharkPlayer.getShip() == 8 && event.containsWeaponsInfo())
+        If you want to do this, find a better way.  No event.getByteArray()!
+        /*if(m_match.getMatchId() == 3 && sharkPlayer.getShip() == 8 && event.containsWeaponsInfo())
         {
             WeaponFired weapon = new WeaponFired(event.getByteArray());
             if (weapon.getWeaponType() == WeaponFired.WEAPON_REPEL)
                 sharkPlayer.reportStatistic(Statistics.REPELS_USED);
-        }
+        }*/
 
         if (m_gameState != 4 || m_match.getMatchTypeId() != 2)
             return;
