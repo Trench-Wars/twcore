@@ -66,10 +66,11 @@ public class bouncerbot extends SubspaceBot {
     public void handleCommand( String name, String message ){
         if( message.startsWith( "!invite " )){
             if( message.length() > 0 ){
-                invitedPlayers.add( name );
-                m_botAction.sendRemotePrivateMessage( name, "You have been invited to #noseeum!" );
-                m_botAction.sendPublicMessage( name + " has been invited" );
-                logEvent( name + " has been invited" );
+                String invitee = message.substring(8);
+                invitedPlayers.add( invitee );
+                m_botAction.sendRemotePrivateMessage( invitee, "You have been invited to " + m_botAction.getArenaName() + "!" );
+                m_botAction.sendPublicMessage( invitee + " has been invited" );
+                logEvent( invitee + " has been invited" );
             }
         } else if( message.startsWith( "!message " )){
             bouncemessage = message.substring( 9 );
