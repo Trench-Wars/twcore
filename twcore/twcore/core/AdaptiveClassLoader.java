@@ -15,24 +15,24 @@
  *
  * 3. All advertising materials mentioning features or use of this
  *    software must display the following acknowledgment:
- *    "This product includes software developed by the Java Apache 
+ *    "This product includes software developed by the Java Apache
  *    Project for use in the Apache JServ servlet engine project
  *    <http://java.apache.org/>."
  *
  * 4. The names "Apache JServ", "Apache JServ Servlet Engine" and
- *    "Java Apache Project" must not be used to endorse or promote products 
+ *    "Java Apache Project" must not be used to endorse or promote products
  *    derived from this software without prior written permission.
  *
  * 5. Products derived from this software may not be called "Apache JServ"
- *    nor may "Apache" nor "Apache JServ" appear in their names without 
+ *    nor may "Apache" nor "Apache JServ" appear in their names without
  *    prior written permission of the Java Apache Project.
  *
  * 6. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
- *    "This product includes software developed by the Java Apache 
+ *    "This product includes software developed by the Java Apache
  *    Project for use in the Apache JServ servlet engine project
  *    <http://java.apache.org/>."
- *    
+ *
  * THIS SOFTWARE IS PROVIDED BY THE JAVA APACHE PROJECT "AS IS" AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -435,6 +435,7 @@ public class AdaptiveClassLoader extends ClassLoader {
 
         // Try to load it from each repository
         Enumeration repEnum = repository.elements();
+        StringBuffer repoList = new StringBuffer();
 
         // Cache entry.
         ClassCacheEntry classCache = new ClassCacheEntry();
@@ -459,7 +460,7 @@ public class AdaptiveClassLoader extends ClassLoader {
                     classData = null;
                 }
             }
-              
+
             if (classData != null) {
                 // Define the class
                 c = defineClass(name, classData, 0, classData.length);
@@ -468,16 +469,20 @@ public class AdaptiveClassLoader extends ClassLoader {
                 // Origin is set by the specific loader
                 classCache.lastModified = classCache.origin.lastModified();
                 cache.put(name, classCache);
-    
+
                 // Resolve it if necessary
                 if (resolve) resolveClass(c);
-                
+
                 return c;
             }
+
+            repoList.append(file.getAbsolutePath());
+            if (repEnum.hasMoreElements())
+                repoList.append(", ");
         }
 
         // If not found in any repository
-        throw new ClassNotFoundException(name);
+        throw new ClassNotFoundException("Class: " + name + " (repository contains: " + repoList.toString() + ")");
     }
 
     /**
@@ -578,7 +583,7 @@ public class AdaptiveClassLoader extends ClassLoader {
             return null;
         }
     }
-    
+
     /**
      * Tries to load the class from a zip file.
      *
@@ -771,7 +776,7 @@ public class AdaptiveClassLoader extends ClassLoader {
                 if (resFile.exists()) {
                     // Build a file:// URL form the file name
                     try {
-                        return new URL("file", null, resFile.getAbsolutePath());                    	
+                        return new URL("file", null, resFile.getAbsolutePath());
                     } catch(java.net.MalformedURLException badurl) {
                         badurl.printStackTrace();
                         return null;
@@ -798,7 +803,7 @@ public class AdaptiveClassLoader extends ClassLoader {
                     ioe.printStackTrace();
                     return null;
                 }
-            }   
+            }
         }
 
         // Not found
@@ -806,7 +811,7 @@ public class AdaptiveClassLoader extends ClassLoader {
     }
 
     /**
-     * Return the last modified time for a class in the 
+     * Return the last modified time for a class in the
      * ClassCache.
      *
      * @throws ClassNotFoundException if class is not found
