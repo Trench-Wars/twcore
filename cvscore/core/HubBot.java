@@ -134,7 +134,7 @@ public class HubBot extends SubspaceBot
 		}
 		else
 		{
-			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried !remove " + message);
+			m_botAction.sendChatMessage(1, messager + " isn't a High Moderator, but he tried !remove " + message);
 		}
 	}
 
