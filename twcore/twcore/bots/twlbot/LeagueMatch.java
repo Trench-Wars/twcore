@@ -341,7 +341,7 @@ public class LeagueMatch
             return false;
     }
     
-    /** Setting for playoff mode, to be set in twlbottwl.  Keeps the match
+    /** Setting for playoff mode, to be set in twlbotstandard.  Keeps the match
      * timer in sync with the main bot.
      * @param isBasePlayoff True if this match is a base playoff match.
      * @author qan
@@ -377,8 +377,8 @@ public class LeagueMatch
      */
     private void giveTimeWarning(int time, int team)
     {       
-        if (    (m_isBasePlayoff  && time <= twlbottwl.TIME_RACE_PLAYOFF_TARGET)
-             || (!m_isBasePlayoff && time <= twlbottwl.TIME_RACE_TARGET) ) {
+        if (    (m_isBasePlayoff  && time <= twlbotstandard.TIME_RACE_PLAYOFF_TARGET)
+             || (!m_isBasePlayoff && time <= twlbotstandard.TIME_RACE_TARGET) ) {
 
             int teamId = 0;
             int target;
@@ -400,9 +400,9 @@ public class LeagueMatch
             }
 
             if( m_isBasePlayoff )
-                target = twlbottwl.TIME_RACE_PLAYOFF_TARGET;
+                target = twlbotstandard.TIME_RACE_PLAYOFF_TARGET;
             else
-                target = twlbottwl.TIME_RACE_TARGET;
+                target = twlbotstandard.TIME_RACE_TARGET;
                 
             if (target - teamScore == time * 60) //3 mins * 60 secs
             {

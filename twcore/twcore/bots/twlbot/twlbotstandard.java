@@ -13,7 +13,7 @@ import twcore.core.*;
 import twcore.misc.database.DBPlayerData;
 import twcore.misc.statistics.*;
 
-public class twlbottwl extends TWLBotExtension
+public class twlbotstandard extends TWLBotExtension
 {
     private final String mySQLHost = "website";
     private final String mySQLRegister = "local";
@@ -81,7 +81,7 @@ public class twlbottwl extends TWLBotExtension
     private final int TWLJ = 2; //jav league
     private final int TWLB = 3; //base league
 
-    public twlbottwl()
+    public twlbotstandard()
     {
         m_laggers = new HashMap();
     }
