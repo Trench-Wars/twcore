@@ -19,6 +19,7 @@ captainsfixed=0
 pingmax=400
 blueout=1
 lagoutextension=60
+aliascheck=1
 
 matchtype=5
 captain_can_start_game=1

@@ -18,6 +18,7 @@ waitafterlagout=15
 captain_can_start_game=1
 lineuptime=7
 blueout=1
+aliascheck=1
 
 # assign the maximum number of ships allowed per shiptype.
 # -1 indicates that the ship is NOT allowed

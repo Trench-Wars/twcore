@@ -17,6 +17,7 @@ captainsfixed=0
 maxping=700
 waitafterlagout=15
 specialaccess=arrogance <ZH>:Mantra-Slider:Yojo:Adman:Microstar:Divine Rides:warportal:Nockm:greven
+aliascheck=0
 
 # assign the maximum number of ships allowed per shiptype.
 # -1 indicates that the ship is NOT allowed

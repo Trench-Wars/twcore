@@ -8,6 +8,7 @@ deaths=-1
 time=60
 rounds=1
 maxrounds=1
+aliascheck=0
 
 winby=timerace
 #this is to ensure you have a default setting if user doesn't define any

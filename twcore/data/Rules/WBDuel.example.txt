@@ -22,6 +22,7 @@ maxping=300
 lagoutextension=60
 subdelaytime=2
 blueout=0
+aliascheck=0
 
 matchtype=4
 captain_can_start_game=0
