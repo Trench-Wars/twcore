@@ -56,7 +56,7 @@ public class twbottwl extends TWBotExtension
 	private final int MINIMUM_DUEL_LIMIT = 3; //players
 	private final int MINIMUM_BASE_LIMIT = 6; //players
 	
-	private final double VERSION = 1.6;
+	private final double VERSION = 1.8;
 	
 	final static int TIME_RACE_TARGET = 900; //sec
 	final static int DUEL_TARGET = 50; //kills
@@ -174,8 +174,20 @@ public class twbottwl extends TWBotExtension
 					m_botAction.resetFlagGame();
 					m_botAction.scoreResetAll();
 					m_botAction.shipResetAll();
-					m_botAction.setDoors(0);
+					if (m_match.getMatchTypeId() == 1)
+					{
+                                                m_botAction.setDoors(0);
+                                        }
+					if (m_match.getMatchTypeId() == 3)
+					{
+                                                m_botAction.setDoors(0);
+                                        }
 					m_botAction.sendArenaMessage("GO GO GO", 104);
+					if (m_match.getMatchTypeId() == 2)
+					{
+						m_botAction.warpFreqToLocation(0, 446, 444);
+						m_botAction.warpFreqToLocation(1, 577, 444);
+					}
 					if (m_match.getMatchTypeId() == 3)
 					{
 						m_botAction.warpFreqToLocation(0, 486, 256);
@@ -436,25 +448,25 @@ public class twbottwl extends TWBotExtension
 			
 		// a name has to be registered
 		if( !forced ) {
-			if (!dbP.isRegistered()) 
+			if (!dbP.isRegistered())
 			{
 				m_botAction.sendPrivateMessage(name, "Unable to add player, that player has not registered.");
 				return;
 			}
-					
+
 			// the name must be enabled
 			if (!dbP.isEnabled()) {
 				m_botAction.sendPrivateMessage(name, "Unable to add player, that player's name is disabled.");
 				return;
 			}
 		}
-		
+
 		//Should be good at this point, add the player. Lag check???
 		m_match.addPlayer(playerTeamId, player, shipType);
-		
+
 		//Lag check - let the host handle it
 		m_botAction.sendUnfilteredPrivateMessage( player, "*lag" );
-		
+
 		addingPlayer = player;
 
 		if (!forced && m_gameState != 4)
@@ -1137,7 +1149,8 @@ public class twbottwl extends TWBotExtension
 
 	public void do_showScore(String name, String message)
 	{
-		if (m_gameState == 0)
+		if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
+                if (m_gameState == 0)
 			return;
 		if (m_gameState < 4)
 		{
@@ -1208,11 +1221,29 @@ public class twbottwl extends TWBotExtension
 	 * This command just returns a version final variable to show if the bot is getting compiled or not
 	 * 
 	 */
-	
+
+// was trying to add module no succes yet.
 	public void do_version(String name, String message)
 	{
 		m_botAction.sendPrivateMessage(name, Double.toString(VERSION));
 	}
+//	/**
+//	* This is an lag check created by rodge_rabbit.
+//       * The players will be checked on the lag limits and specced if they found to be out of range
+//        */
+//	public void do_lagcheck(String name, String message)
+//	{
+//	if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
+//	if (!(shipType >= 1 && shipType <= 8))
+//        return;
+//        Iterator i = m_arenaTracker.getFreqIDIterator(freq);
+//        if (i == null)
+//            return;
+//        while (i.hasNext())
+//        {
+//            setShip(((Integer) i.next()).intValue(), shipType);
+//        }
+//	}
 
     /**
      * Parses the FlagClaimed event to the correct team
@@ -1780,9 +1811,14 @@ public class twbottwl extends TWBotExtension
 		{
 			do_loadTestGame(name, message);
 		}
+// DISABLED because not implented yet.
+//		else if (message.toLowerCase().startsWith("!lagcheck"))
+//		{
+//			do_lagcheck(name, message);
+//		}
 		else if (message.toLowerCase().startsWith("!version"))
 		{
-			do_version(name,message);
+			do_version(name, message);
 		}
 		else if (message.toLowerCase().startsWith("!setcaptain "))
 		{
@@ -1863,23 +1899,24 @@ public class twbottwl extends TWBotExtension
 				"!ref                                - shows the match ref" };
 		m_botAction.privateMessageSpam(name, help);
 	}
-	
+
 	public void parseLagInformation( String message ) {
 		
 		try {
 			String pieces[] = message.split( "  " );
 			int average = Integer.parseInt( pieces[1].split( ":" )[1].split( " " )[0] );
-			double plossS2C = Double.parseDouble( pieces[4].split( ":" )[1].split( " " )[0] );
-			double plossC2S = Double.parseDouble( pieces[5].split( ":" )[1].split( " " )[0] );
-			double plossWeapons = Double.parseDouble( pieces[6].split( ":" )[1].split( " " )[0] );
+			double plossS2C = Double.parseDouble( pieces[4].split( ":" )[1].split( "%" )[0] );
+			double plossC2S = Double.parseDouble( pieces[5].split( ":" )[1].split( "%" )[0] );
+			double plossWeapons = Double.parseDouble( pieces[6].split( ":" )[1].split( "%" )[0] );
 			
 			if( average > MAX_AVERAGE_PING || plossS2C > MAX_PLOSS
 				|| plossC2S > MAX_PLOSS || plossWeapons > MAX_WEAPONS_PLOSS )
 			{
-				m_botAction.sendSmartPrivateMessage( m_match.getRef(), addingPlayer + " does not meet the lag requirements." );
+				m_botAction.sendSmartPrivateMessage( m_match.getRef(), addingPlayer + " does not meet the lag requirements! Please !remove the player and inform the squad captain(s)." );
 				m_botAction.sendSmartPrivateMessage( m_match.getRef(), "Ave: "+average+"  S2C: "+plossS2C+"  C2S: "+plossC2S+"  Weapons: "+plossWeapons );
 			}
 		} catch (Exception e) {
+             m_botAction.sendSmartPrivateMessage( m_match.getRef(), "Lag Check failed?" );
 		}
 		
 	}
