@@ -103,7 +103,7 @@ public class spaceballbot extends SubspaceBot {
 			}
 		}
 		
-		if (!m_botAction.getOperatorList().isER(name) && !name.equalsIgnoreCase("Sika")) {
+		if (!m_botAction.getOperatorList().isER(name)) {
 			return;
 		}
 
@@ -226,6 +226,9 @@ public class spaceballbot extends SubspaceBot {
 		SBPlayer p = (SBPlayer)players.get(m_botAction.getPlayerName(event.getPlayerID()));
 		if (p == null) {
 			Player p2 = m_botAction.getPlayer(event.getPlayerID());
+			if (p2 == null) {
+				return;
+			}
 			players.put(p2.getPlayerName(), new SBPlayer(p2.getPlayerName(), p2.getFrequency()));
 			return;
 		}
@@ -291,7 +294,7 @@ public class spaceballbot extends SubspaceBot {
 
 //		m_botAction.sendArenaMessage("Weapon phyred! " + p + " X:" + event.getXLocation() + " Y:" + event.getYLocation() + " VX:" + event.getXVelocity() + " BVX:" + bVX + " VY:" + event.getYVelocity() + " BVY:" + bVY);
 
-		fired_projectiles.add(new Projectile(p, event.getXLocation() + (short)(10.0 * Math.sin(bearing)), event.getYLocation() - (short)(10.0 * Math.cos(bearing)), event.getXVelocity() + (short)(pSpeed * Math.sin(bearing)), event.getYVelocity() - (short)(pSpeed * Math.cos(bearing)), event.getWeaponType()));
+		fired_projectiles.add(new Projectile(p, event.getXLocation() + (short)(10.0 * Math.sin(bearing)), event.getYLocation() - (short)(10.0 * Math.cos(bearing)), event.getXVelocity() + (short)(pSpeed * Math.sin(bearing)), event.getYVelocity() - (short)(pSpeed * Math.cos(bearing)), event.getWeaponType(), event.getWeaponLevel()));
 	}
 
 	public void handleEvent(LoggedOn event) {
@@ -575,7 +578,7 @@ public class spaceballbot extends SubspaceBot {
 //				oShip.fire(7);
 				if (c == 7) {
 					c = 0;
-					if (c2 == 1) {
+					if (c2 == 0) {
 						c = 0;
 						c2 = 0;
 						announceWinner();
