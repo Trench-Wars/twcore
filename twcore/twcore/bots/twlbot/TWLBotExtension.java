@@ -1,6 +1,7 @@
 package twcore.bots.twlbot;
 
 import twcore.core.*;
+import java.util.*;
 
 /*
  * PortabotExtension.java Created on March 21, 2002, 2:46 PM
@@ -36,7 +37,7 @@ public abstract class TWLBotExtension
         m_botSettings = m_botAction.getBotSettings();
     }
 
-    public abstract String[] getHelpMessages();
+    public abstract Collection getHelpMessages();
 
     public abstract void cancel();
 

@@ -44,7 +44,7 @@ public class twlbotstreak extends TWLBotExtension
         }
         else if (message.toLowerCase().startsWith("!streak"))
         {
-            String pieces[] = message.split(":");
+            String pieces[] = message.split(" ");
             try
             {
                 int i = Integer.parseInt(pieces[1]);
@@ -61,8 +61,7 @@ public class twlbotstreak extends TWLBotExtension
             }
             catch (Exception e)
             {
-                m_botAction
-                        .sendPrivateMessage(name, "Remember: !streak <start>:<update> (Btw failed to start streak.)");
+                m_botAction.sendPrivateMessage(name, "Remember: !streak <start> <update> (Btw failed to start streak.)");
             }
         }
     }
@@ -155,11 +154,13 @@ public class twlbotstreak extends TWLBotExtension
     /**
      * Help messages for the streak Module
      */
-    public String[] getHelpMessages()
+    public Collection getHelpMessages()
     {
-        String[] messages = {
-                "!streak <start>:<update>  - Watches for streaks beginning at <start> and updated every <update>",
-                "!streakoff                - Turns off the streak watcher." };
+        Vector messages = new Vector();
+        
+        messages.add("!streak <start> <update>  - Watches for streaks beginning at <start> and updated every <update>");
+        messages.add("!streakoff                - Turns off the streak watcher.");
+
         return messages;
     }
 

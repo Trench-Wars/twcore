@@ -2076,39 +2076,39 @@ public class twlbotstandard extends TWLBotExtension
         }
     }
 
-    public String[] getHelpMessages()
+    public Collection getHelpMessages()
     {
-        String help[] =
-            {
-                "---------------------- REF COMMANDS ------------------------------------",
-                "!loadgame <game#>                   - loads match identified by <game#>",
-                "!unloadgame                         - unloads the current match",
-                "!zone                               - zones for the current game",
-                "!startpick                          - will allow team lineups to be set",
-                "!add <name>:<ship> / !add <name>    - adds <name> in <ship> if specified",
-                "!remove <name>                      - removes <name> from the lineup",
-                "!startgame                          - starts the match",
-                "!blueout                            - toggles spectator blueout",
-                "!score                              - shows the score of the match",
-                "!setcaptain <player>                - sets the player as the captain of the squad he is on",
-                "!newhost                            - sets you as the new host for the match",
-                "-------------------- PLAYER COMMANDS -----------------------------------",
-                "!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut> if captain",
-                "!switch <player1>:<player2>         - switches <player1> and <player2> if captain",
-                "!list                               - list the players for your team",
-                "!myfreq                             - puts you on your team freq",
-                "!lagout                             - places you back into the game",
-                "!ref                                - shows the game ref",
-                "-------------------- OTHER COMMANDS ------------------------------------",
-        "!help                               - shows this message",
-                "!off                                - cleans up the bot and shuts down the TWL module",
-                "!lock                               - locks bot so it can't be moved",
-                "!unlock                             - unlocks bot so it can be moved",
-                "!come, !go <arena>                  - tells the bot to come to an arena",
-                "!die                                - tells the bot to take a hike... off a cliff",
-                "!home                               - tells the bot to unlock and go home",
-                "!mybot                              - lets everyone know you are hosting instead of the former host"
-             };
+        Vector help = new Vector();
+        
+        help.add("---------------------- REF COMMANDS ------------------------------------");
+        help.add("!loadgame <game#>                   - loads match identified by <game#>");
+        help.add("!unloadgame                         - unloads the current match");
+        help.add("!zone                               - zones for the current game");
+        help.add("!startpick                          - will allow team lineups to be set");
+        help.add("!add <name>:<ship> / !add <name>    - adds <name> in <ship> if specified");
+        help.add("!remove <name>                      - removes <name> from the lineup");
+        help.add("!startgame                          - starts the match");
+        help.add("!blueout                            - toggles spectator blueout");
+        help.add("!score                              - shows the score of the match");
+        help.add("!setcaptain <player>                - sets the player as the captain of the squad he is on");
+        help.add("!newhost                            - sets you as the new host for the match");
+        help.add("-------------------- PLAYER COMMANDS -----------------------------------");
+        help.add("!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut> if captain");
+        help.add("!switch <player1>:<player2>         - switches <player1> and <player2> if captain");
+        help.add("!list                               - list the players for your team");
+        help.add("!myfreq                             - puts you on your team freq");
+        help.add("!lagout                             - places you back into the game");
+        help.add("!ref                                - shows the game ref");
+        help.add("-------------------- OTHER COMMANDS ------------------------------------");
+        help.add("!help                               - shows this message");
+        help.add("!off                                - cleans up the bot and shuts down the TWL module");
+        help.add("!lock                               - locks bot so it can't be moved");
+        help.add("!unlock                             - unlocks bot so it can be moved");
+        help.add("!come, !go <arena>                  - tells the bot to come to an arena");
+        help.add("!die                                - tells the bot to take a hike... off a cliff");
+        help.add("!home                               - tells the bot to unlock and go home");
+        help.add("!mybot                              - lets everyone know you are hosting instead of the former host");
+        
         return help;
     }
 
