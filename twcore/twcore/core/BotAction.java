@@ -320,18 +320,18 @@ public class BotAction
      * @param frequency The frequency this message is to be sent to.
      * @param message The message to be displayed.
      */
-    public void sendOpposingTeamMessage(int frequency, String message)
+    public void sendOpposingTeamMessageByFrequency(int frequency, String message)
     {
 
         sendOpposingTeamMessage(frequency, message, (byte) 0);
     }
 
     /** Send a message to a whole frequency of players.
-     * @param playerID The player whose freq this message is to be sent to.
+     * @param frequency The frequency this message is to be sent to.
      * @param message The message to be sent
      * @param soundCode Sound code to be sent along with the message.
      */
-    /*public void sendOpposingTeamMessage(int frequency, String message, int soundCode)
+    public void sendOpposingTeamMessageByFrequency(int frequency, String message, int soundCode)
     {
         Iterator i;
         int playerID;
@@ -351,8 +351,13 @@ public class BotAction
                 }
             }
         }
-    }*/
+    }
 
+    /** Send a message to a whole frequency of players.
+     * @param playerID The id of the player whose frequency this message is to be sent to.
+     * @param message The message to be sent
+     * @param soundCode Sound code to be sent along with the message.
+     */
     public void sendOpposingTeamMessage( int playerID, String message, int soundCode ) {
 
         char firstChar;
@@ -363,11 +368,16 @@ public class BotAction
             firstChar = message.charAt(0);
             if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')
             {
-                m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
+                m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short)playerID, message);
             }
         }
     }
 
+    /** Send a message to a whole frequency of players.
+     * @param playerName The name of the player whose frequency this message is to be sent to.
+     * @param message The message to be sent
+     * @param soundCode Sound code to be sent along with the message.
+     */
     public void sendOpposingTeamMessage( String playerName, String message, int soundCode ){
         int         playerID = m_arenaTracker.getPlayerID( playerName );
         
