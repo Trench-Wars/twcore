@@ -763,33 +763,33 @@ public class twlbottwl extends TWLBotExtension
             team1Score = "" + m_match.getTeam2Deaths();
             team2Score = "" + m_match.getTeam1Deaths();
         }
-		//If dd or jd display on normal scoreboard
-		if( m_match.getMatchTypeId() < 3 ) {
-	        for (int i = team1Score.length() - 1; i > -1; i--)
-	            m_myObjects.showObject(Integer.parseInt("" + team1Score.charAt(i)) + 200 + (team1Score.length() - 1 - i) * 10);
-	        for (int i = team2Score.length() - 1; i > -1; i--)
-	            m_myObjects.showObject(Integer.parseInt("" + team2Score.charAt(i)) + 100 + (team2Score.length() - 1 - i) * 10);
+        //If dd or jd display on normal scoreboard
+        if( m_match.getMatchTypeId() < 3 ) {
+            for (int i = team1Score.length() - 1; i > -1; i--)
+                m_myObjects.showObject(Integer.parseInt("" + team1Score.charAt(i)) + 200 + (team1Score.length() - 1 - i) * 10);
+            for (int i = team2Score.length() - 1; i > -1; i--)
+                m_myObjects.showObject(Integer.parseInt("" + team2Score.charAt(i)) + 100 + (team2Score.length() - 1 - i) * 10);
         } else { //Else display on twlb scoreboard
-        	
-        	int t1s = Integer.parseInt( team1Score );
-        	int t2s = Integer.parseInt( team2Score );
-        
-        	int team1Minutes = (int)Math.floor( t1s / 60.0 );
-        	int team2Minutes = (int)Math.floor( t2s / 60.0 );
-        	int team1Seconds = t1s - team1Minutes * 60;
-        	int team2Seconds = t2s - team2Minutes * 60;
-        	
-        	//Team 1
-        	m_myObjects.showObject( 100 + team1Seconds % 10 );
-        	m_myObjects.showObject( 110 + (team1Seconds - team1Seconds % 10)/10 );
-        	m_myObjects.showObject( 130 + team1Minutes % 10 );
-        	m_myObjects.showObject( 140 + (team1Minutes - team1Minutes % 10)/10 );
 
-        	//Team 2
-        	m_myObjects.showObject( 200 + team2Seconds % 10 );
-        	m_myObjects.showObject( 210 + (team2Seconds - team2Seconds % 10)/10 );
-        	m_myObjects.showObject( 230 + team2Minutes % 10 );
-        	m_myObjects.showObject( 240 + (team2Minutes - team2Minutes % 10)/10 );
+            int t1s = Integer.parseInt( team1Score );
+            int t2s = Integer.parseInt( team2Score );
+
+            int team1Minutes = (int)Math.floor( t1s / 60.0 );
+            int team2Minutes = (int)Math.floor( t2s / 60.0 );
+            int team1Seconds = t1s - team1Minutes * 60;
+            int team2Seconds = t2s - team2Minutes * 60;
+
+            //Team 1
+            m_myObjects.showObject( 100 + team1Seconds % 10 );
+            m_myObjects.showObject( 110 + (team1Seconds - team1Seconds % 10)/10 );
+            m_myObjects.showObject( 130 + team1Minutes % 10 );
+            m_myObjects.showObject( 140 + (team1Minutes - team1Minutes % 10)/10 );
+
+            //Team 2
+            m_myObjects.showObject( 200 + team2Seconds % 10 );
+            m_myObjects.showObject( 210 + (team2Seconds - team2Seconds % 10)/10 );
+            m_myObjects.showObject( 230 + team2Minutes % 10 );
+            m_myObjects.showObject( 240 + (team2Minutes - team2Minutes % 10)/10 );
         }
         if (m_generalTime >= 0)
         {
@@ -1921,7 +1921,7 @@ public class twlbottwl extends TWLBotExtension
                 "!lagout                             - places you back into the game",
                 "!ref                                - shows the game ref",
                 "-------------------- OTHER COMMANDS ------------------------------------",
-		"!help                               - shows this message",
+        "!help                               - shows this message",
                 "!off                                - cleans up the bot and shuts down the TWL module",
                 "!lock                               - locks bot so it can't be moved",
                 "!unlock                             - unlocks bot so it can be moved",
@@ -2590,7 +2590,7 @@ public class twlbottwl extends TWLBotExtension
             playerQuery += "0, 0, '" + timeEnd + "', " + pp.getStatistic(Statistics.TOTAL_TEAMKILLS) + ", " + pp.getStatistic(Statistics.TERRIER_KILL) + " )";
             try
             {
-                m_botAction.SQLBackgroundQuery(mySQLHost, name, playerQuery);
+                m_botAction.SQLQuery(mySQLHost, name, playerQuery);
             }
             catch (Exception e)
             {
