@@ -334,7 +334,12 @@ public class twbottwl extends TWBotExtension
 			m_botAction.sendPrivateMessage(name, "You must load a game and !startpick before you can add players.");
 			return;
 		}
-		if (m_gameState > 2 && !forced)
+		if (m_gameState == 3)
+		{
+			m_botAction.sendPrivateMessage(name, "You can add after game starts.");
+			return;			
+		}
+		if (m_gameState > 3 && !forced)
 		{
 			if (m_match.getMatchTypeId() == 3)
 			{
@@ -814,7 +819,7 @@ public class twbottwl extends TWBotExtension
 			teamName = m_match.getTeam2Name();
 			m_match.setTeamTwoCap(matchCaptain);
 		}
-		m_botAction.sendArenaMessage(matchCaptain + " has been set captain of " + teamName);
+		m_botAction.sendArenaMessage(matchCaptain + " has been set captain for " + teamName);
 	}
 	
 	//Subs one player for another
@@ -829,7 +834,7 @@ public class twbottwl extends TWBotExtension
 		boolean isCap = sql_isCap(name);
 		if (!name.equals(m_match.getRef()))
 		{
-			if (!m_match.isTeamMember(teamId) || !isCap || !m_match.isTeamCaptain(name))
+			if (!m_match.isTeamMember(teamId) || (!isCap && !m_match.isTeamCaptain(name)))
 			{
 				m_botAction.sendPrivateMessage(name, "You are not captain for either team.");
 				return;
@@ -920,7 +925,7 @@ public class twbottwl extends TWBotExtension
 		boolean isCap = sql_isCap(name);
 		if (!name.equals(m_match.getRef()))
 		{
-			if (!m_match.isTeamMember(teamId) || !isCap || !m_match.isTeamCaptain(name))
+			if (!m_match.isTeamMember(teamId) || (!isCap && !m_match.isTeamCaptain(name)))
 			{
 				m_botAction.sendPrivateMessage(name, "You are not captain for either team.");
 				return;
