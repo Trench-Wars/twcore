@@ -642,7 +642,7 @@ import java.util.Vector;
 							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.05);
 							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.05);
 							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.05);
+							((Statistic)m_statistics.get(DEATHS)).setWeight(0.12);
 							break;
 						case 6: //x
 							((Statistic)m_statistics.get(SCORE)).setWeight(0.8);
