@@ -7,45 +7,52 @@ import twcore.misc.statistics.*;
 
 public class LeagueMatch
 {
+	//match stuff
+	private int m_matchId;
+	private int m_matchTypeId;
 
-	int m_matchId;
-	int m_matchTypeId;
+	//team stuff
+	private int m_team1Id;
+	private int m_team2Id;
+	private String m_team1Name;
+	private String m_team2Name;
+	private int m_team1Size = 0;
+	private int m_team2Size = 0;
+	private HashMap m_team1List;
+	private HashMap m_team2List;
+	private int m_team1Subs = 0;
+	private int m_team2Subs = 0;
+	private int m_team1Switches = 0;
+	private int m_team2Switches = 0;
+	private int m_team1Score = 0;
+	private int m_team2Score = 0;
+	private int m_team1Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	private int m_team2Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	private final int m_shipLimits[] = { 8, 8, 8, 0, 1, 8, 8, 2 };
+	private boolean m_team1Flag = false;
+	private boolean m_team2Flag = false;
 
-	int m_team1Id;
-	int m_team2Id;
-	String m_team1Name;
-	String m_team2Name;
-	int m_team1Size = 0;
-	int m_team2Size = 0;
-	HashMap m_team1List;
-	HashMap m_team2List;
-	int m_team1Subs = 0;
-	int m_team2Subs = 0;
-	int m_team1Switches = 0;
-	int m_team2Switches = 0;
+	//ref stuff
+	private String m_ref = "";
+	private boolean m_zoned = false;
+	private boolean m_blueOut = false;
+	private boolean m_saveState = false;
+	private int m_overTime = 1;
+	private String m_restartTime = "00:00";
+	private BotAction m_botAction;
+	private Vector m_playerList;
+	private HashMap m_justSaw;
 
-	int m_team1Score = 0;
-	int m_team2Score = 0;
-	boolean m_team1Flag = false;
-	boolean m_team2Flag = false;
-	String m_ref = "";
-	int m_rosterLimit;
-	int m_deathLimit = 0;
-	int m_subLimit = 0;
-	int m_switchLimit = 3;
-	int m_lagoutLimit;
-	boolean m_zoned = false;
-	boolean m_blueOut = false;
-	boolean m_saveState = false;
-	int m_overTime = 1;
-	String m_restartTime = "00:00";
-	BotAction m_botAction;
+	//limits	
+	private int m_rosterLimit;
+	private int m_deathLimit = 0;
+	private int m_subLimit = 0;
+	private int m_switchLimit = 3;
+	private int m_lagoutLimit;
 
-	int m_team1Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-	int m_team2Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-	final int m_shipLimits[] = { 8, 8, 8, 0, 1, 8, 8, 2 };
-	Vector m_playerList;
-	HashMap m_justSaw;
+	//constants
+	private final int TEAM_ONE_FREQ = 0;
+	private final int TEAM_TWO_FREQ = 1;
 	
 	public LeagueMatch(ResultSet result, BotAction botAction)
 	{
@@ -365,7 +372,7 @@ public class LeagueMatch
 			if (twbottwl.TIME_RACE_TARGET - teamScore == time * 60) //3 mins * 60 secs
 			{
 				if (teamId == getFlagOwner()) //no multiple warning
-					m_botAction.sendArenaMessage(name + " needs " + time + " m of flag time to win");
+					m_botAction.sendArenaMessage(name + " needs " + time + " min of flag time to win");
 			}
 		}
 	}
@@ -378,12 +385,12 @@ public class LeagueMatch
 	 */
 	public void setFlagOwner(int freq)
 	{
-		if (isTeamOne(freq))
+		if (freq == TEAM_ONE_FREQ)
 		{
 			m_team1Flag = true;
 			m_team2Flag = false;
 		}
-		else if (isTeamTwo(freq))
+		else if (freq == TEAM_TWO_FREQ)
 		{
 			m_team2Flag = true;
 			m_team1Flag = false;
@@ -504,13 +511,13 @@ public class LeagueMatch
 	{
 		if (m_team1Id == teamId)
 		{
-			m_team1List.put(name, new LeaguePlayer(name, shipType, 0, m_deathLimit));
+			m_team1List.put(name, new LeaguePlayer(name, shipType, TEAM_ONE_FREQ, m_deathLimit));
 			m_team1Ships[shipType - 1]++;
 			m_team1Size++;
 		}
 		else if (m_team2Id == teamId)
 		{
-			m_team2List.put(name, new LeaguePlayer(name, shipType, 1, m_deathLimit));
+			m_team2List.put(name, new LeaguePlayer(name, shipType, TEAM_TWO_FREQ, m_deathLimit));
 			m_team2Ships[shipType - 1]++;
 			m_team2Size++;
 		}
@@ -660,18 +667,18 @@ public class LeagueMatch
 		int t = getMatchTypeId();
 		if (t == 1)
 		{
-			m_botAction.warpFreqToLocation(0, 312, 362);
-			m_botAction.warpFreqToLocation(1, 713, 662);
+			m_botAction.warpFreqToLocation(TEAM_ONE_FREQ, 312, 362);
+			m_botAction.warpFreqToLocation(TEAM_TWO_FREQ, 713, 662);
 		}
 		else if (t == 2)
 		{
-			m_botAction.warpFreqToLocation(0, 446, 453);
-			m_botAction.warpFreqToLocation(1, 576, 453);
+			m_botAction.warpFreqToLocation(TEAM_ONE_FREQ, 446, 453);
+			m_botAction.warpFreqToLocation(TEAM_TWO_FREQ, 576, 453);
 		}
 		else if (t == 3)
 		{
-			m_botAction.warpFreqToLocation(0, 310, 482);
-			m_botAction.warpFreqToLocation(1, 714, 482);
+			m_botAction.warpFreqToLocation(TEAM_ONE_FREQ, 310, 482);
+			m_botAction.warpFreqToLocation(TEAM_TWO_FREQ, 714, 482);
 		}
 	}
 
@@ -685,23 +692,23 @@ public class LeagueMatch
 			int f = getPlayer(name).getFreq();
 			if (t == 1)
 			{
-				if (f == 0)
+				if (f == TEAM_ONE_FREQ)
 					m_botAction.warpTo(name, 312, 362);
-				else if (f == 1)
+				else if (f == TEAM_TWO_FREQ)
 					m_botAction.warpTo(name, 713, 662);
 			}
 			else if (t == 2)
 			{
-				if (f == 0)
+				if (f == TEAM_ONE_FREQ)
 					m_botAction.warpTo(name, 446, 453);
-				else if (f == 1)
+				else if (f == TEAM_TWO_FREQ)
 					m_botAction.warpTo(name, 576, 453);
 			}
 			else if (t == 3)
 			{
-				if (f == 0)
+				if (f == TEAM_ONE_FREQ)
 					m_botAction.warpTo(name, 310, 482);
-				else if (f == 1)
+				else if (f == TEAM_TWO_FREQ)
 					m_botAction.warpTo(name, 714, 482);
 			}
 		}
@@ -719,12 +726,12 @@ public class LeagueMatch
 			int x2 = 0, y2 = 0;
 			if (t == 1)
 			{
-				if (f == 0)
+				if (f == TEAM_ONE_FREQ)
 				{
 					x2 = 312 * 16;
 					y2 = 362 * 16;
 				}
-				else if (f == 1)
+				else if (f == TEAM_TWO_FREQ)
 				{
 					x2 = 713 * 16;
 					y2 = 662 * 16;
@@ -732,12 +739,12 @@ public class LeagueMatch
 			}
 			else if (t == 2)
 			{
-				if (f == 0)
+				if (f == TEAM_ONE_FREQ)
 				{
 					x2 = 446 * 16;
 					y2 = 453 * 16;
 				}
-				else if (f == 1)
+				else if (f == TEAM_TWO_FREQ)
 				{
 					x2 = 576 * 16;
 					y2 = 453 * 16;
@@ -745,12 +752,12 @@ public class LeagueMatch
 			}
 			else if (t == 3)
 			{
-				if (f == 0)
+				if (f == TEAM_ONE_FREQ)
 				{
 					x2 = 310 * 16;
 					y2 = 482 * 16;
 				}
-				else if (f == 1)
+				else if (f == TEAM_TWO_FREQ)
 				{
 					x2 = 714 * 16;
 					y2 = 482 * 16;
@@ -838,7 +845,7 @@ public class LeagueMatch
 	public void addFlagReward(int freq, int pts)
 	{
 		Iterator it;
-		if (freq == 0)
+		if (freq == TEAM_ONE_FREQ)
 			it = m_team1List.keySet().iterator();
 		else
 			it = m_team2List.keySet().iterator();

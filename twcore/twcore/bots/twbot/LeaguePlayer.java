@@ -237,20 +237,20 @@ public class LeaguePlayer
 
 
 
-	String m_playerName;
-	int m_frequency;
-	int m_deathLimit;
+	private String m_playerName;
+	private int m_frequency;
+	private int m_deathLimit;
 
-	int m_lagouts = 0;
+	private int m_lagouts = 0;
 
-	boolean m_outOfGame = false;
-	boolean m_laggedOut = false;
-	boolean m_warned = false;
-	boolean m_inBase = false;
-	boolean m_saveState = false;
-	int m_timeOfLagout = 0;
-	int m_timer = 0;
-	String m_sub = "  -";
+	private boolean m_outOfGame = false;
+	private boolean m_laggedOut = false;
+	private boolean m_warned = false;
+	private boolean m_inBase = false;
+	private boolean m_saveState = false;
+	private int m_timeOfLagout = 0;
+	private int m_timer = 0;
+	private String m_sub = "  -";
 
 	private TotalStatistics m_statisticTracker;
 

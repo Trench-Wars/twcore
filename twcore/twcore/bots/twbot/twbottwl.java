@@ -15,30 +15,30 @@ import twcore.misc.statistics.*;
 
 public class twbottwl extends TWBotExtension
 {
-	final String mySQLHost = "website";
-	LeagueMatch m_match;
+	private final String mySQLHost = "website";
+	private LeagueMatch m_match;
 
 	//0 - off
 	//1 - match loaded
 	//2 - lineups requested
 	//3 - 30 seconds till start
 	//4 - game in progress
-	int m_gameState = 0;
-	int m_secondsOnStart = 0;
+	private int m_gameState = 0;
+	private int m_secondsOnStart = 0;
 
-	String m_timeStart;
-	String m_timeEnd;
-	int m_generalTime = 0;
+	private String m_timeStart;
+	private String m_timeEnd;
+	private int m_generalTime = 0;
 
-	HashMap m_laggers;
-	int m_watch;
-	Objset m_myObjects;
-	java.util.Date m_lockDate;
-	java.util.Date m_lastRoundCutoffDate;
+	private HashMap m_laggers;
+	private int m_watch;
+	private Objset m_myObjects;
+	private java.util.Date m_lockDate;
+	private java.util.Date m_lastRoundCutoffDate;
 	
 	//constants
-	final int MINIMUM_DUEL_LIMIT = 3;
-	final int MINIMUM_BASE_LIMIT = 4;
+	private final int MINIMUM_DUEL_LIMIT = 3;
+	private final int MINIMUM_BASE_LIMIT = 2;
 	final static int TIME_RACE_TARGET = 900;
 	final static int DUEL_TARGET = 50;
 
