@@ -26,7 +26,6 @@ lagoutextension=60
 aliascheck=1
 
 matchtype=2
-captain_can_start_game=0
 manual_game_start=1
 storegame=1
 loggame=1

@@ -15,7 +15,6 @@ forfeit_loser_score=0
 forfeit_winner_score=100000
 captainsfixed=0
 maxping=700
-captain_can_start_game=1
 waitafterlagout=15
 specialaccess=arrogance <ZH>:Mantra-Slider:Yojo:Adman:Microstar:Divine Rides:warportal:Nockm:greven:fit of rage:zerzera:rodge <ZH>
 aliascheck=0

@@ -25,7 +25,6 @@ subdelaytime=2
 aliascheck=0
 
 matchtype=4
-captain_can_start_game=0
 storegame=0
 loggame=0
 squadjoined=0

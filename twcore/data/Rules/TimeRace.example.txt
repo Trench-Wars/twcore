@@ -19,7 +19,6 @@ forfeit_loser_score=0
 forfeit_winner_score=100000
 captainsfixed=0
 maxping=700
-captain_can_start_game=1
 waitafterlagout=15
 specialaccess=Adman:Microstar:Divine Rides:warportal:Nockm:greven:fit of rage:zerzera:force of nature:stabwound:nrg:Legionair:nethila:buja x:credit account:se><plosion:rz:da1andonly:fizzy:flared
 

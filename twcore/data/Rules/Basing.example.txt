@@ -16,7 +16,6 @@ forfeit_winner_score=900
 captainsfixed=0
 maxping=700 
 waitafterlagout=15
-captain_can_start_game=1
 lineuptime=7
 blueout=0
 aliascheck=0
