@@ -199,7 +199,7 @@ public class robohelp extends SubspaceBot {
         if( message.startsWith( "activated #" ) ){
             number = message.substring( message.indexOf( ' ' ) );
             if( m_banPending == true && number != null ){
-                m_botAction.sendUnfilteredPublicMessage( "?bancomment " + number + " Ban by " + m_lastBanner + " for abusing help or cheater" );
+                m_botAction.sendUnfilteredPublicMessage( "?bancomment " + number + " Ban by " + m_lastBanner + " for abusing the alert commands" );
                 m_banPending = false;
                 m_lastBanner = null;
             }
@@ -661,7 +661,7 @@ public class robohelp extends SubspaceBot {
                 } else {
                     helpRequest.setBeenWarned( true );
                     if( helpRequest.AdvertTell() == true ){
-                        m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
+                        m_botAction.sendRemotePrivateMessage( name, "WARNING: Do NOT use the ?advert "
                         +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
                         +"will not be tolerated!", 1 );
                         m_botAction.sendChatMessage( name + " has been warned for ?advert abuse." );
@@ -1063,5 +1063,6 @@ public class robohelp extends SubspaceBot {
     }
 
 }
+
 
 
