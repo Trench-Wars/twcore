@@ -6,8 +6,6 @@ package twcore.core;
  * Created on December 8, 2001, 2:39 AM
  */
 import java.io.*;
-import java.net.*;
-import java.util.*;
 
 public class GamePacketInterpreter {
 

@@ -1,5 +1,4 @@
 package twcore.core;
-import java.util.*;
 import java.io.*;
 
 public class HubBot extends SubspaceBot {

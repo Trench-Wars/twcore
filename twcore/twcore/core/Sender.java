@@ -1,17 +1,14 @@
-/*
- * RoboBot.java
+/**
+ * Sender.java
  *
  * Created on December 12, 2001, 7:28 PM
- */
-
-/**
  *
  * @author  Jeremy
  */
+
 package twcore.core;
 import java.net.*;
 import java.util.*;
-import java.io.*;
 
 public class Sender extends Thread {
     private DatagramSocket   m_socket;
