@@ -327,7 +327,7 @@ public class BotAction
     }
 
     /** Send a message to a whole frequency of players.
-     * @param frequency The frequency this message is to be sent to.
+     * @param playerID The player whose freq this message is to be sent to.
      * @param message The message to be sent
      * @param soundCode Sound code to be sent along with the message.
      */
@@ -539,7 +539,6 @@ public class BotAction
      * private messages instead.
      * @param name The name of the player.
      * @param message The message to be displayed.
-     * @param soundCode Sound code to be sent along with the message.
      */
     public void sendRemotePrivateMessage(String name, String message)
     {
@@ -738,7 +737,7 @@ public class BotAction
     }
 
     /** Sets private objects of an individual player
-     * @param PlayerId of the player
+     * @param playerId of the player
      */
     public void setObjects( int playerId ) {
         if( m_objectSet.toSet( playerId ) ) {
@@ -1075,7 +1074,7 @@ public class BotAction
      *
      * @author Kirthi Sugnanam - FoN
      *
-     * @param arena The arena string to join
+     * @param arenaName The arena string to join
      * @param xResolution The X - coordinate resolution for the screen
      * @param yResolution The Y - coordinate resolution for the screen
      */
@@ -1124,7 +1123,7 @@ public class BotAction
     }
 
     /**Overloaded function to joinArena which allows to specify the resolution of the arena
-     * @see joinArena (short arena)
+     * @see joinArena(short arena)
      *
      * @author Kirthi Sugnanam - FoN
      *
@@ -1403,7 +1402,7 @@ public class BotAction
         }
         return result;
     }
-    
+
     /**
      * Gets the total number of players currently playing.
      * @return # players
@@ -1416,10 +1415,10 @@ public class BotAction
             numPlayers++;
             i.next();
         }
-        
+
         return numPlayers;
     }
-    
+
 
     /** Sets the doors in the arena to the specified value.  If you wish, you can use
      * setDoors( String ) and enter binary string such as "11010110" to turn doors
@@ -1583,7 +1582,7 @@ public class BotAction
     }
 
     /**
-     * @return
+     * @return an iterator of all players in a frequency (currently not working)
      * @param freq
      */
     public Iterator getFreqPlayerIterator(int freq)
@@ -1882,7 +1881,7 @@ public class BotAction
     }
 
     /**
-     * @return
+     * @return a file containing the core configuration
      * @param filename
      */
     public File getCoreCfg(String filename)
@@ -1961,5 +1960,4 @@ public class BotAction
 
     	m_packetGenerator.sendBannerPacket( _banner );
     }
-
 }

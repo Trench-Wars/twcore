@@ -189,12 +189,12 @@ public class AdaptiveClassLoader extends ClassLoader {
      * Creates a new class loader that will load classes from specified
      * class repositories.
      *
-     * @param classRepository An set of File classes indicating
-     *        directories and/or zip/jar files. It may be empty when
-     *        only system classes are loaded.
-     * @throw java.lang.IllegalArgumentException if the objects contained
-     *        in the vector are not a file instance or the file is not
-     *        a valid directory or a zip/jar file.
+     * @param  classRepository An set of File classes indicating
+     *         directories and/or zip/jar files. It may be empty when
+     *         only system classes are loaded.
+     * @throws java.lang.IllegalArgumentException if the objects contained
+     *         in the vector are not a file instance or the file is not
+     *         a valid directory or a zip/jar file.
      */
     public AdaptiveClassLoader(Vector classRepository)
         throws IllegalArgumentException
@@ -206,15 +206,15 @@ public class AdaptiveClassLoader extends ClassLoader {
      * Creates a new class loader that will load classes from specified
      * class repositories.
      *
-     * @param classRepository An set of File classes indicating
-     *        directories and/or zip/jar files. It may be empty when
-     *        only system classes are loaded.
-     * @param chainedClassLoader A class loader to attempt to load classes
-     *        as resources thru before falling back on the default system
-     *        loaders.
-     * @throw java.lang.IllegalArgumentException if the objects contained
-     *        in the vector are not a file instance or the file is not
-     *        a valid directory or a zip/jar file.
+     * @param  classRepository An set of File classes indicating
+     *         directories and/or zip/jar files. It may be empty when
+     *         only system classes are loaded.
+     * @param  chainedClassLoader A class loader to attempt to load classes
+     *         as resources thru before falling back on the default system
+     *         loaders.
+     * @throws java.lang.IllegalArgumentException if the objects contained
+     *         in the vector are not a file instance or the file is not
+     *         a valid directory or a zip/jar file.
      */
     public AdaptiveClassLoader(Vector classRepository, ClassLoader chainedClassLoader)
         throws IllegalArgumentException
@@ -307,7 +307,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      * Check to see if a given class should be reloaded because of a
      * modification to the original class.
      *
-     * @param className The name of the class to check for modification.
+     * @param classname The name of the class to check for modification.
      */
     public synchronized boolean shouldReload(String classname) {
 
