@@ -41,7 +41,7 @@ public class Tools {
         }while( nextSpace != -1 );
         String stuff = input.substring( previousSpace ).toLowerCase();
         stuff=stuff.replace('?',' ').replace('!',' ').trim();
-        list.add( stuff );
+        if (stuff.length() > 0) list.add( stuff );
 
         return (String[])list.toArray(new String[list.size()]);
     }
