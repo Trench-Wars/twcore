@@ -9,10 +9,13 @@ import java.util.*;
  *  everyone on the channel so that information can be spread easily.
  *
  *  @author Ikrit
- *  @version 1.1
+ *  @version 1.2
  *  
  *  Added database support of messages because I forgot SSC messaging only
  *  allows one message from a person at a time.
+ *  
+ *  Added pubbot support so the bot can PM a player that has just logged
+ *  in to tell them if they have messages.
  */
 public class messagebot extends SubspaceBot
 {
@@ -158,7 +161,7 @@ public class messagebot extends SubspaceBot
     		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
     	}
-    	c.messageChannel(name, "Channel deleted.");
+    	c.messageChannel(name, "Channel " + message + " deleted.");
     	channels.remove(message.toLowerCase());
     }
     
@@ -561,6 +564,19 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
+		String queryCheck = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
+		try {
+			ResultSet results = m_botAction.SQLQuery("local", queryCheck);
+			if(results.next())
+			{
+				String player = results.getString("fcName");
+				if(!player.toLowerCase().equals(name))
+				{
+					m_botAction.sendSmartPrivateMessage(name, "That is not your message.");
+					return;
+				}
+			}
+		} catch(Exception e) { Tools.printStackTrace(e); }
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+name+"\" AND fnID = " + messageNumber;
 		try{
 			ResultSet results = m_botAction.SQLQuery("local", query);
@@ -595,6 +611,19 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
+		String queryCheck = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
+		try {
+			ResultSet results = m_botAction.SQLQuery("local", queryCheck);
+			if(results.next())
+			{
+				String player = results.getString("fcName");
+				if(!player.toLowerCase().equals(name))
+				{
+					m_botAction.sendSmartPrivateMessage(name, "That is not your message.");
+					return;
+				}
+			}
+		} catch(Exception e) { Tools.printStackTrace(e); }
 		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
@@ -690,13 +719,13 @@ public class messagebot extends SubspaceBot
 		{
 			public void run()
 			{
-				String query = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 31 DAY)) AND fnRead = 0";
-				String query2 = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 15 DAY)) AND fnRead = 1";
-				try {
-					m_botAction.SQLQuery("local", query);
-					m_botAction.SQLQuery("local", query2);
-					System.out.println("Deleting messages.");
-				} catch(SQLException e) { Tools.printStackTrace( e ); }
+			//	String query = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 31 DAY)) AND fnRead = 0";
+			//	String query2 = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 15 DAY)) AND fnRead = 1";
+			//	try {
+			//		m_botAction.SQLQuery("local", query);
+			//		m_botAction.SQLQuery("local", query2);
+			//		System.out.println("Deleting messages.");
+			//	} catch(SQLException e) { Tools.printStackTrace( e ); }
 			}
 		};
 	}
@@ -877,7 +906,7 @@ class Channel
 			int level = ((Integer)members.get(player.toLowerCase())).intValue();
 			if(level > 0)
 			{
-				m_bA.sendSmartPrivateMessage(player, name + ": " + message);
+				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + ">" + message);
 			}
 		}
 	}
