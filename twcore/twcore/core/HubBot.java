@@ -110,6 +110,8 @@ public class HubBot extends SubspaceBot
 
 		m_botAction.getOperatorList().clearList();
 		m_botAction.getOperatorList().parseFile(m_botAction.getCoreCfg("owners.cfg"), OperatorList.OWNER_LEVEL);
+		m_botAction.getOperatorList().parseFile(m_botAction.getCoreCfg("remote.cfg"), OperatorList.REMOTE_LEVEL);
+		m_botAction.getOperatorList().parseFile(m_botAction.getCoreCfg("highmod.cfg"), OperatorList.HIGHMOD_LEVEL);
 		m_botAction.sendUnfilteredPublicMessage("*getmodlist");
 		m_botAction.sendUnfilteredPublicMessage("*getfile smod.txt");
 		m_botAction.sendUnfilteredPublicMessage("*getfile sysop.txt");
@@ -125,14 +127,14 @@ public class HubBot extends SubspaceBot
 	{
 		String className = message.trim();
 
-		if (m_botAction.getOperatorList().isSmod(messager) == true)
+		if (m_botAction.getOperatorList().isHighmod(messager) == true)
 		{
 			m_botQueue.removeBot(message);
                         m_botAction.sendPrivateMessage(messager, "Removed.");
 		}
 		else
 		{
-			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried " + message);
+			m_botAction.sendChatMessage(1, messager + " isn't an High Moderator, but he tried !remove " + message);
 		}
 	}
 
@@ -140,20 +142,20 @@ public class HubBot extends SubspaceBot
 	{
 		String className = message.trim();
 
-		if (m_botAction.getOperatorList().isSmod(messager) == true)
+		if (m_botAction.getOperatorList().isER(messager) == true)
 		{
 			m_botQueue.listWaitingList(messager);
 		}
 		else
 		{
-			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried " + message);
+			m_botAction.sendChatMessage(1, messager + " isn't a ER+, but he tried !waitinglist " + message);
 		}
 	}
 
 	public void handleUpdateAccess(String messager, String message)
 	{
 
-		if (m_botAction.getOperatorList().isSmod(messager) == true)
+		if (m_botAction.getOperatorList().isHighmod(messager) == true)
 		{
 			LoadAccessLists();
 			m_botAction.sendSmartPrivateMessage(messager, "Updating access levels...");
@@ -161,20 +163,20 @@ public class HubBot extends SubspaceBot
 		}
 		else
 		{
-			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried " + message);
+			m_botAction.sendChatMessage(1, messager + " isn't an High Moderator, but he tried !updateaccess " + message);
 		}
 	}
 
 	public void handleListBotTypes(String messager, String message)
 	{
 
-		if (m_botAction.getOperatorList().isSmod(messager) == true)
+		if (m_botAction.getOperatorList().isHighmod(messager) == true)
 		{
 			m_botQueue.listBotTypes(messager);
 		}
 		else
 		{
-			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried " + message);
+			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried !listbottypes " + message);
 		}
 	}
 
@@ -195,7 +197,7 @@ public class HubBot extends SubspaceBot
 		}
 		else
 		{
-			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried " + message);
+			m_botAction.sendChatMessage(1, messager + " isn't an smod, but he tried !listbots " + message);
 		}
 	}
 
@@ -209,9 +211,14 @@ public class HubBot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(messager, "!waitinglist - Displays the waiting list.");
 		}
 
-		if (m_botAction.getOperatorList().isSmod(messager) == true)
+		if (m_botAction.getOperatorList().isHighmod(messager) == true)
 		{
 			m_botAction.sendSmartPrivateMessage(messager, "!updateaccess - Rereads the mod, smod, and sysop file so that all access levels are updated.");
+			m_botAction.sendSmartPrivateMessage(messager, "!remove <bot> - Removes <bot> from the zone. Use exact capitalization.");
+		}
+
+		if (m_botAction.getOperatorList().isSmod(messager) == true)
+		{
 			m_botAction.sendSmartPrivateMessage(messager, "!listbottypes - Lists the number of each bot type burrently in use.");
 			m_botAction.sendSmartPrivateMessage(messager, "!listbots <bot type> - Lists the names and spawners of a bot type.");
 		}
@@ -238,7 +245,7 @@ public class HubBot extends SubspaceBot
 		}
 		else
 		{
-			m_botAction.sendChatMessage(1, messager + " isn't a moderator, but he tried !spawn " + message);
+			m_botAction.sendChatMessage(1, messager + " isn't a ER+, but he tried !spawn " + message);
 		}
 	}
 }
