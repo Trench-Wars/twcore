@@ -537,6 +537,10 @@ public class twbot extends SubspaceBot
 	{
 		distributeEvent((SubspaceEvent) event);
 	}
+	public void handleEvent( TurretEvent event ) 
+	{
+		distributeEvent( (SubspaceEvent)event);
+	}
 
 	static final String[] helps =
 		{

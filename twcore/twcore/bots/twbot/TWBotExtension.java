@@ -80,6 +80,8 @@ public abstract class TWBotExtension {
             handleEvent( (FlagClaimed)event );
         else if( event instanceof SQLResultEvent )
             handleEvent( (SQLResultEvent)event );
+        else if( event instanceof TurretEvent )
+        	handleEvent( (TurretEvent)event );
     }
     public void handleEvent( ScoreReset event ){}
     public void handleEvent( PlayerEntered event ){}
@@ -104,4 +106,5 @@ public abstract class TWBotExtension {
     public void handleEvent( FlagDropped event ){}
     public void handleEvent( FlagClaimed event ){}
     public void handleEvent( SQLResultEvent event ){}
+    public void handleEvent( TurretEvent event ){}
 }
