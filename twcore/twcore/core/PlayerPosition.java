@@ -54,17 +54,14 @@ public class PlayerPosition extends SubspaceEvent{
             m_xLocation = array.readLittleEndianShort(4);
             m_ping = array.readByte(6);
             
-            // Yeah, bounty is sent as a byte.  > 255 bty will lead to errors in short pos packet.
+            // Bounty is sent as a byte, so >255 bty will lead to errors from short pos packet.
             m_bounty = array.readByte(7);
-            
-            // m_playerID = array.readByte(8) & 0xff;
-            // A byte of all high bits is the the identity value of a bitwise AND ...  so, why do this?
-            
+                        
             // YES, we are only reading the lower byte for the short ver of the position packet.
             // YES, this means player position data may update sporadically because
             // Player checks vs. ID before updating (due to this problem).  Players with the
             // lower 255 ids won't have issues, but those with higher ids will.  -qan
-            m_playerID = array.readByte(8);
+            m_playerID = (short)(array.readByte(8) & 0xff);
             m_togglables = array.readByte( 9 );
             parseTogglables( m_togglables );
             m_yVelocity = array.readLittleEndianShort(10);
