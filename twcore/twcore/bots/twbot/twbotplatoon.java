@@ -13,7 +13,7 @@ import twcore.core.*;
  *  every time you die you get put down 1 ship until you get to ship 1.
  *  If you die as ship 1, you're out.
  *  @author - Jacen Solo
- *  @version 1.0
+ *  @version 1.1
  */
 public class twbotplatoon extends TWBotExtension
 {
@@ -92,11 +92,15 @@ public class twbotplatoon extends TWBotExtension
     			m_botAction.sendArenaMessage(m_botAction.getPlayerName(event.getKilleeID()) + " is out!");
     			Iterator it = m_botAction.getPlayingPlayerIterator();
 		    	int players = 0;
+		    	int freqs = 0;
+		    	HashSet freqList = new HashSet();
 		    	
-		    	while(it.hasNext()) { it.next(); players++; }
+		    	while(it.hasNext()) { it.next(); players++; Player p = (Player)it.next(); if(!freqList.contains(new Integer(p.getFrequency()))) freqList.add(new Integer(p.getFrequency()));}
 		    	
 		    	if(players == 1)
-		    		gameOver();
+		    		gameOver(true);
+		    	else if(freqList.size() == 1)
+		    		gameOver(false);
 		    }
 		    else
 		    {
@@ -110,12 +114,16 @@ public class twbotplatoon extends TWBotExtension
     	if(!isRunning)
     		return;
     	Iterator it = m_botAction.getPlayingPlayerIterator();
-    	int players = 0;
-    	
-    	while(it.hasNext()) { it.next(); players++; }
-    	
-    	if(players == 1)
-    		gameOver();
+		int players = 0;
+		int freqs = 0;
+		HashSet freqList = new HashSet();
+		    	
+		while(it.hasNext()) { it.next(); players++; Player p = (Player)it.next(); if(!freqList.contains(new Integer(p.getFrequency()))) freqList.add(new Integer(p.getFrequency()));}
+		    	
+		if(players == 1)
+			gameOver(true);
+		else if(freqList.size() == 1)
+			gameOver(false);
     }
     
     public void handleEvent(FrequencyShipChange event)
@@ -125,12 +133,16 @@ public class twbotplatoon extends TWBotExtension
     	if(event.getShipType() == 0)
     	{
     		Iterator it = m_botAction.getPlayingPlayerIterator();
-	    	int players = 0;
-	    	
-	    	while(it.hasNext()) { it.next(); players++; }
-	    	
-	    	if(players == 1)
-	    		gameOver();
+		    int players = 0;
+		    int freqs = 0;
+		    HashSet freqList = new HashSet();
+		    
+		    while(it.hasNext()) { it.next(); players++; Player p = (Player)it.next(); if(!freqList.contains(new Integer(p.getFrequency()))) freqList.add(new Integer(p.getFrequency()));}
+		    
+		    if(players == 1)
+		    	gameOver(true);
+		    else if(freqList.size() == 1)
+		    	gameOver(false);
 	    }
 	}
 	
@@ -140,17 +152,20 @@ public class twbotplatoon extends TWBotExtension
 		isRunning = false;
 	}
 	
-	public void gameOver()
+	public void gameOver(boolean onePlayer)
 	{
 		Iterator it = m_botAction.getPlayingPlayerIterator();
     	String winner = "";
     	while(it.hasNext())
     	{
     		Player p = (Player)it.next();
-    		winner = p.getPlayerName();
+    		if(onePlayer)
+    			winner = p.getPlayerName();
+    		else
+    			winner = "Freq " + p.getFrequency();
     	}
     	
-    	m_botAction.sendArenaMessage(winner + " has won the game!", 104);
+    	m_botAction.sendArenaMessage(winner + " has won the game!", 5);
     	isRunning = false;
     }
     
