@@ -174,7 +174,7 @@ public class twbotdangerous extends TWBotExtension {
 
         if( player != null )
             m_botAction.sendArenaMessage( winner.getPlayerName() + " still lives with " + player.getTime() + " to spare, and a high of " + player.getMaxTime() + "." );
-        m_botAction.sendArenaMessage( "This game's Time MVP is " + getMaxTimeLeaderString() + ".  (It seems that " + getHighKiller() + " is quite the butcher...)"  );
+        m_botAction.sendArenaMessage( "This game's Time MVP is: " + getMaxTimeLeaderString() + ""  );
         if( m_numStolen > 0 )
             m_botAction.sendArenaMessage( "Today I've cheated " + m_numStolen + " of you out of " + m_stolenTime + " seconds of your lives!" );
         m_botAction.sendArenaMessage( "Thank you for playing the MOST DANGEROUS GAME.", 102 );
@@ -234,48 +234,7 @@ public class twbotdangerous extends TWBotExtension {
         
         return highPlayer + " (" + highPlayer.getMaxTime() + ")";        
     }
-
-    
-    
-    /**
-     * Gets info on highest # kills.
-     * @return Name of person with highest # kills.
-     */
-    public String getHighKiller() {
-        Iterator i = m_players.values().iterator();
-        String highPlayer = "";
-        int kills = 0;
         
-        if( i.hasNext() ) {
-            PlayerInfo pinfo = (PlayerInfo)i.next();
-            Player player = m_botAction.getPlayer( pinfo.toString() );
-            if( player != null ) {
-                highPlayer = pinfo.toString();
-                kills = player.getWins();
-            }
-        } else {
-            return "no-one";
-        }
-                
-        while( i.hasNext() ) {
-            PlayerInfo pinfo = (PlayerInfo)i.next();
-            Player player = m_botAction.getPlayer( pinfo.toString() );
-            if( player != null ) {            
-                int pkills = player.getWins();           
-                // Doesn't retain tied highs.  Cry -> river
-                if( pkills > kills ) {
-                	highPlayer = pinfo.toString();
-            	}
-            }
-        }
-        
-        if( highPlayer == "" )
-            return "no-one";
-        else
-            return highPlayer;        
-    }
-    
-    
     
     /**
      * Format an integer time as a String. 
