@@ -19,7 +19,12 @@ public class twbotsafes extends TWBotExtension {
 	}
 	
 	public String[] getHelpMessages() {
-		return null;
+		
+		String message[] = {
+				"!safespec -          Toggle speccing for going in safety."
+		};
+		
+		return message;
 	}
 
 	/** This method handles message events.
