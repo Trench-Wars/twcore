@@ -9,7 +9,7 @@ import java.util.*;
  *  everyone on the channel so that information can be spread easily.
  *
  *  @author Ikrit
- *  @version 1.2
+ *  @version 1.4
  *  
  *  Added database support of messages because I forgot SSC messaging only
  *  allows one message from a person at a time.
@@ -83,33 +83,34 @@ public class messagebot extends SubspaceBot
         int acceptedMessages;
         
         acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
-        m_CI.registerCommand( "!create",     acceptedMessages, this, "createChannel" );//done
-        m_CI.registerCommand( "!destroy",    acceptedMessages, this, "destroyChannel" );//done
-        m_CI.registerCommand( "!join",  acceptedMessages, this, "joinChannel" ); //done
-        m_CI.registerCommand( "!quit",  acceptedMessages, this, "quitChannel" ); //done
-        m_CI.registerCommand( "!help",  acceptedMessages, this, "doHelp" ); //done
-        m_CI.registerCommand( "!accept",  acceptedMessages, this, "acceptPlayer" ); //done
-        m_CI.registerCommand( "!decline",  acceptedMessages, this, "declinePlayer" ); //done
-        m_CI.registerCommand( "!announce",  acceptedMessages, this, "announceToChannel" ); //done
-        m_CI.registerCommand( "!message",  acceptedMessages, this, "messageChannel" ); //done
-        m_CI.registerCommand( "!requests", acceptedMessages, this, "listRequests"); //done
-        m_CI.registerCommand( "!ban", acceptedMessages, this, "banPlayer"); //done
-        m_CI.registerCommand( "!unban", acceptedMessages, this, "unbanPlayer"); //done
-        m_CI.registerCommand( "!makeop", acceptedMessages, this, "makeOp"); //done
-        m_CI.registerCommand( "!deop", acceptedMessages, this, "deOp"); //done
-        m_CI.registerCommand( "!owner", acceptedMessages, this, "sayOwner"); //done
-        m_CI.registerCommand( "!grant", acceptedMessages, this, "grantChannel"); //done
-        m_CI.registerCommand( "!private", acceptedMessages, this, "makePrivate"); //done
-        m_CI.registerCommand( "!public", acceptedMessages, this, "makePublic"); //done
-        m_CI.registerCommand( "!unread", acceptedMessages, this, "setAsNew");//done
-        m_CI.registerCommand( "!read", acceptedMessages, this, "readMessage");//done
-        m_CI.registerCommand( "!delete", acceptedMessages, this, "deleteMessage");//done
-        m_CI.registerCommand( "!messages", acceptedMessages, this, "myMessages");//done
-        m_CI.registerCommand( "!go", acceptedMessages, this, "handleGo");//done
-        m_CI.registerCommand( "!members", acceptedMessages, this, "listMembers");//done
-        m_CI.registerCommand( "!banned", acceptedMessages, this, "listBanned");//done
+        m_CI.registerCommand( "!create",     acceptedMessages, this, "createChannel" );
+        m_CI.registerCommand( "!destroy",    acceptedMessages, this, "destroyChannel" );
+        m_CI.registerCommand( "!join",  acceptedMessages, this, "joinChannel" ); 
+        m_CI.registerCommand( "!quit",  acceptedMessages, this, "quitChannel" ); 
+        m_CI.registerCommand( "!help",  acceptedMessages, this, "doHelp" ); 
+        m_CI.registerCommand( "!accept",  acceptedMessages, this, "acceptPlayer" ); 
+        m_CI.registerCommand( "!decline",  acceptedMessages, this, "declinePlayer" ); 
+        m_CI.registerCommand( "!announce",  acceptedMessages, this, "announceToChannel" ); 
+        m_CI.registerCommand( "!message",  acceptedMessages, this, "messageChannel" ); 
+        m_CI.registerCommand( "!requests", acceptedMessages, this, "listRequests"); 
+        m_CI.registerCommand( "!ban", acceptedMessages, this, "banPlayer"); 
+        m_CI.registerCommand( "!unban", acceptedMessages, this, "unbanPlayer"); 
+        m_CI.registerCommand( "!makeop", acceptedMessages, this, "makeOp"); 
+        m_CI.registerCommand( "!deop", acceptedMessages, this, "deOp"); 
+        m_CI.registerCommand( "!owner", acceptedMessages, this, "sayOwner"); 
+        m_CI.registerCommand( "!grant", acceptedMessages, this, "grantChannel"); 
+        m_CI.registerCommand( "!private", acceptedMessages, this, "makePrivate"); 
+        m_CI.registerCommand( "!public", acceptedMessages, this, "makePublic"); 
+        m_CI.registerCommand( "!unread", acceptedMessages, this, "setAsNew");
+        m_CI.registerCommand( "!read", acceptedMessages, this, "readMessage");
+        m_CI.registerCommand( "!delete", acceptedMessages, this, "deleteMessage");
+        m_CI.registerCommand( "!messages", acceptedMessages, this, "myMessages");
+        m_CI.registerCommand( "!go", acceptedMessages, this, "handleGo");
+        m_CI.registerCommand( "!members", acceptedMessages, this, "listMembers");
+        m_CI.registerCommand( "!banned", acceptedMessages, this, "listBanned");
+        m_CI.registerCommand( "!me", acceptedMessages, this, "myChannels");
         
-        m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); //done
+        m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
     }
     
     /** Creates a channel
@@ -502,6 +503,33 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
+    /** Tells the player all the channels he/she is on.
+     *  @param Name of player
+     *  @param does nothing
+     */
+     
+    public void myChannels(String name, String message)
+    {
+    	String query = "SELECT * FROM tblChannelUser WHERE fcName = \""+name.toLowerCase()+"\"";
+    	try {
+    		ResultSet results = m_botAction.SQLQuery("local", query);
+    		while(results.next())
+    		{
+    			String channel = results.getString("fcChannel");
+    			channel = channel.toLowerCase();
+    			Channel c = (Channel)channels.get(channel);
+    			if(c.isOp(name.toLowerCase()))
+    				channel += ": Operator.";
+    			else if(c.isOwner(name.toLowerCase()))
+    				channel += ": Owner.";
+    			else
+    				channel += ": Member.";
+    			m_botAction.sendSmartPrivateMessage(name, channel);
+    		}
+    	} catch(Exception e) { Tools.printStackTrace(e); }
+    }
+    			
+    
     /** Sends help messages
      *  @param Name of player.
      */
@@ -533,6 +561,7 @@ public class messagebot extends SubspaceBot
         m_botAction.sendSmartPrivateMessage(name, "!destroy <channel>             -Destroys <channel>.");
         m_botAction.sendSmartPrivateMessage(name, "!accept <channel>:<name>       -Accepts <name>'s request to join <channel>.");
         m_botAction.sendSmartPrivateMessage(name, "!decline <channel>:<name>      -Declines <name>'s request to join <channel>.");
+        m_botAction.sendSmartPrivateMessage(name, "!me                            -Tells you what chennels you have joined.");
         
         if(m_botAction.getOperatorList().isZH(name))
        		m_botAction.sendSmartPrivateMessage(name, "!create <channel>              -Creates a channel with the name <channel>.");
