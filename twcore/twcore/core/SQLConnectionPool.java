@@ -44,7 +44,11 @@ public class SQLConnectionPool implements Runnable {
             return stmt.getResultSet();
         }catch( SQLException e ){
             free( conn );
-            throw e;
+            //throw e;
+            
+            // DEBUG: Returning null to generate NullPointerExceptions in bots that do not
+            // catch SQLExceptions
+            return null;
         }        
     }
     
