@@ -183,7 +183,7 @@ public class Tools {
             case 3:
                 return "Spider";
             case 4:
-                return "Leviathen";
+                return "Leviathan";
             case 5:
                 return "Terrier";
             case 6:
