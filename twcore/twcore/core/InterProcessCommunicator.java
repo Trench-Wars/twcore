@@ -80,7 +80,7 @@ public class InterProcessCommunicator {
                 IPCChannel channel = (IPCChannel)i.next();
                 channel.unsubscribe( bot );
                 if ( channel.isEmpty() ) {
-                    i.remove( channel );
+                    i.remove( );
                 }
             }
         }
