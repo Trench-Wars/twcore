@@ -1,6 +1,6 @@
 package twcore.bots.bshipbot;
 
-//Battleship Bot by D1st0rt v2.4
+//Battleship Bot by D1st0rt v2.5
 
 import twcore.core.*;
 import java.util.*;
@@ -19,7 +19,7 @@ public class bshipbot extends SubspaceBot
 	private boolean night = true;
 
 	//Game states
-	private int state = IDLE;
+	private int state = IDLE; //haha this wouldn't work in c :D
 	private static final int IDLE = 0, PICKING = 1, PLAYING = 2, SETUP = 3;
 
 	//Ships
@@ -33,7 +33,8 @@ public class bshipbot extends SubspaceBot
 	{
 		public void run()
 		{
-			refresh();
+			if(night)
+				refresh();
 		}
 
 	};
@@ -42,6 +43,9 @@ public class bshipbot extends SubspaceBot
 	/*			  Setup				*/
 	/********************************/
 
+	/**
+	 * Constructor: Creates a new bshipbot
+	 */
 	public bshipbot(BotAction botAction)
 	{
 		super(botAction);
@@ -57,7 +61,6 @@ public class bshipbot extends SubspaceBot
 		events.request(EventRequester.TURRET_EVENT);
 		events.request(EventRequester.PLAYER_DEATH);
 		events.request(EventRequester.PLAYER_ENTERED);
-		events.request(EventRequester.BALL_POSITION); //Backup for Core's Turret handling bug
 
 		//Commands
 		m_commandInterpreter = new CommandInterpreter(m_botAction);
@@ -75,6 +78,10 @@ public class bshipbot extends SubspaceBot
 		m_botAction.setPlayerPositionUpdating(500);
 	}
 
+	/**
+	 * Event: LoggedOn
+	 * Joins the Battleship arena, sets reliable kills
+	 */
 	public void handleEvent(LoggedOn event)
 	{
 		String initialArena = config.getString("InitialArena");
@@ -87,110 +94,123 @@ public class bshipbot extends SubspaceBot
 	/*			  Commands			*/
 	/********************************/
 
+	/**
+	 * Sets up all of the commands with the CommandInterpreter
+	 */
 	public void registerCommands()
 	{
 		int acceptedMessages = Message.PRIVATE_MESSAGE | Message.PUBLIC_MESSAGE | Message.ARENA_MESSAGE;
 		//Base Commands
-		m_commandInterpreter.registerCommand("!about", acceptedMessages, this, "about");
-		m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "help");
-		m_commandInterpreter.registerCommand("!go", acceptedMessages | Message.REMOTE_PRIVATE_MESSAGE, this, "go");
-		m_commandInterpreter.registerCommand("!die", acceptedMessages | Message.REMOTE_PRIVATE_MESSAGE, this, "do_die");
-		m_commandInterpreter.registerCommand("!say", acceptedMessages |Message.REMOTE_PRIVATE_MESSAGE, this, "say");
+		m_commandInterpreter.registerCommand("!about", acceptedMessages, this, "C_about");
+		m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "C_help");
+		m_commandInterpreter.registerCommand("!go", acceptedMessages | Message.REMOTE_PRIVATE_MESSAGE, this, "C_go");
+		m_commandInterpreter.registerCommand("!die", acceptedMessages | Message.REMOTE_PRIVATE_MESSAGE, this, "C_die");
+		m_commandInterpreter.registerCommand("!say", acceptedMessages |Message.REMOTE_PRIVATE_MESSAGE, this, "C_say");
 
-		//Extension Commands
-		m_commandInterpreter.registerCommand("!rules", acceptedMessages, this, "rules");
-		m_commandInterpreter.registerCommand("!allowed", acceptedMessages, this, "allowed");
-		m_commandInterpreter.registerCommand("!teams", acceptedMessages, this, "teams");
-		//m_commandInterpreter.registerCommand("!list", acceptedMessages, this, "list");
-		m_commandInterpreter.registerCommand("!setup",acceptedMessages, this, "setup");
-		m_commandInterpreter.registerCommand("!start",acceptedMessages, this, "start");
-		m_commandInterpreter.registerCommand("~state",acceptedMessages, this, "setstate");
-		m_commandInterpreter.registerCommand("!stop",acceptedMessages, this, "stop");
-		//m_commandInterpreter.registerCommand("!pick",acceptedMessages, this, "pick");
-		m_commandInterpreter.registerCommand("!quit",acceptedMessages, this, "quit");
-		m_commandInterpreter.registerCommand("!remaining",acceptedMessages, this, "remaining");
-		m_commandInterpreter.registerCommand("!remove",acceptedMessages, this, "removeP");
-		m_commandInterpreter.registerCommand("!sethour",acceptedMessages,this, "setHour");
-		m_commandInterpreter.registerCommand("!night",acceptedMessages,this, "night");
-		//m_commandInterpreter.registerCommand("!eventeams",acceptedMessages,this,"evenTeams");
+		//Battleship Commands
+		m_commandInterpreter.registerCommand("!rules", acceptedMessages, this, "C_rules");
+		m_commandInterpreter.registerCommand("!allowed", acceptedMessages, this, "C_allowed");
+		m_commandInterpreter.registerCommand("!teams", acceptedMessages, this, "C_teams");
+		m_commandInterpreter.registerCommand("!setup",acceptedMessages, this, "C_setup");
+		m_commandInterpreter.registerCommand("!start",acceptedMessages, this, "C_start");
+		m_commandInterpreter.registerCommand("~state",acceptedMessages, this, "C_state");
+		m_commandInterpreter.registerCommand("!stop",acceptedMessages, this, "C_stop");
+		m_commandInterpreter.registerCommand("!quit",acceptedMessages, this, "C_quit");
+		m_commandInterpreter.registerCommand("!remaining",acceptedMessages, this, "C_remaining");
+		m_commandInterpreter.registerCommand("!remove",acceptedMessages, this, "C_remove");
+		m_commandInterpreter.registerCommand("!sethour",acceptedMessages,this, "C_setHour");
+		m_commandInterpreter.registerCommand("!night",acceptedMessages,this, "C_night");
 	}
 
-	public void about(String name, String message)
-		{
-			String[] about =
-			{"+-Battleship Bot by D1st0rt-------v2.4-+",
-			 "| -Make sure you n00bs don't attach to |",
-			 "|   the wrong ships.                   |",
-			 "| -Night Mode!                         |",
-			 "| -Handle Battleship Games             |",
-			 "+--------------------------------------+"};
-
-			m_botAction.privateMessageSpam(name,about);
-		}
-
-		public void help(String name, String message)
-		{
-			String[] help =
-			{"+------------Battleship Bot------------+",
-			 "| -!about         What this bot does   |",
-			 "| -!help          This message         |",
-			 "| -!allowed       Who can attach to who|",
-			 "| -!quit          Leave the game       |",
-			 "| -!remaining     Who is left (in game)|",
-			 "| -!rules         Rules of the game    |",
-			 "+--------------------------------------+"};
-			String[] staffhelp =
-			{"+-------------Staff Commands-----------+",
-			 "| -!go <arena>    Sends bot to <arena> |",
-			 "| -!say <msg>     Makes bot say msg    |",
-			 "| -!die           Deactivate bot       |",
-			 "| -!setup <#>     Sets up game (#teams)|",
-			 "| -!start         Starts a set up game |",
-			 "| -!stop          Stop any part of game|",
-			 "| -!remove <team> Remaining -1 for team|",
-			 "| -!teams <#>     Makes # random teams |",
-			 "| -!sethour <#>   Set game time to #   |",
-			 "| -!night <on/off>Toggle night mode    |",
-			// "| -!eventeams     Evens teams          |",
-			 "+--------------------------------------+"};
-
-			m_botAction.privateMessageSpam(name,help);
-			if(oplist.isER(name))
-				m_botAction.privateMessageSpam(name,staffhelp);
-	 	}
-
-	public void go(String name, String message)
+	/**
+	 * Command: !about
+	 * What this bot does
+	 */
+	public void C_about(String name, String message)
 	{
-		if(oplist.isZH(name))
-		{
-			if(!message.equals(""))
-			{
-				m_botAction.changeArena(message);
-				m_botAction.setReliableKills(1);
-			}
-		}
+		String[] about =
+		{"+-Battleship Bot by D1st0rt-------v2.5-+",
+		 "| -Make sure you n00bs don't attach to |",
+		 "|   the wrong ships.                   |",
+		 "| -Night Mode!                         |",
+		 "| -Handle Battleship Games             |",
+		 "+--------------------------------------+"};
+
+		m_botAction.privateMessageSpam(name,about);
 	}
 
-	public void say(String name, String message)
+	/**
+	 * Command: !help
+	 * Displays list of commands available
+	 */
+	public void C_help(String name, String message)
 	{
+		String[] help =
+		{"+------------Battleship Bot------------+",
+		 "| -!about         What this bot does   |",
+		 "| -!help          This message         |",
+		 "| -!allowed       Who can attach to who|",
+		 "| -!quit          Leave the game       |",
+		 "| -!remaining     Who is left (in game)|",
+		 "| -!rules         Rules of the game    |",
+		 "+--------------------------------------+"};
+		String[] staffhelp =
+		{"+-------------Staff Commands-----------+",
+		 "| -!go <arena>    Sends bot to <arena> |",
+		 "| -!say <msg>     Makes bot say msg    |",
+		 "| -!die           Deactivate bot       |",
+		 "| -!setup <#>     Sets up game (#teams)|",
+		 "| -!start         Starts a set up game |",
+		 "| -!stop          Stop any part of game|",
+		 "| -!remove <team> Remaining -1 for team|",
+		 "| -!teams <#>     Makes # random teams |",
+		 "| -!sethour <#>   Set game time to #   |",
+		 "| -!night <on/off>Toggle night mode    |",
+		 "+--------------------------------------+"};
+
+		m_botAction.privateMessageSpam(name,help);
 		if(oplist.isER(name))
+			m_botAction.privateMessageSpam(name,staffhelp);
+	}
+
+	/**
+	 * Command: !go <arena>
+	 * Makes the bot change arena to <arena>
+	 */
+	public void C_go(String name, String message)
+	{
+		if(oplist.isZH(name) && !message.equals(""))
 		{
-			if(!message.equals(""))
-			{
-				m_botAction.sendPublicMessage(message);
-			}
+			m_botAction.changeArena(message);
+			m_botAction.setReliableKills(1);
 		}
 	}
 
-	public void do_die(String name, String message)
+	/**
+	 * Command: !say <text>
+	 * Makes the bot say <text>
+	 */
+	public void C_say(String name, String message)
+	{
+		if(oplist.isER(name) && !message.equals(""))
+			m_botAction.sendPublicMessage(message);
+	}
+
+	/**
+	 * Command: !die
+	 * Terminates the bot
+	 */
+	public void C_die(String name, String message)
 	{
 		if(oplist.isZH(name))
-		{
 			m_botAction.die();
-		}
 	}
 
-	public void rules(String name, String message)
+	/**
+	 * Command: !rules
+	 * Displays the rules for the current game mode
+	 */
+	public void C_rules(String name, String message)
 	{
 			String[] game =
 			{"Each team gets one of each of the 5 ships, and 6 turrets.",
@@ -210,7 +230,12 @@ public class bshipbot extends SubspaceBot
 			m_botAction.privateMessageSpam(name,normal);
 	}
 
-	public void teams(String name, String message)
+	/**
+	 * Command: !teams <number>
+	 * Use this before !setup to start a game, organizes players into
+	 * <number> teams to play the game with.
+	 */
+	public void C_teams(String name, String message)
 	{
 		if(oplist.isER(name))
 		{
@@ -228,7 +253,11 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
-	public void allowed(String name, String message)
+	/**
+	 * Command: !allowed
+	 * Displays who is allowed to attach to who
+	 */
+	public void C_allowed(String name, String message)
 	{
 		String[] s =
 		{"+-------------Allowed Ship Attaches-----------+",
@@ -239,13 +268,11 @@ public class bshipbot extends SubspaceBot
 		m_botAction.privateMessageSpam(name,s);
 	}
 
-	/*public void list(String name, String message)
-	{
-		if(oplist.isZH(name))
-			m_botAction.sendPrivateMessage(name,"" + attached);
-	}*/
-
-	public void remaining(String name, String message)
+	/**
+	 * Command: !remaining
+	 * (In-Game) Displays how many capital ships remain for each team
+	 */
+	public void C_remaining(String name, String message)
 	{
 		if(state == IDLE)
 			m_botAction.sendPrivateMessage(name, "No game in progress");
@@ -259,7 +286,13 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
-	public void setup(String name, String message)
+	/**
+	 * Command: !setup
+	 * Once teams have been established
+	 ****************
+	 * NOTE TO HOSTS: Make all manual team arrangements before this point
+	 */
+	public void C_setup(String name, String message)
 	{
 		if(oplist.isER(name))
 		{
@@ -272,43 +305,11 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
-	/*public void pick(String name, String message)
-	{
-		if(state == PICKING)
-		{
-			boolean ok = false;
-			int pick = 1;
-			int team = m_botAction.getPlayer(name).getFrequency();
-			if(!Tools.isAllDigits(message));
-			else
-			{
-				pick = Integer.parseInt(message);
-				if(pick == 1)
-					ok = true;
-				else if(pick == 2)
-					ok = true;
-			}
-			if(m_botAction.getPlayer(name).getShipType() != 3) //Not a plane
-			{
-				m_botAction.sendPrivateMessage(name, "Sorry, you can't switch to a turret");
-			}
-			else if(ok) //Valid ship
-			{
-				if(turrets[team] >= 6)
-					m_botAction.sendPrivateMessage(name, "Sorry, your team already has the maximum amount of turrets");
-				else
-				{
-					turrets[team]++;
-					m_botAction.setShip(name, pick);
-					m_botAction.sendPublicMessage(name + " is now a turret, bringing Team "+ team +"'s turret count to "+ turrets[team]);
-				}
-			}
-			else
-				m_botAction.sendPrivateMessage(name, "Invalid ship. (!pick 1 or 2)");
-		}
-	}*/
-
-	public void start(String name, String message)
+	/**
+	 * Command: !start
+	 * Once teams have been created and ships assigned, this will begin the game
+	 */
+	public void C_start(String name, String message)
 	{
 		if(oplist.isER(name))
 			switch(state)
@@ -331,7 +332,11 @@ public class bshipbot extends SubspaceBot
 			}
 	}
 
-	public void stop(String name, String message)
+	/**
+	 * Command: !stop
+	 * Stops a currently running game.
+	 */
+	public void C_stop(String name, String message)
 	{
 		if(oplist.isER(name))
 		{
@@ -350,7 +355,12 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
-	public void removeP(String name, String message)
+	/**
+	 * Command: !remove <team #>
+	 * If one of the team's capital ships specs or otherwise leaves, this decreases the
+	 * ship count appropriately
+	 */
+	public void C_remove(String name, String message)
 	{
 		if(oplist.isER(name))
 		{
@@ -369,30 +379,43 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
-	public void quit(String name, String message)
+	/**
+	 * Command: !quit
+	 * If a player wants to spec, but doesn't have enough energy, they can use this
+	 */
+	public void C_quit(String name, String message)
 	{
 		m_botAction.spec(name);
 		m_botAction.spec(name);
 	}
 
-	public void night(String name, String message)
+	/**
+	 * Command: !night <on/off>
+	 * Turns night mode on or off
+	 */
+	public void C_night(String name, String message)
 	{
 		if(!oplist.isER(name))
 			return;
 		if(message.equalsIgnoreCase("off") && night)
 		{
-			setHour("","12");
-			m_botAction.cancelTasks();
+			m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOff());
 			night = false;
 		}
 		else if(message.equalsIgnoreCase("on") && !night)
 		{
-			m_botAction.scheduleTaskAtFixedRate(timeMode,1000,60000);
 			night = true;
+			m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOn(hour));
 		}
+		else
+			m_botAction.sendPrivateMessage(name,"Night mode: "+night);
 	}
 
-	public void setHour(String name, String message)
+	/**
+	 * Command !sethour <hour>
+	 * Sets the night mode hour to <hour>, updates lvz
+	 */
+	public void C_setHour(String name, String message)
 	{
 		if(!oplist.isER(name))
 			return;
@@ -404,37 +427,16 @@ public class bshipbot extends SubspaceBot
 			hr = -1;
 		}
 		if(hr < 0 || hr > 23)
-		{
 			m_botAction.sendPrivateMessage(name,"Please specify an hour between 0 and 23");
-			return;
-		}
-
-		hr--;
-		int i = 1000;
-		if(hour > 19)
-			i = (hour - 24) + 14;
-		else if(hour == 4)
-			i = 10;
-		else if(hour == 3)
-			i = 11;
-		else if(hour == 2)
-			i = 12;
-		else if(hour == 1)
-			i = 13;
-		else if(hour == 0)
-			i = 14;
-			m_botAction.sendUnfilteredPublicMessage("*objset -"+ (100+hour) +", -"+i+",");
-		hour = hr;
-		refresh();
+		else
+			m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOff() + nightObjectsOn(hour = hr));
 	}
 
-	/*public void evenTeams(String name, String message)
-	{
-		if(oplist.isER(name))
-			even();
-	}*/
-
-	public void setstate(String name, String message)
+	/**
+	 * Unlisted control Command: ~state
+	 * Use this only as a last resort to fix something (ie ~state 0 kills a game)
+	 */
+	public void C_state(String name, String message)
 	{
 		if(oplist.isER(name) || name.equals("D1st0rt"))
 			state = Integer.parseInt(message);
@@ -444,6 +446,10 @@ public class bshipbot extends SubspaceBot
 	/*		Battleship Functions	*/
 	/********************************/
 
+	/**
+	 * Makes (well, sort of) random teams
+	 * @param howmany how many teams to make
+	 */
 	public void makeTeams(int howmany)
 	{
 		TEAMS = howmany;
@@ -462,6 +468,9 @@ public class bshipbot extends SubspaceBot
 		state = SETUP;
 	}
 
+	/**
+	 * Sets up the game by assigning players to appropriate ships
+	 */
 	public void setUp()
 	{
 		m_botAction.toggleLocked();
@@ -482,13 +491,9 @@ public class bshipbot extends SubspaceBot
 						ships[x]++;
 					}
 					else if(index < 12)//next 3
-					{
 						m_botAction.setShip(p.getPlayerName(),1);
-					}
 					else if(index < 15)//next 3
-					{
 						m_botAction.setShip(p.getPlayerName(),2);
-					}
 					else
 						m_botAction.setShip(p.getPlayerName(),3);
 					index++;
@@ -507,6 +512,10 @@ public class bshipbot extends SubspaceBot
 		//m_botAction.sendArenaMessage("Each team gets 6 turrets, pm me with !pick 1 or !pick 2 -" + m_botAction.getBotName(),2);
 	}
 
+	/**
+	 * Removes a frequency from the game, checks for a winning frequency
+	 * @param freq the team to remove from the game
+	 */
 	public void endGame(int freq)
 	{
 		teamsLeft.remove(new Integer(freq));
@@ -527,61 +536,101 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
-	public void refresh()
+
+	/********************************/
+	/*     Night Mode Functions     */
+	/********************************/
+
+	/**
+	 * Called by the TimerTask, updates the night mode lvz to the next hour
+	 */
+	private void refresh()
 	{
-		if(hour < 0)
-			return;
-		String objset = "*objset ";
-		int i = 1000;
-		if(hour > 19)
-			i = (hour - 24) + 14;
-		else if(hour == 4)
-			i = 10;
-		else if(hour == 3)
-			i = 11;
-		else if(hour == 2)
-			i = 12;
-		else if(hour == 1)
-			i = 13;
-		else if(hour == 0)
-			i = 14;
-		objset += "-"+ (100+hour) +", -"+i+",";
-
-		hour++;
-		if(hour > 23)
-			hour = 0;
-
-		objset += "+"+(100+hour)+",";
-
-		i = -1;
-		if(hour > 19)
-			i = (hour - 24) + 14;
-		else if(hour == 4)
-			i = 10;
-		else if(hour == 3)
-			i = 11;
-		else if(hour == 2)
-			i = 12;
-		else if(hour == 1)
-			i = 13;
-		else if(hour == 0)
-			i = 14;
-
-		if(i != -1)
-			objset += " +"+ i + ",";
-
-		m_botAction.sendUnfilteredPublicMessage(objset);
+		if(hour > -1)
+		{
+			m_botAction.sendUnfilteredPublicMessage("*objset"+ nightObjectsOff() + nightObjectsOn(hour+1));
+			hour++;
+			if(hour >= 24)
+				hour = 0;
+		}
 	}
+
+	/**
+	 * Used to display the night mode lvzs to players upon entering
+	 */
+	private void showObjects(int playerID)
+	{
+		if(hour > -1)
+		m_botAction.sendUnfilteredPrivateMessage(playerID,"*objset"+ nightObjectsOff() + nightObjectsOn(hour));
+	}
+
+	/**
+	 * Produces a string to turn off the night mode objects
+	 * @return an objset formatted string to turn off lvz
+	 */
+	private String nightObjectsOff()
+	{
+		String objset = " -"+ (100 + hour) +", ";
+
+		int id = objectID(hour);
+		if(id != -1)
+			objset += "-"+ id +",";
+
+		return objset;
+	}
+
+	/**
+	 * Produces a string to turn on the night mode objects
+	 * @param hr the hour to turn on
+	 * @return an objset formatted string to turn on lvz
+	 */
+	private String nightObjectsOn(int hr)
+	{
+		if(hr >= 24)
+			hr = 0;
+		String objset = " +"+ (100 + hr) +",";
+
+		int id = objectID(hr);
+		if(id != -1)
+			objset += " +"+ id +",";
+
+		return objset;
+	}
+
+	/**
+	 * Calculates the darkness level needed for a particular hour
+	 * @param hr the hour to find the darkness object id for
+	 * @returns the objon id number of the proper lvz object
+	 */
+	private int objectID(int hr)
+	{
+		int id = -1;
+		if(hr > 19)
+			id = (hr - 24) + 14;
+		else if(hr < 5 && hr > -1)
+			id = (10 - hr);
+
+		return id;
+	}
+
 
 	/********************************/
 	/*		   	  Events			*/
 	/********************************/
 
+	/**
+	 * Event: Message
+	 * Sends to command interpreter
+	 */
 	public void handleEvent(Message event)
 	{
     	m_commandInterpreter.handleEvent(event);
 	}
 
+	/**
+	 * Event: PlayerDeath
+	 * (In-Game) Checks for death of capital ships, announces, adjusts team data, checks for win
+	 */
 	public void handleEvent(PlayerDeath event)
 	{
 		if(state == PLAYING)
@@ -611,7 +660,6 @@ public class bshipbot extends SubspaceBot
 				break;
 
 				case BATTLESHIP:
-
 					m_botAction.sendArenaMessage("Inconceivable! Team "+ team +" just lost their Battleship ("+ name +"). It's not looking good for them now...",7);
 					m_botAction.setShip(name, 3);
 					ships[team]--; //update remaining players
@@ -629,29 +677,20 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
+	/**
+	 * Event: PlayerEntered
+	 * Displays current night mode lvz to player
+	 */
 	public void handleEvent(PlayerEntered event)
 	{
-		int pId = event.getPlayerID();
-		m_botAction.sendUnfilteredPrivateMessage(pId,"*objon "+ (100+hour));
-
-			int i = 1000;
-			if(hour > 19)
-				i = (hour - 24) + 14;
-			else if(hour == 4)
-				i = 10;
-			else if(hour == 3)
-				i = 11;
-			else if(hour == 2)
-				i = 12;
-			else if(hour == 1)
-				i = 13;
-			else if(hour == 0)
-				i = 14;
-
-			m_botAction.sendUnfilteredPrivateMessage(pId,"*objon " + i);
-
+		showObjects(event.getPlayerID());
 	}
 
+	/**
+	 * Event: TurretEvent
+	 * (Attach): If not allowed, warps back
+	 * (Detach): warps back
+	 */
 	public void handleEvent(TurretEvent event)
 	{
 		//m_botAction.sendPublicMessage("Attach detected");
@@ -699,13 +738,16 @@ public class bshipbot extends SubspaceBot
 					//Taken out: too many issues, not that big of a deal
 					else if(bShip == CARRIER)
 					{
-						/*m_botAction.setFreq(turret,100);
+						m_botAction.setFreq(turret,100);
 						m_botAction.setFreq(turret,freq);
-						int x = (m_botAction.getPlayer(boat).getXLocation())/16;
-						int y = (m_botAction.getPlayer(boat).getYLocation())/16;*/
+
+						//Note: This section won't work until position updates improve
+						/*int x = (m_botAction.getPlayer(boat).getXLocation())/16;
+						int y = (m_botAction.getPlayer(boat).getYLocation())/16;
 						m_botAction.sendPrivateMessage(turret,"Cleared for takeoff!");
-						//m_botAction.warpTo(turret,x,y); //Warps to last mine :p
-					}//Detach them from carrier so they don't stay as a turret.
+						m_botAction.warpTo(turret,x,y); //Warps to last mine :p
+						//Detach them from carrier so they don't stay as a turret.*/
+					}
 				break;
 				default:
 					m_botAction.setFreq(turret,100);
