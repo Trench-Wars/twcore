@@ -37,7 +37,7 @@ public class BuildTWCore {
         botList = new LinkedList();
         miscList = new LinkedList();
         String currentOS = System.getProperty("os.name").toLowerCase();
-        if (currentOS.startsWith("windows")) extraCP = extraCP.replace(':', ';');
+        if (currentOS.startsWith("windows")) extraCP = extraCP.replace(':', ';'); 
         handleArguments(args);
     }
     
@@ -96,6 +96,17 @@ public class BuildTWCore {
     public void fullExec(String s) throws Exception {
         fullExec(new String[] {s});
     }
+
+    public void lincom() {
+	try {
+        String currentOS = System.getProperty("os.name").toLowerCase();
+        if (!currentOS.startsWith("windows")) fullExec(new String[] {"/home/bots/twbots/compile_core.sh"});
+        } catch (Exception e) {
+            System.out.println("Couldn't build core: " + e.getMessage());
+            e.printStackTrace();
+        };
+    }
+
     
     
     public boolean createFileList(File dir, File fList) throws Exception {
@@ -161,6 +172,7 @@ public class BuildTWCore {
             // compile all the files into there
             createFileList(new File("twcore/core"), new File("flist.txt"));
             fullExec(new String[] {"/home/bots/java/current/bin/javac", "-sourcepath", "core", "-d", "temp", "@flist.txt"});
+	    lincom();	    
             
             // create the jar
             fullExec(new String[] {"/home/bots/java/current/bin/jar", "cf", "twcore.jar", "-C", "temp", "."});
@@ -306,3 +318,4 @@ public class BuildTWCore {
     }
     
 }
+
