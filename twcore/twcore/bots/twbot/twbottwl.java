@@ -1163,6 +1163,9 @@ public class twbottwl extends TWBotExtension
 
     public void do_showScore(String name, String message)
     {
+        if (m_match == null)
+            return;
+
         if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
                 if (m_gameState == 0)
             return;
