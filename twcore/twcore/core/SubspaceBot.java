@@ -133,6 +133,10 @@ public abstract class SubspaceBot {
         Tools.printLog( m_botAction.getBotName() + ": PlayerBanner event not handled; ignored" );
     }
 
+    public void handleEvent( TurretEvent event ){
+        Tools.printLog( m_botAction.getBotName() + ": TurretEvent event not handled; ignored" );
+    }
+    
     public void handleDisconnect(){
     }
 
