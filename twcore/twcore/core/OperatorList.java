@@ -8,7 +8,7 @@ public class OperatorList {
     Map             m_accessList;
 
     public static final int ZH_LEVEL = 1;
-    public static final int REMOTE_LEVEL = 2;
+    public static final int OUTSIDER_LEVEL = 2;
     public static final int ER_LEVEL = 3;
     public static final int MODERATOR_LEVEL = 4;
     public static final int HIGHMOD_LEVEL = 5;
@@ -58,18 +58,18 @@ public class OperatorList {
         }
     }
     
-    public boolean isRemote( String name ){
+    public boolean isOutsider( String name ){
 
-        if( getAccessLevel( name ) >= REMOTE_LEVEL ){
+        if( getAccessLevel( name ) >= OUTSIDER_LEVEL ){
             return true;
         } else {
             return false;
         }
     }
 
-    public boolean isRemoteExact( String name ){
+    public boolean isOutsiderExact( String name ){
 
-        if( getAccessLevel( name ) == REMOTE_LEVEL ){
+        if( getAccessLevel( name ) == OUTSIDER_LEVEL ){
             return true;
         } else {
             return false;
