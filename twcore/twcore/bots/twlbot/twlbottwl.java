@@ -33,6 +33,8 @@ public class twlbottwl extends TWLBotExtension
     private java.util.Date m_lastRoundCutoffDate;
     private int m_season = 0; //current twl season defined in constructor from config file
     private BotSettings m_botSettings; //access to settings in the cfg file
+    private Vector m_twlCoordinators;
+    private Vector m_twlStaff;
 
     private String addingPlayer;
     
@@ -46,11 +48,11 @@ public class twlbottwl extends TWLBotExtension
     //constants
     
     //m_gameState constants
-    private final int GAME_OFF = 0;
-    private final int MATCH_LOADED = 1;
-    private final int LINEUP_REQUESTED = 2;
-    private final int TIME_TO_START = 3;
-    private final int GAME_IN_PROGRESS = 4;
+    private final int GAME_OFF = 0; //game not being played
+    private final int MATCH_LOADED = 1; //match loaded from database
+    private final int LINEUP_REQUESTED = 2; //picking has been started
+    private final int TIME_TO_START = 3; //teams are ready
+    private final int GAME_IN_PROGRESS = 4; //match in progress
     
     private final int EXTENSION_TIME = 2; //mins
     private final int BASE_PLAYOFF_TIMER = 41; //mins (for playoff mode)
@@ -69,7 +71,7 @@ public class twlbottwl extends TWLBotExtension
     private final int MINIMUM_DUEL_LIMIT = 3; //players
     private final int MINIMUM_BASE_LIMIT = 6; //players
 
-    private final double VERSION = 1.9;
+    private final double VERSION = 2.0;
 
     final static int TIME_RACE_TARGET = 900; //sec
     final static int TIME_RACE_PLAYOFF_TARGET = 1200; // sec (for playoff mode)
@@ -84,7 +86,25 @@ public class twlbottwl extends TWLBotExtension
     {
         m_laggers = new HashMap();
         m_botSettings = m_botAction.getBotSettings();
+        
+        //obtain settings of staff and season
         m_season = m_botSettings.getInt("Season");
+        
+        StringTokenizer coordinatorTokens = new StringTokenizer(m_botSettings.getString("TWLCoordinators"), ":");
+        StringTokenizer staffTokens = new StringTokenizer(m_botSettings.getString("TWLStaff"), ":");
+        String playerName;
+
+        while(coordinatorTokens.hasMoreTokens())
+        {
+          playerName = staffTokens.nextToken().toLowerCase();
+          m_twlCoordinators.add(playerName);
+        }
+        
+        while(staffTokens.hasMoreTokens())
+        {
+            playerName = staffTokens.nextToken().toLowerCase();
+            m_twlStaff.add(playerName);
+        }
     }
 
     /**
@@ -795,6 +815,15 @@ public class twlbottwl extends TWLBotExtension
             }
         };
         m_botAction.scheduleTaskAtFixedRate(watchPlayers, 2000, 3000);
+        
+        TimerTask saveState = new TimerTask()
+        {
+            public void run()
+            {
+                m_botAction.sendUnfilteredPublicMessage("?time");
+            }
+        };
+        m_botAction.scheduleTaskAtFixedRate(saveState, 37000, 10000);
         */
 
         TimerTask updateScores = new TimerTask()
@@ -805,15 +834,6 @@ public class twlbottwl extends TWLBotExtension
             }
         };
         m_botAction.scheduleTaskAtFixedRate(updateScores, 2000, 1000);
-
-        TimerTask saveState = new TimerTask()
-        {
-            public void run()
-            {
-                m_botAction.sendUnfilteredPublicMessage("?time");
-            }
-        };
-        m_botAction.scheduleTaskAtFixedRate(saveState, 37000, 10000);
     }
 
     public void do_toggleBlueOut(String name)
@@ -1934,7 +1954,7 @@ public class twlbottwl extends TWLBotExtension
         }
         else if (message.startsWith("!fadd "))
         {
-            if (m_opList.isSmod(name) || name.toLowerCase().equals( "rodge_rabbit" ) )
+            if (m_opList.isSmod(name) || m_twlCoordinators.contains(name))
                 do_addPlayer(name, message.substring(6, message.length()), true);
         }
         else if (message.startsWith("!remove "))
@@ -1985,21 +2005,14 @@ public class twlbottwl extends TWLBotExtension
         }
         else if (message.startsWith("!creatematch "))
         {
-            if (m_opList.isSmod(name)
-                || (name.toLowerCase()).equals("demonic")
-                || (name.toLowerCase()).equals("rodge_rabbit")
-                || (name.toLowerCase()).equals("wpe <er>")
-                || (name.toLowerCase()).equals("randedl")
-                || (name.toLowerCase()).equals("zeus!!")
-                || (name.toLowerCase()).equals("melo")
-                || (name.toLowerCase()).equals("wingzero"))
+            if (m_opList.isSmod(name) || m_twlCoordinators.contains(name) || m_twlStaff.contains(name))
                 sql_createFakeMatch(name, message.substring(13, message.length()));
         }
         else if (message.startsWith("!loadtestgame"))
         {
             do_loadTestGame(name, message);
         }
-// DISABLED because not implented yet.
+// TODO: DISABLED because not implented yet.
 //      else if (message.startsWith("!lagcheck"))
 //      {
 //          do_lagcheck(name, message);
