@@ -38,7 +38,7 @@ import java.util.Vector;
 			public static final int REPELS_USED = 19;
 			public static final int TOTAL_KILLS = 20;
 			public static final int TOTAL_TEAMKILLS = 21;
-			public static final int REPELS_PER_DEATH = 22
+			public static final int REPELS_PER_DEATH = 22;
 			public static final int RATING = 23;
 			
 			private int m_shipType;
@@ -541,11 +541,11 @@ import java.util.Vector;
 
 			private class RepelsPerDeath extends Statistic implements DerivedStatisticInterface
 			{
-			    private int m_shipType
+			    private int m_shipType;
 			    
-			    public RepelsPerDeath(shipType)
+			    public RepelsPerDeath(int shipType)
 			    {
-			        super(REPELS_PER_DEATH, "R/D", true) //derived is true
+			        super(REPELS_PER_DEATH, "R/D", true); //derived is true
 			        m_shipType = shipType;
 			    }
 			    
@@ -564,7 +564,7 @@ import java.util.Vector;
 			    
 			    public int derivedInt()
 			    {
-			        return (int)derviedDouble();
+			        return (int)derivedDouble();
 			    }
 			}
 			
@@ -686,7 +686,7 @@ import java.util.Vector;
 							break;
 						case 8: //shark
 							((Statistic)m_statistics.get(SCORE)).setWeight(1);
-							((Statistic)m_statistics.get(REPELS_PER_DEATH).setWeight(0.65));
+							((Statistic)m_statistics.get(REPELS_PER_DEATH)).setWeight(0.65);
 							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.001);
 							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.001);
 							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.001);
