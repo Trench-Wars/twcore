@@ -782,6 +782,27 @@ public class BotAction
     {
         sendUnfilteredPrivateMessage(playerID, "*prize " + prizeNum);
     }
+  
+    
+    /** Issues a specific prize to a player, using *prize #'s
+     * @param playerName Name of the player
+     * @param prizeNum number of the prize
+     */
+    public void specificPrize(String playerName, int prizeNum)
+    {
+		sendUnfilteredPrivateMessage(playerName, "*prize #" + prizeNum);
+    }
+
+    
+    /** Issues a specific prize to a player, using *prize #'s
+     * @param playerID Player ID
+     * @param prizeNum Number of the prize
+     */
+    public void specificPrize(int playerID, int prizeNum)
+    {
+          sendUnfilteredPrivateMessage(playerID, "*prize #" + prizeNum);
+    }
+    
 
     /** Issues a prize to a frequency of players.  Possibly buggy?
      * @param freqID The frequency of players you wish to issue the prizes to.
