@@ -1470,7 +1470,7 @@ public class BotAction
             sendPrivateMessage(playerID, (String)i.next());
         }
     }
-  
+
     /**
      * Private message spam but with a gerneralized collection to allow for dynamic help statements
      * @param playerName Name of the player to be spammed
@@ -1482,9 +1482,9 @@ public class BotAction
         while (i.hasNext())
         {
             sendSmartPrivateMessage(playerName, (String)i.next());
-        }        
+        }
     }
-    
+
     /** Sends the contents of the String array to the player in remote private messages.
      * Careful with this one, sending too many across the billing server can cause
      * trouble.
@@ -1577,13 +1577,16 @@ public class BotAction
         m_botSession.disconnect();
     }
 
-    /** Sends a death packet.  Not really sure what this does.
+    /** Sends a death packet. (Fixed by D1st0rt 3-26-05)
+     * I'm pretty sure nothing will happen if you send an invalid playerID
+     * @param playerID the id of the player that killed the bot.
      * @param bounty Amount of bounty the death is related to.
      */
-    public void sendDeath(int bounty)
+    public void sendDeath(int playerID, int bounty)
     {
-        m_packetGenerator.sendPlayerDeath(getPlayerID(m_botSession.getBotName()), bounty);
+        m_packetGenerator.sendPlayerDeath(playerID, bounty);
     }
+
 
     /** Unimplemented
      * @param size Maximum size of the freqs
