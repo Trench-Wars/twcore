@@ -1507,13 +1507,14 @@ public class twlbotstandard extends TWLBotExtension
             }
         }
 
-        LeaguePlayer sharkPlayer = m_match.getPlayer(player);
+        // TO DO: Get repel statistics in a much better way.  No more event.getByteArray!
+        /*LeaguePlayer sharkPlayer = m_match.getPlayer(player);
         if(m_match.getMatchId() == 3 && sharkPlayer.getShip() == 8 && event.containsWeaponsInfo())
         {
             WeaponFired weapon = new WeaponFired(event.getByteArray());
             if (weapon.getWeaponType() == WeaponFired.WEAPON_REPEL)
                 sharkPlayer.reportStatistic(Statistics.REPELS_USED);
-        }
+        }*/
 
         //if the game isn't a jav game don't do line check
         if (m_gameState != GAME_IN_PROGRESS || m_match.getMatchTypeId() != TWLJ)
