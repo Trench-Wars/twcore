@@ -848,6 +848,7 @@ public class LeagueMatch
                 if (diff < rate) {
                     mvps = new HashSet();
                     mvps.add(lp);
+                    diff = rate;
                 } else if (diff == rate) {
                     mvps.add(lp);
                 }
@@ -865,6 +866,7 @@ public class LeagueMatch
             if (kills < weighted_kills) {
                 finalmvps = new HashSet();
                 finalmvps.add(lp.getName());
+                kills = weighted_kills;
             } else if (kills == weighted_kills) {
                 finalmvps.add(lp.getName());
             }
