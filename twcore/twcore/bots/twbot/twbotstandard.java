@@ -109,7 +109,11 @@ public class twbotstandard extends TWBotExtension {
                 s.setRotation( i % 40 );
                 s.fire( i );
             }
-        } /*else if( message.startsWith( "!spec " )){
+        } else if( message.startsWith( "!restart" )){
+            m_botAction.sendUnfilteredPublicMessage("*restart");
+        }
+
+        /*else if( message.startsWith( "!spec " )){
             specPlayers = getInteger( message.substring( 6 ));
             m_botAction.sendArenaMessage( "Removing players with " + specPlayers + " deaths - " + name );
             m_botAction.checkAndSpec( specPlayers );
@@ -233,11 +237,11 @@ public class twbotstandard extends TWBotExtension {
     }
 
     public void handleListMsg( String name ){
-    	ArenaMsgTask task;
+        ArenaMsgTask task;
 
-    	if( arenaTasks.size() == 0 ){
-    	    m_botAction.sendPrivateMessage( name, "There currently are no scheduled messages" );
-    	}
+        if( arenaTasks.size() == 0 ){
+            m_botAction.sendPrivateMessage( name, "There currently are no scheduled messages" );
+        }
 
         for( int i = 0; i < arenaTasks.size(); i++ ){
             task = (ArenaMsgTask)arenaTasks.get(i);
@@ -250,21 +254,21 @@ public class twbotstandard extends TWBotExtension {
     }
 
     public void handleClearMsgs( String name ){
-    	clearArenaMsgs();
+        clearArenaMsgs();
         m_botAction.sendPrivateMessage( name, "All repeating arena messages have been cleared" );
     }
 
     public void clearArenaMsgs(){
-    	for( int i = 0; i < arenaTasks.size(); i++){
-    	    ((ArenaMsgTask)arenaTasks.get(i)).cancel();
-    	}
+        for( int i = 0; i < arenaTasks.size(); i++){
+            ((ArenaMsgTask)arenaTasks.get(i)).cancel();
+        }
         arenaTasks.clear();
     }
 
     public void handleDelMsg( String name, int index ){
-    	ArenaMsgTask task;
+        ArenaMsgTask task;
 
-    	try{
+        try{
             task = (ArenaMsgTask)arenaTasks.get(index);
         } catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Invalid message number" );
@@ -294,21 +298,21 @@ public class twbotstandard extends TWBotExtension {
             soundCode = newSoundCode;
         }
 
-    	public void run(){
-    	    if( soundCode != 0 ){
-    	        m_botAction.sendArenaMessage( message, soundCode );
-    	    } else {
-    	    	m_botAction.sendArenaMessage( message );
-    	    }
-    	}
+        public void run(){
+            if( soundCode != 0 ){
+                m_botAction.sendArenaMessage( message, soundCode );
+            } else {
+                m_botAction.sendArenaMessage( message );
+            }
+        }
 
-    	public String getMessage(){
-    	    return message;
-    	}
+        public String getMessage(){
+            return message;
+        }
 
-    	public int getSoundCode(){
-    	    return soundCode;
-    	}
+        public int getSoundCode(){
+            return soundCode;
+        }
     }
 
     public String[] getHelpMessages() {
@@ -317,7 +321,8 @@ public class twbotstandard extends TWBotExtension {
             "!door <-2 to 255>         - Changes door mode.  -2 and -1 are random modes.",
             "!where                    - Robo will tell you his location. Remote PM or squad msg only.",
             "!setship <ship>           - Changes everyone to <ship>",
-            "!setship <freq> <ship>    - Changes everyone on <freq> to <ship>"
+            "!setship <freq> <ship>    - Changes everyone on <freq> to <ship>",
+            "!restart                  - Restarts the ball game"
 //            "!spec <numdeaths>         - Specs players when they reach <numdeaths>",
 //            "!warp                     - Warps everyone to a random location",
 //            "!warp <freq>              - Warps everyone on <freq> to a random location",
