@@ -780,16 +780,16 @@ public class twlbottwl extends TWLBotExtension
         	int team2Seconds = t2s - team2Minutes * 60;
         	
         	//Team 1
-        	m_myObjects.showObject( 200 + team1Seconds % 10 );
-        	m_myObjects.showObject( 210 + (team1Seconds - team1Seconds % 10)/10 );
-        	m_myObjects.showObject( 230 + team1Minutes % 10 );
-        	m_myObjects.showObject( 240 + (team1Minutes - team1Minutes % 10)/10 );
+        	m_myObjects.showObject( 100 + team1Seconds % 10 );
+        	m_myObjects.showObject( 110 + (team1Seconds - team1Seconds % 10)/10 );
+        	m_myObjects.showObject( 130 + team1Minutes % 10 );
+        	m_myObjects.showObject( 140 + (team1Minutes - team1Minutes % 10)/10 );
 
         	//Team 2
-        	m_myObjects.showObject( 100 + team2Seconds % 10 );
-        	m_myObjects.showObject( 110 + (team2Seconds - team2Seconds % 10)/10 );
-        	m_myObjects.showObject( 130 + team2Minutes % 10 );
-        	m_myObjects.showObject( 140 + (team2Minutes - team2Minutes % 10)/10 );
+        	m_myObjects.showObject( 200 + team2Seconds % 10 );
+        	m_myObjects.showObject( 210 + (team2Seconds - team2Seconds % 10)/10 );
+        	m_myObjects.showObject( 230 + team2Minutes % 10 );
+        	m_myObjects.showObject( 240 + (team2Minutes - team2Minutes % 10)/10 );
         }
         if (m_generalTime >= 0)
         {
