@@ -8,7 +8,7 @@ package twcore.core;
 
 /**
  *
- * @author  harvey
+ * @author harvey, modified by FoN
  */
 public class EventRequester
 {
