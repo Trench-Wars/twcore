@@ -1813,6 +1813,10 @@ public class twbottwl extends TWBotExtension
 		{
 			showHelpMessages(name, message);
 		}
+		else if (message.toLowerCase().startsWith("!score"))
+		{
+			do_showScore(name, message);
+		}
 		else if (message.toLowerCase().startsWith("!ref"))
 		{
 			if (m_gameState == 0)
