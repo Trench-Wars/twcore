@@ -36,15 +36,21 @@ public class twbottwl extends TWBotExtension
 	private java.util.Date m_lockDate;
 	private java.util.Date m_lastRoundCutoffDate;
 	
+	private String addingPlayer;
+	
 	//constants
 	private final int EXTENSION_TIME = 2; //mins
 	private final int BASE_TIMER = 31; //mins
 	private final int DUEL_TIMER = 30; //mins
 	
-	private final int TIME_BEFORE_LAGOUT = 60; //sec	twlb 15
-	private final int TIME_BEFORE_SUB = 30; //sec       twlb 5
+	private final int[] TIME_BEFORE_LAGOUT = { 60, 15 }; //sec [0]-d/j, [1]-b
+	private final int TIME_BEFORE_SUB = 5; //sec
 	private final int TIME_BEFORE_SWITCH = 15; //sec
 	private final int LAGOUT_LIMIT = 4; //min
+
+	private final int MAX_AVERAGE_PING = 300; //300 ms
+	private final int MAX_PLOSS = 3; //3%
+	private final int MAX_WEAPONS_PLOSS = 1; //1%
 	
 	private final int MINIMUM_DUEL_LIMIT = 3; //players
 	private final int MINIMUM_BASE_LIMIT = 6; //players
@@ -442,6 +448,12 @@ public class twbottwl extends TWBotExtension
 		
 		//Should be good at this point, add the player. Lag check???
 		m_match.addPlayer(playerTeamId, player, shipType);
+		
+		//Lag check - let the host handle it
+		m_botAction.sendUnfilteredPrivateMessage( player, "*lag" );
+		
+		addingPlayer = player;
+		
 		if (!forced && m_gameState != 4)
 		{
 			m_botAction.sendSquadMessage(m_match.getTeamName(player), player + " has been placed in ship " + shipType);
@@ -1083,12 +1095,15 @@ public class twbottwl extends TWBotExtension
 			return;
 		}
 
+		int lagoutTime = TIME_BEFORE_LAGOUT[0];
+		if( m_match.getMatchTypeId() > 2 ) lagoutTime = TIME_BEFORE_LAGOUT[1];
+
 		//put a limit on when a player can get back in 
-		if (m_match.getPlayer(name).getTimeSinceLagout() < TIME_BEFORE_LAGOUT)
+		if (m_match.getPlayer(name).getTimeSinceLagout() < lagoutTime)
 		{
 			m_botAction.sendPrivateMessage(
 				name,
-				"You still have " + (TIME_BEFORE_LAGOUT - m_match.getPlayer(name).getTimeSinceLagout()) + " secs before you can get back in");
+				"You still have " + (lagoutTime - m_match.getPlayer(name).getTimeSinceLagout()) + " secs before you can get back in");
 		}
 		else
 		{
@@ -1647,6 +1662,10 @@ public class twbottwl extends TWBotExtension
 			{
 				sql_saveGameState(message);
 			}
+			else if (message.startsWith("PING Current:") && m_gameState == 2)
+			{
+				parseLagInformation( message );
+			}
 		}
 		else if (event.getMessageType() == Message.PUBLIC_MESSAGE || event.getMessageType() == Message.PUBLIC_MACRO_MESSAGE)
 		{
@@ -1817,6 +1836,7 @@ public class twbottwl extends TWBotExtension
 				"!blueout                            - toggles spectator blueout",
 				"!score                              - shows the score of the match",
 				"!setcaptain <player>                - sets the player as the captain of the squad he is on",
+				"!newhost                            - sets you as the new host for the match",
 				"-------------------- PLAYER COMMANDS -----------------------------------",
 				"!sub <playerOut>:<playerIn>         - puts <playerIn> in for <playerOut> if captain",
 				"!switch <player1>:<player2>         - switches <player1> and <player2> if captain",
@@ -1839,6 +1859,26 @@ public class twbottwl extends TWBotExtension
 				"!lagout                             - places you back into the game",
 				"!ref                                - shows the match ref" };
 		m_botAction.privateMessageSpam(name, help);
+	}
+	
+	public void parseLagInformation( String message ) {
+		
+		try {
+			String pieces[] = message.split( "  " );
+			int average = Integer.parseInt( pieces[1].split( ":" )[1].split( " " )[0] );
+			double plossS2C = Double.parseDouble( pieces[4].split( ":" )[1].split( " " )[0] );
+			double plossC2S = Double.parseDouble( pieces[5].split( ":" )[1].split( " " )[0] );
+			double plossWeapons = Double.parseDouble( pieces[6].split( ":" )[1].split( " " )[0] );
+			
+			if( average > MAX_AVERAGE_PING || plossS2C > MAX_PLOSS
+				|| plossC2S > MAX_PLOSS || plossWeapons > MAX_WEAPONS_PLOSS )
+			{
+				m_botAction.sendSmartPrivateMessage( m_match.getRef(), addingPlayer + " does not meet the lag requirements." );
+				m_botAction.sendSmartPrivateMessage( m_match.getRef(), "Ave: "+average+"  S2C: "+plossS2C+"  C2S: "+plossC2S+"  Weapons: "+plossWeapons );
+			}
+		} catch (Exception e) {
+		}
+		
 	}
 
 	public void cancel()
