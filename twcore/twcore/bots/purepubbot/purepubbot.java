@@ -16,6 +16,9 @@ public class purepubbot extends SubspaceBot
   private HashSet freq1List;
   private boolean started;
   private boolean privFreqs;
+  private boolean flagTimeStarted;
+  private FlagCountTask flagTimer;
+  private int flagMinutesRequired; 
 
   /**
    * This method initializes the bot.
@@ -188,6 +191,61 @@ public class purepubbot extends SubspaceBot
   }
 
   /**
+   * Starts a "flag time" mode in which a team must hold the flag for a certain consecutive
+   * number of minutes in order to win the round.
+   * 
+   * @param sender is the person issuing the command.
+   * @param argString is the number of minutes to hold the game to.
+   */
+  public void doTimeCmd(String sender, String argString )
+  {
+    if(flagTimeStarted)
+      throw new RuntimeException( "Flag Time mode has already been started." );
+
+    int min = 0;
+    
+    try {
+      min = (Integer.valueOf( argString )).intValue();
+    } catch (Exception e) {
+      throw new RuntimeException( "Bad input.  Please supply a number." );        
+    }
+    
+    if( min < 1 || min > 120 )
+      throw new RuntimeException( "The number of minutes required must be between 1 and 120." );
+    
+    flagMinutesRequired = min;        
+    
+    m_botAction.sendSmartPrivateMessage(sender, "Flag Time mode enabled." );
+    m_botAction.sendArenaMessage( "Flag Time mode has been enabled." );
+      
+    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " minutes to win the round." );
+    m_botAction.sendArenaMessage( "Next round will begin in 60 seconds." );
+    m_botAction.scheduleTask( new StartRoundTask(), 60000 );
+  }
+  
+  /**
+   * Ends "flag time" mode.
+   * 
+   * @param sender is the person issuing the command.
+   * @param argString is the number of minutes to hold the game to.
+   */
+  public void doEndTimeCmd(String sender )
+  {
+    if(!flagTimeStarted)
+      throw new RuntimeException("Flag Time mode is not currently running.");
+    
+    m_botAction.sendSmartPrivateMessage(sender, "Flag Time mode disabled." );
+    m_botAction.sendArenaMessage( "Flag Time mode has been disabled." );
+
+    try {
+      flagTimer.cancel();
+    } catch (Exception e ) {
+    }
+    
+    flagTimeStarted = false;
+  }
+
+  /**
    * This method logs the bot off.
    *
    * @param sender is the person issuing the command.
@@ -219,6 +277,9 @@ public class purepubbot extends SubspaceBot
       "!Start                           -- Starts pure pub settings.",
       "!Stop                            -- Stops pure pub settings.",
       "!Privfreqs                       -- Toggles Private Frequencies.",
+      "!Time #                          -- Starts Flag Time mode (a team wins",
+      "                                    with # consecutive min of flagtime).",
+      "!Endtime                         -- Ends Flag Time mode.",
       "!Die                             -- Logs the bot off of the server.",
       "!Help                            -- Displays this help message."
     };
@@ -247,6 +308,10 @@ public class purepubbot extends SubspaceBot
         doStopCmd(sender);
       if(command.equals("!privfreqs"))
         doPrivFreqsCmd(sender);
+      if(command.startsWith("!time "))
+        doTimeCmd(sender, message.substring(6));
+      if(command.startsWith("!endtime"))
+        doEndTimeCmd(sender);
       if(command.equals("!die"))
         doDieCmd(sender);
       if(command.equals("!help"))
@@ -455,12 +520,53 @@ public class purepubbot extends SubspaceBot
       checkFreq(player.getPlayerID(), player.getFrequency(), false);
     }
   }
+  
+  /**
+   * Starts a game of flag time mode.
+   */
+  private void doStartRound() {
+    if(!flagTimeStarted)
+      return;
+        
+    flagTimer = new FlagCountTask();
+    m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
+  }
+
+  /**
+   * Displays rules and pauses for intermission.
+   */
+  private void doIntermission() {
+    if(!flagTimeStarted)
+      return;
+    
+    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " minutes to win the round." );
+    m_botAction.sendArenaMessage( "Next round will begin in 5 minutes." );
+    m_botAction.scheduleTask( new StartRoundTask(), 300000 );
+  }
+  
+  /**
+   * Ends a round of Flag Time mode, and sets up an intermission, followed by a new round.
+   */
+  private void doEndRound( int winningFreq ) {
+    if(!flagTimeStarted)
+      return;
+
+    try {
+      flagTimer.cancel();
+    } catch (Exception e ) {
+    }
+    
+    m_botAction.sendArenaMessage( "END ROUND:  Freq " + winningFreq + " has emerged victorious.", 1 );
+    m_botAction.scheduleTask( new IntermissionTask(), 10000 );
+  }
+
+
+  
 
   /**
    * This private class logs the bot off.  It is used to give a slight delay
    * to the log off process.
    */
-
   private class DieTask extends TimerTask
   {
 
@@ -473,4 +579,91 @@ public class purepubbot extends SubspaceBot
       m_botAction.die();
     }
   }
+
+  /**
+   * This private class starts the round.
+   */
+  private class StartRoundTask extends TimerTask {
+    public void run() {
+      doStartRound();
+    }
+  }
+
+  /**
+   * This private class provides a pause before starting the round.
+   */
+  private class IntermissionTask extends TimerTask {
+    public void run() {
+      doIntermission();
+    }
+  }
+
+  /**
+   * This private class counts the consecutive flag time an individual team racks up.
+   * Upon reaching the time needed to win, it fires the end of the round.
+   */
+  private class FlagCountTask extends TimerTask {
+    int flagholdingFreq;
+    int secondsHeld;
+    boolean isRunning;
+    
+    
+    public FlagCountTask() {
+      flagholdingFreq = -1;
+      secondsHeld = 0;
+      isRunning = false;
+    }
+      
+    public void flagClaimed( int freq, int pid ) {
+      if( freq != flagholdingFreq && freq != -1 ) {
+        flagholdingFreq = freq;
+        
+        int remain = (flagMinutesRequired * 60) - secondsHeld; 
+        
+        if( remain <= 20 ) {
+          Player p = m_botAction.getPlayer( pid );
+
+          if( p != null ) {
+            if( remain < 10 )
+              m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims the flag for Freq " + freq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!" );
+            else
+              m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims the flag for Freq " + freq + " with " + remain + " seconds left!" );
+          }
+        }
+
+        secondsHeld = 0;              
+      }
+          
+    }
+    
+    public void run()
+    {
+      if( isRunning == false ) {
+        if( secondsHeld == 0 )
+          m_botAction.sendArenaMessage( "Round begins in 10 seconds ..." );
+        secondsHeld++;			// Used for the first 10 seconds as dummy counter
+
+        if( secondsHeld >= 10 ) {
+          secondsHeld = 0;
+          isRunning = false;
+          m_botAction.sendArenaMessage( "ROUND START!  Hold the flag for " + flagMinutesRequired + " consecutive minutes to win!", 1 );
+        }
+        return;
+      }
+        
+        
+      if( flagholdingFreq == -1 )
+        return;
+      
+      secondsHeld++;
+      
+      if( secondsHeld >= flagMinutesRequired * 60 )
+        doEndRound(flagholdingFreq);
+      else if( (flagMinutesRequired * 60) - secondsHeld == 60 )
+        m_botAction.sendArenaMessage( "UPDATE: 60 seconds more flag time for Freq " + flagholdingFreq + " to win." );
+      else if( (flagMinutesRequired * 60) - secondsHeld == 10 )
+        m_botAction.sendArenaMessage( "UPDATE: 10 seconds more flag time for Freq " + flagholdingFreq + " to win." );
+    }
+  }  
+
 }
