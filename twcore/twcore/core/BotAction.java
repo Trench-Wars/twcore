@@ -352,9 +352,9 @@ public class BotAction
             }
         }
     }*/
-    
+
     public void sendOpposingTeamMessage( int playerID, String message, int soundCode ) {
-    	
+
         char firstChar;
         String temp = message.trim();
 
@@ -567,30 +567,65 @@ public class BotAction
         }
     }
 
-    /** Creates a set of teams of a particular size randomly.  The problem with this
-     * is it is not entirely random.  A more random algorithm needs to be developed.
+    /** Creates a set of teams of a particular size randomly. Starts at freq 0
+     * and continues filling freqs completely until there are no players left.
      * @param teamSize The size of the team desired.
      */
     public void createRandomTeams(int teamSize)
     {
-        int freqCounter = 0;
-        int teamCounter = 0;
-        int playerID = 0;
+		StringBag plist = new StringBag();
+		int freq = 0;
+		String name;
 
-        for (Iterator i = m_arenaTracker.getPlayingIDIterator(); i.hasNext();)
-        {
-            //Get initial playerID
-            playerID = ((Integer) i.next()).intValue();
-            setFreq(playerID, freqCounter);
-            if (teamCounter < teamSize - 1)
-                teamCounter++;
-            else
-            {
-                freqCounter++;
-                teamCounter = 0;
-            }
-        }
-    }
+		//stick all of the players in randomizer
+		Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+		while(i.hasNext())
+			plist.add(((Player)i.next()).getPlayerName());
+
+		while(!plist.isEmpty() && freq > -1)
+		{
+			for(int x = 0; x < teamSize; x++)
+			{
+				name = plist.grabAndRemove();
+				if(name != null)
+					setFreq(name, freq);
+				else
+				{
+					freq = -2;
+					break;
+				}
+			}
+			freq++; //that freq is done, move on to the next
+		}
+
+	}
+
+    /** Creates a certain number of random teams from non-specced players
+     * Starts with freq 0, goes up to number specified - 1, in an even distribution
+     * @param howMany how many random teams to create
+     */
+    public void createNumberOfTeams(int howMany)
+    {
+		StringBag plist = new StringBag();
+		int current = 0;
+		howMany -= 1;
+		String name;
+
+		//stick all of the players in randomizer
+		Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+		while(i.hasNext())
+			plist.add(((Player)i.next()).getPlayerName());
+
+		//assign players to teams
+		while(!plist.isEmpty())
+		{
+			if(current > howMany)
+				current = 0;
+			name = plist.grabAndRemove();
+			setFreq(name,current);
+			current++;
+		}
+	}
 
     /** Issues a /*spec command to the player supplied by the parameter.  Note that in
      * most cases the command must be issued twice, just as in the game.
@@ -782,8 +817,8 @@ public class BotAction
     {
         sendUnfilteredPrivateMessage(playerID, "*prize " + prizeNum);
     }
-  
-    
+
+
     /** Issues a specific prize to a player, using *prize #'s
      * @param playerName Name of the player
      * @param prizeNum number of the prize
@@ -793,7 +828,7 @@ public class BotAction
 		sendUnfilteredPrivateMessage(playerName, "*prize #" + prizeNum);
     }
 
-    
+
     /** Issues a specific prize to a player, using *prize #'s
      * @param playerID Player ID
      * @param prizeNum Number of the prize
@@ -802,7 +837,7 @@ public class BotAction
     {
           sendUnfilteredPrivateMessage(playerID, "*prize #" + prizeNum);
     }
-    
+
 
     /** Issues a prize to a frequency of players.  Possibly buggy?
      * @param freqID The frequency of players you wish to issue the prizes to.
@@ -997,7 +1032,7 @@ public class BotAction
     };
 
     /** Retreives the name of the bot.
-     * @return Thw name of the bot.
+     * @return The name of the bot.
      */
     public String getBotName()
     {
@@ -1368,6 +1403,23 @@ public class BotAction
         }
         return result;
     }
+    
+    /**
+     * Gets the total number of players currently playing.
+     * @return # players
+     */
+    public int getNumPlayers() {
+        int numPlayers = 0;
+        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+
+        while ( i.hasNext() ) {
+            numPlayers++;
+            i.next();
+        }
+        
+        return numPlayers;
+    }
+    
 
     /** Sets the doors in the arena to the specified value.  If you wish, you can use
      * setDoors( String ) and enter binary string such as "11010110" to turn doors
@@ -1891,7 +1943,7 @@ public class BotAction
     {
         m_botSession.getGamePacketGenerator().setSendDelay(milliseconds);
     }
-    
+
      /** Turns automatic player position updating on and off. By default it is off.
      * @param milliseconds - specified time to update player positions at
      * 0 	 : turns tracking off and has the bot spectate its current area
@@ -1901,12 +1953,12 @@ public class BotAction
     public void setPlayerPositionUpdating( int milliseconds ) {
     	m_arenaTracker.setPlayerPositionUpdateDelay( milliseconds );
     }
-    
+
     /** Sets the bots personal banner
      * @param _banner A byte array containing the banner data
      */
     public void setBanner( byte[] _banner ) {
-    	
+
     	m_packetGenerator.sendBannerPacket( _banner );
     }
 
