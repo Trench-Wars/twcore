@@ -571,6 +571,7 @@ public class twbottwl extends TWBotExtension
 			{
 				public void run()
 				{
+					m_botAction.sendArenaMessage("-");
 					m_match.addTimePoint();
 					if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_TARGET))
 						do_endGame();
@@ -635,6 +636,7 @@ public class twbottwl extends TWBotExtension
 		{
 			public void run()
 			{
+				m_botAction.sendArenaMessage(".");
 				do_updateScoreBoard();
 			}
 		};
