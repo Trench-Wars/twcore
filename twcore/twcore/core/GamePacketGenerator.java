@@ -369,11 +369,11 @@ public class GamePacketGenerator {
     
     public void sendBannerPacket( byte[] banner ) {
     	
-    	ByteArray ba = new ByteArray( 97 );
-    	ba.addByte( 0x19 );
-    	ba.addByteArray( banner );
+    	ByteArray bytearray = new ByteArray( 97 );
+    	bytearray.addByte( 0x19 );
+    	bytearray.addByteArray( banner );
     	
-    	sendReliableMessage( ba );
+    	sendReliableMessage( bytearray );
     }
 
     public void sendShipChangePacket( short ship ) {
