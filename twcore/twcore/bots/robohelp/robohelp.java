@@ -10,7 +10,7 @@ import twcore.core.*;
 public class robohelp extends SubspaceBot {
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
     public static final int LINE_SIZE = 100;
-
+                    
     boolean             m_banPending = false;
     String              m_lastBanner = null;
     BotSettings         m_botSettings;
@@ -153,23 +153,19 @@ public class robohelp extends SubspaceBot {
 
     public void handleStatus( String name, String message ){
 
-        m_botAction.sendChatMessage( "==========Current System Status=========" );
-        
         if( !m_botAction.SQLisOperational() ){
 
-	m_botAction.sendChatMessage( "==    Statistic Recording: ERROR      ==" );
-        m_botAction.sendChatMessage( "== NOTE: The database connection is   ==" );
-        m_botAction.sendChatMessage( "==       down. Some other bots might  ==" );
-        m_botAction.sendChatMessage( "==       experience problems too.     ==" );
-        m_botAction.sendChatMessage( "===========End System Status============" );	
-	return;        
-	
+        m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
+	return;
+
 	}
         try {
-        m_botAction.sendChatMessage( "==  Statistic Recording: Operational  ==" );
-	m_botAction.sendChatMessage( "===========End System Status============" );        
+        m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall" );
+        m_botAction.sendChatMessage( "Statistic Recording: Operational" );
 
-	} catch (Exception e ) {}
+	} catch (Exception e ) {
+        m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
+        }
 
     }
 
@@ -260,7 +256,7 @@ public class robohelp extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "?obscene" );
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
-        m_botAction.sendUnfilteredPublicMessage("?blogin radiant482");
+        m_botAction.sendUnfilteredPublicMessage( "?blogin " + m_botSettings.getString( "Banpassword" ) );
     }
 
     public void handleZone( String name, String message ) {
@@ -392,19 +388,38 @@ public class robohelp extends SubspaceBot {
         if( opList.isZH( playerName ) ){
             return;
         }
-        m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
-                +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
-                +"will not be tolerated!", 1 );
-        m_botAction.sendChatMessage( "NOTICE: "+ playerName + " has been warned for ?advert abuse." );
+        
+        callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
+        helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
+        if( helpRequest == null ){
+            helpRequest = new HelpRequest( playerName, null, null );
+            m_playerList.put( playerName.toLowerCase(), helpRequest );
+        }
+        if( helpRequest.AdvertTell() == true ){
+        m_botAction.sendChatMessage( "NOTICE: " + playerName + " has used ?advert before. Please use !warn if needed." );
+        }
+        else {
+        m_botAction.sendRemotePrivateMessage( playerName, "Please do not use ?advert. "
+                +"If you would like to request an event, please use the ?help command." );
+        helpRequest.setAdvertTell( true );
+        m_botAction.sendChatMessage( playerName + " has been notified that ?advert is not for non-staff." );
+        }
+                
+                
 
-        Calendar thisTime = Calendar.getInstance();
-        java.util.Date day = thisTime.getTime();
-        String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
-        String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
-        String date = new java.sql.Date( System.currentTimeMillis() ).toString();
-        String[] data = { playerName.toLowerCase().trim(), new String( warntime + ": Warning to " + playerName + " from Robohelp for ?advert abuse."), "RoboHelp", date };
-
-        m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
+ //       m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
+ //               +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
+ //               +"will not be tolerated!", 1 );
+ //       m_botAction.sendChatMessage( "NOTICE: "+ playerName + " has been warned for ?advert abuse." );
+ //
+ //       Calendar thisTime = Calendar.getInstance();
+ //       java.util.Date day = thisTime.getTime();
+ //       String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
+ //       String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
+ //       String date = new java.sql.Date( System.currentTimeMillis() ).toString();
+ //       String[] data = { playerName.toLowerCase().trim(), new String( warntime + ": Warning to " + playerName + " from Robohelp for ?advert abuse."), "RoboHelp", date };
+ //
+ //      m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
 
     }
 
@@ -641,23 +656,41 @@ public class robohelp extends SubspaceBot {
             if( helpRequest == null ){
                 m_botAction.sendChatMessage( name + " hasn't done a help call yet." );
             } else {
-                if( helpRequest.getBeenWarned() == true ){
+                if( helpRequest.getBeenWarned() == true ) {
                     m_botAction.sendChatMessage( "NOTICE: " + name + " has already been warned." );
                 } else {
                     helpRequest.setBeenWarned( true );
-                    m_botAction.sendRemotePrivateMessage( name, "WARNING: We appreciate "
-                    +"your input.  However, your excessive abuse of the ?cheater or ?help command will "
-                    +"not be tolerated further!", 1 );
-                    m_botAction.sendChatMessage( name + " has been warned." );
+                    if( helpRequest.AdvertTell() == true ){
+                        m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
+                        +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
+                        +"will not be tolerated!", 1 );
+                        m_botAction.sendChatMessage( name + " has been warned for ?advert abuse." );
+                        
+                        Calendar thisTime = Calendar.getInstance();
+                        java.util.Date day = thisTime.getTime();
+                        String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
+                        String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
+                        String date = new java.sql.Date( System.currentTimeMillis() ).toString();
+                        String[] data = { name.toLowerCase().trim(), new String( warntime + ": Warning to " + name + " from Robohelp for advert abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
 
-                    Calendar thisTime = Calendar.getInstance();
-                    java.util.Date day = thisTime.getTime();
-                    String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
-                    String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
-                    String date = new java.sql.Date( System.currentTimeMillis() ).toString();
-                    String[] data = { name.toLowerCase().trim(), new String( warntime + ": Warning to " + name + " from Robohelp for help/cheater abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
+                        m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
 
-                    m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
+                     } else {
+
+                        m_botAction.sendRemotePrivateMessage( name, "WARNING: We appreciate "
+                        +"your input.  However, your excessive abuse of the ?cheater or ?help command will "
+                        +"not be tolerated further!", 1 );
+                        m_botAction.sendChatMessage( name + " has been warned." );
+
+                        Calendar thisTime = Calendar.getInstance();
+                        java.util.Date day = thisTime.getTime();
+                        String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
+                        String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
+                        String date = new java.sql.Date( System.currentTimeMillis() ).toString();
+                        String[] data = { name.toLowerCase().trim(), new String( warntime + ": Warning to " + name + " from Robohelp for help/cheater abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
+
+                        m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
+                     }
                 }
             }
         }
@@ -704,7 +737,7 @@ public class robohelp extends SubspaceBot {
                         m_lastBanner = playerName;
                         m_banPending = true;
                         m_botAction.sendRemotePrivateMessage( name, "You have been banned for "
-                        +"abuse of the ?help command.  I am sorry this had to happen.  Your ban "
+                        +"abuse of the alert commands.  I am sorry this had to happen.  Your ban "
                         +"will likely expire in 24 hours.  Goodbye!" );
                         m_botAction.sendUnfilteredPublicMessage( "?ban -e1 " + name );
                         m_botAction.sendChatMessage( "Player \"" + name + "\" has been "
@@ -916,6 +949,7 @@ public class robohelp extends SubspaceBot {
         String[]    m_responses;
         String      m_playerName;
         boolean     m_beenWarned;
+        boolean     m_advertTell;
         int         m_nextResponse;
         boolean     m_allowSummons;
 
@@ -923,6 +957,7 @@ public class robohelp extends SubspaceBot {
 
             m_nextResponse = 0;
             m_beenWarned = false;
+            m_advertTell = false;
             m_question = question;
             m_allowSummons = false;
             m_responses = responses;
@@ -946,6 +981,17 @@ public class robohelp extends SubspaceBot {
 
             return m_beenWarned;
         }
+
+        public void setAdvertTell( boolean advertTell ){
+
+            m_advertTell = advertTell;
+        }
+
+        public boolean AdvertTell(){
+
+            return m_advertTell;
+        }
+
 
         public void setAllowSummons( boolean allowSummons ){
 
@@ -1017,4 +1063,5 @@ public class robohelp extends SubspaceBot {
     }
 
 }
+
 
