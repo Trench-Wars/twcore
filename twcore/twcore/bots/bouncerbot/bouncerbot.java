@@ -15,12 +15,12 @@ import java.util.*;
 import java.io.*;
 public class bouncerbot extends SubspaceBot {
     OperatorList m_opList;
-    ArrayList invitedPlayers;
+    HashSet invitedPlayers;
     ArrayList log;
     String bouncemessage;
     public bouncerbot( BotAction botAction ){
         super( botAction );
-        invitedPlayers = new ArrayList();
+        invitedPlayers = new HashSet();
         bouncemessage = "Entering a private arena without being invited is against the rules.  Goodbye!";
         log = new ArrayList();
         EventRequester events = m_botAction.getEventRequester();
@@ -47,7 +47,7 @@ public class bouncerbot extends SubspaceBot {
     
     public void handleEvent( PlayerEntered event ){
         if( m_opList.isSmod( event.getPlayerName() )) return;
-        if( invitedPlayers.contains( event.getPlayerName() )) return;
+        if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
         if( !m_opList.isModerator( event.getPlayerName() )) return;
         m_botAction.sendPrivateMessage( event.getPlayerName(), bouncemessage );
         m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
@@ -67,7 +67,7 @@ public class bouncerbot extends SubspaceBot {
         if( message.startsWith( "!invite " )){
             if( message.length() > 0 ){
                 String invitee = message.substring(8);
-                invitedPlayers.add( invitee );
+                invitedPlayers.add( invitee.toLowerCase() );
                 m_botAction.sendRemotePrivateMessage( invitee, "You have been invited to " + m_botAction.getArenaName() + "!" );
                 m_botAction.sendPublicMessage( invitee + " has been invited" );
                 logEvent( invitee + " has been invited" );
