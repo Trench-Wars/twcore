@@ -234,6 +234,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleEvent( LoggedOn event ){
+        m_botAction.sendUnfilteredPublicMessage( "?obscene" );
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
         m_botAction.sendUnfilteredPublicMessage("?blogin radiant482");
@@ -701,23 +702,49 @@ public class robohelp extends SubspaceBot {
                     if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 't' ) isIT = true;
                 }
             }
+
+            boolean isGOT = false, isIT2 = false;        
+            for( int i = 0; i < message.length(); i++ ) { 
+                if( message.charAt( i ) == 'g' ) {
+                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 'o' && message.charAt( Math.min( i+2, message.length() - 1 ) ) == 't') isGOT = true;
+                }
+                if( message.charAt( i ) == 'i' ) {
+                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 't' ) isIT2 = true;
+                }
+            }
+
             if( isON && isIT && !name.toLowerCase().equals( m_botAction.getBotName().toLowerCase() ) ) {
                 boolean recorded = false;
                 int i = 0;
                 while( !recorded && i < callList.size() ) {
                     EventData e = (EventData)callList.elementAt( i );
                     if( new java.util.Date().getTime() < e.getTime() + 60000 ) {
-                        updateStatRecords( name );
+                        updateStatRecordsONIT( name );
                         callList.removeElementAt( i );
                         recorded = true;
                     } else callList.removeElementAt( i );
                     i++;
                 }
             }
+
+            if( isGOT && isIT2 && !name.toLowerCase().equals( m_botAction.getBotName().toLowerCase() ) ) {
+                boolean recorded = false;
+                int i = 0;
+                while( !recorded && i < callList.size() ) {
+                    EventData e = (EventData)callList.elementAt( i );
+                    if( new java.util.Date().getTime() < e.getTime() + 60000 ) {
+                        updateStatRecordsGOTIT( name );                  
+                        callList.removeElementAt( i );
+                        recorded = true;        
+                    } else callList.removeElementAt( i );
+                    i++;
+                }
+            }
+
         } catch (Exception e) {}
     }
 
-    public void updateStatRecords( String name ) {
+    public void updateStatRecordsONIT( String name ) {
         if( !m_botAction.SQLisOperational() ){
             return;
         }
@@ -726,10 +753,28 @@ public class robohelp extends SubspaceBot {
             Calendar thisTime = Calendar.getInstance();
             java.util.Date day = thisTime.getTime();
             String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
-            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fdDate = '"+time+"'" );
+            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             if(result.next()) {
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fdDate = '"+time+"'" );
-            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fdDate`) VALUES ('', '"+name+"', '1', '"+time+"')" );
+                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('', '"+name+"', '1', '0', '"+time+"')" );
+
+        } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
+    }
+
+    public void updateStatRecordsGOTIT( String name ) {
+        if( !m_botAction.SQLisOperational() ){             
+            return;
+        }
+
+        try {
+            Calendar thisTime = Calendar.getInstance();
+            java.util.Date day = thisTime.getTime();     
+            String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
+            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
+
+            if(result.next()) {
+                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
+            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('', '"+name+"', '1', '1', '"+time+"')" );
         } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
     }
 
