@@ -104,7 +104,16 @@ public class twbotplatoon extends TWBotExtension
 		    }
 		    else
 		    {
-		    	m_botAction.setShip(event.getKilleeID(), ship);
+		    	final int kID = event.getKilleeID();
+		    	final int ship2 = ship;
+		    	TimerTask shipChange = new TimerTask()
+		    	{
+		    		public void run()
+		    		{
+		    			m_botAction.setShip(kID, ship2);
+		    		}
+		    	};
+		    	m_botAction.scheduleTask(shipChange, 5  * 1000);
 		    }
 		}
     }
