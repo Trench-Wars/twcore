@@ -614,6 +614,15 @@ public class twbottwl extends TWBotExtension
                 m_botAction.setDoors(0);
                 m_botAction.sendArenaMessage("GO GO GO", 104);
 
+                if (m_match.getMatchTypeId() == 2)
+                {
+                    m_botAction.warpFreqToLocation(0, 446, 444);
+                    m_botAction.warpFreqToLocation(1, 577, 444);
+                    m_botAction.setTimer(DUEL_TIMER);
+                    m_generalTime = DUEL_TIMER * 60; //60 sec in a minute
+                }
+
+
                 //base match
                 if (m_match.getMatchTypeId() == 3)
                 {
