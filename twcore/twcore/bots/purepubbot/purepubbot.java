@@ -1,6 +1,7 @@
 package twcore.bots.purepubbot;
 
 import java.util.*;
+
 import twcore.core.*;
 
 public class purepubbot extends SubspaceBot
@@ -261,6 +262,7 @@ public class purepubbot extends SubspaceBot
     m_botAction.sendArenaMessage( "Flag Time mode has been disabled." );
 
     try {
+      flagTimer.endGame();
       flagTimer.cancel();
     } catch (Exception e ) {
     }
@@ -584,7 +586,7 @@ public class purepubbot extends SubspaceBot
   private void doStartRound() {
     if(!flagTimeStarted)
       return;
-        
+    
     flagTimer = new FlagCountTask();
     m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
   }
@@ -609,6 +611,7 @@ public class purepubbot extends SubspaceBot
       return;
 
     try {
+      flagTimer.endGame();
       flagTimer.cancel();
     } catch (Exception e ) {
     }
@@ -677,14 +680,16 @@ public class purepubbot extends SubspaceBot
    */
   private class FlagCountTask extends TimerTask {
     int flagholdingFreq;
-    int secondsHeld;
+    int secondsHeld, totalSecs;
     int preTimeCount;
-    boolean isRunning;
+    boolean isStarted, isRunning;
     
     
     public FlagCountTask() {
       flagholdingFreq = -1;
       secondsHeld = 0;
+      totalSecs = 0;
+      isStarted = false;
       isRunning = false;
     }
       
@@ -713,23 +718,74 @@ public class purepubbot extends SubspaceBot
       }     
     }
     
+    public void endGame() {
+      isRunning = false;
+    }
+    
+    /**
+     * Give out prizes to the winning freq.  If it was a hard-fought victory, give more.
+     * Then prize them a shipreset and warp them out so that another freq can have a shot.
+     */
+    public void givePrizes() {
+        int weight = (totalSecs / 60);
+        if( weight >= 20 && weight < 40 )
+          weight += 10;
+        else if( weight >= 40 && weight < 50 )
+          weight += 20;
+        else if( weight >= 50 && weight < 100 )
+          weight += 30;
+        else if( weight >= 100 )
+          weight += 50;
+        
+        try
+        {
+          Iterator iterator = m_botAction.getPlayerIterator();
+          Player player;
+          while(iterator.hasNext())
+          {
+            player = (Player) iterator.next();
+            if( player != null ) {
+              if(player.getFrequency() == flagholdingFreq ) {
+                for( int i = 0; i < weight; i++ )               
+                  m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #13");
+              }
+            }
+          }
+          
+          iterator = m_botAction.getPlayerIterator();
+          while(iterator.hasNext()) {
+            player = (Player) iterator.next();
+            if( player != null ) {
+              if(player.getFrequency() == flagholdingFreq ) {
+                m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #7");
+                m_botAction.shipReset( player.getPlayerID() );
+              }
+            }
+          }
+        }
+        catch(Exception e)
+        {
+        }
+    }
+    
     public void sendTimeRemaining( String name ) {       
       if( isRunning == false ) {
         m_botAction.sendSmartPrivateMessage( name, "We are currently between games." );
         return;
       }
       
-      m_botAction.sendSmartPrivateMessage( name, (flagholdingFreq == -1 ? "Nobody" : "Freq " + flagholdingFreq ) + " has held for " + getTimeString(secondsHeld) + " and needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more to win.");      
+      m_botAction.sendSmartPrivateMessage( name, (flagholdingFreq == -1 ? "Nobody" : "Freq " + flagholdingFreq ) + " has held for " + getTimeString(secondsHeld) + " and needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more to win.  [Total time: " + getTimeString( totalSecs ) + "]" );      
     }
     
     public void run()
-    {
-      if( isRunning == false ) {
+    {        
+      if( isStarted == false ) {
         if( preTimeCount == 0 )
           m_botAction.sendArenaMessage( "Round begins in 10 seconds . . ." );
         preTimeCount++;
 
         if( preTimeCount >= 10 ) {
+          isStarted = true;
           isRunning = true;
           m_botAction.sendArenaMessage( "ROUND START!" );
           m_botAction.sendArenaMessage( "Hold the flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win.", 103 );
@@ -738,15 +794,19 @@ public class purepubbot extends SubspaceBot
         }
       }
         
-        
+      if( isRunning == false )
+          return;
+      
       if( flagholdingFreq == -1 )
         return;
       
       secondsHeld++;
+      totalSecs++;
       
       if( secondsHeld >= flagMinutesRequired * 60 ) {
+        endGame();
+        givePrizes();
         doEndRound(flagholdingFreq);
-        isRunning = false;
       } else if( (flagMinutesRequired * 60) - secondsHeld == 60 ) {
         m_botAction.sendArenaMessage( "Freq " + flagholdingFreq + " will win in 60 seconds." );
       } else if( (flagMinutesRequired * 60) - secondsHeld == 10 ) {
