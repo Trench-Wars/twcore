@@ -65,6 +65,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!read", acceptedMessages, this, "readMessage");
         m_CI.registerCommand( "!delete", acceptedMessages, this, "deleteMessage");
         m_CI.registerCommand( "!messages", acceptedMessages, this, "myMessages");
+        m_CI.registerCommand( "!go", acceptedMessages, this, "handleGo");//done
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); //done
     }
@@ -95,7 +96,7 @@ public class messagebot extends SubspaceBot
     	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     }
     
-    /** Allows a channel owner or smod to delete a channel.
+    /** Allows a channel owner or Highmod to delete a channel.
      *  @param Name of player.
      *  @param Name of channel being deleted.
      */
@@ -108,7 +109,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isSmod(name))
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
     	{
     		String query = "DELETE FROM tblChannel WHERE fcChannelName = " + message.toLowerCase();
     		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = " + message.toLowerCase();
@@ -303,7 +304,7 @@ public class messagebot extends SubspaceBot
     }
     
     /** Grants ownership of a channel to a new player.
-     *  @param Name of owner/smod
+     *  @param Name of owner/Highmod
      *  @param Name of channel and player beign given operator.
      */
     public void grantChannel(String name, String message)
@@ -316,7 +317,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isSmod(name))
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.newOwner(name, pieces[1]);
     }
     
@@ -402,7 +403,7 @@ public class messagebot extends SubspaceBot
         
         if(m_botAction.getOperatorList().isZH(name))
        		m_botAction.sendSmartPrivateMessage(name, "!create <channel>              -Creates a channel with the name <channel>.");
-       	if(m_botAction.getOperatorList().isSmod(name))
+       	if(m_botAction.getOperatorList().isHighmod(name))
        		m_botAction.sendSmartPrivateMessage(name, "You can do any command for any channel.");
     }
     
@@ -554,6 +555,18 @@ public class messagebot extends SubspaceBot
 		}
 		m_botAction.sendSmartPrivateMessage(name, "PM me with !read <num> to read a message.");
 	}
+	
+	/** Sends the bot to a new arena.
+	 *  @param Name of player.
+	 *  @param Arena to go to.
+	 */
+	 public void handleGo(String name, String message)
+	 {
+	 	if(!m_botAction.getOperatorList().isHighmod(name))
+	 		return;
+	 	
+	 	m_botAction.changeArena(message);
+	 }
 	
 	/** Sets up the task that will delete messages that have expired.
 	 */
