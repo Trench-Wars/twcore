@@ -548,6 +548,7 @@ public class twbottwl extends TWBotExtension
 				{
 					m_botAction.warpFreqToLocation(0, 486, 256);
 					m_botAction.warpFreqToLocation(1, 538, 256);
+					m_botAction.moveToTile(513, 212);
 					m_botAction.setTimer(31);
 				}
 				else
@@ -617,6 +618,8 @@ public class twbottwl extends TWBotExtension
 		};
 		m_botAction.scheduleTask(timer1, 34000);
 
+
+		/*
 		TimerTask watchPlayers = new TimerTask()
 		{
 			public void run()
@@ -626,6 +629,7 @@ public class twbottwl extends TWBotExtension
 			}
 		};
 		m_botAction.scheduleTaskAtFixedRate(watchPlayers, 2000, 3000);
+		*/
 
 		TimerTask updateScores = new TimerTask()
 		{
@@ -665,6 +669,7 @@ public class twbottwl extends TWBotExtension
 		m_generalTime -= 1;
 		String team1Score;
 		String team2Score;
+		
 		if (m_match.getMatchTypeId() == 3)
 		{
 			team1Score = "" + m_match.getTeam1Score();
@@ -675,6 +680,7 @@ public class twbottwl extends TWBotExtension
 			team1Score = "" + m_match.getTeam2Deaths();
 			team2Score = "" + m_match.getTeam1Deaths();
 		}
+		
 		for (int i = team1Score.length() - 1; i > -1; i--)
 			m_myObjects.showObject(Integer.parseInt("" + team1Score.charAt(i)) + 200 + (team1Score.length() - 1 - i) * 10);
 		for (int i = team2Score.length() - 1; i > -1; i--)
@@ -1036,7 +1042,7 @@ public class twbottwl extends TWBotExtension
         Player player = m_botAction.getPlayer(event.getPlayerID());
 		int freq = player.getFrequency();
 
-		//m_botAction.sendArenaMessage("flagclaimed by: " + player.getPlayerName());
+		m_botAction.sendArenaMessage("flagclaimed by: " + player.getPlayerName());
 	
 		if (m_gameState != 4)
 			return;		
