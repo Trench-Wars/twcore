@@ -32,7 +32,6 @@ public class twlbottwl extends TWLBotExtension
     private java.util.Date m_lockDate;
     private java.util.Date m_lastRoundCutoffDate;
     private int m_season = 0; //current twl season defined in constructor from config file
-    private BotSettings m_botSettings; //access to settings in the cfg file
     private Vector m_twlCoordinators;
     private Vector m_twlStaff;
 
@@ -85,7 +84,15 @@ public class twlbottwl extends TWLBotExtension
     public twlbottwl()
     {
         m_laggers = new HashMap();
-        m_botSettings = m_botAction.getBotSettings();
+    }
+ 
+    /**
+     * Overloaded method from the super class to set the TWLcoordinator and TWLstaff lists
+     */
+    public void set(BotAction action, OperatorList opList, twlbot twBot)
+    {   
+        //call the super class to set these variables
+        super.set(action,opList,twBot);
         
         //obtain settings of staff and season
         m_season = m_botSettings.getInt("Season");
@@ -96,8 +103,8 @@ public class twlbottwl extends TWLBotExtension
 
         while(coordinatorTokens.hasMoreTokens())
         {
-          playerName = staffTokens.nextToken().toLowerCase();
-          m_twlCoordinators.add(playerName);
+            playerName = staffTokens.nextToken().toLowerCase();
+        	m_twlCoordinators.add(playerName);
         }
         
         while(staffTokens.hasMoreTokens())
@@ -1853,7 +1860,7 @@ public class twlbottwl extends TWLBotExtension
             String name = m_botAction.getPlayerName(event.getPlayerID());
             if (m_gameState < LINEUP_REQUESTED && m_opList.isER(name))
                 handleCommand(name, message);
-            else if ((m_gameState > MATCH_LOADED) && (name.equals(m_match.getRef()) || (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name)))
+            else if ((m_gameState > MATCH_LOADED) && (name.equals(m_match.getRef()) || m_twlCoordinators.contains(name) || m_opList.isSmod(name)))
                 handleCommand(name, message);
             else
                 handlePlayerCommand(name, message);
