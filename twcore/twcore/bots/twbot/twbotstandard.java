@@ -50,6 +50,8 @@ public class twbotstandard extends TWBotExtension {
     public void handleCommand( String name, String message ){
         if( message.startsWith( "!random " )){
             m_botAction.createRandomTeams( getInteger( message.substring(8) ));
+        } else if( message.startsWith( "!teams " )){
+        	createNumberofTeams( getInteger( message.substring(7) ));
         } else if( message.startsWith( "!door " )){
             m_botAction.setDoors( getInteger( message.substring( 6 )));
         } else if( message.startsWith( "!setship " )){
@@ -134,7 +136,26 @@ public class twbotstandard extends TWBotExtension {
         }*/
     }
 
-    public void handleEvent( PlayerDeath event ){
+    /** Creates the requested number of teams if possible
+	 * @param 
+	 */
+	private void createNumberofTeams( int _teams ) {
+		
+		int current = 0;
+		int howmany = _teams - 1;
+		
+		Iterator i = m_botAction.getPlayingPlayerIterator();
+		while( i.hasNext() ) {
+			
+			if(current > howmany)
+				current = 0;
+			Player p = (Player)i.next();
+			m_botAction.setFreq( p.getPlayerID(), current );
+			current++;
+		}
+	}
+
+	public void handleEvent( PlayerDeath event ){
         if( specPlayers <= 0 ) return;
 
         Player p = m_botAction.getPlayer( event.getKilleeID() );
@@ -318,6 +339,7 @@ public class twbotstandard extends TWBotExtension {
     public String[] getHelpMessages() {
         String[] help = {
             "!random <numberFreqs>     - Makes random freqs of a particular size.",
+			"!teams <numberTeams>      - Makes the requested number of teams.",
             "!door <-2 to 255>         - Changes door mode.  -2 and -1 are random modes.",
             "!where                    - Robo will tell you his location. Remote PM or squad msg only.",
             "!setship <ship>           - Changes everyone to <ship>",
