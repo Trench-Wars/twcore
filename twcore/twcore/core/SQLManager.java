@@ -32,8 +32,8 @@ public class SQLManager extends Thread {
                 + ":" + sqlcfg.getInt( "Port" + i ) + "/"
                 + sqlcfg.getString( "Database" + i ) + "?user="
                 + sqlcfg.getString( "Login" + i ) + "&password="
-                + sqlcfg.getString( "Password" + i ) + "&autoReconnect=true";
-                
+                + sqlcfg.getString( "Password" + i ) + "&autoReconnect=true" + "&autoReconnectForPools=true" + "&maxReconnects=5000" + "&initialTimeout=5" + "&logSlowQueries=true";
+
                 SQLConnectionPool db = new SQLConnectionPool( name, dburl,
                 sqlcfg.getInt( "MinPoolSize" + i ),
                 sqlcfg.getInt( "MaxPoolSize" + i ),
