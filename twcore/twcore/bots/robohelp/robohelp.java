@@ -158,10 +158,9 @@ public class robohelp extends SubspaceBot {
         if( !m_botAction.SQLisOperational() ){
 
 	m_botAction.sendChatMessage( "==    Statistic Recording: ERROR      ==" );
-        m_botAction.sendChatMessage( "== NOTE: Record shows the database-   ==" );
-        m_botAction.sendChatMessage( "==       connection is down. TWDBot   ==" );
-        m_botAction.sendChatMessage( "==       Tournybot and other bots     ==" );
-        m_botAction.sendChatMessage( "==       can experience problems also ==" );
+        m_botAction.sendChatMessage( "== NOTE: The database connection is   ==" );
+        m_botAction.sendChatMessage( "==       down. Some other bots might  ==" );
+        m_botAction.sendChatMessage( "==       experience problems too.     ==" );
         m_botAction.sendChatMessage( "===========End System Status============" );	
 	return;        
 	
@@ -394,8 +393,8 @@ public class robohelp extends SubspaceBot {
             return;
         }
         m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
-                +"command.  It is for staff members only, and is punnishble by a ban. Further abuse "
-                +"will not be tolerated further!", 1 );
+                +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
+                +"will not be tolerated!", 1 );
         m_botAction.sendChatMessage( "NOTICE: "+ playerName + " has been warned for ?advert abuse." );
 
         Calendar thisTime = Calendar.getInstance();
