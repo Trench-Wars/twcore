@@ -39,6 +39,7 @@ public class LeagueMatch
     private boolean m_zoned = false;
     private boolean m_blueOut = false;
     private boolean m_saveState = false;
+    private boolean m_isBasePlayoff = false;
     private int m_overTime = 1;
     private String m_restartTime = "00:00";
     private BotAction m_botAction;
@@ -320,11 +321,20 @@ public class LeagueMatch
         else
             return false;
     }
+    
+    /** Setting for playoff mode, to be set in twlbottwl.  Keeps the match
+     * timer in sync with the main bot.
+     * @param isBasePlayoff True if this match is a base playoff match.
+     * @author qan
+     */
+    public void setPlayoff( boolean isBasePlayoff ) {
+        m_isBasePlayoff = isBasePlayoff;
+    }
 
     /**
      * @author FoN
      *
-     * This adds a sec point to team with flag
+     * this adds a sec point to team with flag
      * Also gives out time warnings.
      */
     public void addTimePoint()
@@ -347,12 +357,12 @@ public class LeagueMatch
      * Displays warning depending on time remaining
      */
     private void giveTimeWarning(int time, int team)
-    {
-
-        if (time <= twlbottwl.TIME_RACE_TARGET)
-        {
+    {       
+        if (    (m_isBasePlayoff  && time <= twlbottwl.TIME_RACE_PLAYOFF_TARGET)
+             || (!m_isBasePlayoff && time <= twlbottwl.TIME_RACE_TARGET) ) {
 
             int teamId = 0;
+            int target;
             boolean warning = true;
             String name = "";
             int teamScore = 0;
@@ -370,11 +380,18 @@ public class LeagueMatch
                 teamScore = getTeam2Score();
             }
 
-            if (twlbottwl.TIME_RACE_TARGET - teamScore == time * 60) //3 mins * 60 secs
+            if( m_isBasePlayoff )
+                target = twlbottwl.TIME_RACE_PLAYOFF_TARGET;
+            else
+                target = twlbottwl.TIME_RACE_TARGET;
+                
+            if (target - teamScore == time * 60) //3 mins * 60 secs
             {
                 if (teamId == getFlagOwner()) //no multiple warning
                     m_botAction.sendArenaMessage(name + " needs " + time + " min of flag time to win");
             }
+            
+            
         }
     }
 
@@ -627,6 +644,8 @@ public class LeagueMatch
     {
         int ship1 = getPlayer(player1).getShip();
         int ship2 = getPlayer(player2).getShip();
+        if( ship1 == 0 || ship2 == 0 )  // in case of spec, bail on switch
+            return;
         getPlayer(player1).setShip(ship2);
         getPlayer(player2).setShip(ship1);
         m_botAction.setShip(player1, ship2);
