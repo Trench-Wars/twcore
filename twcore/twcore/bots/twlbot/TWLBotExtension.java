@@ -15,15 +15,17 @@ import twcore.core.*;
 public abstract class TWLBotExtension {
     BotAction m_botAction;
     OperatorList m_opList;
+    BotSettings m_botSettings;
     twlbot m_twBot;
     /** Creates a new instance of PortabotExtension */
     public TWLBotExtension() {
     }
     
-    public final void set( BotAction action, OperatorList opList, twlbot twBot ){
+    public void set( BotAction action, OperatorList opList, twlbot twBot ){
         m_botAction = action;
         m_opList = opList;
         m_twBot = twBot;
+        m_botSettings = m_botAction.getBotSettings();
     }
     
     public abstract String[] getHelpMessages();
