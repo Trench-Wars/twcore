@@ -253,7 +253,6 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleEvent( LoggedOn event ){
-        m_botAction.sendUnfilteredPublicMessage( "?obscene" );
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
         m_botAction.sendUnfilteredPublicMessage( "?blogin " + m_botSettings.getString( "Banpassword" ) );

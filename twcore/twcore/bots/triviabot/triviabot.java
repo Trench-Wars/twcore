@@ -456,7 +456,6 @@ public class triviabot extends SubspaceBot {
         String access[] =  m_botSettings.getString("SpecialAccess").split( ":" );
         for( int i = 0; i < access.length; i++ ) 
             accessList.put( access[i], access[i] );
-        m_botAction.sendUnfilteredPublicMessage( "?obscene" );
     }
     
     public void handleEvent( Message event ){
