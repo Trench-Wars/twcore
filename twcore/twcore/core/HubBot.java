@@ -109,7 +109,7 @@ public class HubBot extends SubspaceBot {
             m_botQueue.removeBot( message );
             m_botAction.sendPrivateMessage( messager, "Removed." );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but he tried !remove " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but (s)he tried !remove " + message );
         }
     }
 
@@ -119,7 +119,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
             m_botQueue.listWaitingList( messager );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but he tried !waitinglist " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but (s)he tried !waitinglist " + message );
         }
     }
 
@@ -130,7 +130,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "Updating access levels..." );
             m_botAction.sendChatMessage( 1, "Updating access levels at " + messager + "'s request" );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an Smod, but he tried !updateaccess " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but (s)he tried !updateaccess " + message );
         }
     }
 
@@ -139,7 +139,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
             m_botQueue.listBotTypes( messager );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but he tried !listbottypes " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but (s)he tried !listbottypes " + message );
         }
     }
 
@@ -153,7 +153,7 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage( messager, "Usage: !listbots <bot type>" );
             }
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but he tried !listbots " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but (s)he tried !listbots " + message );
         }
     }
 
@@ -167,10 +167,7 @@ public class HubBot extends SubspaceBot {
 
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess - Rereads the mod, smod, and sysop file so that all access levels are updated." );
-        }
-
-        if( m_botAction.getOperatorList().isSmod( messager ) == true ){
-            m_botAction.sendSmartPrivateMessage( messager, "!listbottypes - Lists the number of each bot type burrently in use." );
+            m_botAction.sendSmartPrivateMessage( messager, "!listbottypes - Lists the number of each bot type currently in use." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbots <bot type> - Lists the names and spawners of a bot type." );
         }
     }
@@ -188,7 +185,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
             spawn( messager, message );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but he tried !spawn " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but (s)he tried !spawn " + message );
         }
     }
 }
