@@ -142,7 +142,7 @@ public class HubBot extends SubspaceBot
 	{
 		String className = message.trim();
 
-		if (m_botAction.getOperatorList().isER(messager) == true)
+		if (m_botAction.getOperatorList().isOutsider(messager) == true)
 		{
 			m_botQueue.listWaitingList(messager);
 		}
@@ -204,7 +204,7 @@ public class HubBot extends SubspaceBot
 	public void handleHelp(String messager, String message)
 	{
 
-		if (m_botAction.getOperatorList().isER(messager) == true)
+		if (m_botAction.getOperatorList().isOutsider(messager) == true)
 		{
 			m_botAction.sendSmartPrivateMessage(messager, "!help - Displays this message.");
 			m_botAction.sendSmartPrivateMessage(messager, "!spawn <bot type> - spawns a new bot.");
@@ -238,7 +238,7 @@ public class HubBot extends SubspaceBot
 
 	public void handleSpawnMessage(String messager, String message)
 	{
-		if (m_botAction.getOperatorList().isER(messager) == true)
+		if (m_botAction.getOperatorList().isOutsider(messager) == true)
 		{
 			spawn(messager, message);
 		}
