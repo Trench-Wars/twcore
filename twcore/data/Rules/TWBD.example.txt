@@ -39,9 +39,11 @@ safe1x=312
 safe1y=482
 safe2x=712
 safe2y=482
-obj_countdown10=51
-obj_gogogo=52
-obj_gameover=50
+obj_countdown10=1
+obj_countdown54321=2
+obj_gogogo=3
+obj_gameover=4
+
 
 storegame=1
 loggame=0
