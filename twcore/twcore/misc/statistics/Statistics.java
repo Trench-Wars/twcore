@@ -22,6 +22,7 @@ import java.util.Vector;
         private int m_deaths;
         private int m_score;
         private int m_flagClaimed;
+        private int m_repelsUsed;
 
         //teamkill
         private int m_wbTeamKill;
@@ -45,11 +46,11 @@ import java.util.Vector;
             {
                 switch (statType)
                 {
-                    case StatisticRequester.TOTAL_KILLS :
+                    case StatisticRequester.TOTAL_KILLS:
                         return m_wbKill + m_javKill + m_spiderKill + m_levKill + m_terrKill + m_weaselKill + m_lancKill + m_sharkKill;
-                    case StatisticRequester.DEATHS :
+                    case StatisticRequester.DEATHS:
                         return m_deaths;
-                    case StatisticRequester.SCORE :
+                    case StatisticRequester.SCORE:
                         return m_score;
                     case StatisticRequester.WARBIRD_KILL:
                         return m_wbKill;
@@ -91,6 +92,8 @@ import java.util.Vector;
                         return m_wbTeamKill + m_javTeamKill + m_spiderTeamKill + m_levTeamKill + m_terrTeamKill + m_weaselTeamKill + m_lancTeamKill + m_sharkTeamKill;
                     case StatisticRequester.RATING:
                         return getRating();
+                    case StatisticRequester.REPELS_USED:
+                    	return m_repelsUsed;
                     default : //if errored
                         return 0;
                 }
@@ -318,13 +321,15 @@ import java.util.Vector;
                         break;
 
                     case 8 : //shark
-                        stats.add(FORMULA, "Shark: 1.2points * (.12terr + sum(.09allotherships) - 0.005deaths - (.1(allothershipstks) + .15terrtk + .11sharkTK))");
+                        stats.add(FORMULA, "Shark: 0.5points(RepelUsedPerDeath) * (.12terr + sum(.06allotherships) - 0.006deaths - (.07(allothershipstks) + .15terrtk + ..09sharkTK))");
                         stats.add(
                             STATS,
                             "K: "
                                 + getStatistic(StatisticRequester.TOTAL_KILLS)
                                 + " D: "
                                 + m_deaths
+                                + " Rep: "
+                                + m_repelsUsed
                                 + " TKs: "
                                 + getStatistic(StatisticRequester.TOTAL_TEAMKILLS)
                                 + " Wk: "
@@ -393,7 +398,7 @@ import java.util.Vector;
          *
          * lanc: .6Points * (.07wb + .07jav + .05spid + 0.12terr + .05x + .06lanc + .08shark - .04deaths)
          *
-         * shark: 1.2points * (.12terr + sum(.09allotherships) - 0.005deaths - (.1(allothershipstks) + .15terrtk + .11sharkTK)))
+         * shark: 0.5(repelsUsed/deaths)points * (.12terr + sum(.06allotherships) - 0.006deaths - (.07(allothershipstks) + .15terrtk + .09sharkTK)))
          *
          * Original idea by Bleen and FoN
          *
@@ -511,25 +516,26 @@ import java.util.Vector;
 
                 case 8 : //shark
                     rating =
-                        (int) (1.2
+                        (int) (0.5
                             * m_score
-                            * (m_wbKill * 0.09
-                                + m_javKill * 0.09
-                                + m_spiderKill * 0.09
+                            * (repelsUsedPerDeath())
+                            * (m_wbKill * 0.06
+                                + m_javKill * 0.06
+                                + m_spiderKill * 0.06
                                 + m_levKill
                                 + m_terrKill * 0.12
-                                + m_weaselKill * 0.09
-                                + m_lancKill * 0.09
-                                + m_sharkKill * 0.09
-                                - m_deaths * 0.005
-                                - (m_wbTeamKill * 0.1
-                                    + m_javTeamKill * 0.1
-                                    + m_spiderTeamKill * 0.1
-                                    + m_levTeamKill * 0.1
+                                + m_weaselKill * 0.06
+                                + m_lancKill * 0.06
+                                + m_sharkKill * 0.06
+                                - m_deaths * 0.006
+                                - (m_wbTeamKill * 0.07
+                                    + m_javTeamKill * 0.07
+                                    + m_spiderTeamKill * 0.07
+                                    + m_levTeamKill * 0.07
                                     + m_terrTeamKill * 0.15
-                                    + m_weaselTeamKill * 0.1
-                                    + m_lancTeamKill * 0.1
-                                    + m_sharkTeamKill * 0.11)));
+                                    + m_weaselTeamKill * 0.07
+                                    + m_lancTeamKill * 0.07
+                                    + m_sharkTeamKill * 0.09)));
                     return rating;
 
                 default : //if errored
@@ -538,6 +544,14 @@ import java.util.Vector;
             }
 
         }
+
+		private double repelsUsedPerDeath()
+		{
+			if (m_deaths == 0)
+				return m_repelsUsed;
+			else
+				return (double)m_repelsUsed/ (double)m_deaths;	
+		}
 
         /**
          * sets all the stat variables to zero or their initial values
@@ -555,6 +569,7 @@ import java.util.Vector;
             m_deaths = 0;
             m_score = 0;
             m_flagClaimed = 0;
+            m_repelsUsed = 0;
             m_wbTeamKill = 0;
             m_javTeamKill = 0;
             m_spiderTeamKill = 0;
@@ -672,10 +687,17 @@ import java.util.Vector;
         {
             m_flagClaimed++;
         }
+        
+        /**
+         * Sets the m_flagClaimed.
+         */
+        public void setRepelsUsed()
+        {
+            m_repelsUsed++;
+        }
 
         /**
          * Sets the m_javTeamKill.
-         * @param m_javTeamKill The m_javTeamKill to set
          */
         public void setJavTeamKill()
         {
@@ -684,7 +706,6 @@ import java.util.Vector;
 
         /**
          * Sets the m_lancTeamKill.
-         * @param m_lancTeamKill The m_lancTeamKill to set
          */
         public void setLancTeamKill()
         {
@@ -693,7 +714,6 @@ import java.util.Vector;
 
         /**
          * Sets the m_levTeamKill.
-         * @param m_levTeamKill The m_levTeamKill to set
          */
         public void setLevTeamKill()
         {
@@ -702,7 +722,6 @@ import java.util.Vector;
 
         /**
          * Sets the m_sharkTeamKill.
-         * @param m_sharkTeamKill The m_sharkTeamKill to set
          */
         public void setSharkTeamKill()
         {
@@ -711,7 +730,6 @@ import java.util.Vector;
 
         /**
          * Sets the m_spiderTeamKill.
-         * @param m_spiderTeamKill The m_spiderTeamKill to set
          */
         public void setSpiderTeamKill()
         {
@@ -720,7 +738,6 @@ import java.util.Vector;
 
         /**
          * Sets the m_terrTeamKill.
-         * @param m_terrTeamKill The m_terrTeamKill to set
          */
         public void setTerrTeamKill()
         {
@@ -729,7 +746,6 @@ import java.util.Vector;
 
         /**
          * Sets the m_wbTeamKill.
-         * @param m_wbTeamKill The m_wbTeamKill to set
          */
         public void setWbTeamKill()
         {
@@ -738,7 +754,6 @@ import java.util.Vector;
 
         /**
          * Sets the m_weaselTeamKill.
-         * @param m_weaselTeamKill The m_weaselTeamKill to set
          */
         public void setWeaselTeamKill()
         {
@@ -756,7 +771,7 @@ import java.util.Vector;
 
         /**
          * Sets the m_shipType.
-         * @param shipType The m_shipType to set
+         * @param shipType sets the ship Type
          */
         public void setShipType(int shipType)
         {

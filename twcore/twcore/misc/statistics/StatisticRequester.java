@@ -9,7 +9,7 @@ public class StatisticRequester
 {
 	//If this is modified make sure you implement the statistic + set and get methods
 	//in Statistics.java
-	public static final int TOTAL_NUMBER = 23;
+	public static final int TOTAL_NUMBER = 24;
 	public static final int TOTAL_KILLS = 0;
 	public static final int DEATHS = 1;
 	public static final int SCORE = 2;
@@ -33,6 +33,7 @@ public class StatisticRequester
 	public static final int SHIP_TYPE = 20;
 	public static final int TOTAL_TEAMKILLS = 21;
 	public static final int RATING = 22;
+	public static final int REPELS_USED = 23;
 
 	private boolean[] array;
 
