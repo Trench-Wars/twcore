@@ -1068,10 +1068,46 @@ public class LeagueMatch
 			return;
 		m_botAction.showObject(50);
 		m_botAction.sendArenaMessage("_", 5);
+		String team1leadingZero = "";
+		String team2leadingZero = "";
+
+		if (team1Score % 60 < 10)
+			team1leadingZero = "0";
+		if (team2Score % 60 < 10)
+			team2leadingZero = "0";
 		if (team1Score > team2Score)
-			m_botAction.sendArenaMessage(getTeam1Name() + " defeats " + getTeam2Name() + " in this match  (" + team1Score + " - " + team2Score + ")");
+			m_botAction.sendArenaMessage(
+				getTeam1Name()
+					+ " defeats "
+					+ getTeam2Name()
+					+ " in this match  ("
+					+ team1Score / 60
+					+ ":"
+					+ team1leadingZero
+					+ team1Score % 60
+					+ " - "
+					+ team2Score / 60
+					+ ":"
+					+ team2leadingZero
+					+ team2Score % 60
+					+ ")");
 		else
-			m_botAction.sendArenaMessage(getTeam2Name() + " defeats " + getTeam1Name() + " in this match  (" + team2Score + " - " + team1Score + ")");
+			m_botAction.sendArenaMessage(
+				getTeam2Name()
+					+ " defeats "
+					+ getTeam1Name()
+					+ " in this match  ("
+					+ 
+					+ team2Score / 60
+					+ ":"
+					+ team2leadingZero
+					+ team2Score % 60
+					+ " - "
+					+ team1Score / 60
+					+ ":"
+					+ team1leadingZero
+					+ team1Score % 60
+					+ ")");
 		m_botAction.sendArenaMessage("MVP: " + mvp);
 	}
 
