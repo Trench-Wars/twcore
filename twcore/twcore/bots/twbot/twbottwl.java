@@ -1316,7 +1316,7 @@ public class twbottwl extends TWBotExtension
         }
 
         LeaguePlayer sharkPlayer = m_match.getPlayer(player);
-        If you want to do this, find a better way.  No event.getByteArray()!
+        // If you want to do this, find a better way.  No event.getByteArray()!
         /*if(m_match.getMatchId() == 3 && sharkPlayer.getShip() == 8 && event.containsWeaponsInfo())
         {
             WeaponFired weapon = new WeaponFired(event.getByteArray());
