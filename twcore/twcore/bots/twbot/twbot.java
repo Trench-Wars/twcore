@@ -214,7 +214,15 @@ public class twbot extends SubspaceBot
 	{
 		clear();
 		currentArena = arena;
-		m_botAction.changeArena(arena);
+
+		try
+		{
+			m_botAction.changeArena(arena, (short)4096, (short)4096);
+		}
+		catch (Exception e)
+		{
+			m_botAction.changeArena(arena);
+		}
 	}
 
 	private void clear()
