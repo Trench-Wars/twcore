@@ -90,7 +90,6 @@ public class twbot extends SubspaceBot
 
 	public void distributeEvent(SubspaceEvent event)
 	{
-            m_botAction.sendPublicMessage("received: " + event.getClass().getName());
 		Iterator i = extensions.entrySet().iterator();
 		while (i.hasNext())
 		{
