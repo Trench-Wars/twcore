@@ -111,7 +111,6 @@ public class Tools {
                 out.println();
                 out.println( "-----------------" );
                 out.println( getTimeStamp() );
-                out.println( e.getMessage() );
                 out.println();
                 e.printStackTrace( out );
                 out.close();
@@ -130,7 +129,10 @@ public class Tools {
             if( exceptionLogFilePath == null ) return;
             try{
                 PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter( exceptionLogFilePath, true )));
+                out.println();
+                out.println( "-----------------" );
                 out.println( getTimeStamp() + " " + note );
+                out.println();
                 e.printStackTrace( out );
                 out.close();
             } catch( IOException ioe ){
