@@ -30,6 +30,11 @@ class Receiver extends Thread {
         
         return m_packetsReceived;
     }
+
+    public boolean isConnected(){
+
+        return m_socket.isConnected();
+    }
         
     public ByteArray get(){
         if( m_packets.isEmpty() == false ){
@@ -46,24 +51,24 @@ class Receiver extends Thread {
     
     public void run(){
         DatagramPacket      packet;
-        try{
-            m_socket.setSoTimeout( 20000 );
-        } catch( SocketException e ){
-            return;
+
+        try {
+            m_socket.setSoTimeout( 30000 );
+        } catch( IOException e ){
+            Tools.printStackTrace( e );
+            m_socket.disconnect();
         }
         
-        try {
-            while( m_socket.isConnected() == true && !interrupted() ){
-                
+        while( m_socket.isConnected() == true && !interrupted() ){
+            try {                
                 packet = new DatagramPacket( new byte[520], 520 );
                 m_socket.receive( packet );
                 m_packets.add( packet );
                 m_packetsReceived++;
+            } catch( IOException e ){
+                m_socket.disconnect();
             }
-        } catch( IOException e ){
-            //Tools.printStackTrace( e );
-            Tools.printLog( "A bot has disconnected." );
-            return;
         }
     }
 }
+

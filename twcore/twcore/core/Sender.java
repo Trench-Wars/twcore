@@ -32,6 +32,11 @@ public class Sender extends Thread {
         
         return m_packetsSent;
     }
+
+    public boolean isConnected(){
+
+        return m_socket.isConnected();
+    }
     
     public void send( DatagramPacket packet ){
         m_packets.add( packet );
@@ -52,12 +57,12 @@ public class Sender extends Thread {
                     m_socket.send( (DatagramPacket)m_packets.remove( 0 ));
                     m_packetsSent++;
                 }
+ 
                 Thread.sleep( 5 );
-            } catch( InterruptedException e ){
-                return;
             } catch( Exception e ){
-                Tools.printStackTrace( e );
+                m_socket.disconnect();
             }
         }
     }
 }
+

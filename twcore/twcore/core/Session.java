@@ -157,6 +157,10 @@ public class Session extends Thread
 
     public void disconnect()
     {
+        if( m_state == NOT_RUNNING ){
+            return;
+        }
+
         m_coreData.getInterProcessCommunicator().removeFromAll(m_subspaceBot);
         m_packetGenerator.sendDisconnect();
         try
@@ -182,7 +186,6 @@ public class Session extends Thread
             }
             catch (InterruptedException except)
             {
-                Tools.printStackTrace(except);
             }
         }
         if (!m_group.isDestroyed())
@@ -199,6 +202,7 @@ public class Session extends Thread
             m_timer = null;
         }
     }
+
     public void loggedOn()
     {
         m_state = RUNNING;
@@ -234,6 +238,28 @@ public class Session extends Thread
             {
 
                 currentTime = System.currentTimeMillis();
+
+                if (m_state == STARTING)
+                {
+                    if (System.currentTimeMillis() - m_initialTime > 5000)
+                    {
+                        Tools.printLog(m_name + " failed to log in.  Login timed out.");
+                        disconnect();
+                        return;
+                    }
+                }
+
+                if( m_outboundQueue.isConnected() == false || m_inboundQueue.isConnected() == false ){
+                    disconnect();
+                    return;
+                }
+
+                if (currentTime - lastPacketTime > TIMEOUT_DELAY)
+                {
+                    disconnect();
+                    return;
+                }
+
                 if (currentTime - lastSyncTime > SYNC_TIME)
                 {
                     lastSyncTime = currentTime;
@@ -250,20 +276,6 @@ public class Session extends Thread
                 {
                     lastPacketTime = currentTime;
                     m_packetInterpreter.translateGamePacket(m_inboundQueue.get(), false);
-                }
-
-                if (m_state == STARTING)
-                {
-                    if (System.currentTimeMillis() - m_initialTime > 5000)
-                    {
-                        Tools.printLog(m_name + " failed to log in.  Login timed out.");
-                        disconnect();
-                    }
-                }
-
-                if (currentTime - lastPacketTime > TIMEOUT_DELAY)
-                {
-                    disconnect();
                 }
 
                 Thread.sleep(5);
