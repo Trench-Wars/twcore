@@ -55,7 +55,7 @@ public class twbottwl extends TWBotExtension
 	private final int MINIMUM_DUEL_LIMIT = 3; //players
 	private final int MINIMUM_BASE_LIMIT = 6; //players
 	
-	private final double VERSION = 1.4;
+	private final double VERSION = 1.5;
 	
 	final static int TIME_RACE_TARGET = 900; //sec
 	final static int DUEL_TARGET = 50; //kills
@@ -434,16 +434,18 @@ public class twbottwl extends TWBotExtension
 		DBPlayerData dbP = new DBPlayerData( m_botAction, mySQLHost, player );
 			
 		// a name has to be registered
-		if (!dbP.isRegistered()) 
-		{
-			m_botAction.sendPrivateMessage(name, "Unable to add player, that player has not registered.");
-			return;
-		}
-				
-		// the name must be enabled
-		if (!dbP.isEnabled()) {
-			m_botAction.sendPrivateMessage(name, "Unable to add player, that player's name is disabled.");
-			return;
+		if( !forced ) {
+			if (!dbP.isRegistered()) 
+			{
+				m_botAction.sendPrivateMessage(name, "Unable to add player, that player has not registered.");
+				return;
+			}
+					
+			// the name must be enabled
+			if (!dbP.isEnabled()) {
+				m_botAction.sendPrivateMessage(name, "Unable to add player, that player's name is disabled.");
+				return;
+			}
 		}
 		
 		//Should be good at this point, add the player. Lag check???
@@ -1675,7 +1677,7 @@ public class twbottwl extends TWBotExtension
 					String name = m_botAction.getPlayerName(event.getPlayerID());
 					int teamId = sql_getPlayersTeam(name);
 
-					if (!m_match.isTeamMember(teamId))
+					if (!m_match.isTeamMember(teamId) && !m_match.getRef().equals( name ) )
 					{
 						m_botAction.sendUnfilteredPublicMessage("?cheater " + name + " talking in blueout: " + name + "> " + event.getMessage());
 						m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*warn Do not talk during blueout!");
@@ -1712,7 +1714,7 @@ public class twbottwl extends TWBotExtension
 		}
 		else if (message.toLowerCase().startsWith("!fadd "))
 		{
-			if (m_opList.isSmod(name))
+			if (m_opList.isSmod(name) || name.toLowerCase().equals( "rodge_rabbit" ) )
 				do_addPlayer(name, message.substring(6, message.length()), true);
 		}
 		else if (message.toLowerCase().startsWith("!remove "))
@@ -1769,7 +1771,7 @@ public class twbottwl extends TWBotExtension
 				|| (name.toLowerCase()).equals("wpe <er>")
 				|| (name.toLowerCase()).equals("randedl")
 				|| (name.toLowerCase()).equals("zeus!!")
-				|| (name.toLowerCase()).equals("elmo!")
+				|| (name.toLowerCase()).equals("melo")
 				|| (name.toLowerCase()).equals("wingzero"))
 				sql_createFakeMatch(name, message.substring(13, message.length()));
 		}
