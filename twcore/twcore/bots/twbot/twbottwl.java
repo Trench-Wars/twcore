@@ -16,6 +16,7 @@ import twcore.misc.statistics.*;
 public class twbottwl extends TWBotExtension
 {
 	private final String mySQLHost = "website";
+	private final String mySQLRegister = "local";
 	private LeagueMatch m_match;
 
 	//0 - off
@@ -55,7 +56,7 @@ public class twbottwl extends TWBotExtension
 	private final int MINIMUM_DUEL_LIMIT = 3; //players
 	private final int MINIMUM_BASE_LIMIT = 6; //players
 	
-	private final double VERSION = 1.5;
+	private final double VERSION = 1.6;
 	
 	final static int TIME_RACE_TARGET = 900; //sec
 	final static int DUEL_TARGET = 50; //kills
@@ -334,7 +335,7 @@ public class twbottwl extends TWBotExtension
 	}
 
 	public void do_addPlayer(String name, String message, boolean forced)
-	{	
+	{
 		if (m_gameState < 2)
 		{
 			m_botAction.sendPrivateMessage(name, "You must load a game and !startpick before you can add players.");
@@ -431,7 +432,7 @@ public class twbottwl extends TWBotExtension
 		}
 		
 		
-		DBPlayerData dbP = new DBPlayerData( m_botAction, mySQLHost, player );
+		DBPlayerData dbP = new DBPlayerData( m_botAction, mySQLRegister, player );
 			
 		// a name has to be registered
 		if( !forced ) {
@@ -455,7 +456,7 @@ public class twbottwl extends TWBotExtension
 		m_botAction.sendUnfilteredPrivateMessage( player, "*lag" );
 		
 		addingPlayer = player;
-		
+
 		if (!forced && m_gameState != 4)
 		{
 			m_botAction.sendSquadMessage(m_match.getTeamName(player), player + " has been placed in ship " + shipType);
@@ -1049,7 +1050,7 @@ public class twbottwl extends TWBotExtension
 	{
 		if (m_gameState == 0)
 			return;
-		if (name.equals(m_match.getRef()))
+		if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
 		{
 			m_botAction.sendPrivateMessage(name, m_match.getTeam1Players());
 			m_botAction.sendPrivateMessage(name, m_match.getTeam2Players());
@@ -1815,10 +1816,6 @@ public class twbottwl extends TWBotExtension
 		{
 			showHelpMessages(name, message);
 		}
-		else if (message.toLowerCase().startsWith("!score"))
-		{
-			do_showScore(name, message);
-		}
 		else if (message.toLowerCase().startsWith("!ref"))
 		{
 			if (m_gameState == 0)
@@ -2083,7 +2080,7 @@ public class twbottwl extends TWBotExtension
 
 	/**
 	 * Gets the date that the player must have joined by for the 1 round waiting period.
-	 * 
+	 *
 	 * @return java.util.Date The eligibility of the player depending on joining before this date.
 	 */
 	public java.util.Date sql_getLastRoundCutoffDate()
