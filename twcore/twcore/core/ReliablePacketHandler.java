@@ -25,7 +25,7 @@ public class ReliablePacketHandler {
     }
 
     public void sendReliableMessage( ByteArray message ){
-        
+
         ByteArray           outgoingPacket = new ByteArray( message.size() + 6 );
 
         outgoingPacket.addByte( 0x00 );
@@ -40,13 +40,13 @@ public class ReliablePacketHandler {
     }
 
     public void handleReliableMessage( ByteArray message ){
-        
+
         ByteArray  subMessage;
         int        receivedAck;
-        
+
         receivedAck = message.readLittleEndianInt( 2 );
         m_packetGenerator.sendAck( receivedAck );
-                
+
         if( receivedAck == m_expectedReliable ){
             m_expectedReliable++;
 
@@ -82,16 +82,18 @@ public class ReliablePacketHandler {
         final int       RESEND_DELAY = 3000;
 
         if( m_sentPackets.isEmpty() == false ){
-            iterator = m_sentPackets.keySet().iterator();
+            synchronized (m_sentPackets) {
+                iterator = m_sentPackets.keySet().iterator();
 
-            while( iterator.hasNext() == true ){
-                i = (Integer)iterator.next();
-                message = (ReliablePacket)m_sentPackets.get( i );
-                if( message != null ){
-                    if( message.getTimeSent() + RESEND_DELAY < currentTime ){
-                        packet = message.getPacket();
-                        m_packetGenerator.composeHighPriorityPacket( packet, packet.size() );
-                        message.setTimeSent( currentTime );
+                while( iterator.hasNext() == true ){
+                    i = (Integer)iterator.next();
+                    message = (ReliablePacket)m_sentPackets.get( i );
+                    if( message != null ){
+                        if( message.getTimeSent() + RESEND_DELAY < currentTime ){
+                            packet = message.getPacket();
+                            m_packetGenerator.composeHighPriorityPacket( packet, packet.size() );
+                            message.setTimeSent( currentTime );
+                        }
                     }
                 }
             }
