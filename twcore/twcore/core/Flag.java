@@ -37,6 +37,12 @@ public class Flag {
         m_team = message.getTeam();
     }
     
+    /**
+     * NOTE: If for some reason the playerID is invalid, m_team will be set to -1.
+     * This should be accounted for when using flags. 
+     * @param message FlagClaimed event
+     * @param team Team that claimed the flag; -1 if unable to get it
+     */
     public void processEvent( FlagClaimed message, int team ) {
         
         m_playerID = message.getPlayerID();
