@@ -368,6 +368,12 @@ public class BotAction
         }
     }
 
+    public void sendOpposingTeamMessage( String playerName, String message, int soundCode ){
+        int         playerID = m_arenaTracker.getPlayerID( playerName );
+        
+        sendOpposingTeamMessage( playerID, message, soundCode );
+    }
+
     /** Retreives a file from the server.  File arrives in a "FileArrived" packet.
      * @param fileName Filename of the file requested.
      */
