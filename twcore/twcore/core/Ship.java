@@ -8,6 +8,7 @@ package twcore.core;
 /**
  *
  * @author  harvey
+ * edited by FoN
  */
 public class Ship extends Thread
 {
@@ -142,5 +143,19 @@ public class Ship extends Thread
 	{
 		m_gen.sendAttachRequestPacket((short) - 1);
 	}
-
+	
+    /**
+     * @return Returns the x.
+     */
+    public int getX()
+    {
+        return x;
+    }
+    /**
+     * @return Returns the y.
+     */
+    public int getY()
+    {
+        return y;
+    }
 }
