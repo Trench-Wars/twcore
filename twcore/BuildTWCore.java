@@ -160,10 +160,10 @@ public class BuildTWCore {
             
             // compile all the files into there
             createFileList(new File("twcore/core"), new File("flist.txt"));
-            fullExec(new String[] {"javac", "-sourcepath", "core", "-d", "temp", "@flist.txt"});
+            fullExec(new String[] {"/home/bots/java/current/bin/javac", "-sourcepath", "core", "-d", "temp", "@flist.txt"});
             
             // create the jar
-            fullExec(new String[] {"jar", "cf", "twcore.jar", "-C", "temp", "."});
+            fullExec(new String[] {"/home/bots/java/current/bin/jar", "cf", "twcore.jar", "-C", "temp", "."});
             
             recursiveDelete(tempDir);
             
@@ -183,7 +183,7 @@ public class BuildTWCore {
                 System.out.println("Building " + f.getPath());
                 boolean hasContent = createFileList(f, new File("flist.txt"));
                 if (hasContent)
-                    fullExec(new String[] {"javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
+                    fullExec(new String[] {"/home/bots/java/current/bin/javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
             } catch (Exception e) { System.out.println("error... " + e.getMessage()); }
             
             
@@ -221,7 +221,7 @@ public class BuildTWCore {
 
             // create the jar
             if (doneSomething)
-                fullExec(new String[] {"jar", "uf", "twcore.jar", "-C", "temp", "."});
+                fullExec(new String[] {"/home/bots/java/current/bin/jar", "uf", "twcore.jar", "-C", "temp", "."});
             
             recursiveDelete(tempDir);
             
@@ -242,7 +242,7 @@ public class BuildTWCore {
                     hasContent = createFileList(botDirs[i], new File("flist.txt"));
 					if (hasContent) {
 						System.out.println("Building " + botDirs[i].getName());
-						fullExec(new String[] {"javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
+						fullExec(new String[] {"/home/bots/java/current/bin/javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
 					}
                 } catch (Exception e) {
                     System.out.println("Error.... " + e.getMessage());
