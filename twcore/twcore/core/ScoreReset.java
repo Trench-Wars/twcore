@@ -13,6 +13,7 @@ public class ScoreReset extends SubspaceEvent
 
 	public ScoreReset(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.SCORE_RESET; //sets the event type in the superclass
 		
 		m_playerID = (int) array.readLittleEndianShort(1);

@@ -15,6 +15,7 @@ public class FrequencyShipChange extends SubspaceEvent
 
 	public FrequencyShipChange(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.FREQUENCY_SHIP_CHANGE; //sets the event type in the superclass
 		
 		m_shipType = ((int) array.readByte(1) + 1) % 9;

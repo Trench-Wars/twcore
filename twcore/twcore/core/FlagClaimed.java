@@ -8,6 +8,7 @@ public class FlagClaimed extends SubspaceEvent
 
 	public FlagClaimed(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.FLAG_CLAIMED; //sets the event type in the superclass
 		
 		m_flagID = (int) array.readLittleEndianShort(1);

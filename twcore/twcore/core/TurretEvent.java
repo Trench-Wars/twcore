@@ -8,6 +8,7 @@ public class TurretEvent extends SubspaceEvent
 
 	public TurretEvent(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.TURRET_EVENT; //sets the event type in the superclass
 		
 		m_attacher = (int) array.readLittleEndianShort(1);

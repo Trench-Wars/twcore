@@ -22,6 +22,7 @@ public class ArenaList extends SubspaceEvent
 
 	public ArenaList(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.ARENA_LIST; //sets the event type in the superclass
 		
 		int i = 1;

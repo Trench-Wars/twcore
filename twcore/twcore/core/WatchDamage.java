@@ -50,6 +50,7 @@ public class WatchDamage extends SubspaceEvent
 
 	public WatchDamage(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.WATCH_DAMAGE; //sets the event type in the superclass
 		
 		m_victim = (int) array.readLittleEndianShort(1); //(int)array.readByte( 1 );

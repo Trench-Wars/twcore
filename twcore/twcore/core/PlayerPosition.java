@@ -47,6 +47,7 @@ public class PlayerPosition extends SubspaceEvent
 
 	public PlayerPosition(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.PLAYER_POSITION;	//this is in the superclass SubspaceEvent and needs to be set to its respective type
 		m_type = array.readByte(0);
 		m_size = array.size();
@@ -210,6 +211,8 @@ public class PlayerPosition extends SubspaceEvent
 		return (m_type == 0x05 && m_size == 31) || (m_type == 0x28 && m_size == 0x26);
 	}
 
+
+	
 	public int getEnergy()
 	{
 		return m_energy;

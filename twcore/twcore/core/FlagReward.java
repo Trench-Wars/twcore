@@ -8,12 +8,12 @@ Field    Length    Description
  */
 public class FlagReward extends SubspaceEvent
 {
-
 	int m_points;
 	int m_frequency;
 
 	public FlagReward(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.FLAG_REWARD; //sets the event type in the superclass
 
 		m_frequency = (int) array.readLittleEndianShort(1);

@@ -7,6 +7,7 @@ public class FileArrived extends SubspaceEvent
 
 	public FileArrived(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.FILE_ARRIVED; //sets the event type in the superclass
 
 		fileName = array.readString(0, array.size());

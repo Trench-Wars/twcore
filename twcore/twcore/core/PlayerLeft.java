@@ -7,15 +7,16 @@ Field    Length    Description
  */
 public class PlayerLeft extends SubspaceEvent
 {
-
-	int m_playerID;
+	private int m_playerID;
 
 	public PlayerLeft(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.PLAYER_LEFT; //sets the event type in the superclass
 
 		m_playerID = (int) array.readLittleEndianShort(1);
 	}
+
 
 	public int getPlayerID()
 	{

@@ -7,6 +7,7 @@ public class FlagDropped extends SubspaceEvent
 
 	public FlagDropped(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.FLAG_DROPPED; //sets the event type in the superclass
 		
 		m_playerID = (int) array.readLittleEndianShort(1);

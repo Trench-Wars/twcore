@@ -21,6 +21,7 @@ public class PlayerDeath extends SubspaceEvent
 
 	public PlayerDeath(ByteArray array)
 	{
+		m_byteArray = array;
 		m_eventType = EventRequester.PLAYER_DEATH; //set the eventtype in the super class
 		
 		m_random = (int) array.readByte(1);
