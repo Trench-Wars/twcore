@@ -561,9 +561,10 @@ public class zonerbot extends SubspaceBot
    */
   private void removeCurrentAdverter()
   {
-    idleTimer.cancel();
     if(advertQueue.size() > 0 && advertTimer.isExpired())
       setIdleTimer(idleTime * 60 * 1000);
+    else
+      idleTimer.cancel();
   }
 
   /**
@@ -925,6 +926,8 @@ public class zonerbot extends SubspaceBot
 
   private void setIdleTimer(long milliseconds)
   {
+    if(idleTimer != null)
+      idleTimer.cancel();
     idleTimer = new IdleTimer(milliseconds);
     m_botAction.scheduleTask(idleTimer, milliseconds);
   }
