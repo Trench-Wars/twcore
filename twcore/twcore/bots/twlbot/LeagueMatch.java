@@ -844,7 +844,7 @@ public class LeagueMatch
             while (i.hasNext()) {
                 String player = (String) i.next();
                 LeaguePlayer lp = getPlayer(player);
-                int rate = lp.getStatistic(Statistics.TOTAL_KILLS) - 2 * lp.getStatistic(Statistics.TOTAL_TEAMKILLS) - lp.getStatistic(Statistics.DEATHS);
+                int rate = lp.getStatistic(Statistics.TOTAL_KILLS) - lp.getStatistic(Statistics.TOTAL_TEAMKILLS) - lp.getStatistic(Statistics.DEATHS);
                 if (diff < rate) {
                     mvps = new HashSet();
                     mvps.add(lp);
@@ -862,7 +862,7 @@ public class LeagueMatch
 
         while (i.hasNext()) {
             LeaguePlayer lp = (LeaguePlayer) i.next();
-            int weighted_kills = lp.getStatistic(Statistics.TOTAL_KILLS) - lp.getStatistic(Statistics.TOTAL_TEAMKILLS);
+            int weighted_kills = lp.getStatistic(Statistics.TOTAL_KILLS);
             if (kills < weighted_kills) {
                 finalmvps = new HashSet();
                 finalmvps.add(lp.getName());
