@@ -93,20 +93,33 @@ public class purepubbot extends SubspaceBot
 
   public void handleEvent(PlayerEntered event)
   {
-    if(started)
-    {
-      int playerID = event.getPlayerID();
-      Player player = m_botAction.getPlayer(playerID);
-      String playerName = m_botAction.getPlayerName(playerID);
-
-      m_botAction.sendSmartPrivateMessage(playerName, "This arena has pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.");
-      checkPlayer(playerID, false);
-      if(!privFreqs)
+    try {
+      if(started)
       {
-        m_botAction.sendSmartPrivateMessage(playerName, "Private Frequencies are currently disabled.");
-        checkFreq(playerID, player.getFrequency(), false);
+        int playerID = event.getPlayerID();
+        Player player = m_botAction.getPlayer(playerID);
+        String playerName = m_botAction.getPlayerName(playerID);
+
+        m_botAction.sendSmartPrivateMessage(playerName, "This arena has pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.");
+        checkPlayer(playerID, false);
+        if(!privFreqs)
+        {
+          m_botAction.sendSmartPrivateMessage(playerName, "Private Frequencies are currently disabled.");
+          checkFreq(playerID, player.getFrequency(), false);
+        }
       }
+      if(flagTimeStarted) {
+        int playerID = event.getPlayerID();
+        Player player = m_botAction.getPlayer(playerID);
+        String playerName = m_botAction.getPlayerName(playerID);
+
+        m_botAction.sendSmartPrivateMessage(playerName, "Flag Time mode is currently running.  Send !help to me for more information.");
+        if( flagTimer != null)
+          m_botAction.sendSmartPrivateMessage(playerName, flagTimer.getTimeInfo() );      
+      }
+    } catch (Exception e) {      
     }
+
   }
 
   /**
@@ -598,9 +611,9 @@ public class purepubbot extends SubspaceBot
     if(!flagTimeStarted)
       return;
     
-    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the round." );
-    m_botAction.sendArenaMessage( "Next round will begin in 3 minutes." );
-    m_botAction.scheduleTask( new StartRoundTask(), 3 * 60 * 1000 );
+    m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the round." );
+    m_botAction.sendArenaMessage( "Next round will begin in 2 minutes." );
+    m_botAction.scheduleTask( new StartRoundTask(), 2 * 60 * 1000 );
   }
   
   /**
@@ -616,7 +629,7 @@ public class purepubbot extends SubspaceBot
     } catch (Exception e ) {
     }
     
-    m_botAction.sendArenaMessage( "END ROUND:  Freq " + winningFreq + " has emerged victorious.", 1 );
+    m_botAction.sendArenaMessage( "END ROUND:  Freq " + winningFreq + " has emerged victorious!", 1 );
     m_botAction.scheduleTask( new IntermissionTask(), 10000 );
   }
   
@@ -724,7 +737,6 @@ public class purepubbot extends SubspaceBot
     
     /**
      * Give out prizes to the winning freq.  If it was a hard-fought victory, give more.
-     * Then prize them a shipreset and warp them out so that another freq can have a shot.
      */
     public void givePrizes() {
         int weight = (totalSecs / 60);
@@ -749,7 +761,6 @@ public class purepubbot extends SubspaceBot
                 for( int i = 0; i < weight; i++ ) {               
                   m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #13");
                 }
-                m_botAction.shipReset( player.getPlayerID() );
               }
             }
           }          
@@ -759,13 +770,22 @@ public class purepubbot extends SubspaceBot
         }
     }
     
-    public void sendTimeRemaining( String name ) {       
-      if( isRunning == false ) {
-        m_botAction.sendSmartPrivateMessage( name, "We are currently between games." );
-        return;
-      }
-      
-      m_botAction.sendSmartPrivateMessage( name, (flagholdingFreq == -1 ? "Nobody" : "Freq " + flagholdingFreq ) + " has held for " + getTimeString(secondsHeld) + " and needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more to win.  [Total time: " + getTimeString( totalSecs ) + "]" );      
+    /**
+     * Returns string info about status of game
+     * @return Status of game
+     */
+    public String getTimeInfo() {
+      if( isRunning == false )
+        return "We are currently between games.";
+      return (flagholdingFreq == -1 ? "Nobody" : "Freq " + flagholdingFreq ) + " has held for " + getTimeString(secondsHeld) + " and needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more to win.  [Total time: " + getTimeString( totalSecs ) + "]";        
+    }
+    
+    /**
+     * Sends time info to requested player.
+     * @param name Person to send info to
+     */
+    public void sendTimeRemaining( String name ) {
+      m_botAction.sendSmartPrivateMessage( name, getTimeInfo() );      
     }
     
     public void run()
@@ -786,13 +806,20 @@ public class purepubbot extends SubspaceBot
       }
         
       if( isRunning == false )
-          return;
+        return;
+      
+      totalSecs++;
+
+      // Display mode info at 5 min increments, unless we are near the end of a game
+      if( (totalSecs % (5 * 60)) == 0 && ( flagMinutesRequired - secondsHeld > 30) ) {
+        m_botAction.sendArenaMessage( "Flag Time mode commands (PM to " + m_botAction.getBotName() + "): !help !time" );       
+        m_botAction.sendArenaMessage( getTimeInfo() );
+      }
       
       if( flagholdingFreq == -1 )
         return;
       
       secondsHeld++;
-      totalSecs++;
       
       if( secondsHeld >= flagMinutesRequired * 60 ) {
         endGame();
