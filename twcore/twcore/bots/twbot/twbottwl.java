@@ -520,7 +520,6 @@ public class twbottwl extends TWBotExtension
 		m_botAction.scheduleTask(warpPlayers, 5000);
 		m_botAction.sendArenaMessage("Game starts in 30 seconds", 2);
 
-
 		//second warp		
 		TimerTask secondWarp = new TimerTask()
 		{
@@ -549,18 +548,6 @@ public class twbottwl extends TWBotExtension
 					m_botAction.warpFreqToLocation(0, 486, 256);
 					m_botAction.warpFreqToLocation(1, 538, 256);
 					m_botAction.setTimer(31);
-
-					TimerTask timeRace = new TimerTask()
-					{
-						public void run()
-						{
-							m_match.addTimePoint();
-							if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) ||  (m_match.getTeam2Score() >= TIME_RACE_TARGET))
-								do_endGame();
-						}
-					};
-
-					m_botAction.scheduleTaskAtFixedRate(timeRace, 1000, 1000);
 				}
 				else
 					m_botAction.setTimer(30);
@@ -574,6 +561,22 @@ public class twbottwl extends TWBotExtension
 				sql_startGame();
 			}
 		};
+
+		//base match
+		if (m_match.getMatchTypeId() == 3)
+		{
+			TimerTask timeRace = new TimerTask()
+			{
+				public void run()
+				{
+					m_match.addTimePoint();
+					if ((m_match.getTeam1Score() >= TIME_RACE_TARGET) || (m_match.getTeam2Score() >= TIME_RACE_TARGET))
+						do_endGame();
+				}
+			};
+
+			m_botAction.scheduleTaskAtFixedRate(timeRace, 35000, 1000);
+		}
 
 		TimerTask timerDoors = new TimerTask()
 		{
