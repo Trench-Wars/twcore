@@ -470,6 +470,8 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleLast( String playerName, String message ){
+        if (!opList.isZH(playerName))
+          return;
         String[]        responses;
         HelpRequest     helpRequest;
 
