@@ -160,9 +160,11 @@ public class messagebot extends SubspaceBot
     			m_botAction.SQLQuery("local", query2);
     		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
+    		c.messageChannel(name, "Channel " + message + " deleted.");
+    		channels.remove(message.toLowerCase());
     	}
-    	c.messageChannel(name, "Channel " + message + " deleted.");
-    	channels.remove(message.toLowerCase());
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Puts in a request to join a channel.
@@ -216,8 +218,10 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isZH(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
   		  	c.acceptPlayer(name, pieces[1]);
+  		else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Declines a player's request to join a channel.
@@ -236,6 +240,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.rejectPlayer(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Sends a pm to all players on the channel.
@@ -254,6 +260,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.announceToChannel(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 	
 	/** Sends ?message's to every player on a channel.
@@ -272,6 +280,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.messageChannel(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Lists all requests to join a channel.
@@ -287,8 +297,10 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isZH(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.listRequests(name);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Bans a player from a channel
@@ -307,6 +319,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.banPlayer(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Removes a player's ban.
@@ -325,6 +339,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.unbanPlayer(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Lists all requests to join a channel.
@@ -342,6 +358,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(message.toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.listBanned(name);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Lists all requests to join a channel.
@@ -359,6 +377,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(message.toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.listMembers(name);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Makes a player a channel operator.
@@ -377,6 +397,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.makeOp(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Revokes a player's operator status
@@ -401,6 +423,8 @@ public class messagebot extends SubspaceBot
     	
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.deOp(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Grants ownership of a channel to a new player.
@@ -419,6 +443,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.newOwner(name, pieces[1]);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Tells who the owner of the requested channel is.
@@ -453,6 +479,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(message.toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.makePublic(name);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Makes a channel private
@@ -470,6 +498,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(message.toLowerCase());
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
     		c.makePrivate(name);
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Sends help messages
@@ -726,6 +756,7 @@ public class messagebot extends SubspaceBot
 			//		m_botAction.SQLQuery("local", query2);
 			//		System.out.println("Deleting messages.");
 			//	} catch(SQLException e) { Tools.printStackTrace( e ); }
+				System.out.println("fun....");
 			}
 		};
 	}
