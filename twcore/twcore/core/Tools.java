@@ -57,7 +57,7 @@ public class Tools {
             }
         }
         
-        if (startpos != input.length()-1) list.add(input.substring(startpos));
+        if ((startpos != input.length()-1) || startpos == 0) list.add(input.substring(startpos));
         
         return (String[])list.toArray(new String[list.size()]);
     }
