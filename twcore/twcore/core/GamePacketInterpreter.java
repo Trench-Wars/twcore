@@ -672,7 +672,9 @@ public class GamePacketInterpreter {
         }
         
         PasswordPacketResponse ppResponse = new PasswordPacketResponse( message );
-        Tools.printLog( m_session.getBotName() + " log in response: " + ppResponse.getResponseMessage() );
+        
+        if( ppResponse.getResponseValue() > 0 )
+        	Tools.printLog( m_session.getBotName() + " log in response: " + ppResponse.getResponseMessage() );
         
         if( ppResponse.isFatal() ) m_session.disconnect();
     }

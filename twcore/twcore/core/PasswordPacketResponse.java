@@ -53,7 +53,8 @@ public class PasswordPacketResponse {
 	
 	public boolean isFatal() {
 		
-		if( m_response == 0 || m_response == 6 || m_response == 12 ) return false;
+		if( m_response == 0 || m_response == 6 
+			|| m_response == 12 || m_response == 14 ) return false;
 		else return true;
 	}
 }
