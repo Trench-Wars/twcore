@@ -2,119 +2,232 @@ package twcore.bots.twbot;
 
 import twcore.core.*;
 
-public class LeaguePlayer {
-	
-	String playerName;
-	int    shipType;
-	int	   frequency;
-	int    deathLimit;
-	
-	int	   deaths = 0;
-	int    kills = 0;
-	int	   teamkills = 0;
-	int	   terrierKills = 0;
-	int    score = 0;
-	int	   lagouts = 0;
-	
-	boolean outOfGame = false;
-	boolean laggedOut = false;
-	boolean warned = false;
-	boolean inBase = false;
-	boolean saveState = false;
-	int timeOfLagout = 0;
-	int timer = 0;
-	String sub = "  -";
+public class LeaguePlayer
+{
 
-	public LeaguePlayer( String name, int ship, int freq, int deaths ) {
-		playerName = name;
-		shipType = ship;
-		frequency = freq;
-		deathLimit = deaths;
-		timer = (int)(System.currentTimeMillis()/1000);
+	String m_playerName;
+	int m_shipType;
+	int m_frequency;
+	int m_deathLimit;
+
+	int m_deaths = 0;
+	int m_kills = 0;
+	int m_teamkills = 0;
+	int m_terrierKills = 0;
+	int m_score = 0;
+	int m_lagouts = 0;
+
+	boolean m_outOfGame = false;
+	boolean m_laggedOut = false;
+	boolean m_warned = false;
+	boolean m_inBase = false;
+	boolean m_saveState = false;
+	int m_timeOfLagout = 0;
+	int m_timer = 0;
+	String m_sub = "  -";
+
+	public LeaguePlayer(String name, int ship, int freq, int deaths)
+	{
+		m_playerName = name;
+		m_shipType = ship;
+		m_frequency = freq;
+		m_deathLimit = deaths;
+		m_timer = (int) (System.currentTimeMillis() / 1000);
 	}
-	
-	public String getName() { return playerName; }
-	
-	public int getShip() { return shipType; }
-	public void setShip( int s ) { shipType = s; }
-	
-	public int getFreq() { return frequency; }
-	public int getDeathLimit() { return deathLimit; }
-	public void setDeathLimit( int d ) { deathLimit = d; }
-	
-	public int getKills() { return kills; }
-	public void addKill() { kills++; }
-	public void setKills( int k ) { kills = k; }
-	
-	public int getTeamKills() { return teamkills; }
-	public void addTeamKill() { teamkills++; }
-	public void setTeamKills( int k ) { teamkills = k; }
-	
-	public int getTerrierKills() { return terrierKills; }
-	public void addTerrierKill() { terrierKills++; }
-	public void setTerrierKills( int k ) { terrierKills = k; }
-	
-	public int getDeaths() { return deaths; }
-	public void addDeath() { 
-		deaths++; 
-		timer = (int)(System.currentTimeMillis()/1000);
-		warned = false;
-		inBase = false;
+
+	public String getName()
+	{
+		return m_playerName;
 	}
-	public void setDeaths( int d ) { deaths = d; }
-	
-	public int getScore() { return score; }
-	public void addToScore( int s ) { score += s; }
-	public void setScore( int s ) { score = s; }
-	
-	public int getLagouts() { return lagouts; }
-	public void addLagout() { lagouts++; }
-	public void setLagouts( int l ) { lagouts = l; }
-	
-	public void isOut() { outOfGame = true; }
-	public boolean isOutOfGame() { return outOfGame; }
-	
-	public void laggedOut() { laggedOut = true; }
-	
-	public void notLaggedOut() { 
-		laggedOut = false; 
-		timer = (int)(System.currentTimeMillis()/1000);
+
+	public int getShip()
+	{
+		return m_shipType;
 	}
-	
-	public boolean isLagged() { return laggedOut; }
-	
-	public int getTimeBetweenLagouts() {
-		int time = (int)(System.currentTimeMillis()/1000);
-		time -= timeOfLagout;
+	public void setShip(int s)
+	{
+		m_shipType = s;
+	}
+
+	public int getFreq()
+	{
+		return m_frequency;
+	}
+	public int getDeathLimit()
+	{
+		return m_deathLimit;
+	}
+	public void setDeathLimit(int d)
+	{
+		m_deathLimit = d;
+	}
+
+	public int getKills()
+	{
+		return m_kills;
+	}
+	public void addKill()
+	{
+		m_kills++;
+	}
+	public void setKills(int k)
+	{
+		m_kills = k;
+	}
+
+	public int getTeamKills()
+	{
+		return m_teamkills;
+	}
+	public void addTeamKill()
+	{
+		m_teamkills++;
+	}
+	public void setTeamKills(int k)
+	{
+		m_teamkills = k;
+	}
+
+	public int getTerrierKills()
+	{
+		return m_terrierKills;
+	}
+	public void addTerrierKill()
+	{
+		m_terrierKills++;
+	}
+	public void setTerrierKills(int k)
+	{
+		m_terrierKills = k;
+	}
+
+	public int getDeaths()
+	{
+		return m_deaths;
+	}
+	public void addDeath()
+	{
+		m_deaths++;
+		m_timer = (int) (System.currentTimeMillis() / 1000);
+		m_warned = false;
+		m_inBase = false;
+	}
+	public void setDeaths(int d)
+	{
+		m_deaths = d;
+	}
+
+	public int getScore()
+	{
+		return m_score;
+	}
+	public void addToScore(int s)
+	{
+		m_score += s;
+	}
+	public void setScore(int s)
+	{
+		m_score = s;
+	}
+
+	public int getLagouts()
+	{
+		return m_lagouts;
+	}
+	public void addLagout()
+	{
+		m_lagouts++;
+	}
+	public void setLagouts(int l)
+	{
+		m_lagouts = l;
+	}
+
+	public void isOut()
+	{
+		m_outOfGame = true;
+	}
+	public boolean isOutOfGame()
+	{
+		return m_outOfGame;
+	}
+
+	public void laggedOut()
+	{
+		m_laggedOut = true;
+	}
+
+	public void notLaggedOut()
+	{
+		m_laggedOut = false;
+		m_timer = (int) (System.currentTimeMillis() / 1000);
+	}
+
+	public boolean isLagged()
+	{
+		return m_laggedOut;
+	}
+
+	public int getTimeBetweenLagouts()
+	{
+		int time = (int) (System.currentTimeMillis() / 1000);
+		time -= m_timeOfLagout;
 		return time;
 	}
-	
-	public void subbedBy( String name ) { sub = name; }
-	public String getSub() { return sub; }
-	
-	public void updateTimer() { 
-		timer = (int)(System.currentTimeMillis()/1000); 
-		warned = false;
-		inBase = false;
+
+	public void subbedBy(String name)
+	{
+		m_sub = name;
 	}
-	
-	public boolean hasBeenInBase() { return inBase; }
-	public void inBase() { inBase = true; }
-	public void notInBase() { inBase = false; }
-	
-	public int timeOutOfBounds() {
-		int time = (int)(System.currentTimeMillis()/1000);
-		time -= timer;
+	public String getSub()
+	{
+		return m_sub;
+	}
+
+	public void updateTimer()
+	{
+		m_timer = (int) (System.currentTimeMillis() / 1000);
+		m_warned = false;
+		m_inBase = false;
+	}
+
+	public boolean hasBeenInBase()
+	{
+		return m_inBase;
+	}
+	public void inBase()
+	{
+		m_inBase = true;
+	}
+	public void notInBase()
+	{
+		m_inBase = false;
+	}
+
+	public int timeOutOfBounds()
+	{
+		int time = (int) (System.currentTimeMillis() / 1000);
+		time -= m_timer;
 		return time;
 	}
-	
-	public boolean warned() { return warned; }
-	public void haveWarned() { 
-		warned = true; 
+
+	public boolean warned()
+	{
+		return m_warned;
+	}
+	public void haveWarned()
+	{
+		m_warned = true;
 		//timer = (int)(System.currentTimeMillis()/1000);
 	}
-	
-	public boolean state() { return saveState; }
-	public void toggleState() { saveState = true; }
-	
+
+	public boolean state()
+	{
+		return m_saveState;
+	}
+	public void toggleState()
+	{
+		m_saveState = true;
+	}
+
 }
