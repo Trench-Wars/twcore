@@ -1,7 +1,7 @@
 /*
  * twbotkiller - Killer module - qan (gdugwyler@hotmail.com)
  *
- * Created 5/29/04 - Last modified 7/14/04
+ * Created 5/29/04 - Last modified 8/5/04
  * 
  *
  *
@@ -32,34 +32,52 @@ import twcore.core.*;
  * next hit spec'ing.  Other than that, a normal elim.  Last person standing wins.
  *
  * @author  qan
- * @version 1.7
+ * @version 1.9
  */
 public class twbotkiller extends TWBotExtension {
 
     public twbotkiller() {
     }
 
+
+    // Bot stats
+    final static String f_version = "1.9";         // Version of bot
+    final static String f_modified = "7/24/04";    // Date of last modification
+
+    // Final declarations
+    final static int f_5seconds = 5000;      // 5000ms / 5 seconds
+    final static int f_specship = 0;         // the ship number representing spec
+    final static int f_deflives = 10;        // the default number of deaths allowed
+    final static int f_teamsize = 1;         // Teams of 1 (standard DM style)
+    final static int f_guesscmdlength = 7;   // length of !guess command till args
+    
+
     TimerTask startGame;
     TimerTask giveStartWarning;
 
-    int m_killerID;
+    String m_killer = "";
     int m_lives;
 
     boolean isRunning = false;
     boolean suddenDeath = false;
+    boolean manual = false;        // Manual toggle for more personal hosting style
 
 
 
-    /**This handleEvent accepts msgs from players as well as mods.
-     * Mod-only commands are filtered out in handleCommand
-     * @event The Message event in question.
+    /** Handles event received message, and if from an ER or above, 
+     * tries to parse it as an event mod command.  Otherwise, parses
+     * as a general command.
+     * @param event Passed event.
      */
     public void handleEvent( Message event ){
 
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
-            handleCommand( name, message );
+            if( m_opList.isER( name ))
+                handleCommand( name, message );
+            else
+                handleGeneralCommand( name, message );
         }
     }
 
@@ -74,50 +92,57 @@ public class twbotkiller extends TWBotExtension {
     public void doInit( final int lives, String killerName ){
         m_lives = lives;
 
-
-        m_botAction.sendArenaMessage( "RULES OF KILLER: Basic elim, except that one person is THE KILLER.  This should remain as secret as possible.  Anyone murdered by the Killer is instantly specced.",4 );
-        m_botAction.sendArenaMessage( "Send !guess <name> to the bot to guess who the killer is.  If you're right, you become the new Killer -- but guess wrong and you'll be specced." );
-        m_botAction.sendArenaMessage( "Use !whoami to see if you're the Killer.  NOTE: Revealing the identity of the Killer to anyone else is considered *cheating* and will be dealt with harshly!" );
-
-
         if ( killerName == "" ) {
             makeNewRandomKiller();
         } else {
             Player p = m_botAction.getFuzzyPlayer( killerName );
             if( p != null) {
-                m_killerID = p.getPlayerID();
-                String name = m_botAction.getPlayerName( m_killerID );
-                m_botAction.sendPrivateMessage( name, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity.",1);
+                m_killer = p.getPlayerName();
+                m_botAction.sendPrivateMessage( m_killer, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity.",1);
             }
         }
 
-
-        // Wait 5 seconds before giving 10 sec warning so players can read rules
-        giveStartWarning = new TimerTask() {
-            public void run() {
-                m_botAction.sendArenaMessage( "10 seconds until the slaying begins...", 2);
-            }
-        };
-        m_botAction.scheduleTask( giveStartWarning, 5000 );
-
-
+        
         startGame = new TimerTask() {
             public void run() {
                 if( isRunning == false ) {
                     isRunning = true;
-
                     m_botAction.scoreResetAll();
                     m_botAction.shipResetAll();
 
                     m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths." );
+                    m_botAction.sendArenaMessage( "Blueout enabled for secrecy.  Staff, please refrain from speaking in public chat." );
                     m_botAction.sendArenaMessage( "THE HUNT IS ON!  Beware the Killer...", 104);
-                    m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-                    m_botAction.sendArenaMessage( "Blueout enabled to protect the Killer.  Staff, please refrain from speaking in public chat." );
-                }
 
+                    m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
+                    m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
+                }
             }
         };
-        m_botAction.scheduleTask( startGame, 15000 );
+
+        if( manual ) {
+            if( isRunning == false ) {
+                isRunning = true;
+                m_botAction.scoreResetAll();
+                m_botAction.shipResetAll();
+                m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths." );
+                m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
+                m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
+            }
+        } else {
+            m_botAction.createRandomTeams( f_teamsize );
+
+            displayRules();
+
+            // Wait 5 seconds before giving 10 sec warning so players can read rules
+            giveStartWarning = new TimerTask() {
+                public void run() {
+                    m_botAction.sendArenaMessage( "10 seconds until the slaying begins...", 2);
+                }
+            };
+            m_botAction.scheduleTask( giveStartWarning, f_5seconds );
+            m_botAction.scheduleTask( startGame, f_5seconds * 3 );
+        }
     }
 
 
@@ -127,9 +152,9 @@ public class twbotkiller extends TWBotExtension {
      *         in the arena, false if not.
      */
     public boolean killerStillPlaying() {
-        Player p = m_botAction.getPlayer( m_killerID );
+        Player p = m_botAction.getPlayer( m_killer );
 
-        if( p != null && p.getShipType() != 0)
+        if( p != null && p.getShipType() != f_specship)
             return true;
         else
             return false;
@@ -141,16 +166,15 @@ public class twbotkiller extends TWBotExtension {
      * FIX: Feed all eligible players into a list and use a random number generator to choose one.
      */
     public void makeNewRandomKiller() {
-        m_killerID = -1;
+        m_killer = "";
 
         Iterator i = m_botAction.getPlayingPlayerIterator();
 
-        while (m_killerID == -1 && i.hasNext() ) {
+        while (m_killer == "" && i.hasNext() ) {
             if (i != null) {
-                m_killerID = ((Player) i.next()).getPlayerID();
+                m_killer = ((Player) i.next()).getPlayerName();
 
-                String name = m_botAction.getPlayerName( m_killerID );
-                m_botAction.sendPrivateMessage( name, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity by keeping your kills secretive.",1);
+                m_botAction.sendPrivateMessage( m_killer, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity by keeping your kills secretive.",1);
             }
         }
     }
@@ -167,9 +191,10 @@ public class twbotkiller extends TWBotExtension {
             
             switch( params.length){
 
-            // Default: 10 lives, random starting killer
-            case 0: 
-                doInit( 10, "" );
+            // Default # lives, random starting killer
+            case 0:
+                m_killer = "";
+                doInit( f_deflives, "" );
                 m_botAction.sendPrivateMessage( name, "Killer mode started." );
                 break;
 
@@ -209,10 +234,73 @@ public class twbotkiller extends TWBotExtension {
      */
     public void handleCommand( String name, String message ){
 
-        if( message.startsWith( "!whoami" )) {
+        if( message.startsWith( "!stop" )){
+            if(isRunning == true) {
+                doStop();
+                m_botAction.sendPrivateMessage( name, "Killer mode stopped." );
+            } else {
+                m_botAction.sendPrivateMessage( name, "Killer mode is not currently enabled." );
+            }
+              
+        } else if( message.startsWith( "!start " )){
+            if(isRunning == false) {
+                String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
+                m_killer = "";
+                start( name, parameters );
+            } else {
+                m_botAction.sendPrivateMessage( name, "Killer mode has already been started." );
+            }
+
+        } else if( message.startsWith( "!start" )){
+            if(isRunning == false) {
+                m_killer = "";
+                doInit( f_deflives, "" );
+                m_botAction.sendPrivateMessage( name, "Killer mode started." );
+            } else {
+                m_botAction.sendPrivateMessage( name, "Killer mode has already been started." );
+            }
+
+        } else if( message.startsWith( "!rules" )) {
+            displayRules();
+
+        } else if( message.startsWith( "!manual" )) {
+            if( manual ) {
+                manual = false;
+                m_botAction.sendPrivateMessage( name, "Manual OFF.  !start will now do most of the work for you." );
+            } else {
+                manual = true;
+                m_botAction.sendPrivateMessage( name, "Manual ON.  !start won't display rules, give 10 seconds, say GO, etc." );
+            }
+  
+        } else
+            handleGeneralCommand( name, message );    // pass the buck
+
+    }
+
+
+
+    /** Handles all general commands given to the bot.
+     * @param name Name of player who sent the command.
+     * @param message Message sent
+     */
+    public void handleGeneralCommand( String name, String message ) {
+        // Prevent double !help spam (don't be TOO helpful)
+        if( message.startsWith( "!bothelp" ) )
+            sendHelp( name );
+
+        else if( message.startsWith( "!botrules" ) )
+            sendRules( name );
+
+        else if( message.startsWith( "!about" ) )
+            sendAbout( name );
+
+        else if( message.equals( "!help" ) )
+            m_botAction.sendPrivateMessage( name, "Send !bothelp for help on the loaded bot module." );
+
+        else if( message.startsWith( "!whoami" )) {
             if(isRunning == true) {
 
-                if( m_botAction.getPlayerID( name ) == m_killerID ) {
+                if( m_killer.equals( name ) ) {
                     m_botAction.sendPrivateMessage( name, "You are the Killer.  Be careful not to give yourself away." );
                 } else {
                     m_botAction.sendPrivateMessage( name, "You are not the Killer.  Run, run for your life!" );
@@ -222,29 +310,28 @@ public class twbotkiller extends TWBotExtension {
                 m_botAction.sendPrivateMessage( name, "Killer is not currently running." );
             }
 
-        }
-
-        if( message.startsWith( "!guess " )){
+        } else if( message.startsWith( "!guess " )){
 
             if(isRunning == true) {
 
                 if( killerStillPlaying()) {
 
-                    if( m_botAction.getPlayerID( name ) == m_killerID ) {
+                    if( m_killer.equals( name ) ) {
                         m_botAction.sendPrivateMessage( name, "You ARE the Killer...  you don't need to make any guesses as to who you are." );
 
                     } else {    
                 
-                        String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
+                        String[] parameters = Tools.stringChopper( message.substring( f_guesscmdlength ), ' ' );
 
                         Player guessK = m_botAction.getFuzzyPlayer( parameters[0] );
                         Player p = m_botAction.getPlayer( name );
 
-                        if (p.getShipType() != 0 && guessK != null && suddenDeath == false ) {
-                            if( m_killerID == guessK.getPlayerID() ) {
+                        if ( p.getShipType() != f_specship && guessK != null
+                                                           && suddenDeath == false ) {
+                            if( m_killer.equals( guessK.getPlayerName() ) ) {
                                 m_botAction.sendPrivateMessage( name, "CORRECT!  You are now the new killer!  Try to keep your identity secret from others and make your kills as stealthy as possible.", 103 );
                                 m_botAction.sendArenaMessage( "Beware, a new killer stalks the night...!");
-                                m_killerID = p.getPlayerID();
+                                m_killer = p.getPlayerName();
                             } else {
                                 m_botAction.sendPrivateMessage( name, "You have been deceived by the killer!  Now you have become one of the victims...", 13 );
                                 m_botAction.sendArenaMessage( name + " falsely presumed the killer's identity and ended up one of the victims.");
@@ -261,45 +348,6 @@ public class twbotkiller extends TWBotExtension {
             } else {
                 m_botAction.sendPrivateMessage( name, "Killer is not currently running." );
             }
-
-	}        
-
-
-
-        if( m_opList.isER( name )) {
-            if( message.startsWith( "!stop" )){
-                if(isRunning == true) {
-                    m_botAction.sendPrivateMessage( name, "Killer mode stopped." );
-                    isRunning = false;
-                    suddenDeath = false;
-                } else {
-                    m_botAction.sendPrivateMessage( name, "Killer mode is not currently enabled." );
-                }
-              
-            } else if( message.startsWith( "!start " )){
-                if(isRunning == false) {
-                    String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
-                    start( name, parameters );
-                } else {
-                    m_botAction.sendPrivateMessage( name, "Killer mode has already been started." );
-                }
-
-            } else if( message.startsWith( "!start" )){
-                if(isRunning == false) {
-                    doInit( 10, "" );
-                    m_botAction.sendArenaMessage( "Removing players with 10 deaths." );
-                    isRunning = true;
-                    m_botAction.sendPrivateMessage( name, "Killer mode started." );
-                } else {
-                    m_botAction.sendPrivateMessage( name, "Killer mode has already been started." );
-                }
-
-            } else if( message.startsWith( "!rules" )) {
-                m_botAction.sendArenaMessage( "RULES OF KILLER: Basic elim, except that one person is THE KILLER.  This should remain as secret as possible.  Anyone murdered by the Killer is instantly specced.",4 );
-                m_botAction.sendArenaMessage( "Send !guess <name> to the bot to guess who the killer is.  If you're right, you become the new Killer -- but guess wrong and you'll be specced." );
-                m_botAction.sendArenaMessage( "Use !whoami to see if you're the Killer.  NOTE: Revealing the identity of the Killer to anyone else is considered *cheating* and will be dealt with harshly!" );
-
-            } 
         }
     }
 
@@ -309,7 +357,7 @@ public class twbotkiller extends TWBotExtension {
      * @param event Contains event information on player who left.
      */
     public void handleEvent( PlayerLeft event ) {
-        if( event.getPlayerID() == m_killerID ) {
+        if( m_killer.equals( m_botAction.getPlayerName(event.getPlayerID()) ) ) {
             makeNewRandomKiller();
         }
     }
@@ -323,9 +371,9 @@ public class twbotkiller extends TWBotExtension {
      */
     public void handleEvent( FrequencyShipChange event ) {
 
-        if( event.getShipType() == 0 && isRunning ) {
+        if( event.getShipType() == f_specship && isRunning ) {
 
-            if( event.getPlayerID() == m_killerID ) {
+            if( m_killer.equals( m_botAction.getPlayerName( event.getPlayerID() ) ) ) {
 
                 int numPs = 0;
                 Iterator i3 = m_botAction.getPlayingPlayerIterator();
@@ -348,12 +396,12 @@ public class twbotkiller extends TWBotExtension {
                     i.next();
                 }
 
-                if( numPlayers == 2 ) {
+                if( numPlayers == 2 && !suddenDeath ) {
 
-                    Player p = m_botAction.getPlayer( m_killerID );
+                    Player p = m_botAction.getPlayer( m_killer );
 
                     try {
-                       if( p != null && p.getShipType() != 0) {
+                       if( p != null && p.getShipType() != f_specship) {
                            suddenDeath = true;                
                            m_botAction.sendArenaMessage( p.getPlayerName() + " has been uncovered as the Killer!  The final showdown begins... and the next to die will perish.",103);
                        }
@@ -366,14 +414,12 @@ public class twbotkiller extends TWBotExtension {
                     try {
                         Player winner = (Player) i2.next();
 
-                        if( winner.getPlayerID() == m_killerID ) {
+                        if( m_killer.equals( winner.getPlayerName() ) ) {
                             m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + ", the notorious Killer, has emerged victorious, and lives to kill another day...",13);
-                            isRunning = false;
-                            suddenDeath = false;
+                            doStop();
                         } else {
                             m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " has triumphed over the Killer and returned peace to this once-quiet city.",5);
-                            isRunning = false;
-                            suddenDeath = false;
+                            doStop();
                         }
                     } catch (Exception e) {
                     }
@@ -403,9 +449,7 @@ public class twbotkiller extends TWBotExtension {
             
             } else {
 
-                int kID = event.getKillerID();
-
-                if( kID == m_killerID ) {
+                if( m_killer.equals( m_botAction.getPlayerName( event.getKillerID() ) ) ) {
 
                     String playerName = p.getPlayerName();
                     m_botAction.sendPrivateMessage(playerName, "You have been slain by the Killer -- you are dead.", 13);
@@ -429,6 +473,97 @@ public class twbotkiller extends TWBotExtension {
 
         }
     }
+
+
+
+    /** Performs all necessary operations to stop bot.
+     */
+    public void doStop() {
+        isRunning = false;
+        suddenDeath = false;
+        m_killer = "";
+        m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
+        m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
+
+        if( ! manual ) {
+            m_botAction.toggleLocked();	// Note: the bot DOES NOT LOCK to start.
+                                          // This is to give host some freedom.
+            m_botAction.sendArenaMessage( "Arena and chats unlocked, free to enter." );
+        }
+    }
+
+
+
+    // DISPLAY/INFO SECTION -- a handy layout.  To use, replace your module's
+    // handleEvent for Message events with the one in here, create f_version
+    // and f_lastmodified final static variables as seen above, copy/paste
+    // the handleGeneralCommand method, and copy/paste/edit the following
+    // methods below.  Makes a module much more user-friendly.
+
+    /** Displays the rules of the event module in readable form.
+     */
+    public void displayRules() {
+        String[] rules = getRules();
+        for( int i = 0; i < rules.length; i++ )
+            m_botAction.sendArenaMessage( rules[i] );
+    }
+
+
+
+    /** Sends rules privately to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendRules( String name ) {
+        m_botAction.privateMessageSpam( name, getRules() );
+    }
+
+
+
+    /** Sends about message to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendAbout(String name) {
+        String about = "Killer module, v" + f_version + ".  Created by qan.  Last modified " + f_modified;
+        m_botAction.sendPrivateMessage( name, about );
+    }
+
+
+
+    /** Sends general help to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendHelp( String name ) {
+        String[] help = {
+            "General Help for Killer Module",
+            "!guess <name> - Guess <name> as the Killer.  If you are wrong,",
+            "                you are specced.  If right, you become the Killer.",
+            "!whoami       - Shows whether or not you are the Killer.",
+            "!botrules     - Display built-in rules via private message.",
+            "!about        - Gives basic information about the bot module.",
+            "!bothelp      - This message."
+        };
+        m_botAction.privateMessageSpam( name, help );
+    }
+
+
+
+    /** Returns the rules of the event in readable form.
+     * @return String array containing rules.
+     */
+    public String[] getRules() {
+        String[] rules = {
+          // | Max line length for rules to display correctly on 800x600.....................|
+            ".....                          - RULES of KILLER -                          .....",
+            "...   One person is, in secret, the Killer.  If anyone is killed by the       ...",
+            "..    Killer, they are specced.  Revealing the Killer's identity = CHEATING.   ..",
+            ".     To guess who the Killer is, PM !guess <name> to the bot.   If you guess   .",
+            ".     wrong, you'll be specced, but if you're correct, you become the Killer!   .",
+            ".     Send !whoami to the bot to check on your status.  Otherwise, normal elim. .",
+            ".                                 - OBJECTIVE -                                 .",
+            ".         - Be the last one standing, no matter the cost.                       .",
+        };
+        return rules;
+    }
     
 
 
@@ -442,8 +577,10 @@ public class twbotkiller extends TWBotExtension {
             "!start <lives> <killername> - Specify number of lives and starting Killer.",
             "!stop               - Stops Killer mode.",
             "!rules              - Displays basic rules of Killer to the arena.",
+            "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)",
             "!guess <name>       - PUBLIC COMMAND.  Makes a guess as to who the Killer is.",
-            "!whoami             - PUBLIC COMMAND.  Tells you if you are the Killer." };
+            "!whoami             - PUBLIC COMMAND.  Tells you if you are the Killer."
+        };
         return KillerHelp;
     }
 

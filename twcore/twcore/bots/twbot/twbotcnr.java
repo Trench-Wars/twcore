@@ -1,7 +1,7 @@
 /*
  * twbotcnr.java - Cops and Robbers module - qan (gdugwyler@hotmail.com)
  *
- * Created 5/27/2004 - Last modified 7/14/04.
+ * Created 5/27/2004 - Last modified 7/24/04.
  *
  */  
 
@@ -45,7 +45,7 @@ import twcore.core.*;
  *   - If robbers get flag, set doors to 0 (open)
  *   - If cops get flag, set doors to 1 (closed)
  * 
- * @version 1.6
+ * @version 1.8
  * @author qan
  *
  */
@@ -57,15 +57,34 @@ public class twbotcnr extends TWBotExtension {
     }
 
 
+    // Bot stats
+    final static String f_version = "1.8";         // Version of bot
+    final static String f_modified = "7/24/04";    // Date of last modification
+
+
+    // Final declarations
+    final static int f_5seconds = 5000;      // 5000ms / 5 seconds
+    final static int f_minmapcoord = 0;      // Min coord
+    final static int f_maxmapcoord = 1024;   // Max coord
+    final static int f_defrobfreq = 0;       // Default Robber freq
+    final static int f_defcopfreq = 1;       // "       Cop    "
+    final static int f_defrobship = 1;       // "       Robber ship
+    final static int f_defcopship = 3;       // "       Cop    "
+    final static int f_deflives = 2;         // "       Lives
+    final static int f_alldoorsopen = 0;     // Door open for setdoors
+    final static int f_prisondoorclosed = 1; // Jail door closed for setdoors
+
+
+    // Timers
     TimerTask startGame;
     TimerTask giveStartWarning;
 
     // Data on frequencies, ships, number of lives, and start locations
-    int m_robberfreq = 0;
-    int m_robbership = 1;
-    int m_copfreq = 1;
-    int m_copship = 3;
-    int m_lives = 2;
+    int m_robberfreq = f_defrobfreq;
+    int m_copfreq = f_defcopfreq;
+    int m_robbership = f_defrobship;
+    int m_copship = f_defcopship;
+    int m_lives = f_deflives;
 
     // Default start locations (for use in CnR arena)
     int m_robstart_x = 512;
@@ -74,23 +93,39 @@ public class twbotcnr extends TWBotExtension {
     int m_copstart_y = 290;
 
     boolean isRunning = false;
-    boolean modeSet = false;
+    boolean manual = false;
 
 
-    /** Initializes frequencies, ships, and number of cop lives
-      * @param robberfreq Robber freq
+    /** Handles event received message, and if from an ER or above, 
+     * tries to parse it as an event mod command.  Otherwise, parses
+     * as a general command.
+     * @param event Passed event.
+     */
+    public void handleEvent( Message event ){
+
+        String message = event.getMessage();
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
+            String name = m_botAction.getPlayerName( event.getPlayerID() );
+            if( m_opList.isER( name ))
+                handleCommand( name, message );
+            else
+                handleGeneralCommand( name, message );
+        }
+    }
+
+
+
+    /** Initializes ships and number of cop lives
       * @param robberfreq Robber ship
-      * @param robberfreq Cop freq
       * @param robberfreq Cop ship
       * @param robberfreq Cop lives before spec
       */
-    public void setMode( int robberfreq, int robbership, int copfreq, int copship, int lives ){
-        m_robberfreq = robberfreq;
+    public void setMode( int robbership, int copship, int lives ){
+        m_robberfreq = f_defrobfreq;
+        m_copfreq = f_defcopfreq;
         m_robbership = robbership;
-        m_copfreq = copfreq;
         m_copship = copship;
         m_lives = lives;
-        modeSet = true;
     }
 
 
@@ -102,7 +137,8 @@ public class twbotcnr extends TWBotExtension {
       * @param y Y location to start at.
       */
     public void setStart( String name, int team, int x, int y ) {
-        if ( x >= 0 && x <= 1024 && y >= 0 && y <= 1024) {
+        if ( x >= f_minmapcoord && x <= f_maxmapcoord &&
+             y >= f_minmapcoord && y <= f_maxmapcoord) {
             if (team == 0) {
                 m_robstart_x = x;
                 m_robstart_y = y;
@@ -116,17 +152,21 @@ public class twbotcnr extends TWBotExtension {
     }
 
 
+
     /** Initializes number of lives, doors, & correct ships, gives rules, then a 10
      * second warning and starts game.
      */
     public void doInit() {
+        if( !manual ) {
+
+        }
 
         startGame = new TimerTask() {
             public void run() {
                 if( isRunning == false ) {
                     isRunning = true;
 
-                    m_botAction.setDoors(1);  // close up the prison
+                    m_botAction.setDoors( f_prisondoorclosed );  // close up the prison
 
                     m_botAction.changeAllShipsOnFreq( m_robberfreq, m_robbership);
                     m_botAction.changeAllShipsOnFreq( m_copfreq, m_copship);
@@ -144,36 +184,30 @@ public class twbotcnr extends TWBotExtension {
                 
             }
         };
-        m_botAction.scheduleTask( startGame, 15000 );
 
+        if( manual ) {
+            m_botAction.setDoors( f_prisondoorclosed );  // close up the prison
+            m_botAction.changeAllShipsOnFreq( m_robberfreq, m_robbership);
+            m_botAction.changeAllShipsOnFreq( m_copfreq, m_copship);
+            m_botAction.warpFreqToLocation( m_robberfreq, m_robstart_x, m_robstart_y );
+            m_botAction.warpFreqToLocation( m_copfreq, m_copstart_x, m_copstart_y );           
+            m_botAction.shipResetAll();
+            m_botAction.scoreResetAll();
+            m_botAction.resetFlagGame();
 
-        // Wait 5 seconds before giving 10 seconds so players can read rules
-        giveStartWarning = new TimerTask() {
-            public void run() {
-                m_botAction.sendArenaMessage( "10 seconds until the crime spree begins...", 2);
-            }
-        };
-        m_botAction.scheduleTask( giveStartWarning, 5000 );
+        } else {
+            displayRules();    // show formatted rules
 
-
-        m_botAction.sendArenaMessage( "RULES OF COPS AND ROBBERS: Robbers (usually WBs) have unlimited lives, cops (usually spiders) don't.  If a cop shoots a robber, the robber goes to jail.  However, if another robber touches the flag, allowing an escape." );
-        m_botAction.sendArenaMessage( "OBJECTIVE: COPS win if all the robbers are jailed.  ROBBERS win only when every last stinkin' cop is dead." );
-
-    }
-
-
-
-    /** Handles event received message, and if from an ER or above, 
-     * tries to parse it as a command.
-     * @param event Passed event.
-     */
-    public void handleEvent( Message event ){
-
-        String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
-            String name = m_botAction.getPlayerName( event.getPlayerID() );
-            if( m_opList.isER( name )) handleCommand( name, message );
+            // Wait 5 seconds before giving 10 seconds so players can read rules
+            giveStartWarning = new TimerTask() {
+                public void run() {
+                    m_botAction.sendArenaMessage( "10 seconds until the crime spree begins...", 2);
+                }
+            };
+            m_botAction.scheduleTask( giveStartWarning, f_5seconds );
+            m_botAction.scheduleTask( startGame, f_5seconds * 3 );
         }
+
     }
 
 
@@ -189,7 +223,7 @@ public class twbotcnr extends TWBotExtension {
             switch( params.length){
             // All default
             case 0: 
-                setMode(0, 1, 1, 3, 2);
+                setMode( f_defrobship, f_defcopship, f_deflives );
                 doInit();
 
                 m_botAction.sendPrivateMessage( name, "Cops and Robbers started." );
@@ -199,7 +233,7 @@ public class twbotcnr extends TWBotExtension {
             case 1: 
                 int lives = Integer.parseInt(params[0]);
 
-                setMode(0, 1, 1, 3, lives);
+                setMode( f_defrobship, f_defcopship, lives );
                 doInit();
 
                 m_botAction.sendPrivateMessage( name, "Cops and Robbers started." );
@@ -211,7 +245,7 @@ public class twbotcnr extends TWBotExtension {
                 int copship = Integer.parseInt(params[1]);
                 int theLives = Integer.parseInt(params[2]);
 
-                setMode( 0, robbership, 1, copship, theLives );
+                setMode( robbership, copship, theLives );
                 doInit();
 
                 m_botAction.sendPrivateMessage( name, "Cops and Robbers started." );
@@ -221,13 +255,12 @@ public class twbotcnr extends TWBotExtension {
         }catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Invalid argument type, or invalid number of arguments.  Please try again." );
             isRunning = false;
-            modeSet = false;
         }
     }
 
 
 
-    /** Handles all commands given to the bot.
+    /** Handles all event mod commands given to the bot.
      * @param name Name of ER or above who sent the command.
      * @param message Message sent
      */
@@ -236,7 +269,7 @@ public class twbotcnr extends TWBotExtension {
         if( message.startsWith( "!stop" )){
             if(isRunning == true) {
               m_botAction.sendPrivateMessage( name, "Cops and Robbers stopped." );
-              m_botAction.setDoors(0);
+              m_botAction.setDoors( f_alldoorsopen );
               isRunning = false;
             } else {
               m_botAction.sendPrivateMessage( name, "I can't do that, Dave.  Cops and Robbers is not currently running." );
@@ -252,7 +285,7 @@ public class twbotcnr extends TWBotExtension {
 
         } else if( message.startsWith( "!start" )){
             if(isRunning == false) {
-                setMode(0, 1, 1, 3, 2);
+                setMode( f_defrobship, f_defcopship, f_deflives );
                 doInit();
                 m_botAction.sendPrivateMessage( name, "Cops and Robbers started." );
             } else {
@@ -260,8 +293,7 @@ public class twbotcnr extends TWBotExtension {
             }
 
         } else if( message.startsWith( "!rules" )) {
-            m_botAction.sendArenaMessage( "RULES OF COPS AND ROBBERS: Robbers (usually WBs) have unlimited lives, cops (usually spiders) don't.  If a cop shoots a robber, the robber goes to jail.  However, if another robber touches the flag, allowing an escape." );
-            m_botAction.sendArenaMessage( "OBJECTIVE: COPS win if all the robbers are jailed.  ROBBERS win only when every last stinkin' cop is dead." );
+            displayRules();
 
         } else if( message.startsWith( "!setrobstart ")) {
             String[] parameters = Tools.stringChopper( message.substring( 12 ), ' ' );
@@ -269,7 +301,7 @@ public class twbotcnr extends TWBotExtension {
                 if( parameters.length == 2) {
                     int x = Integer.parseInt(parameters[0]);
                     int y = Integer.parseInt(parameters[1]);
-                    setStart(name, 0, x, y);
+                    setStart(name, f_defrobfreq, x, y);
                 } else {
                     m_botAction.sendPrivateMessage( name, "Invalid number of parameters.  Format: !setrobstart <x-coord> <y-coord>" ); 
                 }
@@ -284,7 +316,7 @@ public class twbotcnr extends TWBotExtension {
                 if( parameters.length == 2) {
                     int x = Integer.parseInt(parameters[0]);
                     int y = Integer.parseInt(parameters[1]);
-                    setStart(name, 1, x, y);
+                    setStart(name, f_defcopfreq, x, y);
                 } else {
                     m_botAction.sendPrivateMessage( name, "Invalid number of parameters.  Format: !setcopstart <x-coord> <y-coord>" ); 
                 }
@@ -294,13 +326,44 @@ public class twbotcnr extends TWBotExtension {
             }
 
         } else if( message.startsWith( "!openjail")) {
-            m_botAction.setDoors(0);  // open all doors
+            m_botAction.setDoors( f_alldoorsopen );  // open all doors
             m_botAction.sendPrivateMessage( name, "Jail opened." ); 
 
         } else if( message.startsWith( "!closejail")) {
-            m_botAction.setDoors(1);  // close jail
+            m_botAction.setDoors( f_prisondoorclosed );  // close jail
             m_botAction.sendPrivateMessage( name, "Jail closed." ); 
-        }
+
+        } else if( message.startsWith( "!manual" )) {
+            if( manual ) {
+                manual = false;
+                m_botAction.sendPrivateMessage( name, "Manual OFF.  !start will now do most of the work for you." );
+            } else {
+                manual = true;
+                m_botAction.sendPrivateMessage( name, "Manual ON.  !start won't display rules, give 10 seconds, say GO, etc." );
+            }
+        } else
+            handleGeneralCommand( name, message );    // pass the buck
+    }
+
+
+
+    /** Handles all general commands given to the bot.
+     * @param name Name of player who sent the command.
+     * @param message Message sent
+     */
+    public void handleGeneralCommand( String name, String message ) {
+        // Prevent double !help spam (don't be TOO helpful)
+        if( message.startsWith( "!bothelp" ) )
+            sendHelp( name );
+
+        else if( message.startsWith( "!botrules" ) )
+            sendRules( name );
+
+        else if( message.startsWith( "!about" ) )
+            sendAbout( name );
+
+        else if( message.equals( "!help" ) )
+            m_botAction.sendPrivateMessage( name, "Send !bothelp for help on the loaded bot module." );
 
     }
 
@@ -310,7 +373,7 @@ public class twbotcnr extends TWBotExtension {
      * @param event Contains event information on player who died.
      */
     public void handleEvent( PlayerDeath event ){
-        if( modeSet && isRunning ){
+        if( isRunning ){
             Player p = m_botAction.getPlayer( event.getKilleeID() );
 
             if( p.getShipType() == m_copship && p.getFrequency() == m_copfreq) {
@@ -336,24 +399,94 @@ public class twbotcnr extends TWBotExtension {
      * @param event Contains event information on player who claimed the flag.
      */
     public void handleEvent( FlagClaimed event ) {
-        if( modeSet && isRunning ){
+        if( isRunning ){
 
             Flag f = m_botAction.getFlag( event.getFlagID() );
             Player p = m_botAction.getPlayer( event.getPlayerID() );
             String playerName = p.getPlayerName();
         
             if( p.getShipType() == m_copship && p.getFrequency() == m_copfreq) {
-                m_botAction.setDoors(1); // close only jail door
+                m_botAction.setDoors( f_prisondoorclosed ); // close only jail door
                 m_botAction.sendArenaMessage("The cops have restored order to the jail and closed the gates.");
 
             } else if ( p.getShipType() == m_robbership && p.getFrequency() == m_robberfreq) {
-                m_botAction.setDoors(0); // open all doors
+                m_botAction.setDoors( f_alldoorsopen ); // open all doors
                 m_botAction.sendArenaMessage(playerName + " has broken open the jail!  The robbers are free!");
                 final int warpx = f.getXLocation();
                 final int warpy = f.getYLocation();           
             
             }
         }
+    }
+
+
+
+
+    // DISPLAY/INFO SECTION -- a handy layout.  To use, replace your module's
+    // handleEvent for Message events with the one in here, create f_version
+    // and f_lastmodified final static variables as seen above, copy/paste
+    // the handleGeneralCommand method, and copy/paste/edit the following
+    // methods below.  Makes a module much more user-friendly.
+
+    /** Displays the rules of the event module in readable form.
+     */
+    public void displayRules() {
+        String[] rules = getRules();
+        for( int i = 0; i < rules.length; i++ )
+            m_botAction.sendArenaMessage( rules[i] );
+    }
+
+
+
+    /** Sends rules privately to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendRules( String name ) {
+        m_botAction.privateMessageSpam( name, getRules() );
+    }
+
+
+
+    /** Sends about message to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendAbout( String name ) {
+        String about = "Cops and Robbers module, v" + f_version + ".  Created by qan.  Last modified " + f_modified;
+        m_botAction.sendPrivateMessage( name, about );
+    }
+
+
+
+    /** Sends general help to a player.
+     * @param name Player to send msg to.
+     */
+    public void sendHelp( String name ) {
+        String[] help = {
+            "General Help for Cops and Robbers Module",
+            "!botrules   - Display built-in rules via private message.",
+            "!about      - Gives basic information about the bot module.",
+            "!bothelp    - This message."
+        };
+        m_botAction.privateMessageSpam( name, help );
+    }
+
+
+
+    /** Returns a copy of the rules.
+     * @return A string array containing the rules for this module.
+     */
+    public String[] getRules() {
+        String[] rules = {
+          // | Max line length for rules to display correctly on 800x600.....................|
+            ".....               - RULES of COPS AND ROBBERS -               .....",
+            "...    Every time a Robber dies, he goes to jail.  The jail can   ...",
+            "..     be opened/closed by touching the flag in base.              ..",
+            ".      Robbers have unlimited lives, but Cops have a death limit.   .",
+            ".                           - OBJECTIVE -                           .",
+            ".         - Cops win by jailing all Robbers.                        .",
+            ".         - Robbers win only by killing off all Cops (!)            ."
+        };
+        return rules;
     }
 
 
@@ -370,6 +503,8 @@ public class twbotcnr extends TWBotExtension {
             "!rules              - Displays basic rules of Cops and Robbers to the arena.",
             "!openjail           - Manually opens jail doors (and all other doors).",
             "!closejail          - Manually closes jail doors.",
+            "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)",
+            "!bothelp            - Displays help on commands for players.",
             "   MANUAL SETUP (when not in ?go cnr.  Jail is door 1, set spawns in cfg)",
             "!setcopstart <x-coord> <y-coord> - Sets cop start location.",
             "!setrobstart <x-coord> <y-coord> - Sets robber start location."
