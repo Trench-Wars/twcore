@@ -138,6 +138,9 @@ public class GamePacketInterpreter {
             case 0x1d:
                 handleShipFreqChange( array, alreadyDecrypted );
                 break;
+            case 0x1F:
+            	handlePlayerBanner( array, alreadyDecrypted );
+            	break;
             case 0x22:
             	handleTurfFlagUpdate( array, alreadyDecrypted );
             	break;
@@ -519,6 +522,23 @@ public class GamePacketInterpreter {
 
         if( m_requester.check( EventRequester.FREQUENCY_SHIP_CHANGE )){
             m_subspaceBot.handleEvent( update );
+        }
+    }
+    
+    void handlePlayerBanner( ByteArray message, boolean alreadyDecrypted ) {
+    	// Check for valid message
+    	if( message.size() < 99 ){ 
+            return;
+        }
+        
+        if( alreadyDecrypted == false ){
+            m_ssEncryption.decrypt( message, message.size()-1, 1 );
+        }
+    	
+    	PlayerBanner banner = new PlayerBanner( message );
+    	
+    	if( m_requester.check( EventRequester.PLAYER_BANNER )){
+            m_subspaceBot.handleEvent( banner );
         }
     }
 
