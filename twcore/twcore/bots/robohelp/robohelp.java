@@ -194,24 +194,24 @@ public class robohelp extends SubspaceBot {
         try {
             BufferedReader in = new BufferedReader(new FileReader( m_botAction.getDataFile( "HelpResponses.txt" )));
             String line;
-	    int i = 0;
+        int i = 0;
             do{
                 line = in.readLine();
-		try{
-                	if ( line != null ){
-                    	line = line.trim();
-                    	int indexOfLine = line.indexOf( '|' );
-                    	if( indexOfLine != -1 ){
-                        	String key = line.substring( 0, indexOfLine );
-                        	String response = line.substring( indexOfLine + 1 );
-                        	search.add( response, key );
-	                        rawData.put( response, key );
-                    	}
-                	}
-		} catch( Exception e ){
-			System.out.println( "Error in HelpResponses.txt near: Line " + i );
-		}
-		i++;
+        try{
+                    if ( line != null ){
+                        line = line.trim();
+                        int indexOfLine = line.indexOf( '|' );
+                        if( indexOfLine != -1 ){
+                            String key = line.substring( 0, indexOfLine );
+                            String response = line.substring( indexOfLine + 1 );
+                            search.add( response, key );
+                            rawData.put( response, key );
+                        }
+                    }
+        } catch( Exception e ){
+            System.out.println( "Error in HelpResponses.txt near: Line " + i );
+        }
+        i++;
             } while( line!=null );
 
             if( in != null ){
@@ -321,9 +321,9 @@ public class robohelp extends SubspaceBot {
 
     class EventData {
 
-        String 	arena;
-        long 	time;
-        int		dups;
+        String  arena;
+        long    time;
+        int     dups;
 
         public EventData( String a ) {
             arena = a;
@@ -349,7 +349,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleCheater( String playerName, String message ){
-        HelpRequest		helpRequest;
+        HelpRequest     helpRequest;
 
         lastHelpRequestName = playerName;
 
@@ -362,8 +362,8 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleHelp( String playerName, String message ){
-        String[]		response;
-        HelpRequest		helpRequest;
+        String[]        response;
+        HelpRequest     helpRequest;
 
         if( playerName.compareTo( m_botAction.getBotName() ) == 0 ){
             return;
@@ -376,9 +376,9 @@ public class robohelp extends SubspaceBot {
 
             response = new String[1];
             response[0] = tempMessage;
-                                
+
             m_botAction.sendRemotePrivateMessage( playerName, tempMessage );
-            
+
             helpRequest = new HelpRequest( playerName, message, response );
             m_playerList.put( playerName.toLowerCase(), helpRequest );
             return;
@@ -412,8 +412,8 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleNext( String playerName, String message ){
-        String			response;
-        HelpRequest		helpRequest;
+        String          response;
+        HelpRequest     helpRequest;
 
         helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
 
@@ -440,7 +440,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleSummon( String playerName, String message ){
-        HelpRequest		helpRequest;
+        HelpRequest     helpRequest;
 
         helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
 
@@ -470,8 +470,8 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleLast( String playerName, String message ){
-        String[]		responses;
-        HelpRequest		helpRequest;
+        String[]        responses;
+        HelpRequest     helpRequest;
 
         if( lastHelpRequestName == null ){
             m_botAction.sendRemotePrivateMessage( playerName, "No one has done a help call yet!" );
@@ -555,8 +555,8 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleWarn( String playerName, String message ){
-        String			name;
-        HelpRequest		helpRequest;
+        String          name;
+        HelpRequest     helpRequest;
 
         if( message == null ){
             name = lastHelpRequestName;
@@ -583,22 +583,22 @@ public class robohelp extends SubspaceBot {
                     helpRequest.setBeenWarned( true );
                     m_botAction.sendRemotePrivateMessage( name, "WARNING: We appreciate "
                     +"your input.  However, your excessive abuse of the ?cheater or ?help command will "
-                    +"not be tolerated further!" );
+                    +"not be tolerated further!", 1 );
                     m_botAction.sendChatMessage( name + " has been warned." );
-                    
+
                     String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
                     String date = new java.sql.Date( System.currentTimeMillis() ).toString();
                     String[] data = { name.toLowerCase().trim(), new String( "Warning to " + name + " from Robohelp for help/cheater abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
-            
-                    m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );                    
+
+                    m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
                 }
             }
         }
     }
 
     public void handleBan( String playerName, String message ){
-        String			name;
-        HelpRequest		helpRequest;
+        String          name;
+        HelpRequest     helpRequest;
 
         if( message == null ){
             name = lastHelpRequestName;
@@ -643,8 +643,8 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleRepeat( String playerName, String message ){
-        String			name;
-        HelpRequest		helpRequest;
+        String          name;
+        HelpRequest     helpRequest;
 
         if( message == null ){
             name = lastHelpRequestName;
@@ -790,13 +790,13 @@ public class robohelp extends SubspaceBot {
 
     class HelpRequest {
 
-        long		m_time;
-        String		m_question;
-        String[]	m_responses;
-        String		m_playerName;
-        boolean		m_beenWarned;
-        int			m_nextResponse;
-        boolean		m_allowSummons;
+        long        m_time;
+        String      m_question;
+        String[]    m_responses;
+        String      m_playerName;
+        boolean     m_beenWarned;
+        int         m_nextResponse;
+        boolean     m_allowSummons;
 
         public HelpRequest( String playerName, String question, String[] responses ){
 
