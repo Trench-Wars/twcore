@@ -1,7 +1,7 @@
 /*
 * twbotballspec.java - BallSpec Module - qan (gdugwyler@hotmail.com)
 *
-* Created 6/09/2004 - Last modified 3/05/05
+* Created 6/09/2004 - Last modified 3/22/05
 *
 *
 *
@@ -143,8 +143,21 @@ public class twbotballspec extends TWBotExtension {
      * @param message Message sent
      */
     public void handleCommand( String name, String message ){
-
-        if( message.startsWith( "!stop" )){
+        if( message.startsWith( "!balls " )) {
+            if( !( m_botAction.getOperatorList().isModerator(name) ) ) {
+                m_botAction.sendPrivateMessage( name, "You must be a moderator to use this command." );                
+            }
+            
+            String[] parameters = Tools.stringChopper( message.substring( 8 ), ' ' );                
+            try {
+                int numballs = Integer.parseInt(parameters[0]);
+                m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=" + numballs );
+                m_botAction.sendPrivateMessage( name, "Ball count set to " + numballs + "." );                
+            } catch ( Exception e ) {
+                m_botAction.sendPrivateMessage( name, "Invalid input.  Please give a number." );
+            }
+        
+        } else if( message.startsWith( "!stop" )){
             if( isRunning == true ) {
                 m_botAction.sendPrivateMessage( name, "BallSpec mode stopped." );
                 m_eliminator = "";
@@ -160,7 +173,6 @@ public class twbotballspec extends TWBotExtension {
                 if( p != null ) {
                     m_eliminator = p.getPlayerName();
                     m_botAction.sendPrivateMessage( name, "BallSpec mode started." );
-                    m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=0" );
                     doInit();
                 } else {
                     m_botAction.sendPrivateMessage( name, "Player not found.  Please try again." );
@@ -172,16 +184,6 @@ public class twbotballspec extends TWBotExtension {
         } else if( message.startsWith( "!rules" )) {
              displayRules();
              
-        } else if( message.startsWith( "!balls " )) {
-            String[] parameters = Tools.stringChopper( message.substring( 8 ), ' ' );                
-            try {
-                int numballs = Integer.parseInt(parameters[0]);
-                m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=" + numballs );
-                m_botAction.sendPrivateMessage( name, "Ball count set to " + numballs + "." );                
-            } catch ( Exception e ) {
-                m_botAction.sendPrivateMessage( name, "Invalid input.  Please give a number." );
-            }
-
         } else if( message.startsWith( "!manual" )) {
             if( manual ) {
                 manual = false;
@@ -258,7 +260,6 @@ public class twbotballspec extends TWBotExtension {
                         winner = (Player) i2.next();
 
                     m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " has escaped the wrath of the Eliminator and won the game!",5);
-                    m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=0" );
                     m_eliminator = "";
                     m_lastelim = "";
                     isRunning = false;
@@ -413,7 +414,8 @@ public class twbotballspec extends TWBotExtension {
             "!stop               - Ends BallSpec mode.",
             "!rules              - Displays basic rules of BallSpec mode to the arena.",
             "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)",
-            "!bothelp            - Displays help on commands for players."
+            "!balls #            - (Mod+) Sets # balls in the arena.",
+            "!bothelp            - Displays help on commands for players."            
         };
         return ballspecHelp;
     }
