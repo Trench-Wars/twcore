@@ -201,13 +201,22 @@ public class Tools {
         }
     }
 
+    /**
+     * Returns true if a string is all digits.
+     * @param str String to determine if all digits.
+     * @return True if string is all digits.
+     */
     public static boolean isAllDigits( String str ){
-        for( int i = 0; i < str.length(); i++ ){
-            if( !Character.isDigit( str.charAt( i ))){
-                return false;
+        try {
+            for( int i = 0; i < str.length(); i++ ){
+                if( !Character.isDigit( str.charAt( i ))){
+                    return false;
+                }
             }
+            return true;
+        } catch ( Exception e ) {
+            return false;
         }
-        return true;
     }
     public static String addSlashesToString( String t) {
         String n = null;
