@@ -930,11 +930,11 @@ public class BotAction
     }
 
     /** Sets the *timer game timer
-     * @param seconds Time to game end in seconds
+     * @param seconds Time to game end in minutes
      */
-    public void setTimer(int seconds)
+    public void setTimer(int minutes)
     {
-        sendUnfilteredPublicMessage("*timer" + seconds);
+        sendUnfilteredPublicMessage("*timer" + minutes);
     }
 
     /** Warns the player with a moderator warning
