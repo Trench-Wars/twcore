@@ -800,7 +800,7 @@ class Channel
 			return false;
 		
 		int level = ((Integer)members.get(name.toLowerCase())).intValue();
-		if(level == 2) return true;
+		if(level >= 2) return true;
 		else return false;
 	}
 	
