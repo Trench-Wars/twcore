@@ -144,6 +144,8 @@ public class falloutbot extends SubspaceBot {
 				}
 			}
 	    	Player p = m_botAction.getPlayer( event.getPlayerID() );
+	    	if( p == null )
+	    	    return;
 	    	double dist = getCenterDistance( p.getXLocation(), p.getYLocation() );
 			if( dist > (arenaRad-arenaCur*160) && !players.containsKey( p.getPlayerName() ) ) {
 				m_botAction.sendArenaMessage( p.getPlayerName() + " has passed the perimeter and is out!" );
