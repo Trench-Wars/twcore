@@ -55,9 +55,9 @@ public abstract class Statistic
 	public String toString()
 	{
 		if (m_variableType == INT)
-			return m_shortForm + ": " + getIntValue() + " ";
+			return m_shortForm + ":" + getIntValue() + " ";
 		else
-			return m_shortForm + ": " + getDoubleValue() + " ";
+			return m_shortForm + ":" + getDoubleValue() + " ";
 	}
 	
 	/**
