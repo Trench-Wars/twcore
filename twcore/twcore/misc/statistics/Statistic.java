@@ -89,12 +89,17 @@ public abstract class Statistic
 	 */
 	public int getIntValue()
 	{
-	
+
 		if (m_variableType == INT)
 		{
 			//if derived
 			if (m_derived)
-				return derivedInt() + m_intValue;
+			{
+				synchronized(this)
+				{
+					return derivedInt() + m_intValue;
+				}
+			}
 			else
 				return m_intValue;
 		}
@@ -102,9 +107,14 @@ public abstract class Statistic
 		{
 			//if derived
 			if (m_derived)
-				return derivedInt() + (int)m_doubleValue;
+			{
+				synchronized(this)
+				{
+					return derivedInt() + (int) m_doubleValue;
+				}
+			}
 			else
-				return (int)m_doubleValue;
+				return (int) m_doubleValue;
 		}
 	}
 	
@@ -117,14 +127,24 @@ public abstract class Statistic
 		{
 			//if derived
 			if (m_derived)
-				return derivedDouble() + (double)m_intValue;
+			{
+				synchronized(this)
+				{
+					return derivedDouble() + (double)m_intValue;
+				}
+			}
 			else
 				return (double)m_intValue;
 		}
 		else
 		{
 			if (m_derived)
-				return derivedDouble() + m_doubleValue;
+			{
+				synchronized(this)
+				{
+					return derivedDouble() + m_doubleValue;
+				}
+			}
 			else
 				return m_doubleValue;
 		}
@@ -142,7 +162,7 @@ public abstract class Statistic
 	 * Returns the m_weight.
 	 * @return int
 	 */
-	public double weight()
+	public double getWeight()
 	{
 		return m_weight;
 	}
@@ -151,7 +171,7 @@ public abstract class Statistic
 	 * Sets the m_weight.
 	 * @param weight The m_weight to set
 	 */
-	public void setWeight(double weight)
+	public synchronized void setWeight(double weight)
 	{
 		m_weight = weight;
 	}
@@ -159,7 +179,7 @@ public abstract class Statistic
 	/**
 	 * Adds one to intvalue
 	 */
-	public void setValue()
+	public synchronized void setValue()
 	{
 		if (m_variableType == INT)
 			m_intValue++;		
@@ -171,7 +191,7 @@ public abstract class Statistic
 	 * Adds to existing intValue
 	 * @param value The value to add to existing variable
 	 */
-	public void setValue(int value)
+	public synchronized void setValue(int value)
 	{
 		if (m_variableType == INT)
 			m_intValue += value;	
@@ -179,7 +199,7 @@ public abstract class Statistic
 			m_doubleValue += (double)value;
 	}
 	
-	public void setValue(double value)
+	public synchronized void setValue(double value)
 	{
 		if (m_variableType == INT)
 			m_intValue += (int)value;	
@@ -190,7 +210,7 @@ public abstract class Statistic
 	/**
 	 * @param value Changes internal stat to specified value
 	 */	
-	public void changeValue(int value)
+	public synchronized void changeValue(int value)
 	{
 		if (m_variableType == INT)
 			m_intValue = value;	
@@ -198,7 +218,7 @@ public abstract class Statistic
 			m_doubleValue = (double)value;						
 	}
 	
-	public void changeValue(double value)
+	public synchronized void changeValue(double value)
 	{
 		if (m_variableType == INT)
 			m_intValue = (int)value;	
@@ -209,7 +229,7 @@ public abstract class Statistic
 	/**
 	 * decrement value by 1
 	 */	
-	public void decrement()
+	public synchronized void decrement()
 	{
 		if (m_variableType == INT)
 			m_intValue--;	
