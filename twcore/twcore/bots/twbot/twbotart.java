@@ -29,6 +29,11 @@ public class twbotart extends TWBotExtension
 	{
 		if(message.toLowerCase().startsWith("!draw "))
 			download(name, message.substring(6));
+		else if(message.toLowerCase().startsWith("!specbot"))
+		{
+			m_botAction.spec(m_botAction.getBotName());
+			m_botAction.spec(m_botAction.getBotName());
+		}
 	}
 	
 	public void download(String name, String message)
@@ -68,8 +73,6 @@ public class twbotart extends TWBotExtension
 					}
 					ship.move(xNormal, ship.getY() + 16);
 				}
-				m_botAction.spec(m_botAction.getBotName());
-				m_botAction.spec(m_botAction.getBotName());
 			}
 			else
 				m_botAction.sendPrivateMessage(name, "That file contains too many mines. You should try reducing it so I can draw all of it.");
@@ -82,7 +85,10 @@ public class twbotart extends TWBotExtension
 	
 	public String[] getHelpMessages()
 	{
-		String[] blah = { "!draw <url>        -Draws the text file at <url>." };
+		String[] blah = {
+			"!draw <url>        -Draws the text file at <url>.",
+			"!specbot           -Puts bot into spectator mode."
+		};
 		return blah;
 	}
 }
