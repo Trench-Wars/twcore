@@ -47,7 +47,7 @@ public class spaceballbot extends SubspaceBot {
 	int botVX = 0;
 	int botVY = 0;
 
-	int botMass = 300;
+	int botMass = 2200;
 
 	int winner;
 
@@ -630,7 +630,7 @@ public class spaceballbot extends SubspaceBot {
 		if (botVX == 0 && botVY == 0) {
 			oShip.move(botX, botY);
 		} else {
-			int dir = (int) (Math.random() * 360);
+			int dir = (int) (Math.random() * 40);
 			oShip.move(dir, botX, botY, botVX, botVY, 0, 1500, 1337);
 		}
 
