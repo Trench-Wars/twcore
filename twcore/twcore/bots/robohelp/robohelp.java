@@ -69,6 +69,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell" );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan" );
         m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
+        m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "handleStatus" );
 
 
         acceptedMessages = Message.ARENA_MESSAGE;
@@ -148,6 +149,26 @@ public class robohelp extends SubspaceBot {
             advertisementThread.start();
             m_botAction.sendRemotePrivateMessage( name, "Backup Advertisements Enabled" );
         }
+    }
+
+    public void handleStatus( String name, String message ){
+
+        m_botAction.sendChatMessage( "**********Current System Status*********" );
+        
+        if( m_botAction.SQLisOperational() ){
+        m_botAction.sendChatMessage( "**  Statistic Recording: Operational  **" );
+        }
+        else {
+        m_botAction.sendChatMessage( "**    Statistic Recording: ERROR      **" );
+        m_botAction.sendChatMessage( "** NOTE: Record shows the database-   **" );
+        m_botAction.sendChatMessage( "**       connection is down. TWDBot   **" );
+        m_botAction.sendChatMessage( "**       Tournybot and other bots     **" );
+        m_botAction.sendChatMessage( "**       can experience problems also **" );
+        }
+
+        m_botAction.sendChatMessage( "***********End System Status************" );
+
+
     }
 
     public void handleGoogle( String name, String message ){
@@ -358,6 +379,31 @@ public class robohelp extends SubspaceBot {
         public String getArena() { return arena; }
         public long getTime() { return time; }
         public int getDups() { return dups; }
+    }
+
+    public void handleAdvert ( String playerName, String message ){
+        String[]        response2;
+        HelpRequest     helpRequest;
+
+        lastHelpRequestName = playerName;
+
+        if( opList.isZH( playerName ) ){
+            return;
+        }
+        m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
+                +"command.  It is for staff members only, and is punnishble by a ban. Further abuse "
+                +"will not be tolerated further!", 1 );
+        m_botAction.sendChatMessage( "NOTICE:"+ playerName + " has been warned for ?advert abuse." );
+
+        Calendar thisTime = Calendar.getInstance();
+        java.util.Date day = thisTime.getTime();
+        String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
+        String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
+        String date = new java.sql.Date( System.currentTimeMillis() ).toString();
+        String[] data = { playerName.toLowerCase().trim(), new String( warntime + ": Warning to " + playerName + " from Robohelp for ?advert abuse."), "RoboHelp", date };
+
+        m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
+
     }
 
     public void handleCheater( String playerName, String message ){
@@ -743,7 +789,7 @@ public class robohelp extends SubspaceBot {
                 while( !recorded && i < callList.size() ) {
                     EventData e = (EventData)callList.elementAt( i );
                     if( new java.util.Date().getTime() < e.getTime() + 60000 ) {
-                        updateStatRecordsGOTIT( name );                  
+                        updateStatRecordsGOTIT( name );
                         callList.removeElementAt( i );
                         recorded = true;        
                     } else callList.removeElementAt( i );
@@ -795,6 +841,7 @@ public class robohelp extends SubspaceBot {
             "!tell <name>:<keyword> - Private messages the specified name with the response to the keyword given.",
             "!warn <optional name> - Warns the specified player.  If no name is given, warns the last person.",
             "!ban <optional name> - Bans the specified player.  If no name is given, bans the last person.",
+            "!status - Gives back status from systems.",
             "Commands sent via private message to me:",
             "!lookup <keyword> - Tells you the response when the specified key word is given",
             "!last <optional name> - Tells you what the response to the specified player was.  If no name is specified, the last response is given.",
@@ -854,6 +901,8 @@ public class robohelp extends SubspaceBot {
                 handleHelp( event.getMessager(), event.getMessage() );
             } else if( command.equals( "cheater" )){
                 handleCheater( event.getMessager(), event.getMessage() );
+            } else if( command.equals( "advert" )){
+                handleAdvert( event.getMessager(), event.getMessage() );
             }
         }
     }
@@ -966,3 +1015,4 @@ public class robohelp extends SubspaceBot {
     }
 
 }
+
