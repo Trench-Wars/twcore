@@ -153,20 +153,24 @@ public class robohelp extends SubspaceBot {
 
     public void handleStatus( String name, String message ){
 
-        m_botAction.sendChatMessage( "********* Current System Status ********" );
+        m_botAction.sendChatMessage( "==========Current System Status=========" );
         
-        if( m_botAction.SQLisOperational() ){
-        m_botAction.sendChatMessage( "**  Statistics Recording: Operational **" );
-        }
-        else {
-        m_botAction.sendChatMessage( "**       Statistics Recording: ERROR  **" );
-        m_botAction.sendChatMessage( "** NOTE: The database connection is   **" );
-        m_botAction.sendChatMessage( "**       down. Some other bots might  **" );
-        m_botAction.sendChatMessage( "**       experience problems too.     **" );
-        }
+        if( !m_botAction.SQLisOperational() ){
 
-        m_botAction.sendChatMessage( "********** End System Status ***********" );
+	m_botAction.sendChatMessage( "==    Statistic Recording: ERROR      ==" );
+        m_botAction.sendChatMessage( "== NOTE: Record shows the database-   ==" );
+        m_botAction.sendChatMessage( "==       connection is down. TWDBot   ==" );
+        m_botAction.sendChatMessage( "==       Tournybot and other bots     ==" );
+        m_botAction.sendChatMessage( "==       can experience problems also ==" );
+        m_botAction.sendChatMessage( "===========End System Status============" );	
+	return;        
+	
+	}
+        try {
+        m_botAction.sendChatMessage( "==  Statistic Recording: Operational  ==" );
+	m_botAction.sendChatMessage( "===========End System Status============" );        
 
+	} catch (Exception e ) {}
 
     }
 
@@ -390,8 +394,8 @@ public class robohelp extends SubspaceBot {
             return;
         }
         m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
-                +"command.  It is for staff members only, and is punishble by a ban. Further abuse "
-                +"will not be tolerated!", 1 );
+                +"command.  It is for staff members only, and is punnishble by a ban. Further abuse "
+                +"will not be tolerated further!", 1 );
         m_botAction.sendChatMessage( "NOTICE: "+ playerName + " has been warned for ?advert abuse." );
 
         Calendar thisTime = Calendar.getInstance();
