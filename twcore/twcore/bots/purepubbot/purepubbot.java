@@ -746,22 +746,13 @@ public class purepubbot extends SubspaceBot
             player = (Player) iterator.next();
             if( player != null ) {
               if(player.getFrequency() == flagholdingFreq ) {
-                for( int i = 0; i < weight; i++ )               
+                for( int i = 0; i < weight; i++ ) {               
                   m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #13");
-              }
-            }
-          }
-          
-          iterator = m_botAction.getPlayerIterator();
-          while(iterator.hasNext()) {
-            player = (Player) iterator.next();
-            if( player != null ) {
-              if(player.getFrequency() == flagholdingFreq ) {
-                m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #7");
+                }
                 m_botAction.shipReset( player.getPlayerID() );
               }
             }
-          }
+          }          
         }
         catch(Exception e)
         {
