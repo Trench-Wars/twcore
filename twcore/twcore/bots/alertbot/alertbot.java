@@ -90,7 +90,7 @@ public class alertbot extends SubspaceBot {
 
         String botName = m_botAction.getBotName();
         arena = config.getString( botName + "Arena" );
-        m_botAction.sendUnfilteredPublicMessage( "?chat="+ config.getString( botName + "Chat" )+",alerts" );
+        m_botAction.sendUnfilteredPublicMessage( "?chat="+ config.getString( botName + "Chat" )+",alerts,uberalerts" );
         m_botAction.joinArena( arena );
 
     }
@@ -120,6 +120,7 @@ public class alertbot extends SubspaceBot {
                 }
                 m_botAction.sendChatMessage(1, startMessage);
                 m_botAction.sendChatMessage(2, startMessage);
+                m_botAction.sendChatMessage(3, startMessage);
                 try {
                     ResultSet set = m_botAction.SQLQuery("local","select name from alerts where id="+alertBotTypeID+" and date > NOW() order by date desc limit 100");
                     if (set == null) return;
@@ -149,6 +150,7 @@ public class alertbot extends SubspaceBot {
                 m_botAction.SQLQuery("local","REPLACE INTO alerts (id,name,date) values("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts activated for " + botType + "." );
             } catch (SQLException e) {
+                Tools.printStackTrace(e);
                 m_botAction.sendSmartPrivateMessage(name,"Unable to enable alerts at this time.");
                 return;
             }
@@ -158,6 +160,7 @@ public class alertbot extends SubspaceBot {
                 m_botAction.SQLQuery("local","delete from alerts where id="+alertBotTypeID+" and name=\""+Tools.addSlashesToString(name)+"\"");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts deactivated for " + botType + "." );
             } catch (SQLException e) {
+                Tools.printStackTrace(e);
                 m_botAction.sendSmartPrivateMessage(name,"Unable to disable alerts at this time.");
                 return;
             }
