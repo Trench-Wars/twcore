@@ -41,8 +41,8 @@ public class twbottwl extends TWBotExtension
 	private final int BASE_TIMER = 31; //mins
 	private final int DUEL_TIMER = 30; //mins
 	
-	private final int TIME_BEFORE_LAGOUT = 60; //sec
-	private final int TIME_BEFORE_SUB = 30; //sec
+	private final int TIME_BEFORE_LAGOUT = 60; //sec	twlb 15
+	private final int TIME_BEFORE_SUB = 30; //sec       twlb 5
 	private final int TIME_BEFORE_SWITCH = 15; //sec
 	private final int LAGOUT_LIMIT = 4; //min
 	
@@ -421,6 +421,22 @@ public class twbottwl extends TWBotExtension
 		if (m_match.shipLimitMet(shipType, playerTeamId) && m_match.getMatchTypeId() == 3)
 		{
 			m_botAction.sendPrivateMessage(name, "Unable to add player, this team has reached the ship type limit for this ship.");
+			return;
+		}
+		
+		
+		DBPlayerData dbP = new DBPlayerData( m_botAction, mySQLHost, player );
+			
+		// a name has to be registered
+		if (!dbP.isRegistered()) 
+		{
+			m_botAction.sendPrivateMessage(name, "Unable to add player, that player has not registered.");
+			return;
+		}
+				
+		// the name must be enabled
+		if (!dbP.isEnabled()) {
+			m_botAction.sendPrivateMessage(name, "Unable to add player, that player's name is disabled.");
 			return;
 		}
 		
@@ -819,7 +835,7 @@ public class twbottwl extends TWBotExtension
 			teamName = m_match.getTeam2Name();
 			m_match.setTeamTwoCap(matchCaptain);
 		}
-		m_botAction.sendArenaMessage(matchCaptain + " has been set captain for " + teamName);
+		m_botAction.sendArenaMessage(matchCaptain + " has been set as captain for " + teamName);
 	}
 	
 	//Subs one player for another
@@ -1722,7 +1738,7 @@ public class twbottwl extends TWBotExtension
 				return;
 			m_botAction.sendPrivateMessage(name, "Match Ref: " + m_match.getRef());
 		}
-		else if (message.toLowerCase().startsWith("!host"))
+		else if (message.toLowerCase().startsWith("!newhost"))
 		{
 			do_changeHost(name, message);
 		}
