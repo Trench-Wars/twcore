@@ -3,45 +3,45 @@ package twcore.core;
 
 public class BallPosition extends SubspaceEvent {
     
-    private int m_ballID;
-    private int m_xLocation;
-    private int m_yLocation;
-    private int m_xVelocity;
-    private int m_yVelocity;
-    private int m_playerID;
+    private byte m_ballID;
+    private short m_xLocation;
+    private short m_yLocation;
+    private short m_xVelocity;
+    private short m_yVelocity;
+    private short m_playerID;
     private int m_timeStamp;
     
     public BallPosition( ByteArray array ) {
-        m_ballID = (int)array.readByte( 1 );
-        m_xLocation = (int)array.readLittleEndianShort( 2 );
-        m_yLocation = (int)array.readLittleEndianShort( 4 );
-        m_xVelocity = (int)array.readLittleEndianShort( 6 );
-        m_yVelocity = (int)array.readLittleEndianShort( 8 );
-        m_playerID = (int)array.readLittleEndianShort( 10 );
-        m_timeStamp = (int)array.readInt( 12 );
+        m_ballID = array.readByte( 1 );
+        m_xLocation = array.readLittleEndianShort( 2 );
+        m_yLocation = array.readLittleEndianShort( 4 );
+        m_xVelocity = array.readLittleEndianShort( 6 );
+        m_yVelocity = array.readLittleEndianShort( 8 );
+        m_playerID = array.readLittleEndianShort( 10 );
+        m_timeStamp = array.readInt( 12 );
     }
     
-    public int getBallID() {
+    public byte getBallID() {
         return m_ballID;
     }
     
-    public int getXLocation() {
+    public short getXLocation() {
         return m_xLocation;
     }
     
-    public int getYLocation() {
+    public short getYLocation() {
         return m_yLocation;
     }
     
-    public int getXVelocity() {
+    public short getXVelocity() {
         return m_xVelocity;
     }
     
-    public int getYVelocity() {
+    public short getYVelocity() {
         return m_yVelocity;
     }
     
-    public int getPlayerID() {
+    public short getPlayerID() {
         return m_playerID;
     }
     

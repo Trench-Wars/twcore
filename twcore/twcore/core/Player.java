@@ -1,34 +1,31 @@
 package twcore.core;
 
-import java.util.Properties;
-import java.util.Iterator;
 public class Player {
     
     private String  m_playerName;
     private String  m_squadName;
-    private int     m_shipType;
-    private int     m_xLocation;
-    private int     m_yLocation;
-    private int     m_xVelocity;
-    private int     m_yVelocity;
-    private int     m_frequency;
-    private int     m_wins;
-    private int     m_losses;
+    private byte    m_shipType;
+    private short   m_xLocation;
+    private short   m_yLocation;
+    private short   m_xVelocity;
+    private short   m_yVelocity;
+    private short   m_frequency;
+    private short   m_wins;
+    private short   m_losses;
     private int     m_flagPoints;
     private int     m_killPoints;
-    private int     m_acceptsAudio;
-    private int     m_hasKOTH;
-    private int     m_rotation;
-    private int     m_ping;
-    private int     m_bounty;
-    private int     m_energy;
-    private int     m_s2CLag;
-    private int     m_timer;
-    private int     m_itemInformation;
-    private int     m_identTurretee;
-    private int     m_flagsCarried;
-    private int     m_timeStamp;
-    private int     m_playerID;
+    private byte    m_acceptsAudio;
+    private byte    m_hasKOTH;
+    private byte    m_rotation;
+    private byte    m_ping;
+    private short   m_bounty;
+    private short   m_energy;
+    private short   m_s2CLag;
+    private short   m_timer;
+    private short   m_identTurretee;
+    private short   m_flagsCarried;
+    private short   m_timeStamp;
+    private short   m_playerID;
     private int     m_score;
     
     private boolean m_stealthOn;
@@ -65,7 +62,6 @@ public class Player {
         m_xVelocity = 0;
         m_yVelocity = 0;
         m_timeStamp = 0;
-        m_itemInformation = 0;
         
         m_wins = playerEntered.getWins();
         m_losses = playerEntered.getLosses();
@@ -130,7 +126,6 @@ public class Player {
         m_acceptsAudio = 0;
         m_flagsCarried = 0;
         m_identTurretee = 0;
-        m_itemInformation = 0;
         
         m_stealthOn = false;
         m_cloakOn = false;
@@ -272,42 +267,42 @@ public class Player {
         return new String( m_squadName );
     }
     
-    public int getShipType(){
+    public byte getShipType(){
         
         return m_shipType;
     }
     
-    public int getXLocation(){
+    public short getXLocation(){
         
         return m_xLocation;
     }
     
-    public int getYLocation(){
+    public short getYLocation(){
         
         return m_yLocation;
     }
     
-    public int getXVelocity(){
+    public short getXVelocity(){
         
         return m_xVelocity;
     }
     
-    public int getYVelocity(){
+    public short getYVelocity(){
         
         return m_yVelocity;
     }
     
-    public int getFrequency(){
+    public short getFrequency(){
         
         return m_frequency;
     }
     
-    public int getWins(){
+    public short getWins(){
         
         return m_wins;
     }
     
-    public int getLosses(){
+    public short getLosses(){
         
         return m_losses;
     }
@@ -322,67 +317,62 @@ public class Player {
         return m_killPoints;
     }
     
-    public int getAcceptsAudio(){
+    public byte getAcceptsAudio(){
         
         return m_acceptsAudio;
     }
     
-    public int getHasKOTH(){
+    public byte getHasKOTH(){
         
         return m_hasKOTH;
     }
     
-    public int getRotation(){
+    public byte getRotation(){
         
         return m_rotation;
     }
     
-    public int getPing(){
+    public byte getPing(){
         
         return m_ping;
     }
     
-    public int getBounty(){
+    public short getBounty(){
         
         return m_bounty;
     }
         
-    public int getEnergy(){
+    public short getEnergy(){
         
         return m_energy;
     }
     
-    public int getS2CLag(){
+    public short getS2CLag(){
         
         return m_s2CLag;
     }
     
-    public int getTimer(){
+    public short getTimer(){
         
         return m_timer;
     }
-    
-    public int getItemInformation(){
         
-        return m_itemInformation;
-    }
-    
-    public int getTurretee(){
+    public short getTurretee(){
         
         return m_identTurretee;
     }
     
-    public int getflagsCarried(){
+    public short getflagsCarried(){
         
         return m_flagsCarried;
     }
     
-    public int getTimeStamp(){
+    public short getTimeStamp(){
         
         return m_timeStamp;
     }
     
-    public int getPlayerID(){
+    public short getPlayerID(){
         
         return m_playerID;
     }

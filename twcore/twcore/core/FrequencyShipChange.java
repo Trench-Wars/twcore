@@ -8,23 +8,23 @@ Field    Length    Description
 4        2        Team*/
 public class FrequencyShipChange extends SubspaceEvent {
 
-    int             m_playerID;
-    int             m_shipType;
-    int             m_freq;
+    short           m_playerID;
+    byte            m_shipType;
+    short           m_freq;
 
     public FrequencyShipChange(ByteArray array){
-        m_shipType = ((int)array.readByte( 1 ) + 1) % 9;
-        m_playerID = (int)array.readLittleEndianShort( 2 );
-        m_freq = (int)array.readLittleEndianShort( 4 );
+        m_shipType = (byte)((array.readByte( 1 ) + 1) % 9);
+        m_playerID = (short)array.readLittleEndianShort( 2 );
+        m_freq = (short)array.readLittleEndianShort( 4 );
     }
 
-    public int getPlayerID(){
+    public short getPlayerID(){
         return m_playerID;
     }    
-    public int getShipType(){
+    public byte getShipType(){
         return m_shipType;
     }
-    public int getFrequency(){
+    public short getFrequency(){
         return m_freq;
     }
 }

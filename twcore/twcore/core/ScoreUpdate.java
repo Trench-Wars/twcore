@@ -11,21 +11,21 @@ Field    Length    Description
 11       2        Wins
 13       2        Losses
 */
-    int m_playerID;
-    int m_flagPoints;
-    int m_killPoints;
-    int m_wins;
-    int m_losses;
+    short m_playerID;
+    int   m_flagPoints;
+    int   m_killPoints;
+    short m_wins;
+    short m_losses;
 
     public ScoreUpdate(ByteArray array){
-        m_playerID = (int)array.readLittleEndianShort( 1 );
+        m_playerID = array.readLittleEndianShort( 1 );
         m_flagPoints = array.readLittleEndianInt( 3 );
         m_killPoints = array.readLittleEndianInt( 7 );
-        m_wins = (int)array.readLittleEndianShort( 11 );
-        m_losses = (int)array.readLittleEndianShort( 13 );
+        m_wins = array.readLittleEndianShort( 11 );
+        m_losses = array.readLittleEndianShort( 13 );
     }
 
-    public int getPlayerID(){
+    public short getPlayerID(){
         return m_playerID;
     }
     public int getFlagPoints(){
@@ -34,10 +34,10 @@ Field    Length    Description
     public int getKillPoints(){
         return m_killPoints;
     }
-    public int getWins(){
+    public short getWins(){
         return m_wins;
     }
-    public int getLosses(){
+    public short getLosses(){
         return m_losses;
     }
 }

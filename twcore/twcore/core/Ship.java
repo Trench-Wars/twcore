@@ -1,14 +1,13 @@
-package twcore.core;
 /*
- * PositionUpdator.java
+ * Ship.java
  *
  * Created on October 24, 2002, 10:11 AM
- */
-
-/**
  *
  * @author  harvey
  */
+
+package twcore.core;
+
 public class Ship extends Thread {
 
     public static int       MOVING_TIME = 100;
@@ -16,12 +15,12 @@ public class Ship extends Thread {
     public static boolean   MOVEMENT_MOVING = true;
     public static boolean   MOVEMENT_UNMOVING = false;
 
-    private int         x = 8192;
-    private int         y = 8192;
-    private int         xVel = 0;
-    private int         yVel = 0;
-    private int         bounty = 3;
-    private int         energy = 1500;
+    private short       x = 8192;
+    private short       y = 8192;
+    private short       xVel = 0;
+    private short       yVel = 0;
+    private short       bounty = 3;
+    private short       energy = 1500;
     private byte        togglables = 0;
     private byte        direction = 0x0;
     private boolean     m_moving = MOVEMENT_UNMOVING;
@@ -34,30 +33,30 @@ public class Ship extends Thread {
     }
 
     public void move( int direction, int x, int y, int xVel, int yVel, int togglables, int energy, int bounty ){
-        this.x = x;
-        this.y = y;
-        this.xVel = xVel;
-        this.yVel = yVel;
+        this.x = (short)x;
+        this.y = (short)y;
+        this.xVel = (short)xVel;
+        this.yVel = (short)yVel;
         this.direction = (byte)direction;
         this.togglables = (byte)togglables;
-        this.energy = energy;
-        this.bounty = bounty;
+        this.energy = (short)energy;
+        this.bounty = (short)bounty;
         setMoving( true );
         sendPositionPacket();
     }
 
     public void move( int x, int y, int xVel, int yVel ){
-        this.x = x;
-        this.y = y;
-        this.xVel = xVel;
-        this.yVel = yVel;
+        this.x = (short)x;
+        this.y = (short)y;
+        this.xVel = (short)xVel;
+        this.yVel = (short)yVel;
         setMoving( true );
         sendPositionPacket();
     }
 
     public void move( int x, int y ){
-        this.x = x;
-        this.y = y;
+        this.x = (short)x;
+        this.y = (short)y;
         this.xVel = 0;
         this.yVel = 0;
         setMoving( false );
@@ -125,13 +124,13 @@ public class Ship extends Thread {
     /**
      * @return Returns the x.
      */
-    public int getX(){
+    public short getX(){
         return x;
     }
     /**
      * @return Returns the y.
      */
-    public int getY(){
+    public short getY(){
         return y;
     }
 }

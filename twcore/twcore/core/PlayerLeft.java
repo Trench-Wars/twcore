@@ -7,14 +7,14 @@ Field    Length    Description
  */
 public class PlayerLeft extends SubspaceEvent {
 
-    int             m_playerID;
+    short             m_playerID;
 
     public PlayerLeft( ByteArray array ){
 
-        m_playerID = (int)array.readLittleEndianShort( 1 );
+        m_playerID = array.readLittleEndianShort( 1 );
     }
 
-    public int getPlayerID(){
+    public short getPlayerID(){
         return m_playerID;
     }
 }

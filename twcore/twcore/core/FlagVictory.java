@@ -9,15 +9,15 @@ Field    Length    Description
 public class FlagVictory extends SubspaceEvent {
 
     int         m_reward;
-    int         m_frequency;
+    short       m_frequency;
 
     public FlagVictory( ByteArray array ){
 
-        m_frequency = (int)array.readLittleEndianShort( 1 );
-        m_reward = (int)array.readLittleEndianInt( 3 );
+        m_frequency = array.readLittleEndianShort( 1 );
+        m_reward = array.readLittleEndianInt( 3 );
     }
 
-    public int getFrequency(){
+    public short getFrequency(){
         return m_frequency;
     }
 

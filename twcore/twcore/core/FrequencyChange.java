@@ -9,19 +9,19 @@ Field    Length    Description
 */
 public class FrequencyChange extends SubspaceEvent {
 
-    int             m_playerID;
-    int             m_frequency;
+    short             m_playerID;
+    short             m_frequency;
 
     public FrequencyChange(ByteArray array){
-        m_playerID = (int)array.readLittleEndianShort( 1 );
-        m_frequency = (int)array.readLittleEndianShort( 3 );
+        m_playerID = (short)array.readLittleEndianShort( 1 );
+        m_frequency = (short)array.readLittleEndianShort( 3 );
     }
 
-    public int getPlayerID(){
+    public short getPlayerID(){
         return m_playerID;
     }
 
-    public int getFrequency(){
+    public short getFrequency(){
         return m_frequency;
     }
 }

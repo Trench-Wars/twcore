@@ -8,13 +8,13 @@ Field    Length    Description
 1        2        Player ident
 
 */
-    int m_playerID;
+    short m_playerID;
 
     public ScoreReset(ByteArray array){
-        m_playerID = (int)array.readLittleEndianShort( 1 );
+        m_playerID = array.readLittleEndianShort( 1 );
     }
 
-    public int getPlayerID(){
+    public short getPlayerID(){
         return m_playerID;
     }
 }

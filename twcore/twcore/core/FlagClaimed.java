@@ -15,8 +15,8 @@ package twcore.core;
 public class FlagClaimed extends SubspaceEvent {
     
     //Variable Declarations
-    private int m_flagID;
-    private int m_playerID;
+    private short m_flagID;
+    private short m_playerID;
 
     /**
      * Creates a new instance of FlagClaimed, this is called by GamePacketInterpreter
@@ -24,15 +24,15 @@ public class FlagClaimed extends SubspaceEvent {
      * @param array the ByteArray containing the packet data
      */    
     public FlagClaimed( ByteArray array ) {
-        m_flagID = (int)array.readLittleEndianShort( 1 );
-        m_playerID = (int)array.readLittleEndianShort( 3 );
+        m_flagID = array.readLittleEndianShort( 1 );
+        m_playerID = array.readLittleEndianShort( 3 );
     }
     
     /**
      * This gets the ID of the flag that was just claimed
      * @return the ID of the claimed flag
      */
-    public int getFlagID() {
+    public short getFlagID() {
         return m_flagID;
     }
     
@@ -40,7 +40,7 @@ public class FlagClaimed extends SubspaceEvent {
      * This gets the ID of the player that just claimed the flag
      * @return the ID of the claiming player
      */
-    public int getPlayerID() {
+    public short getPlayerID() {
         return m_playerID;
     }
 }

@@ -1,23 +1,23 @@
 package twcore.core;
 
 public class PlayerPosition extends SubspaceEvent{
-    private int m_type;
+    private byte m_type;
     private int m_size;
-    private int m_rotation;
-    private int m_timeStamp;
-    private int m_xLocation;
-    private int m_ping;
-    private int m_bounty;
-    private int m_playerID;
-    private int m_yVelocity;
-    private int m_yLocation;
-    private int m_xVelocity;
+    private byte m_rotation;
+    private short m_timeStamp;
+    private short m_xLocation;
+    private byte m_ping;
+    private short m_bounty;
+    private short m_playerID;
+    private short m_yVelocity;
+    private short m_yLocation;
+    private short m_xVelocity;
     
     private byte m_togglables;
     //if energy packet
-    private int m_energy = 0;
-    private int m_s2clag  = 0;
-    private int m_timer = 0;
+    private short m_energy = 0;
+    private short m_s2clag  = 0;
+    private short m_timer = 0;
     private int m_checksum;
     
     //if weapons packet
@@ -53,8 +53,18 @@ public class PlayerPosition extends SubspaceEvent{
             m_timeStamp = array.readLittleEndianShort(2);
             m_xLocation = array.readLittleEndianShort(4);
             m_ping = array.readByte(6);
+            
+            // Yeah, bounty is sent as a byte.  > 255 bty will lead to errors in short pos packet.
             m_bounty = array.readByte(7);
-            m_playerID = array.readByte(8) & 0xff;
+            
+            // m_playerID = array.readByte(8) & 0xff;
+            // A byte of all high bits is the the identity value of a bitwise AND ...  so, why do this?
+            
+            // YES, we are only reading the lower byte for the short ver of the position packet.
+            // YES, this means player position data may update sporadically because
+            // Player checks vs. ID before updating (due to this problem).  Players with the
+            // lower 255 ids won't have issues, but those with higher ids will.  -qan
+            m_playerID = array.readByte(8);
             m_togglables = array.readByte( 9 );
             parseTogglables( m_togglables );
             m_yVelocity = array.readLittleEndianShort(10);
@@ -72,18 +82,18 @@ public class PlayerPosition extends SubspaceEvent{
                 parseItemCount( array.readLittleEndianInt( 22 ));
             }
         } else if( m_type == 0x05 ){
-            m_rotation = (int)array.readByte(1);
-            m_timeStamp = (int)array.readLittleEndianShort(2);
-            m_xLocation = (int)array.readLittleEndianShort(4);
-            m_yVelocity = (int)array.readLittleEndianShort(6);
-            m_playerID = (int)array.readLittleEndianShort(8);
-            m_xVelocity = (int)array.readLittleEndianShort(10);
-            m_checksum = (int)array.readByte(12);
+            m_rotation = array.readByte(1);
+            m_timeStamp = array.readLittleEndianShort(2);
+            m_xLocation = array.readLittleEndianShort(4);
+            m_yVelocity = array.readLittleEndianShort(6);
+            m_playerID = array.readLittleEndianShort(8);
+            m_xVelocity = array.readLittleEndianShort(10);
+            m_checksum = array.readByte(12);
             m_togglables = array.readByte( 13 );
             parseTogglables( m_togglables );
-            m_ping = (int)array.readByte(14);
-            m_yLocation = (int)array.readLittleEndianShort(15);
-            m_bounty = (int)array.readLittleEndianShort(17);
+            m_ping = array.readByte(14);
+            m_yLocation = array.readLittleEndianShort(15);
+            m_bounty = array.readLittleEndianShort(17);
             m_weaponInfo = array.readLittleEndianShort(19);
             if( m_size > 21 ){
                 //parse beginning until size 23
@@ -123,11 +133,11 @@ public class PlayerPosition extends SubspaceEvent{
         m_portal=  ( items & 0x3c000000 ) >> 26;
     }
     
-    public int getRotation(){
+    public byte getRotation(){
         return m_rotation;
     }
     
-    public int getXLocation(){
+    public short getXLocation(){
         return m_xLocation;
     }
     
@@ -135,27 +145,27 @@ public class PlayerPosition extends SubspaceEvent{
         return m_togglables;
     }
     
-    public int getPing(){
+    public byte getPing(){
         return m_ping;
     }
     
-    public int getBounty(){
+    public short getBounty(){
         return m_bounty;
     }
     
-    public int getPlayerID(){
+    public short getPlayerID(){
         return m_playerID;
     }
     
-    public int getYVelocity(){
+    public short getYVelocity(){
         return m_yVelocity;
     }
     
-    public int getYLocation(){
+    public short getYLocation(){
         return m_yLocation;
     }
     
-    public int getXVelocity(){
+    public short getXVelocity(){
         return m_xVelocity;
     }
     
@@ -178,15 +188,15 @@ public class PlayerPosition extends SubspaceEvent{
         || ( m_type == 0x28 && m_size == 0x26 );
     }
     
-    public int getEnergy(){
+    public short getEnergy(){
         return m_energy;
     }
     
-    public int getS2CLag(){
+    public short getS2CLag(){
         return m_s2clag;
     }
     
-    public int getTimer(){
+    public short getTimer(){
         return m_timer;
     }
     
@@ -198,7 +208,7 @@ public class PlayerPosition extends SubspaceEvent{
         return m_weaponInfo;
     }
     
-    public int getTimeStamp(){
+    public short getTimeStamp(){
         return m_timeStamp;
     }
     

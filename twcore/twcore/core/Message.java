@@ -4,8 +4,8 @@ public class Message extends SubspaceEvent {
     
     String       m_message;
     String       m_messager;
-    int          m_playerID;
-    int          m_soundCode;
+    short        m_playerID;
+    byte         m_soundCode;
     int          m_chatNumber;
     int          m_messageType;
     String       m_alertCommandType;
@@ -34,8 +34,8 @@ public class Message extends SubspaceEvent {
         m_chatNumber = 0;
         m_messager = null;
         m_messageType = (1 << (int)array.readByte( 1 ));
-        m_soundCode = (int)array.readByte( 2 );
-        m_playerID = (int)array.readLittleEndianShort( 3 );
+        m_soundCode = (byte)array.readByte( 2 );
+        m_playerID = (short)array.readLittleEndianShort( 3 );
         m_message = array.readString( 5, array.size() - 6 );
         
         if( m_messageType == Message.ARENA_MESSAGE && m_message.startsWith( "misc:alertcommand:" )){
@@ -80,12 +80,12 @@ public class Message extends SubspaceEvent {
         }
     }
     
-    public int getPlayerID(){
+    public short getPlayerID(){
         
         return m_playerID;
     }
     
-    public int getSoundCode(){
+    public byte getSoundCode(){
         
         return m_soundCode;
     }

@@ -2,15 +2,15 @@ package twcore.core;
 
 public class SoccerGoal extends SubspaceEvent {
     
-    private int m_frequency;
-    private int m_reward;
+    private short m_frequency;
+    private int   m_reward;
     
     public SoccerGoal( ByteArray array ) {
-        m_frequency = (int)array.readLittleEndianShort( 1 );
-        m_reward     = (int)array.readLittleEndianInt( 3 );
+        m_frequency = array.readLittleEndianShort( 1 );
+        m_reward    = array.readLittleEndianInt( 3 );
     }
     
-    public int getFrequency() {
+    public short getFrequency() {
         return m_frequency;
     }
     

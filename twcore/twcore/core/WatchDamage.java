@@ -34,10 +34,10 @@ public class WatchDamage extends SubspaceEvent {
     public static int WEAPON_MINE = 11;
     public static int WEAPON_NOTMINE = 12;
 
-    int                 m_victim;
-    int                 m_attacker;
-    int                 m_oldEnergy;
-    int                 m_energyLost;
+    short               m_victim;
+    short               m_attacker;
+    short               m_oldEnergy;
+    short               m_energyLost;
 
     private short       m_weaponInfo;
     private int         m_weaponType;
@@ -49,11 +49,11 @@ public class WatchDamage extends SubspaceEvent {
 
     public WatchDamage( ByteArray array ){
 
-        m_victim = (int)array.readLittleEndianShort( 1 ); //(int)array.readByte( 1 );
-        m_attacker = (int)array.readLittleEndianShort( 7 ); //(int)array.readByte( 7 );
+        m_victim = array.readLittleEndianShort( 1 );
+        m_attacker = array.readLittleEndianShort( 7 );
         m_weaponInfo = array.readLittleEndianShort( 9 );
-        m_oldEnergy = (int)array.readLittleEndianShort( 11 );
-        m_energyLost = (int)array.readLittleEndianShort( 13 );
+        m_oldEnergy = array.readLittleEndianShort( 11 );
+        m_energyLost = array.readLittleEndianShort( 13 );
 
         if( m_energyLost < 0 ){
             m_energyLost += 65535;
@@ -74,28 +74,28 @@ public class WatchDamage extends SubspaceEvent {
     /** Gets the PlayerID of the Victim
      * @return Victim PlayerID
      */
-    public int getVictim(){
+    public short getVictim(){
         return m_victim;
     }
 
     /** Gets the PlayerID of the Attacker
      * @return Attacker PlayerID
      */
-    public int getAttacker(){
+    public short getAttacker(){
         return m_attacker;
     }
 
     /** Gets the energy the player had before.
      * @return Old Energy Level
      */
-    public int getOldEnergy(){
+    public short getOldEnergy(){
         return m_oldEnergy;
     }
 
     /** Gets the energy the player lost.
      * @return Lost energy
      */
-    public int getEnergyLost(){
+    public short getEnergyLost(){
         return m_energyLost;
     }
 

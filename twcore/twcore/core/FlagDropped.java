@@ -14,7 +14,7 @@ package twcore.core;
 public class FlagDropped extends SubspaceEvent {
     
     //Variable Declarations
-    private int m_playerID;
+    private short m_playerID;
     
     /**
      * Creates a new instance of FlagDropped, this is called by GamePacketInterpreter
@@ -22,14 +22,14 @@ public class FlagDropped extends SubspaceEvent {
      * @param array the ByteArray containing the packet data
      */
     public FlagDropped( ByteArray array ) {
-        m_playerID = (int)array.readLittleEndianShort( 1 );
+        m_playerID = array.readLittleEndianShort( 1 );
     }
     
     /**
      * This gets the ID of the player that just dropped the flag
      * @return the ID of the dropping player
      */
-    public int getPlayerID() {
+    public short getPlayerID() {
         return m_playerID;
     }
 }

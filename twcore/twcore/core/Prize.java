@@ -32,32 +32,32 @@ public class Prize extends SubspaceEvent {
     static final int PORTAL_PRIZE =28;
     
     int m_timeStamp;
-    int m_xTiles;
-    int m_yTiles;
-    int m_prizeType;
-    int m_playerID;
+    short m_xTiles;
+    short m_yTiles;
+    short m_prizeType;
+    short m_playerID;
     
     public Prize(ByteArray array){
         m_timeStamp = (int)array.readLittleEndianInt( 1 );
-        m_xTiles = (int)array.readLittleEndianShort( 5 );
-        m_yTiles = (int)array.readLittleEndianShort( 7 );
-        m_prizeType = (int)array.readLittleEndianShort( 9 );
-        m_playerID = (int)array.readLittleEndianShort( 11 );
+        m_xTiles = (short)array.readLittleEndianShort( 5 );
+        m_yTiles = (short)array.readLittleEndianShort( 7 );
+        m_prizeType = (short)array.readLittleEndianShort( 9 );
+        m_playerID = (short)array.readLittleEndianShort( 11 );
     }
     
     public int getTimeStamp(){
         return m_timeStamp;
     }
-    public int getXTiles(){
+    public short getXTiles(){
         return m_xTiles;
     }
-    public int getYTiles(){
+    public short getYTiles(){
         return m_yTiles;
     }
-    public int getPrizeType(){
+    public short getPrizeType(){
         return m_prizeType;
     }
-    public int getPlayerID(){
+    public short getPlayerID(){
         return m_playerID;
     }
 }

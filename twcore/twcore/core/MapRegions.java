@@ -4,7 +4,6 @@ import java.io.*;
 import java.awt.*;
 import java.awt.image.*;
 import javax.imageio.*;
-import twcore.core.*;
 
 /** <b>MapRegions 1.0</b><br>
  * Very easy way to check if a player is in a certain part of the map.
