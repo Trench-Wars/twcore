@@ -109,6 +109,28 @@ public class purepubbot extends SubspaceBot
   }
 
   /**
+   * This method handles a PlayerLeft event.
+   *
+   * @param event is the event to handle.
+   */
+  public void handleEvent(FlagClaimed event)
+  {
+    if(!flagTimeStarted)
+      return;
+    
+    int playerID = event.getPlayerID();
+    Player p = m_botAction.getPlayer(playerID);
+    
+    try {
+      if( p != null ) {
+        flagTimer.flagClaimed( p.getFrequency(), playerID );
+      }
+    } catch (Exception e) {
+    }
+  }
+
+  
+  /**
    * This method moves a bot from one arena to another.  The bot must not be
    * started for it to move.
    *
@@ -122,8 +144,8 @@ public class purepubbot extends SubspaceBot
   {
     String currentArena = m_botAction.getArenaName();
 
-    if(started)
-      throw new RuntimeException("Bot is currently running pure pub settings in " + currentArena + ".  Please !Stop before trying to move.");
+    if(started || flagTimeStarted)
+      throw new RuntimeException("Bot is currently running pure pub settings in " + currentArena + ".  Please !Stop and/or !Endtime before trying to move.");
     if(currentArena.equalsIgnoreCase(argString))
       throw new IllegalArgumentException("Bot is already in that arena.");
 
@@ -364,6 +386,7 @@ public class purepubbot extends SubspaceBot
     eventRequester.request(EventRequester.MESSAGE);
     eventRequester.request(EventRequester.PLAYER_LEFT);
     eventRequester.request(EventRequester.PLAYER_ENTERED);
+    eventRequester.request(EventRequester.FLAG_CLAIMED);
     eventRequester.request(EventRequester.FREQUENCY_CHANGE);
     eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
   }
