@@ -180,9 +180,10 @@ public class falloutbot extends SubspaceBot {
 	   		}
 	   	}
 		m_botAction.showObject( 3 );
+		    
 		if( i == 1 )
 			m_botAction.sendArenaMessage( winner.substring( 0, winner.length() - 5 ) + " has won this round of Fallout!", 5 );
-		else 
+		else if( i > 1 ) 
 			m_botAction.sendArenaMessage( winner.substring( 0, winner.length() - 5 ) + " have won this round of Fallout!", 5 );
 		m_botAction.cancelTasks();
 		m_botAction.shipResetAll();
