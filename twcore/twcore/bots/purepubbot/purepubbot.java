@@ -367,8 +367,8 @@ public class purepubbot extends SubspaceBot
                 "When enabled, I may restrict levis from playing, prevent private frequencies, or run Flag Time mode.",
                 "Flag Time mode commands (a freq must hold flag for an amount of consecutive minutes to win):",
                 "!Help                            -- Displays this help message.",
-                "!Time                            -- Provides time remaining in Flag Time mode."//,
-                //"!Warp                            -- Warps you into flagroom at start of next round."
+                "!Time                            -- Provides time remaining in Flag Time mode.",
+                "!Warp                            -- Warps you into flagroom at start of next round."
         };
         
         if( opList.isHighmod( sender ) )
@@ -394,8 +394,8 @@ public class purepubbot extends SubspaceBot
                 doTimeCmd(sender);
             else if(command.equals("!help"))
                 doHelpCmd(sender);
-            //else if(command.equals("!warp"))
-              //  doWarpCmd(sender);
+            else if(command.equals("!warp"))
+                doWarpCmd(sender);
             
             if ( !opList.isHighmod(sender) )
                 return;
@@ -779,7 +779,7 @@ public class purepubbot extends SubspaceBot
             String pname = (String)i.next();
             if( pname != null ) {
                 rand = r.nextInt( NUM_WARP_POINTS ); 
-                doRandomWarp( pname, warpPtsX[rand], warpPtsX[rand] );
+                doRandomWarp( pname, warpPtsX[rand], warpPtsY[rand] );
             }                
         }
                     
