@@ -12,6 +12,8 @@ public class bfallout extends MultiModule {
 
 	HashMap players;
 
+	TimerTask fallOutCheck;
+
 	int m_eventStartTime;
 	int m_eventState = 0;		// 0 = nothing, 1 = starting, 2 = playing, 3 = stalling
 
@@ -136,6 +138,12 @@ public class bfallout extends MultiModule {
 			}
 		};
 
+		TimerTask eightSeconds = new TimerTask() {
+			public void run() {
+				m_botAction.warpAllRandomly();
+			}
+		};
+
 		TimerTask tenSeconds = new TimerTask() {
 			public void run() {
 		
@@ -144,7 +152,7 @@ public class bfallout extends MultiModule {
 					Player p = (Player)i.next();
 
 					if (!p.getPlayerName().equals(m_botAction.getBotName())) {
-						players.put(p.getPlayerName().toLowerCase(), p.getPlayerName().toLowerCase());
+						players.put(p.getPlayerName(), p.getPlayerName());
 					}
 				}
 
@@ -157,10 +165,25 @@ public class bfallout extends MultiModule {
 					m_botAction.sendArenaMessage("GO GO GO!", 104);
 
 					changeTarget();
+
+					fallOutCheck = new TimerTask() {
+						public void run() {
+							Iterator i = m_botAction.getPlayingPlayerIterator();
+							while (i.hasNext()) {
+								Player p = (Player)i.next();
+
+								if (players.containsKey(p.getPlayerName()) && !playerInsideRing(p)) {
+									handleFallOut(p.getPlayerName());
+								}
+							}
+						}
+					};
+					m_botAction.scheduleTaskAtFixedRate(fallOutCheck, 5000, 5000);
 				}
 			}
 		};
 		m_botAction.scheduleTask(fiveSeconds, 5000);
+		m_botAction.scheduleTask(eightSeconds, 8000);
 		m_botAction.scheduleTask(tenSeconds, 10000);
 	}
 
@@ -192,16 +215,8 @@ public class bfallout extends MultiModule {
 	public void handleEvent(PlayerPosition event) {
 		if (m_eventState == 2) {
 			String name = m_botAction.getPlayerName(event.getPlayerID());
-			if (players.containsKey(name.toLowerCase()) && m_spaceShip.getDistance(event.getXLocation(), event.getYLocation()) >= 316) {
-				players.remove(name.toLowerCase());
-
-				m_botAction.sendArenaMessage(name + " fell out!  Time: "+getTimeString());
-				m_botAction.spec(event.getPlayerID());
-				m_botAction.spec(event.getPlayerID());
-
-				if (players.size() <= 1) {
-					declareWinner();
-				}
+			if (players.containsKey(name) && !playerInsideRing(m_botAction.getPlayer(event.getPlayerID()))) {
+				handleFallOut(name);
 			}
 		}
 	}
@@ -226,13 +241,25 @@ public class bfallout extends MultiModule {
 		}
 	}
 
-	public void handleLagOut(String name) {
-		if (m_eventState != 0 && players.containsKey(name.toLowerCase())) {
-			players.remove(name.toLowerCase());
+	public boolean playerInsideRing(Player p) {
+		return m_spaceShip.getDistance(p.getXLocation(), p.getYLocation()) < 321;
+	}
 
-			if (players.size() <= 1) {
-				declareWinner();
-			}
+	public void handleFallOut(String name) {
+		players.remove(name);
+
+		m_botAction.sendArenaMessage(name + " fell out!  Time: "+getTimeString());
+		m_botAction.spec(name);
+		m_botAction.spec(name);
+
+		if (players.size() <= 1) {
+			declareWinner();
+		}
+	}
+
+	public void handleLagOut(String name) {
+		if (m_eventState != 0 && players.containsKey(name)) {
+			handleFallOut(name);
 		}
 	}
 
