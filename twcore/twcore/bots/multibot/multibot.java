@@ -144,8 +144,34 @@ public class multibot extends SubspaceBot
    */
   private void doListGamesCmd(String sender)
   {
-    throw new RuntimeException("Not Implemented Yet.");
+    File directory = new File(modulePath);
+	File[] files = directory.listFiles(fnf);
+
+    m_botAction.sendPrivateMessage(sender, "Listing available modules..");
+
+	for (int i = 0; i < files.length; i++) {
+	  String name = files[i] + "";
+	  name = name.substring(modulePath.length() + 1);
+      m_botAction.sendPrivateMessage(sender, "-- " + name);
+	}
   }
+
+  public FilenameFilter fnf = new FilenameFilter() {
+    public boolean accept(File dir, String name) {
+      File f = new File(modulePath, name);
+
+	  if (f.isDirectory()) {
+
+		String[] fileNames = f.list();
+
+        if (containsString(fileNames, name.toLowerCase() + CLASS_EXTENSION) && containsString(fileNames, name.toLowerCase() + CONFIG_EXTENSION)) {
+          return true;
+        }
+		return false;
+      }
+	  return false;
+	}
+  };
 
   /**
    * This method locks the bot with the current game number.
@@ -426,6 +452,8 @@ public class multibot extends SubspaceBot
   public void handleEvent(PlayerLeft event){handleEvent((SubspaceEvent) event);}
 
   public void handleEvent(PlayerDeath event){handleEvent((SubspaceEvent) event);}
+
+  public void handleEvent(PlayerEntered event){handleEvent((SubspaceEvent) event);}
 
   public void handleEvent(Prize event){handleEvent((SubspaceEvent) event);}
 
