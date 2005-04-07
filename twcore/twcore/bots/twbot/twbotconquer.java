@@ -10,7 +10,6 @@
  */
 package twcore.bots.twbot;
 
-import java.util.*;
 import twcore.core.*;
 
 public class twbotconquer extends TWBotExtension {
@@ -24,6 +23,9 @@ public class twbotconquer extends TWBotExtension {
         if( !isRunning ) return;
         
         Player killer = m_botAction.getPlayer( event.getKillerID() );
+        if( killer == null )
+            return;
+        
         m_botAction.setFreq( event.getKilleeID(), killer.getFrequency() );
         String killeename = m_botAction.getPlayerName( event.getKilleeID() );
         String killername = m_botAction.getPlayerName( event.getKillerID() );
