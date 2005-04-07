@@ -631,7 +631,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage( "END ROUND:  Freq " + winningFreq + " has emerged victorious!", 1 );
         switch( specialPrize ) {
             case 1:
-                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": Party pack of unique and wonderful things!");
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": Party pack of goodies!");
                 break;
             case 2:
                 m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": Life-size trophies of themselves!");
@@ -640,7 +640,13 @@ public class purepubbot extends SubspaceBot
                 m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": Double bounty bonus!");
                 break;
             case 4:
-                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": The losing team's REVENGE!");
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": Sore loser's REVENGE!");
+                break;                
+            case 5:
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": The triple platinum trophy!");
+                break;                
+            case 6:
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + winningFreq + ": Bodyguard!!");
                 break;                
         }
         
@@ -753,15 +759,15 @@ public class purepubbot extends SubspaceBot
          * Give out prizes to the winning freq.  If it was a hard-fought victory, give more.
          */
         public int givePrizes() {
-            int weight = (totalSecs / 60);
+            int weight = (totalSecs / 60) * 3;
             if( weight >= 20 && weight < 40 )
-                weight += 10;
-            else if( weight >= 40 && weight < 50 )
-                weight += 20;
-            else if( weight >= 50 && weight < 100 )
-                weight += 30;
-            else if( weight >= 100 )
                 weight += 50;
+            else if( weight >= 40 && weight < 50 )
+                weight += 100;
+            else if( weight >= 50 && weight < 100 )
+                weight += 200;
+            else if( weight >= 100 )
+                weight += 500;
             
         	int special = 0;
         	// Special prizes for long battles (add more if you think of any!)
@@ -769,18 +775,22 @@ public class purepubbot extends SubspaceBot
                 Random r = new Random();
             	int chance = r.nextInt(100);
             
-            	if( chance > 50 && chance < 70 )
+            	if( chance > 40 && chance < 70 )
             	    special = 1;
             	else if( chance >= 70 && chance < 80 )
             	    special = 2;
             	else if( chance >= 80 && chance < 90 ) {
             	    weight *= 2;
             		special = 3;
-            	} else if( chance >= 90 ) {
+            	} else if( chance >= 90 && chance < 95 ) {
             	    special = 4;
+            	} else if( chance >= 95 && chance < 98 ) {
+            	    special = 5;
+            	} else if( chance == 98 || chance == 99 ) {
+            	    special = 6;
             	}
             }
-            
+
             try
             {
                 Iterator iterator = m_botAction.getPlayerIterator();
@@ -790,9 +800,7 @@ public class purepubbot extends SubspaceBot
                     player = (Player) iterator.next();
                     if( player != null ) {
                         if(player.getFrequency() == flagholdingFreq ) {
-                            for( int i = 0; i < weight; i++ ) {               
-                                m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #13");
-                            }
+                            m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize " + weight);
                             switch( special ) {
                             	case 1:  // "Party pack" -- replenishes all essentials + gives anti
                                     m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #6");                            	    
@@ -811,8 +819,16 @@ public class purepubbot extends SubspaceBot
                                     break;
                                 case 3:  // "Double reward" -- two times number of "full charges" prized
                                     break;
-                                case 4:  // "Loser's revenge" -- engine shutdown!
+                                case 4:  // "Triple trophy" -- 3 decoys
+                                    m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
+                                    m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
+                                    m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
+                                    break;                
+                                case 5:  // "Sore Loser's Revenge" -- engine shutdown!
                                     m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #14");
+                                    break;                
+                                case 6:  // "Bodyguard" -- shields
+                                    m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #18");
                                     break;                
                             }
                         }
