@@ -652,9 +652,7 @@ public class purepubbot extends SubspaceBot
     private void doEndRound( ) {
         if( !flagTimeStarted )
             return;
-
-        flagTimer.endGame();
-        
+       
         int weight = ((flagTimer.getTotalSecs() * 3 ) / 60);
         if( weight >= 20 && weight < 40 )
             weight += 50;
@@ -664,6 +662,8 @@ public class purepubbot extends SubspaceBot
             weight += 200;
         else if( weight >= 100 )
             weight += 500;
+
+        int flagholdingFreq = flagTimer.getHoldingFreq();
         
     	int special = 0;
     	// Special prizes for long battles (add more if you think of any!)
@@ -671,25 +671,31 @@ public class purepubbot extends SubspaceBot
             Random r = new Random();
         	int chance = r.nextInt(100);
         
-        	if( chance > 40 && chance < 70 )
+        	if( chance > 40 && chance < 70 ) {
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Party pack of goodies!");
         	    special = 1;
-        	else if( chance >= 70 && chance < 80 )
+        	} else if( chance >= 70 && chance < 80 ) {
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Life-size Trophies of Themselves!");
         	    special = 2;
-        	else if( chance >= 80 && chance < 90 ) {
+        	} else if( chance >= 80 && chance < 90 ) {
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Double Bounty Bonus!");
         	    weight *= 2;
         		special = 3;
         	} else if( chance >= 90 && chance < 94 ) {
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": The Triple Platinum Trophy!");
         	    special = 4;
         	} else if( chance >= 94 && chance < 97 ) {
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Ultimate Techno Dance Party!", 102);
         	    special = 5;
         	} else if( chance >= 97 && chance < 99 ) {
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Sore Loser's REVENGE!");
         	    special = 6;
         	} else if( chance == 99 ) {
+                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Personal Body-Guard!");
         	    special = 7;
         	}
         }
         
-        int flagholdingFreq = flagTimer.getHoldingFreq();
         m_botAction.sendArenaMessage( "END ROUND:  Freq " + flagholdingFreq + " has emerged victorious after " + getTimeString( flagTimer.getTotalSecs() ) + ", earning " + weight + " bounty!", 1 );
 
         try
@@ -704,7 +710,6 @@ public class purepubbot extends SubspaceBot
                         m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize " + weight);
                         switch( special ) {
                         	case 1:  // "Party pack" -- replenishes all essentials + gives anti
-                                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Party pack of goodies!");
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #6");                            	    
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #15");                            	    
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #19");                            	    
@@ -717,27 +722,21 @@ public class purepubbot extends SubspaceBot
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #28");
                                 break;
                         	case 2:  // "Trophy" -- decoy given
-                                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Life-size Trophies of Themselves!");
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
                                 break;
                             case 3:  // "Double reward" -- two times number of "full charges" prized
-                                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Double Bounty Bonus!");
                                 break;
                             case 4:  // "Triple trophy" -- 3 decoys
-                                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": The Triple Platinum Trophy!");
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
                                 break;                
                             case 5:  // "Techno Dance Party" -- plays victory music :P
-                                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Ultimate Techno Dance Party!", 102);
                                 break;                
                             case 6:  // "Sore Loser's Revenge" -- engine shutdown!
-                                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Sore Loser's REVENGE!");
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #14");
                                 break;                
                             case 7:  // "Bodyguard" -- shields
-                                m_botAction.sendArenaMessage( "SPECIAL PRIZE for Freq " + flagholdingFreq + ": Personal Body-Guard!");
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #18");
                                 break;                
                         }
@@ -968,6 +967,7 @@ public class purepubbot extends SubspaceBot
             secondsHeld++;
             
             if( secondsHeld >= flagMinutesRequired * 60 ) {
+                endGame();
                 doEndRound();
             } else if( (flagMinutesRequired * 60) - secondsHeld == 60 ) {
                 m_botAction.sendArenaMessage( "Freq " + flagholdingFreq + " will win in 60 seconds." );
