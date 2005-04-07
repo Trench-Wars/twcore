@@ -518,6 +518,8 @@ public class messagebot extends SubspaceBot
     			String channel = results.getString("fcChannel");
     			channel = channel.toLowerCase();
     			Channel c = (Channel)channels.get(channel);
+    			if( c == null)
+    			    return;
     			if(c.isOp(name.toLowerCase()))
     				channel += ": Operator.";
     			else if(c.isOwner(name.toLowerCase()))
@@ -653,7 +655,6 @@ public class messagebot extends SubspaceBot
 		try{
 			messageNumber = Integer.parseInt(message);
 		} catch(Exception e) {
-			Tools.printStackTrace( e );
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
