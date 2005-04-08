@@ -16,6 +16,9 @@ public class bfallout extends MultiModule {
 
 	int m_eventStartTime;
 	int m_eventState = 0;		// 0 = nothing, 1 = starting, 2 = playing, 3 = stalling
+	int m_shipType = 1;
+
+	BFPlayer bestGreener;
 
 	public void init() {
 		m_spaceShip = new SpaceShip(m_botAction, moduleSettings, this, "handleShipEvent", 6, 0);
@@ -46,6 +49,7 @@ public class bfallout extends MultiModule {
 		eventRequester.request(EventRequester.LOGGED_ON);
 		eventRequester.request(EventRequester.PLAYER_POSITION);
 		eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+		eventRequester.request(EventRequester.PRIZE);
 	}
 
 	public void registerCommands() {
@@ -78,6 +82,8 @@ public class bfallout extends MultiModule {
 			String[] out2 = {
 				"| Host Commands:                                             |",
 				"|   !start                     - Starts the event            |",
+				"|   !start <#>                 - Starts the event and forces |",
+				"|                                shiptype # for players      |",
 				"|   !stop                      - Stops the event             |",
 				"|   !spamrules                 - *arena messages the rules   |",
 				"+------------------------------------------------------------+"
@@ -92,6 +98,18 @@ public class bfallout extends MultiModule {
 			return;
 
 		if (m_eventState == 0) {
+			m_shipType = 1;
+			if (message != null) {
+				if (Tools.isAllDigits(message)) {
+					int ship;
+					try {
+						ship = Integer.parseInt(message);
+						if (ship <= 8 && ship >= 1) {
+							m_shipType = ship;
+						}
+					} catch (NumberFormatException nfe) { }
+				}
+			}
 			startEvent();
 		} else {
 			m_botAction.sendPrivateMessage(name, "The event is already in progress!  (!stop it first..?)");
@@ -116,6 +134,7 @@ public class bfallout extends MultiModule {
 			return;
 
 		m_botAction.sendArenaMessage("BalanceFallout rules:  Stay inside the moving circle as long as possible, last player in wins!", 1);
+		m_botAction.sendArenaMessage("This event also features a green game:  Pick up the most greens to win!");
 	}
 
 	public void startEvent() {
@@ -131,7 +150,7 @@ public class bfallout extends MultiModule {
 					Player p = (Player)i.next();
 
 					if (!p.getPlayerName().equals(m_botAction.getBotName())) {
-						m_botAction.setShip(p.getPlayerID(), 1);
+						m_botAction.setShip(p.getPlayerID(), m_shipType);
 						m_botAction.setFreq(p.getPlayerID(), 1);
 					}
 				}
@@ -152,7 +171,7 @@ public class bfallout extends MultiModule {
 					Player p = (Player)i.next();
 
 					if (!p.getPlayerName().equals(m_botAction.getBotName())) {
-						players.put(p.getPlayerName(), p.getPlayerName());
+						players.put(p.getPlayerName(), new BFPlayer(p.getPlayerName()));
 					}
 				}
 
@@ -172,13 +191,13 @@ public class bfallout extends MultiModule {
 							while (i.hasNext()) {
 								Player p = (Player)i.next();
 
-								if (players.containsKey(p.getPlayerName()) && !playerInsideRing(p)) {
-									handleFallOut(p.getPlayerName());
+								if (players.containsKey(p.getPlayerName()) && !playerInsideRing(p, 2000)) {
+									m_botAction.sendPrivateMessage("Sika", p.getPlayerName() + " cheats!!!1");
 								}
 							}
 						}
 					};
-//					m_botAction.scheduleTaskAtFixedRate(fallOutCheck, 5000, 5000);
+					m_botAction.scheduleTaskAtFixedRate(fallOutCheck, 5000, 5000);
 				}
 			}
 		};
@@ -215,7 +234,7 @@ public class bfallout extends MultiModule {
 	public void handleEvent(PlayerPosition event) {
 		if (m_eventState == 2) {
 			String name = m_botAction.getPlayerName(event.getPlayerID());
-			if (players.containsKey(name) && !playerInsideRing(m_botAction.getPlayer(event.getPlayerID()))) {
+			if (players.containsKey(name) && !playerInsideRing(m_botAction.getPlayer(event.getPlayerID()), 330)) {
 				handleFallOut(name);
 			}
 		}
@@ -241,14 +260,32 @@ public class bfallout extends MultiModule {
 		}
 	}
 
-	public boolean playerInsideRing(Player p) {
-		return m_spaceShip.getDistance(p.getXLocation(), p.getYLocation()) < 321;
+	public void handleEvent(Prize event) {
+		if (m_eventState == 2) {
+			String name = m_botAction.getPlayerName(event.getPlayerID());
+
+			if (players.containsKey(name)) {
+				BFPlayer p = (BFPlayer)players.get(name);
+				p.incGreens();
+			}
+		}
+	}
+
+	public boolean playerInsideRing(Player p, int dist) {
+		return m_spaceShip.getDistance(p.getXLocation(), p.getYLocation()) < dist;
 	}
 
 	public void handleFallOut(String name) {
+
+		BFPlayer p = (BFPlayer)players.get(name);
+
+		m_botAction.sendArenaMessage(name + " fell out!  Time: "+getTimeString()+"  Greens: "+p.getGreens());
+
+		if (bestGreener == null || bestGreener.getGreens() < p.getGreens()) {
+			bestGreener = p;
+		}
 		players.remove(name);
 
-		m_botAction.sendArenaMessage(name + " fell out!  Time: "+getTimeString());
 		m_botAction.spec(name);
 		m_botAction.spec(name);
 
@@ -296,17 +333,26 @@ public class bfallout extends MultiModule {
 	}
 
 	public void declareWinner() {
+		BFPlayer p;
 		String winner = null;
+		int g = 0;
 		Iterator i = players.keySet().iterator();
 		while (i.hasNext()) {
-			winner = (String) i.next();
+			winner = (String)i.next();
+			p = (BFPlayer)players.get(winner);
+			g = p.getGreens();
+
+			if (bestGreener == null || bestGreener.getGreens() < p.getGreens()) {
+				bestGreener = p;
+			}
 		}
 
 		if (winner == null) {
 			winner = "-No one (?)-";
 		}
 
-		m_botAction.sendArenaMessage("GAME OVER: Winner "+winner+"!  Time: "+getTimeString(), 5);
+		m_botAction.sendArenaMessage("GAME OVER: Winner "+winner+"!  Time: "+getTimeString()+"  Greens: "+g, 5);
+		m_botAction.sendArenaMessage("---------  Most Greens: "+bestGreener.getName()+" with "+bestGreener.getGreens()+" green(s)");
 		stopEvent();
 	}
 
@@ -326,4 +372,20 @@ public class bfallout extends MultiModule {
 		m_spaceShip.interrupt();
 		m_botAction.cancelTasks();
 	}
+
+	class BFPlayer {
+
+		int greens = 0;
+		String name;
+
+		public BFPlayer(String name) {
+			this.name = name;
+		}
+
+		public String getName() { return name; }
+
+		public void incGreens() { greens++; }
+
+		public int getGreens() { return greens; }
+	};
 }
