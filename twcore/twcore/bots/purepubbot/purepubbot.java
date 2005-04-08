@@ -261,7 +261,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage( "Flag Time mode has been enabled." );
         
         m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the round." );
-        m_botAction.sendArenaMessage( "Next round will begin in 60 seconds." );
+        m_botAction.sendArenaMessage( "Next round will begin in 60 seconds.  PM me with !warp to enable flagroom warping. -" + m_botAction.getBotName() );
         
         flagTimeStarted = true;
         m_botAction.scheduleTask( new StartRoundTask(), 60000 );
@@ -309,15 +309,16 @@ public class purepubbot extends SubspaceBot
      */
     public void doWarpCmd( String sender )
     {
+        sender = sender.toLowerCase();
         if(!flagTimeStarted)
             throw new RuntimeException( "Flag Time mode is not currently running." );
 
         if( warpPlayers.contains( sender ) ) {
             warpPlayers.remove( sender );
-            m_botAction.sendSmartPrivateMessage( sender, "You will no longer be warped inside the FR at the start of next round." );
+            m_botAction.sendSmartPrivateMessage( sender, "You will no longer be warped inside FR at the start of every round.  !warp again to reactivate." );
         } else {
             warpPlayers.add( sender );
-            m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside the flag room at the start of next round." );            
+            m_botAction.sendSmartPrivateMessage( sender, "You will now be warped inside the flag room at start of every round.  !warp again to deactivate." );            
         }
     }
         
@@ -508,7 +509,7 @@ public class purepubbot extends SubspaceBot
     }
     
     /**
-     * This moethod removes a playerName from the freq lists.
+     * This method removes a playerName from the freq and warp lists.
      */
     private void removeFromLists(String playerName)
     {
@@ -516,6 +517,7 @@ public class purepubbot extends SubspaceBot
         
         freq0List.remove(lowerName);
         freq1List.remove(lowerName);
+        warpPlayers.remove(lowerName);
     }
     
     /**
@@ -639,7 +641,7 @@ public class purepubbot extends SubspaceBot
             return;
         
         m_botAction.sendArenaMessage( "RULES: Hold the flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the round." );
-        m_botAction.sendArenaMessage( "Next round will begin in 2 minutes.  PM me with !warp to warp into FR at round start. -" + m_botAction.getBotName() );
+        m_botAction.sendArenaMessage( "Next round will begin in 2 minutes.  PM me with !warp to enable flagroom warping. -" + m_botAction.getBotName() );
         // Remove this line after testing is done
         m_botAction.sendArenaMessage( "Comments?  Post them here: http://forums.trenchwars.org/showthread.php?t=17883" );
         m_botAction.scheduleTask( new StartRoundTask(), 2 * 60 * 1000 );
@@ -777,6 +779,7 @@ public class purepubbot extends SubspaceBot
     private void warpPlayers() {
         Iterator i = warpPlayers.iterator();
         Random r = new Random();
+        LinkedList removePlayers = new LinkedList();
         int rand;
         
         while( i.hasNext() ) {
@@ -784,10 +787,8 @@ public class purepubbot extends SubspaceBot
             if( pname != null ) {
                 rand = r.nextInt( NUM_WARP_POINTS ); 
                 doRandomWarp( pname, warpPtsX[rand], warpPtsY[rand] );
-            }                
-        }
-                    
-        warpPlayers = new LinkedList();
+            }
+        }                    
     }
     
     /**
