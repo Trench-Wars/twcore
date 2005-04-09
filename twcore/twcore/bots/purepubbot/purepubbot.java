@@ -18,6 +18,8 @@ public class purepubbot extends SubspaceBot
     private boolean privFreqs;
     private boolean flagTimeStarted;
     private FlagCountTask flagTimer;
+    private StartRoundTask startTimer;
+    private IntermissionTask intermissionTimer;
     private int flagMinutesRequired; 
     
     private static final int NUM_WARP_POINTS = 13;
@@ -75,6 +77,7 @@ public class purepubbot extends SubspaceBot
         String playerName = m_botAction.getPlayerName(playerID);
         
         removeFromLists(playerName);
+        removeFromWarpList(playerName);
     }
     
     /**
@@ -309,7 +312,6 @@ public class purepubbot extends SubspaceBot
      */
     public void doWarpCmd( String sender )
     {
-        sender = sender.toLowerCase();
         if(!flagTimeStarted)
             throw new RuntimeException( "Flag Time mode is not currently running." );
 
@@ -509,7 +511,7 @@ public class purepubbot extends SubspaceBot
     }
     
     /**
-     * This method removes a playerName from the freq and warp lists.
+     * This method removes a playerName from the freq lists.
      */
     private void removeFromLists(String playerName)
     {
@@ -517,9 +519,17 @@ public class purepubbot extends SubspaceBot
         
         freq0List.remove(lowerName);
         freq1List.remove(lowerName);
-        warpPlayers.remove(lowerName);
+        warpPlayers.remove( playerName );
     }
     
+    /**
+     * This method removes a playerName from the warp list.
+     */
+    private void removeFromWarpList(String playerName)
+    {       
+        warpPlayers.remove( playerName );
+    }
+
     /**
      * This method sets a player to a freq and updates the freq lists.
      *
@@ -629,6 +639,12 @@ public class purepubbot extends SubspaceBot
         if(!flagTimeStarted)
             return;
         
+        try {
+            flagTimer.endGame();
+            flagTimer.cancel();
+        } catch (Exception e ) {
+        }       
+
         flagTimer = new FlagCountTask();
         m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
     }
@@ -644,7 +660,14 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage( "Next round will begin in 2 minutes.  PM me with !warp to enable flagroom warping. -" + m_botAction.getBotName() );
         // Remove this line after testing is done
         m_botAction.sendArenaMessage( "Comments?  Post them here: http://forums.trenchwars.org/showthread.php?t=17883" );
-        m_botAction.scheduleTask( new StartRoundTask(), 2 * 60 * 1000 );
+
+        try {
+            startTimer.cancel();
+        } catch (Exception e ) {
+        }       
+        
+        startTimer = new StartRoundTask();
+        m_botAction.scheduleTask( startTimer, 2 * 60 * 1000 );
     }
     
     /**
@@ -755,10 +778,12 @@ public class purepubbot extends SubspaceBot
         try {
             flagTimer.endGame();
             flagTimer.cancel();
+            intermissionTimer.cancel();
         } catch (Exception e ) {
         }       
-        
-        m_botAction.scheduleTask( new IntermissionTask(), 10000 );
+               
+        intermissionTimer = new IntermissionTask();
+        m_botAction.scheduleTask( intermissionTimer, 10000 );
     }
     
     /**
@@ -776,10 +801,13 @@ public class purepubbot extends SubspaceBot
         }
     }
 
+    /**
+     * Warps all players who have PMed with !warp into FR at start.
+     *
+     */
     private void warpPlayers() {
         Iterator i = warpPlayers.iterator();
         Random r = new Random();
-        LinkedList removePlayers = new LinkedList();
         int rand;
         
         while( i.hasNext() ) {
@@ -890,7 +918,7 @@ public class purepubbot extends SubspaceBot
                 
                 int remain = (flagMinutesRequired * 60) - secondsHeld; 
                 
-                if( remain <= 25 ) {
+                if( remain < 60 ) {
                     Player p = m_botAction.getPlayer( pid );
 
                     if( p != null ) {
@@ -898,8 +926,10 @@ public class purepubbot extends SubspaceBot
                             m_botAction.sendArenaMessage( "UNBELIEVABLE!!: " + p.getPlayerName() + " claims the flag for Freq " + freq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!" );
                         else if( remain < 11 )
                             m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims the flag for Freq " + freq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!" );
-                        else
+                        else if( remain < 25 )
                             m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims the flag for Freq " + freq + " with " + remain + " seconds left!" );
+                        else
+                            m_botAction.sendArenaMessage( "SAVE: " + p.getPlayerName() + " claims the flag for Freq " + freq + " with " + remain + " seconds left." );
                     }
                 }
                 
