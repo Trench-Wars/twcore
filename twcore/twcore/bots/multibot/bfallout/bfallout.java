@@ -17,12 +17,14 @@ public class bfallout extends MultiModule {
 	int m_eventStartTime;
 	int m_eventState = 0;		// 0 = nothing, 1 = starting, 2 = playing, 3 = stalling
 	int m_shipType = 1;
+	boolean m_repsEnabled = false;
 
 	BFPlayer bestGreener;
 
 	public void init() {
 		m_spaceShip = new SpaceShip(m_botAction, moduleSettings, this, "handleShipEvent", 6, 0);
 		m_spaceShip.init();
+		m_botAction.getShip().setFreq(0);
 		m_commandInterpreter = new CommandInterpreter(m_botAction);
 		registerCommands();
 
@@ -50,6 +52,7 @@ public class bfallout extends MultiModule {
 		eventRequester.request(EventRequester.PLAYER_POSITION);
 		eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
 		eventRequester.request(EventRequester.PRIZE);
+		eventRequester.request(EventRequester.WEAPON_FIRED);
 	}
 
 	public void registerCommands() {
@@ -82,8 +85,8 @@ public class bfallout extends MultiModule {
 			String[] out2 = {
 				"| Host Commands:                                             |",
 				"|   !start                     - Starts the event            |",
-				"|   !start <#>                 - Starts the event and forces |",
-				"|                                shiptype # for players      |",
+				"|     Params: <#>              - Forces shiptype #           |",
+				"|             rep              - Enables reps (wb only)      |",
 				"|   !stop                      - Stops the event             |",
 				"|   !spamrules                 - *arena messages the rules   |",
 				"+------------------------------------------------------------+"
@@ -99,16 +102,20 @@ public class bfallout extends MultiModule {
 
 		if (m_eventState == 0) {
 			m_shipType = 1;
-			if (message != null) {
-				if (Tools.isAllDigits(message)) {
-					int ship;
-					try {
-						ship = Integer.parseInt(message);
-						if (ship <= 8 && ship >= 1) {
-							m_shipType = ship;
-						}
-					} catch (NumberFormatException nfe) { }
+			if (message.indexOf("rep") == -1) {
+				if (message != null) {
+					if (Tools.isAllDigits(message)) {
+						int ship;
+						try {
+							ship = Integer.parseInt(message);
+							if (ship <= 8 && ship >= 1) {
+								m_shipType = ship;
+							}
+						} catch (NumberFormatException nfe) { }
+					}
 				}
+			} else {
+				m_repsEnabled = true;
 			}
 			startEvent();
 		} else {
@@ -141,6 +148,9 @@ public class bfallout extends MultiModule {
 		m_eventState = 1;
 		m_botAction.toggleLocked();
 		m_botAction.sendArenaMessage("Get ready!  Starting in 10 seconds ..", 2);
+		if (m_repsEnabled) {
+			m_botAction.sendArenaMessage("This round has reps enabled!  Fire at the bot to make it rep!  Everyone starts with 1 rep, pick up greens to get more!");
+		}
 
 		TimerTask fiveSeconds = new TimerTask() {
 			public void run() {
@@ -212,6 +222,8 @@ public class bfallout extends MultiModule {
 		m_botAction.toggleLocked();
 		m_spaceShip.reset();
 		players.clear();
+		m_repsEnabled = false;
+		bestGreener = null;
 		m_botAction.sendArenaMessage("Event has been stopped.");
 	}
 
@@ -271,6 +283,16 @@ public class bfallout extends MultiModule {
 		}
 	}
 
+	public void handleEvent(WeaponFired event) {
+		if (m_eventState == 2 && m_repsEnabled) {
+			String name = m_botAction.getPlayerName(event.getPlayerID());
+
+			if (players.containsKey(name)) {
+				m_spaceShip.handleEvent(event);
+			}
+		}
+	}
+
 	public boolean playerInsideRing(Player p, int dist) {
 		return m_spaceShip.getDistance(p.getXLocation(), p.getYLocation()) < dist;
 	}
@@ -309,6 +331,14 @@ public class bfallout extends MultiModule {
 	}
 
 	public void handleShipEvent(Projectile p) {
+		if (m_repsEnabled && players.containsKey(p.getOwner())) {
+			BFPlayer pl = (BFPlayer)players.get(p.getOwner());
+
+			if (pl.canUseRep()) {
+				m_botAction.getShip().fire(5);
+				pl.incRepsUsed();
+			}
+		}
 	}
 
 	public void handleShipEvent(Integer time) {
@@ -376,6 +406,7 @@ public class bfallout extends MultiModule {
 	class BFPlayer {
 
 		int greens = 0;
+		int repsUsed = 0;
 		String name;
 
 		public BFPlayer(String name) {
@@ -387,5 +418,9 @@ public class bfallout extends MultiModule {
 		public void incGreens() { greens++; }
 
 		public int getGreens() { return greens; }
+
+		public void incRepsUsed() { repsUsed++; }
+
+		public boolean canUseRep() { return repsUsed <= greens; }
 	};
 }
