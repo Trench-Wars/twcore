@@ -158,14 +158,14 @@ public abstract class MultiModule
         handleEvent((FrequencyShipChange) event);
       else if(event instanceof ArenaList)
         handleEvent((ArenaList) event);
+      else if(event instanceof WeaponFired)
+        handleEvent((WeaponFired) event);
       else if(event instanceof PlayerPosition)
         handleEvent((PlayerPosition) event);
       else if(event instanceof Prize)
         handleEvent((Prize) event);
       else if(event instanceof ScoreUpdate)
         handleEvent((ScoreUpdate) event);
-      else if(event instanceof WeaponFired)
-        handleEvent((WeaponFired) event);
       else if(event instanceof LoggedOn)
         handleEvent((LoggedOn) event);
       else if(event instanceof FileArrived)
