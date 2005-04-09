@@ -519,7 +519,6 @@ public class purepubbot extends SubspaceBot
         
         freq0List.remove(lowerName);
         freq1List.remove(lowerName);
-        warpPlayers.remove( playerName );
     }
     
     /**
