@@ -4,7 +4,6 @@ package twcore.bots.strikeballbot;
 import twcore.core.*;
 import java.util.*;
 import java.io.*;
-import java.text.*;
 import java.util.Date;
 
 

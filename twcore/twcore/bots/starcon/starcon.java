@@ -1,7 +1,6 @@
 package twcore.bots.starcon;
 
 import java.util.*;
-import java.io.*;
 import twcore.core.*;
 
 public class starcon extends SubspaceBot {

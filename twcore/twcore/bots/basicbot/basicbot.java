@@ -10,7 +10,6 @@
 package twcore.bots.basicbot;
 
 import twcore.core.*;
-import java.util.*;
 
 /**
  *

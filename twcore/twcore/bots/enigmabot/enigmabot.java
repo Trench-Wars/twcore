@@ -7,7 +7,6 @@
 package twcore.bots.enigmabot;
 
 import twcore.core.*;
-import java.io.*;
 import java.util.*;
 
 public class enigmabot extends SubspaceBot {

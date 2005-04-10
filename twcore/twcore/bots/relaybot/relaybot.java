@@ -12,7 +12,6 @@ package twcore.bots.relaybot;
 
 import java.util.*;
 import java.io.*;
-import java.net.*;
 import twcore.core.*;
 
 public class relaybot extends SubspaceBot {

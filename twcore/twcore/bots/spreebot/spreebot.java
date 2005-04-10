@@ -37,9 +37,9 @@ public class spreebot extends SubspaceBot {
         super( botAction );
         map = new HashMap();
         EventRequester req = botAction.getEventRequester();
-        req.request( req.MESSAGE );
-        req.request( req.PLAYER_ENTERED );
-        req.request( req.PLAYER_DEATH );
+        req.request( EventRequester.MESSAGE );
+        req.request( EventRequester.PLAYER_ENTERED );
+        req.request( EventRequester.PLAYER_DEATH );
     }
     
     public void handleEvent( LoggedOn event ){

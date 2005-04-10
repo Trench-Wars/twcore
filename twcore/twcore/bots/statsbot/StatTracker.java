@@ -15,7 +15,6 @@ package twcore.bots.statsbot;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;

@@ -1,7 +1,6 @@
 package twcore.bots.multibot.starcon;
 
 import java.util.*;
-import java.io.*;
 import twcore.core.*;
 import twcore.bots.multibot.*;
 

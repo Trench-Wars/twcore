@@ -1,7 +1,6 @@
 package twcore.bots.zonerbot;
 
 import java.util.*;
-import java.sql.*;
 import twcore.core.*;
 
 /**

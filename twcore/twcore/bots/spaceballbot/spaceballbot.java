@@ -2,7 +2,6 @@ package twcore.bots.spaceballbot;
 
 import twcore.core.*;
 import java.util.*;
-import java.math.*;
 
 /**
  * Hosts a game of SpaceBall. Objectives:

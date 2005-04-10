@@ -1,6 +1,5 @@
 package twcore.bots.rpsbot;
 
-import java.util.*;
 import twcore.core.*;
 
 public class RPSGame

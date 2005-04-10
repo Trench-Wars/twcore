@@ -13,7 +13,6 @@ import twcore.core.LoggedOn;
 import twcore.core.Message;
 import twcore.core.PlayerDeath;
 import twcore.core.PlayerLeft;
-import twcore.core.PlayerPosition;
 import twcore.core.SubspaceBot;
 import twcore.core.WatchDamage;
 import twcore.core.WeaponFired;

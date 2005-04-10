@@ -36,8 +36,8 @@ public class twrcbot extends SubspaceBot
 		
 		EventRequester events = m_botAction.getEventRequester();
 		
-		events.request(events.LOGGED_ON);
-		events.request(events.MESSAGE);
+		events.request(EventRequester.LOGGED_ON);
+		events.request(EventRequester.MESSAGE);
 		try {
 			if(!people.exists())
 				people.createNewFile();

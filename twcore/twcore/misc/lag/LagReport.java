@@ -1,7 +1,5 @@
 package twcore.misc.lag;
 
-import twcore.core.*;
-import java.util.*;
 
 public class LagReport {
 

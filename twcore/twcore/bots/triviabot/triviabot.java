@@ -6,7 +6,6 @@
 package twcore.bots.triviabot;
 
 import java.util.*;
-import java.io.*;
 import java.sql.*;
 import twcore.core.*;
 import twcore.misc.PlayerProfile;

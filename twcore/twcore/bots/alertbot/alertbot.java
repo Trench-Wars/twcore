@@ -9,7 +9,6 @@ package twcore.bots.alertbot;
 import twcore.core.*;
 import java.util.*;
 import java.util.regex.*;
-import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

@@ -1,7 +1,5 @@
 package twcore.misc.pubcommon;
 
-import twcore.core.*;
-
 public abstract class PubBotModule extends Module
 {
   private String ipcChannel;

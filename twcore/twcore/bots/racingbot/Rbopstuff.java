@@ -1,7 +1,6 @@
 package twcore.bots.racingbot;
 
 import twcore.core.*;
-import java.util.*;
 
 public class Rbopstuff extends RBExtender
 {
@@ -11,7 +10,7 @@ public class Rbopstuff extends RBExtender
 	
 	public void handleEvent(Message event)
 	{
-		if(event.getMessageType() == event.PRIVATE_MESSAGE)
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
 		{
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 			String message = event.getMessage();

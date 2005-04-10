@@ -1,7 +1,5 @@
 package twcore.bots.spaceballbot;
 
-import twcore.core.*;
-
 /**
  * SpaceBall Projectile class
  *

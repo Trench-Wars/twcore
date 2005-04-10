@@ -3,7 +3,6 @@ package twcore.bots.roboreplacement;
 import twcore.core.*;
 import java.util.*;
 import java.sql.*;
-import twcore.misc.PlayerProfile;
 
 public class roboreplacement extends SubspaceBot
 {

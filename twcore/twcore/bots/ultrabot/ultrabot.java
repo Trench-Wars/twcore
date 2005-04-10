@@ -11,7 +11,6 @@ package twcore.bots.ultrabot;
 
 import twcore.core.*;
 import twcore.misc.command.*;
-import java.util.*;
 
 /**
  *

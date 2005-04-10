@@ -1,6 +1,5 @@
 package twcore.bots.twbot;
 
-import twcore.core.*;
 import twcore.misc.statistics.*;
 import java.util.*;
 

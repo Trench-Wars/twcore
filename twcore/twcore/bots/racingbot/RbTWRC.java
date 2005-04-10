@@ -75,7 +75,7 @@ public class RbTWRC extends RacingBotExtension
 	 */
 	public void handleEvent(Message event)
 	{
-		if(event.getMessageType() == event.PRIVATE_MESSAGE)
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
 		{
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 			String message = event.getMessage();

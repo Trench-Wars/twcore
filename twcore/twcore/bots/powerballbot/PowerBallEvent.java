@@ -1,7 +1,5 @@
 package twcore.bots.powerballbot;
 
-import twcore.core.*;
-
 public class PowerBallEvent {
 	
 	String scorer = null;

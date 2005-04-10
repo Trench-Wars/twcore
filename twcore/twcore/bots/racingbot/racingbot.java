@@ -4,7 +4,6 @@ import twcore.core.*;
 
 import java.io.*;
 import java.util.*;
-import java.sql.*;
 
 public class racingbot extends SubspaceBot {
 	
