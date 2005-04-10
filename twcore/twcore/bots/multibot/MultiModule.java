@@ -1,8 +1,6 @@
 package twcore.bots.multibot;
 
 import twcore.core.*;
-import java.util.Properties;
-import java.io.*;
 
 public abstract class MultiModule
 {
@@ -12,10 +10,6 @@ public abstract class MultiModule
   protected BotAction m_botAction;
   protected OperatorList opList;
   protected BotSettings moduleSettings;
-
-  protected void MultiModule()
-  {
-  }
 
   /**
    * This method initializes the bot module.  This must be called before the
