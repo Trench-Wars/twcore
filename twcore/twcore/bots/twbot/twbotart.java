@@ -52,7 +52,7 @@ public class twbotart extends TWBotExtension
 				inString = inString.replaceAll(" ", "");
 				chars += inString.length();
 			}
-			if(chars < 100)
+			if(chars < 1000)
 			{
 				ship.setShip(1);
 				URLC = url.openConnection();
