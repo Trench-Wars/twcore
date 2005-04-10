@@ -38,6 +38,9 @@ public class SpaceShip extends Thread
 	int vY = 0;
 	int d = 0;
 
+	int lastVX = 0;
+	int lastVY = 0;
+
 	int iDir = 0;
 	int cDir = 0;
 
@@ -50,10 +53,16 @@ public class SpaceShip extends Thread
 	int m_mode;
 	int m_shipNumber;
 
+	int m_positionPacketDelay = 0;
+	int m_positionCount = 0;
+	int m_lastPositionSent = 0;
+
 	public SpaceShip(BotAction botAction, BotSettings botSettings, Object b, String method, int s, int m)
 	{
 		m_botAction = botAction;
 		m_botSettings = botSettings;
+
+		m_positionPacketDelay = m_botSettings.getInt("packetdelay");
 
 		m_bot = b;
 		m_methodName = method;
@@ -108,9 +117,20 @@ public class SpaceShip extends Thread
 		}
 
 //		m_botAction.sendArenaMessage("faweew "+tD+" "+x+" "+y+" "+vX+" "+vY);
-		m_ship.move(tD, x, y, vX, vY, 0, 1500, 1337);
+
+		if (lastVX != vX || lastVY != vY || needsToSendPacket()) {
+			m_ship.move(tD, x, y, vX, vY, 0, 1500, 1337);
+			m_positionCount++;
+			m_lastPositionSent = (int)(System.currentTimeMillis());
+			lastVX = vX;
+			lastVY = vY;
+		}
 
 		m_mAge = (int)(System.currentTimeMillis());
+	}
+
+	public boolean needsToSendPacket() {
+		return (int)(System.currentTimeMillis()) - m_lastPositionSent > m_positionPacketDelay;
 	}
 
 	public void checkHits() {
@@ -453,4 +473,7 @@ public class SpaceShip extends Thread
 		targetY = 0;
 	}
 
+	public int getPacketsSent() { return m_positionCount; }
+
+	public void setPacketsSent(int s) { m_positionCount = s; }
 }
