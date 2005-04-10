@@ -18,6 +18,7 @@ public class bfallout extends MultiModule {
 	int m_eventState = 0;		// 0 = nothing, 1 = starting, 2 = playing, 3 = stalling
 	int m_shipType = 1;
 	boolean m_repsEnabled = false;
+	boolean m_decoysEnabled = false;
 
 	BFPlayer bestGreener;
 
@@ -87,6 +88,7 @@ public class bfallout extends MultiModule {
 				"|   !start                     - Starts the event            |",
 				"|     Params: <#>              - Forces shiptype #           |",
 				"|             rep              - Enables reps (wb only)      |",
+				"|             decoy            - Enables decoys              |",
 				"|   !stop                      - Stops the event             |",
 				"|   !spamrules                 - *arena messages the rules   |",
 				"+------------------------------------------------------------+"
@@ -104,18 +106,23 @@ public class bfallout extends MultiModule {
 			m_shipType = 1;
 			if (message.indexOf("rep") == -1) {
 				if (message != null) {
-					if (Tools.isAllDigits(message)) {
-						int ship;
-						try {
-							ship = Integer.parseInt(message);
-							if (ship <= 8 && ship >= 1) {
+					int ship;
+					try {
+						String pieces[] = message.split(" ");
+
+						for (int i = 0; i < pieces.length; i++) {
+							ship = Integer.parseInt(pieces[i]);
+
+							if (ship <= 8 && ship >= 1)
 								m_shipType = ship;
-							}
-						} catch (NumberFormatException nfe) { }
-					}
+						}
+					} catch (NumberFormatException nfe) { }
 				}
 			} else {
 				m_repsEnabled = true;
+			}
+			if (message.indexOf("decoy") != -1) {
+				m_decoysEnabled = true;
 			}
 			startEvent();
 		} else {
@@ -149,7 +156,10 @@ public class bfallout extends MultiModule {
 		m_botAction.toggleLocked();
 		m_botAction.sendArenaMessage("Get ready!  Starting in 10 seconds ..", 2);
 		if (m_repsEnabled) {
-			m_botAction.sendArenaMessage("This round has reps enabled!  Fire at the bot to make it rep!  Everyone starts with 1 rep, pick up greens to get more!");
+			m_botAction.sendArenaMessage("This round has reps enabled!  Fire at the bot to make it rep!  Everyone starts with 0 rep uses, pick up greens to get more!");
+		}
+		if (m_decoysEnabled) {
+			m_botAction.sendArenaMessage("Tricky decoy mode enabled!  Choose wisely which circle to follow!");
 		}
 
 		TimerTask fiveSeconds = new TimerTask() {
@@ -185,7 +195,7 @@ public class bfallout extends MultiModule {
 					}
 				}
 
-				if (players.size() <= 1) {
+				if (players.size() <= 0) {
 					m_botAction.sendArenaMessage("Not enough players.");
 					stopEvent();
 				} else {
@@ -195,6 +205,8 @@ public class bfallout extends MultiModule {
 
 					changeTarget();
 
+					m_spaceShip.setPacketsSent(0);
+
 					fallOutCheck = new TimerTask() {
 						public void run() {
 							Iterator i = m_botAction.getPlayingPlayerIterator();
@@ -202,7 +214,7 @@ public class bfallout extends MultiModule {
 								Player p = (Player)i.next();
 
 								if (players.containsKey(p.getPlayerName()) && !playerInsideRing(p, 2000)) {
-									m_botAction.sendPrivateMessage("Sika", p.getPlayerName() + " cheats!!!1");
+									handleFallOut(p.getPlayerName());
 								}
 							}
 						}
@@ -220,9 +232,11 @@ public class bfallout extends MultiModule {
 		m_eventState = 0;
 		m_botAction.cancelTasks();
 		m_botAction.toggleLocked();
+		m_botAction.sendPrivateMessage("Sika", "NÄIN PALJON!: "+m_spaceShip.getPacketsSent());
 		m_spaceShip.reset();
 		players.clear();
 		m_repsEnabled = false;
+		m_decoysEnabled = false;
 		bestGreener = null;
 		m_botAction.sendArenaMessage("Event has been stopped.");
 	}
@@ -351,14 +365,22 @@ public class bfallout extends MultiModule {
 
 		if (Math.random() > 0.5) {
 			newX = m_spaceShip.getX() + newX;
-			newY = m_spaceShip.getY() + newY;
 		} else {
 			newX = m_spaceShip.getX() - newX;
+		}
+		if (Math.random() > 0.5) {
 			newY = m_spaceShip.getY() - newY;
+		} else {
+			newY = m_spaceShip.getY() + newY;
 		}
 
 		if (!m_spaceShip.changeTarget(newX, newY)) {
 			changeTarget();		
+		} else {
+			if ((m_decoysEnabled) && (1 + (int)(Math.random() * 3) == 2) && (!getTimeString().equals("0:00"))) {
+				m_botAction.getShip().fire(6);
+				m_botAction.sendArenaMessage("OoOoOoHh!!", 21);
+			}
 		}
 	}
 
@@ -421,6 +443,6 @@ public class bfallout extends MultiModule {
 
 		public void incRepsUsed() { repsUsed++; }
 
-		public boolean canUseRep() { return repsUsed <= greens; }
+		public boolean canUseRep() { return repsUsed < greens; }
 	};
 }
