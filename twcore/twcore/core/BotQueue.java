@@ -134,9 +134,12 @@ public class BotQueue extends Thread {
 
         ChildBot deadBot = (ChildBot)m_botStable.remove( name );
         if( deadBot != null ){
-            deadBot.getBot().getBotAction().cancelTasks();
+            Session deadSesh = deadBot.getBot();
+            if( deadSesh != null ) {
+                deadSesh.getBotAction().cancelTasks();
+                deadSesh.disconnect();
+            }
             addToBotCount( deadBot.getClassName(), (-1) );
-            deadBot.getBot().disconnect();
             deadBot = null;
             System.gc();
         }
