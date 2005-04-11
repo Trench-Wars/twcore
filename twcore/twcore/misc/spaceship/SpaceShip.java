@@ -30,10 +30,11 @@ public class SpaceShip extends Thread
 
 	Ship m_ship;
 
-	long m_mAge = (int)(System.currentTimeMillis());
+	int m_mAge = (int)System.currentTimeMillis();
+	int m_mStart = 0;
 
-	int x = 8192;
-	int y = 8192;
+	short x = 8192;
+	short y = 8192;
 	int vX = 0;
 	int vY = 0;
 	int d = 0;
@@ -53,16 +54,10 @@ public class SpaceShip extends Thread
 	int m_mode;
 	int m_shipNumber;
 
-	int m_positionPacketDelay = 0;
-	int m_positionCount = 0;
-	int m_lastPositionSent = 0;
-
 	public SpaceShip(BotAction botAction, BotSettings botSettings, Object b, String method, int s, int m)
 	{
 		m_botAction = botAction;
 		m_botSettings = botSettings;
-
-		m_positionPacketDelay = m_botSettings.getInt("packetdelay");
 
 		m_bot = b;
 		m_methodName = method;
@@ -99,8 +94,8 @@ public class SpaceShip extends Thread
 			}
 			rotate();
 
-			x = (int)getXLoc();
-			y = (int)getYLoc();
+			x = m_ship.getX();
+			y = m_ship.getY();
 			if ((x < 0 && vX < 0) || (x > 16384 && vX > 0)) {
 				vX *= -1;
 			}
@@ -118,19 +113,8 @@ public class SpaceShip extends Thread
 
 //		m_botAction.sendArenaMessage("faweew "+tD+" "+x+" "+y+" "+vX+" "+vY);
 
-		if (lastVX != vX || lastVY != vY || needsToSendPacket()) {
-			m_ship.move(tD, x, y, vX, vY, 0, 1500, 1337);
-			m_positionCount++;
-			m_lastPositionSent = (int)(System.currentTimeMillis());
-			lastVX = vX;
-			lastVY = vY;
-		}
-
+		m_ship.setVelocitiesAndDir(vX, vY, tD);
 		m_mAge = (int)(System.currentTimeMillis());
-	}
-
-	public boolean needsToSendPacket() {
-		return (int)(System.currentTimeMillis()) - m_lastPositionSent > m_positionPacketDelay;
 	}
 
 	public void checkHits() {
@@ -192,32 +176,6 @@ public class SpaceShip extends Thread
 		allowance = 5;
 	}
 
-
-	/**
-	 * This method calculates the bot x location.
-
-	 * @return bX is the new bot x location
-	 */
-
-	public double getXLoc() { double bX = x + (vX * getAge() / (double) 10000.0); return bX; }
-
-
-	/**
-	 * This method calculates the bot y location.
-
-	 * @return bY is the new bot y location
-	 */
-
-	public double getYLoc() { double bY = y + (vY * getAge() / (double) 10000.0); return bY; }
-
-
-	/**
-	 * This method calculates the time from last collision with a wall/projectile.
-
-	 * @return is the age
-	 */
-
-	public double getAge() { return (int)(System.currentTimeMillis()) - m_mAge; }
 
 	public double getSpeed() {
 		return Math.sqrt(Math.pow(vX, 2) + Math.pow(vY, 2));
@@ -388,7 +346,7 @@ public class SpaceShip extends Thread
 		if ((x <= 16384 && x >= 0) && (y <= 16384 && y >= 0)) {
 			targetX = x;
 			targetY = y;
-			m_targetStartTime = (int)(System.currentTimeMillis());
+			m_targetStartTime = (int)System.currentTimeMillis();
 			return true;
 		}
 		return false;
@@ -439,8 +397,8 @@ public class SpaceShip extends Thread
 	public int getY() { return y; }
 
 	public void setLocation(int tX, int tY) {
-		x = tX;
-		y = tY; 
+		x = (short)tX;
+		y = (short)tY; 
 	}
 
 	public int getVX() { return vX; }
@@ -471,9 +429,6 @@ public class SpaceShip extends Thread
 
 		targetX = 0;
 		targetY = 0;
+		m_ship.move(x, y);
 	}
-
-	public int getPacketsSent() { return m_positionCount; }
-
-	public void setPacketsSent(int s) { m_positionCount = s; }
 }
