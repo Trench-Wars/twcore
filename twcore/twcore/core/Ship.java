@@ -25,6 +25,15 @@ public class Ship extends Thread {
     private byte        direction = 0x0;
     private boolean     m_moving = MOVEMENT_UNMOVING;
 
+    private short lastXV = 0;
+    private short lastYV = 0;
+    private byte lastD = 0x0;
+
+    private int shipType = 8;
+
+    private int m_mAge = (int)System.currentTimeMillis();
+    private int m_pAge = (int)System.currentTimeMillis();
+
     private GamePacketGenerator     m_gen;
 
     Ship( ThreadGroup group, GamePacketGenerator gen ){
@@ -63,6 +72,13 @@ public class Ship extends Thread {
         sendPositionPacket();
     }
 
+    public void setVelocitiesAndDir(int xVel, int yVel, int d)
+    {
+        this.xVel = (short)xVel;
+        this.yVel = (short)yVel;
+        direction = (byte)d;
+    }
+
     public void setMoving( boolean moving ){
         m_moving = moving;
     }
@@ -70,6 +86,34 @@ public class Ship extends Thread {
     public void setRotation( int rotation ){
         direction = (byte)rotation;
         sendPositionPacket();
+    }
+
+    public void updatePosition()
+    {
+        if (xVel != 0 && yVel != 0)
+        {
+            x += (short)(xVel * getAge() / 10000.0);
+            y += (short)(yVel * getAge() / 10000.0);
+        }
+        m_mAge = (int)System.currentTimeMillis();
+
+        if (needsToBeSent())
+        {
+            sendPositionPacket();
+            lastXV = xVel;
+            lastYV = yVel;
+            lastD = direction;
+            m_pAge = (int)System.currentTimeMillis();
+        }
+    }
+
+    public int getAge() {
+        return (int)System.currentTimeMillis() - m_mAge;
+    }
+
+    public boolean needsToBeSent()
+    {
+        return xVel != lastXV || yVel != lastYV || lastD != direction || (int)System.currentTimeMillis() - m_pAge >= 1000;
     }
 
     public void sendPositionPacket()
@@ -84,8 +128,8 @@ public class Ship extends Thread {
     public void run(){
         try {
             while( !interrupted() ){
-                sendPositionPacket();
-                if( m_moving == MOVEMENT_MOVING ){
+                updatePosition();
+                if ( shipType != 8 ){
                     Thread.sleep( MOVING_TIME );
                 } else {
                     Thread.sleep( UNMOVING_TIME );
@@ -106,6 +150,7 @@ public class Ship extends Thread {
     }
 
     public void setShip( int shipType ){
+        this.shipType = (short)shipType;
         m_gen.sendShipChangePacket( (short)shipType );
     }
 
