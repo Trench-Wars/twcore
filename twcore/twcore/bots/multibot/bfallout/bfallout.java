@@ -49,6 +49,7 @@ public class bfallout extends MultiModule {
 		eventRequester.request(EventRequester.ARENA_JOINED);
 		eventRequester.request(EventRequester.PLAYER_ENTERED);
 		eventRequester.request(EventRequester.PLAYER_LEFT);
+		eventRequester.request(EventRequester.PLAYER_DEATH);
 		eventRequester.request(EventRequester.LOGGED_ON);
 		eventRequester.request(EventRequester.PLAYER_POSITION);
 		eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
@@ -180,6 +181,7 @@ public class bfallout extends MultiModule {
 		TimerTask eightSeconds = new TimerTask() {
 			public void run() {
 				m_botAction.warpAllRandomly();
+				m_botAction.shipResetAll();
 			}
 		};
 
@@ -202,10 +204,9 @@ public class bfallout extends MultiModule {
 					m_eventState = 2;
 					m_eventStartTime = (int)(System.currentTimeMillis());
 					m_botAction.sendArenaMessage("GO GO GO!", 104);
+					m_botAction.shipResetAll();
 
 					changeTarget();
-
-					m_spaceShip.setPacketsSent(0);
 
 					fallOutCheck = new TimerTask() {
 						public void run() {
@@ -232,7 +233,6 @@ public class bfallout extends MultiModule {
 		m_eventState = 0;
 		m_botAction.cancelTasks();
 		m_botAction.toggleLocked();
-		m_botAction.sendPrivateMessage("Sika", "NÄIN PALJON!: "+m_spaceShip.getPacketsSent());
 		m_spaceShip.reset();
 		players.clear();
 		m_repsEnabled = false;
@@ -283,6 +283,16 @@ public class bfallout extends MultiModule {
 		String name = m_botAction.getPlayerName(event.getPlayerID());
 		if (event.getShipType() == 0) {
 			handleLagOut(name);
+		}
+	}
+
+	public void handleEvent(PlayerDeath event) {
+		if (m_eventState == 2) {
+			String name = m_botAction.getPlayerName(event.getKilleeID());
+
+			if (players.containsKey(name)) {
+				handleFallOut(name);
+			}
 		}
 	}
 
