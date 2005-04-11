@@ -220,7 +220,7 @@ public class bfallout extends MultiModule {
 							}
 						}
 					};
-					m_botAction.scheduleTaskAtFixedRate(fallOutCheck, 5000, 5000);
+//					m_botAction.scheduleTaskAtFixedRate(fallOutCheck, 5000, 5000);
 				}
 			}
 		};
