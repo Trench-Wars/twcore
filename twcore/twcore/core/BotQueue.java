@@ -9,7 +9,7 @@ public class BotQueue extends Thread {
     private List        m_waitingRoom;
     private long        m_lastSpawnTime;
     private ThreadGroup m_group;
-    private final int   SPAWN_DELAY = 20000;
+    private int   SPAWN_DELAY = 20000;
     
     private AdaptiveClassLoader m_loader;
     private Vector repository;
@@ -21,7 +21,10 @@ public class BotQueue extends Thread {
         m_lastSpawnTime = 0;
         m_botAction = botAction;
         directory = new File( m_botAction.getCoreData().getGeneralSettings().getString( "Core Location" ));
-        
+
+        if (m_botAction.getCoreData().getGeneralSettings().getString( "Server" ).equals("localhost"))
+            SPAWN_DELAY = 100;
+		
         resetRepository();
         
         m_botTypes = Collections.synchronizedMap( new HashMap() );
