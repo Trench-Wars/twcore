@@ -54,10 +54,10 @@ public class twbotrevenge extends TWBotExtension
 			{
 			String killerName = m_botAction.getPlayerName(event.getKillerID());
 			String killedName = m_botAction.getPlayerName(event.getKilleeID());
-			RevengePlayer killer = (RevengePlayer)PlayerMap.get(killerName);
-			RevengePlayer killed = (RevengePlayer)PlayerMap.get(killedName);
+			RevengePlayer killer = (RevengePlayer)playerMap.get(killerName);
+			RevengePlayer killed = (RevengePlayer)playerMap.get(killedName);
 
-			if (killed.hasKilled(KillerName))
+			if (killed.hasKilled(killerName))
 				{
 				killer.addPoints(revengeReward);
 				m_botAction.sendPrivateMessage(killerName, "You have gained "
@@ -91,10 +91,10 @@ public class twbotrevenge extends TWBotExtension
 				+ normalPenalty + " points for being killed by " + killerName
 				+ ". (Total: " + killed.getScore() + ")");
 				}
-			PlayerMap.remove(killerName);
-			PlayerMap.remove(killedName);
-			PlayerMap.put(killerName, killer);
-			PlayerMap.put(killedName, killed);
+			playerMap.remove(killerName);
+			playerMap.remove(killedName);
+			playerMap.put(killerName, killer);
+			playerMap.put(killedName, killed);
 			}
 		}
 
@@ -129,10 +129,10 @@ public class twbotrevenge extends TWBotExtension
 
 	public void startRevenge(String name, String message)
 		{
-		if (!inProgess)
+		if (!inProgress)
 			{
 			timeLimit = explodeToInt(message, 1, " ");
-			if (timeLimit == null)
+			if (timeLimit == -1)
 				{
 				timeLimit = 10;
 				m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -157,8 +157,8 @@ public class twbotrevenge extends TWBotExtension
 					while (it.hasNext())
 						{
 						Player p = (Player)it.next();
-						playerMap.add(p.getPlayerName(), RevengePlayer(
-						p.getPlayerName(), playerCount));
+						playerMap.put(p.getPlayerName(), new RevengePlayer(
+p.getPlayerName(), playerCount));
 						}
 					}
 				};
@@ -222,7 +222,7 @@ public class twbotrevenge extends TWBotExtension
 	public void setNormalReward(String name, String message)
 		{
 		normalReward = explodeToInt(message, 1, " ");
-		if (normalReward == null)
+		if (normalReward == -1)
 			{
 			normalReward = 7;
 			m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -237,7 +237,7 @@ public class twbotrevenge extends TWBotExtension
 	public void setRevengeReward(String name, String message)
 		{
 		revengeReward = explodeToInt(message, 1, " ");
-		if (revengeReward == null)
+		if (revengeReward == -1)
 			{
 			revengeReward = 7;
 			m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -252,7 +252,7 @@ public class twbotrevenge extends TWBotExtension
 	public void setAlreadyKilledReward(String name, String message)
 		{
 		alreadyKilledReward = explodeToInt(message, 1, " ");
-		if (alreadyKilledReward == null)
+		if (alreadyKilledReward == -1)
 			{
 			alreadyKilledReward = 2;
 			m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -267,7 +267,7 @@ public class twbotrevenge extends TWBotExtension
 	public void setNormalPenalty(String name, String message)
 		{
 		normalPenalty = explodeToInt(message, 1, " ");
-		if (normalPenalty == null)
+		if (normalPenalty == -1)
 			{
 			normalPenalty = 0;
 			m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -282,7 +282,7 @@ public class twbotrevenge extends TWBotExtension
 	public void setRevengePenalty(String name, String message)
 		{
 		revengePenalty = explodeToInt(message, 1, " ");
-		if (revengePenalty == null)
+		if (revengePenalty == -1)
 			{
 			revengePenalty = 7;
 			m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -297,7 +297,7 @@ public class twbotrevenge extends TWBotExtension
 	public void setShipTypeLimit(String name, String message)
 		{
 		shipType = explodeToInt(message, 1, " ");
-		if (shipType == null)
+		if (shipType == -1)
 			{
 			shipType = ANY_SHIP;
 			m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -333,7 +333,7 @@ public class twbotrevenge extends TWBotExtension
 		{
 		if (playerMap.containsKey(name))
 			{
-			RofflePlayer tempPlayer = (RofflePlayer)playerMap.get(name);
+			RevengePlayer tempPlayer = (RevengePlayer)playerMap.get(name);
 			m_botAction.sendPrivateMessage(name, "You currently have "
 			+ tempPlayer.getScore() + " points.");
 			}
@@ -370,7 +370,7 @@ public class twbotrevenge extends TWBotExtension
 			}
 		catch (Exception e)
 			{
-			return null;
+			return -1;
 			}
 		}
 
@@ -432,7 +432,7 @@ class RevengePlayer
 		score -= points;
 		}
 
-	public int getPoints()
+	public int getScore()
 		{
 		return score;
 		}

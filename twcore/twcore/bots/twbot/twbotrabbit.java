@@ -32,8 +32,8 @@ public class twbotrabbit extends TWBotExtension
 		};
 
 	private boolean	inProgress = false;
-	private int	timeLimit = 15;
-	private int	shipType = ANY_SHIP;
+	private int timeLimit = 15;
+	private int shipType = ANY_SHIP;
 	private ArrayList rabbitList = new ArrayList(4);
 	private StringBag fcMsgs = new StringBag();
 	private StringBag killMsgs = new StringBag();
@@ -113,7 +113,7 @@ public class twbotrabbit extends TWBotExtension
 		if (!inProgress)
 			{
 			timeLimit = explodeToInt(message, 1, " ");
-			if (timeLimit == null)
+			if (timeLimit == -1)
 				{
 				timeLimit = 15;
 				m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -205,7 +205,7 @@ public class twbotrabbit extends TWBotExtension
 	public void setShipTypeLimit(String name, String message)
 		{
 		shipType = explodeToInt(message, 1, " ");
-		if (shipType == null)
+		if (shipType == -1)
 			{
 			shipType = ANY_SHIP;
 			m_botAction.sendPrivateMessage(name, "That is not properly "
@@ -345,7 +345,7 @@ public class twbotrabbit extends TWBotExtension
 			}
 		catch (Exception e)
 			{
-			return null;
+			return -1;
 			}
 		}
 
