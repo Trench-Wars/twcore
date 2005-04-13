@@ -18,7 +18,7 @@ public class DBPlayerData {
     BotAction m_connection;
     
     boolean m_playerLoaded = false;
-    String m_connName = "website";
+    String m_connName = "local";
     String m_fcUserName = "";
     String m_fcPassword = "";
     int m_fnUserID = 0;
