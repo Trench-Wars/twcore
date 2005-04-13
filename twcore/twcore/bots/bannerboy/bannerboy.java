@@ -8,7 +8,7 @@ import java.util.*;
 public class bannerboy extends SubspaceBot {
 	
 	//mySQL database to use
-	private String m_sqlHost = "website";
+	private String m_sqlHost = "local";
 	
 	//Keep track of the time since last personal banner change
 	private long m_lastBannerSet = 0;

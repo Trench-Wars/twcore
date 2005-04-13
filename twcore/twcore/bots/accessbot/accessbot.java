@@ -47,16 +47,16 @@ public class accessbot extends SubspaceBot {
 	    m_botAction.sendSmartPrivateMessage( access_name, "Please hold, updating staff access." );
 		try {
 			
-		//Used to cycle through those who have staff rank on website.
-		ResultSet result = m_botAction.SQLQuery( "website", "SELECT fnUserID, fnRankID, fnUserRankID FROM `tblUserRank` WHERE fnRankID > 4 AND fnRankID < 10" );
+		//Used to cycle through those who have staff rank on local.
+		ResultSet result = m_botAction.SQLQuery( "local", "SELECT fnUserID, fnRankID, fnUserRankID FROM `tblUserRank` WHERE fnRankID > 4 AND fnRankID < 10" );
 			while( result.next() ) {
 				int userId = result.getInt( "fnUserID" );
 				int rankId = result.getInt( "fnRankID" );
 				int userRankId = result.getInt( "fnUserRankID" );
-				ResultSet result2 = m_botAction.SQLQuery( "website", "SELECT fcUserName FROM `tblUser` WHERE fnUserID = \""+userId+"\"" );
+				ResultSet result2 = m_botAction.SQLQuery( "local", "SELECT fcUserName FROM `tblUser` WHERE fnUserID = \""+userId+"\"" );
 				if( result2.next() ) {
         				String curPlayer = result2.getString( "fcUserName" );
-					DBPlayerData man = new DBPlayerData( m_botAction, "website", result2.getString( "fcUserName" ) );
+					DBPlayerData man = new DBPlayerData( m_botAction, "local", result2.getString( "fcUserName" ) );
 					if( m_botAction.getOperatorList().isSysop( curPlayer ) ) {
 						//if( rankId != 9 )
 						//	man.removeRank( userRankId );
@@ -86,7 +86,7 @@ public class accessbot extends SubspaceBot {
 			Iterator it = set.iterator();
 			while( it.hasNext() ) {
 				String curPlayer = (String) it.next();
-					DBPlayerData man = new DBPlayerData( m_botAction, "website", curPlayer, true );
+					DBPlayerData man = new DBPlayerData( m_botAction, "local", curPlayer, true );
 					if( m_botAction.getOperatorList().isSysop( curPlayer ) ) {
 						//if( !man.hasRank( 9 ) )
 						//	man.giveRank( 9 );
