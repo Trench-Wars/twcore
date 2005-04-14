@@ -224,6 +224,7 @@ public class robohelp extends SubspaceBot {
             GoogleSearchResultElement[] elements = r.getResultElements();
             return elements[0].getURL();
         } catch( Exception e ){
+        	Tools.printStackTrace(e);
             return new String( "Nothing found." );
        }
    }
