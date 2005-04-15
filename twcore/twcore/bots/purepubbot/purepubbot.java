@@ -102,9 +102,11 @@ public class purepubbot extends SubspaceBot
 
         try {
             if( flagTimeStarted && flagTimer.isRunning() ) {
-                String pname = m_botAction.getPlayer( playerID ).getPlayerName();
-                playerTimes.remove( pname );
-                playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
+                if( m_botAction.getPlayer(playerID).getShipType() == 0 ) {
+                    String pname = m_botAction.getPlayer( playerID ).getPlayerName();
+                	playerTimes.remove( pname );
+                	playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
+                }
             }
         } catch (Exception e) {
         }    
