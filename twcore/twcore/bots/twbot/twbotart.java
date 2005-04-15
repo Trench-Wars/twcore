@@ -34,6 +34,17 @@ public class twbotart extends TWBotExtension
 			m_botAction.spec(m_botAction.getBotName());
 			m_botAction.spec(m_botAction.getBotName());
 		}
+		else if(message.toLowerCase().startsWith("!list"))
+			m_botAction.requestArenaList();
+	}
+	
+	public void handleEvent(ArenaList event)
+	{
+		String[] arenas = event.getArenaNames();
+		for(int k = 0;k < arenas.length;k++)
+			m_botAction.sendUnfilteredPublicMessage(arenas[k]);
+		
+		m_botAction.sendUnfilteredPublicMessage("Arenas listed.");
 	}
 	
 	public void download(String name, String message)
