@@ -27,6 +27,11 @@ public class purepubbot extends SubspaceBot
     private IntermissionTask intermissionTimer;
     private int flagMinutesRequired; 
     
+    boolean initLogin = true;
+    
+    public int initialPub;
+    public String initialSpawn;
+    
     private int warpPtsX[] = { 512, 505, 502, 499, 491, 495, 487, 519, 522, 525, 529, 533, 537 }; 
     private int warpPtsY[] = { 264, 260, 267, 274, 279, 263, 255, 260, 267, 274, 263, 279, 255 };
     private LinkedList warpPlayers;
@@ -51,6 +56,30 @@ public class purepubbot extends SubspaceBot
         privFreqs = true;
         flagTimeStarted = false;
         warpPlayers = new LinkedList();
+    }
+    
+    /* Sends bot to public arena.
+     */
+    public void handleEvent(ArenaList event)
+    {
+    	System.out.println("Got the arena list...");
+    	String[] arenaNames = event.getArenaNames();
+    	String arenaToJoin = arenaNames[initialPub];
+    	if(Tools.isAllDigits(arenaToJoin))
+    	{
+    		System.out.println("Joining: " + arenaToJoin);
+    		m_botAction.changeArena(arenaToJoin);
+    		startBot();
+    	}
+    }
+    
+    public void handleEvent(ArenaJoined event)
+    {
+    	if(!initLogin)
+    		return;
+    	
+    	initLogin = false;
+    	m_botAction.requestArenaList();
     }
     
     /**
@@ -476,9 +505,9 @@ public class purepubbot extends SubspaceBot
     public void handleEvent(LoggedOn event)
     {
         BotSettings botSettings = m_botAction.getBotSettings();
-        String initialArena = botSettings.getString("InitialArena");
-        
-        m_botAction.changeArena(initialArena);
+        initialSpawn = botSettings.getString("InitialArena");
+        initialPub = (botSettings.getInt(m_botAction.getBotName() + "Pub") - 1);
+        m_botAction.joinArena(initialSpawn);
     }
     
     /**
@@ -488,13 +517,15 @@ public class purepubbot extends SubspaceBot
     private void requestEvents()
     {
         EventRequester eventRequester = m_botAction.getEventRequester();
-        
         eventRequester.request(EventRequester.MESSAGE);
         eventRequester.request(EventRequester.PLAYER_LEFT);
         eventRequester.request(EventRequester.PLAYER_ENTERED);
         eventRequester.request(EventRequester.FLAG_CLAIMED);
         eventRequester.request(EventRequester.FREQUENCY_CHANGE);
         eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        eventRequester.request(EventRequester.LOGGED_ON);
+        eventRequester.request(EventRequester.ARENA_LIST);
+        eventRequester.request(EventRequester.ARENA_JOINED);
     }
     
     /**
@@ -656,6 +687,13 @@ public class purepubbot extends SubspaceBot
             player = (Player) iterator.next();
             checkFreq(player.getPlayerID(), player.getFrequency(), false);
         }
+    }
+    
+    public void startBot()
+    {
+    	String commands[] = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Setup").split(",");
+    	for(int k = 0;k < commands.length;k++)
+    		handleCommand(m_botAction.getBotName(), commands[k]);
     }
     
     /**
