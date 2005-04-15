@@ -16,74 +16,78 @@ import java.sql.*;
 
 public class DBPlayerData {
     BotAction m_connection;
-    
+
     boolean m_playerLoaded = false;
     String m_connName = "local";
     String m_fcUserName = "";
     String m_fcPassword = "";
     int m_fnUserID = 0;
     java.sql.Date m_fdSignedUp = null;
-        
+
     int m_fnTeamUserID = 0;
     int m_fnTeamID = 0;
     java.sql.Date m_fdTeamSignedUp = null;
     String m_fcTeamName = "";
-    
+
     String m_fcIP = "";
     int m_fnMID = 0;
     int m_fnStatus = 0;
-    
+
     long m_lastQuery = 0;
-    
-    
+
+
     /** Creates a new instance of DBPlayerData */
-    
+
     public DBPlayerData(BotAction conn, String connName) {
         m_connection = conn;
         m_connName = connName;
     };
-    
-    
+
+
     public DBPlayerData(BotAction conn, String connName, String fcPlayerName) {
         m_connection = conn;
         m_fcUserName = fcPlayerName;
         m_connName = connName;
         getPlayerData();
     }
-    
-        
+
+
     public DBPlayerData(BotAction conn, String connName, String fcPlayerName, boolean createIfNotExists) {
         m_connection = conn;
         m_fcUserName = fcPlayerName;
         m_connName = connName;
         if (!getPlayerData() && createIfNotExists) createPlayerData();
     }
- 
-    
 
-    
+
+
+
     public boolean getPlayerSquadData() {
+        boolean result = false;
         try {
             ResultSet qryPlayerSquadInfo = m_connection.SQLQuery(m_connName,
             "SELECT TU.fdJoined, TU.fnTeamUserID, T.fnTeamID, T.fcTeamName FROM tblTeam T, tblTeamUser TU " +
             "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = " + getUserID());
             m_lastQuery = System.currentTimeMillis();
-            
+
             if (qryPlayerSquadInfo.next()) {
                 m_fnTeamID = qryPlayerSquadInfo.getInt("fnTeamID");
                 m_fcTeamName = qryPlayerSquadInfo.getString("fcTeamName");
                 m_fnTeamUserID = qryPlayerSquadInfo.getInt("fnTeamUserID");
                 m_fdTeamSignedUp = qryPlayerSquadInfo.getDate("fdJoined");
-                return true;
-            } else return false;
+                result = true;
+            }
+            qryPlayerSquadInfo.close();
+            return result;
         } catch (Exception e) {
             System.out.println("Database error! - " + e.getMessage());
             return false;
         }
     };
-    
-    
-    public boolean getPlayerData() {        
+
+
+    public boolean getPlayerData() {
+        boolean result = false;
         try {
             ResultSet qryPlayerInfo = m_connection.SQLQuery(m_connName,
             "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"'");
@@ -93,37 +97,43 @@ public class DBPlayerData {
                 m_fcUserName = qryPlayerInfo.getString("fcUserName");
                 m_fnUserID = qryPlayerInfo.getInt("fnUserID");
                 m_fdSignedUp = qryPlayerInfo.getDate("fdSignedUp");
-                
+
                 getPlayerAliasData();
                 getPlayerSquadData();
-                return true;
-            } else return false;
+                result = true;
+            }
+            qryPlayerInfo.close();
+            return result;
         } catch (Exception e) {
             System.out.println("Database error! - " + e.getMessage());
             return false;
         }
     };
-    
+
     public boolean getPlayerAliasData() {
-    	try {
-    		ResultSet qryPlayerAlias = m_connection.SQLQuery( "server",
-    		"SELECT fcIP, fnMID, fnStatus FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
-    		if( qryPlayerAlias.next() ) {
-    			m_fcIP = qryPlayerAlias.getString( "fcIP" );
-    			m_fnMID = qryPlayerAlias.getInt( "fnMID" );
-    			m_fnStatus = qryPlayerAlias.getInt( "fnStatus" );
-    			return true;
-    		} else return false;
-    	} catch (Exception e) {
-    		System.out.println("Database error! - " + e.getMessage());
+        boolean result = false;
+        try {
+            ResultSet qryPlayerAlias = m_connection.SQLQuery( "server",
+            "SELECT fcIP, fnMID, fnStatus FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
+            if( qryPlayerAlias.next() ) {
+                m_fcIP = qryPlayerAlias.getString( "fcIP" );
+                m_fnMID = qryPlayerAlias.getInt( "fnMID" );
+                m_fnStatus = qryPlayerAlias.getInt( "fnStatus" );
+                result = true;
+            }
+            qryPlayerAlias.close();
+            return result;
+        } catch (Exception e) {
+            System.out.println("Database error! - " + e.getMessage());
             return false;
         }
     }
-    
-    
+
+
     public boolean createPlayerData() {
         try {
-            m_connection.SQLQuery(m_connName, "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())");
+            ResultSet r = m_connection.SQLQuery(m_connName, "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())");
+            if (r != null) r.close();
             m_lastQuery = System.currentTimeMillis();
             if (getPlayerData()) return true; else return false;
         } catch (Exception e) {
@@ -131,13 +141,14 @@ public class DBPlayerData {
             return false;
         }
     };
-    
-    
-    
+
+
+
     public boolean createPlayerAccountData(String fcPassword) {
         if (m_fnUserID != 0) {
             try {
-                m_connection.SQLQuery(m_connName, "INSERT INTO tblUserAccount(fnUserID, fcPassword) VALUES ("+m_fnUserID+",PASSWORD('"+Tools.addSlashesToString(fcPassword)+"'))");
+                ResultSet r = m_connection.SQLQuery(m_connName, "INSERT INTO tblUserAccount(fnUserID, fcPassword) VALUES ("+m_fnUserID+",PASSWORD('"+Tools.addSlashesToString(fcPassword)+"'))");
+                if (r != null) r.close();
                 m_lastQuery = System.currentTimeMillis();
                 m_fcPassword = fcPassword;
                 return true;
@@ -147,12 +158,13 @@ public class DBPlayerData {
             }
         } else return false;
     };
-    
-    
+
+
     public boolean updatePlayerAccountData(String fcPassword) {
         if (m_fnUserID != 0) {
             try {
-                m_connection.SQLQuery(m_connName, "UPDATE tblUserAccount SET fcPassword = PASSWORD('"+Tools.addSlashesToString(fcPassword)+"') WHERE fnUserID = "+m_fnUserID);
+                ResultSet r = m_connection.SQLQuery(m_connName, "UPDATE tblUserAccount SET fcPassword = PASSWORD('"+Tools.addSlashesToString(fcPassword)+"') WHERE fnUserID = "+m_fnUserID);
+                if (r != null) r.close();
                 m_lastQuery = System.currentTimeMillis();
                 m_fcPassword = fcPassword;
                 return true;
@@ -162,45 +174,49 @@ public class DBPlayerData {
             }
         } else return false;
     };
-    
+
     public boolean getPlayerAccountData() {
         if (m_fnUserID != 0) {
+            boolean result = false;
             try {
                 ResultSet qryPlayerAccountInfo = m_connection.SQLQuery(m_connName, "SELECT fcPassword FROM tblUserAccount WHERE fnUserID="+m_fnUserID);
                 m_lastQuery = System.currentTimeMillis();
                 if (qryPlayerAccountInfo.next()) {
                     m_fcPassword = qryPlayerAccountInfo.getString("fcPassword");
-                    return true;
-                } else {
-                    return false;
+                    result = true;
                 }
+                qryPlayerAccountInfo.close();
+                return result;
             } catch (Exception e) {
-                
+
             };
         };
         return false;
     };
-    
-    
+
+
     public boolean hasRank(int rankNr) {
         if (m_fnUserID != 0) {
+            boolean result = false;
             try {
                 ResultSet qryHasPlayerRank = m_connection.SQLQuery(m_connName, "SELECT fnUserID FROM tblUserRank WHERE fnUserID = "+m_fnUserID+" AND fnRankID =" + rankNr);
                 m_lastQuery = System.currentTimeMillis();
-                if (qryHasPlayerRank.next()) return true;
-                else return false;
+                if (qryHasPlayerRank.next()) result = true;
+                qryHasPlayerRank.close();
+                return result;
             } catch (Exception e) {
             };
         };
         return false;
     };
-    
-    
-    
+
+
+
     public boolean giveRank(int rankNr) {
         if (m_fnUserID != 0) {
             try {
-                m_connection.SQLQuery(m_connName, "INSERT tblUserRank (fnUserID, fnRankID) VALUES ("+m_fnUserID+", "+rankNr+")");
+                ResultSet r = m_connection.SQLQuery(m_connName, "INSERT tblUserRank (fnUserID, fnRankID) VALUES ("+m_fnUserID+", "+rankNr+")");
+                if (r != null) r.close();
                 m_lastQuery = System.currentTimeMillis();
                 return true;
             } catch (Exception e) {
@@ -209,95 +225,107 @@ public class DBPlayerData {
         };
         return false;
     };
-    
-    public boolean removeRank( int userRankId ) {
-    	if(m_fnUserID != 0) {
-    		try {
-    			String query = "DELETE FROM tblUserRank WHERE fnUserRankId = "+userRankId;
-    			m_connection.SQLQuery(m_connName, query );
-    			m_connection.SQLQuery(m_connName, "INSERT tblDeleteLog (fcDeleteQuery) VALUES ('"+query+"')" );
-    			m_lastQuery = System.currentTimeMillis();
-    			return true;
-    		} catch (Exception e) {
-    			return false;
-    		}
-    	};
-    	return false;
-    };
-    
-    public boolean register( String ip, String mid ) {
-    	if( m_fnUserID != 0 ) {
-    		try {
-    			String query = "INSERT INTO tblAliasSuppression (fnUserID, fcIP, fnMID, fnStatus) VALUES ";
-    			query += "("+m_fnUserID+", '"+ip+"', '"+mid+"', 1)";
-    			m_connection.SQLQuery( "server", query );
-    			m_lastQuery = System.currentTimeMillis();
-    			return true;
-    		} catch (Exception e) {
-    			System.out.println( e );
-    			return false;
-    		}
-    	}
-    	return false;
-    }
-    
-    public boolean aliasMatch( String ip, String mid ) {
-    	String pieces[] = ip.split(".");
-    	ip = ip.substring( 0, ip.lastIndexOf( "." ) )+".%";
 
-    	try {
-    		String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' AND fnMID = '"+mid+"'";
-    		ResultSet result = m_connection.SQLQuery( "server", query );
-    		if( result.next() ) return true;
-    		else return false;
-    	} catch (Exception e) {
-    		return true;
-    	}
+    public boolean removeRank( int userRankId ) {
+        if(m_fnUserID != 0) {
+            try {
+                String query = "DELETE FROM tblUserRank WHERE fnUserRankId = "+userRankId;
+                ResultSet r;
+                r = m_connection.SQLQuery(m_connName, query );
+                if (r != null) {
+                    r.close();
+                    r = null;
+                }
+                r = m_connection.SQLQuery(m_connName, "INSERT tblDeleteLog (fcDeleteQuery) VALUES ('"+query+"')" );
+                if (r != null) r.close();
+                m_lastQuery = System.currentTimeMillis();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        };
+        return false;
+    };
+
+    public boolean register( String ip, String mid ) {
+        if( m_fnUserID != 0 ) {
+            try {
+                String query = "INSERT INTO tblAliasSuppression (fnUserID, fcIP, fnMID, fnStatus) VALUES ";
+                query += "("+m_fnUserID+", '"+ip+"', '"+mid+"', 1)";
+                ResultSet r = m_connection.SQLQuery( "server", query );
+                if (r != null) r.close();
+                m_lastQuery = System.currentTimeMillis();
+                return true;
+            } catch (Exception e) {
+                System.out.println( e );
+                return false;
+            }
+        }
+        return false;
     }
-    
+
+    public boolean aliasMatch( String ip, String mid ) {
+        String pieces[] = ip.split(".");
+        ip = ip.substring( 0, ip.lastIndexOf( "." ) )+".%";
+        boolean result = false;
+
+        try {
+            String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' AND fnMID = '"+mid+"'";
+            ResultSet r = m_connection.SQLQuery( "server", query );
+            if( r.next() ) result = true;
+            r.close();
+            return result;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     public boolean resetRegistration() {
-    	
-    	try {
-    		m_connection.SQLQuery( "server", "DELETE FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
-    		return true;
-    	} catch (Exception e) {
-    		return false;
-    	}
+
+        try {
+            ResultSet r = m_connection.SQLQuery( "server", "DELETE FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
+            if (r != null) r.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
-    
+
     public boolean enableName() {
-    	
-    	try {
-    		m_connection.SQLQuery( "server", "UPDATE tblAliasSuppression SET fnStatus = 1 WHERE fnUserID = "+m_fnUserID );
-    		return true;
-    	} catch (Exception e) {
-    		return false;
-    	}
+
+        try {
+            ResultSet r = m_connection.SQLQuery( "server", "UPDATE tblAliasSuppression SET fnStatus = 1 WHERE fnUserID = "+m_fnUserID );
+            if (r != null) r.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
-    
+
     public boolean disableName() {
-    	
-    	try {
-    		m_connection.SQLQuery( "server", "UPDATE tblAliasSuppression SET fnStatus = 2 WHERE fnUserID = "+m_fnUserID );
-    		return true;
-    	} catch (Exception e) {
-    		return false;
-    	}
+
+        try {
+            ResultSet r = m_connection.SQLQuery( "server", "UPDATE tblAliasSuppression SET fnStatus = 2 WHERE fnUserID = "+m_fnUserID );
+            if (r != null) r.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
-    
+
     public boolean isRegistered() {
-    	if( m_fnStatus != 0 ) return true;
-    	else return false;
+        if( m_fnStatus != 0 ) return true;
+        else return false;
     }
-    
+
     public boolean isEnabled() {
-    	if( m_fnStatus == 1 ) return true;
-    	else return false;
+        if( m_fnStatus == 1 ) return true;
+        else return false;
     }
-    
-    
+
+
     public BotAction getBotAction() { return m_connection; };
-    
+
     public boolean playerLoaded() { return m_playerLoaded; };
     public int getUserID() { return m_fnUserID; };
     public String getUserName() { return m_fcUserName; };
@@ -311,6 +339,6 @@ public class DBPlayerData {
     public int getTeamID() { return m_fnTeamID; };
     public int getTeamUserID() { return m_fnTeamUserID; };
     public long getLastQuery() { return m_lastQuery; };
-    
+
     public void setUserName(String fcUserName) { m_fcUserName = fcUserName; };
 };
