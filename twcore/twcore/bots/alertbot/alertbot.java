@@ -126,6 +126,7 @@ public class alertbot extends SubspaceBot {
                     while ( set.next() ) {
                         m_botAction.sendSmartPrivateMessage( set.getString("name"), startMessage );
                     }
+                    set.close();
                 } catch (SQLException e) {
                   return;
                 }
@@ -146,8 +147,10 @@ public class alertbot extends SubspaceBot {
     public void handleCommand(String name, String message){
         if(message.equalsIgnoreCase("!on")){
             try {
-                m_botAction.SQLQuery("local","REPLACE INTO alerts (id,name,date) values("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
+                // let's be paranoid
+                ResultSet set = m_botAction.SQLQuery("local","REPLACE INTO alerts (id,name,date) values("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts activated for " + botType + "." );
+                if (set != null) set.close();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
                 m_botAction.sendSmartPrivateMessage(name,"Unable to enable alerts at this time.");
@@ -156,8 +159,9 @@ public class alertbot extends SubspaceBot {
         }
         else if ( message.equalsIgnoreCase("!off") ) {
             try {
-                m_botAction.SQLQuery("local","delete from alerts where id="+alertBotTypeID+" and name=\""+Tools.addSlashesToString(name)+"\"");
+                ResultSet set = m_botAction.SQLQuery("local","delete from alerts where id="+alertBotTypeID+" and name=\""+Tools.addSlashesToString(name)+"\"");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts deactivated for " + botType + "." );
+                if (set != null) set.close();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
                 m_botAction.sendSmartPrivateMessage(name,"Unable to disable alerts at this time.");
