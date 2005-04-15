@@ -202,39 +202,43 @@ public class twbotzombies extends TWBotExtension {
         if( modeSet && isRunning ){
             Player p = m_botAction.getPlayer( event.getKilleeID() );
             Player p2 = m_botAction.getPlayer( event.getKillerID() );
-            if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_srcfreq ){
-                m_botAction.setShip( event.getKilleeID(), m_destship );
-                m_botAction.setFreq( event.getKilleeID(), m_destfreq );
-                String killmsg = killmsgs.toString();
-                int soundPos = killmsg.indexOf('%');
-                int soundCode = 0;
-
-                if( soundPos != -1){
-                    try{
-                        soundCode = Integer.parseInt(killmsg.substring(soundPos + 1));
-                    } catch( Exception e ){
-                    	soundCode = 0;
+            try {
+                if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_srcfreq ){
+                    m_botAction.setShip( event.getKilleeID(), m_destship );
+                    m_botAction.setFreq( event.getKilleeID(), m_destfreq );
+                    String killmsg = killmsgs.toString();
+                    int soundPos = killmsg.indexOf('%');
+                    int soundCode = 0;
+                    
+                    if( soundPos != -1){
+                        try{
+                            soundCode = Integer.parseInt(killmsg.substring(soundPos + 1));
+                        } catch( Exception e ){
+                            soundCode = 0;
+                        }
+                        if(soundCode == 12) {soundCode = 1;} //no naughty sounds
                     }
-                    if(soundCode == 12) {soundCode = 1;} //no naughty sounds
+                    
+                    if( killmsg.startsWith( "'" ) == false){
+                        killmsg = " " + killmsg;
+                    }
+                    
+                    if( soundCode > 0 ){
+                        killmsg = killmsg.substring(0, soundPos + 1);
+                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg, soundCode );
+                    } else {
+                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg );
+                    }
+                    
+                    //}
                 }
-
-                if( killmsg.startsWith( "'" ) == false){
-                   killmsg = " " + killmsg;
+                if(m_srcship.contains(new Integer(p2.getShipType())) && p2.getShipType() != m_destship && killerShipSet)
+                {
+                    if(p2.getShipType() != killerShip)
+                        m_botAction.setShip(event.getKillerID(), killerShip);
                 }
-
-                if( soundCode > 0 ){
-                    killmsg = killmsg.substring(0, soundPos + 1);
-                    m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg, soundCode );
-                } else {
-                    m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg );
-                }
-
-                //}
-            }
-            if(m_srcship.contains(new Integer(p2.getShipType())) && p2.getShipType() != m_destship && killerShipSet)
-            {
-            	if(p2.getShipType() != killerShip)
-            		m_botAction.setShip(event.getKillerID(), killerShip);
+            } catch (Exception e) {
+                
             }
         }
     }
