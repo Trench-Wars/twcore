@@ -716,7 +716,6 @@ public class purepubbot extends SubspaceBot
     {
     	String commands[] = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Setup").split(",");
     	for(int k = 0; k < commands.length; k++) {
-			System.out.println(commands[k]);
     		handleCommand(m_botAction.getBotName(), commands[k]);
 		}
     }
