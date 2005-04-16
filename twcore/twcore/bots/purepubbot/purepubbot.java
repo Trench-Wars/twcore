@@ -62,12 +62,33 @@ public class purepubbot extends SubspaceBot
      */
     public void handleEvent(ArenaList event)
     {
-    	System.out.println("Got the arena list...");
     	String[] arenaNames = event.getArenaNames();
+
+        Comparator a = new Comparator()
+        {
+            public int compare(Object oa, Object ob)
+            {
+                String a = (String)oa;
+                String b = (String)ob;
+                if (Tools.isAllDigits(a)) {
+                    if (Tools.isAllDigits(b)) {
+		                return a.compareToIgnoreCase(b);
+                    } else {
+                        return -1;
+                    }
+                } else if (Tools.isAllDigits(b)) {
+                    return 1;
+                } else {
+                    return a.compareToIgnoreCase(b);
+				}
+            };
+        };
+
+        Arrays.sort(arenaNames, a);
+
     	String arenaToJoin = arenaNames[initialPub];
     	if(Tools.isAllDigits(arenaToJoin))
     	{
-    		System.out.println("Joining: " + arenaToJoin);
     		m_botAction.changeArena(arenaToJoin);
     		startBot();
     	}
@@ -458,7 +479,7 @@ public class purepubbot extends SubspaceBot
             else if(command.equals("!warp"))
                 doWarpCmd(sender);
             
-            if ( !opList.isHighmod(sender) )
+            if ( !opList.isHighmod(sender) && !sender.equals(m_botAction.getBotName()) )
                 return;
             
             if(command.startsWith("!go "))
@@ -694,8 +715,10 @@ public class purepubbot extends SubspaceBot
     public void startBot()
     {
     	String commands[] = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Setup").split(",");
-    	for(int k = 0;k < commands.length;k++)
+    	for(int k = 0; k < commands.length; k++) {
+			System.out.println(commands[k]);
     		handleCommand(m_botAction.getBotName(), commands[k]);
+		}
     }
     
     /**
