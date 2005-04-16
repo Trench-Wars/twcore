@@ -57,7 +57,7 @@ public class Objset {
 
         if( playerObj.containsKey( new Integer( object ) ) ) {
             String status = (String)playerObj.get( new Integer( object ) );
-            if( status.equals( "+" ) )
+            if( status != null && status.equals( "+" ) )
                 playerMap.put( new Integer( object ), "-" );
         } else playerMap.put( new Integer( object ), "-" );
     }
@@ -69,7 +69,7 @@ public class Objset {
             while( it.hasNext() ) {
                 int x = ((Integer)it.next()).intValue();
                 String status = (String)m_objects.get( new Integer( x ) );
-                if( status.equals( "+" ) )
+                if( status != null && status.equals( "+" ) )
                     m_unsetObjects.put( new Integer( x ), "-" );
             }
         }
@@ -89,7 +89,7 @@ public class Objset {
             while( it.hasNext() ) {
                 int x = ((Integer)it.next()).intValue();
                 String status = (String)playerObj.get( new Integer( x ) );
-                if( status.equals( "+" ) )
+                if( status != null && status.equals( "+" ) )
                     playerUnset.put( new Integer( x ), "-" );
             }
         }
@@ -99,7 +99,7 @@ public class Objset {
         if( !m_objects.containsKey( new Integer( object ) ) )
             return false;
         String status = (String)m_objects.get( new Integer( object ) );
-        if( status.equals("+") ) return true;
+        if( status != null && status.equals("+") ) return true;
         else return false;
     }
 
@@ -108,7 +108,7 @@ public class Objset {
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return false;
         Map playerObj = (Map)m_privateObjects.get( new Integer( playerId ) );
         String status = (String)playerObj.get( new Integer( object ) );
-        if( status.equals("+") ) return true;
+        if( status != null && status.equals("+") ) return true;
         else return false;
     }
 
