@@ -19,6 +19,7 @@ public class DBPlayerData {
 
     boolean m_playerLoaded = false;
     String m_connName = "local";
+	String m_aliasConnName = "server";
     String m_fcUserName = "";
     String m_fcPassword = "";
     int m_fnUserID = 0;
@@ -88,6 +89,10 @@ public class DBPlayerData {
 
     public boolean getPlayerData() {
         boolean result = false;
+
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
+            m_aliasConnName = "local";
+
         try {
             ResultSet qryPlayerInfo = m_connection.SQLQuery(m_connName,
             "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"'");
@@ -113,7 +118,7 @@ public class DBPlayerData {
     public boolean getPlayerAliasData() {
         boolean result = false;
         try {
-            ResultSet qryPlayerAlias = m_connection.SQLQuery( "server",
+            ResultSet qryPlayerAlias = m_connection.SQLQuery( m_aliasConnName,
             "SELECT fcIP, fnMID, fnStatus FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
             if( qryPlayerAlias.next() ) {
                 m_fcIP = qryPlayerAlias.getString( "fcIP" );
@@ -252,7 +257,7 @@ public class DBPlayerData {
             try {
                 String query = "INSERT INTO tblAliasSuppression (fnUserID, fcIP, fnMID, fnStatus) VALUES ";
                 query += "("+m_fnUserID+", '"+ip+"', '"+mid+"', 1)";
-                ResultSet r = m_connection.SQLQuery( "server", query );
+                ResultSet r = m_connection.SQLQuery( m_aliasConnName, query );
                 if (r != null) r.close();
                 m_lastQuery = System.currentTimeMillis();
                 return true;
@@ -271,7 +276,7 @@ public class DBPlayerData {
 
         try {
             String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' AND fnMID = '"+mid+"'";
-            ResultSet r = m_connection.SQLQuery( "server", query );
+            ResultSet r = m_connection.SQLQuery( m_aliasConnName, query );
             if( r.next() ) result = true;
             r.close();
             return result;
@@ -283,7 +288,7 @@ public class DBPlayerData {
     public boolean resetRegistration() {
 
         try {
-            ResultSet r = m_connection.SQLQuery( "server", "DELETE FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
+            ResultSet r = m_connection.SQLQuery( m_aliasConnName, "DELETE FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
             if (r != null) r.close();
             return true;
         } catch (Exception e) {
@@ -294,7 +299,7 @@ public class DBPlayerData {
     public boolean enableName() {
 
         try {
-            ResultSet r = m_connection.SQLQuery( "server", "UPDATE tblAliasSuppression SET fnStatus = 1 WHERE fnUserID = "+m_fnUserID );
+            ResultSet r = m_connection.SQLQuery( m_aliasConnName, "UPDATE tblAliasSuppression SET fnStatus = 1 WHERE fnUserID = "+m_fnUserID );
             if (r != null) r.close();
             return true;
         } catch (Exception e) {
@@ -305,7 +310,7 @@ public class DBPlayerData {
     public boolean disableName() {
 
         try {
-            ResultSet r = m_connection.SQLQuery( "server", "UPDATE tblAliasSuppression SET fnStatus = 2 WHERE fnUserID = "+m_fnUserID );
+            ResultSet r = m_connection.SQLQuery( m_aliasConnName, "UPDATE tblAliasSuppression SET fnStatus = 2 WHERE fnUserID = "+m_fnUserID );
             if (r != null) r.close();
             return true;
         } catch (Exception e) {
