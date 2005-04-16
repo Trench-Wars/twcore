@@ -72,7 +72,11 @@ public class purepubbot extends SubspaceBot
                 String b = (String)ob;
                 if (Tools.isAllDigits(a)) {
                     if (Tools.isAllDigits(b)) {
-		                return a.compareToIgnoreCase(b);
+                        if (Integer.parseInt(a) < Integer.parseInt(b)) {
+                            return -1;
+                        } else {
+                            return 1;
+                        }
                     } else {
                         return -1;
                     }
