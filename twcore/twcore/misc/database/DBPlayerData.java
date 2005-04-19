@@ -68,7 +68,7 @@ public class DBPlayerData {
         try {
             ResultSet qryPlayerSquadInfo = m_connection.SQLQuery(m_connName,
             "SELECT TU.fdJoined, TU.fnTeamUserID, T.fnTeamID, T.fcTeamName FROM tblTeam T, tblTeamUser TU " +
-            "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = " + getUserID());
+            "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = " + getUserID() + " ORDER BY fdJoined DESC");
             m_lastQuery = System.currentTimeMillis();
 
             if (qryPlayerSquadInfo.next()) {
@@ -95,7 +95,7 @@ public class DBPlayerData {
 
         try {
             ResultSet qryPlayerInfo = m_connection.SQLQuery(m_connName,
-            "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"'");
+            "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY fdSignedUp ASC");
             m_lastQuery = System.currentTimeMillis();
             if (qryPlayerInfo.next()) {
                 m_playerLoaded = true;
