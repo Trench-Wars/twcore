@@ -157,7 +157,7 @@ public class GamePacketGenerator {
     //Must NOT be a new user...
     public void sendPasswordPacket( String name, String password ){
 
-        ByteArray      bytearray = new ByteArray( 107 );
+        ByteArray      bytearray = new ByteArray( 101 );
         int[]          arr = { 0x86, 0x00, 0xBC, 0x01,
         0x00, 0x00, 0x2B, 0x02,
         0x00, 0x00 };
@@ -366,13 +366,13 @@ public class GamePacketGenerator {
 
         sendReliableMessage( bytearray );
     }
-    
+
     public void sendBannerPacket( byte[] banner ) {
-        
+
         ByteArray bytearray = new ByteArray( 97 );
         bytearray.addByte( 0x19 );
         bytearray.addByteArray( banner );
-        
+
         sendReliableMessage( bytearray );
     }
 
