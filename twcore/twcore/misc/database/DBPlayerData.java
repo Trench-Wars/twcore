@@ -19,7 +19,7 @@ public class DBPlayerData {
 
     boolean m_playerLoaded = false;
     String m_connName = "local";
-	String m_aliasConnName = "server";
+    String m_aliasConnName = "server";
     String m_fcUserName = "";
     String m_fcPassword = "";
     int m_fnUserID = 0;
@@ -57,7 +57,7 @@ public class DBPlayerData {
         m_connection = conn;
         m_fcUserName = fcPlayerName;
         m_connName = connName;
-        if (!getPlayerData() && createIfNotExists) createPlayerData();
+        if (!getPlayerData() && createIfNotExists && !checkPlayerExist) createPlayerData();
     }
 
 
@@ -115,6 +115,28 @@ public class DBPlayerData {
         }
     };
 
+    public boolean checkPlayerExist() {
+        boolean result = false;
+
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
+            m_connName = "website";
+
+        try {
+            ResultSet qryPlayerExist = m_connection.SQLQuery(m_connName,
+            "SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY fdSignedUp ASC");
+            m_lastQuery = System.currentTimeMillis();
+            if (qryPlayerExist.next()) {
+                result = true;
+            }
+            qryPlayerExist.close();
+            return result;
+        } catch (Exception e) {
+            System.out.println("Database error! - " + e.getMessage());
+            return false;
+        }
+    };
+
+
     public boolean getPlayerAliasData() {
         boolean result = false;
         try {
@@ -136,20 +158,26 @@ public class DBPlayerData {
 
 
     public boolean createPlayerData() {
-        try {
-            ResultSet r = m_connection.SQLQuery(m_connName, "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())");
-            if (r != null) r.close();
-            m_lastQuery = System.currentTimeMillis();
-            if (getPlayerData()) return true; else return false;
-        } catch (Exception e) {
-            System.out.println("Couldn't create user");
-            return false;
-        }
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost")) {
+            m_connName = "website";
+
+           try {
+               ResultSet r = m_connection.SQLQuery(m_connName, "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())");
+               if (r != null) r.close();
+               m_lastQuery = System.currentTimeMillis();
+               if (getPlayerData()) return true; else return false;
+           } catch (Exception e) {
+               System.out.println("Couldn't create user");
+               return false;
+           }
     };
 
 
 
     public boolean createPlayerAccountData(String fcPassword) {
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
+            m_connName = "website";
+
         if (m_fnUserID != 0) {
             try {
                 ResultSet r = m_connection.SQLQuery(m_connName, "INSERT INTO tblUserAccount(fnUserID, fcPassword) VALUES ("+m_fnUserID+",PASSWORD('"+Tools.addSlashesToString(fcPassword)+"'))");
@@ -166,6 +194,9 @@ public class DBPlayerData {
 
 
     public boolean updatePlayerAccountData(String fcPassword) {
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
+            m_connName = "website";
+
         if (m_fnUserID != 0) {
             try {
                 ResultSet r = m_connection.SQLQuery(m_connName, "UPDATE tblUserAccount SET fcPassword = PASSWORD('"+Tools.addSlashesToString(fcPassword)+"') WHERE fnUserID = "+m_fnUserID);
@@ -218,6 +249,9 @@ public class DBPlayerData {
 
 
     public boolean giveRank(int rankNr) {
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
+            m_connName = "website";
+
         if (m_fnUserID != 0) {
             try {
                 ResultSet r = m_connection.SQLQuery(m_connName, "INSERT tblUserRank (fnUserID, fnRankID) VALUES ("+m_fnUserID+", "+rankNr+")");
@@ -232,6 +266,9 @@ public class DBPlayerData {
     };
 
     public boolean removeRank( int userRankId ) {
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
+            m_connName = "website";
+
         if(m_fnUserID != 0) {
             try {
                 String query = "DELETE FROM tblUserRank WHERE fnUserRankId = "+userRankId;
