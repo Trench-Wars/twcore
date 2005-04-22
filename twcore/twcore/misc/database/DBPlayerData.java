@@ -57,7 +57,7 @@ public class DBPlayerData {
         m_connection = conn;
         m_fcUserName = fcPlayerName;
         m_connName = connName;
-        if (!getPlayerData() && createIfNotExists && !checkPlayerExist) createPlayerData();
+        if (!getPlayerData() && createIfNotExists && !checkPlayerExists()) createPlayerData();
     }
 
 
@@ -115,7 +115,7 @@ public class DBPlayerData {
         }
     };
 
-    public boolean checkPlayerExist() {
+    public boolean checkPlayerExists() {
         boolean result = false;
 
         if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
