@@ -158,7 +158,7 @@ public class DBPlayerData {
 
 
     public boolean createPlayerData() {
-        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost")) {
+        if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
             m_connName = "website";
 
            try {
