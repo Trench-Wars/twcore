@@ -12,6 +12,7 @@ public class bshipbot extends SubspaceBot
 	CommandInterpreter m_cmd;
 	OperatorList oplist;
 	StartWarp startWarp;
+	CapshipNotify notify;
 
 	//Night Mode
 	int hour = 0;
@@ -28,15 +29,7 @@ public class bshipbot extends SubspaceBot
 	//Geometry Constants
 	static final byte X = 0, Y = 1, HEIGHT = 2, WIDTH = 3;
 
-	TimerTask timeMode = new TimerTask()
-	{
-		public void run()
-		{
-			if(night)
-				refresh();
-		}
-
-	};
+	NightUpdate timeMode = new NightUpdate();
 
 	/********************************/
 	/*			  Setup				*/
@@ -543,12 +536,15 @@ public class bshipbot extends SubspaceBot
 		m_botAction.sendArenaMessage("Game will begin in 10 seconds.");
 		state = ACTIVE;
 		startWarp = new StartWarp();
+		notify = new CapshipNotify();
 		m_botAction.scheduleTask(startWarp,10000);
+		m_botAction.scheduleTaskAtFixedRate(notify,2000,300000);
 	}
 
 	private void postgame()
 	{
 		startWarp.cancel();
+		notify.cancel();
 		m_botAction.warpAllRandomly();
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team0-X=357");
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team0-Y=199");
@@ -608,6 +604,8 @@ public class bshipbot extends SubspaceBot
 		{
 			Player p = (Player)it.next();
 			ships[p.getFrequency()][p.getShipType() -1]++;
+			if(p.getShipType() >= FRIGATE)
+				notify.add(p.getPlayerName(), p.getFrequency());
 		}
 	}
 
@@ -941,28 +939,33 @@ public class bshipbot extends SubspaceBot
 			switch(ship)
 			{
 				case MINESWEEPER:
-					m_botAction.sendArenaMessage("Team "+ team + "'s Minesweeper ("+ name +") just got blown up by " + killer,19);
+					m_botAction.sendArenaMessage("Team "+ team + "just lost a Minesweeper! ("+ name +", killed by "+ killer +")",19);
 					m_botAction.setShip(name, 3);
+					notify.remove(name);
 				break;
 
 				case SUB:
-					m_botAction.sendArenaMessage("Team "+ team +"'s Sub ("+ name +") just got destroyed by "+ killer + ". I guess cloak didn't help...",19);
+					m_botAction.sendArenaMessage("Team "+ team + "just lost a Submarine! ("+ name +", killed by "+ killer +")",19);
 					m_botAction.setShip(name, 3);
+					notify.remove(name);
 				break;
 
 				case FRIGATE:
-					m_botAction.sendArenaMessage("Awww snap! Team "+ team+"'s Frigate ("+ name +") just got pwned by "+ killer +"! Where will all of the turrets go?",25);
+					m_botAction.sendArenaMessage("Team "+ team + "just lost a Frigate! ("+ name +", killed by "+ killer +")",19);
 					m_botAction.setShip(name, 3);
+					notify.remove(name);
 				break;
 
 				case BATTLESHIP:
-					m_botAction.sendArenaMessage("Inconceivable! Team "+ team +" just lost their Battleship ("+ name +"). It's not looking good for them now...",7);
+					m_botAction.sendArenaMessage("Team "+ team + "just lost a BATTLESHIP! ("+ name +", killed by "+ killer +")",19);
 					m_botAction.setShip(name, 3);
+					notify.remove(name);
 				break;
 
 				case CARRIER:
-					m_botAction.sendArenaMessage("The Carrier for Team " + team + " ("+ name +") was just demolished by "+ killer +" , effectively shutting down their entire Air Force!",10);
+					m_botAction.sendArenaMessage("Team "+ team + "just lost an AIRCRAFT CARRIER! ("+ name +", killed by "+ killer +")",19);
 					m_botAction.setShip(name, 3);
+					notify.remove(name);
 				break;
 			}
 
@@ -1064,6 +1067,15 @@ public class bshipbot extends SubspaceBot
 		}
 	}
 
+	private class NightUpdate extends TimerTask
+	{
+		public void run()
+		{
+			if(night)
+				refresh();
+		}
+	}
+
 	private class StartWarp extends TimerTask
 	{
 		public void run()
@@ -1084,6 +1096,54 @@ public class bshipbot extends SubspaceBot
 				m_botAction.warpFreqToLocation(i,x,y);
 			}
 			m_botAction.sendArenaMessage("Game Begin!!!",104);
+		}
+	}
+
+	private class CapshipNotify extends TimerTask
+	{
+		private Vector[] capships = new Vector[teams];
+		private boolean ready = false;
+		public void run()
+		{
+			if(!ready)
+				init();
+
+			for(int x = 0; x < capships.length; x++)
+			{
+				StringBuffer bships = new StringBuffer("Your Team's Battleships: ,");
+				StringBuffer carriers = new StringBuffer("Carriers: ,");
+				Player p = null;
+				for(int y = 0; y < capships[x].size(); y++)
+				{
+					p = m_botAction.getPlayer((String)capships[x].get(y));
+					if(p.getShipType() == FRIGATE || p.getShipType() == BATTLESHIP)
+						bships.append(p.getPlayerName() +", ");
+					else if(p.getShipType() == CARRIER)
+						carriers.append(p.getPlayerName() +", ");
+				}
+				bships.deleteCharAt(bships.length() - 1);
+				carriers.deleteCharAt(bships.length() - 1);
+				if(p != null)
+					m_botAction.sendOpposingTeamMessage((int)p.getPlayerID(), bships.toString() + carriers.toString(),0);
+			}
+		}
+
+		public void remove(String name)
+		{
+			for(int x = 0; x < capships.length; x++)
+				capships[x].remove(name);
+		}
+
+		public void add(String name, int freq)
+		{
+			capships[freq].add(name);
+		}
+
+		public void init()
+		{
+			for(int x = 0; x < capships.length; x++)
+				capships[x] = new Vector();
+			ready = true;
 		}
 	}
 }
