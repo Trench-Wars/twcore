@@ -151,14 +151,6 @@ public class GamePacketInterpreter {
             case 0x2F:
                 handleArenaList( array, alreadyDecrypted );
                 break;
-            case 0x31:
-                m_session.loggedOn();
-                m_subspaceBot.handleEvent( new LoggedOn( null ) );
-                m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,
-                "*energy" );
-                m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,
-                "?obscene" );
-                break;
             case 0x38:
                 handleWatchDamage( array, alreadyDecrypted );
                 break;
@@ -524,19 +516,19 @@ public class GamePacketInterpreter {
             m_subspaceBot.handleEvent( update );
         }
     }
-    
+
     void handlePlayerBanner( ByteArray message, boolean alreadyDecrypted ) {
         // Check for valid message
-        if( message.size() < 99 ){ 
+        if( message.size() < 99 ){
             return;
         }
-        
+
         if( alreadyDecrypted == false ){
             m_ssEncryption.decrypt( message, message.size()-1, 1 );
         }
-        
+
         PlayerBanner banner = new PlayerBanner( message );
-        
+
         if( m_requester.check( EventRequester.PLAYER_BANNER )){
             m_subspaceBot.handleEvent( banner );
         }
@@ -697,6 +689,13 @@ public class GamePacketInterpreter {
             Tools.printLog( m_session.getBotName() + " log in response: " + ppResponse.getResponseMessage() );
 
         if( ppResponse.isFatal() ) m_session.disconnect();
+
+		/***** ASSS Compatible Login Sequence Fix (D1st0rt) *****/
+        //Login ok, continue (Moved here from handle of packet 0x31)
+        m_session.loggedOn();
+		m_subspaceBot.handleEvent( new LoggedOn( null ) );
+		m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,"*energy" );
+		m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,"?obscene" );
     }
 
     void handleFileRequest( ByteArray message, boolean alreadyDecrypted ){
