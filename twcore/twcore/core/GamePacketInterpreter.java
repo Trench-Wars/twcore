@@ -690,12 +690,14 @@ public class GamePacketInterpreter {
 
         if( ppResponse.isFatal() ) m_session.disconnect();
 
-		/***** ASSS Compatible Login Sequence Fix (D1st0rt) *****/
+        /***** ASSS Compatible Login Sequence Fix (D1st0rt) *****/
         //Login ok, continue (Moved here from handle of packet 0x31)
-        m_session.loggedOn();
-		m_subspaceBot.handleEvent( new LoggedOn( null ) );
-		m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,"*energy" );
-		m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,"?obscene" );
+        else if( ppResponse.getResponseValue() == 0 ){
+            m_session.loggedOn();
+            m_subspaceBot.handleEvent( new LoggedOn( null ) );
+            m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,"*energy" );
+            m_packetGenerator.sendChatPacket( (byte)2, (byte)0, (short)0,"?obscene" );
+        }
     }
 
     void handleFileRequest( ByteArray message, boolean alreadyDecrypted ){
