@@ -4,7 +4,7 @@
 # Check whether the core is running or not. If not, start it.
 #
 # Crontab entry to run the check every 5 minute:
-#    */5 * * * *   /home/bots/botcheck >/dev/null 2>&1
+#    */5 * * * *   /home/bots/botcheck.sh >/dev/null 2>&1
 #
 
 bothome="/home/bots"
