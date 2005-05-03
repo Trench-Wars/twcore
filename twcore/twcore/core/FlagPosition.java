@@ -22,7 +22,7 @@ public class FlagPosition extends SubspaceEvent {
     private short m_team;
 
     /**
-     * Creates a new instance of FlagDropped, this is called by GamePacketInterpreter
+     * Creates a new instance of FlagPosition, this is called by GamePacketInterpreter
      * when it receives the packet
      * @param array the ByteArray containing the packet data
      */
@@ -34,32 +34,32 @@ public class FlagPosition extends SubspaceEvent {
     }
 
     /**
-	 * This gets the ID of the flag
-	 * @return the ID of the flag
+     * This gets the ID of the flag
+     * @return the ID of the flag
      */
     public short getFlagID() {
         return m_flagID;
     }
 
     /**
-	 * This gets the X coordinate of the tile that the flag is located on
-	 * @return the X coordinate of the flag
+     * This gets the X coordinate of the tile that the flag is located on
+     * @return the X coordinate of the flag
      */
     public short getXLocation() {
         return m_xLocation;
     }
 
     /**
-	 * This gets the Y coordinate of the tile that the flag is located on
-	 * @return the Y coordinate of the flag
+     * This gets the Y coordinate of the tile that the flag is located on
+     * @return the Y coordinate of the flag
      */
     public short getYLocation() {
         return m_yLocation;
     }
 
     /**
-	 * This gets the frequency of the team that owns this flag
-	 * @return the frequency that owns this flag, or -1 if unowned
+     * This gets the frequency of the team that owns this flag
+     * @return the frequency that owns this flag, or -1 if unowned
      */
     public short getTeam() {
         return m_team;

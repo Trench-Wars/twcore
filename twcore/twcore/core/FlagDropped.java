@@ -2,7 +2,7 @@ package twcore.core;
 
 /**
  * Event called when a player drops a flag they are carrying.
- * <br><font size="+2"><b>FlagClaimed: <font color="blue">S2C 0x13</b></font></font>
+ * <br><font size="+2"><b>FlagDropped: <font color="blue">S2C 0x16</b></font></font>
  * <table border="1" cellspacing="0">
  * <tr> <th>Offset</th><th>Length</th><th>Description</th> </tr>
  * <tr> <td>0</td> <td>1</td> <td>Type Byte</td> </tr>
@@ -12,10 +12,10 @@ package twcore.core;
  * any warzone flags automatically in the core.
  */
 public class FlagDropped extends SubspaceEvent {
-    
+
     //Variable Declarations
     private short m_playerID;
-    
+
     /**
      * Creates a new instance of FlagDropped, this is called by GamePacketInterpreter
      * when it receives the packet
@@ -24,7 +24,7 @@ public class FlagDropped extends SubspaceEvent {
     public FlagDropped( ByteArray array ) {
         m_playerID = array.readLittleEndianShort( 1 );
     }
-    
+
     /**
      * This gets the ID of the player that just dropped the flag
      * @return the ID of the dropping player
