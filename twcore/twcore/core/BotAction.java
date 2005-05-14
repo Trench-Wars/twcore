@@ -17,6 +17,7 @@ public class BotAction
     private Arena m_arenaTracker;
     private GamePacketGenerator m_packetGenerator;
     private Objset m_objectSet;
+    private int m_botNumber;
 
     /** Constructor for BotAction.  Don't worry about this, the object has already
      * been constructed for you.
@@ -24,13 +25,14 @@ public class BotAction
      * @param packetGenerator Packet generator which is called when packets are sent out.
      * @param arena Arena Tracker object used to represent an arena full of players.
      */
-    public BotAction(GamePacketGenerator packetGenerator, Arena arena, Timer timer, Session botSession)
+    public BotAction(GamePacketGenerator packetGenerator, Arena arena, Timer timer, int botNum, Session botSession)
     {
         m_timer = timer;
         m_arenaTracker = arena;
         m_botSession = botSession;
         m_timerTasks = new LinkedList();
         m_packetGenerator = packetGenerator;
+        m_botNumber = botNum;
         m_objectSet = new Objset();
     }
 
@@ -2009,5 +2011,12 @@ public class BotAction
     public void setBanner( byte[] _banner ) {
 
         m_packetGenerator.sendBannerPacket( _banner );
+    }
+    
+    /** Returns the bot's number
+     * @return m_botNumber
+     */
+    public int getBotNumber(){
+    	return m_botNumber;
     }
 }

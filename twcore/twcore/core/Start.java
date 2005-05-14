@@ -67,6 +67,7 @@ public class Start {
                     roboClass,
                     coreData.getGeneralSettings().getString( "Main Login" ),
                     coreData.getGeneralSettings().getString( "Main Password" ),
+                    1,
                     group );
 
             kingBot.start();

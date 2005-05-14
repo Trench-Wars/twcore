@@ -13,6 +13,7 @@ public class Session extends Thread {
     private Ship            m_ship;
     private String          m_name;
     private int             m_state;
+    private int				m_botNumber;
     private ThreadGroup     m_group;
     private Timer           m_timer;
     private DatagramSocket  m_socket;
@@ -37,7 +38,7 @@ public class Session extends Thread {
     public static int NOT_RUNNING = 0;
     public static int INVALID_CLASS = (-1);
 
-    public Session( CoreData cdata, Class roboClass, String name, String password, ThreadGroup parentGroup ){
+    public Session( CoreData cdata, Class roboClass, String name, String password, int botNum, ThreadGroup parentGroup ){
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
         m_roboClass = roboClass;
@@ -45,6 +46,7 @@ public class Session extends Thread {
         m_name = name;
         m_state = STARTING;
         m_password = password;
+        m_botNumber = botNum;
         m_timer = new Timer();
     }
 
@@ -74,7 +76,7 @@ public class Session extends Thread {
                 m_name,
                 m_password + "*" + m_coreData.getGeneralSettings().getString( "Sysop Password" ) );
 
-        m_botAction = new BotAction( m_packetGenerator, m_arenaTracker, m_timer, this );
+        m_botAction = new BotAction( m_packetGenerator, m_arenaTracker, m_timer, m_botNumber, this );
         m_reliablePacketHandler = new ReliablePacketHandler( m_packetGenerator, m_packetInterpreter, m_ssEncryption );
 
         m_packetInterpreter.setReliablePacketHandler( m_reliablePacketHandler );
@@ -133,6 +135,10 @@ public class Session extends Thread {
 
     public void finalize(){
         Tools.printLog( m_name + " is going away." );
+    }
+    
+    public int getBotNumber(){
+    	return m_botNumber;
     }
 
     public void disconnect(){

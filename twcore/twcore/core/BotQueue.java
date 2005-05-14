@@ -198,7 +198,7 @@ public class BotQueue extends Thread {
             }
             
             Class roboClass = m_loader.loadClass( "twcore.bots." + rawClassName + "." + rawClassName );
-            childBot = new Session( cdata, roboClass, botName, botPassword, m_group );
+            childBot = new Session( cdata, roboClass, botName, botPassword, currentBotCount.intValue(), m_group );
         } catch( ClassNotFoundException cnfe ){
             Tools.printLog( "Class not found: " + rawClassName + ".class.  Reinstall this bot?" );
             m_botAction.sendSmartPrivateMessage( messager, "The class file does not exist.  Cannot start bot." );
