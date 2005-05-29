@@ -106,8 +106,11 @@ public class HubBot extends SubspaceBot {
         String className = message.trim();
 
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
-            m_botQueue.removeBot( message );
-            m_botAction.sendPrivateMessage( messager, "Removed." );
+            boolean success = m_botQueue.removeBot( message );
+            if( success )
+                m_botAction.sendPrivateMessage( messager, "Removed." );
+            else
+                m_botAction.sendPrivateMessage( messager, "Bot has NOT been removed.  Use exact casing of the name, i.e., !remove TWDBot" );                
         } else {
             m_botAction.sendChatMessage( 1, messager + " isn't an smod, but (s)he tried !remove " + message );
         }
@@ -166,6 +169,7 @@ public class HubBot extends SubspaceBot {
         }
 
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
+            m_botAction.sendSmartPrivateMessage( messager, "!remove <name> - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)" );
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess - Rereads the mod, smod, and sysop file so that all access levels are updated." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbottypes - Lists the number of each bot type currently in use." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbots <bot type> - Lists the names and spawners of a bot type." );
