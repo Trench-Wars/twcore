@@ -1,10 +1,11 @@
 /**
  * Messages module for TWBot.
  *
- * This module allows the user 3 methods of messaging:
+ * This module allows the user 4 methods of messaging:
  * 1) Timed arena messaging.
  * 2) Timed spec freq messaging.
  * 3) Private greet messaging.
+ * 4) Messaging to the killer of a specified person.
  *
  * The syntax for the messages module is as follows:
  *
@@ -21,6 +22,8 @@
  * !AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
  * !MsgList                                  -- Displays all of the current message tasks.",
  * !MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
+ * !MsgTarget <Person>,<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
+ * !ClearTargets                             -- Clears all message target data.",
  * !MsgsOff                                  -- Turns all of the messages off."
  *
  * NOTE: The !AddMsg command is removed from the standard module so don't forget
@@ -41,6 +44,7 @@ import twcore.core.*;
 public class twbotmessages extends TWBotExtension
 {
   private Vector msgList;
+  private boolean haveTargets;
 
   /**
    * This method initializes the messages module.
@@ -49,6 +53,7 @@ public class twbotmessages extends TWBotExtension
   public twbotmessages()
   {
     msgList = new Vector();
+    haveTargets = false;
   }
 
   /**
@@ -66,6 +71,8 @@ public class twbotmessages extends TWBotExtension
         "!AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
         "!MsgList                                  -- Displays all of the current message tasks.",
         "!MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
+        "!MsgTarget <Person>,<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
+        "!ClearTargets                             -- Clears all message target data.",
         "!MsgsOff                                  -- Turns all of the messages off."
     };
     return message;
@@ -169,6 +176,39 @@ public class twbotmessages extends TWBotExtension
   }
 
   /**
+   * This method adds a message to be PM'd when a specified target is killed.
+   * 
+   * @param sender is the person that is using the bot.
+   * @param argString are the arguments being supplied.
+   */
+  public void doAddTargetMsgCmd( String sender, String argString ) {
+      StringTokenizer argTokens = new StringTokenizer(argString, ",");
+      int numArgs = argTokens.countTokens();
+
+      if(numArgs != 2)
+        throw new IllegalArgumentException("Please use the following format: !AddTargetMsg <Person>,<Msg>");
+      try
+      {
+        String name = argTokens.nextToken();
+        String msg = argTokens.nextToken();
+        
+        Player p = m_botAction.getFuzzyPlayer( name );
+        
+        if( p == null ) {
+            m_botAction.sendSmartPrivateMessage(sender, "Unable to find player \'" + name + "\'" );            
+        } else {
+            MsgTask msgTask = new MsgTask( msg, name );        
+        	msgList.add(msgTask);
+            m_botAction.sendSmartPrivateMessage(sender, "Target message added for \'" + name + "\': \'" + msgTask.printMessage() + "\'");
+        }
+      }
+      catch(NumberFormatException e)
+      {
+        throw new NumberFormatException("Please use the following format: !AddTargetMsg <Person>,<Msg>");
+      }
+  }
+
+  /**
    * This method displays the list of message tasks currently in the bot.
    *
    * @param sender is the person that is using the bot.
@@ -217,7 +257,7 @@ public class twbotmessages extends TWBotExtension
       throw new IllegalArgumentException("Please use the following format: !MsgDel <Msg Number>");
     }
   }
-
+  
   /**
    * This method cancels all of the message tasks.
    *
@@ -255,6 +295,8 @@ public class twbotmessages extends TWBotExtension
         doAddSpecMsgCmd(sender, command.substring(12));
       if(lowerCommand.startsWith("!addgreetmsg "))
         doAddGreetMsgCmd(sender, command.substring(13));
+      if(lowerCommand.startsWith("!addtargetmsg "))
+        doAddTargetMsgCmd( sender, command.substring(14));
       if(lowerCommand.equalsIgnoreCase("!msglist"))
         doMsgListCmd(sender);
       if(lowerCommand.startsWith("!msgdel "))
@@ -305,6 +347,36 @@ public class twbotmessages extends TWBotExtension
   }
 
   /**
+   * This method handles the player death event.  It will display the target
+   * messages if a target player is killed.
+   *
+   * @param event this is the PlayerEntered event.
+   */
+
+  public void handleEvent(PlayerDeath event)
+  {
+    MsgTask msgTask;
+    Player killer = m_botAction.getPlayer(event.getKillerID()); 
+    Player killed = m_botAction.getPlayer(event.getKilleeID()); 
+    
+    if( killer == null || killed == null )
+      return;
+    
+    String playerName = killer.getPlayerName();
+    String victimName = killed.getPlayerName().toLowerCase();
+
+    for(int index = 0; index < msgList.size(); index++)
+    {
+      msgTask = (MsgTask) msgList.get(index);
+      if(msgTask.getType() == MsgTask.TARGET_TYPE)
+        if(msgTask.getTarget().equals(victimName)) {
+          m_botAction.sendSmartPrivateMessage(playerName, msgTask.getMessage(), msgTask.getSoundCode());
+          return;
+        }
+    }
+  }
+
+  /**
    * This method cancels all of the message tasks.
    */
 
@@ -329,9 +401,11 @@ public class twbotmessages extends TWBotExtension
     public static final int ARENA_TYPE = 0;
     public static final int SPEC_TYPE = 1;
     public static final int GREET_TYPE = 2;
+    public static final int TARGET_TYPE = 3;
     public static final double MIN_INTERVAL = 0.1;
 
     String message;
+    String target;
     int soundCode;
     int taskType;
     double interval;
@@ -343,13 +417,28 @@ public class twbotmessages extends TWBotExtension
      * @param soundCode is the sound that is to be made.
      */
 
-    public MsgTask(String message, int soundCode)
+    public MsgTask(String message, int soundCode )
     {
       if(soundCode < 0 || soundCode > 999)
         throw new IllegalArgumentException("Invalid sound code.");
       this.message = message;
       this.soundCode = soundCode;
       taskType = GREET_TYPE;
+    }
+
+    /**
+     * This constructor initializes a TARGET_TYPE message task.
+     *
+     * @param message is the message that is to be displayed.
+     * @param target is the person that must be killed to see the message.
+     */
+
+    public MsgTask(String message, String target )
+    {
+      this.message = message;
+      this.target = target.toLowerCase();
+      soundCode = 0;
+      taskType = TARGET_TYPE;
     }
 
     /**
@@ -400,6 +489,17 @@ public class twbotmessages extends TWBotExtension
     }
 
     /**
+     * This method returns the target associated with the message.
+     *
+     * @return the message is returned.
+     */
+
+    public String getTarget()
+    {
+      return target;
+    }
+
+    /**
      * This method returns the sound code.
      *
      * @return the sound code is returned.
@@ -411,8 +511,7 @@ public class twbotmessages extends TWBotExtension
     }
 
     /**
-     * This method returns a string representation of the the message and the
-     * sound.
+     * This method returns a string representation of the the message and th
      *
      * @return the message and the sound code is returned.
      */
@@ -440,6 +539,8 @@ public class twbotmessages extends TWBotExtension
           return "Spec Message: " + printMessage() + " every " + interval + " seconds.";
         case GREET_TYPE:
           return "Greet Message: " + printMessage();
+        case TARGET_TYPE:
+          return "Target Message on " + target + ": " + printMessage(); 
         default:
           return "ERROR: Invalid task type.";
       }
