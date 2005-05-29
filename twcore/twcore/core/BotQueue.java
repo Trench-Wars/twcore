@@ -133,7 +133,7 @@ public class BotQueue extends Thread {
         return result;
     }
     
-    void removeBot( String name ){
+    boolean removeBot( String name ){
 
         ChildBot deadBot = (ChildBot)m_botStable.remove( name );
         if( deadBot != null ){
@@ -145,7 +145,9 @@ public class BotQueue extends Thread {
             addToBotCount( deadBot.getClassName(), (-1) );
             deadBot = null;
             System.gc();
+            return true;
         }
+        return false;
     }
     
     void spawnBot( String className, String messager ){
