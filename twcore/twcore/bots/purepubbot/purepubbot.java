@@ -133,12 +133,12 @@ public class purepubbot extends SubspaceBot
         try {
             if( flagTimeStarted && flagTimer.isRunning() ) {
                 // Remove player if spec'ing
-                if( m_botAction.getPlayer(playerID).getShipType() == 0 ) {
-                    String pname = m_botAction.getPlayer( playerID ).getPlayerName();
+                if( p.getShipType() == 0 ) {
+                    String pname = p.getPlayerName();
                 	playerTimes.remove( pname );
                 // Reset player if shipchanging
                 } else {
-                    String pname = m_botAction.getPlayer( playerID ).getPlayerName();
+                    String pname = p.getPlayerName();
                 	playerTimes.remove( pname );                    
                     playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
                 }
