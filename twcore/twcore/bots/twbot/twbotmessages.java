@@ -69,9 +69,9 @@ public class twbotmessages extends TWBotExtension
         "!AddMsg <Msg>,<Sound>,<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
         "!AddSpecMsg <Msg>,<Sound>,<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
         "!AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
+        "!AddTargetMsg <Person>,<Msg>              -- Adds <Msg> to be PM'd when <Person> is killed.",
         "!MsgList                                  -- Displays all of the current message tasks.",
         "!MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
-        "!MsgTarget <Person>,<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
         "!ClearTargets                             -- Clears all message target data.",
         "!MsgsOff                                  -- Turns all of the messages off."
     };

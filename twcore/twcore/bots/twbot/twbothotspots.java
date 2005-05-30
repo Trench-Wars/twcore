@@ -36,8 +36,6 @@ public class twbothotspots extends TWBotExtension {
 
     	if( message.toLowerCase().startsWith( "!addspot " ) ) {
     		do_addHotSpot( name, message.substring( 9, message.length() ) );
-    	} else if( message.toLowerCase().startsWith( "!help" ) ) {
-    	    m_botAction.privateMessageSpam( name, getHelpMessages() );
     	} else if( message.toLowerCase().startsWith( "!watch" ) ) {
 	    	TimerTask change = new TimerTask() {
 				public void run() {
@@ -160,7 +158,8 @@ public class twbothotspots extends TWBotExtension {
 		        "!addspot <warpx> <warpy> <radius> <destx> <desty>     - Adds a new hotspot.",
 		        "            Players will warp to the coord <destx>,<desty>",
 		        "            when they enter within <radius> of <warpx>,<warpy>.",
-		        "!watch    - Begin watching all hotspots."
+		        "!watch    - Begin watching all hotspots.",
+		        "(Use !warp module's !where command to locate your hotspots!)"
 		};
 		return help;
 	}
