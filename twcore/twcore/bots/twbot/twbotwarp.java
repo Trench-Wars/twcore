@@ -235,7 +235,7 @@ public class twbotwarp extends TWBotExtension
   public void doWhereCmd(String sender) {
       Player p = m_botAction.getPlayer( sender );
       if( p != null ) {
-          m_botAction.sendSmartPrivateMessage( sender, "You are at: (" + p.getXLocation() + "," + p.getYLocation() + ")" );
+          m_botAction.sendSmartPrivateMessage( sender, "You are at: (" + new Integer(p.getXLocation() / 16) + "," + new Integer(p.getYLocation() / 16) + ")" );
       }
   }  
   
