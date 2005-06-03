@@ -4,6 +4,7 @@ import twcore.core.*;
 
 import java.io.*;
 import java.util.*;
+import java.sql.*;
 
 public class racingbot extends SubspaceBot {
 	
@@ -127,7 +128,7 @@ public class racingbot extends SubspaceBot {
                 extension.set(m_botAction, m_botAction.getOperatorList(), this );
                 extensions.put(extensionType, extension);
                 m_botAction.sendPrivateMessage(name, extensionType + " loaded.");
-            } catch( Exception e ){e.printStackTrace();}
+            } catch( Exception e ){e.printStackTrace(); m_botAction.sendPrivateMessage(name, "Could not load module: " + extensionType);}
         }
         else {
             m_botAction.sendPrivateMessage( name, "Please !lock the bot first before loading a module." );
@@ -156,7 +157,7 @@ public class racingbot extends SubspaceBot {
             if( s[i].endsWith( ".class" )){
                 s[i] = s[i].substring( 0, s[i].lastIndexOf( '.' ));
                 if( s[i].startsWith( "Rb" ) && s[i].indexOf( '$' ) == -1 ){
-                    String reply = s[i].substring( 5 );
+                    String reply = s[i].substring( 2 );
                     if( modules.containsKey( reply ))
                         reply = reply + " *";
                     m_botAction.sendPrivateMessage(name, reply);

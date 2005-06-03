@@ -300,9 +300,10 @@ public class Rbwarp extends RBExtender
     int senderID = event.getPlayerID();
     String sender = m_botAction.getPlayerName(senderID);
     String message = event.getMessage().trim();
-
-    if(m_opList.isER(sender) || m_rbBot.twrcOps.contains(sender.toLowerCase()))
-      handleCommand(sender, message);
+	try {
+ 	   if(m_opList.isER(sender) || m_rbBot.twrcOps.contains(sender.toLowerCase()))
+    	  handleCommand(sender, message);
+    } catch(Exception e) { Tools.printStackTrace(e); }
   }
 
   public void cancel()
