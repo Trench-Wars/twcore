@@ -395,7 +395,7 @@ public class ByteArray {
         return new String( charArray ).trim();*/
 
         //New method can (Sorry Sika) - D1st0rt
-        return new String(m_array, index, length);
+        return new String(m_array, index, length).trim();
     }
 
     public String readNullTerminatedString( int index ){
