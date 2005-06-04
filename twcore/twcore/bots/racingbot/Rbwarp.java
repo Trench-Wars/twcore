@@ -303,7 +303,7 @@ public class Rbwarp extends RBExtender
 	try {
  	   if(m_opList.isER(sender) || m_rbBot.twrcOps.contains(sender.toLowerCase()))
     	  handleCommand(sender, message);
-    } catch(Exception e) { Tools.printStackTrace(e); }
+    } catch(Exception e) { }
   }
 
   public void cancel()
