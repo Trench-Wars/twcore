@@ -15,7 +15,7 @@ import java.util.*;
 public class BuildTWCore {
 
     String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.1.7-bin.jar";
-    String nixBinDir = "/home/bots/java/current/bin/";  // Location of bin directory on a *nix system
+    String nixBinDir = "";  // Location of bin directory on a *nix system
     String bldCmd = "";
     Runtime runtime;
     
