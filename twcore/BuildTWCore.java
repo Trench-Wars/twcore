@@ -201,7 +201,7 @@ public class BuildTWCore {
                     if (temp)
                         fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
                     else
-                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "@flist.txt"});
+                        fullExec(new String[] {bldCmd, "-sourcepath", f.getPath(), "@flist.txt"});
                 }
             } catch (Exception e) { System.out.println("error... " + e.getMessage()); }
             
