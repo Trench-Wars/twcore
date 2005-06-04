@@ -252,7 +252,7 @@ public class BuildTWCore {
             recursiveDelete(tempDir);
             
         } catch (Exception e) {
-            System.out.println("Couldn't build core: " + e.getMessage());
+            System.out.println("Couldn't build misc: " + e.getMessage());
             e.printStackTrace();
         };
     };
