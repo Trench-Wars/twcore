@@ -9,7 +9,7 @@
  * @author  harvey
  */
 
-package twcore.bots.twbot;
+package twcore.bots.racingbot;
 
 import java.util.*;
 import twcore.core.*;
