@@ -184,9 +184,8 @@ public class BuildTWCore {
         System.out.println("Finished building core");
     }
     
-    
-    
-    public void recursiveCompile(File f, boolean dig) {
+        
+    public void recursiveCompile(File f, boolean dig, boolean temp) {
         if (f.isDirectory() && !f.getName().endsWith("CVS") ) {
             // compile all the files located in here into temp
             try {
@@ -198,7 +197,11 @@ public class BuildTWCore {
                         bldCmd = "javac";                    
                     else
                     	bldCmd = nixBinDir + "javac";
-                    fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
+
+                    if (temp)
+                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
+                    else
+                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "@flist.txt"});
                 }
             } catch (Exception e) { System.out.println("error... " + e.getMessage()); }
             
@@ -207,7 +210,10 @@ public class BuildTWCore {
             
             if (dig)
                 for (int i=0; i<flist.length; i++)
-                    if (flist[i].isDirectory()) recursiveCompile(flist[i], true);
+                    if (flist[i].isDirectory()) {
+                      if (temp) recursiveCompile(flist[i], true, true);
+                      else recursiveCompile(flist[i], true, false);
+                    }
         }
     }    
     
@@ -222,7 +228,7 @@ public class BuildTWCore {
             
             // compile all the files into there            
             if (bbuildAllMisc) {
-                recursiveCompile(new File("twcore/misc"), true);
+                recursiveCompile(new File("twcore/misc"), true, true);
                 doneSomething = true;
             } else {
                 ListIterator i = miscList.listIterator();
@@ -230,7 +236,7 @@ public class BuildTWCore {
                 while (i.hasNext()) {
                     s = (String)i.next();
                     if (s.endsWith("/") || s.endsWith("\\")) s = s.substring(0, s.length()-1);
-                    recursiveCompile(new File(s), false);
+                    recursiveCompile(new File(s), false, true);
                     doneSomething = true;
                 };
             };
