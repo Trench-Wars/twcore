@@ -382,7 +382,7 @@ public class BotAction
      */
     public void sendOpposingTeamMessage( String playerName, String message, int soundCode ){
         int         playerID = m_arenaTracker.getPlayerID( playerName );
-        
+
         sendOpposingTeamMessage( playerID, message, soundCode );
     }
 
@@ -932,7 +932,7 @@ public class BotAction
     }
 
     /** Sets the *timer game timer
-     * @param seconds Time to game end in minutes
+     * @param minutes Time to game end in minutes
      */
     public void setTimer(int minutes)
     {
@@ -1090,7 +1090,7 @@ public class BotAction
     }
 
     /**Overloaded function to joinArena which allows to specify the resolution of the arena
-     * @see joinArena(String arenaName)
+     * @see #joinArena(String arenaName)
      *
      * @author Kirthi Sugnanam - FoN
      *
@@ -1143,7 +1143,7 @@ public class BotAction
     }
 
     /**Overloaded function to joinArena which allows to specify the resolution of the arena
-     * @see joinArena(short arena)
+     * @see #joinArena(short arena)
      *
      * @author Kirthi Sugnanam - FoN
      *
@@ -1196,7 +1196,7 @@ public class BotAction
     }
 
     /** This is an overloaded change function to allow variations in resolution
-     * @see changeArena(String newArenaName)
+     * @see #changeArena(String newArenaName)
      * @author Kirthi Sugnanam - FoN
      *
      * @param newArenaName Name or number of the arena to change to.
@@ -1230,7 +1230,7 @@ public class BotAction
     }
 
     /** This is an overloaded function to allow resolution changes
-     * @see changeArena(short arenaNumber)
+     * @see #changeArena(short arenaNumber)
      * @author Kirthi Sugnanam - FoN
      *
      * @param arenaNumber The number of the public arena to change to.
@@ -1480,7 +1480,7 @@ public class BotAction
      * Private message spam but with a gerneralized collection to allow for dynamic help statements
      * This will not work remotely as in REMOTE.MESSAGE type
      * @param playerID ID of the player to be spammed
-     * @param helpMessages The collection of messages (Need to be String Objects or typed to string objects)
+     * @param messages The collection of messages (Need to be String Objects or typed to string objects)
      */
     public void privateMessageSpam(int playerID, Collection messages)
     {
@@ -1494,7 +1494,7 @@ public class BotAction
     /**
      * Private message spam but with a gerneralized collection to allow for dynamic help statements
      * @param playerName Name of the player to be spammed
-     * @param helpMessages The collection of messages (Need to be String Objects or typed to string objects)
+     * @param messages The collection of messages (Need to be String Objects or typed to string objects)
      */
     public void privateMessageSpam(String playerName, Collection messages)
     {
@@ -2012,7 +2012,7 @@ public class BotAction
 
         m_packetGenerator.sendBannerPacket( _banner );
     }
-    
+
     /** Returns the bot's number
      * @return m_botNumber
      */

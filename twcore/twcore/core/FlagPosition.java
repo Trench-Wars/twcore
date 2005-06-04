@@ -1,16 +1,17 @@
 package twcore.core;
 
 /**
- * Event called when a flag is dropped, reset, or otherwise put somewhere else on the map.
- * <br><font size="+2"><b>FlagPosition: <font color="blue">S2C 0x12</b></font></font>
- * <table border="1" cellspacing="0">
- * <tr> <th>Offset</th><th>Length</th><th>Description</th> </tr>
- * <tr> <td>0</td> <td>1</td> <td>Type Byte</td> </tr>
- * <tr> <td>1</td> <td>2</td> <td>Flag ID</td> </tr>
- * <tr> <td>3</td> <td>2</td> <td>X Location</td> </tr>
- * <tr> <td>5</td> <td>2</td> <td>Y Location</td> </tr>
- * <tr> <td>7</td> <td>2</td> <td>Owning Freq</td> </tr>
- * </table><br></html>
+ * (S2C 0x12) Event called when a flag is dropped, reset, or otherwise put somewhere else on the map. <code><pre>
+ * +-----------------------------+
+ * | Offset  Length  Description |
+ * +-----------------------------+
+ * | 0       1       Type Byte   |
+ * | 1       2       Flag ID     |
+ * | 3       2       X Location  |
+ * | 5       2       Y Location  |
+ * | 7       2       Owning Freq |
+ * +-----------------------------+</code></pre>
+ *
  * The Owning Frequency is -1 if unowned.
  */
 public class FlagPosition extends SubspaceEvent {

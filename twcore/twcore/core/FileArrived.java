@@ -1,16 +1,17 @@
 package twcore.core;
 
  /**
-  * Event called when the bot finishes the download of a file.
-  * <br><font size="+2"><b>FileArrived: <font color="blue">S2C 0x10</b></font></font>
-  * <table border="1" cellspacing="0">
-  * <tr> <th>Offset</th><th>Length</th><th>Description</th> </tr>
-  * <tr> <td>0</td> <td>1</td> <td>Type Byte</td> </tr>
-  * <tr> <td>1</td> <td>16</td> <td>Name of File</td> </tr>
-  * <tr> <td>17</td> <td>?</td> <td>File Data</td> </tr>
-  * </table><br>
+  * (S2C 0x10) Event called when the bot finishes the download of a file. <code><pre>
+  * +-----------------------------+
+  * | Offset  Length  Description |
+  * +-----------------------------+
+  * | 0       1       Type Byte   |
+  * | 1       16      Name of File|
+  * | 17      ?       File Data   |
+  * +-----------------------------+</code></pre>
+  *
   * If the file name isn't specified, it's the news.txt file and has to be
-  * decompressed. All other files are sent uncompressed
+  * decompressed. All other files (except map?) are sent uncompressed
   */
 public class FileArrived extends SubspaceEvent {
 

@@ -1,14 +1,16 @@
 package twcore.core;
 
 /**
- * Event called when a team wins a flag jackpot.
- * <br><font size="+2"><b>FlagReward: <font color="blue">S2C 0x14</b></font></font>
- * <table border="1" cellspacing="0">
- * <tr> <th>Offset</th><th>Length</th><th>Description</th> </tr>
- * <tr> <td>0</td> <td>1</td> <td>Type Byte</td> </tr>
- * <tr> <td>1</td> <td>2</td> <td>Freq</td> </tr>
- * <tr> <td>3</td> <td>4</td> <td>Jackpot Size</td> </tr>
- * </table><br></html>
+ * (S2C 0x14) Event called when a team wins a flag jackpot. <code><pre>
+ * +------------------------------+
+ * | Offset  Length  Description  |
+ * +------------------------------+
+ * | 0       1       Type Byte    |
+ * | 2       2       Frequency    |
+ * | 3       4       Jackpot size |
+ * +------------------------------+</code></pre>
+ *
+ * This event also resets ships of the winning frequency and warzone flag locations
  */
 public class FlagVictory extends SubspaceEvent {
 

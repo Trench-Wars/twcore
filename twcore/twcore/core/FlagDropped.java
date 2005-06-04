@@ -1,13 +1,14 @@
 package twcore.core;
 
 /**
- * Event called when a player drops a flag they are carrying.
- * <br><font size="+2"><b>FlagDropped: <font color="blue">S2C 0x16</b></font></font>
- * <table border="1" cellspacing="0">
- * <tr> <th>Offset</th><th>Length</th><th>Description</th> </tr>
- * <tr> <td>0</td> <td>1</td> <td>Type Byte</td> </tr>
- * <tr> <td>1</td> <td>2</td> <td>Player ID</td> </tr>
- * </table><br></html>
+ * (S2C 0x16) Event called when a player drops a flag they are carrying. <code><pre>
+ * +-----------------------------+
+ * | Offset  Length  Description |
+ * +-----------------------------+
+ * | 0       1       Type Byte   |
+ * | 1       2       Player ID   |
+ * +-----------------------------+</code></pre>
+ *
  * This event occurs for warzone flags, but players aren't updated as not carrying
  * any warzone flags automatically in the core.
  */
