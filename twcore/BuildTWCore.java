@@ -273,7 +273,8 @@ public class BuildTWCore {
 	                        bldCmd = "javac";                    
 	                    else
 	                    	bldCmd = nixBinDir + "javac";
-						fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
+//						fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
+                            recursiveCompile(botDirs[i], true, false);
 					}
                 } catch (Exception e) {
                     System.out.println("Error.... " + e.getMessage());
