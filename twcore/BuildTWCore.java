@@ -187,7 +187,7 @@ public class BuildTWCore {
     
     
     public void recursiveCompile(File f, boolean dig) {
-        if (f.isDirectory()) {
+        if (f.isDirectory() && !f.getName().endsWith("CVS") ) {
             // compile all the files located in here into temp
             try {
                 System.out.println("Building " + f.getPath());
