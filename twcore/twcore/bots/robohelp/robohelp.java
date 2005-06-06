@@ -68,7 +68,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!warn", acceptedMessages, this, "handleWarn" );
         m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell" );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan" );
-        m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
+//      m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
         m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "handleStatus" );
         m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary" );
         m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
