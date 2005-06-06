@@ -15,7 +15,7 @@ import java.util.*;
 public class BuildTWCore {
 
     String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.1.7-bin.jar";
-    String nixBinDir = "";  // Location of bin directory on a *nix system
+    String binDir = "";  // Location of bin directory
     String bldCmd = "";
     Runtime runtime;
     
@@ -162,17 +162,17 @@ public class BuildTWCore {
             // compile all the files into there
 
             createFileList(new File("twcore/core"), new File("flist.txt"));
-            if (currentOS.startsWith("windows"))
+/*            if (currentOS.startsWith("windows"))
                 bldCmd = "javac";
-            else
-                bldCmd = nixBinDir + "javac";
+            else*/
+                bldCmd = binDir + "javac";
             fullExec(new String[] { bldCmd, "-sourcepath", "core", "-d", "temp", "@flist.txt"});
             
             // create the jar
-            if (currentOS.startsWith("windows"))
+/*            if (currentOS.startsWith("windows"))
                 bldCmd = "jar";
-            else
-                bldCmd = nixBinDir + "jar";
+            else*/
+                bldCmd = binDir + "jar";
             fullExec(new String[] { bldCmd, "cf", "twcore.jar", "-C", "temp", "."});
             
             recursiveDelete(tempDir);
@@ -193,10 +193,10 @@ public class BuildTWCore {
                 boolean hasContent = createFileList(f, new File("flist.txt"));
                 if (hasContent) {               	
 
-                    if (currentOS.startsWith("windows"))
+/*                    if (currentOS.startsWith("windows"))
                         bldCmd = "javac";                    
-                    else
-                    	bldCmd = nixBinDir + "javac";
+                    else*/
+                    	bldCmd = binDir + "javac";
 
                     if (temp)
                         fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
@@ -243,10 +243,10 @@ public class BuildTWCore {
 
             // create the jar
             if (doneSomething) {
-                if (currentOS.startsWith("windows"))
+/*                if (currentOS.startsWith("windows"))
                     bldCmd = "jar";                    
-                else
-                	bldCmd = nixBinDir + "jar";
+                else*/
+                	bldCmd = binDir + "jar";
                 fullExec(new String[] {bldCmd, "uf", "twcore.jar", "-C", "temp", "."});
             }
             recursiveDelete(tempDir);
@@ -266,14 +266,11 @@ public class BuildTWCore {
             if ((bbuildAllBots) || (botList.contains(botDirs[i].getName()))) {
                 try {
                     hasContent = createFileList(botDirs[i], new File("flist.txt"));
-					if (hasContent) {
-						System.out.println("Building " + botDirs[i].getName());
-
-	                    if (currentOS.startsWith("windows"))
+			if (hasContent) {
+/*	                    if (currentOS.startsWith("windows"))
 	                        bldCmd = "javac";                    
-	                    else
-	                    	bldCmd = nixBinDir + "javac";
-//						fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
+	                    else*/
+	                    	bldCmd = binDir + "javac";
                             recursiveCompile(botDirs[i], true, false);
 					}
                 } catch (Exception e) {
@@ -299,17 +296,6 @@ public class BuildTWCore {
             System.out.println("deleting *.class in /");
             recursiveDeleteClass(new File("."));
 
-            /*
-            File[] botDirs = new File("bots").listFiles();
-            File[] botFiles;
-            int j;
-            for (int i=0; i < botDirs.length; i++) {
-                botFiles = botDirs[i].listFiles();
-                for (j=0; j < botFiles.length; j++)
-                    if (botFiles[j].getName().endsWith(".class")) botFiles[j].delete();
-            }
-             */
-            
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
