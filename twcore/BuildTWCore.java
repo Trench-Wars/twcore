@@ -162,16 +162,10 @@ public class BuildTWCore {
             // compile all the files into there
 
             createFileList(new File("twcore/core"), new File("flist.txt"));
-/*            if (currentOS.startsWith("windows"))
-                bldCmd = "javac";
-            else*/
                 bldCmd = binDir + "javac";
             fullExec(new String[] { bldCmd, "-sourcepath", "core", "-d", "temp", "@flist.txt"});
             
             // create the jar
-/*            if (currentOS.startsWith("windows"))
-                bldCmd = "jar";
-            else*/
                 bldCmd = binDir + "jar";
             fullExec(new String[] { bldCmd, "cf", "twcore.jar", "-C", "temp", "."});
             
@@ -193,9 +187,6 @@ public class BuildTWCore {
                 boolean hasContent = createFileList(f, new File("flist.txt"));
                 if (hasContent) {               	
 
-/*                    if (currentOS.startsWith("windows"))
-                        bldCmd = "javac";                    
-                    else*/
                     	bldCmd = binDir + "javac";
 
                     if (temp)
@@ -243,9 +234,6 @@ public class BuildTWCore {
 
             // create the jar
             if (doneSomething) {
-/*                if (currentOS.startsWith("windows"))
-                    bldCmd = "jar";                    
-                else*/
                 	bldCmd = binDir + "jar";
                 fullExec(new String[] {bldCmd, "uf", "twcore.jar", "-C", "temp", "."});
             }
@@ -267,9 +255,6 @@ public class BuildTWCore {
                 try {
                     hasContent = createFileList(botDirs[i], new File("flist.txt"));
 			if (hasContent) {
-/*	                    if (currentOS.startsWith("windows"))
-	                        bldCmd = "javac";                    
-	                    else*/
 	                    	bldCmd = binDir + "javac";
                             recursiveCompile(botDirs[i], true, false);
 					}
