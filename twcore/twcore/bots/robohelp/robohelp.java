@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 import java.text.SimpleDateFormat;
 import java.sql.*;
-import com.google.soap.search.*;
+// import com.google.soap.search.*;
 import twcore.core.*;
 
 public class robohelp extends SubspaceBot {
@@ -172,11 +172,11 @@ public class robohelp extends SubspaceBot {
 
     }
    
-    public void handleGoogle( String name, String message ){
+/*    public void handleGoogle( String name, String message ){
 
         m_botAction.sendChatMessage( "Google search results for " + message + ": " + doGoogleSearch( message ) );
 
-    }
+    }*/
 
     /**
      * Forms an appropriate query to dictionary.reference.com. 
@@ -211,7 +211,7 @@ public class robohelp extends SubspaceBot {
         
     }
     
-    public String doGoogleSearch( String searchString ){
+/*    public String doGoogleSearch( String searchString ){
 
         try {
 
@@ -227,7 +227,7 @@ public class robohelp extends SubspaceBot {
         	Tools.printStackTrace(e);
             return new String( "Nothing found." );
        }
-   }
+   }*/
 
    public void handleBanNumber( String name, String message ){
 
@@ -624,7 +624,7 @@ public class robohelp extends SubspaceBot {
 
                 m_botAction.sendChatMessage( "Use :" + m_botAction.getBotName()
                 + ":!lookup <keyword> instead."  );
-            } else if( keyword.toLowerCase().startsWith( "google " ) ){
+/*            } else if( keyword.toLowerCase().startsWith( "google " ) ){
                 String     query;
 
                 query = keyword.substring( 6 ).trim();
@@ -634,7 +634,7 @@ public class robohelp extends SubspaceBot {
                     String result = doGoogleSearch( query );
                     m_botAction.sendRemotePrivateMessage( name, "Google says: " + result );
                     m_botAction.sendChatMessage( "Told " + name + " that Google says: " + result );
-                }
+                }*/
             } else if( keyword.toLowerCase().startsWith( "dictionary " ) ){
                 String     query;
 
@@ -948,7 +948,7 @@ public class robohelp extends SubspaceBot {
             "!warn <optional name> - Warns the specified player.  If no name is given, warns the last person.",
             "!ban <optional name> - Bans the specified player.  If no name is given, bans the last person.",
             "!status - Gives back status from systems.",
-            "!google search - Returns first page found by Googling the search term.",
+//          "!google search - Returns first page found by Googling the search term.",
             "!dictionary word - Returns a link for a definition of the word.",
             "!thesaurus word - Returns a link for a thesaurus entry for the word.",
             "!javadocs term - Returns a link for a javadocs lookup of the term.",
