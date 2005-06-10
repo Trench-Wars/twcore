@@ -9,13 +9,15 @@ import java.util.*;
  *  everyone on the channel so that information can be spread easily.
  *
  *  @author Ikrit
- *  @version 1.4
+ *  @version 1.5
  *  
  *  Added database support of messages because I forgot SSC messaging only
  *  allows one message from a person at a time.
  *  
  *  Added pubbot support so the bot can PM a player that has just logged
  *  in to tell them if they have messages.
+ *  
+ *  Fixed possible SQL injection attacks (cough FINALLY cough).
  */
 public class messagebot extends SubspaceBot
 {
@@ -59,7 +61,7 @@ public class messagebot extends SubspaceBot
 	 */
 	public void checkNewMessages(String name)
 	{
-		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+name+"\" and fnRead = 0";
+		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+Tools.addSlashesToString(name)+"\" and fnRead = 0";
 		try {
 			ResultSet results = m_botAction.SQLQuery("local", query);
 			boolean found = false;
@@ -85,30 +87,30 @@ public class messagebot extends SubspaceBot
         acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_CI.registerCommand( "!create",     acceptedMessages, this, "createChannel" );
         m_CI.registerCommand( "!destroy",    acceptedMessages, this, "destroyChannel" );
-        m_CI.registerCommand( "!join",  acceptedMessages, this, "joinChannel" ); 
-        m_CI.registerCommand( "!quit",  acceptedMessages, this, "quitChannel" ); 
-        m_CI.registerCommand( "!help",  acceptedMessages, this, "doHelp" ); 
-        m_CI.registerCommand( "!accept",  acceptedMessages, this, "acceptPlayer" ); 
-        m_CI.registerCommand( "!decline",  acceptedMessages, this, "declinePlayer" ); 
-        m_CI.registerCommand( "!announce",  acceptedMessages, this, "announceToChannel" ); 
-        m_CI.registerCommand( "!message",  acceptedMessages, this, "messageChannel" ); 
-        m_CI.registerCommand( "!requests", acceptedMessages, this, "listRequests"); 
-        m_CI.registerCommand( "!ban", acceptedMessages, this, "banPlayer"); 
-        m_CI.registerCommand( "!unban", acceptedMessages, this, "unbanPlayer"); 
-        m_CI.registerCommand( "!makeop", acceptedMessages, this, "makeOp"); 
-        m_CI.registerCommand( "!deop", acceptedMessages, this, "deOp"); 
-        m_CI.registerCommand( "!owner", acceptedMessages, this, "sayOwner"); 
-        m_CI.registerCommand( "!grant", acceptedMessages, this, "grantChannel"); 
-        m_CI.registerCommand( "!private", acceptedMessages, this, "makePrivate"); 
-        m_CI.registerCommand( "!public", acceptedMessages, this, "makePublic"); 
-        m_CI.registerCommand( "!unread", acceptedMessages, this, "setAsNew");
-        m_CI.registerCommand( "!read", acceptedMessages, this, "readMessage");
-        m_CI.registerCommand( "!delete", acceptedMessages, this, "deleteMessage");
-        m_CI.registerCommand( "!messages", acceptedMessages, this, "myMessages");
-        m_CI.registerCommand( "!go", acceptedMessages, this, "handleGo");
-        m_CI.registerCommand( "!members", acceptedMessages, this, "listMembers");
-        m_CI.registerCommand( "!banned", acceptedMessages, this, "listBanned");
-        m_CI.registerCommand( "!me", acceptedMessages, this, "myChannels");
+        m_CI.registerCommand( "!join",       acceptedMessages, this, "joinChannel" ); 
+        m_CI.registerCommand( "!quit",       acceptedMessages, this, "quitChannel" ); 
+        m_CI.registerCommand( "!help",       acceptedMessages, this, "doHelp" ); 
+        m_CI.registerCommand( "!accept",     acceptedMessages, this, "acceptPlayer" ); 
+        m_CI.registerCommand( "!decline",    acceptedMessages, this, "declinePlayer" ); 
+        m_CI.registerCommand( "!announce",   acceptedMessages, this, "announceToChannel" ); 
+        m_CI.registerCommand( "!message",    acceptedMessages, this, "messageChannel" ); 
+        m_CI.registerCommand( "!requests",   acceptedMessages, this, "listRequests"); 
+        m_CI.registerCommand( "!ban",        acceptedMessages, this, "banPlayer"); 
+        m_CI.registerCommand( "!unban",		 acceptedMessages, this, "unbanPlayer"); 
+        m_CI.registerCommand( "!makeop",	 acceptedMessages, this, "makeOp"); 
+        m_CI.registerCommand( "!deop", 	     acceptedMessages, this, "deOp"); 
+        m_CI.registerCommand( "!owner",		 acceptedMessages, this, "sayOwner"); 
+        m_CI.registerCommand( "!grant",		 acceptedMessages, this, "grantChannel"); 
+        m_CI.registerCommand( "!private",	 acceptedMessages, this, "makePrivate"); 
+        m_CI.registerCommand( "!public",	 acceptedMessages, this, "makePublic"); 
+        m_CI.registerCommand( "!unread",	 acceptedMessages, this, "setAsNew");
+        m_CI.registerCommand( "!read",		 acceptedMessages, this, "readMessage");
+        m_CI.registerCommand( "!delete",	 acceptedMessages, this, "deleteMessage");
+        m_CI.registerCommand( "!messages",	 acceptedMessages, this, "myMessages");
+        m_CI.registerCommand( "!go",		 acceptedMessages, this, "handleGo");
+        m_CI.registerCommand( "!members",	 acceptedMessages, this, "listMembers");
+        m_CI.registerCommand( "!banned",	 acceptedMessages, this, "listBanned");
+        m_CI.registerCommand( "!me",		 acceptedMessages, this, "myChannels");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
     }
@@ -133,7 +135,7 @@ public class messagebot extends SubspaceBot
     	Channel c = new Channel(name.toLowerCase(), message.toLowerCase(), m_botAction, true, false);
     	channels.put(message.toLowerCase(), c);
     	
-    	String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES(\""+message.toLowerCase()+"\", \""+name.toLowerCase()+"\", 0)";
+    	String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES(\""+Tools.addSlashesToString(message.toLowerCase())+"\", \""+Tools.addSlashesToString(name.toLowerCase())+"\", 0)";
     	try {
     		m_botAction.SQLQuery("local", query);
     	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
@@ -154,8 +156,8 @@ public class messagebot extends SubspaceBot
     	Channel c = (Channel)channels.get(message.toLowerCase());
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
     	{
-    		String query = "DELETE FROM tblChannel WHERE fcChannelName = " + message.toLowerCase();
-    		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = " + message.toLowerCase();
+    		String query = "DELETE FROM tblChannel WHERE fcChannelName = " + Tools.addSlashesToString(message.toLowerCase());
+    		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = " + Tools.addSlashesToString(message.toLowerCase());
     		try {
     			m_botAction.SQLQuery("local", query);
     			m_botAction.SQLQuery("local", query2);
@@ -510,7 +512,7 @@ public class messagebot extends SubspaceBot
      
     public void myChannels(String name, String message)
     {
-    	String query = "SELECT * FROM tblChannelUser WHERE fcName = \""+name.toLowerCase()+"\"";
+    	String query = "SELECT * FROM tblChannelUser WHERE fcName = \""+Tools.addSlashesToString(name.toLowerCase())+"\"";
     	try {
     		ResultSet results = m_botAction.SQLQuery("local", query);
     		while(results.next())
@@ -625,7 +627,11 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+name+"\" AND fnID = " + messageNumber;
+		if(!ownsMessage(name.toLowerCase(), messageNumber)) {
+			m_botAction.sendSmartPrivateMessage(name, "That is not your message!");
+			return;
+		}
+		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+Tools.addSlashesToString(name.toLowerCase())+"\" AND fnID = " + messageNumber;
 		try{
 			ResultSet results = m_botAction.SQLQuery("local", query);
 			if(results.next())
@@ -635,7 +641,7 @@ public class messagebot extends SubspaceBot
 				
 				m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
 				
-				query = "UPDATE tblMessageSystem SET fnRead = 1 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
+				query = "UPDATE tblMessageSystem SET fnRead = 1 WHERE fcName = \""+Tools.addSlashesToString(name.toLowerCase())+"\" AND fnID = " + messageNumber;
 				m_botAction.SQLQuery("local", query);
 			}
 			else
@@ -658,7 +664,11 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
+		if(!ownsMessage(name.toLowerCase(), messageNumber)) {
+			m_botAction.sendSmartPrivateMessage(name, "That is not your message!");
+			return;
+		}
+		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = \""+Tools.addSlashesToString(name.toLowerCase())+"\" AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
 			m_botAction.sendSmartPrivateMessage(name, "Message marked as unread.");
@@ -682,7 +692,11 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 			return;
 		}
-		String query = "DELETE FROM tblMessageSystem WHERE fcName = \""+name.toLowerCase()+"\" AND fnID = " + messageNumber;
+		if(!ownsMessage(name.toLowerCase(), messageNumber)) {
+			m_botAction.sendSmartPrivateMessage(name, "That is not your message!");
+			return;
+		}
+		String query = "DELETE FROM tblMessageSystem WHERE fcName = \""+Tools.addSlashesToString(name.toLowerCase())+"\" AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
 			m_botAction.sendSmartPrivateMessage(name, "Message deleted.");
@@ -698,7 +712,7 @@ public class messagebot extends SubspaceBot
 	 */
 	public void myMessages(String name, String message)
 	{
-		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+name.toLowerCase()+"\"";
+		String query = "SELECT * FROM tblMessageSystem WHERE fcName = \""+Tools.addSlashesToString(name.toLowerCase())+"\"";
 		String messageNumbers = "";
 		m_botAction.sendSmartPrivateMessage(name, "You have the following messages: ");
 		try {
@@ -719,6 +733,25 @@ public class messagebot extends SubspaceBot
 		}
 		m_botAction.sendSmartPrivateMessage(name, "PM me with !read <num> to read a message.");
 	}
+	
+	/** Checks the database to make sure a player owns the
+	 *  message that he's trying to do stuff with.
+	 *  @param name Name of the player
+	 *  @param messageNumber Number of the message he/she is
+	 *         trying to do stuff to
+	 */
+	 public boolean ownsMessage(String name, int messageNumber)
+	 {
+	 	String query = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
+	 	try {
+	 		ResultSet results = m_botAction.SQLQuery("local", query);
+	 		if(results.getString("fcName").toLowerCase().equals(name))
+	 			return true;
+	 		else
+	 			return false;
+	 	} catch(Exception e) { Tools.printStackTrace(e); }
+	 	return false;
+	 }
 	
 	/** Sends the bot to a new arena.
 	 *  @param Name of player.
@@ -825,7 +858,7 @@ class Channel
 			updateSQL(name.toLowerCase(), 1);
 			updateSQL(player.toLowerCase(), 3);
 			try {
-				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = \""+player+"\" WHERE fcChannelName = \"" + channelName.toLowerCase() + "\"");
+				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = \""+Tools.addSlashesToString(player)+"\" WHERE fcChannelName = \"" + Tools.addSlashesToString(channelName.toLowerCase()) + "\"");
 			} catch(Exception e) { Tools.printStackTrace( e ); }
 			owner = player;
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
@@ -860,6 +893,10 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
+			if(isOwner(player)) {
+				m_bA.sendSmartPrivateMessage(name, "You can't take away your owner access!");
+				return;
+			}
 			members.put(player.toLowerCase(), new Integer(1));
 			updateSQL(player.toLowerCase(), 1);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
@@ -875,7 +912,7 @@ class Channel
 	public void makePrivate(String name)
 	{
 		try {
-			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = \"" + channelName.toLowerCase() + "\"");
+			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = \"" + Tools.addSlashesToString(channelName.toLowerCase()) + "\"");
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now private channel.");
 		isOpen = false;
@@ -887,7 +924,7 @@ class Channel
 	public void makePublic(String name)
 	{
 		try {
-			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = \"" + channelName.toLowerCase() + "\"");
+			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = \"" + Tools.addSlashesToString(channelName.toLowerCase()) + "\"");
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now public channel.");
 		isOpen = true;
@@ -977,7 +1014,7 @@ class Channel
 			}
 			members.remove(name.toLowerCase());
 			try {
-				m_bA.SQLQuery("local", "DELETE FROM tblChannelUser WHERE fcName = \""+name.toLowerCase()+"\"");
+				m_bA.SQLQuery("local", "DELETE FROM tblChannelUser WHERE fcName = \""+Tools.addSlashesToString(name.toLowerCase())+"\"");
 			} catch(Exception e) { Tools.printStackTrace( e ); }
 			m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
 		}
@@ -1088,7 +1125,7 @@ class Channel
 	 */
 	public void updateSQL(String player, int level)
 	{
-		String query = "SELECT * FROM tblChannelUser WHERE fcName = \"" + player.toLowerCase()+"\" AND fcChannel = \""+channelName+"\"";
+		String query = "SELECT * FROM tblChannelUser WHERE fcName = \"" + Tools.addSlashesToString(player.toLowerCase())+"\" AND fcChannel = \""+Tools.addSlashesToString(channelName)+"\"";
 		
 		
 		try {
@@ -1096,14 +1133,14 @@ class Channel
 			if(results.next())
 			{
 				if(level != -5)
-					query = "UPDATE tblChannelUser SET fnLevel = " + level + " WHERE fcName = \"" + player.toLowerCase() + "\" AND fcChannel = \"" + channelName +"\"";
+					query = "UPDATE tblChannelUser SET fnLevel = " + level + " WHERE fcName = \"" + Tools.addSlashesToString(player.toLowerCase()) + "\" AND fcChannel = \"" + Tools.addSlashesToString(channelName) +"\"";
 				else
-					query = "DELETE FROM tblChannelUser WHERE fcName = \"" + player.toLowerCase()+"\"";
+					query = "DELETE FROM tblChannelUser WHERE fcName = \"" + Tools.addSlashesToString(player.toLowerCase())+"\"";
 				m_bA.SQLQuery("local", query);
 			}
 			else
 			{
-				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES (\"" + channelName + "\", \"" + player.toLowerCase() + "\", " + level + ")";
+				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES (\"" + Tools.addSlashesToString(channelName) + "\", \"" + Tools.addSlashesToString(player.toLowerCase()) + "\", " + level + ")";
 				m_bA.SQLQuery("local", query);
 			}
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
@@ -1116,7 +1153,7 @@ class Channel
 	 */
 	public void leaveMessage(String name, String player, String message)
 	{
-		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, \""+player.toLowerCase()+"\", \""+name + ": " + message+"\", 0, NOW())";
+		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, \""+Tools.addSlashesToString(player.toLowerCase())+"\", \""+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"\", 0, NOW())";
 		try {
 			m_bA.SQLQuery("local", query);
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
@@ -1126,7 +1163,7 @@ class Channel
 	 */
 	public void reload()
 	{
-		String query = "SELECT * FROM tblChannelUser WHERE fcChannel = \"" + channelName.toLowerCase()+"\"";
+		String query = "SELECT * FROM tblChannelUser WHERE fcChannel = \"" + Tools.addSlashesToString(channelName.toLowerCase())+"\"";
 		
 		try {
 			ResultSet results = m_bA.SQLQuery("local", query);
