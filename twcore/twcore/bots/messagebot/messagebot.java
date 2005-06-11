@@ -22,6 +22,7 @@ import java.util.*;
 public class messagebot extends SubspaceBot
 {
 	HashMap channels;
+	HashSet ops;
 	CommandInterpreter m_CI;
 	TimerTask messageDeleteTask;
 	public static final String IPCCHANNEL = "messages";
@@ -36,6 +37,7 @@ public class messagebot extends SubspaceBot
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.LOGGED_ON);
 		channels = new HashMap();
+		ops = new HashSet();
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
 		deleteTask();
@@ -154,7 +156,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     	{
     		String query = "DELETE FROM tblChannel WHERE fcChannelName = " + Tools.addSlashesToString(message.toLowerCase());
     		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = " + Tools.addSlashesToString(message.toLowerCase());
@@ -221,7 +223,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
   		  	c.acceptPlayer(name, pieces[1]);
   		else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -241,7 +243,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.rejectPlayer(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -261,7 +263,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.announceToChannel(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -281,7 +283,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.messageChannel(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -300,7 +302,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listRequests(name);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -320,7 +322,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.banPlayer(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -340,7 +342,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.unbanPlayer(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -359,7 +361,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listBanned(name);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -378,7 +380,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listMembers(name);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -398,7 +400,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makeOp(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -424,7 +426,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
     	
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.deOp(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -444,7 +446,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.newOwner(name, pieces[1]);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -480,7 +482,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makePublic(name);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -499,7 +501,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(message.toLowerCase());
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name))
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makePrivate(name);
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -547,6 +549,7 @@ public class messagebot extends SubspaceBot
         m_botAction.sendSmartPrivateMessage(name, "!read <num>                    -PM's you message <num>.");
         m_botAction.sendSmartPrivateMessage(name, "!delete <num>                  -Deletes message <num>.");
         m_botAction.sendSmartPrivateMessage(name, "!messages                      -PM's you all your message numbers.");
+        m_botAction.sendSmartPrivateMessage(name, "!me                            -Tells you what channels you have joined.");
         m_botAction.sendSmartPrivateMessage(name, "!help                          -Sends you this help message.");
         m_botAction.sendSmartPrivateMessage(name, "");
         m_botAction.sendSmartPrivateMessage(name, "Any channel owner commands:");
@@ -565,11 +568,11 @@ public class messagebot extends SubspaceBot
         m_botAction.sendSmartPrivateMessage(name, "!destroy <channel>             -Destroys <channel>.");
         m_botAction.sendSmartPrivateMessage(name, "!accept <channel>:<name>       -Accepts <name>'s request to join <channel>.");
         m_botAction.sendSmartPrivateMessage(name, "!decline <channel>:<name>      -Declines <name>'s request to join <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "!me                            -Tells you what chennels you have joined.");
+        
         
         if(m_botAction.getOperatorList().isZH(name))
        		m_botAction.sendSmartPrivateMessage(name, "!create <channel>              -Creates a channel with the name <channel>.");
-       	if(m_botAction.getOperatorList().isHighmod(name))
+       	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
        		m_botAction.sendSmartPrivateMessage(name, "You can do any command for any channel.");
     }
     
@@ -591,6 +594,10 @@ public class messagebot extends SubspaceBot
 	{
 		m_botAction.joinArena(m_botAction.getBotSettings().getString("Default arena"));
 		m_botAction.ipcSubscribe(IPCCHANNEL);
+		
+		String opList[] = (m_botAction.getBotSettings().getString("Ops")).split(":");
+		for(int k = 0;k < opList.length;k++)
+			ops.add(opList[k].toLowerCase());
 		
 		String query = "SELECT * FROM tblChannel";
 		try {
@@ -759,7 +766,7 @@ public class messagebot extends SubspaceBot
 	 */
 	 public void handleGo(String name, String message)
 	 {
-	 	if(!m_botAction.getOperatorList().isHighmod(name))
+	 	if(!m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
 	 		return;
 	 	
 	 	m_botAction.changeArena(message);
