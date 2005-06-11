@@ -753,6 +753,9 @@ public class messagebot extends SubspaceBot
 	 	String query = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
 	 	try {
 	 		ResultSet results = m_botAction.SQLQuery("local", query);
+	 		
+	 		if(!results.next()) return false;
+	 		
 	 		if(results.getString("fcName").toLowerCase().equals(name))
 	 			return true;
 	 		else
