@@ -76,6 +76,7 @@ public class messagebot extends SubspaceBot
 					found = true;
 				}
 			}
+			results.close();
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
 	
@@ -140,7 +141,7 @@ public class messagebot extends SubspaceBot
     	
     	String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES('"+Tools.addSlashesToString(message.toLowerCase())+"', '"+Tools.addSlashesToString(name.toLowerCase())+"', 0)";
     	try {
-    		m_botAction.SQLQuery("local", query);
+    		m_botAction.SQLQuery("local", query).close();
     	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     }
     
@@ -162,8 +163,8 @@ public class messagebot extends SubspaceBot
     		String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(message.toLowerCase()) + "'";
     		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(message.toLowerCase()) + "'";
     		try {
-    			m_botAction.SQLQuery("local", query);
-    			m_botAction.SQLQuery("local", query2);
+    			m_botAction.SQLQuery("local", query).close();
+    			m_botAction.SQLQuery("local", query2).close();
     		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
     		c.messageChannel(name, "Channel " + message + " deleted.");
@@ -533,6 +534,7 @@ public class messagebot extends SubspaceBot
     				channel += ": Member.";
     			m_botAction.sendSmartPrivateMessage(name, channel);
     		}
+    		results.close();
     	} catch(Exception e) { Tools.printStackTrace(e); }
     }
     			
@@ -618,6 +620,7 @@ public class messagebot extends SubspaceBot
 				c.reload();
 				channels.put(channelName.toLowerCase(), c);
 			}
+			results.close();
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 	
@@ -656,6 +659,7 @@ public class messagebot extends SubspaceBot
 			{
 				m_botAction.sendSmartPrivateMessage(name, "Could not find that message.");
 			}
+			results.close();
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 	
@@ -678,7 +682,7 @@ public class messagebot extends SubspaceBot
 		}
 		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try {
-			m_botAction.SQLQuery("local", query);
+			m_botAction.SQLQuery("local", query).close();
 			m_botAction.sendSmartPrivateMessage(name, "Message marked as unread.");
 		} catch(SQLException e) {
 			Tools.printStackTrace( e );
@@ -706,7 +710,7 @@ public class messagebot extends SubspaceBot
 		}
 		String query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try {
-			m_botAction.SQLQuery("local", query);
+			m_botAction.SQLQuery("local", query).close();
 			m_botAction.sendSmartPrivateMessage(name, "Message deleted.");
 		} catch(Exception e) {
 			m_botAction.sendSmartPrivateMessage(name, "Message unable to be deleted.");
@@ -735,6 +739,7 @@ public class messagebot extends SubspaceBot
 
 				m_botAction.sendSmartPrivateMessage(name, thisMessage);
 			}
+			results.close();
 		} catch(Exception e) {
 			m_botAction.sendSmartPrivateMessage(name, "Error while reading message database.");
 			Tools.printStackTrace( e );
@@ -754,12 +759,15 @@ public class messagebot extends SubspaceBot
 	 	try {
 	 		ResultSet results = m_botAction.SQLQuery("local", query);
 	 		
-	 		if(!results.next()) return false;
+	 		if(!results.next()) { results.close(); return false; }
 	 		
-	 		if(results.getString("fcName").toLowerCase().equals(name))
+	 		if(results.getString("fcName").toLowerCase().equals(name)) {
+	 			results.close();
 	 			return true;
-	 		else
+	 		} else {
+	 			results.close();
 	 			return false;
+	 		}
 	 	} catch(Exception e) { Tools.printStackTrace(e); }
 	 	return false;
 	 }
@@ -877,7 +885,7 @@ class Channel
 			updateSQL(name.toLowerCase(), 1);
 			updateSQL(player.toLowerCase(), 3);
 			try {
-				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'");
+				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'").close();
 			} catch(Exception e) { Tools.printStackTrace( e ); }
 			owner = player;
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
@@ -931,7 +939,7 @@ class Channel
 	public void makePrivate(String name)
 	{
 		try {
-			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'");
+			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'").close();
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now private channel.");
 		isOpen = false;
@@ -943,7 +951,7 @@ class Channel
 	public void makePublic(String name)
 	{
 		try {
-			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'");
+			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'").close();
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now public channel.");
 		isOpen = true;
@@ -1033,7 +1041,7 @@ class Channel
 			}
 			members.remove(name.toLowerCase());
 			try {
-				m_bA.SQLQuery("local", "DELETE FROM tblChannelUser WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'");
+				m_bA.SQLQuery("local", "DELETE FROM tblChannelUser WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'").close();
 			} catch(Exception e) { Tools.printStackTrace( e ); }
 			m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
 		}
@@ -1155,13 +1163,14 @@ class Channel
 					query = "UPDATE tblChannelUser SET fnLevel = " + level + " WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase()) + "' AND fcChannel = '" + Tools.addSlashesToString(channelName) +"'";
 				else
 					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase())+"'";
-				m_bA.SQLQuery("local", query);
+				m_bA.SQLQuery("local", query).close();
 			}
 			else
 			{
 				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES ('" + Tools.addSlashesToString(channelName) + "', '" + Tools.addSlashesToString(player.toLowerCase()) + "', " + level + ")";
-				m_bA.SQLQuery("local", query);
+				m_bA.SQLQuery("local", query).close();
 			}
+			results.close();
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 	
@@ -1174,7 +1183,7 @@ class Channel
 	{
 		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', 0, NOW())";
 		try {
-			m_bA.SQLQuery("local", query);
+			m_bA.SQLQuery("local", query).close();
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 	
@@ -1194,6 +1203,7 @@ class Channel
 				if(level < 0)
 					banned.add(name.toLowerCase());
 			}
+			results.close();
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 	
@@ -1218,7 +1228,7 @@ class Channel
 			else
 				message += pName;
 			k++;
-			if(k % 10 == 0)
+			if(k % 10 == 0 || !it.hasNext())
 			{
 				m_bA.sendSmartPrivateMessage(name, message);
 				message = "";
@@ -1242,7 +1252,7 @@ class Channel
 			
 			message += pName;
 			k++;
-			if(k % 10 == 0)
+			if(k % 10 == 0 || !it.hasNext())
 			{
 				m_bA.sendSmartPrivateMessage(name, message);
 				message = "";
