@@ -12,7 +12,7 @@ public class purepubbot extends SubspaceBot
     public static final int LEVIATHAN = 4;
     private static final int FLAG_CLAIM_SECS = 4;		// Seconds it takes to fully claim a flag
     private static final int INTERMISSION_SECS = 90;	// Seconds between end of round and start of next
-    private static final int NUM_WARP_POINTS = 13;		// Total number of warp points for !warp cmd
+    private static final int NUM_WARP_POINTS_PER_SIDE = 6;		// Total number of warp points per side of FR
     
     private OperatorList opList;
     private HashSet freq0List;
@@ -32,8 +32,11 @@ public class purepubbot extends SubspaceBot
     public int initialPub;
     public String initialSpawn;
     
-    private int warpPtsX[] = { 512, 505, 502, 499, 491, 495, 487, 519, 522, 525, 529, 533, 537 }; 
-    private int warpPtsY[] = { 264, 260, 267, 274, 279, 263, 255, 260, 267, 274, 263, 279, 255 };
+    private int warpPtsLeftX[] = { 505, 502, 499, 491, 495, 487 }; 
+    private int warpPtsLeftY[] = { 260, 267, 274, 279, 263, 255 };
+
+    private int warpPtsRightX[] = { 519, 522, 525, 529, 533, 537 }; 
+    private int warpPtsRightY[] = { 260, 267, 274, 263, 279, 255 };
     private LinkedList warpPlayers;
     
     /**
@@ -784,27 +787,8 @@ public class purepubbot extends SubspaceBot
        
         int secs = flagTimer.getTotalSecs();
         int mins = secs / 60;
-        // int points = secs * 5;
         int weight = ((int)(secs * 3 ) / 60);
         
-        /*
-        // Incremental point bonuses - REMOVED because using *points resets "Ave" stat
-        if( mins >= 120 ) 
-            points += 100000;
-        if( mins >= 90 ) 
-            points += 50000;
-        if( mins >= 60 )
-            points += 20000;
-        if( mins >= 45 )
-            points += 10000;
-        if( mins >= 30 )
-            points += 5000;
-        if( mins >= 20 )
-            points += 2000;
-        if( mins >= 15 )
-            points += 1000;
-        */
-
         // Incremental bounty bonuses
         if( mins >= 90 )
             weight += 150;
@@ -826,29 +810,20 @@ public class purepubbot extends SubspaceBot
         	int chance = r.nextInt(100);
         
         	if( chance == 99 ) {
-        	    m_botAction.sendArenaMessage( "PRIZE for MVPs: Personal Body-Guard!" );
         	    special = 8;
         	} else if( chance >= 97 ) {
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Sore Loser's REVENGE!" );
         	    special = 7;
         	} else if( chance >= 94 ) {
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Ultimate Techno Dance Party!", 102);
         	    special = 6;
         	} else if( chance >= 90 ) {
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: The Triple Platinum Trophy!" );
         	    special = 5;
         	} else if( chance >= 80 ) {
-        	    weight *= 2;
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Double Bounty Bonus!  (Total possible bounty: " + weight + ")" );
         		special = 4;
         	} else if( chance >= 70 ) {
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Life-size Trophies of Themselves!" );
         	    special = 3;
         	} else if( chance >= 60 ) {
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Full shrap!" );
         	    special = 2;        	    
         	} else if( chance > 20 ) {
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Refreshments!" );
         	    special = 1;
         	}
         }
@@ -862,24 +837,28 @@ public class purepubbot extends SubspaceBot
                     if(player.getFrequency() == flagholdingFreq ) {
                         String playerName = player.getPlayerName();
 
-                        // Calculate amount of time actually spent on freq 
-                        if( playerTimes.containsKey( playerName ) ) {
-                            Integer i = (Integer)playerTimes.get( playerName );
+                        Integer i = (Integer)playerTimes.get( playerName );
+
+                        if( i != null ) {
+                            // Calculate amount of time actually spent on freq 
                                                        
                             int timeOnFreq = secs - i.intValue();
                             int percentOnFreq = (int)( ( (float)timeOnFreq / (float)secs ) * 100 );
-                            //int modpoints = points * (percentOnFreq / 100);
                             int modbounty = (int)(weight * ((float)percentOnFreq / 100));
                             
                             if( percentOnFreq == 100 ) {
                                 MVPs.add( playerName );
                                 m_botAction.sendPrivateMessage( playerName, "For staying with the same freq and ship the entire match, you are an MVP and receive the full bonus: " + modbounty );
+                                if( special == 4 ) {
+                                    m_botAction.sendPrivateMessage( playerName, "You also receive an additional " + weight + " bounty as a special prize!" );
+                                    modbounty *= 2;
+                                }
+
                             } else {
                                 m_botAction.sendPrivateMessage( playerName, "You were with the same freq and ship for the last " + getTimeString(timeOnFreq) + ", and receive " + percentOnFreq  + "% of the bounty reward: " + modbounty );                                
                             }
                                                                 
                             m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize " + modbounty);
-                            //m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*points " + modpoints);
                         }
                         
                         if( MVPs.contains( playerName ) ) {
@@ -897,7 +876,8 @@ public class purepubbot extends SubspaceBot
                                 break;
                             case 2:  // "Full shrap"
                                 for(int j = 0; j < 5; j++ )
-                                    m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #19");                                    
+                                    m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #19");
+                                break;
                             case 3:  // "Trophy" -- decoy given
                                 m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize #23");
                                 break;
@@ -922,12 +902,39 @@ public class purepubbot extends SubspaceBot
                 }
             }
         } catch(Exception e) {
-        }
+        }        
         
         Iterator i = MVPs.iterator();
         String name, MVplayers = ""; 
         
         if( i.hasNext() ) {
+            switch( special ) {
+            case 1:  // "Refreshments" -- replenishes all essentials + gives anti
+                m_botAction.sendArenaMessage( "PRIZE for MVPs: Refreshments!" );
+        	    break;
+            case 2:  // "Full shrap"
+                m_botAction.sendArenaMessage( "PRIZE for MVPs: Full shrap!" );
+                break;
+            case 3:  // "Trophy" -- decoy given
+                m_botAction.sendArenaMessage( "PRIZE for MVPs: Life-size Trophies of Themselves!" );
+                break;
+            case 4:  // "Double bounty reward"
+                m_botAction.sendArenaMessage( "PRIZE for MVPs: Double Bounty Bonus!  (MVP bounty: " + weight * 2 + ")" );
+                break;
+            case 5:  // "Triple trophy" -- 3 decoys
+                m_botAction.sendArenaMessage( "PRIZE for MVPs: The Triple Platinum Trophy!" );
+                break;                
+            case 6:  // "Techno Dance Party" -- plays victory music :P
+                m_botAction.sendArenaMessage( "PRIZE for MVPs: Ultimate Techno Dance Party!", 102);
+                break;                
+            case 7:  // "Sore Loser's Revenge" -- engine shutdown!
+                m_botAction.sendArenaMessage( "PRIZE for MVPs: Sore Loser's REVENGE!" );
+                break;                
+            case 8:  // "Bodyguard" -- shields
+        	    m_botAction.sendArenaMessage( "PRIZE for MVPs: Personal Body-Guard!" );
+                break;                
+            }
+            
             MVplayers = (String)i.next();
         }        
         while( i.hasNext() ) {
@@ -957,7 +964,7 @@ public class purepubbot extends SubspaceBot
     public void setupPlayerTimes() {
         playerTimes = new HashMap();
 
-        Iterator i = m_botAction.getPlayerIterator();
+        Iterator i = m_botAction.getPlayingPlayerIterator();
         Player player;
         
         try {
@@ -986,18 +993,28 @@ public class purepubbot extends SubspaceBot
 
     /**
      * Warps all players who have PMed with !warp into FR at start.
-     *
+     * Ensures !warpers on freqs are warped all to 'their' side, but not predictably.
      */
     private void warpPlayers() {
         Iterator i = warpPlayers.iterator();
         Random r = new Random();
         int rand;
+        Player p;
+        
+        int randomside = r.nextInt( 2 );
         
         while( i.hasNext() ) {
             String pname = (String)i.next();
-            if( pname != null ) {
-                rand = r.nextInt( NUM_WARP_POINTS ); 
-                doRandomWarp( pname, warpPtsX[rand], warpPtsY[rand] );
+            p = m_botAction.getPlayer( pname );
+            
+            if( p != null ) {
+                rand = r.nextInt( NUM_WARP_POINTS_PER_SIDE ); 
+                if( p.getFrequency() % 2 == randomside )
+                    doRandomWarp( pname, warpPtsLeftX[rand], warpPtsLeftY[rand] );
+                else
+                    doRandomWarp( pname, warpPtsRightX[rand], warpPtsRightY[rand] );
+            } else {
+                warpPlayers.remove( pname );
             }
         }                    
     }
