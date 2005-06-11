@@ -892,7 +892,6 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
-			members.put(player.toLowerCase(), new Integer(3));
 			updateSQL(name.toLowerCase(), 1);
 			updateSQL(player.toLowerCase(), 3);
 			try {
@@ -914,7 +913,6 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
-			members.put(player.toLowerCase(), new Integer(2));
 			updateSQL(player.toLowerCase(), 2);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been made an operator in " + channelName + " channel.");
@@ -935,7 +933,6 @@ class Channel
 				m_bA.sendSmartPrivateMessage(name, "You can't take away your owner access!");
 				return;
 			}
-			members.put(player.toLowerCase(), new Integer(1));
 			updateSQL(player.toLowerCase(), 1);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "Your operator priveleges in " + channelName + " channel have been revoked.");
@@ -1025,13 +1022,11 @@ class Channel
 		}
 		if(isOpen)
 		{
-			members.put(name.toLowerCase(), new Integer(1));
 			updateSQL(name.toLowerCase(), 1);
 			m_bA.sendSmartPrivateMessage(name, "You have been accepted to " + channelName + " announcement channel.");
 		}
 		else
 		{
-			members.put(name.toLowerCase(), new Integer(0));
 			updateSQL(name.toLowerCase(), 0);
 			m_bA.sendSmartPrivateMessage(name, "You have been placed into the channel request list. The channel owner will make the decision.");
 		}
@@ -1103,7 +1098,6 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
-			members.remove(player.toLowerCase());
 			updateSQL(player, -5);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been rejected from " + channelName + " channel.");
@@ -1131,7 +1125,6 @@ class Channel
 			int level = ((Integer)members.get(player.toLowerCase())).intValue();
 			level *= -1;
 			updateSQL(player, level);
-			members.put(player.toLowerCase(), new Integer(level));
 		}
 	}
 	
@@ -1153,7 +1146,6 @@ class Channel
 			int level = ((Integer)members.get(player.toLowerCase())).intValue();
 			level *= -1;
 			updateSQL(player, level);
-			members.put(player.toLowerCase(), new Integer(level));
 		}
 	}			
 	
@@ -1170,10 +1162,13 @@ class Channel
 			ResultSet results = m_bA.SQLQuery("local", query);
 			if(results.next())
 			{
-				if(level != -5)
+				if(level != -5) {
 					query = "UPDATE tblChannelUser SET fnLevel = " + level + " WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase()) + "' AND fcChannel = '" + Tools.addSlashesToString(channelName) +"'";
-				else
+					members.put(player.toLowerCase(), new Integer(level));
+				} else {
 					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase())+"'";
+					members.remove(player.toLowerCase());
+				}
 				m_bA.SQLQuery("local", query).close();
 			}
 			else
