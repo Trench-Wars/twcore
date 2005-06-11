@@ -113,6 +113,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!members",	 acceptedMessages, this, "listMembers");
         m_CI.registerCommand( "!banned",	 acceptedMessages, this, "listBanned");
         m_CI.registerCommand( "!me",		 acceptedMessages, this, "myChannels");
+        m_CI.registerCommand( "!mtfbwy",	 acceptedMessages, this, "handleDie");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
     }
@@ -770,6 +771,18 @@ public class messagebot extends SubspaceBot
 	 		return;
 	 	
 	 	m_botAction.changeArena(message);
+	 }
+	 
+	/** Kills the bot
+	 *  @param Name of player
+	 *  @param should be blank
+	 */
+	 public void handleDie(String name, String message)
+	 {
+	 	if(!m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+	 		return;
+	 	
+	 	m_botAction.die();
 	 }
 	
 	/** Sets up the task that will delete messages that have expired.
