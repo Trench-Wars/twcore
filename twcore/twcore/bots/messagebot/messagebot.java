@@ -767,10 +767,8 @@ public class messagebot extends SubspaceBot
 	 */
 	 public void handleGo(String name, String message)
 	 {
-	 	if(!m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
-	 		return;
-	 	
-	 	m_botAction.changeArena(message);
+	 	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+	 		m_botAction.changeArena(message);
 	 }
 	 
 	/** Kills the bot
@@ -779,10 +777,8 @@ public class messagebot extends SubspaceBot
 	 */
 	 public void handleDie(String name, String message)
 	 {
-	 	if(!m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
-	 		return;
-	 	
-	 	m_botAction.die();
+	 	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+		 	m_botAction.die();
 	 }
 	
 	/** Sets up the task that will delete messages that have expired.
