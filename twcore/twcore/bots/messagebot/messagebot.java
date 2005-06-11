@@ -115,6 +115,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!banned",	 acceptedMessages, this, "listBanned");
         m_CI.registerCommand( "!me",		 acceptedMessages, this, "myChannels");
         m_CI.registerCommand( "!mtfbwy",	 acceptedMessages, this, "handleDie");
+        m_CI.registerCommand( "!login",		 acceptedMessages, this, "playerLogin");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
     }
@@ -770,6 +771,16 @@ public class messagebot extends SubspaceBot
 	 		}
 	 	} catch(Exception e) { Tools.printStackTrace(e); }
 	 	return false;
+	 }
+	 
+	/** Handles a message sent by pubbots to tell a player if they have new messages
+	 *  @param Name of player PM'ing
+	 *  @param Name of player logging in
+	 */
+	 public void playerLogin(String name, String player)
+	 {
+	 	if(m_botAction.getOperatorList().isSysop(name))
+	 		checkNewMessages(player.toLowerCase());
 	 }
 	
 	/** Sends the bot to a new arena.
