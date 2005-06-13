@@ -42,14 +42,14 @@ public abstract class TWBotExtension {
             handleEvent( (Message)event );
         else if( event instanceof PlayerLeft )
             handleEvent( (PlayerLeft)event );
+        else if( event instanceof WeaponFired )
+            handleEvent( (WeaponFired)event );
         else if( event instanceof PlayerPosition )
             handleEvent( (PlayerPosition)event );
         else if( event instanceof PlayerDeath )
             handleEvent( (PlayerDeath)event );
         else if( event instanceof ScoreUpdate )
             handleEvent( (ScoreUpdate)event );
-        else if( event instanceof WeaponFired )
-            handleEvent( (WeaponFired)event );
         else if( event instanceof FrequencyChange )
             handleEvent( (FrequencyChange)event );
         else if( event instanceof FrequencyShipChange )
