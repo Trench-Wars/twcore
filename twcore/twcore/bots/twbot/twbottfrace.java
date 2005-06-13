@@ -66,7 +66,7 @@ public class twbottfrace extends TWBotExtension
     			Player p = (Player)it.next();
     			if(i < 4) freq0(p, (i % 4));
     			else if(i < 8) freq1(p, (i % 4));
-    			else if(i < 8) freq2(p, (i % 4));
+    			else if(i < 12) freq2(p, (i % 4));
     			else freq3(p, (i % 4));
     		}
     		
