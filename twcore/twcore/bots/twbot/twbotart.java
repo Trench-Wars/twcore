@@ -34,19 +34,8 @@ public class twbotart extends TWBotExtension
 			m_botAction.spec(m_botAction.getBotName());
 			m_botAction.spec(m_botAction.getBotName());
 		}
-		else if(message.toLowerCase().startsWith("!list"))
-			m_botAction.requestArenaList();
 	}
-	
-	public void handleEvent(ArenaList event)
-	{
-		String[] arenas = event.getArenaNames();
-		for(int k = 0;k < arenas.length;k++)
-			m_botAction.sendUnfilteredPublicMessage(arenas[k]);
 		
-		m_botAction.sendUnfilteredPublicMessage("Arenas listed.");
-	}
-	
 	public void download(String name, String message)
 	{
 		try {
@@ -72,14 +61,16 @@ public class twbotart extends TWBotExtension
 				int xNormal = ship.getX();
 				while((inString = in.readLine()) != null)
 				{
-					for(int k = 0;k < inString.length();k++)
+					ship.fire(getWeapon(inString.charAt(0)));
+					for(int k = 1;k < inString.length();k++)
 					{
-						if(inString.charAt(k) == ' ')
-							ship.move(ship.getX() + 16, ship.getY() + 0);
-						else
-						{
-							ship.fire(-32700);
-							ship.move(ship.getX() + 16, ship.getY() + 0);
+						int temp = 0;
+						if(inString.charAt(k) == ' ') {
+							for(temp = 0;inString.charAt((temp + k)) == ' ' && (temp + k) < inString.length();temp++) { }
+							k += (temp - 1);
+							ship.move(ship.getX() + (16 * temp), ship.getY());
+						} else {
+							ship.moveAndFire(ship.getX() + 16, ship.getY() + 0, getWeapon(inString.charAt(k));
 						}
 					}
 					ship.move(xNormal, ship.getY() + 16);
@@ -88,6 +79,15 @@ public class twbotart extends TWBotExtension
 			else
 				m_botAction.sendPrivateMessage(name, "That file contains too many mines. You should try reducing it so I can draw all of it.");
 		} catch(Exception e) {m_botAction.sendPrivateMessage(name, "error... check URL and try again."); e.printStackTrace();}
+	}
+	
+	public int getWeapon(char c) {
+		Ship s = m_botAction.getShip();
+		
+		if(c == '.') return s.getWeaponNumber(3, 0, false, false, true, 3, true);
+		if(c == '*') return s.getWeaponNumber(3, 1, false, false, true, 3, true);
+		if(c == '#') return s.getWeaponNumber(3, 2, false, false, true, 3, true);
+		if(c == ' ') return 0;
 	}
 	
 	public void cancel()
@@ -103,6 +103,3 @@ public class twbotart extends TWBotExtension
 		return blah;
 	}
 }
-
-
-
