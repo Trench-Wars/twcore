@@ -113,6 +113,13 @@ public class twbotstandard extends TWBotExtension {
             }
         } else if( message.startsWith( "!restart" )){
             m_botAction.sendUnfilteredPublicMessage("*restart");
+        } else if( message.startsWith( "!merge ")) {
+            String[] parameters = Tools.stringChopper( message.substring( 7 ).trim(), ' ' );
+            try{
+                if( parameters.length == 2 ){
+                    m_botAction.setFreqtoFreq(Integer.parseInt(parameters[0]), Integer.parseInt(parameters[1]));
+                }
+            }catch( Exception e ){}
         }
 
         /*else if( message.startsWith( "!spec " )){
@@ -344,7 +351,8 @@ public class twbotstandard extends TWBotExtension {
             "!where                    - Robo will tell you his location. Remote PM or squad msg only.",
             "!setship <ship>           - Changes everyone to <ship>",
             "!setship <freq> <ship>    - Changes everyone on <freq> to <ship>",
-            "!restart                  - Restarts the ball game"
+            "!restart                  - Restarts the ball game",
+            "!merge <freq1> <freq2>    - Changes everyone on <freq1> to <freq2>"
 //            "!spec <numdeaths>         - Specs players when they reach <numdeaths>",
 //            "!warp                     - Warps everyone to a random location",
 //            "!warp <freq>              - Warps everyone on <freq> to a random location",
