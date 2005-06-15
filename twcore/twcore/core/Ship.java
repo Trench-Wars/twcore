@@ -8,6 +8,8 @@
 
 package twcore.core;
 
+import java.util.BitSet;
+
 public class Ship extends Thread {
 
     public static int       MOVING_TIME = 100;
@@ -124,6 +126,14 @@ public class Ship extends Thread {
     public void fire( int weapon ){
         m_gen.sendPositionPacket( direction, (short)xVel, (short)y, (byte)togglables, (short)x, (short)yVel, (short)bounty, (short)energy, (short)weapon );
     }
+    
+    public void moveAndFire(int x, int y, int weapon ){
+    	this.x = (short)x;
+        this.y = (short)y;
+        this.xVel = 0;
+        this.yVel = 0;
+        m_gen.sendPositionPacket( direction, (short)xVel, (short)y, (byte)togglables, (short)x, (short)yVel, (short)bounty, (short)energy, (short)weapon );
+    }
 
     public void run(){
         try {
@@ -178,4 +188,43 @@ public class Ship extends Thread {
     public short getY(){
         return y;
     }
+    
+    public int getWeaponNumber(byte weaponType, byte weaponLevel, boolean bouncing, boolean isEMP, boolean isBomb, byte shrap, boolean alternate)
+    {
+    	BitSet bits = new BitSet(16);
+    	bits.set(11, false);
+    	
+    	if(weaponType >= 8) { bits.set(12, true); weaponType -= 8; }
+    	if(weaponType >= 4) { bits.set(13, true); weaponType -= 4; }
+    	if(weaponType >= 2) { bits.set(14, true); weaponType -= 2; }
+    	if(weaponType >= 1) { bits.set(15, true); weaponType -= 1; }
+    	
+    	if(weaponLevel >= 2) { bits.set(9, true); weaponLevel -= 2; }
+    	if(weaponLevel >= 1) { bits.set(10, true); weaponLevel -= 1; }
+    	
+    	if(bouncing) bits.set(8, true);
+    	
+    	if(isEMP) bits.set(7, true);
+    	
+    	if(isBomb) bits.set(6, true);
+    	
+    	if(shrap >= 16) { bits.set(1, true); shrap -= 16; }
+    	if(shrap >= 8) { bits.set(2, true); shrap -= 8; }
+    	if(shrap >= 4) { bits.set(3, true); shrap -= 4; }
+    	if(shrap >= 2) { bits.set(4, true); shrap -= 2; }
+    	if(shrap >= 1) { bits.set(5, true); shrap -= 1; }
+    	
+    	if(alternate) bits.set(0, true);
+    	
+    	int total = 0;
+    	int factor = 1;
+    	
+    	for(int k = 15;k >= 0;k--) {
+    		if(bits.get(k)) total += factor;
+    		factor *= 2;
+    	}
+    	
+    	return total;
+    }
+    	
 }
