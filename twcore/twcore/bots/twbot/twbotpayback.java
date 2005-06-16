@@ -102,8 +102,10 @@ public class twbotpayback extends TWBotExtension
     	if(message.toLowerCase().startsWith("!start")) {
     		m_botAction.sendArenaMessage("Payback started, GO!", 104);
     		started = true;
+    		cancel();
     	} else if(message.toLowerCase().startsWith("!stop")) {
     		m_botAction.sendArenaMessage("Payback stopped!", 13);
+    		cancel();
     	} else if(message.toLowerCase().startsWith("!time ")) {
     		time = 30;
     		try {
@@ -122,13 +124,24 @@ public class twbotpayback extends TWBotExtension
     	return helps;
     }
     
-    public void cancel() { }
+    public void cancel() {
+    	Iterator it = payback.values().iterator();
+    	while(it.hasNext()) {
+    		Payback pb = (Payback)it.next();
+    		if(!pb.isCancelled())
+    			pb.cancel();
+    	}
+    	
+    	payback.clear();
+    	beingTracked.clear();
+    }
 }
 
 class Payback extends TimerTask {
 	
 	String player;
 	BotAction m_botAction;
+	boolean cancelled = false;
 	
 	public Payback(String name, BotAction ba) {
 		player = name;
@@ -138,5 +151,10 @@ class Payback extends TimerTask {
 	public void run() {
 		m_botAction.spec(player);
 		m_botAction.spec(player);
+		cancelled = true;
+	}
+	
+	public boolean isCancelled() {
+		return cancelled;
 	}
 }
