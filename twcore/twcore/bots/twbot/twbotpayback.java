@@ -151,6 +151,7 @@ class Payback extends TimerTask {
 	public void run() {
 		m_botAction.spec(player);
 		m_botAction.spec(player);
+		m_botAction.sendPrivateMessage(player, "You're supposed to kill your killer... not sit around and eat grasshoppers in left field.");
 		cancelled = true;
 	}
 	
