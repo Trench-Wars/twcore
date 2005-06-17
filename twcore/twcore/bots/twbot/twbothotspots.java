@@ -127,14 +127,19 @@ public class twbothotspots extends TWBotExtension {
 	}
 
 	public void resetPlayerQueue( String name ) {
+	    try {
 		for( int i = 0; i < queueList.size(); i++ ) {
 			String thisName = (String)queueList.elementAt( i );
-			if( thisName.equals( name ) && thisName != null && name != null ) {
-				queueList.removeElementAt( i );
-				queueList.addElement( name );
-				i = queueList.size();
+			if( thisName != null && name != null ) {
+			    if( thisName.equals( name ) ) {
+					queueList.removeElementAt( i );
+					queueList.addElement( name );
+					i = queueList.size();
+				}
 			}
 		}
+	    } catch (Exception e) {
+	    }
 	}
 
 	public void do_addHotSpot( String name, String message ) {
