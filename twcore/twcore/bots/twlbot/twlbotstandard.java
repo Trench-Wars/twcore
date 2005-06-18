@@ -1232,7 +1232,7 @@ public class twlbotstandard extends TWLBotExtension
     {
         if (m_gameState == GAME_OFF)
             return;
-        if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
+        if (name.equals(m_match.getRef()) || m_opList.isSmod(name))
         {
             m_botAction.sendPrivateMessage(name, m_match.getTeam1Players());
             m_botAction.sendPrivateMessage(name, m_match.getTeam2Players());
@@ -1323,7 +1323,7 @@ public class twlbotstandard extends TWLBotExtension
         if( m_match == null || m_gameState == GAME_OFF )
             return;
 
-        if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name)) {
+        if (name.equals(m_match.getRef()) || m_opList.isSmod(name)) {
 
             if (m_gameState < GAME_IN_PROGRESS) {
                 m_botAction.sendPrivateMessage(name, m_match.getTeam1Name() + " vs " + m_match.getTeam2Name() + " (Has not started)");
@@ -1399,24 +1399,6 @@ public class twlbotstandard extends TWLBotExtension
     {
         m_botAction.sendPrivateMessage(name, Double.toString(VERSION) );
     }
-//  /**
-//  * This is an lag check created by rodge_rabbit.
-//       * The players will be checked on the lag limits and specced if they found to be out of range
-//        */
-//  public void do_lagcheck(String name, String message)
-//  {
-//  if (name.equals(m_match.getRef())|| (name.toLowerCase()).equals("rodge_rabbit") || m_opList.isSmod(name))
-//  if (!(shipType >= 1 && shipType <= 8))
-//        return;
-//        Iterator i = m_arenaTracker.getFreqIDIterator(freq);
-//        if (i == null)
-//            return;
-//        while (i.hasNext())
-//        {
-//            setShip(((Integer) i.next()).intValue(), shipType);
-//        }
-//  }
-
 
 
     /** Switches into TWLB Playoff mode, with games 40 minutes max instead
