@@ -50,6 +50,10 @@ public class Arena {
         return m_playerList.values().iterator();
     }
     
+    public Map getPlayerMap() {
+    	return m_playerList;
+    }
+    
     public Iterator getPlayerIDIterator(){
         
         return m_playerList.keySet().iterator();

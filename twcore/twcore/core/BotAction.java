@@ -1031,21 +1031,23 @@ public class BotAction
      */
     public String getFuzzyPlayerName(String playerName)
     {
-        Iterator i = m_arenaTracker.getPlayerIterator();
+    	Map m_playerMap = m_arenaTracker.getPlayerMap();
+        Iterator i = m_playerMap.values().iterator();
         String answ, best = null;
-
-        while (i.hasNext())
-        {
-            answ = ((Player) i.next()).getPlayerName();
-            if (answ.toLowerCase().startsWith(playerName.toLowerCase()))
-                if (best == null)
-                    best = answ;
-                else if (best.toLowerCase().compareTo(answ.toLowerCase()) > 0)
-                    best = answ;
-
-            if (answ.equalsIgnoreCase(playerName))
-                return answ;
-        };
+		synchronized(m_playerMap) {
+	        while (i.hasNext())
+	        {
+	            answ = ((Player) i.next()).getPlayerName();
+	            if (answ.toLowerCase().startsWith(playerName.toLowerCase()))
+	                if (best == null)
+	                    best = answ;
+	                else if (best.toLowerCase().compareTo(answ.toLowerCase()) > 0)
+	                    best = answ;
+	
+	            if (answ.equalsIgnoreCase(playerName))
+	                return answ;
+	        };
+	     }
 
         return best;
     };
