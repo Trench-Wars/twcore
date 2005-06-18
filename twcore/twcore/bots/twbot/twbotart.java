@@ -61,19 +61,22 @@ public class twbotart extends TWBotExtension
 				int xNormal = ship.getX();
 				while((inString = in.readLine()) != null)
 				{
-					ship.fire(getWeapon(inString.charAt(0)));
-					for(int k = 1;k < inString.length();k++)
+					if(inString.length() != 0)
 					{
-						int temp = 0;
-						if(inString.charAt(k) == ' ') {
-							for(temp = 0;inString.charAt((temp + k)) == ' ' && (temp + k) < inString.length();temp++) { }
-							k += (temp - 1);
-							ship.move(ship.getX() + (16 * temp), ship.getY());
-						} else {
-							ship.moveAndFire(ship.getX() + 16, ship.getY() + 0, getWeapon(inString.charAt(k)));
+						ship.fire(getWeapon(inString.charAt(0)));
+						for(int k = 1;k < inString.length();k++)
+						{
+							int temp = 0;
+							if(inString.charAt(k) == ' ') {
+								for(temp = 0;(temp + k) < inString.length() && inString.charAt((temp + k)) == ' ';temp++) { }
+								k += (temp - 1);
+								ship.move(ship.getX() + (16 * temp), ship.getY());
+							} else {
+								ship.moveAndFire(ship.getX() + 16, ship.getY() + 0, getWeapon(inString.charAt(k)));
+							}
 						}
+						ship.move(xNormal, ship.getY() + 16);
 					}
-					ship.move(xNormal, ship.getY() + 16);
 				}
 			}
 			else
@@ -84,9 +87,9 @@ public class twbotart extends TWBotExtension
 	public int getWeapon(char c) {
 		Ship s = m_botAction.getShip();
 		
-		if(c == '.') return s.getWeaponNumber((byte)3, (byte)0, false, false, true, (byte)3, true);
-		if(c == '*') return s.getWeaponNumber((byte)3, (byte)1, false, false, true, (byte)3, true);
-		if(c == '#') return s.getWeaponNumber((byte)3, (byte)2, false, false, true, (byte)3, true);
+		if(c == '.') return s.getWeaponNumber((byte)3, (byte)0, false, false, true, (byte)4, true);
+		if(c == '*') return s.getWeaponNumber((byte)3, (byte)1, false, false, true, (byte)5, true);
+		if(c == '#') return s.getWeaponNumber((byte)3, (byte)2, false, false, true, (byte)6, true);
 		return 0;
 	}
 	
