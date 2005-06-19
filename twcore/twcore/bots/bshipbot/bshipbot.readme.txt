@@ -1,4 +1,4 @@
-Battleship Bot v2.5
+Battleship Bot v3.0
 
 *****Info*****
 Made for ?go battleship in Trench
@@ -7,17 +7,30 @@ Features:
  - Hosts battleship games
  - Manipulates LVZ to simulate day/night (night mode) 
  
+*****New in this Release*****
+This new version brings about a lot of improvements to the game as far as
+simplicity of hosting and flexibility. The game can now be run on any of
+the 5 boards in the ?go battleship arena for up to 4 teams with any 
+combination of ships. Using *lock is no longer required for the game because
+the bot will recognize any player who enters, leaves, or changes ships.
+The command interface has been streamlined by having "game settings" that
+determine certain things like how many teams will play, what board to use
+and whether to lock people from changing into a capital ship. The game can
+be started after custom picking teams, or randomness can be used with the
+!assign command. In game, players will periodically be notified of any 
+attachable ships on their team.
+ 
 *****Hosting*****
-The first thing you need to do is make sure everyone who is playing is
-in the arena. Then teams need to be set up. You can do this manually, 
-or random with !teams <number of teams to make>. Once teams have been
-established, place everyone in the proper ships using !setup. Again, 
-if you want to change the ship numbers of people around you can do it
-manually, but after you !setup. Make sure the number of capital ships
-is the same. Once you are ready to begin, !start the game and sit back
-watching as they are warped to the arena to duke it out. If anything 
-happens where a capital ship leaves a team without dying, you can
-subtract one from the remaining ships counter with !remove <frequency>
+This game will run right off the bat if you tell it to !start, but you will
+probably want to configure it a bit first. Use the !set command to pick a 
+board, how many teams to play, and whether to lock switching into a capital
+ship. If you wish to have teams picked, you can do so, or you can use !assign
+to give people random team and ship assignments. Once you are satisfied, use
+!start to begin the game. Whenever someone changes ship, leaves, or dies,
+the ship count will be updated. If you wish the bot to do a manual check, use
+the !scheck command. When a team is eliminated, they will be put into spectator
+mode. If you wish to put them back in, its possible, but you must manually warp
+them back. If at any time you wish to terminate the game, use !stop.
 
 *****Files*****
 bshipbot.java
@@ -25,22 +38,22 @@ bshipbot.cfg
 
 *****Commands*****
 !about		About this bot
-!allowed	Displays who is allowed to attach to who
-!quit		For people that want to leave, but have low energy
-!remaining	During a game, how many capital ships are left on each team
+!help		Command listing
 !rules		Rules of the game
+!quit		For people that want to leave, but have low energy
+!status		Displays current game status
 
-<ZH>
+<ZH+>
 !go <arena>	Sends bot to <arena>
 !die		Terminates bot
 
-<ER>
+<ER+>
 !say <message>	Makes bot say msg
-!setup <#>	Sets up game (#teams)
-!start		Starts game once it has been set up
-!stop		Stop any part of game
-!remove <team>	Remaining -1 for team (manual override if somebody leaves)
-!teams <#>	Makes # random teams
+!set <...>	Alters various game settings
+!assign <...>   Assigns random teams and/or ships
+!start		Starts game
+!stop		Stops game
+!scheck 	Bot manually checks ship counts
 !sethour <#>	Set game time to # (nightmode, 0-23)
 !night <on/off>	Turns night mode on or off (no parameter = status)
 
