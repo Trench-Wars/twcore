@@ -68,7 +68,7 @@ public class DBPlayerData {
         try {
             ResultSet qryPlayerSquadInfo = m_connection.SQLQuery(m_connName,
             "SELECT TU.fdJoined, TU.fnTeamUserID, T.fnTeamID, T.fcTeamName FROM tblTeam T, tblTeamUser TU " +
-            "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = " + getUserID() + " ORDER BY fdJoined DESC");
+            "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = " + getUserID() + " ORDER BY TU.fdJoined ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
 
             if (qryPlayerSquadInfo.next()) {
@@ -95,7 +95,7 @@ public class DBPlayerData {
 
         try {
             ResultSet qryPlayerInfo = m_connection.SQLQuery(m_connName,
-            "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY fdSignedUp ASC");
+            "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
             if (qryPlayerInfo.next()) {
                 m_playerLoaded = true;
@@ -123,7 +123,7 @@ public class DBPlayerData {
 
         try {
             ResultSet qryPlayerExist = m_connection.SQLQuery(m_connName,
-            "SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY fdSignedUp ASC");
+            "SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
             if (qryPlayerExist.next()) {
                 result = true;
@@ -141,7 +141,7 @@ public class DBPlayerData {
         boolean result = false;
         try {
             ResultSet qryPlayerAlias = m_connection.SQLQuery( m_aliasConnName,
-            "SELECT fcIP, fnMID, fnStatus FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
+            "SELECT fcIP, fnMID, fnStatus FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID+" ORDER BY fnUserID ASC LIMIT 0,1");
             if( qryPlayerAlias.next() ) {
                 m_fcIP = qryPlayerAlias.getString( "fcIP" );
                 m_fnMID = qryPlayerAlias.getInt( "fnMID" );
@@ -215,7 +215,7 @@ public class DBPlayerData {
         if (m_fnUserID != 0) {
             boolean result = false;
             try {
-                ResultSet qryPlayerAccountInfo = m_connection.SQLQuery(m_connName, "SELECT fcPassword FROM tblUserAccount WHERE fnUserID="+m_fnUserID);
+                ResultSet qryPlayerAccountInfo = m_connection.SQLQuery(m_connName, "SELECT fcPassword FROM tblUserAccount WHERE fnUserID="+m_fnUserID+" ORDER BY fnUserID ASC LIMIT 0,1");
                 m_lastQuery = System.currentTimeMillis();
                 if (qryPlayerAccountInfo.next()) {
                     m_fcPassword = qryPlayerAccountInfo.getString("fcPassword");
@@ -384,3 +384,4 @@ public class DBPlayerData {
 
     public void setUserName(String fcUserName) { m_fcUserName = fcUserName; };
 };
+
