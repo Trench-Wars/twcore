@@ -1,7 +1,7 @@
 package twcore.core;
 
 /**
- * (S2C 0x07) Event fired when a chat message is received.
+ * (S2C 0x07) Event fired when a chat message is received. <code><pre>
  * +------------------------------+
  * | Offset  Length  Description  |
  * +------------------------------+
