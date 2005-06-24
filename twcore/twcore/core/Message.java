@@ -1,7 +1,22 @@
 package twcore.core;
 
+/**
+ * (S2C 0x07) Event fired when a chat message is received.
+ * +------------------------------+
+ * | Offset  Length  Description  |
+ * +------------------------------+
+ * | 0       1       Type Byte    |
+ * | 1       1       Chat Type    |
+ * | 2       1       Sound Byte   |
+ * | 3       2       Sender ID    |
+ * | 5       *       Chat Message |
+ * +------------------------------+</code></pre>
+ *
+ * Chat message is null-terminated ('\0')
+ */
 public class Message extends SubspaceEvent {
-    
+
+    //Variable Declarations
     String       m_message;
     String       m_messager;
     short        m_playerID;
@@ -9,7 +24,8 @@ public class Message extends SubspaceEvent {
     int          m_chatNumber;
     int          m_messageType;
     String       m_alertCommandType;
-    
+
+    //Public Field Declarations
     public static final int ARENA_MESSAGE = 0x01;
     public static final int PUBLIC_MACRO_MESSAGE = 0x02;
     public static final int PUBLIC_MESSAGE = 0x04;
@@ -21,23 +37,24 @@ public class Message extends SubspaceEvent {
     public static final int SERVER_ERROR = 0x100;
     public static final int CHAT_MESSAGE = 0x200;
     public static final int ALERT_MESSAGE = 0x400;
-    //public static int CHEATER_MESSAGE = 0x800;
-    //public static int ADVERT_MESSAGE = 0x1000;
-    
     public static String[] alertCommands = null;
-    
-    
+
+    /**
+     * Creates a new instance of Message, this is called by GamePacketInterpreter
+     * when it receives the packet
+     * @param array the ByteArray containing the packet data
+     */
     public Message(ByteArray array){
         int         nameEnding;
         int         nameBeginning;
-        
+
         m_chatNumber = 0;
         m_messager = null;
         m_messageType = (1 << (int)array.readByte( 1 ));
         m_soundCode = (byte)array.readByte( 2 );
         m_playerID = (short)array.readLittleEndianShort( 3 );
         m_message = array.readString( 5, array.size() - 6 );
-        
+
         if( m_messageType == Message.ARENA_MESSAGE && m_message.startsWith( "misc:alertcommand:" )){
             alertCommands = m_message.substring( 18 ).split( "," );
         } else {
@@ -53,7 +70,7 @@ public class Message extends SubspaceEvent {
                         }
                     }
                 }
-                
+
                 if( m_messageType == REMOTE_PRIVATE_MESSAGE ){
                     nameBeginning = m_message.indexOf( '(' );
                     nameEnding = m_message.indexOf( ")>" );
@@ -79,39 +96,67 @@ public class Message extends SubspaceEvent {
             }
         }
     }
-    
+
+    /**
+     * This gets the ID of the player that sent the message
+     * @return the sender's ID
+     */
     public short getPlayerID(){
-        
+
         return m_playerID;
     }
-    
+
+    /**
+     * This gets the sound code (ie %12) that was sent along with the message
+     * @return the code of the sound that was sent (no sound = 0)
+     */
     public byte getSoundCode(){
-        
+
         return m_soundCode;
     }
-    
+
+    /**
+     * This gets the type of message that was sent
+     * @return the message type
+     */
     public int getMessageType(){
-        
+
         return m_messageType;
     }
-    
+
+    /**
+     * This gets the message that was sent
+     * @return A string containing the message
+     */
     public String getMessage(){
-        
+
         return m_message;
     }
-    
+
+    /**
+     * This gets the name of the player that sent the message
+     * @return A string containing the sender's name
+     */
     public String getMessager(){
-        
+
         return m_messager;
     }
-    
+
+    /**
+     * This gets the alert command that was sent (ie "?cheater")
+     * @return A string containing the alert command
+     */
     public String getAlertCommandType(){
-        
+
         return m_alertCommandType;
     }
-    
+
+    /**
+     * This gets the number of the chat channel the message is on
+     * @return the channel number of the message
+     */
     public int getChatNumber(){
-        
+
         return m_chatNumber;
     }
 }
