@@ -176,8 +176,12 @@ public class twbot extends SubspaceBot
 		key = key.toLowerCase();
 		if (extensions.containsKey(key))
 		{
-			String[] helps = ((TWBotExtension) extensions.get(key)).getHelpMessages();
-			m_botAction.privateMessageSpam(name, helps);
+		    try {
+		        String[] helps = ((TWBotExtension) extensions.get(key)).getHelpMessages();
+		        m_botAction.privateMessageSpam(name, helps);
+		    } catch ( Exception e ) {
+				m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " module.  Try reloading it.");		        
+		    }
 		}
 		else
 		{
