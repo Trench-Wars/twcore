@@ -923,7 +923,7 @@ class Channel
 	
 	/** Removes an operator.
 	 *  @param Name of owner.
-	 *  @param Name of new operator.
+	 *  @param Name of op being deleted.
 	 */
 	public void deOp(String name, String player)
 	{
@@ -1045,10 +1045,7 @@ class Channel
 				m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
 				return;
 			}
-			members.remove(name.toLowerCase());
-			try {
-				m_bA.SQLQuery("local", "DELETE FROM tblChannelUser WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'").close();
-			} catch(Exception e) { Tools.printStackTrace( e ); }
+			updateSQL(name.toLowerCase(), -5);
 			m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
 		}
 		else
@@ -1178,6 +1175,7 @@ class Channel
 			}
 			results.close();
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
+		  catch(NullPointerException npe) { System.out.println("Silly debugging...."); }
 	}
 	
 	/** Leaves a message from for a player in the database.
@@ -1187,7 +1185,7 @@ class Channel
 	 */
 	public void leaveMessage(String name, String player, String message)
 	{
-		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', 0, NOW())";
+		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(channelName)+":"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', 0, NOW())";
 		try {
 			m_bA.SQLQuery("local", query).close();
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
