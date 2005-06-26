@@ -21,6 +21,7 @@ public class roboreplacement extends SubspaceBot
 	HashMap votes = new HashMap();   //key is ID of the person that voted, value is the person's vote
 	HashMap deaths = new HashMap();  //key is ID of the person, value is the person's number of deaths
 	HashMap kills = new HashMap();   //key is ID of the person, value is the person's number of kills
+	HashMap lastDeaths = new HashMap();
 	
 	Vector topTen; //Vector of people with the top ten ratings
 	
@@ -74,6 +75,7 @@ public class roboreplacement extends SubspaceBot
 			} catch(Exception e) {}
 		}
 		shipName = ships[elimShip];
+		if(m_botSettings.getInt("CheckY" + num) > 0) setupYPosCheck(m_botSettings.getInt("CheckY" + num));
 		m_botAction.joinArena(arena);
 		setupZoner();
 		m_botAction.sendUnfilteredPublicMessage("*specall");
@@ -224,7 +226,7 @@ public class roboreplacement extends SubspaceBot
 			}
 			else  //adds the killee to the deaths hashmap if they are not there yet
 				deaths.put(new Integer(event.getKilleeID()), new Integer(1));
-				
+			
 			if(!kills.containsKey(new Integer(event.getKilleeID())))         //adds killee to kills hashmap to make sure the bot doesn't mess up on db entry
 				kills.put(new Integer(event.getKilleeID()), new Integer(0));
 			if(!deaths.containsKey(new Integer(event.getKillerID())))        //adds killer to deaths hashmap to make sure the bot doesn't mess up on db entry
@@ -245,6 +247,8 @@ public class roboreplacement extends SubspaceBot
 				m_botAction.toggleLocked();
 				isRunning = false;				
 			}
+			
+			lastDeaths.put(new Integer(p.getPlayerID()), new Integer(((int)(System.currentTimeMillis() / 1000 % 30))));
 		}
 	}
 	
@@ -313,6 +317,7 @@ public class roboreplacement extends SubspaceBot
 				m_botAction.createRandomTeams(1);
 				m_botAction.sendArenaMessage("Go! Go! Go!", 104);
 				m_botAction.sendUnfilteredPublicMessage("*scorereset");
+				lastDeaths.clear();
 				isRunning = true;
 			}
 		};
@@ -505,6 +510,40 @@ public class roboreplacement extends SubspaceBot
         }
         catch (Exception e){}
     }
+    
+    public void setupYPosCheck(int y) {
+    	final int b = y;
+    	TimerTask yCheck = new TimerTask() {
+    		public void run() {
+    			checkYs(b);
+    		}
+    	};
+    	m_botAction.setPlayerPositionUpdating(500);
+    	m_botAction.scheduleTaskAtFixedRate(yCheck, 1000, 1000);
+    }
+    
+    public void checkYs(int y) {
+    	if(!isRunning) return;
+    	
+    	Iterator it = m_botAction.getPlayingPlayerIterator();
+    	
+    	while(it.hasNext()) {
+    		Player p = (Player)it.next();
+    		if((p.getYLocation() / 16) > y) {
+    			if(!lastDeaths.containsKey(new Integer(p.getPlayerID()))) {
+    				lastDeaths.put(new Integer(p.getPlayerID()), new Integer(((int)(System.currentTimeMillis() / 1000 % 30))));
+    			} else {
+	    			int timeLeft = (int)(System.currentTimeMillis() / 1000 % 30) - ((Integer)lastDeaths.get(new Integer(p.getPlayerID()))).intValue();
+	    			if(timeLeft == 15) {
+	    				m_botAction.sendPrivateMessage(p.getPlayerID(), "You have 15 seconds to get to base.");
+	    			} else if(timeLeft <= 0) {
+	    				m_botAction.spec(p.getPlayerID());
+	    				m_botAction.spec(p.getPlayerID());
+	    			}
+	    		}
+	    	}
+	    }
+	 }
 	
 	public void cancel()
 	{
