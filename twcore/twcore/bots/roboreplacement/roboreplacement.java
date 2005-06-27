@@ -242,7 +242,7 @@ public class roboreplacement extends SubspaceBot
 			
 			if(players.size() == 1) //handles the game over when only one person is left
 			{
-				m_botAction.sendArenaMessage(m_botAction.getPlayerName(event.getKillerID()) + " has won!", 5);
+				m_botAction.sendArenaMessage("GAME OVER: Winner " + m_botAction.getPlayerName(event.getKillerID()), 5);
 				handleGameOver(event.getKillerID());
 				m_botAction.toggleLocked();
 				isRunning = false;				
@@ -267,7 +267,7 @@ public class roboreplacement extends SubspaceBot
 		{
 			Iterator i = players.iterator();
 			int pID = ((Integer)i.next()).intValue();
-			m_botAction.sendArenaMessage(m_botAction.getPlayerName(pID) + " has won!", 5);
+			m_botAction.sendArenaMessage("GAME OVER: Winner " + m_botAction.getPlayerName(pID), 5);
 			handleGameOver(pID);
 			m_botAction.toggleLocked();
 			isRunning = false;				
