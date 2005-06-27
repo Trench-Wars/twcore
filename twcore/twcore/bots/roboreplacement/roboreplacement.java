@@ -524,6 +524,7 @@ public class roboreplacement extends SubspaceBot
     
     public void checkYs(int y) {
     	if(!isRunning) return;
+    	if(voting) return;
     	
     	Iterator it = m_botAction.getPlayingPlayerIterator();
     	
