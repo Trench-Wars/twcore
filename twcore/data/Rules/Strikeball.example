@@ -1,7 +1,7 @@
 [General]
 name=Strikeball
 specialaccess=moltenrock
-arena=strikeball
+arena=strikeball,strikeball2
 ship=1
 players=6
 minplayers=4
