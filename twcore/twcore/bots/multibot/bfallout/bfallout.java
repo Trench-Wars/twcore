@@ -3,6 +3,7 @@ package twcore.bots.multibot.bfallout;
 import java.util.*;
 import twcore.core.*;
 import twcore.bots.multibot.*;
+import twcore.misc.multibot.*;
 import twcore.misc.spaceship.*;
 
 public class bfallout extends MultiModule {

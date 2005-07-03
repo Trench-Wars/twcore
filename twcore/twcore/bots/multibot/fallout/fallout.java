@@ -2,6 +2,7 @@ package twcore.bots.multibot.fallout;
 
 import twcore.core.*;
 import twcore.bots.multibot.*;
+import twcore.misc.multibot.*;
 import java.util.*;
 
 public class fallout extends MultiModule {

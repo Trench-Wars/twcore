@@ -3,6 +3,7 @@ package twcore.bots.multibot.starcon;
 import java.util.*;
 import twcore.core.*;
 import twcore.bots.multibot.*;
+import twcore.misc.multibot.*;
 
 public class starcon extends MultiModule {
 

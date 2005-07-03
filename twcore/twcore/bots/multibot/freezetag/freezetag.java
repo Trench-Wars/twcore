@@ -14,6 +14,7 @@ package twcore.bots.multibot.freezetag;
 import java.util.*;
 import twcore.core.*;
 import twcore.bots.multibot.*;
+import twcore.misc.multibot.*;
 
 /**
  * This class is sort of a variant of the zombies module.  It is to be used

@@ -3,6 +3,7 @@ package twcore.bots.multibot;
 import twcore.core.*;
 import java.util.*;
 import java.io.*;
+import twcore.misc.multibot.*;
 
 public class multibot extends SubspaceBot
 {

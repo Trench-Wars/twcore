@@ -3,6 +3,7 @@ package twcore.bots.multibot.remote;
 import twcore.core.*;
 import twcore.bots.multibot.*;
 import java.util.*;
+import twcore.misc.multibot.*;
 
 public class remote extends MultiModule
 {

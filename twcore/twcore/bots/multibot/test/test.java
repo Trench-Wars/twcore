@@ -2,6 +2,7 @@ package twcore.bots.multibot.test;
 
 import twcore.core.*;
 import twcore.bots.multibot.*;
+import twcore.misc.multibot.*;
 import java.util.*;
 
 public class test extends MultiModule
