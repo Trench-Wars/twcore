@@ -1,11 +1,11 @@
 [General]
 name=Strikeball
 specialaccess=moltenrock
-arena=strikeball,strikeball2
+arena=strikeball
 ship=1
 players=6
 minplayers=4
-deaths=10
+deaths=0
 score=-1
 time=20
 rounds=1
@@ -40,7 +40,7 @@ maxcurrping=600
 maxploss=10
 maxslowpackets=5
 maxstandarddeviation=400
-maxnumspikes=10 
+maxnumspikes=10
 lagcheckdelay=60
 
 [Arena]
