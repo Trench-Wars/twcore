@@ -14,6 +14,7 @@ class Command {
     private String      m_methodName;
     private String      m_helpString; //added a help string to be inbuild into the command
     private int         m_messageTypes;
+    private int			m_opLevelReq;
 
     public Command( int messageTypes, Object methodClass, String methodName ){
 
@@ -21,6 +22,7 @@ class Command {
         m_methodClass = methodClass;
         m_messageTypes = messageTypes;
         m_helpString = "";
+        m_opLevelReq = 0;
     }
 
     /**
@@ -40,8 +42,43 @@ class Command {
         m_methodClass = methodClass;
         m_messageTypes = messageTypes;
         m_helpString = helpString;
+        m_opLevelReq = 0;
     }
 
+    /**
+     * Constructor addition of access levels
+     * @param messageTypes    Allowable message types
+     * @param methodClass     The class the method is located in
+     * @param methodName      The name of the method the command is registered to
+     * @param helpString      The message if !help is issued
+     * @param opStatus  The minimum access level needed to use this command
+     */
+    public Command( int messageTypes, Object methodClass, String methodName, int opLevelReq ){
+
+        m_methodName = methodName;
+        m_methodClass = methodClass;
+        m_messageTypes = messageTypes;
+        m_helpString = "";
+        m_opLevelReq = opLevelReq;
+    }
+
+    /**
+     * Constructor addition of access levels (with help string input)
+     * @param messageTypes    Allowable message types
+     * @param methodClass     The class the method is located in
+     * @param methodName      The name of the method the command is registered to
+     * @param helpString      The message if !help is issued
+     * @param opStatus  The minimum access level needed to use this command
+     */
+    public Command( int messageTypes, Object methodClass, String methodName, String helpString, int opLevelReq ){
+        m_methodName = methodName;
+        m_methodClass = methodClass;
+        m_messageTypes = messageTypes;
+        m_helpString = helpString;
+        m_opLevelReq = opLevelReq;
+    }
+    
+    
     //Getter Methods
     public Object getMethodClass(){
 
@@ -60,6 +97,10 @@ class Command {
 
     public String getHelpString(){
         return m_helpString;
+    }
+
+    public int getOpLevelReq(){
+        return m_opLevelReq;
     }
 }
 
@@ -113,6 +154,35 @@ public class CommandInterpreter {
     }
 
     /**
+     * Overloaded constructor with op level required to execute
+     * 
+     * @param trigger the command name
+     * @param messageTypes Different message types like private message or arena message etc
+     * @param methodClass The class to register the command with
+     * @param methodName The method in teh class to register the command with
+     * @param opStatus The help message associated with this command
+     */
+    public void registerCommand( String trigger, int messageTypes, Object methodClass, String methodName, int opLevelReq ){
+        m_allCommandTypes |= messageTypes;
+        m_commands.put( trigger.toLowerCase(), new Command( messageTypes, methodClass, methodName, opLevelReq ) );
+    }
+
+    /**
+     * Overloaded constructor with help message and op level required to execute
+     * 
+     * @param trigger the command name
+     * @param messageTypes Different message types like private message or arena message etc
+     * @param methodClass The class to register the command with
+     * @param methodName The method in teh class to register the command with
+     * @param helpMessage The help message associated with this command
+     */
+    public void registerCommand( String trigger, int messageTypes, Object methodClass, String methodName, String helpMessage, int opLevelReq ){
+        m_allCommandTypes |= messageTypes;
+        m_commands.put( trigger.toLowerCase(), new Command( messageTypes, methodClass, methodName, helpMessage, opLevelReq ) );
+    }
+    
+    
+    /**
      * Registers default command if nothing matches
      * 
      * @param messageType The message type ie arena message or private message etc
@@ -124,8 +194,8 @@ public class CommandInterpreter {
     }
 
     /**
-     * Gets all the helps registred to the command
-     * @return a vector as a collection containing the strings of all the helps for all the commands
+     * Gets all the help messages registered.
+     * @return Vector as a collection containing the strings of all available help msgs
      */
     public Collection getCommandHelps(){
         Vector      helps = new Vector( m_commands.size() );
@@ -137,6 +207,29 @@ public class CommandInterpreter {
             command = (Command)m_commands.get( commandKey );
             if( command != null ){
                 if( !command.getHelpString().equals( "" ) ){
+                    helps.add( command.getHelpString() );
+                }
+            }
+        }
+        
+        helps.trimToSize();
+        return helps;
+    }
+    
+    /**
+     * Gets all the help messages registered available to the provided access level.
+     * @return Vector as a collection containing the strings of all available help msgs (for given access level)
+     */
+    public Collection getCommandHelpsForAccessLevel( int accessLevel ) {
+        Vector      helps = new Vector( m_commands.size() );
+        Iterator    i = m_commands.keySet().iterator();
+        Command     command;
+
+        while( i.hasNext() ){
+            String      commandKey = (String)i.next();
+            command = (Command)m_commands.get( commandKey );
+            if( command != null ){
+                if( !command.getHelpString().equals( "" ) && accessLevel >= command.getOpLevelReq() ){
                     helps.add( command.getHelpString() );
                 }
             }
@@ -211,18 +304,23 @@ public class CommandInterpreter {
 
                 if( messager == null ){
                     messager = "";
+                    // If we can't get the name and the command needs a certain access level, dump
+                    if( command.getOpLevelReq() > 0 )
+                        return false;
                 }
-
-                try {
-                    Object parameters[] = { messager, message };
-                    Object methodClass = command.getMethodClass();
-                    Class parameterTypes[] = { messager.getClass(), message.getClass() };
-
-                    methodClass.getClass().getMethod( command.getMethodName(), parameterTypes ).invoke( methodClass, parameters );
-                    result = true;
-                } catch( Exception e ){
-                    Tools.printStackTrace( e );
-                }
+                
+                if( m_botAction.getOperatorList().getAccessLevel( messager ) >= command.getOpLevelReq() ) {                   
+                    try {
+                        Object parameters[] = { messager, message };
+                        Object methodClass = command.getMethodClass();
+                        Class parameterTypes[] = { messager.getClass(), message.getClass() };
+                        
+                        methodClass.getClass().getMethod( command.getMethodName(), parameterTypes ).invoke( methodClass, parameters );
+                        result = true;
+                    } catch( Exception e ){
+                        Tools.printStackTrace( e );
+                    }
+            	}
             }
         }
 
