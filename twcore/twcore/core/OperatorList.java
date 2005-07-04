@@ -25,7 +25,7 @@ public class OperatorList {
         return m_accessList;
     }
 
-    int getAccessLevel( String name ){
+    public int getAccessLevel( String name ){
         Integer      accessLevel;
         
         if( name == null ){
