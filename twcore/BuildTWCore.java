@@ -14,7 +14,7 @@ import java.util.*;
  */
 public class BuildTWCore {
 
-    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.1.7-bin.jar";
+    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.0.7-bin.jar";
     String binDir = "";  // Location of bin directory
     String bldCmd = "";
     Runtime runtime;
@@ -179,20 +179,19 @@ public class BuildTWCore {
     }
     
         
-    public void recursiveCompile(File f, boolean dig, boolean temp) {
+    public void recursiveCompile(File f, boolean dig, boolean bot) {
         if (f.isDirectory() && !f.getName().endsWith("CVS") ) {
             // compile all the files located in here into temp
             try {
                 System.out.println("Building " + f.getPath());
                 boolean hasContent = createFileList(f, new File("flist.txt"));
                 if (hasContent) {               	
-
-                    	bldCmd = binDir + "javac";
-
-                    if (temp)
+                    bldCmd = binDir + "javac";
+                    
+                    if (!bot)
                         fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
                     else
-                        fullExec(new String[] {bldCmd, "-sourcepath", f.getPath(), "@flist.txt"});
+                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "@flist.txt"});
                 }
             } catch (Exception e) { System.out.println("error... " + e.getMessage()); }
             
@@ -202,8 +201,7 @@ public class BuildTWCore {
             if (dig)
                 for (int i=0; i<flist.length; i++)
                     if (flist[i].isDirectory()) {
-                      if (temp) recursiveCompile(flist[i], true, true);
-                      else recursiveCompile(flist[i], true, false);
+						recursiveCompile(flist[i], true, bot);
                     }
         }
     }    
@@ -227,7 +225,7 @@ public class BuildTWCore {
                 while (i.hasNext()) {
                     s = (String)i.next();
                     if (s.endsWith("/") || s.endsWith("\\")) s = s.substring(0, s.length()-1);
-                    recursiveCompile(new File(s), false, true);
+                    recursiveCompile(new File(s), false, false);
                     doneSomething = true;
                 };
             };
@@ -245,7 +243,6 @@ public class BuildTWCore {
         };
     };
     
-    
     public void buildBots() { 
         File[] botDirs = new File("twcore/bots").listFiles();
         boolean hasContent;
@@ -253,11 +250,13 @@ public class BuildTWCore {
         for (int i=0; i < botDirs.length; i++) {
             if ((bbuildAllBots) || (botList.contains(botDirs[i].getName()))) {
                 try {
+                    
                     hasContent = createFileList(botDirs[i], new File("flist.txt"));
-			if (hasContent) {
-	                    	bldCmd = binDir + "javac";
-                            recursiveCompile(botDirs[i], true, false);
+					if (hasContent) {
+						System.out.println("Building " + botDirs[i].getName());
+						fullExec(new String[] {"javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", botDirs[i].getPath(), "@flist.txt"});
 					}
+					recursiveCompile(botDirs[i], true, true);
                 } catch (Exception e) {
                     System.out.println("Error.... " + e.getMessage());
                 }
