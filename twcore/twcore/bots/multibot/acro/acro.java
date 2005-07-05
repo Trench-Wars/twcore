@@ -2,10 +2,11 @@ package twcore.bots.multibot.acro;
 
 import twcore.core.*;
 import twcore.bots.multibot.*;
+import twcore.misc.multibot.*;
 import java.util.*;
 
 public class acro extends MultiModule{
-    
+
     CommandInterpreter  m_commandInterpreter;
     Random				generator;
     int					gameState = 0;
@@ -19,31 +20,31 @@ public class acro extends MultiModule{
     HashMap				playerScores = new HashMap();
     Vector				phrases;
     int					votes[];
-    
+
     public void init()    {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         generator = new Random();
     }
-    
+
     public void requestEvents(EventRequester events)	{
         events.request(EventRequester.MESSAGE);
     }
-    
+
     public boolean isUnloadable()	{
         return true;
     }
-    
+
     public void registerCommands()	{
         int acceptedMessages;
-        
+
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "doDie" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
-    
+
     public void doStartGame( String name, String message ) {
         if( m_botAction.getOperatorList().isER( name ) ) {
             if( gameState == 0 ) {
@@ -58,12 +59,12 @@ public class acro extends MultiModule{
             }
         }
     }
-    
+
     public void setUpShow() {
         gameState = 1;
         length = Math.abs( generator.nextInt() ) % 2 + 4;
         m_botAction.sendArenaMessage( "Challenge #" + round + " : " + generateAcro( length ) );
-        
+
         TimerTask end = new TimerTask() {
             public void run() {
                 phrases = new Vector();
@@ -86,7 +87,7 @@ public class acro extends MultiModule{
         };
         m_botAction.scheduleTask( end, 46000 );
     }
-    
+
     public void setUpVotes() {
         TimerTask vote = new TimerTask() {
             public void run() {
@@ -122,7 +123,7 @@ public class acro extends MultiModule{
         };
         m_botAction.scheduleTask( vote, 30000 );
     }
-    
+
     public void gameOver() {
         TimerTask game = new TimerTask() {
             public void run() {
@@ -140,7 +141,7 @@ public class acro extends MultiModule{
         };
         m_botAction.scheduleTask( game, 10000 );
     }
-    
+
     public void doCheckPrivate( String name, String message ) {
         if( gameState == 1 ) {
             String pieces[] = message.split( " " );
@@ -161,7 +162,7 @@ public class acro extends MultiModule{
                         m_botAction.sendPrivateMessage( name, "Your answer has been changed." );
                     }
                 } else m_botAction.sendPrivateMessage( name, "You have submitted an invalid acronym" );
-                
+
             } else m_botAction.sendPrivateMessage( name, "You can only use the set letters for the acronym" );
         } else if( gameState == 2 ) {
             int vote = 0;
@@ -170,12 +171,12 @@ public class acro extends MultiModule{
                 try {
                     String cur     = (String)phrases.elementAt( vote - 1);
                     String parts[] = Tools.stringChopper( cur, '%' );
-                    
+
                     if( playerVotes.containsKey( name ) ) {
                         m_botAction.sendPrivateMessage( name, "You have already voted!." );
                         return;
                     }
-                    
+
                     if( !parts[0].toLowerCase().equals( name.toLowerCase() ) ) {
                         votes[vote-1]++;
                         playerVotes.put( name, name );
@@ -188,7 +189,7 @@ public class acro extends MultiModule{
             } else m_botAction.sendPrivateMessage( name, "Please enter a valid vote." );
         }
     }
-    
+
     public String generateAcro( int size ) {
         String acro = "";
         for( int i = 0; i < size; i ++ ) {
@@ -222,14 +223,14 @@ public class acro extends MultiModule{
         }
         curAcro = acro;
         return acro;
-        
+
     }
-    
+
     public void doShowHelp( String name, String message ) {
         if( ! m_botAction.getOperatorList().isER( name ) )
-            m_botAction.privateMessageSpam( name, getPlayerHelpMessage() );        
+            m_botAction.privateMessageSpam( name, getPlayerHelpMessage() );
     }
-    
+
     public String[] getModHelpMessage() {
         String[] help = {
                 "!start - Starts a game of acromania",
@@ -238,9 +239,9 @@ public class acro extends MultiModule{
         };
         return help;
     }
-            
+
     public String[] getPlayerHelpMessage() {
-        String[] help = {       
+        String[] help = {
                 "Rules for Acromania: compose a sentence with the letters provided.",
                 "PM your answers to me before the timer is up!",
                 "Then vote for your favorite answer.  You can't vote for your own!"
@@ -251,5 +252,5 @@ public class acro extends MultiModule{
     public void handleEvent( Message event ) {
         m_commandInterpreter.handleEvent( event );
     }
-    
+
 }
