@@ -43,15 +43,18 @@ public class bship extends MultiModule
 
 	public void init()
 	{
+		m_botAction.setReliableKills(1);
+
 		//Commands
 		m_cmd = new CommandInterpreter(m_botAction);
+		registerCommands();
+
+		//Initial Game Settings
 		hour = 0;
 		night = false;
 		state = IDLE;
 		teams = 2;
 		lockCapShips = false;
-		registerCommands();
-		m_botAction.setReliableKills(1);
 
 		//Start Night Mode
 		m_botAction.scheduleTaskAtFixedRate(timeMode,1000,60000);
@@ -147,8 +150,6 @@ public class bship extends MultiModule
 		 "| -!rules         Rules of the game    |",
 		 "| -!status        What is happening    |",
 		 "+--------------------------------------+"};
-
-
 		m_botAction.privateMessageSpam(name,help);
 	}
 
