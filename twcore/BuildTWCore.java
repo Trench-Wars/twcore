@@ -1,4 +1,4 @@
-/*+
+/*
  * BuildTWCore.java
  *
  * Created on March 14, 2004, 9:48 PM
@@ -7,6 +7,7 @@
 import java.io.*;
 import java.util.*;
 
+
 /**
  *
  * @author  Stefan / Mythrandir
@@ -14,6 +15,8 @@ import java.util.*;
 public class BuildTWCore {
 
     String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.1.7-bin.jar";
+    String binDir = "";  // Location of bin directory
+    String bldCmd = "";
     Runtime runtime;
     
     // flags
@@ -35,8 +38,8 @@ public class BuildTWCore {
         runtime = Runtime.getRuntime();
         botList = new LinkedList();
         miscList = new LinkedList();
-        String currentOS = System.getProperty("os.name").toLowerCase();
-        if (currentOS.startsWith("windows")) extraCP = extraCP.replace(':', ';');
+        currentOS = System.getProperty("os.name").toLowerCase();
+        if (currentOS.startsWith("windows")) extraCP = extraCP.replace(':', ';'); 
         handleArguments(args);
     }
     
@@ -95,8 +98,7 @@ public class BuildTWCore {
     public void fullExec(String s) throws Exception {
         fullExec(new String[] {s});
     }
-    
-    
+
     public boolean createFileList(File dir, File fList) throws Exception {
         boolean isnotempty = false;
         if (fList.exists()) fList.delete();
@@ -110,7 +112,6 @@ public class BuildTWCore {
                 out.println(coreList[i].getPath());
                 isnotempty = true;
             }
-            
         
         out.close();
         
@@ -159,11 +160,14 @@ public class BuildTWCore {
             tempDir.mkdir();
             
             // compile all the files into there
+
             createFileList(new File("twcore/core"), new File("flist.txt"));
-            fullExec(new String[] {"javac", "-sourcepath", "core", "-d", "temp", "@flist.txt"});
+                bldCmd = binDir + "javac";
+            fullExec(new String[] { bldCmd, "-sourcepath", "core", "-d", "temp", "@flist.txt"});
             
             // create the jar
-            fullExec(new String[] {"jar", "cf", "twcore.jar", "-C", "temp", "."});
+                bldCmd = binDir + "jar";
+            fullExec(new String[] { bldCmd, "cf", "twcore.jar", "-C", "temp", "."});
             
             recursiveDelete(tempDir);
             
@@ -174,18 +178,21 @@ public class BuildTWCore {
         System.out.println("Finished building core");
     }
     
-    
-    
+        
     public void recursiveCompile(File f, boolean dig, boolean bot) {
-        if (f.isDirectory()) {
+        if (f.isDirectory() && !f.getName().endsWith("CVS") ) {
             // compile all the files located in here into temp
             try {
                 System.out.println("Building " + f.getPath());
                 boolean hasContent = createFileList(f, new File("flist.txt"));
-                if (hasContent && !bot)
-                    fullExec(new String[] {"javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
-                else if(hasContent && bot)
-                	fullExec(new String[] {"javac", "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "@flist.txt"});
+                if (hasContent) {               	
+                    bldCmd = binDir + "javac";
+                    
+                    if (!bot)
+                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
+                    else
+                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP, "-sourcepath", f.getPath(), "@flist.txt"});
+                }
             } catch (Exception e) { System.out.println("error... " + e.getMessage()); }
             
             
@@ -193,7 +200,9 @@ public class BuildTWCore {
             
             if (dig)
                 for (int i=0; i<flist.length; i++)
-                    if (flist[i].isDirectory()) recursiveCompile(flist[i], true, bot);
+                    if (flist[i].isDirectory()) {
+						recursiveCompile(flist[i], true, bot);
+                    }
         }
     }    
     
@@ -222,17 +231,17 @@ public class BuildTWCore {
             };
 
             // create the jar
-            if (doneSomething)
-                fullExec(new String[] {"jar", "uf", "twcore.jar", "-C", "temp", "."});
-            
+            if (doneSomething) {
+                	bldCmd = binDir + "jar";
+                fullExec(new String[] {bldCmd, "uf", "twcore.jar", "-C", "temp", "."});
+            }
             recursiveDelete(tempDir);
             
         } catch (Exception e) {
-            System.out.println("Couldn't build core: " + e.getMessage());
+            System.out.println("Couldn't build misc: " + e.getMessage());
             e.printStackTrace();
         };
     };
-    
     
     public void buildBots() { 
         File[] botDirs = new File("twcore/bots").listFiles();
@@ -271,17 +280,6 @@ public class BuildTWCore {
             System.out.println("deleting *.class in /");
             recursiveDeleteClass(new File("."));
 
-            /*
-            File[] botDirs = new File("bots").listFiles();
-            File[] botFiles;
-            int j;
-            for (int i=0; i < botDirs.length; i++) {
-                botFiles = botDirs[i].listFiles();
-                for (j=0; j < botFiles.length; j++)
-                    if (botFiles[j].getName().endsWith(".class")) botFiles[j].delete();
-            }
-             */
-            
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -310,3 +308,4 @@ public class BuildTWCore {
     }
     
 }
+
