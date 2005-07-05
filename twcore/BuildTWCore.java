@@ -14,7 +14,7 @@ import java.util.*;
  */
 public class BuildTWCore {
 
-    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.0.7-bin.jar";
+    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/mysql-connector-java-3.1.7-bin.jar";
     String binDir = "";  // Location of bin directory
     String bldCmd = "";
     Runtime runtime;
