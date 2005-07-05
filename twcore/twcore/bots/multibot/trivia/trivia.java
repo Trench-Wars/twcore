@@ -58,6 +58,20 @@ public class trivia extends MultiModule {
         getTopTen();
         registerCommands();
         m_rnd = new Random();
+        BotSettings m_botSettings = m_botAction.getBotSettings();
+        m_botAction.sendUnfilteredPublicMessage( "?chat=trivia" );
+        
+        //Gets variables from .cfg
+        m_timeQuestion =  m_botSettings.getInt("QuestionTime");
+        m_timeHint        =  m_botSettings.getInt("HintTime");
+        m_timeAnswer   =  m_botSettings.getInt("AnswerTime"); //cumulative w/hint
+        m_timeNext       =  m_botSettings.getInt("NextTime");   //Till next question
+        m_timePer1     =  m_botSettings.getInt("Periodic1");
+        m_timePer2     =  m_botSettings.getInt("Periodic2");
+        toWin           =  m_botSettings.getInt("ToWin");
+        String access[] =  m_botSettings.getString("SpecialAccess").split( ":" );
+        for( int i = 0; i < access.length; i++ ) 
+            accessList.put( access[i], access[i] );
     }
     
     public void requestEvents(EventRequester events)	{
@@ -450,25 +464,6 @@ public class trivia extends MultiModule {
                 fragment = fragment + " ";
         }
         return fragment;
-    }
-    
-    public void handleEvent( LoggedOn event ){
-        BotSettings m_botSettings = m_botAction.getBotSettings();
-        String initialArena = m_botSettings.getString( "Arena" );
-        m_botAction.joinArena( initialArena );
-        m_botAction.sendUnfilteredPublicMessage( "?chat=trivia" );
-        
-        //Gets variables from .cfg
-        m_timeQuestion =  m_botSettings.getInt("QuestionTime");
-        m_timeHint        =  m_botSettings.getInt("HintTime");
-        m_timeAnswer   =  m_botSettings.getInt("AnswerTime"); //cumulative w/hint
-        m_timeNext       =  m_botSettings.getInt("NextTime");   //Till next question
-        m_timePer1     =  m_botSettings.getInt("Periodic1");
-        m_timePer2     =  m_botSettings.getInt("Periodic2");
-        toWin           =  m_botSettings.getInt("ToWin");
-        String access[] =  m_botSettings.getString("SpecialAccess").split( ":" );
-        for( int i = 0; i < access.length; i++ ) 
-            accessList.put( access[i], access[i] );
     }
     
     public void handleEvent( Message event ){
