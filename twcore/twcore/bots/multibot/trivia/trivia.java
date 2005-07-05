@@ -58,7 +58,7 @@ public class trivia extends MultiModule {
         getTopTen();
         registerCommands();
         m_rnd = new Random();
-        BotSettings m_botSettings = m_botAction.getBotSettings();
+        BotSettings m_botSettings = moduleSettings;
         m_botAction.sendUnfilteredPublicMessage( "?chat=trivia" );
         
         //Gets variables from .cfg
