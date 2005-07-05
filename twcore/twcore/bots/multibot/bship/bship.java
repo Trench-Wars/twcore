@@ -41,39 +41,22 @@ public class bship extends MultiModule
 	/*			  Setup				*/
 	/********************************/
 
-	/**
-	 * Constructor: Creates a new bshipbot
-	 */
-	public bship()
+	public void init()
 	{
-		//Default Values for Settings
+		//Commands
+		m_cmd = new CommandInterpreter(m_botAction);
 		hour = 0;
 		night = false;
 		state = IDLE;
 		teams = 2;
 		lockCapShips = false;
-	}
-
-	public void init()
-	{
-		//Commands
-		m_cmd = new CommandInterpreter(m_botAction);
 		registerCommands();
-	}
-
-	/**
-	 * Event: LoggedOn
-	 * Joins the Battleship arena, sets reliable kills
-	 */
-	public void handleEvent(LoggedOn event)
-	{
-		String initialArena = m_botAction.getBotSettings().getString("InitialArena");
-		m_botAction.joinArena(initialArena);
 		m_botAction.setReliableKills(1);
 
 		//Start Night Mode
 		m_botAction.scheduleTaskAtFixedRate(timeMode,1000,60000);
 	}
+
 
 	public boolean isUnloadable()
 	{
