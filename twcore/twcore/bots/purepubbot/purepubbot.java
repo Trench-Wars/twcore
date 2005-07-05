@@ -18,7 +18,7 @@ public class purepubbot extends SubspaceBot
     private HashSet freq0List;
     private HashSet freq1List;
     private HashMap playerTimes;
-    private LinkedList MVPs;
+    private HashSet MVPs;
     private boolean started;
     private boolean privFreqs;
     private boolean flagTimeStarted;
@@ -54,7 +54,7 @@ public class purepubbot extends SubspaceBot
         freq0List = new HashSet();
         freq1List = new HashSet();
         playerTimes = new HashMap();
-        MVPs = new LinkedList();
+        MVPs = new HashSet();
         started = false;
         privFreqs = true;
         flagTimeStarted = false;
@@ -904,8 +904,10 @@ public class purepubbot extends SubspaceBot
         } catch(Exception e) {
         }        
         
+        HashSet teamLeaders = flagTimer.getTopClaimers(); 
         Iterator i = MVPs.iterator();
-        String name, MVplayers = ""; 
+        Iterator j = teamLeaders.iterator();
+        String name, MVplayers = "", leaders = ""; 
         
         if( i.hasNext() ) {
             switch( special ) {
@@ -940,11 +942,19 @@ public class purepubbot extends SubspaceBot
         while( i.hasNext() ) {
             name = (String)i.next();
             MVplayers = MVplayers + ", " + name;
-        }        
+        }
+        while( j.hasNext() ) {
+            name = (String)j.next();
+            if( MVPs.contains( name ) )
+                leaders = name + " ";
+        }
+        
+        if( leaders != "" )
+            m_botAction.sendArenaMessage( "Team Leaders: " + leaders );
         if( MVplayers != "" )
             m_botAction.sendArenaMessage( "MVPs: " + MVplayers );
         
-        MVPs = new LinkedList();
+        MVPs = new HashSet();
         
         try {
             flagTimer.endGame();
@@ -1099,6 +1109,7 @@ public class purepubbot extends SubspaceBot
         int secondsHeld, totalSecs, claimSecs, preTimeCount;
         int claimerID;
         boolean isStarted, isRunning, isBeingClaimed;
+        HashMap flagClaims;
         
         /**
          * FlagCountTask Constructor
@@ -1111,6 +1122,7 @@ public class purepubbot extends SubspaceBot
             isStarted = false;
             isRunning = false;
             isBeingClaimed = false;
+            flagClaims = new HashMap();
         }
         
         /**
@@ -1152,10 +1164,13 @@ public class purepubbot extends SubspaceBot
             
             int remain = (flagMinutesRequired * 60) - secondsHeld; 
             
-            if( remain < 60 ) {
-                Player p = m_botAction.getPlayer( claimerID );
 
-                if( p != null ) {
+            Player p = m_botAction.getPlayer( claimerID );
+            if( p != null ) {                
+                
+                addFlagClaim( p.getPlayerName() );
+
+                if( remain < 60 ) {
                     if( remain < 4 )
                         m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 7 );
                     else if( remain < 11 )
@@ -1171,7 +1186,59 @@ public class purepubbot extends SubspaceBot
             
             isBeingClaimed = false;
             flagClaimingFreq = -1;
-            secondsHeld = 0;                          
+            secondsHeld = 0;
+            
+        }
+        
+        /**
+         * Increments a count for player claiming the flag.
+         * @param name Name of player.
+         */
+        public void addFlagClaim( String name ) {
+            Integer count = (Integer)flagClaims.get( name );
+            if( count == null ) {
+                flagClaims.put( name, new Integer(1) );
+            } else {
+                flagClaims.remove( name );
+                flagClaims.put( name, new Integer( count.intValue() + 1) );
+            }
+        }
+        
+        /**
+         * Gives the names of the top flag claimers.
+         * @return A HashSet containing all players who claimed the flag the largest number of times.  
+         */
+        public HashSet getTopClaimers() {
+            HashSet topClaimers = new HashSet();
+
+            try {
+                Set claimers = flagClaims.keySet();
+                Collection claims = flagClaims.values();            
+                Iterator i;
+                Integer highClaim = new Integer(1);
+                Integer dummyClaim;
+                String dummyPlayer;
+                
+                i = claims.iterator();
+                
+                while( i.hasNext() ) {
+                    dummyClaim = (Integer)i.next();
+                    if( dummyClaim.intValue() > highClaim.intValue() )
+                        highClaim = dummyClaim;
+                }
+                
+                i = claimers.iterator();
+                while( i.hasNext() ) {
+                    dummyPlayer = (String)i.next();
+                    if( ((Integer)flagClaims.get( dummyPlayer )).intValue() == highClaim.intValue() ) {
+                        topClaimers.add( dummyPlayer );
+                    }
+                }
+                
+            } catch ( Exception e ) {                
+            }
+        
+            return topClaimers;
         }
 
         /**
