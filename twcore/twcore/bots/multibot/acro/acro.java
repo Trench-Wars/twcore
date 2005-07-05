@@ -40,6 +40,7 @@ public class acro extends MultiModule{
 
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
+        m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "doStopGame" );
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "doDie" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
@@ -59,6 +60,14 @@ public class acro extends MultiModule{
             }
         }
     }
+    
+    public void doStopGame(String name, String message) {
+		if(m_botAction.getOperatorList().isER( name )) {
+			m_botAction.cancelTasks();
+			gameState = 0;
+			m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
+		}
+	}
 
     public void setUpShow() {
         gameState = 1;
