@@ -1247,8 +1247,10 @@ public class purepubbot extends SubspaceBot
                     dummyPlayer = (String)i.next();
                     dummyClaim = (Integer)flagClaims.get( dummyPlayer );
                     if( dummyClaim != null ) {
-                        if( dummyClaim.intValue() > highClaim.intValue() )
+                        if( dummyClaim.intValue() > highClaim.intValue() ) {
                             leader = dummyPlayer;
+                            highClaim = dummyClaim;
+                        }
                     }
                 }                
                 return leader;
