@@ -42,7 +42,7 @@ public class enigma extends MultiModule {
     public void init() {
         
         m_commandInterpreter = new CommandInterpreter( m_botAction );
-        m_botSettings = m_botAction.getBotSettings();
+        m_botSettings = moduleSettings;
         
         registerCommands();
         
