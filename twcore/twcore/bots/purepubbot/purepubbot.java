@@ -245,7 +245,7 @@ public class purepubbot extends SubspaceBot
         Player p = m_botAction.getPlayer(playerID);
         
         try {
-            if( p != null ) {
+            if( p != null && flagTimer != null ) {
                 flagTimer.flagClaimed( p.getFrequency(), playerID );
             }
         } catch (Exception e) {
@@ -402,8 +402,11 @@ public class purepubbot extends SubspaceBot
      */
     public void doTimeCmd( String sender )
     {   
-        if( flagTimer != null && flagTimeStarted )
-            flagTimer.sendTimeRemaining( sender );
+        if( flagTimeStarted )
+            if( flagTimer != null )
+                flagTimer.sendTimeRemaining( sender );
+            else
+                throw new RuntimeException( "Flag time mode is just about to start." );                
         else
             throw new RuntimeException( "Flag time mode is not currently running." );
     }
@@ -771,7 +774,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage( "OBJECT: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win a round.  Best 3 of 5." );
         int roundNum = freq0Score + freq1Score + 1;
         
-        m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "Round" + roundNum) + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
+        m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "Round " + roundNum) + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
 
         try {
             startTimer.cancel();
@@ -820,12 +823,12 @@ public class purepubbot extends SubspaceBot
                 freq1Score = 0;
             } else {
                 int roundNum = freq0Score + freq1Score;
-                m_botAction.sendArenaMessage( "END OF ROUND " + roundNum + ":  Freq " + flagholdingFreq + " wins after " + getTimeString( flagTimer.getTotalSecs() ) +
+                m_botAction.sendArenaMessage( "END OF ROUND " + roundNum + ": Freq " + flagholdingFreq + " wins after " + getTimeString( flagTimer.getTotalSecs() ) +
                                               " (" + weight + " bounty bonus)  Score: " + freq0Score + " - " + freq1Score, 1 );                                                
             }
                 
         } else {
-            m_botAction.sendArenaMessage( "END ROUND:  Freq " + flagholdingFreq + " wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + "(" + weight + " bounty bonus)", 1 );
+            m_botAction.sendArenaMessage( "END ROUND: Freq " + flagholdingFreq + " wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + "(" + weight + " bounty bonus)", 1 );
             
         }
         
@@ -1275,9 +1278,9 @@ public class purepubbot extends SubspaceBot
             int roundNum = freq0Score + freq1Score + 1;
 
             if( isRunning == false ) {
-                return "We are currently in between games (round " + roundNum + " starting soon).";
+                return "We are currently in between games (round " + roundNum + " starting soon).  Score: " + freq0Score + " - " + freq1Score;
             }
-            return "ROUND " + roundNum + ": " + (flagHoldingFreq == -1 ? "Nobody" : "Freq " + flagHoldingFreq ) + " has held for " + getTimeString(secondsHeld) + " & needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more.  [Total time: " + getTimeString( totalSecs ) + "]";        
+            return "ROUND " + roundNum + ": " + (flagHoldingFreq == -1 ? "Nobody" : "Freq " + flagHoldingFreq ) + " has held for " + getTimeString(secondsHeld) + " & needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more.  [Total time: " + getTimeString( totalSecs ) + "]  Score: " + freq0Score + " - " + freq1Score;        
         }
         
         /**
@@ -1304,7 +1307,7 @@ public class purepubbot extends SubspaceBot
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
-                    m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "ROUND" + roundNum) + " START!  Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win.", 1 );
+                    m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "ROUND " + roundNum) + " START!  Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win.", 1 );
                     m_botAction.resetFlagGame();
                     setupPlayerTimes();
                     warpPlayers();
