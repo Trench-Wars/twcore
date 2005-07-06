@@ -790,74 +790,74 @@ public class purepubbot extends SubspaceBot
      * After, sets up an intermission, followed by a new round.
      */
     private void doEndRound( ) {
-        if( !flagTimeStarted )
+        if( !flagTimeStarted || flagTimer == null )
             return;
        
-        int secs = flagTimer.getTotalSecs();
-        int mins = secs / 60;
-        int weight = ((int)(secs * 3 ) / 60);
-        
-        // Incremental bounty bonuses
-        if( mins >= 90 )
-            weight += 150;
-        else if( mins >= 60 )
-            weight += 100;
-        else if( mins >= 30 )
-            weight += 45;
-        else if( mins >= 15 )
-            weight += 20;
-        
-
-        int flagholdingFreq = flagTimer.getHoldingFreq();
-        
-        if( flagholdingFreq == 0 || flagholdingFreq == 1 ) {
-            if( flagholdingFreq == 0 )
-                freq0Score++;
-            else
-                freq1Score++;
-            
-            if( freq0Score > 2 || freq1Score > 2) {
-                m_botAction.sendArenaMessage( "END GAME!  Freq " + flagholdingFreq + " has won after " + getTimeString( flagTimer.getTotalSecs() ) +
-                                              " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );                                
-                freq0Score = 0;
-                freq1Score = 0;
-            } else {
-                int roundNum = freq0Score + freq1Score;
-                m_botAction.sendArenaMessage( "END OF ROUND " + roundNum + ": Freq " + flagholdingFreq + " wins after " + getTimeString( flagTimer.getTotalSecs() ) +
-                                              " (" + weight + " bounty bonus)  Score: " + freq0Score + " - " + freq1Score, 1 );                                                
-            }
-                
-        } else {
-            m_botAction.sendArenaMessage( "END ROUND: Freq " + flagholdingFreq + " wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + "(" + weight + " bounty bonus)", 1 );
-            
-        }
-        
-    	int special = 0;
-    	// Special prizes for long battles (add more if you think of any!)
-        if( mins > 12 ) {
-            Random r = new Random();
-        	int chance = r.nextInt(100);
-        
-        	if( chance == 99 ) {
-        	    special = 8;
-        	} else if( chance >= 97 ) {
-        	    special = 7;
-        	} else if( chance >= 94 ) {
-        	    special = 6;
-        	} else if( chance >= 90 ) {
-        	    special = 5;
-        	} else if( chance >= 80 ) {
-        		special = 4;
-        	} else if( chance >= 70 ) {
-        	    special = 3;
-        	} else if( chance >= 60 ) {
-        	    special = 2;        	    
-        	} else if( chance > 20 ) {
-        	    special = 1;
-        	}
-        }
-        
         try {
+            int secs = flagTimer.getTotalSecs();
+            int mins = secs / 60;
+            int weight = ((int)(secs * 3 ) / 60);
+            
+            // Incremental bounty bonuses
+            if( mins >= 90 )
+                weight += 150;
+            else if( mins >= 60 )
+                weight += 100;
+            else if( mins >= 30 )
+                weight += 45;
+            else if( mins >= 15 )
+                weight += 20;
+            
+            
+            int flagholdingFreq = flagTimer.getHoldingFreq();
+            
+            if( flagholdingFreq == 0 || flagholdingFreq == 1 ) {
+                if( flagholdingFreq == 0 )
+                    freq0Score++;
+                else
+                    freq1Score++;
+                
+                if( freq0Score > 2 || freq1Score > 2) {
+                    m_botAction.sendArenaMessage( "END GAME!  Freq " + flagholdingFreq + " has won after " + getTimeString( flagTimer.getTotalSecs() ) +
+                            " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );                                
+                    freq0Score = 0;
+                    freq1Score = 0;
+                } else {
+                    int roundNum = freq0Score + freq1Score;
+                    m_botAction.sendArenaMessage( "END OF ROUND " + roundNum + ": Freq " + flagholdingFreq + " wins after " + getTimeString( flagTimer.getTotalSecs() ) +
+                            " (" + weight + " bounty bonus)  Score: " + freq0Score + " - " + freq1Score, 1 );                                                
+                }
+                
+            } else {
+                m_botAction.sendArenaMessage( "END ROUND: Freq " + flagholdingFreq + " wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + "(" + weight + " bounty bonus)", 1 );
+                
+            }
+            
+            int special = 0;
+            // Special prizes for long battles (add more if you think of any!)
+            if( mins > 12 ) {
+                Random r = new Random();
+                int chance = r.nextInt(100);
+                
+                if( chance == 99 ) {
+                    special = 8;
+                } else if( chance >= 97 ) {
+                    special = 7;
+                } else if( chance >= 94 ) {
+                    special = 6;
+                } else if( chance >= 90 ) {
+                    special = 5;
+                } else if( chance >= 80 ) {
+                    special = 4;
+                } else if( chance >= 70 ) {
+                    special = 3;
+                } else if( chance >= 60 ) {
+                    special = 2;        	    
+                } else if( chance > 20 ) {
+                    special = 1;
+                }
+            }
+            
             Iterator iterator = m_botAction.getPlayingPlayerIterator();
             Player player;
             while(iterator.hasNext()) {
@@ -865,12 +865,12 @@ public class purepubbot extends SubspaceBot
                 if( player != null ) {
                     if(player.getFrequency() == flagholdingFreq ) {
                         String playerName = player.getPlayerName();
-
+                        
                         Integer i = (Integer)playerTimes.get( playerName );
-
+                        
                         if( i != null ) {
                             // Calculate amount of time actually spent on freq 
-                                                       
+                            
                             int timeOnFreq = secs - i.intValue();
                             int percentOnFreq = (int)( ( (float)timeOnFreq / (float)secs ) * 100 );
                             int modbounty = (int)(weight * ((float)percentOnFreq / 100));
@@ -882,11 +882,11 @@ public class purepubbot extends SubspaceBot
                                     m_botAction.sendPrivateMessage( playerName, "You also receive an additional " + weight + " bounty as a special prize!" );
                                     modbounty *= 2;
                                 }
-
+                                
                             } else {
                                 m_botAction.sendPrivateMessage( playerName, "You were with the same freq and ship for the last " + getTimeString(timeOnFreq) + ", and receive " + percentOnFreq  + "% of the bounty reward: " + modbounty );                                
                             }
-                                                                
+                            
                             m_botAction.sendUnfilteredPrivateMessage(player.getPlayerID(), "*prize " + modbounty);
                         }
                         
@@ -930,53 +930,55 @@ public class purepubbot extends SubspaceBot
                     }
                 }
             }
-        } catch(Exception e) {
-        }        
-        
-        String leader = flagTimer.getTeamLeader( MVPs ); 
-        Iterator i = MVPs.iterator();
-        String name, MVplayers = "";
-        MVPs.remove( leader );
-        
-        if( i.hasNext() ) {
-            switch( special ) {
-            case 1:  // "Refreshments" -- replenishes all essentials + gives anti
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Refreshments!" );
-        	    break;
-            case 2:  // "Full shrap"
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Full shrap!" );
-                break;
-            case 3:  // "Trophy" -- decoy given
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Life-size Trophies of Themselves!" );
-                break;
-            case 4:  // "Double bounty reward"
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Double Bounty Bonus!  (MVP bounty: " + weight * 2 + ")" );
-                break;
-            case 5:  // "Triple trophy" -- 3 decoys
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: The Triple Platinum Trophy!" );
-                break;                
-            case 6:  // "Techno Dance Party" -- plays victory music :P
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Ultimate Techno Dance Party!", 102);
-                break;                
-            case 7:  // "Sore Loser's Revenge" -- engine shutdown!
-                m_botAction.sendArenaMessage( "PRIZE for MVPs: Sore Loser's REVENGE!" );
-                break;                
-            case 8:  // "Bodyguard" -- shields
-        	    m_botAction.sendArenaMessage( "PRIZE for MVPs: Personal Body-Guard!" );
-                break;                
+            
+            String leader = flagTimer.getTeamLeader( MVPs ); 
+            Iterator i = MVPs.iterator();
+            String name, MVplayers = "";
+            MVPs.remove( leader );
+            
+            if( i.hasNext() ) {
+                switch( special ) {
+                case 1:  // "Refreshments" -- replenishes all essentials + gives anti
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Refreshments!" );
+                    break;
+                case 2:  // "Full shrap"
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Full shrap!" );
+                    break;
+                case 3:  // "Trophy" -- decoy given
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Life-size Trophies of Themselves!" );
+                    break;
+                case 4:  // "Double bounty reward"
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Double Bounty Bonus!  (MVP bounty: " + weight * 2 + ")" );
+                    break;
+                case 5:  // "Triple trophy" -- 3 decoys
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: The Triple Platinum Trophy!" );
+                    break;                
+                case 6:  // "Techno Dance Party" -- plays victory music :P
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Ultimate Techno Dance Party!", 102);
+                    break;                
+                case 7:  // "Sore Loser's Revenge" -- engine shutdown!
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Sore Loser's REVENGE!" );
+                    break;                
+                case 8:  // "Bodyguard" -- shields
+                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Personal Body-Guard!" );
+                    break;                
+                }
+                
+                MVplayers = (String)i.next();
+            }        
+            while( i.hasNext() ) {
+                name = (String)i.next();
+                MVplayers = MVplayers + ", " + name;
             }
             
-            MVplayers = (String)i.next();
+            if( leader != "" )
+                m_botAction.sendArenaMessage( "The Team Leader was " + leader + "!");
+            if( MVplayers != "" )
+                m_botAction.sendArenaMessage( "MVPs: " + MVplayers );
+
+        } catch(Exception e) {
+            Tools.printStackTrace( e );
         }        
-        while( i.hasNext() ) {
-            name = (String)i.next();
-            MVplayers = MVplayers + ", " + name;
-        }
-        
-        if( leader != "" )
-            m_botAction.sendArenaMessage( "The Team Leader was " + leader + "!");
-        if( MVplayers != "" )
-            m_botAction.sendArenaMessage( "MVPs: " + MVplayers );
         
         MVPs = new HashSet();
         
@@ -985,6 +987,7 @@ public class purepubbot extends SubspaceBot
             flagTimer.cancel();
             intermissionTimer.cancel();
         } catch (Exception e ) {
+            Tools.printStackTrace( e );
         }       
                
         intermissionTimer = new IntermissionTask();
@@ -1234,19 +1237,28 @@ public class purepubbot extends SubspaceBot
          * @return A HashSet containing all players who claimed the flag the largest number of times.  
          */
         public String getTeamLeader( HashSet MVPs ) {
-            Iterator i = MVPs.iterator();
-            Integer dummyClaim, highClaim = new Integer(0);
-            String leader = "", dummyPlayer;
-            
-            while( i.hasNext() ) {
-                dummyPlayer = (String)i.next();
-                dummyClaim = (Integer)flagClaims.get( dummyPlayer );
-                if( dummyClaim != null ) {
-                    if( dummyClaim.intValue() > highClaim.intValue() )
-                        leader = dummyPlayer;
-                }
+            if( MVPs == null )
+                return ""; 
+            try {
+                Iterator i = MVPs.iterator();
+                Integer dummyClaim, highClaim = new Integer(0);
+                String leader = "", dummyPlayer;
+                
+                while( i.hasNext() ) {
+                    dummyPlayer = (String)i.next();
+                    dummyClaim = (Integer)flagClaims.get( dummyPlayer );
+                    if( dummyClaim != null ) {
+                        if( dummyClaim.intValue() > highClaim.intValue() )
+                            leader = dummyPlayer;
+                    }
+                }                
+                return leader;
+
+            } catch (Exception e ) {
+                Tools.printStackTrace( e );
+                return "";
             }
-            return leader;
+            
         }
 
         /**
