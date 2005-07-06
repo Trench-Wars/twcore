@@ -932,9 +932,9 @@ public class purepubbot extends SubspaceBot
             }
             
             String leader = flagTimer.getTeamLeader( MVPs ); 
-            Iterator i = MVPs.iterator();
             String name, MVplayers = "";
             MVPs.remove( leader );
+            Iterator i = MVPs.iterator();
             
             if( i.hasNext() ) {
                 switch( special ) {
@@ -987,7 +987,6 @@ public class purepubbot extends SubspaceBot
             flagTimer.cancel();
             intermissionTimer.cancel();
         } catch (Exception e ) {
-            Tools.printStackTrace( e );
         }       
                
         intermissionTimer = new IntermissionTask();
