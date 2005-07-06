@@ -40,7 +40,7 @@ public class gravbomber extends MultiModule {
 
     /* Initialization Code */
     public void init() {
-        m_botSettings = m_botAction.getBotSettings();
+        m_botSettings = moduleSettings;
         m_opList = m_botAction.getOperatorList();
         setupWeapons();
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat Name" ) + ",spamchat" );
