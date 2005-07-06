@@ -25,7 +25,8 @@ public class purepubbot extends SubspaceBot
     private FlagCountTask flagTimer;
     private StartRoundTask startTimer;
     private IntermissionTask intermissionTimer;
-    private int flagMinutesRequired; 
+    private int flagMinutesRequired;
+    private int freq0Score, freq1Score;
     
     boolean initLogin = true;
     
@@ -362,9 +363,11 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage( "Flag Time mode has been enabled." );
         
         m_botAction.sendArenaMessage( "OBJECT: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win." );
-        m_botAction.sendArenaMessage( "Next round begins in 60 seconds.  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
+        m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
         
         flagTimeStarted = true;
+        freq0Score = 0;
+        freq1Score = 0;
         m_botAction.scheduleTask( new StartRoundTask(), 60000 );
     }
     
@@ -765,8 +768,10 @@ public class purepubbot extends SubspaceBot
         if(!flagTimeStarted)
             return;
         
-        m_botAction.sendArenaMessage( "OBJECT: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win." );
-        m_botAction.sendArenaMessage( "Next round in " + getTimeString( INTERMISSION_SECS ) + ".  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
+        m_botAction.sendArenaMessage( "OBJECT: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win a round.  Best 3 of 5." );
+        int roundNum = freq0Score + freq1Score + 1;
+        
+        m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "Round" + roundNum) + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
 
         try {
             startTimer.cancel();
@@ -801,11 +806,32 @@ public class purepubbot extends SubspaceBot
         
 
         int flagholdingFreq = flagTimer.getHoldingFreq();
-        m_botAction.sendArenaMessage( "END ROUND:  Freq " + flagholdingFreq + " has won after " + getTimeString( flagTimer.getTotalSecs() ) + "!  Bounty bonus: " + weight, 1 );
+        
+        if( flagholdingFreq == 0 || flagholdingFreq == 1 ) {
+            if( flagholdingFreq == 0 )
+                freq0Score++;
+            else
+                freq1Score++;
+            
+            if( freq0Score > 2 || freq1Score > 2) {
+                m_botAction.sendArenaMessage( "END GAME!  Freq " + flagholdingFreq + " has won after " + getTimeString( flagTimer.getTotalSecs() ) +
+                                              " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );                                
+                freq0Score = 0;
+                freq1Score = 0;
+            } else {
+                int roundNum = freq0Score + freq1Score;
+                m_botAction.sendArenaMessage( "END OF ROUND " + roundNum + ":  Freq " + flagholdingFreq + " wins after " + getTimeString( flagTimer.getTotalSecs() ) +
+                                              " (" + weight + " bounty bonus)  Score: " + freq0Score + " - " + freq1Score, 1 );                                                
+            }
+                
+        } else {
+            m_botAction.sendArenaMessage( "END ROUND:  Freq " + flagholdingFreq + " wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + "(" + weight + " bounty bonus)", 1 );
+            
+        }
         
     	int special = 0;
     	// Special prizes for long battles (add more if you think of any!)
-        if( mins > 15 ) {
+        if( mins > 12 ) {
             Random r = new Random();
         	int chance = r.nextInt(100);
         
@@ -904,10 +930,10 @@ public class purepubbot extends SubspaceBot
         } catch(Exception e) {
         }        
         
-        HashSet teamLeaders = flagTimer.getTopClaimers(); 
+        String leader = flagTimer.getTeamLeader( MVPs ); 
         Iterator i = MVPs.iterator();
-        Iterator j = teamLeaders.iterator();
-        String name, MVplayers = "", leaders = ""; 
+        String name, MVplayers = "";
+        MVPs.remove( leader );
         
         if( i.hasNext() ) {
             switch( special ) {
@@ -943,14 +969,9 @@ public class purepubbot extends SubspaceBot
             name = (String)i.next();
             MVplayers = MVplayers + ", " + name;
         }
-        while( j.hasNext() ) {
-            name = (String)j.next();
-            if( MVPs.contains( name ) )
-                leaders = name + " ";
-        }
         
-        if( leaders != "" )
-            m_botAction.sendArenaMessage( "Team Leaders: " + leaders );
+        if( leader != "" )
+            m_botAction.sendArenaMessage( "The Team Leader was " + leader + "!");
         if( MVplayers != "" )
             m_botAction.sendArenaMessage( "MVPs: " + MVplayers );
         
@@ -1174,7 +1195,7 @@ public class purepubbot extends SubspaceBot
                     if( remain < 4 )
                         m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 7 );
                     else if( remain < 11 )
-                        m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!" );
+                        m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with just " + remain + " seconds left!" );
                     else if( remain < 25 )
                         m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with " + remain + " seconds left!" );
                     else
@@ -1205,40 +1226,24 @@ public class purepubbot extends SubspaceBot
         }
         
         /**
-         * Gives the names of the top flag claimers.
+         * Gives the name of the top flag claimers out of the MVPs.  If there is a tie, does not
+         * care because it doesn't matter all that much and it's only bragging rights anyway. :P
          * @return A HashSet containing all players who claimed the flag the largest number of times.  
          */
-        public HashSet getTopClaimers() {
-            HashSet topClaimers = new HashSet();
-
-            try {
-                Set claimers = flagClaims.keySet();
-                Collection claims = flagClaims.values();            
-                Iterator i;
-                Integer highClaim = new Integer(1);
-                Integer dummyClaim;
-                String dummyPlayer;
-                
-                i = claims.iterator();
-                
-                while( i.hasNext() ) {
-                    dummyClaim = (Integer)i.next();
+        public String getTeamLeader( HashSet MVPs ) {
+            Iterator i = MVPs.iterator();
+            Integer dummyClaim, highClaim = new Integer(0);
+            String leader = "", dummyPlayer;
+            
+            while( i.hasNext() ) {
+                dummyPlayer = (String)i.next();
+                dummyClaim = (Integer)flagClaims.get( dummyPlayer );
+                if( dummyClaim != null ) {
                     if( dummyClaim.intValue() > highClaim.intValue() )
-                        highClaim = dummyClaim;
+                        leader = dummyPlayer;
                 }
-                
-                i = claimers.iterator();
-                while( i.hasNext() ) {
-                    dummyPlayer = (String)i.next();
-                    if( ((Integer)flagClaims.get( dummyPlayer )).intValue() == highClaim.intValue() ) {
-                        topClaimers.add( dummyPlayer );
-                    }
-                }
-                
-            } catch ( Exception e ) {                
             }
-        
-            return topClaimers;
+            return leader;
         }
 
         /**
@@ -1267,9 +1272,12 @@ public class purepubbot extends SubspaceBot
          * @return Time-based status of game
          */
         public String getTimeInfo() {
-            if( isRunning == false )
-                return "We are currently in between games.";
-            return (flagHoldingFreq == -1 ? "Nobody" : "Freq " + flagHoldingFreq ) + " has held for " + getTimeString(secondsHeld) + " and needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more to win.  [Total time: " + getTimeString( totalSecs ) + "]";        
+            int roundNum = freq0Score + freq1Score + 1;
+
+            if( isRunning == false ) {
+                return "We are currently in between games (round " + roundNum + " starting soon).";
+            }
+            return "ROUND " + roundNum + ": " + (flagHoldingFreq == -1 ? "Nobody" : "Freq " + flagHoldingFreq ) + " has held for " + getTimeString(secondsHeld) + " & needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more.  [Total time: " + getTimeString( totalSecs ) + "]";        
         }
         
         /**
@@ -1288,14 +1296,15 @@ public class purepubbot extends SubspaceBot
                
         public void run() {        
             if( isStarted == false ) {
+                int roundNum = freq0Score + freq1Score + 1;
                 if( preTimeCount == 0 )
-                    m_botAction.sendArenaMessage( "Round begins in 10 seconds . . ." );
+                    m_botAction.sendArenaMessage( "Round " + roundNum + " begins in 10 seconds . . ." );
                 preTimeCount++;
                 
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
-                    m_botAction.sendArenaMessage( "ROUND START!  Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win.", 1 );
+                    m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "ROUND" + roundNum) + " START!  Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win.", 1 );
                     m_botAction.resetFlagGame();
                     setupPlayerTimes();
                     warpPlayers();
