@@ -58,6 +58,8 @@ public class multibot extends SubspaceBot
       handleEvent((SubspaceEvent) event);
     if(opList.isER(sender))
       handleCommands(sender, message, messageType);
+    else if(message.toLowerCase().startsWith("!where"))
+   	  doWhereCmd(sender, false);
   }
 
   /**
@@ -100,6 +102,8 @@ public class multibot extends SubspaceBot
           doUnlockCmd(sender);
         if(command.equals("!help"))
           doLockedHelpMessage(sender);
+        if(command.equals("!where"))
+          doWhereCmd(sender, true);
       }
     }
     catch(RuntimeException e)
@@ -230,7 +234,22 @@ public class multibot extends SubspaceBot
     m_botAction.sendSmartPrivateMessage(sender, "Unloading module: " + multiModule.getModuleName());
     unloadModule();
   }
-
+  
+  /**
+   * This method tells the player wehre the bot is.
+   * 
+   * @param sender is the sender of the command.
+   */
+   
+   private void doWhereCmd(String sender, boolean staff)
+   {
+   	if(staff)
+   	  m_botAction.sendSmartPrivateMessage(sender, "I'm being used in " + m_botAction.getArenaName() + ".");
+   	else if(m_botAction.getArenaName().startsWith("#"))
+   	  m_botAction.sendSmartPrivateMessage(sender, "I'm being used in a private arena.");
+	else
+	  m_botAction.sendSmartPrivateMessage(sender, "I'm being used in " + m_botAction.getArenaName() + ".");
+   }
   /**
    * This method displays the help message of an unlocked bot to the sender.
    *
@@ -444,6 +463,8 @@ public class multibot extends SubspaceBot
   {
     m_botAction.sendUnfilteredPublicMessage("?chat=" + chatName);
   }
+  
+
 
 
   public void handleEvent(ArenaList event){handleEvent((SubspaceEvent) event);}
