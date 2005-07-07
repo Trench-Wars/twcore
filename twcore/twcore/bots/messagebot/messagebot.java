@@ -142,7 +142,7 @@ public class messagebot extends SubspaceBot
     	
     	String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES('"+Tools.addSlashesToString(message.toLowerCase())+"', '"+Tools.addSlashesToString(name.toLowerCase())+"', 0)";
     	try {
-    		m_botAction.SQLQuery("local", query).close();
+    		m_botAction.SQLQuery("local", query);
     	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     }
     
@@ -164,8 +164,8 @@ public class messagebot extends SubspaceBot
     		String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(message.toLowerCase()) + "'";
     		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(message.toLowerCase()) + "'";
     		try {
-    			m_botAction.SQLQuery("local", query).close();
-    			m_botAction.SQLQuery("local", query2).close();
+    			m_botAction.SQLQuery("local", query);
+    			m_botAction.SQLQuery("local", query2);
     		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
     		c.messageChannel(name, "Channel " + message + " deleted.");
@@ -527,10 +527,10 @@ public class messagebot extends SubspaceBot
     			Channel c = (Channel)channels.get(channel);
     			if( c == null)
     			    return;
-    			if(c.isOp(name.toLowerCase()))
-    				channel += ": Operator.";
-    			else if(c.isOwner(name.toLowerCase()))
+    			if(c.isOwner(name.toLowerCase()))
     				channel += ": Owner.";
+    			else if(c.isOp(name.toLowerCase()))
+    				channel += ": Operator.";
     			else
     				channel += ": Member.";
     			m_botAction.sendSmartPrivateMessage(name, channel);
@@ -683,7 +683,7 @@ public class messagebot extends SubspaceBot
 		}
 		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try {
-			m_botAction.SQLQuery("local", query).close();
+			m_botAction.SQLQuery("local", query);
 			m_botAction.sendSmartPrivateMessage(name, "Message marked as unread.");
 		} catch(SQLException e) {
 			Tools.printStackTrace( e );
@@ -711,7 +711,7 @@ public class messagebot extends SubspaceBot
 		}
 		String query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try {
-			m_botAction.SQLQuery("local", query).close();
+			m_botAction.SQLQuery("local", query);
 			m_botAction.sendSmartPrivateMessage(name, "Message deleted.");
 		} catch(Exception e) {
 			m_botAction.sendSmartPrivateMessage(name, "Message unable to be deleted.");
@@ -895,7 +895,7 @@ class Channel
 			updateSQL(name.toLowerCase(), 1);
 			updateSQL(player.toLowerCase(), 3);
 			try {
-				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'").close();
+				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'");
 			} catch(Exception e) { Tools.printStackTrace( e ); }
 			owner = player;
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
@@ -947,7 +947,7 @@ class Channel
 	public void makePrivate(String name)
 	{
 		try {
-			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'").close();
+			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'");
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now private channel.");
 		isOpen = false;
@@ -959,7 +959,7 @@ class Channel
 	public void makePublic(String name)
 	{
 		try {
-			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'").close();
+			m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'");
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now public channel.");
 		isOpen = true;
@@ -1166,12 +1166,12 @@ class Channel
 					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase())+"'";
 					members.remove(player.toLowerCase());
 				}
-				m_bA.SQLQuery("local", query).close();
+				m_bA.SQLQuery("local", query);
 			}
 			else
 			{
 				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES ('" + Tools.addSlashesToString(channelName) + "', '" + Tools.addSlashesToString(player.toLowerCase()) + "', " + level + ")";
-				m_bA.SQLQuery("local", query).close();
+				m_bA.SQLQuery("local", query);
 			}
 			results.close();
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
@@ -1187,7 +1187,7 @@ class Channel
 	{
 		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(channelName)+":"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', 0, NOW())";
 		try {
-			m_bA.SQLQuery("local", query).close();
+			m_bA.SQLQuery("local", query);
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 	
