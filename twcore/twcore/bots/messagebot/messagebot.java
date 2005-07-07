@@ -1000,7 +1000,7 @@ class Channel
 			int level = ((Integer)members.get(player.toLowerCase())).intValue();
 			if(level > 0)
 			{
-				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + ">" + message);
+				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + "> " + message);
 			}
 		}
 	}
