@@ -117,7 +117,6 @@ public class untouchable extends MultiModule {
                     m_botAction.sendArenaMessage( "GO GO GO!!", 104);
 
                     m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-                    m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
                     m_botAction.sendArenaMessage( "Blueout enabled for secrecy.  Staff, please refrain from speaking in public chat." );
                 }
 
@@ -130,7 +129,6 @@ public class untouchable extends MultiModule {
             m_botAction.shipResetAll();
             m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths (except the Untouchable)" );
             m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-            m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
 
         } else {
             m_botAction.createRandomTeams( f_teamsize );
@@ -363,7 +361,6 @@ public class untouchable extends MultiModule {
         m_untouchable = "";
         isRunning = false;
         m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-        m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
 
         if( ! manual ) {
             m_botAction.toggleLocked();	// Note: the bot DOES NOT LOCK to start.

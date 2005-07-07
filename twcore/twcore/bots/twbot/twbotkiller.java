@@ -115,7 +115,6 @@ public class twbotkiller extends TWBotExtension {
                     m_botAction.sendArenaMessage( "THE HUNT IS ON!  Beware the Killer...", 104);
 
                     m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-                    m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
                 }
             }
         };
@@ -127,7 +126,6 @@ public class twbotkiller extends TWBotExtension {
                 m_botAction.shipResetAll();
                 m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths." );
                 m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-                m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
             }
         } else {
             m_botAction.createRandomTeams( f_teamsize );
@@ -483,7 +481,6 @@ public class twbotkiller extends TWBotExtension {
         suddenDeath = false;
         m_killer = "";
         m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
-        m_botAction.sendUnfilteredPublicMessage( "*lockprivate" );
 
         if( ! manual ) {
             m_botAction.toggleLocked();	// Note: the bot DOES NOT LOCK to start.
