@@ -353,7 +353,7 @@ public class f1bot extends SubspaceBot {
 	    {
 
 
-                if(name.equals("Nockm <ER>"))
+                if(m_botAction.getOperatorList().isER(name))
                 {//////////////
 
 //		if(event.getMessage().equals("qwe"))
