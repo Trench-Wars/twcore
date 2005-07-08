@@ -1171,6 +1171,7 @@ class Channel
 			else
 			{
 				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES ('" + Tools.addSlashesToString(channelName) + "', '" + Tools.addSlashesToString(player.toLowerCase()) + "', " + level + ")";
+				members.put(player.toLowerCase(), new Integer(level));
 				m_bA.SQLQuery("local", query);
 			}
 			results.close();
