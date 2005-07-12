@@ -18,13 +18,15 @@ import java.util.*;
  *  in to tell them if they have messages.
  *  
  *  Fixed possible SQL injection attacks (cough FINALLY cough).
+ *  
+ *  Added support so the bot will sync with the website.
  */
 public class messagebot extends SubspaceBot
 {
 	HashMap channels;
 	HashSet ops;
 	CommandInterpreter m_CI;
-	TimerTask messageDeleteTask;
+	TimerTask messageDeleteTask, messageBotSync;
 	public static final String IPCCHANNEL = "messages";
 	
 	/** Constructor, requests Message and Login events.
@@ -40,8 +42,9 @@ public class messagebot extends SubspaceBot
 		ops = new HashSet();
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
-		deleteTask();
+		createTasks();
 		m_botAction.scheduleTaskAtFixedRate(messageDeleteTask, 30 * 60 * 1000, 30 * 60 * 1000);
+		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 5 * 60 * 1000, 5 * 60 * 1000);
 	}
 	
 	/** This method handles an InterProcessEvent
@@ -802,10 +805,34 @@ public class messagebot extends SubspaceBot
 	 	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
 		 	m_botAction.die();
 	 }
+	 
+	 /** Announces to a channel that they have recieved a new message.
+	  *  @param Name of channel
+	  */
+	 public void messageSentFromWebsite(String channel)
+	 {
+	 	try {
+		 	Channel c = (Channel)channels.get(channel.toLowerCase());
+		 	c.announceToChannel(m_botAction.getBotName(), "You have received a new private message, pm me with !messages to check it.");
+		} catch(Exception e) {  Tools.printStackTrace( e ); }
+	 }
+	 
+	 /** Syncs the website and MessageBot's access levels
+	  *  @param Name of channel
+	  *  @param Name of player
+	  *  @param Access level
+	  */
+	 public void accessUpdateFromWebsite(String channel, String name, int level)
+	 {
+	 	try {
+	 		Channel c = (Channel)channels.get(channel.toLowerCase());
+	 		c.updateAccess(name, level);
+	 	} catch(Exception e) { Tools.printStackTrace( e ); }
+	 }
 	
 	/** Sets up the task that will delete messages that have expired.
 	 */
-	void deleteTask()
+	void createTasks()
 	{
 		messageDeleteTask = new TimerTask()
 		{
@@ -821,6 +848,29 @@ public class messagebot extends SubspaceBot
 				System.out.println("fun....");
 			}
 		};
+		
+		messageBotSync = new TimerTask()
+		{
+			public void run()
+			{
+				String query = "SELECT * FROM tblMessageToBot ORDER BY fnID ASC";
+				String query2 = "DELETE FROM tblMessageToBot";
+				try {
+					ResultSet results = m_botAction.SQLQuery("local", query);
+					while(results.next()) {
+						String event = results.getString("fcSyncData");
+						String pieces[] = event.split(":");
+						if(pieces.length == 2)
+							messageSentFromWebsite(pieces[1]);
+						else
+							accessUpdateFromWebsite(pieces[2], pieces[1], Integer.parseInt(pieces[3]));
+					}
+					
+					m_botAction.SQLQuery("local", query2);
+				} catch(Exception e) { Tools.printStackTrace( e ); }
+			}
+		};
+							
 	}
 }
 
@@ -1000,7 +1050,7 @@ class Channel
 			int level = ((Integer)members.get(player.toLowerCase())).intValue();
 			if(level > 0)
 			{
-				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + "> " + message);
+				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + ">" + message);
 			}
 		}
 	}
@@ -1264,5 +1314,13 @@ class Channel
 			}
 		}
 	}
+	
+	/** Updates access after website refresh
+	 *  @param Name of player
+	 *  @param New access level
+	 */
+	 public void updateAccess(String name, int level) {
+	 	members.put(name.toLowerCase(), new Integer(level));
+	 }
 	
 }
