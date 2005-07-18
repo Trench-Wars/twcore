@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * This class is made to store command information
- * 
+ *
  * @author Jeremy
  * @version 1.3
  */
@@ -14,7 +14,7 @@ class Command {
     private String      m_methodName;
     private String      m_helpString; //added a help string to be inbuild into the command
     private int         m_messageTypes;
-    private int			m_opLevelReq;
+    private int         m_opLevelReq;
 
     public Command( int messageTypes, Object methodClass, String methodName ){
 
@@ -77,8 +77,8 @@ class Command {
         m_helpString = helpString;
         m_opLevelReq = opLevelReq;
     }
-    
-    
+
+
     //Getter Methods
     public Object getMethodClass(){
 
@@ -109,7 +109,7 @@ class Command {
  * methods The commands are registred to the intrepretor with a method name. As
  * a message is received, the command intrepreter parses the message for a
  * command and directs to the appropriate method as required
- * 
+ *
  * @author Jeremy
  * @version 1.3
  */
@@ -128,7 +128,7 @@ public class CommandInterpreter {
 
     /**
      * Registered the command into the map with its allocated methodName
-     * 
+     *
      * @param trigger the command name
      * @param messageTypes Different message types like private message or arena message etc
      * @param methodClass The class to register the command with
@@ -141,7 +141,7 @@ public class CommandInterpreter {
 
     /**
      * Overloaded previous constructor with help message as optional
-     * 
+     *
      * @param trigger the command name
      * @param messageTypes Different message types like private message or arena message etc
      * @param methodClass The class to register the command with
@@ -155,12 +155,12 @@ public class CommandInterpreter {
 
     /**
      * Overloaded constructor with op level required to execute
-     * 
+     *
      * @param trigger the command name
      * @param messageTypes Different message types like private message or arena message etc
      * @param methodClass The class to register the command with
      * @param methodName The method in teh class to register the command with
-     * @param opStatus The help message associated with this command
+     * @param opLevelReq The help message associated with this command
      */
     public void registerCommand( String trigger, int messageTypes, Object methodClass, String methodName, int opLevelReq ){
         m_allCommandTypes |= messageTypes;
@@ -169,7 +169,7 @@ public class CommandInterpreter {
 
     /**
      * Overloaded constructor with help message and op level required to execute
-     * 
+     *
      * @param trigger the command name
      * @param messageTypes Different message types like private message or arena message etc
      * @param methodClass The class to register the command with
@@ -180,11 +180,11 @@ public class CommandInterpreter {
         m_allCommandTypes |= messageTypes;
         m_commands.put( trigger.toLowerCase(), new Command( messageTypes, methodClass, methodName, helpMessage, opLevelReq ) );
     }
-    
-    
+
+
     /**
      * Registers default command if nothing matches
-     * 
+     *
      * @param messageType The message type ie arena message or private message etc
      * @param methodClass The class the command belongs to
      * @param methodName The method in the class the command is registered to
@@ -211,11 +211,11 @@ public class CommandInterpreter {
                 }
             }
         }
-        
+
         helps.trimToSize();
         return helps;
     }
-    
+
     /**
      * Gets all the help messages registered available to the provided access level.
      * @return Vector as a collection containing the strings of all available help msgs (for given access level)
@@ -234,17 +234,17 @@ public class CommandInterpreter {
                 }
             }
         }
-        
+
         helps.trimToSize();
         return helps;
     }
-    
+
     /**
      * Get a particular help message for a particular command
      * @param trigger the command name for the help wanted
      * @return The string of the help message registered to the command
      */
-    public String getCommandHelp( String trigger ){   
+    public String getCommandHelp( String trigger ){
         String      help = "";
         Command     command = (Command)m_commands.get( trigger );
         if( command != null ){
@@ -276,7 +276,7 @@ public class CommandInterpreter {
         messageType = event.getMessageType();
 
         if( (m_allCommandTypes & messageType) == 0 ){
-            return false; 
+            return false;
         }
 
         seperatorIndex = message.indexOf( ' ' );
@@ -308,19 +308,19 @@ public class CommandInterpreter {
                     if( command.getOpLevelReq() > 0 )
                         return false;
                 }
-                
-                if( m_botAction.getOperatorList().getAccessLevel( messager ) >= command.getOpLevelReq() ) {                   
+
+                if( m_botAction.getOperatorList().getAccessLevel( messager ) >= command.getOpLevelReq() ) {
                     try {
                         Object parameters[] = { messager, message };
                         Object methodClass = command.getMethodClass();
                         Class parameterTypes[] = { messager.getClass(), message.getClass() };
-                        
+
                         methodClass.getClass().getMethod( command.getMethodName(), parameterTypes ).invoke( methodClass, parameters );
                         result = true;
                     } catch( Exception e ){
                         Tools.printStackTrace( e );
                     }
-            	}
+                }
             }
         }
 
