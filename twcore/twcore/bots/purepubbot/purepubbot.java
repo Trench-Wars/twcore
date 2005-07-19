@@ -704,11 +704,12 @@ public class purepubbot extends SubspaceBot
         while( i.hasNext() ) {
             dummy = (Player)i.next();
             if( dummy != null) {
-                if( dummy.getFrequency() == player.getFrequency() )
-                    shipTotals.set( dummy.getShipType(), new Integer( ((Integer)shipTotals.get(dummy.getShipType())).intValue() + 1 ) ); 
+                if( dummy.getFrequency() == player.getFrequency() ) {
+                    shipTotals.set( dummy.getShipType(), new Integer( ((Integer)shipTotals.get(dummy.getShipType())).intValue() + 1 ) );
+                    if( player.getShipType() != 0 )
+                        freqTotal++;
+                }
             }
-            if( player.getShipType() != 0 )
-                freqTotal++;
         }
                 
     	int numShipsOfType = ((Integer)shipTotals.get(player.getShipType())).intValue();
