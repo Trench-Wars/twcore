@@ -32,7 +32,6 @@ public class purepubbot extends SubspaceBot
     private int initialPub;
     private String initialSpawn;    
     private Vector shipWeights;
-    private Vector emptyShipCounts;
     
     private int warpPtsLeftX[] = { 505, 502, 499, 491, 495, 487 }; 
     private int warpPtsLeftY[] = { 260, 267, 274, 279, 263, 255 };
@@ -68,7 +67,6 @@ public class purepubbot extends SubspaceBot
         strictFlagTime = false;
         warpPlayers = new LinkedList();
         shipWeights = new Vector();
-        emptyShipCounts = new Vector();
     }
     
     
@@ -104,11 +102,8 @@ public class purepubbot extends SubspaceBot
         initialPub = (botSettings.getInt(m_botAction.getBotName() + "Pub") - 1);
         m_botAction.joinArena(initialSpawn);
         shipWeights.add( new Integer(1) );		// Allow unlimited number of spec players
-        emptyShipCounts.add( new Integer(0) );        
-        for( int i = 1; i < 9; i++ ) {
+        for( int i = 1; i < 9; i++ )
             shipWeights.add( new Integer( botSettings.getInt(m_botAction.getBotName() + "Ship" + i) ) );
-            emptyShipCounts.add( new Integer(0) );
-        }
     }
 
     
@@ -698,7 +693,10 @@ public class purepubbot extends SubspaceBot
             return;
         
         int freqTotal = 0;
-        Vector shipTotals = emptyShipCounts;
+        Vector shipTotals = new Vector();
+        shipTotals.add( new Integer(0) );        
+        for( int j = 1; j < 9; j++ )
+            shipTotals.add( new Integer(0) );
             
         Player dummy;
         while( i.hasNext() ) {
