@@ -693,24 +693,24 @@ public class purepubbot extends SubspaceBot
         
         // For all other weights, we must decide whether they can play based on the number of people on freq
         // who are also using the ship.
-        Iterator i = m_botAction.getFreqPlayerIterator( player.getFrequency() );
+        Iterator i = m_botAction.getPlayingPlayerIterator();
         if( i == null)
             return;
         
         int freqTotal = 0;
         Vector shipTotals = emptyShipCounts;
             
+        Player dummy;
         while( i.hasNext() ) {
-            player = (Player)i.next();
-            if( player != null) {
-                shipTotals.set( player.getShipType(), new Integer( ((Integer)shipTotals.get(player.getShipType())).intValue() + 1 ) ); 
+            dummy = (Player)i.next();
+            if( dummy != null) {
+                if( dummy.getFrequency() == player.getFrequency() )
+                    shipTotals.set( dummy.getShipType(), new Integer( ((Integer)shipTotals.get(dummy.getShipType())).intValue() + 1 ) ); 
             }
             if( player.getShipType() != 0 )
                 freqTotal++;
         }
-        
-        player = m_botAction.getPlayer(playerID);
-        
+                
     	int numShipsOfType = ((Integer)shipTotals.get(player.getShipType())).intValue();
                         
         if( freqTotal == 0 || numShipsOfType > freqTotal / weight ) {
