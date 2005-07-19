@@ -21,6 +21,7 @@ public class purepubbot extends SubspaceBot
     private boolean started;
     private boolean privFreqs;
     private boolean flagTimeStarted;
+    private boolean strictFlagTime;
     private FlagCountTask flagTimer;
     private StartRoundTask startTimer;
     private IntermissionTask intermissionTimer;
@@ -38,6 +39,11 @@ public class purepubbot extends SubspaceBot
 
     private int warpPtsRightX[] = { 519, 522, 525, 529, 533, 537 }; 
     private int warpPtsRightY[] = { 260, 267, 274, 263, 279, 255 };
+    private static final int SAFE_LEFT_X = 306;
+    private static final int SAFE_LEFT_Y = 482;
+    private static final int SAFE_RIGHT_X = 717;
+    private static final int SAFE_RIGHT_Y = 306;
+    
     private LinkedList warpPlayers;
     
     
@@ -59,6 +65,7 @@ public class purepubbot extends SubspaceBot
         started = false;
         privFreqs = true;
         flagTimeStarted = false;
+        strictFlagTime = false;
         warpPlayers = new LinkedList();
         shipWeights = new Vector();
         emptyShipCounts = new Vector();
@@ -358,6 +365,8 @@ public class purepubbot extends SubspaceBot
                 doPrivFreqsCmd(sender);
             else if(command.startsWith("!starttime "))
                 doStartTimeCmd(sender, message.substring(11));
+            else if(command.startsWith("!startstricttime "))
+                doStartStrictTimeCmd(sender, message.substring(17));
             else if(command.equals("!stoptime"))
                 doStopTimeCmd(sender);
             else if(command.equals("!die"))
@@ -481,7 +490,10 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage( "Flag Time mode has been enabled." );
         
         m_botAction.sendArenaMessage( "OBJECT: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win." );
-        m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
+        if( strictFlagTime )
+            m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  All players will be warped at round start." );
+        else
+            m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
         
         flagTimeStarted = true;
         freq0Score = 0;
@@ -489,6 +501,24 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask( new StartRoundTask(), 60000 );
     }
     
+    
+    /**
+     * Starts a "flag time" mode in which a team must hold the flag for a certain consecutive
+     * number of minutes in order to win the round.
+     * 
+     * Differs from normal time in that all players are warped automatically, and shipreset.
+     * 
+     * @param sender is the person issuing the command.
+     * @param argString is the number of minutes to hold the game to.
+     */
+    public void doStartStrictTimeCmd(String sender, String argString ) {
+        if(flagTimeStarted)
+            throw new RuntimeException( "Flag Time mode has already been started.  Disable and re-enable if you want to run strict flag time." );
+        
+        strictFlagTime = true;
+        doStartTimeCmd(sender, argString );
+    }
+
     
     /**
      * Ends "flag time" mode.
@@ -512,6 +542,7 @@ public class purepubbot extends SubspaceBot
         }
         
         flagTimeStarted = false;
+        strictFlagTime = false;
     }
     
     
@@ -541,6 +572,8 @@ public class purepubbot extends SubspaceBot
     {
         if(!flagTimeStarted)
             throw new RuntimeException( "Flag Time mode is not currently running." );
+        if( strictFlagTime )
+            throw new RuntimeException( "You do not need to !warp in Strict Flag Time mode." );
 
         if( warpPlayers.contains( sender ) ) {
             warpPlayers.remove( sender );
@@ -586,6 +619,7 @@ public class purepubbot extends SubspaceBot
                 "!StartTime #                     -- Starts Flag Time mode (a team wins",
                 "                                    with # consecutive min of flagtime).",
                 "!StopTime                        -- Ends Flag Time mode.",
+                "!StartStrictTime #               -- Starts a 'Strict' Flag Time mode",                
                 "!Time                            -- Provides time remaining in Flag Time mode.",
                 "!Die                             -- Logs the bot off of the server.",
                 "!Help                            -- Displays this help message."
@@ -1126,16 +1160,27 @@ public class purepubbot extends SubspaceBot
      * Ensures !warpers on freqs are warped all to 'their' side, but not predictably.
      */
     private void warpPlayers() {
-        Iterator i = warpPlayers.iterator();
+        Iterator i;
+        if( strictFlagTime )
+            i = m_botAction.getPlayingPlayerIterator();
+        else
+            i = warpPlayers.iterator();
+
         Random r = new Random();
         int rand;
         Player p;
+        String pname;
         
         int randomside = r.nextInt( 2 );
         
         while( i.hasNext() ) {
-            String pname = (String)i.next();
-            p = m_botAction.getPlayer( pname );
+            if( strictFlagTime ) {
+                p = (Player)i.next();
+                pname = p.getPlayerName();
+            } else {
+                pname = (String)i.next();
+                p = m_botAction.getPlayer( pname );
+            }
             
             if( p != null ) {
                 rand = r.nextInt( NUM_WARP_POINTS_PER_SIDE ); 
@@ -1144,9 +1189,30 @@ public class purepubbot extends SubspaceBot
                 else
                     doRandomWarp( pname, warpPtsRightX[rand], warpPtsRightY[rand] );
             } else {
-                warpPlayers.remove( pname );
+                if( !strictFlagTime )
+                    warpPlayers.remove( pname );
             }
         }                    
+    }
+    
+    
+    /**
+     * In Strict Flag Time mode, warp all players to a safe 10 seconds before starting.
+     *
+     */
+    private void safeWarp() {
+        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Player p;
+        
+        while( i.hasNext() ) {
+            p = (Player)i.next();
+            if( p != null ) {
+                if( p.getFrequency() % 2 == 0 )
+                    m_botAction.warpTo( p.getPlayerID(), SAFE_LEFT_X, SAFE_LEFT_Y );
+                else
+                    m_botAction.warpTo( p.getPlayerID(), SAFE_LEFT_X, SAFE_LEFT_Y );                    
+            }
+        }        
     }
     
 
@@ -1413,8 +1479,11 @@ public class purepubbot extends SubspaceBot
         public void run() {        
             if( isStarted == false ) {
                 int roundNum = freq0Score + freq1Score + 1;
-                if( preTimeCount == 0 )
+                if( preTimeCount == 0 ) {
                     m_botAction.sendArenaMessage( "Round " + roundNum + " begins in 10 seconds . . ." );
+                    if( strictFlagTime )
+                        safeWarp();
+                }
                 preTimeCount++;
                 
                 if( preTimeCount >= 10 ) {
