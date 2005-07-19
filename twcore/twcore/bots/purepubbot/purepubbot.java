@@ -713,16 +713,25 @@ public class purepubbot extends SubspaceBot
         }
                 
     	int numShipsOfType = ((Integer)shipTotals.get(player.getShipType())).intValue();
+    	
+    	// Free pass if you're the only one on the freq, regardless of weight.
+    	if( numShipsOfType <= 1 )
+    	    return;
                         
-        if( freqTotal == 0 || numShipsOfType > freqTotal / weight ) {
+    	if( freqTotal == 0 ) {
+            m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "Problem locating your freq!  Please contact a mod with ?help.");
+            return;
+    	}
+    	    
+        if( numShipsOfType > freqTotal / weight ) {
             // If unlimited spiders are allowed, set them to spider; else spec
             if( ((Integer)shipWeights.get(3)).intValue() == 1 ) {
                 m_botAction.setShip(playerID, 3);
-                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind, or not enough people on the freq to allow you to play that ship.");                
+                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind (" + numShipsOfType + "), or not enough people on the freq to allow you to play that ship.");                
             } else {
                 m_botAction.spec(playerID);
                 m_botAction.spec(playerID);
-                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind, or not enough people on the freq to allow you to play that ship.  Please choose another.");
+                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind (" + numShipsOfType + "), or not enough people on the freq to allow you to play that ship.  Please choose another.");
             }
         }
     }
@@ -1211,7 +1220,7 @@ public class purepubbot extends SubspaceBot
                 if( p.getFrequency() % 2 == 0 )
                     m_botAction.warpTo( p.getPlayerID(), SAFE_LEFT_X, SAFE_LEFT_Y );
                 else
-                    m_botAction.warpTo( p.getPlayerID(), SAFE_LEFT_X, SAFE_LEFT_Y );                    
+                    m_botAction.warpTo( p.getPlayerID(), SAFE_RIGHT_X, SAFE_RIGHT_Y );                    
             }
         }        
     }
