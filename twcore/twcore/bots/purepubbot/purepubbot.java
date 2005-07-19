@@ -9,7 +9,6 @@ public class purepubbot extends SubspaceBot
     public static final int SPEC = 0;
     public static final int FREQ_0 = 0;
     public static final int FREQ_1 = 1;
-    public static final int LEVIATHAN = 4;
     private static final int FLAG_CLAIM_SECS = 4;		// Seconds it takes to fully claim a flag
     private static final int INTERMISSION_SECS = 90;	// Seconds between end of round and start of next
     private static final int NUM_WARP_POINTS_PER_SIDE = 6;		// Total number of warp points per side of FR
@@ -29,9 +28,10 @@ public class purepubbot extends SubspaceBot
     private int freq0Score, freq1Score;
     
     boolean initLogin = true;
-    
-    public int initialPub;
-    public String initialSpawn;
+    private int initialPub;
+    private String initialSpawn;    
+    private Vector shipWeights;
+    private Vector emptyShipCounts;
     
     private int warpPtsLeftX[] = { 505, 502, 499, 491, 495, 487 }; 
     private int warpPtsLeftY[] = { 260, 267, 274, 279, 263, 255 };
@@ -40,12 +40,12 @@ public class purepubbot extends SubspaceBot
     private int warpPtsRightY[] = { 260, 267, 274, 263, 279, 255 };
     private LinkedList warpPlayers;
     
+    
     /**
      * This method initializes the bot.
      *
      * @param botAction is the BotAction method for the bot.
-     */
-    
+     */   
     public purepubbot(BotAction botAction)
     {
         super(botAction);
@@ -60,9 +60,70 @@ public class purepubbot extends SubspaceBot
         privFreqs = true;
         flagTimeStarted = false;
         warpPlayers = new LinkedList();
+        shipWeights = new Vector();
+        emptyShipCounts = new Vector();
     }
     
-    /* Sends bot to public arena.
+    
+    /**
+     * This method requests all of the appropriate events.
+     */    
+    private void requestEvents()
+    {
+        EventRequester eventRequester = m_botAction.getEventRequester();
+        eventRequester.request(EventRequester.MESSAGE);
+        eventRequester.request(EventRequester.PLAYER_LEFT);
+        eventRequester.request(EventRequester.PLAYER_ENTERED);
+        eventRequester.request(EventRequester.FLAG_CLAIMED);
+        eventRequester.request(EventRequester.FREQUENCY_CHANGE);
+        eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        eventRequester.request(EventRequester.LOGGED_ON);
+        eventRequester.request(EventRequester.ARENA_LIST);
+        eventRequester.request(EventRequester.ARENA_JOINED);
+    }
+
+    
+    /* **********************************  EVENTS  ************************************ */
+      
+    /**
+     * Retreive all necessary settings for the bot to operate.
+     *
+     * @param event is the event to process.
+     */    
+    public void handleEvent(LoggedOn event)
+    {
+        BotSettings botSettings = m_botAction.getBotSettings();
+        initialSpawn = botSettings.getString("InitialArena");
+        initialPub = (botSettings.getInt(m_botAction.getBotName() + "Pub") - 1);
+        m_botAction.joinArena(initialSpawn);
+        shipWeights.add( new Integer(1) );		// Allow unlimited number of spec players
+        emptyShipCounts.add( new Integer(0) );        
+        for( int i = 1; i < 9; i++ ) {
+            shipWeights.add( new Integer( botSettings.getInt(m_botAction.getBotName() + "Ship" + i) ) );
+            emptyShipCounts.add( new Integer(0) );
+        }
+    }
+
+    
+    /**
+     * Requests arena list to move to appropriate pub automatically, if this is the first arena joined.
+     * 
+     * @param event is the event to process.
+     */
+    public void handleEvent(ArenaJoined event)
+    {
+    	if(!initLogin)
+    		return;
+    	
+    	initLogin = false;
+    	m_botAction.requestArenaList();
+    }
+
+    
+    /**
+     * Sends bot to public arena specified in CFG.
+     * 
+     * @param event is the event to process.
      */
     public void handleEvent(ArenaList event)
     {
@@ -101,31 +162,22 @@ public class purepubbot extends SubspaceBot
     		startBot();
     	}
     }
-    
-    public void handleEvent(ArenaJoined event)
-    {
-    	if(!initLogin)
-    		return;
-    	
-    	initLogin = false;
-    	m_botAction.requestArenaList();
-    }
-    
+        
+
     /**
      * This method handles the FrequencyShipChange event.
      * Checks players for appropriate ships/freqs.
      * Resets their MVP timer if they spec or change ships (new rule).
      *
      * @param event is the event to process.
-     */
-    
+     */    
     public void handleEvent(FrequencyShipChange event)
     {
         int playerID = event.getPlayerID();
         int freq = event.getFrequency();
         
         if(started) {
-            checkPlayer(playerID, true);
+            checkPlayer(playerID);
             if(!privFreqs)
                 checkFreq(playerID, freq, true);
         }
@@ -151,8 +203,9 @@ public class purepubbot extends SubspaceBot
         }    
     }
     
+    
     /**
-     * This method handles a PlayerLeft event.
+     * Remove player from all tracking lists when they leave the arena.
      *
      * @param event is the event to handle.
      */
@@ -165,6 +218,7 @@ public class purepubbot extends SubspaceBot
         removeFromWarpList(playerName);
     	playerTimes.remove( playerName );                    
     }
+    
     
     /**
      * Checks if freq is valid (if private frequencies are disabled), and prevents
@@ -194,12 +248,12 @@ public class purepubbot extends SubspaceBot
         }
     }
     
+    
     /**
-     * This method handles the PlayerEntered event.
+     * When a player enters, display necessary information, and check their ship & freq.
      *
      * @param event is the event to process.
-     */
-    
+     */    
     public void handleEvent(PlayerEntered event)
     {
         try {
@@ -209,8 +263,8 @@ public class purepubbot extends SubspaceBot
                 Player player = m_botAction.getPlayer(playerID);
                 String playerName = m_botAction.getPlayerName(playerID);
                 
-                m_botAction.sendSmartPrivateMessage(playerName, "This arena has pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.");
-                checkPlayer(playerID, false);
+                m_botAction.sendSmartPrivateMessage(playerName, "This arena has pure pub settings enabled.  Certain ships are restricted.");
+                checkPlayer(playerID);
                 if(!privFreqs)
                 {
                     m_botAction.sendSmartPrivateMessage(playerName, "Private Frequencies are currently disabled.");
@@ -231,8 +285,9 @@ public class purepubbot extends SubspaceBot
         
     }
     
+    
     /**
-     * This method handles a PlayerLeft event.
+     * If flag time mode is running, register with the flag time game that the flag has been claimed. 
      *
      * @param event is the event to handle.
      */
@@ -254,6 +309,68 @@ public class purepubbot extends SubspaceBot
     
     
     /**
+     * This method handles a Message event.
+     *
+     * @param event is the message event to handle.
+     */    
+    public void handleEvent(Message event)
+    {
+        String sender = getSender(event);
+        int messageType = event.getMessageType();
+        String message = event.getMessage().trim();
+        
+        if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )    
+            handleCommand(sender, message);
+    }
+    
+        
+    /* **********************************  COMMANDS  ************************************ */
+    
+    /**
+     * This method handles a command sent to the bot.
+     *
+     * @param sender is the person issuing the command.
+     * @param message is the command that is being sent.
+     */    
+    public void handleCommand(String sender, String message)
+    {
+        String command = message.toLowerCase();
+        
+        try
+        {
+            if(message.equals("!time"))
+                doTimeCmd(sender);
+            else if(command.equals("!help"))
+                doHelpCmd(sender);
+            else if(command.equals("!warp"))
+                doWarpCmd(sender);
+            
+            if ( !opList.isHighmod(sender) && !sender.equals(m_botAction.getBotName()) )
+                return;
+            
+            if(command.startsWith("!go "))
+                doGoCmd(sender, message.substring(4));
+            else if(command.equals("!start"))
+                doStartCmd(sender);
+            else if(command.equals("!stop"))
+                doStopCmd(sender);
+            else if(command.equals("!privfreqs"))
+                doPrivFreqsCmd(sender);
+            else if(command.startsWith("!starttime "))
+                doStartTimeCmd(sender, message.substring(11));
+            else if(command.equals("!stoptime"))
+                doStopTimeCmd(sender);
+            else if(command.equals("!die"))
+                doDieCmd(sender);
+        }
+        catch(RuntimeException e)
+        {
+            m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+        }
+    }
+
+    
+    /**
      * This method moves a bot from one arena to another.  The bot must not be
      * started for it to move.
      *
@@ -261,8 +378,7 @@ public class purepubbot extends SubspaceBot
      * @param argString is the new arena to go to.
      * @throws RuntimeException if the bot is currently running.
      * @throws IllegalArgumentException if the bot is already in that arena.
-     */
-    
+     */    
     public void doGoCmd(String sender, String argString)
     {
         String currentArena = m_botAction.getArenaName();
@@ -276,23 +392,24 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendSmartPrivateMessage(sender, "Bot going to: " + argString);
     }
     
+    
     /**
      * This method starts the pure pub settings.
      *
      * @param sender is the person issuing the command.
      * @throws RuntimeException if the bot is already running pure pub settings.
-     */
-    
+     */    
     public void doStartCmd(String sender)
     {
         if(started)
             throw new RuntimeException("Bot is already running pure pub settings.");
         
         started = true;
-        specLevis();
-        m_botAction.sendArenaMessage("Pure pub settings enabled.  Leviathans (Ship 4) are no longer allowed in this arena.", 2);
+        specRestrictedShips();
+        m_botAction.sendArenaMessage("Pure pub settings enabled.  Ship restrictions are now in effect.", 2);
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully enabled.");
     }
+    
     
     /**
      * This method stops the pure pub settings.
@@ -300,17 +417,17 @@ public class purepubbot extends SubspaceBot
      * @param sender is the person issuing the command.
      * @throws RuntimeException if the bot is not currently running pure pub
      * settings.
-     */
-    
+     */    
     public void doStopCmd(String sender)
     {
         if(!started)
             throw new RuntimeException("Bot is not currently running pure pub settings.");
         
         started = false;
-        m_botAction.sendArenaMessage("Pure pub settings disabled.  Leviathans (Ship 4) are allowed in this arena.", 2);
+        m_botAction.sendArenaMessage("Pure pub settings disabled.  Ship restrictions are now in effect.", 2);
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully disabled.");
     }
+    
     
     /**
      * This method toggles if private frequencies are allowed or not.
@@ -334,6 +451,7 @@ public class purepubbot extends SubspaceBot
         }
         privFreqs = !privFreqs;
     }
+    
     
     /**
      * Starts a "flag time" mode in which a team must hold the flag for a certain consecutive
@@ -371,6 +489,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask( new StartRoundTask(), 60000 );
     }
     
+    
     /**
      * Ends "flag time" mode.
      * 
@@ -394,7 +513,8 @@ public class purepubbot extends SubspaceBot
         
         flagTimeStarted = false;
     }
-      
+    
+    
     /**
      * Displays info about time remaining, if applicable.
      * 
@@ -411,6 +531,7 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException( "Flag time mode is not currently running." );
     }
 
+    
     /**
      * Adds player to next round's warp list.
      * 
@@ -430,13 +551,13 @@ public class purepubbot extends SubspaceBot
         }
     }
         
+
     /**
-     * This method logs the bot off.
+     * Logs the bot off if not enabled.
      *
      * @param sender is the person issuing the command.
      * @throws RuntimeException if the bot is running pure pub settings.
-     */
-    
+     */    
     public void doDieCmd(String sender)
     {
         String currentArena = m_botAction.getArenaName();
@@ -448,12 +569,12 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask(new DieTask(), 100);
     }
     
+    
     /**
-     * This method displays a help message.
+     * Displays a help message depending on access level.
      *
      * @param sender is the person issuing the command.
-     */
-    
+     */    
     public void doHelpCmd(String sender)
     {
         String[] helpMessage =
@@ -473,7 +594,7 @@ public class purepubbot extends SubspaceBot
         String[] playerHelpMessage =
         {
                 "Hello!  I am a bot designed to enforce 'pure pub' rules.",
-                "When enabled, I may restrict levis from playing, prevent private frequencies, or run Flag Time mode.",
+                "When enabled, I may restrict certain ships, prevent private frequencies, or run Flag Time mode.",
                 "Flag Time mode commands (a freq must hold flag for an amount of consecutive minutes to win):",
                 "!Time                            -- Provides time remaining in Flag Time mode.",
                 "!Warp                            -- Warps you into flagroom at start of next round.",
@@ -486,98 +607,10 @@ public class purepubbot extends SubspaceBot
             m_botAction.smartPrivateMessageSpam(sender, playerHelpMessage);
     }
     
-    /**
-     * This method handles a command sent to the bot.
-     *
-     * @param sender is the person issuing the command.
-     * @param message is the command that is being sent.
-     */
     
-    public void handleCommand(String sender, String message)
-    {
-        String command = message.toLowerCase();
-        
-        try
-        {
-            if(message.equals("!time"))
-                doTimeCmd(sender);
-            else if(command.equals("!help"))
-                doHelpCmd(sender);
-            else if(command.equals("!warp"))
-                doWarpCmd(sender);
-            
-            if ( !opList.isHighmod(sender) && !sender.equals(m_botAction.getBotName()) )
-                return;
-            
-            if(command.startsWith("!go "))
-                doGoCmd(sender, message.substring(4));
-            else if(command.equals("!start"))
-                doStartCmd(sender);
-            else if(command.equals("!stop"))
-                doStopCmd(sender);
-            else if(command.equals("!privfreqs"))
-                doPrivFreqsCmd(sender);
-            else if(command.startsWith("!starttime "))
-                doStartTimeCmd(sender, message.substring(11));
-            else if(command.equals("!stoptime"))
-                doStopTimeCmd(sender);
-            else if(command.equals("!die"))
-                doDieCmd(sender);
-        }
-        catch(RuntimeException e)
-        {
-            m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
-        }
-    }
     
-    /**
-     * This method handles a Message event.
-     *
-     * @param event is the message event to handle.
-     */
-    
-    public void handleEvent(Message event)
-    {
-        String sender = getSender(event);
-        int messageType = event.getMessageType();
-        String message = event.getMessage().trim();
-        
-        if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )    
-            handleCommand(sender, message);
-    }
-    
-    /**
-     * This method handles a LoggedOn event.
-     *
-     * @param event is the message event to handle.
-     */
-    
-    public void handleEvent(LoggedOn event)
-    {
-        BotSettings botSettings = m_botAction.getBotSettings();
-        initialSpawn = botSettings.getString("InitialArena");
-        initialPub = (botSettings.getInt(m_botAction.getBotName() + "Pub") - 1);
-        m_botAction.joinArena(initialSpawn);
-    }
-    
-    /**
-     * This method requests all of the appropriate events.
-     */
-    
-    private void requestEvents()
-    {
-        EventRequester eventRequester = m_botAction.getEventRequester();
-        eventRequester.request(EventRequester.MESSAGE);
-        eventRequester.request(EventRequester.PLAYER_LEFT);
-        eventRequester.request(EventRequester.PLAYER_ENTERED);
-        eventRequester.request(EventRequester.FLAG_CLAIMED);
-        eventRequester.request(EventRequester.FREQUENCY_CHANGE);
-        eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
-        eventRequester.request(EventRequester.LOGGED_ON);
-        eventRequester.request(EventRequester.ARENA_LIST);
-        eventRequester.request(EventRequester.ARENA_JOINED);
-    }
-    
+    /* **********************************  SUPPORT METHODS  ************************************ */
+
     /**
      * This method returns the name of the player that sent the message regardless
      * of whether or not the message is a remote private message or a private
@@ -586,8 +619,7 @@ public class purepubbot extends SubspaceBot
      * @param event is the message event.
      * @return the name of the sender is returned.  If the name of the sender
      * cannot be determined then null is returned.
-     */
-    
+     */  
     private String getSender(Message event)
     {
         if(event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
@@ -596,30 +628,75 @@ public class purepubbot extends SubspaceBot
         int senderID = event.getPlayerID();
         return m_botAction.getPlayerName(senderID);
     }
+
     
     /**
-     * This method checks to see if a player is a leviathan.  If they are then
+     * This method checks to see if a player is a restricted ship.  If they are then
      * they are specced.
      *
      * @param playerName is the player to be checked.
      * @param specMessage enables the spec message.
-     */
-    
-    private void checkPlayer(int playerID, boolean specMessage)
+     */    
+    private void checkPlayer(int playerID)
     {
         Player player = m_botAction.getPlayer(playerID);
+        if( player == null )
+            return;
+
+        int weight = ((Integer)shipWeights.get(player.getShipType())).intValue();
         
-        if(player != null && player.getShipType() == LEVIATHAN)
-        {
+        // If weight is 1, unlimited number of that shiptype is allowed.  (Spec is also set to 1.)
+        if( weight == 1 )
+            return;
+        
+        // If weight is 0, ship is completely restricted.
+        if( weight == 0 ) { 
             m_botAction.spec(playerID);
-            m_botAction.spec(playerID);
-            if(specMessage)
-                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "Leviathans are not allowed in this pub.  Please change pubs if you wish to be a levi.");
+        	m_botAction.spec(playerID);            	            
+       	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "That ship has been restricted in this arena.  Please choose another, or type ?arena to select another arena.");
+       	    return;
+        }
+        
+        // For all other weights, we must decide whether they can play based on the number of people on freq
+        // who are also using the ship.
+        Iterator i = m_botAction.getFreqPlayerIterator( player.getFrequency() );
+        if( i == null)
+            return;
+        
+        int freqTotal = 0;
+        Vector shipTotals = emptyShipCounts;
+            
+        while( i.hasNext() ) {
+            player = (Player)i.next();
+            if( player != null) {
+                shipTotals.set( player.getShipType(), new Integer( ((Integer)shipTotals.get(player.getShipType())).intValue() + 1 ) ); 
+            }
+            if( player.getShipType() != 0 )
+                freqTotal++;
+        }
+        
+        player = m_botAction.getPlayer(playerID);
+        
+    	int numShipsOfType = ((Integer)shipTotals.get(player.getShipType())).intValue();
+                        
+        if( freqTotal == 0 || numShipsOfType > freqTotal / weight ) {
+            // If unlimited spiders are allowed, set them to spider; else spec
+            if( ((Integer)shipWeights.get(3)).intValue() == 1 ) {
+                m_botAction.setShip(playerID, 3);
+                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind, or not enough people on the freq to allow you to play that ship.");                
+            } else {
+                m_botAction.spec(playerID);
+                m_botAction.spec(playerID);
+                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind, or not enough people on the freq to allow you to play that ship.  Please choose another.");
+            }
         }
     }
+        
     
     /**
      * This method removes a playerName from the freq lists.
+     * 
+     * @param playerName is the name of the player to remove.
      */
     private void removeFromLists(String playerName)
     {
@@ -628,6 +705,7 @@ public class purepubbot extends SubspaceBot
         freq0List.remove(lowerName);
         freq1List.remove(lowerName);
     }
+
     
     /**
      * This method removes a playerName from the warp list.
@@ -637,6 +715,7 @@ public class purepubbot extends SubspaceBot
         warpPlayers.remove( playerName );
     }
 
+    
     /**
      * This method sets a player to a freq and updates the freq lists.
      *
@@ -652,6 +731,7 @@ public class purepubbot extends SubspaceBot
         if(freq == FREQ_1)
             freq1List.add(lowerName);
     }
+
     
     /**
      * This method checks to see if a player is on a private freq.  If they are
@@ -684,12 +764,12 @@ public class purepubbot extends SubspaceBot
             addToLists(playerName, newFreq);
         }
     }
+
     
     /**
-     * This method specs all of the levis in the arena.
-     */
-    
-    private void specLevis()
+     * Specs all ships in the arena that are over the weighted restriction limit.
+     */    
+    private void specRestrictedShips()
     {
         Iterator iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
@@ -697,10 +777,11 @@ public class purepubbot extends SubspaceBot
         while(iterator.hasNext())
         {
             player = (Player) iterator.next();
-            checkPlayer(player.getPlayerID(), false);
+            checkPlayer(player.getPlayerID());
         }
     }
     
+
     /**
      * This method fills the freq lists for freqs 1 and 0.
      */
@@ -723,6 +804,7 @@ public class purepubbot extends SubspaceBot
         }
     }
     
+
     /**
      * This method fixes the freq of each player.
      */
@@ -739,6 +821,10 @@ public class purepubbot extends SubspaceBot
         }
     }
     
+    
+    /**
+     * Starts the bot with CFG-specified setup commands.
+     */
     public void startBot()
     {
     	String commands[] = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Setup").split(",");
@@ -746,6 +832,9 @@ public class purepubbot extends SubspaceBot
     		handleCommand(m_botAction.getBotName(), commands[k]);
 		}
     }
+
+    
+    /* **********************************  FLAGTIME METHODS  ************************************ */       
     
     /**
      * Starts a game of flag time mode.
@@ -764,6 +853,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
     }
     
+
     /**
      * Displays rules and pauses for intermission.
      */
@@ -785,6 +875,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask( startTimer, INTERMISSION_SECS * 1000 );
     }
     
+
     /**
      * Ends a round of Flag Time mode & awards prizes.
      * After, sets up an intermission, followed by a new round.
@@ -993,6 +1084,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask( intermissionTimer, 10000 );
     }
     
+
     /**
      * Adds all players to the hashmap which stores the time, in flagTimer time,
      * when they joined their freq. 
@@ -1012,6 +1104,7 @@ public class purepubbot extends SubspaceBot
         }
     }
     
+
     /**
      * Formats an integer time as a String. 
      * @param time Time in seconds.
@@ -1026,6 +1119,7 @@ public class purepubbot extends SubspaceBot
             return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
         }
     }
+
 
     /**
      * Warps all players who have PMed with !warp into FR at start.
@@ -1055,6 +1149,7 @@ public class purepubbot extends SubspaceBot
         }                    
     }
     
+
     /**
      * Warps a player within a radius of 2 tiles to provided coord.
      * 
@@ -1079,6 +1174,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.warpTo(playerName, xWarp, yWarp);
     }
     
+    
     private int calcXCoord(int xCoord, double randRadians, double randRadius)
     {
         return xCoord + (int) Math.round(randRadius * Math.sin(randRadians));
@@ -1088,9 +1184,10 @@ public class purepubbot extends SubspaceBot
     {
         return yCoord + (int) Math.round(randRadius * Math.cos(randRadians));
     }
-
     
     
+    /* **********************************  TIMERTASK CLASSES  ************************************ */
+   
     /**
      * This private class logs the bot off.  It is used to give a slight delay
      * to the log off process.
@@ -1108,6 +1205,7 @@ public class purepubbot extends SubspaceBot
         }
     }
     
+    
     /**
      * This private class starts the round.
      */
@@ -1117,6 +1215,7 @@ public class purepubbot extends SubspaceBot
         }
     }
     
+    
     /**
      * This private class provides a pause before starting the round.
      */
@@ -1125,6 +1224,7 @@ public class purepubbot extends SubspaceBot
             doIntermission();
         }
     }
+    
     
     /**
      * This private class counts the consecutive flag time an individual team racks up.
