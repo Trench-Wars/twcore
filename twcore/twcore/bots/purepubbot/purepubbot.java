@@ -693,25 +693,20 @@ public class purepubbot extends SubspaceBot
             return;
         
         int freqTotal = 0;
-        Vector shipTotals = new Vector();
-        shipTotals.add( new Integer(0) );        
-        for( int j = 1; j < 9; j++ )
-            shipTotals.add( new Integer(0) );
+        int numShipsOfType = 0;
             
         Player dummy;
         while( i.hasNext() ) {
             dummy = (Player)i.next();
             if( dummy != null) {
                 if( dummy.getFrequency() == player.getFrequency() ) {
-                    shipTotals.set( dummy.getShipType(), new Integer( ((Integer)shipTotals.get(dummy.getShipType())).intValue() + 1 ) );
-                    if( player.getShipType() != 0 )
-                        freqTotal++;
+                    freqTotal++;                    
+                    if( dummy.getShipType() == player.getShipType() )
+                        numShipsOfType++;
                 }
             }
         }
-                
-    	int numShipsOfType = ((Integer)shipTotals.get(player.getShipType())).intValue();
-    	
+                    	
     	// Free pass if you're the only one on the freq, regardless of weight.
     	if( numShipsOfType <= 1 )
     	    return;
