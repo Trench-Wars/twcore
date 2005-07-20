@@ -1193,6 +1193,7 @@ public class BotAction
     public void changeArena(String newArenaName)
     {
         m_packetGenerator.sendArenaLeft();
+        m_arenaTracker.clear();
         joinArena(newArenaName);
     }
 
@@ -1208,6 +1209,7 @@ public class BotAction
     public void changeArena(String newArenaName, short xResolution, short yResolution) throws Exception
     {
         m_packetGenerator.sendArenaLeft();
+        m_arenaTracker.clear();
         try
         {
             joinArena(newArenaName, xResolution, yResolution);
@@ -1225,6 +1227,7 @@ public class BotAction
     public void changeArena(short arenaNumber)
     {
         m_packetGenerator.sendArenaLeft();
+        m_arenaTracker.clear();
         joinArena(arenaNumber);
     }
 
@@ -1240,6 +1243,7 @@ public class BotAction
     public void changeArena(short arenaNumber, short xResolution, short yResolution) throws Exception
     {
         m_packetGenerator.sendArenaLeft();
+        m_arenaTracker.clear();
         try
         {
             joinArena(arenaNumber, xResolution, yResolution);
@@ -2017,4 +2021,11 @@ public class BotAction
     public int getBotNumber(){
     	return m_botNumber;
     }
+
+    /**
+     * Wipes all data from the arena tracker (player lists, etc)
+     */
+    public void clearArenaData(){
+		m_arenaTracker.clear();
+	}
 }
