@@ -41,7 +41,7 @@ public class purepubbot extends SubspaceBot
     private static final int SAFE_LEFT_X = 306;
     private static final int SAFE_LEFT_Y = 482;
     private static final int SAFE_RIGHT_X = 717;
-    private static final int SAFE_RIGHT_Y = 306;
+    private static final int SAFE_RIGHT_Y = 482;
     
     private LinkedList warpPlayers;
     
@@ -723,11 +723,11 @@ public class purepubbot extends SubspaceBot
             // If unlimited spiders are allowed, set them to spider; else spec
             if( ((Integer)shipWeights.get(3)).intValue() == 1 ) {
                 m_botAction.setShip(playerID, 3);
-                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind (" + numShipsOfType + "), or not enough people on the freq to allow you to play that ship.");                
+                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind (" + (numShipsOfType - 1) + "), or not enough people on the freq to allow you to play that ship.");                
             } else {
                 m_botAction.spec(playerID);
                 m_botAction.spec(playerID);
-                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind (" + numShipsOfType + "), or not enough people on the freq to allow you to play that ship.  Please choose another.");
+                m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind (" + (numShipsOfType - 1) + "), or not enough people on the freq to allow you to play that ship.  Please choose another.");
             }
         }
     }
