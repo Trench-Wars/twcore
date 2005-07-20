@@ -233,8 +233,11 @@ public class purepubbot extends SubspaceBot
         int playerID = event.getPlayerID();
         int freq = event.getFrequency();
         
-        if(started && !privFreqs)
-            checkFreq(playerID, freq, true);
+        if(started) {
+            checkPlayer(playerID);
+            if(!privFreqs)
+                checkFreq(playerID, freq, true);
+        }
         
         Player p = m_botAction.getPlayer( playerID );
         if( p == null )
@@ -428,7 +431,7 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException("Bot is not currently running pure pub settings.");
         
         started = false;
-        m_botAction.sendArenaMessage("Pure pub settings disabled.  Ship restrictions are now in effect.", 2);
+        m_botAction.sendArenaMessage("Pure pub settings disabled.  Ship restrictions are no longer in effect.", 2);
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully disabled.");
     }
     
@@ -783,6 +786,9 @@ public class purepubbot extends SubspaceBot
         String playerName = player.getPlayerName();
         int ship = player.getShipType();
         int newFreq = freq;
+        
+        if( playerName == null )
+            return;
         
         removeFromLists(playerName);
         
