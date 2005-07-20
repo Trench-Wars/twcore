@@ -735,8 +735,6 @@ public class GamePacketInterpreter {
 
     void handleArenaJoined( ByteArray message, boolean alreadyDecrypted ){
         if( m_requester.check( EventRequester.ARENA_JOINED ) ){
-			//Joining new arena, so the old players aren't there (good eye qan :D)
-			m_arenaTracker.clear();
             m_subspaceBot.handleEvent( new ArenaJoined( null ) );
         }
     }
@@ -746,4 +744,3 @@ public class GamePacketInterpreter {
         //TODO: add this at some point, 2dragons said he had a settings class
     }
 }
-
