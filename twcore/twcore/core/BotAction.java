@@ -1043,7 +1043,7 @@ public class BotAction
 	                    best = answ;
 	                else if (best.toLowerCase().compareTo(answ.toLowerCase()) > 0)
 	                    best = answ;
-	
+
 	            if (answ.equalsIgnoreCase(playerName))
 	                return answ;
 	        };
@@ -1193,7 +1193,6 @@ public class BotAction
     public void changeArena(String newArenaName)
     {
         m_packetGenerator.sendArenaLeft();
-        m_arenaTracker.clear();
         joinArena(newArenaName);
     }
 
@@ -1209,7 +1208,6 @@ public class BotAction
     public void changeArena(String newArenaName, short xResolution, short yResolution) throws Exception
     {
         m_packetGenerator.sendArenaLeft();
-        m_arenaTracker.clear();
         try
         {
             joinArena(newArenaName, xResolution, yResolution);
@@ -1227,7 +1225,6 @@ public class BotAction
     public void changeArena(short arenaNumber)
     {
         m_packetGenerator.sendArenaLeft();
-        m_arenaTracker.clear();
         joinArena(arenaNumber);
     }
 
@@ -1243,7 +1240,6 @@ public class BotAction
     public void changeArena(short arenaNumber, short xResolution, short yResolution) throws Exception
     {
         m_packetGenerator.sendArenaLeft();
-        m_arenaTracker.clear();
         try
         {
             joinArena(arenaNumber, xResolution, yResolution);
