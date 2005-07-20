@@ -43,6 +43,7 @@ public class Arena {
         m_playerIDList.clear();
         m_frequencyList.clear();
         m_flagIDList.clear();
+        m_tracker.clear();
     }
     
     public Iterator getPlayerIterator(){
