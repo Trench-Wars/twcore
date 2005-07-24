@@ -20,10 +20,13 @@ import java.util.*;
  *  Fixed possible SQL injection attacks (cough FINALLY cough).
  *  
  *  Added support so the bot will sync with the website.
+ *
+ *  Added a thing for default channels so you don't have to do !command channel:blahblahblah all the time
  */
 public class messagebot extends SubspaceBot
 {
 	HashMap channels;
+	HashMap defaultChannel;
 	HashSet ops;
 	CommandInterpreter m_CI;
 	TimerTask messageDeleteTask, messageBotSync;
@@ -39,6 +42,7 @@ public class messagebot extends SubspaceBot
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.LOGGED_ON);
 		channels = new HashMap();
+		defaultChannel = new HashMap();
 		ops = new HashSet();
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
@@ -119,6 +123,8 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!me",		 acceptedMessages, this, "myChannels");
         m_CI.registerCommand( "!mtfbwy",	 acceptedMessages, this, "handleDie");
         m_CI.registerCommand( "!login",		 acceptedMessages, this, "playerLogin");
+        m_CI.registerCommand( "!setdefault", acceptedMessages, this, "setPlayerDefaultChannel");
+        m_CI.registerCommand( "!default",	 acceptedMessages, this, "tellPlayerDefaultChannel");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
     }
@@ -155,24 +161,25 @@ public class messagebot extends SubspaceBot
      */
     public void destroyChannel(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     	{
-    		String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(message.toLowerCase()) + "'";
-    		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(message.toLowerCase()) + "'";
+    		String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(channel) + "'";
+    		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(channel) + "'";
     		try {
     			m_botAction.SQLQuery("local", query);
     			m_botAction.SQLQuery("local", query2);
     		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
-    		c.messageChannel(name, "Channel " + message + " deleted.");
-    		channels.remove(message.toLowerCase());
+    		c.messageChannel(name, "Channel " + channel + " deleted.");
+    		channels.remove(channel);
     	}
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -184,13 +191,14 @@ public class messagebot extends SubspaceBot
      */
     public void joinChannel(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	c.joinRequest(name);    	
     }
     
@@ -200,13 +208,14 @@ public class messagebot extends SubspaceBot
      */
     public void quitChannel(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOwner(name))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "You cannot leave while you are owner.");
@@ -221,14 +230,15 @@ public class messagebot extends SubspaceBot
      */
     public void acceptPlayer(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
   		  	c.acceptPlayer(name, pieces[1]);
   		else
@@ -241,14 +251,15 @@ public class messagebot extends SubspaceBot
      */
     public void declinePlayer(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.rejectPlayer(name, pieces[1]);
     	else
@@ -261,14 +272,15 @@ public class messagebot extends SubspaceBot
      */
     public void announceToChannel(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.announceToChannel(name, pieces[1]);
     	else
@@ -281,14 +293,15 @@ public class messagebot extends SubspaceBot
 	 */
 	public void messageChannel(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.messageChannel(name, pieces[1]);
     	else
@@ -301,13 +314,14 @@ public class messagebot extends SubspaceBot
      */
     public void listRequests(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listRequests(name);
     	else
@@ -320,14 +334,15 @@ public class messagebot extends SubspaceBot
      */
     public void banPlayer(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.banPlayer(name, pieces[1]);
     	else
@@ -340,14 +355,15 @@ public class messagebot extends SubspaceBot
      */
     public void unbanPlayer(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.unbanPlayer(name, pieces[1]);
     	else
@@ -360,13 +376,14 @@ public class messagebot extends SubspaceBot
      */
     public void listBanned(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listBanned(name);
     	else
@@ -379,13 +396,14 @@ public class messagebot extends SubspaceBot
      */
     public void listMembers(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listMembers(name);
     	else
@@ -398,14 +416,15 @@ public class messagebot extends SubspaceBot
      */
     public void makeOp(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makeOp(name, pieces[1]);
     	else
@@ -418,14 +437,15 @@ public class messagebot extends SubspaceBot
      */
     public void deOp(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(!c.isOp(name))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That player is not an operator.");
@@ -444,8 +464,9 @@ public class messagebot extends SubspaceBot
      */
     public void grantChannel(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
@@ -464,14 +485,14 @@ public class messagebot extends SubspaceBot
      */
     public void sayOwner(String name, String message)
     {
-    	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(pieces[0].toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	m_botAction.sendSmartPrivateMessage(name, "Owner: " + c.owner);
     }
     
@@ -481,13 +502,14 @@ public class messagebot extends SubspaceBot
      */
     public void makePublic(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makePublic(name);
     	else
@@ -500,13 +522,14 @@ public class messagebot extends SubspaceBot
      */
     public void makePrivate(String name, String message)
     {
-    	if(!channels.containsKey(message.toLowerCase()))
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
-    	Channel c = (Channel)channels.get(message.toLowerCase());
+    	Channel c = (Channel)channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makePrivate(name);
     	else
@@ -557,6 +580,8 @@ public class messagebot extends SubspaceBot
         m_botAction.sendSmartPrivateMessage(name, "!delete <num>                  -Deletes message <num>.");
         m_botAction.sendSmartPrivateMessage(name, "!messages                      -PM's you all your message numbers.");
         m_botAction.sendSmartPrivateMessage(name, "!me                            -Tells you what channels you have joined.");
+        m_botAction.sendSmartPrivateMessage(name, "!setdefault <channel>          -Sets your default channel.");
+        m_botAction.sendSmartPrivateMessage(name, "!default                       -Tells you what your default channel is.");
         m_botAction.sendSmartPrivateMessage(name, "!help                          -Sends you this help message.");
         m_botAction.sendSmartPrivateMessage(name, "");
         m_botAction.sendSmartPrivateMessage(name, "Any channel owner commands:");
@@ -774,6 +799,49 @@ public class messagebot extends SubspaceBot
 	 		}
 	 	} catch(Exception e) { Tools.printStackTrace(e); }
 	 	return false;
+	 }
+	 
+	/** Sets the default channel for a player.
+	 *  @param name Name of player
+	 *  @param channel Channel to be set as default.
+	 */
+	 public void setPlayerDefaultChannel(String name, String channel) {
+	 	defaultChannel.put(name.toLowerCase(), channel.toLowerCase());
+	 	m_botAction.sendSmartPrivateMessage(name, "Default channel set to: " + channel.toLowerCase());
+	 }
+	 
+	/** Tells the player what their default is set to.
+	 *  @param name Name of the player
+	 *  @param empty ""
+	 */
+	 public void tellPlayerDefaultChannel(String name, String empty) {
+	 	if(defaultChannel.containsKey(name.toLowerCase()))
+	 		m_botAction.sendSmartPrivateMessage(name, "Default channel: " + defaultChannel.get(name.toLowerCase()));
+	 	else
+	 		m_botAction.sendSmartPrivateMessage(name, "You have not set your default channel.");
+	 }
+	 
+	/** Retrieves the channel name out of the message.
+	 *  @param name Name of player.
+	 *  @param message Message sent
+	 */
+	 public String getChannel(String name, String message, boolean noParams) {
+	 	if(noParams) {
+	 		if(message.length() == 0 && defaultChannel.containsKey(name.toLowerCase()))
+	 			return (String)defaultChannel.get(name.toLowerCase());
+	 		else
+	 			return message;
+	 	} else {
+		 	if(message.indexOf(":") == -1) {
+		 		if(defaultChannel.containsKey(name.toLowerCase()))
+		 			return (String)defaultChannel.get(name.toLowerCase());
+		 		else
+		 			return "";
+		 	} else {
+		 		String pieces[] = message.split(":");
+		 		return pieces[0];
+		 	}
+		}
 	 }
 	 
 	/** Handles a message sent by pubbots to tell a player if they have new messages
@@ -1321,6 +1389,11 @@ class Channel
 	 */
 	 public void updateAccess(String name, int level) {
 	 	members.put(name.toLowerCase(), new Integer(level));
+	 	if(level < 0) {
+	 		banned.add(name.toLowerCase());
+	 	} else if(banned.contains(name.toLowerCase())) {
+	 		banned.remove(name.toLowerCase());
+	 	}
 	 }
 	
 }
