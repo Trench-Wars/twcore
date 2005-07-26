@@ -19,6 +19,7 @@ public class Flag {
     
     public Flag( FlagClaimed message ) {
         
+        m_flagID = message.getFlagID();
         m_playerID = message.getPlayerID();
         m_flagClaimed = true;
     }
