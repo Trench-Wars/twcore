@@ -877,12 +877,17 @@ public class messagebot extends SubspaceBot
 	 /** Announces to a channel that they have recieved a new message.
 	  *  @param Name of channel
 	  */
-	 public void messageSentFromWebsite(String channel)
+	 public Set messageSentFromWebsite(String channel)
 	 {
+	 	Set s = null;
+	 	
 	 	try {
 		 	Channel c = (Channel)channels.get(channel.toLowerCase());
-		 	c.announceToChannel(m_botAction.getBotName(), "You have received a new private message, pm me with !messages to check it.");
+		 	s = c.members.keySet();
+		 	s.removeAll(c.banned);
 		} catch(Exception e) {  Tools.printStackTrace( e ); }
+		
+		return s;
 	 }
 	 
 	 /** Syncs the website and MessageBot's access levels
@@ -921,6 +926,8 @@ public class messagebot extends SubspaceBot
 		{
 			public void run()
 			{
+				HashSet peopleToTell = new HashSet();
+				
 				String query = "SELECT * FROM tblMessageToBot ORDER BY fnID ASC";
 				String query2 = "DELETE FROM tblMessageToBot";
 				try {
@@ -929,13 +936,18 @@ public class messagebot extends SubspaceBot
 						String event = results.getString("fcSyncData");
 						String pieces[] = event.split(":");
 						if(pieces.length == 2)
-							messageSentFromWebsite(pieces[1]);
+							peopleToTell.addAll(messageSentFromWebsite(pieces[1]));
 						else
 							accessUpdateFromWebsite(pieces[2], pieces[1], Integer.parseInt(pieces[3]));
 					}
-					
 					m_botAction.SQLQuery("local", query2);
 				} catch(Exception e) { Tools.printStackTrace( e ); }
+				
+				Iterator it = peopleToTell.iterator();
+				while(it.hasNext()) {
+					String player = (String)it.next();
+					m_botAction.sendSmartPrivateMessage(player, "You have received a new message. PM me with !messages to read it.");
+				}
 			}
 		};
 							
@@ -1018,6 +1030,7 @@ class Channel
 			owner = player;
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been made the owner of " + channelName + " channel.");
+			m_bA.sendSmartPrivateMessage(name, player + " has been granted ownership of " + channelName);
 		}
 		else
 			m_bA.sendSmartPrivateMessage(name, "This player is not in the channel.");
@@ -1034,6 +1047,7 @@ class Channel
 			updateSQL(player.toLowerCase(), 2);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been made an operator in " + channelName + " channel.");
+			m_bA.sendSmartPrivateMessage(name, player + " has been granted op powers in " + channelName);
 		}
 		else
 			m_bA.sendSmartPrivateMessage(name, "This player is not in the channel.");
@@ -1054,6 +1068,7 @@ class Channel
 			updateSQL(player.toLowerCase(), 1);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "Your operator priveleges in " + channelName + " channel have been revoked.");
+			m_bA.sendSmartPrivateMessage(name, player + "'s op powers in " + channelName + " have been revoked.");
 		}
 		else
 			m_bA.sendSmartPrivateMessage(name, "This player is not in the channel.");
@@ -1234,7 +1249,10 @@ class Channel
 			return;
 		}
 		else
+		{
 			banned.add(player.toLowerCase());
+			m_bA.sendSmartPrivateMessage(name, player + " has been banned.");
+		}
 		if(members.containsKey(player.toLowerCase()))
 		{
 			int level = ((Integer)members.get(player.toLowerCase())).intValue();
@@ -1250,7 +1268,10 @@ class Channel
 	public void unbanPlayer(String name, String player)
 	{
 		if(banned.contains(player.toLowerCase()))
+		{
 			banned.remove(player.toLowerCase());
+			m_bA.sendSmartPrivateMessage(name, player + " has been unbanned.");
+		}
 		else
 		{
 			m_bA.sendSmartPrivateMessage(name, "That player is not banned.");
