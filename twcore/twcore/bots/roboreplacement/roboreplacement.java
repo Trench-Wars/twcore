@@ -161,14 +161,24 @@ public class roboreplacement extends SubspaceBot
 			}
 			if(message.toLowerCase().startsWith("!zoneoff") && zoneOn) //Turns the zoning ability off
 			{
+				try {
+				    zonerTrue.cancel();
+				}catch (Exception e) {
+					m_botAction.sendSmartPrivateMessage(name, "Problem turning off zoners.");				    
+				}
 				m_botAction.sendSmartPrivateMessage(name, "I promise I won't send any more zoners...<insert evil snicker here>");
-				zonerTrue.cancel();
 				zoneOn = false;
 			}
 			if(message.toLowerCase().startsWith("!zoneon") && !zoneOn) //Turns the zoning ability on
 			{
+				try {
+				    zonerTrue.cancel();
+				    setupZoner();
+					m_botAction.scheduleTaskAtFixedRate(zonerTrue, 15 * 60 * 1000, 15 * 60 * 1000);
+				}catch (Exception e) {
+					m_botAction.sendSmartPrivateMessage(name, "Problem turning on zoners.");				    
+				}
 				m_botAction.sendSmartPrivateMessage(name, name + "'s mom has got it goin on...");
-				m_botAction.scheduleTaskAtFixedRate(zonerTrue, 15 * 60 * 1000, 15 * 60 * 1000);
 				zoneOn = true;
 			}
 			if(message.toLowerCase().startsWith("!help")) //Sends the help message
@@ -477,10 +487,14 @@ public class roboreplacement extends SubspaceBot
         try{
 
             ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnDeaths, fnWon, fnPlayed, fnKills, fnRating FROM tblElimTwoStats"+num+" WHERE fcUserName = \"" + username+"\"");
-            if(result.next()) {
-                return username + "- Wins: "+ result.getInt("fnWon") + "  Games:" + result.getInt("fnPlayed") + ")  Kills: " +result.getInt("fnKills") + "  Deaths:" + result.getInt("fnDeaths") + "  Rating: " + result.getInt("fnRating");
+            if( result == null ) {
+                if(result.next()) {
+                	return username + "- Wins: "+ result.getInt("fnWon") + "  Games:" + result.getInt("fnPlayed") + ")  Kills: " +result.getInt("fnKills") + "  Deaths:" + result.getInt("fnDeaths") + "  Rating: " + result.getInt("fnRating");
+            	} else {
+                	return "There is no record of player " + username;
+            	}
             } else {
-                return "There is no record of player " + username;
+            	return "There is no record of player " + username;                
             }
         } catch (Exception e) {
             Tools.printStackTrace(e);
