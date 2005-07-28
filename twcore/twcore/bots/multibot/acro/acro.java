@@ -114,7 +114,7 @@ public class acro extends MultiModule{
                             	playerScores.put( piece[0], "10" );
                         	m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
                         } else {
-                        	m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - (did not vote; no score)" );                            
+                        	m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );                            
                         }
                     }
                 }
@@ -189,14 +189,14 @@ public class acro extends MultiModule{
                     String cur     = (String)phrases.elementAt( vote - 1);
                     String parts[] = Tools.stringChopper( cur, '%' );
 
-                    if( playerVotes.containsKey( name ) ) {
+                    if( playerVotes.containsKey( name.toLowerCase() ) ) {
                         m_botAction.sendPrivateMessage( name, "You have already voted!." );
                         return;
                     }
 
                     if( !parts[0].toLowerCase().equals( name.toLowerCase() ) ) {
                         votes[vote-1]++;
-                        playerVotes.put( name, name );
+                        playerVotes.put( name.toLowerCase(), name );
                         if( votes[vote-1] > maxVote ) maxVote = votes[vote-1];
                         m_botAction.sendPrivateMessage( name, "Your vote has been counted." );
                     } else m_botAction.sendPrivateMessage( name, "You cannot vote for your own." );
