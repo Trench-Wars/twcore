@@ -104,13 +104,18 @@ public class acro extends MultiModule{
                 for( int i = 0; i < phrases.size(); i++ ) {
                     if( votes[i] == maxVote ) {
                         String piece[] = Tools.stringChopper( ((String)phrases.elementAt( i )), '%' );
-                        if( playerScores.containsKey( piece[0] ) ) {
-                            int s = Integer.parseInt( (String)playerScores.get( piece[0] ) );
-                            s += 10;
-                            playerScores.put( piece[0], ""+s );
-                        } else
-                            playerScores.put( piece[0], "10" );
-                        m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
+                        if( playerVotes.containsKey( piece[0] ) ) {
+                        
+                            if( playerScores.containsKey( piece[0] ) ) {
+                            	int s = Integer.parseInt( (String)playerScores.get( piece[0] ) );
+                            	s += 10;
+                            	playerScores.put( piece[0], ""+s );
+                        	} else
+                            	playerScores.put( piece[0], "10" );
+                        	m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
+                        } else {
+                        	m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - (did not vote; no score)" );                            
+                        }
                     }
                 }
                 playerIdeas.clear();
@@ -160,7 +165,10 @@ public class acro extends MultiModule{
                 for( int i = 0; i < pieces.length; i++ ) {
                     if( pieces[i].toLowerCase().charAt(0) != pieces2[i].toLowerCase().charAt(0) )
                         valid = false;
+                    if( pieces[i].contains("_") || pieces[i].contains("-") )
+                        valid = false;
                 }
+                
                 if( valid ) {
                     if(	!playerIdeas.containsKey( name ) ) {
                         playerIdeas.put( name, message );
@@ -170,9 +178,9 @@ public class acro extends MultiModule{
                         playerIdeas.put( name, message );
                         m_botAction.sendPrivateMessage( name, "Your answer has been changed." );
                     }
-                } else m_botAction.sendPrivateMessage( name, "You have submitted an invalid acronym" );
+                } else m_botAction.sendPrivateMessage( name, "You have submitted an invalid acronym.  It must match the letters and not contain dashes/underscores." );
 
-            } else m_botAction.sendPrivateMessage( name, "You can only use the set letters for the acronym" );
+            } else m_botAction.sendPrivateMessage( name, "You must use the correct number of letters!" );
         } else if( gameState == 2 ) {
             int vote = 0;
             try { vote = Integer.parseInt( message ); } catch (Exception e ) {}
@@ -253,7 +261,8 @@ public class acro extends MultiModule{
         String[] help = {
                 "Rules for Acromania: compose a sentence with the letters provided.",
                 "PM your answers to me before the timer is up!",
-                "Then vote for your favorite answer.  You can't vote for your own!"
+                "Then vote for your favorite answer.  You can't vote for your own!",
+                "If you don't vote for someone else's acro, you can't win."
         };
         return help;
     }
