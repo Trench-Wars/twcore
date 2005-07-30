@@ -12,7 +12,7 @@ import com.wilko.jaim.*;
  *  everyone on the channel so that information can be spread easily.
  *
  *  @author Ikrit
- *  @version 1.6
+ *  @version 1.8
  *  
  *  Added database support of messages because I forgot SSC messaging only
  *  allows one message from a person at a time.
@@ -25,6 +25,12 @@ import com.wilko.jaim.*;
  *  Added support so the bot will sync with the website.
  *
  *  Added a thing for default channels so you don't have to do !command channel:blahblahblah all the time
+ *
+ *  Added a buddy list thing for my planned AIM stuff.
+ *
+ *  Added AOL Instant Messanger support.
+ *
+ *  Added a news feature for the lobby thing that qan is designing. Highmod+ can add news messages that get arena'd every 90 sec's.
  */
 public class messagebot extends SubspaceBot implements JaimEventListener
 {
@@ -33,8 +39,11 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	HashMap buddyLists;
 	HashMap aimLogins;
 	HashSet ops;
+	HashMap news;
+	ArrayList newsIDs;
+	int newsID;
 	CommandInterpreter m_CI;
-	TimerTask messageDeleteTask, messageBotSync, aimReconnect;
+	TimerTask messageDeleteTask, messageBotSync, aimReconnect, newsTask;
 	public static final String IPCCHANNEL = "messages";
 	JaimConnection aimConnection;
 	boolean aimOn = false;
@@ -53,12 +62,16 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 		buddyLists = new HashMap();
 		aimLogins = new HashMap();
 		ops = new HashSet();
+		news = new HashMap();
+		newsIDs = new ArrayList();
+		newsID = 0;
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
 		createTasks();
 		m_botAction.scheduleTaskAtFixedRate(aimReconnect, 1, 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(messageDeleteTask, 30 * 60 * 1000, 30 * 60 * 1000);
-		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 5 * 60 * 1000, 5 * 60 * 1000);
+		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 2 * 60 * 1000, 2 * 60 * 1000);
+		m_botAction.scheduleTaskAtFixedRate(newsTask, 90 * 1000, 90 * 1000);
 	}
 	
 	/** This method handles an InterProcessEvent
@@ -140,6 +153,9 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         m_CI.registerCommand( "!add",		 acceptedMessages, this, "addBuddy");
         m_CI.registerCommand( "!remove",	 acceptedMessages, this, "removeBuddy");
         m_CI.registerCommand( "!buddylist",	 acceptedMessages, this, "buddyList");
+        m_CI.registerCommand( "!addnews",	 acceptedMessages, this, "addNewsItem");
+        m_CI.registerCommand( "!delnews",	 acceptedMessages, this, "deleteNewsItem");
+        m_CI.registerCommand( "!setaimname", acceptedMessages, this, "setAIMName");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
     }
@@ -710,6 +726,23 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 					buddyLists.put(name, new BuddyList(name, id, buddies, m_botAction));
 				}
 			} catch(SQLException e) { Tools.printStackTrace(e); }
+			
+			query = "SELECT * FROM tblBotNews ORDER BY fnID DESC";
+			try {
+				ResultSet results = m_botAction.SQLQuery("local", query);
+				while(results.next()) {
+					String name = results.getString("fcName");
+					String content = results.getString("fcNews");
+					String date = results.getString("fdTime");
+					String url = results.getString("fcURL");
+					int id = results.getInt("fnID");
+					NewsArticle na = new NewsArticle(content, name, date, id, url);
+					news.put(id, na);
+					newsIDs.add(id);
+				}
+				results.close();
+			} catch(SQLException e) { Tools.printStackTrace(e); }
+					
 		} catch(Exception e) {}
 		
 //		aimLogins.put("olos necaj", "ikrit <er>");
@@ -888,19 +921,33 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	  *  @param name Name of player
 	  *  @param empty ""
 	  */
-	  public void registerName(String name, String empty) {
+	  public void registerName(String name, String aimName) {
 	  	if(buddyLists.containsKey(name.toLowerCase())) {
 	  		m_botAction.sendSmartPrivateMessage(name, "You have already registered for this.");
 	  		return;
 	  	} else {
 	  		try {
-		  		m_botAction.SQLQuery("local", "INSERT INTO tblAIMUser (fnID, fcName) VALUES (0, '"+name.toLowerCase()+"'");
-		  		int id = m_botAction.SQLQuery("local", "SELECT fnID FROM tblAIMUser WHERE fcName = '"+name.toLowerCase()+"'").getInt("fnID");
-		  		m_botAction.sendSmartPrivateMessage(name, "Registration complete.");
+		  		m_botAction.SQLQuery("local", "INSERT INTO tblAIMUser (fnID, fcName, fcAIMName) VALUES (0, '"+Tools.addSlashesToString(name.toLowerCase())+"', '"+Tools.addSlashesToString(aimName.toLowerCase())+"')");
+		  		int id = m_botAction.SQLQuery("local", "SELECT fnID FROM tblAIMUser WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'").getInt("fnID");
+		  		m_botAction.sendSmartPrivateMessage(name, "Registration complete, you may use the AIM name " + aimName + " to send PMs with me.");
 		  		buddyLists.put(name.toLowerCase(), new BuddyList(name.toLowerCase(), id, new HashSet(), m_botAction));
+		  		aimLogins.put(name.toLowerCase(), aimName.toLowerCase());
 		  	} catch(Exception e) { }
 		}
 	}
+	
+	/** Sets AIM name.
+	 *  @param name Name of player
+	 *  @param AIM name.
+	 */
+	 public void setAIMName(String name, String aimName) {
+	 	String query = "UPDATE tblAIMUser SET fcAIMName = '"+Tools.addSlashesToString(aimName.toLowerCase())+"' WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
+	 	try {
+	 		m_botAction.SQLQuery("local", query);
+	 		aimLogins.put(name.toLowerCase(), aimName.toLowerCase());
+	 		m_botAction.sendSmartPrivateMessage(name, "AIM name set to: " + aimName);
+	 	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Update failed."); }
+	 }
 	
 	/** Adds a name to buddy list.
 	 *  @param name Name of player
@@ -951,6 +998,10 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	 public void aimMessage(String name, String message) {
 	 	if(!buddyLists.containsKey(name.toLowerCase())) {
 	 		m_botAction.sendSmartPrivateMessage(name, "You have not registered for a buddy list yet.");
+	 		return;
+	 	}
+	 	if(!aimOn) {
+	 		m_botAction.sendSmartPrivateMessage(name, "The bot cannot sign on to AIM right now, please try again later.");
 	 		return;
 	 	}
 	 	
@@ -1115,6 +1166,12 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         		setupAIM();
         	}
         };
+        
+        newsTask = new TimerTask() {
+        	public void run() {
+        		nextNews();
+        	}
+        };
 	}
 		
 	/** Sets up all the stuff for AIM.
@@ -1200,30 +1257,8 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      public void receiveIM(IMTocResponse im) {
      	String player = im.getFrom();
      	String message = removeSpecialChars(Utils.stripHTML(im.getMsg()));
-     	try { aimConnection.getInfo(player); } catch(Exception e) { }
      	try {
-	     	if(!aimLogins.containsKey(player.toLowerCase())) {
-	     		if(message.toLowerCase().startsWith("!login ")) {
-	     			String pieces[] = message.toLowerCase().split(" ", 2);
-	     			String unPW[] = pieces[1].split(":", 2);
-	     			try {
-	     				ResultSet results = m_botAction.SQLQuery("local", "SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(unPW[0])+"' ORDER BY fdSignedUp ASC");
-	     				if(results.next()) {
-	     					int ID = results.getInt("fnUserID");
-	     					results.close();
-	     					results = m_botAction.SQLQuery("local", "SELECT * FROM tblUserAccount WHERE fnUserID = " + ID + " AND fcPassword = PASSWORD('"+Tools.addSlashesToString(unPW[1])+"')");
-	     					if(results.next()) {
-	     						aimLogins.put(player.toLowerCase(), unPW[0]);
-	     						aimConnection.sendIM(player, "Logged in.");
-	     					} else {
-	     						aimConnection.sendIM(player, "Login failed.");
-	     					}
-	     				}
-	     			} catch(Exception e) { Tools.printStackTrace(e); }
-	     		} else {
-	     			aimConnection.sendIM(player, "Please use !login name:pw before trying to use me.");
-	     		}
-	     	} else {
+	     	if(aimLogins.containsKey(player.toLowerCase())) {
 	     		String name = (String)aimLogins.get(player.toLowerCase());
 	     		if(message.toLowerCase().startsWith("!add ")) {
 	     			BuddyList bList = (BuddyList)buddyLists.get(name);
@@ -1239,9 +1274,8 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	     				aimConnection.sendIM(player, "Buddy removed.");
 	     			else
 	     				aimConnection.sendIM(player, "Not a buddy.");
-	     		} else if(message.toLowerCase().startsWith("!logout")) {
-	     			aimLogins.remove(name);
-	     			aimConnection.sendIM(player, "Logout complete.");
+	     		} else if(message.toLowerCase().startsWith("!help")) {
+	     			aimConnection.sendIM(player, "!add <name>   -Adds a player to your buddy list. <br> !remove <name>   -Removes a player from your buddy list. <br> Name:Message  -Sends Name 'message' through pm.");
 	     		} else {
 	     			String pieces[] = message.split(":", 2);
 	     			if(bothBuddies(name, pieces[0]))
@@ -1312,6 +1346,102 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      		}
      	}
      	return message;
+     }
+     
+    /** Adds a news item.
+     *  @param name Name of player adding.
+     *  @param message Stuff...
+     */
+     public void addNewsItem(String name, String message) {
+     	if(!m_botAction.getOperatorList().isHighmod(name) || !ops.contains(name.toLowerCase()))
+     		return;
+     	String contents;
+     	String writer = name;
+     	String url;
+     	
+     	String pieces[] = message.split(":", 2);
+     	if(pieces.length == 2) {
+     		contents = pieces[0];
+     		url = pieces[1];
+     	} else {
+     		contents = message;
+     		url = "";
+     	}
+     	int id;
+     	String date;
+     	String query = "INSERT INTO tblBotNews (fnID, fcName, fcNews, fdTime, fcURL) VALUES (0, '"+Tools.addSlashesToString(writer)+"', ";
+     	query += "'"+Tools.addSlashesToString(contents)+"', NOW(), '"+Tools.addSlashesToString(url) +"')";
+     	String query2 = "SELECT fnID, fdTime FROM tblBotNews WHERE fcName = '"+Tools.addSlashesToString(writer)+"' ORDER BY fnID DESC";
+     	try {
+     		m_botAction.SQLQuery("local", query);
+     		ResultSet results = m_botAction.SQLQuery("local", query2);
+     		date = results.getString("fdTime");
+     		id = results.getInt("fnID");
+     	} catch(Exception e) { return; }
+     	NewsArticle na = new NewsArticle(writer, contents, date, id, url);
+     	news.put(id, na);
+     	newsIDs.add(id);
+     }
+    
+    /** Deletes a news item
+     *  @param name Name of player
+     *  @param id News id
+     */
+     public void deleteNewsItem(String name, String id2) {
+     	if(!m_botAction.getOperatorList().isHighmod(name) || !ops.contains(name.toLowerCase()))
+     		return;
+     	int id = 9283749;
+     	try {
+     		id = Integer.parseInt(id2);
+     	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Someone needs to go back to 1st grade to learn what a number is."); }
+     	if(id == 9283749) return;
+     	
+     	if(news.remove(id) != null) {
+     		String query = "DELETE FROM tblBotNews WHERE fnID = " + id;
+     		try {
+     			m_botAction.SQLQuery("local", query);
+     		} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Delete failed."); return; }
+     		m_botAction.sendSmartPrivateMessage(name, "News article deleted.");
+     		newsIDs.remove(newsIDs.indexOf(id));
+     	} else {
+     		m_botAction.sendSmartPrivateMessage(name, "Invalid news id.");
+     	}
+     }
+    
+    /** PM's a player with a news article.
+     *  @param name Name of player
+     *  @param id ID of article.
+     */
+     public void readNewsItem(String name, String id2) {
+     	int id = 9283749;
+     	try {
+     		id = Integer.parseInt(id2);
+     	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Someone needs to go back to 1st grade to learn what a number is."); }
+     	if(id == 9283749) return;
+     	
+     	NewsArticle na = (NewsArticle)news.get(id2);
+     	if(na == null) {
+     		m_botAction.sendSmartPrivateMessage(name, "Invalid news id.");
+     		return;
+     	}
+     	
+     	m_botAction.sendSmartPrivateMessage(name, na.toString());
+     	if(!na.url.equals(""))
+     		m_botAction.sendSmartPrivateMessage(name, "For more information, visit: " + na.url);
+     }
+    
+    /** Gets next news article in queue.
+     */
+     public void nextNews() {
+     	if(newsID > newsIDs.size()) newsID = 0;
+     	if(newsIDs.isEmpty()) return;
+     	
+     	NewsArticle na = (NewsArticle)news.get(newsID);
+     	m_botAction.sendArenaMessage(na.toString());
+     	if(!na.url.equals(""))
+     		m_botAction.sendArenaMessage("For more information, click on this link: " + na.url);
+     	
+     	newsID++;
      }
 }
 
@@ -1726,11 +1856,13 @@ class Channel
 			if(k % 10 != 0)
 				message += ", ";
 			
+			int level = (Integer)members.get(pName.toLowerCase());
+			
 			if(isOwner(pName))
 				message += pName + " (Owner)";
 			else if(isOp(pName))
 				message += pName + " (Op)";
-			else
+			else if(level > 0)
 				message += pName;
 			k++;
 			if(k % 10 == 0 || !it.hasNext())
@@ -1746,7 +1878,7 @@ class Channel
 	 */
 	public void listBanned(String name)
 	{
-		Iterator it = members.keySet().iterator();
+		Iterator it = banned.iterator();
 		String message = "";
 		m_bA.sendSmartPrivateMessage(name, "List of players banned from " + channelName + ": ");
 		for(int k = 0;it.hasNext();)
@@ -1800,7 +1932,7 @@ class BuddyList
 	{
 		try {
 			if(buddies.add(n.toLowerCase())) {
-				m_bA.SQLQuery("local", "INSERT INTO tblBuddyList (fnID, fcBuddyName) VALUES ("+id+", '"+n.toLowerCase()+"'");
+				m_bA.SQLQuery("local", "INSERT INTO tblBuddyList (fnID, fcBuddyName) VALUES ("+id+", '"+Tools.addSlashesToString(n.toLowerCase())+"'");
 				m_bA.sendSmartPrivateMessage(name, n + " added to buddy list.");
 				return true;
 			} else {
@@ -1814,7 +1946,7 @@ class BuddyList
 	{
 		try {
 			if(buddies.remove(n.toLowerCase())) {
-				m_bA.SQLQuery("local", "DELETE FROM tblBuddyList WHERE fcBuddyName = '"+n.toLowerCase()+"'");
+				m_bA.SQLQuery("local", "DELETE FROM tblBuddyList WHERE fcBuddyName = '"+Tools.addSlashesToString(n.toLowerCase())+"'");
 				m_bA.sendSmartPrivateMessage(name, n + " removed from buddy list.");
 				return true;
 			} else {
@@ -1848,5 +1980,29 @@ class BuddyList
 	public boolean isBuddy(String name) {
 		if(buddies.contains(name.toLowerCase())) return true;
 		else return false;
+	}
+}
+
+class NewsArticle 
+{
+	String writer;
+	String contents;
+	String d;
+	int id;
+	String url;
+	
+	public NewsArticle(String writer, String contents, String d, int id, String url)
+	{
+		this.writer = writer;
+		this.contents = contents;
+		this.d = d;
+		this.id = id;
+		this.url = url;
+	}
+	
+	public String toString()
+	{
+		String news = "Article #" + id + ": " + d + "-" + contents + " -" + writer;
+		return news;
 	}
 }
