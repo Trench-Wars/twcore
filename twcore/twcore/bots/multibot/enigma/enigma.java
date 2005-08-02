@@ -77,7 +77,7 @@ public class enigma extends MultiModule {
         m_commandInterpreter.registerCommand( "!come", 		acceptedMessages, this, "doComeArena");
         m_commandInterpreter.registerCommand( "!lagout", 	acceptedMessages, this, "doLagout" );
         m_commandInterpreter.registerCommand( "!whatis", 	acceptedMessages, this, "doWhatIs" );
-        m_commandInterpreter.registerDefaultCommand( Message.CHAT_MESSAGE, this, "doCheckAnswer" );
+        m_commandInterpreter.registerDefaultCommand( Message.CHAT_MESSAGE, this, "doShowHelp" );
     }
     
     /****************************************************************/
