@@ -142,7 +142,7 @@ public class lagHandler
                     {
                         public void run()
                         {
-                            spamLagInfo(false, true);
+                            tInfoCheck();
                         };
                     };
                     m_botAction.scheduleTask(tITimer, 500);
@@ -166,17 +166,13 @@ public class lagHandler
 							}
                             tinfoValues.add(new Integer(diff));
 
+                            serverTime[1] = sTime;
+                            userTime[1] = uTime;
+
                             if (tinfoValues.size() >= 32)
                             {
                                 tITimer.cancel();
-								serverTime[1] = sTime;
-								userTime[1] = uTime;
-                                adjustTinfoValues();
-
-                                spikeMean = calcSpikeMean();
-                                spikeSD = calcSpikeSD();
-                                numSpikes = calcNumSpikes();
-                                spamLagInfo(true, true);
+								tInfoCheck();
                             }
                         }
                     }
@@ -188,6 +184,23 @@ public class lagHandler
         }
     }
 
+    public void tInfoCheck()
+    {
+        if (tinfoValues.size() >= 10)
+        {
+            adjustTinfoValues();
+
+            spikeMean = calcSpikeMean();
+            spikeSD = calcSpikeSD();
+            numSpikes = calcNumSpikes();
+            spamLagInfo(true, true);
+        }
+        else
+        {
+            spamLagInfo(false, true);
+        }
+    }
+	
     private void doGetPing(String message)
     {
         currentPing = parsePing(message, "Ping:");
@@ -387,38 +400,6 @@ public class lagHandler
         return spikeCount;
     }
 
-    private boolean checkGrowing()
-    {
-        int nonGrowing = 0;
-        Integer tinfoValue = (Integer) tinfoValues.get(0);
-        int lastTinfo = tinfoValue.intValue();
-        for (int index = 1; index < tinfoValues.size(); index++)
-        {
-            tinfoValue = (Integer) tinfoValues.get(index);
-            if (tinfoValue.intValue() < lastTinfo) { 
-                nonGrowing++;
-            }
-            lastTinfo = tinfoValue.intValue();
-        }
-        return nonGrowing  < 5;
-    }
-
-    private boolean checkDiminishing()
-    {
-        int nonDiminishing = 0;
-        Integer tinfoValue = (Integer) tinfoValues.get(0);
-        int lastTinfo = tinfoValue.intValue();
-        for (int index = 0; index < tinfoValues.size(); index++)
-        {
-            tinfoValue = (Integer) tinfoValues.get(index);
-            if (tinfoValue.intValue() > lastTinfo) { 
-                nonDiminishing++;
-            }
-            lastTinfo = tinfoValue.intValue();
-        }
-        return nonDiminishing < 5;
-    }
-
 	public void adjustTinfoValues()
 	{
 		int deltaServerTime = serverTime[1] - serverTime[0];
@@ -437,34 +418,6 @@ public class lagHandler
             tinfoValues.set(index, new Integer(newValue));
         }
 	}
-
-
-/*    public void adjustTinfoValues()
-    {
-        double delta = 0;
-        Integer tinfoValue = (Integer) tinfoValues.get(0);
-		int firstTinfo = tinfoValue.intValue();
-		tinfoValue = (Integer) tinfoValues.get(31);
-        int lastTinfo = tinfoValue.intValue();
-
-		delta = firstTinfo - lastTinfo;
-		if (delta < 0) {
-			delta = delta * (-1);
-		}
-		if (delta < 10) {
-			return;
-		}
-		delta = delta / (double)32.0;
-
-		tinfoValue = (Integer) tinfoValues.get(0);
-		lastTinfo = tinfoValue.intValue();
-        for (int index = 1; index < tinfoValues.size(); index++)
-        {
-            tinfoValue = (Integer) tinfoValues.get(index);
-            int newValue = tinfoValue.intValue() + (int)(delta * index);
-            tinfoValues.set(index, new Integer(newValue));
-        }
-    } */
 
     public void startLagRequest(String pName, String req)
     {
