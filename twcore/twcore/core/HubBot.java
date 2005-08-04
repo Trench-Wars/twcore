@@ -33,6 +33,7 @@ public class HubBot extends SubspaceBot {
 
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "handleHelp" );
         m_commandInterpreter.registerCommand( "!remove", acceptedMessages, this, "handleRemove" );
+        m_commandInterpreter.registerCommand( "!hardremove", acceptedMessages, this, "handleHardRemove" );        
         m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "handleListBots" );
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage" );
         m_commandInterpreter.registerCommand( "!listbottypes", acceptedMessages, this, "handleListBotTypes" );
@@ -105,14 +106,26 @@ public class HubBot extends SubspaceBot {
     public void handleRemove( String messager, String message ){
         String className = message.trim();
 
-        if( m_botAction.getOperatorList().isSmod( messager ) == true ){
+        if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
             boolean success = m_botQueue.removeBot( message );
             if( success )
                 m_botAction.sendPrivateMessage( messager, "Removed." );
             else
                 m_botAction.sendPrivateMessage( messager, "Bot has NOT been removed.  Use exact casing of the name, i.e., !remove TWDBot" );                
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but (s)he tried !remove " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't a highmod, but (s)he tried !remove " + message );
+        }
+    }
+
+    public void handleHardRemove( String messager, String message ){
+        String className = message.trim();
+
+        if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
+            m_botAction.sendPrivateMessage( messager, "Removing all bots of type " + message + ".  Please be patient, this may take a while." );
+            m_botQueue.hardRemoveAllBotsOfType( message );
+            m_botAction.sendPrivateMessage( messager, "Removed all bots of type " + message + " (if possible).  Count reset to 0." );
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " isn't a highmod, but (s)he tried !hardremove " + message );
         }
     }
 
@@ -168,8 +181,12 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "!waitinglist - Displays the waiting list." );
         }
 
-        if( m_botAction.getOperatorList().isSmod( messager ) == true ){
+        if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!remove <name> - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)" );
+            m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
+        }
+        
+        if( m_botAction.getOperatorList().isSmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess - Rereads the mod, smod, and sysop file so that all access levels are updated." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbottypes - Lists the number of each bot type currently in use." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbots <bot type> - Lists the names and spawners of a bot type." );
