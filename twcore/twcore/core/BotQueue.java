@@ -111,8 +111,10 @@ public class BotQueue extends Thread {
         
         oldBotCount = (Integer)m_botTypes.get( className );
         if( oldBotCount != null ){
-            newBotCount = new Integer( oldBotCount.intValue() + valueToAdd );
-            m_botTypes.put( className, newBotCount );
+            if( oldBotCount.intValue() + valueToAdd >= 0 ) {
+                newBotCount = new Integer( oldBotCount.intValue() + valueToAdd );
+            	m_botTypes.put( className, newBotCount );
+            }
         }
     }
     
@@ -148,6 +150,23 @@ public class BotQueue extends Thread {
             return true;
         }
         return false;
+    }
+    
+    void hardRemoveAllBotsOfType( String className ) {
+        String       rawClassName = className.toLowerCase();
+        ChildBot c;
+        
+        Iterator i = m_botStable.values().iterator();
+        while( i.hasNext() ) {
+            c = (ChildBot)i.next();
+            if( c != null ) { 
+                if( c.getClassName() == rawClassName ) {
+                    removeBot( c.getBot().getName() );
+                }
+            }
+        }
+        if( ((Integer)m_botTypes.get( rawClassName )).intValue() != 0 )
+            m_botTypes.put( rawClassName, new Integer(0) );
     }
     
     void spawnBot( String className, String messager ){
