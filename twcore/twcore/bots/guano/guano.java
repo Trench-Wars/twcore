@@ -164,7 +164,7 @@ public class guano extends SubspaceBot
     {
         try
         {
-            ResultSet resultSet = m_botAction.SQLQuery("local",
+            ResultSet resultSet = m_botAction.SQLQuery(TWSITES_DATABASE,
                     "SELECT * " +
                     "FROM tblWarnings " +
                     "WHERE name = \"" + playerName.toLowerCase() + "\"");
