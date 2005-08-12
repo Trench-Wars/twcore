@@ -79,7 +79,7 @@ public class speed extends MultiModule {
 	public void do_help(String name, String message) {
 		String[] out = {
 			"+------------------------------------------------------------+",
-			"| SpeedBot v.0.1b                             - author Sika  |",
+			"| SpeedBot v.0.9                             - author Sika  |",
 			"+------------------------------------------------------------+",
 			"| Speed objectives:                                          |",
 			"|   There is a bomb planted in your spaceship. It explodes   |",
@@ -330,7 +330,8 @@ public class speed extends MultiModule {
 		Iterator it = players.keySet().iterator();
 
 		while (it.hasNext()) {
-			m_botAction.spectatePlayer((String)it.next());
+			String name = (String)it.next();
+			m_botAction.spectatePlayer(name);
 		}
 	}
 
@@ -445,6 +446,7 @@ public class speed extends MultiModule {
 	}
 
 	public void handleEvent(PlayerPosition event) {
+
 		String name = m_botAction.getPlayerName(event.getPlayerID());
 		if (m_eventState > 0 && players.containsKey(name)) {
 
@@ -473,8 +475,8 @@ public class speed extends MultiModule {
 
 				p.setSpeed((int)speedID);
 			}
-			
-			if (m_eventState == 2 && p.timeFromDeath() > 6000 && ((speed < m_speedLimits[m_speedLimit] && !m_speedLimitReversed) || (speed > m_speedLimits[m_speedLimit] && m_speedLimitReversed))) {
+
+		if (m_eventState == 2 && p.timeFromDeath() > 6000 && ((speed < m_speedLimits[m_speedLimit] && !m_speedLimitReversed) || (speed > m_speedLimits[m_speedLimit] && m_speedLimitReversed))) {
 				handleExplosion(m_botAction.getPlayerName(event.getPlayerID()), speed);
 			}
 		}
@@ -586,9 +588,9 @@ public class speed extends MultiModule {
 
 		String name;
 		int speed;
-		int lastUpdate;
+		int lastUpdate = (int)System.currentTimeMillis();
 
-		int lastDeath;
+		int lastDeath = (int)System.currentTimeMillis();
 
 		int goals;
 
