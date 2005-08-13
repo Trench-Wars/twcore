@@ -190,7 +190,7 @@ public abstract class MultiModule
       StackTraceElement[] stackTrace = e.getStackTrace();
       String eventName = event.getClass().getName();
 
-      m_botAction.sendChatMessage(FIRST_CHAT, "Error in module: " + getModuleName() + " when handling a " + eventName + " event.");
+      m_botAction.sendChatMessage(FIRST_CHAT, "Error in module: " + getModuleName() + " when handling a " + eventName + " event:" + e.getMessage() );
       m_botAction.sendChatMessage(FIRST_CHAT, "Stack Trace:");
       for(int index = 0; index < stackTrace.length; index++)
         m_botAction.sendChatMessage(FIRST_CHAT, stackTrace[index].toString());
