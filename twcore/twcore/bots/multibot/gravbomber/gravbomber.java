@@ -61,7 +61,7 @@ public class gravbomber extends MultiModule {
     }
 
     public void handleEvent( Message event ){
-    	String name = m_botAction.getPlayerName( event.getPlayerID() ); ;
+    	String name = m_botAction.getPlayerName( event.getPlayerID() );
         String message = event.getMessage();
 
         if( message.startsWith("!") ) {
