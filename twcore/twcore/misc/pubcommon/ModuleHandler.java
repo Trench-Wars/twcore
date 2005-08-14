@@ -7,7 +7,7 @@ import twcore.core.*;
 public class ModuleHandler
 {
   private AdaptiveClassLoader loader;
-  private HashMap moduleList;
+  private Map moduleList;
   private File moduleLocation;
   private String moduleGroup;
   private BotAction m_botAction;
@@ -26,7 +26,7 @@ public class ModuleHandler
     m_botAction = botAction;
     initializeLoader(modulePath);
     this.moduleGroup = moduleGroup;
-    moduleList = new HashMap();
+    moduleList = Collections.synchronizedMap(new HashMap());
   }
 
   /**
