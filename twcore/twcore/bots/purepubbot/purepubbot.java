@@ -137,8 +137,8 @@ public class purepubbot extends SubspaceBot
             {
                 String a = (String)oa;
                 String b = (String)ob;
-                if (Tools.isAllDigits(a)) {
-                    if (Tools.isAllDigits(b)) {
+                if (Tools.isAllDigits(a) || a == "" ) {
+                    if (Tools.isAllDigits(b) || b == "" ) {
                         if (Integer.parseInt(a) < Integer.parseInt(b)) {
                             return -1;
                         } else {
@@ -784,6 +784,9 @@ public class purepubbot extends SubspaceBot
     {
         Player player = m_botAction.getPlayer(playerID);
         String playerName = player.getPlayerName();
+        if( player == null )
+            return;
+        
         int ship = player.getShipType();
         int newFreq = freq;
         
