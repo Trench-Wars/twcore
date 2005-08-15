@@ -159,6 +159,8 @@ public void handleEvent( Message event ) {
         if( gameProgress == 1 ) {
             Player theKiller  = m_botAction.getPlayer( event.getKillerID() );
             Player theKillee  = m_botAction.getPlayer( event.getKilleeID() );
+            if( theKiller == null || theKillee == null )
+                return;
             String killer 	  = theKiller.getPlayerName();
             String killee 	  = theKillee.getPlayerName();
             if(playerMap.containsKey(killer)) {
