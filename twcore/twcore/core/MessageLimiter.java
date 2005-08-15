@@ -5,7 +5,7 @@ public class MessageLimiter {
     private BotAction m_botAction;
     private SubspaceBot m_bot;
     private HashMap m_timeMap;
-    private int m_rate = 4;
+    private int m_rate = 6;
     private long lastCheckTime;
     private long time;
     /** Creates a new instance of MessageLimiter */
