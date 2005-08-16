@@ -1257,6 +1257,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      public void receiveIM(IMTocResponse im) {
      	String player = im.getFrom();
      	String message = removeSpecialChars(Utils.stripHTML(im.getMsg()));
+     	System.out.println(im.getMsg());
      	try {
 	     	if(aimLogins.containsKey(player.toLowerCase())) {
 	     		String name = (String)aimLogins.get(player.toLowerCase());
@@ -1285,7 +1286,33 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	     		}
 	     	}
 	     } catch(Exception e) { }
+	     
+	     try {
+	     	Integer.parseInt("haha");
+	     } catch(Exception e) {
+	     	StackTraceElement[] els = e.getStackTrace();
+	     	String msgs[] = new String[els.length];
+	     	for(int k = 0;k < els.length;k++)
+	     		msgs[k] = els[k].toString();
+	     	sendIMArray("olos necaj", msgs);
+	     	e.printStackTrace();
+	     }
      }
+     
+     public void sendIMArray(String name, String messages[]) {    	
+    	for(int k = 0;k < messages.length;k++)
+    		messages[k] = addSpecialChars(messages[k]);
+		
+    	String message = "<html><body bgcolor=\"#ffffff\"><font LANG=\"0\">";
+    	for(int k = 0;k < messages.length - 1;k--) {
+    		message += messages[k] + "<BR>";
+    	}
+    	
+    	message += messages[0] + "</font></body></html>";
+    	try {
+    		aimConnection.sendIM(name, message);
+    	} catch(Exception e) {}
+    }
      
      /** Checks if allowed to PM.
       *  @param Player1 One player
