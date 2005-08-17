@@ -40,6 +40,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	HashMap defaultChannel;
 	HashMap buddyLists;
 	HashMap aimLogins;
+	HashMap aimToTW;
 	HashSet ops;
 	HashMap news;
 	ArrayList newsIDs;
@@ -64,6 +65,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 		defaultChannel = new HashMap();
 		buddyLists = new HashMap();
 		aimLogins = new HashMap();
+		aimToTW = new HashMap();
 		ops = new HashSet();
 		news = new HashMap();
 		newsIDs = new ArrayList();
@@ -946,6 +948,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 		  		m_botAction.sendSmartPrivateMessage(name, "Registration complete, you may use the AIM name " + aimName + " to send PMs with me.");
 		  		buddyLists.put(name.toLowerCase(), new BuddyList(name.toLowerCase(), id, new HashSet(), m_botAction));
 		  		aimLogins.put(name.toLowerCase(), aimName.toLowerCase());
+		  		aimToTW.put(aimName.toLowerCase(), name.toLowerCase());
 		  	} catch(Exception e) { }
 		}
 	}
@@ -959,6 +962,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	 	try {
 	 		m_botAction.SQLQuery("local", query);
 	 		aimLogins.put(name.toLowerCase(), aimName.toLowerCase());
+	 		aimToTW.put(aimName.toLowerCase(), name.toLowerCase());
 	 		m_botAction.sendSmartPrivateMessage(name, "AIM name set to: " + aimName);
 	 	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Update failed."); }
 	 }
@@ -1020,16 +1024,8 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	 	}
 	 	
 	 	String pieces[] = message.split(":", 2);
-	 	String aimName = "";
-	 	Iterator it = aimLogins.keySet().iterator();
-	 	while(it.hasNext()) {
-	 		String key = (String)it.next();
-	 		if(pieces[0].toLowerCase().equals(key)) {
-	 			aimName = (String)aimLogins.get(key);
-	 			break;
-	 		}
-	 	}
-	 	if(aimName.equals("")) return;
+	 	String aimName = (String)aimLogins.get(pieces[0].toLowerCase());
+	 	if(aimName == null) return;
 	 	
 	 	if(bothBuddies(name, pieces[0]))
 	 		try {
@@ -1273,8 +1269,8 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      	String message = removeSpecialChars(Utils.stripHTML(im.getMsg()));
      	System.out.println(im.getMsg());
      	try {
-	     	if(aimLogins.containsKey(player.toLowerCase())) {
-	     		String name = (String)aimLogins.get(player.toLowerCase());
+	     	if(aimToTW.containsKey(player.toLowerCase())) {
+	     		String name = (String)aimToTW.get(player.toLowerCase());
 	     		if(message.toLowerCase().startsWith("!add ")) {
 	     			BuddyList bList = (BuddyList)buddyLists.get(name);
 	     			String pieces[] = message.split(" ", 2);
