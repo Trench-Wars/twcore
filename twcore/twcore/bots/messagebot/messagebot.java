@@ -1416,9 +1416,11 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      	try {
      		m_botAction.SQLQuery("local", query);
      		ResultSet results = m_botAction.SQLQuery("local", query2);
-     		date = results.getString("fdTime");
-     		id = results.getInt("fnID");
-     	} catch(Exception e) { return; }
+     		if(results.next()) {
+	     		date = results.getString("fdTime");
+	     		id = results.getInt("fnID");
+	     	} else { return; }
+     	} catch(Exception e) { if(bug) m_botAction.sendSmartPrivateMessage("ikrit <er>", "Error while adding news item :/."); return; }
      	NewsArticle na = new NewsArticle(writer, contents, date, id, url);
      	news.put(id, na);
      	newsIDs.add(id);
