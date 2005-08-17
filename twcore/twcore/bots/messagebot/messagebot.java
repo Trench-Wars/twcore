@@ -1394,7 +1394,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      *  @param message Stuff...
      */
      public void addNewsItem(String name, String message) {
-     	if(!m_botAction.getOperatorList().isHighmod(name) || !ops.contains(name.toLowerCase()))
+     	if(!m_botAction.getOperatorList().isHighmod(name) && !ops.contains(name.toLowerCase()))
      		return;
      	String contents;
      	String writer = name;
@@ -1432,7 +1432,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      *  @param id News id
      */
      public void deleteNewsItem(String name, String id2) {
-     	if(!m_botAction.getOperatorList().isHighmod(name) || !ops.contains(name.toLowerCase()))
+     	if(!m_botAction.getOperatorList().isHighmod(name) && !ops.contains(name.toLowerCase()))
      		return;
      	int id = 9283749;
      	try {
