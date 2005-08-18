@@ -151,7 +151,7 @@ public class ModuleHandler
 
   public void handleEvent(SubspaceEvent event)
   {
-    Collection collection = moduleList.values();
+    Collection collection = Collections.synchronizedCollection( moduleList.values() );    
     Iterator iterator = collection.iterator();
     Module module;
 
