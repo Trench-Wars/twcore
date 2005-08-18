@@ -964,7 +964,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	 		aimLogins.put(name.toLowerCase(), aimName.toLowerCase());
 	 		aimToTW.put(aimName.toLowerCase(), name.toLowerCase());
 	 		m_botAction.sendSmartPrivateMessage(name, "AIM name set to: " + aimName);
-	 	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Update failed."); }
+	 	} catch(Exception e) { Tools.printStackTrace(e); m_botAction.sendSmartPrivateMessage(name, "Update failed."); }
 	 }
 	
 	/** Adds a name to buddy list.
@@ -1991,7 +1991,7 @@ class BuddyList
 	{
 		try {
 			if(buddies.add(n.toLowerCase())) {
-				m_bA.SQLQuery("local", "INSERT INTO tblBuddyList (fnID, fcBuddyName) VALUES ("+id+", '"+Tools.addSlashesToString(n.toLowerCase())+"'");
+				m_bA.SQLQuery("local", "INSERT INTO tblBuddyList (fnID, fcBuddyName) VALUES ("+id+", '"+Tools.addSlashesToString(n.toLowerCase())+"')");
 				m_bA.sendSmartPrivateMessage(name, n + " added to buddy list.");
 				return true;
 			} else {
