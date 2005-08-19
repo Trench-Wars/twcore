@@ -149,7 +149,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         m_CI.registerCommand( "!members",	 acceptedMessages, this, "listMembers");
         m_CI.registerCommand( "!banned",	 acceptedMessages, this, "listBanned");
         m_CI.registerCommand( "!me",		 acceptedMessages, this, "myChannels");
-        m_CI.registerCommand( "!mtfbwy",	 acceptedMessages, this, "handleDie");
+        m_CI.registerCommand( "!die",		 acceptedMessages, this, "handleDie");
         m_CI.registerCommand( "!login",		 acceptedMessages, this, "playerLogin");
         m_CI.registerCommand( "!setdefault", acceptedMessages, this, "setPlayerDefaultChannel");
         m_CI.registerCommand( "!default",	 acceptedMessages, this, "tellPlayerDefaultChannel");
@@ -609,50 +609,58 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      */
     public void doHelp(String name, String message)
     {
-    	m_botAction.sendSmartPrivateMessage(name, "Messaging system commands:");
-        m_botAction.sendSmartPrivateMessage(name, "    !join <channel>                -Puts in request to join <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !quit <channel>                -Removes you from <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !owner <channel>               -Tells you who owns <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !unread <num>                  -Sets message <num> as unread.");
-        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                    -PM's you message <num>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !messages                      -PM's you all your message numbers.");
-        m_botAction.sendSmartPrivateMessage(name, "    !me                            -Tells you what channels you have joined.");
-        m_botAction.sendSmartPrivateMessage(name, "    !setdefault <channel>          -Sets your default channel.");
-        m_botAction.sendSmartPrivateMessage(name, "    !default                       -Tells you what your default channel is.");
-        m_botAction.sendSmartPrivateMessage(name, "    !announce <channel>:<message>  -Sends everyone on <channel> a pm of <message>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !message <channel>:<message>   -Leaves a message for everyone on <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !requests <channel>            -PM's you with all the requests to join <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !banned <channel>              -Lists players banned on <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !members <channel>             -Lists all members on <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !ban <channel>:<name>          -Bans <name> from <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !unban <channel>:<name>        -Lifts <name>'s ban from <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !makeop <channel>:<name>       -Makes <name> an operator in <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !deop <channel>:<name>         -Revokes <name>'s operator status in <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !grant <channel>:<name>        -Grants ownership of <channel> to <name>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !private <channel>             -Makes <channel> a request based channel.");
-        m_botAction.sendSmartPrivateMessage(name, "    !public <channel>              -Makes <channel> open to everyone.");
-        m_botAction.sendSmartPrivateMessage(name, "    !destroy <channel>             -Destroys <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !accept <channel>:<name>       -Accepts <name>'s request to join <channel>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !decline <channel>:<name>      -Declines <name>'s request to join <channel>.");
-	    if(m_botAction.getOperatorList().isZH(name))
-	       	m_botAction.sendSmartPrivateMessage(name, "    !create <channel>              -Creates a channel with the name <channel>.");
-		m_botAction.sendSmartPrivateMessage(name, " ");
-    	m_botAction.sendSmartPrivateMessage(name, "AIM interface commands:");
-        m_botAction.sendSmartPrivateMessage(name, "    !register <name>               -Registers you for a buddy list and sets your AIM name as <name>.");
-        m_botAction.sendSmartPrivateMessage(name, "    !aim <player>:<message>        -Sends <message> to <player>'s AIM screen name.");
-        m_botAction.sendSmartPrivateMessage(name, "    !add <name>                    -Adds <name> to your buddy list.");
-        m_botAction.sendSmartPrivateMessage(name, "    !remove <name>                 -Removes <name> from your buddy list.");
-        m_botAction.sendSmartPrivateMessage(name, "    !buddylist                     -PM's you your buddy list.");
-        m_botAction.sendSmartPrivateMessage(name, "    !setaimname <name>             -Sets your AIM name to <name>.");
-        m_botAction.sendSmartPrivateMessage(name, " ");
-        m_botAction.sendSmartPrivateMessage(name, "!help                          -Sends you this help message.");
-	    if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) {
-	    	m_botAction.sendSmartPrivateMessage(name, "Highmod+ commands:");
+    	if(message.toLowerCase().startsWith("channel") || message.toLowerCase().startsWith("message")) {
+	    	m_botAction.sendSmartPrivateMessage(name, "Messaging system commands:");
+	        m_botAction.sendSmartPrivateMessage(name, "    !join <channel>                -Puts in request to join <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !quit <channel>                -Removes you from <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !owner <channel>               -Tells you who owns <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !unread <num>                  -Sets message <num> as unread.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                    -PM's you message <num>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !messages                      -PM's you all your message numbers.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !me                            -Tells you what channels you have joined.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !setdefault <channel>          -Sets your default channel.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !default                       -Tells you what your default channel is.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !announce <channel>:<message>  -Sends everyone on <channel> a pm of <message>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !message <channel>:<message>   -Leaves a message for everyone on <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !requests <channel>            -PM's you with all the requests to join <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !banned <channel>              -Lists players banned on <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !members <channel>             -Lists all members on <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !ban <channel>:<name>          -Bans <name> from <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !unban <channel>:<name>        -Lifts <name>'s ban from <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !makeop <channel>:<name>       -Makes <name> an operator in <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !deop <channel>:<name>         -Revokes <name>'s operator status in <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !grant <channel>:<name>        -Grants ownership of <channel> to <name>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !private <channel>             -Makes <channel> a request based channel.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !public <channel>              -Makes <channel> open to everyone.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !destroy <channel>             -Destroys <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !accept <channel>:<name>       -Accepts <name>'s request to join <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !decline <channel>:<name>      -Declines <name>'s request to join <channel>.");
+		    if(m_botAction.getOperatorList().isZH(name))
+		       	m_botAction.sendSmartPrivateMessage(name, "    !create <channel>              -Creates a channel with the name <channel>.");
+		} else if(message.toLowerCase().startsWith("aim")) {
+	    	m_botAction.sendSmartPrivateMessage(name, "AIM interface commands:");
+	        m_botAction.sendSmartPrivateMessage(name, "    !register <name>               -Registers you for a buddy list and sets your AIM name as <name>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !aim <player>:<message>        -Sends <message> to <player>'s AIM screen name.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !add <name>                    -Adds <name> to your buddy list.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !remove <name>                 -Removes <name> from your buddy list.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !buddylist                     -PM's you your buddy list.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !setaimname <name>             -Sets your AIM name to <name>.");
+	    } else if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()) && message.toLowerCase().startsWith("smod")) {
+	    	m_botAction.sendSmartPrivateMessage(name, "Smod+ commands:");
 	        m_botAction.sendSmartPrivateMessage(name, "    !addnews <news>:<url>          -Adds a news article with <news> as the content and <url> for more info.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !delnews <#>                   -Deletes news id number <#>."); 
 	        m_botAction.sendSmartPrivateMessage(name, "    !go <arena>                    -Sends messagebot to <arena>.");
-        }       
+	        m_botAction.sendSmartPrivateMessage(name, "    !die                           -Kills messagebot.");
+        } else {
+	    	String defaultHelp = "!help <section>                    -Replace <section> with message or channel to get the messaging system help, replace with aim to get aim help";
+	    	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+	    		defaultHelp += ", replace with smod to get the smod commands.";
+	    	else
+	    		defaultHelp += ".";
+        	m_botAction.sendSmartPrivateMessage(name, defaultHelp);
+        }
+	         
     }
     
     /** Does nothing
