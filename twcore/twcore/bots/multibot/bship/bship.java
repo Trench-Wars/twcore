@@ -290,6 +290,18 @@ public class bship extends MultiModule
 
 				m_botAction.privateMessageSpam(name, s);
 			}
+			else if(message.indexOf("cslock=") != -1)
+			{
+				int index = message.indexOf("cslock=");
+				String part = message.substring(index + 7, index + 10);
+				if(part.startsWith("on"))
+					lockCapShips = true;
+				else if(part.startsWith("off"))
+					lockCapShips = false;
+				else
+					throw new Exception();
+					m_botAction.sendPrivateMessage(name, "Cap ship locking "+ part);
+			}
 			else if(state == IDLE)
 			{
 				message = message.toLowerCase() + " ";
@@ -309,19 +321,6 @@ public class bship extends MultiModule
 						String part = message.substring(index + 6, index + 7);
 						board = Byte.parseByte(part);
 						m_botAction.sendPrivateMessage(name, "Board set to "+ board);
-					}
-					if(message.indexOf("cslock=") != -1)
-					{
-						int index = message.indexOf("cslock=");
-						String part = message.substring(index + 7, index + 10);
-						if(part.startsWith("on"))
-							lockCapShips = true;
-						else if(part.startsWith("off"))
-							lockCapShips = false;
-						else
-							throw new Exception();
-
-						m_botAction.sendPrivateMessage(name, "Cap ship locking "+ part);
 					}
 				}catch(Exception e)
 				{
