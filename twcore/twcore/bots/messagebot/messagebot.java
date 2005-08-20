@@ -33,6 +33,12 @@ import com.wilko.jaim.*;
  *  Added a news feature for the lobby thing that qan is designing. Highmod+ can add news messages that get arena'd every 90 sec's.
  *
  *  Added all new commands to !help thus making !help a 41 PM long help message.
+ *
+ *  Added debugging stuff...
+ *
+ *  Added an alerts chat type thing for in lobby.
+ *
+ *  Fixed help so it doesn't spam 41 lines.
  */
 public class messagebot extends SubspaceBot implements JaimEventListener
 {
@@ -46,11 +52,12 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	ArrayList newsIDs;
 	int newsID;
 	CommandInterpreter m_CI;
-	TimerTask messageDeleteTask, messageBotSync, aimReconnect, newsTask;
+	TimerTask messageDeleteTask, messageBotSync, aimReconnect, newsTask, newsChatTask;
 	public static final String IPCCHANNEL = "messages";
 	JaimConnection aimConnection;
 	boolean aimOn = false;
 	boolean bug = false;
+	boolean newsAlerts = false;
 	
 	/** Constructor, requests Message and Login events.
 	 *  Also prepares bot for use.
@@ -73,10 +80,12 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
 		createTasks();
-		m_botAction.scheduleTaskAtFixedRate(aimReconnect, 1, 60 * 1000);
+		setupAIM();
+	//	m_botAction.scheduleTaskAtFixedRate(aimReconnect, 1, 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(messageDeleteTask, 30 * 60 * 1000, 30 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 2 * 60 * 1000, 2 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(newsTask, 90 * 1000, 90 * 1000);
+		m_botAction.scheduleTaskAtFixedRate(newsChatTask, 15 * 60 * 1000, 15 * 60 * 1000);
 	}
 	
 	/** This method handles an InterProcessEvent
@@ -160,9 +169,11 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         m_CI.registerCommand( "!buddylist",	 acceptedMessages, this, "buddyList");
         m_CI.registerCommand( "!addnews",	 acceptedMessages, this, "addNewsItem");
         m_CI.registerCommand( "!delnews",	 acceptedMessages, this, "deleteNewsItem");
+        m_CI.registerCommand( "!readnews",	 acceptedMessages, this, "readNewsItem");
         m_CI.registerCommand( "!setaimname", acceptedMessages, this, "setAIMName");
         m_CI.registerCommand( "!bug",		 acceptedMessages, this, "bugMe");
         m_CI.registerCommand( "!debug",		 acceptedMessages, this, "stopBuggingMe");
+        m_CI.registerCommand( "!alerts",	 acceptedMessages, this, "announceToAlerts");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
     }
@@ -646,6 +657,9 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	        m_botAction.sendSmartPrivateMessage(name, "    !remove <name>                 -Removes <name> from your buddy list.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !buddylist                     -PM's you your buddy list.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !setaimname <name>             -Sets your AIM name to <name>.");
+	    } else if(message.toLowerCase().startsWith("news")) {
+	    	m_botAction.sendSmartPrivateMessage(name, "News interface commands:");
+	    	m_botAction.sendSmartPrivateMessage(name, "    !readnews <#>                  -PM's you news article #<#>.");
 	    } else if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()) && message.toLowerCase().startsWith("smod")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Smod+ commands:");
 	        m_botAction.sendSmartPrivateMessage(name, "    !addnews <news>:<url>          -Adds a news article with <news> as the content and <url> for more info.");
@@ -653,7 +667,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	        m_botAction.sendSmartPrivateMessage(name, "    !go <arena>                    -Sends messagebot to <arena>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !die                           -Kills messagebot.");
         } else {
-	    	String defaultHelp = "!help <section>                    -Replace <section> with message or channel to get the messaging system help, replace with aim to get aim help";
+	    	String defaultHelp = "!help <section>                    -Replace <section> with message or channel to get the messaging system help, replace with aim to get aim help, replace with news to get news help";
 	    	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
 	    		defaultHelp += ", replace with smod to get the smod commands.";
 	    	else
@@ -679,6 +693,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	 */
 	public void handleEvent(LoggedOn event)
 	{
+		m_botAction.sendUnfilteredPublicMessage("?chat=news,superalerts");
 		try {
 			m_botAction.joinArena(m_botAction.getBotSettings().getString("Default arena"));
 			m_botAction.ipcSubscribe(IPCCHANNEL);
@@ -1190,6 +1205,12 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         		nextNews();
         	}
         };
+        
+        newsChatTask = new TimerTask() {
+        	public void run() {
+        		newsAlerts();
+        	}
+        };
 	}
 		
 	/** Sets up all the stuff for AIM.
@@ -1209,7 +1230,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	        aimConnection.addBlock("");     // Set Deny None
 	            
 	        aimConnection.setInfo("This buddy is using <a href=\"http://jaimlib.sourceforge.net\">Jaim</a>.");
-	     } catch(Exception e) { e.printStackTrace(); }
+	     } catch(Exception e) { Tools.printStackTrace(e); }
 	}
 		
 	/** Receive an event and process it according to its content
@@ -1226,13 +1247,13 @@ public class messagebot extends SubspaceBot implements JaimEventListener
     		aimReconnect.cancel();
     		aimOn = true;
         } else if (responseType.equalsIgnoreCase(ConnectionLostTocResponse.RESPONSE_TYPE)) {
-        	aimReconnect = new TimerTask() {
+        	/** aimReconnect = new TimerTask() {
         		public void run() {
         			setupAIM();
         		}
         	};
         	m_botAction.scheduleTaskAtFixedRate(aimReconnect, 60 * 1000, 60 * 1000);
-        	aimOn = false;
+        	aimOn = false; */
         } else {
         	System.out.println(tr.toString());
         }
@@ -1488,14 +1509,24 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      	if(newsIDs.isEmpty()) return;
      	
      	NewsArticle na = (NewsArticle)news.get(newsID);
-     	m_botAction.sendArenaMessage(na.toString());
+     	m_botAction.sendChatMessage(na.toString());
      	if(!na.url.equals(""))
-     		m_botAction.sendArenaMessage("For more information, click on this link: " + na.url);
+     		m_botAction.sendChatMessage("For more information, click on this link: " + na.url);
      	
      	newsID++;
      	
      	
      }
+    
+    /** Alternates the arena message between news and superalerts.
+     */ 
+     public void newsAlerts() {
+     	if(newsAlerts)
+  		   	m_botAction.sendArenaMessage("To receive news reports, join ?chat=news. -MessageBot");
+  		else
+  			m_botAction.sendArenaMessage("To get TWD match results with your alerts, join ?chat=superalerts. -MessageBot");
+  		 newsAlerts = !newsAlerts;
+    }
      
     /** Bugs Ikrit
      */
@@ -1509,6 +1540,16 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      public void stopBuggingMe(String name, String bleh) {
      	if(name.toLowerCase().startsWith("ikrit"))
      		bug = false;
+     }
+    
+    /** Sends a message to ?chat=superalerts
+     */
+     public void announceToAlerts(String name, String details) {
+    	if(!m_botAction.getOperatorList().isSysop(name)) {
+    		return;
+    	}
+    	
+    	m_botAction.sendChatMessage(2, details);
      }
 }
 
