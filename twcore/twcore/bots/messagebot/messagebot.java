@@ -80,8 +80,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
 		createTasks();
-		setupAIM();
-	//	m_botAction.scheduleTaskAtFixedRate(aimReconnect, 1, 60 * 1000);
+//		m_botAction.scheduleTask(aimReconnect, 1);
 		m_botAction.scheduleTaskAtFixedRate(messageDeleteTask, 30 * 60 * 1000, 30 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 2 * 60 * 1000, 2 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(newsTask, 90 * 1000, 90 * 1000);
@@ -660,7 +659,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	    } else if(message.toLowerCase().startsWith("news")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "News interface commands:");
 	    	m_botAction.sendSmartPrivateMessage(name, "    !readnews <#>                  -PM's you news article #<#>.");
-	    } else if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()) && message.toLowerCase().startsWith("smod")) {
+	    } else if((m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) && message.toLowerCase().startsWith("smod")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Smod+ commands:");
 	        m_botAction.sendSmartPrivateMessage(name, "    !addnews <news>:<url>          -Adds a news article with <news> as the content and <url> for more info.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !delnews <#>                   -Deletes news id number <#>."); 
@@ -1244,8 +1243,8 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         } else if (responseType.equalsIgnoreCase(ConfigTocResponse.RESPONSE_TYPE)) {
         	receiveConfig();
     	} else if (responseType.equalsIgnoreCase(LoginCompleteTocResponse.RESPONSE_TYPE)) {
-    		aimReconnect.cancel();
-    		aimOn = true;
+    	//	aimReconnect.cancel();
+    	//	aimOn = true;
         } else if (responseType.equalsIgnoreCase(ConnectionLostTocResponse.RESPONSE_TYPE)) {
         	/** aimReconnect = new TimerTask() {
         		public void run() {
