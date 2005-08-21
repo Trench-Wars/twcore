@@ -25,6 +25,8 @@ public class twbotgolden extends TWBotExtension {
    int humanShip = 1;
    int humanFreq = 0;
    int specPlayers = 25;
+   int resetDelay = 5;
+   TimerTask resetPlayer;
 
    /**
     * This method switchs ships and freqs and specs depending
@@ -41,9 +43,10 @@ public class twbotgolden extends TWBotExtension {
 
        String killeename = m_botAction.getPlayerName( event.getKilleeID() );
        String killername = m_botAction.getPlayerName( event.getKillerID() );
+       Player deathGuy = m_botAction.getPlayer( event.getKilleeID() );
        //If the person dead has the golden gun then switch ships.
 //        m_botAction.sendArenaMessage( killername + " has killed '" + killeename + "'");
-       if (killeename.compareToIgnoreCase( hasGun) == 0)
+       if ((killeename.compareToIgnoreCase( hasGun) == 0) && (deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
            {if (m_botAction.getPlayer( event.getKilleeID() ).isPlaying() )
                {m_botAction.setShip(killeename, humanShip);
                //Sets old Golden Gunner to human ship
@@ -56,12 +59,19 @@ public class twbotgolden extends TWBotExtension {
                m_botAction.setShip(killername, gunShip);
                //Sets new golden Gunner to gun ship
                }
+           final String oldGun = hasGun;
+            resetPlayer = new TimerTask() {
+               public void run() {
+//for testing                    m_botAction.sendArenaMessage( "shipreseting old gun holder: " + oldGun);
+                    m_botAction.shipReset( oldGun );
+                    }
+               };
+           m_botAction.scheduleTask( resetPlayer, resetDelay * 1000 );
            hasGun = killername;
            //Remembers new gunner
            m_botAction.sendArenaMessage( hasGun + killMessage);
            //Announces new gunner.
            }
-       Player deathGuy = m_botAction.getPlayer( event.getKilleeID() );
        if ( deathGuy.getLosses() >= specPlayers ){
            m_botAction.spec( event.getKilleeID() );
            m_botAction.spec( event.getKilleeID() );
@@ -207,6 +217,7 @@ public class twbotgolden extends TWBotExtension {
            m_botAction.sendPrivateMessage(name, "Gunner: Freq " + gunFreq + " Ship " + gunShip);
            m_botAction.sendPrivateMessage(name, "Kill message: <name>" + killMessage);
            m_botAction.sendPrivateMessage(name, "Death limit set to: " + specPlayers );
+           m_botAction.sendPrivateMessage(name, "Shipreset delay (seconds) set to " + resetDelay);
        }
        else if( message.startsWith( "!game " )){
            //This will change the freqs and ships for both gunner and human.
@@ -226,6 +237,14 @@ public class twbotgolden extends TWBotExtension {
                    specPlayers = getInteger( message.substring( 10 ));
                    m_botAction.sendPrivateMessage( name, "Death limit set to: " + specPlayers );
                }
+           }
+       }
+              else if( message.toLowerCase().startsWith( "!resetdelay " )){
+           if( getInteger( message.substring( 12 )) < 1 ){
+               m_botAction.sendPrivateMessage( name, "The !resetdelay cannot be less then 1" );
+           } else {
+               resetDelay = getInteger( message.substring( 12 ));
+               m_botAction.sendPrivateMessage( name, "Shipreset delay (seconds) set to: " + resetDelay );
            }
        }
    }
@@ -272,7 +291,8 @@ public class twbotgolden extends TWBotExtension {
            "!randomplayer    - PMs you with name of random player" ,
            "!setmessage <message>",
            "                 - Changes the arena message when new golden gun.",
-           "!goldspec <#>    - sets death limit."
+           "!goldspec <#>    - sets death limit.",
+           "!resetdelay <#)  - changes deley between when goldengun dies and *shipreset"
            };
        return help;
    }
