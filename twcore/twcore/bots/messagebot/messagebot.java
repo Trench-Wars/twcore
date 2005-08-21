@@ -1174,6 +1174,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 				String query2 = "DELETE FROM tblMessageToBot";
 				try {
 					ResultSet results = m_botAction.SQLQuery("local", query);
+					if(results == null) return;
 					while(results.next()) {
 						String event = results.getString("fcSyncData");
 						String pieces[] = event.split(":");
