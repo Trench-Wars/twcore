@@ -774,7 +774,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 					String date = results.getString("fdTime");
 					String url = results.getString("fcURL");
 					int id = results.getInt("fnID");
-					NewsArticle na = new NewsArticle(content, name, date, id, url);
+					NewsArticle na = new NewsArticle(name, content, date, id, url);
 					news.put(id, na);
 					newsIDs.add(id);
 				}
@@ -1505,10 +1505,10 @@ public class messagebot extends SubspaceBot implements JaimEventListener
      	if(bug) {
      		m_botAction.sendSmartPrivateMessage("ikrit <er>", "I should have just sent a news thing... I have " + newsIDs.size() + " news articles.");
      	}
-     	if(newsID > newsIDs.size()) newsID = 0;
+     	if(newsID >= newsIDs.size()) newsID = 0;
      	if(newsIDs.isEmpty()) return;
      	
-     	NewsArticle na = (NewsArticle)news.get(newsID);
+     	NewsArticle na = (NewsArticle)news.get(newsIDs.get(newsID));
      	m_botAction.sendChatMessage(na.toString());
      	if(!na.url.equals(""))
      		m_botAction.sendChatMessage("For more information, click on this link: " + na.url);
@@ -2110,7 +2110,7 @@ class NewsArticle
 	
 	public String toString()
 	{
-		String news = "Article #" + id + ": " + d + "-" + contents + " -" + writer;
+		String news = "Article #" + id + ": " + contents + " -" + writer;
 		return news;
 	}
 }
