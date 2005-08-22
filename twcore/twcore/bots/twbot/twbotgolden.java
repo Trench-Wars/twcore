@@ -45,8 +45,8 @@ public class twbotgolden extends TWBotExtension {
        String killername = m_botAction.getPlayerName( event.getKillerID() );
        Player deathGuy = m_botAction.getPlayer( event.getKilleeID() );
        //If the person dead has the golden gun then switch ships.
-//        m_botAction.sendArenaMessage( killername + " has killed '" + killeename + "'");
-       if ((killeename.compareToIgnoreCase( hasGun) == 0) && (deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
+//Old check       if ((killeename.compareToIgnoreCase( hasGun) == 0) && (deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
+       if ((deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
            {if (m_botAction.getPlayer( event.getKilleeID() ).isPlaying() )
                {m_botAction.setShip(killeename, humanShip);
                //Sets old Golden Gunner to human ship
@@ -59,7 +59,7 @@ public class twbotgolden extends TWBotExtension {
                m_botAction.setShip(killername, gunShip);
                //Sets new golden Gunner to gun ship
                }
-           final String oldGun = hasGun;
+           final String oldGun = killeename;
             resetPlayer = new TimerTask() {
                public void run() {
 //for testing                    m_botAction.sendArenaMessage( "shipreseting old gun holder: " + oldGun);
@@ -67,9 +67,8 @@ public class twbotgolden extends TWBotExtension {
                     }
                };
            m_botAction.scheduleTask( resetPlayer, resetDelay * 1000 );
-           hasGun = killername;
            //Remembers new gunner
-           m_botAction.sendArenaMessage( hasGun + killMessage);
+           m_botAction.sendArenaMessage( killername + killMessage);
            //Announces new gunner.
            }
        if ( deathGuy.getLosses() >= specPlayers ){
@@ -189,10 +188,10 @@ public class twbotgolden extends TWBotExtension {
             if( !isRunning )
                {m_botAction.sendPrivateMessage(name, "Golden Gun is stopped, just start with that person.");
                return;}
-           m_botAction.setShip(hasGun, humanShip);
+/*           m_botAction.setShip(hasGun, humanShip);
            //Sets old Golden Gunner to human ship
            m_botAction.setFreq(hasGun, humanFreq);
-           //Sets old Golden Gunner to human freq
+           //Sets old Golden Gunner to human freq*/
            hasGun = message.substring( 8 );
            hasGun = m_botAction.getFuzzyPlayerName(hasGun);
            m_botAction.sendArenaMessage( hasGun + killMessage);
@@ -208,7 +207,7 @@ public class twbotgolden extends TWBotExtension {
        }
        else if( message.startsWith( "!status" )){
            //This was a handy testing function that I left in because I like it.
-           m_botAction.sendPrivateMessage(name, hasGun + " has the gun.");
+//           m_botAction.sendPrivateMessage(name, hasGun + " has the gun.");
            if( isRunning )
            m_botAction.sendPrivateMessage(name, "Golden Gun is running.");
            if( !isRunning )
