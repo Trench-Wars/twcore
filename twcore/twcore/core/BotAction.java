@@ -980,7 +980,7 @@ public class BotAction
     /** Gets the Player object associated with the PlayerID provided.  The Player object
      * describes all the pertinent details about a player in the arena the bot is in.
      * @param playerName The name of the player you wish to retreive info for.
-     * @return Returns a Player object.
+     * @return Returns a Player object.  ** MAY BE NULL **
      */
     public Player getPlayer(String playerName)
     {
@@ -989,7 +989,7 @@ public class BotAction
 
     /** Translates a playerID into a name, as a String.
      * @param playerID The PlayerID you want to translate.
-     * @return The player's name.
+     * @return The player's name.  ** MAY BE NULL **
      */
     public String getPlayerName(int playerID)
     {
@@ -999,7 +999,7 @@ public class BotAction
     /** Translates a player's name into a playerID.  Be careful while using this,
      * however, as players may or may not be in a given arena.
      * @param playerName The name of the player.
-     * @return The PlayerID of the player given in playerName.
+     * @return The PlayerID of the player given in playerName.  -1 if not found
      */
     public int getPlayerID(String playerName)
     {
@@ -1011,7 +1011,7 @@ public class BotAction
      * return the first found match OR the player which exactly matches (case
      * insensitive) 'playerName' if there is one.
      * @param playerName The partial name of a player
-     * @return The PlayerID of the first found player matching or starting with playerName
+     * @return First found Player matching or starting with playerName  ** MAY BE NULL **
      */
     public Player getFuzzyPlayer(String playerName)
     {
@@ -1020,14 +1020,14 @@ public class BotAction
             return getPlayer(fuzzyResult);
          else
             return null;
-    };
+    }
 
     /** Searches for players in the arena of which the first part of the name
      * matches with 'playerName'. When there are multiple player matches it will
      * return the first found match OR the player which exactly matches (case
      * insensitive) 'playerName' if there is one.
      * @param playerName The partial name of a player
-     * @return The PlayerName of the first found player matching or starting with playerName
+     * @return The name of the first found player matching or starting with playerName  ** MAY BE NULL **
      */
     public String getFuzzyPlayerName(String playerName)
     {
@@ -1046,11 +1046,11 @@ public class BotAction
 
 	            if (answ.equalsIgnoreCase(playerName))
 	                return answ;
-	        };
+	        }
 	     }
 
         return best;
-    };
+    }
 
     /** Retreives the name of the bot.
      * @return The name of the bot.
