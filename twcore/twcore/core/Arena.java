@@ -200,14 +200,14 @@ public class Arena {
      * @param playerName Name of the player of interest
      * @return Player requested
      */
-    public Player getPlayer( String playerName ){
-        Player p = (Player)m_playerList.get( m_playerIDList.get( playerName.toLowerCase() ) );
+    public Player getPlayer( String searchName ){
+        Player p = (Player)m_playerList.get( m_playerIDList.get( searchName.toLowerCase() ) );
         if( p == null ){
             //hack to support really long names
             Iterator i = getPlayerIterator();
             while( i.hasNext() ){
                 Player q = (Player)i.next();
-                if( playerName.startsWith( q.getPlayerName() )){
+                if( q.getPlayerName().startsWith( searchName ) ) {
                     return q;
                 }
             }
