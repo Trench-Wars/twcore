@@ -32,8 +32,6 @@ public class speed extends MultiModule {
 		registerCommands();
 
 		players = new HashMap();
-
-//		m_botAction.spectatePlayer("sika");
     }
 
 	public boolean isUnloadable() {
@@ -49,7 +47,6 @@ public class speed extends MultiModule {
 
 	public void requestEvents(EventRequester eventRequester) {
 
-		eventRequester.request(EventRequester.ARENA_JOINED);
 		eventRequester.request(EventRequester.MESSAGE);
 		eventRequester.request(EventRequester.PLAYER_ENTERED);
 		eventRequester.request(EventRequester.PLAYER_LEFT);
@@ -346,7 +343,16 @@ public class speed extends MultiModule {
 	}
 
 	public void changeSpeedLimit() {
-		m_botAction.sendArenaMessage("NOTICE: SpeedLimit ["+getFigure()+"] will change to "+m_speedLimits[m_speedLimit + 1]+" in 10 seconds!!", 2);
+
+		int newLimit;
+
+		if (m_speedLimitReversed) {
+			newLimit = m_speedLimits[m_speedLimit - 1];
+		} else {
+			newLimit = m_speedLimits[m_speedLimit + 1];
+		}
+
+		m_botAction.sendArenaMessage("NOTICE: SpeedLimit ["+getFigure()+"] will change to "+newLimit+" in 10 seconds!!", 2);
 		TimerTask fixed = new TimerTask() {
 			public void run() {
 				m_eventState = 2;
@@ -423,10 +429,6 @@ public class speed extends MultiModule {
 		}
 
 		m_botAction.sendArenaMessage(winner+" wins!!", 5);
-	}
-
-	public void handleEvent(ArenaJoined event) {
-//		m_botAction.moveToTile(234, 297);
 	}
 
 	public void handleEvent(Message event) {
