@@ -292,7 +292,7 @@ public class speed extends MultiModule {
 					updatePositions();
 				}
 			};
-			m_botAction.scheduleTaskAtFixedRate(positionCheck, 100, 100);
+//			m_botAction.scheduleTaskAtFixedRate(positionCheck, 100, 100);
 
 			if (m_fixedSpeedLimit) {
 				m_botAction.sendArenaMessage("NOTICE: SpeedLimit ["+getFigure()+"] [Fixed "+m_speedLimits[m_speedLimit]+"] comes into effect in 10 seconds!!", 2);
