@@ -464,5 +464,21 @@ public class ByteArray {
 
         return barray;
     }
+
+   /**
+	* get the bit fragment from startIndex to endIndex
+	* @param extractFrom the byte to extract from
+	* @param startIndex the inclusive leftbound index: 1234 5678
+	* @param endIndex the inclusive rightbound index 1234 5678 and > startIndex
+	* @return the int extracted from the requested bits
+	*/
+	public static int getPartial(byte extractFrom, int startIndex, int endIndex)
+	{
+	      int shift = 8 - endIndex;
+	      int numBits = endIndex - startIndex + 1;
+	      byte mask = (byte)((0x01 << numBits) - 1);
+
+	      return (extractFrom >> shift) & mask;
+	}
 }
 
