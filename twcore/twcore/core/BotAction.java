@@ -427,6 +427,8 @@ public class BotAction
      */
     public void sendChatMessage(int chatNumber, String message, int soundCode)
     {
+        if( message == null )
+            return;
         String temp = message.trim();
         char firstChar;
 
