@@ -14,8 +14,8 @@ public class Player {
     private short   m_losses;
     private int     m_flagPoints;
     private int     m_killPoints;
-    private byte    m_acceptsAudio;
-    private byte    m_hasKOTH;
+    private boolean m_acceptsAudio;
+    private boolean m_hasKOTH;
     private byte    m_rotation;
     private byte    m_ping;
     private short   m_bounty;
@@ -109,7 +109,7 @@ public class Player {
         m_bounty = 0;
         m_energy = 0;
         m_s2CLag = 0;
-        m_hasKOTH = 0;
+        m_hasKOTH = false;
         m_shipType = 0;
         m_rotation = 0;
         m_xLocation = 0;
@@ -123,7 +123,7 @@ public class Player {
         m_killPoints = 0;
         m_squadName = "";
         m_playerName = "";
-        m_acceptsAudio = 0;
+        m_acceptsAudio = false;
         m_flagsCarried = 0;
         m_identTurretee = 0;
         
@@ -317,12 +317,12 @@ public class Player {
         return m_killPoints;
     }
     
-    public byte getAcceptsAudio(){
+    public boolean getAcceptsAudio(){
         
         return m_acceptsAudio;
     }
     
-    public byte getHasKOTH(){
+    public boolean getHasKOTH(){
         
         return m_hasKOTH;
     }
