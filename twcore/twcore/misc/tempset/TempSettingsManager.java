@@ -12,8 +12,8 @@ import twcore.core.Tools;
 
 /**
  * This class provides an easy way to allow an op to modify temporary settings.
- * The TempSettingsManager interfaces with the bot and keeps track of all the 
- * TempSettings. Settings are identified by name and are case-sensitive, so 
+ * The TempSettingsManager interfaces with the bot and keeps track of all the
+ * TempSettings. Settings are identified by name and are case-sensitive, so
  * don't make duplicates in the same case. It registers !get and !set with
  * the Command Interpreter so all the bot writer has to do is add whatever
  * settings they want. Just make sure there are no other commands using !get/!set.
@@ -139,7 +139,7 @@ public class TempSettingsManager
 	public Object getSetting(String name)
 	{
 		TempSetting t = m_settings.get(name);
-		if(t == null)			
+		if(t == null)
 			Tools.printLog("TempSet: Could not retrieve setting "+name +" (doesn't exist)");
 		return m_settings.get(name);
 	}
@@ -175,7 +175,7 @@ public class TempSettingsManager
 					"Syntax: !set <name1>=<value1> <name2>=<value2> ...",
 					"-----Modifiable Settings:-----"};
 				String[] sets = m_settings.keySet().toArray(new String[]{});
-				
+
 				m_botAction.privateMessageSpam(name, help);
 				m_botAction.privateMessageSpam(name, sets);
 			}
@@ -207,5 +207,14 @@ public class TempSettingsManager
 			else
 				m_botAction.sendPrivateMessage(name, t.getName() + "=" + t.getValue());
 		}
+	}
+
+	/**
+	 * This locks/unlocks settings from being modified through the command interface (!set)
+	 * @param locked Whether settings should be locked or unlocked
+	 */
+	public void setLocked(boolean locked)
+	{
+		m_locked = locked;
 	}
 }
