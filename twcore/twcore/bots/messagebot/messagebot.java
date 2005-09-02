@@ -1244,16 +1244,16 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         } else if (responseType.equalsIgnoreCase(ConfigTocResponse.RESPONSE_TYPE)) {
         	receiveConfig();
     	} else if (responseType.equalsIgnoreCase(LoginCompleteTocResponse.RESPONSE_TYPE)) {
-    	//	aimReconnect.cancel();
-    	//	aimOn = true;
+    		aimReconnect.cancel();
+    		aimOn = true;
         } else if (responseType.equalsIgnoreCase(ConnectionLostTocResponse.RESPONSE_TYPE)) {
-        	/** aimReconnect = new TimerTask() {
+        	aimReconnect = new TimerTask() {
         		public void run() {
         			setupAIM();
         		}
         	};
-        	m_botAction.scheduleTaskAtFixedRate(aimReconnect, 60 * 1000, 60 * 1000);
-        	aimOn = false; */
+        	m_botAction.scheduleTask(aimReconnect, 60 * 1000);
+        	aimOn = false;
         } else {
         	System.out.println(tr.toString());
         }
