@@ -226,7 +226,7 @@ public class ByteArray {
 
     public void addByteArray( ByteArray byteArray ){
         byte[]        tempArray = byteArray.getByteArray();
-
+		growArray((m_array.length + tempArray.length));
         System.arraycopy( tempArray, 0, m_array, m_pointer, tempArray.length );
 
         m_pointer += tempArray.length;
@@ -234,24 +234,24 @@ public class ByteArray {
 
     public void addByteArray( ByteArray byteArray, int index ){
         byte[]        tempArray = byteArray.getByteArray();
-
+		growArray((m_array.length + tempArray.length));
         System.arraycopy( tempArray, 0, m_array, index, tempArray.length );
     }
 
     public void addByteArray( byte[] byteArray ){
-
+		growArray((m_array.length + byteArray.length));
         System.arraycopy( byteArray, 0, m_array, m_pointer, byteArray.length );
 
         m_pointer += byteArray.length;
     }
 
     public void addByteArray( byte[] byteArray, int index ){
-
+		growArray((m_array.length + byteArray.length - index));
         System.arraycopy( byteArray, 0, m_array, index, byteArray.length );
     }
 
     public void addByteArray( int[] intArray ){
-
+		growArray((m_array.length + intArray.length));
         for( int i=0; i<intArray.length; i++ ){
             m_array[m_pointer++] = (byte)((intArray[i]) & 0xff);
         }
@@ -260,7 +260,7 @@ public class ByteArray {
     }
 
     public void addByteArray( int[] intArray, int index ){
-
+    	growArray((m_array.length + intArray.length));
         for( int i=0; i<intArray.length; i++ ){
             m_array[index+i] = (byte)((intArray[i]) & 0xff);
         }
@@ -395,7 +395,7 @@ public class ByteArray {
         return new String( charArray ).trim();*/
 
         //New method can (Sorry Sika) - D1st0rt
-        return new String(m_array, index, length).trim();
+        return new String(m_array, index, length);
     }
 
     public String readNullTerminatedString( int index ){
@@ -464,21 +464,4 @@ public class ByteArray {
 
         return barray;
     }
-
-   /**
-	* get the bit fragment from startIndex to endIndex
-	* @param extractFrom the byte to extract from
-	* @param startIndex the inclusive leftbound index: 1234 5678
-	* @param endIndex the inclusive rightbound index 1234 5678 and > startIndex
-	* @return the int extracted from the requested bits
-	*/
-	public static int getPartial(byte extractFrom, int startIndex, int endIndex)
-	{
-	      int shift = 8 - endIndex;
-	      int numBits = endIndex - startIndex + 1;
-	      byte mask = (byte)((0x01 << numBits) - 1);
-
-	      return (extractFrom >> shift) & mask;
-	}
 }
-
