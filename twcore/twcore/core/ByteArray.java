@@ -387,15 +387,7 @@ public class ByteArray {
     public String readString( int index, int length ){
         char[]        charArray = new char[length];
 
-		//This old method couldn't handle special characters
-        /*for( int i=0; i<length; i++ ){
-            charArray[i] = (char)(m_array[index+i]);
-        }
-
-        return new String( charArray ).trim();*/
-
-        //New method can (Sorry Sika) - D1st0rt
-        return new String(m_array, index, length);
+        return new String(m_array, index, length).trim();
     }
 
     public String readNullTerminatedString( int index ){
@@ -464,4 +456,20 @@ public class ByteArray {
 
         return barray;
     }
+
+   /**
+	* get the bit fragment from startIndex to endIndex
+	* @param extractFrom the byte to extract from
+	* @param startIndex the inclusive leftbound index: 1234 5678
+	* @param endIndex the inclusive rightbound index 1234 5678 and > startIndex
+	* @return the int extracted from the requested bits
+	*/
+	public static int getPartial(byte extractFrom, int startIndex, int endIndex)
+	{
+	      int shift = 8 - endIndex;
+	      int numBits = endIndex - startIndex + 1;
+	      byte mask = (byte)((0x01 << numBits) - 1);
+
+	      return (extractFrom >> shift) & mask;
+	}
 }
