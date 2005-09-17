@@ -226,7 +226,7 @@ public class ByteArray {
 
     public void addByteArray( ByteArray byteArray ){
         byte[]        tempArray = byteArray.getByteArray();
-		growArray((m_array.length + tempArray.length));
+
         System.arraycopy( tempArray, 0, m_array, m_pointer, tempArray.length );
 
         m_pointer += tempArray.length;
@@ -234,24 +234,24 @@ public class ByteArray {
 
     public void addByteArray( ByteArray byteArray, int index ){
         byte[]        tempArray = byteArray.getByteArray();
-		growArray((m_array.length + tempArray.length));
+
         System.arraycopy( tempArray, 0, m_array, index, tempArray.length );
     }
 
     public void addByteArray( byte[] byteArray ){
-		growArray((m_array.length + byteArray.length));
+
         System.arraycopy( byteArray, 0, m_array, m_pointer, byteArray.length );
 
         m_pointer += byteArray.length;
     }
 
     public void addByteArray( byte[] byteArray, int index ){
-		growArray((m_array.length + byteArray.length - index));
+
         System.arraycopy( byteArray, 0, m_array, index, byteArray.length );
     }
 
     public void addByteArray( int[] intArray ){
-		growArray((m_array.length + intArray.length));
+
         for( int i=0; i<intArray.length; i++ ){
             m_array[m_pointer++] = (byte)((intArray[i]) & 0xff);
         }
@@ -260,7 +260,7 @@ public class ByteArray {
     }
 
     public void addByteArray( int[] intArray, int index ){
-    	growArray((m_array.length + intArray.length));
+
         for( int i=0; i<intArray.length; i++ ){
             m_array[index+i] = (byte)((intArray[i]) & 0xff);
         }
@@ -473,3 +473,5 @@ public class ByteArray {
 	      return (extractFrom >> shift) & mask;
 	}
 }
+
+
