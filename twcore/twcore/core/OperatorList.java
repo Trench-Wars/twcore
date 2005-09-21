@@ -4,11 +4,25 @@ import java.io.*;
 import java.util.*;
 
 /**
- * OperatorList
+ * Stores the access list as read from the server-based files moderate.txt, smod.txt,
+ * and sysop.txt, and the bot core config files owner.cfg, outsider.cfg, and
+ * highmod.cfg.  Is able to answer access-specific queries based on the information
+ * gathered.
  * 
- * Stores the accesslist as read from moderate.txt, smod.txt, sysop.txt, owner.cfg, outsider.cfg,
- * etc., and returns information based on the data.
- *  
+ * Access levels
+ * <code>
+ * #   Title            Description                                      Read from
+ * 
+ * 0 - Normal player    no special privileges
+ * 1 - Zone Helper      extremely limited privileges                     [moderate.txt]
+ * 2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]    
+ * 3 - Event Ref        regular privileges; first stage of real access   [moderate.txt]
+ * 4 - Moderator        expanded privileges for administrative duties    [moderate.txt]
+ * 5 - High Moderator   additional privileges normally only for smods    [highmod.cfg ]
+ * 6 - Super Moderator  nearly all privileges                            [smod.txt    ]
+ * 7 - Sysop            nearly all privileges (used to test if a bot)    [sysop.txt   ]
+ * 8 - Owner            all privileges                                   [owner.cfg   ]
+ * </code>
  */
 public class OperatorList {
 
@@ -24,7 +38,7 @@ public class OperatorList {
     public static final int OWNER_LEVEL = 8;
 
     /**
-     * Constructor
+     * Creates a new instance of OperatorList.
      */
     public OperatorList(){
 
@@ -89,10 +103,11 @@ public class OperatorList {
     
     /**
      * Check if a given name is at least of Outsider status.
-     * NOTE: Outsider is a special status provided to coders who are not members of staff.
-     * They are able to use some bot powers that ZHs can't, but can't generally use event bots.
-     * XXX: If an Outsider also is on moderate.txt with arena permissions, they will be
-     * considered a full moderator.  
+     * NOTE: Outsider is a special status provided to coders who are not members
+     * of staff.  They are able to use some bot powers that ZHs can't, but can't
+     * generally use event bots.
+     * FIXME: If an Outsider also is on moderate.txt with arena permissions, they
+     * will be considered a full moderator.  
      * @param name Name in question
      * @return True if player is at least an Outsider
      */
@@ -180,7 +195,7 @@ public class OperatorList {
      * Check if a given name is at least of HighMod status.
      * NOTE: HighMod is a special status given to experienced mods, allowing them
      * access to certain features that are normally only allowed to SMod+.  Usually
-     * they are league ops, etc.
+     * they are league ops or hold another important position requiring this status.
      * @param name Name in question
      * @return True if player is at least a HighMod
      */
@@ -276,6 +291,7 @@ public class OperatorList {
      * (REDUNDANT) Check if a given name is an owner.
      * @param name Name in question
      * @return True if player is an owner
+     * @deprecated Exactly the same functionality as isOwner, as no higher access level exists.
      */
     public boolean isOwnerExact( String name ){
 
@@ -332,11 +348,11 @@ public class OperatorList {
     /**
      * Wrapper method for parseFile(File, int).
      * 
-     * Parses an access list and sets all  members on the list to a given access level.
-     * Used in conjunction with the changeAllMatches method (using <ER> and <ZH> tags),
-     * it can successfully assign access levels to all individuals.  NOTE: If someone
-     * in outsider.cfg is also on moderate.txt, and they don't have a tag of some kind,
-     * they will be set to moderator level. 
+     * Parses an access list and sets all members on the list to a given access
+     * level.  Used in conjunction with the changeAllMatches method (using ER
+     * and ZH tags), it can successfully assign access levels to all individuals.
+     * NOTE: If someone in outsider.cfg is also on moderate.txt, and they don't
+     * have a tag of some kind, they will be set to moderator level. 
      *  
      * @param filename Filename, in String form, to parse
      * @param accessLevel Access level to assign to   
@@ -346,11 +362,11 @@ public class OperatorList {
     }
 
     /**
-     * Parses an access list and sets all  members on the list to a given access level.
-     * Used in conjunction with the changeAllMatches method (using <ER> and <ZH> tags),
-     * it can successfully assign access levels to all individuals.  NOTE: If someone
-     * in outsider.cfg is also on moderate.txt, and they don't have a tag of some kind,
-     * they will be set to moderator level. 
+     * Parses an access list and sets all members on the list to a given access
+     * level.  Used in conjunction with the changeAllMatches method (using ER
+     * and ZH tags), it can successfully assign access levels to all individuals.
+     * NOTE: If someone in outsider.cfg is also on moderate.txt, and they don't
+     * have a tag of some kind, they will be set to moderator level. 
      *  
      * @param filename Filename, in String form, to parse
      * @param accessLevel Access level to assign to   
