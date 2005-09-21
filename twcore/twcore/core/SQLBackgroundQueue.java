@@ -1,23 +1,27 @@
 package twcore.core;
 
-/*
- * SQLBackgroundQueue.java
- *
- * Created on November 6, 2002, 6:57 AM
- */
+import java.util.*;
 
 /**
- *
- * @author  harvey
+ * Purely a class-specific abstraction of a LinkedList.  SQLBackgroundQueue
+ * is an implementation of a background query queue that ensures all that is
+ * stored in the queue and returned from the queue is SQLResultEvents.
  */
-import java.util.*;
 public class SQLBackgroundQueue {
     private LinkedList queue;
-    /** Creates a new instance of SQLBackgroundQueue */
+    
+    /** 
+     * Creates a new background queue to keep track of all background queries.
+     */
     public SQLBackgroundQueue() {
         queue = new LinkedList();
     }
     
+    /**
+     * Returns the SQL event object of the background query at the head of the
+     * queue.  If the queue is empty, the return is null.
+     * @return SQL event of the background query at the head of the queue (null if none)
+     */
     public synchronized SQLResultEvent getNextInLine(){
         if( queue.isEmpty() ) return null;
         SQLResultEvent event = (SQLResultEvent)queue.getFirst();
@@ -25,14 +29,25 @@ public class SQLBackgroundQueue {
         return event;
     }
     
+    /**
+     * Adds a background query to the head of the queue (high priority).
+     * @param event
+     */
     public synchronized void addHighPriority( SQLResultEvent event ){
         queue.addFirst( event );
     }
     
+    /**
+     * @return True if the queue is empty
+     */
     public synchronized boolean isEmpty(){
         return queue.isEmpty();
     }
     
+    /**
+     * Adds a background query to the tail end of the queue (standard priority).
+     * @param event SQL event object containing the background query to add
+     */
     public synchronized void addQuery( SQLResultEvent event ){
         queue.addLast( event );
     }
