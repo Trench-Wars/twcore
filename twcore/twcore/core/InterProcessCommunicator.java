@@ -2,17 +2,15 @@ package twcore.core;
 import java.util.*;
 
 /**
- * InterProcessCommunicator
- *
  * Main class of the Inter-process Communication protocol of TWCore, handling routing
  * of messages between bots along specific channels.  Also handles channel subscriptions,
  * creation/deletion of channels, and firing of InterProcessEvents.
- *     
+ * 
  * @author  harvey
  */
 public class InterProcessCommunicator {
 
-    private Map channels;
+    private Map channels;       // (String)Channel name -> IPCChannel
 
     /** Creates a new instance of InterProcessCommunicator */
     public InterProcessCommunicator() {

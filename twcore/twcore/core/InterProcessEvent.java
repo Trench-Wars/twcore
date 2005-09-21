@@ -1,17 +1,15 @@
 package twcore.core;
 
 /**
- * InterProcessEvent
- * 
  * Event class of the Inter-process Communication protocol of TWCore.  Bots may
  * request this event if they intend to send and receive IPC messages.
  *
  * @author  harvey
  */
 public class InterProcessEvent extends SubspaceEvent {
-    String m_senderName;
-    String m_channelName;
-    Object m_o;
+    String m_senderName;        // Name of the sender of the message
+    String m_channelName;       // Channel the message is being sent under
+    Object m_o;                 // Object being sent (almost always IPCMessage)
     
     /** Creates a new instance of InterProcessEvent */
     public InterProcessEvent( String senderName, String channelName, Object o ) {
