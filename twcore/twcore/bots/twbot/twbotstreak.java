@@ -7,7 +7,8 @@ public class twbotstreak extends TWBotExtension {
 	
 	HashMap playerMap;
 	boolean running = false;
-	int 	streak = 3, reStreak = 3;
+	int 	streak = 3, reStreak = 3, bestStreak = 0;
+	String bestStreakOwner;
 	String  sMessages[] = {
 		" On Fire!",
 		" Killing Spree!",
@@ -52,19 +53,41 @@ public class twbotstreak extends TWBotExtension {
     	if( running ) {
 		    streak = 3;
 		    reStreak = 3;
+			bestStreak = 0;
+			bestStreakOwner = null;
 			running = false;
 			playerMap.clear();
 			m_botAction.sendPrivateMessage( name, "I was getting bored of watching them kill each other anyway." );
 		} else m_botAction.sendPrivateMessage( name, "I wasn't looking for streaks, was I suppost to?" );
     }
+
+	public void getBestStreak( String name ) {
+		if( running && bestStreakOwner != null ) {
+			m_botAction.sendPrivateMessage(name, "Best Streak of the Session: "+ bestStreakOwner + " ("+ bestStreak + ":0)");
+		}
+	}
     
     public void checkStreak( String name, int kills ) {
-    	for( int i = 0; i < sMessages.length; i++ ) {
-    		int count = streak + i * reStreak;
-    		if( kills == count )
-    		m_botAction.sendArenaMessage( "Streak!: " + name + " (" + kills +":0)" + sMessages[i] );
-    	}
-    }
+		String out = null;
+		for( int i = 0; i < sMessages.length; i++ ) {
+			int count = streak + i * reStreak;
+			if( kills == count ) {
+				out =  "Streak!: " + name + " (" + kills +":0)" + sMessages[i];
+			}
+		}
+		if (kills > bestStreak) {
+			bestStreak = kills;
+			bestStreakOwner = name;
+			if (out != null) {
+				out += " (Best Streak of the Session!)";
+			} else {
+				out = "Streak!: " + name + " (" + kills +":0) Best Streak of the Session!";
+			}
+		}
+		if (out != null) {
+			m_botAction.sendArenaMessage(out);
+		}
+	}
     
     public void handleEvent( PlayerDeath event ) {
     	if( running ) {
@@ -84,9 +107,14 @@ public class twbotstreak extends TWBotExtension {
 	    		playerMap.put( killer, ""+it );
 	    		checkStreak( killer, it );
 	    	}
-	    	if( playerMap.containsKey( killee ) )
+	    	if( playerMap.containsKey( killee ) ) {
+	    		String ct = (String)playerMap.get( killee );
+	    		int it = Integer.parseInt( ct );
+				if (it == bestStreak && killee.equals(bestStreakOwner)) {
+					m_botAction.sendArenaMessage("And the best Streak of the Session ends for "+killee+" ("+it+" kills)!");
+				}
 	    		playerMap.remove( killee );
-
+			}
 	  	}
     }
     
@@ -94,14 +122,17 @@ public class twbotstreak extends TWBotExtension {
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
-            if( m_opList.isER( name )) handleCommand( name, message );
+			if (message.equalsIgnoreCase("!best"))
+				getBestStreak(name);
+			if( m_opList.isER( name )) handleCommand( name, message );
         }
     }
     
     public String[] getHelpMessages() {
         String[] messages = {
             "!streak <start> <update>  - Watches for streaks beginning at <start> and updated every <update>",
-            "!streakoff                - Turns off the streak watcher."
+            "!streakoff                - Turns off the streak watcher.",
+			"!best                     - Shows the best streak of the session."
         };
         return messages;
     }
