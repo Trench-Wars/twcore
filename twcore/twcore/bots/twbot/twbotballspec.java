@@ -145,12 +145,15 @@ public class twbotballspec extends TWBotExtension {
     public void handleCommand( String name, String message ){
         if( message.startsWith( "!balls " )) {
             if( !( m_botAction.getOperatorList().isModerator(name) ) ) {
-                m_botAction.sendPrivateMessage( name, "You must be a moderator to use this command." );                
+                m_botAction.sendPrivateMessage( name, "You must be a moderator to use this command." );
+                return;                
             }
             
             String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );                
             try {
                 int numballs = Integer.parseInt(parameters[0]);
+                if(numballs > 8) numballs = 8;
+                if(numballs < 0) numballs = 0;
                 m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=" + numballs );
                 m_botAction.sendPrivateMessage( name, "Ball count set to " + numballs + "." );                
             } catch ( Exception e ) {
