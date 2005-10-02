@@ -1,8 +1,8 @@
 package twcore.bots.multibot.bship;
 
 import twcore.core.*;
-import twcore.bots.multibot.*;
 import twcore.misc.multibot.*;
+import twcore.misc.tempset.*;
 import java.util.*;
 
 /**
@@ -12,27 +12,29 @@ import java.util.*;
  * @Version 3.0
  */
 
-public class bship extends MultiModule
+public class bship extends MultiModule implements TSChangeListener
 {
 	//Class Objects
 	private CommandInterpreter m_cmd;
 	private StartWarp startWarp;
 	private CapshipNotify notify;
+	private TempSettingsManager m_tsm;
+	private BSTeam[] _teams;
 
 	//Night Mode
-	private int hour;
 	private boolean night;
 
 	//Game settings
-	private byte state, board, teams, ships[][];
+	private byte state;
 	private static final byte IDLE = 0, ACTIVE = 1;
-	private boolean lockCapShips;
+	//private boolean lockCapShips;
+	private int[][] points;
 
 	//Ships
-	private static final byte GUN = 1, CANNON = 2, PLANE = 3, MINESWEEPER = 4,
-	SUB = 5, FRIGATE = 6, BATTLESHIP = 7, CARRIER = 8;
+	public static final byte SPEC = 0, GUN = 1, CANNON = 2, PLANE = 3, MINESWEEPER = 4,
+	SUB = 5, FRIGATE = 6, BATTLESHIP = 7, CARRIER = 8, ALL = 9, PLAYING = 10;
 
-	//Geometry Constants
+	//Geometry
 	private static final byte X = 0, Y = 1, HEIGHT = 2, WIDTH = 3;
 
 	private NightUpdate timeMode = new NightUpdate();
@@ -48,13 +50,12 @@ public class bship extends MultiModule
 		//Commands
 		m_cmd = new CommandInterpreter(m_botAction);
 		registerCommands();
+		m_tsm = new TempSettingsManager(m_botAction, m_cmd, OperatorList.ER_LEVEL);
+		registerSettings();
 
-		//Initial Game Settings
-		hour = 0;
+		//Initial Game Settings		
 		night = false;
-		state = IDLE;
-		teams = 2;
-		lockCapShips = false;
+		state = IDLE;		
 
 		//Start Night Mode
 		m_botAction.scheduleTaskAtFixedRate(timeMode,1000,60000);
@@ -110,12 +111,31 @@ public class bship extends MultiModule
 		m_cmd.registerCommand("!rules", priv | pub, this, "C_rules");
 		m_cmd.registerCommand("!status", priv | pub, this, "C_status");
 		m_cmd.registerCommand("!assign", priv, this, "C_assign");
-		m_cmd.registerCommand("!set", priv, this, "C_set");
+		//m_cmd.registerCommand("!set", priv, this, "C_set");
 		m_cmd.registerCommand("!start", priv, this, "C_start");
 		m_cmd.registerCommand("!stop", priv, this, "C_stop");
 		m_cmd.registerCommand("!quit", priv | pub, this, "C_quit");
 		m_cmd.registerCommand("!scheck", priv, this, "C_scheck");
+		m_cmd.registerCommand("!stathelp", priv | pub, this, "C_stathelp");
 
+	}
+	
+	private void registerSettings()
+	{		
+		m_tsm.addSetting(SType.INT, "board", "2");
+		m_tsm.addSetting(SType.INT, "teams", "2");
+		m_tsm.addSetting(SType.BOOLEAN, "cslock", "false");
+		m_tsm.addSetting(SType.INT, "hour", "0");		
+		m_tsm.restrictSetting("hour", 0, 23);
+		m_tsm.addSetting(SType.INT, "lives", "3");
+		
+		m_tsm.addTSChangeListener(this);
+	}
+	
+	public void settingChanged(String name, String value)
+	{
+		if(name.equals("hour"))
+			refresh();
 	}
 
 	/**
@@ -149,6 +169,7 @@ public class bship extends MultiModule
 		 "| -!quit          Enter spectator mode |",
 		 "| -!rules         Rules of the game    |",
 		 "| -!status        What is happening    |",
+		 "| -!stathelp      Explain stats        |",
 		 "+--------------------------------------+"};
 		m_botAction.privateMessageSpam(name,help);
 	}
@@ -247,7 +268,7 @@ public class bship extends MultiModule
 					message = message.toLowerCase();
 					if(message.indexOf("team") != -1)
 					{
-						makeTeams(teams);
+						makeTeams((Integer)m_tsm.getSetting("teams"));
 						buf.append("Teams ");
 					}
 
@@ -264,72 +285,13 @@ public class bship extends MultiModule
 					m_botAction.sendPrivateMessage(name, buf.toString());
 				}catch(Exception e)
 				{
+					Tools.printStackTrace(e);
 					m_botAction.sendPrivateMessage(name, "Error: Bad syntax. use !assign help.");
 				}
 			}
 			else
 				m_botAction.sendPrivateMessage(name, "Can't assign while game in progress.");
 
-		}
-	}
-
-	/**
-	 * Command: !set
-	 * Parameters: [teams=<#>] [board=<#>] [cslock=<on/off>]
-	 * Modifies current game settings
-	 */
-	public void C_set(String name, String message)
-	{
-		if(opList.isER(name))
-		{
-			if(message.equalsIgnoreCase("help"))
-			{
-				String[] s = new String[]{
-					"Change game settings - number of teams, board or cap ship locking.",
-					"Use \"teams=\" \"cslock=\" and/or \"board=\" after !set"};
-
-				m_botAction.privateMessageSpam(name, s);
-			}
-			else if(message.indexOf("cslock=") != -1)
-			{
-				int index = message.indexOf("cslock=");
-				String part = message.substring(index + 7, index + 10);
-				if(part.startsWith("on"))
-					lockCapShips = true;
-				else if(part.startsWith("off"))
-					lockCapShips = false;
-				else
-					throw new Exception();
-					m_botAction.sendPrivateMessage(name, "Cap ship locking "+ part);
-			}
-			else if(state == IDLE)
-			{
-				message = message.toLowerCase() + " ";
-
-				try{
-					if(message.indexOf("teams=") != -1)
-					{
-						int index = message.indexOf("teams=");
-						String part = message.substring(index + 6, index + 7);
-						teams = Byte.parseByte(part);
-						m_botAction.sendPrivateMessage(name, "Teams set to "+ teams);
-					}
-
-					if(message.indexOf("board=") != -1)
-					{
-						int index = message.indexOf("board=");
-						String part = message.substring(index + 6, index + 7);
-						board = Byte.parseByte(part);
-						m_botAction.sendPrivateMessage(name, "Board set to "+ board);
-					}
-				}catch(Exception e)
-				{
-					m_botAction.sendPrivateMessage(name, "Error: Bad syntax. use !set help.");
-					Tools.printStackTrace(e);
-				}
-			}
-			else
-				m_botAction.sendPrivateMessage(name, "Can't change settings while game in progress.");
 		}
 	}
 
@@ -341,6 +303,10 @@ public class bship extends MultiModule
 	 */
 	public void C_status(String name, String message)
 	{
+		int teams = (Integer)m_tsm.getSetting("teams");
+		int board = (Integer)m_tsm.getSetting("board");
+		boolean lockCapShips = (Boolean)m_tsm.getSetting("cslock");
+		
 		if(state == IDLE)
 		{
 			m_botAction.sendPrivateMessage(name, "Nothing special going on.");
@@ -432,35 +398,12 @@ public class bship extends MultiModule
 			else if(message.equalsIgnoreCase("on"))
 			{
 				night = true;
-				m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOn(hour));
+				m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOn((Integer)m_tsm.getSetting("hour")));
 			}
 
 			m_botAction.sendPrivateMessage(name,"Night mode: "+night);
 		}
-	}
-
-	/**
-	 * Command: !sethour
-	 * Parameters: <hour (0-23)>
-	 * Sets the night mode hour to <hour>, updates lvz
-	 */
-	public void C_setHour(String name, String message)
-	{
-		if(!opList.isER(name))
-		{
-			byte hr;
-			try{
-				hr = Byte.parseByte(message);
-			}catch(NumberFormatException e)
-			{
-				hr = -1;
-			}
-			if(hr < 0 || hr > 23)
-				m_botAction.sendPrivateMessage(name,"Please specify an hour between 0 and 23");
-			else
-				m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOff() + nightObjectsOn(hour = hr));
-		}
-	}
+	}	
 
 	/**
 	 * Command: !scheck
@@ -473,16 +416,30 @@ public class bship extends MultiModule
 		{
 			if(state == ACTIVE)
 			{
-				m_botAction.sendPrivateMessage(name, "Re-checking teams still in game...");
-				try{
-					updateShipCount();
-				}catch(Exception e)
-				{
-					m_botAction.sendPrivateMessage(name, "Uh oh, this shouldn't happen :p");
-				}
+				m_botAction.sendPrivateMessage(name, "Re-checking teams still in game...");				
 				checkForLosers();
 			}
 		}
+	}
+	
+	/**
+	 * Command: !stathelp
+	 * Parameters:
+	 * Explains statistic abbreviations
+	 */
+	public void C_stathelp(String name, String message)
+	{
+		String[] msg = new String[]{
+				"ShpsPlyd: All ships the player has been in this game",
+				"Kls     : Total kills by the player during the game",
+				"Dths    : Total deaths by the player during the game",
+				"SKls    : Kills the player got on capital ships",
+				"TKls    : Kills the player got on ship turrets",
+				"PKls    : Kills the player got on planes",
+				"Atts    : Times the player attached to a capital ship",
+				"TaT     : Times the player was attached to",
+				"Rating  : (5*SKls) + (2*TKls) + PKls + TaT - (1*Dths or 3*Dths if capship)"};
+		m_botAction.privateMessageSpam(name, msg);
 	}
 
 	/********************************/
@@ -520,6 +477,13 @@ public class bship extends MultiModule
 	 */
 	private void pregame()
 	{
+		int teams = (Integer)m_tsm.getSetting("teams");
+		int board = (Integer)m_tsm.getSetting("board");
+		
+		_teams = new BSTeam[teams];
+		for(int x = 0; x < _teams.length; x++)
+			_teams[x] = new BSTeam(x);
+		
 		StringBuffer buf = new StringBuffer("Initializing Battleship Game: ");
 
 		buf.append(teams);
@@ -539,7 +503,6 @@ public class bship extends MultiModule
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team1-Radius=1");
 
 		m_botAction.sendArenaMessage("Spawn Points established. Ship Distribution: ");
-
 		notify = new CapshipNotify();
 
 		String[] teamStatus = getTeamShipCount();
@@ -555,6 +518,7 @@ public class bship extends MultiModule
 		}
 
 		m_botAction.sendArenaMessage("Game will begin in 10 seconds.");
+		m_tsm.setLocked(true);
 		state = ACTIVE;
 		startWarp = new StartWarp();
 
@@ -577,9 +541,11 @@ public class bship extends MultiModule
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team1-Radius=10");
 		m_botAction.shipResetAll();
 		m_botAction.warpAllRandomly();
+		
+		displayStats();
 
 		state = IDLE;
-		ships = null;
+		m_tsm.setLocked(false);		
 	}
 
 	/**
@@ -590,30 +556,27 @@ public class bship extends MultiModule
 	{
 		String[] s;
 		try{
-		 	s = new String[teams];
-
-			if(ships == null) //only in pregame
-				updateShipCount();
-
+		 	s = new String[_teams.length];
 			for(int x = 0; x < s.length; x++)
 			{
 				StringBuffer buf = new StringBuffer("Team "+ x +": ");
+				byte[] ships = _teams[x].getShipCount();
 				buf.append("#1: ");
-				buf.append(ships[x][0]);
+				buf.append(ships[0]);
 				buf.append(", #2: ");
-				buf.append(ships[x][1]);
+				buf.append(ships[1]);
 				buf.append(", #3: ");
-				buf.append(ships[x][2]);
+				buf.append(ships[2]);
 				buf.append(", #4: ");
-				buf.append(ships[x][3]);
+				buf.append(ships[3]);
 				buf.append(", #5: ");
-				buf.append(ships[x][4]);
+				buf.append(ships[4]);
 				buf.append(", #6: ");
-				buf.append(ships[x][5]);
+				buf.append(ships[5]);
 				buf.append(", #7: ");
-				buf.append(ships[x][6]);
+				buf.append(ships[6]);
 				buf.append(", #8: ");
-				buf.append(ships[x][7]);
+				buf.append(ships[7]);
 				s[x] = buf.toString();
 			}
 		}catch(Exception e)
@@ -623,23 +586,60 @@ public class bship extends MultiModule
 
 		return s;
 	}
-
-	/**
-	 * Checks ships of all playing players and updates the recorded numbers
-	 * Also will add capital ships to the notifier
-	 */
-	private void updateShipCount() throws Exception
+	
+	private void displayStats()
 	{
-		ships = new byte[teams][8];
-		Iterator it = m_botAction.getPlayingPlayerIterator();
-		while(it.hasNext())
+		for(int x = 0; x < _teams.length; x++)
 		{
-			Player p = (Player)it.next();
-			ships[p.getFrequency()][p.getShipType() -1]++;
-			if(p.getShipType() >= FRIGATE)
-				notify.add(p.getPlayerName(), p.getFrequency());
-		}
+			BSPlayer[] players = _teams[x].getPlayers();
+			String[] msg = new String[5 + players.length];
+			msg[0] = "+-----------------------------+";
+			msg[1] = "| END GAME STATS: TEAM "+ x +"      |";
+			msg[2] = "+--------------------+--------+------+------+------+------+------+------+------+------+";
+			msg[3] = "|Name                |ShpsPlyd|Rating| Kls  | Dths | SKls | TKls | PKls | Atts | TaT  |";
+			for(int y = 0; y < players.length; y++)
+			{
+				BSPlayer p = players[y];
+				StringBuffer buf = new StringBuffer("|");
+				buf.append(Tools.formatString(p.toString(),20));
+				buf.append("|");
+				buf.append(p.ships);
+				buf.append("|");
+				buf.append(rightAlign(""+ p.rating, 6));
+				buf.append("|");
+				buf.append(rightAlign(""+ (p.cskills + p.tkills + p.pkills), 6));
+				buf.append("|");
+				buf.append(rightAlign("" + p.deaths, 6));
+				buf.append("|");
+				buf.append(rightAlign(""+ p.cskills, 6));
+				buf.append("|");
+				buf.append(rightAlign(""+ p.tkills, 6));
+				buf.append("|");
+				buf.append(rightAlign(""+ p.pkills, 6));
+				buf.append("|");
+				buf.append(rightAlign(""+ p.takeoffs, 6));
+				buf.append("|");
+				buf.append(rightAlign(""+ p.tacount, 6));
+				buf.append("|");
+				msg[4 + y] = buf.toString();
+			}
+			msg[msg.length - 1] = msg[2];
+			
+			for(int y = 0; y < msg.length; y++)
+				m_botAction.sendArenaMessage(msg[y]);
+		}		    		    
 	}
+	
+	private String rightAlign( String fragment, int length)
+	{        
+        if(fragment.length() > length)
+            fragment = fragment.substring(0,length-1);
+        else {
+            for(int i=fragment.length();i<length;i++)
+                fragment = " "+ fragment ;
+        }
+        return fragment;
+    }	
 
 	/**
 	 * Checks all teams for being eliminated and
@@ -647,27 +647,9 @@ public class bship extends MultiModule
 	 */
 	private void checkForLosers()
 	{
-		for(int x = 0; x < teams; x++)
-			if(!checkTeam(x))
-				endGame(x);
-	}
-
-	/**
-	 * Checks a team to see if all of its capital ships have been destroyed
-	 * @param team the team to check
-	 * @return whether the team has any capital ships remaining
-	 */
-	private boolean checkTeam(int team)
-	{
-		try{
-			int left = ships[team][3] + ships[team][4] + ships[team][5] +
-					   ships[team][6] + ships[team][7];
-
-			return (left > 0);
-		}catch(Exception e)
-		{
-			return false;
-		}
+		for(int x = 0; x < _teams.length; x++)
+			if(_teams[x].isOut())
+				removeTeam(x);
 	}
 
 	/**
@@ -782,6 +764,7 @@ public class bship extends MultiModule
 	 */
 	private int[][] specialWarp(short[] dims)
 	{
+		int teams = (Integer)m_tsm.getSetting("teams");
 		//Distribution:
 		//Left, Right, Top, Bottom
 		byte[] distrib = new byte[4];
@@ -842,6 +825,7 @@ public class bship extends MultiModule
 	 */
 	private void randomShips()
 	{
+		int teams = (Integer)m_tsm.getSetting("teams");
 		StringBag[] plist = new StringBag[teams];
 		for(int x = 0; x < plist.length; x++)
 			plist[x] = new StringBag();
@@ -883,8 +867,8 @@ public class bship extends MultiModule
 	private byte getTeamsLeft()
 	{
 		byte count = 0;
-		for(int x = 0; x < teams; x++)
-			if(checkTeam(x))
+		for(int x = 0; x < _teams.length; x++)
+			if(!_teams[x].isOut())
 				count++;
 		return count;
 	}
@@ -893,15 +877,15 @@ public class bship extends MultiModule
 	 * Removes a frequency from the game, checks for a winning frequency
 	 * @param freq the team to remove from the game
 	 */
-	private void endGame(int freq)
+	private void removeTeam(int freq)
 	{
 		specFreq(freq);
 		m_botAction.sendArenaMessage("All of Team "+ freq +"'s ships have been sunk!",13);
 		if(getTeamsLeft() <= 1)
 		{
 			int team = -1;
-			for(int x = 0; x < teams; x++)
-				if(checkTeam(x))
+			for(int x = 0; x < _teams.length; x++)
+				if(!_teams[x].isOut())
 				{
 					team = x;
 					break;
@@ -922,6 +906,7 @@ public class bship extends MultiModule
 	 */
 	private void refresh()
 	{
+		int hour = (Integer)m_tsm.getSetting("hour");
 		if(hour > -1)
 		{
 			m_botAction.sendUnfilteredPublicMessage("*objset"+ nightObjectsOff() + nightObjectsOn(hour+1));
@@ -936,6 +921,7 @@ public class bship extends MultiModule
 	 */
 	private void showObjects(int playerID)
 	{
+		int hour = (Integer)m_tsm.getSetting("hour");
 		if(hour > -1)
 		m_botAction.sendUnfilteredPrivateMessage(playerID,"*objset"+ nightObjectsOff() + nightObjectsOn(hour));
 	}
@@ -946,9 +932,9 @@ public class bship extends MultiModule
 	 */
 	private String nightObjectsOff()
 	{
-		String objset = " -"+ (100 + hour) +", ";
+		String objset = " -"+ (100 + (Integer)m_tsm.getSetting("hour")) +", ";
 
-		int id = objectID(hour);
+		int id = objectID((Integer)m_tsm.getSetting("hour"));
 		if(id != -1)
 			objset += "-"+ id +",";
 
@@ -1005,6 +991,7 @@ public class bship extends MultiModule
 		events.request(EventRequester.PLAYER_ENTERED);
 		events.request(EventRequester.PLAYER_LEFT);
 		events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+		events.request(EventRequester.FREQUENCY_CHANGE);
 	 }
 
 	/**
@@ -1024,49 +1011,41 @@ public class bship extends MultiModule
 	{
 		if(state == ACTIVE)
 		{
-			int ship = m_botAction.getPlayer(event.getKilleeID()).getShipType(); //Get the ship # of the player that died
+			byte ship = m_botAction.getPlayer(event.getKilleeID()).getShipType(); //Get the ship # of the player that died
 			String name = m_botAction.getPlayerName(event.getKilleeID()); //Get dead player's name
 			String killer = m_botAction.getPlayerName(event.getKillerID()); // Get killer's name
-			int team = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get dead player's team #
+			short kteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get dead player's team #
+			short dteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get killer's team #
+			if(_teams[dteam].playerDeath(name))
+				m_botAction.setShip(name, 3);
+			_teams[kteam].playerKill(name, ship);
 			switch(ship)
 			{
 				case MINESWEEPER:
-					m_botAction.sendArenaMessage("Team "+ team + " just lost a Minesweeper! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.setShip(name, 3);
-					notify.remove(name);
+					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Minesweeper! ("+ name +", killed by "+ killer +")",19);
+					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case SUB:
-					m_botAction.sendArenaMessage("Team "+ team + " just lost a Submarine! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.setShip(name, 3);
-					notify.remove(name);
+					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Submarine! ("+ name +", killed by "+ killer +")",19);
+					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case FRIGATE:
-					m_botAction.sendArenaMessage("Team "+ team + " just lost a Frigate! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.setShip(name, 3);
-					notify.remove(name);
+					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Frigate! ("+ name +", killed by "+ killer +")",19);
+					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case BATTLESHIP:
-					m_botAction.sendArenaMessage("Team "+ team + " just lost a BATTLESHIP! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.setShip(name, 3);
-					notify.remove(name);
+					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a BATTLESHIP! ("+ name +", killed by "+ killer +")",19);
+					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case CARRIER:
-					m_botAction.sendArenaMessage("Team "+ team + " just lost an AIRCRAFT CARRIER! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.setShip(name, 3);
-					notify.remove(name);
+					m_botAction.sendArenaMessage("Team "+ dteam + " just lost an AIRCRAFT CARRIER! ("+ name +", killed by "+ killer +")",19);
+					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
-			}
-
-			try{
-				updateShipCount(); //update remaining players
-			}catch(Exception e)
-			{
-				m_botAction.sendArenaMessage("Error - Teams not properly configured.");
-			}
+			}			
 			checkForLosers();
 		}
 	}
@@ -1081,15 +1060,7 @@ public class bship extends MultiModule
 			showObjects(event.getPlayerID());
 
 		if(state == ACTIVE)
-				{
-					try{
-						updateShipCount(); //update remaining players
-					}catch(Exception e)
-					{
-						m_botAction.sendArenaMessage("Error - Teams not properly configured.");
-					}
-					checkForLosers();
-		}
+			checkForLosers();		
 	}
 
 	/**
@@ -1098,16 +1069,21 @@ public class bship extends MultiModule
 	 */
 	public void handleEvent(PlayerLeft event)
 	{
-		if(state == ACTIVE)
-		{
-			try{
-				updateShipCount(); //update remaining players
-			}catch(Exception e)
-			{
-				m_botAction.sendArenaMessage("Error - Teams not properly configured.");
-			}
-			checkForLosers();
-		}
+		if(state == ACTIVE)			
+			checkForLosers();		
+	}
+	
+	public void handleEvent(FrequencyChange event)
+	{
+		Player p = m_botAction.getPlayer(event.getPlayerID());
+		String name = p.getPlayerName();
+		short freq = event.getFrequency();
+		
+		for(int x = 0; x < _teams.length; x++)			
+			if(x != freq)
+				_teams[x].removePlayer(name);		
+		
+		_teams[freq].setShip(name, p.getShipType());
 	}
 
 	/**
@@ -1116,21 +1092,28 @@ public class bship extends MultiModule
 	 * If cap ship locking is on, will prevent players from switching to a capital ship
 	 */
 	public void handleEvent(FrequencyShipChange event)
-	{
+	{	
+		Player p = m_botAction.getPlayer(event.getPlayerID());
+		short freq = p.getFrequency();
+		byte ship = event.getShipType();
+		String name = p.getPlayerName();
+		BSPlayer bp = _teams[freq].getPlayer(name);		
 		if(state == ACTIVE)
-		{
-			if(lockCapShips)
-				if(event.getShipType() > 3)
-					m_botAction.setShip(event.getPlayerID(), 3);
-
-			try{
-				updateShipCount(); //update remaining players
-			}catch(Exception e)
+		{			
+			if((Boolean)m_tsm.getSetting("cslock"))
 			{
-				m_botAction.sendArenaMessage("Error - Teams not properly configured.");
+				if(event.getShipType() > 3 && bp.ship < 3)
+					m_botAction.setShip(event.getPlayerID(), bp.ship);			
+				else
+					_teams[freq].setShip(name, ship);
 			}
+			else
+				_teams[freq].setShip(name, ship);
+				
 			checkForLosers();
 		}
+		else		
+			_teams[freq].setShip(name, ship);			
 	}
 
 	/**
@@ -1221,9 +1204,10 @@ public class bship extends MultiModule
 	{
 		public void run()
 		{
-			short[] dims = boardDimensions(board);
-			int[][] points;
+			short[] dims = boardDimensions((byte)((Integer)m_tsm.getSetting("board")).intValue());
+			
 
+			int teams = _teams.length;
 			//Special can handle more than 4, but standard is faster
 			if(teams <= 4)
 				points = standardWarp(dims);
@@ -1239,63 +1223,51 @@ public class bship extends MultiModule
 			m_botAction.sendArenaMessage("Game Begin!!!",104);
 		}
 	}
+	
+	private class CapshipRespawn extends TimerTask
+	{
+		private String _name;
+		private int _freq;
+		public CapshipRespawn(String name, int freq)
+		{
+			_name = name;
+			_freq = freq;
+		}
+		
+		public void run()
+		{
+			int x = points[_freq][X];
+			int y = points[_freq][Y];
+			m_botAction.warpTo(_name, x, y);
+		}
+	}
 
 	/**
 	 * TimerTask: CapshipNotify
 	 * Notifies players which ships they can attach to on their team
 	 */
 	private class CapshipNotify extends TimerTask
-	{
-		private Vector[] capships = new Vector[teams];
-		private boolean ready = false;
+	{		
 		public void run()
 		{
-			if(!ready)
-				init();
-
-			for(int x = 0; x < capships.length; x++)
+			for(int x = 0; x < _teams.length; x++)
 			{
 				StringBuffer bships = new StringBuffer("Your Team's Battleships:");
-				StringBuffer carriers = new StringBuffer(" Carriers:");
-				Player p = null;
-				for(int y = 0; y < capships[x].size(); y++)
+				StringBuffer carriers = new StringBuffer(" Carriers:");				
+				BSPlayer[] players = _teams[x].getPlayers(); 
+				for(int y = 0; y < players.length; y++)
 				{
-					p = m_botAction.getPlayer((String)capships[x].get(y));
-					if(p.getShipType() == FRIGATE || p.getShipType() == BATTLESHIP)
-						bships.append(" "+ p.getPlayerName() +",");
-					else if(p.getShipType() == CARRIER)
-						carriers.append(" "+ p.getPlayerName() +",");
+					if(players[x].ship == FRIGATE || players[x].ship == BATTLESHIP)					
+						bships.append(" "+ players[x] +",");
+					else if(players[x].ship == CARRIER)
+						carriers.append(" "+ players[x] +",");
 				}
 				if(bships.toString().endsWith(","))
 					bships.deleteCharAt(bships.length() - 1);
 				if(carriers.toString().endsWith(","))
-					carriers.deleteCharAt(carriers.length() - 1);
-				if(p != null)
-					m_botAction.sendOpposingTeamMessage((int)p.getPlayerID(), bships.toString() + carriers.toString(),0);
+					carriers.deleteCharAt(carriers.length() - 1);				
+				m_botAction.sendOpposingTeamMessageByFrequency(x, bships.toString() + carriers.toString(),0);
 			}
-		}
-
-		public void remove(String name)
-		{
-			if(!ready)
-				init();
-			for(int x = 0; x < capships.length; x++)
-				capships[x].remove(name);
-		}
-
-		public void add(String name, int freq)
-		{
-			if(!ready)
-				init();
-			if(!capships[freq].contains(name))
-				capships[freq].add(name);
-		}
-
-		public void init()
-		{
-			for(int x = 0; x < capships.length; x++)
-				capships[x] = new Vector();
-			ready = true;
-		}
+		}		
 	}
 }
