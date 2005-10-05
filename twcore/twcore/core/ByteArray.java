@@ -3,25 +3,46 @@ package twcore.core;
 import java.io.*;
 import java.net.DatagramPacket;
 
+/**
+ * Internal storage class for holding an array of bytes, and performing various
+ * operations on it.  Does not account for data that exceeds the intended size
+ * of an array.
+ */
 public class ByteArray {
 
-    byte[]     m_array;
-    int        m_pointer=0;
+    byte[]     m_array;             // Byte data of the array 
+    int        m_pointer=0;         // Index of the current insertion point
 
+    /**
+     * Constructs an empty ByteArray. 
+     */
     public ByteArray(){
     }
 
+    /**
+     * Constructs an empty ByteArray of a given size.  If size is not ample,
+     * problems will occur (not a user-friendly datatype). 
+     * @param size Size of ByteArray to construct
+     */
     public ByteArray( int size ){
 
         m_array = new byte[size];
     }
 
+    /**
+     * Constructs a new ByteArray using a DatagramPacket.
+     * @param packet Packet to use to construct the ByteArray
+     */
     public ByteArray( DatagramPacket packet ){
 
         m_array = new byte[packet.getLength()];
         System.arraycopy( packet.getData(), 0, m_array, 0, packet.getLength() );
     }
 
+    /**
+     * Constructs a new ByteArray using an array of bytes.
+     * @param byteArray Array of bytes
+     */
     public ByteArray( byte[] byteArray ){
 
         m_array = new byte[byteArray.length];
@@ -29,6 +50,10 @@ public class ByteArray {
         addByteArray( byteArray );
     }
 
+    /**
+     * Constructs a new ByteArray using an array of ints.
+     * @param intArray Array of ints
+     */
     public ByteArray( int[] intArray ){
 
         m_array = new byte[intArray.length];
@@ -36,10 +61,17 @@ public class ByteArray {
         addByteArray( intArray );
     }
 
+    /**
+     * @return Size/length of the ByteArray
+     */
     public int size(){
         return m_array.length;
     }
 
+    /**
+     * Enlarge the array to a given size.
+     * @param newSize Size to enlarge to
+     */
     public void growArray( int newSize ){
         byte[]    newarray = new byte[newSize];
 
@@ -47,6 +79,10 @@ public class ByteArray {
         m_array = newarray;
     }
 
+    /**
+     * Shrink the array to a given size.
+     * @param newSize Size to shrink to
+     */
     public void shrinkArray( int newSize ){
         byte[]    newarray = new byte[newSize];
 
@@ -54,26 +90,41 @@ public class ByteArray {
         m_array = newarray;
     }
 
-    public void setPointerIndex( int newpointer ){
+    /**
+     * Set the index of the array pointer to a specified point.
+     * @param newPointer Index to set to
+     */
+    public void setPointerIndex( int newPointer ){
 
-        m_pointer = newpointer;
+        m_pointer = newPointer;
     }
 
+    /**
+     * @return Index of the array pointer
+     */
     public int getPointerIndex(){
 
         return m_pointer;
     }
 
+    /**
+     * Increment the index pointer by 1.
+     */
     public void incrementPointer(){
 
         m_pointer++;
     }
 
+    /**
+     * Decrement the index pointer by 1.
+     */
     public void decrementPointer(){
         if( m_pointer != 0 ){
             m_pointer++;
         }
     }
+    
+    // ***** VARIOUS DATATYPE ADDERS (self-explanatory) *****
 
     public void addByte( byte theByte ){
         m_array[m_pointer++] = theByte;
@@ -266,6 +317,11 @@ public class ByteArray {
         }
     }
 
+    /**
+     * Add contents of a file to the internal byte array.
+     * @param file
+     * @throws IOException
+     */
     public void addFileContents( File file ) throws IOException {
         int              length;
         byte             buffer[];
@@ -280,6 +336,12 @@ public class ByteArray {
         fileReader.close();
     }
 
+    /**
+     * Adds part of another ByteArray to this one.
+     * @param byteArray ByteArray to add
+     * @param sourceIndex Index to start the copyover
+     * @param length Size/length of the copy
+     */
     public void addPartialByteArray( ByteArray byteArray, int sourceIndex, int length ){
         byte[]        tempArray = byteArray.getByteArray();
 
@@ -287,23 +349,49 @@ public class ByteArray {
         m_pointer += length;
     }
 
+    /**
+     * Adds part of another ByteArray to this one.
+     * @param byteArray ByteArray to add
+     * @param destIndex Index to copy into in the source ByteArray
+     * @param sourceIndex Index to start the copyover
+     * @param length Size/length of the copy
+     */
     public void addPartialByteArray( ByteArray byteArray, int destIndex, int sourceIndex, int length ){
         byte[]        tempArray = byteArray.getByteArray();
 
         System.arraycopy( tempArray, sourceIndex, m_array, destIndex, length );
     }
 
+    /**
+     * Adds part of a byte array to this one.
+     * @param byteArray byte array to add
+     * @param sourceIndex Index to start the copyover
+     * @param length Size/length of the copy
+     */
     public void addPartialByteArray( byte[] byteArray, int sourceIndex, int length ){
 
         System.arraycopy( byteArray, sourceIndex, m_array, m_pointer, length );
         m_pointer += length;
     }
 
+    /**
+     * Adds part of a byte array to this one.
+     * @param byteArray byte array to add
+     * @param destIndex Index to copy into in the source ByteArray
+     * @param sourceIndex Index to start the copyover
+     * @param length Size/length of the copy
+     */
     public void addPartialByteArray( byte[] byteArray, int destIndex, int sourceIndex, int length ){
 
         System.arraycopy( byteArray, sourceIndex, m_array, destIndex, length );
     }
 
+    /**
+     * Adds part of an int array to this one.
+     * @param intArray int array to add
+     * @param sourceIndex Index to start the copyover
+     * @param length Size/length of the copy
+     */
     public void addPartialByteArray( int[] intArray, int sourceIndex, int length ){
 
         for( int i=0; i<length; i++ ){
@@ -311,6 +399,13 @@ public class ByteArray {
         }
     }
 
+    /**
+     * Adds part of an int array to this one.
+     * @param intArray int array to add
+     * @param destIndex Index to copy into in the source ByteArray
+     * @param sourceIndex Index to start the copyover
+     * @param length Size/length of the copy
+     */
     public void addPartialByteArray( int[] intArray, int destIndex, int sourceIndex, int length ){
 
         for( int i=0; i<length; i++ ){
@@ -318,6 +413,8 @@ public class ByteArray {
         }
     }
 
+    // ***** repeatAdd methods *****
+    
     public void repeatAdd( byte theByte, int number ){
         for( int i=0; i<number; i++ ){
             m_array[m_pointer++] = theByte;
@@ -325,8 +422,6 @@ public class ByteArray {
     }
 
     public void repeatAdd( byte theByte, int number, int index ){
-        int        oldPointer = m_pointer;
-
         for( int i=0; i<number; i++ ){
             m_array[index+i] = theByte;
         }
@@ -344,10 +439,15 @@ public class ByteArray {
         }
     }
 
+    /**
+     * @return Internal byte array inside this object
+     */
     public byte[] getByteArray(){
         return m_array;
     }
 
+    // ***** read methods *****
+    
     public byte readByte( int index ){
         return m_array[index];
     }
@@ -385,8 +485,6 @@ public class ByteArray {
     }
 
     public String readString( int index, int length ){
-        char[]        charArray = new char[length];
-
         return new String(m_array, index, length).trim();
     }
 
@@ -407,7 +505,13 @@ public class ByteArray {
         }
         return new ByteArray(newarray);
     }
+    
+    // ***** show methods *****
 
+    /**
+     * Sends contents of a passed byte array to the console, in hex format.
+     * @param b byte array to display 
+     */
     public static void show( byte[] b ){
         for( int i=0; i<b.length; i++ ){
             System.out.print( ConvertHex.byteToHex( b[i] ) + " " );
@@ -416,6 +520,10 @@ public class ByteArray {
         System.out.println();
     }
 
+    /**
+     * Sends short contents of a passed byte array to the console, in hex format.
+     * @param b byte array to display 
+     */
     public static void showShort( byte[] b ){
         for( int i=0; i<b.length && i<26; i++ ){
             System.out.print( ConvertHex.byteToHex( b[i] ) + " " );
@@ -424,6 +532,10 @@ public class ByteArray {
         System.out.println();
     }
 
+    /**
+     * Sends short contents of a passed ByteArray to the console, in hex format.
+     * @param byteArray ByteAray to display 
+     */
     public static void showShort( ByteArray byteArray ){
         byte[] b = byteArray.getByteArray();
         for( int i=0; i<b.length && i<26; i++ ){
@@ -433,6 +545,9 @@ public class ByteArray {
         System.out.println();
     }
 
+    /**
+     * Sends contents of the internal byte array to the console, in hex format. 
+     */
     public void show(){
         for( int i=0; i<m_array.length; i++ ){
             System.out.print( ConvertHex.byteToHex( m_array[i] ) + " " );
@@ -441,12 +556,20 @@ public class ByteArray {
         System.out.println();
     }
 
+    /**
+     * Sends short contents of the internal byte array to the console, in hex format.
+     */
     public void showShort(){
         for( int i=0; i<m_array.length && i<26; i++ ){
             System.out.print( ConvertHex.byteToHex( m_array[i] ) + " " );
         }
     }
 
+    /**
+     * Returns an int array as a byte array.
+     * @param intarray int array to process
+     * @return byte array containing same data
+     */
     public static byte[] toByteArray( int[] intarray ){
         byte[] barray = new byte[intarray.length];
 
@@ -458,11 +581,11 @@ public class ByteArray {
     }
 
    /**
-	* get the bit fragment from startIndex to endIndex
-	* @param extractFrom the byte to extract from
-	* @param startIndex the inclusive leftbound index: 1234 5678
-	* @param endIndex the inclusive rightbound index 1234 5678 and > startIndex
-	* @return the int extracted from the requested bits
+	* Gets the bit fragment from startIndex to endIndex.
+	* @param extractFrom The byte to extract from
+	* @param startIndex The inclusive leftbound index: 1234 5678
+	* @param endIndex The inclusive rightbound index 1234 5678 and > startIndex
+	* @return The int extracted from the requested bits
 	*/
 	public static int getPartial(byte extractFrom, int startIndex, int endIndex)
 	{
@@ -473,5 +596,4 @@ public class ByteArray {
 	      return (extractFrom >> shift) & mask;
 	}
 }
-
 
