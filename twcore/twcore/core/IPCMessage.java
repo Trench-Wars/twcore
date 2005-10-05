@@ -1,17 +1,16 @@
 package twcore.core;
 
 /**
- * IPCMessage
- * 
- * Representing class of messages of the Inter-process Communication protocol of TWCore.
- * Used to transmit messages between bots.    
- * 
+ * Used as a transmitter of messages between bots, using the IPC protocol.
+ * Very simple and lightweight class.     
+ *
+ * @author  harvey
  */
 public class IPCMessage
 {
-  private String message;
-  private String sender;
-  private String recipient;
+  private String message;       // Message being sent
+  private String sender;        // Sender of the message
+  private String recipient;     // Intended recipient of the message
 
   /**
    * IPCMessage constructor given only a message.
