@@ -1,23 +1,25 @@
-/*
- * Receiver.java
- *
- * Created on December 12, 2001, 7:28 PM
- */
-
-/**
- *
- * @author  Jeremy
- */
 package twcore.core;
+
 import java.net.*;
 import java.util.*;
 import java.io.*;
 
+/**
+ * A packet receiving queue.  Waits for a packet to be received from the socket
+ * it was initialized from, and once received, adds it to the end of the queue.
+ * Periodically the Session looks for available packets and requests any
+ * @author Jeremy
+ */
 class Receiver extends Thread {
-    private DatagramSocket   m_socket;
-    private List             m_packets;
-    private int              m_packetsReceived;
+    private DatagramSocket   m_socket;          // Connection to SS server
+    private List             m_packets;         // Received packet queue
+    private int              m_packetsReceived; // # packets received
     
+    /**
+     * Creates a new instance of Receiver, a packet receiving queue.
+     * @param group ThreadGroup of this Session
+     * @param socket Connection to the outside world
+     */
     public Receiver( ThreadGroup group, DatagramSocket socket ){
         super( group, "Receiver" );
         m_socket = socket;
@@ -26,16 +28,25 @@ class Receiver extends Thread {
         start();
     }
     
+    /**
+     * @return Total number of packets received
+     */
     public int getNumPacketsReceived(){
         
         return m_packetsReceived;
     }
 
+    /**
+     * @return True if the connection to the SS server is still active 
+     */
     public boolean isConnected(){
 
         return m_socket.isConnected();
     }
-        
+    
+    /**
+     * @return Next packet in the queue in the form of a ByteArray
+     */
     public ByteArray get(){
         if( m_packets.isEmpty() == false ){
             return new ByteArray( (DatagramPacket)m_packets.remove( 0 ) );
@@ -44,11 +55,21 @@ class Receiver extends Thread {
         }
     }
     
+    /**
+     * @return True if there are packets in the queue still waiting to be processed
+     */
     public boolean containsMoreElements(){
         
         return !m_packets.isEmpty();
     }
     
+    /**
+     * As long as the connection is maintained, attempts to receive a new
+     * packet.  The DatagramSocket's receive(DatagramPacket) method will
+     * block until a packet is received, at which point Receiver will add
+     * the packet to the queue, increment the received packet counter, and
+     * then attempt to receive the next packet.
+     */
     public void run(){
         DatagramPacket      packet;
 
