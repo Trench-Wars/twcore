@@ -1,14 +1,27 @@
 package twcore.core;
 
 import java.util.*;
+
+/**
+ * Optional class for limiting the number of messages that can be sent to
+ * a bot from a given player within 60 seconds.  (Does not apply to HighMod+.)
+ * Use BotAction's setMessageLimit(int) to run this class with a bot.
+ */
 public class MessageLimiter {
-    private BotAction m_botAction;
-    private SubspaceBot m_bot;
-    private HashMap m_timeMap;
-    private int m_rate = 6;
-    private long lastCheckTime;
-    private long time;
-    /** Creates a new instance of MessageLimiter */
+    private BotAction   m_botAction;    // Bot utility class
+    private SubspaceBot m_bot;          // Bot the limiter applies to
+    private HashMap     m_timeMap;      // (String)Name -> (Integer)# times msgd/last min.
+    private int         m_rate = 6;     // # msgs allowed per player per minute
+    private long        lastCheckTime;  // Last time anyone sent a msg
+    private long        time;           // Time allowed per message (from m_rate)
+    
+    /**
+     * Creates a new instance of MessageLimiter with the specified message
+     * limit per minute per person.
+     * @param botAction Bot utility class
+     * @param bot Bot the limiter should apply to
+     * @param rate Number of messages allowed from a person in one minute
+     */
     public MessageLimiter( BotAction botAction, SubspaceBot bot, int rate ) {
         m_botAction = botAction;
         m_timeMap = new HashMap();
@@ -18,6 +31,13 @@ public class MessageLimiter {
         time = Math.round(1000d*60d/(double)m_rate);
     }
 
+    /**
+     * Handles the message event before the bot so that the bot will not be
+     * spammed.  If the PM passes the message limit test, it will go through;
+     * otherwise, the player will receive a warning message and the bot will
+     * not receive the message.
+     * @param event Event/packet provided
+     */
     public void handleEvent( Message event ){
         String name = null;
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
@@ -25,6 +45,10 @@ public class MessageLimiter {
         } else if( event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE ){
             name = event.getMessager();
         } else {
+            m_bot.handleEvent( event );
+            return;
+        }
+        if( m_botAction.getOperatorList().isHighmod( name ) ) {
             m_bot.handleEvent( event );
             return;
         }
@@ -44,6 +68,12 @@ public class MessageLimiter {
         }
     }
     
+    /**
+     * Reduces the count of messages from all players by the difference
+     * supplied (should be difference between current time and last time
+     * a message was received).
+     * @param difference Difference between current time and last time a msg was received
+     */
     public void reduce( long difference ){
         long times = difference/time;
         for( int j = 0; j < times && j < m_rate; j++ ){
@@ -61,6 +91,11 @@ public class MessageLimiter {
         }
     }
     
+    /**
+     * Record the supplied player name as having sent a message at this time
+     * by incrementing their message count.  If over the limit, warn them.
+     * @param name 
+     */
     public void recordTime( String name ){
         if( m_timeMap.containsKey( name )){
             int value = ((Integer)m_timeMap.get( name )).intValue();
