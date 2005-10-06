@@ -1013,11 +1013,11 @@ public class purepubbot extends SubspaceBot
         boolean gameOver    = false;       // Game over, man.. game over!
         int flagholdingFreq = flagTimer.getHoldingFreq();
         int maxScore        = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
+        int secs = flagTimer.getTotalSecs();
+        int mins = secs / 60;
+        int weight = ((int)(secs * 3 ) / 60);
        
         try {
-            int secs = flagTimer.getTotalSecs();
-            int mins = secs / 60;
-            int weight = ((int)(secs * 3 ) / 60);
             
             // Incremental bounty bonuses
             if( mins >= 90 )
@@ -1037,10 +1037,6 @@ public class purepubbot extends SubspaceBot
                     freq1Score++;
                                 
                 if( freq0Score >= maxScore || freq1Score >= maxScore ) {
-                    m_botAction.sendArenaMessage( "END GAME!  Freq " + flagholdingFreq + " has won after " + getTimeString( flagTimer.getTotalSecs() ) +
-                            " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );
-                    freq0Score = 0;
-                    freq1Score = 0;
                     gameOver = true;
                 } else {
                     int roundNum = freq0Score + freq1Score;
@@ -1201,14 +1197,7 @@ public class purepubbot extends SubspaceBot
         } catch(Exception e) {
             Tools.printStackTrace( e );
         }        
-                
-        try {
-            flagTimer.endGame();
-            flagTimer.cancel();
-            intermissionTimer.cancel();
-        } catch (Exception e ) {
-        }
-        
+                        
         int intermissionTime = 10000;
         
         if( gameOver ) {
@@ -1229,7 +1218,7 @@ public class purepubbot extends SubspaceBot
             }
             switch( diff ) {
             case -1:
-                winMsg = " for completely shutting out the competition!";
+                winMsg = " for their masterful victory!";
                 break;
             case 1:
                 winMsg = " for their close win!";
@@ -1241,7 +1230,19 @@ public class purepubbot extends SubspaceBot
                 winMsg = " for their win!";
                 break;
             }
-            m_botAction.sendArenaMessage( "Congratulations to FREQ " + flagholdingFreq + winMsg );
+            m_botAction.sendArenaMessage( "GAME OVER!  Freq " + flagholdingFreq + " has won the game after " + getTimeString( flagTimer.getTotalSecs() ) +
+                    " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );
+            m_botAction.sendArenaMessage( "Give congratulations to FREQ " + flagholdingFreq + winMsg );
+        }
+        
+        freq0Score = 0;
+        freq1Score = 0;
+
+        try {
+            flagTimer.endGame();
+            flagTimer.cancel();
+            intermissionTimer.cancel();
+        } catch (Exception e ) {
         }
         
         intermissionTimer = new IntermissionTask();
