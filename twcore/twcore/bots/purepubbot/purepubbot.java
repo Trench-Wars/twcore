@@ -3,75 +3,111 @@ package twcore.bots.purepubbot;
 import java.util.*;
 import twcore.core.*;
 
+/** 
+ * "Pure" pub bot that can enforce ship restrictions, freq restrictions, and run
+ * a timed pub game using a flag. (Note that for non-TW zones, the warp points for
+ * flag time games be set up by hand.)
+ * 
+ * Restrictions for any ship can be easily enforced using this bot.  Each restriction
+ * should be marked in this format in the CFG: (BotName)Ship(#)=(Value), e.g., if
+ * the bot's name is MyPurePub, to completely restrict ship 1, one would use
+ * MyPurePubShip1=0, and to allow ship 3, one would use MyPurePubShip3=1.  All
+ * playable ships 1-8 must be defined for each bot.  Ship 0 is autodefined as 1.
+ * 
+ *   Values:
+ *   0  - No ships of this type allowed
+ *   1  - Unlimited number of ships of this type are allowed
+ *   #  - If the number of current ships of the type on this frequency is
+ *        greater than the total number of people on the frequency divided
+ *        by this number (ships of this type > total ships / weight), then the
+ *        ship is not allowed.  The exception to this rule is if the player is
+ *        the only one on the freq currently in the ship.
+ *        
+ * For example, to say that only half the ships on a freq are allowed to be javs:
+ * MyPurePub2=2, and for only a fifth of the ships allowed to be terrs, MyPurePub=5.
+ * See JavaDocs of the checkPlayer(int) method for more information.
+ * 
+ * 
+ * (NOTE: purepubbot is different than the pub bot module and hub system.  Pubhub /
+ * Pubbot answers queries about player aliases, spies for certain words, monitors
+ * TKs, informs people of messages received, and can perform any other task necessary
+ * in a pub -- particularly ones that require a way to verify when a person logs on.)
+ * 
+ * @author Cpt.Guano!  (Timed pub & specific restrictions: qan)
+ * @see pubbot; pubhub
+ */
 public class purepubbot extends SubspaceBot
 {
+    public static final int SPEC = 0;                   // Number of the spec ship
+    public static final int FREQ_0 = 0;                 // Frequency 0
+    public static final int FREQ_1 = 1;                 // Frequency 1
+    private static final int FLAG_CLAIM_SECS = 3;		// Seconds it takes to fully
+                                                        // claim a flag
+    private static final int INTERMISSION_SECS = 90;	// Seconds between end of round
+                                                        // and start of next
+    private static final int NUM_WARP_POINTS_PER_SIDE = 6; // Total number of warp points
+                                                           // per side of FR
+    private static final int MAX_FLAGTIME_ROUNDS = 5;   // Max # rounds (odd numbers only)
     
-    public static final int SPEC = 0;
-    public static final int FREQ_0 = 0;
-    public static final int FREQ_1 = 1;
-    private static final int FLAG_CLAIM_SECS = 4;		// Seconds it takes to fully claim a flag
-    private static final int INTERMISSION_SECS = 90;	// Seconds between end of round and start of next
-    private static final int NUM_WARP_POINTS_PER_SIDE = 6;		// Total number of warp points per side of FR
+    private OperatorList opList;                        // Admin rights info obj
+    private HashSet freq0List;                          // Players on freq 0
+    private HashSet freq1List;                          // Players on freq 1
+    private HashMap playerTimes;                        // Roundtime of player on freq
+    private boolean started;                            // True if pure pub is enabled
+    private boolean privFreqs;                          // True if priv freqs are allowed
+    private boolean flagTimeStarted;                    // True if flag time is enabled
+    private boolean strictFlagTime;                     // True for autowarp in flag time
+    private FlagCountTask flagTimer;                    // Flag time main class
+    private StartRoundTask startTimer;                  // TimerTask to start round
+    private IntermissionTask intermissionTimer;         // TimerTask for round intermission
+    private int flagMinutesRequired;                    // Flag minutes required to win
+    private int freq0Score, freq1Score;                 // # rounds won
+    boolean initLogin = true;                           // True if first arena login
+    private int initialPub;                             // Order of pub arena to defaultjoin
+    private String initialSpawn;                        // Arena initially spawned in
+    private Vector shipWeights;                         // "Weight" restriction per ship 
+    private List warpPlayers;                           // Players that wish to be warped
     
-    private OperatorList opList;
-    private HashSet freq0List;
-    private HashSet freq1List;
-    private HashMap playerTimes;
-    private HashSet MVPs;
-    private boolean started;
-    private boolean privFreqs;
-    private boolean flagTimeStarted;
-    private boolean strictFlagTime;
-    private FlagCountTask flagTimer;
-    private StartRoundTask startTimer;
-    private IntermissionTask intermissionTimer;
-    private int flagMinutesRequired;
-    private int freq0Score, freq1Score;
+    // X and Y coords for warp points.  Note that the first X and Y should be
+    // the "standard" warp; in TW this is the earwarp.  These coords are used in
+    // strict flag time mode.
+    private int warpPtsLeftX[]  = { 487, 505, 502, 499, 491, 495 }; 
+    private int warpPtsLeftY[]  = { 255, 260, 267, 274, 279, 263 };
+    private int warpPtsRightX[] = { 537, 519, 522, 525, 529, 533 }; 
+    private int warpPtsRightY[] = { 255, 260, 267, 274, 263, 279 };
     
-    boolean initLogin = true;
-    private int initialPub;
-    private String initialSpawn;    
-    private Vector shipWeights;
-    
-    private int warpPtsLeftX[] = { 505, 502, 499, 491, 495, 487 }; 
-    private int warpPtsLeftY[] = { 260, 267, 274, 279, 263, 255 };
-
-    private int warpPtsRightX[] = { 519, 522, 525, 529, 533, 537 }; 
-    private int warpPtsRightY[] = { 260, 267, 274, 263, 279, 255 };
+    // Warp coords for safes (for use in strict flag time mode)
     private static final int SAFE_LEFT_X = 306;
     private static final int SAFE_LEFT_Y = 482;
     private static final int SAFE_RIGHT_X = 717;
     private static final int SAFE_RIGHT_Y = 482;
     
-    private LinkedList warpPlayers;
-    
     
     /**
-     * This method initializes the bot.
+     * Creates a new instance of purepub bot and initializes necessary data.
      *
-     * @param botAction is the BotAction method for the bot.
+     * @param Reference to bot utility class
      */   
     public purepubbot(BotAction botAction)
     {
         super(botAction);
-        
         requestEvents();
         opList = m_botAction.getOperatorList();
         freq0List = new HashSet();
         freq1List = new HashSet();
         playerTimes = new HashMap();
-        MVPs = new HashSet();
         started = false;
         privFreqs = true;
         flagTimeStarted = false;
         strictFlagTime = false;
+        warpPlayers = Collections.synchronizedList( new LinkedList() );
         warpPlayers = new LinkedList();
         shipWeights = new Vector();
     }
     
     
     /**
-     * This method requests all of the appropriate events.
+     * Requests all of the appropriate events.
      */    
     private void requestEvents()
     {
@@ -91,7 +127,7 @@ public class purepubbot extends SubspaceBot
     /* **********************************  EVENTS  ************************************ */
       
     /**
-     * Retreive all necessary settings for the bot to operate.
+     * Retreives all necessary settings for the bot to operate.
      *
      * @param event is the event to process.
      */    
@@ -108,7 +144,8 @@ public class purepubbot extends SubspaceBot
 
     
     /**
-     * Requests arena list to move to appropriate pub automatically, if this is the first arena joined.
+     * Requests arena list to move to appropriate pub automatically, if the arena
+     * is the first arena joined.
      * 
      * @param event is the event to process.
      */
@@ -164,10 +201,10 @@ public class purepubbot extends SubspaceBot
     		startBot();
     	}
     }
-        
+
 
     /**
-     * This method handles the FrequencyShipChange event.
+     * Handles the FrequencyShipChange event.
      * Checks players for appropriate ships/freqs.
      * Resets their MVP timer if they spec or change ships (new rule).
      *
@@ -207,7 +244,7 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * Remove player from all tracking lists when they leave the arena.
+     * Removes a player from all tracking lists when they leave the arena.
      *
      * @param event is the event to handle.
      */
@@ -255,36 +292,44 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * When a player enters, display necessary information, and check their ship & freq.
+     * When a player enters, displays necessary information, and checks
+     * their ship & freq.
      *
      * @param event is the event to process.
      */    
     public void handleEvent(PlayerEntered event)
     {
         try {
+            int playerID = event.getPlayerID();
+            Player player = m_botAction.getPlayer(playerID);
+            String playerName = m_botAction.getPlayerName(playerID);
+
             if(started)
             {
-                int playerID = event.getPlayerID();
-                Player player = m_botAction.getPlayer(playerID);
-                String playerName = m_botAction.getPlayerName(playerID);
                 
-                m_botAction.sendSmartPrivateMessage(playerName, "This arena has pure pub settings enabled.  Certain ships are restricted.");
+                m_botAction.sendPrivateMessage(playerName, "Pure Pub enabled.  Private Freqs: [" + (privFreqs ? "OK" : "NO") + "]" + "  Timed pub: [" + (flagTimeStarted ? "ON" : "OFF") + "]" );                
+
+                String restrictions = "";
+                int weight;
+                
+                for( int i = 1; i < 9; i++ ) {
+                    weight = ((Integer)shipWeights.get( i )).intValue();                    
+                    if( weight == 0 )
+                        restrictions += Tools.shipName( i ) + "s disabled.  ";
+                    if( weight > 1 )
+                        restrictions += Tools.shipName( i ) + "s limited.  ";
+                }
+
+                if( restrictions != "" )
+                    m_botAction.sendSmartPrivateMessage(playerName, "Ship restrictions: " + restrictions );
+                
                 checkPlayer(playerID);
                 if(!privFreqs)
-                {
-                    m_botAction.sendSmartPrivateMessage(playerName, "Private Frequencies are currently disabled.");
                     checkFreq(playerID, player.getFrequency(), false);
-                }
             }
-            if(flagTimeStarted) {
-                int playerID = event.getPlayerID();
-                Player player = m_botAction.getPlayer(playerID);
-                String playerName = m_botAction.getPlayerName(playerID);
-                
-                m_botAction.sendSmartPrivateMessage(playerName, "Flag Time mode is currently running.  Send !help to me for more information.");
+            if(flagTimeStarted)
                 if( flagTimer != null)
                     m_botAction.sendSmartPrivateMessage(playerName, flagTimer.getTimeInfo() );      
-            }
         } catch (Exception e) {      
         }
         
@@ -292,7 +337,8 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * If flag time mode is running, register with the flag time game that the flag has been claimed. 
+     * If flag time mode is running, register with the flag time game that the
+     * flag has been claimed. 
      *
      * @param event is the event to handle.
      */
@@ -314,7 +360,7 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * This method handles a Message event.
+     * Handles all messages received.
      *
      * @param event is the message event to handle.
      */    
@@ -332,7 +378,7 @@ public class purepubbot extends SubspaceBot
     /* **********************************  COMMANDS  ************************************ */
     
     /**
-     * This method handles a command sent to the bot.
+     * Handles commands sent to the bot.
      *
      * @param sender is the person issuing the command.
      * @param message is the command that is being sent.
@@ -378,7 +424,7 @@ public class purepubbot extends SubspaceBot
 
     
     /**
-     * This method moves a bot from one arena to another.  The bot must not be
+     * Moves the bot from one arena to another.  The bot must not be
      * started for it to move.
      *
      * @param sender is the person issuing the command.
@@ -401,7 +447,7 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * This method starts the pure pub settings.
+     * Starts the pure pub settings.
      *
      * @param sender is the person issuing the command.
      * @throws RuntimeException if the bot is already running pure pub settings.
@@ -419,7 +465,7 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * This method stops the pure pub settings.
+     * Stops the pure pub settings.
      *
      * @param sender is the person issuing the command.
      * @throws RuntimeException if the bot is not currently running pure pub
@@ -437,7 +483,7 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * This method toggles if private frequencies are allowed or not.
+     * Toggles if private frequencies are allowed or not.
      *
      * @param sender is the sender of the command.
      */
@@ -461,8 +507,8 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * Starts a "flag time" mode in which a team must hold the flag for a certain consecutive
-     * number of minutes in order to win the round.
+     * Starts a "flag time" mode in which a team must hold the flag for a certain
+     * consecutive number of minutes in order to win the round.
      * 
      * @param sender is the person issuing the command.
      * @param argString is the number of minutes to hold the game to.
@@ -487,7 +533,7 @@ public class purepubbot extends SubspaceBot
         
         m_botAction.sendArenaMessage( "Flag Time mode has been enabled." );
         
-        m_botAction.sendArenaMessage( "OBJECT: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win." );
+        m_botAction.sendArenaMessage( "Object: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win a round.  Best " + ( MAX_FLAGTIME_ROUNDS + 1) / 2 + " of "+ MAX_FLAGTIME_ROUNDS + " wins the game." );        
         if( strictFlagTime )
             m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  All players will be warped at round start." );
         else
@@ -501,10 +547,11 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * Starts a "flag time" mode in which a team must hold the flag for a certain consecutive
-     * number of minutes in order to win the round.
+     * Starts a "flag time" mode in which a team must hold the flag for a certain
+     * consecutive number of minutes in order to win the round.
      * 
-     * Differs from normal time in that all players are warped automatically, and shipreset.
+     * Differs from normal time in that all players are first warped automatically
+     * into safe (must be set), and then warped into base.
      * 
      * @param sender is the person issuing the command.
      * @param argString is the number of minutes to hold the game to.
@@ -545,7 +592,7 @@ public class purepubbot extends SubspaceBot
     
     
     /**
-     * Displays info about time remaining, if applicable.
+     * Displays info about time remaining in flag time round, if applicable.
      * 
      * @param sender is the person issuing the command.
      */
@@ -571,7 +618,7 @@ public class purepubbot extends SubspaceBot
         if(!flagTimeStarted)
             throw new RuntimeException( "Flag Time mode is not currently running." );
         if( strictFlagTime )
-            throw new RuntimeException( "You do not need to !warp in Strict Flag Time mode." );
+            throw new RuntimeException( "You do not need to !warp in Strict Flag Time mode.  You will automatically be warped." );
 
         if( warpPlayers.contains( sender ) ) {
             warpPlayers.remove( sender );
@@ -663,8 +710,29 @@ public class purepubbot extends SubspaceBot
 
     
     /**
-     * This method checks to see if a player is a restricted ship.  If they are then
-     * they are specced.
+     * This method checks to see if a player is in a restricted ship, or the
+     * weight for the given ship has been reached.  If either is true, then the
+     * player is specced.
+     * 
+     * Weights can be thought of as a denominator (bottom number) of a fraction,
+     * the fraction saying how much of the freq can be made up of ships of this
+     * type.  If the weight is 0, no ships of a type are allowed.  Weight of 1
+     * gives a fraction of 1/1, or a whole -- the entire freq can be made up of
+     * this ship.  Following that, 2 is half, 3 is a third, 4 is a fourth, etc.
+     * Play with what weight seems right to you.
+     * 
+     * Note that even with a very small freq, if a weight is 1 or greater, 1 ship
+     * of this type is ALWAYS allowed.
+     * 
+     * Value for ship "weights":
+     * 
+     * 0  - No ships of this type allowed
+     * 1  - Unlimited number of ships of this type are allowed
+     * #  - If the number of current ships of the type on this frequency is
+     *      greater than the total number of people on the frequency divided
+     *      by this number (ships of this type > total ships / weight), then the
+     *      ship is not allowed.  Exception to this rule is if the player is the
+     *      only one on the freq currently in the ship.
      *
      * @param playerName is the player to be checked.
      * @param specMessage enables the spec message.
@@ -689,8 +757,8 @@ public class purepubbot extends SubspaceBot
        	    return;
         }
         
-        // For all other weights, we must decide whether they can play based on the number of people on freq
-        // who are also using the ship.
+        // For all other weights, we must decide whether they can play based on the
+        // number of people on freq who are also using the ship.
         Iterator i = m_botAction.getPlayingPlayerIterator();
         if( i == null)
             return;
@@ -734,7 +802,7 @@ public class purepubbot extends SubspaceBot
         
     
     /**
-     * This method removes a playerName from the freq lists.
+     * Removes a playerName from the freq tracking lists.
      * 
      * @param playerName is the name of the player to remove.
      */
@@ -748,7 +816,7 @@ public class purepubbot extends SubspaceBot
 
     
     /**
-     * This method removes a playerName from the warp list.
+     * Removes a playerName from the warp list.
      */
     private void removeFromWarpList(String playerName)
     {       
@@ -757,7 +825,7 @@ public class purepubbot extends SubspaceBot
 
     
     /**
-     * This method sets a player to a freq and updates the freq lists.
+     * Sets a player to a freq and updates the freq lists.
      *
      * @param playerName is the name of the player to add.
      * @param freq is the new freq.
@@ -774,8 +842,8 @@ public class purepubbot extends SubspaceBot
 
     
     /**
-     * This method checks to see if a player is on a private freq.  If they are
-     * then they are changed to the pub freq with the fewest number of players.
+     * Checks to see if a player is on a private freq.  If they are then
+     * they are changed to the pub freq with the fewest number of players.
      *
      * @param Player player is the player to check.
      * @param changeMessage is true if a changeMessage will be displayed.
@@ -829,7 +897,7 @@ public class purepubbot extends SubspaceBot
     
 
     /**
-     * This method fills the freq lists for freqs 1 and 0.
+     * Fills the freq lists for freqs 1 and 0.
      */
     private void fillFreqLists()
     {
@@ -852,7 +920,7 @@ public class purepubbot extends SubspaceBot
     
 
     /**
-     * This method fixes the freq of each player.
+     * Fixes the freq of each player.
      */
     private void fixFreqs()
     {
@@ -880,8 +948,7 @@ public class purepubbot extends SubspaceBot
     }
 
     
-    /* **********************************  FLAGTIME METHODS  ************************************ */       
-    
+    /* **********************************  FLAGTIME METHODS  ************************************ */           
     /**
      * Starts a game of flag time mode.
      */
@@ -907,10 +974,22 @@ public class purepubbot extends SubspaceBot
         if(!flagTimeStarted)
             return;
         
-        m_botAction.sendArenaMessage( "OBJECT: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win a round.  Best 3 of 5." );
         int roundNum = freq0Score + freq1Score + 1;
         
-        m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "Round " + roundNum) + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
+        String roundTitle = "";
+        switch( roundNum ) {
+        case 1:
+            m_botAction.sendArenaMessage( "Object: Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win a round.  Best " + ( MAX_FLAGTIME_ROUNDS + 1) / 2 + " of "+ MAX_FLAGTIME_ROUNDS + " wins the game." );        
+            roundTitle = "The next game";
+            break;
+        case MAX_FLAGTIME_ROUNDS:
+            roundTitle = "Final Round";
+            break;
+        default:
+            roundTitle = "Round " + roundNum;
+        }
+        
+        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")  Type :" + m_botAction.getBotName() +":!warp to warp into FR."  );
 
         try {
             startTimer.cancel();
@@ -926,9 +1005,14 @@ public class purepubbot extends SubspaceBot
      * Ends a round of Flag Time mode & awards prizes.
      * After, sets up an intermission, followed by a new round.
      */
-    private void doEndRound( ) {
+    private void doEndRound( ) {        
         if( !flagTimeStarted || flagTimer == null )
             return;
+
+        HashSet MVPs        = new HashSet();
+        boolean gameOver    = false;       // Game over, man.. game over!
+        int flagholdingFreq = flagTimer.getHoldingFreq();
+        int maxScore        = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
        
         try {
             int secs = flagTimer.getTotalSecs();
@@ -945,20 +1029,19 @@ public class purepubbot extends SubspaceBot
             else if( mins >= 15 )
                 weight += 20;
             
-            
-            int flagholdingFreq = flagTimer.getHoldingFreq();
-            
+                        
             if( flagholdingFreq == 0 || flagholdingFreq == 1 ) {
                 if( flagholdingFreq == 0 )
                     freq0Score++;
                 else
                     freq1Score++;
-                
-                if( freq0Score > 2 || freq1Score > 2) {
+                                
+                if( freq0Score >= maxScore || freq1Score >= maxScore ) {
                     m_botAction.sendArenaMessage( "END GAME!  Freq " + flagholdingFreq + " has won after " + getTimeString( flagTimer.getTotalSecs() ) +
-                            " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );                                
+                            " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );
                     freq0Score = 0;
                     freq1Score = 0;
+                    gameOver = true;
                 } else {
                     int roundNum = freq0Score + freq1Score;
                     m_botAction.sendArenaMessage( "END OF ROUND " + roundNum + ": Freq " + flagholdingFreq + " wins after " + getTimeString( flagTimer.getTotalSecs() ) +
@@ -1068,36 +1151,38 @@ public class purepubbot extends SubspaceBot
                 }
             }
             
-            String leader = flagTimer.getTeamLeader( MVPs ); 
+            String[] leaderInfo = flagTimer.getTeamLeader( MVPs );
+            if( leaderInfo.length != 2 )
+                return;
             String name, MVplayers = "";
-            MVPs.remove( leader );
+            MVPs.remove( leaderInfo[0] );
             Iterator i = MVPs.iterator();
             
             if( i.hasNext() ) {
                 switch( special ) {
                 case 1:  // "Refreshments" -- replenishes all essentials + gives anti
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Refreshments!" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Refreshments!" );
                     break;
                 case 2:  // "Full shrap"
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Full shrap!" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Full shrap!" );
                     break;
                 case 3:  // "Trophy" -- decoy given
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Life-size Trophies of Themselves!" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Life-size Trophies of Themselves!" );
                     break;
                 case 4:  // "Double bounty reward"
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Double Bounty Bonus!  (MVP bounty: " + weight * 2 + ")" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Double Bounty Bonus!  (MVP bounty: " + weight * 2 + ")" );
                     break;
                 case 5:  // "Triple trophy" -- 3 decoys
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: The Triple Platinum Trophy!" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: The Triple Platinum Trophy!" );
                     break;                
                 case 6:  // "Techno Dance Party" -- plays victory music :P
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Ultimate Techno Dance Party!", 102);
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Ultimate Techno Dance Party!", 102);
                     break;                
                 case 7:  // "Sore Loser's Revenge" -- engine shutdown!
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Sore Loser's REVENGE!" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Sore Loser's REVENGE!" );
                     break;                
                 case 8:  // "Bodyguard" -- shields
-                    m_botAction.sendArenaMessage( "PRIZE for MVPs: Personal Body-Guard!" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Personal Body-Guard!" );
                     break;                
                 }
                 
@@ -1108,26 +1193,59 @@ public class purepubbot extends SubspaceBot
                 MVplayers = MVplayers + ", " + name;
             }
             
-            if( leader != "" )
-                m_botAction.sendArenaMessage( "The Team Leader was " + leader + "!");
+            if( leaderInfo[0] != "" )
+                m_botAction.sendArenaMessage( "The Team Leader was " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
             if( MVplayers != "" )
                 m_botAction.sendArenaMessage( "MVPs: " + MVplayers );
 
         } catch(Exception e) {
             Tools.printStackTrace( e );
         }        
-        
-        MVPs = new HashSet();
-        
+                
         try {
             flagTimer.endGame();
             flagTimer.cancel();
             intermissionTimer.cancel();
         } catch (Exception e ) {
-        }       
-               
+        }
+        
+        int intermissionTime = 10000;
+        
+        if( gameOver ) {
+            intermissionTime = 20000;
+
+            int diff = 0;
+            String winMsg = "";
+            if( freq0Score >= maxScore ) {
+                if( freq1Score == 0 )
+                    diff = -1;
+                else
+                    diff = freq0Score - freq1Score;
+            } else if( freq1Score >= maxScore ) {
+                if( freq0Score == 0 )
+                    diff = -1;
+                else
+                    diff = freq1Score - freq0Score;
+            }
+            switch( diff ) {
+            case -1:
+                winMsg = " for completely shutting out the competition!";
+                break;
+            case 1:
+                winMsg = " for their close win!";
+                break;
+            case 2:
+                winMsg = " for a well-executed victory!";
+                break;                
+            default:
+                winMsg = " for their win!";
+                break;
+            }
+            m_botAction.sendArenaMessage( "Congratulations to FREQ " + flagholdingFreq + winMsg );
+        }
+        
         intermissionTimer = new IntermissionTask();
-        m_botAction.scheduleTask( intermissionTimer, 10000 );
+        m_botAction.scheduleTask( intermissionTimer, intermissionTime );
     }
     
 
@@ -1182,6 +1300,7 @@ public class purepubbot extends SubspaceBot
         int rand;
         Player p;
         String pname;
+        LinkedList nullPlayers = new LinkedList();
         
         int randomside = r.nextInt( 2 );
         
@@ -1195,22 +1314,36 @@ public class purepubbot extends SubspaceBot
             }
             
             if( p != null ) {
-                rand = r.nextInt( NUM_WARP_POINTS_PER_SIDE ); 
-                if( p.getFrequency() % 2 == randomside )
-                    doRandomWarp( pname, warpPtsLeftX[rand], warpPtsLeftY[rand] );
+                if( strictFlagTime )
+                    rand = 0;           // Warp freqmates to same spot in strict mode.
+                                        // The warppoints @ index 0 must be set up
+                                        // to default/earwarps for this to work properly.
                 else
-                    doRandomWarp( pname, warpPtsRightX[rand], warpPtsRightY[rand] );
+                    rand = r.nextInt( NUM_WARP_POINTS_PER_SIDE );
+                if( p.getFrequency() % 2 == randomside )
+                    doPlayerWarp( pname, warpPtsLeftX[rand], warpPtsLeftY[rand] );
+                else
+                    doPlayerWarp( pname, warpPtsRightX[rand], warpPtsRightY[rand] );
             } else {
-                if( !strictFlagTime )
-                    warpPlayers.remove( pname );
+                if( !strictFlagTime ) {
+                    nullPlayers.add( pname );
+                }
             }
-        }                    
+        }
+        
+        if( ! nullPlayers.isEmpty() ) {
+            i = nullPlayers.iterator();
+            while( i.hasNext() ) {
+                warpPlayers.remove( (String)i.next() );
+            }
+        }
     }
     
     
     /**
-     * In Strict Flag Time mode, warp all players to a safe 10 seconds before starting.
-     *
+     * In Strict Flag Time mode, warp all players to a safe 10 seconds before
+     * starting.  This gives a semi-official feeling to the game, and resets
+     * all mines, etc.
      */
     private void safeWarp() {
         Iterator i = m_botAction.getPlayingPlayerIterator();
@@ -1237,7 +1370,7 @@ public class purepubbot extends SubspaceBot
      * @param radius
      * @author Cpt.Guano!
      */
-    private void doRandomWarp(String playerName, int xCoord, int yCoord ) {
+    private void doPlayerWarp(String playerName, int xCoord, int yCoord ) {
         int radius = 2;
         double randRadians;
         double randRadius;
@@ -1258,6 +1391,7 @@ public class purepubbot extends SubspaceBot
         return xCoord + (int) Math.round(randRadius * Math.sin(randRadians));
     }
     
+    
     private int calcYCoord(int yCoord, double randRadians, double randRadius)
     {
         return yCoord + (int) Math.round(randRadius * Math.cos(randRadians));
@@ -1275,8 +1409,7 @@ public class purepubbot extends SubspaceBot
         
         /**
          * This method logs the bot off.
-         */
-        
+         */    
         public void run()
         {
             m_botAction.die();
@@ -1288,6 +1421,10 @@ public class purepubbot extends SubspaceBot
      * This private class starts the round.
      */
     private class StartRoundTask extends TimerTask {
+        
+        /**
+         * Starts the round when scheduled.
+         */
         public void run() {
             doStartRound();
         }
@@ -1298,6 +1435,10 @@ public class purepubbot extends SubspaceBot
      * This private class provides a pause before starting the round.
      */
     private class IntermissionTask extends TimerTask {
+
+        /**
+         * Starts the intermission/rule display when scheduled.
+         */
         public void run() {
             doIntermission();
         }
@@ -1376,13 +1517,13 @@ public class purepubbot extends SubspaceBot
 
                 if( remain < 60 ) {
                     if( remain < 4 )
-                        m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 7 );
+                        m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 7 );
                     else if( remain < 11 )
-                        m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with just " + remain + " seconds left!" );
+                        m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with just " + remain + " sec. left!" );
                     else if( remain < 25 )
-                        m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with " + remain + " seconds left!" );
+                        m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with " + remain + " sec. left!" );
                     else
-                        m_botAction.sendArenaMessage( "SAVE: " + p.getPlayerName() + " claims the flag for Freq " + flagHoldingFreq + " with " + remain + " seconds left." );
+                        m_botAction.sendArenaMessage( "Save: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with " + remain + " sec. left." );
                 }
             }
             
@@ -1409,13 +1550,15 @@ public class purepubbot extends SubspaceBot
         }
         
         /**
-         * Gives the name of the top flag claimers out of the MVPs.  If there is a tie, does not
-         * care because it doesn't matter all that much and it's only bragging rights anyway. :P
-         * @return A HashSet containing all players who claimed the flag the largest number of times.  
+         * Gives the name of the top flag claimers out of the MVPs.  If there is
+         * a tie, does not care because it's only bragging rights anyway. :P
+         * @return Array of size 2, index 0 being the team leader and 1 being # flaggrabs  
          */
-        public String getTeamLeader( HashSet MVPs ) {
+        public String[] getTeamLeader( HashSet MVPs ) {
+            String[] leaderInfo = {"", ""};
+            
             if( MVPs == null )
-                return ""; 
+                return leaderInfo; 
             try {
                 Iterator i = MVPs.iterator();
                 Integer dummyClaim, highClaim = new Integer(0);
@@ -1430,12 +1573,14 @@ public class purepubbot extends SubspaceBot
                             highClaim = dummyClaim;
                         }
                     }
-                }                
-                return leader;
+                }
+                leaderInfo[0] = leader;
+                leaderInfo[1] = highClaim.toString();
+                return leaderInfo;
 
             } catch (Exception e ) {
                 Tools.printStackTrace( e );
-                return "";
+                return leaderInfo;
             }
             
         }
@@ -1469,9 +1614,12 @@ public class purepubbot extends SubspaceBot
             int roundNum = freq0Score + freq1Score + 1;
 
             if( isRunning == false ) {
-                return "We are currently in between games (round " + roundNum + " starting soon).  Score: " + freq0Score + " - " + freq1Score;
+                if( roundNum == 1 )
+                    return "Round 1 of a new game is just about to start.";
+                else
+                    return "We are currently in between rounds (round " + roundNum + " starting soon).  Score: " + freq0Score + " - " + freq1Score;
             }
-            return "ROUND " + roundNum + ": " + (flagHoldingFreq == -1 ? "Nobody" : "Freq " + flagHoldingFreq ) + " has held for " + getTimeString(secondsHeld) + " & needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more.  [Total time: " + getTimeString( totalSecs ) + "]  Score: " + freq0Score + " - " + freq1Score;        
+            return "ROUND " + roundNum + " Stats: " + (flagHoldingFreq == -1 ? "Nobody" : "Freq " + flagHoldingFreq ) + " holding for " + getTimeString(secondsHeld) + ", needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score: " + freq0Score + " - " + freq1Score;        
         }
         
         /**
@@ -1487,12 +1635,17 @@ public class purepubbot extends SubspaceBot
         public int getHoldingFreq() {
             return flagHoldingFreq;
         }
-               
+        
+        /**
+         * Timer running once per second that handles the starting of a round,
+         * displaying of information updates every 5 minutes, the flag claiming
+         * timer, and total flag holding time/round ends. 
+         */
         public void run() {        
             if( isStarted == false ) {
                 int roundNum = freq0Score + freq1Score + 1;
                 if( preTimeCount == 0 ) {
-                    m_botAction.sendArenaMessage( "Round " + roundNum + " begins in 10 seconds . . ." );
+                    m_botAction.sendArenaMessage( "Next round begins in 10 seconds . . ." );
                     if( strictFlagTime )
                         safeWarp();
                 }
@@ -1501,7 +1654,7 @@ public class purepubbot extends SubspaceBot
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
-                    m_botAction.sendArenaMessage( ( roundNum == 5 ? "FINAL ROUND" : "ROUND " + roundNum) + " START!  Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win.", 1 );
+                    m_botAction.sendArenaMessage( ( roundNum == MAX_FLAGTIME_ROUNDS ? "FINAL ROUND" : "ROUND " + roundNum) + " START!  Hold flag for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the round.", 1 );
                     m_botAction.resetFlagGame();
                     setupPlayerTimes();
                     warpPlayers();
@@ -1516,13 +1669,12 @@ public class purepubbot extends SubspaceBot
             
             // Display mode info at 5 min increments, unless we are near the end of a game
             if( (totalSecs % (5 * 60)) == 0 && ( (flagMinutesRequired * 60) - secondsHeld > 30) ) {
-                m_botAction.sendArenaMessage( "Flag Time commands (PM to " + m_botAction.getBotName() + "): !warp !time !help" );       
                 m_botAction.sendArenaMessage( getTimeInfo() );
             }
             
             if( isBeingClaimed ) {
                 claimSecs++;
-                if( claimSecs >= 3 ) {
+                if( claimSecs >= FLAG_CLAIM_SECS ) {
                     claimSecs = 0;
                     assignFlag();
                 }                    
