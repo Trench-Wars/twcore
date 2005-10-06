@@ -15,7 +15,7 @@ class DoubleSetting extends TempSetting
 		m_restricted = false;
 	}
 
-	public String setValue(String arg)
+	public String setValue(String arg, boolean changed)
 	{
 		double val;
 
@@ -30,6 +30,7 @@ class DoubleSetting extends TempSetting
 				return "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
 
 		m_value = val;
+		changed = true;
 		return "Value for "+ m_name +" set to "+ val;
 	}
 

@@ -1,6 +1,7 @@
 package twcore.misc.tempset;
 
 import java.util.HashMap;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,6 +27,7 @@ public class TempSettingsManager
 	private int m_opLevel = OperatorList.ER_LEVEL;
 	private HashMap<String, TempSetting> m_settings;
 	private boolean m_locked;
+	private Vector<TSChangeListener> m_listeners;
 
 	/**
 	 * @param botAction The BotAction event to send chat messages with
@@ -141,22 +143,23 @@ public class TempSettingsManager
 		TempSetting t = m_settings.get(name);
 		if(t == null)
 			Tools.printLog("TempSet: Could not retrieve setting "+name +" (doesn't exist)");
-		return m_settings.get(name);
+		return m_settings.get(name).getValue();
 	}
 
 	/**
 	 * This changes the value of a setting, with an optional message being returned
 	 * @param name The name of the setting to change
 	 * @param arg The new value you want for the setting
+	 * @param validret, check after call to see if the value actually was changed
 	 * @return A message describing the success or failure of the set attempt
 	 */
-	public String setValue(String name, String arg)
+	public String setValue(String name, String arg, boolean changed)
 	{
 		TempSetting t = m_settings.get(name);
 		if(t == null)
 			return "Setting "+ name +" does not exist";
 
-		return t.setValue(arg);
+		return t.setValue(arg, changed);
 	}
 
 	/**
@@ -184,7 +187,13 @@ public class TempSettingsManager
 				Matcher regex;
 				regex = Pattern.compile("(\\w+)=(\\w+)").matcher(message);
 				while(regex.find())
-					m_botAction.sendPrivateMessage(name, setValue(regex.group(1), regex.group(2)));
+				{
+					boolean changed = false;
+					m_botAction.sendPrivateMessage(name, setValue(regex.group(1), regex.group(2), changed));
+					if(changed)
+						for(TSChangeListener l: m_listeners)
+							l.settingChanged(regex.group(1), regex.group(2));
+				}
 			}
 			else
 				m_botAction.sendPrivateMessage(name, "Settings are currently locked.");
@@ -216,5 +225,11 @@ public class TempSettingsManager
 	public void setLocked(boolean locked)
 	{
 		m_locked = locked;
+	}
+	
+	public void addTSChangeListener(TSChangeListener t)
+	{
+		if(!m_listeners.contains(t))
+			m_listeners.add(t);
 	}
 }

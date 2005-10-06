@@ -11,9 +11,10 @@ class StringSetting extends TempSetting
 		m_value = defval;
 	}
 
-	public String setValue(String arg)
+	public String setValue(String arg, boolean changed)
 	{
 		m_value = arg;
+		changed = true;
 		return "Value for "+ m_name +" set to "+ arg;
 	}
 

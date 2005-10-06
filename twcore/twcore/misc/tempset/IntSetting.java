@@ -15,7 +15,7 @@ class IntSetting extends TempSetting
 		m_restricted = false;
 	}
 
-	public String setValue(String arg)
+	public String setValue(String arg, boolean changed)
 	{
 		int val;
 
@@ -30,6 +30,7 @@ class IntSetting extends TempSetting
 				return "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
 
 		m_value = val;
+		changed = true;
 		return "Value for "+ m_name +" set to "+ val;
 	}
 

@@ -11,10 +11,11 @@ class BoolSetting extends TempSetting
 		m_value = defval;
 	}
 
-	public String setValue(String arg)
+	public String setValue(String arg, boolean changed)
 	{
 		arg = arg.toLowerCase();
 		m_value = (arg.equals("true")) || arg.equals("t") || arg.equals("on") || arg.equals("yes") || arg.equals("y");
+		changed = true;
 		return "Value for "+ m_name +" set to "+ m_value;
 	}
 
