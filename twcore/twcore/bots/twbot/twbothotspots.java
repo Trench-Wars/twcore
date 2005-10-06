@@ -118,8 +118,9 @@ public class twbothotspots extends TWBotExtension {
 			String key = (String)it.next();
 			HotSpot spot = (HotSpot)hotSpots.get( key );
 			if( spot != null )
-			    if( spot.inside( p.getXLocation(), p.getYLocation() ) )
-			        m_botAction.warpTo( name, spot.getX(), spot.getY() );
+                if( p != null )
+                    if( spot.inside( p.getXLocation(), p.getYLocation() ) )
+                        m_botAction.warpTo( name, spot.getX(), spot.getY() );
 		}
 	}
 
