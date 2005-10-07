@@ -120,7 +120,7 @@ public class BotSettings {
         String      value = (String)m_data.get( keyName.toLowerCase() );
         
         if( value != null ){
-            return Integer.getInteger(value);
+            return Integer.valueOf(value);
         } else {
             return null;
         }
