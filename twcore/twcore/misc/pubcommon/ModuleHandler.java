@@ -35,7 +35,7 @@ public class ModuleHandler
    * @param moduleName is the name of the module to load.
    */
 
-  public void loadModule(String moduleName)
+  public synchronized void loadModule(String moduleName)
   {
     String lowerName = moduleName.toLowerCase();
 
@@ -63,7 +63,7 @@ public class ModuleHandler
    * @param moduleName is the name of the module to unload.
    */
 
-  public void unloadModule(String moduleName)
+  public synchronized void unloadModule(String moduleName)
   {
     String lowerName = moduleName.toLowerCase();
 
@@ -149,7 +149,7 @@ public class ModuleHandler
    * @param event is the event to handle.
    */
 
-  public void handleEvent(SubspaceEvent event)
+  public synchronized void handleEvent(SubspaceEvent event)
   {
     Collection collection = Collections.synchronizedCollection( moduleList.values() );    
     Iterator iterator = collection.iterator();
