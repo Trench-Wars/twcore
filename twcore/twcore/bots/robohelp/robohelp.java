@@ -29,6 +29,9 @@ public class robohelp extends SubspaceBot {
     Vector              eventList = new Vector();
     TreeMap             events = new TreeMap();
     Vector              callList = new Vector();
+    
+    String				findPopulation = "";
+	int					setPopID = -1;
 
     public robohelp( BotAction botAction ){
         super( botAction );
@@ -42,6 +45,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         m_botAction.getEventRequester().request( EventRequester.MESSAGE );
+        m_botAction.getEventRequester().request( EventRequester.ARENA_LIST );
     }
 
     void registerCommands(){
@@ -339,10 +343,40 @@ public class robohelp extends SubspaceBot {
                 try {
                     m_botAction.SQLQuery( mySQLHost, query );
                 } catch (Exception e ) { System.out.println( "Could Not Insert Advert Record" ); }
+                ResultSet results = m_botAction.SQLQuery(mySQLHost, "SELECT fnAdvertID FROM tblAdvert ORDER BY fnAdvertID DESC");
+				results.next();
+				final int id = results.getInt("fnAdvertID");
+				final String eventPlace = arena;
+				TimerTask tT = new TimerTask() {
+					public void run() {
+						getArenaSize(id, eventPlace);
+					}
+				};
+				m_botAction.scheduleTask(tT, 60 * 1000);
             }
         } catch (Exception e ) {}
 
     }
+    
+    public void getArenaSize(int adID, String arena) {
+		findPopulation = arena;
+		setPopID = adID;
+		m_botAction.requestArenaList();
+	}
+
+	public void handleEvent(ArenaList event) {
+		if(findPopulation.equals("") || setPopID == -1) return;
+		int population = event.getSizeOfArena(findPopulation);
+		int totalPopulation = 0;
+		for(int k = 0;k < event.getArenaNames().length;k++) {
+			totalPopulation += event.getSizeOfArena(event.getArenaNames()[k]);
+		}
+		try {
+			m_botAction.SQLQuery(mySQLHost, "UPDATE tblAdvert SET fnArenaPopulation = "+population+", fnZonePopulation = "+totalPopulation+" WHERE fnAdvertID = "+setPopID);
+		} catch(Exception e) {}
+		findPopulation = "";
+		setPopID = -1;
+	}
 
     public void handleDisplayHosted( String name, String message ) {
         if( !m_botAction.SQLisOperational() ){
