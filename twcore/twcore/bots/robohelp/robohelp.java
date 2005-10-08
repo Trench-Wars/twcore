@@ -342,7 +342,7 @@ public class robohelp extends SubspaceBot {
                 query += "('', '"+Tools.addSlashesToString(host)+"', '"+arena+"', '"+Tools.addSlashesToString(advert)+"', '"+time+"')";
                 try {
                     m_botAction.SQLQuery( mySQLHost, query );
-                } catch (Exception e ) { System.out.println( "Could Not Insert Advert Record" ); }
+                } catch (Exception e ) { Tools.printStackTrace(e); }
                 ResultSet results = m_botAction.SQLQuery(mySQLHost, "SELECT fnAdvertID FROM tblAdvert ORDER BY fnAdvertID DESC");
 				results.next();
 				final int id = results.getInt("fnAdvertID");
