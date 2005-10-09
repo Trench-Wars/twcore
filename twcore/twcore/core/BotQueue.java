@@ -227,8 +227,10 @@ public class BotQueue extends Thread {
                 }
             }
         }
-        if( ((Integer)m_botTypes.get( rawClassName )).intValue() != 0 )
-            m_botTypes.put( rawClassName, new Integer(0) );
+        Integer numBots = (Integer)m_botTypes.get( rawClassName );
+        if( numBots != null )
+            if( numBots.intValue() != 0 )
+                m_botTypes.put( rawClassName, new Integer(0) );
     }
     
     /**
