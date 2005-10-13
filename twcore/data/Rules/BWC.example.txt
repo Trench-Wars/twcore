@@ -23,6 +23,7 @@ aliascheck=0
 maxship5=1
 maxship8=2
 maxship4=-1
+maxship3=4
 
 squadjoined=0
 rosterjoined=0
@@ -30,13 +31,17 @@ eligibleafter=3
 shipchanges=2
 shipswitches=3
 substitutes=3
-lagouts=-1
+lagouts=3
 
 [Arena]
 safe1x=312
 safe1y=482
+safe1xout=486
+safe1yout=256
 safe2x=712
 safe2y=482
+safe2xout=538
+safe2yout=256
 obj_countdown10=51
 obj_gogogo=52
 obj_gameover=50
