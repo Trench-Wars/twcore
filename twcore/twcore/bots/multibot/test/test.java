@@ -98,7 +98,7 @@ public class test extends MultiModule
     if(isVoting)
       throw new RuntimeException("Voting already in progress.");
     if(argTokens.countTokens() < 3)
-      throw new IllegalArgumentException("Invalid Syntax.  Please use !Vote <Description>:<Option1>:<Option2>");
+      throw new IllegalArgumentException("Invalid syntax.  Please use !Vote <Description>:<Option1>:<Option2>");
 
     description = argTokens.nextToken();
     options.clear();
