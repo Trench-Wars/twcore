@@ -8,6 +8,7 @@
 
 cvspath='/home/bots/cvs/bin/'
 cvs=$cvspath'cvs -d :pserver:twcore_read@zux.sjr.fi:/twcore'
+botpath='~/twbots'
 
 case "$1" in
      login)
@@ -15,7 +16,8 @@ case "$1" in
             ;;
      checkout)
                 cd ~/
-                $cvs checkout twcore
+                $cvs checkout twbots
+                cd $botpath
             ;;
      *)
              echo "[login|checkout]"   
