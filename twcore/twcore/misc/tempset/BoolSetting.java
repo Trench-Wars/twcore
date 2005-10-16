@@ -11,12 +11,18 @@ class BoolSetting extends TempSetting
 		m_value = defval;
 	}
 
-	public String setValue(String arg, boolean changed)
+	public Result setValue(String arg)
 	{
 		arg = arg.toLowerCase();
-		m_value = (arg.equals("true")) || arg.equals("t") || arg.equals("on") || arg.equals("yes") || arg.equals("y");
-		changed = true;
-		return "Value for "+ m_name +" set to "+ m_value;
+		Result r = new Result();
+		boolean val = (arg.equals("true")) || arg.equals("t") || arg.equals("on") || arg.equals("yes") || arg.equals("y");
+		if(m_value != val)
+		{
+			r.changed = true;
+			m_value = val;
+			r.response = "Value for "+ m_name +" set to "+ m_value;
+		}
+		return r;
 	}
 
 	public Object getValue()

@@ -41,6 +41,7 @@ public class TempSettingsManager
 		m_opList = botAction.getOperatorList();
 		m_settings = new HashMap<String, TempSetting>();
 		m_locked = false;
+		m_listeners = new Vector<TSChangeListener>();
 		registerCommands(cmd);
 	}
 
@@ -149,17 +150,21 @@ public class TempSettingsManager
 	/**
 	 * This changes the value of a setting, with an optional message being returned
 	 * @param name The name of the setting to change
-	 * @param arg The new value you want for the setting
-	 * @param validret, check after call to see if the value actually was changed
+	 * @param arg The new value you want for the setting 
 	 * @return A message describing the success or failure of the set attempt
 	 */
-	public String setValue(String name, String arg, boolean changed)
+	public String setValue(String name, String arg)
 	{
 		TempSetting t = m_settings.get(name);
 		if(t == null)
 			return "Setting "+ name +" does not exist";
-
-		return t.setValue(arg, changed);
+		
+		Result r = t.setValue(arg);
+		if(r.changed)
+			for(TSChangeListener l : m_listeners)
+				l.settingChanged(name, arg);
+		
+		return r.response;
 	}
 
 	/**
@@ -188,9 +193,9 @@ public class TempSettingsManager
 				regex = Pattern.compile("(\\w+)=(\\w+)").matcher(message);
 				while(regex.find())
 				{
-					boolean changed = false;
-					m_botAction.sendPrivateMessage(name, setValue(regex.group(1), regex.group(2), changed));
-					if(changed)
+					String old = ""+ getSetting(regex.group(1));
+					m_botAction.sendPrivateMessage(name, setValue(regex.group(1), regex.group(2)));
+					if(old.equals(regex.group(2)))
 						for(TSChangeListener l: m_listeners)
 							l.settingChanged(regex.group(1), regex.group(2));
 				}

@@ -11,11 +11,17 @@ class StringSetting extends TempSetting
 		m_value = defval;
 	}
 
-	public String setValue(String arg, boolean changed)
+	public Result setValue(String arg)
 	{
-		m_value = arg;
-		changed = true;
-		return "Value for "+ m_name +" set to "+ arg;
+		Result r = new Result();
+		if(!m_value.equals(arg))
+		{	
+			m_value = arg;
+		
+			r.changed = true;
+			r.response ="Value for "+ m_name +" set to "+ arg;
+		}
+		return r;
 	}
 
 	public Object getValue()

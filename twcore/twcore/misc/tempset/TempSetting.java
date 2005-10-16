@@ -15,5 +15,5 @@ abstract class TempSetting
 	}
 
 	public abstract Object getValue();
-	public abstract String setValue(String arg, boolean validret);
+	public abstract Result setValue(String arg);
 }

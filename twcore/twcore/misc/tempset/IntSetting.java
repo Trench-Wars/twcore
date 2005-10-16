@@ -15,23 +15,29 @@ class IntSetting extends TempSetting
 		m_restricted = false;
 	}
 
-	public String setValue(String arg, boolean changed)
+	public Result setValue(String arg)
 	{
 		int val;
+		Result r = new Result();
 
 		try{
 		val = Integer.parseInt(arg);
 		}catch(Exception e)
 		{
-			return "Value for "+ m_name +" must be a valid integer.";
+			r.response = "Value for "+ m_name +" must be a valid integer.";
+			return r;
 		}
 		if(m_restricted)
 			if(val < m_min || val > m_max)
-				return "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
+			{
+				r.response = "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
+				return r;
+			}
 
 		m_value = val;
-		changed = true;
-		return "Value for "+ m_name +" set to "+ val;
+		r.changed = true;
+		r.response = "Value for "+ m_name +" set to "+ val;
+		return r;
 	}
 
 	public Object getValue()
