@@ -53,9 +53,34 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!listbottypes", acceptedMessages, this, "handleListBotTypes" );
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
+        m_commandInterpreter.registerCommand( "!restartlog", acceptedMessages, this, "handleClose");
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleInvalidMessage" );
+    }
+    
+    public void handleClose(String name, String message) {
+    	if(!m_botAction.getOperatorList().isSmod(name)) {
+    		return;
+    	}
+    	try {
+	    	System.out.close();
+	    	System.err.close();
+	    	File f1 = new File("currentOut.log");
+	    	File f2 = new File("currentErr.log");
+	    	File f3 = new File("out.log");
+	    	File f4 = new File("err.log");
+	    	if(f3.exists()) f3.delete();
+	    	if(f4.exists()) f4.delete();
+	    	f1.renameTo(f3);
+	    	f2.renameTo(f4);
+	    	f1.delete();
+	    	f2.delete();
+	    	f1.createNewFile();
+	    	f2.createNewFile();
+	    	System.setOut(new PrintStream(new FileOutputStream(f1)));
+	    	System.setErr(new PrintStream(new FileOutputStream(f2)));
+	    } catch(Exception e) {}
     }
 
     /**
