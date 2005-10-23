@@ -248,8 +248,8 @@ public class GamePacketGenerator {
     }
 
     public void sendChatPacket( byte messageType, byte soundCode, short userID, String message ){
-    	if( message.length() > 250 )
-    		message = message.substring(0, 249);		// (hack) Don't send more than SS can handle
+    	if( message.length() > 243 )
+    		message = message.substring(0, 242);		// (hack) Don't send more than SS can handle
     	
         int            size = message.length() + 6;
         ByteArray      bytearray = new ByteArray( size );
