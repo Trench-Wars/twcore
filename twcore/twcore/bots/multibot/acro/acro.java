@@ -158,7 +158,7 @@ public class acro extends MultiModule{
 
     public void doCheckPrivate( String name, String message ) {
         if( gameState == 1 ) {
-            String pieces[] = message.split( " " );
+            String pieces[] = message.split( " +" );
             String pieces2[] = curAcro.split( " " );
             if( pieces.length == pieces2.length ) {
                 boolean valid = true;
