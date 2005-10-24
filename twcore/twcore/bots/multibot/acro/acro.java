@@ -8,18 +8,18 @@ import java.util.*;
 public class acro extends MultiModule{
 
     CommandInterpreter  m_commandInterpreter;
-    Random				generator;
-    int					gameState = 0;
-    int					length = 0;
-    int					numIdeas = 0;
-    int					maxVote = -1;
-    int					round = 1;
-    String				curAcro = "";
-    HashMap				playerIdeas = new HashMap();
-    HashMap				playerVotes = new HashMap();
-    HashMap				playerScores = new HashMap();
-    Vector				phrases;
-    int					votes[];
+    Random              generator;
+    int                 gameState = 0;
+    int                 length = 0;
+    int                 numIdeas = 0;
+    int                 maxVote = -1;
+    int                 round = 1;
+    String              curAcro = "";
+    HashMap             playerIdeas = new HashMap();
+    HashMap             playerVotes = new HashMap();
+    HashMap             playerScores = new HashMap();
+    Vector              phrases;
+    int                 votes[];
 
     public void init()    {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
@@ -27,15 +27,15 @@ public class acro extends MultiModule{
         generator = new Random();
     }
 
-    public void requestEvents(EventRequester events)	{
+    public void requestEvents(EventRequester events)    {
         events.request(EventRequester.MESSAGE);
     }
 
-    public boolean isUnloadable()	{
+    public boolean isUnloadable()   {
         return true;
     }
 
-    public void registerCommands()	{
+    public void registerCommands()  {
         int acceptedMessages;
 
         acceptedMessages = Message.PRIVATE_MESSAGE;
@@ -60,14 +60,14 @@ public class acro extends MultiModule{
             }
         }
     }
-    
+
     public void doStopGame(String name, String message) {
-		if(m_botAction.getOperatorList().isER( name )) {
-			m_botAction.cancelTasks();
-			gameState = 0;
-			m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
-		}
-	}
+        if(m_botAction.getOperatorList().isER( name )) {
+            m_botAction.cancelTasks();
+            gameState = 0;
+            m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
+        }
+    }
 
     public void setUpShow() {
         gameState = 1;
@@ -105,16 +105,16 @@ public class acro extends MultiModule{
                     if( votes[i] == maxVote ) {
                         String piece[] = Tools.stringChopper( ((String)phrases.elementAt( i )), '%' );
                         if( playerVotes.containsKey( piece[0] ) ) {
-                        
+
                             if( playerScores.containsKey( piece[0] ) ) {
-                            	int s = Integer.parseInt( (String)playerScores.get( piece[0] ) );
-                            	s += 10;
-                            	playerScores.put( piece[0], ""+s );
-                        	} else
-                            	playerScores.put( piece[0], "10" );
-                        	m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
+                                int s = Integer.parseInt( (String)playerScores.get( piece[0] ) );
+                                s += 10;
+                                playerScores.put( piece[0], ""+s );
+                            } else
+                                playerScores.put( piece[0], "10" );
+                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
                         } else {
-                        	m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );                            
+                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );
                         }
                     }
                 }
@@ -163,14 +163,14 @@ public class acro extends MultiModule{
             if( pieces.length == pieces2.length ) {
                 boolean valid = true;
                 for( int i = 0; i < pieces.length; i++ ) {
-                    if( pieces[i].toLowerCase().charAt(0) != pieces2[i].toLowerCase().charAt(0) )
+                    if( pieces[i].length() == 0 || pieces[i].toLowerCase().charAt(0) != pieces2[i].toLowerCase().charAt(0) )
                         valid = false;
                     if( pieces[i].contains("_") || pieces[i].contains("-") )
                         valid = false;
                 }
-                
+
                 if( valid ) {
-                    if(	!playerIdeas.containsKey( name ) ) {
+                    if( !playerIdeas.containsKey( name ) ) {
                         playerIdeas.put( name, message );
                         m_botAction.sendPrivateMessage( name, "Your answer has been recorded." );
                     } else {
