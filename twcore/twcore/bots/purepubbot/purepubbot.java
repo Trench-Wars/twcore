@@ -1233,10 +1233,11 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendArenaMessage( "GAME OVER!  Freq " + flagholdingFreq + " has won the game after " + getTimeString( flagTimer.getTotalSecs() ) +
                     " (" + weight + " bounty bonus)  Final score: " + freq0Score + " - " + freq1Score, 2 );
             m_botAction.sendArenaMessage( "Give congratulations to FREQ " + flagholdingFreq + winMsg );
+
+            freq0Score = 0;
+            freq1Score = 0;        
         }
         
-        freq0Score = 0;
-        freq1Score = 0;
 
         try {
             flagTimer.endGame();
