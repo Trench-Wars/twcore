@@ -5,10 +5,12 @@ package twcore.core;
  * as part of Session, and can be retrieved from it using BotAction's
  * getEventRequester() method.  Only those events which are specifically
  * requested are sent; all others are ignored.
- * 
+ * <p>
  * NOTE: See code of this class for a brief description of what each event does,
  * and the name of the file associated with it.
- * 
+ * <p>
+ * If interested in handling an event that isn't covered here, see the instructions
+ * in the javadoc for GamePacketInterpreter's translateNormalPacket method.
  * @author harvey
  */
 public class EventRequester {
