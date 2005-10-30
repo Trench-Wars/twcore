@@ -28,6 +28,7 @@ public class OperatorList {
 
     Map             m_accessList;
 
+    public static final int PLAYER_LEVEL = 0;
     public static final int ZH_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
     public static final int ER_LEVEL = 3;
@@ -62,12 +63,12 @@ public class OperatorList {
         Integer      accessLevel;
         
         if( name == null ){
-            return 0;
+            return PLAYER_LEVEL;
         }
         
         accessLevel = (Integer)m_accessList.get( name.trim().toLowerCase() );
         if( accessLevel == null ){
-            return 0;
+            return PLAYER_LEVEL;
         } else {
             return accessLevel.intValue();
         }
