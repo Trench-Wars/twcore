@@ -1,6 +1,8 @@
-/*
- * Arena.java
- * 
+package twcore.core;
+
+import java.util.*;
+
+/**
  * Arena is used to keep track of player information in the Arena a bot is in.  
  * It is also used to spectate players in order to receive their position packets,
  * as like any other client, a TWCore bot only receives position packets from
@@ -15,36 +17,20 @@
  * client with a movement prediction algorithm has no real trouble distinguishing between
  * two players with the same 1-byte ID, but a bot core does.  Fair warning!  -qan
  */
-
-package twcore.core;
-
-import java.util.*;
-
 public class Arena {
+    Map         m_playerList;           // (Integer)PlayerID -> Player
+    Map         m_playerIDList;         // (String)Player Name -> (Integer)PlayerID
+    Map         m_frequencyList;        // (Integer)Freq -> ((Integer)PlayerID -> Player))
+    Map         m_flagIDList;           // (Integer)FlagID -> Flag
     
-    //Player Integer wrapped ID# mapped to Player objects;
-    Map         m_playerList;
-    
-    //String player names mapped to player ID#'s
-    Map         m_playerIDList;
-    
-    //Integer wrapped freq numbers mapped to maps
-    //Inner maps have playerID's mapped to Player objects.
-    Map         m_frequencyList;
-    
-    //Flag Integer wrapped ID# mapped to Flag objects;
-    Map         m_flagIDList;
-    
-    //Arena Tracker variables
-    private List m_tracker;
-    private int  m_currentTimer = 0;
-    private int  m_updateTimer = 0;
+    private List m_tracker;             // Queue list for spectating (gathers position data)
+    private int  m_updateTimer = 5000;  // Time to spectate (setPlayerPositionUpdateDelay)
+    private GamePacketGenerator m_gen;  // For generating spectate packets
     
     /**
      * Creates a new instance of an Arena object.
-     *
      */
-    public Arena() {
+    public Arena( GamePacketGenerator generator ) {
         
         m_playerList = Collections.synchronizedMap( new HashMap() );
         m_playerIDList = Collections.synchronizedMap( new HashMap() );
@@ -52,6 +38,7 @@ public class Arena {
         m_flagIDList = Collections.synchronizedMap( new HashMap() );
         
         m_tracker = Collections.synchronizedList( new LinkedList() );
+        m_gen = generator;
     }
     
     /**
@@ -148,7 +135,7 @@ public class Arena {
      */    
     public Iterator getFreqPlayerIterator( int freq ){
         
-        Map freqMap = (Map)m_playerList.get( new Integer( freq ));
+        Map freqMap = (Map)m_frequencyList.get( new Integer( freq ));
         if( freqMap == null ) return null;
         return freqMap.values().iterator();        
     }
@@ -372,8 +359,10 @@ public class Arena {
         
         frequencyList.put( new Integer( message.getPlayerID() ), player );
         
-        if( player.getShipType() != 0 ) addPlayerToTracker( new Integer( message.getPlayerID() ) );
-        else removePlayerFromTracker( new Integer( message.getPlayerID() ) );
+        if( player.getShipType() != 0 )
+            addPlayerToTracker( new Integer( message.getPlayerID() ) );
+        else
+            removePlayerFromTracker( new Integer( message.getPlayerID() ) );
     }
     
     /**
@@ -544,9 +533,43 @@ public class Arena {
         flag.processEvent( message );
     }
     
-     /** Adds a playing player into the tracker Queue
-     * (PlayerEntered, FrequencyShipChange, PlayerDeath)
-     * @param playerID - unique ID of player to add to tracking system
+    /**
+     * Handles players attaching and unattaching from one another.  Rather than
+     * handling the event separately inside Player, it's parsed beforehand.
+     * @param message Event object to be processed
+     */
+    public void processEvent( TurretEvent message ){
+        short attacheeID = message.getAttacheeID();
+        short attacherID = message.getAttacherID();
+        Player attacher = (Player)m_playerList.get( new Integer( attacherID ) );
+        if( attacher == null )
+            return;
+        
+        if( message.isAttaching() ) {
+            // Attaching
+            Player attachee = (Player)m_playerList.get( new Integer( attacheeID ) );
+            if( attachee != null ) {
+                attachee.addTurret( attacherID );            
+                attacher.setAttached( attacheeID );
+            }
+        } else {
+            // Unattaching
+            int lastAttachedTo = -1;
+            lastAttachedTo = attacher.setUnattached();  
+            if( lastAttachedTo != -1 ) {
+                Player detachedFrom = (Player)m_playerList.get( new Integer( lastAttachedTo ) );
+                if( detachedFrom != null )
+                    detachedFrom.removeTurret( attacherID );
+            }
+        }
+    }
+
+    /**
+     * Adds a playing player into the tracker queue to be spectated by the bot
+     * and receive position packets from.  Can be used to force the player to
+     * the back of the queue.
+     * (Called by PlayerEntered, FrequencyChange, FrequencyShipChange, PlayerDeath)
+     * @param playerID Unique ID of player to add to the tracking system
      */
     public void addPlayerToTracker( Integer playerID ) {
         
@@ -554,44 +577,41 @@ public class Arena {
         m_tracker.add( playerID );
     }
     
-    /** Removes a playing player from the tracker Queue
-     * (PlayerLeft)
-     * @param playerID - unique ID of player to remove from tracking system
+    /**
+     * Removes a playing player from the tracker queue.
+     * (Called by PlayerLeft, FrequencyChange, FrequencyShipChange)
+     * @param playerID Unique ID of player to remove from the tracking system
      */
     public void removePlayerFromTracker( Integer playerID ) {
         
         m_tracker.remove( playerID );
     }
       
-    /** Called every .100 from Session and used to maintain updating player positions
-     * on regular intervals.
-     * @param m_gen - GamePacketGenerator
+    /**
+     * Used to maintain updated player positions.  Called at approximate intervals
+     * (every .1 sec) from Session.  Because the server only sends the bot position
+     * packets from players within radar range, in order to get information on
+     * the position of all players, the bot must change who it spectates regularly. 
+     * @param m_gen GamePacketGenerator to send the spectate packet through
      */
-    public void checkPositionChange( GamePacketGenerator m_gen ) {
+    public void checkPositionChange() {
+        if( m_updateTimer == 0 )
+            return;
         
-        m_currentTimer += 100;
-        
-        if( m_currentTimer > m_updateTimer && m_updateTimer != -1 ) {
-            m_currentTimer = 0;
-
-            if( m_updateTimer > 0 )
-                m_gen.sendSpectatePacket( getNextPlayer().shortValue() );
-            else if( m_updateTimer == 0 ) {
-                m_gen.sendSpectatePacket( (short)-1 );
-                m_updateTimer = -1;
-            }    
-        }
+        Integer i = getNextPlayer();
+        if( i.intValue() != -1 )
+            m_gen.sendSpectatePacket( i.shortValue() );
     }
     
-    /** Returns the next player in the queue - also updates the player to keep the 
-     * system moving. +)
-     * @return - The next player ID in the queue
+    /**
+     * Looks at the head of the queue of players to be spectated, adds the
+     * next player's ID to the tail of the queue, and returns their ID. 
+     * @return The ID of the next player in the queue to be spectated on
      */
     public Integer getNextPlayer() {
         
         if( m_tracker.size() > 0 ) {
-            Integer i = (Integer)m_tracker.get( 0 );
-            m_tracker.remove( 0 );
+            Integer i = (Integer)m_tracker.remove( 0 );
             m_tracker.add( i );
             return i;
         } else
@@ -599,10 +619,14 @@ public class Arena {
         
     }
     
-    /** Turns on/off the position updating system with specified 
-     * timeframe for switching to the next player in the queue.
-     * @param ms - time in ms to update the queue
-     * < 0 : off, < 200 : on w/200 delay, anything else is specified speed
+    /**
+     * Turns on and off the position updating system with a specified timeframe
+     * for switching to the next player in the queue.  By default the system is
+     * on, and set to delay 5000 milliseconds before switching to the next player.
+     * This is a compromise between efficiency and reliability.  It's advised that
+     * if you don't use the PlayerPosition packet that you turn this system off.
+     * @param Time in ms to update the queue.
+     * 0 : off, < 200 : on w/200 delay, anything else is on w/ specified speed
      */
     public void setPlayerPositionUpdateDelay( int ms ) {
         
@@ -612,5 +636,16 @@ public class Arena {
             m_updateTimer = 200;
         else 
             m_updateTimer = ms;
+        
+        // Cease all spectation when turning off
+        if( ms == 0 )
+            m_gen.sendSpectatePacket( (short)-1 );
+    }
+    
+    /**
+     * @return Interval, in ms, after which bot spectates on a new player; 0 = off 
+     */
+    public int getUpdateTime() {
+        return m_updateTimer;
     }
 }
