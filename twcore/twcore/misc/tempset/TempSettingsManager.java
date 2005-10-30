@@ -143,8 +143,11 @@ public class TempSettingsManager
 	{
 		TempSetting t = m_settings.get(name);
 		if(t == null)
+		{
 			Tools.printLog("TempSet: Could not retrieve setting "+name +" (doesn't exist)");
-		return m_settings.get(name).getValue();
+			return null;
+		}		
+		return t.getValue();
 	}
 
 	/**
