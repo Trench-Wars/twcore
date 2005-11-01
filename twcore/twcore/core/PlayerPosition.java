@@ -14,14 +14,17 @@ public class PlayerPosition extends SubspaceEvent{
     private short m_xVelocity;
     
     private byte m_togglables;
-    //if energy packet
+
+    // Used in packet containing energy information only
     private short m_energy = 0;
     private short m_s2clag  = 0;
     private short m_timer = 0;
-    private int m_checksum;
+    // DISABLED: Checksum
+    // private int m_checksum;
     
-    //if weapons packet
-    private short m_weaponInfo = 0;
+    // DISABLED: Weapon info
+    // Used in weapons (long) packet only
+    // private short m_weaponInfo = 0;
     
     //Togglables
     private boolean m_stealthOn;
@@ -31,15 +34,16 @@ public class PlayerPosition extends SubspaceEvent{
     private boolean m_warpedIn;
     private boolean m_inSafe;
     private boolean m_ufoOn;
-    private boolean m_unknown;
+    // DISABLED: Unknown toggleable
+    // private boolean m_unknown;
     
-    //this information may or may not be present
+    // This information may or may not be present
     private boolean m_shields = false;
     private boolean m_super = false;
     private int m_burst = -1;
     private int m_repel = -1;
     private int m_thor = -1;
-    private int m_wall = -1;
+    private int m_brick = -1;
     private int m_decoy = -1;
     private int m_rocket = -1;
     private int m_portal = -1;
@@ -85,13 +89,19 @@ public class PlayerPosition extends SubspaceEvent{
             m_yVelocity = array.readLittleEndianShort(6);
             m_playerID = array.readLittleEndianShort(8);
             m_xVelocity = array.readLittleEndianShort(10);
-            m_checksum = array.readByte(12);
+            
+            // Checksum currently unused.  Uncomment and add to Player to use
+            // m_checksum = array.readByte(12);
+            
             m_togglables = array.readByte( 13 );
             parseTogglables( m_togglables );
             m_ping = array.readByte(14);
             m_yLocation = array.readLittleEndianShort(15);
             m_bounty = array.readLittleEndianShort(17);
-            m_weaponInfo = array.readLittleEndianShort(19);
+
+            // Weapon info currently unused.  Uncomment and add to Player to use
+            // m_weaponInfo = array.readLittleEndianShort(19);
+            
             if( m_size > 21 ){
                 //parse beginning until size 23
                 m_energy = array.readLittleEndianShort(21);
@@ -115,7 +125,8 @@ public class PlayerPosition extends SubspaceEvent{
         m_warpedIn = ( togglables & 0x10 ) >> 4 == 1;
         m_inSafe = ( togglables & 0x20 ) >> 5 == 1;
         m_ufoOn = ( togglables & 0x40 ) >> 6 == 1;
-        m_unknown = ( togglables & 0x80 ) >> 7 == 1;
+        // Unknown toggleable currently unused.  Uncomment and add to Player to use
+        // m_unknown = ( togglables & 0x80 ) >> 7 == 1;
     }
     
     public void parseItemCount( int items ){
@@ -124,7 +135,7 @@ public class PlayerPosition extends SubspaceEvent{
         m_burst=   ( items & 0x0000003c ) >> 2;
         m_repel=   ( items & 0x000003c0 ) >> 6;
         m_thor=    ( items & 0x00003c00 ) >> 10;
-        m_wall=    ( items & 0x0003c000 ) >> 14;
+        m_brick=   ( items & 0x0003c000 ) >> 14;
         m_decoy=   ( items & 0x003c0000 ) >> 18;
         m_rocket=  ( items & 0x03c00000 ) >> 22;
         m_portal=  ( items & 0x3c000000 ) >> 26;
@@ -177,7 +188,7 @@ public class PlayerPosition extends SubspaceEvent{
     }
     
     public boolean containsWeaponsInfo(){
-        return m_type == 0x05 && m_weaponInfo != 0;
+        return m_type == 0x05;
     }
     
     public boolean containsItemCount(){
@@ -196,15 +207,7 @@ public class PlayerPosition extends SubspaceEvent{
     public short getTimer(){
         return m_timer;
     }
-    
-    public int getChecksum(){
-        return m_checksum;
-    }
-    
-    public short getWeaponInfo(){
-        return m_weaponInfo;
-    }
-    
+        
     public short getTimeStamp(){
         return m_timeStamp;
     }
@@ -229,8 +232,15 @@ public class PlayerPosition extends SubspaceEvent{
         return m_thor;
     }
     
+    /**
+     * @deprecated Who calls them walls?
+     */
     public int getWallCount(){
-        return m_wall;
+        return getBrickCount();
+    }
+
+    public int getBrickCount(){
+        return m_brick;
     }
     
     public int getDecoyCount(){
@@ -273,8 +283,31 @@ public class PlayerPosition extends SubspaceEvent{
         return m_ufoOn; 
     }
     
-    public boolean Unknown(){    
-        return m_unknown; 
+    /**
+     * DISABLED.
+     * @return 0
+     */
+    public int getChecksum(){
+        return 0;
+        // return m_checksum;
+    }
+    
+    /**
+     * DISABLED.
+     * @return 0
+     */
+    public short getWeaponInfo(){
+        return 0;
+        //return m_weaponInfo;
+    }
+
+    /**
+     * DISABLED.
+     * @return false
+     */
+    public boolean Unknown(){
+        return false;
+        //return m_unknown; 
     }
     
 }
