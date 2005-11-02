@@ -155,10 +155,17 @@ public class ModuleHandler
     Iterator iterator = collection.iterator();
     Module module;
 
-    while(iterator.hasNext())
-    {
-      module = (Module) iterator.next();
-      module.handleEvent(event);
+    try {
+      while(iterator.hasNext())
+      {
+        module = (Module) iterator.next();
+      	  module.handleEvent(event);
+      }
+    } catch (Exception e) {
+      Tools.printStackTrace(e);
+  	  // FIXME: If we throw a ConcurrentModificationException, at least do not kill the bot.
+      // Very basic solution until we come up with something more permanent.  In the meantime,
+      // if a bot is removed, it WILL block events from being handled.
     }
   }
 
