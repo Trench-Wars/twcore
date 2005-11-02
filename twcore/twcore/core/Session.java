@@ -199,7 +199,7 @@ public class Session extends Thread {
         final int TIMEOUT_DELAY = 60000;
         int clientKey = (int)(-Math.random() * Integer.MAX_VALUE);
         
-        long lastPositionUpdate = 0;
+        long lastPositionUpdate = System.currentTimeMillis();
         int positionUpdateTime = 5000;
 
         m_packetInterpreter.setSubspaceBot( m_subspaceBot );
@@ -247,6 +247,7 @@ public class Session extends Thread {
                 }
 
                 if( currentTime - lastPositionUpdate > positionUpdateTime ) {
+                	lastPositionUpdate = currentTime;
                     m_arenaTracker.checkPositionChange();
                     // Synch times
                     if( positionUpdateTime != m_arenaTracker.getUpdateTime() )
