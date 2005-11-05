@@ -234,13 +234,13 @@ public class multibot extends SubspaceBot
     m_botAction.sendSmartPrivateMessage(sender, "Unloading module: " + multiModule.getModuleName());
     unloadModule();
   }
-  
+
   /**
    * This method tells the player wehre the bot is.
-   * 
+   *
    * @param sender is the sender of the command.
    */
-   
+
    private void doWhereCmd(String sender, boolean staff)
    {
    	if(staff)
@@ -463,7 +463,7 @@ public class multibot extends SubspaceBot
   {
     m_botAction.sendUnfilteredPublicMessage("?chat=" + chatName);
   }
-  
+
 
 
 
@@ -510,6 +510,8 @@ public class multibot extends SubspaceBot
   public void handleEvent(FlagClaimed event){handleEvent((SubspaceEvent) event);}
 
   public void handleEvent(InterProcessEvent event){handleEvent((SubspaceEvent) event);}
+
+  public void handleEvent(TurretEvent event){handleEvent((SubspaceEvent) event);}
 
   private class DieTask extends TimerTask
   {
