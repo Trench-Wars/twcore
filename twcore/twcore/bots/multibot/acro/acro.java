@@ -41,7 +41,7 @@ public class acro extends MultiModule{
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "doStopGame" );
-        m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "doDie" );
+        //m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "doDie" ); Not needed now that this is a multimodule
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
@@ -251,7 +251,6 @@ public class acro extends MultiModule{
     public String[] getModHelpMessage() {
         String[] help = {
                 "!start - Starts a game of acromania",
-                "!die   - Kills me",
                 "NOTE: This event should only be hosted by Mod+!"
         };
         return help;
