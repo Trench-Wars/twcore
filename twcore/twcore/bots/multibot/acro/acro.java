@@ -251,6 +251,7 @@ public class acro extends MultiModule{
     public String[] getModHelpMessage() {
         String[] help = {
                 "!start - Starts a game of acromania",
+                "!stop  - Stops a game currently in progress",              
                 "NOTE: This event should only be hosted by Mod+!"
         };
         return help;
