@@ -108,7 +108,7 @@ public class multibot extends SubspaceBot
     }
     catch(RuntimeException e)
     {
-      m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+      m_botAction.sendSmartPrivateMessage(sender, "Runtime exception encountered; please notify a member of the coding staff if you believe you have reached this recording in error." );
     }
   }
 
