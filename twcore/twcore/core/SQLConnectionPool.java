@@ -7,7 +7,7 @@ import java.util.*;
  * Main workhorse of the TWCore SQL system.  Handles all connections of a given
  * connection pool and any queries that use it, passing to separate threads to
  * create new connections as necessary.
- * 
+ * <p>
  * Note that if the WaitIfBusy argument is set to 1 for a given connection pool
  * inside sql.cfg, and no connections are available, the connection pool will
  * wait for a new connection to be created before continuing.  If it is set to 0

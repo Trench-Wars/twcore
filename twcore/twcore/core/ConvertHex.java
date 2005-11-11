@@ -1,8 +1,6 @@
 package twcore.core;
 
 /**
- * ConvertHex
- * 
  * General utility class for byte to hex conversions.  
  * All methods are referenced in a static context. 
  */
@@ -24,7 +22,7 @@ public class ConvertHex {
     /**
      * Given an integer representation of a byte, return a String containing the
      * hexadecimal equivalent.
-     * @param b byte to process
+     * @param theByte byte to process
      * @return String containing the hexadecimal equivalent of the provided byte
      */
     public static String byteToHex( int theByte ){

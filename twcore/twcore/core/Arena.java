@@ -7,8 +7,8 @@ import java.util.*;
  * It is also used to spectate players in order to receive their position packets,
  * as like any other client, a TWCore bot only receives position packets from
  * other players when they are close.
- * 
- * NOTE ABOUT PLAYER IDS:
+ * <p>
+ * <u>NOTE ABOUT PLAYER IDS:</u><br>
  * "Player ID" refers to the internal packet ID used by the SS protocol rather than
  * the player's UserID found in ?userid.  IDs are assigned sequentially arena-wide
  * rather than zone-wide.  In almost all cases, an ID is sent as 2 bytes; however,
@@ -184,7 +184,7 @@ public class Arena {
      * NOTE: It's important to check the returned Player object for a null value
      * before using it, or at least catch the possible NullPointerException. 
      * 
-     * @param playerName Name of the player of interest
+     * @param searchName Name of the player of interest
      * @return Player requested
      */
     public Player getPlayer( String searchName ){
@@ -592,7 +592,6 @@ public class Arena {
      * (every .1 sec) from Session.  Because the server only sends the bot position
      * packets from players within radar range, in order to get information on
      * the position of all players, the bot must change who it spectates regularly. 
-     * @param m_gen GamePacketGenerator to send the spectate packet through
      */
     public void checkPositionChange() {
         if( m_updateTimer == 0 )
@@ -625,7 +624,7 @@ public class Arena {
      * on, and set to delay 5000 milliseconds before switching to the next player.
      * This is a compromise between efficiency and reliability.  It's advised that
      * if you don't use the PlayerPosition packet that you turn this system off.
-     * @param Time in ms to update the queue.
+     * @param ms Time in ms between switching of currently spec'd player.
      * 0 : off, < 200 : on w/200 delay, anything else is on w/ specified speed
      */
     public void setPlayerPositionUpdateDelay( int ms ) {

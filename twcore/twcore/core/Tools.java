@@ -229,7 +229,6 @@ public class Tools {
     }
 
     public static String formatString( String fragment, int length, String padding ) {
-        String line;
         if(fragment.length() > length)
             fragment = fragment.substring(0,length-1);
         else {

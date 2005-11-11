@@ -114,7 +114,7 @@ public class CommandInterpreter {
      * Registers a default command.  A default command is the command that executes when
      * no other command is found for the specified message type.
      *
-     * @param messageTypes Message type accepted as defined in Message (use only one) 
+     * @param messageType Message type accepted as defined in Message (use only one) 
      * @param methodClass Class to register the command with (use <code>this</code>)
      * @param methodName Method of methodClass to be called when no trigger that accepts the message type matches
      */

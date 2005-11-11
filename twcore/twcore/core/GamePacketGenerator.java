@@ -87,7 +87,7 @@ public class GamePacketGenerator {
 
     /**
      * Adds a packet to the standard outgoing queue.
-     * @param array Packet to add
+     * @param bytearray Packet to add
      */
     public void composePacket( ByteArray bytearray ){
 
@@ -117,7 +117,8 @@ public class GamePacketGenerator {
     /**
      * Adds a packet to the immediate outgoing queue, ignoring any other packets
      * in the standard queue it could be clustered with.  Fast but not as efficient.
-     * @param array Packet to add
+     * @param bytearray Packet to add
+     * @param size Size of packet
      */
     public void composeImmediatePacket( ByteArray bytearray, int size ){
 
@@ -150,7 +151,8 @@ public class GamePacketGenerator {
      * Adds a packet to the immediate high-priority outgoing queue, ignoring any
      * other packets in the standard queue it could be clustered with and placing
      * it at the head of the immediate queue.
-     * @param array Packet to add
+     * @param bytearray Packet to add
+     * @param size Size of packet
      */
     public void composeHighPriorityPacket( ByteArray bytearray, int size ){
 

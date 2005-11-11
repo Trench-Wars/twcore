@@ -10,7 +10,7 @@ import java.io.*;
  * Periodically the Session looks for available packets and requests any
  * @author Jeremy
  */
-class Receiver extends Thread {
+public class Receiver extends Thread {
     private DatagramSocket   m_socket;          // Connection to SS server
     private List             m_packets;         // Received packet queue
     private int              m_packetsReceived; // # packets received

@@ -123,7 +123,7 @@ public class Ship extends Thread {
      * Generates a position packet for the ship, and fires the weapon specified.
      * Refer to the getWeaponNumber method for proper setup of a weapon.
      * @param weapon A 16-bit bitvector containing weapon information
-     * @see getWeaponNumber
+     * @see #getWeaponNumber(byte, byte, boolean, boolean, boolean, byte, boolean)
      */
     public void fire( int weapon ){
         m_gen.sendPositionPacket( direction, (short)xVel, (short)y, (byte)togglables, (short)x, (short)yVel, (short)bounty, (short)energy, (short)weapon );
@@ -203,7 +203,7 @@ public class Ship extends Thread {
      * @param x X location on the map (0-16384)
      * @param y Y location on the map (0-16384)
      * @param weapon 16-bit bitvector containing weapon information
-     * @see getWeaponNumber
+     * @see #getWeaponNumber(byte, byte, boolean, boolean, boolean, byte, boolean)
      */
     public void moveAndFire(int x, int y, int weapon ){
     	this.x = (short)x;

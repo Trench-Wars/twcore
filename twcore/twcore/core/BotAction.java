@@ -1899,7 +1899,7 @@ public class BotAction
      * reliably to the bot.  If it's essential that you receive all player death
      * events / packets, it's advisable to set this to 1, or to use the more
      * explicit receiveAllPlayerDeaths() method.
-     * @param var Amount of bounty for kill messages to become reliable.
+     * @param minBounty Amount of bounty for kill messages to become reliable.
      * @see #receiveAllPlayerDeaths()
      */
     public void setReliableKills(int minBounty)
@@ -2111,7 +2111,7 @@ public class BotAction
      * for a specific player, as specified by ID.  In order for this command to
      * work, first get the Objset with getObjectSet(), add the objects you would
      * like set all at once, and then run the command.
-     * @param playerID ID of the player to send to.
+     * @param playerId ID of the player to send to.
      */
     public void setObjects( int playerId ) {
         if( m_objectSet.toSet( playerId ) ) {

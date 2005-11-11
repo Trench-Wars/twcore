@@ -8,17 +8,17 @@ import java.io.File;
  * Thread-based main class for the core's SQL database functionality.
  * Initializes and manages SQL connection pools and queries, and runs
  * background queries on a semi-regular basis.
- * 
+ * <p>
  * 
  * Choosing a standard query vs. background/high-priority background query:
- * 
- * Standard / foreground    -  Runs exactly when needed.  Does not wait in
+ * <p>
+ * <b>Standard / foreground</b>    -  Runs exactly when needed.  Does not wait in
  * a queue to execute (unless connections are low).  Does not require a unique
  * identifier or special event handling.  However, a standard query will
  * pause the program thread until the results are returned.  For large queries
  * and bad connections this may result in long delays and unresponsiveness.
- * 
- * Background               -  Runs as a separate program thread.  Waits in a
+ * <p>
+ * <b>Background</b>               -  Runs as a separate program thread.  Waits in a
  * queue and can be delayed by other queries waiting to execute.  Requires the
  * bot to catch an SQLResultEvent and use a unique identifier to refer to the
  * query.  As a separate thread, after the background query is run, the bot
@@ -26,8 +26,8 @@ import java.io.File;
  * may need to access large amounts of SQL data from the same bot at the same
  * time without compromising responsiveness to the bot for others.  However,
  * their individual result sets may return more slowly than with a standard query.
- * 
- * High-priority background -  Same as a background query, but added to the
+ * <p>
+ * <b>High-priority background</b> -  Same as a background query, but added to the
  * head of the queue.  Combines the versatility of a background queue with the
  * foreground's ability to return the result set almost instantly.
  */
@@ -137,8 +137,7 @@ public class SQLManager extends Thread {
      * bot's thread will not continue while the query is in effect.  Use a
      * background query if you wish for the thread to continue while the query
      * is executed.
-     * @param connName Name of the connection as defined in sql.cfg
-     * @param identifier The unique identifier for this query
+     * @param connectionName Name of the connection as defined in sql.cfg
      * @param query A properly-formed SQL query
      * @return The result set of the query (MAY be null)
      * @throws SQLException

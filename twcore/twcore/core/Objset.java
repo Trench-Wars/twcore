@@ -212,7 +212,7 @@ public class Objset {
      * work with the *objset command, and then moves them from the "unset" objects list
      * to the "set" objects list. 
      * @param playerId
-     * @return
+     * @return A String containing a list of objects and their show or hide values for use with *objset.
      */
     public String getObjects( int playerId ) {
         if( playerId < 0 ) return "";

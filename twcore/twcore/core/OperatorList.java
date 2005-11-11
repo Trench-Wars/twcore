@@ -8,21 +8,21 @@ import java.util.*;
  * and sysop.txt, and the bot core config files owner.cfg, outsider.cfg, and
  * highmod.cfg.  Is able to answer access-specific queries based on the information
  * gathered.
- * 
+ * <p>
  * Access levels
- * <code>
+ * <p><code><pre>
  * #   Title            Description                                      Read from
  * 
  * 0 - Normal player    no special privileges
  * 1 - Zone Helper      extremely limited privileges                     [moderate.txt]
- * 2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]    
+ * 2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]
  * 3 - Event Ref        regular privileges; first stage of real access   [moderate.txt]
  * 4 - Moderator        expanded privileges for administrative duties    [moderate.txt]
  * 5 - High Moderator   additional privileges normally only for smods    [highmod.cfg ]
  * 6 - Super Moderator  nearly all privileges                            [smod.txt    ]
  * 7 - Sysop            nearly all privileges (used to test if a bot)    [sysop.txt   ]
  * 8 - Owner            all privileges                                   [owner.cfg   ]
- * </code>
+ * </pre></code>
  */
 public class OperatorList {
 
@@ -369,7 +369,7 @@ public class OperatorList {
      * NOTE: If someone in outsider.cfg is also on moderate.txt, and they don't
      * have a tag of some kind, they will be set to moderator level. 
      *  
-     * @param filename Filename, in String form, to parse
+     * @param file Filename, in String form, to parse
      * @param accessLevel Access level to assign to   
      */
     public void parseFile( File file, int accessLevel ){
