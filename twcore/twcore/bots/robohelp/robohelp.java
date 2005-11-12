@@ -10,8 +10,13 @@ import twcore.core.*;
 public class robohelp extends SubspaceBot {
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
     public static final int LINE_SIZE = 100;
+    public static final int CALL_EXPIRATION_TIME = 90000;  // Time after which a call can't
+                                                           // can't be claimed (onit/gotit) 
+    public static final String ZONE_CHANNEL = "Zone Channel";
                     
     boolean             m_banPending = false;
+    boolean             m_zonerbotForAdverts = true;
+    boolean             m_strictOnIts = true;
     String              m_lastBanner = null;
     BotSettings         m_botSettings;
 
@@ -45,7 +50,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         m_botAction.getEventRequester().request( EventRequester.MESSAGE );
-        m_botAction.getEventRequester().request( EventRequester.ARENA_LIST );
     }
 
     void registerCommands(){
@@ -83,8 +87,16 @@ public class robohelp extends SubspaceBot {
 
         m_commandInterpreter.registerCommand( "Ban", acceptedMessages, this, "handleBanNumber" );
 
-        m_commandInterpreter.registerDefaultCommand( Message.CHAT_MESSAGE, this, "handleChat" );
-        m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleZone" );
+        if( m_strictOnIts == true ) {
+            m_commandInterpreter.registerCommand( "on it", Message.CHAT_MESSAGE, this, "handleOnIt" );
+            m_commandInterpreter.registerCommand( "got it", Message.CHAT_MESSAGE, this, "handleGotIt" );
+        } else {
+            m_commandInterpreter.registerDefaultCommand( Message.CHAT_MESSAGE, this, "handleChat" );            
+        }
+        
+        if(m_zonerbotForAdverts == false ) {
+        	m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleZone" );
+        }
     }
 
     AdvertisementThread advertisementThread;
@@ -221,7 +233,7 @@ public class robohelp extends SubspaceBot {
 
             GoogleSearch s = new GoogleSearch();
             s.setKey( m_botSettings.getString( "GoogleKey" ) );
-            //s.setKey( "z29LCP5QFHLdYLHho9ekJtmg1IHtZXVX" );
+            //s.setKey( "EsAMyNxQFHLUiEnJqdsU1IKpEMl0yiDl" );
             s.setQueryString( searchString );
             s.setMaxResults( 1 );
             GoogleSearchResult r = s.doSearch();
@@ -297,6 +309,29 @@ public class robohelp extends SubspaceBot {
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
         m_botAction.sendUnfilteredPublicMessage( "?blogin " + m_botSettings.getString( "Banpassword" ) );
+        m_botAction.ipcSubscribe(ZONE_CHANNEL);        
+    }
+
+    /**
+     * Intended for receiving reliable zone messages from ZonerBot, rather than
+     * picking them apart from handleZone.
+     * @param event IPC event to handle
+     */
+    public void handleEvent( InterProcessEvent event ) {
+        
+      IPCMessage ipcMessage = (IPCMessage) event.getObject();
+      String message = ipcMessage.getMessage();
+      
+      try {
+          String parts[] = message.toLowerCase().split( "@ad@" );
+          String host = parts[0];
+          String arena = parts[1];
+          String advert = parts[2];
+          
+          storeAdvert( host, arena, advert );
+      } catch (Exception e ) {
+    	  Tools.printStackTrace(e);    	  
+      }
     }
 
     public void handleZone( String name, String message ) {
@@ -330,52 +365,41 @@ public class robohelp extends SubspaceBot {
                     i = -1;
                 }
             String advert = message.substring( 0, start ).trim();
-            //Gets time;
-            Calendar thisTime = Calendar.getInstance();
-            java.util.Date day = thisTime.getTime();
-            String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
-            //Adds to buffer of sorts.
-            if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) && !arena.equals( "tourny" ) ) {
-                if( eventList.size() > 511 ) eventList.remove( 0 );
-                eventList.addElement( new EventData( arena, new java.util.Date().getTime() ) );
-                String query = "INSERT INTO `tblAdvert` (`fnAdvertID`, `fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
-                query += "('', '"+Tools.addSlashesToString(host)+"', '"+arena+"', '"+Tools.addSlashesToString(advert)+"', '"+time+"')";
-                try {
-                    m_botAction.SQLQuery( mySQLHost, query );
-                } catch (Exception e ) { Tools.printStackTrace(e); }
-                ResultSet results = m_botAction.SQLQuery(mySQLHost, "SELECT fnAdvertID FROM tblAdvert ORDER BY fnAdvertID DESC");
-				results.next();
-				final int id = results.getInt("fnAdvertID");
-				final String eventPlace = arena;
-				TimerTask tT = new TimerTask() {
-					public void run() {
-						getArenaSize(id, eventPlace);
-					}
-				};
-				m_botAction.scheduleTask(tT, 60 * 1000);
-            }
-        } catch (Exception e ) {}
+            
+            storeAdvert( host, arena, advert );
+        } catch (Exception e ) {
+        	Tools.printStackTrace(e);
+        }
 
     }
     
+    /**
+     * Stores data of an advert into the database.
+     * @param host Host of the event
+     * @param arena Arena where it was hosted
+     * @param advert Text of the advert
+     */
+    public void storeAdvert( String host, String arena, String advert ) {
+        //Gets time;
+        Calendar thisTime = Calendar.getInstance();
+        java.util.Date day = thisTime.getTime();
+        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
+        //Adds to buffer of sorts.
+        if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) && !arena.equals( "tourny" ) ) {
+            if( eventList.size() > 511 ) eventList.remove( 0 );
+            eventList.addElement( new EventData( arena, new java.util.Date().getTime() ) );
+            String query = "INSERT INTO `tblAdvert` (`fnAdvertID`, `fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
+            query += "('', '"+Tools.addSlashesToString(host)+"', '"+arena+"', '"+Tools.addSlashesToString(advert)+"', '"+time+"')";
+            try {
+                m_botAction.SQLQuery( mySQLHost, query );
+            } catch (Exception e ) { Tools.printLog( "Could not insert advert record." ); }
+        }
+    }
+
     public void getArenaSize(int adID, String arena) {
 		findPopulation = arena;
 		setPopID = adID;
 		m_botAction.requestArenaList();
-	}
-
-	public void handleEvent(ArenaList event) {
-		if(findPopulation.equals("") || setPopID == -1) return;
-		int population = event.getSizeOfArena(findPopulation);
-		int totalPopulation = 0;
-		for(int k = 0;k < event.getArenaNames().length;k++) {
-			totalPopulation += event.getSizeOfArena(event.getArenaNames()[k]);
-		}
-		try {
-			m_botAction.SQLQuery(mySQLHost, "UPDATE tblAdvert SET fnArenaPopulation = "+population+", fnZonePopulation = "+totalPopulation+" WHERE fnAdvertID = "+setPopID);
-		} catch(Exception e) {}
-		findPopulation = "";
-		setPopID = -1;
 	}
 
     public void handleDisplayHosted( String name, String message ) {
@@ -886,6 +910,44 @@ public class robohelp extends SubspaceBot {
         }
     }
 
+    /**
+     * For strict onits, requiring the "on it" to be at the start of the message.
+     * @param name Name of person saying on it
+     * @param message Message containing on it
+     */
+    public void handleOnIt( String name, String message ) {
+        boolean recorded = false;
+        int i = 0;
+        while( !recorded && i < callList.size() ) {
+            EventData e = (EventData)callList.elementAt( i );
+            if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
+                updateStatRecordsONIT( name );
+                callList.removeElementAt( i );
+                recorded = true;
+            } else callList.removeElementAt( i );
+            i++;
+        }
+    }
+    
+    /**
+     * For strict gotits, requiring the "got it" to be at the start of the message.
+     * @param name Name of person saying got it
+     * @param message Message containing got it
+     */
+    public void handleGotIt( String name, String message ) {
+        boolean recorded = false;
+        int i = 0;
+        while( !recorded && i < callList.size() ) {
+            EventData e = (EventData)callList.elementAt( i );
+            if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
+                updateStatRecordsGOTIT( name );
+                callList.removeElementAt( i );
+                recorded = true;
+            } else callList.removeElementAt( i );
+            i++;
+        }
+    }
+
     public void handleChat( String name, String message ) {
         try {
             message = message.toLowerCase();
@@ -914,7 +976,7 @@ public class robohelp extends SubspaceBot {
                 int i = 0;
                 while( !recorded && i < callList.size() ) {
                     EventData e = (EventData)callList.elementAt( i );
-                    if( new java.util.Date().getTime() < e.getTime() + 60000 ) {
+                    if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
                         updateStatRecordsONIT( name );
                         callList.removeElementAt( i );
                         recorded = true;
@@ -928,7 +990,7 @@ public class robohelp extends SubspaceBot {
                 int i = 0;
                 while( !recorded && i < callList.size() ) {
                     EventData e = (EventData)callList.elementAt( i );
-                    if( new java.util.Date().getTime() < e.getTime() + 60000 ) {
+                    if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
                         updateStatRecordsGOTIT( name );
                         callList.removeElementAt( i );
                         recorded = true;        
@@ -982,7 +1044,7 @@ public class robohelp extends SubspaceBot {
             "!warn <optional name> - Warns the specified player.  If no name is given, warns the last person.",
             "!ban <optional name> - Bans the specified player.  If no name is given, bans the last person.",
             "!status - Gives back status from systems.",
-//          "!google search - Returns first page found by Googling the search term.",
+//            "!google search - Returns first page found by Googling the search term.",
             "!dictionary word - Returns a link for a definition of the word.",
             "!thesaurus word - Returns a link for a thesaurus entry for the word.",
             "!javadocs term - Returns a link for a javadocs lookup of the term.",

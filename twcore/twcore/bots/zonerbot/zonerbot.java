@@ -23,7 +23,7 @@ import twcore.core.*;
 
 public class zonerbot extends SubspaceBot
 {
-//  public static final String ZONE_CHANNEL = "Zone Channel";
+  public static final String ZONE_CHANNEL = "Zone Channel";
   public static final String HOSTNAME = "localhost";
   public static final String GO_STRING = "?go ";
   public static final long CLEAR_REQUESTS_DELAY = 10 * 60 * 1000;
@@ -277,8 +277,8 @@ public class zonerbot extends SubspaceBot
   }
 
   /**
-   * This method zones the advert, sets the advert timer and cancels the idle
-   * timer.
+   * This method zones the advert, sets the advert timer, cancels the idle
+   * timer, and informs RoboHelp that the zoner has been sent.
    *
    * @param advert is the advert to send.
    */
@@ -294,7 +294,10 @@ public class zonerbot extends SubspaceBot
     setAdvertTimer(advertTime * 60 * 1000);
     recentAdvertList.add(adverter, recentAdvertTime * 60 * 1000);
     removeFromQueue(0);
-    advert.record();
+    //advert.record();
+    
+    IPCMessage msg = new IPCMessage( adverter + "@ad@" + advert.getArenaName( advertText ) + "@ad@" + advertText ); 
+    m_botAction.ipcTransmit( ZONE_CHANNEL, msg );
   }
 
   /**
@@ -897,7 +900,7 @@ public class zonerbot extends SubspaceBot
     recentAdvertTime = botSettings.getInt("readverttime");
     maxQueueLength = botSettings.getInt("queuelength");*/
 
-//    m_botAction.ipcSubscribe(ZONE_CHANNEL);
+    m_botAction.ipcSubscribe(ZONE_CHANNEL);
     m_botAction.changeArena(initialArena);
     m_botAction.scheduleTask(new ClearRequestsTask(), CLEAR_REQUESTS_DELAY);
     setAdvertTimer(1000);
