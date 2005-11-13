@@ -2012,7 +2012,7 @@ public class BotAction
      * alternate maps and configuration files.
      * @param fileName Name of the file to send.
      */
-    public void putFileToServer(String fileName)
+    public void putFile(String fileName)
     {
         sendUnfilteredPublicMessage("*putfile " + fileName);
     }
