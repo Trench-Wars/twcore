@@ -1,32 +1,45 @@
-/*
- * BotSettings.java
- *
- * Created on January 8, 2002, 11:02 PM
- */
-
-/**
- *
- * @author  harvey
- */
 package twcore.core;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.HashMap;
+
+import twcore.core.util.Tools;
+
+/**
+ * Reads, stores, and allows access to the settings in a bot's configuration
+ * file.
+ */
 public class BotSettings {
     
-    private String              m_fileName;
-    private HashMap             m_data;
-    //private javax.swing.Timer   m_backupTimer;
+    private String              m_fileName;     // Name & location of the CFG
+    private HashMap             m_data;         // CFG field -> value mapping
     
-    /** Creates a new instance of PersistantStorage */
+    /**
+     * Constructs a BotSettings object with no data.
+     */
     public BotSettings(){
         m_data = new HashMap();
     }
     
+    /**
+     * Constructs a BotSettings object with the data from a properly formed
+     * configuration file.  Wrapper for BotSettings(File)
+     * @param fileName Text name and location of configuration file
+     */
     public BotSettings(String fileName) {
         this( new File( fileName ));
     }
     
+    /**
+     * Constructs a BotSettings object with the data from a properly formed
+     * configuration file.
+     * @param file Reference object to properly formed configuration file
+     */
     public BotSettings( File file ) {
         m_fileName = file.getPath();
 
@@ -60,21 +73,41 @@ public class BotSettings {
         }
     }
     
+    /**
+     * Overwrites default loaded data with new data.
+     * @param keyName Name of the field to be replaced
+     * @param data New data
+     */
     public void put( String keyName, int data ){
         
         m_data.put( keyName.toLowerCase(), new String( "" + data ) );
     }
     
+    /**
+     * Overwrites default loaded data with new data.
+     * @param keyName Name of the field to be replaced
+     * @param data New data
+     */
     public void put( String keyName, String data ){
         
         m_data.put( keyName.toLowerCase(), new String( data ) );
     }
     
+    /**
+     * Overwrites default loaded data with new data.
+     * @param keyName Name of the field to be replaced
+     * @param data New data
+     */
     public void put( String keyName, double data ){
         
         m_data.put( keyName.toLowerCase(), new String( "" + data ) );
     }
     
+    /**
+     * Returns data associated with a specified field. 
+     * @param keyName Field to fetch from
+     * @return Data associated with the specified field
+     */
     public int getInt( String keyName ){
         String      value = (String)m_data.get( keyName.toLowerCase() );
         
@@ -84,6 +117,27 @@ public class BotSettings {
             return 0;
         }
     }
+
+    /**
+     * Returns data associated with a specified field. 
+     * @param keyName Field to fetch from
+     * @return Data associated with the specified field
+     */
+    public Integer getInteger( String keyName ){
+        String      value = (String)m_data.get( keyName.toLowerCase() );
+        
+        if( value != null ){
+            return Integer.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns data associated with a specified field. 
+     * @param keyName Field to fetch from
+     * @return Data associated with the specified field
+     */
     public String getString( String keyName ){
         String      value = (String)m_data.get( keyName.toLowerCase() );
         
@@ -93,6 +147,12 @@ public class BotSettings {
             return null;
         }
     }
+    
+    /**
+     * Returns data associated with a specified field. 
+     * @param keyName Field to fetch from
+     * @return Data associated with the specified field
+     */
     public double getDouble( String keyName ){
         String      value = (String)m_data.get( keyName.toLowerCase() );
         
@@ -103,6 +163,11 @@ public class BotSettings {
         }
     }
     
+    /**
+     * Saves the data back to the file (use if altered manually during program
+     * execution).
+     * @return True if file save succeeds.
+     */
     public boolean save() {
         try{
             String          key;
@@ -139,5 +204,5 @@ public class BotSettings {
             Tools.printLog( "Failed to write file: " + e.getMessage() );
             return false;
         }
-    };
+    }
 }
