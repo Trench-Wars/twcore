@@ -51,8 +51,7 @@ public class Ship extends Thread {
 
     /**
      * Regularly checks to make updates to position by way of sending a new
-     * position packet.  If the ship is in spectator mode, it doesn't need to
-     * be updated, and if it isn't moving, it doesn't need to be updated
+     * position packet.  If the ship isn't moving, it doesn't need to be updated
      * quite as often as a moving ship.  Default regularity of updates is
      * 100ms and 1000ms for moving and unmoving ships, respectively.  Set update
      * times either hard in the code, or with setUpdateTime()
@@ -60,12 +59,8 @@ public class Ship extends Thread {
     public void run(){
         try {
             while( !interrupted() ){
-                if( shipType == SPEC_SHIP ) {
-                    Thread.sleep( getUnmovingUpdateTime() );            
-                    return;
-                }
                 updatePosition();
-                if ( xVel == 0 && yVel == 0 ){
+                if ( shipType == SPEC_SHIP || xVel == 0 && yVel == 0 ){
                     Thread.sleep( getUnmovingUpdateTime() );
                 } else {
                     Thread.sleep( getMovingUpdateTime() );
