@@ -26,6 +26,7 @@ public class Arena {
     private List m_tracker;             // Queue list for spectating (gathers position data)
     private int  m_updateTimer = 5000;  // Time to spectate (setPlayerPositionUpdateDelay)
     private GamePacketGenerator m_gen;  // For generating spectate packets
+    private int lastPlayer;				// ID of last player to have been spectated on
     
     /**
      * Creates a new instance of an Arena object.
@@ -39,6 +40,8 @@ public class Arena {
         
         m_tracker = Collections.synchronizedList( new LinkedList() );
         m_gen = generator;
+        
+        lastPlayer = -9999;
     }
     
     /**
@@ -598,8 +601,10 @@ public class Arena {
             return;
         
         Integer i = getNextPlayer();
-        if( i.intValue() != -1 )
+        if( i.intValue() != lastPlayer ) {
+        	lastPlayer = i.intValue();
             m_gen.sendSpectatePacket( i.shortValue() );
+        }
     }
     
     /**
