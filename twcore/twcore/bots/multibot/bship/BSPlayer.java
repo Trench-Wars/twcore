@@ -1,11 +1,9 @@
 package twcore.bots.multibot.bship;
 
-import java.util.BitSet;
-
 public class BSPlayer
 {
-	private String _name;	
-	
+	private String _name;
+
 	/** Player's current ship */
 	public byte ship;
 	/** Capital ship kills */
@@ -15,7 +13,7 @@ public class BSPlayer
 	/** Plane kills */
 	public short pkills;
 	/** Capital ship kills */
-	public short deaths;	
+	public short deaths;
 	/** Lives left (capships) */
 	public short lives;
 	/** Times attached to a capital ship (turret/plane) */
@@ -26,12 +24,13 @@ public class BSPlayer
 	public char[] ships;
 	/** Aggregate rating */
 	public int rating;
-	
-	public BSPlayer(String name)	
+
+	public BSPlayer(String name)
 	{
 		_name = name;
 		ship = 0;
 		deaths = 0;
+		lives = 0;
 		cskills = 0;
 		tkills = 0;
 		pkills = 0;
@@ -40,9 +39,9 @@ public class BSPlayer
 		rating = 0;
 		ships = new char[8];
 	}
-	
+
 	public String toString()
 	{
 		return _name;
-	}	
+	}
 }

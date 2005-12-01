@@ -4,9 +4,22 @@ import twcore.core.*;
 import twcore.misc.multibot.*;
 import twcore.misc.tempset.*;
 import java.util.*;
+import static twcore.core.EventRequester.*;
 
 /**
  * Battleship Bot
+ *
+ * This bot is the first bot I ever made, and I have been constantly
+ * making additions and improvements to it to sharpen my skills as a
+ * bot developer. I have this available for public download even though
+ * I realize that it can really only be used in the battleship arena in
+ * Trench because it is here that I have tried to employ my best bot
+ * making practices. There are several different things this bot has
+ * pioneered, and aspects of this bot can be applied to many other bots.
+ * I hope that it can be used as a guide of sorts to new coders as to
+ * how they can go about getting things done in their own bots.
+ *
+ * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
  * @Version 3.0
@@ -14,21 +27,24 @@ import java.util.*;
 
 public class bship extends MultiModule implements TSChangeListener
 {
-	//Class Objects
+	//Core Objects
 	private CommandInterpreter m_cmd;
-	private StartWarp startWarp;
-	private CapshipNotify notify;
 	private TempSettingsManager m_tsm;
-	private BSTeam[] _teams;
 
 	//Night Mode
 	private boolean night;
+	private NightUpdate timeMode;
 
-	//Game settings
+	//Game data
 	private byte state;
 	private static final byte IDLE = 0, ACTIVE = 1;
-	//private boolean lockCapShips;
 	private int[][] points;
+	private BSTeam[] _teams;
+
+	//TimerTasks
+	private StartWarp startWarp;
+	private CapshipNotify notify;
+	private CapshipRespawn respawn;
 
 	//Ships
 	public static final byte SPEC = 0, GUN = 1, CANNON = 2, PLANE = 3, MINESWEEPER = 4,
@@ -37,12 +53,86 @@ public class bship extends MultiModule implements TSChangeListener
 	//Geometry
 	private static final byte X = 0, Y = 1, HEIGHT = 2, WIDTH = 3;
 
-	private NightUpdate timeMode = new NightUpdate();
+	//////////////////////////////////
+	/*       Message Strings        */
+	//////////////////////////////////
 
-	/********************************/
+	/** rGame: Rules for playing in a special (hosted) game */
+	private final String[] rGame = {
+		"+-------------------Rules: Special Game-------------------+",
+		"|Each team gets one of each of the 5 ships, and 6 turrets.|",
+		"|The rest are planes. When a ship dies it can't reenter,  |",
+		"|but turrets and planes are free to attach. A team wins   |",
+		"|when all enemy ships are destroyed.                      |",
+		"+---------------------------------------------------------+"};
+
+	/** rNormal: Rules for playing when not in a special (hosted) game */
+	private final String[] rNormal = {
+		"+------------------Rules: Normal Game---------------------+",
+		"|Get your fleet together and try to control the flag      |",
+		"|as much as you can. Remember that turrets (1 and 2)      |",
+		"|can't stay detached out of spawn, and planes (3) use F3  |",
+		"|to move.                                                 |",
+		"+---------------------------------------------------------+"};
+
+	/** rAttach: Restrictions on attaching */
+	private final String[] rAttach = {
+		"+-----------------Allowed Ship Attaches-------------------+",
+		"| AA(1)/Cannon(2) -------------> Frigate(6)/Battleship(7) |",
+		"| Plane(3)        -------------> Carrier(8)               |",
+		"+---------------------------------------------------------+"};
+
+	/** aboutMsg: Tells the player information about the bot, used by !about */
+	private final String[] aboutMsg = {
+		"+-Battleship Bot by D1st0rt--------v3.0-+",
+		"| -Attach Regulation                    |",
+		"| -Night Mode LVZ Automation            |",
+		"| -Battleship Games                     |",
+		"+---------------------------------------+"};
+
+	/** helpMsg: Tells the player all available commands, used by !help */
+	private final String[] helpMsg = {
+		"+------------Battleship Bot-------------+",
+		"| -!about          What this bot does   |",
+		"| -!help           This message         |",
+		"| -!quit           Enter spectator mode |",
+		"| -!rules          Rules of the game    |",
+		"| -!status         What is happening    |",
+		"| -!stathelp       Explain stats        |",
+		"+---------------------------------------+"};
+
+	/** statHelp: Explains the statistics used in hosted games, used by !stathelp */
+	private final String[] statHelp = {
+		"+--------------------------Statistic Abbreviations-------------------------+",
+		"|ShpsPlyd: All ships the player has been in this game                      |",
+		"|Kls     : Total kills by the player during the game                       |",
+		"|Dths    : Total deaths by the player during the game                      |",
+		"|SKls    : Kills the player got on capital ships                           |",
+		"|TKls    : Kills the player got on ship turrets                            |",
+		"|PKls    : Kills the player got on planes                                  |",
+		"|Atts    : Times the player attached to a capital ship                     |",
+		"|TaT     : Times the player was attached to                                |",
+		"|Rating  : (5*SKls) + (2*TKls) + PKls + TaT - (1*Dths or 3*Dths if capship)|",
+		"+--------------------------------------------------------------------------+"};
+
+	/** modHelp: Displays commands for staff use, used by !help */
+	private final String[] modHelp = {
+		"+-------------Staff Commands------------+",
+		"| -!start          Starts a game        |",
+		"| -!stop           Stop a game          |",
+		"| -!assign         See <!assign help>   |",
+		"| -!set            See <!set help>      |",
+		"| -!scheck         Manual game update   |",
+		"| -!night <on/off> Toggle night mode    |",
+		"+---------------------------------------+"};
+
+	//////////////////////////////////
 	/*			  Setup				*/
-	/********************************/
+	//////////////////////////////////
 
+	/**
+	 * Initializes all of the bot objects (acts as constructor)
+	 */
 	public void init()
 	{
 		m_botAction.setReliableKills(1);
@@ -53,39 +143,71 @@ public class bship extends MultiModule implements TSChangeListener
 		m_tsm = new TempSettingsManager(m_botAction, m_cmd, OperatorList.ER_LEVEL);
 		registerSettings();
 
-		//Initial Game Settings		
+		//Initial Game Settings
 		night = false;
-		state = IDLE;		
+		state = IDLE;
+		int teams = (Integer)m_tsm.getSetting("teams");
+		_teams = new BSTeam[teams];
+		for(int x = 0; x < _teams.length; x++)
+			_teams[x] = new BSTeam(x);
 
 		//Start Night Mode
+		timeMode = new NightUpdate();
 		m_botAction.scheduleTaskAtFixedRate(timeMode,1000,60000);
 	}
 
-
+	/**
+	 * Determines unloadability of the bot based on game status
+	 * @return whether the bot can be unloaded or not
+	 */
 	public boolean isUnloadable()
 	{
 		return (state != ACTIVE);
 	}
 
+	/**
+	 * Gets the help message for moderators
+	 * @return the moderator help message
+	 */
 	public String[] getModHelpMessage()
 	{
-		return new String[]
-		{"+-------------Staff Commands-----------+",
-		 "| -!go <arena>    Sends bot to <arena> |",
-		 "| -!die           Deactivate bot       |",
-		 "| -!start         Starts a game        |",
-		 "| -!stop          Stop a game          |",
-		 "| -!assign        See <!assign help>   |",
-		 "| -!set           See <!set help>      |",
-		 "| -!scheck        Manual game update   |",
-		 "| -!sethour <#>   Set game time to #   |",
-		 "| -!night <on/off>Toggle night mode    |",
-		 "+--------------------------------------+"};
+		return modHelp;
 	}
 
-	/********************************/
+	//////////////////////////////////
+	/*			  Settings			*/
+	//////////////////////////////////
+
+	/**
+	 * Establishes all of the settings with the TempSettings Manager
+	 */
+	private void registerSettings()
+	{
+		m_tsm.addSetting(SType.INT, "board", "2");
+		m_tsm.addSetting(SType.INT, "teams", "2");
+		m_tsm.addSetting(SType.BOOLEAN, "cslock", "false");
+		m_tsm.addSetting(SType.INT, "hour", "0");
+		m_tsm.restrictSetting("hour", 0, 23);
+		m_tsm.addSetting(SType.INT, "lives", "3");
+
+		m_tsm.addTSChangeListener(this);
+	}
+
+	/**
+	 * Called when a setting is altered in-gam through the command interface
+	 * @param name the name of the setting that was changed
+	 * @param value the value the setting was changed to
+	 */
+	public void settingChanged(String name, String value)
+	{
+		if(name.equals("hour"))
+			refresh();
+	}
+
+
+	//////////////////////////////////
 	/*			  Commands			*/
-	/********************************/
+	//////////////////////////////////
 
 	/**
 	 * Sets up all of the commands with the CommandInterpreter
@@ -99,44 +221,22 @@ public class bship extends MultiModule implements TSChangeListener
 		//Base Commands
 		m_cmd.registerCommand("!about", priv | pub, this, "C_about");
 		m_cmd.registerCommand("!help", priv | pub, this, "C_help");
-		m_cmd.registerCommand("!go", priv | rem, this, "C_go");
-		m_cmd.registerCommand("!die", priv | rem, this, "C_die");
 		m_cmd.registerCommand("!say", priv | rem, this, "C_say");
 
 		//Night Mode Commands
-		m_cmd.registerCommand("!sethour", priv, this, "C_setHour");
 		m_cmd.registerCommand("!night", priv, this, "C_night");
 
 		//Battleship Game Commands
 		m_cmd.registerCommand("!rules", priv | pub, this, "C_rules");
 		m_cmd.registerCommand("!status", priv | pub, this, "C_status");
 		m_cmd.registerCommand("!assign", priv, this, "C_assign");
-		//m_cmd.registerCommand("!set", priv, this, "C_set");
 		m_cmd.registerCommand("!start", priv, this, "C_start");
 		m_cmd.registerCommand("!stop", priv, this, "C_stop");
 		m_cmd.registerCommand("!quit", priv | pub, this, "C_quit");
 		m_cmd.registerCommand("!scheck", priv, this, "C_scheck");
 		m_cmd.registerCommand("!stathelp", priv | pub, this, "C_stathelp");
+	}
 
-	}
-	
-	private void registerSettings()
-	{		
-		m_tsm.addSetting(SType.INT, "board", "2");
-		m_tsm.addSetting(SType.INT, "teams", "2");
-		m_tsm.addSetting(SType.BOOLEAN, "cslock", "false");
-		m_tsm.addSetting(SType.INT, "hour", "0");		
-		m_tsm.restrictSetting("hour", 0, 23);
-		m_tsm.addSetting(SType.INT, "lives", "3");
-		
-		m_tsm.addTSChangeListener(this);
-	}
-	
-	public void settingChanged(String name, String value)
-	{
-		if(name.equals("hour"))
-			refresh();
-	}
 
 	/**
 	 * Command: !about
@@ -145,14 +245,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void C_about(String name, String message)
 	{
-		String[] about =
-		{"+-Battleship Bot by D1st0rt-------v3.0-+",
-		 "| -Attach Regulation                   |",
-		 "| -Night Mode LVZ Automation           |",
-		 "| -Battleship Games                    |",
-		 "+--------------------------------------+"};
-
-		m_botAction.privateMessageSpam(name,about);
+		m_botAction.privateMessageSpam(name, aboutMsg);
 	}
 
 	/**
@@ -162,30 +255,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void C_help(String name, String message)
 	{
-		String[] help =
-		{"+------------Battleship Bot------------+",
-		 "| -!about         What this bot does   |",
-		 "| -!help          This message         |",
-		 "| -!quit          Enter spectator mode |",
-		 "| -!rules         Rules of the game    |",
-		 "| -!status        What is happening    |",
-		 "| -!stathelp      Explain stats        |",
-		 "+--------------------------------------+"};
-		m_botAction.privateMessageSpam(name,help);
-	}
-
-	/**
-	 * Command: !go
-	 * Parameters: <arena>
-	 * Makes the bot change arena to <arena>
-	 */
-	public void C_go(String name, String message)
-	{
-		if(opList.isZH(name) && !message.equals(""))
-		{
-			m_botAction.changeArena(message);
-			m_botAction.setReliableKills(1);
-		}
+		m_botAction.privateMessageSpam(name, helpMsg);
 	}
 
 	/**
@@ -200,47 +270,14 @@ public class bship extends MultiModule implements TSChangeListener
 	}
 
 	/**
-	 * Command: !die
-	 * Parameters
-	 * Terminates the bot
-	 */
-	public void C_die(String name, String message)
-	{
-		if(opList.isZH(name))
-			m_botAction.die();
-	}
-
-	/**
 	 * Command: !rules
 	 * Parameters:
 	 * Displays the rules for the current game mode
 	 */
 	public void C_rules(String name, String message)
 	{
-		String[] game =
-		{"Each team gets one of each of the 5 ships, and 6 turrets.",
-		 "The rest are planes. When a ship dies it can't reenter,",
-		 "but turrets and planes are free to attach. The team wins",
-		 "if all enemy ships are killed."};
-
-		String[] normal =
-		{"Get your fleet together and try to control the flag",
-		 "as much as you can. Remember that turrets (1 and 2)",
-		 "can't stay detached out of spawn, and planes (3) use F3",
-		 "to move."};
-
-		if(state == ACTIVE)
-			m_botAction.privateMessageSpam(name,game);
-		else
-			m_botAction.privateMessageSpam(name,normal);
-
-		String[] s =
-		{"+-------------Allowed Ship Attaches-----------+",
-		 "| AA(1)/Cannon(2) -> Frigate(6)/Battleship(7) |",
-		 "| Plane(3)        -> Carrier(8)               |",
-		 "+---------------------------------------------+"};
-
-		m_botAction.privateMessageSpam(name,s);
+		m_botAction.privateMessageSpam(name, (state == ACTIVE ? rGame : rNormal));
+		m_botAction.privateMessageSpam(name, rAttach);
 	}
 
 	/**
@@ -306,7 +343,7 @@ public class bship extends MultiModule implements TSChangeListener
 		int teams = (Integer)m_tsm.getSetting("teams");
 		int board = (Integer)m_tsm.getSetting("board");
 		boolean lockCapShips = (Boolean)m_tsm.getSetting("cslock");
-		
+
 		if(state == IDLE)
 		{
 			m_botAction.sendPrivateMessage(name, "Nothing special going on.");
@@ -403,7 +440,7 @@ public class bship extends MultiModule implements TSChangeListener
 
 			m_botAction.sendPrivateMessage(name,"Night mode: "+night);
 		}
-	}	
+	}
 
 	/**
 	 * Command: !scheck
@@ -416,12 +453,12 @@ public class bship extends MultiModule implements TSChangeListener
 		{
 			if(state == ACTIVE)
 			{
-				m_botAction.sendPrivateMessage(name, "Re-checking teams still in game...");				
+				m_botAction.sendPrivateMessage(name, "Re-checking teams still in game...");
 				checkForLosers();
 			}
 		}
 	}
-	
+
 	/**
 	 * Command: !stathelp
 	 * Parameters:
@@ -429,22 +466,12 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void C_stathelp(String name, String message)
 	{
-		String[] msg = new String[]{
-				"ShpsPlyd: All ships the player has been in this game",
-				"Kls     : Total kills by the player during the game",
-				"Dths    : Total deaths by the player during the game",
-				"SKls    : Kills the player got on capital ships",
-				"TKls    : Kills the player got on ship turrets",
-				"PKls    : Kills the player got on planes",
-				"Atts    : Times the player attached to a capital ship",
-				"TaT     : Times the player was attached to",
-				"Rating  : (5*SKls) + (2*TKls) + PKls + TaT - (1*Dths or 3*Dths if capship)"};
-		m_botAction.privateMessageSpam(name, msg);
+		m_botAction.privateMessageSpam(name, statHelp);
 	}
 
-	/********************************/
+	//////////////////////////////////
 	/*		Battleship Functions	*/
-	/********************************/
+	//////////////////////////////////
 
 	/**
 	 * Makes random teams, and warps them to safety areas
@@ -479,11 +506,11 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		int teams = (Integer)m_tsm.getSetting("teams");
 		int board = (Integer)m_tsm.getSetting("board");
-		
+
 		_teams = new BSTeam[teams];
 		for(int x = 0; x < _teams.length; x++)
 			_teams[x] = new BSTeam(x);
-		
+
 		StringBuffer buf = new StringBuffer("Initializing Battleship Game: ");
 
 		buf.append(teams);
@@ -509,7 +536,7 @@ public class bship extends MultiModule implements TSChangeListener
 		for(int x = 0; x < teamStatus.length; x++)
 			m_botAction.sendArenaMessage(teamStatus[x]);
 
-		for(int x = 0; x <= teams; x++)
+		for(int x = 0; x < teams; x++)
 		{
 			if(x % 2 == 0) 	//even freq
 				m_botAction.warpFreqToLocation(x, 495, 752);
@@ -541,11 +568,11 @@ public class bship extends MultiModule implements TSChangeListener
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team1-Radius=10");
 		m_botAction.shipResetAll();
 		m_botAction.warpAllRandomly();
-		
+
 		displayStats();
 
 		state = IDLE;
-		m_tsm.setLocked(false);		
+		m_tsm.setLocked(false);
 	}
 
 	/**
@@ -586,7 +613,10 @@ public class bship extends MultiModule implements TSChangeListener
 
 		return s;
 	}
-	
+
+	/**
+	 * Shows end game statistics for a hosted game
+	 */
 	private void displayStats()
 	{
 		for(int x = 0; x < _teams.length; x++)
@@ -624,14 +654,19 @@ public class bship extends MultiModule implements TSChangeListener
 				msg[4 + y] = buf.toString();
 			}
 			msg[msg.length - 1] = msg[2];
-			
+
 			for(int y = 0; y < msg.length; y++)
 				m_botAction.sendArenaMessage(msg[y]);
-		}		    		    
+		}
 	}
-	
+
+	/**
+	 * Takes a string and fills the left end of it with spaces up to a specified length
+	 * @param fragment the string to pad
+	 * @param length the desired length of the final string
+	 */
 	private String rightAlign( String fragment, int length)
-	{        
+	{
         if(fragment.length() > length)
             fragment = fragment.substring(0,length-1);
         else {
@@ -639,11 +674,10 @@ public class bship extends MultiModule implements TSChangeListener
                 fragment = " "+ fragment ;
         }
         return fragment;
-    }	
+    }
 
 	/**
-	 * Checks all teams for being eliminated and
-	 *
+	 * Checks and removes eliminated teams
 	 */
 	private void checkForLosers()
 	{
@@ -897,9 +931,9 @@ public class bship extends MultiModule implements TSChangeListener
 	}
 
 
-	/********************************/
+	//////////////////////////////////
 	/*     Night Mode Functions     */
-	/********************************/
+	//////////////////////////////////
 
 	/**
 	 * Called by the TimerTask, updates the night mode lvz to the next hour
@@ -976,22 +1010,22 @@ public class bship extends MultiModule implements TSChangeListener
 	}
 
 
-	/********************************/
+	//////////////////////////////////
 	/*		   	  Events			*/
-	/********************************/
+	//////////////////////////////////
 
 	/**
 	 * Registers all of the events to be used by the bot with the core
 	 */
 	 public void requestEvents(EventRequester events)
 	 {
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.TURRET_EVENT);
-		events.request(EventRequester.PLAYER_DEATH);
-		events.request(EventRequester.PLAYER_ENTERED);
-		events.request(EventRequester.PLAYER_LEFT);
-		events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
-		events.request(EventRequester.FREQUENCY_CHANGE);
+		events.request(MESSAGE);
+		events.request(TURRET_EVENT);
+		events.request(PLAYER_DEATH);
+		events.request(PLAYER_ENTERED);
+		events.request(PLAYER_LEFT);
+		events.request(FREQUENCY_SHIP_CHANGE);
+		events.request(FREQUENCY_CHANGE);
 	 }
 
 	/**
@@ -1009,6 +1043,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(PlayerDeath event)
 	{
+		m_botAction.sendPublicMessage("PD");
 		if(state == ACTIVE)
 		{
 			byte ship = m_botAction.getPlayer(event.getKilleeID()).getShipType(); //Get the ship # of the player that died
@@ -1016,36 +1051,44 @@ public class bship extends MultiModule implements TSChangeListener
 			String killer = m_botAction.getPlayerName(event.getKillerID()); // Get killer's name
 			short kteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get dead player's team #
 			short dteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get killer's team #
-			if(_teams[dteam].playerDeath(name))
-				m_botAction.setShip(name, 3);
+
 			_teams[kteam].playerKill(name, ship);
+			boolean hasLivesLeft = _teams[dteam].playerDeath(name);
+			if(!hasLivesLeft)
+				m_botAction.setShip(name, 3);
+
 			switch(ship)
 			{
 				case MINESWEEPER:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Minesweeper! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
+					if(!hasLivesLeft)
+						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case SUB:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Submarine! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
+					if(!hasLivesLeft)
+						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case FRIGATE:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Frigate! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
+					if(!hasLivesLeft)
+						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case BATTLESHIP:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a BATTLESHIP! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
+					if(!hasLivesLeft)
+						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case CARRIER:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost an AIRCRAFT CARRIER! ("+ name +", killed by "+ killer +")",19);
-					m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
+					if(!hasLivesLeft)
+						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
-			}			
+			}
 			checkForLosers();
 		}
 	}
@@ -1056,11 +1099,12 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(PlayerEntered event)
 	{
+		m_botAction.sendPublicMessage("PE");
 		if(night)
 			showObjects(event.getPlayerID());
 
 		if(state == ACTIVE)
-			checkForLosers();		
+			checkForLosers();
 	}
 
 	/**
@@ -1069,51 +1113,65 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(PlayerLeft event)
 	{
-		if(state == ACTIVE)			
-			checkForLosers();		
+		m_botAction.sendPublicMessage("PL");
+		if(state == ACTIVE)
+			checkForLosers();
 	}
-	
+
+	/**
+	 * Event: FrequencyChange
+	 * If playing a game, will update the ship count
+	 */
 	public void handleEvent(FrequencyChange event)
 	{
-		Player p = m_botAction.getPlayer(event.getPlayerID());
-		String name = p.getPlayerName();
-		short freq = event.getFrequency();
-		
-		for(int x = 0; x < _teams.length; x++)			
-			if(x != freq)
-				_teams[x].removePlayer(name);		
-		
-		_teams[freq].setShip(name, p.getShipType());
+		m_botAction.sendPublicMessage("FC");
+		if(state == ACTIVE)
+		{
+			Player p = m_botAction.getPlayer(event.getPlayerID());
+			String name = p.getPlayerName();
+			short freq = event.getFrequency();
+
+			for(int x = 0; x < _teams.length; x++)
+				if(x != freq)
+					_teams[x].removePlayer(name);
+
+			_teams[freq].setShip(name, p.getShipType());
+
+			checkForLosers();
+		}
 	}
 
 	/**
 	 * Event: FrequencyShipChange
-	 * If playing, updates the ship count
+	 * If playing a game, updates the ship count
 	 * If cap ship locking is on, will prevent players from switching to a capital ship
 	 */
 	public void handleEvent(FrequencyShipChange event)
-	{	
-		Player p = m_botAction.getPlayer(event.getPlayerID());
-		short freq = p.getFrequency();
-		byte ship = event.getShipType();
-		String name = p.getPlayerName();
-		BSPlayer bp = _teams[freq].getPlayer(name);		
+	{
+		m_botAction.sendPublicMessage("FSC");
 		if(state == ACTIVE)
-		{			
+		{
+			Player p = m_botAction.getPlayer(event.getPlayerID());
+			short freq = p.getFrequency();
+			byte ship = event.getShipType();
+			String name = p.getPlayerName();
+
+			BSPlayer bp = _teams[freq].getPlayer(name);
+			if(bp == null)
+				bp = new BSPlayer(name);
+
 			if((Boolean)m_tsm.getSetting("cslock"))
 			{
 				if(event.getShipType() > 3 && bp.ship < 3)
-					m_botAction.setShip(event.getPlayerID(), bp.ship);			
+					m_botAction.setShip(event.getPlayerID(), bp.ship);
 				else
 					_teams[freq].setShip(name, ship);
 			}
 			else
 				_teams[freq].setShip(name, ship);
-				
+
 			checkForLosers();
 		}
-		else		
-			_teams[freq].setShip(name, ship);			
 	}
 
 	/**
@@ -1123,6 +1181,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(TurretEvent event)
 	{
+		m_botAction.sendPublicMessage("TE");
 		int turret = event.getAttacherID();
 		int freq = m_botAction.getPlayer(turret).getFrequency();
 		String tname = m_botAction.getPlayerName(turret);
@@ -1179,9 +1238,9 @@ public class bship extends MultiModule implements TSChangeListener
 		}
 	}
 
-	/********************************/
+	//////////////////////////////////
 	/*		   	 TimerTasks			*/
-	/********************************/
+	//////////////////////////////////
 
 	/**
 	 * TimerTask: NightUpdate
@@ -1205,7 +1264,7 @@ public class bship extends MultiModule implements TSChangeListener
 		public void run()
 		{
 			short[] dims = boardDimensions((byte)((Integer)m_tsm.getSetting("board")).intValue());
-			
+
 
 			int teams = _teams.length;
 			//Special can handle more than 4, but standard is faster
@@ -1223,7 +1282,11 @@ public class bship extends MultiModule implements TSChangeListener
 			m_botAction.sendArenaMessage("Game Begin!!!",104);
 		}
 	}
-	
+
+	/**
+	 * TimerTask: CapshipRespawn
+	 * Respawns a capital ship to the arena after they die
+	 */
 	private class CapshipRespawn extends TimerTask
 	{
 		private String _name;
@@ -1233,7 +1296,7 @@ public class bship extends MultiModule implements TSChangeListener
 			_name = name;
 			_freq = freq;
 		}
-		
+
 		public void run()
 		{
 			int x = points[_freq][X];
@@ -1247,17 +1310,17 @@ public class bship extends MultiModule implements TSChangeListener
 	 * Notifies players which ships they can attach to on their team
 	 */
 	private class CapshipNotify extends TimerTask
-	{		
+	{
 		public void run()
 		{
 			for(int x = 0; x < _teams.length; x++)
 			{
 				StringBuffer bships = new StringBuffer("Your Team's Battleships:");
-				StringBuffer carriers = new StringBuffer(" Carriers:");				
-				BSPlayer[] players = _teams[x].getPlayers(); 
+				StringBuffer carriers = new StringBuffer(" Carriers:");
+				BSPlayer[] players = _teams[x].getPlayers();
 				for(int y = 0; y < players.length; y++)
 				{
-					if(players[x].ship == FRIGATE || players[x].ship == BATTLESHIP)					
+					if(players[x].ship == FRIGATE || players[x].ship == BATTLESHIP)
 						bships.append(" "+ players[x] +",");
 					else if(players[x].ship == CARRIER)
 						carriers.append(" "+ players[x] +",");
@@ -1265,9 +1328,9 @@ public class bship extends MultiModule implements TSChangeListener
 				if(bships.toString().endsWith(","))
 					bships.deleteCharAt(bships.length() - 1);
 				if(carriers.toString().endsWith(","))
-					carriers.deleteCharAt(carriers.length() - 1);				
+					carriers.deleteCharAt(carriers.length() - 1);
 				m_botAction.sendOpposingTeamMessageByFrequency(x, bships.toString() + carriers.toString(),0);
 			}
-		}		
+		}
 	}
 }
