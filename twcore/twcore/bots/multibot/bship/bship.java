@@ -22,35 +22,40 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @Version 3.0
+ * @version 2005.12.7
  */
 
 public class bship extends MultiModule implements TSChangeListener
 {
-	//Core Objects
+
+	//////////////////////////////////
+	/*		   Declarations			*/
+	//////////////////////////////////
+
+	// Core Objects //
 	private CommandInterpreter m_cmd;
 	private TempSettingsManager m_tsm;
 
-	//Night Mode
+	// Night Mode //
 	private boolean night;
 	private NightUpdate timeMode;
 
-	//Game data
+	// Game Data //
 	private byte state;
 	private static final byte IDLE = 0, ACTIVE = 1;
 	private int[][] points;
 	private BSTeam[] _teams;
 
-	//TimerTasks
+	// TimerTasks //
 	private StartWarp startWarp;
 	private CapshipNotify notify;
 	private CapshipRespawn respawn;
 
-	//Ships
+	// Ships //
 	public static final byte SPEC = 0, GUN = 1, CANNON = 2, PLANE = 3, MINESWEEPER = 4,
 	SUB = 5, FRIGATE = 6, BATTLESHIP = 7, CARRIER = 8, ALL = 9, PLAYING = 10;
 
-	//Geometry
+	// Geometry //
 	private static final byte X = 0, Y = 1, HEIGHT = 2, WIDTH = 3;
 
 	//////////////////////////////////
@@ -171,7 +176,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public String[] getModHelpMessage()
 	{
-		return modHelp;
+		return this.modHelp;
 	}
 
 	//////////////////////////////////
@@ -245,7 +250,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void C_about(String name, String message)
 	{
-		m_botAction.privateMessageSpam(name, aboutMsg);
+		m_botAction.privateMessageSpam(name, this.aboutMsg);
 	}
 
 	/**
@@ -255,7 +260,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void C_help(String name, String message)
 	{
-		m_botAction.privateMessageSpam(name, helpMsg);
+		m_botAction.privateMessageSpam(name, this.helpMsg);
 	}
 
 	/**
@@ -276,8 +281,8 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void C_rules(String name, String message)
 	{
-		m_botAction.privateMessageSpam(name, (state == ACTIVE ? rGame : rNormal));
-		m_botAction.privateMessageSpam(name, rAttach);
+		m_botAction.privateMessageSpam(name, (state == ACTIVE ? this.rGame : this.rNormal));
+		m_botAction.privateMessageSpam(name, this.rAttach);
 	}
 
 	/**
@@ -466,7 +471,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void C_stathelp(String name, String message)
 	{
-		m_botAction.privateMessageSpam(name, statHelp);
+		m_botAction.privateMessageSpam(name, this.statHelp);
 	}
 
 	//////////////////////////////////
@@ -529,8 +534,15 @@ public class bship extends MultiModule implements TSChangeListener
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team1-Y=752");
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team1-Radius=1");
 
+		Iterator i = m_botAction.getPlayingPlayerIterator();
+		while(i.hasNext())
+		{
+			Player p = (Player)i.next();
+			_teams[p.getFrequency()].setShip(p.getPlayerName(), p.getShipType());
+		}
+
 		m_botAction.sendArenaMessage("Spawn Points established. Ship Distribution: ");
-		notify = new CapshipNotify();
+
 
 		String[] teamStatus = getTeamShipCount();
 		for(int x = 0; x < teamStatus.length; x++)
@@ -547,6 +559,8 @@ public class bship extends MultiModule implements TSChangeListener
 		m_botAction.sendArenaMessage("Game will begin in 10 seconds.");
 		m_tsm.setLocked(true);
 		state = ACTIVE;
+
+		notify = new CapshipNotify();
 		startWarp = new StartWarp();
 
 		m_botAction.scheduleTask(startWarp,10000);
@@ -795,6 +809,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 * Calculates starting warp points for more than 4 teams in a given board
 	 * @param dims the dimensions of the board to calculate on
 	 * @return an int[][] containing the warp points
+	 * @deprecated Its not really deprecated but you shouldn't use it
 	 */
 	private int[][] specialWarp(short[] dims)
 	{
@@ -1248,6 +1263,9 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private class NightUpdate extends TimerTask
 	{
+		/**
+	     * Executes this task, changes the night mode graphics
+	     */
 		public void run()
 		{
 			if(night)
@@ -1261,6 +1279,10 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private class StartWarp extends TimerTask
 	{
+		/**
+	     * Executes this task, warps all players to their team's starting location
+	     * on the game board.
+	     */
 		public void run()
 		{
 			short[] dims = boardDimensions((byte)((Integer)m_tsm.getSetting("board")).intValue());
@@ -1291,12 +1313,22 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		private String _name;
 		private int _freq;
+
+		/**
+		 * Creates a new CapshipRespawn task to send a capital ship back to
+		 * its team's starting location on the game board after they die.
+		 * @param name the player's name
+		 * @param freq the player's frequency
+		 */
 		public CapshipRespawn(String name, int freq)
 		{
 			_name = name;
 			_freq = freq;
 		}
 
+		/**
+	     * Executes this task, warps ship back into game board
+	     */
 		public void run()
 		{
 			int x = points[_freq][X];
@@ -1311,6 +1343,9 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private class CapshipNotify extends TimerTask
 	{
+		/**
+	     * Executes this task, notifies team of attachable ships
+	     */
 		public void run()
 		{
 			for(int x = 0; x < _teams.length; x++)

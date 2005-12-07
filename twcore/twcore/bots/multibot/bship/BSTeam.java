@@ -1,18 +1,35 @@
 package twcore.bots.multibot.bship;
 
 import java.util.*;
+import static twcore.bots.multibot.bship.bship.PLAYING;
+import static twcore.bots.multibot.bship.bship.SPEC;
+import static twcore.bots.multibot.bship.bship.ALL;
 
+/**
+ * Represents a team of players in the main battleship game. Manages individual
+ * BSPlayer objects and passes events to the players for stat tracking
+ *
+ * @author D1st0rt
+ * @version 2005.12.7
+ */
 public class BSTeam
 {
 	/** The players on this team */
 	private Vector<BSPlayer> _players;
+
 	/** This team's frequency */
 	private int _freq;
+
 	/** A cached ship count for this team */
 	private byte[] _shipCount;
+
 	/** Whether the cache is up to date or not */
 	private boolean _changed;
 
+	/**
+     * Creates a new instance of BSTeam
+     * @param freq the team's frequency
+     */
 	public BSTeam(int freq)
 	{
 		_freq = freq;
@@ -21,36 +38,60 @@ public class BSTeam
 		_shipCount = new byte[8];
 	}
 
+	/**
+     * Resets this team to completely empty, just as when it was instantiated
+     */
 	public void reset()
 	{
 		_players.clear();
 		_changed = false;
-		_shipCount = null;
+		_shipCount = new byte[8];
 	}
 
+	/**
+     * Gets all players on this in a specific ship
+     * @param the desired ship, can also be ALL or PLAYING
+     * @return an array of all BSPlayers currently in that ship
+     */
 	public BSPlayer[] getPlayers(byte ship)
 	{
 		Vector<BSPlayer> players = new Vector<BSPlayer>();
 		for(BSPlayer p : _players)
 		{
-			if(ship == bship.ALL || (ship == bship.PLAYING && p.ship != bship.SPEC) || (p.ship == ship) )
+			if(ship == ALL || (ship == PLAYING && p.ship != SPEC) || (p.ship == ship) )
 				players.add(p);
 		}
 		return players.toArray(new BSPlayer[players.size()]);
 	}
 
+	/**
+     * Removes a player from this team
+     * @param name the name of the player
+     */
 	public void removePlayer(String name)
 	{
 		BSPlayer p = getPlayer(name);
 		if(p != null)
+		{
 			_players.remove(p);
+			_changed = true;
+		}
 	}
 
+	/**
+     * Gets all of the players on this team
+     * @return an array of all BSPlayers currently on the team
+     */
 	public BSPlayer[] getPlayers()
 	{
 		return _players.toArray(new BSPlayer[_players.size()]);
 	}
 
+	/**
+     * Updates the ship of a player. If the player does not exist, they are created.
+     * @param name the name of the player
+     * @param ship the ship the player is in
+     */
 	public void setShip(String name, byte ship)
 	{
 		BSPlayer p = getPlayer(name);
@@ -65,6 +106,11 @@ public class BSTeam
 		System.out.println("Ship set: "+ name +" - "+ ship);
 	}
 
+	/**
+     * Gets a player by name
+     * @param name the name of the desired player
+     * @return the BSPlayer object for the player with that name, or null if not found
+     */
 	public BSPlayer getPlayer(String name)
 	{
 		BSPlayer[] players = getPlayers();
@@ -76,6 +122,13 @@ public class BSTeam
 		return null;
 	}
 
+	/**
+     * Event for notifying a BSPlayer that it has just died. Updates death count and
+     * rating and checks to see how many lives are left. Decrements lives, and
+     * if there are lives left, it returns true. If no lives remain, it returns false.
+     * @param name the name of the player that died
+     * @return whether the player has any lives left or not
+     */
 	public boolean playerDeath(String name)
 	{
 		BSPlayer p = getPlayer(name);
@@ -98,6 +151,12 @@ public class BSTeam
 		return true;
 	}
 
+	/**
+     * Event for notifying a BSPlayer that it just killed somebody.
+     * Updates kill count and rating.
+     * @param name the player that just got a kill
+     * @param ship the ship of the player that DIED
+     */
 	public void playerKill(String name, byte ship)
 	{
 		BSPlayer p = getPlayer(name);
@@ -121,6 +180,12 @@ public class BSTeam
 		}
 	}
 
+	/**
+     * Event for notifying both BSPlayers involved in an attach. Updates
+     * attach counts and ratings.
+     * @param attachee the player that got attached to
+     * @param attacher the player that attached
+     */
 	public void attach(String attachee, String attacher)
 	{
 		BSPlayer ship = getPlayer(attachee);
@@ -132,11 +197,20 @@ public class BSTeam
 		turret.takeoffs++;
 	}
 
+	/**
+     * Gets the number of players on this team in a particular ship
+     * @param the desired ship, can also be ALL or PLAYING
+     */
 	public int getShipCount(byte ship)
 	{
 		return getPlayers(ship).length;
 	}
 
+	/**
+     * Gets a cached array of the ship distribution of this team. If the ship
+     * distribution has changed since the last calculation, it recalculates.
+     * @return a byte[] containing the number of players in each ship by array index
+     */
 	public byte[] getShipCount()
 	{
 		if(_changed)
@@ -147,6 +221,11 @@ public class BSTeam
 		return _shipCount;
 	}
 
+	/**
+     * Determines if this team is eliminated or not. A team is eliminated if they
+     * have no remaining capital ships.
+     * @return whether the team is out or not
+     */
 	public boolean isOut()
 	{
 		byte[] ships = getShipCount();
