@@ -458,7 +458,7 @@ public class BotAction
             firstChar = message.charAt(0);
             if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')
             {
-                i = m_arenaTracker.getFreqPlayerIterator(frequency);
+                i = m_arenaTracker.getFreqIDIterator(frequency);
                 if (i != null)
                 {
                     playerID = ((Integer) i.next()).intValue();
