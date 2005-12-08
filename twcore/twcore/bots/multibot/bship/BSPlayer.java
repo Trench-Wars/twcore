@@ -37,7 +37,7 @@ public class BSPlayer
 	public short tacount;
 
 	/** Ships played by this player */
-	public char[] ships;
+	public boolean[] ships;
 
 	/** Aggregate rating */
 	public int rating;
@@ -75,6 +75,19 @@ public class BSPlayer
 		takeoffs = 0;
 		tacount = 0;
 		rating = 0;
-		ships = new char[8];
+		ships = new boolean[8];
+	}
+
+	public String shipsPlayed()
+	{
+		String s = "";
+		for(int x = 0; x < ships.length; x++)
+		{
+			if(ships[x])
+				s += (x+1);
+			else
+				s += " ";
+		}
+		return s;
 	}
 }

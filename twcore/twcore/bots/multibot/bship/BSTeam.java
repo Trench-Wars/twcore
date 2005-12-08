@@ -44,7 +44,7 @@ public class BSTeam
 	public void reset()
 	{
 		_players.clear();
-		_changed = false;
+		_changed = true;
 		_shipCount = new byte[8];
 	}
 
@@ -96,14 +96,20 @@ public class BSTeam
 	{
 		BSPlayer p = getPlayer(name);
 		if(p == null)
+		{
 			p = new BSPlayer(name);
+			_players.add(p);
+		}
+
+		int pIndex = _players.indexOf(p);
 
 		p.ship = ship;
 		if(p.ship != bship.SPEC)
-			p.ships[ship-1] = ("" +ship).charAt(0);
+			p.ships[ship-1] = true;
+
+		_players.setElementAt(p, pIndex);
 
 		_changed = true;
-		System.out.println("Ship set: "+ name +" - "+ ship);
 	}
 
 	/**

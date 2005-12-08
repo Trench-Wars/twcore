@@ -509,6 +509,8 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void pregame()
 	{
+		try{
+
 		int teams = (Integer)m_tsm.getSetting("teams");
 		int board = (Integer)m_tsm.getSetting("board");
 
@@ -565,6 +567,10 @@ public class bship extends MultiModule implements TSChangeListener
 
 		m_botAction.scheduleTask(startWarp,10000);
 		m_botAction.scheduleTaskAtFixedRate(notify,2000,300000);
+		}catch(Exception e)
+		{
+			Tools.printStackTrace(e);
+		}
 	}
 
 	/**
@@ -636,18 +642,19 @@ public class bship extends MultiModule implements TSChangeListener
 		for(int x = 0; x < _teams.length; x++)
 		{
 			BSPlayer[] players = _teams[x].getPlayers();
-			String[] msg = new String[5 + players.length];
+			String[] msg = new String[6 + players.length];
 			msg[0] = "+-----------------------------+";
 			msg[1] = "| END GAME STATS: TEAM "+ x +"      |";
 			msg[2] = "+--------------------+--------+------+------+------+------+------+------+------+------+";
 			msg[3] = "|Name                |ShpsPlyd|Rating| Kls  | Dths | SKls | TKls | PKls | Atts | TaT  |";
+			msg[4] = "+--------------------+--------+------+------+------+------+------+------+------+------+";
 			for(int y = 0; y < players.length; y++)
 			{
 				BSPlayer p = players[y];
 				StringBuffer buf = new StringBuffer("|");
 				buf.append(Tools.formatString(p.toString(),20));
 				buf.append("|");
-				buf.append(p.ships);
+				buf.append(p.shipsPlayed());
 				buf.append("|");
 				buf.append(rightAlign(""+ p.rating, 6));
 				buf.append("|");
@@ -665,7 +672,7 @@ public class bship extends MultiModule implements TSChangeListener
 				buf.append("|");
 				buf.append(rightAlign(""+ p.tacount, 6));
 				buf.append("|");
-				msg[4 + y] = buf.toString();
+				msg[5 + y] = buf.toString();
 			}
 			msg[msg.length - 1] = msg[2];
 
@@ -1058,7 +1065,6 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(PlayerDeath event)
 	{
-		m_botAction.sendPublicMessage("PD");
 		if(state == ACTIVE)
 		{
 			byte ship = m_botAction.getPlayer(event.getKilleeID()).getShipType(); //Get the ship # of the player that died
@@ -1114,7 +1120,6 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(PlayerEntered event)
 	{
-		m_botAction.sendPublicMessage("PE");
 		if(night)
 			showObjects(event.getPlayerID());
 
@@ -1128,7 +1133,6 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(PlayerLeft event)
 	{
-		m_botAction.sendPublicMessage("PL");
 		if(state == ACTIVE)
 			checkForLosers();
 	}
@@ -1139,18 +1143,23 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(FrequencyChange event)
 	{
-		m_botAction.sendPublicMessage("FC");
 		if(state == ACTIVE)
 		{
 			Player p = m_botAction.getPlayer(event.getPlayerID());
 			String name = p.getPlayerName();
 			short freq = event.getFrequency();
 
-			for(int x = 0; x < _teams.length; x++)
-				if(x != freq)
-					_teams[x].removePlayer(name);
+			if(p.getShipType() != SPEC)
+			{
+				for(int x = 0; x < _teams.length; x++)
+					if(x != freq)
+						_teams[x].removePlayer(name);
 
-			_teams[freq].setShip(name, p.getShipType());
+				_teams[freq].setShip(name, p.getShipType());
+			}
+			else
+				for(int x = 0; x < _teams.length; x++)
+					_teams[x].removePlayer(name);
 
 			checkForLosers();
 		}
@@ -1163,7 +1172,6 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(FrequencyShipChange event)
 	{
-		m_botAction.sendPublicMessage("FSC");
 		if(state == ACTIVE)
 		{
 			Player p = m_botAction.getPlayer(event.getPlayerID());
@@ -1171,19 +1179,25 @@ public class bship extends MultiModule implements TSChangeListener
 			byte ship = event.getShipType();
 			String name = p.getPlayerName();
 
-			BSPlayer bp = _teams[freq].getPlayer(name);
-			if(bp == null)
-				bp = new BSPlayer(name);
-
-			if((Boolean)m_tsm.getSetting("cslock"))
+			if(p.getShipType() != SPEC)
 			{
-				if(event.getShipType() > 3 && bp.ship < 3)
-					m_botAction.setShip(event.getPlayerID(), bp.ship);
-				else
+				BSPlayer bp = _teams[freq].getPlayer(name);
+				if(bp == null)
+					bp = new BSPlayer(name);
+
+				if((Boolean)m_tsm.getSetting("cslock"))
+				{
+					if(event.getShipType() > 3 && bp.ship < 3)
+						m_botAction.setShip(event.getPlayerID(), bp.ship);
+					else
+						_teams[freq].setShip(name, ship);
+				}
+				else if(p.getShipType() != SPEC)
 					_teams[freq].setShip(name, ship);
 			}
 			else
-				_teams[freq].setShip(name, ship);
+				for(int x = 0; x < _teams.length; x++)
+					_teams[x].removePlayer(name);
 
 			checkForLosers();
 		}
@@ -1196,7 +1210,6 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(TurretEvent event)
 	{
-		m_botAction.sendPublicMessage("TE");
 		int turret = event.getAttacherID();
 		int freq = m_botAction.getPlayer(turret).getFrequency();
 		String tname = m_botAction.getPlayerName(turret);
@@ -1348,10 +1361,12 @@ public class bship extends MultiModule implements TSChangeListener
 	     */
 		public void run()
 		{
+			try{
+
 			for(int x = 0; x < _teams.length; x++)
 			{
 				StringBuffer bships = new StringBuffer("Your Team's Battleships:");
-				StringBuffer carriers = new StringBuffer(" Carriers:");
+				StringBuffer carriers = new StringBuffer("Your Team's Carriers:");
 				BSPlayer[] players = _teams[x].getPlayers();
 				for(int y = 0; y < players.length; y++)
 				{
@@ -1364,7 +1379,12 @@ public class bship extends MultiModule implements TSChangeListener
 					bships.deleteCharAt(bships.length() - 1);
 				if(carriers.toString().endsWith(","))
 					carriers.deleteCharAt(carriers.length() - 1);
-				m_botAction.sendOpposingTeamMessageByFrequency(x, bships.toString() + carriers.toString(),0);
+				m_botAction.sendOpposingTeamMessageByFrequency(x, bships.toString(), 0);
+				m_botAction.sendOpposingTeamMessageByFrequency(x, carriers.toString(), 0);
+			}
+			}catch(Exception e)
+			{
+				Tools.printStackTrace(e);
 			}
 		}
 	}
