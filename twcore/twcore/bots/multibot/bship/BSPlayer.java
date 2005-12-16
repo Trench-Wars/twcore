@@ -5,7 +5,7 @@ package twcore.bots.multibot.bship;
  * related to the game in progress.
  *
  * @author D1st0rt
- * @version 2005.12.7
+ * @version 2005.12.8
  */
 public class BSPlayer
 {
@@ -78,6 +78,10 @@ public class BSPlayer
 		ships = new boolean[8];
 	}
 
+	/**
+     * Gets a string of all ships played by this player. Displays the ship
+     * number in it's 0-7 index if it has been used.
+     */
 	public String shipsPlayed()
 	{
 		String s = "";

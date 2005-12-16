@@ -10,7 +10,7 @@ import static twcore.bots.multibot.bship.bship.ALL;
  * BSPlayer objects and passes events to the players for stat tracking
  *
  * @author D1st0rt
- * @version 2005.12.7
+ * @version 2005.12.8
  */
 public class BSTeam
 {

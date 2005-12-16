@@ -22,7 +22,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 2005.12.7
+ * @version 2005.12.8
  */
 
 public class bship extends MultiModule implements TSChangeListener
@@ -189,11 +189,14 @@ public class bship extends MultiModule implements TSChangeListener
 	private void registerSettings()
 	{
 		m_tsm.addSetting(SType.INT, "board", "2");
+		m_tsm.restrictSetting("board", 0, 5);
 		m_tsm.addSetting(SType.INT, "teams", "2");
+		m_tsm.restrictSetting("teams", 0, 4);
 		m_tsm.addSetting(SType.BOOLEAN, "cslock", "false");
 		m_tsm.addSetting(SType.INT, "hour", "0");
 		m_tsm.restrictSetting("hour", 0, 23);
 		m_tsm.addSetting(SType.INT, "lives", "3");
+		m_tsm.restrictSetting("lives", 0, 10);
 
 		m_tsm.addTSChangeListener(this);
 	}
@@ -511,8 +514,13 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		try{
 
+		m_tsm.setLocked("teams", true);
+		m_tsm.setLocked("board", true);
+		m_tsm.setLocked("lives", true);
+
 		int teams = (Integer)m_tsm.getSetting("teams");
 		int board = (Integer)m_tsm.getSetting("board");
+		int lives = (Integer)m_tsm.getSetting("lives");
 
 		_teams = new BSTeam[teams];
 		for(int x = 0; x < _teams.length; x++)
@@ -541,6 +549,7 @@ public class bship extends MultiModule implements TSChangeListener
 		{
 			Player p = (Player)i.next();
 			_teams[p.getFrequency()].setShip(p.getPlayerName(), p.getShipType());
+			_teams[p.getFrequency()].getPlayer(p.getPlayerName()).lives = (short)lives;
 		}
 
 		m_botAction.sendArenaMessage("Spawn Points established. Ship Distribution: ");
@@ -559,7 +568,6 @@ public class bship extends MultiModule implements TSChangeListener
 		}
 
 		m_botAction.sendArenaMessage("Game will begin in 10 seconds.");
-		m_tsm.setLocked(true);
 		state = ACTIVE;
 
 		notify = new CapshipNotify();
@@ -592,7 +600,10 @@ public class bship extends MultiModule implements TSChangeListener
 		displayStats();
 
 		state = IDLE;
-		m_tsm.setLocked(false);
+
+		m_tsm.setLocked("teams", false);
+		m_tsm.setLocked("board", false);
+		m_tsm.setLocked("lives", false);
 	}
 
 	/**
@@ -1070,43 +1081,44 @@ public class bship extends MultiModule implements TSChangeListener
 			byte ship = m_botAction.getPlayer(event.getKilleeID()).getShipType(); //Get the ship # of the player that died
 			String name = m_botAction.getPlayerName(event.getKilleeID()); //Get dead player's name
 			String killer = m_botAction.getPlayerName(event.getKillerID()); // Get killer's name
-			short kteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get dead player's team #
-			short dteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get killer's team #
+			short kteam = m_botAction.getPlayer(event.getKillerID()).getFrequency(); //Get killer's team #
+			short dteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get dead player's team #
 
 			_teams[kteam].playerKill(name, ship);
 			boolean hasLivesLeft = _teams[dteam].playerDeath(name);
 			if(!hasLivesLeft)
 				m_botAction.setShip(name, 3);
 
+
 			switch(ship)
 			{
 				case MINESWEEPER:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Minesweeper! ("+ name +", killed by "+ killer +")",19);
-					if(!hasLivesLeft)
+					if(hasLivesLeft)
 						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case SUB:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Submarine! ("+ name +", killed by "+ killer +")",19);
-					if(!hasLivesLeft)
+					if(hasLivesLeft)
 						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case FRIGATE:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a Frigate! ("+ name +", killed by "+ killer +")",19);
-					if(!hasLivesLeft)
+					if(hasLivesLeft)
 						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case BATTLESHIP:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost a BATTLESHIP! ("+ name +", killed by "+ killer +")",19);
-					if(!hasLivesLeft)
+					if(hasLivesLeft)
 						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 
 				case CARRIER:
 					m_botAction.sendArenaMessage("Team "+ dteam + " just lost an AIRCRAFT CARRIER! ("+ name +", killed by "+ killer +")",19);
-					if(!hasLivesLeft)
+					if(hasLivesLeft)
 						m_botAction.scheduleTask(new CapshipRespawn(name, dteam), 3500);
 				break;
 			}
@@ -1124,7 +1136,12 @@ public class bship extends MultiModule implements TSChangeListener
 			showObjects(event.getPlayerID());
 
 		if(state == ACTIVE)
+		{
+			if(event.getShipType() != SPEC && event.getTeam() < _teams.length)
+				_teams[event.getTeam()].setShip(event.getPlayerName(), event.getShipType());
+
 			checkForLosers();
+		}
 	}
 
 	/**
@@ -1134,7 +1151,12 @@ public class bship extends MultiModule implements TSChangeListener
 	public void handleEvent(PlayerLeft event)
 	{
 		if(state == ACTIVE)
+		{
+			for(int x = 0; x < _teams.length; x++)
+				_teams[x].removePlayer(m_botAction.getPlayerName(event.getPlayerID()));
+
 			checkForLosers();
+		}
 	}
 
 	/**
@@ -1185,9 +1207,9 @@ public class bship extends MultiModule implements TSChangeListener
 				if(bp == null)
 					bp = new BSPlayer(name);
 
-				if((Boolean)m_tsm.getSetting("cslock"))
+				if((Boolean)m_tsm.getSetting("cslock") || bp.lives < 1)
 				{
-					if(event.getShipType() > 3 && bp.ship < 3)
+					if(event.getShipType() > 3)
 						m_botAction.setShip(event.getPlayerID(), bp.ship);
 					else
 						_teams[freq].setShip(name, ship);
@@ -1217,7 +1239,7 @@ public class bship extends MultiModule implements TSChangeListener
 		int bShip = 0;
 
 		int boat = event.getAttacheeID();
-		if(m_botAction.getPlayer(boat) != null)
+		if(event.isAttaching())
 		{
 			bShip = m_botAction.getPlayer(boat).getShipType();
 
@@ -1251,7 +1273,6 @@ public class bship extends MultiModule implements TSChangeListener
 				break;
 			}
 		}
-
 		else
 		{
 			switch(tShip)//Warp turrets back to spawn so they don't sit there w/o ship
