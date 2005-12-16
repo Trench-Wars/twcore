@@ -3,10 +3,12 @@ package twcore.misc.tempset;
 abstract class TempSetting
 {
 	protected String m_name;
+	protected boolean m_locked;
 
 	public TempSetting(String name)
 	{
 		m_name = name;
+		m_locked = false;
 	}
 
 	public String getName()
@@ -14,20 +16,42 @@ abstract class TempSetting
 		return m_name;
 	}
 
+	public void setLocked(boolean locked)
+	{
+		m_locked = locked;
+	}
+
+	public boolean getLocked()
+	{
+		return m_locked;
+	}
+
+	public Result setValue(String arg)
+	{
+		Result r = null;
+		if(m_locked)
+		{
+			r = new Result();
+			r.response = "That setting is currently locked.";
+		}
+
+		return r;
+	}
+
 	public abstract Object getValue();
-	public abstract Result setValue(String arg);
+
 }
 
 class Result
 {
 	public String response;
 	public boolean changed;
-	
+
 	public Result()
 	{
 		response = "No change to made to setting.";
 		changed = false;
-	}	
+	}
 }
 
 class IntSetting extends TempSetting
@@ -48,25 +72,28 @@ class IntSetting extends TempSetting
 	public Result setValue(String arg)
 	{
 		int val;
-		Result r = new Result();
+		Result r = super.setValue(arg);
 
-		try{
-		val = Integer.parseInt(arg);
-		}catch(Exception e)
+		if(r == null)
 		{
-			r.response = "Value for "+ m_name +" must be a valid integer.";
-			return r;
-		}
-		if(m_restricted)
-			if(val < m_min || val > m_max)
+			try{
+			val = Integer.parseInt(arg);
+			}catch(Exception e)
 			{
-				r.response = "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
+				r.response = "Value for "+ m_name +" must be a valid integer.";
 				return r;
 			}
+			if(m_restricted)
+				if(val < m_min || val > m_max)
+				{
+					r.response = "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
+					return r;
+				}
 
-		m_value = val;
-		r.changed = true;
-		r.response = "Value for "+ m_name +" set to "+ val;
+			m_value = val;
+			r.changed = true;
+			r.response = "Value for "+ m_name +" set to "+ val;
+		}
 		return r;
 	}
 
@@ -96,13 +123,17 @@ class StringSetting extends TempSetting
 
 	public Result setValue(String arg)
 	{
-		Result r = new Result();
-		if(!m_value.equals(arg))
-		{	
-			m_value = arg;
-		
-			r.changed = true;
-			r.response ="Value for "+ m_name +" set to "+ arg;
+		Result r = super.setValue(arg);
+		if(r == null)
+		{
+
+			if(!m_value.equals(arg))
+			{
+				m_value = arg;
+
+				r.changed = true;
+				r.response ="Value for "+ m_name +" set to "+ arg;
+			}
 		}
 		return r;
 	}
@@ -127,13 +158,16 @@ class BoolSetting extends TempSetting
 	public Result setValue(String arg)
 	{
 		arg = arg.toLowerCase();
-		Result r = new Result();
-		boolean val = (arg.equals("true")) || arg.equals("t") || arg.equals("on") || arg.equals("yes") || arg.equals("y");
-		if(m_value != val)
+		Result r = super.setValue(arg);
+		if(r == null)
 		{
-			r.changed = true;
-			m_value = val;
-			r.response = "Value for "+ m_name +" set to "+ m_value;
+			boolean val = (arg.equals("true")) || arg.equals("t") || arg.equals("on") || arg.equals("yes") || arg.equals("y");
+			if(m_value != val)
+			{
+				r.changed = true;
+				m_value = val;
+				r.response = "Value for "+ m_name +" set to "+ m_value;
+			}
 		}
 		return r;
 	}
@@ -162,25 +196,28 @@ class DoubleSetting extends TempSetting
 	public Result setValue(String arg)
 	{
 		double val;
-		Result r = new Result();
+		Result r = super.setValue(arg);
 
-		try{
-		val = Double.parseDouble(arg);
-		}catch(Exception e)
+		if(r == null)
 		{
-			r.response = "Value for "+ m_name +" must be a valid number.";
-			return r;
-		}
-		if(m_restricted)
-			if(val < m_min || val > m_max)
+			try{
+			val = Double.parseDouble(arg);
+			}catch(Exception e)
 			{
-				r.response = "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
+				r.response = "Value for "+ m_name +" must be a valid number.";
 				return r;
 			}
+			if(m_restricted)
+				if(val < m_min || val > m_max)
+				{
+					r.response = "Value for "+ m_name +" must be between "+ m_min +" and "+ m_max;
+					return r;
+				}
 
-		m_value = val;
-		r.changed = true;
-		r.response = "Value for "+ m_name +" set to "+ val;
+			m_value = val;
+			r.changed = true;
+			r.response = "Value for "+ m_name +" set to "+ val;
+		}
 		return r;
 	}
 

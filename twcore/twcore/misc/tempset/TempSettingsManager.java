@@ -146,14 +146,14 @@ public class TempSettingsManager
 		{
 			Tools.printLog("TempSet: Could not retrieve setting "+name +" (doesn't exist)");
 			return null;
-		}		
+		}
 		return t.getValue();
 	}
 
 	/**
 	 * This changes the value of a setting, with an optional message being returned
 	 * @param name The name of the setting to change
-	 * @param arg The new value you want for the setting 
+	 * @param arg The new value you want for the setting
 	 * @return A message describing the success or failure of the set attempt
 	 */
 	public String setValue(String name, String arg)
@@ -161,12 +161,12 @@ public class TempSettingsManager
 		TempSetting t = m_settings.get(name);
 		if(t == null)
 			return "Setting "+ name +" does not exist";
-		
+
 		Result r = t.setValue(arg);
 		if(r.changed)
 			for(TSChangeListener l : m_listeners)
 				l.settingChanged(name, arg);
-		
+
 		return r.response;
 	}
 
@@ -228,13 +228,30 @@ public class TempSettingsManager
 
 	/**
 	 * This locks/unlocks settings from being modified through the command interface (!set)
+	 * @param name The name of the setting to set locked or unlocked
 	 * @param locked Whether settings should be locked or unlocked
 	 */
-	public void setLocked(boolean locked)
+	public void setLocked(String name, boolean locked)
+	{
+		TempSetting t = m_settings.get(name);
+		if(t == null)
+				Tools.printLog("TempSet: Setting "+ name +" does not exist");
+			else
+				t.setLocked(locked);
+	}
+
+	/**
+	 * This locks/unlocks all settings from being modified through the command interface (!set)
+	 * Individual command locks are preserved, but if you setAllLocked(true), it overrides
+	 * any non-locked commands.
+	 * @param name The name of the setting to set locked or unlocked
+	 * @param locked Whether settings should be locked or unlocked
+	 */
+	public void setAllLocked(boolean locked)
 	{
 		m_locked = locked;
 	}
-	
+
 	public void addTSChangeListener(TSChangeListener t)
 	{
 		if(!m_listeners.contains(t))
