@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.*;
 import java.net.*;
 import java.io.*;
-import com.wilko.jaim.*;
 
 /** Bot to host "channels" that allow a player to ?message or pm
  *  everyone on the channel so that information can be spread easily.
@@ -26,10 +25,6 @@ import com.wilko.jaim.*;
  *
  *  Added a thing for default channels so you don't have to do !command channel:blahblahblah all the time
  *
- *  Added a buddy list thing for my planned AIM stuff.
- *
- *  Added AOL Instant Messanger support.
- *
  *  Added a news feature for the lobby thing that qan is designing. Highmod+ can add news messages that get arena'd every 90 sec's.
  *
  *  Added all new commands to !help thus making !help a 41 PM long help message.
@@ -39,23 +34,20 @@ import com.wilko.jaim.*;
  *  Added an alerts chat type thing for in lobby.
  *
  *  Fixed help so it doesn't spam 41 lines.
+ *
+ *  Deleted AIM stuff because I dislike it
  */
-public class messagebot extends SubspaceBot implements JaimEventListener
+public class messagebot extends SubspaceBot
 {
 	HashMap channels;
 	HashMap defaultChannel;
-	HashMap buddyLists;
-	HashMap aimLogins;
-	HashMap aimToTW;
 	HashSet ops;
 	HashMap news;
 	ArrayList newsIDs;
 	int newsID;
 	CommandInterpreter m_CI;
-	TimerTask messageDeleteTask, messageBotSync, aimReconnect, newsTask, newsChatTask;
+	TimerTask messageDeleteTask, messageBotSync, newsTask, newsChatTask;
 	public static final String IPCCHANNEL = "messages";
-	JaimConnection aimConnection;
-	boolean aimOn = false;
 	boolean bug = false;
 	boolean newsAlerts = false;
 	
@@ -70,9 +62,6 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 		events.request(EventRequester.LOGGED_ON);
 		channels = new HashMap();
 		defaultChannel = new HashMap();
-		buddyLists = new HashMap();
-		aimLogins = new HashMap();
-		aimToTW = new HashMap();
 		ops = new HashSet();
 		news = new HashMap();
 		newsIDs = new ArrayList();
@@ -80,7 +69,6 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
 		createTasks();
-//		m_botAction.scheduleTask(aimReconnect, 1);
 		m_botAction.scheduleTaskAtFixedRate(messageDeleteTask, 30 * 60 * 1000, 30 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 2 * 60 * 1000, 2 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(newsTask, 90 * 1000, 90 * 1000);
@@ -161,15 +149,9 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         m_CI.registerCommand( "!login",		 acceptedMessages, this, "playerLogin");
         m_CI.registerCommand( "!setdefault", acceptedMessages, this, "setPlayerDefaultChannel");
         m_CI.registerCommand( "!default",	 acceptedMessages, this, "tellPlayerDefaultChannel");
-        m_CI.registerCommand( "!register",	 acceptedMessages, this, "registerName");
-        m_CI.registerCommand( "!aim",		 acceptedMessages, this, "aimMessage");
-        m_CI.registerCommand( "!add",		 acceptedMessages, this, "addBuddy");
-        m_CI.registerCommand( "!remove",	 acceptedMessages, this, "removeBuddy");
-        m_CI.registerCommand( "!buddylist",	 acceptedMessages, this, "buddyList");
         m_CI.registerCommand( "!addnews",	 acceptedMessages, this, "addNewsItem");
         m_CI.registerCommand( "!delnews",	 acceptedMessages, this, "deleteNewsItem");
         m_CI.registerCommand( "!readnews",	 acceptedMessages, this, "readNewsItem");
-        m_CI.registerCommand( "!setaimname", acceptedMessages, this, "setAIMName");
         m_CI.registerCommand( "!bug",		 acceptedMessages, this, "bugMe");
         m_CI.registerCommand( "!debug",		 acceptedMessages, this, "stopBuggingMe");
         m_CI.registerCommand( "!alerts",	 acceptedMessages, this, "announceToAlerts");
@@ -648,14 +630,6 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	        m_botAction.sendSmartPrivateMessage(name, "    !decline <channel>:<name>      -Declines <name>'s request to join <channel>.");
 		    if(m_botAction.getOperatorList().isZH(name))
 		       	m_botAction.sendSmartPrivateMessage(name, "    !create <channel>              -Creates a channel with the name <channel>.");
-		} else if(message.toLowerCase().startsWith("aim")) {
-	    	m_botAction.sendSmartPrivateMessage(name, "AIM interface commands:");
-	        m_botAction.sendSmartPrivateMessage(name, "    !register <name>               -Registers you for a buddy list and sets your AIM name as <name>.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !aim <player>:<message>        -Sends <message> to <player>'s AIM screen name.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !add <name>                    -Adds <name> to your buddy list.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !remove <name>                 -Removes <name> from your buddy list.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !buddylist                     -PM's you your buddy list.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !setaimname <name>             -Sets your AIM name to <name>.");
 	    } else if(message.toLowerCase().startsWith("news")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "News interface commands:");
 	    	m_botAction.sendSmartPrivateMessage(name, "    !readnews <#>                  -PM's you news article #<#>.");
@@ -666,7 +640,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	        m_botAction.sendSmartPrivateMessage(name, "    !go <arena>                    -Sends messagebot to <arena>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !die                           -Kills messagebot.");
         } else {
-	    	String defaultHelp = "!help <section>                    -Replace <section> with message or channel to get the messaging system help, replace with aim to get aim help, replace with news to get news help";
+	    	String defaultHelp = "!help <section>                    -Replace <section> with message or channel to get the messaging system help, replace with news to get news help";
 	    	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
 	    		defaultHelp += ", replace with smod to get the smod commands.";
 	    	else
@@ -721,50 +695,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 				}
 				results.close();
 			} catch(Exception e) { Tools.printStackTrace( e ); }
-			
-			query = "SELECT * FROM tblAIMUser";
-			
-			try {
-				ResultSet results = m_botAction.SQLQuery("local", query);
-				
-				HashMap nameID = new HashMap();
-				
-				while(results.next())
-				{
-					nameID.put(results.getString("fcName"), results.getInt("fnID"));
-				}
-				
-				HashMap idBuddyList = new HashMap();		
-				
-				query = "SELECT * FROM tblBuddyList";
-				results = m_botAction.SQLQuery("local", query);
-				
-				while(results.next())
-				{
-					String buddyName = results.getString("fcBuddyName");
-					int pID = results.getInt("fnID");
-					if(idBuddyList.containsKey(pID)) {
-						HashSet buddies = (HashSet)idBuddyList.get(pID);
-						buddies.add(buddyName);
-						idBuddyList.put(pID, buddies);
-					} else {
-						HashSet buddies = new HashSet();
-						buddies.add(buddyName);
-						idBuddyList.put(pID, buddies);
-					}
-				}
-				
-				Iterator it = nameID.keySet().iterator();
-				while(it.hasNext())
-				{
-					String name = (String)it.next();
-					int id = (Integer)nameID.get(name);
-					HashSet buddies = (HashSet)idBuddyList.get(id);
-					if(buddies == null) buddies = new HashSet();
-					buddyLists.put(name, new BuddyList(name, id, buddies, m_botAction));
-				}
-			} catch(SQLException e) { Tools.printStackTrace(e); }
-			
+						
 			query = "SELECT * FROM tblBotNews ORDER BY fnID DESC";
 			try {
 				ResultSet results = m_botAction.SQLQuery("local", query);
@@ -783,8 +714,6 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 					
 		} catch(Exception e) {}
 		
-//		aimLogins.put("olos necaj", "ikrit <er>");
-//		HashSet h = new HashSet(); h.add("ikrit <er>"); buddyLists.put("ikrit <er>", new BuddyList("ikrit <er>", 1, h, m_botAction));
 	}
 	
 	/** Reads a message from the database.
@@ -953,110 +882,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	 		m_botAction.sendSmartPrivateMessage(name, "Default channel: " + defaultChannel.get(name.toLowerCase()));
 	 	else
 	 		m_botAction.sendSmartPrivateMessage(name, "You have not set your default channel.");
-	 }
-	 
-	 /** Registers a name for the AIM stuff.
-	  *  @param name Name of player
-	  *  @param empty ""
-	  */
-	  public void registerName(String name, String aimName) {
-	  	if(buddyLists.containsKey(name.toLowerCase())) {
-	  		m_botAction.sendSmartPrivateMessage(name, "You have already registered for this.");
-	  		return;
-	  	} else {
-	  		try {
-		  		m_botAction.SQLQuery("local", "INSERT INTO tblAIMUser (fnID, fcName, fcAIMName) VALUES (0, '"+Tools.addSlashesToString(name.toLowerCase())+"', '"+Tools.addSlashesToString(aimName.toLowerCase())+"')");
-		  		int id = m_botAction.SQLQuery("local", "SELECT fnID FROM tblAIMUser WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'").getInt("fnID");
-		  		m_botAction.sendSmartPrivateMessage(name, "Registration complete, you may use the AIM name " + aimName + " to send PMs with me.");
-		  		buddyLists.put(name.toLowerCase(), new BuddyList(name.toLowerCase(), id, new HashSet(), m_botAction));
-		  		aimLogins.put(name.toLowerCase(), aimName.toLowerCase());
-		  		aimToTW.put(aimName.toLowerCase(), name.toLowerCase());
-		  	} catch(Exception e) { }
-		}
-	}
-	
-	/** Sets AIM name.
-	 *  @param name Name of player
-	 *  @param AIM name.
-	 */
-	 public void setAIMName(String name, String aimName) {
-	 	String query = "UPDATE tblAIMUser SET fcAIMName = '"+Tools.addSlashesToString(aimName.toLowerCase())+"' WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
-	 	try {
-	 		m_botAction.SQLQuery("local", query);
-	 		aimLogins.put(name.toLowerCase(), aimName.toLowerCase());
-	 		aimToTW.put(aimName.toLowerCase(), name.toLowerCase());
-	 		m_botAction.sendSmartPrivateMessage(name, "AIM name set to: " + aimName);
-	 	} catch(Exception e) { Tools.printStackTrace(e); m_botAction.sendSmartPrivateMessage(name, "Update failed."); }
-	 }
-	
-	/** Adds a name to buddy list.
-	 *  @param name Name of player
-	 *  @param buddy Name of buddy
-	 */
-	 public void addBuddy(String name, String buddy) {
-	 	if(!buddyLists.containsKey(name.toLowerCase())) {
-	 		m_botAction.sendSmartPrivateMessage(name, "You have not registered for a buddy list yet.");
-	 		return;
-	 	}
-	 	
-	 	BuddyList bList = (BuddyList)buddyLists.get(name.toLowerCase());
-	 	bList.addBuddy(buddy);
-	 }
-	 
-	/** Removes a name from buddy list.
-	 *  @param name Name of player
-	 *  @param buddy Name of buddy
-	 */
-	 public void removeBuddy(String name, String buddy) {
-	 	if(!buddyLists.containsKey(name.toLowerCase())) {
-	 		m_botAction.sendSmartPrivateMessage(name, "You have not registered for a buddy list yet.");
-	 		return;
-	 	}
-	 	
-	 	BuddyList bList = (BuddyList)buddyLists.get(name.toLowerCase());
-	 	bList.removeBuddy(buddy);
-	 }
-	 
-	/** Lists a player's buddy list.
-	 *  @param name Name of player
-	 *  @param empty ""
-	 */
-	 public void buddyList(String name, String empty) {
-	 	if(!buddyLists.containsKey(name.toLowerCase())) {
-	 		m_botAction.sendSmartPrivateMessage(name, "You have not registered for a buddy list yet.");
-	 		return;
-	 	}
-	 	
-	 	BuddyList bList = (BuddyList)buddyLists.get(name.toLowerCase());
-	 	bList.listBuddies();
-	 }
-	 
-	/** Sends aim message.
-	 *  @param name Name of player
-	 *  @param message Player that's getting message and message
-	 */
-	 public void aimMessage(String name, String message) {
-	 	if(!buddyLists.containsKey(name.toLowerCase())) {
-	 		m_botAction.sendSmartPrivateMessage(name, "You have not registered for a buddy list yet.");
-	 		return;
-	 	}
-	 	if(!aimOn) {
-	 		m_botAction.sendSmartPrivateMessage(name, "The bot cannot sign on to AIM right now, please try again later.");
-	 		return;
-	 	}
-	 	
-	 	String pieces[] = message.split(":", 2);
-	 	String aimName = (String)aimLogins.get(pieces[0].toLowerCase());
-	 	if(aimName == null) return;
-	 	
-	 	if(bothBuddies(name, pieces[0]))
-	 		try {
-	 			aimConnection.sendIM(aimName, addSpecialChars(name + "> " + pieces[1]));
-	 		} catch(Exception e) { }
-	 	else
-	 		m_botAction.sendSmartPrivateMessage(name, "You must be buddies with the player before you can send a message.");
-	 }
-	 			
+	 }	 			
 	 
 	/** Retrieves the channel name out of the message.
 	 *  @param name Name of player.
@@ -1109,8 +935,6 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 	 {
 	 	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) {
 	 		try {
-		 		aimConnection.logOut();
-		 		aimConnection.disconnect();
 			 	m_botAction.die();
 			} catch(Exception e) { }
 		}
@@ -1193,13 +1017,7 @@ public class messagebot extends SubspaceBot implements JaimEventListener
 				}
 			}
 		};
-		
-		aimReconnect = new TimerTask() {
-        	public void run() {
-        		setupAIM();
-        	}
-        };
-        
+		        
         newsTask = new TimerTask() {
         	public void run() {
         		nextNews();
@@ -1212,207 +1030,6 @@ public class messagebot extends SubspaceBot implements JaimEventListener
         	}
         };
 	}
-		
-	/** Sets up all the stuff for AIM.
-	 */
-	public void setupAIM()
-	{
-		System.out.println("Trying to connect...");
-		try {
-			aimConnection = new JaimConnection("toc.oscar.aol.com",9898);
-			aimConnection.setDebug(false);               // Send debugging to standard output
-	        aimConnection.connect();
-	            
-	        aimConnection.addEventListener(this);
-	        aimConnection.watchBuddy("unknownbuddy1212");         // Must watch at least one buddy or you will not appear on buddy listings
-	            
-	        aimConnection.logIn("TW MessageBot","hogwarts",50000);
-	        aimConnection.addBlock("");     // Set Deny None
-	            
-	        aimConnection.setInfo("This buddy is using <a href=\"http://jaimlib.sourceforge.net\">Jaim</a>.");
-	     } catch(Exception e) { Tools.printStackTrace(e); }
-	}
-		
-	/** Receive an event and process it according to its content
-     *@param event - The JaimEvent to be processed
-     */
-    public void receiveEvent(JaimEvent event) {
-        TocResponse tr=event.getTocResponse();
-        String responseType=tr.getResponseType();
-        if (responseType.equalsIgnoreCase(IMTocResponse.RESPONSE_TYPE)) {
-        	receiveIM((IMTocResponse)tr);
-        } else if (responseType.equalsIgnoreCase(ConfigTocResponse.RESPONSE_TYPE)) {
-        	receiveConfig();
-    	} else if (responseType.equalsIgnoreCase(LoginCompleteTocResponse.RESPONSE_TYPE)) {
-    		aimReconnect.cancel();
-    		aimOn = true;
-        } else if (responseType.equalsIgnoreCase(ConnectionLostTocResponse.RESPONSE_TYPE)) {
-        	aimReconnect = new TimerTask() {
-        		public void run() {
-        			setupAIM();
-        		}
-        	};
-        	m_botAction.scheduleTask(aimReconnect, 60 * 1000);
-        	aimOn = false;
-        } else {
-        	System.out.println(tr.toString());
-        }
-    }
-    
-    /** AIM stuff...
-     */
-    public void receiveConfig() {
-        System.out.println("Config is now valid.");
-        
-        try {
-            Iterator it= aimConnection.getGroups().iterator();
-            while (it.hasNext()) {
-                Group g=(Group)it.next();
-                System.out.println("Group: "+g.getName());
-                Enumeration e=g.enumerateBuddies();
-                while (e.hasMoreElements()) {
-                    Buddy b =(Buddy)e.nextElement();
-                    b.setDeny(false);
-                    b.setPermit(false);
-                    aimConnection.watchBuddy(b.getName());
-                    if (b.getDeny()) {
-                        aimConnection.addBlock(b.getName());
-                    }
-                    if (b.getPermit()) {
-                        aimConnection.addPermit(b.getName());
-                    }
-                }
-            }
-            aimConnection.saveConfig();
-        }
-        catch (Exception je) {
-            je.printStackTrace();
-        }
-    }
-    
-    /** Receives an IM.
-     *  @param im Response thing.
-     */
-     public void receiveIM(IMTocResponse im) {
-     	String player = im.getFrom();
-     	String message = removeSpecialChars(Utils.stripHTML(im.getMsg()));
-     	System.out.println(im.getMsg());
-     	try {
-	     	if(aimToTW.containsKey(player.toLowerCase())) {
-	     		String name = (String)aimToTW.get(player.toLowerCase());
-	     		if(message.toLowerCase().startsWith("!add ")) {
-	     			BuddyList bList = (BuddyList)buddyLists.get(name);
-	     			String pieces[] = message.split(" ", 2);
-	     			if(bList.addBuddy(pieces[1]))
-	     				aimConnection.sendIM(player, "Buddy added.");
-	     			else
-	     				aimConnection.sendIM(player, "Already buddy.");
-	     		} else if(message.toLowerCase().startsWith("!remove ")) {
-	     			BuddyList bList = (BuddyList)buddyLists.get(name);
-	     			String pieces[] = message.split(" ", 2);
-	     			if(bList.removeBuddy(pieces[1]))
-	     				aimConnection.sendIM(player, "Buddy removed.");
-	     			else
-	     				aimConnection.sendIM(player, "Not a buddy.");
-	     		} else if(message.toLowerCase().startsWith("!help")) {
-	     			aimConnection.sendIM(player, "!add <name>   -Adds a player to your buddy list. <br> !remove <name>   -Removes a player from your buddy list. <br> Name:Message  -Sends Name 'message' through pm.");
-	     		} else {
-	     			String pieces[] = message.split(":", 2);
-	     			if(bothBuddies(name, pieces[0]))
-	     				m_botAction.sendSmartPrivateMessage(pieces[0], name + "> " + pieces[1]);
-	     			else
-	     				aimConnection.sendIM(player, "You need to be on that player's buddy list to send them pm's.");
-	     		}
-	     	}
-	     } catch(Exception e) { }
-	     
-	     try {
-	     	Integer.parseInt("haha");
-	     } catch(Exception e) {
-	     	StackTraceElement[] els = e.getStackTrace();
-	     	String msgs[] = new String[els.length];
-	     	for(int k = 0;k < els.length;k++)
-	     		msgs[k] = els[k].toString();
-	     	sendIMArray("olos necaj", msgs);
-	     	e.printStackTrace();
-	     }
-     }
-     
-     public void sendIMArray(String name, String messages[]) {    	
-    	for(int k = 0;k < messages.length;k++)
-    		messages[k] = addSpecialChars(messages[k]);
-		
-    	String message = "<html><body bgcolor=\"#ffffff\"><font LANG=\"0\">";
-    	for(int k = 0;k < messages.length - 1;k--) {
-    		message += messages[k] + "<BR>";
-    	}
-    	
-    	message += messages[0] + "</font></body></html>";
-    	try {
-    		aimConnection.sendIM(name, message);
-    	} catch(Exception e) {}
-    }
-     
-     /** Checks if allowed to PM.
-      *  @param Player1 One player
-      *  @param Player2 Two player
-      */
-      public boolean bothBuddies(String p1, String p2) {
-      	BuddyList b1 = (BuddyList)buddyLists.get(p1.toLowerCase());
-      	BuddyList b2 = (BuddyList)buddyLists.get(p2.toLowerCase());
-      	if(b1 == null || b2 == null) return false;
-      	if(b1.isBuddy(p2) && b2.isBuddy(p1)) return true;
-      	else return false;
-      }
-      
-     /** Takes all the stupid things out of the message.
-      *  @param message Message thing
-      */
-      public String removeSpecialChars(String message) {
-      	for(int k = 0;k < message.length();k++) {
-      		if(message.charAt(k) == '&') {
-      			String type = "";
-      			k++;
-      			while(message.charAt(k) != ';') {
-      				type += message.charAt(k);
-      				k++;
-      			}
-      			String pieces[] = message.split("&" + type + ";", 2);
-      			message = pieces[0] + getChar(type) + pieces[1];
-      			k -= (2 + type.length());
-      		}
-      	}
-      	return message;
-      }
-      
-    /** Returns the right char for type
-     *  @param type The type
-     */
-     public char getChar(String type) {
-       	type = type.toLowerCase();
-       	if(type.equals("lt")) return '<';
-       	else if(type.equals("gt")) return '>';
-       	else if(type.equals("amp")) return '&';
-       	else if(type.equals("quot")) return '"';
-       	else return ' ';
-     }
-     
-    /** Adds the &abc; things.
-     *  @param message Message
-     */
-     public String addSpecialChars(String message) {
-     	for(int k = 0;k < message.length();k++) {
-     		char atK = message.charAt(k);
-     		if(atK == '<') {
-     			String pieces[] = message.split("<", 2);
-     			message = pieces[0] + "&lt;" + pieces[1];
-     		} else if(atK == '>') {
-     			String pieces[] = message.split(">", 2);
-     			message = pieces[0] + "&gt;" + pieces[1];
-     		}
-     	}
-     	return message;
-     }
      
     /** Adds a news item.
      *  @param name Name of player adding.
@@ -2018,77 +1635,6 @@ class Channel
 	 	}
 	 }
 	
-}
-
-
-class BuddyList
-{
-	String name;
-	int id;
-	HashSet buddies;
-	BotAction m_bA;
-	
-	public BuddyList(String n, int i, HashSet buds, BotAction ba)
-	{
-		name = n;
-		id = i;
-		buddies = buds;
-		m_bA = ba;
-	}
-	
-	public boolean addBuddy(String n)
-	{
-		try {
-			if(buddies.add(n.toLowerCase())) {
-				m_bA.SQLQuery("local", "INSERT INTO tblBuddyList (fnID, fcBuddyName) VALUES ("+id+", '"+Tools.addSlashesToString(n.toLowerCase())+"')");
-				m_bA.sendSmartPrivateMessage(name, n + " added to buddy list.");
-				return true;
-			} else {
-				m_bA.sendSmartPrivateMessage(name, n + " is already on your buddy list.");
-			}
-		} catch(Exception e) { }
-		return false;
-	}
-	
-	public boolean removeBuddy(String n)
-	{
-		try {
-			if(buddies.remove(n.toLowerCase())) {
-				m_bA.SQLQuery("local", "DELETE FROM tblBuddyList WHERE fcBuddyName = '"+Tools.addSlashesToString(n.toLowerCase())+"'");
-				m_bA.sendSmartPrivateMessage(name, n + " removed from buddy list.");
-				return true;
-			} else {
-				m_bA.sendSmartPrivateMessage(name, n + " is not on your buddy list.");
-			}
-		} catch(Exception e) { }
-		return false;
-	}
-	
-	public void listBuddies()
-	{
-		Iterator it = buddies.iterator();
-		String message = "";
-		m_bA.sendSmartPrivateMessage(name, "Buddy list:");
-		for(int k = 0;it.hasNext();)
-		{
-			String pName = (String)it.next();
-			if(k % 10 != 0)
-				message += ", ";
-			
-			message += pName;
-			k++;
-			if(k % 10 == 0 || !it.hasNext())
-			{
-				m_bA.sendSmartPrivateMessage(name, message);
-				message = "";
-			}
-		}
-	}
-	
-	public boolean isBuddy(String name) {
-		if(buddies.contains(name.toLowerCase())) return true;
-		else return false;
-	}
 }
 
 class NewsArticle 
