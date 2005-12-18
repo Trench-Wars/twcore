@@ -147,8 +147,6 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!me",		 acceptedMessages, this, "myChannels");
         m_CI.registerCommand( "!die",		 acceptedMessages, this, "handleDie");
         m_CI.registerCommand( "!login",		 acceptedMessages, this, "playerLogin");
-        m_CI.registerCommand( "!setdefault", acceptedMessages, this, "setPlayerDefaultChannel");
-        m_CI.registerCommand( "!default",	 acceptedMessages, this, "tellPlayerDefaultChannel");
         m_CI.registerCommand( "!addnews",	 acceptedMessages, this, "addNewsItem");
         m_CI.registerCommand( "!delnews",	 acceptedMessages, this, "deleteNewsItem");
         m_CI.registerCommand( "!readnews",	 acceptedMessages, this, "readNewsItem");
@@ -157,6 +155,8 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!alerts",	 acceptedMessages, this, "announceToAlerts");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
+        
+        m_botAction.ipcSubscribe(IPCCHANNEL);
     }
     
     /** Creates a channel
@@ -611,8 +611,6 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !messages                      -PM's you all your message numbers.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                            -Tells you what channels you have joined.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !setdefault <channel>          -Sets your default channel.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !default                       -Tells you what your default channel is.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !announce <channel>:<message>  -Sends everyone on <channel> a pm of <message>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !message <channel>:<message>   -Leaves a message for everyone on <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !requests <channel>            -PM's you with all the requests to join <channel>.");
@@ -863,43 +861,17 @@ public class messagebot extends SubspaceBot
 	 	} catch(Exception e) { Tools.printStackTrace(e); }
 	 	return false;
 	 }
-	 
-	/** Sets the default channel for a player.
-	 *  @param name Name of player
-	 *  @param channel Channel to be set as default.
-	 */
-	 public void setPlayerDefaultChannel(String name, String channel) {
-	 	defaultChannel.put(name.toLowerCase(), channel.toLowerCase());
-	 	m_botAction.sendSmartPrivateMessage(name, "Default channel set to: " + channel.toLowerCase());
-	 }
-	 
-	/** Tells the player what their default is set to.
-	 *  @param name Name of the player
-	 *  @param empty ""
-	 */
-	 public void tellPlayerDefaultChannel(String name, String empty) {
-	 	if(defaultChannel.containsKey(name.toLowerCase()))
-	 		m_botAction.sendSmartPrivateMessage(name, "Default channel: " + defaultChannel.get(name.toLowerCase()));
-	 	else
-	 		m_botAction.sendSmartPrivateMessage(name, "You have not set your default channel.");
-	 }	 			
-	 
+	 	 
 	/** Retrieves the channel name out of the message.
 	 *  @param name Name of player.
 	 *  @param message Message sent
 	 */
 	 public String getChannel(String name, String message, boolean noParams) {
 	 	if(noParams) {
-	 		if(message.length() == 0 && defaultChannel.containsKey(name.toLowerCase()))
-	 			return (String)defaultChannel.get(name.toLowerCase());
-	 		else
-	 			return message;
+	 		return message;
 	 	} else {
 		 	if(message.indexOf(":") == -1) {
-		 		if(defaultChannel.containsKey(name.toLowerCase()))
-		 			return (String)defaultChannel.get(name.toLowerCase());
-		 		else
-		 			return "";
+	 			return "";
 		 	} else {
 		 		String pieces[] = message.split(":");
 		 		return pieces[0];
@@ -1105,7 +1077,7 @@ public class messagebot extends SubspaceBot
      	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Someone needs to go back to 1st grade to learn what a number is."); }
      	if(id == 9283749) return;
      	
-     	NewsArticle na = (NewsArticle)news.get(id2);
+     	NewsArticle na = (NewsArticle)news.get(id);
      	if(na == null) {
      		m_botAction.sendSmartPrivateMessage(name, "Invalid news id.");
      		return;
@@ -1138,10 +1110,7 @@ public class messagebot extends SubspaceBot
     /** Alternates the arena message between news and superalerts.
      */ 
      public void newsAlerts() {
-     	if(newsAlerts)
-  		   	m_botAction.sendArenaMessage("To receive news reports, join ?chat=news. -MessageBot");
-  		else
-  			m_botAction.sendArenaMessage("To get TWD match results with your alerts, join ?chat=superalerts. -MessageBot");
+  		 m_botAction.sendArenaMessage("To receive news reports, join ?chat=news. -MessageBot");
   		 newsAlerts = !newsAlerts;
     }
      
