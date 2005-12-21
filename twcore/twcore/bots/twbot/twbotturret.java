@@ -1,6 +1,6 @@
 package twcore.bots.twbot;
 
-//Attach Regulation TWBotExtension by D1st0rt v1.4
+//Attach Regulation TWBotExtension by D1st0rt v1.5
 
 import twcore.core.*;
 
@@ -107,13 +107,13 @@ public class twbotturret extends TWBotExtension
 		String help[] = {
 		"Note: Use ship numbers 1-8 for ships (anchor, turret)",
 		"!check <anchor>:<turret> - checks if turret can attach to anchor",
-		"!checka <anchor> - shows all ships allowed to attach to it",
-		"!checkt <turret> - shows all ships it can attach to",
+		"!checkattach <anchor> - shows all ships allowed to attach to it",
+		"!checkturret <turret> - shows all ships it can attach to",
 		"!checkall - displays all rules privately",
-		"!set <t/f>:<anchor>:<turret> - sets a rule of attaching",
-		"!seta <t/f>:<anchor> - sets rule for all ships attaching to anchor",
-		"!sett <t/f>:<turret> - sets rule for turret attaching to all ships",
-		"!setall <t/f> - sets rule for all attaching",
+		"!set <y/n>:<anchor>:<turret> - sets a rule of attaching",
+		"!setattach <y/n>:<anchor> - sets rule for all ships attaching to anchor",
+		"!setturret <y/n>:<turret> - sets rule for turret attaching to all ships",
+		"!setall <y/n> - sets rule for all attaching",
 		"!warpback <on/off> - warp players back to spawn on detach",
 		"!rules - announces attaching rules in an arena message"};
 		return help;
@@ -147,17 +147,17 @@ public class twbotturret extends TWBotExtension
 		try{
 		if(message.startsWith("!check "))
 			interpretCheck(name,message.substring(7));
-		else if(message.startsWith("!checka "))
+		else if(message.startsWith("!checkattach "))
 			interpretCheckA(name,message.substring(8));
-		else if(message.startsWith("!checkt "))
+		else if(message.startsWith("!checkturret "))
 			interpretCheckT(name,message.substring(8));
 		else if(message.startsWith("!checkall"))
 			interpretCheckAll(name,message);
 		else if(message.startsWith("!set "))
 			interpretSet(name,message.substring(5));
-		else if(message.startsWith("!seta "))
+		else if(message.startsWith("!setattach "))
 			interpretSetA(name,message.substring(6));
-		else if(message.startsWith("!sett "))
+		else if(message.startsWith("!setturret "))
 			interpretSetT(name,message.substring(6));
 		else if(message.startsWith("!setall"))
 			interpretSetAll(name,message.substring(8));
@@ -300,9 +300,9 @@ public class twbotturret extends TWBotExtension
 			anchor = Integer.parseInt(pieces[1]) - 1;
 			turret = Integer.parseInt(pieces[2]) - 1;
 
-			if(pieces[0].equals("t")) //allowed
+			if(pieces[0].equals("y")) //allowed
 				allowed = true;
-			else if(pieces[0].equals("f")) //not allowed
+			else if(pieces[0].equals("n")) //not allowed
 				allowed = false;
 			else
 				throw new Exception(); //didn't enter "t" or "f"
@@ -337,9 +337,9 @@ public class twbotturret extends TWBotExtension
 			String[] pieces = message.split(":");
 			anchor = Integer.parseInt(pieces[1])- 1;
 
-			if(pieces[0].equals("t")) //allowed
+			if(pieces[0].equals("y")) //allowed
 				allowed = true;
-			else if(pieces[0].equals("f")) //not allowed
+			else if(pieces[0].equals("n")) //not allowed
 				allowed = false;
 			else
 				throw new Exception(); //didn't enter "t" or "f"
@@ -375,9 +375,9 @@ public class twbotturret extends TWBotExtension
 			String[] pieces = message.split(":");
 			turret = Integer.parseInt(pieces[1])- 1;
 
-			if(pieces[0].equals("t")) //allowed
+			if(pieces[0].equals("y")) //allowed
 				allowed = true;
-			else if(pieces[0].equals("f")) //not allowed
+			else if(pieces[0].equals("n")) //not allowed
 				allowed = false;
 			else
 				throw new Exception(); //didn't enter "t" or "f"
@@ -406,9 +406,9 @@ public class twbotturret extends TWBotExtension
 	public void interpretSetAll(String name, String message)
 	{
 		boolean allowed;
-		if(message.startsWith("t")) //no attach restrictions
+		if(message.startsWith("y")) //no attach restrictions
 			allowed = true;
-		else if(message.startsWith("f")) //no attaching
+		else if(message.startsWith("n")) //no attaching
 			allowed = false;
 		else
 		{
