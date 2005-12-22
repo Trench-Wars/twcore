@@ -145,6 +145,11 @@ public class twbotdangerous extends TWBotExtension {
      * Clears all player records, and cancels all timer tasks. 
      */
     public void clearRecords() {
+        if( m_players != null )
+            return;
+        if( m_players.values() == null )
+            return;
+        
         Iterator i = m_players.values().iterator();
         
         while( i.hasNext() ) {
