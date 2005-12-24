@@ -94,6 +94,7 @@ public class messagebot extends SubspaceBot
 	 */
 	public void checkNewMessages(String name)
 	{
+		if(!notify.containsKey(name.toLowerCase())) setNotify(name.toLowerCase(), "yes");
 		if(!((Boolean)notify.get(name.toLowerCase()))) return;
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name)+"' and fnRead = 0";
 		try {
