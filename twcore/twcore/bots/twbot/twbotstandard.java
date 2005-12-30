@@ -126,8 +126,8 @@ public class twbotstandard extends TWBotExtension {
         			killEasy();
         		}
         	};
-        	m_botAction.setPlayerPositionUpdating(201);
-        	m_botAction.scheduleTask(ezT, 1000);
+        	m_botAction.setPlayerPositionUpdating(200);
+        	m_botAction.scheduleTask(ezT, 5000);
         }
 
         /*else if( message.startsWith( "!spec " )){
