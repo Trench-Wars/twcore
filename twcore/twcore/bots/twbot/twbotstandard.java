@@ -120,6 +120,14 @@ public class twbotstandard extends TWBotExtension {
                     m_botAction.setFreqtoFreq(Integer.parseInt(parameters[0]), Integer.parseInt(parameters[1]));
                 }
             }catch( Exception e ){}
+        } else if( message.startsWith("!easy") ) {
+        	TimerTask ezT = new TimerTask() {
+        		public void run() {
+        			killEasy();
+        		}
+        	};
+        	m_botAction.setPlayerPositionUpdating(201);
+        	m_botAction.scheduleTask(ezT, 1000);
         }
 
         /*else if( message.startsWith( "!spec " )){
@@ -141,6 +149,17 @@ public class twbotstandard extends TWBotExtension {
         } else if( message.startsWith( "!listmsg" )){
             handleListMsg( name );
         }*/
+    }
+    
+    public void killEasy() {
+    	Iterator it = m_botAction.getPlayingPlayerIterator();
+    	while(it.hasNext()) {
+    		Player p = (Player)it.next();
+    		Ship s = m_botAction.getShip();
+    		s.moveAndFire(p.getXLocation(), p.getYLocation(), s.getWeaponNumber((byte)4, (byte)2, false, false, true, (byte)8, false));
+    	}
+    //	m_botAction.setPlayerPositionUpdating(201);
+    	m_botAction.setPlayerPositionUpdating(0);
     }
 
     /** Creates the requested number of teams if possible
