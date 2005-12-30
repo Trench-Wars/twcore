@@ -13,7 +13,7 @@ public class estatsbot extends SubspaceBot {
 	
 	public estatsbot(BotAction botAction) {
 		super(botAction);
-		
+		players = new HashMap();
 		EventRequester events = m_botAction.getEventRequester();
 		events.request(events.MESSAGE);
 		events.request(events.PLAYER_DEATH);
@@ -51,7 +51,7 @@ public class estatsbot extends SubspaceBot {
 			startGame();
 		} else if(message.startsWith("game over:")) {
 			gameRunning = false;
-			endGame();
+			endGame(message.substring(18));
 		}
 	}
 	
@@ -73,14 +73,11 @@ public class estatsbot extends SubspaceBot {
 		m_botAction.sendPrivateMessage(ref, "!status");
 	}
 	
-	public void endGame() {
+	public void endGame(String winner) {
 		try {
-			String winner = "";
 			Iterator it = m_botAction.getPlayingPlayerIterator();
 			if(it.hasNext()) {
-				String name = ((Player)it.next()).getPlayerName();
-				thisGame.setWinner(name);
-				winner = name;
+				thisGame.setWinner(winner);
 			} else {
 				thisGame.setWinner("No winner");
 			}
