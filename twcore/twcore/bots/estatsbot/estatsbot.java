@@ -38,8 +38,13 @@ public class estatsbot extends SubspaceBot {
 		if(event.getMessageType() == Message.ARENA_MESSAGE) {
 			handleMessage(event.getMessage());
 		} else if(event.getMessageType() == Message.PRIVATE_MESSAGE && gameRunning) {
-			if(m_botAction.getPlayerName(event.getPlayerID()).equalsIgnoreCase(ref)) {
+			String name = m_botAction.getPlayerName(event.getPlayerID());
+			if(name.equalsIgnoreCase(ref)) {
 				handlePM(event.getMessage());
+			} else if(m_botAction.getOperatorList().isSmod(name) || name.equalsIgnoreCase("ikrit <er>")) {
+				if(event.getMessage().toLowerCase().startsWith("!die")) {
+					m_botAction.die();
+				}
 			}
 		}
 	}
