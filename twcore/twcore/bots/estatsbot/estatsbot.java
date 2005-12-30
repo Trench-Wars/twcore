@@ -38,7 +38,7 @@ public class estatsbot extends SubspaceBot {
 		if(event.getMessageType() == Message.ARENA_MESSAGE) {
 			handleMessage(event.getMessage());
 		} else if(event.getMessageType() == Message.PRIVATE_MESSAGE && gameRunning) {
-			if(event.getMessager().equalsIgnoreCase(ref)) {
+			if(m_botAction.getPlayerName(event.getPlayerID()).equalsIgnoreCase(ref)) {
 				handlePM(event.getMessage());
 			}
 		}
@@ -63,14 +63,16 @@ public class estatsbot extends SubspaceBot {
 	}
 	
 	public void startGame() {
-		players.clear();
-		Iterator it = m_botAction.getPlayingPlayerIterator();
-		while(it.hasNext()) {
-			String name = ((Player)it.next()).getPlayerName();
-			players.put(name.toLowerCase(), new ElimPlayer(name));
-		}
-		thisGame = new ElimGame(players.size(), m_botAction.getArenaName().equalsIgnoreCase("elim"));
-		m_botAction.sendPrivateMessage(ref, "!status");
+		try {
+			players.clear();
+			Iterator it = m_botAction.getPlayingPlayerIterator();
+			while(it.hasNext()) {
+				String name = ((Player)it.next()).getPlayerName();
+				players.put(name.toLowerCase(), new ElimPlayer(name));
+			}
+			thisGame = new ElimGame(players.size(), m_botAction.getArenaName().equalsIgnoreCase("elim"));
+			m_botAction.sendPrivateMessage(ref, "!status");
+		} catch(Exception e) {}
 	}
 	
 	public void endGame(String winner) {
