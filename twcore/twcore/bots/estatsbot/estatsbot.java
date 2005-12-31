@@ -66,7 +66,7 @@ public class estatsbot extends SubspaceBot {
 			String pieces[] = type.split(" to ");
 			thisGame.setType(pieces[0]);
 			thisGame.setKills(Integer.parseInt(pieces[1]));
-		} catch(Exception e) {}
+		} catch(Exception e) { Tools.printStackTrace(message, e); }
 	}
 	
 	public void startGame() {
