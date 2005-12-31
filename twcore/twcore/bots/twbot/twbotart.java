@@ -7,6 +7,9 @@ import java.net.*;
 
 public class twbotart extends TWBotExtension
 {
+	
+	
+	
 	public twbotart()
 	{
 	}
@@ -72,7 +75,7 @@ public class twbotart extends TWBotExtension
 								k += (temp - 1);
 								ship.move(ship.getX() + (16 * temp), ship.getY());
 							} else if(inString.charAt(k) == '?') {
-								ship.move(0, ship.getX(), ship.getY(), 0, 0, 36, 1200, 3);
+								ship.move(0, ship.getX(), ship.getY(), 0, 0, 4, 1200, 3);
 								ship.move(0, ship.getX(), ship.getY(), 0, 0, 0, 1200, 3);
 							} else {
 								ship.moveAndFire(ship.getX() + 16, ship.getY() + 0, getWeapon(inString.charAt(k)));
