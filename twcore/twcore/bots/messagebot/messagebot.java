@@ -95,7 +95,7 @@ public class messagebot extends SubspaceBot
 	public void checkNewMessages(String name)
 	{
 		if(!notify.containsKey(name.toLowerCase())) setNotify(name.toLowerCase(), "yes");
-		if(!((Boolean)notify.get(name.toLowerCase()))) return;
+		if(!((Boolean)notify.get(name.toLowerCase())).booleanValue()) return;
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name)+"' and fnRead = 0";
 		try {
 			ResultSet results = m_botAction.SQLQuery("local", query);
@@ -110,7 +110,7 @@ public class messagebot extends SubspaceBot
 				}
 			}
 			results.close();
-		} catch(Exception e) { Tools.printStackTrace(e); }
+		} catch(Exception e) { m_botAction.sendSmartPrivateMessage("Ikrit", e.getMessage()); Tools.printStackTrace(e); }
 	}
 	
 	/** Sets up the CommandInterpreter to respond to
