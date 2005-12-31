@@ -61,10 +61,12 @@ public class estatsbot extends SubspaceBot {
 	}
 	
 	public void handlePM(String message) {
-		String type = message.substring(15, message.indexOf(";"));
-		String pieces[] = type.split(" to ");
-		thisGame.setType(pieces[0]);
-		thisGame.setKills(Integer.parseInt(pieces[1]));
+		try {
+			String type = message.substring(15, message.indexOf(";"));
+			String pieces[] = type.split(" to ");
+			thisGame.setType(pieces[0]);
+			thisGame.setKills(Integer.parseInt(pieces[1]));
+		} catch(Exception e) {}
 	}
 	
 	public void startGame() {
