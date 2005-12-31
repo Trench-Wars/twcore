@@ -63,9 +63,7 @@ public class estatsbot extends SubspaceBot {
 	public void handlePM(String message) {
 		try {
 			String type = message.substring(15, message.indexOf(";"));
-			String pieces[] = type.split(" to ");
-			thisGame.setType(pieces[0]);
-			thisGame.setKills(Integer.parseInt(pieces[1]));
+			thisGame.setType(type);
 		} catch(Exception e) { Tools.printStackTrace(message, e); }
 	}
 	
@@ -131,7 +129,6 @@ class ElimPlayer {
 
 class ElimGame {
 	String gameType;
-	int kills;
 	int players;
 	String winner;
 	boolean isElim;
@@ -144,18 +141,14 @@ class ElimGame {
 	public void setType(String type) {
 		gameType = type;
 	}
-	
-	public void setKills(int k) {
-		kills = k;
-	}
-	
+		
 	public void setWinner(String w) {
 		winner = w;
 	}
 	
 	public String getQuery() {
 		int e = 0; if(isElim) e = 1;
-		String query = "INSERT INTO tblElimRound (fnGameID, fnPlayers, fcGameType, fnToWin, fcWinner, fnElim, ftDate) VALUES(0, "+players+", '"+gameType+"', "+kills+", '"+winner+"', "+e+", NOW());";
+		String query = "INSERT INTO tblElimRound (fnGameID, fnPlayers, fcGameType, fcWinner, fnElim, ftDate) VALUES(0, "+players+", '"+gameType+"', '"+winner+"', "+e+", NOW());";
 		return query;
 	}
 }
