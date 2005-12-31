@@ -55,15 +55,19 @@ public class twbotwipeout extends TWBotExtension
 	
 	public void handleEvent(FrequencyShipChange event)
 	{
+		String name = m_botAction.getPlayerName(event.getPlayerID());
 		if(event.getShipType() == 0)
 		{
-			String name = m_botAction.getPlayerName(event.getPlayerID());
 			if(players.contains(name))
 				players.remove(name);
 			if(playersKicked.contains(name))
 				playersKicked.remove(name);
 			if(gotKill.contains(name))
 				gotKill.remove(name);
+		} else if(isRunning) {
+			m_botAction.spec(name);
+			m_botAction.spec(name);
+			m_botAction.sendPrivateMessage(name, "Sorry, you cannot enter a game while it's running.");
 		}
 	}
 
@@ -106,16 +110,9 @@ public class twbotwipeout extends TWBotExtension
 		
 	}
 	
-	public void handleTie(HashSet winnerz)
+	public void handleTie()
 	{
-		Iterator it = winnerz.iterator();
-		m_botAction.sendArenaMessage("We have a tie!!!", 5);
-		m_botAction.sendArenaMessage("Winners are: ");
-		while(it.hasNext())
-		{
-			m_botAction.sendArenaMessage(String.valueOf(it.next()));
-		}
-		end();
+		m_botAction.sendArenaMessage("No one got a kill, time extended.", 2);
 	}
 	
 	public void handleWin()
@@ -135,18 +132,34 @@ public class twbotwipeout extends TWBotExtension
 			String name = (String)it.next();
 			if(!gotKill.contains(name))
 			{
-				m_botAction.spec(name);
-				m_botAction.spec(name);
 				playersKicked.add(name);
-				players.remove(name);
 			}
 		}
 		if(players.size() == 1)
 			handleWin();
-		else if(players.isEmpty())
-			handleTie(playersKicked);
-		playersKicked.clear();
-		gotKill.clear();
+		else if(players.size() == playersKicked.size())
+			handleTie();
+		else {
+			boolean allFreq = true;
+			int freq = -1;
+			Iterator it2 = players.iterator();
+			while(it2.hasNext()) {
+				String name = (String)it2.next();
+				if(!playersKicked.contains(name)) {
+					if(freq == -1) freq = m_botAction.getPlayer(name).getFrequency();
+					else if(freq != m_botAction.getPlayer(name).getFrequency()) allFreq = false;
+				}
+			}
+			it = playersKicked.iterator();
+			while(it.hasNext()) {
+				String name = (String)it2.next();
+				m_botAction.spec(name);
+				m_botAction.spec(name);
+				players.remove(name);
+			}
+			playersKicked.clear();
+			gotKill.clear();
+		}
 	}
 			
 	public void end()
