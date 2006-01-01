@@ -65,7 +65,7 @@ public class Session extends Thread {
         }
 
         m_ssEncryption = new SSEncryption();
-        m_packetGenerator = new GamePacketsssGenerator( m_outboundQueue, m_ssEncryption, m_timer );
+        m_packetGenerator = new GamePacketGenerator( m_outboundQueue, m_ssEncryption, m_timer );
         m_arenaTracker = new Arena( m_packetGenerator );
         m_packetInterpreter =
             new GamePacketInterpreter(
