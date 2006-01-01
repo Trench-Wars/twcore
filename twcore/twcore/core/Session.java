@@ -65,7 +65,7 @@ public class Session extends Thread {
         }
 
         m_ssEncryption = new SSEncryption();
-        m_packetGenerator = new GamePacketGenerator( m_outboundQueue, m_ssEncryption, m_timer );
+        m_packetGenerator = new GamePacketsssGenerator( m_outboundQueue, m_ssEncryption, m_timer );
         m_arenaTracker = new Arena( m_packetGenerator );
         m_packetInterpreter =
             new GamePacketInterpreter(
@@ -246,13 +246,13 @@ public class Session extends Thread {
                     m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
                 }
 
-                if( currentTime - lastPositionUpdate > positionUpdateTime ) {
+                /*if( currentTime - lastPositionUpdate > positionUpdateTime ) {
                 	lastPositionUpdate = currentTime;
                     m_arenaTracker.checkPositionChange();
                     // Synch times
                     if( positionUpdateTime != m_arenaTracker.getUpdateTime() )
                         positionUpdateTime = m_arenaTracker.getUpdateTime();                        
-                }
+                }*/
                 
                 Thread.sleep(5);
             }
