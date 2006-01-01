@@ -41,7 +41,6 @@ public class messagebot extends SubspaceBot
 	HashMap defaultChannel;
 	HashSet ops;
 	HashMap news;
-	HashMap notify;
 	ArrayList newsIDs;
 	int newsID;
 	CommandInterpreter m_CI;
@@ -63,7 +62,6 @@ public class messagebot extends SubspaceBot
 		defaultChannel = new HashMap();
 		ops = new HashSet();
 		news = new HashMap();
-		notify = new HashMap();
 		newsIDs = new ArrayList();
 		newsID = 0;
 		m_CI = new CommandInterpreter(m_botAction);
@@ -94,8 +92,6 @@ public class messagebot extends SubspaceBot
 	 */
 	public void checkNewMessages(String name)
 	{
-		if(!notify.containsKey(name.toLowerCase())) setNotify(name.toLowerCase(), "yes");
-		if(!((Boolean)notify.get(name.toLowerCase())).booleanValue()) return;
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name)+"' and fnRead = 0";
 		try {
 			ResultSet results = m_botAction.SQLQuery("local", query);
@@ -155,7 +151,6 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!bug",		 acceptedMessages, this, "bugMe");
         m_CI.registerCommand( "!debug",		 acceptedMessages, this, "stopBuggingMe");
         m_CI.registerCommand( "!alerts",	 acceptedMessages, this, "announceToAlerts");
-        m_CI.registerCommand( "!notify",	 acceptedMessages, this, "setNotify");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
         
@@ -712,18 +707,7 @@ public class messagebot extends SubspaceBot
 				}
 				results.close();
 			} catch(SQLException e) { Tools.printStackTrace(e); }
-			
-			query = "SELECT * FROM tblMessageBotUser";
-			try {
-				ResultSet results = m_botAction.SQLQuery("local", query);
-				while(results.next()) {
-					String name = results.getString("fcName");
-					int enabled = results.getInt("fnNotifyEnabled");
-					notify.put(name.toLowerCase(), (enabled == 1));
-				}
-				results.close();
-			} catch(SQLException e) { Tools.printStackTrace(e); }
-					
+								
 		} catch(Exception e) {}
 		
 	}
@@ -1151,26 +1135,6 @@ public class messagebot extends SubspaceBot
     	}
     	
     	m_botAction.sendChatMessage(2, details);
-     }
-     
-     public void setNotify(String name, String message) {
-     	try {
-     		message = message.toLowerCase();
-     		boolean isPlayer = false;
-     		ResultSet results = m_botAction.SQLQuery("local", "SELECT fnNotifyEnabled FROM tblMessageBotUser WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'");
-	     	if(results.next()) isPlayer = true;
-	     	if(message.startsWith("y") || message.startsWith("on")) {
-	     		if(isPlayer) m_botAction.SQLQuery("local", "UPDATE tblMessageBotUser SET fnNotifyEnabled = 1 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'");
-	     		else m_botAction.SQLQuery("local", "INSERT INTO tblMessageBotUser (fcName, fnNotifyEnabled) VALUES('"+Tools.addSlashesToString(name.toLowerCase())+"', 1)");
-	     		notify.put(name.toLowerCase(), true);
-	     		m_botAction.sendSmartPrivateMessage(name, "Auto-notify turned on.");
-	     	} else if(message.startsWith("n") || message.startsWith("off")) {
-	     		if(isPlayer) m_botAction.SQLQuery("local", "UPDATE tblMessageBotUser SET fnNotifyEnabled = 0 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'");
-	     		else m_botAction.SQLQuery("local", "INSERT INTO tblMessageBotUser (fcName, fnNotifyEnabled) VALUES('"+Tools.addSlashesToString(name.toLowerCase())+"', 0)");
-	     		notify.put(name.toLowerCase(), false);
-	     		m_botAction.sendSmartPrivateMessage(name, "Auto-notify turned off.");
-	     	}
-     	} catch(Exception e) {}
      }
 }
 
