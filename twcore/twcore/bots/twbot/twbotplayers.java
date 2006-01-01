@@ -11,7 +11,11 @@ import twcore.core.*;
  * @author qan
  */
 public class twbotplayers extends TWBotExtension {
-
+	int ship = 1;
+	int freq = 0;
+	int sFreq = 5239;
+	boolean staffVsWorld = true;
+	
     public twbotplayers() {
     }
 
@@ -21,24 +25,42 @@ public class twbotplayers extends TWBotExtension {
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
-            if( m_opList.isER( name ))
-                handleCommand( name, message );
+            if( m_opList.isZH( name ))
+                handleCommand( name, message, m_opList.isZH( name ) );
         }
     }
 
 
 
-    public void handleCommand( String name, String message ){
-        if(message.startsWith("!players")) {
-        	Iterator it = m_botAction.getPlayingPlayerIterator();
-        	while(it.hasNext()) {
-        		m_botAction.sendPublicMessage(((Player)it.next()).getPlayerName());
-        	}
-        } else if(message.startsWith("!")) {
-        	m_botAction.sendPublicMessage(m_botAction.getFuzzyPlayerName(message.substring(1)));
+    public void handleCommand( String name, String message, boolean staff ){
+        if(message.startsWith("!late")) {
+        	if(!staff || !staffVsWorld) {
+        		Iterator it = m_botAction.getPlayingPlayerIterator();
+        		int highestDeaths = 0;
+	        	while(it.hasNext()) {
+	        		int deaths = ((Player)it.next()).getLosses();
+	        		if(deaths > highestDeaths) highestDeaths = deaths;
+	        	}
+	        	m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!specplayer "+name+":"+highestDeaths);
+	        	m_botAction.setShip(name, ship);
+	        	m_botAction.setFreq(name, freq);
+	        } else if(staffVsWorld) {
+	        	m_botAction.setShip(name, ship);
+	        	m_botAction.setFreq(name, sFreq);	        	
+	        }
+        } else if(message.startsWith("!ship ") && staff) {
+        	try {
+        		ship = Integer.parseInt(message.substring(6));
+        	} catch(Exception e) {}
+        } else if(message.startsWith("!freq ") && staff) {
+        	try {
+        		freq = Integer.parseInt(message.substring(6));
+        	} catch(Exception e) {}
+        } else if(message.startsWith("!sfreq ") && staff) {
+        	try {
+        		sFreq = Integer.parseInt(message.substring(7));
+        	} catch(Exception e) {}
         }
-
-
     }
 
 
