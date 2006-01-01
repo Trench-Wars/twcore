@@ -14,6 +14,7 @@ public class twbotplayers extends TWBotExtension {
 	int ship = 1;
 	int freq = 0;
 	int sFreq = 5239;
+	int deaths = 10;
 	boolean staffVsWorld = true;
 	
     public twbotplayers() {
@@ -38,10 +39,12 @@ public class twbotplayers extends TWBotExtension {
         		Iterator it = m_botAction.getPlayingPlayerIterator();
         		int highestDeaths = 0;
 	        	while(it.hasNext()) {
-	        		int deaths = ((Player)it.next()).getLosses();
-	        		if(deaths > highestDeaths) highestDeaths = deaths;
+	        		Player p = (Player)it.next();
+	        		int deaths = p.getLosses();
+	        		if(!m_botAction.getOperatorList().isZH(p.getPlayerName()) && !staffVsWorld)
+	        			if(deaths > highestDeaths) highestDeaths = deaths;
 	        	}
-	        	m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!specplayer "+name+":"+highestDeaths);
+	        	m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!specplayer "+name+":"+(deaths - highestDeaths));
 	        	m_botAction.setShip(name, ship);
 	        	m_botAction.setFreq(name, freq);
 	        } else if(staffVsWorld) {
@@ -59,6 +62,10 @@ public class twbotplayers extends TWBotExtension {
         } else if(message.startsWith("!sfreq ") && staff) {
         	try {
         		sFreq = Integer.parseInt(message.substring(7));
+        	} catch(Exception e) {}
+        } else if(message.startsWith("!deaths ") && staff) {
+        	try {
+        		deaths = Integer.parseInt(message.substring(8));
         	} catch(Exception e) {}
         }
     }
