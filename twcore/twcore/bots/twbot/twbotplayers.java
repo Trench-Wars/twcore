@@ -23,8 +23,6 @@ public class twbotplayers extends TWBotExtension {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
             if( m_opList.isER( name ))
                 handleCommand( name, message );
-            else
-                handleGeneralCommand( name, message );
         }
     }
 
