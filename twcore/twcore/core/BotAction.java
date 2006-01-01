@@ -2648,19 +2648,17 @@ public class BotAction
         Map m_playerMap = m_arenaTracker.getPlayerMap();
         Iterator i = m_playerMap.values().iterator();
         String answ, best = null;
-        playerName = playerName.toLowerCase();
-        
         synchronized(m_playerMap) {
             while (i.hasNext())
             {
-                answ = ((Player) i.next()).getPlayerName().toLowerCase();
-                if (answ.startsWith(playerName))
+                answ = ((Player) i.next()).getPlayerName();
+                if (answ.toLowerCase().startsWith(playerName.toLowerCase()))
                     if (best == null)
                         best = answ;
-                    else if ( best.compareTo(answ) > 0 )
+                    else if (best.toLowerCase().compareTo(answ.toLowerCase()) > 0)
                         best = answ;
 
-                if (answ.equals(playerName))
+                if (answ.equalsIgnoreCase(playerName))
                     return answ;
             }
          }
