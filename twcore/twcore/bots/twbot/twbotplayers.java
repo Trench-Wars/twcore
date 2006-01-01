@@ -34,7 +34,7 @@ public class twbotplayers extends TWBotExtension {
         	while(it.hasNext()) {
         		m_botAction.sendPublicMessage(((Player)it.next()).getPlayerName());
         	}
-        } else if(message.startWith("!")) {
+        } else if(message.startsWith("!")) {
         	m_botAction.sendPublicMessage(m_botAction.getFuzzyPlayerName(message.substring(1)));
         }
 
