@@ -44,9 +44,18 @@ public class estatsbot extends SubspaceBot {
 			} else if(m_botAction.getOperatorList().isSmod(name) || name.equalsIgnoreCase("ikrit <er>")) {
 				if(event.getMessage().toLowerCase().startsWith("!die")) {
 					m_botAction.die();
+				} else {
+					tellAbout(name);
 				}
+			} else {
+				tellAbout(name);
 			}
 		}
+	}
+	
+	public void tellAbout(String name) {
+		if(name == null) return;
+		m_botAction.sendPrivateMessage(name, "Hey, just your friendly StatsBot here watching everything you do >.>. You can check my stuff out at http://www.trenchwars.org/Elim");
 	}
 	
 	public void handleMessage(String message) {
