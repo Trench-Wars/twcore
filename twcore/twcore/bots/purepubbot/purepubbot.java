@@ -1045,8 +1045,10 @@ public class purepubbot extends SubspaceBot
                 }
                 
             } else {
-                m_botAction.sendArenaMessage( "END ROUND: Freq " + flagholdingFreq + " wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + "(" + weight + " bounty bonus)", 1 );
-                
+                if( flagholdingFreq < 100 )
+                    m_botAction.sendArenaMessage( "END ROUND: Freq " + flagholdingFreq + " wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + " (" + weight + " bounty bonus)", 1 );
+                else
+                    m_botAction.sendArenaMessage( "END ROUND: A private freq wins the round after " + getTimeString( flagTimer.getTotalSecs() ) + " (" + weight + " bounty bonus)", 1 );                    
             }
             
             int special = 0;
@@ -1519,13 +1521,13 @@ public class purepubbot extends SubspaceBot
 
                 if( remain < 60 ) {
                     if( remain < 4 )
-                        m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 7 );
+                        m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 7 );
                     else if( remain < 11 )
-                        m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with just " + remain + " sec. left!" );
+                        m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with just " + remain + " sec. left!" );
                     else if( remain < 25 )
-                        m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with " + remain + " sec. left!" );
+                        m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with " + remain + " sec. left!" );
                     else
-                        m_botAction.sendArenaMessage( "Save: " + p.getPlayerName() + " claims flag for Freq " + flagHoldingFreq + " with " + remain + " sec. left." );
+                        m_botAction.sendArenaMessage( "Save: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with " + remain + " sec. left." );
                 }
             }
             
@@ -1621,7 +1623,7 @@ public class purepubbot extends SubspaceBot
                 else
                     return "We are currently in between rounds (round " + roundNum + " starting soon).  Score: " + freq0Score + " - " + freq1Score;
             }
-            return "ROUND " + roundNum + " Stats: " + (flagHoldingFreq == -1 ? "Nobody" : "Freq " + flagHoldingFreq ) + " holding for " + getTimeString(secondsHeld) + ", needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score: " + freq0Score + " - " + freq1Score;        
+            return "ROUND " + roundNum + " Stats: " + (flagHoldingFreq == -1 || flagHoldingFreq > 99 ? "?" : "Freq " + flagHoldingFreq ) + " holding for " + getTimeString(secondsHeld) + ", needs " + getTimeString( (flagMinutesRequired * 60) - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score: " + freq0Score + " - " + freq1Score;        
         }
         
         /**
@@ -1693,9 +1695,9 @@ public class purepubbot extends SubspaceBot
                 endGame();
                 doEndRound();
             } else if( flagSecsReq - secondsHeld == 60 ) {
-                m_botAction.sendArenaMessage( "Freq " + flagHoldingFreq + " will win in 60 seconds." );
+                m_botAction.sendArenaMessage( (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "Private freq" ) + " will win in 60 seconds." );
             } else if( flagSecsReq - secondsHeld == 10 ) {
-                m_botAction.sendArenaMessage( "Freq " + flagHoldingFreq + " will win in 10 seconds . . ." );
+                m_botAction.sendArenaMessage( (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "Private freq" ) + " will win in 10 seconds . . ." );
             }
         }
     }  
