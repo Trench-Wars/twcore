@@ -8,7 +8,7 @@ import java.net.*;
 public class twbotart extends TWBotExtension
 {
 	
-	
+	int move = 16;
 	
 	public twbotart()
 	{
@@ -36,6 +36,10 @@ public class twbotart extends TWBotExtension
 		{
 			m_botAction.spec(m_botAction.getBotName());
 			m_botAction.spec(m_botAction.getBotName());
+		} else if(message.toLowerCase().startsWith("!setmove ")) {
+			try {
+				move = Integer.parseInt(message.substring(9));
+			} catch(Exception e) {}
 		}
 	}
 		
@@ -73,15 +77,15 @@ public class twbotart extends TWBotExtension
 							if(inString.charAt(k) == ' ') {
 								for(temp = 0;(temp + k) < inString.length() && inString.charAt((temp + k)) == ' ';temp++) { }
 								k += (temp - 1);
-								ship.move(ship.getX() + (16 * temp), ship.getY());
+								ship.move(ship.getX() + (move * temp), ship.getY());
 							} else if(inString.charAt(k) == '?') {
 								ship.move(0, ship.getX(), ship.getY(), 0, 0, 4, 1200, 3);
 								ship.move(0, ship.getX(), ship.getY(), 0, 0, 0, 1200, 3);
 							} else {
-								ship.moveAndFire(ship.getX() + 16, ship.getY() + 0, getWeapon(inString.charAt(k)));
+								ship.moveAndFire(ship.getX() + move, ship.getY() + 0, getWeapon(inString.charAt(k)));
 							}
 						}
-						ship.move(xNormal, ship.getY() + 16);
+						ship.move(xNormal, ship.getY() + move);
 					}
 				}
 			}
