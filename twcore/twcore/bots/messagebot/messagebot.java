@@ -151,6 +151,10 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!bug",		 acceptedMessages, this, "bugMe");
         m_CI.registerCommand( "!debug",		 acceptedMessages, this, "stopBuggingMe");
         m_CI.registerCommand( "!alerts",	 acceptedMessages, this, "announceToAlerts");
+        m_CI.registerCommand( "!ignore",	 acceptedMessages, this, "ignorePlayer");
+        m_CI.registerCommand( "!unignore",	 acceptedMessages, this, "unignorePlayer");
+        m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
+        m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
         
@@ -599,15 +603,17 @@ public class messagebot extends SubspaceBot
      */
     public void doHelp(String name, String message)
     {
-    	if(message.toLowerCase().startsWith("channel") || message.toLowerCase().startsWith("message")) {
+    	if(message.toLowerCase().startsWith("message")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Messaging system commands:");
 	        m_botAction.sendSmartPrivateMessage(name, "    !join <channel>                -Puts in request to join <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !quit <channel>                -Removes you from <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !owner <channel>               -Tells you who owns <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !unread <num>                  -Sets message <num> as unread.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                    -PM's you message <num>.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>. !delete all works too.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !messages                      -PM's you all your message numbers.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !lmessage <name>:<message>     -Leaves <message> for <name>.");
+	    } else if(message.toLowerCase().startsWith("channel")) {
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                            -Tells you what channels you have joined.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !announce <channel>:<message>  -Sends everyone on <channel> a pm of <message>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !message <channel>:<message>   -Leaves a message for everyone on <channel>.");
@@ -636,9 +642,9 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !go <arena>                    -Sends messagebot to <arena>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !die                           -Kills messagebot.");
         } else {
-	    	String defaultHelp = "!help <section>                    -Replace <section> with message or channel to get the messaging system help, replace with news to get news help";
+	    	String defaultHelp = "PM me with !help channel for channel system help, !help message for message system help, !help news for news system help";
 	    	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
-	    		defaultHelp += ", replace with smod to get the smod commands.";
+	    		defaultHelp += ", !help smod for SMod command help.";
 	    	else
 	    		defaultHelp += ".";
         	m_botAction.sendSmartPrivateMessage(name, defaultHelp);
@@ -785,23 +791,28 @@ public class messagebot extends SubspaceBot
 	public void deleteMessage(String name, String message)
 	{
 		int messageNumber = -1;
-		try{
-			messageNumber = Integer.parseInt(message);
-		} catch(Exception e) {
-			e.printStackTrace();
-			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
-			return;
+		String query;
+		if(message.equalsIgnoreCase("all")) {
+			query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
+		} else {
+			try{
+				messageNumber = Integer.parseInt(message);
+			} catch(Exception e) {
+				e.printStackTrace();
+				m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
+				return;
+			}
+			if(!ownsMessage(name.toLowerCase(), messageNumber)) {
+				m_botAction.sendSmartPrivateMessage(name, "That is not your message!");
+				return;
+			}
+			query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		}
-		if(!ownsMessage(name.toLowerCase(), messageNumber)) {
-			m_botAction.sendSmartPrivateMessage(name, "That is not your message!");
-			return;
-		}
-		String query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try {
 			m_botAction.SQLQuery("local", query);
-			m_botAction.sendSmartPrivateMessage(name, "Message deleted.");
+			m_botAction.sendSmartPrivateMessage(name, "Message(s) deleted.");
 		} catch(Exception e) {
-			m_botAction.sendSmartPrivateMessage(name, "Message unable to be deleted.");
+			m_botAction.sendSmartPrivateMessage(name, "Message(s) unable to be deleted.");
 			Tools.printStackTrace( e );
 		}
 	}
@@ -1136,6 +1147,102 @@ public class messagebot extends SubspaceBot
     	
     	m_botAction.sendChatMessage(2, details);
      }
+     
+     public void ignorePlayer(String name, String player) {
+     	try {
+     		if(!isIgnored(name, player)) {
+	     		m_botAction.SQLQuery("local", "INSERT INTO tblMessageBotIgnore (fcIgnorer, fcIgnoree) VALUES('"+Tools.addSlashesToString(name)+"', '"+Tools.addSlashesToString(player)+"');");
+	     		m_botAction.sendSmartPrivateMessage(name, player + " ignored.");
+	     	} else {
+	     		m_botAction.sendSmartPrivateMessage(name, player + " is already ignored.");
+	     	}
+     	} catch(Exception e) {}
+     }
+     
+     public void unignorePlayer(String name, String player) {
+     	try {
+     		if(isIgnored(name, player)) {
+     			m_botAction.SQLQuery("local", "DELETE FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"');");
+     			m_botAction.sendSmartPrivateMessage(name, player + " unignored.");
+     		} else {
+     			m_botAction.sendSmartPrivateMessage(name, player + " is not currently ignored.");
+     		}
+     	} catch(Exception e) {}
+     }
+     
+     public void whoIsIgnored(String name, String blank) {
+     	try {
+     		ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"'");
+     		String ignored = "";
+     		while(results.next()) {
+     			ignored += results.getString("fcIgnored");
+     			if(ignored.length() > 150) {
+     				m_botAction.sendSmartPrivateMessage(name, ignored);
+     				ignored = "";
+     			} else {
+     				ignored += ", ";
+     			}
+     		}
+     		m_botAction.sendSmartPrivateMessage(name, ignored.substring(0, ignored.length() - 2));
+     	} catch(Exception e) {}
+     }
+     
+     public boolean isIgnored(String name, String player) {
+     	try {
+     		ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"');");
+     		if(results.next()) {
+     			return true;
+     		} else {
+     			return false;
+     		}
+     	} catch(Exception e) {}
+     	return false;
+     }
+     
+     public void leaveMessage(String name, String message) {
+     	String pieces[] = message.split(":", 2);
+     	String player = pieces[0];
+     	message = pieces[1];
+     	if(player.equalsIgnoreCase(name)) {
+     		m_botAction.sendSmartPrivateMessage(name, "You cannot message yourself.");
+     		return;
+     	}
+     	try {
+     		String query1 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 1 WEEK)";
+     		String query2 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"' AND fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 1 DAY)";
+     		String query3 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"'";
+     		ResultSet results = m_botAction.SQLQuery("local", query1);
+     		int msgsSent = 0;
+     		if(results.next()) {
+     			msgsSent = results.getInt("msgs");
+     		}
+     		int plrMsgsRcvdFrmName = 0;
+     		results = m_botAction.SQLQuery("local", query2);
+     		if(results.next()) {
+     			plrMsgsRcvdFrmName = results.getInt("msgs");
+     		}
+     		int plrMsgsRcvd = 0;
+     		results = m_botAction.SQLQuery("local", query3);
+     		if(results.next()) {
+     			plrMsgsRcvd = results.getInt("msgs");
+     		}
+     		if(msgsSent > 100) {
+     			m_botAction.sendSmartPrivateMessage(name, "Sorry, you have reached your weekly quota of 100 messages. Please wait until some of your messages reset their stats before trying to send more.");
+     			return;
+     		} else if(plrMsgsRcvdFrmName > 3) {
+     			m_botAction.sendSmartPrivateMessage(name, "Sorry, you have reached your daily limit on messages to this player. Please wait before sending more messages.");
+     			return;
+     		} else if(plrMsgsRcvd > 24) {
+     			m_botAction.sendSmartPrivateMessage(name, "Sorry, the player's inbox is currently full. Please try to message him/her later.");
+     			return;
+     		} else if(isIgnored(player, name)) {
+     			return;
+     		} else {
+     			m_botAction.SQLQuery("local", "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES(0, '"+Tools.addSlashesToString(player)+"', '"+name+"> "+Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(name)+"', 0, NOW())");
+     			m_botAction.sendSmartPrivateMessage(name, "Message sent.");
+     		}
+     	} catch(Exception e) {}
+     }
 }
 
 class Channel
@@ -1317,7 +1424,7 @@ class Channel
 			int level = ((Integer)members.get(player.toLowerCase())).intValue();
 			if(level > 0)
 			{
-				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + ">" + message);
+				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + "> " + message);
 			}
 		}
 	}
