@@ -91,8 +91,7 @@ public class estatsbot extends SubspaceBot {
 	
 	public void endGame(String winner) {
 		try {
-			Iterator it = m_botAction.getPlayingPlayerIterator();
-			if(it.hasNext()) {
+			if(winner != null && !winner.equalsIgnoreCase("ner")) {
 				thisGame.setWinner(winner);
 			} else {
 				thisGame.setWinner("No winner");
@@ -101,7 +100,7 @@ public class estatsbot extends SubspaceBot {
 			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnGameID FROM tblElimRound ORDER BY fnGameID DESC");
 			results.next();
 			int gID = results.getInt("fnGameID");
-			it = players.values().iterator();
+			Iterator it = players.values().iterator();
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
 				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(winner)));
