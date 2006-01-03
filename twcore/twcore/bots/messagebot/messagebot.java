@@ -832,7 +832,7 @@ public class messagebot extends SubspaceBot
 			ResultSet results = m_botAction.SQLQuery("local", query);
 			while(results.next())
 			{
-				String thisMessage = "Message #" + String.valueOf(results.getInt("fnID")) + ". Status: ";
+				String thisMessage = "Message #" + String.valueOf(results.getInt("fnID")) + ". From: " + results.getString("fcSender")+". Status: ";
 				if(results.getInt("fnRead") == 1)
 					thisMessage += " Read";
 				else
@@ -1622,7 +1622,7 @@ class Channel
 	 */
 	public void leaveMessage(String name, String player, String message)
 	{
-		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(channelName)+":"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', 0, NOW())";
+		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(channelName)+"', 0, NOW())";
 		try {
 			m_bA.SQLQuery("local", query);
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
