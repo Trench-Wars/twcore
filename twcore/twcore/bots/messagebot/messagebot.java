@@ -669,6 +669,7 @@ public class messagebot extends SubspaceBot
 	public void handleEvent(LoggedOn event)
 	{
 		m_botAction.sendUnfilteredPublicMessage("?chat=news,superalerts");
+		m_botAction.sendUnfilteredPublicMessage("?chat=news,superalerts");
 		try {
 			m_botAction.joinArena(m_botAction.getBotSettings().getString("Default arena"));
 			m_botAction.ipcSubscribe(IPCCHANNEL);
@@ -715,6 +716,7 @@ public class messagebot extends SubspaceBot
 			} catch(SQLException e) { Tools.printStackTrace(e); }
 								
 		} catch(Exception e) {}
+		m_botAction.setMessageLimit(5);
 		
 	}
 	
