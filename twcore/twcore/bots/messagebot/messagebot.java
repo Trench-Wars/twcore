@@ -1162,7 +1162,7 @@ public class messagebot extends SubspaceBot
      public void unignorePlayer(String name, String player) {
      	try {
      		if(isIgnored(name, player)) {
-     			m_botAction.SQLQuery("local", "DELETE FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"');");
+     			m_botAction.SQLQuery("local", "DELETE FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"';");
      			m_botAction.sendSmartPrivateMessage(name, player + " unignored.");
      		} else {
      			m_botAction.sendSmartPrivateMessage(name, player + " is not currently ignored.");
@@ -1175,7 +1175,7 @@ public class messagebot extends SubspaceBot
      		ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"'");
      		String ignored = "";
      		while(results.next()) {
-     			ignored += results.getString("fcIgnored");
+     			ignored += results.getString("fcIgnoree");
      			if(ignored.length() > 150) {
      				m_botAction.sendSmartPrivateMessage(name, ignored);
      				ignored = "";
