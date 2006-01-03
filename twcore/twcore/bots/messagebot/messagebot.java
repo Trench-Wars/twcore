@@ -1189,7 +1189,7 @@ public class messagebot extends SubspaceBot
      
      public boolean isIgnored(String name, String player) {
      	try {
-     		ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"');");
+     		ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"'");
      		if(results.next()) {
      			return true;
      		} else {
@@ -1208,7 +1208,7 @@ public class messagebot extends SubspaceBot
      		return;
      	}
      	try {
-     		String query1 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 1 WEEK)";
+     		String query1 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 7 DAY)";
      		String query2 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"' AND fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 1 DAY)";
      		String query3 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"'";
      		ResultSet results = m_botAction.SQLQuery("local", query1);
