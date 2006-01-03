@@ -1504,7 +1504,7 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
-			members.put(player.toLowerCase(), new Integer(1));
+			updateSQL(player.toLowerCase(), new Integer(1));
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been accepted into " + channelName + " channel.");
 			m_bA.sendSmartPrivateMessage(name, player + " accepted.");
