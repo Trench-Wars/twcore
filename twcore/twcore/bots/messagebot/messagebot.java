@@ -1202,6 +1202,10 @@ public class messagebot extends SubspaceBot
      }
      
      public void leaveMessage(String name, String message) {
+     	if(message.indexOf(":") == -1) {
+     		m_botAction.sendSmartPrivateMessage(name, "Correct usage: !lmessage <name>:<message>");
+     		return;
+     	}
      	String pieces[] = message.split(":", 2);
      	String player = pieces[0];
      	message = pieces[1];
