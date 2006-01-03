@@ -1244,7 +1244,7 @@ public class messagebot extends SubspaceBot
      		} else if(isIgnored(player, name)) {
      			return;
      		} else {
-     			m_botAction.SQLQuery("local", "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES(0, '"+Tools.addSlashesToString(player)+"', '"+name+"> "+Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(name)+"', 0, NOW())");
+     			m_botAction.SQLQuery("local", "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES(0, '"+Tools.addSlashesToString(player)+"', '"+Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(name)+"', 0, NOW())");
      			m_botAction.sendSmartPrivateMessage(name, "Message sent.");
      		}
      	} catch(Exception e) {}
