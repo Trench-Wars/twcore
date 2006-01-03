@@ -7,7 +7,7 @@ import twcore.core.*;
 public class ModuleHandler
 {
   private AdaptiveClassLoader loader;
-  private Map moduleList;
+  private ConcurrentHashMap moduleList;
   private File moduleLocation;
   private String moduleGroup;
   private BotAction m_botAction;
@@ -26,7 +26,7 @@ public class ModuleHandler
     m_botAction = botAction;
     initializeLoader(modulePath);
     this.moduleGroup = moduleGroup;
-    moduleList = Collections.synchronizedMap(new HashMap());
+    moduleList = new ConcurrentHashMap();
   }
 
   /**
@@ -151,7 +151,7 @@ public class ModuleHandler
 
   public void handleEvent(SubspaceEvent event)
   {
-    Collection collection = Collections.synchronizedCollection( moduleList.values() );    
+    Collection collection = moduleList.values();    
     Iterator iterator = collection.iterator();
     Module module;
 
