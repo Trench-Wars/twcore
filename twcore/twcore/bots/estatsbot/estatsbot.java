@@ -60,10 +60,10 @@ public class estatsbot extends SubspaceBot {
 	
 	public void handleMessage(String message) {
 		message = message.toLowerCase();
-		if(message.startsWith("go! go! go!")) {
+		if(message.startsWith("go! go! go!") && !gameRunning) {
 			gameRunning = true;
 			startGame();
-		} else if(message.startsWith("game over:")) {
+		} else if(message.startsWith("game over:") && gameRunning) {
 			gameRunning = false;
 			endGame(message.substring(18));
 		}
