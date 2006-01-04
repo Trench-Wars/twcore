@@ -10,12 +10,15 @@ import static twcore.bots.multibot.bship.bship.ALL;
  * BSPlayer objects and passes events to the players for stat tracking
  *
  * @author D1st0rt
- * @version 2005.12.8
+ * @version 06.01.04
  */
 public class BSTeam
 {
 	/** The players on this team */
 	private Vector<BSPlayer> _players;
+
+	/** Cached array of BSPlayer objects for this team */
+	private BSPlayer[] _plist;
 
 	/** This team's frequency */
 	private int _freq;
@@ -36,6 +39,7 @@ public class BSTeam
 		_players = new Vector<BSPlayer>();
 		_changed = true;
 		_shipCount = new byte[8];
+		_plist = null;
 	}
 
 	/**
@@ -45,6 +49,7 @@ public class BSTeam
 	{
 		_players.clear();
 		_changed = true;
+		_plist = null;
 		_shipCount = new byte[8];
 	}
 
@@ -75,6 +80,7 @@ public class BSTeam
 		{
 			_players.remove(p);
 			_changed = true;
+			_plist = null;
 		}
 	}
 
@@ -84,7 +90,10 @@ public class BSTeam
      */
 	public BSPlayer[] getPlayers()
 	{
-		return _players.toArray(new BSPlayer[_players.size()]);
+		if(_plist == null || _changed)
+			_plist = _players.toArray(new BSPlayer[_players.size()]);
+
+		return _plist;
 	}
 
 	/**
@@ -97,7 +106,7 @@ public class BSTeam
 		BSPlayer p = getPlayer(name);
 		if(p == null)
 		{
-			p = new BSPlayer(name);
+			p = new BSPlayer(name, _freq);
 			_players.add(p);
 		}
 
@@ -110,6 +119,7 @@ public class BSTeam
 		_players.setElementAt(p, pIndex);
 
 		_changed = true;
+		_plist = null;
 	}
 
 	/**
@@ -237,6 +247,20 @@ public class BSTeam
 		byte[] ships = getShipCount();
 		int count = ships[3] + ships[4] + ships[5] + ships[6] + ships[7];
 		return (count == 0);
+	}
+
+	/**
+	 * Sets the locked status of a player. Locked status is used to keep a player from being
+	 * added to another team or changed ships, if for example they attach to a wrong ship or lag out.
+	 * @param name the name of the player
+	 * @param locked whether the player is to be locked or unlocked
+	 */
+	public void lockPlayer(String name, boolean locked)
+	{
+		BSPlayer p = getPlayer(name);
+		if(p != null)
+			p.locked = locked;
+
 	}
 }
 

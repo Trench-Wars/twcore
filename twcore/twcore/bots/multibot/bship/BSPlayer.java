@@ -5,12 +5,15 @@ package twcore.bots.multibot.bship;
  * related to the game in progress.
  *
  * @author D1st0rt
- * @version 2005.12.8
+ * @version 06.01.04
  */
 public class BSPlayer
 {
 	/** Player's name */
 	private String _name;
+
+	/** Player's frequency */
+	private short _freq;
 
 	/** Player's current ship */
 	public byte ship;
@@ -42,11 +45,14 @@ public class BSPlayer
 	/** Aggregate rating */
 	public int rating;
 
+	/** Used to prevent being added to a team when inappropriate */
+	public boolean locked;
+
 	/**
      * Creates a new instance of BSPlayer
      * @param name the Player's name
      */
-	public BSPlayer(String name)
+	public BSPlayer(String name, int freq)
 	{
 		_name = name;
 		resetStats();
@@ -59,6 +65,11 @@ public class BSPlayer
 	public String toString()
 	{
 		return _name;
+	}
+
+	public short getFreq()
+	{
+		return _freq;
 	}
 
 	/**
