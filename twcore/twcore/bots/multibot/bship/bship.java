@@ -448,6 +448,30 @@ public class bship extends MultiModule implements TSChangeListener
 	}
 
 	/**
+	 * Command: !night
+	 * Parameters: <on/off>
+	 * Turns night mode on or off
+	 */
+	public void C_night(String name, String message)
+	{
+		if(opList.isER(name))
+		{
+			if(message.equalsIgnoreCase("off"))
+			{
+				m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOff());
+				night = false;
+			}
+			else if(message.equalsIgnoreCase("on"))
+			{
+				night = true;
+				m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOn((Integer)m_tsm.getSetting("hour")));
+			}
+
+			m_botAction.sendPrivateMessage(name,"Night mode: "+night);
+		}
+	}
+
+	/**
 	 * Command: !scheck
 	 * Parameters:
 	 * Manual check of all ships in game, shouldn't be needed most of the time
@@ -1305,13 +1329,7 @@ public class bship extends MultiModule implements TSChangeListener
 
 			switch(tShip)
 			{
-				case GUN:
-				if(bShip == CARRIER) //Tries to attach to Carrier
-					{
-						m_botAction.sendPrivateMessage(turret,"Only Planes (3) can attach to Carriers (8).");
-						m_botAction.setShip(turret, PLANE);
-					}
-				break;
+				case GUN: //fall through
 				case CANNON:
 				if(bShip == CARRIER) //Tries to attach to Carrier
 					{
@@ -1336,9 +1354,7 @@ public class bship extends MultiModule implements TSChangeListener
 		{
 			switch(tShip)//Warp turrets back to spawn so they don't sit there w/o ship
 			{
-				case GUN:
-					m_botAction.sendUnfilteredPrivateMessage(turret,"*prize #7");
-				break;
+				case GUN: //fall through
 				case CANNON:
 					m_botAction.sendUnfilteredPrivateMessage(turret,"*prize #7");
 				break;
