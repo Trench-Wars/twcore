@@ -34,6 +34,20 @@ import java.io.*;
  *  Fixed help so it doesn't spam 41 lines.
  *
  *  Deleted AIM stuff because I dislike it
+ *
+ *  Added ability to leave messages to people instead of channels
+ *  
+ *	Editted !help
+ *	
+ *	Added ability to message yourself
+ *
+ *	Fixed !help order
+ */
+ 
+/** TODO:
+ *
+ *	Multi-line messages
+ *
  */
 public class messagebot extends SubspaceBot
 {
@@ -155,6 +169,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!unignore",	 acceptedMessages, this, "unignorePlayer");
         m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
         m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
+        m_CI.registerCommand( "!listnews",	 acceptedMessages, this, "listNews");
         
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing"); 
         
@@ -436,10 +451,10 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = (Channel)channels.get(channel);
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+    //	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listMembers(name);
-    	else
-    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
+    //	else
+    //		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
     /** Makes a player a channel operator.
@@ -605,9 +620,6 @@ public class messagebot extends SubspaceBot
     {
     	if(message.toLowerCase().startsWith("message")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Messaging system commands:");
-	        m_botAction.sendSmartPrivateMessage(name, "    !join <channel>                -Puts in request to join <channel>.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !quit <channel>                -Removes you from <channel>.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !owner <channel>               -Tells you who owns <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !unread <num>                  -Sets message <num> as unread.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                    -PM's you message <num>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>. !delete all works too.");
@@ -615,6 +627,9 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !lmessage <name>:<message>     -Leaves <message> for <name>.");
 	    } else if(message.toLowerCase().startsWith("channel")) {
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                            -Tells you what channels you have joined.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !join <channel>                -Puts in request to join <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !quit <channel>                -Removes you from <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !owner <channel>               -Tells you who owns <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !announce <channel>:<message>  -Sends everyone on <channel> a pm of <message>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !message <channel>:<message>   -Leaves a message for everyone on <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !requests <channel>            -PM's you with all the requests to join <channel>.");
@@ -635,6 +650,7 @@ public class messagebot extends SubspaceBot
 	    } else if(message.toLowerCase().startsWith("news")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "News interface commands:");
 	    	m_botAction.sendSmartPrivateMessage(name, "    !readnews <#>                  -PM's you news article #<#>.");
+	    	m_botAction.sendSmartPrivateMessage(name, "    !listnews                      -PM's you all the news article numbers.");
 	    } else if((m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) && message.toLowerCase().startsWith("smod")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Smod+ commands:");
 	        m_botAction.sendSmartPrivateMessage(name, "    !addnews <news>:<url>          -Adds a news article with <news> as the content and <url> for more info.");
@@ -1118,6 +1134,16 @@ public class messagebot extends SubspaceBot
      	
      	
      }
+     
+     public void listNews(String name, String blank) {
+     	String message = "";
+     	
+     	for(int k = 0;k < newsIDs.size();k++) {
+     		message += (Integer)newsIDs.get(k) + ", ";
+     	}
+     	m_botAction.sendSmartPrivateMessage(name, "News IDs: ");
+     	m_botAction.sendSmartPrivateMessage(name, message);
+     }
     
     /** Alternates the arena message between news and superalerts.
      */ 
@@ -1209,10 +1235,6 @@ public class messagebot extends SubspaceBot
      	String pieces[] = message.split(":", 2);
      	String player = pieces[0];
      	message = pieces[1];
-     	if(player.equalsIgnoreCase(name)) {
-     		m_botAction.sendSmartPrivateMessage(name, "You cannot message yourself.");
-     		return;
-     	}
      	try {
      		String query1 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 7 DAY)";
      		String query2 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"' AND fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 1 DAY)";
@@ -1659,21 +1681,19 @@ class Channel
 		for(int k = 0;it.hasNext();)
 		{
 			String pName = (String)it.next();
-			if(k % 10 != 0)
-				message += ", ";
 			
 			int level = (Integer)members.get(pName.toLowerCase());
 			
 			if(isOwner(pName))
-				message += pName + " (Owner)";
+				message += pName + " (Owner), ";
 			else if(isOp(pName))
-				message += pName + " (Op)";
+				message += pName + " (Op), ";
 			else if(level > 0)
-				message += pName;
+				message += pName + ", ";
 			k++;
 			if(k % 10 == 0 || !it.hasNext())
 			{
-				m_bA.sendSmartPrivateMessage(name, message);
+				m_bA.sendSmartPrivateMessage(name, message.substring(0, message.length() - 2));
 				message = "";
 			}
 		}
