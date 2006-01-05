@@ -30,6 +30,7 @@ public class estatsbot extends SubspaceBot {
 		
 		String killer = m_botAction.getPlayerName(event.getKillerID());
 		String killee = m_botAction.getPlayerName(event.getKilleeID());
+		if(killer == null || killee == null) return;
 		((ElimPlayer)players.get(killer.toLowerCase())).addKill();
 		((ElimPlayer)players.get(killee.toLowerCase())).addDeath();
 	}
