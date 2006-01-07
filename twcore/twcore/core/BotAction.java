@@ -461,8 +461,10 @@ public class BotAction
                 i = m_arenaTracker.getFreqIDIterator(frequency);
                 if (i != null)
                 {
-                    playerID = ((Integer) i.next()).intValue();
-                    m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
+                    if( i.hasNext() ) {
+                        playerID = ((Integer) i.next()).intValue();
+                        m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
+                    }
                 }
             }
         }
