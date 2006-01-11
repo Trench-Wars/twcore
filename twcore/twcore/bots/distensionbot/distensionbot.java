@@ -128,7 +128,7 @@ public class distensionbot extends SubspaceBot {
     private void registerCommands() {
         int acceptedMessages = Message.PRIVATE_MESSAGE;
 
-        m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "cmdDie",         "!die  - Kills DistensionBot.", OperatorList.SMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "cmdDie",         "!die       - Kills DistensionBot.", OperatorList.SMOD_LEVEL );
         
         m_commandInterpreter.registerCommand( "!enlist", acceptedMessages, this, "cmdEnlist",   "!enlist #  - Enlist with army #.  Use !enlist #:pw for a priv. army" );
         m_commandInterpreter.registerCommand( "!return", acceptedMessages, this, "cmdReturn",   "!return    - Return to your current position in the war" );
@@ -224,13 +224,12 @@ public class distensionbot extends SubspaceBot {
         String pwd = "";
 
         try {
-            String parms = msg.substring( msg.indexOf( ' ' ) );
-            int privateIndex = parms.indexOf( ':' ); 
+            int privateIndex = msg.indexOf( ':' ); 
             if( privateIndex > 0 ) {
-                armyNum = Integer.parseInt( parms.substring( 0, privateIndex ) );
-                pwd = parms.substring( privateIndex + 1 );
+                armyNum = Integer.parseInt( msg.substring( 0, privateIndex ) );
+                pwd = msg.substring( privateIndex + 1 );
             } else {
-                armyNum = Integer.parseInt( parms );
+                armyNum = Integer.parseInt( msg );
             }
         } catch (Exception e) {
             m_botAction.sendPrivateMessage( name, "Hmm... which army do you want to enlist in?  You sure that's one of the !armies here?" );
@@ -310,6 +309,11 @@ public class distensionbot extends SubspaceBot {
         if( player == null )
             return;
         
+        if( player.getShipNum() == -1 ) {
+            m_botAction.sendPrivateMessage( name, "You'll need to !return to your army or !enlist in a new one before you go flying off." );
+            return;            
+        }
+        
         int shipNum = 0;
         try {
             shipNum = Integer.parseInt( msg );
@@ -387,7 +391,7 @@ public class distensionbot extends SubspaceBot {
                 }
             }
 
-            m_botAction.sendPrivateMessage( name, Tools.formatString("   #", 8 ) + Tools.formatString("Army Name", 43 ) + "Pilots" + "   Enlistment Bonus" );
+            m_botAction.sendPrivateMessage( name, Tools.formatString("#", 8 ) + Tools.formatString("Army Name", 40 ) + "Pilots" + "Enlistment Bonus" );
             
             Iterator i = allcount.keySet().iterator();
             Integer armyNum, armyCount;
