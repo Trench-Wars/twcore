@@ -171,7 +171,8 @@ public class CommandInterpreter {
             String      commandKey = (String)i.next();
             command = (Command)m_commands.get( commandKey );
             if( command != null ){
-                if( !command.getHelpString().equals( "" ) && accessLevel >= command.getOpLevelReq() ){
+                if( !command.getHelpString().equals( "" ) && !command.getHelpString().startsWith( "default" ) && 
+                        accessLevel >= command.getOpLevelReq() ){                    
                     helps.add( command.getHelpString() );
                 }
             }
