@@ -240,13 +240,13 @@ public class distensionbot extends SubspaceBot {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionArmy WHERE fnArmyID = '"+ armyNum +"'" );
             if( r.next() ) {
                 int bonus = 0;
-                if( r.getString( "fcPrivateArmy" ) == "y" ) {
+                if( r.getString( "fcPrivateArmy" ).equals("y") ) {
                     if ( r.getString( "fnPassword" ) != pwd ) {
                         m_botAction.sendPrivateMessage( name, "That's a private army there.  And the password doesn't seem to match up.  Best watch yourself now, or you won't get in ANYWHERE." );
                         return;
                     }
                 } else {
-                    if( r.getString( "fcDefaultArmy" ) == "y" )
+                    if( r.getString( "fcDefaultArmy" ).equals("y") )
                         bonus = calcEnlistmentBonus( armyNum, getDefaultArmyCounts() );
                 }
                 m_botAction.sendPrivateMessage( name, "Ah, joining " + r.getString( "fcArmyName" ) + "?  Excellent.  You'll be pilot #" + (r.getString( "fnNumPilots" ) + 1) + "." );
@@ -389,7 +389,7 @@ public class distensionbot extends SubspaceBot {
             while( r.next() ) {
                 allcount.put( new Integer( r.getInt( "fnArmyID" )), new Integer( r.getInt( "fnNumPilots" )) );
                 names.put( new Integer( r.getInt( "fnArmyID" )), new String( r.getString( "fcArmyName" )) );
-                if( r.getString("fcDefaultArmy") == "y" ) {
+                if( r.getString("fcDefaultArmy").equals("y") ) {
                     defaultcount.put( new Integer( r.getInt( "fnArmyID" )), new Integer( r.getInt( "fnNumPilots" )) );
                 }
             }
@@ -581,7 +581,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         m_botAction.sendPrivateMessage( name, "Available Upgrades: " + player.getArmyName() + " Armory - " + Tools.shipName( shipNum ).toUpperCase() ); 
-        m_botAction.sendPrivateMessage( name, "#  Name                          Curr /  Max      Credit" ); 
+        m_botAction.sendPrivateMessage( name, " #  Name                          Curr /  Max      Credit" ); 
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1 ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = player.getPurchasedUpgrades();
@@ -1247,14 +1247,14 @@ public class distensionbot extends SubspaceBot {
             try {
                 ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
                 if( r.next() ) {
-                    banned = (r.getString( "fcBanned" ) == "y" ? true : false);
+                    banned = (r.getString( "fcBanned" ).equals( "y" ) ? true : false);
                     if( banned == true )
                         return false;
                     
                     armyID = r.getInt( "fnArmyID" );
-                    points = r.getInt( "fnPoints" );                    
+                    points = r.getInt( "fnPoints" );
                     for( int i = 0; i < 8; i++ )
-                        shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ) == "y" ? true : false );
+                        shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ).equals( "y" ) ? true : false );
                     pointsSaved = true;
                 } else {
                     pointsSaved = false;
@@ -1537,7 +1537,7 @@ public class distensionbot extends SubspaceBot {
         }
         
         public ShipUpgrade getUpgrade( int upgradeNum ) {
-        	if( upgradeNum < 1 || upgradeNum > NUM_UPGRADES )
+        	if( upgradeNum < 0 || upgradeNum > NUM_UPGRADES )
         		return null;
         	else
         		return upgrades.get( upgradeNum );
