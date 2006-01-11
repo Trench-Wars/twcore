@@ -816,11 +816,17 @@ public class distensionbot extends SubspaceBot {
                 else if( loser.getLevel() - victor.getLevel() <= -15 )
                     points = 1;
                 else
-                    points = loser.getLevel();
+                    if( loser.getLevel() == 0 )
+                        points = 1;
+                    else
+                        points = loser.getLevel();
                 double armySizeWeight = (killedarmy.getTotalStrength() - killerarmy.getTotalStrength());
                 if( armySizeWeight != 0 )
                     armySizeWeight /= 2.0;
+                else
+                    armySizeWeight = 1;
                 points = (int)((points * killerarmy.getNumFlagsOwned()) * armySizeWeight);
+                
                 victor.addPoints( points );
             }
         }
