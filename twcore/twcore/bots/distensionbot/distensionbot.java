@@ -213,7 +213,7 @@ public class distensionbot extends SubspaceBot {
         }
         
         try {
-            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionPlayer WHERE fcName = 'qan'" );
+            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionPlayer WHERE fcName = '" + Tools.addSlashesToString( name  ) +"'" );
             if( r.next() ) {
                 m_botAction.sendPrivateMessage( name, "Ah, trying to enlist?... No, I know you.  You can !return any time.  After that, maybe you'd like to !defect to an army more worthy of your skills?");
                 return;
@@ -252,7 +252,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( name, "Ah, joining " + r.getString( "fcArmyName" ) + "?  Excellent.  You'll be pilot #" + (r.getString( "fnNumPilots" ) + 1) + "." );
                 if( bonus > 0 )
                     m_botAction.sendPrivateMessage( name, "You're also entitled to an enlistment bonus of " + bonus + ".  Congratulations." );
-                m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + (r.getString( "fnNumPilots" ) + 1) + "' WHERE fcName='" + r.getString( "fcArmyName" ) + "'" );
+                m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + (r.getInt( "fnNumPilots" ) + 1) + "' WHERE fnArmyID='" + armyNum + "'" );
                 
                 DistensionPlayer p = m_players.get( name );
                 p.addPoints( bonus );
@@ -1298,9 +1298,11 @@ public class distensionbot extends SubspaceBot {
                 String query = "SELECT * FROM tblDistensionShip ship, tblDistensionPlayer player " +
                                "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
                                "ship.fnPlayerID = player.fnID AND " +
-                               "ship.fnShipNum = '" + shipNum;
+                               "ship.fnShipNum = '" + shipNum + "'";
                 
-                ResultSet r = m_botAction.SQLQuery( m_database, query );                
+                ResultSet r = m_botAction.SQLQuery( m_database, query );
+                if( r == null )
+                    return false;
                 if( r.next() ) {
                     shipLevel = 0;
                     for( int i = 0; i < NUM_UPGRADES; i++ ) {
@@ -1395,8 +1397,10 @@ public class distensionbot extends SubspaceBot {
          */
         public String getArmyName() {
             DistensionArmy army = m_armies.get( armyID );
-            if( army == null )
-                army = m_armies.put( armyID, new DistensionArmy( armyID ) );
+            if( army == null ) {
+                army = new DistensionArmy( armyID );
+                m_armies.put( armyID, army );
+            }
             return army.getName();
         }
 
