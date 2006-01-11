@@ -237,7 +237,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         try {
-            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionArmy WHERE fnArmyID = '"+ armyNum +"'" );           
+            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionArmy WHERE fnArmyID = '"+ armyNum +"'" );
             if( r.next() ) {
                 int bonus = 0;
                 if( r.getString( "fcPrivateArmy" ) == "y" ) {
@@ -252,13 +252,14 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( name, "Ah, joining " + r.getString( "fcArmyName" ) + "?  Excellent.  You'll be pilot #" + (r.getString( "fnNumPilots" ) + 1) + "." );
                 if( bonus > 0 )
                     m_botAction.sendPrivateMessage( name, "You're also entitled to an enlistment bonus of " + bonus + ".  Congratulations." );
-
+                m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + (r.getString( "fnNumPilots" ) + 1) + "' WHERE fcName='" + r.getString( "fcArmyName" ) + "'" );
+                
                 DistensionPlayer p = m_players.get( name );
                 p.addPoints( bonus );
+                p.setArmy( armyNum );
+                p.addPlayerToDB();
                 p.addShipToDB( 1 );
                 p.setShipNum( 0 );
-                p.setArmy( armyNum );
-                p.savePlayerToDB();
                 m_botAction.sendPrivateMessage( name, "Welcome aboard.  If you need an !intro to how things work, I'd be glad to !help out.  Or if you just want to get some action, jump in your warbird.  (!pilot 1)" );
             } else {
                 m_botAction.sendPrivateMessage( name, "You making stuff up now?  Maybe you should join one of those !armies that ain't just make believe..." );
@@ -391,7 +392,7 @@ public class distensionbot extends SubspaceBot {
                 }
             }
 
-            m_botAction.sendPrivateMessage( name, Tools.formatString("#", 8 ) + Tools.formatString("Army Name", 40 ) + "Pilots" + "Enlistment Bonus" );
+            m_botAction.sendPrivateMessage( name, Tools.formatString("#", 4 ) + Tools.formatString("Army Name", 40 ) + "Pilots" + "   Enlistment Bonus" );
             
             Iterator i = allcount.keySet().iterator();
             Integer armyNum, armyCount;
@@ -405,7 +406,7 @@ public class distensionbot extends SubspaceBot {
                     bonus = calcEnlistmentBonus( armyNum, defaultcount );
                 else
                     bonus = 0;
-                m_botAction.sendPrivateMessage( name, Tools.formatString( armyNum.toString(), 8 )   + Tools.formatString( armyName, 43 ) +
+                m_botAction.sendPrivateMessage( name, Tools.formatString( armyNum.toString(), 4 )   + Tools.formatString( armyName, 43 ) +
                                                       Tools.formatString( armyCount.toString(), 6 ) + Tools.formatString( "" + bonus, 19 ) );
             }
         } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
@@ -521,18 +522,18 @@ public class distensionbot extends SubspaceBot {
         String printmsg;
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
             currentUpgrade = upgrades.get( i );
-            printmsg = (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 30);
+            printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 30) + "- ";
             if( currentUpgrade.getMaxLevel() == 0 )
-                printmsg += "- N/A";  
+                printmsg += "N/A";  
             else if( currentUpgrade.getMaxLevel() == 1 )
                 if( purchasedUpgrades[i] == 1 )
-                    printmsg += "  (INSTALLED)";
+                    printmsg += "(INSTALLED)";
                 else
-                    printmsg += "  (NOT INSTALLED)";
+                    printmsg += "(NOT INSTALLED)";
             else {
-                printmsg += "- LVL " + purchasedUpgrades[i];
+                printmsg += "LVL " + purchasedUpgrades[i];
                 if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i])
-                    printmsg += "  (MAX)";
+                    printmsg += "(MAX)";
             }
             if( currentUpgrade.getMaxLevel() != -1 )
                 m_botAction.sendPrivateMessage( name, printmsg );
@@ -587,7 +588,7 @@ public class distensionbot extends SubspaceBot {
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
             printCost = true;
             currentUpgrade = upgrades.get( i );
-            printmsg = (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 30);
+            printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 30);
             if( currentUpgrade.getMaxLevel() == 0 ) {
                 printmsg += "N/A";
                 printCost = false;
@@ -609,7 +610,8 @@ public class distensionbot extends SubspaceBot {
             }            
             if( printCost )
                 printmsg += currentUpgrade.getCostDefine( purchasedUpgrades[i] ) + "c";            
-            m_botAction.sendPrivateMessage( name, printmsg );
+            if( currentUpgrade.getMaxLevel() != -1 )
+                m_botAction.sendPrivateMessage( name, printmsg );
         }        
     }
     
@@ -700,6 +702,8 @@ public class distensionbot extends SubspaceBot {
     public void handleEvent(PlayerEntered event) {
         String name = event.getPlayerName();
         if( name == null )
+            return;
+        if( name == "Mr. Arrogant 2")
             return;
         name = name.toLowerCase();
         m_players.remove( name );
@@ -1175,7 +1179,7 @@ public class distensionbot extends SubspaceBot {
             this.name = name;
             shipNum = -1;
             shipLevel = -1;
-            points = -1;
+            points = 0;
             armyID = -1;
             warnedForTK = false;
             banned = false;
