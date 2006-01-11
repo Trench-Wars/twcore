@@ -331,8 +331,10 @@ public class distensionbot extends SubspaceBot {
 
             player.setShipNum( shipNum );
             if( player.getCurrentShipFromDB() ) {
-                if( army == null )
-                    m_armies.put( new Integer(player.getArmyID()), new DistensionArmy( player.getArmyID() ) );
+                if( army == null ) {
+                    army = new DistensionArmy( player.getArmyID() );
+                    m_armies.put( new Integer(player.getArmyID()), army );
+                }
                 army.adjustStrength( player.getLevel() );
                 
                 m_botAction.setShip( name, shipNum );
