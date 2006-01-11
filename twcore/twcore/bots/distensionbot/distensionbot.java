@@ -258,8 +258,8 @@ public class distensionbot extends SubspaceBot {
                 p.addPoints( bonus );
                 p.setArmy( armyNum );
                 p.addPlayerToDB();
-                p.addShipToDB( 1 );
                 p.setShipNum( 0 );
+                p.addShipToDB( 1 );
                 m_botAction.sendPrivateMessage( name, "Welcome aboard.  If you need an !intro to how things work, I'd be glad to !help out.  Or if you just want to get some action, jump in your warbird.  (!pilot 1)" );
             } else {
                 m_botAction.sendPrivateMessage( name, "You making stuff up now?  Maybe you should join one of those !armies that ain't just make believe..." );
@@ -407,7 +407,7 @@ public class distensionbot extends SubspaceBot {
                 else
                     bonus = 0;
                 m_botAction.sendPrivateMessage( name, Tools.formatString( armyNum.toString(), 4 )   + Tools.formatString( armyName, 43 ) +
-                                                      Tools.formatString( armyCount.toString(), 6 ) + Tools.formatString( "" + bonus, 19 ) );
+                                                      Tools.formatString( armyCount.toString(), 6 ) + bonus + "c" );
             }
         } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         
@@ -1268,7 +1268,7 @@ public class distensionbot extends SubspaceBot {
             shipsAvail[ shipNumToAdd - 1 ] = true;
             try {
                 m_botAction.SQLQuery( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-                m_botAction.SQLQuery( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), '" + shipNumToAdd + ")" );
+                m_botAction.SQLQuery( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), '" + shipNumToAdd + "')" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
         
@@ -1604,7 +1604,7 @@ public class distensionbot extends SubspaceBot {
          */
         public int getCostDefine( int currentLevel ) {
             if( costDefines == null )
-                return (2^currentLevel) * baseCost;
+                return ((int)Math.pow(2, currentLevel)) * baseCost;
             else            
                 return costDefines[ currentLevel ];
         }
