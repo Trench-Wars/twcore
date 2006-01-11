@@ -113,7 +113,7 @@ public class distensionbot extends SubspaceBot {
         req.request(EventRequester.PLAYER_LEFT);
         req.request(EventRequester.PLAYER_DEATH);
         req.request(EventRequester.LOGGED_ON);
-        req.request(EventRequester.FLAG_REWARD);
+        //req.request(EventRequester.FLAG_REWARD);
         req.request(EventRequester.FLAG_CLAIMED);
     }
 
@@ -779,14 +779,14 @@ public class distensionbot extends SubspaceBot {
             return;
 
         // Prize back to life the player who was killed
-        DistensionPlayer loser = m_players.get( killed.getPlayerName() );
+        DistensionPlayer loser = m_players.get( killed.getPlayerName().toLowerCase() );
         if( loser != null )
             loser.prizeUpgradesAfterDeath();
         else
             return;
         
         if( killer != null ) {
-            DistensionPlayer victor = m_players.get( killer.getPlayerName() );
+           DistensionPlayer victor = m_players.get( killer.getPlayerName().toLowerCase() );
             if( victor == null )
                 return;
 
