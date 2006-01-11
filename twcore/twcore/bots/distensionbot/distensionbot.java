@@ -1255,6 +1255,7 @@ public class distensionbot extends SubspaceBot {
                 }
                 return pointsSaved;
             } catch (SQLException e ) {
+                Tools.printStackTrace("Problem fetching returning player", e);
                 return false;
             }
         }
