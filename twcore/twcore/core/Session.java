@@ -199,11 +199,8 @@ public class Session extends Thread {
         final int TIMEOUT_DELAY = 60000;
         int clientKey = (int)(-Math.random() * Integer.MAX_VALUE);
         
-        long lastForcedGCTime = 0;
-        final int FORCED_GC_TIME = 10 * 60 * 1000; // Force garbage collection every 10 min
-        
-        //long lastPositionUpdate = System.currentTimeMillis();
-        //int positionUpdateTime = 5000;
+        long lastPositionUpdate = System.currentTimeMillis();
+        int positionUpdateTime = 5000;
 
         m_packetInterpreter.setSubspaceBot( m_subspaceBot );
 
@@ -211,7 +208,6 @@ public class Session extends Thread {
         m_packetGenerator.sendClientKey( clientKey );
 
         lastPacketTime = System.currentTimeMillis();
-        lastForcedGCTime = System.currentTimeMillis();
 
         try {
             while( (m_state == RUNNING || m_state == STARTING) && !interrupted() ){
@@ -245,11 +241,6 @@ public class Session extends Thread {
                     m_reliablePacketHandler.resendUnackedPacket();
                 }
 
-                if( currentTime - lastForcedGCTime > FORCED_GC_TIME ){
-                    lastForcedGCTime = currentTime;
-                    System.gc();
-                }
-
                 if( m_inboundQueue.containsMoreElements() ){
                     lastPacketTime = currentTime;
                     m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
@@ -274,3 +265,4 @@ public class Session extends Thread {
         }
     }
 }
+
