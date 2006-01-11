@@ -1241,7 +1241,7 @@ public class distensionbot extends SubspaceBot {
             try {
                 ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
                 if( r.next() ) {
-                    banned = (r.getString( "fnBanned" ) == "y" ? true : false);
+                    banned = (r.getString( "fcBanned" ) == "y" ? true : false);
                     if( banned == true )
                         return false;
                     
