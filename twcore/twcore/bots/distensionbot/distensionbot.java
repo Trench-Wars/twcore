@@ -659,6 +659,7 @@ public class distensionbot extends SubspaceBot {
         }
         player.addPoints( -cost );
         player.modifyUpgrade( upgradeNum - 1, 1 );
+        m_botAction.specificPrize( name, upgrade.getPrizeNum() );
         if( upgrade.getMaxLevel() == 1 )
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " has been installed on the " + Tools.shipName( shipNum ) + "." );
         else 
@@ -1296,7 +1297,7 @@ public class distensionbot extends SubspaceBot {
             
             query +=       " WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
                            "ship.fnPlayerID = player.fnID AND " +
-                           "ship.fnShipNum = '" + shipNum;
+                           "ship.fnShipNum = '" + shipNum + "'";
             // Background it, but don't worry about results for obvious reasons
             m_botAction.SQLBackgroundQuery( m_database, null, query );
             upgradesSaved = true;
