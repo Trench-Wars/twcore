@@ -134,14 +134,14 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!return", acceptedMessages, this, "cmdReturn",   "!return    - Return to your current position in the war" );
         m_commandInterpreter.registerCommand( "!pilot", acceptedMessages, this, "cmdPilot",     "!pilot #   - Pilot ship # available in your hangar." );        
         m_commandInterpreter.registerCommand( "!dock", acceptedMessages, this, "cmdDock",       "!dock      - View public armies, soldier counts & enlistment bonuses" );
-        m_commandInterpreter.registerCommand( "!armies", acceptedMessages, this, "cmdEnlist",   "!armies    - View public armies, soldier counts & enlistment bonuses" );
+        m_commandInterpreter.registerCommand( "!armies", acceptedMessages, this, "cmdArmies",   "!armies    - View public armies, soldier counts & enlistment bonuses" );
         m_commandInterpreter.registerCommand( "!hangar", acceptedMessages, this, "cmdHangar",   "!hangar    - View your ships & those available for purchase" );
         m_commandInterpreter.registerCommand( "!buyship", acceptedMessages, this, "cmdBuyship", "!buyship # - Buys a given ship, if it is available" );
         m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "cmdStatus",   "!status    - View current ship's level and upgrades" );
         m_commandInterpreter.registerCommand( "!credit", acceptedMessages, this, "cmdCredit",   "!credit    - Quick view of your army credit" );
         m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory",   "!armory    - View ship upgrades available in your army's armory" );        
-        m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdArmory",  "!upgrade # - Upgrades your ship with upgrade # from the armory" );        
-        m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "cmdHelp", "" );
+        m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade",  "!upgrade # - Upgrades your ship with upgrade # from the armory" );        
+        m_commandInterpreter.registerHelpCommand( acceptedMessages, this );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
@@ -233,7 +233,7 @@ public class distensionbot extends SubspaceBot {
                 armyNum = Integer.parseInt( parms );
             }
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage( name, "Couldn't understand that one.  Please take another whack at it." );
+            m_botAction.sendPrivateMessage( name, "Hmm... which army do you want to enlist in?  You sure that's one of the !armies here?" );
             return;
         }
 
