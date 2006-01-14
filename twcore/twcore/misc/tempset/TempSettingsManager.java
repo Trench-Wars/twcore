@@ -158,16 +158,22 @@ public class TempSettingsManager
 	 */
 	public String setValue(String name, String arg)
 	{
+		String response = "";
 		TempSetting t = m_settings.get(name);
 		if(t == null)
-			return "Setting "+ name +" does not exist";
+		{
+			response = "Setting "+ name +" does not exist";
+		}
+		else
+		{
+			Result r = t.setValue(arg);
+			if(r.changed)
+				for(TSChangeListener l : m_listeners)
+					l.settingChanged(name, arg);
+			response = r.response;
+		}
 
-		Result r = t.setValue(arg);
-		if(r.changed)
-			for(TSChangeListener l : m_listeners)
-				l.settingChanged(name, arg);
-
-		return r.response;
+		return response;
 	}
 
 	/**

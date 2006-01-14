@@ -76,6 +76,7 @@ class IntSetting extends TempSetting
 
 		if(r == null)
 		{
+			r = new Result();
 			try{
 			val = Integer.parseInt(arg);
 			}catch(Exception e)
@@ -126,7 +127,7 @@ class StringSetting extends TempSetting
 		Result r = super.setValue(arg);
 		if(r == null)
 		{
-
+			r = new Result();
 			if(!m_value.equals(arg))
 			{
 				m_value = arg;
@@ -161,6 +162,7 @@ class BoolSetting extends TempSetting
 		Result r = super.setValue(arg);
 		if(r == null)
 		{
+			r = new Result();
 			boolean val = (arg.equals("true")) || arg.equals("t") || arg.equals("on") || arg.equals("yes") || arg.equals("y");
 			if(m_value != val)
 			{
@@ -200,6 +202,7 @@ class DoubleSetting extends TempSetting
 
 		if(r == null)
 		{
+			r = new Result();
 			try{
 			val = Double.parseDouble(arg);
 			}catch(Exception e)
