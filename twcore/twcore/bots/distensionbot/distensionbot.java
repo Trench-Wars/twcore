@@ -580,7 +580,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "If you want to see the armory's selection, you'll need to !pilot a ship first." );
             return;
         }
-        m_botAction.sendPrivateMessage( name, "Available Upgrades: " + player.getArmyName() + " Armory - " + Tools.shipName( shipNum ).toUpperCase() ); 
+        m_botAction.sendPrivateMessage( name, "Available Upgrades: " + player.getArmyName() + " Armory - " + Tools.shipName( shipNum ).toUpperCase() + player.getPoints() + "c avail."); 
         m_botAction.sendPrivateMessage( name, " #  Name                          Curr /  Max      Credit" ); 
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1 ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
@@ -807,6 +807,8 @@ public class distensionbot extends SubspaceBot {
                     return;                
 
                 if( killerarmy.getNumFlagsOwned() == 0 ) {
+                    if( killer.getPlayerName().equals("qan"))
+                        m_botAction.sendPrivateMessage( "qan", "DEBUG: 0 flags owned; 1 point given." );
                     victor.addPoints( 1 );
                     return;
                 }
@@ -826,9 +828,12 @@ public class distensionbot extends SubspaceBot {
                     armySizeWeight /= 2.0;
                 else
                     armySizeWeight = 1;
+
                 points = (int)((points * killerarmy.getNumFlagsOwned()) * armySizeWeight);
                 
                 victor.addPoints( points );
+                if( killer.getPlayerName().equals("qan"))
+                    m_botAction.sendPrivateMessage( "qan", "DEBUG: points=" + points + "; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
             }
         }
     }
