@@ -8,41 +8,69 @@ import java.util.regex.Pattern;
 import twcore.core.BotAction;
 import twcore.core.CommandInterpreter;
 import twcore.core.Message;
-import twcore.core.OperatorList;
 import twcore.core.Tools;
+
+import static twcore.core.OperatorList.ER_LEVEL;
 
 /**
  * This class provides an easy way to allow an op to modify temporary settings.
- * The TempSettingsManager interfaces with the bot and keeps track of all the
- * TempSettings. Settings are identified by name and are case-sensitive, so
- * don't make duplicates in the same case. It registers !get and !set with
- * the Command Interpreter so all the bot writer has to do is add whatever
- * settings they want. Just make sure there are no other commands using !get/!set.
+ * The TempSettingsManager (TSM) interfaces with the bot and keeps track of all the
+ * TempSettings. Settings are identified by name and are no longer case-sensitive.
+ * There are now multiple ways to interface chat messages with the TSM:
+ * <ul>
+ *     <li> Register !get and !set with a supplied CommandInterpreter
+ *     <li> Pass the chat message to it with handleEvent
+ *     <li> Filter the chat messages yourself and call c_Set and c_Get directly
+ * </ul>
+ * As of this version, the types of settings you can store are integers, doubles,
+ * booleans, and strings. On the command side, you can assign values using the form
+ * <code>!set name1=value1 name2=value2 ...</code> For strings that contain spaces
+ * or non-alphanumeric characters, you can enclose the value in quotes. If at
+ * certain points during the execution of your bot you do not want settings to
+ * be changed from the command interface, you can use the locking system to either
+ * lock settings individually or you can lock the entire TSM at once. If your
+ * bot needs to be notified when a bot operator modifies one of the settings
+ * through the command interface, have it implement TSChangeListener and subscribe
+ * with the TSM to get the settingChanged callback.
+ *
  * @author D1st0rt
+ * @version 06.01.14
  */
 public class TempSettingsManager
 {
 	private BotAction m_botAction;
-	private OperatorList m_opList;
-	private int m_opLevel = OperatorList.ER_LEVEL;
+	private int m_opLevel = ER_LEVEL;
 	private HashMap<String, TempSetting> m_settings;
 	private boolean m_locked;
 	private Vector<TSChangeListener> m_listeners;
 
 	/**
+	 * Creates a new instance of TempSettingsManager
 	 * @param botAction The BotAction event to send chat messages with
 	 * @param cmd The CommandInterpreter to register commands with
 	 * @param opLevel The minimum Operator Level to access the settings
 	 */
 	public TempSettingsManager(BotAction botAction, CommandInterpreter cmd, int opLevel)
 	{
+		this(botAction, opLevel);
+		registerCommands(cmd);
+	}
+
+	/**
+	 * Creates a new instance of TempSettingsManager. Use this Constructor when
+	 * you don't want to use a CommandInterpreter. Note that if you do use this
+	 * constructor you will have to pass screen your messages and pass the commands
+	 * manually to cSet() and c_Get().
+	 * @param botAction The BotAction event to send chat messages with
+	 * @param opLevel The minimum Operator Level to access the settings
+	 */
+	public TempSettingsManager(BotAction botAction, int opLevel)
+	{
 		m_botAction = botAction;
 		m_opLevel = opLevel;
-		m_opList = botAction.getOperatorList();
 		m_settings = new HashMap<String, TempSetting>();
 		m_locked = false;
 		m_listeners = new Vector<TSChangeListener>();
-		registerCommands(cmd);
 	}
 
 	/**
@@ -67,26 +95,26 @@ public class TempSettingsManager
 		{
 			case STRING:
 				StringSetting sset = new StringSetting(name, defval);
-				m_settings.put(name, sset);
+				m_settings.put(name.toLowerCase(), sset);
 			break;
 
 			case INT:
 				int idefault = Integer.parseInt(defval);
 				IntSetting iset = new IntSetting(name, idefault);
-				m_settings.put(name, iset);
+				m_settings.put(name.toLowerCase(), iset);
 			break;
 
 			case DOUBLE:
 				double ddefault = Double.parseDouble(defval);
 				DoubleSetting dset = new DoubleSetting(name, ddefault);
-				m_settings.put(name, dset);
+				m_settings.put(name.toLowerCase(), dset);
 			break;
 
 			case BOOLEAN:
 				String arg = defval.toLowerCase();
 				boolean bdefault = (arg.equals("true")) || arg.equals("t") || arg.equals("on") || arg.equals("yes") || arg.equals("y");
 				BoolSetting bset = new BoolSetting(name, bdefault);
-				m_settings.put(name, bset);
+				m_settings.put(name.toLowerCase(), bset);
 			break;
 
 			default:
@@ -102,9 +130,9 @@ public class TempSettingsManager
 	 */
 	public void restrictSetting(String name, int min, int max)
 	{
-		TempSetting t = m_settings.get(name);
+		TempSetting t = m_settings.get(name.toLowerCase());
 		if(t == null)
-			Tools.printLog("TempSet: Could not restrict setting "+name +" (doesn't exist)");
+			Tools.printLog("TempSet: Could not restrict setting "+ name +" (doesn't exist)");
 		else if(! (t instanceof IntSetting))
 			Tools.printLog("TempSet: Could not restrict setting "+ name +" (not an int setting)");
 		else
@@ -122,9 +150,9 @@ public class TempSettingsManager
 	 */
 	public void restrictSetting(String name, double min, double max)
 	{
-		TempSetting t = m_settings.get(name);
+		TempSetting t = m_settings.get(name.toLowerCase());
 		if(t == null)
-			Tools.printLog("TempSet: Could not restrict setting "+name +" (doesn't exist)");
+			Tools.printLog("TempSet: Could not restrict setting "+ name +" (doesn't exist)");
 		else if(!(t instanceof DoubleSetting))
 			Tools.printLog("TempSet: Could not restrict setting "+ name +" (not a double setting)");
 		else
@@ -141,10 +169,10 @@ public class TempSettingsManager
 	 */
 	public Object getSetting(String name)
 	{
-		TempSetting t = m_settings.get(name);
+		TempSetting t = m_settings.get(name.toLowerCase());
 		if(t == null)
 		{
-			Tools.printLog("TempSet: Could not retrieve setting "+name +" (doesn't exist)");
+			Tools.printLog("TempSet: Could not retrieve setting "+ name +" (doesn't exist)");
 			return null;
 		}
 		return t.getValue();
@@ -159,7 +187,7 @@ public class TempSettingsManager
 	public String setValue(String name, String arg)
 	{
 		String response = "";
-		TempSetting t = m_settings.get(name);
+		TempSetting t = m_settings.get(name.toLowerCase());
 		if(t == null)
 		{
 			response = "Setting "+ name +" does not exist";
@@ -177,41 +205,63 @@ public class TempSettingsManager
 	}
 
 	/**
+	 * This takes an incoming chat message and screens it for use in the TempSettingsManager.
+	 * It will pass the message to the appropriate function when necessary.
+	 * @param event the chat message to check for delivery
+	 */
+	public void handleEvent(Message event)
+	{
+		String sender = m_botAction.getPlayerName(event.getPlayerID());
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE && sender != null)
+		{
+			if(m_botAction.getOperatorList().getAccessLevel(sender) >= m_opLevel)
+			{
+				String command = event.getMessage();
+
+				if(command.toLowerCase().startsWith("!get "))
+					c_Get(sender, command.substring(5));
+				else if(command.toLowerCase().startsWith("!set "))
+					c_Set(sender, command.substring(5));
+			}
+		}
+	}
+
+	/**
 	 * This is the command function registered with the CommandInterpreter under !set
 	 * @param name The name of the player that sent the message
 	 * @param message The parameters sent along after "!set"
 	 */
 	public void c_Set(String name, String message)
 	{
-		if(m_opList.getAccessLevel(name) >= m_opLevel)
+		if(message.equalsIgnoreCase("help"))
 		{
-			if(message.equalsIgnoreCase("help"))
-			{
-				String[] help = new String[]{
-					"Use the !set command to change temporary bot settings",
-					"Syntax: !set <name1>=<value1> <name2>=<value2> ...",
-					"-----Modifiable Settings:-----"};
-				String[] sets = m_settings.keySet().toArray(new String[]{});
+			String[] help = new String[]{
+				"Use the !set command to change temporary bot settings",
+				"Syntax: !set <name1>=<value1> <name2>=<value2> ...",
+				"-----Modifiable Settings:-----"};
+			String[] sets = m_settings.keySet().toArray(new String[]{});
 
-				m_botAction.privateMessageSpam(name, help);
-				m_botAction.privateMessageSpam(name, sets);
-			}
-			else if(!m_locked)
-			{
-				Matcher regex;
-				regex = Pattern.compile("(\\w+)=(\\w+)").matcher(message);
-				while(regex.find())
-				{
-					String old = ""+ getSetting(regex.group(1));
-					m_botAction.sendPrivateMessage(name, setValue(regex.group(1), regex.group(2)));
-					if(old.equals(regex.group(2)))
-						for(TSChangeListener l: m_listeners)
-							l.settingChanged(regex.group(1), regex.group(2));
-				}
-			}
-			else
-				m_botAction.sendPrivateMessage(name, "Settings are currently locked.");
+			m_botAction.privateMessageSpam(name, help);
+			m_botAction.privateMessageSpam(name, sets);
 		}
+		else if(!m_locked)
+		{
+			Matcher regex;
+			regex = Pattern.compile("(\\w+)=((\\w+)|\"(.+)\")").matcher(message);
+			while(regex.find())
+			{
+				String old = ""+ getSetting(regex.group(1));
+				String val = regex.group(2);
+				if(val.startsWith("\"")&& val.endsWith("\""))
+					val = val.substring(1, val.length()-1);
+				m_botAction.sendPrivateMessage(name, setValue(regex.group(1), val));
+				if(old.equals(regex.group(2)))
+					for(TSChangeListener l: m_listeners)
+						l.settingChanged(regex.group(1), regex.group(2));
+			}
+		}
+		else
+			m_botAction.sendPrivateMessage(name, "Settings are currently locked.");
 	}
 
 	/**
@@ -221,15 +271,12 @@ public class TempSettingsManager
 	 */
 	public void c_Get(String name, String message)
 	{
-		if(m_opList.getAccessLevel(name) >= m_opLevel)
-		{
-			message = message.trim();
-			TempSetting t = m_settings.get(message);
-			if(t == null)
-				m_botAction.sendPrivateMessage(name, "Setting "+ message +" does not exist");
-			else
-				m_botAction.sendPrivateMessage(name, t.getName() + "=" + t.getValue());
-		}
+		message = message.trim();
+		TempSetting t = m_settings.get(message.toLowerCase());
+		if(t == null)
+			m_botAction.sendPrivateMessage(name, "Setting "+ message +" does not exist");
+		else
+			m_botAction.sendPrivateMessage(name, t.getName() + "=" + t.getValue());
 	}
 
 	/**
@@ -239,7 +286,7 @@ public class TempSettingsManager
 	 */
 	public void setLocked(String name, boolean locked)
 	{
-		TempSetting t = m_settings.get(name);
+		TempSetting t = m_settings.get(name.toLowerCase());
 		if(t == null)
 				Tools.printLog("TempSet: Setting "+ name +" does not exist");
 			else
@@ -250,7 +297,6 @@ public class TempSettingsManager
 	 * This locks/unlocks all settings from being modified through the command interface (!set)
 	 * Individual command locks are preserved, but if you setAllLocked(true), it overrides
 	 * any non-locked commands.
-	 * @param name The name of the setting to set locked or unlocked
 	 * @param locked Whether settings should be locked or unlocked
 	 */
 	public void setAllLocked(boolean locked)
@@ -258,9 +304,25 @@ public class TempSettingsManager
 		m_locked = locked;
 	}
 
+	/**
+	 * Registers a TSChangeListener with the TempSettingsManager. Any time a setting is changed
+	 * through the command interface, the registered listeners will receive the settingChanged
+	 * callback.
+	 * @param t the listener to add
+	 */
 	public void addTSChangeListener(TSChangeListener t)
 	{
 		if(!m_listeners.contains(t))
 			m_listeners.add(t);
+	}
+
+	/**
+	 * Removes a TSChangeListener from receiving settingChanged callbacks.
+	 * @param t the listener to remove
+	 */
+	public void removeTSChangeListener(TSChangeListener t)
+	{
+		if(m_listeners.contains(t))
+			m_listeners.remove(t);
 	}
 }
