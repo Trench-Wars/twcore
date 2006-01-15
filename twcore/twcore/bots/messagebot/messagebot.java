@@ -1361,6 +1361,10 @@ class Channel
 	 */
 	public void makeOp(String name, String player)
 	{
+		if(isOwner(player)) {
+				m_bA.sendSmartPrivateMessage(name, "You can't take away your owner access!");
+				return;
+		}
 		if(members.containsKey(player.toLowerCase()))
 		{
 			updateSQL(player.toLowerCase(), 2);
@@ -1497,6 +1501,10 @@ class Channel
 				m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
 				return;
 			}
+			if(isOwner(name)) {
+				m_bA.sendSmartPrivateMessage(name, "You have to make a new owner before you leave.");
+				return;
+			}
 			updateSQL(name.toLowerCase(), -5);
 			m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
 		}
@@ -1562,6 +1570,10 @@ class Channel
 	 */
 	public void banPlayer(String name, String player)
 	{
+		if(isOwner(player)) {
+			m_bA.sendSmartPrivateMessage(name, "You cannot ban the owner!");
+			return;
+		}
 		if(banned.contains(player.toLowerCase()))
 		{
 			m_bA.sendSmartPrivateMessage(name, "That player is already banned.");
