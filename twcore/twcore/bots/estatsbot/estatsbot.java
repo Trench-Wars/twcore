@@ -3,7 +3,7 @@ package twcore.bots.estatsbot;
 import twcore.core.*;
 import java.util.*;
 import java.sql.*;
-
+/* Version something */
 public class estatsbot extends SubspaceBot {
 	
 	HashMap players;
@@ -30,9 +30,10 @@ public class estatsbot extends SubspaceBot {
 		
 		String killer = m_botAction.getPlayerName(event.getKillerID());
 		String killee = m_botAction.getPlayerName(event.getKilleeID());
-		if(killer == null || killee == null) return;
-		((ElimPlayer)players.get(killer.toLowerCase())).addKill();
-		((ElimPlayer)players.get(killee.toLowerCase())).addDeath();
+		if(players.containsKey((killer.toLowerCase())))
+			((ElimPlayer)players.get(killer.toLowerCase())).addKill();
+		if(players.containsKey((killee.toLowerCase())))
+			((ElimPlayer)players.get(killee.toLowerCase())).addDeath();
 	}
 	
 	public void handleEvent(Message event) {
@@ -74,7 +75,7 @@ public class estatsbot extends SubspaceBot {
 		try {
 			String type = message.substring(15, message.indexOf(";"));
 			thisGame.setType(type);
-		} catch(Exception e) { Tools.printStackTrace(message, e); }
+		} catch(Exception e) {}
 	}
 	
 	public void startGame() {
