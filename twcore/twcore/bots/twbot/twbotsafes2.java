@@ -15,7 +15,7 @@ import static twcore.misc.tempset.SType.*;
  * as put them into spectator mode.
  *
  * @author D1st0rt
- * @version 06.01.14
+ * @version 06.01.21
  */
 public class twbotsafes2 extends TWBotExtension
 {
@@ -29,7 +29,7 @@ public class twbotsafes2 extends TWBotExtension
 	private final String helpMessage[] =
 	{
 		"+------------------Extended Safes Module------------------+",
-		"|  Release 1.1 [01/14/06] - http://d1st0rt.sscentral.com  |",
+		"|  Release 1.2 [01/21/06] - http://d1st0rt.sscentral.com  |",
 		"+---------------------------------------------------------+",
 		"! !activate - Toggles the module doing anything when a    |",
 		"|             player flies over a safety tile             |",
@@ -55,7 +55,8 @@ public class twbotsafes2 extends TWBotExtension
 	public twbotsafes2()
 	{
 		m_active = false;
-		m_tsm = null;
+		m_tsm = new TempSettingsManager(BotAction.getBotAction(), ER_LEVEL);
+		registerSettings();
 	}
 
 	/**
@@ -73,12 +74,6 @@ public class twbotsafes2 extends TWBotExtension
 	 */
 	public void handleEvent(Message event)
 	{
-		if(m_tsm == null)
-		{
-			m_tsm = new TempSettingsManager(m_botAction, ER_LEVEL);
-			registerSettings();
-		}
-
 		m_tsm.handleEvent(event);
 
 		String name = m_botAction.getPlayerName(event.getPlayerID());
