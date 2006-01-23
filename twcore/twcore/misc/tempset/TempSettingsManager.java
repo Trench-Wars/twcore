@@ -43,6 +43,7 @@ public class TempSettingsManager
 	private HashMap<String, TempSetting> m_settings;
 	private boolean m_locked;
 	private Vector<TSChangeListener> m_listeners;
+	private String[] customHelp;
 
 	/**
 	 * Creates a new instance of TempSettingsManager
@@ -71,6 +72,7 @@ public class TempSettingsManager
 		m_settings = new HashMap<String, TempSetting>();
 		m_locked = false;
 		m_listeners = new Vector<TSChangeListener>();
+		customHelp = null;
 	}
 
 	/**
@@ -235,14 +237,21 @@ public class TempSettingsManager
 	{
 		if(message.equalsIgnoreCase("help"))
 		{
-			String[] help = new String[]{
-				"Use the !set command to change temporary bot settings",
-				"Syntax: !set <name1>=<value1> <name2>=<value2> ...",
-				"-----Modifiable Settings:-----"};
-			String[] sets = m_settings.keySet().toArray(new String[]{});
+			if(customHelp != null)
+			{
+				m_botAction.privateMessageSpam(name, customHelp);
+			}
+			else
+			{
+				String[] help = new String[]{
+					"Use the !set command to change temporary bot settings",
+					"Syntax: !set <name1>=<value1> <name2>=<value2> ...",
+					"-----Modifiable Settings:-----"};
+				String[] sets = m_settings.keySet().toArray(new String[]{});
 
-			m_botAction.privateMessageSpam(name, help);
-			m_botAction.privateMessageSpam(name, sets);
+				m_botAction.privateMessageSpam(name, help);
+				m_botAction.privateMessageSpam(name, sets);
+			}
 		}
 		else if(!m_locked)
 		{
@@ -324,5 +333,15 @@ public class TempSettingsManager
 	{
 		if(m_listeners.contains(t))
 			m_listeners.remove(t);
+	}
+
+	/**
+	 * Allows the bot to specify a custom message for !set help. To revert back
+	 * to the default, pass a null object. For no message, pass a new String[0]
+	 * @param customHelp the custom help message to display
+	 */
+	public void setCustomHelp(String[] customHelp)
+	{
+		this.customHelp = customHelp;
 	}
 }
