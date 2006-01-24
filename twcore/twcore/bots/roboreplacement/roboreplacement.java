@@ -302,6 +302,7 @@ public class roboreplacement extends SubspaceBot
 				if(numPlayers <= 1)
 				{
 					m_botAction.sendArenaMessage("This game has been cancelled because there are not enough players!", 5);
+					m_botAction.sendUnfilteredPublicMessage("*lock");
 					return;
 				}
 				Iterator i = m_botAction.getPlayingPlayerIterator();
@@ -484,7 +485,7 @@ public class roboreplacement extends SubspaceBot
 	
 	public String getPlayerStats(String username) //returns a string of the user's stats
 	{
-        try{
+       /* try{
 
             ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnDeaths, fnWon, fnPlayed, fnKills, fnRating FROM tblElimTwoStats"+num+" WHERE fcUserName = \"" + username+"\"");
             if( result == null ) {
@@ -499,7 +500,7 @@ public class roboreplacement extends SubspaceBot
         } catch (Exception e) {
             Tools.printStackTrace(e);
             return "Can't retrieve stats.";
-        }
+        }*/ return "";
     }
 	
 	public void topTen(String name) //pm's the person the top ten people
@@ -517,12 +518,12 @@ public class roboreplacement extends SubspaceBot
 	public void getTopTen() //gets the top ten people and puts them in the vector topTen
 	{
         topTen = new Vector();
-        try {
+        /*try {
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fcUserName, fnWon, fnPlayed, fnWon, fnDeaths, fnRating FROM tblElimTwoStats"+num+" ORDER BY fnRating DESC LIMIT 10");
             while(result.next())
                 topTen.add(result.getString("fcUsername") + "Wins: " + result.getInt("fnWon") +"  Games: " + result.getInt("fnPlayed") + "  Kills: " + result.getInt("fnKills") + "  Deaths: " + result.getInt("fnDeaths") + "  Rating: " + result.getInt("fnRating"));
         }
-        catch (Exception e){}
+        catch (Exception e){}*/
     }
     
     public void setupYPosCheck(int y) {
@@ -537,7 +538,7 @@ public class roboreplacement extends SubspaceBot
     }
     
     public void checkYs(int y) {
-    	if(!isRunning) return;
+    	/*if(!isRunning) return;
     	if(voting) return;
     	
     	Iterator it = m_botAction.getPlayingPlayerIterator();
@@ -557,7 +558,7 @@ public class roboreplacement extends SubspaceBot
 	    			}
 	    		}
 	    	}
-	    }
+	    }*/
 	 }
 	
 	public void cancel()
