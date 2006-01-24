@@ -15,7 +15,7 @@ import static twcore.misc.tempset.SType.*;
  * as put them into spectator mode.
  *
  * @author D1st0rt
- * @version 06.01.21
+ * @version 06.01.23
  */
 public class twbotsafes2 extends TWBotExtension
 {
@@ -28,25 +28,26 @@ public class twbotsafes2 extends TWBotExtension
 	/** The help message to be sent to bot operators */
 	private final String helpMessage[] =
 	{
-		"+------------------Extended Safes Module------------------+",
-		"|  Release 1.2 [01/21/06] - http://d1st0rt.sscentral.com  |",
-		"+---------------------------------------------------------+",
-		"! !activate - Toggles the module doing anything when a    |",
-		"|             player flies over a safety tile             |",
-		"|                                                         |",
-		"| !set      - Modify actions to take for safety'd players |",
-		"|   |                                                     |",
-		"|   +-SpecPlayer= on/off, Whether to spec player          |",
-		"|   +-SpeccedMsg= on/off, Arena message when player spec'd|",
-		"|   +-ChangeShip= on/off, Whether to change player's ship |",
-		"|   +-TargetShip= 1 - 8 , ship to change player to        |",
-		"|   +-ShipChgMsg= on/off, Arena message when ship changed |",
-		"|   +-ChangeFreq= on/off, Whether to change player's freq |",
-		"|   +-TargetFreq= 0-9999, freq to change player to        |",
-		"|   +-FreqChgMsg= on/off, Arena message when freq changed |",
-		"|                                                         |",
-		"| !get      - Get the value for one of the above settings |",
-		"+---------------------------------------------------------+"
+		"+------------------Extended Safes Module-------------------+",
+		"|  Release 1.3 [01/23/06] - http://d1st0rt.sscentral.com   |",
+		"+----------------------------------------------------------+",
+		"! !activate - Toggles the module doing anything when a     |",
+		"|             player flies over a safety tile              |",
+		"|                                                          |",
+		"| !set      - Modify actions to take for safety'd players  |",
+		"|   |                                                      |",
+		"|   +- SpecPlayer= on/off, Whether to spec player          |",
+		"|   +- SpeccedMsg= \"text\" , Arena message when player spec'd|",
+		"|   +- ChangeShip= on/off, Whether to change player's ship |",
+		"|   +- TargetShip= 1 - 8 , ship to change player to        |",
+		"|   +- ShipChgMsg= \"text\", Arena message when ship changed |",
+		"|   +- ChangeFreq= on/off, Whether to change player's freq |",
+		"|   +- TargetFreq= 0-9999, freq to change player to        |",
+		"|   +- FreqChgMsg= \"text\", Arena message when freq changed |",
+		"|      (Set the msg's to \"none\" for no message displayed)  |",
+		"|                                                          |",
+		"| !get      - Get the value for one of the above settings  |",
+		"+----------------------------------------------------------+"
 	};
 
 	/**
@@ -100,22 +101,25 @@ public class twbotsafes2 extends TWBotExtension
 			{
 				m_botAction.spec(event.getPlayerID());
 				m_botAction.spec(event.getPlayerID());
-				if((Boolean)m_tsm.getSetting("SpeccedMsg"))
-					m_botAction.sendArenaMessage(name + " has been specced for going into a safe area.");
+				String msg = (String)m_tsm.getSetting("SpeccedMsg");
+				if(!msg.equalsIgnoreCase("none"))
+					m_botAction.sendArenaMessage(name + " " + msg);
 			}
 
 			if((Boolean)m_tsm.getSetting("ChangeShip") && ship != tship)
 			{
 				m_botAction.setShip(event.getPlayerID(), tship);
-				if((Boolean)m_tsm.getSetting("ShipChgMsg"))
-					m_botAction.sendArenaMessage(name + " is now in ship "+ tship +" for going into a safe area.");
+				String msg = (String)m_tsm.getSetting("ShipChgMsg");
+				if(!msg.equalsIgnoreCase("none"))
+					m_botAction.sendArenaMessage(name + " " + msg);
 			}
 
 			if((Boolean)m_tsm.getSetting("ChangeFreq") && freq != tfreq)
 			{
 				m_botAction.setFreq(event.getPlayerID(), tfreq);
-				if((Boolean)m_tsm.getSetting("FreqChgMsg"))
-					m_botAction.sendArenaMessage(name + " is now on freq "+ tfreq +" for going into a safe area.");
+				String msg = (String)m_tsm.getSetting("FreqChgMsg");
+				if(!msg.equalsIgnoreCase("none"))
+					m_botAction.sendArenaMessage(name + " " + msg);
 			}
 		}
 	}
@@ -138,15 +142,15 @@ public class twbotsafes2 extends TWBotExtension
 	private void registerSettings()
 	{
 		m_tsm.addSetting(BOOLEAN, "SpecPlayer", "off");
-		m_tsm.addSetting(BOOLEAN, "SpeccedMsg", "off");
+		m_tsm.addSetting(STRING,  "SpeccedMsg", "none");
 
 		m_tsm.addSetting(BOOLEAN, "ChangeShip", "off");
 		m_tsm.addSetting(INT,     "TargetShip", "3");
-		m_tsm.addSetting(BOOLEAN, "ShipChgMsg", "off");
+		m_tsm.addSetting(STRING,  "ShipChgMsg", "none");
 
 		m_tsm.addSetting(BOOLEAN, "ChangeFreq", "off");
 		m_tsm.addSetting(INT,     "TargetFreq", "1");
-		m_tsm.addSetting(BOOLEAN, "FreqChgMsg", "off");
+		m_tsm.addSetting(STRING,  "FreqChgMsg", "none");
 
 		m_tsm.restrictSetting("TargetShip", 1, 8);
 		m_tsm.restrictSetting("TargetFreq", 0, 9999);
