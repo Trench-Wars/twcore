@@ -37,7 +37,7 @@ public class twbotsafes2 extends TWBotExtension
 		"| !set      - Modify actions to take for safety'd players  |",
 		"|   |                                                      |",
 		"|   +- SpecPlayer= on/off, Whether to spec player          |",
-		"|   +- SpeccedMsg= \"text\" , Arena message when player spec'd|",
+		"|   +- SpeccedMsg= \"text\", Arena message when player spec'd|",
 		"|   +- ChangeShip= on/off, Whether to change player's ship |",
 		"|   +- TargetShip= 1 - 8 , ship to change player to        |",
 		"|   +- ShipChgMsg= \"text\", Arena message when ship changed |",
