@@ -2,6 +2,7 @@ package twcore.misc.tempset;
 
 import java.util.HashMap;
 import java.util.Vector;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +35,7 @@ import static twcore.core.OperatorList.ER_LEVEL;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.01.14
+ * @version 06.02.02
  */
 public class TempSettingsManager
 {
@@ -247,7 +248,11 @@ public class TempSettingsManager
 					"Use the !set command to change temporary bot settings",
 					"Syntax: !set <name1>=<value1> <name2>=<value2> ...",
 					"-----Modifiable Settings:-----"};
-				String[] sets = m_settings.keySet().toArray(new String[]{});
+
+				String[] sets = new String[m_settings.size()];
+				Iterator setsIter = m_settings.values().iterator();
+				for(int x = 0; x < sets.length; x++)
+					sets[x] = ((TempSetting)setsIter.next()).getName();
 
 				m_botAction.privateMessageSpam(name, help);
 				m_botAction.privateMessageSpam(name, sets);
@@ -256,15 +261,15 @@ public class TempSettingsManager
 		else if(!m_locked)
 		{
 			Matcher regex;
-			regex = Pattern.compile("(\\w+)=((\\w+)|\"(.+)\")").matcher(message);
+			regex = Pattern.compile("(\\w+)=((\\w+)|\"([^\"]+)\")").matcher(message);
 			while(regex.find())
 			{
 				String old = ""+ getSetting(regex.group(1));
 				String val = regex.group(2);
-				if(val.startsWith("\"")&& val.endsWith("\""))
+				if(val.startsWith("\"") && val.endsWith("\""))
 					val = val.substring(1, val.length()-1);
 				m_botAction.sendPrivateMessage(name, setValue(regex.group(1), val));
-				if(old.equals(regex.group(2)))
+				if(!old.equals(val))
 					for(TSChangeListener l: m_listeners)
 						l.settingChanged(regex.group(1), regex.group(2));
 			}
