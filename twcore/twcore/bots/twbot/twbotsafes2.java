@@ -5,6 +5,7 @@ import twcore.core.CommandInterpreter;
 import twcore.core.Message;
 import twcore.core.PlayerPosition;
 import twcore.misc.tempset.TempSettingsManager;
+import twcore.misc.tempset.TSChangeListener;
 import static twcore.core.OperatorList.ER_LEVEL;
 import static twcore.misc.tempset.SType.*;
 
@@ -15,9 +16,9 @@ import static twcore.misc.tempset.SType.*;
  * as put them into spectator mode.
  *
  * @author D1st0rt
- * @version 06.01.23
+ * @version 06.02.02
  */
-public class twbotsafes2 extends TWBotExtension
+public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 {
 	/** The TempSettingsManager used to keep track of the settings */
 	private TempSettingsManager m_tsm;
@@ -29,7 +30,7 @@ public class twbotsafes2 extends TWBotExtension
 	private final String helpMessage[] =
 	{
 		"+------------------Extended Safes Module-------------------+",
-		"|  Release 1.3 [01/23/06] - http://d1st0rt.sscentral.com   |",
+		"|  Release 1.4 [02/02/06] - http://d1st0rt.sscentral.com   |",
 		"+----------------------------------------------------------+",
 		"! !activate - Toggles the module doing anything when a     |",
 		"|             player flies over a safety tile              |",
@@ -50,6 +51,12 @@ public class twbotsafes2 extends TWBotExtension
 		"+----------------------------------------------------------+"
 	};
 
+
+	// Cached game settings to increase speed
+	private boolean specPlayer = false, changeShip = false, changeFreq = false;
+	private int targetFreq = 1, targetShip = 3;
+	private String speccedMsg = "none", shipChgMsg = "none", freqChgMsg= "none";
+
 	/**
 	 * Creates a new instance of the Extended Safes Module
 	 */
@@ -58,6 +65,7 @@ public class twbotsafes2 extends TWBotExtension
 		m_active = false;
 		m_tsm = new TempSettingsManager(BotAction.getBotAction(), ER_LEVEL);
 		registerSettings();
+		m_tsm.addTSChangeListener(this);
 	}
 
 	/**
@@ -67,6 +75,31 @@ public class twbotsafes2 extends TWBotExtension
 	public String[] getHelpMessages()
 	{
 		return helpMessage;
+	}
+
+	/**
+	 * Fired when an op changes a setting with !set. Updates the cached value.
+	 * @param setting the name of the setting that was changed
+	 * @param value the text string value the bot op entered
+	 */
+	public void settingChanged(String setting, String value)
+	{
+		if(setting.equals("specplayer"))
+			specPlayer = (Boolean)m_tsm.getSetting("SpecPlayer");
+		else if(setting.equals("speccedmsg"))
+			speccedMsg = (String)m_tsm.getSetting("SpeccedMsg");
+		else if(setting.equals("changeship"))
+			changeShip = (Boolean)m_tsm.getSetting("ChangeShip");
+		else if(setting.equals("targetship"))
+			targetShip = (Integer)m_tsm.getSetting("TargetShip");
+		else if(setting.equals("shipchgmsg"))
+			shipChgMsg = (String)m_tsm.getSetting("ShipChgMsg");
+		else if(setting.equals("changefreq"))
+			changeFreq = (Boolean)m_tsm.getSetting("ChangeFreq");
+		else if(setting.equals("targetfreq"))
+			targetFreq = (Integer)m_tsm.getSetting("TargetFreq");
+		else if(setting.equals("freqchgmsg"))
+			freqChgMsg = (String)m_tsm.getSetting("FreqChgMsg");
 	}
 
 	/**
@@ -94,32 +127,27 @@ public class twbotsafes2 extends TWBotExtension
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 			int ship = m_botAction.getPlayer(event.getPlayerID()).getShipType();
 			int freq = m_botAction.getPlayer(event.getPlayerID()).getFrequency();
-			int tship = (Integer)m_tsm.getSetting("TargetShip");
-			int tfreq = (Integer)m_tsm.getSetting("TargetFreq");
 
-			if((Boolean)m_tsm.getSetting("SpecPlayer"))
+			if(specPlayer)
 			{
 				m_botAction.spec(event.getPlayerID());
 				m_botAction.spec(event.getPlayerID());
-				String msg = (String)m_tsm.getSetting("SpeccedMsg");
-				if(!msg.equalsIgnoreCase("none"))
-					m_botAction.sendArenaMessage(name + " " + msg);
+				if(!speccedMsg.equalsIgnoreCase("none"))
+					m_botAction.sendArenaMessage(name + " " + speccedMsg);
 			}
 
-			if((Boolean)m_tsm.getSetting("ChangeShip") && ship != tship)
+			if(changeShip && ship != targetShip)
 			{
-				m_botAction.setShip(event.getPlayerID(), tship);
-				String msg = (String)m_tsm.getSetting("ShipChgMsg");
-				if(!msg.equalsIgnoreCase("none"))
-					m_botAction.sendArenaMessage(name + " " + msg);
+				m_botAction.setShip(event.getPlayerID(), targetShip);
+				if(!shipChgMsg.equalsIgnoreCase("none"))
+					m_botAction.sendArenaMessage(name + " " + shipChgMsg);
 			}
 
-			if((Boolean)m_tsm.getSetting("ChangeFreq") && freq != tfreq)
+			if(changeFreq && freq != targetFreq)
 			{
-				m_botAction.setFreq(event.getPlayerID(), tfreq);
-				String msg = (String)m_tsm.getSetting("FreqChgMsg");
-				if(!msg.equalsIgnoreCase("none"))
-					m_botAction.sendArenaMessage(name + " " + msg);
+				m_botAction.setFreq(event.getPlayerID(), targetFreq);
+				if(!freqChgMsg.equalsIgnoreCase("none"))
+					m_botAction.sendArenaMessage(name + " " + freqChgMsg);
 			}
 		}
 	}
@@ -156,5 +184,8 @@ public class twbotsafes2 extends TWBotExtension
 		m_tsm.restrictSetting("TargetFreq", 0, 9999);
 	}
 
-	public void cancel(){ }
+	public void cancel()
+	{
+		m_tsm.removeTSChangeListener(this);
+	}
 }
