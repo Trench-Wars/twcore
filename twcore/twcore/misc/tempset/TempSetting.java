@@ -249,7 +249,7 @@ class StringSetting extends TempSetting
 class BoolSetting extends TempSetting
 {
 	/** The current value of the setting */
-	boolean m_value;
+	private boolean m_value;
 
 	/**
      * Creates a new BoolSetting
