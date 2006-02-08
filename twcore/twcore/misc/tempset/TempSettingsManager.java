@@ -35,7 +35,7 @@ import static twcore.core.OperatorList.ER_LEVEL;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.02.02
+ * @version 06.02.08
  */
 public class TempSettingsManager
 {
@@ -200,7 +200,7 @@ public class TempSettingsManager
 			Result r = t.setValue(arg);
 			if(r.changed)
 				for(TSChangeListener l : m_listeners)
-					l.settingChanged(name, arg);
+					l.settingChanged(name, t.getValue());
 			response = r.response;
 		}
 
@@ -269,9 +269,6 @@ public class TempSettingsManager
 				if(val.startsWith("\"") && val.endsWith("\""))
 					val = val.substring(1, val.length()-1);
 				m_botAction.sendPrivateMessage(name, setValue(regex.group(1), val));
-				if(!old.equals(val))
-					for(TSChangeListener l: m_listeners)
-						l.settingChanged(regex.group(1), regex.group(2));
 			}
 		}
 		else
