@@ -16,7 +16,7 @@ import static twcore.misc.tempset.SType.*;
  * as put them into spectator mode.
  *
  * @author D1st0rt
- * @version 06.02.02
+ * @version 06.02.08
  */
 public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 {
@@ -30,7 +30,7 @@ public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 	private final String helpMessage[] =
 	{
 		"+------------------Extended Safes Module-------------------+",
-		"|  Release 1.4 [02/02/06] - http://d1st0rt.sscentral.com   |",
+		"|  Release 1.5 [02/08/06] - http://d1st0rt.sscentral.com   |",
 		"+----------------------------------------------------------+",
 		"! !activate - Toggles the module doing anything when a     |",
 		"|             player flies over a safety tile              |",
@@ -82,24 +82,24 @@ public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 	 * @param setting the name of the setting that was changed
 	 * @param value the text string value the bot op entered
 	 */
-	public void settingChanged(String setting, String value)
+	public void settingChanged(String setting, Object value)
 	{
 		if(setting.equals("specplayer"))
-			specPlayer = (Boolean)m_tsm.getSetting("SpecPlayer");
+			specPlayer = (Boolean)value;
 		else if(setting.equals("speccedmsg"))
-			speccedMsg = (String)m_tsm.getSetting("SpeccedMsg");
+			speccedMsg = (String)value;
 		else if(setting.equals("changeship"))
-			changeShip = (Boolean)m_tsm.getSetting("ChangeShip");
+			changeShip = (Boolean)value;
 		else if(setting.equals("targetship"))
-			targetShip = (Integer)m_tsm.getSetting("TargetShip");
+			targetShip = (Integer)value;
 		else if(setting.equals("shipchgmsg"))
-			shipChgMsg = (String)m_tsm.getSetting("ShipChgMsg");
+			shipChgMsg = (String)value;
 		else if(setting.equals("changefreq"))
-			changeFreq = (Boolean)m_tsm.getSetting("ChangeFreq");
+			changeFreq = (Boolean)value;
 		else if(setting.equals("targetfreq"))
-			targetFreq = (Integer)m_tsm.getSetting("TargetFreq");
+			targetFreq = (Integer)value;
 		else if(setting.equals("freqchgmsg"))
-			freqChgMsg = (String)m_tsm.getSetting("FreqChgMsg");
+			freqChgMsg = (String)value;
 	}
 
 	/**
