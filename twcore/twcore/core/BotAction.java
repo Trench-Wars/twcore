@@ -9,7 +9,7 @@ import java.sql.SQLException;
  * actions in the arena, getting information on players, scheduling tasks to be
  * performed, and much more.  Being familiar with the features of BotAction will
  * allow you to do just about anything you require.  Every bot has a reference
- * to BotAction available as m_botAction, thanks to the bot superclass, SubspaceBot. 
+ * to BotAction available as m_botAction, thanks to the bot superclass, SubspaceBot.
  * <p>
  * <u>Some of BotAction's abilities include:</u><br>
  *  - Sending public, private, arena, zone and warning messages.<br>
@@ -39,7 +39,7 @@ public class BotAction
     private Objset              m_objectSet;        // For automation of LVZ object setting
     private int                 m_botNumber;        // Bot's internal ID number
 
-    
+
     /** Constructor for BotAction.  Don't worry about this, the object has already
      * been constructed for you.
      * @param botSession Bot thread this object is attached to
@@ -55,11 +55,11 @@ public class BotAction
         m_packetGenerator = packetGenerator;
         m_botNumber = botNum;
         m_objectSet = new Objset();
-    }   
-    
-    
-    
-    
+    }
+
+
+
+
     // **********************************************************************************
     //
     //                                TASK SCHEDULING
@@ -68,13 +68,13 @@ public class BotAction
     /*
      * Task scheduling is not difficult in TWCore.  It allows you to create events
      * that will run at a later time, or run repeatedly at regular intervals.
-     * 
+     *
      * To schedule a task, create a new internal class for your bot that extends the
      * TimerTask class, and include a run() method in the class containing the code
      * you want to run when the TimerTask executes.  Then call either scheduleTask
      * (for running once) or scheduleTaskAtFixedRate (for running repeatedly) to
      * schedule the task, and you're done.
-     * 
+     *
      * If you ever need to cancel the task, hold a reference to it and call the cancel
      * method.  Make sure to catch any exceptions that can possibly arise from the
      * task already being cancelled.
@@ -84,7 +84,7 @@ public class BotAction
      * Schedules a TimerTask to occur once at a future time.  TimerTask is part of
      * the package java.util.  The only method that a subclass of TimerTask must
      * override is public void run().
-     * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling. 
+     * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
      * @param task TimerTask to be executed
      * @param delayms Length of time before execution, in milliseconds
      */
@@ -98,7 +98,7 @@ public class BotAction
      * Schedules a TimerTask to occur repeatedly at an interval.  TimerTask is part of
      * the package java.util.  The only method that a TimerTask must override is
      * public void run().
-     * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling. 
+     * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
      * @param task TimerTask to be executed
      * @param delayms Length of time before execution, in milliseconds
      * @param periodms Delay between executions after the initial execution, in milliseconds
@@ -113,7 +113,7 @@ public class BotAction
      * Cancels all pending TimerTasks.  You can cancel an individual TimerTask by using
      * task.cancel().  Note that if you cancel a TimerTask and it has already been cancelled,
      * an exception will be generated, which should be caught.
-     * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling. 
+     * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
      */
     public void cancelTasks()
     {
@@ -129,9 +129,9 @@ public class BotAction
         }
     }
 
-    
-    
-        
+
+
+
     // **********************************************************************************
     //
     //                                    MESSAGING
@@ -141,10 +141,10 @@ public class BotAction
      * Messages generally consist of three components: a way to identify the target,
      * which is either the player ID or name; the message itself; and optionally, a
      * sound code to play along with the message.
-     * 
+     *
      * Messages come in several different types: public, private, team-wide, arena-wide,
      * zone-wide, to an opposing team, on a chat, or as a public macro.
-     * 
+     *
      * Private messages also come in two flavors.  A normal private message is to
      * someone in the arena (/), whereas a remote is to anywhere on the billing
      * server, and requires the server to look up their location in order to deliver
@@ -153,14 +153,14 @@ public class BotAction
      * messages if you're unsure of where the player is, and want to guarantee that
      * they receive the message.  TWCore will try to find the person in the arena,
      * and if they can't be found, will send it remotely.
-     * 
+     *
      * Use private message spams to send many messages at once to a player, such as
      * for a help display.
-     * 
+     *
      * [For the most part, this section should be self-explanatory.]
      */
-    
-    /** 
+
+    /**
      * Displays a green arena message to the arena the bot is in.
      * @param message The message to be displayed.
      */
@@ -169,7 +169,7 @@ public class BotAction
         sendArenaMessage(message, (byte) 0);
     }
 
-    /** 
+    /**
      * Displays a green arena message to the arena the bot is in, with a sound code.
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
@@ -179,7 +179,7 @@ public class BotAction
         sendUnfilteredPublicMessage("*arena " + message, soundCode);
     }
 
-    /** 
+    /**
      * Sends a zone wide advertisement.  Do not use unless absolutely necessary.
      * @param message The message to be sent
      */
@@ -188,7 +188,7 @@ public class BotAction
         sendZoneMessage(message, (byte) 0);
     }
 
-    /** 
+    /**
      * Sends a zone wide advertisement.  Do not use unless absolutely necessary.
      * Includes a sound code.
      * @param message The away message to be sent
@@ -262,7 +262,7 @@ public class BotAction
             }
         }
     }
-    
+
     /**
      * Sends a private message to someone in the same arena.  Do not attempt to use
      * this method if you are not absolutely certain that the player is in the arena.
@@ -288,7 +288,7 @@ public class BotAction
         sendPrivateMessage(playerID, message, (byte) 0);
     }
 
-    /** 
+    /**
      * Sends a private message to someone in the same arena.  Do not attempt to use
      * this method if you are not absolutely certain that the player is in the arena.
      * If you are at all unsure, use sendSmartPrivateMessage instead.
@@ -302,7 +302,7 @@ public class BotAction
         sendPrivateMessage(playerID, message, soundCode);
     }
 
-    /** 
+    /**
      * Sends a private message to someone in the same arena.  Do not attempt to use
      * this method if you are not absolutely certain that the player is in the arena.
      * If you are at all unsure, use sendSmartPrivateMessage instead.
@@ -325,7 +325,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Sends a smart private message.  A smart private message is a private message
      * sent much like the Continuum client does it.  If a player is not present in the
      * arena, the message will be sent as a remote private message.  Otherwise, the
@@ -339,7 +339,7 @@ public class BotAction
         sendSmartPrivateMessage(name, message, 0);
     }
 
-    /** 
+    /**
      * Sends a smart private message.  A smart private message is a private message
      * sent much like the Continuum client does it.  If a player is not present in the
      * arena, the message will be sent as a remote private message.  Otherwise, the
@@ -362,7 +362,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Sends a remote private message.  Remote private messages look like (Name)> to
      * the player, even if the player is in the same arena as you.  Try to use smart
      * private messages instead.
@@ -374,7 +374,7 @@ public class BotAction
         sendRemotePrivateMessage( name, message, 0 );
     }
 
-    /** 
+    /**
      * Sends a remote private message.  Remote private messages look like (Name)> to
      * the player, even if the player is in the same arena as you.  Try to use smart
      * private messages instead.
@@ -397,7 +397,7 @@ public class BotAction
                 m_packetGenerator.sendChatPacket((byte) 7, (byte) soundCode, (short) 0, ":" + name + ":" + message);
             }
         }
-    }    
+    }
 
     /**
      * Sends a message to bot's teammates.  If the bot is in spectator mode, it will
@@ -492,7 +492,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Sends a message to a whole frequency of players based on the name of a player
      * on that frequency.
      * @param playerName The name of the player whose frequency this message is to be sent to.
@@ -514,7 +514,7 @@ public class BotAction
         sendChatMessage(1, message, (byte) 0);
     }
 
-    /** 
+    /**
      * Sends a chat message to a specific chat number out of the chats the bot
      * has joined.
      * @param chatNumber Number of the chat to send information to.
@@ -558,7 +558,7 @@ public class BotAction
         sendSquadMessage(squadName, message, 0);
     }
 
-    /** 
+    /**
      * Sends a squad message to a specific squad with a sound code.
      * @param squadName Name of the squad
      * @param message Message to send to that squad
@@ -568,7 +568,7 @@ public class BotAction
     {
         m_packetGenerator.sendChatPacket((byte) 7, (byte) soundCode, (short) 0, ":#" + squadName + ":" + message);
     }
-    
+
     /**
      * Sends a "?help" alert command.
      * @param message The message to be sent along with the alert
@@ -597,7 +597,7 @@ public class BotAction
         sendUnfilteredPublicMessage("?" + type + " " + message);
     }
 
-    
+
     // ***** ULFILTERED MESSAGING *****
 
     /**
@@ -613,7 +613,7 @@ public class BotAction
         sendUnfilteredPrivateMessage(playerID, message, (byte) 0);
     }
 
-    /** 
+    /**
      * Sends a private message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
@@ -625,7 +625,7 @@ public class BotAction
         sendUnfilteredPrivateMessage(playerID, message, (byte) 0);
     }
 
-    /** 
+    /**
      * Sends a private message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
@@ -639,7 +639,7 @@ public class BotAction
         sendUnfilteredPrivateMessage(playerID, message, soundCode);
     }
 
-    /** 
+    /**
      * Sends a private message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
@@ -652,7 +652,7 @@ public class BotAction
         m_packetGenerator.sendChatPacket((byte) 5, (byte) soundCode, (short) playerID, message);
     }
 
-    /** 
+    /**
      * Sends a public message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
@@ -663,7 +663,7 @@ public class BotAction
         sendUnfilteredPublicMessage(message, (byte) 0);
     }
 
-    /** 
+    /**
      * Sends a public message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
@@ -675,7 +675,7 @@ public class BotAction
         m_packetGenerator.sendChatPacket((byte) 2, (byte) soundCode, (short) 0, message);
     }
 
-   /** 
+   /**
      * Sends a public macro without any filtration.  For the sake of security, use
      * the filtered macro methods unless you know what you're doing.
      * @param message Message to be sent.
@@ -685,7 +685,7 @@ public class BotAction
         sendUnfilteredPublicMacro(message, (byte) 0);
     }
 
-    /** 
+    /**
      * Sends a public macro without any filtration.  For the sake of security, use
      * the filtered macro methods unless you know what you're doing.
      * @param message Message to be sent.
@@ -696,10 +696,10 @@ public class BotAction
         m_packetGenerator.sendChatPacket((byte) 1, (byte) soundCode, (short) 0, message);
     }
 
-    
+
     // ***** MULTI-LINE MESSAGING *****
-    
-    /** 
+
+    /**
      * Sends the contents of the String array to the player in private messages.
      * Note that the player should be in the arena or this may fail.
      * @param playerID PlayerID to send the messages to.
@@ -761,7 +761,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Sends the contents of the String array to the player in remote private messages.
      * Careful with this one, sending too many across the billing server can cause
      * trouble.
@@ -800,21 +800,21 @@ public class BotAction
         }
     }
 
-    
-    
-        
+
+
+
     // **********************************************************************************
     //
     //                                  MISC OPERATIONS
     //
-    // ********************************************************************************** 
+    // **********************************************************************************
     /*
      * This is the main section of BotAction, covering the general actions you can use:
-     * 
+     *
      *  - BASIC PLAYER OPERATIONS: Set ships & freqs, warp, send to spec, reset scores,
      *    give prizes, add bounty, send warns, record damage to/from a player.
      *  - ARENA OPERATIONS: Lock/unlock arena, reset flag game, set timer, set doors,
-     *    toggle public & private chat on/off, set power of thors in arena. 
+     *    toggle public & private chat on/off, set power of thors in arena.
      *  - COMPLEX OPERATIONS: Team creation by team size or # teams, mass warping,
      *    mass shipsetting, mass setfreq'ing, old spec@death method, arena data clear.
      *  - BOT OPERATIONS: Join & change arenas, move ship, spectate on players, pick up
@@ -829,20 +829,20 @@ public class BotAction
      *  - INTER-PROCESS COMMUNICATIONS: (For sending messages between bots -- very easy).
      *    Send a standard IPC message, transmit a generic object, subscribe bot to an
      *    IPC channel, unsubscribe from an IPC channel, and destroy an IPC channel.
-     * 
+     *
      */
 
     // ***** BASIC PLAYER OPERATIONS *****
     /*
      * Simple operations that either have a target, or apply to all players.
      */
-    
+
     /**
      * Changes the ship type of a player to the type specified.  Ship should be
      * 1 to 8 (0 does not set a player to spectator, though when using getShipType()
      * inside player, 0 will correspond to the spectator ship).  Note that unlike
      * the internal packet protocol, this command uses the more accepted public
-     * numbering system instead of using ship 0 for warbird and ship 8 for spectator.  
+     * numbering system instead of using ship 0 for warbird and ship 8 for spectator.
      * @param playerID Player ID of the player you want to change.
      * @param shipType Ship type that you wish to set.  Must be a value between 1 and 8.
      */
@@ -856,7 +856,7 @@ public class BotAction
      * 1 to 8 (0 does not set a player to spectator, though when using getShipType()
      * inside player, 0 will correspond to the spectator ship).  Note that unlike
      * the internal packet protocol, this command uses the more accepted public
-     * numbering system instead of using ship 0 for warbird and ship 8 for spectator.  
+     * numbering system instead of using ship 0 for warbird and ship 8 for spectator.
      * @param playerName The name of the player.
      * @param shipType Ship type that you wish to set.  Must be a value between 1 and 8.
      */
@@ -955,7 +955,7 @@ public class BotAction
      */
     public void specWithoutLock(String playerName) {
         sendUnfilteredPrivateMessage(playerName, "*spec");
-        sendUnfilteredPrivateMessage(playerName, "*spec");        
+        sendUnfilteredPrivateMessage(playerName, "*spec");
     }
 
     /**
@@ -966,7 +966,7 @@ public class BotAction
      */
     public void specWithoutLock(int playerID) {
         sendUnfilteredPrivateMessage(playerID, "*spec");
-        sendUnfilteredPrivateMessage(playerID, "*spec");        
+        sendUnfilteredPrivateMessage(playerID, "*spec");
     }
 
     /**
@@ -1048,7 +1048,7 @@ public class BotAction
      * 5 = Cloak       12 = Top Speed         19 = Shrapnel     26 = Brick
      * 6 = XRadar      13 = Full Charge       20 = AntiWarp     27 = Rocket
      * 7 = Warp        14 = Engine Shutdown   21 = Repel        28 = Portal</pre></code>
-     * To take away a prize, or reduce the prize's result by one, use a negative number. 
+     * To take away a prize, or reduce the prize's result by one, use a negative number.
      * @param playerName Name of the player.
      * @param prizeNum Number of the prize to issue.
      */
@@ -1067,7 +1067,7 @@ public class BotAction
      * 5 = Cloak       12 = Top Speed         19 = Shrapnel     26 = Brick
      * 6 = XRadar      13 = Full Charge       20 = AntiWarp     27 = Rocket
      * 7 = Warp        14 = Engine Shutdown   21 = Repel        28 = Portal</pre></code>
-     * To take away a prize, or reduce the prize's result by one, use a negative number. 
+     * To take away a prize, or reduce the prize's result by one, use a negative number.
      * @param playerID Player ID
      * @param prizeNum Number of the prize
      */
@@ -1086,7 +1086,7 @@ public class BotAction
      * 5 = Cloak       12 = Top Speed         19 = Shrapnel     26 = Brick
      * 6 = XRadar      13 = Full Charge       20 = AntiWarp     27 = Rocket
      * 7 = Warp        14 = Engine Shutdown   21 = Repel        28 = Portal</pre></code>
-     * To take away a prize, or reduce the prize's result by one, use a negative number. 
+     * To take away a prize, or reduce the prize's result by one, use a negative number.
      * @param prizeNum Number of the prize.
      */
     public void prizeAll(int prizeNum)
@@ -1104,7 +1104,7 @@ public class BotAction
      * 5 = Cloak       12 = Top Speed         19 = Shrapnel     26 = Brick
      * 6 = XRadar      13 = Full Charge       20 = AntiWarp     27 = Rocket
      * 7 = Warp        14 = Engine Shutdown   21 = Repel        28 = Portal</pre></code>
-     * To take away a prize, or reduce the prize's result by one, use a negative number. 
+     * To take away a prize, or reduce the prize's result by one, use a negative number.
      * @param freqID The frequency of players you wish to issue the prizes to.
      * @param prizeNum Number of the prize.
      */
@@ -1161,7 +1161,7 @@ public class BotAction
      * Issues the number of random prizes specified to a specific player.  The
      * prizes are chosen based on the probability in the arena settings.  This
      * method is equivalent to giveBounty, and should not be used because it can
-     * be confused with specificPrize, which issues one specific prize to a player.  
+     * be confused with specificPrize, which issues one specific prize to a player.
      * @param playerName Name of the player.
      * @param numPrizes Number of random prizes to issue.
      * @see #specificPrize(String, int)
@@ -1178,7 +1178,7 @@ public class BotAction
      * Issues the number of random prizes specified to a specific player.  The
      * prizes are chosen based on the probability in the arena settings.  This
      * method is equivalent to giveBounty, and should not be used because it can
-     * be confused with specificPrize, which issues one specific prize to a player.  
+     * be confused with specificPrize, which issues one specific prize to a player.
      * @param playerID Player ID of the player.
      * @param numPrizes Number of random prizes to issue.
      * @see #specificPrize(int, int)
@@ -1211,9 +1211,9 @@ public class BotAction
     public void warnPlayer(int playerID, String message)
     {
         sendUnfilteredPrivateMessage(playerID, "*warn " + message);
-    }        
+    }
 
-    /** 
+    /**
      * Toggles the WatchDamage attribute for this player, which will send
      * detailed information about weapon damage to/from them, and can be picked
      * up by handling WatchDamage events.
@@ -1224,7 +1224,7 @@ public class BotAction
         sendUnfilteredPrivateMessage(playerID, "*watchdamage");
     }
 
-    /** 
+    /**
      * Toggles the WatchDamage attribute for this player, which will send
      * detailed information about weapon damage to/from them, and can be picked
      * up by handling WatchDamage events.
@@ -1240,7 +1240,7 @@ public class BotAction
     /*
      * Pertaining to anything done that is done to the arena or is arena-specific.
      */
-    
+
     /**
      * Locks or unlocks the arena, depending on previous lock status.  A locked
      * arena can't be entered by anyone in the standard method, but only by *setship.
@@ -1260,7 +1260,7 @@ public class BotAction
     }
 
     /**
-     * Sets the *timer game timer to a specified time.  0 to turn off.  
+     * Sets the *timer game timer to a specified time.  0 to turn off.
      * @param minutes Time until end of game, in minutes.
      */
     public void setTimer(int minutes)
@@ -1269,7 +1269,7 @@ public class BotAction
     }
 
     /**
-     * Resets the timer on a timed game to its starting value.  
+     * Resets the timer on a timed game to its starting value.
      * @see #setTimer(int)
      */
     public void resetTimer()
@@ -1317,11 +1317,11 @@ public class BotAction
     {
         toggleLockPublicChat();
     }
-    
+
     /**
      * Starts or stops the locking of public (blue) messages in the arena.  When
      * this is enabled, players will see their text printed to the chat window,
-     * but it will not actually be displayed. 
+     * but it will not actually be displayed.
      * <p>All lock options default to off.  After calling this method to switch
      * on, call it to turn off again, or else the arena will keep the lock.
      * <p>Note that lock options do not apply to staff on moderate.txt.
@@ -1342,7 +1342,7 @@ public class BotAction
     {
         sendUnfilteredPublicMessage("*lockprivate");
     }
-    
+
     /**
      * Toggles between applying chat locks to spectators or all players.  By
      * default the locks affect all players.  This should be used in conjunction
@@ -1350,7 +1350,7 @@ public class BotAction
      * @see #toggleLockPublicChat()
      * @see #toggleLockPrivateChat()
      */
-    public void toggleLocksToSpecators()
+    public void toggleLocksToSpectators()
     {
         sendUnfilteredPublicMessage("*lockspec");
     }
@@ -1365,13 +1365,13 @@ public class BotAction
         sendUnfilteredPublicMessage("*thor " + thorAdjust);
     }
 
-    
+
     // ***** COMPLEX OPERATIONS *****
     /*
      * Operations made up of other operations to form more complex behaviors.
      */
 
-    /** 
+    /**
      * Creates a set of teams of a particular size randomly. Starts at freq 0
      * and continues filling freqs completely until there are no players left.
      * @param teamSize The size of team desired.
@@ -1404,7 +1404,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Creates a certain number of random teams from non-specced players.  Starts
      * with freq 0 and goes up to number specified - 1, in an even distribution.
      * @param howMany Number of random teams to create.
@@ -1430,9 +1430,9 @@ public class BotAction
             setFreq(name,current);
             current++;
         }
-    }    
+    }
 
-    /** 
+    /**
      * Warps all the players in the arena to location X, Y.
      * @param x X coordinate to warp the players to (1-1024)
      * @param y X coordinate to warp the players to (1-1024)
@@ -1448,7 +1448,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Warps all the players on a frequency to location X, Y.
      * @param freq Frequency to warp
      * @param x X coordinate to warp the players to (1-1024)
@@ -1470,7 +1470,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Sends the warp prize to all players that are currently in a ship, creating
      * the same effect as if they had just hit the warp key.
      */
@@ -1479,7 +1479,7 @@ public class BotAction
         prizeAll(7);
     }
 
-    /** 
+    /**
      * Issues a *setship to all the players in the arena who are not in spec.
      * @param shipType Ship type to switch the players into.
      */
@@ -1493,7 +1493,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Changes all the ships on a freq to a particular ship type.
      * @param freq The frequency of the players you wish to change
      * @param shipType The ship type that you wish to change the players to
@@ -1511,7 +1511,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Changes all the players on one freq to another freq.  Great for
      * consolidating teams.
      * @param initialFreq Frequency of the players you wish to change
@@ -1528,7 +1528,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Changes the frequency of all the playing players in the game to a
      * specified frequency.
      * @param destFreq Frequency to change the players to.
@@ -1544,7 +1544,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Checks every player in the game for X number of deaths, and places them
      * in spectator mode.  Normally not used (spec module used instead).  Note
      * that if you use this method, you still have to monitor PlayerDeath packets
@@ -1573,15 +1573,15 @@ public class BotAction
     public void clearArenaData(){
         m_arenaTracker.clear();
     }
-    
-    
+
+
     // ***** BOT OPERATIONS *****
     /*
-     * Covers operations that involve the bot performing some kind of action 
+     * Covers operations that involve the bot performing some kind of action
      * relating directly to itself.
      */
-        
-    /** 
+
+    /**
      * Causes the bot to join an arena at initial login.  If the bot has logged
      * on and is already in an arena, use changeArena( int ) instead.
      * <p>If arenaname contains only a number, then it's assumed to be a pub
@@ -1646,7 +1646,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Causes the bot to join the specified public arena.  Should be used only
      * at initial login.
      * @param arena The arena number to join.
@@ -1690,7 +1690,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Joins the bot to a random public arena.
      * @author DoCk> (modified by FoN)
      */
@@ -1707,7 +1707,7 @@ public class BotAction
         m_packetGenerator.sendSpectatePacket((short) - 1);
     }
 
-    /** 
+    /**
      * This method tells the bot to leave the current arena, and join another
      * arena specified by a String.  If the String contains an integer value, the
      * bot will go to a public arena of that value.
@@ -1720,7 +1720,7 @@ public class BotAction
         joinArena(newArenaName);
     }
 
-    /** 
+    /**
      * This is an overloaded change function to allow variations in resolution.
      * @param newArenaName Name or number of the arena to change to.
      * @param xResolution The X Max for the screen size.
@@ -1742,7 +1742,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Forces the bot to leave the current arena and join a public arena specified
      * by an integer.
      * @param arenaNumber The number of the public arena to change to.
@@ -1754,7 +1754,7 @@ public class BotAction
         joinArena(arenaNumber);
     }
 
-    /** 
+    /**
      * Forces the bot to leave the current arena and join a public arena specified
      * by an integer.  Allows resolution to be specified.
      * @param arenaNumber The number of the public arena to change to.
@@ -1777,7 +1777,7 @@ public class BotAction
         }
     }
 
-    /** 
+    /**
      * Moves the bot to the tile (x,y).  512, 512 is the center of the map.
      * For more complex operations, get a copy of the Ship object with getShip().
      * @param x X value to move the bot to
@@ -1789,7 +1789,7 @@ public class BotAction
         m_botSession.getShip().move(x * 16, y * 16);
     }
 
-    /** 
+    /**
      * Moves the bot to position X, Y in exact map coordinates as opposed to
      * tile coordinates.  This means that the center of the arena is (8192, 8192)
      * as opposed to the less accurate (512, 512) of moveToTile( X, Y ).
@@ -1818,7 +1818,7 @@ public class BotAction
         m_botSession.getShip().move(x, y, vx, vy);
     }
 
-    /** 
+    /**
      * Sets the bot to spectate the specified player and surrounding area.
      * PlayerPosition events for any players in radar range will be created,
      * but any outside will not.  If you send -1, the bot will cease spectating
@@ -1832,7 +1832,7 @@ public class BotAction
         m_packetGenerator.sendSpectatePacket((short) playerID);
     }
 
-    /** 
+    /**
      * Sets the bot to spectate the specified player and surrounding area.
      * PlayerPosition events for any players in radar range will be created,
      * but any outside will not.
@@ -1842,16 +1842,16 @@ public class BotAction
     {
         m_packetGenerator.sendSpectatePacket((short) m_arenaTracker.getPlayerID(playerName));
     }
-    
+
     /**
      * Ceases spectating the player the bot is currently spectating on, if any.
      */
     public void stopSpectatingPlayer()
     {
-        m_packetGenerator.sendSpectatePacket((short) -1);        
+        m_packetGenerator.sendSpectatePacket((short) -1);
     }
 
-    /** 
+    /**
      * Sent a request for the bot to pick up flag specified by the given ID.
      * @param flagID ID of flag to pickup.
      */
@@ -1860,7 +1860,7 @@ public class BotAction
         m_packetGenerator.sendFlagRequestPacket((short) flagID);
     }
 
-    /** 
+    /**
      * Drops all flags the bot is carrying.
      */
     public void dropFlags()
@@ -1868,7 +1868,7 @@ public class BotAction
         m_packetGenerator.sendFlagDropPacket();
     }
 
-    /** 
+    /**
      * Sets the bot's personal banner.
      * @param _banner A byte array containing the banner data (BMP format, no palette).
      */
@@ -1877,7 +1877,7 @@ public class BotAction
         m_packetGenerator.sendBannerPacket( _banner );
     }
 
-    /** 
+    /**
      * Sends a death packet, causing the bot to die. (Fixed by D1st0rt 3-26-05)
      * If you send an invalid playerID, hypothetically nothing should happen.
      * @param playerID ID of the player who killed the bot.
@@ -1888,15 +1888,15 @@ public class BotAction
         m_packetGenerator.sendPlayerDeath(playerID, bounty);
     }
 
-    /** 
-     * Tells the bot to go parachuting (without the parachute). 
+    /**
+     * Tells the bot to go parachuting (without the parachute).
      */
     public void die()
     {
         m_botSession.disconnect();
     }
 
-    /** 
+    /**
      * Sets the minimum bounty needed for a player's kills/deaths to be sent
      * reliably to the bot.  If it's essential that you receive all player death
      * events / packets, it's advisable to set this to 1, or to use the more
@@ -1908,9 +1908,9 @@ public class BotAction
     {
         sendUnfilteredPublicMessage("*relkills " + minBounty);
     }
-    
+
     /**
-     * Sets the bot to receive all death events / packets, regardless of the 
+     * Sets the bot to receive all death events / packets, regardless of the
      * amount of bounty a player has.  Useful if you must account for every death.
      */
     public void receiveAllPlayerDeaths()
@@ -1918,7 +1918,7 @@ public class BotAction
         sendUnfilteredPublicMessage("*relkills 1");
     }
 
-    /** 
+    /**
      * Sends out a request for an ArenaList packet to be sent back.  It can
      * then be received by handling the ArenaList event (if it has been requested
      * by using EventRequester).
@@ -1928,7 +1928,7 @@ public class BotAction
         sendUnfilteredPublicMessage("?arena");
     }
 
-    /** 
+    /**
      * Sets up spam protection for the bot, allowing only the specified number of
      * messages to be sent to the bot before it begins to ignore them.
      * <p>This protection does not apply to HighMod+ (who should know what they
@@ -1940,7 +1940,7 @@ public class BotAction
         m_botSession.getGamePacketInterpreter().setMessageLimiter(msgsPerMin, this);
     }
 
-    /** 
+    /**
      * Adjusts the packet send delay.  The more packets that are sent out, the greater
      * the possibility you'll overflow the 2500 packet/minute limit.  The default
      * setting is 75 ms.  If your bot doesn't require a quick response, set it higher.
@@ -1975,7 +1975,7 @@ public class BotAction
     public void setPlayerPositionUpdating( int milliseconds ) {
         m_arenaTracker.setPlayerPositionUpdateDelay( milliseconds );
     }
-    
+
     /**
      * Starts the automatic player position updating system with the most reliable
      * positioning TWCore offers (switching between players every 200ms).  This
@@ -1983,23 +1983,23 @@ public class BotAction
      * seconds.  On slower systems and older network connections this may be
      * quite taxing.
      * <p>If you wish to switch faster than every 200ms, you must manually edit
-     * Arena.java and hardcore a new value.  
+     * Arena.java and hardcore a new value.
      */
     public void startReliablePositionUpdating() {
-        m_arenaTracker.setPlayerPositionUpdateDelay( 200 );        
+        m_arenaTracker.setPlayerPositionUpdateDelay( 200 );
     }
 
     /**
      * Stops the automatic player position updating system, causing the bot to
      * stop spectating the player it is currently spectating on, and cease
      * switching between players to update position packets.  Use this if your
-     * bot will not be receiving position packets. 
+     * bot will not be receiving position packets.
      */
     public void stopReliablePositionUpdating() {
         m_arenaTracker.setPlayerPositionUpdateDelay( 0 );
     }
 
-    /** 
+    /**
      * Retreives a file from the server.  File arrives in a "FileArrived" packet /
      * event, and can be received by handling that event.
      * @param fileName Filename of the file requested.
@@ -2009,7 +2009,7 @@ public class BotAction
         sendUnfilteredPublicMessage("*getfile " + fileName);
     }
 
-    /** 
+    /**
      * Sends a file to the server.  This could be used to back up logs, upload
      * alternate maps and configuration files.
      * @param fileName Name of the file to send.
@@ -2019,11 +2019,11 @@ public class BotAction
         sendUnfilteredPublicMessage("*putfile " + fileName);
     }
 
-    
+
     // ***** LVZ OBJECT OPERATIONS *****
     /*
      * For use with LVZ objects.  If you're not familiar with the specification:
-     * 
+     *
      * http://www.kolumbus.fi/sakari.aura/contmapdevguide.html
      */
 
@@ -2032,7 +2032,7 @@ public class BotAction
      * of the object is configured from inside the LVZ.
      * <p>For more information on this format, please download the LVZToolkit from
      * your favorite Subspace download site (subspacedownloads.com ?), and see
-     * http://www.kolumbus.fi/sakari.aura/contmapdevguide.html for a solid spec.  
+     * http://www.kolumbus.fi/sakari.aura/contmapdevguide.html for a solid spec.
      * @param objID The ID of the object as denoted in the LVZ.
      */
     public void showObject(int objID)
@@ -2045,7 +2045,7 @@ public class BotAction
      * the object is configured from inside the LVZ.
      * <p>For more information on this format, please download the LVZToolkit from
      * your favorite Subspace download site (subspacedownloads.com ?), and see
-     * http://www.kolumbus.fi/sakari.aura/contmapdevguide.html for a solid spec.  
+     * http://www.kolumbus.fi/sakari.aura/contmapdevguide.html for a solid spec.
      * @param objID The ID of the object as denoted in the LVZ.
      */
     public void hideObject(int objID)
@@ -2081,7 +2081,7 @@ public class BotAction
      * @param objString Comma-separated list of object IDs marked with + for show or - for hide.
      */
     public void manuallySetObjects( String objString ) {
-        sendUnfilteredPublicMessage("*objset " + objString );        
+        sendUnfilteredPublicMessage("*objset " + objString );
     }
 
     /**
@@ -2094,7 +2094,7 @@ public class BotAction
      * @param objString Comma-separated list of object IDs marked with + for show or - for hide.
      */
     public void manuallySetObjects( String objString, int playerID ) {
-        sendUnfilteredPrivateMessage( playerID, "*objset " + objString );        
+        sendUnfilteredPrivateMessage( playerID, "*objset " + objString );
     }
 
     /**
@@ -2121,18 +2121,18 @@ public class BotAction
         }
     }
 
-    
+
     // ***** SQL DATABASE OPERATIONS *****
     /*
      * SQL in TWCore is easy [and fun :P]!  If you set up a connection to a
-     * SQL server inside sql.cfg, in order to run a query, just supply the 
+     * SQL server inside sql.cfg, in order to run a query, just supply the
      * name of the connection and the SQL query you'd like to run.  Then the
      * results will be returned to you in a ResultSet.  Search for ResultSet
      * inside various bots to see examples of usage -- it's very simple to do,
      * and adds a tremendous amount of functionality to a bot.
      */
-    
-    /** 
+
+    /**
      * Runs a direct SQL Query.  This method does block up the bot from doing anything
      * else, so be careful while using it.  Queries should be quick.  Only use it for
      * queries where the performance of the bot depends primarily upon the value
@@ -2147,7 +2147,7 @@ public class BotAction
         return getCoreData().getSQLManager().query(connectName, query);
     }
 
-    /** 
+    /**
      * Runs a regular backround SQL Query, which is placed in a queue and waits
      * behind any other background queries ahead of it.  Background queries are
      * generally used when getting the data isn't time critical, or when a bot's
@@ -2167,11 +2167,11 @@ public class BotAction
         getCoreData().getSQLManager().queryBackground(connectName, identifier, query, m_botSession.getSubspaceBot());
     }
 
-    /** 
+    /**
      * Runs a high priority background query.  This query will be executed before all
      * other background queries.  This is useful for when you know the queue will be
      * rather large, and you need a query done very quickly, but still wish to run it
-     * in the background without blocking the bot's thread. 
+     * in the background without blocking the bot's thread.
      * @param connectName The connection name as specified in sql.cfg
      * @param identifier A unique identifier that describes what the query is.
      * This identifier will be found in the SQLResultEvent when it is returned.
@@ -2185,7 +2185,7 @@ public class BotAction
         getCoreData().getSQLManager().queryBackgroundHighPriority(connectName, identifier, query, m_botSession.getSubspaceBot());
     }
 
-    /** 
+    /**
      * Runs an insert query into the specified table, given a set of fields and
      * values that correspond to those fields.  This is a helper method that
      * forms the query for you.  Experienced users of SQL may wish to form the
@@ -2271,13 +2271,13 @@ public class BotAction
         }
     }
 
-    
+
     // ***** INTER-PROCESS COMMUNICATION OPERATIONS *****
     /*
      * IPC messages are a very simple and easy way to send information from one
      * bot to another.  This can be used to coordinate activities between them.
      * To use Inter-Process Communications:
-     * 
+     *
      *  - All bots that will communicate with one another need to be subscribed
      *    to a particular channel (something like tuning into the same frequency
      *    on a radio).  The channel is identified by a unique String.  Use
@@ -2300,9 +2300,9 @@ public class BotAction
      */
     public void ipcSendMessage( String channelName, String message, String recipient, String sender ) {
         IPCMessage msg = new IPCMessage( message, recipient, sender );
-        getCoreData().getInterProcessCommunicator().broadcast(channelName, m_botSession.getBotName(), m_botSession.getSubspaceBot(), msg);        
+        getCoreData().getInterProcessCommunicator().broadcast(channelName, m_botSession.getBotName(), m_botSession.getSubspaceBot(), msg);
     }
-    
+
     /**
      * Transmits a generic object (usually an IPCMessage) to the specified channel
      * using inter-process communication.  The object will arrive as an InterProcessEvent,
@@ -2348,9 +2348,9 @@ public class BotAction
         getCoreData().getInterProcessCommunicator().destroy(channelName);
     }
 
-    
-        
-    
+
+
+
     // **********************************************************************************
     //
     //                                     GETTERS
@@ -2359,7 +2359,7 @@ public class BotAction
     /*
      * The following methods are labelled getters because their main intent is to
      * return data.  They are organized into the following categories:
-     * 
+     *
      *  - SIMPLE GETTERS: Get bot name, ID #, current arena name, number of players
      *    in current arena, server address, server port, current state, & SQL status.
      *  - SIMPLE CLASS GETTERS: Gets for the following classes - BotAction, CoreData,
@@ -2375,10 +2375,10 @@ public class BotAction
      *    all players on a frequency, all players (spec'd and playing), all players
      *    by ID rather than Player objects, and all flags by ID.
      */
-    
-    
+
+
     // ***** SIMPLE GETTERS *****
-    
+
     /**
      * @return The login name of the bot as displayed to players.
      */
@@ -2392,7 +2392,7 @@ public class BotAction
     public int getBotNumber() {
         return m_botNumber;
     }
-    
+
     /**
      * @return Name of the arena the bot is currently in or travelling to.
      */
@@ -2442,10 +2442,10 @@ public class BotAction
     public boolean SQLisOperational() {
         return getCoreData().getSQLManager().isOperational();
     }
-    
-    
+
+
     // ***** SIMPLE CLASS GETTERS *****
-    
+
     /**
      * Return the correct BotAction for the running Thread.  Useful for subclasses
      * of bots, so you don't need to pass BotAction down the entire hierarchy.
@@ -2456,7 +2456,7 @@ public class BotAction
     }
 
     /**
-     * @return A reference to the CoreData storage class for the bot core. 
+     * @return A reference to the CoreData storage class for the bot core.
      */
     public CoreData getCoreData()
     {
@@ -2472,7 +2472,7 @@ public class BotAction
         return getCoreData().getOperatorList();
     }
 
-    /** 
+    /**
      * Gets the EventRequester object.  This object controls what events are being sent
      * to your bot.  EventRequester can turn on or off requested events at any time.
      * Use its requestEvent(int) method to request an event.  See source for more info.
@@ -2485,7 +2485,7 @@ public class BotAction
 
     /**
      * Gets a copy of the general settings object, which stores information found
-     * in setup.cfg.   
+     * in setup.cfg.
      * @return An instance of a class that provides the data contained in setup.cfg
      */
     public BotSettings getGeneralSettings() {
@@ -2505,7 +2505,7 @@ public class BotAction
         return m_botSession.getCoreData().getBotConfig(botName);
     }
 
-    /** 
+    /**
      * Gets the Ship object for this bot, which allows you to control the bot
      * as an in-game ship, including movement, firing, attaching, etc.
      * @return This bot's Ship object, which controls the in-game flight of the bot.
@@ -2529,13 +2529,13 @@ public class BotAction
     /**
      * Returns the Objset associated with this bot.  Objset can be used to
      * maintain a list of LVZ objects to shown or hide without the hassle
-     * of handling them manually.  
+     * of handling them manually.
      */
     public Objset getObjectSet() {
         return m_objectSet;
-    }    
+    }
 
-    
+
 
     // ***** PLAYER/FLAG GETTERS *****
     /*
@@ -2544,7 +2544,7 @@ public class BotAction
      * not a 100% chance you can use that information to find the player, and
      * an attempt to do so can from time to time return a null value.
      */
-    
+
     /**
      * Gets the Player object associated with the PlayerID provided.  The Player
      * object describes all the pertinent details about a player in the arena the
@@ -2559,7 +2559,7 @@ public class BotAction
      * an event packet will correspond to an existing player.  It's possible that
      * the event will fire simultaneously as the player leaves, resulting in a null
      * value for the Player object.
-     *  
+     *
      * @param playerID The PlayerID of the player you wish to retrieve info for.
      * @return If a matching ID is found, returns that Player object; otherwise, ** NULL **.
      */
@@ -2582,7 +2582,7 @@ public class BotAction
      * an event packet will correspond to an existing player.  It's possible that
      * the event will fire simultaneously as the player leaves, resulting in a null
      * value for the Player object.
-     * 
+     *
      * @param playerName The name of the player you wish to retreive info for.
      * @return If a matching name is found, returns that Player object; otherwise, ** NULL **.
      */
@@ -2641,7 +2641,7 @@ public class BotAction
      * that do, the one that comes latest in the dictionary is returned.  For
      * example, if the search name is "Oli", and both the players "Oliver" and
      * "Oliver Claushauf" are in the arena, the latter will be returned.  If no
-     * name in the arena begins with the provided name, null is returned.  
+     * name in the arena begins with the provided name, null is returned.
      * @param playerName The partial name of a player.
      * @return Name of the player matching or starting with playerName; null if no match.
      */
@@ -2678,14 +2678,14 @@ public class BotAction
     {
         return m_arenaTracker.getFlag(flagID);
     }
-    
-    
+
+
     // ***** COMPLEX GETTERS *****
-    
+
     /**
      * Gets the total number of players currently playing in the arena (does
      * NOT include those who are spectating).
-     * @return Number of arena players currently in a ship. 
+     * @return Number of arena players currently in a ship.
      */
     public int getNumPlayers() {
         int numPlayers = 0;
@@ -2696,7 +2696,7 @@ public class BotAction
             i.next();
         }
         return numPlayers;
-    }    
+    }
 
     /**
      * Returns true if a freq in the arena contains a specific type of ship.
@@ -2780,15 +2780,15 @@ public class BotAction
         return new File(getGeneralSettings().getString("Core Location") + File.separatorChar + filename);
     }
 
-    
+
     // ***** ITERATORS *****
     /*
      * Iterators return the entire contents of records stored in Arena, and are
      * very useful for managing players in the arena in ways not already covered
-     * by BotAction.  See getPlayingPlayerIterator() for an example of usage. 
+     * by BotAction.  See getPlayingPlayerIterator() for an example of usage.
      */
 
-    /** 
+    /**
      * Returns an iterator of all non-specced Players in the arena.  Example usage:
      * <code><pre>
      * Iterator i = m_botAction.getPlayingPlayerIterator();
@@ -2825,7 +2825,7 @@ public class BotAction
         return m_arenaTracker.getPlayerIterator();
     }
 
-    /** 
+    /**
      * @return An Iterator of the IDs of all players in the arena, both spec'd and playing.
      */
     public Iterator getPlayerIDIterator()
@@ -2839,5 +2839,5 @@ public class BotAction
     public Iterator getFlagIDIterator()
     {
         return m_arenaTracker.getFlagIDIterator();
-    }    
+    }
 }
