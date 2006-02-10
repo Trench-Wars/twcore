@@ -67,6 +67,10 @@ public class BSPlayer
 		return _name;
 	}
 
+	/**
+	 * Gets the team the player is on
+	 * @return the player's frequency
+	 */
 	public short getFreq()
 	{
 		return _freq;

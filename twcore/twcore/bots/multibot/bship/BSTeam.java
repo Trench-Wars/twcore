@@ -148,6 +148,7 @@ public class BSTeam
 	public boolean playerDeath(String name)
 	{
 		BSPlayer p = getPlayer(name);
+		p.deaths++;
 		switch(p.ship)
 		{
 			case bship.PLANE:
@@ -176,6 +177,7 @@ public class BSTeam
 	public void playerKill(String name, byte ship)
 	{
 		BSPlayer p = getPlayer(name);
+
 		switch(ship)
 		{
 			case bship.PLANE:
