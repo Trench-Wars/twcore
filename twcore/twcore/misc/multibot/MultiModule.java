@@ -184,6 +184,8 @@ public abstract class MultiModule
         handleEvent((FlagDropped) event);
       else if(event instanceof FlagClaimed)
         handleEvent((FlagClaimed) event);
+      else if(event instanceof TurretEvent)
+        handleEvent((TurretEvent) event);
     }
     catch(Exception e)
     {
@@ -250,4 +252,6 @@ public abstract class MultiModule
   public void handleEvent(FlagClaimed event){}
 
   public void handleEvent(InterProcessEvent event){}
+
+  public void handleEvent(TurretEvent event){}
 }
