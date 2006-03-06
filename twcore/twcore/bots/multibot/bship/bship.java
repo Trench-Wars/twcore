@@ -3,6 +3,7 @@ package twcore.bots.multibot.bship;
 import twcore.core.*;
 import twcore.misc.multibot.*;
 import twcore.misc.tempset.*;
+import twcore.misc.lvz.*;
 import java.util.*;
 import static twcore.core.EventRequester.*;
 
@@ -35,9 +36,11 @@ public class bship extends MultiModule implements TSChangeListener
 	// Core Objects //
 	private CommandInterpreter m_cmd;
 	private TempSettingsManager m_tsm;
+	private LvzManager m_lvz;
 
 	// Night Mode //
 	private boolean night;
+	private int hour;
 	private NightUpdate timeMode;
 
 	// Game Data //
@@ -167,6 +170,7 @@ public class bship extends MultiModule implements TSChangeListener
 	public void init()
 	{
 		m_botAction.setReliableKills(1);
+		m_lvz = new LvzManager();
 
 		//Commands
 		m_cmd = new CommandInterpreter(m_botAction);
@@ -248,7 +252,11 @@ public class bship extends MultiModule implements TSChangeListener
 	public void settingChanged(String name, Object value)
 	{
 		if(name.equals("hour"))
-			refresh();
+		{
+			m_botAction.sendUnfilteredPublicMessage("*objset "+ nightObjectsOff());
+			hour = (Integer)value;
+			m_botAction.sendUnfilteredPublicMessage("*objset "+ nightObjectsOn(hour));
+		}
 		else if(name.equals("board"))
 		{
 			int board = (Integer)value;
@@ -495,7 +503,7 @@ public class bship extends MultiModule implements TSChangeListener
 				m_botAction.sendUnfilteredPublicMessage("*objset"+nightObjectsOn((Integer)m_tsm.getSetting("hour")));
 			}
 
-			m_botAction.sendPrivateMessage(name,"Night mode: "+night);
+			m_botAction.sendPrivateMessage(name,"Night mode is "+ (night ? "on":"off"));
 		}
 	}
 
@@ -891,69 +899,6 @@ public class bship extends MultiModule implements TSChangeListener
 	}
 
 	/**
-	 * WARNING: Does not yet produce the desired results, use at your own risk
-	 * Calculates starting warp points for more than 4 teams in a given board
-	 * @param dims the dimensions of the board to calculate on
-	 * @return an int[][] containing the warp points
-	 * @deprecated Its not really deprecated but you shouldn't use it
-	 */
-	private int[][] specialWarp(short[] dims)
-	{
-		int teams = (Integer)m_tsm.getSetting("teams");
-		//Distribution:
-		//Left, Right, Top, Bottom
-		byte[] distrib = new byte[4];
-		byte cur = 0;
-		int space;
-
-		for(int i = 0; i < teams; i++)
-		{
-			if(i > 3)
-				i = 0;
-			distrib[i]++;
-		}
-
-		int[][] points = new int[teams][2];
-
-		//Left
-		space = dims[HEIGHT] / distrib[0];
-		for(int i = 0; i < distrib[0]; i++)
-		{
-			points[i][X] = dims[X] + 9;
-			points[i][Y] = dims[Y] + (i * space);
-		}
-		cur = distrib[0];
-
-		//Right
-		space = dims[HEIGHT] / distrib[1];
-		for(int i = 0; i < distrib[1]; i++)
-		{
-			points[i + cur][X] = dims[X] + (dims[WIDTH] - 9);
-			points[i + cur][Y] = dims[Y] + (i * space);
-		}
-		cur += distrib[1];
-
-		//Top
-		space = dims[WIDTH] / distrib[2];
-		for(int i = 0; i < distrib[2]; i++)
-		{
-			points[i + cur][X] = dims[X] + (i * space);
-			points[i + cur][Y] = dims[Y] + 8;
-		}
-		cur += distrib[2];
-
-		//Bottom
-		space = dims[WIDTH] / distrib[2];
-		for(int i = 0; i < distrib[2]; i++)
-		{
-			points[i + cur][X] = dims[X] + (i * space);
-			points[i + cur][Y] = dims[Y] + (dims[HEIGHT] - 8);
-		}
-
-		return points;
-	}
-
-	/**
 	 * Assigns all playing players to ships. Done randomly through each team, will
 	 * assign 1 of each ship 4-8, the next 3 as ship 2, next 3 as ship 1, and the rest
 	 * as ship 3.
@@ -1042,13 +987,16 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void refresh()
 	{
-		int hour = (Integer)m_tsm.getSetting("hour");
-		if(hour > -1)
+		if(night)
 		{
-			m_botAction.sendUnfilteredPublicMessage("*objset"+ nightObjectsOff() + nightObjectsOn(hour+1));
+			m_botAction.sendUnfilteredPublicMessage("*objset"+ nightObjectsOff());
+
 			hour++;
 			if(hour >= 24)
 				hour = 0;
+
+			m_botAction.sendUnfilteredPublicMessage("*objset"+ nightObjectsOn(hour));
+			m_tsm.setValue("hour",""+ hour);
 		}
 	}
 
@@ -1058,8 +1006,8 @@ public class bship extends MultiModule implements TSChangeListener
 	private void showObjects(int playerID)
 	{
 		int hour = (Integer)m_tsm.getSetting("hour");
-		if(hour > -1)
-		m_botAction.sendUnfilteredPrivateMessage(playerID,"*objset"+ nightObjectsOff() + nightObjectsOn(hour));
+		if(night)
+			m_botAction.sendUnfilteredPrivateMessage(playerID,"*objset"+ nightObjectsOff() + nightObjectsOn(hour));
 	}
 
 	/**
@@ -1068,9 +1016,9 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private String nightObjectsOff()
 	{
-		String objset = " -"+ (100 + (Integer)m_tsm.getSetting("hour")) +", ";
+		String objset = " -"+ (100 + hour) +", ";
 
-		int id = objectID((Integer)m_tsm.getSetting("hour"));
+		int id = objectID(hour);
 		if(id != -1)
 			objset += "-"+ id +",";
 
