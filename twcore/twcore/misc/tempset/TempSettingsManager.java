@@ -126,6 +126,50 @@ public class TempSettingsManager
 	}
 
 	/**
+	 * Adds a String setting into the list, enabling it for use
+	 * @param name The name of the setting to be added
+	 * @param defval The default value of this setting (what it will be initially)
+	 */
+	public void addSetting(String name, String defval)
+	{
+		StringSetting sset = new StringSetting(name, defval);
+		m_settings.put(name.toLowerCase(), sset);
+	}
+
+	/**
+	 * Adds an Integer setting into the list, enabling it for use
+	 * @param name The name of the setting to be added
+	 * @param defval The default value of this setting (what it will be initially)
+	 */
+	public void addSetting(String name, int defval)
+	{
+		IntSetting iset = new IntSetting(name, defval);
+		m_settings.put(name.toLowerCase(), iset);
+	}
+
+	/**
+	 * Adds a Double setting into the list, enabling it for use
+	 * @param name The name of the setting to be added
+	 * @param defval The default value of this setting (what it will be initially)
+	 */
+	public void addSetting(String name, double defval)
+	{
+		DoubleSetting dset = new DoubleSetting(name, defval);
+		m_settings.put(name.toLowerCase(), dset);
+	}
+
+	/**
+	 * Adds a Boolean setting into the list, enabling it for use
+	 * @param name The name of the setting to be added
+	 * @param defval The default value of this setting (what it will be initially)
+	 */
+	public void addSetting(String name, boolean defval)
+	{
+		BoolSetting bset = new BoolSetting(name, defval);
+		m_settings.put(name.toLowerCase(), bset);
+	}
+
+	/**
 	 * This is used for when you want to restrict an integer setting within a certain range of numbers
 	 * @param name The name of the setting to restrict
 	 * @param min The minimum value to allow
@@ -187,24 +231,16 @@ public class TempSettingsManager
 	 * @param arg The new value you want for the setting
 	 * @return A message describing the success or failure of the set attempt
 	 */
-	public String setValue(String name, String arg)
+	public Result setValue(String name, String arg)
 	{
-		String response = "";
+		Result result = new Result();
 		TempSetting t = m_settings.get(name.toLowerCase());
 		if(t == null)
-		{
-			response = "Setting "+ name +" does not exist";
-		}
+			result.response = "Setting "+ name +" does not exist";
 		else
-		{
-			Result r = t.setValue(arg);
-			if(r.changed)
-				for(TSChangeListener l : m_listeners)
-					l.settingChanged(name, t.getValue());
-			response = r.response;
-		}
+			result = t.setValue(arg);
 
-		return response;
+		return result;
 	}
 
 	/**
@@ -268,7 +304,16 @@ public class TempSettingsManager
 				String val = regex.group(2);
 				if(val.startsWith("\"") && val.endsWith("\""))
 					val = val.substring(1, val.length()-1);
-				m_botAction.sendPrivateMessage(name, setValue(regex.group(1), val));
+
+				Result r = setValue(regex.group(1), val);
+				m_botAction.sendPrivateMessage(name, r.response);
+
+				if(r.changed)
+				{
+					TempSetting t = m_settings.get(regex.group(1).toLowerCase());
+					for(TSChangeListener l : m_listeners)
+						l.settingChanged(t.getName(), t.getValue());
+				}
 			}
 		}
 		else
