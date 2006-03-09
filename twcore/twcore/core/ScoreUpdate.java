@@ -2,7 +2,7 @@ package twcore.core;
 
 /**
  * (S2C 0x09) Event fired whenever a player's score is changed. <code><pre>
- * 
+ *
  * +-------------------------+
  * |Field Length Description |
  * +-------------------------+
@@ -24,8 +24,8 @@ public class ScoreUpdate extends SubspaceEvent {
     /**
      * Creates a new instance of ScoreUpdate; this is called by
      * GamePacketInterpreter when it receives the packet.
-     * @param Array the ByteArray containing the packet data
-     */     
+     * @param array the ByteArray containing the packet data
+     */
     public ScoreUpdate(ByteArray array){
         m_playerID = array.readLittleEndianShort( 1 );
         m_flagPoints = array.readLittleEndianInt( 3 );
@@ -41,7 +41,7 @@ public class ScoreUpdate extends SubspaceEvent {
     public short getPlayerID(){
         return m_playerID;
     }
-    
+
     /**
      * Gets the number of Flag Points the player has after
      * score change.
@@ -50,7 +50,7 @@ public class ScoreUpdate extends SubspaceEvent {
     public int getFlagPoints(){
         return m_flagPoints;
     }
-    
+
     /**
      * Gets the number of Kill Points the player has after
      * a score change.
@@ -59,7 +59,7 @@ public class ScoreUpdate extends SubspaceEvent {
     public int getKillPoints(){
         return m_killPoints;
     }
-    
+
     /**
      * Gets the number of wins the player has after
      * a score change.
@@ -68,7 +68,7 @@ public class ScoreUpdate extends SubspaceEvent {
     public short getWins(){
         return m_wins;
     }
-    
+
     /**
      * Gets the number of losses the player has after
      * a score change.

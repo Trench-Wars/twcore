@@ -10,12 +10,12 @@ public class TurfFlagUpdate extends SubspaceEvent {
     int         m_flagId;          // ID of the flag
     short       m_frequency;       // Frequency Frequency that holds the flag; -1 if not held
     boolean     m_claimed = false; // True if Flag is claimed
-    
+
     /**
 	 * Creates a new instance of TurfFlagUpdate; this is called by
 	 * GamePacketInterpreter when it receives the packet.
-	 * @param Array the ByteArray containing the packet data
-	 */   
+	 * @param array the ByteArray containing the packet data
+	 */
     public TurfFlagUpdate( ByteArray array, int flagId ){
         m_flagId = flagId;
         m_frequency = array.readLittleEndianShort( 1 );
@@ -23,7 +23,7 @@ public class TurfFlagUpdate extends SubspaceEvent {
             m_claimed = true;
         }
     }
-    
+
     /**
      * Gets the ID of the flag.
      * @return Flag ID

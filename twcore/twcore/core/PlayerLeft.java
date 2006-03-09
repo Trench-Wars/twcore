@@ -1,7 +1,7 @@
-Opackage twcore.core;
+package twcore.core;
 /**
  * (S2C 0x04) Event is fired when a player leaves an arena. <code><pre>.
- * 
+ *
  * +--------------------------+
  * |Field Length Description  |
  * +--------------------------+
@@ -15,8 +15,8 @@ public class PlayerLeft extends SubspaceEvent {
     /**
 	 * Creates a new instance of PlayerLeft; this is called by
 	 * GamePacketInterpreter when it receives the packet.
-	 * @param Array the ByteArray containing the packet data
-	 */    
+	 * @param array the ByteArray containing the packet data
+	 */
     public PlayerLeft( ByteArray array ){
         m_playerID = array.readLittleEndianShort( 1 );
     }

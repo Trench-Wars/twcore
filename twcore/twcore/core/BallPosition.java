@@ -2,7 +2,7 @@ package twcore.core;
 
 /**
  * (S2C 0x2E) Event fired when a player picks up a ball.<code><pre>
- * 
+ *
  * +-------------------------+
  * |Offset Length Description|
  * +-------------------------+
@@ -17,7 +17,7 @@ package twcore.core;
  * +-------------------------+</code></pre>
  */
 public class BallPosition extends SubspaceEvent {
-    
+
     private byte m_ballID;     // ID of the ball picked up
     private short m_xLocation; // X location of the ball
     private short m_yLocation; // Y location of the ball
@@ -25,12 +25,12 @@ public class BallPosition extends SubspaceEvent {
     private short m_yVelocity; // Y velocity of the ball
     private short m_playerID;  // ID of the player who picked up the ball
     private int m_timeStamp;   // Time stamp of the ball
-    
+
     /**
 	 * Creates a new instance of BallPosition; this is called by
 	 * GamePacketInterpreter when it receives the packet.
-	 * @param Array the ByteArray containing the packet data
-	 */   
+	 * @param array the ByteArray containing the packet data
+	 */
     public BallPosition( ByteArray array ) {
         m_ballID = array.readByte( 1 );
         m_xLocation = array.readLittleEndianShort( 2 );
@@ -40,7 +40,7 @@ public class BallPosition extends SubspaceEvent {
         m_playerID = array.readLittleEndianShort( 10 );
         m_timeStamp = array.readInt( 12 );
     }
-    
+
     /**
      * Gets the ID of the ball that was picked up.
      * @return BallID
@@ -48,7 +48,7 @@ public class BallPosition extends SubspaceEvent {
     public byte getBallID() {
         return m_ballID;
     }
-    
+
     /**
      * Gets the X location of the ball that was picked up.
      * @return Xlocation
@@ -56,7 +56,7 @@ public class BallPosition extends SubspaceEvent {
     public short getXLocation() {
         return m_xLocation;
     }
-    
+
     /**
      * Gets the Y location of the ball that was picked up.
      * @return Ylocation
@@ -64,7 +64,7 @@ public class BallPosition extends SubspaceEvent {
     public short getYLocation() {
         return m_yLocation;
     }
-    
+
     /**
      * Gets the X velocity of the ball that was picked up.
      * @return Xvelocity
@@ -72,7 +72,7 @@ public class BallPosition extends SubspaceEvent {
     public short getXVelocity() {
         return m_xVelocity;
     }
-    
+
     /**
      * Gets the Y velocity of the ball that was picked up.
      * @return Yvelocity
@@ -80,7 +80,7 @@ public class BallPosition extends SubspaceEvent {
     public short getYVelocity() {
         return m_yVelocity;
     }
-    
+
     /**
      * Gets the ID of the player who picked up the ball.
      * @return PlayerID
@@ -88,7 +88,7 @@ public class BallPosition extends SubspaceEvent {
     public short getPlayerID() {
         return m_playerID;
     }
-    
+
     /**
      * Gets the Time Stamp of the ball that was picked up.
      * @return TimeStamp

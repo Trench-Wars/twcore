@@ -2,7 +2,7 @@ package twcore.core;
 
 /**
  * (S2C 0x0D) Event fired when a player changes frequencies.<code><pre>
- * 
+ *
  * +-------------------------+
  * |Field Length Description |
  * +-------------------------+
@@ -15,17 +15,17 @@ package twcore.core;
 public class FrequencyChange extends SubspaceEvent {
     short             m_playerID;  // ID of player who changed freqs
     short             m_frequency; // Frequency the player changed to
-    
+
     /**
 	 * Creates a new instance of FrequencyChange; this is called by
 	 * GamePacketInterpreter when it receives the packet.
-	 * @param Array the ByteArray containing the packet data
-	 */   
+	 * @param array the ByteArray containing the packet data
+	 */
     public FrequencyChange(ByteArray array){
         m_playerID = (short)array.readLittleEndianShort( 1 );
         m_frequency = (short)array.readLittleEndianShort( 3 );
     }
-    
+
     /**
      * Gets the ID of the player who changed frequencies.
      * @return PlayerID
@@ -33,7 +33,7 @@ public class FrequencyChange extends SubspaceEvent {
     public short getPlayerID(){
         return m_playerID;
     }
-   
+
     /**
      * Gets the Frequency that the player changed to.
      * @return Frequency
