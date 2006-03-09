@@ -1,7 +1,20 @@
 package twcore.core;
 
-public class Prize extends SubspaceEvent {
-    
+/**
+ * (S2C 0x08) Event fired when a player revceives a prize. <code><pre>
+ * 
+ * +------------------------+
+ * |Field Length Description|
+ * +------------------------+
+ * |0        1    Type Byte |
+ * |1        4    Timestamp |
+ * |5        2    X Tiles   |
+ * |7        2    Y Tiles   |
+ * |9        2    Prize     |
+ * |11       2    Player ID |
+ * +-------------------------+</code></pre> 
+ */
+public class Prize extends SubspaceEvent { 
     static final int RECHARGE_PRIZE = 1;
     static final int ENERGY_PRIZE = 2;
     static final int ROTATION_PRIZE = 3;
@@ -31,12 +44,17 @@ public class Prize extends SubspaceEvent {
     static final int ROCKET_PRIZE = 27;
     static final int PORTAL_PRIZE =28;
     
-    int m_timeStamp;
-    short m_xTiles;
-    short m_yTiles;
-    short m_prizeType;
-    short m_playerID;
+    int m_timeStamp;   // Time Stamp of the prize that was rewarded
+    short m_xTiles;    // X Tiles of the player who received a prize
+    short m_yTiles;    // Y Tiles of the player who received a prize
+    short m_prizeType; // Type of prize a player received
+    short m_playerID;  // ID of the player who was prized
     
+    /**
+     * Creates a new instance of Prize; this is called by
+     * GamePacketInterpreter when it receives the packet.
+     * @param Array the ByteArray containing the packet data
+     */     
     public Prize(ByteArray array){
         m_timeStamp = (int)array.readLittleEndianInt( 1 );
         m_xTiles = (short)array.readLittleEndianShort( 5 );
@@ -45,18 +63,42 @@ public class Prize extends SubspaceEvent {
         m_playerID = (short)array.readLittleEndianShort( 11 );
     }
     
+    /**
+     * Gets the Time Stamp of the prize that was rewarded.
+     * @return TimeStamp 
+     */
     public int getTimeStamp(){
         return m_timeStamp;
     }
+    
+    /**
+     * Gets the X Tiles the player who received a prize.
+     * @return XTiles
+     */   
     public short getXTiles(){
         return m_xTiles;
     }
+    
+    /**
+     * Gets the Y Tiles of the player who is being prized.
+     * @return YTiles
+     */   
     public short getYTiles(){
         return m_yTiles;
     }
+    
+    /**
+     * Gets the type of prize a player received.
+     * @return PrizeType
+     */   
     public short getPrizeType(){
         return m_prizeType;
     }
+    
+    /**
+     * Gets the ID of the player who received the prize.
+     * @return PlayerID
+     */
     public short getPlayerID(){
         return m_playerID;
     }
