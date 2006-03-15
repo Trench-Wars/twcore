@@ -1341,7 +1341,7 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
-			updateSQL(name.toLowerCase(), 1);
+			updateSQL(owner.toLowerCase(), 1);
 			updateSQL(player.toLowerCase(), 3);
 			try {
 				m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'");
