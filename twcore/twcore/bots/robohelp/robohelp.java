@@ -82,6 +82,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
         m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs" );
 		if( m_strictOnIts == true ) {
+			m_botAction.sendPublicMessage("Testing");
             m_commandInterpreter.registerCommand( "on it", acceptedMessages, this, "handleOnIt" );
             m_commandInterpreter.registerCommand( "got it", acceptedMessages, this, "handleGotIt" );
         } else {
