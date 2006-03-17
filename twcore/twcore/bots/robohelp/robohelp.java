@@ -81,18 +81,18 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary" );
         m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
         m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs" );
-
+		if( m_strictOnIts == true ) {
+            m_commandInterpreter.registerCommand( "on it", acceptedMessages, this, "handleOnIt" );
+            m_commandInterpreter.registerCommand( "got it", acceptedMessages, this, "handleGotIt" );
+        } else {
+            m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );            
+        }
 
         acceptedMessages = Message.ARENA_MESSAGE;
 
         m_commandInterpreter.registerCommand( "Ban", acceptedMessages, this, "handleBanNumber" );
 
-        if( m_strictOnIts == true ) {
-            m_commandInterpreter.registerCommand( "on it", Message.CHAT_MESSAGE, this, "handleOnIt" );
-            m_commandInterpreter.registerCommand( "got it", Message.CHAT_MESSAGE, this, "handleGotIt" );
-        } else {
-            m_commandInterpreter.registerDefaultCommand( Message.CHAT_MESSAGE, this, "handleChat" );            
-        }
+        
         
         if(m_zonerbotForAdverts == false ) {
         	m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleZone" );
@@ -916,6 +916,7 @@ public class robohelp extends SubspaceBot {
      * @param message Message containing on it
      */
     public void handleOnIt( String name, String message ) {
+    	m_botAction.sendPublicMessage("Got the on it");
         boolean recorded = false;
         int i = 0;
         while( !recorded && i < callList.size() ) {
