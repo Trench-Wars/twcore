@@ -11,9 +11,9 @@ public class robohelp extends SubspaceBot {
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
     public static final int LINE_SIZE = 100;
     public static final int CALL_EXPIRATION_TIME = 90000;  // Time after which a call can't
-                                                           // can't be claimed (onit/gotit) 
+                                                           // can't be claimed (onit/gotit)
     public static final String ZONE_CHANNEL = "Zone Channel";
-                    
+
     boolean             m_banPending = false;
     boolean             m_zonerbotForAdverts = true;
     boolean             m_strictOnIts = true;
@@ -34,7 +34,7 @@ public class robohelp extends SubspaceBot {
     Vector              eventList = new Vector();
     TreeMap             events = new TreeMap();
     Vector              callList = new Vector();
-    
+
     String				findPopulation = "";
 	int					setPopID = -1;
 
@@ -81,20 +81,13 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary" );
         m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
         m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs" );
-		if( m_strictOnIts == true ) {
-			m_botAction.sendPublicMessage("Testing");
-            m_commandInterpreter.registerCommand( "on it", acceptedMessages, this, "handleOnIt" );
-            m_commandInterpreter.registerCommand( "got it", acceptedMessages, this, "handleGotIt" );
-        } else {
-            m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );            
-        }
+		if (!m_strictOnIts)
+            m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );
 
         acceptedMessages = Message.ARENA_MESSAGE;
 
         m_commandInterpreter.registerCommand( "Ban", acceptedMessages, this, "handleBanNumber" );
 
-        
-        
         if(m_zonerbotForAdverts == false ) {
         	m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleZone" );
         }
@@ -188,7 +181,7 @@ public class robohelp extends SubspaceBot {
         }
 
     }
-   
+
 /*    public void handleGoogle( String name, String message ){
 
         m_botAction.sendChatMessage( "Google search results for " + message + ": " + doGoogleSearch( message ) );
@@ -196,38 +189,38 @@ public class robohelp extends SubspaceBot {
     }*/
 
     /**
-     * Forms an appropriate query to dictionary.reference.com. 
+     * Forms an appropriate query to dictionary.reference.com.
      * @param name Name of individual querying
      * @param message Query
      */
     public void handleDictionary( String name, String message ) {
-        
+
         m_botAction.sendChatMessage( "Dictionary definition:  http://dictionary.reference.com/search?q=" + message );
-        
+
     }
-    
+
     /**
-     * Forms an appropriate query to thesaurus.reference.com. 
+     * Forms an appropriate query to thesaurus.reference.com.
      * @param name Name of individual querying
      * @param message Query
      */
     public void handleThesaurus( String name, String message ) {
-        
+
         m_botAction.sendChatMessage( "Thesaurus entry:  http://thesaurus.reference.com/search?q=" + message );
-        
+
     }
-    
+
     /**
-     * Forms an appropriate query to javadocs.org 
+     * Forms an appropriate query to javadocs.org
      * @param name Name of individual querying
      * @param message Query
      */
     public void handleJavadocs( String name, String message ) {
-        
+
         m_botAction.sendChatMessage( "Javadocs entry:  http://javadocs.org/" + message );
-        
+
     }
-    
+
 /*    public String doGoogleSearch( String searchString ){
 
         try {
@@ -310,7 +303,7 @@ public class robohelp extends SubspaceBot {
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
         m_botAction.sendUnfilteredPublicMessage( "?blogin " + m_botSettings.getString( "Banpassword" ) );
-        m_botAction.ipcSubscribe(ZONE_CHANNEL);        
+        m_botAction.ipcSubscribe(ZONE_CHANNEL);
     }
 
     /**
@@ -319,19 +312,19 @@ public class robohelp extends SubspaceBot {
      * @param event IPC event to handle
      */
     public void handleEvent( InterProcessEvent event ) {
-        
+
       IPCMessage ipcMessage = (IPCMessage) event.getObject();
       String message = ipcMessage.getMessage();
-      
+
       try {
           String parts[] = message.toLowerCase().split( "@ad@" );
           String host = parts[0];
           String arena = parts[1];
           String advert = parts[2];
-          
+
           storeAdvert( host, arena, advert );
       } catch (Exception e ) {
-    	  Tools.printStackTrace(e);    	  
+    	  Tools.printStackTrace(e);
       }
     }
 
@@ -366,14 +359,14 @@ public class robohelp extends SubspaceBot {
                     i = -1;
                 }
             String advert = message.substring( 0, start ).trim();
-            
+
             storeAdvert( host, arena, advert );
         } catch (Exception e ) {
         	Tools.printStackTrace(e);
         }
 
     }
-    
+
     /**
      * Stores data of an advert into the database.
      * @param host Host of the event
@@ -483,7 +476,7 @@ public class robohelp extends SubspaceBot {
         if( opList.isZH( playerName ) ){
             return;
         }
-        
+
         callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
         helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
         if( helpRequest == null ){
@@ -499,8 +492,8 @@ public class robohelp extends SubspaceBot {
         helpRequest.setAdvertTell( true );
         m_botAction.sendChatMessage( playerName + " has been notified that ?advert is not for non-staff." );
         }
-                
-                
+
+
 
  //       m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
  //               +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
@@ -790,7 +783,7 @@ public class robohelp extends SubspaceBot {
                         +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
                         +"will not be tolerated!", 1 );
                         m_botAction.sendChatMessage( name + " has been warned for ?advert abuse." );
-                        
+
                         Calendar thisTime = Calendar.getInstance();
                         java.util.Date day = thisTime.getTime();
                         String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
@@ -905,7 +898,7 @@ public class robohelp extends SubspaceBot {
                     m_botAction.sendRemotePrivateMessage( name, helpRequest.getFirstResponse() );
                     m_botAction.sendChatMessage( "The last response has been repeated to " + name );
                 } else {
-                    m_botAction.sendChatMessage( "Error repeating response to '" + name + "': response not found.  Please address this call manually.");                    
+                    m_botAction.sendChatMessage( "Error repeating response to '" + name + "': response not found.  Please address this call manually.");
                 }
             }
         }
@@ -917,7 +910,6 @@ public class robohelp extends SubspaceBot {
      * @param message Message containing on it
      */
     public void handleOnIt( String name, String message ) {
-    	m_botAction.sendPublicMessage("Got the on it");
         boolean recorded = false;
         int i = 0;
         while( !recorded && i < callList.size() ) {
@@ -930,7 +922,7 @@ public class robohelp extends SubspaceBot {
             i++;
         }
     }
-    
+
     /**
      * For strict gotits, requiring the "got it" to be at the start of the message.
      * @param name Name of person saying got it
@@ -963,8 +955,8 @@ public class robohelp extends SubspaceBot {
                 }
             }
 
-            boolean isGOT = false, isIT2 = false;        
-            for( int i = 0; i < message.length(); i++ ) { 
+            boolean isGOT = false, isIT2 = false;
+            for( int i = 0; i < message.length(); i++ ) {
                 if( message.charAt( i ) == 'g' ) {
                     if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 'o' && message.charAt( Math.min( i+2, message.length() - 1 ) ) == 't') isGOT = true;
                 }
@@ -995,7 +987,7 @@ public class robohelp extends SubspaceBot {
                     if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
                         updateStatRecordsGOTIT( name );
                         callList.removeElementAt( i );
-                        recorded = true;        
+                        recorded = true;
                     } else callList.removeElementAt( i );
                     i++;
                 }
@@ -1028,13 +1020,13 @@ public class robohelp extends SubspaceBot {
     }
 
     public void updateStatRecordsGOTIT( String name ) {
-        if( !m_botAction.SQLisOperational() ){             
+        if( !m_botAction.SQLisOperational() ){
             return;
         }
 
         try {
             Calendar thisTime = Calendar.getInstance();
-            java.util.Date day = thisTime.getTime();     
+            java.util.Date day = thisTime.getTime();
             String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
 
@@ -1109,6 +1101,7 @@ public class robohelp extends SubspaceBot {
     public void handleEvent( Message event ){
 
         m_commandInterpreter.handleEvent( event );
+
         if( event.getMessageType() == Message.ALERT_MESSAGE ){
             String command = event.getAlertCommandType().toLowerCase();
             if( command.equals( "help" )){
@@ -1118,6 +1111,13 @@ public class robohelp extends SubspaceBot {
             } else if( command.equals( "advert" )){
                 handleAdvert( event.getMessager(), event.getMessage() );
             }
+        }
+        else if (event.getMessageType() == Message.CHAT_MESSAGE) {
+        	String message = event.getMessage().toLowerCase();
+        	if (message.startsWith("on it"))
+        		handleOnIt(event.getMessager(), event.getMessage());
+        	else if (message.startsWith("got it"))
+        		handleGotIt(event.getMessager(), event.getMessage());
         }
     }
 
