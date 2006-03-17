@@ -1004,7 +1004,7 @@ public class robohelp extends SubspaceBot {
 
     public void updateStatRecordsONIT( String name ) {
         if( !m_botAction.SQLisOperational() ){
-            return;
+        	m_botAction.sendArenaMessage("SQL Failed.");
         }
 
         try {
@@ -1014,9 +1014,15 @@ public class robohelp extends SubspaceBot {
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             if(result.next()) {
                 m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
-            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('', '"+name+"', '1', '0', '"+time+"')" );
-
-        } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
+				m_botAction.sendArenaMessage("Update called.");
+            } else {
+				m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('', '"+name+"', '1', '0', '"+time+"')" );
+				m_botAction.sendArenaMessage("Insert called.");
+		    }
+        } catch ( Exception e ) {
+		    System.out.println( "Could not update Stat Records" );
+		    m_botAction.sendArenaMessage("Exception in updateStatRecordsONIT");
+		}
     }
 
     public void updateStatRecordsGOTIT( String name ) {
