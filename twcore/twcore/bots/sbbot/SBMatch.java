@@ -81,7 +81,7 @@ public class SBMatch {
 	if( m_botAction.getFuzzyPlayer( name ) == null )
 	    throw new Exception( name + " isn't present in the arena. ");
 	name = m_botAction.getFuzzyPlayer( name ).getPlayerName();
-	if( !strikeballbot.isSBOp( name ) ) {
+	if( !sbbot.isSBOp( name ) ) {
 	    if( otherTeam.isCaptain( name ) )
 		throw new Exception( "Only ERs and SBOps can be captain of both frequencies at once." );
 	}
@@ -111,7 +111,7 @@ public class SBMatch {
 	else if( gameState == PLAYING ) 
 	    roster.addPlayer( addee, adder );
 	else if( gameState == STARTING ) {
-	    if( strikeballbot.isSBOp( adder ) )
+	    if( sbbot.isSBOp( adder ) )
 		throw new Exception( "You must !startpick before you can begin to !add." );
 	    else
 		throw new Exception( "The host must finish setting up the game before you can !add." );
@@ -389,7 +389,7 @@ public class SBMatch {
 	public void addPlayer( String player, SBTeam team ) throws Exception {
 	    if( isPlayer( player ) )
 		throw new Exception( "Cannot add " + player + " as he/she is already playing.");
-	    if( isCaptain( player ) && !team.isCaptain( player ) && !strikeballbot.isSBOp( player ) )
+	    if( isCaptain( player ) && !team.isCaptain( player ) && !sbbot.isSBOp( player ) )
 		throw new Exception( player + " is the captain of the other team." );/*
 	    if( gameState == PLAYING ) {
 		addToWaitingList(player, team);
