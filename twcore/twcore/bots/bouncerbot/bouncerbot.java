@@ -48,7 +48,7 @@ public class bouncerbot extends SubspaceBot {
     public void handleEvent( PlayerEntered event ){
         if( m_opList.isSmod( event.getPlayerName() )) return;
         if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
-        if( !m_opList.isModerator( event.getPlayerName() )) return;
+        if( m_opList.isModerator( event.getPlayerName() )) return;
         m_botAction.sendPrivateMessage( event.getPlayerName(), bouncemessage );
         m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
         m_botAction.sendPublicMessage( "Whoops, " + event.getPlayerName() + " entered without permission." );
