@@ -1,5 +1,8 @@
 package twcore.misc.tempset;
 
+import twcore.core.BotAction;
+import twcore.core.Player;
+
 /**
  * Abstract TempSetting all specific types of settings must extend. Provides
  * name storage and individual locking functionality.
@@ -379,5 +382,174 @@ class DoubleSetting extends TempSetting
 		m_min = min;
 		m_max = max;
 		m_restricted = true;
+	}
+}
+
+/**
+ * This class represents a setting that stores a string value that exists in a
+ * predefined enumeration.
+ *
+ * @author D1st0rt
+ * @version 06.03.30
+ */
+class EnumSetting extends TempSetting
+{
+	/** The set of possible values */
+	private String[] m_values;
+
+	/** The index of the current value */
+	private int m_index;
+
+	/**
+     * Creates a new EnumSetting
+     * @param name the name of the setting
+     * @param defval the setting's initial value. This value is the only
+     * 	      option available in the list until more are added.
+     */
+	public EnumSetting(String name, String defval)
+	{
+		super(name);
+		m_values = new String[]{ defval };
+		m_index = 0;
+	}
+
+	/**
+     * Sets the list of possible values for this setting.
+     * @param values a string array of valid options
+     */
+	public void setOptions(String[] values)
+	{
+		m_values = values;
+		if(m_index >= m_values.length)
+			m_index = 0;
+	}
+
+	/**
+	 * Adds a new setting to the list of options
+	 */
+	public void addSetting(String option)
+	{
+		String[] newArray = new String[m_values.length + 1];
+		System.arraycopy(m_values, 0, newArray, 0, m_values.length);
+		m_values = newArray;
+		m_values[m_values.length - 1] = option;
+	}
+
+	/**
+     * Attempts to change the value of this setting
+     * @param arg the new intended value
+     * @return the Result of the value change
+     */
+	public Result setValue(String arg)
+	{
+		int index = -1;
+		Result r = super.setValue(arg);
+
+		if(r == null)
+		{
+			r = new Result();
+
+			for(int x = 0; x < m_values.length; x++)
+			{
+				if(m_values[x].equalsIgnoreCase(arg))
+					index = x;
+			}
+
+			if(index == -1)
+			{
+				r.response = "Value for "+ m_name +" must be contained in the list of options.";
+				return r;
+			}
+
+			m_index = index;
+			r.changed = true;
+			r.response = "Value for "+ m_name +" set to "+ m_values[m_index];
+		}
+		return r;
+	}
+
+	/**
+	 * Gets the current value of this setting
+	 * @return the value as an Object casted String
+	 */
+	public Object getValue()
+	{
+		return m_values[m_index];
+	}
+}
+
+/**
+ * This class represents a setting that stores a Player value that is modified
+ * through a fuzzy search on the specified player name.
+ *
+ * @author D1st0rt
+ * @version 06.03.30
+ */
+class PlayerSetting extends TempSetting
+{
+	/** The current value of the setting */
+	private Player m_player;
+	/** The BotAction object used for player lookups */
+	private BotAction m_botAction;
+
+	/**
+     * Creates a new PlayerSetting
+     * @param name the name of the setting
+     * @param botAction the BotAction object to use for player lookups
+     */
+	public PlayerSetting(String name, BotAction botAction)
+	{
+		super(name);
+		m_botAction = botAction;
+	}
+
+	/**
+     * Attempts to change the value of this setting
+     * @param arg the new intended value
+     * @return the Result of the value change
+     */
+	public Result setValue(String arg)
+	{
+		Player p = null;
+		Result r = super.setValue(arg);
+
+		if(r == null)
+		{
+			r = new Result();
+
+			if(arg.equalsIgnoreCase("none"))
+			{
+				if(m_player != null)
+				{
+					r.response = "Value for "+ m_name +" set to none.";
+					r.changed = true;
+				}
+			}
+			else
+			{
+				p = m_botAction.getFuzzyPlayer(arg);
+
+				if(p != null)
+				{
+					m_player = p;
+					r.changed = true;
+					r.response = "Value for "+ m_name +" set to "+ m_player.getPlayerName();
+				}
+				else
+					r.response = "That player was not found in this arena.";
+
+			}
+		}
+		return r;
+	}
+
+	/**
+	 * Gets the current value of this setting
+	 * @return the value as an Object casted Player. Be careful because this
+	 * 		   value could possibly be null.
+	 */
+	public Object getValue()
+	{
+		return m_player;
 	}
 }

@@ -35,7 +35,7 @@ import static twcore.core.OperatorList.ER_LEVEL;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.03.30
  */
 public class TempSettingsManager
 {
@@ -120,6 +120,16 @@ public class TempSettingsManager
 				m_settings.put(name.toLowerCase(), bset);
 			break;
 
+			case ENUM:
+				EnumSetting eset = new EnumSetting(name, defval);
+				m_settings.put(name.toLowerCase(), eset);
+			break;
+
+			case PLAYER:
+				PlayerSetting pset = new PlayerSetting(name, m_botAction);
+				m_settings.put(name.toLowerCase(), pset);
+			break;
+
 			default:
 				Tools.printLog("Could not add setting "+ name +" (unknown type)");
 		}
@@ -168,6 +178,32 @@ public class TempSettingsManager
 		BoolSetting bset = new BoolSetting(name, defval);
 		m_settings.put(name.toLowerCase(), bset);
 	}
+
+	/**
+	 * Adds an Enumerated setting into the list, enabling it for use
+	 * @param name The name of the setting to be added
+	 * @param values The available opsions for this setting
+	 * @param defval The default value of this setting (what it will be initially)
+	 */
+	public void addSetting(String name, String[] values, String defval)
+	{
+		EnumSetting eset = new EnumSetting(name, defval);
+		eset.setOptions(values);
+		m_settings.put(name.toLowerCase(), eset);
+	}
+
+
+	/**
+	 * Adds a Player setting into the list, enabling it for use. The default
+	 * value for this setting is null.
+	 * @param name The name of the setting to be added
+	 */
+	public void addSetting(String name)
+	{
+		PlayerSetting pset = new PlayerSetting(name, m_botAction);
+		m_settings.put(name.toLowerCase(), pset);
+	}
+
 
 	/**
 	 * This is used for when you want to restrict an integer setting within a certain range of numbers
