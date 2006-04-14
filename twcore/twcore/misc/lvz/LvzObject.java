@@ -1,311 +1,459 @@
 package twcore.misc.lvz;
 
-import twcore.core.ByteArray;
-
 /**
- * Represents one of an arena's lvz objects. Also stores and manipulates data
- * for the lvz object modify packet:
- * 
- * <code><pre> 
- * +-----------------------------+
- * | Offset  Length  Description |
- * +-----------------------------+
- * | 0       1       Type Byte   |
- * | 1       2       Target pID  |
- * | 2       1       Subtype Byte|
- * | 3       1       Update flags|
- * | 4       2       Obj ID/Type |
- * | 7       2       X Position  |
- * | 9       2       Y Position  |
- * | 11      1       Image ID    |
- * | 12      1       Layer       |
- * | 13      2       Time/Mode   |
- * +-----------------------------+</code></pre>
- * 
- * Offsets 3-13 (The lvz bitfield) can optionally repeat to group multiple
- * objects together. 
- * 
- * @author D1st0rt
- * @version 06.01.21
+ * The LvzObject struct can be used to build update packet to modify an LVZ object, or parse data
+ * from an incoming update packet.
+ * <P>
+ * For in-depth help on any lvz property, see the documentation included with the LVZ toolkit
+ * <P>
+ * <PRE>Data Layout
+ *  Field   Length  Description
+ *      0        1      Update Flags
+ *      1        2      Object ID & Object Type
+ *      3        2      Location [& Type] (x coord)
+ *      5        2      Location [& Type] (y coord)
+ *      7        1      LVZ Image ID
+ *      8        1      LVZ Layer
+ *      9        2      Display Time & Mode
+ * </PRE>
+ *
+ * @author Cerium (Shamelessly ripped from Hybrid by D1st0rt)
  */
-public class LvzObject
+public class LvzObject implements Cloneable
 {
-	//Packet data
-	private byte changes;
-	private short id;
-	private short x;
-	private short y;
-	private byte image;
-	private byte layer;
-	private short time;
+ 	/** LVZ update bytes */
+ 	public final byte[]	objUpdateInfo;
 
-	//other storage
-	boolean mapObj;
 
+	// Constructors
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
-	 * Creates a new LvzObject with the specified id
-	 * @param id the object id (objon number) of this object
+	 * Creates a new instance of the <tt>LvzObject</tt> struct, with all fields set to 0.
 	 */
-	public LvzObject(short id)
+	public LvzObject()
 	{
-		changes = 0;
-		this.id = id;
-		x = 0;
-		y = 0;
-		image = 0;
-		layer = 0;
-		time = 0;
+		this.objUpdateInfo = new byte[11];
 	}
 
 	/**
-	 * Gets the id of this object
-	 * @return the lvz object id (objon number) of this object
+	 * Creates a new instance of the <tt>LvzObject</tt> struct, with the byte array set to the array
+	 * specified.
+	 *
+	 * @param	intObjID	The object's object id.
 	 */
-	public short getID()
+	public LvzObject(int intObjID)
 	{
-		return (short)((id << 1) >> 1);
+		this.objUpdateInfo = new byte[11];
+		this.setObjectID(intObjID);
 	}
 
 	/**
-	 * Converts this LvzObject into a bytearray for use in a packet
-	 * @return the lvz bitfield for this object
+	 * Creates a new instance of the <tt>LvzObject</tt> struct, with the byte array set to the array
+	 * specified.
+	 *
+	 * @param	objUpdateInfo	The new byte array to use.
 	 */
-	public ByteArray toByteArray()
+	public LvzObject(byte[] objUpdateInfo)
 	{
-		ByteArray data = new ByteArray(11);
-		data.addByte(changes);
-		data.addLittleEndianShort(id);
-		data.addLittleEndianShort(x);
-		data.addLittleEndianShort(y);
-		data.addByte(image);
-		data.addByte(layer);
-		data.addLittleEndianShort(time);
-		return data;
+		if(objUpdateInfo == null || objUpdateInfo.length != 11) { throw new IllegalArgumentException(); }
+		this.objUpdateInfo = objUpdateInfo;
+	}
+
+
+	// Cloneable Interface Functions
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * Returns a copy of this <tt>LvzObject</tt> struct. The copies are independant. Changes made
+	 * to either object will not effect the other.
+	 *
+	 * @return See above.
+	 */
+	public Object	clone()
+	{
+		LvzObject objReturn = new LvzObject();
+		System.arraycopy(this.objUpdateInfo, 0, objReturn.objUpdateInfo, 0, 11);
+
+		return objReturn;
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Property Get
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Returns <tt>true</tt> if the position of the specified LVZ object should be updated,
+	 * <tt>false</tt> otherwise.
+	 *
+	 * @return See above.
+	 */
+	public boolean			updateLocation()	{ return (this.objUpdateInfo[0] & 0x01) != 0; }
+
+	/**
+	 * Returns <tt>true</tt> if the image of the specified LVZ object should be updated, <tt>false</tt>
+	 * otherwise.
+	 *
+	 * @return See above.
+	 */
+	public boolean			updateImage()		{ return (this.objUpdateInfo[0] & 0x02) != 0; }
+
+	/**
+	 * Returns <tt>true</tt> if the layer of the specified LVZ object should be updated, <tt>false</tt>
+	 * otherwise.
+	 *
+	 * @return See above.
+	 */
+	public boolean			updateLayer()		{ return (this.objUpdateInfo[0] & 0x04) != 0; }
+
+	/**
+	 * Returns <tt>true</tt> if the display time of the specified LVZ object should be updated,
+	 * <tt>false</tt> otherwise.
+	 *
+	 * @return See above.
+	 */
+	public boolean			updateDisplayTime()	{ return (this.objUpdateInfo[0] & 0x08) != 0; }
+
+	/**
+	 * Returns <tt>true</tt> if the display mode of the specified LVZ object should be updated,
+	 * <tt>false</tt> otherwise.
+	 *
+	 * @return See above.
+	 */
+	public boolean			updateDisplayMode()	{ return (this.objUpdateInfo[0] & 0x10) != 0; }
+
+	/**
+	 * Returns <tt>true</tt> if the this LVZ object is a map object, <tt>false</tt> if its a screen
+	 * object.
+	 *
+	 * @return See above.
+	 */
+	public boolean			isMapObject()		{ return (this.objUpdateInfo[1] & 0x01) != 0; }
+
+	/**
+	 * Returns the object id for the lvz object this struct represents.
+	 *
+	 * @return See above.
+	 */
+	public int				getObjectID()		{ return (this.objUpdateInfo[1] | (this.objUpdateInfo[2] << 8)) >>> 1; }
+
+	/**
+	 * Returns the position of this lvz object, in pixels. For map objects, the origin is the upper left
+	 * corner of the map. The origin for screen objects is dependant on the position type used.
+	 *
+	 * @return See above.
+	 */
+	public int				getXLocation()		{ return (this.objUpdateInfo[3] | (this.objUpdateInfo[4] << 8)) >>> (this.isMapObject() ? 0 : 4); }
+
+	/**
+	 * Returns the position of this lvz object, in pixels. For map objects, the origin is the upper left
+	 * corner of the map. The origin for screen objects is dependant on the position type used.
+	 *
+	 * @return See above.
+	 */
+	public int				getYLocation()		{ return (this.objUpdateInfo[5] | (this.objUpdateInfo[6] << 8)) >>> (this.isMapObject() ? 0 : 4); }
+
+	/**
+	 * Returns the position type for this lvz object. The value returned by this function should be
+	 * compared to the constants in the <tt>hybrid.core.consts.LVZLocationTypes</tt> class to determine
+	 * the origin to use when positioning the LVZ.
+	 * <P>
+	 * <B>Note</B>: This will always return <tt>0</tt> if this lvz object is not a screen object.
+	 *
+	 * @return See above.
+	 */
+	public byte				getXLocationType()	{ return (byte) (this.isMapObject() ? this.objUpdateInfo[3] & 0x0F : 0); }
+
+	/**
+	 * Returns the position type (origin) for this lvz object. The value returned by this function
+	 * should be compared to the constants in the <tt>hybrid.core.consts.LVZLocationTypes</tt> class.
+	 * <P>
+	 * <B>Note</B>: This will always return <tt>0</tt> if this lvz object is not a screen object.
+	 *
+	 * @return See above.
+	 */
+	public byte				getYLocationType()	{ return (byte) (this.isMapObject() ? this.objUpdateInfo[5] & 0x0F : 0); }
+
+	/**
+	 * Returns the image this lvz object is currently using. For the object to be visible, it must use a
+	 * valid image id, specified in one of the lvz files currently being used in the level.
+	 *
+	 * @return See above.
+	 */
+	public byte				getImageID()		{ return this.objUpdateInfo[7]; }
+
+	/**
+	 * Returns the layer this lvz object will be displayed on. The value returned by this function can
+	 * be compared to the constants in the <tt>hybrid.core.consts.LVZLayers</tt> class.
+	 *
+	 * @return See above.
+	 */
+	public byte				getLayer()			{ return this.objUpdateInfo[8]; }
+
+	/**
+	 * Returns the amount of time the lvz object will be displayed (in centiseconds) before it will be
+	 * automatically hidden.
+	 *
+	 * @return See above.
+	 */
+	public int				getDisplayTime()	{ return (this.objUpdateInfo[9] | (this.objUpdateInfo[10] << 8)) & 0x0FFF; }
+
+	/**
+	 * Returns the display mode for this lvz object. The value returned by this function should be
+	 * compared to the constants in the <tt>hybrid.core.consts.LVZDisplayModes</tt> class.
+	 *
+	 * @return See above.
+	 */
+	public byte				getDisplayMode()	{ return (byte) (this.objUpdateInfo[10] >>> 4); }
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Property Set
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Toggles the 'position' flag. Should be set to <tt>true</tt> when the specified LVZ objects
+	 * position should be updated.
+	 *
+	 * @param	boolUpdate	<tt>true</tt> when the LVZ objects position should be updated,
+	 *						<tt>false</tt> otherwise.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
+	 */
+	public LvzObject	updateLocation(boolean boolUpdate)
+	{
+		if(boolUpdate) { this.objUpdateInfo[0] |= 0x01; } else { this.objUpdateInfo[0] &= 0xFE; }
+		return this;
 	}
 
 	/**
-	 * Sets this object's status as a map or screen object
-	 * @param mapObj whether this object is a map object
+	 * Toggles the 'image' flag. Should be set to <tt>true</tt> when the specified LVZ objects image
+	 * should be updated.
+	 *
+	 * @param	boolUpdate	<tt>true</tt> when the LVZ objects image should be updated, <tt>false</tt>
+	 *						otherwise.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	void setMapObject(boolean mapObj)
+	public LvzObject	updateImage(boolean boolUpdate)
 	{
-		this.mapObj = mapObj;
-
-		if(mapObj)
-			id |= 0x8000;
-		else
-			id &= 0x7FFF;
+		if(boolUpdate) { this.objUpdateInfo[0] |= 0x02; } else { this.objUpdateInfo[0] &= 0xFD; }
+		return this;
 	}
 
 	/**
-	 * Gets this object's status as a map or screen object
-	 * @return true if the object is a map object
+	 * Toggles the 'layer' flag. Should be set to <tt>true</tt> when the specified LVZ objects layer
+	 * should be updated.
+	 *
+	 * @param	boolUpdate	<tt>true</tt> when the LVZ objects layer should be updated, <tt>false</tt>
+	 *						otherwise.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public boolean isMapObject()
+	public LvzObject	updateLayer(boolean boolUpdate)
 	{
-		return mapObj;
+		if(boolUpdate) { this.objUpdateInfo[0] |= 0x04; } else { this.objUpdateInfo[0] &= 0xFB; }
+		return this;
 	}
 
 	/**
-	 * Changes this object's mode
-	 * @param mode the object's new mode
-	 * @see twcore.misc.lvz.Mode
+	 * Toggles the 'display time' flag. Should be set to <tt>true</tt> when the specified LVZ objects
+	 * display time should be updated.
+	 *
+	 * @param	boolUpdate	<tt>true</tt> when the LVZ objects display time should be updated,
+	 *						<tt>false</tt> otherwise.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	void setMode(Mode mode)
+	public LvzObject	updateDisplayTime(boolean boolUpdate)
 	{
-		changes |= 8;
-		short temptime = (short)((this.time >> 4) << 4);
-		short modeval = (short)(0xFFF + mode.ordinal());
-		this.time = Short.MIN_VALUE;
-		this.time &= temptime;
-		this.time &= modeval;
+		if(boolUpdate) { this.objUpdateInfo[0] |= 0x08; } else { this.objUpdateInfo[0] &= 0xF7; }
+		return this;
 	}
 
 	/**
-	 * Gets this object's mode
-	 * @return the object's mode
-	 * @see twcore.misc.lvz.Mode
+	 * Toggles the 'display mode' flag. Should be set to <tt>true</tt> when the specified LVZ objects
+	 * display mode should be updated.
+	 *
+	 * @param	boolUpdate	<tt>true</tt> when the LVZ objects display mode should be updated,
+	 *						<tt>false</tt> otherwise.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public Mode getMode()
+	public LvzObject	updateDisplayMode(boolean boolUpdate)
 	{
-		short mode = (short)((time << 12) >> 12);
-		Mode m = Mode.ShowAlways;
-		return m.fromOrdinal(mode);
+		if(boolUpdate) { this.objUpdateInfo[0] |= 0x10; } else { this.objUpdateInfo[0] &= 0xEF; }
+		return this;
 	}
 
 	/**
-	 * Sets the location of this object on the map or screen
-	 * @param xpixels the x coordinate in pixels
-	 * @param ypixels the y coordinate in pixels
+	 * Defines this lvz object as a 'map object'.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public void setLocation(short xpixels, short ypixels)
+	public LvzObject	asMapObject()
 	{
-		changes |= 128;
-
-		if(!mapObj)
-		{
-			short xmode = (short)((x << 12) >> 12);
-			short ymode = (short)((y << 12) >> 12);
-
-			xpixels <<= 4;
-			ypixels <<= 4;
-
-			xpixels += 0xF;
-			ypixels += 0xF;
-
-			x = Short.MIN_VALUE;
-			y = Short.MIN_VALUE;
-
-			x &= xpixels;
-			x &= xmode;
-			y &= ypixels;
-			y &= ymode;
-		}
-		else
-		{
-			x = xpixels;
-			y = ypixels;
-		}
-
+		this.objUpdateInfo[1] |= 0x01;
+		return this;
 	}
 
 	/**
-	 * Gets this object's x location on the map or screen
-	 * @return the x coordinate in pixels
+	 * Defines this lvz object as a 'screen object'.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public short getXLocation()
+	public LvzObject	asScreenObject()
 	{
-		if(!mapObj)
-			return (short)(x >> 4);
-		else
-			return x;
+		this.objUpdateInfo[1] &= 0xFE;
+		return this;
 	}
 
 	/**
-	 * Gets this object's y location on the map or screen
-	 * @return the y coordinate in pixels
+	 * Sets the id for the lvz object this structure represents. This does not edit or replacing an
+	 * existing object id.
+	 *
+	 * @param	intObjectID		The id for the lvz object to edit.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public short getYLocation()
+	public LvzObject	setObjectID(int intObjectID)
 	{
-		if(!mapObj)
-			return (short)(y >> 4);
-		else
-			return y;
+		intObjectID = (intObjectID << 1) | (this.objUpdateInfo[1] & 0x01);
+
+		this.objUpdateInfo[1] = (byte) (intObjectID & 0x00FF);
+		this.objUpdateInfo[2] = (byte) ((intObjectID & 0xFF00) >> 8);
+
+		return this;
 	}
 
 	/**
-	 * Sets the relative location of this object on the screen
-	 * Note that this does not apply to map objects and does nothing.
-	 * @param xtype the point to base x coordinate positions off of
-	 * @param ytype the point to base y coordinate positions off of
-	 * @see twcore.misc.lvz.CoordType
+	 * Sets the distance from this objects origin, in pixels. For map objects, the origin is the upper
+	 * left corner of the map. For screen objects, the origin is determined by the position type.
+	 *
+	 * @param	intLocation		Distance from the origin, in pixels.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	void setRelativeLocation(CoordType xtype, CoordType ytype)
+	public LvzObject	setXLocation(int intLocation)
 	{
-		if(!mapObj)
-		{
-			changes |= 128;
+		if((this.objUpdateInfo[1] & 0x01) == 0) { intLocation = (intLocation << 4) | (this.objUpdateInfo[3] & 0x0F); }
 
-			short tempx = (short)((x >> 12) << 12);
-			short tempy = (short)((y >> 12) << 12);
+		this.objUpdateInfo[3] = (byte) (intLocation & 0x00FF);
+		this.objUpdateInfo[4] = (byte) ((intLocation & 0xFF00) >> 8);
 
-			short xmode = (short)(0xFFF + xtype.ordinal());
-			short ymode = (short)(0xFFF + ytype.ordinal());
-
-			x = Short.MIN_VALUE;
-			y = Short.MIN_VALUE;
-
-			x &= tempx;
-			x &= xmode;
-			y &= tempy;
-			y &= ymode;
-		}
+		return this;
 	}
 
 	/**
-	 * Gets the relative x location of this object on the screen
-	 * @return the reference point for the x coordinate
+	 * Sets the distance from this objects origin, in pixels. For map objects, the origin is the upper
+	 * left corner of the map. For screen objects, the origin is determined by the position type.
+	 *
+	 * @param	intLocation		Distance from the origin, in pixels.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public CoordType getXRelative()
+	public LvzObject	setYLocation(int intLocation)
 	{
-		short type = (short)((x << 12) >> 12);
-		CoordType t = CoordType.C;
-		return t.fromOrdinal(type);
+		if((this.objUpdateInfo[1] & 0x01) == 0) { intLocation = (intLocation << 4) | (this.objUpdateInfo[5] & 0x0F); }
+
+		this.objUpdateInfo[5] = (byte) (intLocation & 0x00FF);
+		this.objUpdateInfo[6] = (byte) ((intLocation & 0xFF00) >> 8);
+
+		return this;
 	}
 
 	/**
-	 * Gets the relative y location of this object on the screen
-	 * @return the reference point for the y coordinate
+	 * Sets the position type for this lvz object.
+	 * <P>
+	 * <B>Note</B>: Location types only apply to screen objects. If this lvz object is a map object,
+	 * 				this function will return silently.
+	 *
+	 * @param	bType	The position type to use. Valid position types are defined in the class
+	 *					<tt>hybrid.core.consts.LVZLocationTypes</tt>.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public CoordType getYRelative()
+	public LvzObject	setXLocationType(byte bType)
 	{
-		short type = (short)((y << 12) >> 12);
-		CoordType t = CoordType.C;
-		return t.fromOrdinal(type);
+		if((this.objUpdateInfo[1] & 0x01) == 0) { this.objUpdateInfo[3] = (byte) ((this.objUpdateInfo[3] & 0xF0) | (bType & 0x0F)); }
+
+		return this;
 	}
 
 	/**
-	 * Sets the image id for this object
-	 * @param image the id of the image this object is to use
+	 * Sets the position type for this lvz object.
+	 * <P>
+	 * <B>Note</B>: Location types only apply to screen objects. If this lvz object is a map object,
+	 * 				this function will return silently.
+	 *
+	 * @param	bType	The position type to use. Valid position types are defined in the class
+	 *					<tt>hybrid.core.consts.LVZLocationTypes</tt>.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	void setImage(byte image)
+	public LvzObject	setYLocationType(byte bType)
 	{
-		changes |= 64;
-		this.image = image;
+		if((this.objUpdateInfo[1] & 0x01) == 0) { this.objUpdateInfo[5] = (byte) ((this.objUpdateInfo[5] & 0xF0) | (bType & 0x0F)); }
+
+		return this;
 	}
 
 	/**
-	 * Gets the image id for this object
-	 * @return the id of the image this object uses
+	 * Sets the image this lvz object should use. The image must be define in one of the level files
+	 * currently in use in the arena.
+	 *
+	 * @param	intImageID		The new image id for this lvz object.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public byte getImage()
+	public LvzObject	setImageID(int intImageID)
 	{
-		return image;
+		this.objUpdateInfo[7] = (byte) (intImageID & 0xFF);
+		return this;
 	}
 
 	/**
-	 * Sets the display time for this object
-	 * @param time the display time the object is to use, in 1/10 seconds
+	 * Sets the layer to display this lvz object on.
+	 *
+	 * @param	bLayer		The layer to display this object on. Valid layer types are defined in the
+	 *						class <tt>hybrid.core.consts.LVZLayers</tt>.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	void setTime(short time)
+	public LvzObject	setLayer(byte bLayer)
 	{
-		changes |= 16;
-		short tempmode = (short)((this.time >> 12) << 12);
-		tempmode = (short)(0xFFF + tempmode);
-		this.time = Short.MIN_VALUE;
-		this.time &= (time << 4);
-		this.time &= tempmode;
-
+		this.objUpdateInfo[8] = bLayer;
+		return this;
 	}
 
 	/**
-	 * Gets the display time for this object
-	 * @return the display time for this object, in 1/10 seconds
+	 * Sets the amount of time to display this lvz object, in centiseconds, before hiding it. This
+	 * setting is ignored for lvz objcts whos display mode is 'ShowAlways'. For all other modes, setting
+	 * this value to 0 will display it indefinitely.
+	 *
+	 * @param	intDisplayTime	Amount of time to display this object, in centiseconds.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	public short getTime()
+	public LvzObject	setDisplayTime(int intDisplayTime)
 	{
-		return time;
+		this.objUpdateInfo[9] = (byte) (intDisplayTime & 0x00FF);
+		this.objUpdateInfo[10] = (byte) ((intDisplayTime & 0x0F00) >> 8);
+
+		return this;
 	}
 
 	/**
-	 * Sets the object's display layer
-	 * @param layer the layer the object is to be displayed on
-	 * @see twcore.misc.lvz.Layer
+	 * Sets the display mode for this lvz object. The display mode effects when the lvz object will be
+	 * displayed by the clients.
+	 *
+	 * @param	bDisplayMode	The new display mode for this lvz object. Value display modes are
+	 *							defined in the class <tt>hybrid.core.consts.LVZDisplayModes</tt>.
+	 *
+	 * @return This <tt>LvzObject</tt> structure.
 	 */
-	void setLayer(Layer layer)
+	public LvzObject	setDisplayMode(byte bDisplayMode)
 	{
-		changes |= 32;
-		this.layer = (byte)layer.ordinal();
-	}
-
-	/**
-	 * Gets the object's display layer
-	 * @return the layer the object is displayed on
-	 * @see twcore.misc.lvz.Layer
-	 */
-	public Layer getLayer()
-	{
-		Layer l = Layer.BelowAll;
-		return l.fromOrdinal(layer);
+		this.objUpdateInfo[10] = (byte) ((this.objUpdateInfo[10] & 0x0F) | ((bDisplayMode << 4) & 0xF0));
+		return this;
 	}
 }

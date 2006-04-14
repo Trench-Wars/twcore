@@ -3,9 +3,9 @@ package twcore.misc.lvz;
 import java.util.HashMap;
 import java.util.Vector;
 
+import twcore.core.BotAction;
 import twcore.core.ByteArray;
 import twcore.core.GamePacketGenerator;
-import twcore.core.Objset;
 import twcore.core.Session;
 
 /**
@@ -14,20 +14,19 @@ import twcore.core.Session;
  * and is a subclass of Objset so it can still be used for all of those
  * functions. Note that while it does keep track of the status of the
  * objects, it is only aware of the data it is provided, so unless you
- * set a property of an object it will not be recorded in the LvzObject
- * object.
- * 
+ * set a property of an object it will not be recorded in the LvzObject.
+ *
  * @author D1st0rt
- * @version 06.01.21
+ * @version 06.02.11
  */
-public class LvzManager extends Objset
+public class LvzManager extends twcore.core.Objset
 {
 	/** A local copy of data on all objects the bot has used */
 	private HashMap<Short, LvzObject> objects;
-	
-	/** A queued list of objects to modify */	
+
+	/** A queued list of objects to modify */
 	private Vector<Short> changeQueue;
-	
+
 	/** The packet generator used to send the object modify packets */
 	private GamePacketGenerator m_gpg;
 
@@ -47,12 +46,15 @@ public class LvzManager extends Objset
 	 * @param id the id of the intended object
 	 * @param layer the intended layer for the object
 	 */
-	public void setToChange(short id, Layer layer)
+	public void setLayerToChange(short id, Layer layer)
 	{
 		if(!changeQueue.contains(id))
 			changeQueue.add(id);
 
-		getObjectSafely(id).setLayer(layer);
+		LvzObject obj = getObjectSafely(id);
+		obj = obj.setLayer((byte)layer.ordinal());
+		obj = obj.updateLayer(true);
+		objects.put(id, obj);
 	}
 
 	/**
@@ -60,12 +62,15 @@ public class LvzManager extends Objset
 	 * @param id the id of the intended object
 	 * @param mode the intended layer for the object
 	 */
-	public void setToChange(short id, Mode mode)
+	public void setModeToChange(short id, Mode mode)
 	{
 		if(!changeQueue.contains(id))
 			changeQueue.add(id);
 
-		getObjectSafely(id).setMode(mode);
+		LvzObject obj = getObjectSafely(id);
+		obj = obj.setLayer((byte)mode.ordinal());
+		obj = obj.updateDisplayMode(true);
+		objects.put(id, obj);
 	}
 
 	/**
@@ -74,12 +79,16 @@ public class LvzManager extends Objset
 	 * @param xpixels the intended x location for the object, in pixels
 	 * @param ypixels the intended y location for the object, in pixels
 	 */
-	public void setToChange(short id, short xpixels, short ypixels)
+	public void setLocationToChange(short id, int xpixels, int ypixels)
 	{
 		if(!changeQueue.contains(id))
 			changeQueue.add(id);
 
-		getObjectSafely(id).setLocation(xpixels, ypixels);
+		LvzObject obj = getObjectSafely(id);
+		obj = obj.setXLocation(xpixels);
+		obj = obj.setYLocation(ypixels);
+		obj = obj.updateLocation(true);
+		objects.put(id, obj);
 	}
 
 	/**
@@ -88,12 +97,16 @@ public class LvzManager extends Objset
 	 * @param xtype the intended reference point for the x coordinate of the object
 	 * @param ytype the intended reference point for the y coordinate of the object
 	 */
-	public void setToChange(short id, CoordType xtype, CoordType ytype)
+	public void setLocationTypeToChange(short id, CoordType xtype, CoordType ytype)
 	{
 		if(!changeQueue.contains(id))
 			changeQueue.add(id);
 
-		getObjectSafely(id).setRelativeLocation(xtype, ytype);
+		LvzObject obj = getObjectSafely(id);
+		obj = obj.setXLocationType((byte)xtype.ordinal());
+		obj = obj.setYLocationType((byte)ytype.ordinal());
+		obj = obj.updateLocation(true);
+		objects.put(id, obj);
 	}
 
 	/**
@@ -101,12 +114,15 @@ public class LvzManager extends Objset
 	 * @param id the id of the intended object
 	 * @param image the id of the intended image for the object
 	 */
-	public void setToChange(short id, byte image)
+	public void setImageToChange(short id, int image)
 	{
 		if(!changeQueue.contains(id))
 			changeQueue.add(id);
 
-		getObjectSafely(id).setImage(image);
+		LvzObject obj = getObjectSafely(id);
+		obj = obj.setImageID(image);
+		obj = obj.updateImage(true);
+		objects.put(id, obj);
 	}
 
 	/**
@@ -114,12 +130,15 @@ public class LvzManager extends Objset
 	 * @param id the id of the intended object
 	 * @param time the intended display time for the object, in 1/10 seconds
 	 */
-	public void setToChange(short id, short time)
+	public void setTimeToChange(short id, int time)
 	{
 		if(!changeQueue.contains(id))
 			changeQueue.add(id);
 
-		getObjectSafely(id).setTime(time);
+		LvzObject obj = getObjectSafely(id);
+		obj = obj.setDisplayTime(time);
+		obj = obj.updateDisplayTime(true);
+		objects.put(id, obj);
 	}
 
 	/**
@@ -129,21 +148,7 @@ public class LvzManager extends Objset
 	 */
 	public void doChanges(boolean clearQueue)
 	{
-		ByteArray data = new ByteArray(4 +(11 * changeQueue.size()));
-		data.addByte(0x0A);
-		data.addLittleEndianShort((short)-1);
-		data.addByte(0x36);
-
-		for(short id : changeQueue)
-		{
-			LvzObject obj = getObject(id);
-			data.addByteArray(obj.toByteArray());
-		}
-
-		m_gpg.composeHighPriorityPacket(data, data.size());
-
-		if(clearQueue)
-			changeQueue.clear();
+		doChanges((short)-1, clearQueue);
 	}
 
 	/**
@@ -162,11 +167,14 @@ public class LvzManager extends Objset
 		for(short id : changeQueue)
 		{
 			LvzObject obj = getObject(id);
-			data.addByteArray(obj.toByteArray());
+			data.addByteArray(obj.objUpdateInfo);
 		}
 
-		m_gpg.composeHighPriorityPacket(data, data.size());
-		
+		m_gpg.sendReliableMessage(data);
+		BotAction b = ((Session)Thread.currentThread()).getBotAction();
+		b.sendChatMessage("Sending object packet.");
+		data.show();
+
 		if(clearQueue)
 			changeQueue.clear();
 	}
@@ -174,7 +182,7 @@ public class LvzManager extends Objset
 	/**
 	 * Retrieves a LvzObject object with the specified id
 	 * @param id the id of the intended object
-	 * @return the object with the specified id if it exists, or null 
+	 * @return the object with the specified id if it exists, or null
 	 */
 	public LvzObject getObject(short id)
 	{
