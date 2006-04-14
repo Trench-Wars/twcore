@@ -171,9 +171,9 @@ public class LvzManager extends twcore.core.Objset
 		}
 
 		m_gpg.sendReliableMessage(data);
-		BotAction b = ((Session)Thread.currentThread()).getBotAction();
-		b.sendChatMessage("Sending object packet.");
-		data.show();
+		//BotAction b = ((Session)Thread.currentThread()).getBotAction();
+		//b.sendChatMessage("Sending object packet.");
+		//data.show();
 
 		if(clearQueue)
 			changeQueue.clear();
