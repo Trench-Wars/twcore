@@ -1,7 +1,7 @@
-package twcore.bots.strikeballbot;
+package twcore.bots.sbbot;
 import twcore.core.*;
 
-public class BotCommandEvent extends twcore.bots.strikeballbot.Message {
+public class BotCommandEvent extends twcore.bots.sbbot.Message {
     Player sender = null;
     String arguments = "";
     

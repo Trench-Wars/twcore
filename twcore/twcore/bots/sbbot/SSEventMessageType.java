@@ -1,4 +1,4 @@
-package twcore.bots.strikeballbot;
+package twcore.bots.sbbot;
 
 public class SSEventMessageType extends MessageType {
     public SSEventMessageType() {}

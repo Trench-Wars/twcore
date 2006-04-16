@@ -1,4 +1,4 @@
-package twcore.bots.strikeballbot;
+package twcore.bots.sbbot;
 import java.util.*;
 import twcore.core.*;
 import java.io.*;

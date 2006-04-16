@@ -1,4 +1,4 @@
-package twcore.bots.strikeballbot;
+package twcore.bots.sbbot;
 
 public abstract class Responder<T> {
     public void Responder() { }
