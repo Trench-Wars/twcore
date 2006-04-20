@@ -9,7 +9,7 @@ public class pubarrogant extends SubspaceBot
 {
   public static final int MIN_ROAM_TIME = 1 * 60 * 1000;
   public static final int MAX_ROAM_TIME = 3 * 60 * 1000;
-  public static final int IDLE_KICK_TIME = 15 * 60;
+  public static final int IDLE_KICK_TIME = 7 * 60 + 30;
   public static final int LOWERSTAFF_IDLE_KICK_TIME = 60 * 60;
   public static final int CHECK_LOG_TIME = 30 * 1000;
   public static final int COMMAND_CLEAR_TIME = 3 * 60 * 60 * 1000;
