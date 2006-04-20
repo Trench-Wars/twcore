@@ -377,8 +377,15 @@ public class pubarrogant extends SubspaceBot
       	if(Tools.isAllDigits(arenaNames[k])) endIndex = k;
       	else break;
       }
-      
-      int arenaIndex = (int) (Math.random() * endIndex);
+      int seed = (int) (Math.random() * 100);
+      int start = 0;
+      int arenaIndex = -1;
+      for(int k = 50;arenaIndex != endIndex;k/=2) {
+          arenaIndex++;
+          if(seed >= start && seed < (start + k))
+          	break;
+          start += k;
+      }
       changeArena(arenaNames[arenaIndex]);
     }
     catch(Exception e)
