@@ -1,4 +1,4 @@
-package twcore.bots.mrarrogant;
+package twcore.bots.pubarrogant;
 
 import twcore.core.*;
 import java.util.*;
