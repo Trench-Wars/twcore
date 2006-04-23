@@ -92,7 +92,6 @@ public class messagebot extends SubspaceBot
 	 */
 	public void handleEvent(InterProcessEvent event)
 	{
-		System.out.println("IPCEVENT");
 		IPCMessage ipcMessage = (IPCMessage) event.getObject();
 		String message = ipcMessage.getMessage();
 		String recipient = ipcMessage.getRecipient();
@@ -984,7 +983,6 @@ public class messagebot extends SubspaceBot
 			//		m_botAction.SQLQuery("local", query2);
 			//		System.out.println("Deleting messages.");
 			//	} catch(SQLException e) { Tools.printStackTrace( e ); }
-				System.out.println("fun....");
 			}
 		};
 		
