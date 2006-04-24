@@ -493,6 +493,7 @@ public class zhbot extends SubspaceBot
 	
 	public void updateAccess() {
 		String accessList = m_botSettings.getString("Access");
+		if(accessList.equals("")) return;
 		String users[] = accessList.split(":");
 		for(int k = 0;k < users.length;k++) {
 			m_opList.changeAllMatches(users[k], OperatorList.ER_LEVEL );
