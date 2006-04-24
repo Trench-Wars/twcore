@@ -80,6 +80,7 @@ public class zhbot extends SubspaceBot
 			catch (Exception e)
 			{
 				m_botAction.sendPrivateMessage(name, "Failed to load " + extensionType);
+				e.printStackTrace();
 			}
 		}
 		else
