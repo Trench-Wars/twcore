@@ -32,7 +32,7 @@ public class twbotlist extends TWBotExtension {
 		else if(event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
 			name = event.getMessager();
 			
-		if(m_botAction.getOperatorList().isZH(name))
+		if(m_opList.isZH(name))
 			handleCommand(name, message);
 	}
 	

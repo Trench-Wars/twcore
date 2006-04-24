@@ -15,12 +15,12 @@ import twcore.core.*;
 public abstract class TWBotExtension {
     BotAction m_botAction;
     OperatorList m_opList;
-    twbot m_twBot;
+    SubspaceBot m_twBot;
     /** Creates a new instance of PortabotExtension */
     public TWBotExtension() {
     }
     
-    public final void set( BotAction action, OperatorList opList, twbot twBot ){
+    public final void set( BotAction action, OperatorList opList, SubspaceBot twBot ){
         m_botAction = action;
         m_opList = opList;
         m_twBot = twBot;
@@ -30,7 +30,7 @@ public abstract class TWBotExtension {
     public abstract void cancel();
     
     private final void sendBotCommand( String name, String message ){
-        m_twBot.handleCommand( name, message );
+   //     m_twBot.handleCommand( name, message );
     }
     
     public final void handleEvent( SubspaceEvent event ){

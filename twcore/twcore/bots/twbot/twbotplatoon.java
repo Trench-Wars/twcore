@@ -31,7 +31,7 @@ public class twbotplatoon extends TWBotExtension
 
         String message = event.getMessage();
         
-        if(m_botAction.getOperatorList().isER(name))
+        if(m_opList.isER(name))
         	handleCommand(name, message);
     }
     

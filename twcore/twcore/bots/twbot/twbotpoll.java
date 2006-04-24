@@ -34,7 +34,7 @@ public class twbotpoll extends TWBotExtension {
             currentPoll.handlePollCount( name, event.getMessage() );
         }
         
-        if( !m_botAction.getOperatorList().isER( name )) return;
+        if( !m_opList.isER( name )) return;
         if( message.startsWith( "!poll " )){
             if( currentPoll != null ){
                 m_botAction.sendPrivateMessage( name, "A poll is currently in "
