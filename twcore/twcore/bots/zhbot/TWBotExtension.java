@@ -15,12 +15,12 @@ import twcore.core.*;
 public abstract class TWBotExtension {
     BotAction m_botAction;
     OperatorList m_opList;
-    zhbot m_twBot;
+    SubspaceBot m_twBot;
     /** Creates a new instance of PortabotExtension */
     public TWBotExtension() {
     }
     
-    public final void set( BotAction action, OperatorList opList, zhbot twBot ){
+    public final void set( BotAction action, OperatorList opList, SubspaceBot twBot ){
         m_botAction = action;
         m_opList = opList;
         m_twBot = twBot;
