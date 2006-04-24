@@ -450,9 +450,9 @@ public class zhbot extends SubspaceBot
 			{
 				m_botAction.sendPrivateMessage(name, "I am locked, sorry.");
 			}
-		} else if(message.startsWith("!addaccess ")) {
+		} else if(message.startsWith("!addaccess ") && m_opList.isSmod(name)) {
 			addAccess(name, message.substring(11));
-		} else if(message.startsWith("!removeaccess ")) {
+		} else if(message.startsWith("!removeaccess ") && m_opList.isSmod(name)) {
 			removeAccess(name, message.substring(14));
 		}
 	}
