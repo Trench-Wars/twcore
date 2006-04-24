@@ -3,7 +3,6 @@ package twcore.bots.zhbot;
 import java.util.*;
 import java.io.*;
 import twcore.core.*;
-import twcore.bots.twbot.*;
 
 public class zhbot extends SubspaceBot
 {
@@ -416,15 +415,10 @@ public class zhbot extends SubspaceBot
 				m_botAction.sendPrivateMessage(name, "I'm already locked.  If you want to unlock me, use !unlock.");
 				return;
 			}
-			twbotstandard std = new twbotstandard();
-			std.set(m_botAction, m_opList, this);
-			extensions.put("standard", std);
-			twbotwarp warp = new twbotwarp();
-			warp.set(m_botAction, m_opList, this);
-			extensions.put("warp", warp);
-			twbotspec spec = new twbotspec();
-			spec.set(m_botAction, m_opList, this);
-			extensions.put("spec", spec);
+			load(m_botAction.getBotName(), "standard");
+			load(m_botAction.getBotName(), "warp");
+			load(m_botAction.getBotName(), "spec");
+
 			nameOfHost = name;
 			m_botAction.sendPrivateMessage(name, "Locked.  Standard, Warp, and Spec modules loaded.");
 			locked = true;
