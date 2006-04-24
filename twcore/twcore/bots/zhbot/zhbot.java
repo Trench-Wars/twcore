@@ -3,6 +3,7 @@ package twcore.bots.zhbot;
 import java.util.*;
 import java.io.*;
 import twcore.core.*;
+import twcore.bots.twbot.*;
 
 public class zhbot extends SubspaceBot
 {
