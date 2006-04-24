@@ -2,6 +2,7 @@ package twcore.bots.zhbot;
 
 import java.util.*;
 import java.io.*;
+import java.text.*;
 import twcore.core.*;
 
 public class zhbot extends SubspaceBot
@@ -331,6 +332,8 @@ public class zhbot extends SubspaceBot
 
 	public void handleCommand(String name, String message)
 	{
+		if(message.startsWith("!"))
+			log(name + " - " + message);
 		if (message.startsWith("!load "))
 		{
 			load(name, message.substring(6));
@@ -606,7 +609,24 @@ public class zhbot extends SubspaceBot
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
-
+	
+	public void log(String logThis) {
+		try{
+			PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter( botRoot.toString() + "/command.log", true )));
+			out.println();
+			out.println( "-----------------" );
+			out.println( getTimeStamp() );
+			out.println();
+			System.out.println(logThis);
+			out.close();
+		} catch( IOException ioe ){
+			ioe.printStackTrace();
+		}
+	}
+	
+	public String getTimeStamp(){
+		return new SimpleDateFormat("EEE MM-dd-yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
+    }
 
 	static final String[] helps =
 		{
