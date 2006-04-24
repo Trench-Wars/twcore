@@ -47,6 +47,7 @@ public class OperatorList {
     }
     
     public OperatorList(OperatorList o) {
+    	m_accessList = Collections.synchronizedMap( new HashMap() );
     	m_accessList.putAll(o.m_accessList);
     }
 
