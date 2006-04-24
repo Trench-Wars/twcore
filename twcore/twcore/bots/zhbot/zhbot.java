@@ -56,7 +56,6 @@ public class zhbot extends SubspaceBot
 		};
 		m_botAction.scheduleTaskAtFixedRate(checkTime, 0, 30000);
 		m_botAction.getEventRequester().requestAll();
-		updateAccess();
 	}
 
 	public void handleEvent(ArenaJoined event)
@@ -498,6 +497,7 @@ public class zhbot extends SubspaceBot
 		m_botAction.joinArena(currentArena);
 		m_botAction.sendUnfilteredPublicMessage("?chat=robodev");
 		m_opList = new OperatorList(m_botAction.getOperatorList());
+		updateAccess();
 	}
 
 	public void handleEvent(PlayerLeft event)
