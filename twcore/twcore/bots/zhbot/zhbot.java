@@ -463,9 +463,13 @@ public class zhbot extends SubspaceBot
 	
 	public void addAccess(String name, String player) {
 		String accessList = m_botSettings.getString("Access");
-		accessList += ":" + player;
+		if(accessList.equals(""))
+			accessList = player;
+		else
+			accessList += ":" + player;
 		m_botSettings.put("Access", accessList);
 		m_botSettings.save();
+		m_opList.changeAllMatches(player, OperatorList.ER_LEVEL );
 		m_botAction.sendSmartPrivateMessage(name, player + " granted access.");
 	}
 	
