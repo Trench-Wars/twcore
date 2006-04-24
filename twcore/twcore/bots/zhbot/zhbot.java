@@ -617,7 +617,7 @@ public class zhbot extends SubspaceBot
 			out.println( "-----------------" );
 			out.println( getTimeStamp() );
 			out.println();
-			System.out.println(logThis);
+			out.println(logThis);
 			out.close();
 		} catch( IOException ioe ){
 			ioe.printStackTrace();
