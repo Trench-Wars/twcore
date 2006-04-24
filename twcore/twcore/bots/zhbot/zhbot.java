@@ -450,6 +450,10 @@ public class zhbot extends SubspaceBot
 			{
 				m_botAction.sendPrivateMessage(name, "I am locked, sorry.");
 			}
+		} else if(message.startsWith("!addaccess ")) {
+			addAccess(name, message.substring(11));
+		} else if(message.startsWith("!removeaccess ")) {
+			removeAccess(name, message.substring(14));
 		}
 	}
 
@@ -601,18 +605,20 @@ public class zhbot extends SubspaceBot
 	static final String[] helps =
 		{
 			"The following commands are the base TWBot:",
-			"!help <module>     - Lists the !help for a module",
-			"!modules           - Lists the module types available",
-			"!load <module>     - Loads a module",
-			"!unload <module>   - Removes a loaded module",
-			"!loaded            - Lists the modules that are currently loaded",
-			"!off               - Cleans up the bot and shuts down all modules",
-			"!lock              - Locks bot so it can't be moved.",
-			"!unlock            - Unlocks bot so it can be moved.",
-			"!come, !go <arena> - Tells the bot to come to an arena",
-			"!die               - Tells the bot to take a hike... off a cliff.",
-			"!home              - Tells the bot to unlock and go home",
-			"!mybot             - Lets everyone know you are hosting instead of the former host." };
+			"!help <module>       - Lists the !help for a module",
+			"!modules             - Lists the module types available",
+			"!load <module>       - Loads a module",
+			"!unload <module>     - Removes a loaded module",
+			"!loaded              - Lists the modules that are currently loaded",
+			"!off                 - Cleans up the bot and shuts down all modules",
+			"!lock                - Locks bot so it can't be moved.",
+			"!unlock              - Unlocks bot so it can be moved.",
+			"!come, !go <arena>   - Tells the bot to come to an arena",
+			"!die                 - Tells the bot to take a hike... off a cliff.",
+			"!home                - Tells the bot to unlock and go home",
+			"!mybot               - Lets everyone know you are hosting instead of the former host.",
+			"!addaccess <name>    - Gives a player <ER> level access.",
+			"!removeaccess <name> - Takes away a player's access." };
 
 	static final String[] playerhelps =
 	{
