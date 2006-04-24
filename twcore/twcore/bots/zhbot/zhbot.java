@@ -418,13 +418,13 @@ public class zhbot extends SubspaceBot
 				m_botAction.sendPrivateMessage(name, "I'm already locked.  If you want to unlock me, use !unlock.");
 				return;
 			}
-			load(m_botAction.getBotName(), "standard");
-			load(m_botAction.getBotName(), "warp");
-			load(m_botAction.getBotName(), "spec");
 
 			nameOfHost = name;
 			m_botAction.sendPrivateMessage(name, "Locked.  Standard, Warp, and Spec modules loaded.");
 			locked = true;
+			load(m_botAction.getBotName(), "standard");
+			load(m_botAction.getBotName(), "warp");
+			load(m_botAction.getBotName(), "spec");
 		}
 		else if (message.startsWith("!unlock"))
 		{
