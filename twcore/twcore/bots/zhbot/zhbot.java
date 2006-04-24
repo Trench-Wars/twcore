@@ -27,7 +27,7 @@ public class zhbot extends SubspaceBot
 		super(botAction);
 		Vector repository = new Vector();
 		coreRoot = new File(botAction.getGeneralSettings().getString("Core Location"));
-		botRoot = new File(coreRoot.getPath() + "/twcore/bots/twbot");
+		botRoot = new File(coreRoot.getPath() + "/twcore/bots/zhbot");
 		repository.add(coreRoot);
 		m_loader = new AdaptiveClassLoader(repository, getClass().getClassLoader());
 
@@ -72,7 +72,7 @@ public class zhbot extends SubspaceBot
 				if (m_loader.shouldReload())
 					m_loader.reinstantiate();
 				extensionType = extensionType.toLowerCase();
-				TWBotExtension extension = (TWBotExtension) m_loader.loadClass("twcore.bots.twbot.twbot" + extensionType).newInstance();
+				TWBotExtension extension = (TWBotExtension) m_loader.loadClass("twcore.bots.twbot.zhbot" + extensionType).newInstance();
 				extension.set(m_botAction, m_opList, this);
 				extensions.put(extensionType, extension);
 				m_botAction.sendPrivateMessage(name, "Successfully loaded " + extensionType);
