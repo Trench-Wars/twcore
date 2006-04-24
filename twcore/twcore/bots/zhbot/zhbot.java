@@ -72,7 +72,7 @@ public class zhbot extends SubspaceBot
 				if (m_loader.shouldReload())
 					m_loader.reinstantiate();
 				extensionType = extensionType.toLowerCase();
-				TWBotExtension extension = (TWBotExtension) m_loader.loadClass("twcore.bots.twbot.zhbot" + extensionType).newInstance();
+				TWBotExtension extension = (TWBotExtension) m_loader.loadClass("twcore.bots.zhbot.twbot" + extensionType).newInstance();
 				extension.set(m_botAction, m_opList, this);
 				extensions.put(extensionType, extension);
 				m_botAction.sendPrivateMessage(name, "Successfully loaded " + extensionType);
