@@ -45,6 +45,10 @@ public class OperatorList {
 
         m_accessList = Collections.synchronizedMap( new HashMap() );
     }
+    
+    public OperatorList(OperatorList o) {
+    	m_accessList.putAll(o.m_accessList);
+    }
 
     /**
      * @return The entire access mapping of player names to access levels
