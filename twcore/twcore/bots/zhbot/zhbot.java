@@ -56,7 +56,7 @@ public class zhbot extends SubspaceBot
 		};
 		m_botAction.scheduleTaskAtFixedRate(checkTime, 0, 30000);
 		m_botAction.getEventRequester().requestAll();
-
+		updateAccess();
 	}
 
 	public void handleEvent(ArenaJoined event)
