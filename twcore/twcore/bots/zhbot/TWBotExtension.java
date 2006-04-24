@@ -30,7 +30,7 @@ public abstract class TWBotExtension {
     public abstract void cancel();
     
     private final void sendBotCommand( String name, String message ){
-  //      m_twBot.handleCommand( name, message );
+   //     m_twBot.handleCommand( name, message );
     }
     
     public final void handleEvent( SubspaceEvent event ){
