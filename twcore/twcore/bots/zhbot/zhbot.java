@@ -502,7 +502,7 @@ public class zhbot extends SubspaceBot
 		if(accessList.equals("")) return;
 		String users[] = accessList.split(":");
 		for(int k = 0;k < users.length;k++) {
-			if(m_opList.isZHExact(users[k]))
+			if(m_opList.isZHExact(users[k]) && !users[k].equals(""))
 				m_opList.changeAllMatches(users[k], OperatorList.ER_LEVEL );
 		}
 	}
