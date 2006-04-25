@@ -617,8 +617,8 @@ public class zhbot extends SubspaceBot
 			PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter( botRoot.toString() + "/command.log", true )));
 			out.println();
 			out.println( "-----------------" );
-			out.println( getTimeStamp() );
-			out.println();
+			out.println( getTimeStamp() +"\n");
+			out.println(m_botAction.getBotName()+"\n");
 			out.println(logThis);
 			out.close();
 		} catch( IOException ioe ){
