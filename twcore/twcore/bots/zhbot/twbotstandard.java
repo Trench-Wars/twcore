@@ -52,8 +52,6 @@ public class twbotstandard extends TWBotExtension {
             m_botAction.createRandomTeams( getInteger( message.substring(8) ));
         } else if( message.startsWith( "!teams " )){
         	createNumberofTeams( getInteger( message.substring(7) ));
-        } else if( message.startsWith( "!door " )){
-            m_botAction.setDoors( getInteger( message.substring( 6 )));
         } else if( message.startsWith( "!setship " )){
             String[] parameters = Tools.stringChopper( message.substring( 8 ).trim(), ' ' );
             try{
@@ -78,39 +76,6 @@ public class twbotstandard extends TWBotExtension {
                     m_botAction.setAlltoFreq( freq );
                 }
             }catch( Exception e ){}
-        } else if( message.startsWith( "!move " )){
-            String[] parameters = Tools.stringChopper( message.substring( 6 ).trim(), ' ' );
-            try{
-                if( parameters.length == 2 ){
-                    int x = Integer.parseInt(parameters[0]);
-                    int y = Integer.parseInt(parameters[1]);
-                    m_botAction.moveToTile( x, y );
-                }
-            }catch( Exception e ){}
-        } else if( message.startsWith( "!rotate " )){
-            String[] parameters = Tools.stringChopper( message.substring( 8 ).trim(), ' ' );
-            try{
-                if( parameters.length == 1 ){
-                    int x = Integer.parseInt(parameters[0]);
-                    Ship s = m_botAction.getShip();
-                    s.setRotation( x );
-                }
-            }catch( Exception e ){}
-        } else if( message.startsWith( "!fire " )){
-            String[] parameters = Tools.stringChopper( message.substring( 6 ).trim(), ' ' );
-            try{
-                if( parameters.length == 1 ){
-                    int x = Integer.parseInt(parameters[0]);
-                    Ship s = m_botAction.getShip();
-                    s.fire( x );
-                }
-            }catch( Exception e ){}
-        } else if( message.startsWith( "!barrage" )){
-            Ship s = m_botAction.getShip();
-            for( int i = 0; i < 255; i++ ){
-                s.setRotation( i % 40 );
-                s.fire( i );
-            }
         } else if( message.startsWith( "!restart" )){
             m_botAction.sendUnfilteredPublicMessage("*restart");
         } else if( message.startsWith( "!merge ")) {
@@ -120,35 +85,7 @@ public class twbotstandard extends TWBotExtension {
                     m_botAction.setFreqtoFreq(Integer.parseInt(parameters[0]), Integer.parseInt(parameters[1]));
                 }
             }catch( Exception e ){}
-        } else if( message.startsWith("!easy") ) {
-        	TimerTask ezT = new TimerTask() {
-        		public void run() {
-        			killEasy();
-        		}
-        	};
-        	m_botAction.setPlayerPositionUpdating(200);
-        	m_botAction.scheduleTask(ezT, 5000);
-        }
-
-        /*else if( message.startsWith( "!spec " )){
-            specPlayers = getInteger( message.substring( 6 ));
-            m_botAction.sendArenaMessage( "Removing players with " + specPlayers + " deaths - " + name );
-            m_botAction.checkAndSpec( specPlayers );
-
-        } else if( message.startsWith( "!spec" s)){
-            m_botAction.sendArenaMessage( "Removing players off - " + name );
-            specPlayers = 0;
-        }   else if( message.startsWith( "!warpto " )){
-            handleWarp( name, message );
-        }   else if( message.startsWith( "!addmsg " )){
-            handleAddMsg( name, message.substring(8) );
-        } else if( message.startsWith( "!clearmsg" )){
-            handleClearMsgs( name );
-        } else if( message.startsWith( "!delmsg " )){
-            handleDelMsg( name, getInteger( message.substring(8), -1 ) );
-        } else if( message.startsWith( "!listmsg" )){
-            handleListMsg( name );
-        }*/
+        } 
     }
     
     public void killEasy() {
@@ -366,22 +303,11 @@ public class twbotstandard extends TWBotExtension {
         String[] help = {
             "!random <numberFreqs>     - Makes random freqs of a particular size.",
 			"!teams <numberTeams>      - Makes the requested number of teams.",
-            "!door <-2 to 255>         - Changes door mode.  -2 and -1 are random modes.",
             "!where                    - Robo will tell you his location. Remote PM or squad msg only.",
             "!setship <ship>           - Changes everyone to <ship>",
             "!setship <freq> <ship>    - Changes everyone on <freq> to <ship>",
             "!restart                  - Restarts the ball game",
             "!merge <freq1> <freq2>    - Changes everyone on <freq1> to <freq2>"
-//            "!spec <numdeaths>         - Specs players when they reach <numdeaths>",
-//            "!warp                     - Warps everyone to a random location",
-//            "!warp <freq>              - Warps everyone on <freq> to a random location",
-//            "!warpto <x> <y>           - Warps everyone in the arena to x,y",
-//            "!warpto <freq> <x> <y>    - Warps everyone on freq <freq> to x,y",
-//            "!move <x> <y>             - Warps the bot to x, y.",
-//            "!addmsg <seconds>,<msg>   - Adds a timed *arena message. To use a sound, place %%<sound> at the end",
-//            "!delmsg <num>             - Removes a specified timed *arena message",
-//            "!clearmsgs                - Removes ALL timed *arena messages",
-//            "!listmsgs                 - Shows a list of the *arena messages scheduled"
         };
         return help;
     }
