@@ -420,11 +420,12 @@ public class zhbot extends SubspaceBot
 			}
 
 			nameOfHost = name;
-			m_botAction.sendPrivateMessage(name, "Locked.  Standard, Warp, and Spec modules loaded.");
+			m_botAction.sendPrivateMessage(name, "Locked.  Standard, Warp, Doors, and Spec modules loaded.");
 			locked = true;
 			load(m_botAction.getBotName(), "standard");
 			load(m_botAction.getBotName(), "warp");
 			load(m_botAction.getBotName(), "spec");
+			load(m_botAction.getBotName(), "doors");
 		}
 		else if (message.startsWith("!unlock"))
 		{
@@ -473,7 +474,7 @@ public class zhbot extends SubspaceBot
 			accessList += ":" + player;
 		m_botSettings.put("Access", accessList);
 		m_botSettings.save();
-		m_opList.changeAllMatches(player, OperatorList.ER_LEVEL );
+		updateAccess();
 		m_botAction.sendSmartPrivateMessage(name, player + " granted access.");
 	}
 	
@@ -491,16 +492,18 @@ public class zhbot extends SubspaceBot
 		}
 		m_botSettings.put("Access", newAccessList);
 		m_botSettings.save();
-		m_opList.changeAllMatches(player, OperatorList.ZH_LEVEL );
+		updateAccess();
 		m_botAction.sendSmartPrivateMessage(name, player + "'s access removed.");
 	}
 	
 	public void updateAccess() {
+		m_opList = new OperatorList(m_botAction.getOperatorList());
 		String accessList = m_botSettings.getString("Access");
 		if(accessList.equals("")) return;
 		String users[] = accessList.split(":");
 		for(int k = 0;k < users.length;k++) {
-			m_opList.changeAllMatches(users[k], OperatorList.ER_LEVEL );
+			if(m_opList.isZHExact(users[k]))
+				m_opList.changeAllMatches(users[k], OperatorList.ER_LEVEL );
 		}
 	}
 	
@@ -509,7 +512,6 @@ public class zhbot extends SubspaceBot
 		distributeEvent((SubspaceEvent) event);
 		m_botAction.joinArena(currentArena);
 		m_botAction.sendUnfilteredPublicMessage("?chat=robodev");
-		m_opList = new OperatorList(m_botAction.getOperatorList());
 		updateAccess();
 	}
 

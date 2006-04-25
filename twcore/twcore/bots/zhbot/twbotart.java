@@ -40,6 +40,13 @@ public class twbotart extends TWBotExtension
 			try {
 				move = Integer.parseInt(message.substring(9));
 			} catch(Exception e) {}
+		} else if(message.toLowerCase().startsWith("!setship ")) {
+			int ship = 0;
+			try {
+				ship = Integer.parseInt(message.substring(9)) - 1;
+			} catch(Exception e) {}
+			if(ship > 7 || ship < 0) ship = 0;
+			m_botAction.getShip().setShip(ship);
 		}
 	}
 		

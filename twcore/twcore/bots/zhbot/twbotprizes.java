@@ -51,16 +51,16 @@ import twcore.core.*;
 public class twbotprizes extends TWBotExtension
 {
   public static final String[] PRIZE_NAMES = {
-      "Recharge", "Energy", "Rotation", "Stealth",
-      "Cloak", "XRadar", "Warp", "Guns", "Bombs",
-      "Bounce", "Thruster", "Top Speed", "Full Charge",
-      "Engine Shutdown", "MultiFire", "Proximity",
-      "Super", "Shields", "Shrapnel", "AntiWarp",
+      "DISABLED", "DISABLED", "DISABLED", "DISABLED",
+      "DISABLED", "DISABLED", "Warp", "DISABLED", "DISABLED",
+      "DISABLED", "DISABLED", "DISABLED", "Full Charge",
+      "DISABLED", "DISABLED", "DISABLED",
+      "DISABLED", "DISABLED", "Shrapnel", "DISABLED",
       "Repel", "Burst", "Decoy", "Thor",
-      "Multiprize", "Brick", "Rocket", "Portal"
+      "DISABLED", "Brick", "Rocket", "Portal"
   };
 
-  public double MIN_INTERVAL = 0.1;
+  public double MIN_INTERVAL = 1.0;
   public int MIN_FREQ = 0;
   public int MAX_FREQ = 9999;
   public int MIN_PRIZE = 1;
@@ -180,6 +180,7 @@ public class twbotprizes extends TWBotExtension
     }
 
     int prizeNumber = fuzzyStringArraySearch(PRIZE_NAMES, prizeString) + 1;
+    if(getPrizeName(prizeNumber).equalsIgnoreCase("disabled")) return 0;
     if(prizeNumber != 0)
       return prizeNumber * negativePrizing;
     prizeNumber = Integer.parseInt(prizeString);
