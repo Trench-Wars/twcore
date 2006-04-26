@@ -312,7 +312,7 @@ public class DBPlayerData {
         boolean result = false;
 
         try {
-            String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' AND fnMID = '"+mid+"'";
+            String query = "SELECT fnAliasID FROM tblAliasSuppression WHERE fcIP LIKE '"+ip+"' OR fnMID = '"+mid+"'";
             ResultSet r = m_connection.SQLQuery( m_aliasConnName, query );
             if( r.next() ) result = true;
             r.close();
