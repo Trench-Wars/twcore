@@ -18,7 +18,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.04.26
+ * @version 06.04.27
  */
 public class bship extends MultiModule implements TSChangeListener
 {
@@ -914,24 +914,20 @@ public class bship extends MultiModule implements TSChangeListener
 			plist[p.getFrequency()].add(p.getPlayerName());
 		}
 
-		for(int x = 0; x < teams; x++) //Set up 5 players in ships
+		for(int x = 0; x < teams; x++)
 		{
-			int index = 4;
+			// Put players in capital ships
+			for(int y = 0; y < cslimit; y++)
+			{
+				Player p = m_botAction.getPlayer(plist[x].grabAndRemove());
+				m_botAction.setShip(p.getPlayerID(), 8 - (x % 5));
+			}
+
+			// Put players in turrets and planes
 			for(int z = 0, s = plist[x].size(); z < s; z++)
 			{
-				//get a random player
 				Player p = m_botAction.getPlayer(plist[x].grabAndRemove());
-
-				if(index < 9) //first 4
-					m_botAction.setShip(p.getPlayerName(),index);
-
-				else if(index < 12)//next 3
-					m_botAction.setShip(p.getPlayerName(), CANNON);
-				else if(index < 15)//next 3
-					m_botAction.setShip(p.getPlayerName(), GUN);
-				else
-					m_botAction.setShip(p.getPlayerName(), PLANE);
-				index++;
+				m_botAction.setShip(p.getPlayerID(), z % 3);
 			}
 		}
 	}
