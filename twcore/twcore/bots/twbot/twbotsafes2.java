@@ -16,7 +16,7 @@ import static twcore.misc.tempset.SType.*;
  * as put them into spectator mode.
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.04.26
  */
 public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 {
@@ -30,7 +30,7 @@ public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 	private final String helpMessage[] =
 	{
 		"+------------------Extended Safes Module-------------------+",
-		"|  Release 1.5 [02/08/06] - http://d1st0rt.sscentral.com   |",
+		"|  Release 1.6 [04/26/06] - http://d1st0rt.sscentral.com   |",
 		"+----------------------------------------------------------+",
 		"! !activate - Toggles the module doing anything when a     |",
 		"|             player flies over a safety tile              |",
@@ -84,6 +84,7 @@ public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 	 */
 	public void settingChanged(String setting, Object value)
 	{
+		setting = setting.toLowerCase();
 		if(setting.equals("specplayer"))
 			specPlayer = (Boolean)value;
 		else if(setting.equals("speccedmsg"))
