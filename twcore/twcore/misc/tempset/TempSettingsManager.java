@@ -24,7 +24,8 @@ import static twcore.core.OperatorList.ER_LEVEL;
  *     <li> Filter the chat messages yourself and call c_Set and c_Get directly
  * </ul>
  * As of this version, the types of settings you can store are integers, doubles,
- * booleans, and strings. On the command side, you can assign values using the form
+ * booleans, strings, players, and enumerated types in the form of a list of
+ * strings. On the command side, you can assign values using the form
  * <code>!set name1=value1 name2=value2 ...</code> For strings that contain spaces
  * or non-alphanumeric characters, you can enclose the value in quotes. If at
  * certain points during the execution of your bot you do not want settings to
@@ -35,7 +36,7 @@ import static twcore.core.OperatorList.ER_LEVEL;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.03.30
+ * @version 06.04.26
  */
 public class TempSettingsManager
 {
@@ -246,6 +247,50 @@ public class TempSettingsManager
 	}
 
 	/**
+	 * This is used for when you want to restrict a Player setting within a
+	 * certain range of frequencies (inclusive)
+	 * @param name The name of the setting to restrict
+	 * @param min The minimum frequency >= 0 to allow
+	 * @param max The maximum frequency <= 9999 to allow
+	 */
+	public void restrictPlayerSettingFreq(String name, int min, int max)
+	{
+		TempSetting t = m_settings.get(name.toLowerCase());
+		if(t == null)
+			Tools.printLog("TempSet: Could not restrict setting "+ name +" (doesn't exist)");
+		else if(!(t instanceof PlayerSetting))
+			Tools.printLog("TempSet: Could not restrict setting "+ name +" (not a Player setting)");
+		else
+		{
+			PlayerSetting pset = (PlayerSetting)t;
+			pset.restrictFreq(min, max);
+		}
+	}
+
+	/**
+	 * Sets whether or not a setting can be set to a player in a particular
+     * ship, where ship ranges from 0 (warbird) to 7 (shark).
+     * @param name The name of the setting to restrict
+     * @param ship the ship to change the value for
+	 * @param ok whether the ship is allowed or not
+	 */
+	public void restrictPlayerSettingShip(String name, int ship, boolean ok)
+	{
+		TempSetting t = m_settings.get(name.toLowerCase());
+		if(t == null)
+			Tools.printLog("TempSet: Could not restrict setting "+ name +" (doesn't exist)");
+		else if(!(t instanceof PlayerSetting))
+			Tools.printLog("TempSet: Could not restrict setting "+ name +" (not a Player setting)");
+		else
+		{
+			PlayerSetting pset = (PlayerSetting)t;
+			pset.setShipAllowed(ship, ok);
+		}
+	}
+
+
+
+	/**
 	 * Gets a setting by name, this is for when you need to access the value in the code of your bot.
 	 * @param name The name of the setting to retrieve
 	 * @return The setting contained in an Object, ready for casting :D
@@ -314,7 +359,7 @@ public class TempSettingsManager
 			{
 				m_botAction.privateMessageSpam(name, customHelp);
 			}
-			else
+			else //TODO: Improve the help generation (show restrictions, etc)
 			{
 				String[] help = new String[]{
 					"Use the !set command to change temporary bot settings",

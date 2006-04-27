@@ -483,7 +483,7 @@ class EnumSetting extends TempSetting
  * through a fuzzy search on the specified player name.
  *
  * @author D1st0rt
- * @version 06.03.30
+ * @version 06.04.19
  */
 class PlayerSetting extends TempSetting
 {
@@ -491,6 +491,16 @@ class PlayerSetting extends TempSetting
 	private Player m_player;
 	/** The BotAction object used for player lookups */
 	private BotAction m_botAction;
+	/** Whether the player has a restricted ship type or not */
+	private boolean m_restrictedShip;
+	/** The allowed ships to grab a player from */
+	private byte m_shipMask;
+	/** Whether the player has a restricted freq range or not */
+	private boolean m_restrictedFreq;
+	/** The minimum allowed frequency to grab a player from */
+	private int m_minFreq;
+	/** The maximum allowed frequency to grab a player from */
+	private int m_maxFreq;
 
 	/**
      * Creates a new PlayerSetting
@@ -501,6 +511,11 @@ class PlayerSetting extends TempSetting
 	{
 		super(name);
 		m_botAction = botAction;
+		m_shipMask = 0x7F;
+		m_minFreq = 0;
+		m_maxFreq = 9999;
+		m_restrictedFreq = false;
+		m_restrictedShip = false;
 	}
 
 	/**
@@ -510,6 +525,7 @@ class PlayerSetting extends TempSetting
      */
 	public Result setValue(String arg)
 	{
+		Player temp;
 		Player p = null;
 		Result r = super.setValue(arg);
 
@@ -531,9 +547,31 @@ class PlayerSetting extends TempSetting
 
 				if(p != null)
 				{
-					m_player = p;
+					temp = p;
 					r.changed = true;
 					r.response = "Value for "+ m_name +" set to "+ m_player.getPlayerName();
+
+					if(m_restrictedShip)
+					{
+						if((p.getShipType() & m_shipMask) == 0)
+						{
+							r.changed = false;
+							r.response = m_name +" is not in an allowed ship.";
+							temp = m_player;
+						}
+					}
+
+					if(m_restrictedFreq)
+					{
+						if(p.getFrequency() <= m_minFreq || p.getFrequency() >= m_maxFreq)
+						{
+							r.changed = false;
+							r.response = m_name +" is not on an allowed freq.";
+							temp = m_player;
+						}
+					}
+
+					m_player = temp;
 				}
 				else
 					r.response = "That player was not found in this arena.";
@@ -551,5 +589,40 @@ class PlayerSetting extends TempSetting
 	public Object getValue()
 	{
 		return m_player;
+	}
+
+	/**
+     * Sets whether or not this value can be set to a player in a particular
+     * ship, where ship ranges from 0 (warbird) to 7 (shark).
+     * @param ship the ship to change the value for
+     * @param allowed whether the ship is allowed or not
+     */
+	public void setShipAllowed(int ship, boolean allowed)
+	{
+		if(ship < 8 && ship > -1)
+		{
+			m_restrictedShip = true;
+
+			if(allowed)
+				m_shipMask |= (1 << ship);
+			else
+				m_shipMask &= ~(1 << ship);
+		}
+	}
+
+	/**
+     * Restricts the range of allowed setting values
+     * @param min the smallest allowed value
+     * @param max the largest allowed value
+     */
+	public void restrictFreq(int minFreq, int maxFreq)
+	{
+		if(minFreq > 0 && minFreq < 9999 && maxFreq > 0 && maxFreq < 9999)
+		{
+			m_restrictedFreq = true;
+
+			m_minFreq = minFreq;
+			m_maxFreq = maxFreq;
+		}
 	}
 }
