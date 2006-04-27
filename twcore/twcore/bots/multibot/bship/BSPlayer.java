@@ -5,7 +5,7 @@ package twcore.bots.multibot.bship;
  * related to the game in progress.
  *
  * @author D1st0rt
- * @version 06.01.04
+ * @version 06.04.26
  */
 public class BSPlayer
 {
@@ -37,7 +37,7 @@ public class BSPlayer
 	public short takeoffs;
 
 	/** Times attached to (capships) */
-	public short tacount;
+	public short attaches;
 
 	/** Ships played by this player */
 	public boolean[] ships;
@@ -88,7 +88,7 @@ public class BSPlayer
 		tkills = 0;
 		pkills = 0;
 		takeoffs = 0;
-		tacount = 0;
+		attaches = 0;
 		rating = 0;
 		ships = new boolean[8];
 	}

@@ -10,24 +10,30 @@ import static twcore.bots.multibot.bship.bship.ALL;
  * BSPlayer objects and passes events to the players for stat tracking
  *
  * @author D1st0rt
- * @version 06.01.04
+ * @version 06.04.26
  */
 public class BSTeam
 {
 	/** The players on this team */
-	private Vector<BSPlayer> _players;
+	private Vector<BSPlayer> players;
 
 	/** Cached array of BSPlayer objects for this team */
-	private BSPlayer[] _plist;
+	private BSPlayer[] plist;
 
 	/** This team's frequency */
-	private int _freq;
+	private int freq;
 
 	/** A cached ship count for this team */
-	private byte[] _shipCount;
+	private byte[] shipCount;
 
 	/** Whether the cache is up to date or not */
-	private boolean _changed;
+	private boolean changed;
+
+	/** How many capital ships the team currently has */
+	private int capShipCount;
+
+	/** How many times a capital ship has died */
+	private int capShipDeaths;
 
 	/**
      * Creates a new instance of BSTeam
@@ -35,11 +41,12 @@ public class BSTeam
      */
 	public BSTeam(int freq)
 	{
-		_freq = freq;
-		_players = new Vector<BSPlayer>();
-		_changed = true;
-		_shipCount = new byte[8];
-		_plist = null;
+		freq = freq;
+		players = new Vector<BSPlayer>();
+		changed = true;
+		shipCount = new byte[8];
+		plist = null;
+		capShipCount = 0;
 	}
 
 	/**
@@ -47,10 +54,11 @@ public class BSTeam
      */
 	public void reset()
 	{
-		_players.clear();
-		_changed = true;
-		_plist = null;
-		_shipCount = new byte[8];
+		players.clear();
+		changed = true;
+		plist = null;
+		shipCount = new byte[8];
+		capShipCount = 0;
 	}
 
 	/**
@@ -61,7 +69,7 @@ public class BSTeam
 	public BSPlayer[] getPlayers(byte ship)
 	{
 		Vector<BSPlayer> players = new Vector<BSPlayer>();
-		for(BSPlayer p : _players)
+		for(BSPlayer p : players)
 		{
 			if(ship == ALL || (ship == PLAYING && p.ship != SPEC) || (p.ship == ship) )
 				players.add(p);
@@ -78,9 +86,9 @@ public class BSTeam
 		BSPlayer p = getPlayer(name);
 		if(p != null)
 		{
-			_players.remove(p);
-			_changed = true;
-			_plist = null;
+			players.remove(p);
+			changed = true;
+			plist = null;
 		}
 	}
 
@@ -90,10 +98,10 @@ public class BSTeam
      */
 	public BSPlayer[] getPlayers()
 	{
-		if(_plist == null || _changed)
-			_plist = _players.toArray(new BSPlayer[_players.size()]);
+		if(plist == null || changed)
+			plist = players.toArray(new BSPlayer[players.size()]);
 
-		return _plist;
+		return plist;
 	}
 
 	/**
@@ -106,20 +114,20 @@ public class BSTeam
 		BSPlayer p = getPlayer(name);
 		if(p == null)
 		{
-			p = new BSPlayer(name, _freq);
-			_players.add(p);
+			p = new BSPlayer(name, freq);
+			players.add(p);
 		}
 
-		int pIndex = _players.indexOf(p);
+		int pIndex = players.indexOf(p);
 
 		p.ship = ship;
 		if(p.ship != bship.SPEC)
 			p.ships[ship-1] = true;
 
-		_players.setElementAt(p, pIndex);
+		players.setElementAt(p, pIndex);
 
-		_changed = true;
-		_plist = null;
+		changed = true;
+		plist = null;
 	}
 
 	/**
@@ -143,9 +151,9 @@ public class BSTeam
      * rating and checks to see how many lives are left. Decrements lives, and
      * if there are lives left, it returns true. If no lives remain, it returns false.
      * @param name the name of the player that died
-     * @return whether the player has any lives left or not
+     * @return how many lives the player has left
      */
-	public boolean playerDeath(String name)
+	public int playerDeath(String name)
 	{
 		BSPlayer p = getPlayer(name);
 		p.deaths++;
@@ -162,10 +170,9 @@ public class BSTeam
 			default:
 				p.rating -= 3;
 				p.lives--;
-				if(p.lives < 1)
-					return false;
 		}
-		return true;
+
+		return p.lives;
 	}
 
 	/**
@@ -209,7 +216,7 @@ public class BSTeam
 		BSPlayer ship = getPlayer(attachee);
 		BSPlayer turret = getPlayer(attacher);
 
-		ship.tacount++;
+		ship.attaches++;
 		ship.rating++;
 
 		turret.takeoffs++;
@@ -231,12 +238,12 @@ public class BSTeam
      */
 	public byte[] getShipCount()
 	{
-		if(_changed)
+		if(changed)
 			for(byte x = 1; x < 9; x++)
-				_shipCount[x-1] = (byte)getShipCount(x);
+				shipCount[x-1] = (byte)getShipCount(x);
 
-		_changed = false;
-		return _shipCount;
+		changed = false;
+		return shipCount;
 	}
 
 	/**
@@ -246,9 +253,7 @@ public class BSTeam
      */
 	public boolean isOut()
 	{
-		byte[] ships = getShipCount();
-		int count = ships[3] + ships[4] + ships[5] + ships[6] + ships[7];
-		return (count == 0);
+		return (getCapShipCount() == 0);
 	}
 
 	/**
@@ -263,6 +268,30 @@ public class BSTeam
 		if(p != null)
 			p.locked = locked;
 
+	}
+
+	/**
+	 * Gets the number of capital ships this team currently has in play.
+	 * @return the number of capital ships
+	 */
+	public int getCapShipCount()
+	{
+		if(changed)
+		{
+			byte[] ships = getShipCount();
+			capShipCount = ships[3] + ships[4] + ships[5] + ships[6] + ships[7];
+			changed = false;
+		}
+
+		return capShipCount;
+	}
+
+	/**
+     * Gets the number of times a capital ship on this team has died.
+     */
+	public int getCapShipDeaths()
+	{
+		return capShipDeaths;
 	}
 }
 
