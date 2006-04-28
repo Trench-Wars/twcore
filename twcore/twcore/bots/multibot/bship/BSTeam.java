@@ -68,13 +68,13 @@ public class BSTeam
      */
 	public BSPlayer[] getPlayers(byte ship)
 	{
-		Vector<BSPlayer> players = new Vector<BSPlayer>();
-		for(BSPlayer p : players)
+		Vector<BSPlayer> bsplayers = new Vector<BSPlayer>();
+		for(BSPlayer p : bsplayers)
 		{
 			if(ship == ALL || (ship == PLAYING && p.ship != SPEC) || (p.ship == ship) )
 				players.add(p);
 		}
-		return players.toArray(new BSPlayer[players.size()]);
+		return players.toArray(new BSPlayer[bsplayers.size()]);
 	}
 
 	/**
@@ -137,11 +137,11 @@ public class BSTeam
      */
 	public BSPlayer getPlayer(String name)
 	{
-		BSPlayer[] players = getPlayers();
-		for(int x = 0; x < players.length; x++)
+		BSPlayer[] bsplayers = getPlayers();
+		for(int x = 0; x < bsplayers.length; x++)
 		{
-			if(players[x].toString().equals(name))
-				return players[x];
+			if(bsplayers[x].toString().equals(name))
+				return bsplayers[x];
 		}
 		return null;
 	}
