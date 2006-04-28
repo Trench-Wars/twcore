@@ -74,7 +74,7 @@ public class BSTeam
 			if(ship == ALL || (ship == PLAYING && p.ship != SPEC) || (p.ship == ship) )
 				bsplayers.add(p);
 		}
-		return players.toArray(new BSPlayer[bsplayers.size()]);
+		return bsplayers.toArray(new BSPlayer[bsplayers.size()]);
 	}
 
 	/**
