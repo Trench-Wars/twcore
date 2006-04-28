@@ -1263,11 +1263,15 @@ public class bship extends MultiModule implements TSChangeListener
 			short freq = p.getFrequency();
 			byte ship = event.getShipType();
 			String name = p.getPlayerName();
-			int capShipsLeft = cslimit - m_teams[freq].getCapShipDeaths();
+
+			int capShipsLeft = 0;
+			if(freq < m_teams.length)
+				capShipsLeft = cslimit - m_teams[freq].getCapShipDeaths();
 
 			//I don't care what spectators are doing
 			if(p.getShipType() != SPEC)
 			{
+
 				//Get the old BSPlayer object for this player if it exists
 				BSPlayer bp = null;
 				for(int x = 0; x < m_teams.length; x++)
