@@ -69,10 +69,10 @@ public class BSTeam
 	public BSPlayer[] getPlayers(byte ship)
 	{
 		Vector<BSPlayer> bsplayers = new Vector<BSPlayer>();
-		for(BSPlayer p : bsplayers)
+		for(BSPlayer p : players)
 		{
 			if(ship == ALL || (ship == PLAYING && p.ship != SPEC) || (p.ship == ship) )
-				players.add(p);
+				bsplayers.add(p);
 		}
 		return players.toArray(new BSPlayer[bsplayers.size()]);
 	}
