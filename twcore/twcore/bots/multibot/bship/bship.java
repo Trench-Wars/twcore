@@ -413,7 +413,7 @@ public class bship extends MultiModule implements TSChangeListener
 			//For staff, display current main game configuration
 			if(opList.isZH(name))
 				m_botAction.sendPrivateMessage(name, "Setup:  Teams="+ teams +" Board="+ board
-												+" Cap Ship Locking="+ cslock);
+												+" Cap Ship Locking="+ cslock + " Limit="+ cslimit);
 		}
 		else
 		{
@@ -1349,7 +1349,8 @@ public class bship extends MultiModule implements TSChangeListener
 		{
 			String bname = m_botAction.getPlayerName(boat);
 			bShip = m_botAction.getPlayer(boat).getShipType();
-			m_teams[freq].lockPlayer(tname, true);
+			if(state == ACTIVE)
+				m_teams[freq].lockPlayer(tname, true);
 
 			switch(tShip)
 			{
@@ -1360,7 +1361,7 @@ public class bship extends MultiModule implements TSChangeListener
 						m_botAction.sendPrivateMessage(turret,"Only Planes (3) can attach to Carriers (8).");
 						m_botAction.setShip(turret, PLANE);
 					}
-					else
+					else if(state == ACTIVE)
 					{
 						//Updates statistics for valid attach
 						m_teams[freq].attach(bname, tname);
@@ -1372,7 +1373,7 @@ public class bship extends MultiModule implements TSChangeListener
 						m_botAction.setShip(turret, GUN);
 						m_botAction.sendPrivateMessage(turret,"Only Guns (1) and Cannons (2) can attach to Frigates (6) and Battleships (7).");
 					}
-					else
+					else if(state == ACTIVE)
 					{
 						//Updates statistics for valid attach
 						m_teams[freq].attach(bname, tname);
