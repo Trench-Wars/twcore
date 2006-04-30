@@ -127,6 +127,7 @@ public class HubBot extends SubspaceBot {
         } catch( Exception e ){
             Tools.printStackTrace( "Exception while auto-loading bots", e );
         }
+        handleClose(m_botAction.getBotName(), "");
     }
 
     /**
