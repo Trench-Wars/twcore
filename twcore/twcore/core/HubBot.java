@@ -70,10 +70,28 @@ public class HubBot extends SubspaceBot {
 	    	File f2 = new File("currentErr.log");
 	    	File f3 = new File("out.log");
 	    	File f4 = new File("err.log");
-	    	if(f3.exists()) f3.delete();
-	    	if(f4.exists()) f4.delete();
-	    	f1.renameTo(f3);
-	    	f2.renameTo(f4);
+	    	if(!f3.exists()) f3.createNewFile();
+	    	if(!f4.exists()) f4.createNewFile();
+	    	if(f1.exists()) {
+	    		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f3, true )));
+	    		BufferedReader in = new BufferedReader(new FileReader(f1));
+	    		String inLine;
+	    		out.println(Tools.getTimeStamp());
+	    		while((inLine = in.readLine()) != null) {
+	    			out.println(inLine);
+	    		}
+	    		out.close();
+	    	}
+	    	if(f2.exists()) {
+	    		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f4, true )));
+	    		BufferedReader in = new BufferedReader(new FileReader(f2));
+	    		String inLine;
+	    		out.println(Tools.getTimeStamp());
+	    		while((inLine = in.readLine()) != null) {
+	    			out.println(inLine);
+	    		}
+	    		out.close();
+	    	}
 	    	f1.delete();
 	    	f2.delete();
 	    	f1.createNewFile();
