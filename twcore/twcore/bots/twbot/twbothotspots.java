@@ -131,7 +131,7 @@ public class twbothotspots extends TWBotExtension {
 	public void resetPlayerQueue( String name ) {
 		for( int i = 0; i < queueList.size(); i++ ) {
 			String thisName = (String)queueList.elementAt( i );
-			if( thisName.equals( name ) && thisName != null ) {
+			if( thisName != null && thisName.equals( name ) ) {
 				queueList.removeElementAt( i );
 				queueList.addElement( name );
 				i = queueList.size();
