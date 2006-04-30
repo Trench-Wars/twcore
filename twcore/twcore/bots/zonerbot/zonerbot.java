@@ -73,6 +73,8 @@ public class zonerbot extends SubspaceBot
     {
       if(sender != null)
       {
+      	if(opList.isOwner(sender))
+      	  handleOwnerCommands(sender, message, messageType);
         if(opList.isSmod(sender))
           handleSmodCommands(sender, message, messageType);
         if(opList.isModerator(sender))
@@ -718,6 +720,15 @@ public class zonerbot extends SubspaceBot
         doDieCmd();
       if(command.equals("!help"))
         doSmodHelpCmd(sender);
+    }
+  }
+  
+  private void handleOwnerCommands(String sender, String message, int messageType) {
+  	String command = message.toLowerCase();
+    if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
+    {
+      if(command.startsWith("!staffadv "))
+        m_botAction.sendZoneMessage(message.substring(10).trim() + " -TW Staff", 2);
     }
   }
 
