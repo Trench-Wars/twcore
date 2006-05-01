@@ -715,7 +715,7 @@ public class bship extends MultiModule implements TSChangeListener
 				buf.append(", #8: ");
 				buf.append(ships[7]);
 				buf.append(", Team Lives Left: ");
-				buf.append(maxlives - m_teams[x].getCapShipDeaths());
+				buf.append((maxlives * cslimit) - m_teams[x].getCapShipDeaths());
 				s[x] = buf.toString();
 			}
 		}catch(Exception e)
@@ -800,8 +800,12 @@ public class bship extends MultiModule implements TSChangeListener
 	private void checkForLosers()
 	{
 		for(int x = 0; x < m_teams.length; x++)
-			if(m_teams[x].isOut())
+		{
+			if(m_teams[x].getCapShipDeaths() >= (maxlives * cslimit) ||
+				m_teams[x].getCapShipCount() < 1)
 				removeTeam(x);
+		}
+
 	}
 
 	/**
@@ -1192,8 +1196,11 @@ public class bship extends MultiModule implements TSChangeListener
 		if(state == ACTIVE)
 		{
 			Player leaving = m_botAction.getPlayer(event.getPlayerID());
-			m_teams[leaving.getFrequency()].setShip(leaving.getPlayerName(), SPEC);
-			checkForLosers();
+			if(leaving.getFrequency() < m_teams.length)
+			{
+				m_teams[leaving.getFrequency()].setShip(leaving.getPlayerName(), SPEC);
+				checkForLosers();
+			}
 		}
 	}
 
