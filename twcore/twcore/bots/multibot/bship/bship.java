@@ -41,7 +41,7 @@ public class bship extends MultiModule implements TSChangeListener
 	private static final byte IDLE = 0, ACTIVE = 1;
 	private int[][] points;
 	private BSTeam[] m_teams;
-	private int cslimit;
+	private int cslimit, maxlives;
 
 	// TimerTasks //
 	private StartWarp startWarp;
@@ -177,6 +177,7 @@ public class bship extends MultiModule implements TSChangeListener
 		state = IDLE;
 		cslock = false;
 		cslimit = 5;
+		maxlives = 3;
 
 		int teams = (Integer)m_tsm.getSetting("teams");
 		m_teams = new BSTeam[teams];
@@ -264,6 +265,8 @@ public class bship extends MultiModule implements TSChangeListener
 			cslock = (Boolean)value;
 		else if(name.equals("cslimit"))
 			cslimit = (Integer)value;
+		else if(name.equals("lives"))
+			maxlives = (Integer)value;
 	}
 
 
@@ -711,6 +714,8 @@ public class bship extends MultiModule implements TSChangeListener
 				buf.append(ships[6]);
 				buf.append(", #8: ");
 				buf.append(ships[7]);
+				buf.append(", Team Lives Left: ");
+				buf.append(maxlives - m_teams[x].getCapShipDeaths());
 				s[x] = buf.toString();
 			}
 		}catch(Exception e)
@@ -1266,7 +1271,7 @@ public class bship extends MultiModule implements TSChangeListener
 
 			int capShipsLeft = 0;
 			if(freq < m_teams.length)
-				capShipsLeft = cslimit - m_teams[freq].getCapShipDeaths();
+				capShipsLeft = (maxlives * cslimit) - m_teams[freq].getCapShipDeaths();
 
 			//I don't care what spectators are doing
 			if(p.getShipType() != SPEC)
