@@ -1,5 +1,6 @@
 package twcore.bots.multibot.bship;
 
+import twcore.core.*;
 import java.util.*;
 import static twcore.bots.multibot.bship.bship.PLAYING;
 import static twcore.bots.multibot.bship.bship.SPEC;
@@ -30,7 +31,7 @@ public class BSTeam
 	private boolean changed;
 
 	/** How many capital ships the team currently has */
-	private int capShipCount;
+	//private int capShipCount;
 
 	/** How many times a capital ship has died */
 	private int capShipDeaths;
@@ -46,7 +47,7 @@ public class BSTeam
 		changed = true;
 		shipCount = new byte[8];
 		plist = null;
-		capShipCount = 0;
+		//capShipCount = 0;
 	}
 
 	/**
@@ -58,7 +59,7 @@ public class BSTeam
 		changed = true;
 		plist = null;
 		shipCount = new byte[8];
-		capShipCount = 0;
+//		capShipCount = 0;
 	}
 
 	/**
@@ -202,6 +203,7 @@ public class BSTeam
 			default:
 				p.cskills++;
 				p.rating += 5;
+				capShipDeaths++;
 		}
 	}
 
@@ -239,8 +241,11 @@ public class BSTeam
 	public byte[] getShipCount()
 	{
 		if(changed)
+		{
+			((Session)Thread.currentThread()).getBotAction().sendArenaMessage("Updated ship count");
 			for(byte x = 1; x < 9; x++)
 				shipCount[x-1] = (byte)getShipCount(x);
+		}
 
 		changed = false;
 		return shipCount;
@@ -251,9 +256,9 @@ public class BSTeam
      * have no remaining capital ships.
      * @return whether the team is out or not
      */
-	public boolean isOut()
+	public boolean isOut(int maxTeamLives)
 	{
-		return (getCapShipCount() == 0);
+		return (getCapShipDeaths() >= maxTeamLives || getCapShipCount() < 1);
 	}
 
 	/**
@@ -276,14 +281,10 @@ public class BSTeam
 	 */
 	public int getCapShipCount()
 	{
-		if(changed)
-		{
-			byte[] ships = getShipCount();
-			capShipCount = ships[3] + ships[4] + ships[5] + ships[6] + ships[7];
-			changed = false;
-		}
+		byte[] ships = getShipCount();
+		//capShipCount = ships[3] + ships[4] + ships[5] + ships[6] + ships[7];
 
-		return capShipCount;
+		return ships[3] + ships[4] + ships[5] + ships[6] + ships[7];
 	}
 
 	/**

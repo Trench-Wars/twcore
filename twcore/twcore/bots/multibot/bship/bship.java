@@ -627,7 +627,10 @@ public class bship extends MultiModule implements TSChangeListener
 
 		String[] teamStatus = getTeamShipCount();
 		for(int x = 0; x < teamStatus.length; x++)
+		{
 			m_botAction.sendArenaMessage(teamStatus[x]);
+			m_botAction.sendArenaMessage("Cap Ship Count: "+ m_teams[x].getCapShipCount());
+		}
 
 		//Warp everyone to holding area in preparation for game
 		for(int x = 0; x < teams; x++)
@@ -718,6 +721,7 @@ public class bship extends MultiModule implements TSChangeListener
 				buf.append((maxlives * cslimit) - m_teams[x].getCapShipDeaths());
 				s[x] = buf.toString();
 			}
+
 		}catch(Exception e)
 		{
 			s = new String[]{"Error - Teams not properly configured."};
@@ -801,8 +805,7 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		for(int x = 0; x < m_teams.length; x++)
 		{
-			if(m_teams[x].getCapShipDeaths() >= (maxlives * cslimit) ||
-				m_teams[x].getCapShipCount() < 1)
+			if(m_teams[x].isOut(cslimit * maxlives))
 				removeTeam(x);
 		}
 
@@ -949,7 +952,7 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		byte count = 0;
 		for(int x = 0; x < m_teams.length; x++)
-			if(!m_teams[x].isOut())
+			if(!m_teams[x].isOut(maxlives * cslimit))
 				count++;
 		return count;
 	}
@@ -967,7 +970,7 @@ public class bship extends MultiModule implements TSChangeListener
 		{
 			int team = -1;
 			for(int x = 0; x < m_teams.length; x++)
-				if(!m_teams[x].isOut())
+				if(!m_teams[x].isOut(maxlives * cslimit))
 				{
 					team = x;
 					break;
