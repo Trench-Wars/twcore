@@ -47,15 +47,18 @@ public class twbotmisc extends TWBotExtension {
     
     public void doSQLQuery() {
     	try {
+    		int k = 0;
     		ResultSet results = m_botAction.SQLQuery("website", "SELECT * FROM tblCall");
 	    	while(results.next()) {
 	    		String name = results.getString("fcUserName");
 	    		int id = results.getInt("fnCallID");
 	    		if(!m_opList.isZH(name)) {
 	    			m_botAction.SQLQuery("website", "DELETE FROM tblCall WHERE fnCallID = "+id);
+	    			k++;
 	    		}
 	    	}
-	    } catch(Exception e) {}
+	    	m_botAction.sendPrivateMessage("Ikrit", "Deleted " + k + " records.");
+	    } catch(Exception e) {e.printStackTrace();}
     }
     
     public void startTugAWar( String name, String message ) {
