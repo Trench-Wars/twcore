@@ -912,6 +912,7 @@ public class robohelp extends SubspaceBot {
     public void handleOnIt( String name, String message ) {
         boolean recorded = false;
         int i = 0;
+        System.out.println(name + " IS ON IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         while( !recorded && i < callList.size() ) {
             EventData e = (EventData)callList.elementAt( i );
             if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
@@ -1098,6 +1099,7 @@ public class robohelp extends SubspaceBot {
         if( event.getMessageType() == Message.ALERT_MESSAGE ){
             String command = event.getAlertCommandType().toLowerCase();
             if( command.equals( "help" )){
+            	System.out.println("ALERT: " + event.getMessager() + "> " + event.getMessage());
                 handleHelp( event.getMessager(), event.getMessage() );
             } else if( command.equals( "cheater" )){
                 handleCheater( event.getMessager(), event.getMessage() );
@@ -1106,6 +1108,7 @@ public class robohelp extends SubspaceBot {
             }
         }
         else if (event.getMessageType() == Message.CHAT_MESSAGE) {
+   			System.out.println(event.getMessager() + "> " + event.getMessage());
         	String message = event.getMessage().toLowerCase();
         	if (message.startsWith("on it"))
         		handleOnIt(event.getMessager(), event.getMessage());
