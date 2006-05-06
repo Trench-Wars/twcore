@@ -38,8 +38,21 @@ public class twbotmisc extends TWBotExtension {
 	    		startBoomBall( name, message );
 	    	} else if( message.toLowerCase().startsWith( "!stop boomball" ) ) {
 	    		stopBoomBall( name, message );
-	    	} 
+	    	} else if (message.toLowerCase().startsWith("!sql")) {
+	    		doSQLQuery();
+	    	}
 	    } catch ( Exception e ) {}
+    }
+    
+    public void doSQLQuery() {
+    	ResultSet results = m_botAction.SQLQuery("website", "SELECT * FROM tblCall");
+    	while(results.hasNext()) {
+    		String name = results.getString("fcUserName");
+    		int id = results.getInt("fnCallID");
+    		if(!m_opList.isZH(name)) {
+    			m_botAction.SQLQuery("website", "DELETE FROM tblCall WHERE fnCallID = "+id);
+    		}
+    	}
     }
     
     public void startTugAWar( String name, String message ) {
