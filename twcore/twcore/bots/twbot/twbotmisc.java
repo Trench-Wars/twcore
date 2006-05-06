@@ -4,7 +4,7 @@ package twcore.bots.twbot;
 
 import java.util.*;
 import twcore.core.*;
-import java.net.*;
+import java.sql.*;
 
 public class twbotmisc extends TWBotExtension {
 	 
