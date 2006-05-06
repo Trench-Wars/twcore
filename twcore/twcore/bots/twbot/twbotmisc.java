@@ -47,7 +47,7 @@ public class twbotmisc extends TWBotExtension {
     
     public void doSQLQuery() {
     	ResultSet results = m_botAction.SQLQuery("website", "SELECT * FROM tblCall");
-    	while(results.hasNext()) {
+    	while(results.next()) {
     		String name = results.getString("fcUserName");
     		int id = results.getInt("fnCallID");
     		if(!m_opList.isZH(name)) {
