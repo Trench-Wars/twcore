@@ -46,14 +46,16 @@ public class twbotmisc extends TWBotExtension {
     }
     
     public void doSQLQuery() {
-    	ResultSet results = m_botAction.SQLQuery("website", "SELECT * FROM tblCall");
-    	while(results.next()) {
-    		String name = results.getString("fcUserName");
-    		int id = results.getInt("fnCallID");
-    		if(!m_opList.isZH(name)) {
-    			m_botAction.SQLQuery("website", "DELETE FROM tblCall WHERE fnCallID = "+id);
-    		}
-    	}
+    	try {
+    		ResultSet results = m_botAction.SQLQuery("website", "SELECT * FROM tblCall");
+	    	while(results.next()) {
+	    		String name = results.getString("fcUserName");
+	    		int id = results.getInt("fnCallID");
+	    		if(!m_opList.isZH(name)) {
+	    			m_botAction.SQLQuery("website", "DELETE FROM tblCall WHERE fnCallID = "+id);
+	    		}
+	    	}
+	    } catch(Exception e) {}
     }
     
     public void startTugAWar( String name, String message ) {
