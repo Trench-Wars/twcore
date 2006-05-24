@@ -359,17 +359,17 @@ public class TempSettingsManager
 			{
 				m_botAction.privateMessageSpam(name, customHelp);
 			}
-			else //TODO: Improve the help generation (show restrictions, etc)
+			else
 			{
 				String[] help = new String[]{
 					"Use the !set command to change temporary bot settings",
 					"Syntax: !set <name1>=<value1> <name2>=<value2> ...",
-					"-----Modifiable Settings:-----"};
+					"Modifiable Settings (* means locked):"};
 
 				String[] sets = new String[m_settings.size()];
 				Iterator setsIter = m_settings.values().iterator();
 				for(int x = 0; x < sets.length; x++)
-					sets[x] = ((TempSetting)setsIter.next()).getName();
+					sets[x] = ((TempSetting)setsIter.next()).getInfo();
 
 				m_botAction.privateMessageSpam(name, help);
 				m_botAction.privateMessageSpam(name, sets);

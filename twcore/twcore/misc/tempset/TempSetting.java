@@ -77,6 +77,12 @@ abstract class TempSetting
      */
 	public abstract Object getValue();
 
+	/**
+	 * Gets information about the setting to be displayed in !set help.
+	 * @return various details about the nature of the setting
+	 */
+	public abstract String getInfo();
+
 }
 
 /**
@@ -187,6 +193,26 @@ class IntSetting extends TempSetting
 		m_max = max;
 		m_restricted = true;
 	}
+
+	/**
+	 * Gets information about the setting to be displayed in !set help.
+	 * @return various details about the nature of the setting
+	 */
+	public String getInfo()
+	{
+		String info = "[INT    ] " + m_name;
+
+		if(m_restricted)
+		{
+			info += " (Range: "+ m_min;
+			info += "-"+ m_max;
+			info += ")";
+		}
+
+		if(m_locked)
+			info = "*"+ info;
+		return info;
+	}
 }
 
 /**
@@ -240,6 +266,18 @@ class StringSetting extends TempSetting
 	public Object getValue()
 	{
 		return m_value;
+	}
+
+	/**
+	 * Gets information about the setting to be displayed in !set help.
+	 * @return various details about the nature of the setting
+	 */
+	public String getInfo()
+	{
+		String info = "[STRING ] "+ m_name;
+		if(m_locked)
+			info = "*"+ info;
+		return info;
 	}
 }
 
@@ -295,6 +333,18 @@ class BoolSetting extends TempSetting
 	public Object getValue()
 	{
 		return new Boolean(m_value);
+	}
+
+	/**
+	 * Gets information about the setting to be displayed in !set help.
+	 * @return various details about the nature of the setting
+	 */
+	public String getInfo()
+	{
+		String info = "[BOOLEAN] "+ m_name;
+		if(m_locked)
+			info = "*"+ info;
+		return info;
 	}
 }
 
@@ -382,6 +432,26 @@ class DoubleSetting extends TempSetting
 		m_min = min;
 		m_max = max;
 		m_restricted = true;
+	}
+
+	/**
+	 * Gets information about the setting to be displayed in !set help.
+	 * @return various details about the nature of the setting
+	 */
+	public String getInfo()
+	{
+		String info = "[DOUBLE ] " + m_name;
+
+		if(m_restricted)
+		{
+			info += " (Range: "+ m_min;
+			info += "-"+ m_max;
+			info += ")";
+		}
+
+		if(m_locked)
+			info = "*"+ info;
+		return info;
 	}
 }
 
@@ -475,6 +545,26 @@ class EnumSetting extends TempSetting
 	public Object getValue()
 	{
 		return m_values[m_index];
+	}
+
+	/**
+	 * Gets information about the setting to be displayed in !set help.
+	 * @return various details about the nature of the setting
+	 */
+	public String getInfo()
+	{
+		String info = "[ENUM   ] " + m_name;
+		info += " (Values: ";
+
+		for(String val : m_values)
+		{
+			info += val + ", ";
+		}
+		info += ")";
+
+		if(m_locked)
+			info = "*"+ info;
+		return info.substring(0, info.length() - 2);
 	}
 }
 
@@ -624,5 +714,40 @@ class PlayerSetting extends TempSetting
 			m_minFreq = minFreq;
 			m_maxFreq = maxFreq;
 		}
+	}
+
+	/**
+	 * Gets information about the setting to be displayed in !set help.
+	 * @return various details about the nature of the setting
+	 */
+	public String getInfo()
+	{
+		String info = "[PLAYER ]";
+		info += " "+ m_name;
+
+		if(m_restrictedFreq)
+		{
+
+			info += " (Freq Range: "+ m_minFreq;
+			info += "-"+ m_maxFreq + ")";
+		}
+
+		if(m_restrictedShip)
+		{
+			info += " (Allowed Ships: ";
+			for(int ship = 0; ship < 8; ship++)
+			{
+				if((ship & m_shipMask) != 0)
+				{
+					info += (ship + 1);
+				}
+			}
+			info += ")";
+		}
+
+		if(m_locked)
+			info = "*"+ info;
+
+		return info;
 	}
 }
