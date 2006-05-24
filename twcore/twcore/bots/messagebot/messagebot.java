@@ -83,7 +83,7 @@ public class messagebot extends SubspaceBot
 		createTasks();
 		m_botAction.scheduleTaskAtFixedRate(messageDeleteTask, 30 * 60 * 1000, 30 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 2 * 60 * 1000, 2 * 60 * 1000);
-		m_botAction.scheduleTaskAtFixedRate(newsTask, 90 * 1000, 90 * 1000);
+		m_botAction.scheduleTaskAtFixedRate(newsTask, 5 * 60 * 1000, 5 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(newsChatTask, 15 * 60 * 1000, 15 * 60 * 1000);
 	}
 
