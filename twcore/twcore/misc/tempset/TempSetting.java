@@ -8,7 +8,7 @@ import twcore.core.Player;
  * name storage and individual locking functionality.
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.05.24
  */
 abstract class TempSetting
 {
@@ -89,7 +89,7 @@ abstract class TempSetting
  * Simple storage class to record the result of an attempt to change a setting
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.05.24
  */
 class Result
 {
@@ -112,7 +112,7 @@ class Result
  * This class represents a setting that stores an integer value
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.05.24
  */
 class IntSetting extends TempSetting
 {
@@ -219,7 +219,7 @@ class IntSetting extends TempSetting
  * This class represents a setting that stores a string value
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.05.24
  */
 class StringSetting extends TempSetting
 {
@@ -285,7 +285,7 @@ class StringSetting extends TempSetting
  * This class represents a setting that stores a boolean value
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.05.24
  */
 class BoolSetting extends TempSetting
 {
@@ -352,7 +352,7 @@ class BoolSetting extends TempSetting
  * This class represents a setting that stores a floating point value
  *
  * @author D1st0rt
- * @version 06.02.08
+ * @version 06.05.24
  */
 class DoubleSetting extends TempSetting
 {
@@ -460,7 +460,7 @@ class DoubleSetting extends TempSetting
  * predefined enumeration.
  *
  * @author D1st0rt
- * @version 06.03.30
+ * @version 06.05.24
  */
 class EnumSetting extends TempSetting
 {
@@ -573,7 +573,7 @@ class EnumSetting extends TempSetting
  * through a fuzzy search on the specified player name.
  *
  * @author D1st0rt
- * @version 06.04.19
+ * @version 06.05.24
  */
 class PlayerSetting extends TempSetting
 {

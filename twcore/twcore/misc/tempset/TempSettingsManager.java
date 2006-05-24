@@ -36,7 +36,7 @@ import static twcore.core.OperatorList.ER_LEVEL;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.04.26
+ * @version 06.05.24
  */
 public class TempSettingsManager
 {
