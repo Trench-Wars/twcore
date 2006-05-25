@@ -36,7 +36,7 @@ import static twcore.core.OperatorList.ER_LEVEL;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.05.24
+ * @version 06.05.25
  */
 public class TempSettingsManager
 {
@@ -203,6 +203,14 @@ public class TempSettingsManager
 	{
 		PlayerSetting pset = new PlayerSetting(name, m_botAction);
 		m_settings.put(name.toLowerCase(), pset);
+	}
+
+	/**
+     * Removes a setting from the list, no longer enabling it for use.
+     */
+	public void removeSetting(String name)
+	{
+		m_settings.remove(name);
 	}
 
 
