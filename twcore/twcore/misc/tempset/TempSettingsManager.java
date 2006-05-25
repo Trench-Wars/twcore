@@ -11,7 +11,7 @@ import twcore.core.CommandInterpreter;
 import twcore.core.Message;
 import twcore.core.Tools;
 
-import static twcore.core.OperatorList.ER_LEVEL;
+import static twcore.core.OperatorList.*;
 
 /**
  * This class provides an easy way to allow an op to modify temporary settings.
@@ -48,7 +48,7 @@ public class TempSettingsManager
 	private String[] customHelp;
 
 	/**
-	 * Creates a new instance of TempSettingsManager
+	 * Creates a new instance of TempSettingsManager.
 	 * @param botAction The BotAction event to send chat messages with
 	 * @param cmd The CommandInterpreter to register commands with
 	 * @param opLevel The minimum Operator Level to access the settings
@@ -69,19 +69,44 @@ public class TempSettingsManager
 	 */
 	public TempSettingsManager(BotAction botAction, int opLevel)
 	{
+		this(botAction);
+		if(opLevel >= 0 && opLevel <= OWNER_LEVEL)
+		{
+			m_opLevel = opLevel;
+		}
+	}
+
+	/**
+	 * Creates a new instance of TempSettingsManager.
+	 * @param botAction The BotAction event to send chat messages with
+	 */
+	public TempSettingsManager(BotAction botAction)
+	{
 		m_botAction = botAction;
-		m_opLevel = opLevel;
+		m_listeners = new Vector<TSChangeListener>();
 		m_settings = new HashMap<String, TempSetting>();
 		m_locked = false;
-		m_listeners = new Vector<TSChangeListener>();
 		customHelp = null;
+	}
+
+	/**
+     * Sets the required access level for an operator to view and modify
+     * the settings.
+     * @param opLevel the operator level (as defined in OperatorList)
+     */
+	public void setOperatorLevel(int opLevel)
+	{
+		if(opLevel >= 0 && opLevel <= OWNER_LEVEL)
+		{
+			m_opLevel = opLevel;
+		}
 	}
 
 	/**
 	 * Registers the commands !get and !set with the provided CommandInterpreter
 	 * @param cmd the CommandInterpreter to use
 	 */
-	private void registerCommands(CommandInterpreter cmd)
+	public void registerCommands(CommandInterpreter cmd)
 	{
 		cmd.registerCommand("!get", Message.PRIVATE_MESSAGE, this, "c_Get", m_opLevel);
 		cmd.registerCommand("!set", Message.PRIVATE_MESSAGE, this, "c_Set", m_opLevel);
