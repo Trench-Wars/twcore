@@ -172,11 +172,12 @@ public class BSTeam
 			case bship.GUN:
 				//fall through
 			case bship.CANNON:
-				p.rating--;
+				if(p.deaths % 2 == 0 && p.deaths > 0)
+					p.rating--;
 			break;
 
 			default:
-				p.rating -= 3;
+				p.rating -= 4;
 				p.lives--;
 				capShipDeaths++;
 		}
@@ -226,7 +227,8 @@ public class BSTeam
 		BSPlayer turret = getPlayer(attacher);
 
 		ship.attaches++;
-		ship.rating++;
+		if(ship.attaches % 3 == 0 && ship.attaches > 0)
+			ship.rating++;
 
 		turret.takeoffs++;
 	}

@@ -115,17 +115,17 @@ public class bship extends MultiModule implements TSChangeListener
 
 	/** statHelp: Explains the statistics used in hosted games, used by !stathelp */
 	private final String[] statHelp = {
-		"+--------------------------Statistic Abbreviations-----------------------+",
-		"|ShpsPlyd: All ships the player has been in this game                    |",
-		"|Kls     : Total kills by the player during the game                     |",
-		"|Dths    : Total deaths by the player during the game                    |",
-		"|SKls    : Kills the player got on capital ships                         |",
-		"|TKls    : Kills the player got on ship turrets                          |",
-		"|PKls    : Kills the player got on planes                                |",
-		"|Atts    : Times the player attached to a capital ship                   |",
-		"|TaT     : Times the player was attached to                              |",
-		"|Rating  : (5*SKls) + (2*TKls) + PKls + TaT - (Dths or 3*Dths if capship)|",
-		"+------------------------------------------------------------------------+"};
+		"+--------------------------Statistic Abbreviations-------------------------------+",
+		"|ShpsPlyd: All ships the player has been in this game                            |",
+		"|Kls     : Total kills by the player during the game                             |",
+		"|Dths    : Total deaths by the player during the game                            |",
+		"|SKls    : Kills the player got on capital ships                                 |",
+		"|TKls    : Kills the player got on ship turrets                                  |",
+		"|PKls    : Kills the player got on planes                                        |",
+		"|Atts    : Times the player attached to a capital ship                           |",
+		"|TaT     : Times the player was attached to                                      |",
+		"|Rating  : (5*SKls) + (2*TKls) + PKls + (TaT/3) - ((Dths/2) or 4*Dths if capship)|",
+		"+--------------------------------------------------------------------------------+"};
 
 	/** modHelp: Displays commands for staff use, used by !help */
 	private final String[] modHelp = {
