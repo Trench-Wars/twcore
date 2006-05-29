@@ -48,6 +48,7 @@ public class BSTeam
 		shipCount = new byte[8];
 		plist = null;
 		//capShipCount = 0;
+		capShipDeaths = 0;
 	}
 
 	/**
@@ -60,6 +61,7 @@ public class BSTeam
 		plist = null;
 		shipCount = new byte[8];
 //		capShipCount = 0;
+		capShipDeaths = 0;
 	}
 
 	/**
@@ -171,6 +173,7 @@ public class BSTeam
 			default:
 				p.rating -= 3;
 				p.lives--;
+				capShipDeaths++;
 		}
 
 		return p.lives;
@@ -203,7 +206,6 @@ public class BSTeam
 			default:
 				p.cskills++;
 				p.rating += 5;
-				capShipDeaths++;
 		}
 	}
 
@@ -242,7 +244,7 @@ public class BSTeam
 	{
 		if(changed)
 		{
-			((Session)Thread.currentThread()).getBotAction().sendArenaMessage("Updated ship count");
+			//((Session)Thread.currentThread()).getBotAction().sendArenaMessage("Updated ship count");
 			for(byte x = 1; x < 9; x++)
 				shipCount[x-1] = (byte)getShipCount(x);
 		}

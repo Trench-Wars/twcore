@@ -18,7 +18,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.04.27
+ * @version 06.05.28
  */
 public class bship extends MultiModule implements TSChangeListener
 {
@@ -101,6 +101,7 @@ public class bship extends MultiModule implements TSChangeListener
 		"| -!rules          Rules of the game    |",
 		"| -!status         What is happening    |",
 		"| -!stathelp       Explain stats        |",
+		"| -!myfreq         Get back on your team|",
 		"+---------------------------------------+"};
 
 	/** assignHelp: Explains how to use !assign */
@@ -300,6 +301,7 @@ public class bship extends MultiModule implements TSChangeListener
 		m_cmd.registerCommand("!quit", priv | pub, this, "c_Quit");
 		m_cmd.registerCommand("!scheck", priv, this, "c_Scheck");
 		m_cmd.registerCommand("!stathelp", priv | pub, this, "c_Stathelp");
+		m_cmd.registerCommand("!myfreq", priv, this, "c_MyFreq");
 	}
 
 
@@ -535,6 +537,56 @@ public class bship extends MultiModule implements TSChangeListener
 	public void c_Stathelp(String name, String message)
 	{
 		m_botAction.privateMessageSpam(name, this.statHelp);
+	}
+
+	/**
+	 * Command: !myfreq
+	 * Parameters: <#>
+	 * Allows a player to rejoin a team they have been on earlier in a game.
+	 */
+	public void c_MyFreq(String name, String message)
+	{
+		if(state == ACTIVE)
+		{
+			try{
+				int team = Integer.parseInt(message);
+				BSPlayer player = m_teams[team].getPlayer(name);
+				if(player != null)
+				{
+					if(m_botAction.getPlayer(name).getFrequency() != team)
+					{
+						m_botAction.spectatePlayer(name);
+						m_botAction.spectatePlayer(name);
+						m_botAction.setFreq(name, team);
+						m_botAction.sendPrivateMessage(name, "Setting you back on team "+ team);
+						m_botAction.setShip(name, PLANE);
+					}
+					else
+					{
+						m_botAction.sendPrivateMessage(name, "You are already on that team.");
+					}
+				}
+				else
+				{
+					m_botAction.sendPrivateMessage(name, "You have not been on that team.");
+				}
+			}
+			catch(Exception e)
+			{
+				for(int x = 0; x < m_teams.length; x++)
+				{
+					if(m_teams[x].getPlayer(name) != null)
+					{
+						String msg = "You have been recorded on team ";
+						msg += x;
+						msg += ". Use !myfreq ";
+						msg += x;
+						msg += " to get back.";
+						m_botAction.sendPrivateMessage(name, msg);
+					}
+				}
+			}
+		}
 	}
 
 	//////////////////////////////////
@@ -803,9 +855,10 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void checkForLosers()
 	{
+		int totalLives = cslimit * maxlives;
 		for(int x = 0; x < m_teams.length; x++)
 		{
-			if(m_teams[x].isOut(cslimit * maxlives))
+			if(m_teams[x].isOut(totalLives))
 				removeTeam(x);
 		}
 
@@ -1416,6 +1469,11 @@ public class bship extends MultiModule implements TSChangeListener
 		}
 	}
 
+	/**
+	 * Event: PlayerPosition
+	 * If active, warp any capital ship currently on a safety tile to the board
+	 * where the game is going on.
+	 */
 	public void handleEvent(PlayerPosition event)
 	{
 		if(state == ACTIVE)
@@ -1423,7 +1481,17 @@ public class bship extends MultiModule implements TSChangeListener
 			Player p = m_botAction.getPlayer(event.getPlayerID());
 			if(p.isInSafe())
 			{
-				if(p.getShipType() > 3)
+				BSPlayer bp = m_teams[p.getFrequency()].getPlayer(p.getPlayerName());
+				if(bp != null)
+				{
+					if(bp.ship > 3 && bp.lives > 0)
+					{
+						int x = points[p.getFrequency()][X];
+						int y = points[p.getFrequency()][Y];
+						m_botAction.warpTo(event.getPlayerID(), x, y);
+					}
+				}
+				else if(p.getShipType() > 3)
 				{
 					int x = points[p.getFrequency()][X];
 					int y = points[p.getFrequency()][Y];
