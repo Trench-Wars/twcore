@@ -18,7 +18,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.05.28
+ * @version 06.05.29
  */
 public class bship extends MultiModule implements TSChangeListener
 {
@@ -183,7 +183,7 @@ public class bship extends MultiModule implements TSChangeListener
 		int teams = (Integer)m_tsm.getSetting("teams");
 		m_teams = new BSTeam[teams];
 		for(int x = 0; x < m_teams.length; x++)
-			m_teams[x] = new BSTeam(x);
+			m_teams[x] = new BSTeam(x, maxlives);
 
 		short[] dims = boardDimensions((byte)((Integer)m_tsm.getSetting("board")).intValue());
 		points = standardWarp(dims);
@@ -639,7 +639,7 @@ public class bship extends MultiModule implements TSChangeListener
 		//Initialize main game data storage
 		m_teams = new BSTeam[teams];
 		for(int x = 0; x < m_teams.length; x++)
-			m_teams[x] = new BSTeam(x);
+			m_teams[x] = new BSTeam(x, lives);
 
 		//Report game configuration
 		StringBuffer buf = new StringBuffer("Initializing Battleship Game: ");
@@ -670,8 +670,18 @@ public class bship extends MultiModule implements TSChangeListener
 		while(i.hasNext())
 		{
 			Player p = (Player)i.next();
-			m_teams[p.getFrequency()].setShip(p.getPlayerName(), p.getShipType());
-			m_teams[p.getFrequency()].getPlayer(p.getPlayerName()).lives = (short)lives;
+			int ship = p.getShipType();
+			if(ship > 3 && m_teams[p.getFrequency()].getCapShipCount() >= cslimit)
+			{
+				String msg = "Sorry, your team already has the maximum number of capital ships.";
+				m_botAction.sendPrivateMessage(p.getPlayerID(), msg);
+				m_botAction.setShip(p.getPlayerID(), PLANE);
+				m_teams[p.getFrequency()].setShip(p.getPlayerName(), PLANE);
+			}
+			else
+			{
+				m_teams[p.getFrequency()].setShip(p.getPlayerName(), p.getShipType());
+			}
 		}
 
 		//Display current breakdown of ships by frequency
@@ -1380,7 +1390,9 @@ public class bship extends MultiModule implements TSChangeListener
 							m_botAction.setShip(name, oldship);
 						}
 						else
+						{
 							m_teams[freq].setShip(name, ship); //add player to the game
+						}
 					}
 				}
 				//The player is in a non-capital ship and is not locked (normal condition)

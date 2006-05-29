@@ -11,7 +11,7 @@ import static twcore.bots.multibot.bship.bship.ALL;
  * BSPlayer objects and passes events to the players for stat tracking
  *
  * @author D1st0rt
- * @version 06.04.26
+ * @version 06.05.29
  */
 public class BSTeam
 {
@@ -36,11 +36,14 @@ public class BSTeam
 	/** How many times a capital ship has died */
 	private int capShipDeaths;
 
+	/** How many lives each player starts out with. */
+	private int initialLives;
+
 	/**
      * Creates a new instance of BSTeam
      * @param freq the team's frequency
      */
-	public BSTeam(int freq)
+	public BSTeam(int freq, int lives)
 	{
 		freq = freq;
 		players = new Vector<BSPlayer>();
@@ -49,6 +52,7 @@ public class BSTeam
 		plist = null;
 		//capShipCount = 0;
 		capShipDeaths = 0;
+		initialLives = lives;
 	}
 
 	/**
@@ -118,6 +122,7 @@ public class BSTeam
 		if(p == null)
 		{
 			p = new BSPlayer(name, freq);
+			p.lives = (short)initialLives;
 			players.add(p);
 		}
 
@@ -127,7 +132,7 @@ public class BSTeam
 		if(p.ship != bship.SPEC)
 			p.ships[ship-1] = true;
 
-		players.setElementAt(p, pIndex);
+		players.setElementAt(p, pIndex); //is this necessary? probably not, check later
 
 		changed = true;
 		plist = null;
