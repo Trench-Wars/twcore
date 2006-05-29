@@ -62,10 +62,12 @@ public class bship extends MultiModule implements TSChangeListener
 	/** rGame: Rules for playing in a special (hosted) game */
 	private final String[] rGame = {
 		"+-------------------Rules: Special Game-------------------+",
-		"|Each team gets one of each of the 5 ships, and 6 turrets.|",
-		"|The rest are planes. When a ship dies it can't reenter,  |",
-		"|but turrets and planes are free to attach. A team wins   |",
-		"|when all enemy ships are destroyed.                      |",
+		"|Each team gets a set number of capital ships, each with  |",
+		"|a set number of lives. When a ship dies it loses a life  |",
+		"|and subtracts one from the total remaining team lives.   |",
+		"|Planes and turrets can enter the game by attaching to a  |",
+		"|capital ship. A team is out when they either have no     |",
+		"|team lives left or no capital ships in play.             |",
 		"+---------------------------------------------------------+"};
 
 	/** rNormal: Rules for playing when not in a special (hosted) game */
