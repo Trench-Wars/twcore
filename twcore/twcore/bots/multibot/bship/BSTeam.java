@@ -263,11 +263,16 @@ public class BSTeam
 	/**
      * Determines if this team is eliminated or not. A team is eliminated if they
      * have no remaining capital ships.
-     * @return whether the team is out or not
+     * @return 0 if still in, 1 if no team lives left, 2 if no capships left
      */
-	public boolean isOut(int maxTeamLives)
+	public int isOut(int maxTeamLives)
 	{
-		return (getCapShipDeaths() >= maxTeamLives || getCapShipCount() < 1);
+		if(getCapShipDeaths() >= maxTeamLives)
+			return 1;
+		else if(getCapShipCount() < 1)
+			return 2;
+		else
+			return 0;
 	}
 
 	/**

@@ -870,8 +870,20 @@ public class bship extends MultiModule implements TSChangeListener
 		int totalLives = cslimit * maxlives;
 		for(int x = 0; x < m_teams.length; x++)
 		{
-			if(m_teams[x].isOut(totalLives))
-				removeTeam(x);
+			switch(m_teams[x].isOut(totalLives))
+			{
+				case 0: //still in
+				return;
+
+				case 1: //no lives
+					m_botAction.sendArenaMessage("Team "+ x +" is out! (No team lives left)");
+				break;
+
+				case 2: //no ships
+					m_botAction.sendArenaMessage("Team "+ x +" is out! (No ships left)");
+				break;
+			}
+			removeTeam(x);
 		}
 
 	}
@@ -1017,7 +1029,7 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		byte count = 0;
 		for(int x = 0; x < m_teams.length; x++)
-			if(!m_teams[x].isOut(maxlives * cslimit))
+			if(m_teams[x].isOut(maxlives * cslimit) == 0)
 				count++;
 		return count;
 	}
@@ -1029,13 +1041,12 @@ public class bship extends MultiModule implements TSChangeListener
 	private void removeTeam(int freq)
 	{
 		specFreq(freq);
-		m_botAction.sendArenaMessage("All of Team "+ freq +"'s ships have been sunk!",13);
 
 		if(getTeamsLeft() <= 1)
 		{
 			int team = -1;
 			for(int x = 0; x < m_teams.length; x++)
-				if(!m_teams[x].isOut(maxlives * cslimit))
+				if(m_teams[x].isOut(maxlives * cslimit) == 0)
 				{
 					team = x;
 					break;
@@ -1394,6 +1405,9 @@ public class bship extends MultiModule implements TSChangeListener
 						else
 						{
 							m_teams[freq].setShip(name, ship); //add player to the game
+							int x = points[p.getFrequency()][X];
+							int y = points[p.getFrequency()][Y];
+							m_botAction.warpTo(event.getPlayerID(), x, y); //warp them
 						}
 					}
 				}
