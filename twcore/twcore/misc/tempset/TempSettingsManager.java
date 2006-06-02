@@ -36,7 +36,7 @@ import static twcore.core.OperatorList.*;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.05.25
+ * @version 06.06.01
  */
 public class TempSettingsManager
 {
@@ -442,11 +442,22 @@ public class TempSettingsManager
 	public void c_Get(String name, String message)
 	{
 		message = message.trim();
-		TempSetting t = m_settings.get(message.toLowerCase());
-		if(t == null)
-			m_botAction.sendPrivateMessage(name, "Setting "+ message +" does not exist");
+		if(message.length() == 0 || message.equals("all"))
+		{
+			for(String setname : m_settings.keySet())
+			{
+				TempSetting t = m_settings.get(setname);
+				m_botAction.sendPrivateMessage(name, t.getName() + "=" + t.getValue());
+			}
+		}
 		else
-			m_botAction.sendPrivateMessage(name, t.getName() + "=" + t.getValue());
+		{
+			TempSetting t = m_settings.get(message.toLowerCase());
+			if(t == null)
+				m_botAction.sendPrivateMessage(name, "Setting "+ message +" does not exist");
+			else
+				m_botAction.sendPrivateMessage(name, t.getName() + "=" + t.getValue());
+		}
 	}
 
 	/**
