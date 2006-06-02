@@ -442,7 +442,7 @@ public class TempSettingsManager
 	public void c_Get(String name, String message)
 	{
 		message = message.trim();
-		if(message.length() == 0 || message.equals("all"))
+		if(message.length() == 0 || message.equalsIgnoreCase("all"))
 		{
 			for(String setname : m_settings.keySet())
 			{
