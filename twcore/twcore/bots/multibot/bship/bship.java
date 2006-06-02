@@ -172,7 +172,8 @@ public class bship extends MultiModule implements TSChangeListener
 		//Commands
 		m_cmd = new CommandInterpreter(m_botAction);
 		registerCommands();
-		m_tsm = new TempSettingsManager(m_botAction, m_cmd, OperatorList.ER_LEVEL);
+		m_tsm = m_botAction.getTSM();
+		m_tsm.setOperatorLevel(OperatorList.ER_LEVEL);
 		registerSettings();
 
 		//Initial Game Settings
@@ -206,6 +207,12 @@ public class bship extends MultiModule implements TSChangeListener
 		{
 			timeMode.cancel();
 			m_tsm.removeTSChangeListener(this);
+			m_tsm.removeSetting("board");
+			m_tsm.removeSetting("teams");
+			m_tsm.removeSetting("cslock");
+			m_tsm.removeSetting("hour");
+			m_tsm.removeSetting("lives");
+			m_tsm.removeSetting("cslimit");
 			ret = true;
 		}
 
