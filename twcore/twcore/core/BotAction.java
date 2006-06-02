@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import twcore.misc.tempset.TempSettingsManager;
+
 /**
  * The main bot utility class, your bot's best and easiest method of performing
  * actions in the arena, getting information on players, scheduling tasks to be
@@ -38,6 +40,7 @@ public class BotAction
     private GamePacketGenerator m_packetGenerator;  // Packet creator
     private Objset              m_objectSet;        // For automation of LVZ object setting
     private int                 m_botNumber;        // Bot's internal ID number
+    private TempSettingsManager m_tsm;              // Handles Temporary Settings
 
 
     /** Constructor for BotAction.  Don't worry about this, the object has already
@@ -2535,7 +2538,21 @@ public class BotAction
         return m_objectSet;
     }
 
+	/**
+     * Gets the TempSettingsManager associated with this bot. This allows for
+     * multiple plugins to utilize the functionality without having to maintain
+     * more than one instance.
+     * @return a TempSettingsManager object for use
+     */
+    public synchronized TempSettingsManager getTSM()
+    {
+    	if(m_tsm == null)
+    	{
+    		m_tsm = new TempSettingsManager(this);
+    	}
 
+    	return m_tsm;
+    }
 
     // ***** PLAYER/FLAG GETTERS *****
     /*
