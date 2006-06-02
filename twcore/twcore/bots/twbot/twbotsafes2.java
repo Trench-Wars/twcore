@@ -16,7 +16,7 @@ import static twcore.misc.tempset.SType.*;
  * as put them into spectator mode.
  *
  * @author D1st0rt
- * @version 06.04.26
+ * @version 06.06.01
  */
 public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 {
@@ -30,7 +30,7 @@ public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 	private final String helpMessage[] =
 	{
 		"+------------------Extended Safes Module-------------------+",
-		"|  Release 1.6 [04/26/06] - http://d1st0rt.sscentral.com   |",
+		"|  Release 1.7 [06/01/06] - http://d1st0rt.sscentral.com   |",
 		"+----------------------------------------------------------+",
 		"! !activate - Toggles the module doing anything when a     |",
 		"|             player flies over a safety tile              |",
@@ -63,7 +63,8 @@ public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 	public twbotsafes2()
 	{
 		m_active = false;
-		m_tsm = new TempSettingsManager(BotAction.getBotAction(), ER_LEVEL);
+		m_tsm = BotAction.getBotAction().getTSM();
+		m_tsm.setOperatorLevel(ER_LEVEL);
 		registerSettings();
 		m_tsm.addTSChangeListener(this);
 	}
@@ -188,5 +189,15 @@ public class twbotsafes2 extends TWBotExtension implements TSChangeListener
 	public void cancel()
 	{
 		m_tsm.removeTSChangeListener(this);
+		m_tsm.removeSetting("SpecPlayer");
+		m_tsm.removeSetting("SpeccedMsg");
+		m_tsm.removeSetting("ChangeShip");
+		m_tsm.removeSetting("TargetShip");
+		m_tsm.removeSetting("ShipChgMsg");
+		m_tsm.removeSetting("ChangeFreq");
+		m_tsm.removeSetting("TargetFreq");
+		m_tsm.removeSetting("FreqChgMsg");
+		m_tsm.removeSetting("TargetShip");
+		m_tsm.removeSetting("TargetFreq");
 	}
 }
