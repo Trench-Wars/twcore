@@ -24,12 +24,12 @@ public class twbothunt extends TWBotExtension {
     private int huntReward = 5; //default unless changed by host
     private int huntPenalty = 2; //default unless changed by host
     private int preyReward = 1; //default unless changed by host
-    
+
 
      /** Creates a new instance of twbothunt */
     public twbothunt() {
     }
-    
+
     public void startHunt ( String hostName ){
     	Player p;
         String addPlayerName;
@@ -37,71 +37,74 @@ public class twbothunt extends TWBotExtension {
     	data = new HashMap();
         keys = new LinkedList();
     	PlayerBag huntPlayerBag = new PlayerBag();
-    	
+
     	Iterator i = m_botAction.getPlayingPlayerIterator();
         if( i == null ) return;
         while( i.hasNext() ){
        	    p = (Player)i.next();
             addPlayerName = p.getPlayerName();
             //HuntPlayer temp;
-            
+
             huntPlayerBag.add(addPlayerName);
         }
 
         int y = huntPlayerBag.size(); //need to take a snapshot
         for( int x = 0; x < y; x++){
             addPlayerName = huntPlayerBag.grab();
-            
+
             //Store playerName in the HuntPlayer class to preserve caps
             data.put(addPlayerName.toLowerCase(), new HuntPlayer(addPlayerName));
-            
+
             //do it this way or else the list will sort them when it imports and we will lose randomization
             keys.addLast(addPlayerName.toLowerCase());
 
             //m_botAction.sendChatMessage( "++++++" + addPlayerName );
         }
-        
+
         /*debug code
         HuntPlayer temp;
         for( int x = 0; x <= keys.size() - 1; x++ ){
             temp = (HuntPlayer)data.get(keys.get(x));
             m_botAction.sendChatMessage( x + ": " + keys.get(x).toString() );
         }*/
-        
+
         if ( keys.size() < 2 ){
             m_botAction.sendPrivateMessage( hostName, "Cannot start game with less then 2 people in play." );
             return;
         }
-        
+
         m_botAction.sendArenaMessage( "Hunt mode activated by " + hostName + ". Type :" + m_botAction.getBotName() + ":!prey if you forget who you are hunting." );
         m_botAction.sendArenaMessage( "Removing players with " + specPlayers + " non-hunted deaths." );
         gameStarted = true;
-        
+
         /*causes problem, warps everyone then starts the game right away
           either have the host do it manually or insert a timer.
-          
+
           m_botAction.createRandomTeams( 1 ); //in case host forgot
         */
         m_botAction.sendUnfilteredPublicMessage( "*scorereset" ); //in case host forgot
         tellArenaPreyName();
     }
-    
-    public void endHunt( String winnerName ){
-    	HuntPlayer winner;
 
-        checkMVP(winnerName);
-    	winner = (HuntPlayer)data.get( winnerName.toLowerCase() );
-    	
-        gameStarted = false;
+    public void endHunt( String winnerName, boolean team ){
+    	gameStarted = false;
         m_botAction.sendArenaMessage ("GAME OVER!", 5);
-        m_botAction.sendArenaMessage ("Survivor is: " + winner.getName() + " (" + winner.getPoints() + " points)");
+    	if(!team) {
+    		HuntPlayer winner;
+        	checkMVP(winnerName);
+    		winner = (HuntPlayer)data.get( winnerName.toLowerCase() );
+
+        	m_botAction.sendArenaMessage ("Survivor is: " + winner.getName() + " (" + winner.getPoints() + " points)");
+        } else {
+        	m_botAction.sendArenaMessage("Survivor is: Freq #"+winnerName);
+        }
         m_botAction.sendArenaMessage ("MVP is: " + mvpName + " (" + mvpScore + " points)");
     }
 
     public Integer findScore( String playerName ){
         if (gameStarted){
             HuntPlayer tempPlayer;
-            
+
             try{
                 tempPlayer = (HuntPlayer)data.get( playerName.toLowerCase() );
                 return new Integer(tempPlayer.getPoints());
@@ -128,29 +131,32 @@ public class twbothunt extends TWBotExtension {
             }
         } else {
             m_botAction.sendPrivateMessage( sendtoName, "Player score not found" );
-        }    	
+        }
     }
 
     public String findPreyName( String hunterName ){
     	if (gameStarted){
     	    int i;
     	    HuntPlayer prey;
-    	
+    		int hunterFreq = m_botAction.getPlayer(hunterName).getFrequency();
     	    i = keys.indexOf( hunterName.toLowerCase() );
-    	    if (i > 0){
-    	    	prey = (HuntPlayer)data.get(keys.get( --i ));
-    	    	return prey.getName();
-    	    } else if (i == 0){
-    	    	prey = (HuntPlayer)data.get(keys.get( keys.size() - 1 ));
-    	    	return prey.getName();    	        
-    	    }    	    
+    	    boolean found = false;
+    	    while(true) {
+	    	    if (i == 0) i = keys.size();
+	    	    prey = (HuntPlayer)data.get(keys.get( --i ));
+	    	    if(m_botAction.getPlayer(prey.getName()).getFrequency() != hunterFreq)
+	    	    	return prey.getName();
+	    	    if(prey.getName().equalsIgnoreCase(hunterName)) {
+	    	    	return "freq:"+hunterFreq;
+	    	    }
+	    	}
     	}
     	return null;
     }
-    
+
     public void tellPreyName( String playerName ){
     	String preyName;
-    	
+
     	preyName = findPreyName( playerName );
     	if (preyName != null){
     	    m_botAction.sendPrivateMessage( playerName, "Your current prey is: " + preyName);
@@ -158,17 +164,17 @@ public class twbothunt extends TWBotExtension {
             m_botAction.sendPrivateMessage( playerName, "You are currently not assigned a prey.");
     	}
     }
-    
+
     public void tellArenaPreyName(){
         for( int i = 0; i < keys.size(); i++){
-          tellPreyName( keys.get(i).toString() );	
+          tellPreyName( keys.get(i).toString() );
         }
     }
-    
+
     public void checkMVP( String playerName ){
         HuntPlayer checkPlayer;
         checkPlayer = (HuntPlayer)data.get(playerName.toLowerCase());
-    	    	
+
         if (mvpScore <= checkPlayer.getPoints()){
             mvpName = checkPlayer.getName();
     	    mvpScore = checkPlayer.getPoints();
@@ -177,29 +183,34 @@ public class twbothunt extends TWBotExtension {
 
     public void removeHuntPlayer( String playerName ){
     	int i = keys.indexOf( playerName.toLowerCase() );
-    	
-    	if (gameStarted){ 
+
+    	if (gameStarted){
     	    if ( i != -1 ){
     	    	checkMVP( playerName );
-    	    	
+
     	    	keys.remove( playerName.toLowerCase() );
                 //m_botAction.sendChatMessage( playerName + " has been removed from the chain." );
-                
+
                 if (keys.size() > 1){
                     //In case they are the last person on the list
                     if ( i == keys.size() ) { i = 0; }
-                    
+                    String preyName = findPreyName(keys.get(i).toString());
+                    int k = i;
+                    while(findPreyName(keys.get(k).toString()).equalsIgnoreCase(preyName)) {
+                    	tellPreyName(keys.get(k).toString());
+                    }
                     //No need to go to the next on list since it will replace the one we just removed
-                    tellPreyName( keys.get( i ).toString() );
                 }
             }
-            
+
             if (keys.size() == 1) {
-            	endHunt( keys.getFirst().toString() );
+            	endHunt( keys.getFirst().toString(), false );
+            } else if(findPreyName(keys.getFirst().toString()).toLowerCase().startsWith("freq:")) {
+            	endHunt(findPreyName(keys.getFirst().toString()).split(":")[1], true);
             }
         }
     }
-    
+
     public void handleEvent( Message event ){
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
@@ -207,28 +218,28 @@ public class twbothunt extends TWBotExtension {
             if( m_opList.isER( name ) ) {
             	handleCommand( name, message );
             } else {
-                handlePublicCommand( name, message );	
+                handlePublicCommand( name, message );
             }
         }
     }
-    
+
     public void handleEvent( PlayerDeath event ){
         Player pKilled = m_botAction.getPlayer( event.getKilleeID() );
         Player pKiller = m_botAction.getPlayer( event.getKillerID() );
-        
+
         if( pKilled == null || pKiller == null )
             return;
-        
+
         String killedName = pKilled.getPlayerName();
         String killerName = pKiller.getPlayerName();
-        
+
         if (gameStarted){
             HuntPlayer tempPlayer;
 
             if ( killedName.equals( findPreyName( killerName ))){ //Hunter kills prey
                 m_botAction.spec( event.getKilleeID() );
                 m_botAction.spec( event.getKilleeID() );
-            
+
                 tempPlayer = (HuntPlayer)data.get( killedName.toLowerCase() );
                 if(tempPlayer != null){
                     m_botAction.sendArenaMessage( killedName + " (" + tempPlayer.getPoints() + " points) has been hunted and killed by " + killerName );
@@ -241,20 +252,20 @@ public class twbothunt extends TWBotExtension {
                 return;
             } else if( killerName.equals( findPreyName( killedName ) ) ) { //Prey kills hunter
             	tempPlayer = (HuntPlayer)data.get( killerName.toLowerCase() );
-            	
+
             	if(tempPlayer != null){
             	    tempPlayer.addPoints(preyReward);
             	    m_botAction.sendPrivateMessage( killerName, "You killed your hunter! " + preyReward + " points added to your score." );
             	}
             } else { //Player kills wrong person
             	tempPlayer = (HuntPlayer)data.get( killerName.toLowerCase() );
-            	
+
             	if(tempPlayer != null){
             	    tempPlayer.remPoints(huntPenalty);
-                    m_botAction.sendPrivateMessage( killerName , "You killed the wrong person! " + huntPenalty + " points deducted from your score." );                    
-                }                
+                    m_botAction.sendPrivateMessage( killerName , "You killed the wrong person! " + huntPenalty + " points deducted from your score." );
+                }
             }
-            
+
       	    if ( pKilled.getLosses() >= specPlayers ){
                 m_botAction.spec( event.getKilleeID() );
                 m_botAction.spec( event.getKilleeID() );
@@ -264,19 +275,19 @@ public class twbothunt extends TWBotExtension {
             }
         }
     }
-    
+
     public void handleEvent( PlayerLeft event ){
     	if (gameStarted){
             removeHuntPlayer( m_botAction.getPlayerName( event.getPlayerID() ) );
         }
     }
-    
+
     public void handleEvent( FrequencyShipChange event ){
     	if (gameStarted){
     	    String name = m_botAction.getPlayerName( event.getPlayerID() );
     	    int ship = event.getShipType();
     	    if ( ship == 0 ){
-    	        removeHuntPlayer( name );	
+    	        removeHuntPlayer( name );
     	    } else {
     	    	//Keep players out of the game who aren't on the list
     	    	if( keys.indexOf( name.toLowerCase() ) == -1 ){
@@ -288,7 +299,7 @@ public class twbothunt extends TWBotExtension {
     	    }
     	}
     }
-    
+
     public void handleCommand( String name, String message ){
         if( message.toLowerCase().startsWith( "!huntspec " )){
             if(gameStarted){
@@ -330,10 +341,10 @@ public class twbothunt extends TWBotExtension {
                 m_botAction.sendPrivateMessage( name, "Prey killing hunter reward set to: " + preyReward );
             }
         } else {
-            handlePublicCommand( name, message );	
+            handlePublicCommand( name, message );
         }
     }
-    
+
     public void handlePublicCommand( String name, String message){
         if( message.toLowerCase().startsWith( "!prey" ) ){
             if(gameStarted){tellPreyName( name );}
@@ -370,7 +381,7 @@ public class twbothunt extends TWBotExtension {
         };
         return help;
     }
-    
+
     public int getInteger( String input ){
         try{
             return Integer.parseInt( input.trim() );
@@ -380,7 +391,7 @@ public class twbothunt extends TWBotExtension {
     }
 
     public void cancel(){
-    
+
     }
 }
 
@@ -388,34 +399,34 @@ class HuntPlayer {
     int huntKills = 0;
     int score = 0;
     String name;
-    
+
     public HuntPlayer(){
     }
-    
+
     public HuntPlayer( String playerName ){
     	name = playerName;
     }
-    
+
     public String getName(){
-        return name;	
+        return name;
     }
-    
+
     public void addPoints( int amount ){
         score += amount;
     }
-    
+
     public void remPoints( int amount ){
         score -= amount;
     }
-    
+
     public int getPoints(){
-        return score;	
+        return score;
     }
-    
+
     public void addHuntKill(){
        huntKills++;
     }
-    
+
     public int getHuntKills(){
        return huntKills;
     }
@@ -435,12 +446,12 @@ class PlayerBag {
 
     public void clear(){
         list.clear();
-    }    
-    
+    }
+
     public void add( String string ){
         list.add( string );
     }
-    
+
     public List getList(){
         return (List)list;
     }
@@ -451,21 +462,21 @@ class PlayerBag {
         } else {
             int i = random( list.size() );
             String grabbed;
-            
+
             grabbed =(String)list.get( i ) ;
             list.remove( i );
             return grabbed;
         }
     }
-    
+
     public int size(){
         return list.size();
     }
-    
+
     private int random( int maximum ){
-        return (int)(Math.random()*maximum);        
+        return (int)(Math.random()*maximum);
     }
-    
+
     public boolean isEmpty(){
         return list.isEmpty();
     }
