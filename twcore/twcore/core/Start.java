@@ -1,6 +1,8 @@
 package twcore.core;
 import java.io.*;
 
+import twcore.core.util.Tools;
+
 /**
  * Loads the TWCore setup file and instantiates HubBot with appropriate login
  * and server information.
@@ -10,7 +12,7 @@ public class Start {
     /**
      * Checks for a valid setup configuration file specified on the command line,
      * or if not specified, checks for the existence of setup.cfg.  Then calls
-     * startHub to process the file. 
+     * startHub to process the file.
      * @param args Cmdline args passed, if any
      */
     public static void main( String args[] ){
@@ -39,22 +41,22 @@ public class Start {
     static void startHub( File setupFile ){
         CoreData        coreData = new CoreData( setupFile );
         BotSettings     generalSettings = coreData.getGeneralSettings();
-        
+
         Tools.exceptionLogFilePath = generalSettings.getString( "Exception Log" );
         Tools.debugging = generalSettings.getInt( "DebugOutput" ) != 0;
-        
-        try {
-	    	System.out.close();
+
+        /*try {
+	    	//System.out.close();
 	    	System.err.close();
-	    	File f1 = new File("currentOut.log");
+	    	//File f1 = new File("currentOut.log");
 	    	File f2 = new File("currentErr.log");
-	    	f1.delete();
+	    	//f1.delete();
 	    	f2.delete();
-	    	f1.createNewFile();
+	    	//f1.createNewFile();
 	    	f2.createNewFile();
-	    	System.setOut(new PrintStream(new FileOutputStream(f1)));
+	    	//System.setOut(new PrintStream(new FileOutputStream(f1)));
 	    	System.setErr(new PrintStream(new FileOutputStream(f2)));
-	    } catch(Exception e) {}
+	    } catch(Exception e) {}*/
 
         while( true ){
             Tools.printLog( "Attempting to connect to server at ss://" + coreData.getServerName() + ":" + coreData.getServerPort() );

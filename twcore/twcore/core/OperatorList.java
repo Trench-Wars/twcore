@@ -3,6 +3,8 @@ package twcore.core;
 import java.io.*;
 import java.util.*;
 
+import twcore.core.util.Tools;
+
 /**
  * Stores the access list as read from the server-based files moderate.txt, smod.txt,
  * and sysop.txt, and the bot core config files owner.cfg, outsider.cfg, and
@@ -12,7 +14,7 @@ import java.util.*;
  * Access levels
  * <p><code><pre>
  * #   Title            Description                                      Read from
- * 
+ *
  * 0 - Normal player    no special privileges
  * 1 - Zone Helper      extremely limited privileges                     [moderate.txt]
  * 2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]
@@ -45,7 +47,7 @@ public class OperatorList {
 
         m_accessList = Collections.synchronizedMap( new HashMap() );
     }
-    
+
     public OperatorList(OperatorList o) {
     	m_accessList = Collections.synchronizedMap( new HashMap() );
     	m_accessList.putAll(o.m_accessList);
@@ -66,11 +68,11 @@ public class OperatorList {
      */
     public int getAccessLevel( String name ){
         Integer      accessLevel;
-        
+
         if( name == null ){
             return PLAYER_LEVEL;
         }
-        
+
         accessLevel = (Integer)m_accessList.get( name.trim().toLowerCase() );
         if( accessLevel == null ){
             return PLAYER_LEVEL;
@@ -106,14 +108,14 @@ public class OperatorList {
             return false;
         }
     }
-    
+
     /**
      * Check if a given name is at least of Outsider status.
      * NOTE: Outsider is a special status provided to coders who are not members
      * of staff.  They are able to use some bot powers that ZHs can't, but can't
      * generally use event bots.
      * FIXME: If an Outsider also is on moderate.txt with arena permissions, they
-     * will be considered a full moderator.  
+     * will be considered a full moderator.
      * @param name Name in question
      * @return True if player is at least an Outsider
      */
@@ -168,7 +170,7 @@ public class OperatorList {
             return false;
         }
     }
-    
+
     /**
      * Check if a given name is at least of Mod status.
      * @param name Name in question
@@ -196,7 +198,7 @@ public class OperatorList {
             return false;
         }
     }
-    
+
     /**
      * Check if a given name is at least of HighMod status.
      * NOTE: HighMod is a special status given to experienced mods, allowing them
@@ -278,7 +280,7 @@ public class OperatorList {
             return false;
         }
     }
-    
+
     /**
      * Check if a given name is an owner.
      * @param name Name in question
@@ -307,27 +309,27 @@ public class OperatorList {
             return false;
         }
     }
-    
+
     /**
-     * Given an access level, returns all players who match that access level. 
+     * Given an access level, returns all players who match that access level.
      * @param accessLevel A number corresponding to the OperatorList access standard
      * @return HashSet of all players of that access level.
      */
     public HashSet getAllOfAccessLevel( int accessLevel ) {
         if( accessLevel < ZH_LEVEL || accessLevel > OWNER_LEVEL )
             return null;
-        
+
         HashSet gathered = new HashSet();
         Iterator i = m_accessList.keySet().iterator();
         String player;
-        
+
         while( i.hasNext() ) {
             player = (String)i.next();
             if( player != null )
                 if( getAccessLevel( player ) == accessLevel )
                     gathered.add( player );
         }
-        
+
         return gathered;
     }
 
@@ -342,26 +344,26 @@ public class OperatorList {
         String          player;
         String          tempPattern;
 
-        tempPattern = pattern.trim().toLowerCase();        
+        tempPattern = pattern.trim().toLowerCase();
         for( i = m_accessList.keySet().iterator(); i.hasNext(); ){
             player = (String)i.next();
             if( player.indexOf( tempPattern ) != -1 ){
                 m_accessList.put( player, new Integer( accessLevel ) );
-            }            
+            }
         }
-    }        
+    }
 
     /**
      * Wrapper method for parseFile(File, int).
-     * 
+     *
      * Parses an access list and sets all members on the list to a given access
      * level.  Used in conjunction with the changeAllMatches method (using ER
      * and ZH tags), it can successfully assign access levels to all individuals.
      * NOTE: If someone in outsider.cfg is also on moderate.txt, and they don't
-     * have a tag of some kind, they will be set to moderator level. 
-     *  
+     * have a tag of some kind, they will be set to moderator level.
+     *
      * @param filename Filename, in String form, to parse
-     * @param accessLevel Access level to assign to   
+     * @param accessLevel Access level to assign to
      */
     public void parseFile( String filename, int accessLevel ){
         parseFile( new File( filename ), accessLevel );
@@ -372,15 +374,15 @@ public class OperatorList {
      * level.  Used in conjunction with the changeAllMatches method (using ER
      * and ZH tags), it can successfully assign access levels to all individuals.
      * NOTE: If someone in outsider.cfg is also on moderate.txt, and they don't
-     * have a tag of some kind, they will be set to moderator level. 
-     *  
+     * have a tag of some kind, they will be set to moderator level.
+     *
      * @param file Filename, in String form, to parse
-     * @param accessLevel Access level to assign to   
+     * @param accessLevel Access level to assign to
      */
     public void parseFile( File file, int accessLevel ){
 
         String             name;
-        String             inBuffer; 
+        String             inBuffer;
         char               firstCharacter;
         LineNumberReader   lineReader;
         Integer            oldAccessLevel;
@@ -405,11 +407,11 @@ public class OperatorList {
             lineReader.close();
         } catch( Exception e ){
             Tools.printStackTrace( e );
-        }  
+        }
     }
 
     /**
-     * Clears the access list. 
+     * Clears the access list.
      */
     void clearList(){
 

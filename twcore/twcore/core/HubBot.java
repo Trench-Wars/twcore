@@ -1,6 +1,12 @@
 package twcore.core;
 import java.io.*;
 
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.FileArrived;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
+
 /**
  * Bot designed to spawn other bots (both manually and automatically from
  * autoload.cfg).  It also sets access privileges based on the server's access
@@ -16,11 +22,11 @@ public class HubBot extends SubspaceBot {
     /**
      * Creates the hub bot's thread grouping, registers commands, sets up
      * accepted events, and starts the bot queue thread.  Once HubBot has
-     * logged on (LoggedOn event received) it begins loading other bots. 
+     * logged on (LoggedOn event received) it begins loading other bots.
      * @param botAction Reference to BotAction object from Session
      */
     public HubBot( BotAction botAction ){
-    
+
         super( botAction );
         m_kingGroup = new ThreadGroup( "KingGroup" );
         m_commandInterpreter = new CommandInterpreter( botAction );
@@ -47,7 +53,7 @@ public class HubBot extends SubspaceBot {
 
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "handleHelp" );
         m_commandInterpreter.registerCommand( "!remove", acceptedMessages, this, "handleRemove" );
-        m_commandInterpreter.registerCommand( "!hardremove", acceptedMessages, this, "handleHardRemove" );        
+        m_commandInterpreter.registerCommand( "!hardremove", acceptedMessages, this, "handleHardRemove" );
         m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "handleListBots" );
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage" );
         m_commandInterpreter.registerCommand( "!listbottypes", acceptedMessages, this, "handleListBotTypes" );
@@ -58,7 +64,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleInvalidMessage" );
     }
-    
+
     public void handleClose(String name, String message) {
     	if(!m_botAction.getOperatorList().isSmod(name)) {
     		return;
@@ -106,7 +112,7 @@ public class HubBot extends SubspaceBot {
      * autoload.cfg to the bot loading queue.
      */
     public void handleEvent( LoggedOn event ){
-    
+
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "*g*misc:alertcommand" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat name" ) );
@@ -159,7 +165,7 @@ public class HubBot extends SubspaceBot {
 
     /**
      * Clears all current access lists, and sets up the new lists based on access
-     * CFG files and the three server-based access lists. 
+     * CFG files and the three server-based access lists.
      */
     public void LoadAccessLists(){
         m_botAction.getOperatorList().clearList();
@@ -173,7 +179,7 @@ public class HubBot extends SubspaceBot {
 
     /**
      * Sends a line to bot development chat when a message not matching any
-     * valid command is received. 
+     * valid command is received.
      * @param messager Name of the player who sent the message
      * @param message Text of the message
      */
@@ -221,9 +227,9 @@ public class HubBot extends SubspaceBot {
     }
 
     /**
-     * Displays in PM the list of bots waiting to be spawned. 
+     * Displays in PM the list of bots waiting to be spawned.
      * @param messager Name of the player who sent the request
-     * @param message Text of the message following the command 
+     * @param message Text of the message following the command
      */
     public void handleShowWaitingList( String messager, String message ){
         if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
@@ -299,7 +305,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "!listbottypes      - Lists the number of each bot type currently in use." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbots <type>   - Lists the names and spawners of a bot type." );
         }
-        
+
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
         }

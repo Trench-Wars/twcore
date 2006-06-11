@@ -1,5 +1,8 @@
 package twcore.core;
 
+import twcore.core.events.*;
+import twcore.core.util.Tools;
+
 /**
  * Basic abstract class that all Subspace bot classes must extend.  Includes
  * default handling for all events.  If a bot requests an event but doesn't
@@ -12,7 +15,7 @@ public abstract class SubspaceBot {
 
     /**
      * Create a new instance of SubspaceBot.
-     * 
+     *
      * Override this constructor so that your bot can hold a reference of BotAction.
      * @param botAction BotAction reference
      */
@@ -24,7 +27,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( SubspaceEvent event ){
@@ -36,7 +39,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( WatchDamage event ){
@@ -48,7 +51,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( ScoreReset event ){
@@ -60,7 +63,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( PlayerEntered event ){
@@ -72,7 +75,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( Message event ){
@@ -84,7 +87,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( PlayerLeft event ){
@@ -96,7 +99,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( PlayerPosition event ){
@@ -108,7 +111,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( PlayerDeath event ){
@@ -120,7 +123,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( ScoreUpdate event ){
@@ -132,7 +135,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( WeaponFired event ){
@@ -144,7 +147,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FrequencyChange event ){
@@ -156,7 +159,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FrequencyShipChange event ){
@@ -168,7 +171,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( ArenaJoined event ){
@@ -179,7 +182,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FileArrived event ){
@@ -190,7 +193,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FlagReward event ){
@@ -201,18 +204,18 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FlagVictory event ){
         Tools.printLog( m_botAction.getBotName() + ": FlagVictory event not handled; ignored" );
     }
-    
+
     /**
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FlagPosition event ){
@@ -223,7 +226,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FlagClaimed event ) {
@@ -234,18 +237,18 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( FlagDropped event ){
         Tools.printLog( m_botAction.getBotName() + ": FlagDropped event not handled; ignored" );
-    }  
-    
+    }
+
     /**
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( SoccerGoal event ) {
@@ -256,18 +259,18 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( BallPosition event ) {
         Tools.printLog( m_botAction.getBotName() + ": BallPosition event not handled; ignored" );
     }
-    
+
     /**
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( Prize event ) {
@@ -278,7 +281,7 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( LoggedOn event ){
@@ -286,12 +289,12 @@ public abstract class SubspaceBot {
         Tools.printLog( m_botAction.getBotName() + ": Logon not handled.  Joining #robopark" );
         m_botAction.joinArena( "#robopark" );
     }
-    
+
     /**
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( ArenaList event ){
@@ -303,30 +306,30 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
-    public void handleEvent( InterProcessEvent event ){    
+    public void handleEvent( InterProcessEvent event ){
 
         Tools.printLog( m_botAction.getBotName() + ": InterProcess event not handled; ignored" );
     }
-    
+
     /**
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( SQLResultEvent event ){
         Tools.printLog( m_botAction.getBotName() + ": SQLResultEvent event not handled; ignored" );
     }
-    
+
     /**
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( PlayerBanner event ){
@@ -337,13 +340,13 @@ public abstract class SubspaceBot {
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
      * the default behavior defined here will be executed.  If you attempt to handle
-     * the event without requesting it from EventRequester, it will not be handled.  
+     * the event without requesting it from EventRequester, it will not be handled.
      * @param event Event object of handled event (packet)
      */
     public void handleEvent( TurretEvent event ){
         Tools.printLog( m_botAction.getBotName() + ": TurretEvent event not handled; ignored" );
     }
-    
+
     /**
      * Default disconnection behavior (do nothing).  This method is called from
      * Session's disconnect() when the bot has been asked to die.  Override this

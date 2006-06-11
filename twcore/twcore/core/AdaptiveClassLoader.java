@@ -60,6 +60,8 @@ import java.net.*;
 import java.util.*;
 import java.util.zip.*;
 
+import twcore.core.util.SimpleFileFilter;
+
 /**
  * A class loader that loads classes from directories and/or zip-format
  * file such as JAR file. It tracks the modification time of the classes

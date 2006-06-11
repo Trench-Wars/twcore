@@ -4,7 +4,18 @@ import java.util.*;
 import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import twcore.misc.tempset.TempSettingsManager;
+
+import twcore.core.game.Arena;
+import twcore.core.game.Flag;
+import twcore.core.game.Player;
+import twcore.core.game.Ship;
+import twcore.core.lvz.Objset;
+import twcore.core.net.GamePacketGenerator;
+import twcore.core.util.IPCMessage;
+import twcore.core.util.InterProcessCommunicator;
+import twcore.core.util.StringBag;
+import twcore.core.util.Tools;
+import twcore.core.tempset.TempSettingsManager;
 
 /**
  * The main bot utility class, your bot's best and easiest method of performing

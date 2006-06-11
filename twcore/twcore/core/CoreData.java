@@ -2,6 +2,10 @@ package twcore.core;
 
 import java.io.*;
 
+import twcore.core.sql.SQLManager;
+import twcore.core.util.InterProcessCommunicator;
+import twcore.core.util.Tools;
+
 /**
  * Reference object for all important data shared between bots.
  * <p>
@@ -16,7 +20,7 @@ import java.io.*;
  * </pre></code>
  */
 public class CoreData {
-    
+
     private InterProcessCommunicator    m_comm;              // Command handler
     private SQLManager                  m_manager;           // SQL system manager
     private OperatorList                m_accessList;        // Access list
@@ -34,14 +38,14 @@ public class CoreData {
         + "/corecfg/sql.cfg" );
         m_manager = new SQLManager( sqlFile );
     }
-        
+
     /**
      * @return Port of the server the core is connected to
      */
     public int getServerPort(){
         return m_generalSettings.getInt( "Port" );
     }
-    
+
     /**
      * Returns the name (address) of the server the core is connected to.
      * If connected to localhost, also convert to an IP rather than localhost.
@@ -53,9 +57,9 @@ public class CoreData {
             name = "127." + ( m_lastIP >> 16 ) + "." + (( m_lastIP & 0x00FF00 ) >> 8 ) + "." + ( m_lastIP & 0x0000FF );
             m_lastIP++;
         }
-        return name;        
+        return name;
     }
-    
+
     /**
      * @return Reference to the locally held InterProcessCommunicator
      */
@@ -69,21 +73,21 @@ public class CoreData {
     public SQLManager getSQLManager(){
         return m_manager;
     }
-    
+
     /**
      * @return Reference to the locally held OperatorList
      */
     public OperatorList getOperatorList(){
         return m_accessList;
     }
-    
+
     /**
      * @return Reference to the locally held BotSettings
      */
     public BotSettings getGeneralSettings(){
         return m_generalSettings;
     }
-    
+
     /**
      * Given the class name of a bot, return its associated configuration.
      * If unable to find a configuration file, return null.

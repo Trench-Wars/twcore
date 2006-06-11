@@ -8,6 +8,16 @@ package twcore.core;
 import java.net.*;
 import java.util.*;
 
+import twcore.core.game.Arena;
+import twcore.core.game.Ship;
+import twcore.core.net.GamePacketGenerator;
+import twcore.core.net.GamePacketInterpreter;
+import twcore.core.net.Receiver;
+import twcore.core.net.ReliablePacketHandler;
+import twcore.core.net.SSEncryption;
+import twcore.core.net.Sender;
+import twcore.core.util.Tools;
+
 public class Session extends Thread {
 
     private Ship            m_ship;
@@ -28,7 +38,7 @@ public class Session extends Thread {
     private SSEncryption    m_ssEncryption;
     private Receiver        m_inboundQueue;
     private Sender          m_outboundQueue;
-    
+
     private GamePacketGenerator     m_packetGenerator;
     private GamePacketInterpreter   m_packetInterpreter;
     private ReliablePacketHandler   m_reliablePacketHandler;
@@ -136,7 +146,7 @@ public class Session extends Thread {
     public void finalize(){
         Tools.printLog( m_name + " is going away." );
     }
-    
+
     public int getBotNumber(){
     	return m_botNumber;
     }
@@ -198,7 +208,7 @@ public class Session extends Thread {
         long lastPacketTime = 0;
         final int TIMEOUT_DELAY = 60000;
         int clientKey = (int)(-Math.random() * Integer.MAX_VALUE);
-        
+
         long lastPositionUpdate = System.currentTimeMillis();
         int positionUpdateTime = 5000;
 
@@ -251,9 +261,9 @@ public class Session extends Thread {
                     m_arenaTracker.checkPositionChange();
                     // Synch times
                     if( positionUpdateTime != m_arenaTracker.getUpdateTime() )
-                        positionUpdateTime = m_arenaTracker.getUpdateTime();                        
+                        positionUpdateTime = m_arenaTracker.getUpdateTime();
                 }*/
-                
+
                 Thread.sleep(5);
             }
         } catch( InterruptedException e ){
