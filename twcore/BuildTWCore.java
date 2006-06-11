@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class BuildTWCore {
 
-    String extraCP = ":twcore/misc/googleapi.jar:twcore/misc/aim.jar:twcore/misc/mysql-connector-java-3.1.10-bin.jar";
+    String extraCP = ":twcore/googleapi.jar:twcore/aim.jar:twcore/mysql-connector-java-3.1.10-bin.jar:";
     String binDir = "";             // Location of Java bin directory
     String bldCmd = "";             // Combination of bin dir and the command being used (automatically set)
     Runtime runtime;                // Runtime process
@@ -38,8 +38,7 @@ public class BuildTWCore {
         runtime = Runtime.getRuntime();
         botList = new LinkedList();
         coreList = new LinkedList();
-        currentOS = System.getProperty("os.name").toLowerCase();
-        if (currentOS.startsWith("windows")) extraCP = extraCP.replace(':', ';');
+        extraCP = extraCP.replace(':', File.pathSeparatorChar);
         handleArguments(args);
     }
 
@@ -95,6 +94,10 @@ public class BuildTWCore {
      * @throws Exception
      */
     public void fullExec(String[] s) throws Exception {
+		/*for(String ss : s)
+		        {
+					System.out.println(ss);
+		}*/
         Process p = runtime.exec(s);
         InputStream stderr = p.getErrorStream();
         InputStreamReader isr = new InputStreamReader(stderr);
@@ -152,6 +155,52 @@ public class BuildTWCore {
 
         return isnotempty;
     }
+
+    /**
+     * Creates a file list using the contents of the provided directory.
+     * @param dir Directory to list
+     * @param fList File to be created
+     * @return True if the directory is not empty
+     * @throws Exception
+     */
+    public boolean createRecursiveFileList(File dir, File fList) throws Exception {
+        boolean isnotempty = false;
+        if (fList.exists()) fList.delete();
+        fList.createNewFile();
+
+        PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter(fList)));
+        isnotempty = recursiveWriteFiles(dir, out);
+
+        out.close();
+
+        return isnotempty;
+    }
+
+    public boolean recursiveWriteFiles(File dir, PrintWriter out)
+    {
+		boolean isnotempty = false;
+		if(dir.isDirectory())
+		        {
+			        File[] coreList = dir.listFiles();
+
+			        for (int i=0;i<coreList.length;i++)
+			        	if(coreList[i].isDirectory())
+			        		isnotempty = recursiveWriteFiles(coreList[i], out);
+			            else if (coreList[i].getName().endsWith(".java")) {
+			                out.println(coreList[i].getPath());
+			                isnotempty = true;
+			            }
+		        }
+		        else
+		        {
+		        	if (dir.getName().endsWith(".java"))
+		        	{
+		        		out.println(dir.getPath());
+		                isnotempty = true;
+		        	}
+        }
+        return isnotempty;
+	}
 
     /**
      * Recursively deletes all files specified in the filelist and their children,
@@ -243,21 +292,25 @@ public class BuildTWCore {
             // Compile all the files located in here into temp
             try {
                 System.out.println("Building " + f.getPath());
-                boolean hasContent = createFileList(f, new File("flist.txt"));
+                boolean hasContent = false;
+                if(bot)
+                	hasContent = createFileList(f, new File("flist.txt"));
+                else
+                	hasContent = createRecursiveFileList(f, new File("flist.txt"));
                 if (hasContent) {
                     bldCmd = binDir + "javac";
 
                     if (!bot)
-                        fullExec(new String[] {bldCmd, "-classpath", "\""+extrapath+"\"", "-d", "temp", "@flist.txt"});
+                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP + extrapath + ":", "-sourcepath", f.getPath(), "-d", "temp", "@flist.txt"});
                     else
-                        fullExec(new String[] {bldCmd, "-classpath", "\""+extrapath+"\"", "@flist.txt"});
+                        fullExec(new String[] {bldCmd, "-classpath", "twcore.jar" + extraCP + extrapath + "/twcore/bots:", "-sourcepath", f.getPath(), "@flist.txt"});
                 }
             } catch (Exception e) { System.out.println("error... " + e.getMessage()); }
 
 
             File[] flist = f.listFiles();
 
-            if (dig)
+            if (dig && flist != null)
                 for (int i=0; i<flist.length; i++)
                     if (flist[i].isDirectory()) {
 						recursiveCompile(flist[i], true, bot, extrapath);
@@ -313,7 +366,7 @@ public class BuildTWCore {
             // Compile
             if (bbuildAllCore) {
             	//fullExec(new String[] { bldCmd, "-sourcepath", "@sourcepath.txt", "-d", "temp", "@flist.txt"});
-                recursiveCompile(new File("twcore/core"), true, false, classpath);
+                recursiveCompile(new File("twcore/core"), false, false, classpath);
                 doneSomething = true;
             } else {
                 ListIterator i = coreList.listIterator();
