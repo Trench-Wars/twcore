@@ -1,9 +1,20 @@
 package twcore.bots.multibot.bship;
 
+import twcore.bots.MultiModule;
 import twcore.core.*;
-import twcore.misc.multibot.*;
-import twcore.misc.tempset.*;
-import twcore.misc.lvz.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.TurretEvent;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
+import twcore.core.util.Tools;
+import twcore.core.tempset.*;
 import java.util.*;
 import static twcore.core.EventRequester.*;
 
@@ -18,7 +29,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.05.29
+ * @version 06.06.01
  */
 public class bship extends MultiModule implements TSChangeListener
 {

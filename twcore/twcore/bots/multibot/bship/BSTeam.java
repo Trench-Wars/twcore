@@ -45,7 +45,7 @@ public class BSTeam
      */
 	public BSTeam(int freq, int lives)
 	{
-		freq = freq;
+		this.freq = freq;
 		players = new Vector<BSPlayer>();
 		changed = true;
 		shipCount = new byte[8];
