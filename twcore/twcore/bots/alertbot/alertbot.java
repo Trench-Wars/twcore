@@ -7,6 +7,11 @@
 package twcore.bots.alertbot;
 
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.util.regex.*;
 import java.sql.ResultSet;

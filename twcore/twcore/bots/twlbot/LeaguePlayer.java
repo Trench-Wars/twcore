@@ -1,6 +1,6 @@
 package twcore.bots.twlbot;
 
-import twcore.misc.statistics.*;
+import twcore.core.stats.Statistics;
 import java.util.*;
 
 public class LeaguePlayer
@@ -25,7 +25,7 @@ public class LeaguePlayer
 		{
 			m_statisticTracker.setStatistic(statType);
 		}
-		
+
 		/**
 		 * Adds to the value already there
 		 * @param statType the type of statistic to increment with value
@@ -87,7 +87,7 @@ public class LeaguePlayer
 
 	/**
 		 * @author FoN
-		 * 
+		 *
 		 * This class is to congregate all the stats so they can be organised and added + removed easily
 		 */
 	private class TotalStatistics
@@ -102,7 +102,7 @@ public class LeaguePlayer
 
 		/**
 		* Creates a new ship given a shiptype
-		* 
+		*
 		* @param fnShipType Type of ship 1 - 8 corresponding to Wb - Shark
 		*/
 		public void createNewShip(int fnShipType)
@@ -115,7 +115,7 @@ public class LeaguePlayer
 
 		/**
 		 * Method reportStatistic.
-		 * 
+		 *
 		 * @param statType the statisticType ot increment
 		 * @param value the value to increment the statistic by
 		 */
@@ -125,10 +125,10 @@ public class LeaguePlayer
 				m_currentShip.setStatistic(statType, value);
 
 		}
-		
+
 		/**
 		 * Method reportStatistic.
-		 * 
+		 *
 		 * @param statType the statisticType ot increment
 		 */
 		public void reportStatistic(int statType)
@@ -136,10 +136,10 @@ public class LeaguePlayer
 			if (m_currentShip != null)
 				m_currentShip.setStatistic(statType);
 		}
-		
+
 		/**
 		 * Method reportKill.
-		 * 
+		 *
 		 * @param statType the statisticType ot change
 		 * @param value the value to change the statistic by
 		 */
@@ -221,7 +221,7 @@ public class LeaguePlayer
 		{
 			return m_currentShip.getStatistic(statType);
 		}
-		
+
 		/**
 		 * Gets the linked list of ships
 		 * @return Iterator to the linked list of ships
@@ -275,7 +275,7 @@ public class LeaguePlayer
 
 	/**
 	 * @author FoN
-	 * 
+	 *
 	 * Ends current ship and creates new ship
 	 * @param s New shiptype
 	 */
@@ -289,12 +289,12 @@ public class LeaguePlayer
 	{
 		return m_frequency;
 	}
-	
+
 	public int getDeathLimit()
 	{
 		return m_deathLimit;
 	}
-	
+
 	public void setDeathLimit(int d)
 	{
 		m_deathLimit = d;
@@ -304,7 +304,7 @@ public class LeaguePlayer
 	{
 		switch (statisticType)
 		{
-			case Statistics.DEATHS:	
+			case Statistics.DEATHS:
 				m_timer = (int) (System.currentTimeMillis() / 1000);
 				m_warned = false;
 				m_inBase = false;
@@ -315,35 +315,35 @@ public class LeaguePlayer
 				break;
 		};
 	}
-	
+
 	public void reportStatistic(int statisticType, int value)
 	{
 		m_statisticTracker.reportStatistic(statisticType, value);
 	}
-	
+
 	public void changeStatistic(int statisticType, int value)
 	{
 		m_statisticTracker.changeStatistic(statisticType, value);
 	}
-	
+
 	public int getStatistic(int statType)
 	{
 		return m_statisticTracker.getStatistic(statType);
 	}
-	
+
 	public int getTotalStatistic(int statType)
 	{
 		return m_statisticTracker.getTotalStatistic(statType);
 	}
-	
+
 	public Iterator getPlayerShips()
 	{
 		return m_statisticTracker.getShips();
 	}
-	
 
 
-	//other stuff	
+
+	//other stuff
 	public String getName()
 	{
 		return m_playerName;
@@ -373,7 +373,7 @@ public class LeaguePlayer
 	{
 		m_outOfGame = true;
 	}
-	
+
 	public boolean isOutOfGame()
 	{
 		return m_outOfGame;
@@ -396,7 +396,7 @@ public class LeaguePlayer
 	{
 		return m_laggedOut;
 	}
-	
+
 	public int getTimeSinceLagout()
 	{
 		int time = (int) (System.currentTimeMillis() / 1000);
@@ -408,7 +408,7 @@ public class LeaguePlayer
 	{
 		m_sub = name;
 	}
-	
+
 	public String getSub()
 	{
 		return m_sub;
@@ -425,12 +425,12 @@ public class LeaguePlayer
 	{
 		return m_inBase;
 	}
-	
+
 	public void inBase()
 	{
 		m_inBase = true;
 	}
-	
+
 	public void notInBase()
 	{
 		m_inBase = false;
@@ -447,7 +447,7 @@ public class LeaguePlayer
 	{
 		return m_warned;
 	}
-	
+
 	public void haveWarned()
 	{
 		m_warned = true;

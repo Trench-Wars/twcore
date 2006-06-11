@@ -16,7 +16,14 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.BallPosition;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 /** A TWBot Extension for ?go elimination.  ER passes bot someone to be the
  * eliminator, who is the only person allowed to touch the ball -- everyone
@@ -54,7 +61,7 @@ public class twbotballspec extends TWBotExtension {
 
 
 
-    /** Handles event received message, and if from an ER or above, 
+    /** Handles event received message, and if from an ER or above,
      * tries to parse it as an event mod command.  Otherwise, parses
      * as a general command.
      * @param event Passed event.
@@ -111,7 +118,7 @@ public class twbotballspec extends TWBotExtension {
                     m_botAction.sendArenaMessage( m_eliminator + " is the Eliminator.  Run for your life!", 104 );
 
                 }
-                
+
             }
         };
 
@@ -146,20 +153,20 @@ public class twbotballspec extends TWBotExtension {
         if( message.startsWith( "!balls " )) {
             if( !( m_botAction.getOperatorList().isModerator(name) ) ) {
                 m_botAction.sendPrivateMessage( name, "You must be a moderator to use this command." );
-                return;                
+                return;
             }
-            
-            String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );                
+
+            String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
             try {
                 int numballs = Integer.parseInt(parameters[0]);
                 if(numballs > 8) numballs = 8;
                 if(numballs < 0) numballs = 0;
                 m_botAction.sendUnfilteredPublicMessage( "?set soccer:ballcount=" + numballs );
-                m_botAction.sendPrivateMessage( name, "Ball count set to " + numballs + "." );                
+                m_botAction.sendPrivateMessage( name, "Ball count set to " + numballs + "." );
             } catch ( Exception e ) {
                 m_botAction.sendPrivateMessage( name, "Invalid input.  Please give a number." );
             }
-        
+
         } else if( message.startsWith( "!stop" )){
             if( isRunning == true ) {
                 m_botAction.sendPrivateMessage( name, "BallSpec mode stopped." );
@@ -186,7 +193,7 @@ public class twbotballspec extends TWBotExtension {
 
         } else if( message.startsWith( "!rules" )) {
              displayRules();
-             
+
         } else if( message.startsWith( "!manual" )) {
             if( manual ) {
                 manual = false;
@@ -238,7 +245,7 @@ public class twbotballspec extends TWBotExtension {
      * @param event Contains event information on player who changed ship or freq.
      */
     public void handleEvent( FrequencyShipChange event ) {
-       
+
         if( event.getShipType() == f_specship && isRunning ) {
 
             int numPlayers = 0;
@@ -298,7 +305,7 @@ public class twbotballspec extends TWBotExtension {
                 // (Also check if someone was just elim'd so there's no spam)
                 if ( p != null && !( m_eliminator.equals( pname ) )
                                && !( m_lastelim.equals( pname ) ) ) {
-                    
+
                     switch( p.getPlayerID() % f_elimmsgcount ) {
                     case 0:
                         m_botAction.sendArenaMessage( pname + " has been obliterated by the Eliminator!" );
@@ -332,7 +339,7 @@ public class twbotballspec extends TWBotExtension {
                     m_botAction.spec( pname );
                     m_botAction.spec( pname  );
                     m_lastelim = pname;
-                }             
+                }
             }
 
         }
@@ -418,13 +425,13 @@ public class twbotballspec extends TWBotExtension {
             "!rules              - Displays basic rules of BallSpec mode to the arena.",
             "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)",
             "!balls #            - (Mod+) Sets # balls in the arena.",
-            "!bothelp            - Displays help on commands for players."            
+            "!bothelp            - Displays help on commands for players."
         };
         return ballspecHelp;
     }
 
 
-    
+
     /** (blank method)
      */
     public void cancel() {

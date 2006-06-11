@@ -1,9 +1,11 @@
 package twcore.bots.multibot.rps;
 
 import java.util.*;
+
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
 import twcore.core.*;
+import twcore.core.events.Message;
 
 public class rps extends MultiModule
 {
@@ -30,14 +32,14 @@ public class rps extends MultiModule
 
     m_botAction.smartPrivateMessageSpam(sender, message);
   }
-  
+
   public  String[] getModHelpMessage() {
     	String[] helpText = new String[] {
             	""
             };
         return helpText;
     }
-    
+
     public boolean isUnloadable() {
     	return true;
     }

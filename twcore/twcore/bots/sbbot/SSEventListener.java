@@ -1,14 +1,15 @@
 package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.events.*;
 
 public class SSEventListener extends Listener {
     public SSEventListener() {}
-    
+
     public void notify(SSEventMessageType message, SubspaceEvent event) {}
     public void notify(SSEventMessageType message, WatchDamage event) {}
     public void notify(SSEventMessageType message, ScoreReset event) {}
     public void notify(SSEventMessageType message, PlayerEntered event) {}
-    public void notify(SSEventMessageType message, twcore.core.Message event) {}
+    public void notify(SSEventMessageType message, twcore.core.events.Message event) {}
     public void notify(SSEventMessageType message, PlayerLeft event) {}
     public void notify(SSEventMessageType message, PlayerPosition event) {}
     public void notify(SSEventMessageType message, PlayerDeath event) {}

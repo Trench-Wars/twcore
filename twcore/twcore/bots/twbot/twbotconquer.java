@@ -10,38 +10,42 @@
  */
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
 
 public class twbotconquer extends TWBotExtension {
     /** Creates a new instance of portabotTestModule */
     public twbotconquer() {
-    }    
-    
-    boolean isRunning = false;        
-    
+    }
+
+    boolean isRunning = false;
+
     public void handleEvent( PlayerDeath event ){
         if( !isRunning ) return;
-        
+
         Player killer = m_botAction.getPlayer( event.getKillerID() );
         if( killer == null )
             return;
-        
+
         m_botAction.setFreq( event.getKilleeID(), killer.getFrequency() );
         String killeename = m_botAction.getPlayerName( event.getKilleeID() );
         String killername = m_botAction.getPlayerName( event.getKillerID() );
         m_botAction.sendArenaMessage( killeename + " has been conquered by "
         + killername + " and now joins freq " + killer.getFrequency() );
     }
-        
+
     public void handleEvent( Message event ){
-        
+
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
             if( m_opList.isER( name )) handleCommand( name, message );
         }
     }
-    
+
     public void handleCommand( String name, String message ){
         if( message.startsWith( "!start" )){
             m_botAction.sendArenaMessage( "Conquer mode activated by " + name );
@@ -51,7 +55,7 @@ public class twbotconquer extends TWBotExtension {
             isRunning = false;
         }
     }
-    
+
     public String[] getHelpMessages() {
         String[] help = {
             "!start - starts conquer mode",
@@ -59,8 +63,8 @@ public class twbotconquer extends TWBotExtension {
         };
         return help;
     }
-    
+
     public void cancel() {
-    }    
-    
+    }
+
 }

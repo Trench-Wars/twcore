@@ -12,6 +12,10 @@ package twcore.bots.spreebot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
 
 public class spreebot extends SubspaceBot {
     HashMap map;
@@ -21,7 +25,7 @@ public class spreebot extends SubspaceBot {
     int largestSpree = 0;
     int announceTime = 5;
     long lastAnnounceTime;
-    
+
     String  sMessages[] = {
         " On Fire!",
         " Killing Spree!",
@@ -31,7 +35,7 @@ public class spreebot extends SubspaceBot {
         " God Like!",
         " Cheater!",
     };
-    
+
     /** Creates a new instance of spreebot */
     public spreebot( BotAction botAction ) {
         super( botAction );
@@ -41,7 +45,7 @@ public class spreebot extends SubspaceBot {
         req.request( EventRequester.PLAYER_ENTERED );
         req.request( EventRequester.PLAYER_DEATH );
     }
-    
+
     public void handleEvent( LoggedOn event ){
         m_botAction.joinArena( "spree" );
         lastAnnounceTime = System.currentTimeMillis();
@@ -51,12 +55,12 @@ public class spreebot extends SubspaceBot {
         m_botAction.scheduleTaskAtFixedRate( new ReminderTask(),
         spaminterval - 60000, spaminterval );
     }
-    
+
     public void handleEvent( PlayerEntered event ){
         System.out.println( "Added a spree info:" + event.getPlayerName() );
         map.put( event.getPlayerName(), new SpreeInfo() );
     }
-    
+
     public void handleEvent( PlayerDeath event ){
         String killerName = m_botAction.getPlayerName( event.getKillerID() );
         String killeeName = m_botAction.getPlayerName( event.getKilleeID() );
@@ -68,7 +72,7 @@ public class spreebot extends SubspaceBot {
         if( isNewSpree( info.getKillsInARow() )){
             m_botAction.sendArenaMessage( "Streak!: " + killerName + " (" +
             + info.getKillsInARow() + ":0) " + message );
-            
+
             if( info.getKillsInARow() > largestSpree ){
                 largestSpreeName = killerName;
                 largestSpree = info.getKillsInARow();
@@ -76,15 +80,15 @@ public class spreebot extends SubspaceBot {
                 + " now has the largest winning streak for this period!", 2 );
             }
         }
-        
+
         if( isNewSpree( info2.getKillsInARow() ) ){
             m_botAction.sendArenaMessage( killerName + " ruined " + killeeName + "'s spree of "
             + info2.getKillsInARow());
         }
-        
+
         info2.reset();
     }
-    
+
     public boolean isNewSpree( int spree ){
         spree -= spreeBegin;
         if( spree == 0 ) return true;
@@ -93,13 +97,13 @@ public class spreebot extends SubspaceBot {
             return( spree % spreeInterval == 0 );
         }
     }
-    
+
     public void handleEvent( Message event ){
         String name = m_botAction.getPlayerName( event.getPlayerID() );
         long temp = lastAnnounceTime + 60000 * announceTime;
         temp -= System.currentTimeMillis();
         temp /= 1000;
-        
+
         if( event.getMessageType() == event.PRIVATE_MESSAGE ){
             if( event.getMessage().equalsIgnoreCase( "!time" )){
                 m_botAction.sendPrivateMessage( event.getPlayerID(),
@@ -111,17 +115,17 @@ public class spreebot extends SubspaceBot {
             }
         }
     }
-    
+
     class SummaryTask extends TimerTask {
         public SummaryTask(){
         }
-        
+
         public void run() {
             m_botAction.sendArenaMessage( "--==-- Announcement --==-- ", 2 );
             m_botAction.sendArenaMessage( "The longest winning streak this period was done by " + largestSpreeName );
             m_botAction.sendArenaMessage( largestSpreeName + " had " + largestSpree + " kills in a row, and has received a Super! prize." );
             //m_botAction.sendArenaMessage(  );
-            
+
             Iterator keyIterator = map.keySet().iterator();
             String topKillName;
             int topKillNumber = 0;
@@ -140,7 +144,7 @@ public class spreebot extends SubspaceBot {
                 }
             }
             keyIterator = map.keySet().iterator();
-            
+
             while( keyIterator.hasNext() ){
                 String name = (String)keyIterator.next();
                 SpreeInfo info = (SpreeInfo)map.get( name );
@@ -161,38 +165,38 @@ public class spreebot extends SubspaceBot {
             lastAnnounceTime = System.currentTimeMillis();
         }
     }
-    
+
     class ReminderTask extends TimerTask {
         public ReminderTask(){
         }
-        
+
         public void run() {
             m_botAction.sendArenaMessage( "The next announcement will occur in ONE minute!", 2 );
         }
     }
-    
-    
+
+
     static class SpreeInfo{
         int killsInARow = 0;
         int totalKills = 0;
         public SpreeInfo(){
         }
-        
+
         public void incrementTotalKills(){
             totalKills++;
         }
         public void incrementKillsInARow(){
             killsInARow++;
         }
-        
+
         public int getKillsInARow(){
             return killsInARow;
         }
-        
+
         public int getTotalKills(){
             return totalKills;
         }
-        
+
         public void reset(){
             killsInARow = 0;
             totalKills = 0;

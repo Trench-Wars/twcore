@@ -1,8 +1,11 @@
 package twcore.bots.multibot.acro;
 
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
 import java.util.*;
 
 public class acro extends MultiModule{
@@ -251,7 +254,7 @@ public class acro extends MultiModule{
     public String[] getModHelpMessage() {
         String[] help = {
                 "!start - Starts a game of acromania",
-                "!stop  - Stops a game currently in progress",              
+                "!stop  - Stops a game currently in progress",
                 "NOTE: This event should only be hosted by Mod+!"
         };
         return help;

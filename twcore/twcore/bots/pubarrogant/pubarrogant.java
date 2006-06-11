@@ -1,6 +1,11 @@
 package twcore.bots.pubarrogant;
 
 import twcore.core.*;
+import twcore.core.events.ArenaList;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.text.*;
 import java.io.*;
@@ -147,7 +152,7 @@ public class pubarrogant extends SubspaceBot
     if(opList.isSmod(target))
       return;
     int idleTime = getIdleTime(message);
-    if(idleTime > LOWERSTAFF_IDLE_KICK_TIME || (idleTime > IDLE_KICK_TIME && !opList.isZH(target)))      
+    if(idleTime > LOWERSTAFF_IDLE_KICK_TIME || (idleTime > IDLE_KICK_TIME && !opList.isZH(target)))
       m_botAction.sendUnfilteredPrivateMessage(target, "*kill");
   }
 
@@ -290,8 +295,8 @@ public class pubarrogant extends SubspaceBot
     endIndex = arenaName.indexOf(")");
 
     if( beginIndex != -1 && endIndex != -1 && beginIndex <= endIndex)
-      arenaName = arenaName.substring(beginIndex, endIndex); 
-      
+      arenaName = arenaName.substring(beginIndex, endIndex);
+
     m_botAction.changeArena(arenaName);
     currentArena = arenaName;
     m_botAction.scheduleTask(new KillIdlersTask(), ENTER_DELAY);

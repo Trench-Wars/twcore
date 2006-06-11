@@ -7,7 +7,14 @@
 
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
+
 import java.util.*;
 
 /**
@@ -93,8 +100,8 @@ public class twbotrevenge extends TWBotExtension
 				}
 			}
 		}
-				
-	/** Handles point scoring, based upon the involved players' kill histories. */ 
+
+	/** Handles point scoring, based upon the involved players' kill histories. */
 	public void handleEvent( PlayerDeath event )
 		{
 		if ( inProgress )
@@ -233,7 +240,7 @@ public class twbotrevenge extends TWBotExtension
 					while ( it.hasNext() )
 						{
 						Player p = (Player)it.next();
-						playerMap.put( p.getPlayerName(), new RevengePlayer( 
+						playerMap.put( p.getPlayerName(), new RevengePlayer(
 p.getPlayerName(), playerCount ) );
 						}
 					}
@@ -312,7 +319,7 @@ p.getPlayerName(), playerCount ) );
 	 * Sets the point value for `normal kills'.
 	 * This is the amount rewarded to players when they've killed a player that they
 	 * have not previously. (Triggered by an !nreward command.)
-	 * 
+	 *
 	 * @param name  the name of the player who sent the command
 	 * @param message  the command being sent (to be parsed for args)
 	 */
@@ -452,7 +459,7 @@ p.getPlayerName(), playerCount ) );
 			m_botAction.sendPrivateMessage( name, "Ship type limit set." );
 			}
 		}
-	
+
 	/**
 	 * This method shows the current game settings.
 	 * The sender of a !settings command will be PM'd with the current options.
@@ -549,7 +556,7 @@ p.getPlayerName(), playerCount ) );
 
 	/**
 	 * This method returns the number of non-spectating players.
-	 * 
+	 *
 	 * @return  the number of non-spectating players
 	 */
 	private int getPlayerCount()
@@ -558,7 +565,7 @@ p.getPlayerName(), playerCount ) );
 		int playerCount = 1;
 		Iterator it = m_botAction.getPlayingPlayerIterator();
 		if (it == null)
-			return 0;		
+			return 0;
 		while ( it.hasNext() )
 			{
 			Player p = (Player)it.next();
@@ -566,7 +573,7 @@ p.getPlayerName(), playerCount ) );
 				freq = p.getFrequency();
 			if ( p.getFrequency() != freq )
 				playerCount++;
-			}		
+			}
 		return playerCount;
 		}
 
@@ -649,7 +656,7 @@ class RevengePlayer
 
 	/**
 	 * This method adds a name to the player's `already killed' list.
-	 * 
+	 *
 	 * @param name  the name of the player to be added
 	 */
 	public void addKilled( String name )

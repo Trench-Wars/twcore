@@ -1,6 +1,9 @@
 package twcore.bots.twrcbot;
 
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+
 import java.util.*;
 import java.sql.ResultSet;
 import java.io.*;
@@ -21,7 +24,7 @@ public class twrcbot extends SubspaceBot
 	boolean isRunning = true;
 	BotSettings m_botSettings;
 	Calendar calendar;
-	
+
 	/** Create the twrcbot, requests LoggedOn and Message events, and makes the 2 logs if necessary
 	 *  @param botAction - necessary thing, passed by BotQueue to give bot functionality
 	 */
@@ -33,9 +36,9 @@ public class twrcbot extends SubspaceBot
 		pdt.setStartRule(Calendar.APRIL, 1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
 		pdt.setEndRule(Calendar.OCTOBER, -1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
 		calendar = new GregorianCalendar(pdt);
-		
+
 		EventRequester events = m_botAction.getEventRequester();
-		
+
 		events.request(EventRequester.LOGGED_ON);
 		events.request(EventRequester.MESSAGE);
 		try {
@@ -46,7 +49,7 @@ public class twrcbot extends SubspaceBot
 		} catch(Exception e) {}
 		m_botSettings = m_botAction.getBotSettings();
 	}
-	
+
 	/** Called when the bot gets logged in
 	 *  @param event - LoggedOn event doesn't do much, it's just there so the bot knows when it gets logged in
 	 */
@@ -66,7 +69,7 @@ public class twrcbot extends SubspaceBot
 			}
 		} catch(IOException e) {}
 	}
-	
+
 	/** Gets the person's name and message then passes info to handleCommand
 	 *  @param event - Message event containing all kinds of info about messages sent to bot
 	 */
@@ -74,17 +77,17 @@ public class twrcbot extends SubspaceBot
 	{
 		String name;
 		String message = event.getMessage();
-		
+
 		int messageType = event.getMessageType();
 		if(messageType == Message.PRIVATE_MESSAGE)
 		{
 			int senderID = event.getPlayerID();
 			name = m_botAction.getPlayerName(senderID);
-			
+
 			handleCommand(name, message);
 		}
 	}
-	
+
 	/** Inserts the player's name into the Racers table of the Racing database
 	 *  @param name - Name of the person signing up.
 	 */
@@ -94,7 +97,7 @@ public class twrcbot extends SubspaceBot
 			m_botAction.SQLQuery("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
 		} catch(Exception e) {}
 	}
-			
+
 	/** Handles the different commands that can be sent to the bot
 	 *  @param name - Name of the person
 	 *  @param message - Message sent to bot
@@ -153,7 +156,7 @@ public class twrcbot extends SubspaceBot
 			else if(message.toLowerCase().startsWith("!die"))
 				m_botAction.die();
 		}
-		
+
 		//reg people commands
 		if(message.toLowerCase().startsWith("!signup"))
 		{
@@ -184,11 +187,11 @@ public class twrcbot extends SubspaceBot
 				m_botAction.sendPrivateMessage(name, "No record of " + pieces[1] + " in the database.");
 		}
 		else if(message.toLowerCase().startsWith("!rank"))
-			m_botAction.sendPrivateMessage(name, "You are currently ranked #" + getRank(name) + " with " + getPoints(name) + " points.");				
+			m_botAction.sendPrivateMessage(name, "You are currently ranked #" + getRank(name) + " with " + getPoints(name) + " points.");
 		else if(message.toLowerCase().startsWith("!help"))
 			handleHelp(name);
 	}
-	
+
 	/** Updates the people.txt file every time a person signs up to keep track of the people
 	 *  that have signed up.
 	 */
@@ -199,14 +202,14 @@ public class twrcbot extends SubspaceBot
 			FileWriter out = new FileWriter(people, true);
 			while(it.hasNext())
 			{
-				String name = (String)it.next();	
+				String name = (String)it.next();
 				out.write(name + "\n");
 				out.flush();
 			}
 			out.close();
 		} catch(IOException e) {}
 	}
-	
+
 	/** Updates a players points.
 	 *  @param name - Name of the op that is updating points.
 	 *  @param params - Player's name and point change
@@ -219,13 +222,13 @@ public class twrcbot extends SubspaceBot
 			int currentPoints = getPoints(pName);
 			writeLog(name + " changed " + params[0] + "'s points from " + currentPoints + " to " + (currentPoints + points) + ". Reason: " + params[2]);
 			currentPoints += points;
-			
+
 			m_botAction.SQLQuery("website", "UPDATE tblRacers SET fldPoints = "+currentPoints+" WHERE fldName = \'"+pName+"\'");
 			m_botAction.sendPrivateMessage(name, "Updated.");
 		} catch(Exception e) {e.printStackTrace();}
 		pointChange(pName, points, params[2]);
 	}
-	
+
 	/** Returns the points that name has.
 	 *  @param name - name of the player that we are getting points of.
 	 */
@@ -239,7 +242,7 @@ public class twrcbot extends SubspaceBot
 				return 0;
 		} catch(Exception e) {return 0;}
 	}
-	
+
 	/** Writes point changes to log.txt
 	 *  @param message - message to be written to the log.txt file
 	 */
@@ -253,7 +256,7 @@ public class twrcbot extends SubspaceBot
 			out.close();
 		} catch(IOException e) {}
 	}
-	
+
 	/** PM's the person with the Help message
 	 *  @param name - Player that asked for the message.
 	 */
@@ -267,13 +270,13 @@ public class twrcbot extends SubspaceBot
 			m_botAction.sendPrivateMessage(name, "!update <name>:#:reason -Adds # points to <name>'s record.");
 			m_botAction.sendPrivateMessage(name, "!die                    -Kills the bot.");
 		}
-		
+
 		m_botAction.sendPrivateMessage(name, "!who <#>                -Returns the player with rank of <#>.");
 		m_botAction.sendPrivateMessage(name, "!rank <name>            -Gets <name>'s rank.");
 		m_botAction.sendPrivateMessage(name, "!signup                 -Signs you up for TWRC,");
 		m_botAction.sendPrivateMessage(name, "!help                   -Displays this message.");
 	}
-	
+
 	/** Returns the rank the specified player.
 	 *  @param name - Name of the player to get rank of.
 	 *  @return Player's rank.
@@ -294,7 +297,7 @@ public class twrcbot extends SubspaceBot
 			return ((Integer)ranks.get(name.toLowerCase())).intValue();
 		} catch(Exception e) {return 0;}
 	}
-	
+
 	/** Finds the player with the requested rank and pm's the person w/ that name.
 	 *  @param name - Name of person requesting rank.
 	 *  @param rank - Rank they want to know.
@@ -325,7 +328,7 @@ public class twrcbot extends SubspaceBot
 		if(!found)
 			m_botAction.sendPrivateMessage(name, "Cannot find anyone with that rank.");
 	}
-	
+
 	/** Inserts point change data into the tblPointsData sql table.
 	 *  @param player - Name of player whose points were changed.
 	 *  @param points - Change in points.
@@ -337,7 +340,7 @@ public class twrcbot extends SubspaceBot
 			m_botAction.SQLQuery("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0, "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
 		} catch(Exception e) {e.printStackTrace();}
 	}
-	
+
 	/** Returns the player's tblRacers fldID.
 	 *  @param name - Name of player.
 	 *  @return ID
@@ -351,7 +354,7 @@ public class twrcbot extends SubspaceBot
 		} catch(Exception e) {e.printStackTrace();}
 		return 0;
 	}
-	
+
 	/** Returns a timestamp for the database.
 	 *  @return Returns a timestamp in the format MM/DD/YYYY HH:MM
 	 */

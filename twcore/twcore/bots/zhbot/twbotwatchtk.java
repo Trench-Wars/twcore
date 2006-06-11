@@ -10,6 +10,11 @@ package twcore.bots.zhbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.game.Player;
 
 /**
  *  This module lets the bot monitor the teamkills, and
@@ -26,15 +31,15 @@ public class twbotwatchtk extends TWBotExtension
 	int allowedTKs = 3;    //How many tk's are  allowed by default
         int decayTime = 5;     //The time it default takes to make decay one teamkill
 	boolean tkwatching = false;   // If true, monitors and take action on teamkills
-	
+
 	public twbotwatchtk()
 	{
 		players = new HashMap();
         cantPlay = new HashMap();
 	}
-	
-	
-	/** Handles event received message, and if from an ER or above, 
+
+
+	/** Handles event received message, and if from an ER or above,
         * tries to parse it as a command.
         * @param event Passed event.
         */
@@ -87,7 +92,7 @@ public class twbotwatchtk extends TWBotExtension
     		m_botAction.sendArenaMessage(name + " has turned off TK watcher.");
     	}
     }
-    
+
     /** Handles all actions when a player enters the arena.
      * @param name Name of player who entered the arena.
      */
@@ -101,7 +106,7 @@ public class twbotwatchtk extends TWBotExtension
     		m_botAction.spec(name);   //double spec to free the person for moving, and dont let him enter if he comes from another arena.
     	}
     }
-    
+
     /** Handles all actions when someone kills another person .
      * @param killer Person who did the killing.
      * @param killee Person who got killed.
@@ -112,12 +117,12 @@ public class twbotwatchtk extends TWBotExtension
 		{
 			Player killer = m_botAction.getPlayer(event.getKillerID());
 			Player killee = m_botAction.getPlayer(event.getKilleeID());
-			
+
 			if( killer == null || killee == null )
 			    return;
-			
+
 			if(killer.getFrequency() == killee.getFrequency())
-			{			
+			{
 				if(players.containsKey(killer))
 				{
 					int i = ((Integer)players.get(killer)).intValue();
@@ -145,7 +150,7 @@ public class twbotwatchtk extends TWBotExtension
 			}
 		}
 	}
-    
+
     /** Handles all actions when a player tryd to enter the game.
      * @param getPlayerID Id of Person who tries to enter.
      * @param getPlayerName Name of person who tries to enter.
@@ -160,7 +165,7 @@ public class twbotwatchtk extends TWBotExtension
 			m_botAction.sendPrivateMessage( event.getPlayerID(), "You cannot enter, you were banned for " + banTime + " minute(s) for teamkilling." );
 		}
 	}
-	
+
 	public String[] getHelpMessages()
 	{
     	String[] TKHelp = {
@@ -180,16 +185,16 @@ public class twbotwatchtk extends TWBotExtension
     public void cancel()
     {
     }
-    
+
 	class EndIt extends TimerTask
-	{	
+	{
 		String player;
-	
+
 		public EndIt(String name)
 		{
 			player = name;
 		}
-		
+
 		public void run()
 		{
 			m_botAction.sendSmartPrivateMessage(player, "You may now play.");
@@ -206,12 +211,12 @@ public class twbotwatchtk extends TWBotExtension
 	class decay extends TimerTask
 	{
 		String player;
-		
+
 		public decay(String name)
 		{
 			player = name;
 		}
-		
+
 		public void run()
 		{
 			if(players.containsKey(player))

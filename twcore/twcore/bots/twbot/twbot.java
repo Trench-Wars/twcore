@@ -2,7 +2,11 @@ package twcore.bots.twbot;
 
 import java.util.*;
 import java.io.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.*;
+import twcore.core.util.Tools;
 
 public class twbot extends SubspaceBot
 {
@@ -180,7 +184,7 @@ public class twbot extends SubspaceBot
 		        String[] helps = ((TWBotExtension) extensions.get(key)).getHelpMessages();
 		        m_botAction.privateMessageSpam(name, helps);
 		    } catch ( Exception e ) {
-				m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " module.  Try reloading it.");		        
+				m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " module.  Try reloading it.");
 		    }
 		}
 		else
@@ -262,8 +266,8 @@ public class twbot extends SubspaceBot
 			}
 			if (!m_opList.isER(name)) {
 				if (message.startsWith("!help")) {
-					m_botAction.privateMessageSpam(name, playerhelps );				    
-				}             
+					m_botAction.privateMessageSpam(name, playerhelps );
+				}
 				return;
 			}
 			lastUse = 0;
@@ -553,11 +557,11 @@ public class twbot extends SubspaceBot
 	{
 		distributeEvent((SubspaceEvent) event);
 	}
-	public void handleEvent( TurretEvent event ) 
+	public void handleEvent( TurretEvent event )
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
-	public void handleEvent( PlayerBanner event ) 
+	public void handleEvent( PlayerBanner event )
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
@@ -588,5 +592,5 @@ public class twbot extends SubspaceBot
 			"Hello, I'm an event bot!  You can use the following commands with me:",
 			"!host              - Tells you who, if anyone, is hosting with this bot.",
 			"!games             - Tells you who's hosting w/ me and where. (remote cmd)"
-	};	
+	};
 }

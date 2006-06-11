@@ -11,7 +11,12 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
 
 public class twbotkillrace extends TWBotExtension {
    /** Creates a new instance of portabotTestModule */

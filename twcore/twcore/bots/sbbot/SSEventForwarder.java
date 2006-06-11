@@ -1,5 +1,7 @@
 package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.events.*;
+
 import java.io.*;
 
 /**
@@ -7,9 +9,9 @@ import java.io.*;
  */
 public abstract class SSEventForwarder extends SubspaceBot {
     protected SSEventOperator operator;
-    
+
     public static final SSEventMessageType
-	SUBSPACEEVENT = new SSEventMessageType(), 
+	SUBSPACEEVENT = new SSEventMessageType(),
 	WATCHDAMAGE = new SSEventMessageType(),
 	SCORERESET = new SSEventMessageType(),
 	PLAYERENTERED = new SSEventMessageType(),
@@ -35,9 +37,9 @@ public abstract class SSEventForwarder extends SubspaceBot {
 	ARENALIST = new SSEventMessageType(),
 	INTERPROCESSEVENT = new SSEventMessageType(),
 	SQLRESULTEVENT = new SSEventMessageType();
-    
+
     protected EventRequester events;
-    
+
     public SSEventForwarder( BotAction botAction) {
 	super(botAction);
 	events = m_botAction.getEventRequester();
@@ -46,11 +48,11 @@ public abstract class SSEventForwarder extends SubspaceBot {
     }
 
     protected abstract SSEventOperator getOperator();
-    
+
     public void handleEvent( SubspaceEvent event ){
 	getOperator().notifyEvent(SUBSPACEEVENT,event);
     }
-    
+
     public void handleEvent( WatchDamage event ) {
 	getOperator().notifyEvent(WATCHDAMAGE,event);
     }
@@ -63,7 +65,7 @@ public abstract class SSEventForwarder extends SubspaceBot {
 	getOperator().notifyEvent(PLAYERENTERED, event);
     }
 
-    public void handleEvent( twcore.core.Message event ) {
+    public void handleEvent( twcore.core.events.Message event ) {
 	getOperator().notifyEvent(MESSAGE, event);
     }
 
@@ -110,7 +112,7 @@ public abstract class SSEventForwarder extends SubspaceBot {
     public void handleEvent( FlagVictory event ){
 	getOperator().notifyEvent(FLAGVICTORY, event);
     }
-    
+
     public void handleEvent( FlagPosition event ) {
 	getOperator().notifyEvent(FLAGPOSITION, event);
     }
@@ -121,8 +123,8 @@ public abstract class SSEventForwarder extends SubspaceBot {
 
     public void handleEvent( FlagDropped event ){
 	getOperator().notifyEvent(FLAGDROPPED, event);
-    }  
-    
+    }
+
     public void handleEvent( SoccerGoal event ) {
 	getOperator().notifyEvent(SOCCERGOAL, event);
     }
@@ -130,7 +132,7 @@ public abstract class SSEventForwarder extends SubspaceBot {
     public void handleEvent( BallPosition event ) {
 	getOperator().notifyEvent(BALLPOSITION, event);
     }
-    
+
     public void handleEvent( Prize event ) {
 	getOperator().notifyEvent(PRIZE,event);
     }
@@ -139,15 +141,15 @@ public abstract class SSEventForwarder extends SubspaceBot {
         //m_botAction.joinArena( "#robopark" );
 	getOperator().notifyEvent(LOGGEDON, event);
     }
-    
+
     public void handleEvent( ArenaList event ){
 	getOperator().notifyEvent(ARENALIST, event);
     }
 
-    public void handleEvent( InterProcessEvent event ){    
+    public void handleEvent( InterProcessEvent event ){
 	getOperator().notifyEvent(INTERPROCESSEVENT, event);
     }
-    
+
     public void handleEvent( SQLResultEvent event ){
 	getOperator().notifyEvent(SQLRESULTEVENT, event);
     }

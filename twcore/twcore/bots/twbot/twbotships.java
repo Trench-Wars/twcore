@@ -9,7 +9,13 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
 
 public class twbotships extends TWBotExtension
 {

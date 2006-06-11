@@ -8,7 +8,7 @@ public class Message {
 	contents = c;
 	text = t;
     }
-    
+
     public Message(Object c) {
 	contents = c;
 	text = (String) null;

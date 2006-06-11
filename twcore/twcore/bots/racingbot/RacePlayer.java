@@ -3,17 +3,17 @@ package twcore.bots.racingbot;
 import java.util.*;
 
 public class RacePlayer {
-	
+
 	int laps  = 0;
 	int check = 0;
-	
+
 	int lastPointOnTrack;
 	int lastCheck = 0;
-		
+
 	public RacePlayer( int last ) {
 		lastPointOnTrack = last;
 	}
-	
+
 	public int hitPoint( int checkPoint, String name, Track currentTrack) {
 		//System.out.println( "Current CP: " + checkPoint + "   Last CP: " + lastCheck + "   LPOT: " + lastPointOnTrack );
 		if( lastCheck+1 == checkPoint ) {
@@ -28,11 +28,11 @@ public class RacePlayer {
 				{
 					ArrayList thisLap = (ArrayList)positions.get(laps);
 					ArrayList lastLap = (ArrayList)positions.get(laps - 1);
-					
+
 					lastLap.remove(lastLap.indexOf(name.toLowerCase()));
 					positions.remove(laps - 1);
 					positions.add(laps - 1, lastLap);
-					
+
 					thisLap.add(name.toLowerCase());
 					positions.remove(laps);
 					positions.add(laps, thisLap);
@@ -41,18 +41,18 @@ public class RacePlayer {
 				{
 					ArrayList thisLap = new ArrayList();
 					ArrayList lastLap = (ArrayList)positions.get(laps - 1);
-						
+
 					lastLap.remove(lastLap.indexOf(name.toLowerCase()));
 					positions.remove(laps - 1);
 					positions.add(laps - 1, lastLap);
-					
+
 					thisLap.add(name.toLowerCase());
 					positions.add(thisLap);
 				}
 			}
 			return laps;
 		}
-		
+
 		return -1;
-	}	
+	}
 }

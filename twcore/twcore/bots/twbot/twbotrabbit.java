@@ -7,7 +7,14 @@
 
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
+
 import java.util.*;
 
 /**
@@ -273,7 +280,7 @@ public class twbotrabbit extends TWBotExtension
 					+ "valid range (1-104). Defaulting to none.");
 					}
 				fcMsgs.add(args[0] + "%" + args[1]);
-				m_botAction.sendPrivateMessage(name, "Flag claim message added.");				
+				m_botAction.sendPrivateMessage(name, "Flag claim message added.");
 				}
 			catch (Exception e)
 				{
@@ -355,7 +362,7 @@ public class twbotrabbit extends TWBotExtension
 		int playerCount = 1;
 		Iterator it = m_botAction.getPlayingPlayerIterator();
 		if (it == null)
-			return 0;		
+			return 0;
 		while (it.hasNext())
 			{
 			Player p = (Player)it.next();
@@ -363,7 +370,7 @@ public class twbotrabbit extends TWBotExtension
 				freq = p.getFrequency();
 			if (p.getFrequency() != freq)
 				playerCount++;
-			}		
+			}
 		return playerCount;
 		}
 

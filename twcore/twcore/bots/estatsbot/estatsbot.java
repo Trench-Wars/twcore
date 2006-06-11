@@ -1,16 +1,22 @@
 package twcore.bots.estatsbot;
 
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.sql.*;
 /* Version something */
 public class estatsbot extends SubspaceBot {
-	
+
 	HashMap players;
 	boolean gameRunning = false;
 	ElimGame thisGame;
 	String ref;
-	
+
 	public estatsbot(BotAction botAction) {
 		super(botAction);
 		players = new HashMap();
@@ -19,15 +25,15 @@ public class estatsbot extends SubspaceBot {
 		events.request(events.PLAYER_DEATH);
 		events.request(events.LOGGED_ON);
 	}
-	
+
 	public void handleEvent(LoggedOn event) {
 		m_botAction.joinArena(m_botAction.getBotSettings().getString("Arena"+m_botAction.getBotNumber()));
 		ref = m_botAction.getBotSettings().getString("Ref"+m_botAction.getBotNumber());
 	}
-	
+
 	public void handleEvent(PlayerDeath event) {
 		if(!gameRunning) return;
-		
+
 		String killer = m_botAction.getPlayerName(event.getKillerID());
 		String killee = m_botAction.getPlayerName(event.getKilleeID());
 		if(players.containsKey((killer.toLowerCase())))
@@ -35,7 +41,7 @@ public class estatsbot extends SubspaceBot {
 		if(players.containsKey((killee.toLowerCase())))
 			((ElimPlayer)players.get(killee.toLowerCase())).addDeath();
 	}
-	
+
 	public void handleEvent(Message event) {
 		if(event.getMessageType() == Message.ARENA_MESSAGE) {
 			handleMessage(event.getMessage());
@@ -54,12 +60,12 @@ public class estatsbot extends SubspaceBot {
 			}
 		}
 	}
-	
+
 	public void tellAbout(String name) {
 		if(name == null) return;
 		m_botAction.sendPrivateMessage(name, "Hey, just your friendly StatsBot here watching everything you do >.>. You can check my stuff out at http://www.trenchwars.org/Elim");
 	}
-	
+
 	public void handleMessage(String message) {
 		message = message.toLowerCase();
 		if(message.startsWith("go! go! go!") && !gameRunning) {
@@ -70,14 +76,14 @@ public class estatsbot extends SubspaceBot {
 			endGame(message.substring(18));
 		}
 	}
-	
+
 	public void handlePM(String message) {
 		try {
 			String type = message.substring(15, message.indexOf(";"));
 			thisGame.setType(type);
 		} catch(Exception e) {}
 	}
-	
+
 	public void startGame() {
 		try {
 			players.clear();
@@ -90,7 +96,7 @@ public class estatsbot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(ref, "!status");
 		} catch(Exception e) {}
 	}
-	
+
 	public void endGame(String winner) {
 		try {
 			if(winner != null && !winner.equalsIgnoreCase("ner")) {
@@ -115,21 +121,21 @@ class ElimPlayer {
 	String name;
 	int kills;
 	int deaths;
-	
+
 	public ElimPlayer(String n) {
 		name = n;
 		kills = 0;
 		deaths = 0;
 	}
-	
+
 	public void addDeath() {
 		deaths++;
 	}
-	
+
 	public void addKill() {
 		kills++;
 	}
-	
+
 	public String getQuery(int gID, boolean won) {
 		int w = 0; if(won) w = 1;
 		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW());";
@@ -142,20 +148,20 @@ class ElimGame {
 	int players;
 	String winner;
 	boolean isElim;
-	
+
 	public ElimGame(int p, boolean elim) {
 		players = p;
 		isElim = elim;
 	}
-	
+
 	public void setType(String type) {
 		gameType = type;
 	}
-		
+
 	public void setWinner(String w) {
 		winner = w;
 	}
-	
+
 	public String getQuery() {
 		int e = 0; if(isElim) e = 1;
 		String query = "INSERT INTO tblElimRound (fnGameID, fnPlayers, fcGameType, fcWinner, fnElim, ftDate) VALUES(0, "+players+", '"+gameType+"', '"+winner+"', "+e+", NOW());";

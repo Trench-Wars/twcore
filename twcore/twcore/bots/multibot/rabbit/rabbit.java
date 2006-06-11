@@ -7,8 +7,14 @@
 
 package twcore.bots.multibot.rabbit;
 
-import twcore.misc.multibot.*;
+import twcore.bots.MultiModule;
 import twcore.core.*;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
+
 import java.util.*;
 
 /**
@@ -40,7 +46,7 @@ public class rabbit extends MultiModule
 	private StringBag killMsgs = new StringBag();
 
 	public void init() { }
-	
+
 	public void requestEvents(EventRequester events)	{
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.FLAG_CLAIMED);
@@ -280,7 +286,7 @@ public class rabbit extends MultiModule
 					+ "valid range (1-104). Defaulting to none.");
 					}
 				fcMsgs.add(args[0] + "%" + args[1]);
-				m_botAction.sendPrivateMessage(name, "Flag claim message added.");				
+				m_botAction.sendPrivateMessage(name, "Flag claim message added.");
 				}
 			catch (Exception e)
 				{
@@ -343,7 +349,7 @@ public class rabbit extends MultiModule
 		}
 
 	public void cancel() {}
-	
+
 	public boolean isUnloadable()	{
 		return true;
 	}
@@ -366,7 +372,7 @@ public class rabbit extends MultiModule
 		int playerCount = 1;
 		Iterator it = m_botAction.getPlayingPlayerIterator();
 		if (it == null)
-			return 0;		
+			return 0;
 		while (it.hasNext())
 			{
 			Player p = (Player)it.next();
@@ -374,7 +380,7 @@ public class rabbit extends MultiModule
 				freq = p.getFrequency();
 			if (p.getFrequency() != freq)
 				playerCount++;
-			}		
+			}
 		return playerCount;
 		}
 

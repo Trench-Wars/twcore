@@ -1,13 +1,22 @@
 package twcore.bots.multibot.gravbomber;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.WatchDamage;
+import twcore.core.events.WeaponFired;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 /*
     GravBomber - author Mr. Spam
 */
 
 import java.util.*;
+
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
 
 public class gravbomber extends MultiModule {
     OperatorList        m_opList;
@@ -46,7 +55,7 @@ public class gravbomber extends MultiModule {
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat Name" ) + ",spamchat" );
         m_botAction.sendUnfilteredPublicMessage( "*relkills 1" );
     }
-    
+
     public void requestEvents(EventRequester req)	{
 		req.request( EventRequester.MESSAGE );
 		req.request( EventRequester.WEAPON_FIRED );
@@ -134,7 +143,7 @@ public class gravbomber extends MultiModule {
             } else if( message.toLowerCase().equals("!quit") ){
             	Player player = m_botAction.getPlayer( name );
             	if( !player.isPlaying() ) return;
-            	
+
                 if(m_gameStarted){
                     if( m_playerList.indexOf(name) != -1 ){
                         remPlayer( name, true, true );
@@ -193,7 +202,7 @@ public class gravbomber extends MultiModule {
         if(m_debug) m_botAction.sendChatMessage( 2, "Hit watchdamage for: " + m_botAction.getPlayerName( event.getVictim() ) + "(" + event.getVictim() + ") Attacker: " + playerName + "(" + event.getAttacker() + ") Damage: " + event.getEnergyLost() );
 
         if( m_playerList.indexOf( playerName ) != -1 && !playerName.equals( m_botAction.getPlayerName( event.getVictim() ) ) && event.getEnergyLost() > 0 ){
-            m_botAction.sendUnfilteredPrivateMessage( playerName, "*points " + event.getEnergyLost() );	
+            m_botAction.sendUnfilteredPrivateMessage( playerName, "*points " + event.getEnergyLost() );
             m_currentTurnDamage += event.getEnergyLost();
         }
 
@@ -255,7 +264,7 @@ public class gravbomber extends MultiModule {
 
     	Player playerKilled = m_botAction.getPlayer( event.getKilleeID() );
     	Player playerKiller = m_botAction.getPlayer( event.getKillerID() );
-    	
+
     	//debug
     	if(m_debug){m_botAction.sendChatMessage( 2, playerKilled.getPlayerName() + " killed by " + playerKiller.getPlayerName() );}
 
@@ -278,7 +287,7 @@ public class gravbomber extends MultiModule {
 
         m_botAction.privateMessageSpam( name, helpText );
     }
-    
+
     public  String[] getModHelpMessage() {
     	String[] helpText = new String[] {
             	"Host Commands:",
@@ -289,12 +298,12 @@ public class gravbomber extends MultiModule {
             };
         return helpText;
     }
-    
+
     public boolean isUnloadable() {
     	return true;
     }
 
-    /* Game Code */    
+    /* Game Code */
     public void setupWeapons(){
     	m_weapons = new LinkedList();
         m_weapons.add( WEAP_ROCKET, new GBWeapon("Grav Inverter", m_botSettings.getInt("RocketPrice") ) );
@@ -341,7 +350,7 @@ public class gravbomber extends MultiModule {
 
         if( GBPlayerBag.size() < 2 ){
             m_botAction.sendPrivateMessage( hostName,  "Cannot start game with less then 2 people in play" );
-            return;	
+            return;
         }
 
         setupSettings();
@@ -356,11 +365,11 @@ public class gravbomber extends MultiModule {
             m_botAction.sendUnfilteredPrivateMessage( playerName, "*watchdamage" );
             m_botAction.sendUnfilteredPrivateMessage( playerName, "*watchgreen" );
             m_botAction.sendUnfilteredPrivateMessage( playerName, "*points " + points );
-            
+
             //debug
             if(m_debug){
                 m_botAction.sendChatMessage( 2, "Added " + playerName + " ID: " + Integer.toString(m_botAction.getPlayerID( playerName )) );
-            } 
+            }
         }
 
         m_botAction.sendUnfilteredPublicMessage( "*shipreset" );
@@ -374,7 +383,7 @@ public class gravbomber extends MultiModule {
     	    m_timer.cancel();
 
     	    m_gameStarted = false;
-    	    
+
     	    for( int i = 0; i <= m_playerList.size(); i++ ){
     	        remPlayer( (String)m_playerList.getFirst(), false, false );
     	    }
@@ -463,10 +472,10 @@ public class gravbomber extends MultiModule {
         }
 
         m_currentTurnDamage = 0;
-        
+
         GBPlayer gbplayer = (GBPlayer)m_playerData.get( playerName );
         gbplayer.decrementTurnsTillNextRocket();
-        
+
         if(startNext && m_gameStarted){
             startTurn( getNextPlayer( true, false ) );
         }
@@ -486,10 +495,10 @@ public class gravbomber extends MultiModule {
     	} else {
     	    return null;
     	}*/
-    	
-    	int pos = m_currentPlayerIndex;    	
+
+    	int pos = m_currentPlayerIndex;
     	int last = (m_playerList.size() - 1);
-    	
+
     	if(!wasRemoved){
             if (pos == last){
     	        pos = m_playerList.indexOf(m_playerList.getFirst());
@@ -498,10 +507,10 @@ public class gravbomber extends MultiModule {
             }
         } else {
             if (pos > (m_playerList.size() - 1)) {
-                pos = m_playerList.indexOf(m_playerList.getFirst());            	
+                pos = m_playerList.indexOf(m_playerList.getFirst());
             }
         }
-        
+
         if( increment ){ m_currentPlayerIndex = pos; }
         return m_playerList.get(pos).toString();
     }
@@ -542,7 +551,7 @@ public class gravbomber extends MultiModule {
             if( power >= min && power <= max ){
             	GBPlayer gbplayer = (GBPlayer)m_playerData.get( playerName );
 
-                if( m_currentPlayer.getPlayerName().equals( playerName ) ){                
+                if( m_currentPlayer.getPlayerName().equals( playerName ) ){
                     m_botAction.sendUnfilteredPublicMessage( "?set All:bombspeed:" + power );
                     m_botAction.sendPrivateMessage( playerName, "Power set to: " + power );
                 } else {
@@ -568,13 +577,13 @@ public class gravbomber extends MultiModule {
     	    weapon = (GBWeapon)m_weapons.get( weaponID );
     	} catch( IndexOutOfBoundsException e){
             m_botAction.sendPrivateMessage( playerName, "Invalid weapon number");
-            return;      
+            return;
         } catch( Exception e ){
             Tools.printStackTrace( e );
         }
 
     	Player player = m_botAction.getPlayer( playerName );
-    	    	
+
     	if( player.getScore() >= weapon.getPrice() ){
             if( weaponID == WEAP_ROCKET ){
                 GBPlayer gbplayer = (GBPlayer)m_playerData.get( playerName );
@@ -712,11 +721,11 @@ public class gravbomber extends MultiModule {
 
     public class TurnTask extends TimerTask{
         final String playerName;
-    
+
         public TurnTask( String endPlayerName ){
             playerName = endPlayerName;
         }
-    
+
     	public void run(){
     	    if(m_gameStarted) endTurn( playerName, true, true );
     	}
@@ -744,21 +753,21 @@ public class gravbomber extends MultiModule {
         }
 
         public String getName(){
-            return name;	
+            return name;
         }
 
         public void setBombPower( int power ){
-            bombPower = power;	
+            bombPower = power;
         }
 
         public int getBombPower(){
-            return bombPower;	
+            return bombPower;
         }
-        
+
         public int getTurnsTillNextRocket(){
             return turnsTillNextRocket;
         }
-        
+
         public void setTurnsTillNextRocket( int newValue ){
             turnsTillNextRocket = newValue;
         }
@@ -773,27 +782,27 @@ public class gravbomber extends MultiModule {
     class GBWeapon {
         String name;
         int price;
-        
+
         public GBWeapon(){
         }
-        
+
         public GBWeapon( String newName, int newPrice ){
             setName( newName );
             setPrice( newPrice );
         }
-        
+
         public void setName( String newName ){
             name = newName;
         }
-        
+
         public String getName(){
             return name;
         }
-        
+
         public void setPrice( int newPrice ){
             price = newPrice;
         }
-        
+
         public int getPrice(){
             return price;
         }
@@ -813,7 +822,7 @@ public class gravbomber extends MultiModule {
 
         public void clear(){
             list.clear();
-        }    
+        }
 
         public void add( String string ){
             list.add( string );
@@ -829,7 +838,7 @@ public class gravbomber extends MultiModule {
             } else {
                 int i = random( list.size() );
                 String grabbed;
-            
+
                 grabbed =(String)list.get( i ) ;
                 list.remove( i );
                 return grabbed;
@@ -841,7 +850,7 @@ public class gravbomber extends MultiModule {
         }
 
         private int random( int maximum ){
-            return (int)(Math.random()*maximum);        
+            return (int)(Math.random()*maximum);
         }
 
         public boolean isEmpty(){

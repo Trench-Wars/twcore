@@ -1,13 +1,16 @@
 package twcore.bots.multibot.fallout;
 
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerPosition;
+import twcore.core.game.Player;
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
 import java.util.*;
 
 public class fallout extends MultiModule {
-	
-	
+
+
 	/* Fallout variables */
 	HashMap     players = new HashMap();
 	final int	arenaRad = 1216;
@@ -39,12 +42,12 @@ public class fallout extends MultiModule {
 	public void handleEvent( Message event ){
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
-            String name = m_botAction.getPlayerName( event.getPlayerID() );            
+            String name = m_botAction.getPlayerName( event.getPlayerID() );
             if( opList.isER( name ) )
             handleCommand( name, message );
         }
     }
-    
+
     public void handleCommand( String name, String message ) {
     	try {
 			if( message.toLowerCase().startsWith( "!start" ) ) {
@@ -65,10 +68,10 @@ public class fallout extends MultiModule {
 	    	} else if( message.toLowerCase().startsWith( "!help" ) ) {
 	    		displayHelp( name, message );
 	    	}
-	    		
+
 	    } catch ( Exception e ) {}
     }
-    
+
     public void displayHelp( String name, String message ) {
     	String help[] = {
     		"!start                         - starts a game of fallout with speed of 30 and teams of 1",
@@ -78,7 +81,7 @@ public class fallout extends MultiModule {
     	};
     	m_botAction.privateMessageSpam( name, help );
     }
-    
+
     public void startFallout( String name, String message ) {
 		if( !fallOut ) {
 		    if( getPlayerCount() > 1 ) {
@@ -88,14 +91,14 @@ public class fallout extends MultiModule {
 		    		m_botAction.showObject( j * 10 );
 		    	m_botAction.showObject( 1 );
 		    	m_botAction.sendArenaMessage( "Game begins in 10 seconds!", 22 );
-		    	
+
 		    	TimerTask preStartGame = new TimerTask() {
 	    			public void run() {
 	    				m_botAction.createRandomTeams( teamSize );
 	    			}
 	    		};
 	    		m_botAction.scheduleTask( preStartGame, 9000 );
-	    		
+
 	    		TimerTask startGame = new TimerTask() {
 	    			public void run() {
 	    				for(int i=1; i < 7; i++)
@@ -109,18 +112,18 @@ public class fallout extends MultiModule {
 	    			}
 	    		};
 	    		m_botAction.scheduleTask( startGame, 10000 );
-	    		
+
 	    		TimerTask prizeEm = new TimerTask() {
 	    			public void run() {
 	    				m_botAction.sendUnfilteredPublicMessage( "*prize 100" );
 	    			}
 	    		};
 	    		m_botAction.scheduleTaskAtFixedRate( prizeEm, 11000, 3000 );
-	    		
+
 			} else m_botAction.sendPrivateMessage( name, "Need 2 or more players to start fallout." );
 		} else m_botAction.sendPrivateMessage( name, "Event already in progress." );
-	} 
-	
+	}
+
 	public void stopFallout( String name, String message ) {
 		if( fallOut ) {
 			m_botAction.sendArenaMessage( "This round of Fallout has been canceled." );
@@ -134,7 +137,7 @@ public class fallout extends MultiModule {
 			players.clear();
 		} else m_botAction.sendPrivateMessage( name, "Fallout is not in progress." );
 	}
-	
+
     public void handleEvent( PlayerPosition event ) {
     	//m_botAction.sendArenaMessage( m_botAction.getPlayer( event.getPlayerID() ).getPlayerName() + "   " + event.getXLocation() +":" + event.getYLocation());
     	//System.out.println( m_botAction.getPlayer( event.getPlayerID() ).getPlayerName() + "   " + event.getXLocation() +":" + event.getYLocation());
@@ -160,15 +163,15 @@ public class fallout extends MultiModule {
 				m_botAction.spec( p.getPlayerName() );
 			}
 			if( getPlayerCount() < 2 ) doHandleWin();
-			
+
 		}
 	}
-	
+
 	public double getCenterDistance( int x, int y ) {
 		double dist = Math.sqrt( Math.pow(( 8192 - x ), 2) + Math.pow(( 8192 - y ), 2) );
 		return dist;
 	}
-	
+
 	public void doHandleWin() {
 		String winner = "Me (The best bot around town)";
 		Iterator it = m_botAction.getPlayingPlayerIterator();
@@ -184,7 +187,7 @@ public class fallout extends MultiModule {
 		m_botAction.showObject( 3 );
 		if( i == 1 )
 			m_botAction.sendArenaMessage( winner.substring( 0, winner.length() - 5 ) + " has won this round of Fallout!", 5 );
-		else 
+		else
 			m_botAction.sendArenaMessage( winner.substring( 0, winner.length() - 5 ) + " have won this round of Fallout!", 5 );
 		m_botAction.cancelTasks();
 		m_botAction.shipResetAll();
@@ -194,8 +197,8 @@ public class fallout extends MultiModule {
 		arenaCur = 0;
 		teamSize = 1;
 		fallOut = false;
-	} 
-	
+	}
+
 	public int getPlayerCount() {
 		int freq = -1;
 		int i = 1;
@@ -203,14 +206,14 @@ public class fallout extends MultiModule {
 	    if( it == null ) return 0;
 	    while( it.hasNext() ){
 	    	Player p = (Player)it.next();
-	    	if( freq == -1 ) 
+	    	if( freq == -1 )
 	    		freq = p.getFrequency();
 	    	if( p.getFrequency() != freq )
 	    		i++;
 	    }
 	    return i;
 	}
-	
+
 	public void cancel() {
 		m_botAction.cancelTasks();
 	}

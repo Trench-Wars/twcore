@@ -1,6 +1,11 @@
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
 import java.util.*;
 import java.net.*;
 import java.io.*;
@@ -20,16 +25,16 @@ public class twbotmarco extends TWBotExtension
 	String currentWord;                   //Current 'polo' word
 	boolean isRunning = false;            //boolean variable to determine if the marco mode is activated
 	Random rand = new Random();           //Random object to pick the 'polo' word
-	
+
 	/**
 	 * Creates a new instance of the module when it is loaded.
 	 * and adds polo to wordList.
-	 */	
+	 */
 	public twbotmarco()
 	{
 		wordList.add("polo");
 	}
-	
+
 	/**
 	 * Handles a message event, if the person is a ER+
 	 * it calls the handleCommand method, if the person
@@ -48,7 +53,7 @@ public class twbotmarco extends TWBotExtension
             	handlePublicCommand(name, message);
         }
     }
-    
+
     /**
      * Remove a person from the deCloaked list if they
      * leave the arena so the last person to say the word
@@ -60,7 +65,7 @@ public class twbotmarco extends TWBotExtension
     	if(deCloaked.contains(m_botAction.getPlayerName(event.getPlayerID())))
     		deCloaked.remove(m_botAction.getPlayerName(event.getPlayerID()));
     }
-    
+
     /**
      * Remove a person from the deCloaked list if they
      * spec so the last person to say the word will still
@@ -72,7 +77,7 @@ public class twbotmarco extends TWBotExtension
     	if(deCloaked.contains(m_botAction.getPlayerName(event.getPlayerID())) && event.getShipType() == 0)
     		deCloaked.remove(m_botAction.getPlayerName(event.getPlayerID()));
     }
-    
+
     /**
      * Handles commands from a ER+ to run the Marco Polo game
      * @param name name is the person that sent the command.
@@ -97,7 +102,7 @@ public class twbotmarco extends TWBotExtension
     	else
     		handlePublicCommand(name, message);
     }
-    
+
     /**
      * Checks to see if the person said the right word and if they are cloakless.
      * if both are true it gives the person their cloak back.
@@ -114,7 +119,7 @@ public class twbotmarco extends TWBotExtension
     			m_botAction.sendUnfilteredPrivateMessage(name, "*prize #-5");
     	}
     }
-    
+
     /**
      * Toggles the mode of Marco Polo, if it is running
      * when the method is called it will turn it off.
@@ -135,7 +140,7 @@ public class twbotmarco extends TWBotExtension
     		m_botAction.sendArenaMessage("Marco Polo mode deactivated.");
     	}
     }
-    
+
     /**
      * pm's the person that sent the !words message
      * with the list of words and the index of the
@@ -147,7 +152,7 @@ public class twbotmarco extends TWBotExtension
     	for(int k = 0;k < wordList.size();k++)
     		m_botAction.sendPrivateMessage(name, k + ". " + wordList.get(k));
     }
-    
+
     /**
      * Checks to see if wordList has the specified index
      * and deletes the word at that index.
@@ -161,7 +166,7 @@ public class twbotmarco extends TWBotExtension
     	try {
     		num = Integer.parseInt(pieces[1]);
     	} catch(Exception e) {}
-    	
+
     	if(num < wordList.size())
     	{
     		m_botAction.sendPrivateMessage(name, wordList.get(num) + " has been removed from the word list.");
@@ -172,7 +177,7 @@ public class twbotmarco extends TWBotExtension
     	else
     		m_botAction.sendPrivateMessage(name, "No word at that index.");
     }
-    
+
     /**
      * Adds a word to wordList
      * @param name name of the person that sent the request to add a word.
@@ -190,7 +195,7 @@ public class twbotmarco extends TWBotExtension
     	wordList.add(pieces[pieceNumber]);
     	m_botAction.sendPrivateMessage(name, pieces[pieceNumber] + " has been added to the word list.");
     }
-    
+
     /**
      * Clears wordList
      * @param name name of the person that requested the wordList.clear()
@@ -201,7 +206,7 @@ public class twbotmarco extends TWBotExtension
     	wordList.add("polo");
     	m_botAction.sendPrivateMessage(name, "Word list cleared.");
     }
-    
+
     /**
      * Gets words from a txt file on the internet.
      * @param name name of the person that sent the request to add the list of words.
@@ -224,7 +229,7 @@ public class twbotmarco extends TWBotExtension
     		}
     	} catch(IOException e) {e.printStackTrace(System.out);}
     }
-    
+
     /**
      * Takes away everyone's cloaks,
      * adds everyone playing to the deCloaked list,
@@ -240,7 +245,7 @@ public class twbotmarco extends TWBotExtension
     			num = 0;
     		else
     			num = rand.nextInt(num);
-    		
+
     		currentWord = String.valueOf(wordList.get(num));
     		m_botAction.sendArenaMessage("Cloaks dropped, say " + currentWord + " to get you cloak back!!!", 13);
     		m_botAction.sendUnfilteredPublicMessage("*prize #-5");
@@ -252,10 +257,10 @@ public class twbotmarco extends TWBotExtension
     		}
     	}
     }
-    
+
     /**
      * Returns the help message for the marco module
-     */ 
+     */
     public String[] getHelpMessages()
     {
     	String help[] = {
@@ -269,8 +274,8 @@ public class twbotmarco extends TWBotExtension
     	};
     	return help;
     }
-    
+
     public void cancel()
     {
     }
-}   		
+}

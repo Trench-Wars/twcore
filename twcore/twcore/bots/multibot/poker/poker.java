@@ -2,8 +2,12 @@ package twcore.bots.multibot.poker;
 
 import java.util.*;
 import java.sql.*;
+
+import twcore.bots.MultiModule;
 import twcore.core.*;
-import twcore.misc.multibot.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerLeft;
+import twcore.core.util.Tools;
 
 public class poker extends MultiModule
 {

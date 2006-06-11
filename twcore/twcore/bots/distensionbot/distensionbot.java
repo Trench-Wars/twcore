@@ -1,73 +1,84 @@
 package twcore.bots.distensionbot;
 
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.sql.*;
 
 
 /**
  * DistensionBot -- for the progressive war-game, 'Distension'.
- * 
- * 
+ *
+ *
  * !ban   dude
  * !unban dude
- * 
- * 
+ *
+ *
  * Pre-login cmds
- * 
+ *
  * `!return       - Checks your enlistment status, and loads profile if it exists.
  * `!enlist #:password - Enlists with a given army.
- * `!armies       - Shows list of armies, their totals, and respective enlistment bonuses. 
+ * `!armies       - Shows list of armies, their totals, and respective enlistment bonuses.
  * (armies is also post-login)
- * 
+ *
  * Post-login cmds
- * 
+ *
  * `!pilot #        - Enter as a given ship.
  * `!dock           - Save and enter spectator mode.
  *
  * `!hangar         - Show available ships, and costs for unavailables.
  * `!buyship #      - Purchase rights to given ship, if possible.
- * 
+ *
  * `!armory         - Show contents of the armory, and associated prices.
  * `!upgrade #      - Upgrade a given aspect of current ship.
  * !scrap #        - Scrap (sell) a given upgrade as defined on !report screen.
- * 
+ *
  * `!status         - Report of current ship status (upgrades, level, etc.).
  * `!credit         - check cred
- *   
+ *
  * !bonus # person - Give an amt of points to comrade, up to max allowed (10?).
- * 
+ *
  * !defect #:password - Defect to another army, scrapping all upgrades for all ships.
  * !newarmy name:freq:private?:password    - Creates a new army and transfers you to the army.  No penalty, but costs $
- * 
+ *
  * !myfreq  - to their freq when in spec
  * !watch # - inform player when they reach a given point amt
- * 
+ *
  * !intro, !intro2, !intro3, etc.
  *
- * 
+ *
  * When a player is killed (0 second spawn time):
  *   1. Add pts to killer, as determined.
  *   2. .2 second spawn time, so *shipreset, prize warp, and prize all necessary prizes
- *   (if a TK, the killer loses pts equal to their level)   
- * 
+ *   (if a TK, the killer loses pts equal to their level)
+ *
  * Adding up points:
  *   Flag multiplier - No flags=all rewards are 1; 1 flag=regular; 2 flags=x2
- *   
+ *
  *   15 levels lower or more           = 1 pt
  *   14 levels below to 9 levels above = level of ship
  *   10 levels above or more           = killer's level + 10
- * 
+ *
  * @author qan
  */
 public class distensionbot extends SubspaceBot {
-    
+
     private static int SCRAP_PERCENTAGE = 60;               // % of $ returned for scrapping upgrades
     private static int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private static String DB_PROB_MSG = "DAMN!  We've got a database problem!  That last one didn't go through.  Please tell somebody!";
                                                             // Msg displayed for DB error
     private String m_database;                              // DB to connect to
-    
+
     private BotSettings m_botSettings;
     private CommandInterpreter m_commandInterpreter;
 
@@ -75,21 +86,21 @@ public class distensionbot extends SubspaceBot {
     private HashMap <String,DistensionPlayer>m_players;     // In-game data on players (Name -> Player)
     private HashMap <Integer,DistensionArmy>m_armies;       // In-game data on armies  (ID -> Army)
     private HashMap <Integer,Integer>m_flags;               // In-game data on flags   (FlagID -> ArmyID that owns)
-    
-    
-    
+
+
+
     /**
      * Constructor.
      * @param botAction Reference to available BotAction instantiation.
      */
     public distensionbot(BotAction botAction) {
         super(botAction);
-        
+
         m_botSettings = m_botAction.getBotSettings();
         m_commandInterpreter = new CommandInterpreter( botAction );
 
         m_database = m_botSettings.getString("Database");
-        
+
         requestEvents();
         registerCommands();
 
@@ -99,9 +110,9 @@ public class distensionbot extends SubspaceBot {
         m_flags = new HashMap<Integer,Integer>();
         setupPrices();
     }
-    
-    
-    /**  
+
+
+    /**
      * Request events that this bot requires to receive.
      *
      */
@@ -117,10 +128,10 @@ public class distensionbot extends SubspaceBot {
         req.request(EventRequester.FLAG_CLAIMED);
     }
 
-    
-    
+
+
     // ****** COMMAND PROCESSING ******
-    
+
     /**
      * Registers all commands necessary.
      *
@@ -129,24 +140,24 @@ public class distensionbot extends SubspaceBot {
         int acceptedMessages = Message.PRIVATE_MESSAGE;
 
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "cmdDie",         "!die       - Kills DistensionBot.", OperatorList.SMOD_LEVEL );
-        
+
         m_commandInterpreter.registerCommand( "!enlist", acceptedMessages, this, "cmdEnlist",   "!enlist #  - Enlist with army #.  Use !enlist #:pw for a priv. army" );
         m_commandInterpreter.registerCommand( "!return", acceptedMessages, this, "cmdReturn",   "!return    - Return to your current position in the war" );
-        m_commandInterpreter.registerCommand( "!pilot", acceptedMessages, this, "cmdPilot",     "!pilot #   - Pilot ship # available in your hangar." );        
+        m_commandInterpreter.registerCommand( "!pilot", acceptedMessages, this, "cmdPilot",     "!pilot #   - Pilot ship # available in your hangar." );
         m_commandInterpreter.registerCommand( "!dock", acceptedMessages, this, "cmdDock",       "!dock      - View public armies, soldier counts & enlistment bonuses" );
         m_commandInterpreter.registerCommand( "!armies", acceptedMessages, this, "cmdArmies",   "!armies    - View public armies, soldier counts & enlistment bonuses" );
         m_commandInterpreter.registerCommand( "!hangar", acceptedMessages, this, "cmdHangar",   "!hangar    - View your ships & those available for purchase" );
         m_commandInterpreter.registerCommand( "!buyship", acceptedMessages, this, "cmdBuyship", "!buyship # - Buys a given ship, if it is available" );
         m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "cmdStatus",   "!status    - View current ship's level and upgrades" );
         m_commandInterpreter.registerCommand( "!credit", acceptedMessages, this, "cmdCredit",   "!credit    - Quick view of your army credit" );
-        m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory",   "!armory    - View ship upgrades available in your army's armory" );        
-        m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade",  "!upgrade # - Upgrades your ship with upgrade # from the armory" );        
+        m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory",   "!armory    - View ship upgrades available in your army's armory" );
+        m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade",  "!upgrade # - Upgrades your ship with upgrade # from the armory" );
         m_commandInterpreter.registerHelpCommand( acceptedMessages, this );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
     }
-       
+
 
     /**
      * Display appropriate message for invalid commands.
@@ -157,17 +168,17 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage( name, "I don't get what you mean... maybe I can !help you with something?"  );
     }
 
-    
+
     /**
-     * Display non-acceptance message for remote msgs. 
+     * Display non-acceptance message for remote msgs.
      * @param name
      * @param msg
      */
     public void handleRemoteMessage( String name, String msg ) {
         m_botAction.sendSmartPrivateMessage( name, "Can't hear ya.  C'mere, and maybe I'll !help you."  );
     }
-    
-    
+
+
     /**
      * Display help based on access level.
      * @param name
@@ -177,8 +188,8 @@ public class distensionbot extends SubspaceBot {
         Collection helps = m_commandInterpreter.getCommandHelpsForAccessLevel( m_botAction.getOperatorList().getAccessLevel( name ) );
         m_botAction.privateMessageSpam( name, (String[])helps.toArray() );
     }
-    
-    
+
+
     /**
      * Kills the bot.
      * @param name
@@ -188,7 +199,7 @@ public class distensionbot extends SubspaceBot {
         try { Thread.sleep(50); } catch (Exception e) {};
         m_botAction.die();
     }
-    
+
 
     /**
      * Enlists in the supplied public army (or private army w/ pwd).  Those choosing default
@@ -201,7 +212,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "Hmm.  Try again, hot shot.");
             return;
         }
-        
+
         name = name.toLowerCase();
         try {
             if( m_players.get( name ).getShipNum() != -1 ) {
@@ -211,20 +222,20 @@ public class distensionbot extends SubspaceBot {
         } catch (NullPointerException e) {
             m_players.put( name, new DistensionPlayer(name) );
         }
-        
+
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionPlayer WHERE fcName = '" + Tools.addSlashesToString( name  ) +"'" );
             if( r.next() ) {
                 m_botAction.sendPrivateMessage( name, "Ah, trying to enlist?... No, I know you.  You can !return any time.  After that, maybe you'd like to !defect to an army more worthy of your skills?");
                 return;
-            }            
+            }
         } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
-        
+
         Integer armyNum;
         String pwd = "";
 
         try {
-            int privateIndex = msg.indexOf( ':' ); 
+            int privateIndex = msg.indexOf( ':' );
             if( privateIndex > 0 ) {
                 armyNum = Integer.parseInt( msg.substring( 0, privateIndex ) );
                 pwd = msg.substring( privateIndex + 1 );
@@ -253,7 +264,7 @@ public class distensionbot extends SubspaceBot {
                 if( bonus > 0 )
                     m_botAction.sendPrivateMessage( name, "You're also entitled to an enlistment bonus of " + bonus + ".  Congratulations." );
                 m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + (r.getInt( "fnNumPilots" ) + 1) + "' WHERE fnArmyID='" + armyNum + "'" );
-                
+
                 DistensionPlayer p = m_players.get( name );
                 p.addPoints( bonus );
                 p.setArmy( armyNum );
@@ -267,8 +278,8 @@ public class distensionbot extends SubspaceBot {
             }
         } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
     }
-    
-    
+
+
     /**
      * Logs a player in / allows them to return to the game.
      * @param name
@@ -279,16 +290,16 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer player = m_players.get( name );
         if( player == null )
             return;
-            
+
         int ship = player.getShipNum();
         if( ship != -1 ) {
-            if( ship == 0 ) 
+            if( ship == 0 )
                 m_botAction.sendPrivateMessage( name, "Having some trouble?  You need me to, haha, !help you?  Might want to !pilot a ship now." );
             else
                 m_botAction.sendPrivateMessage( name, "Yeah, very funny -- that's hilarious actually.  Now go kill someone, jackass." );
             return;
         }
-        
+
         if( player.getPlayerFromDB() == true ) {
             m_botAction.sendPrivateMessage( name, "Returning to the hangars of " + player.getArmyName() + " ..." );
             m_botAction.sendPrivateMessage( name, "Welcome back." );
@@ -298,7 +309,7 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
-    
+
     /**
      * Enters a player as a given ship.
      * @param name
@@ -309,12 +320,12 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer player = m_players.get( name );
         if( player == null )
             return;
-        
+
         if( player.getShipNum() == -1 ) {
             m_botAction.sendPrivateMessage( name, "You'll need to !return to your army or !enlist in a new one before you go flying off." );
-            return;            
+            return;
         }
-        
+
         int shipNum = 0;
         try {
             shipNum = Integer.parseInt( msg );
@@ -336,19 +347,19 @@ public class distensionbot extends SubspaceBot {
                     m_armies.put( new Integer(player.getArmyID()), army );
                 }
                 army.adjustStrength( player.getLevel() );
-                
+
                 m_botAction.setShip( name, shipNum );
                 m_botAction.setFreq( name, player.getArmyID() );
                 player.prizeUpgrades();
             } else {
-                m_botAction.sendPrivateMessage( name, "I'm sorry, I'm having trouble getting that ship for you.  Contact a mod immediately." );                
+                m_botAction.sendPrivateMessage( name, "I'm sorry, I'm having trouble getting that ship for you.  Contact a mod immediately." );
             }
         } else {
-            m_botAction.sendPrivateMessage( name, "You don't own that ship.  Check your !hangar before you try flying something you don't have." );            
+            m_botAction.sendPrivateMessage( name, "You don't own that ship.  Check your !hangar before you try flying something you don't have." );
         }
     }
-    
-    
+
+
     /**
      * Docks player (that is, sends them to spectator mode -- not the sex act, or the TW sysop).
      * @param name
@@ -358,7 +369,7 @@ public class distensionbot extends SubspaceBot {
         name = name.toLowerCase();
         DistensionPlayer player = m_players.get( name );
         if( player == null )
-            return;       
+            return;
 
         if( player.getShipNum() < 1) {
             m_botAction.sendPrivateMessage( name, "Hmm.  Pretty sure you're already docked there.  Want a look at the !hangar while you're here?" );
@@ -374,13 +385,13 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage( name, "Ship status confirmed and logged.  You are now docked.");
     }
 
-    
+
     /**
      * Shows list of public armies with their current counts and enlistment bonuses.
      * @param name
      * @param msg
      */
-    public void cmdArmies( String name, String msg ) {        
+    public void cmdArmies( String name, String msg ) {
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID, fcArmyName, fnNumPilots, fcDefaultArmy FROM tblDistensionArmy WHERE fcPrivateArmy = 'n' ORDER BY fnArmyID ASC" );
             HashMap<Integer,Integer> allcount     = new HashMap<Integer,Integer>();
@@ -395,7 +406,7 @@ public class distensionbot extends SubspaceBot {
             }
 
             m_botAction.sendPrivateMessage( name, Tools.formatString("#", 4 ) + Tools.formatString("Army Name", 40 ) + "Pilots" + "   Enlistment Bonus" );
-            
+
             Iterator i = allcount.keySet().iterator();
             Integer armyNum, armyCount;
             int bonus;
@@ -412,9 +423,9 @@ public class distensionbot extends SubspaceBot {
                                                       Tools.formatString( armyCount.toString(), 6 ) + bonus + "c" );
             }
         } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
-        
+
     }
-    
+
 
     /**
      * Shows the status of all ships available in the hangar, and costs for those
@@ -426,21 +437,21 @@ public class distensionbot extends SubspaceBot {
         name = name.toLowerCase();
         DistensionPlayer player = m_players.get( name );
         if( player == null )
-            return;       
-        
-        int currentShip = player.getShipNum(); 
+            return;
+
+        int currentShip = player.getShipNum();
         if( currentShip == -1 ) {
             m_botAction.sendPrivateMessage( name, "You about to !return to your army, or do you need to !enlist in one?  Don't recognize you quite." );
-            return;            
+            return;
         }
-        
+
         ShipProfile pf;
         for( int i = 0; i < 8; i++ ) {
             if( player.shipIsAvailable(i+1) ) {
                 if( currentShip == (i+1) ) {
-                    m_botAction.sendPrivateMessage( name, "  " + (i + 1) + "   " + Tools.formatString( Tools.shipName( i+1 ), 20 ) + "IN FLIGHT: Level " + player.getLevel() );                    
+                    m_botAction.sendPrivateMessage( name, "  " + (i + 1) + "   " + Tools.formatString( Tools.shipName( i+1 ), 20 ) + "IN FLIGHT: Level " + player.getLevel() );
                 } else {
-                    m_botAction.sendPrivateMessage( name, "  " + (i + 1) + "   " + Tools.formatString( Tools.shipName( i+1 ), 20 ) + "AVAILABLE" );                    
+                    m_botAction.sendPrivateMessage( name, "  " + (i + 1) + "   " + Tools.formatString( Tools.shipName( i+1 ), 20 ) + "AVAILABLE" );
                 }
             } else {
                 pf = m_shipGeneralData.get(i);
@@ -462,13 +473,13 @@ public class distensionbot extends SubspaceBot {
         name = name.toLowerCase();
         DistensionPlayer player = m_players.get( name );
         if( player == null )
-            return;       
-        
+            return;
+
         if( player.getShipNum() == -1 ) {
             m_botAction.sendPrivateMessage( name, "You'll need to !return to your army or !enlist in a new one before purchasing a ship." );
-            return;            
+            return;
         }
-        
+
         int shipNum = 0;
         try {
             shipNum = Integer.parseInt( msg );
@@ -485,7 +496,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( name, "Not available for purchase.  Not sure how you might go about getting it, either..." );
             } else {
             	if( cost > player.getPoints() ) {
-                    m_botAction.sendPrivateMessage( name, "You don't have enough !credit to purchase that.  Work a little harder." );            		
+                    m_botAction.sendPrivateMessage( name, "You don't have enough !credit to purchase that.  Work a little harder." );
             	} else {
             		player.addPoints( -cost );
                     player.addShipToDB( shipNum );
@@ -494,7 +505,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
     }
-    
+
 
     /**
      * Shows current status of ship -- its level and upgrades.
@@ -505,7 +516,7 @@ public class distensionbot extends SubspaceBot {
         name = name.toLowerCase();
         DistensionPlayer player = m_players.get( name );
         if( player == null )
-            return;       
+            return;
         int shipNum = player.getShipNum();
         if( shipNum == -1 ) {
             m_botAction.sendPrivateMessage( name, "I don't know who you are yet.  Please !return to your army, or !enlist if you have none." );
@@ -516,7 +527,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         m_botAction.sendPrivateMessage( name, name.toUpperCase() + " of " + player.getArmyName().toUpperCase() + ":  " + Tools.shipName( shipNum ).toUpperCase() +
-                                              " - LEVEL " + player.getLevel() );        	
+                                              " - LEVEL " + player.getLevel() );
         m_botAction.sendPrivateMessage( name, "CREDIT:  " + player.getPoints() + "c" );
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1 ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
@@ -526,7 +537,7 @@ public class distensionbot extends SubspaceBot {
             currentUpgrade = upgrades.get( i );
             printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 30) + "- ";
             if( currentUpgrade.getMaxLevel() == 0 )
-                printmsg += "N/A";  
+                printmsg += "N/A";
             else if( currentUpgrade.getMaxLevel() == 1 )
                 if( purchasedUpgrades[i] == 1 )
                     printmsg += "(INSTALLED)";
@@ -541,7 +552,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( name, printmsg );
         }
     }
-    
+
 
     /**
      * Quick view of credits.
@@ -552,16 +563,16 @@ public class distensionbot extends SubspaceBot {
         name = name.toLowerCase();
         DistensionPlayer player = m_players.get( name );
         if( player == null )
-            return;       
+            return;
         int shipNum = player.getShipNum();
         if( shipNum == -1 ) {
             m_botAction.sendPrivateMessage( name, "I don't know who you are yet.  Please !return to your army, or !enlist if you have none." );
             return;
         }
-        m_botAction.sendPrivateMessage( name, "CREDIT:  " + player.getPoints() + "c");        
+        m_botAction.sendPrivateMessage( name, "CREDIT:  " + player.getPoints() + "c");
     }
 
-        
+
     /**
      * Shows upgrades available for purchase.
      * @param name
@@ -571,7 +582,7 @@ public class distensionbot extends SubspaceBot {
         name = name.toLowerCase();
         DistensionPlayer player = m_players.get( name );
         if( player == null )
-            return;       
+            return;
         int shipNum = player.getShipNum();
         if( shipNum == -1 ) {
             m_botAction.sendPrivateMessage( name, "I don't know who you are yet.  Please !return to your army, or !enlist if you have none." );
@@ -580,8 +591,8 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "If you want to see the armory's selection, you'll need to !pilot a ship first." );
             return;
         }
-        m_botAction.sendPrivateMessage( name, "Available Upgrades: " + player.getArmyName() + " Armory - " + Tools.shipName( shipNum ).toUpperCase() + player.getPoints() + "c avail."); 
-        m_botAction.sendPrivateMessage( name, " #  Name                          Curr /  Max      Credit" ); 
+        m_botAction.sendPrivateMessage( name, "Available Upgrades: " + player.getArmyName() + " Armory - " + Tools.shipName( shipNum ).toUpperCase() + player.getPoints() + "c avail.");
+        m_botAction.sendPrivateMessage( name, " #  Name                          Curr /  Max      Credit" );
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1 ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = player.getPurchasedUpgrades();
@@ -609,14 +620,14 @@ public class distensionbot extends SubspaceBot {
                     printmsg += Tools.formatString("( " + (purchasedUpgrades[i] < 10 ? " " : "") + purchasedUpgrades[i] + " / " +
                                  currentUpgrade.getMaxLevel() + (currentUpgrade.getMaxLevel() < 10 ? " " : "") + " )", 18);
                 }
-            }            
+            }
             if( printCost )
-                printmsg += currentUpgrade.getCostDefine( purchasedUpgrades[i] ) + "c";            
+                printmsg += currentUpgrade.getCostDefine( purchasedUpgrades[i] ) + "c";
             if( currentUpgrade.getMaxLevel() != -1 )
                 m_botAction.sendPrivateMessage( name, printmsg );
-        }        
+        }
     }
-    
+
 
     /**
      * Upgrades a particular aspect of the current ship.
@@ -627,21 +638,21 @@ public class distensionbot extends SubspaceBot {
         name = name.toLowerCase();
         DistensionPlayer player = m_players.get( name );
         if( player == null )
-            return;       
-        int shipNum = player.getShipNum();        
+            return;
+        int shipNum = player.getShipNum();
         if( shipNum == -1 ) {
             m_botAction.sendPrivateMessage( name, "You'll need to !return to your army or !enlist in a new one before purchasing a ship." );
-            return;            
+            return;
         } else if( shipNum == 0 ){
             m_botAction.sendPrivateMessage( name, "If you want to upgrade a ship, you'll need to !pilot one first." );
             return;
-        }        
+        }
         int upgradeNum = 0;
         try {
             upgradeNum = Integer.parseInt( msg );
         } catch ( Exception e ) {
             m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Give me a number.  Maybe check the !armory first." );
-        }        
+        }
         ShipUpgrade upgrade = m_shipGeneralData.get( shipNum - 1 ).getUpgrade( upgradeNum - 1 );
         int current = player.getPurchasedUpgrade( upgradeNum - 1 );
         if( upgrade == null || current == -1 ) {
@@ -662,12 +673,12 @@ public class distensionbot extends SubspaceBot {
         m_botAction.specificPrize( name, upgrade.getPrizeNum() );
         if( upgrade.getMaxLevel() == 1 )
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " has been installed on the " + Tools.shipName( shipNum ) + "." );
-        else 
+        else
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " on the " + Tools.shipName( shipNum ) + " upgraded to level " + current + 1 + "." );
     }
-    
-    
-    
+
+
+
     // ****** EVENT PROCESSING ******
 
     /**
@@ -675,10 +686,10 @@ public class distensionbot extends SubspaceBot {
      * @param event Event to handle.
      */
     public void handleEvent(Message event) {
-        m_commandInterpreter.handleEvent( event );       
+        m_commandInterpreter.handleEvent( event );
     }
 
-    
+
     /**
      * Join the proper arena, and set up spam protection.
      * @param event Event to handle.
@@ -687,8 +698,8 @@ public class distensionbot extends SubspaceBot {
         m_botAction.joinArena(m_botSettings.getString("Arena"));
         m_botAction.setMessageLimit( 10 );
     }
-    
-    
+
+
     /**
      * Enable reliable tracking of kills on joining of arena.
      * @param event Event to handle.
@@ -696,8 +707,8 @@ public class distensionbot extends SubspaceBot {
     public void handleEvent(ArenaJoined event) {
         m_botAction.setReliableKills(1);
     }
-       
-    
+
+
     /**
      * Track players as they enter, and provide basic help on playing Distension.
      * @param event Event to handle.
@@ -713,8 +724,8 @@ public class distensionbot extends SubspaceBot {
         m_players.put( name, new DistensionPlayer( name ) );
         m_botAction.sendPrivateMessage( name, "Welcome to Distension.  You a !return pilot?  Or will you !enlist in one of our !armies?" );
     }
-    
-    
+
+
     /**
      * Save player data if unexpectedly leaving Distension.
      * @param event Event to handle.
@@ -729,21 +740,21 @@ public class distensionbot extends SubspaceBot {
             return;
         player.savePlayerToDB();
         player.saveCurrentShipToDB();
-        
+
         m_players.remove( name );
     }
 
-    
+
     /**
      * Save player data if unexpectedly leaving Distension.
      * @param event Event to handle.
      */
     public void handleEvent(FlagClaimed event) {
         int flagID = event.getFlagID();
-        Player p = m_botAction.getPlayer( event.getPlayerID() );        
+        Player p = m_botAction.getPlayer( event.getPlayerID() );
         if( p == null )
             return;
-        
+
         // Subtract from old holders; increment for new holders
         Integer ownerID = m_flags.get( new Integer(flagID) );
         if( ownerID != null ) {
@@ -756,9 +767,9 @@ public class distensionbot extends SubspaceBot {
             army.adjustFlags( 1 );
 
         // Replace old army with the new
-        m_flags.put( new Integer(flagID), new Integer(p.getFrequency()) );    
+        m_flags.put( new Integer(flagID), new Integer(p.getFrequency()) );
     }
-    
+
 
     /**
      * Upon death, assign points based on level to the victor, and prize the
@@ -766,11 +777,11 @@ public class distensionbot extends SubspaceBot {
 
      * Adding up points:
      *   Flag multiplier:  No flags=all rewards are 1; 1 flag=regular; 2 flags=x2
-     *   
+     *
      *   15 levels lower or more           = 1 pt
      *   14 levels below to 9 levels above = level of ship
      *   10 levels above or more           = killer's level + 10
-     *   
+     *
      * @param event Event to handle.
      */
     public void handleEvent(PlayerDeath event) {
@@ -785,7 +796,7 @@ public class distensionbot extends SubspaceBot {
             loser.prizeUpgradesAfterDeath();
         else
             return;
-        
+
         if( killer != null ) {
            DistensionPlayer victor = m_players.get( killer.getPlayerName().toLowerCase() );
             if( victor == null )
@@ -804,7 +815,7 @@ public class distensionbot extends SubspaceBot {
                 DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
                 DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
                 if( killerarmy == null || killedarmy == null )
-                    return;                
+                    return;
 
                 if( killerarmy.getNumFlagsOwned() == 0 ) {
                     if( killer.getPlayerName().equals("qan"))
@@ -812,7 +823,7 @@ public class distensionbot extends SubspaceBot {
                     victor.addPoints( 1 );
                     return;
                 }
-                                
+
                 int points;
                 if( loser.getLevel() - victor.getLevel() >= 10 )
                     points = victor.getLevel() + 10;
@@ -830,7 +841,7 @@ public class distensionbot extends SubspaceBot {
                     armySizeWeight = 1;
 
                 points = (int)((points * killerarmy.getNumFlagsOwned()) * armySizeWeight);
-                
+
                 victor.addPoints( points );
                 if( killer.getPlayerName().equals("qan"))
                     m_botAction.sendPrivateMessage( "qan", "DEBUG: points=" + points + "; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
@@ -838,10 +849,10 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
-    
-    
+
+
     // ****** ASSISTANCE METHODS ******
-    
+
     /**
      * @return HashMap containing army# -> num players on army of all default armies.
      */
@@ -855,36 +866,36 @@ public class distensionbot extends SubspaceBot {
             return count;
         } catch (SQLException e ) { return null; }
     }
-    
-    
+
+
     /**
-     * @return Enlistment bonus for a given default army, based on the size of other default armies.  
+     * @return Enlistment bonus for a given default army, based on the size of other default armies.
      */
     public int calcEnlistmentBonus( int armyID, HashMap<Integer,Integer> counts ) {
         if( counts.get( new Integer(armyID)) == null )
             return 0;   // No bonus if this for some reason is not a default army
-        
+
         int ourcount = counts.remove( new Integer(armyID) ).intValue();
-        
+
         Iterator<Integer> i = counts.values().iterator();
         int pilots = 0;
         while( i.hasNext() )
-            pilots += i.next().intValue();       
+            pilots += i.next().intValue();
         if( pilots == 0 || counts.size() == 0 )
             return 0;
         pilots = pilots / counts.size();
         pilots = pilots - ourcount;
-        
+
         // If avg # pilots on other armies is less than # on this one, no bonus for you!
         if( pilots <= 0 )
-            return 0;      
+            return 0;
         // Diff is greater than 25?  Stick to 25
         if( pilots > 25 )
             pilots = 25;
         return pilots * 10;
     }
-    
-    
+
+
     /**
      * Add ships and their appropriate upgrades to m_shipGeneralData
      */
@@ -902,7 +913,7 @@ public class distensionbot extends SubspaceBot {
 30         1
            0
          */
-        
+
         // WARBIRD
         ShipProfile ship = new ShipProfile( 0 );
         ShipUpgrade upg = new ShipUpgrade( "Microfiber Armor", 2, 33, 10 );
@@ -1069,7 +1080,7 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "S4", 0, 0, 0 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
-        
+
         // WEASEL
         ship = new ShipProfile( -1 );
         upg = new ShipUpgrade( "Cerebral Shielding", 2, 0, 10 );
@@ -1165,11 +1176,11 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Inbound Protection Field", 18, 0, 1 );   // DEFINE
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
-        
+
     }
-    
-    
-    
+
+
+
     // ****** INTERNAL CLASSES ******
 
     /**
@@ -1186,9 +1197,9 @@ public class distensionbot extends SubspaceBot {
         private boolean   banned;               // True if banned from playing
         private boolean   pointsSaved;          // True if points on record equal points in DB
         private boolean   upgradesSaved;        // True if upgrades on record equal upgrades in DB
-        private int[]     purchasedUpgrades;    // Upgrades purchased for current ship 
+        private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
         private boolean[] shipsAvail;           // Marks which ships are available
-        
+
         public DistensionPlayer( String name ) {
             this.name = name;
             shipNum = -1;
@@ -1204,7 +1215,7 @@ public class distensionbot extends SubspaceBot {
             for( int i = 0; i < 8; i++ )
                 shipsAvail[i] = false;
         }
-        
+
         /**
          * Shipresets & prizes warp, then prizes upgrades to player based on
          * what has been purchased.
@@ -1214,7 +1225,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.specificPrize( name, 7 );
             prizeUpgrades();
         }
-        
+
         /**
          * Prizes upgrades to player based on what has been purchased.
          */
@@ -1234,7 +1245,7 @@ public class distensionbot extends SubspaceBot {
                                                   "VALUES ('" + Tools.addSlashesToString( name ) + "', '" + armyID + "', '" + points + "')" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
-        
+
         /**
          * Saves necessary player data to the database.
          */
@@ -1244,7 +1255,7 @@ public class distensionbot extends SubspaceBot {
                 pointsSaved = true;
             }
         }
-        
+
         /**
          * Reads in data about the player from the database.
          * @return True if data is retrieved; false if it wasn't.
@@ -1256,7 +1267,7 @@ public class distensionbot extends SubspaceBot {
                     banned = (r.getString( "fcBanned" ).equals( "y" ) ? true : false);
                     if( banned == true )
                         return false;
-                    
+
                     armyID = r.getInt( "fnArmyID" );
                     points = r.getInt( "fnPoints" );
                     for( int i = 0; i < 8; i++ )
@@ -1271,7 +1282,7 @@ public class distensionbot extends SubspaceBot {
                 return false;
             }
         }
-        
+
         /**
          * Adds a ship as available on a player's record, sending to the database
          * as a background query.
@@ -1286,20 +1297,20 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.SQLQuery( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), '" + shipNumToAdd + "')" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
-        
+
         /**
          * Saves the current ship to the DB, handling as a background query so as not to interrupt the process.
          */
         public void saveCurrentShipToDB() {
             if( shipNum < 1 || shipNum > 9 || upgradesSaved )
                 return;
-            
+
             String query = "UPDATE tblDistensionShip ship, tblDistensionPlayer player SET ";
- 
+
             query +=       "ship.fnStat1='" + purchasedUpgrades[0];
             for( int i = 1; i < NUM_UPGRADES; i++ )
                 query +=   ", ship.fnStat" + (i + 1) + "='" + purchasedUpgrades[i] + "'";
-            
+
             query +=       " WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
                            "ship.fnPlayerID = player.fnID AND " +
                            "ship.fnShipNum = '" + shipNum + "'";
@@ -1307,14 +1318,14 @@ public class distensionbot extends SubspaceBot {
             m_botAction.SQLBackgroundQuery( m_database, null, query );
             upgradesSaved = true;
         }
-        
+
         public boolean getCurrentShipFromDB() {
             try {
                 String query = "SELECT * FROM tblDistensionShip ship, tblDistensionPlayer player " +
                                "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
                                "ship.fnPlayerID = player.fnID AND " +
                                "ship.fnShipNum = '" + shipNum + "'";
-                
+
                 ResultSet r = m_botAction.SQLQuery( m_database, query );
                 if( r == null )
                     return false;
@@ -1333,7 +1344,7 @@ public class distensionbot extends SubspaceBot {
                 return false;
             }
         }
-       
+
         /**
          * Adds # pts to total point amt.
          * @param points Amt to add
@@ -1342,7 +1353,7 @@ public class distensionbot extends SubspaceBot {
             this.points += points;
             pointsSaved = false;
         }
-        
+
         /**
          * Modifies the value of a particular upgrade.
          */
@@ -1353,7 +1364,7 @@ public class distensionbot extends SubspaceBot {
                 return;
             purchasedUpgrades[upgrade] += amt;
         }
-        
+
         /**
          * Sets the current ship player is using.
          * @param shipNum # of ship (1-8)
@@ -1434,14 +1445,14 @@ public class distensionbot extends SubspaceBot {
                 return false;
             return shipsAvail[shipNumToCheck - 1];
         }
-        
+
         /**
          * @return True if player has been warned for teamkilling this session.
          */
         public boolean wasWarnedForTK() {
             return warnedForTK;
         }
-        
+
         /**
          * @return True if player has been banned from playing Distension.
          */
@@ -1458,7 +1469,7 @@ public class distensionbot extends SubspaceBot {
                 return -1;
             return purchasedUpgrades[upgrade];
         }
-        
+
         /**
          * @return Returns the purchasedUpgrades.
          */
@@ -1466,8 +1477,8 @@ public class distensionbot extends SubspaceBot {
             return purchasedUpgrades;
         }
     }
-        
-    
+
+
     /**
      * Used to keep track of number of players on a given army.
      */
@@ -1476,7 +1487,7 @@ public class distensionbot extends SubspaceBot {
         int totalStrength;              // Combined levels of all pilots of the army
         int flagsOwned;                 // # flags currently owned
         String armyName;                // Name of army
-        
+
         /**
          * Creates record for an army, given an ID.
          * @param armyID ID of the army
@@ -1492,23 +1503,23 @@ public class distensionbot extends SubspaceBot {
             } catch( Exception e ) {
             }
         }
-        
+
         public void adjustStrength( int value ) {
             totalStrength += value;
             if( totalStrength < 0 )
                 totalStrength = 0;
         }
-        
+
         public void adjustFlags( int value ) {
             flagsOwned += value;
             if( flagsOwned < 0 )
                 flagsOwned = 0;
         }
-        
+
         public String getName() {
             return armyName;
         }
-        
+
         public int getID() {
             return armyID;
         }
@@ -1521,44 +1532,44 @@ public class distensionbot extends SubspaceBot {
             return flagsOwned;
         }
     }
-    
-    
+
+
     // GENERIC INTERNAL DATA CLASSES (for static info defined in price setup)
-    
+
     /**
      * Generic (not player specific) class used for holding basic info on a ship --
      * essentially just its number, cost (if applicable), and upgrade info.
      */
     private class ShipProfile {
         int shipCost;					  // Cost in points; -1 if can not be purchased
-        Vector <ShipUpgrade>upgrades;  // List containing upgrade data for this ship        
-        
+        Vector <ShipUpgrade>upgrades;  // List containing upgrade data for this ship
+
         public ShipProfile( int shipCost ) {
             this.shipCost = shipCost;
             upgrades = new Vector<ShipUpgrade>(NUM_UPGRADES);
         }
-        
+
         public void addUpgrade( ShipUpgrade upgrade ) {
             upgrades.add( upgrade );
         }
-        
+
         public ShipUpgrade getUpgrade( int upgradeNum ) {
         	if( upgradeNum < 0 || upgradeNum > NUM_UPGRADES )
         		return null;
         	else
         		return upgrades.get( upgradeNum );
         }
-        
+
         public Vector<ShipUpgrade> getAllUpgrades() {
         	return upgrades;
         }
-        
+
         public int getCost() {
             return shipCost;
         }
     }
 
-    
+
     /**
      * Generic (not player specific) class used for holding info on upgrades for
      * a specific ship -- name of the upgrade, prize number associated with it,
@@ -1573,7 +1584,7 @@ public class distensionbot extends SubspaceBot {
         int baseCost;				// Cost associated with each level of upgrade.  -1 if array-defined.
         int maxLevel;				// Highest level the upgrade can reach; 1=one-time upgrade; 0=not available; -1=NA and don't number
         int[] costDefines;          // (For precise cost definitions not based on standard formula)
-                
+
         public ShipUpgrade( String name, int prizeNum, int baseCost, int maxLevel ) {
             this.name = name;
             this.prizeNum = prizeNum;
@@ -1581,7 +1592,7 @@ public class distensionbot extends SubspaceBot {
             this.maxLevel = maxLevel;
             costDefines = null;
         }
-        
+
         public ShipUpgrade( String name, int prizeNum, int[] costDefines, int maxLevel ) {
             this.name = name;
             this.prizeNum = prizeNum;
@@ -1596,35 +1607,35 @@ public class distensionbot extends SubspaceBot {
         public int getBaseCost() {
             return baseCost;
         }
-        
+
         /**
          * @return Returns max level of the upgrade; 1=one time upgrade; 0=not available
          */
         public int getMaxLevel() {
             return maxLevel;
         }
-        
+
         /**
          * @return Returns the name of the upgrade.
          */
         public String getName() {
             return name;
         }
-        
+
         /**
          * @return Returns the prizeNum.
          */
         public int getPrizeNum() {
             return prizeNum;
         }
-        
+
         /**
          * @return Returns the cost of upgrading to the next level of this upgrade.
          */
         public int getCostDefine( int currentLevel ) {
             if( costDefines == null )
                 return ((int)Math.pow(2, currentLevel)) * baseCost;
-            else            
+            else
                 return costDefines[ currentLevel ];
         }
     }

@@ -2,7 +2,12 @@ package twcore.bots.twbot;
 
 //Attach Regulation TWBotExtension by D1st0rt v1.5
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.TurretEvent;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 public class twbotturret extends TWBotExtension
 {

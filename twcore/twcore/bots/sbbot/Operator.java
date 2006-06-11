@@ -118,7 +118,7 @@ public class Operator {
 	if(!objectors.containsKey(type)) return;
 	objectors.get(type).remove(o);
     }
-    
+
     /**
      * Adds a Responder to the list of objects listening for the specified poll.
      * @param r The Responder to be notified.
@@ -130,7 +130,7 @@ public class Operator {
 	   responders.put(type, new HashSet<Responder>());
 	responders.get(type).add(r);
     }
-    
+
     public void removeResponder(MessageType type, Responder r) {
 	assert(type != null && r != null);
 	if(!responders.containsKey(type)) return;

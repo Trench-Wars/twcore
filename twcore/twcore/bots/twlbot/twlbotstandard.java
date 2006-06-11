@@ -10,15 +10,25 @@ import java.sql.*;
 import java.util.*;
 import java.text.*;
 import twcore.core.*;
-import twcore.misc.database.DBPlayerData;
-import twcore.misc.statistics.*;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FlagReward;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.game.Player;
+import twcore.core.lvz.Objset;
+import twcore.core.stats.DBPlayerData;
+import twcore.core.stats.Statistics;
+import twcore.core.util.Tools;
 
 public class twlbotstandard extends TWLBotExtension
 {
     private final String mySQLHost = "website";
     private final String mySQLRegister = "local";
     private LeagueMatch m_match;
-    
+
     private int m_secondsOnStart = 0;
     private String m_timeStart;
     private String m_timeEnd;
@@ -36,7 +46,7 @@ public class twlbotstandard extends TWLBotExtension
     private Vector m_twlStaff;
 
     private String addingPlayer;
-    
+
     //0 - off
     //1 - match loaded
     //2 - lineups requested
@@ -45,14 +55,14 @@ public class twlbotstandard extends TWLBotExtension
     private int m_gameState = 0;
 
     //constants
-    
+
     //m_gameState constants
     private final int GAME_OFF = 0; //game not being played
     private final int MATCH_LOADED = 1; //match loaded from database
     private final int LINEUP_REQUESTED = 2; //picking has been started
     private final int TIME_TO_START = 3; //teams are ready
     private final int GAME_IN_PROGRESS = 4; //match in progress
-    
+
     private final int EXTENSION_TIME = 2; //mins
     private final int BASE_PLAYOFF_TIMER = 41; //mins (for playoff mode)
     private final int BASE_TIMER = 31; //mins
@@ -75,9 +85,9 @@ public class twlbotstandard extends TWLBotExtension
     final static int TIME_RACE_TARGET = 900; //sec
     final static int TIME_RACE_PLAYOFF_TARGET = 1200; // sec (for playoff mode)
     final static int DUEL_TARGET = 50; //kills
-    
+
     //matchTypeId constants
-    private final int TWLD = 1; //wb league 
+    private final int TWLD = 1; //wb league
     private final int TWLJ = 2; //jav league
     private final int TWLB = 3; //base league
 
@@ -85,19 +95,19 @@ public class twlbotstandard extends TWLBotExtension
     {
         m_laggers = new HashMap();
     }
- 
+
     /**
      * Overloaded method from the super class to set the TWLcoordinator and TWLstaff lists
      */
     public void set(BotAction action, OperatorList opList, twlbot twBot)
-    {   
+    {
         //call the super class to set these variables
         super.set(action,opList,twBot);
-   
+
         /*
         //obtain settings of staff and season
         m_season = m_botSettings.getInt("Season");
-        
+
         StringTokenizer coordinatorTokens = new StringTokenizer(m_botSettings.getString("TWLCoordinators"), ":");
         StringTokenizer staffTokens = new StringTokenizer(m_botSettings.getString("TWLStaff"), ":");
         String playerName;
@@ -107,7 +117,7 @@ public class twlbotstandard extends TWLBotExtension
             playerName = staffTokens.nextToken().toLowerCase();
         	m_twlCoordinators.add(playerName);
         }
-        
+
         while(staffTokens.hasMoreTokens())
         {
             playerName = staffTokens.nextToken().toLowerCase();
@@ -126,7 +136,7 @@ public class twlbotstandard extends TWLBotExtension
 
     /**
      * Loads a match from the database
-     * 
+     *
      * @param name Person who loaded the match
      * @param message Encripted matchId to get other data later
      */
@@ -343,7 +353,7 @@ public class twlbotstandard extends TWLBotExtension
 
     /**
      * Unloads a game once it is loaded
-     * 
+     *
      * @param name The person who send the command
      * @param message String after the command
      */
@@ -361,7 +371,7 @@ public class twlbotstandard extends TWLBotExtension
 
     /**
      * Zones a game once it is loaded if it hasn't already been zoned
-     * 
+     *
      * @param name The person who sent the command
      * @param message Any parameters after the command
      */
@@ -396,7 +406,7 @@ public class twlbotstandard extends TWLBotExtension
 
     /**
      * Starts the picking process for players to be assigned to teams
-     * 
+     *
      * @param name The person who sent the command
      * @param message Parameters along with the command
      */
@@ -423,7 +433,7 @@ public class twlbotstandard extends TWLBotExtension
 
     /**
      * Adds players to respective teams
-     * 
+     *
      * @param name The host who issues the command
      * @param message Player name along with ship
      * @param forced Player can be force added if within extension time
@@ -574,7 +584,7 @@ public class twlbotstandard extends TWLBotExtension
 
     /**
      * Removes a player once he's added before game starts
-     * 
+     *
      * @param name The host who issued the command
      * @param message Player name
      */
@@ -614,7 +624,7 @@ public class twlbotstandard extends TWLBotExtension
 
     /**
      * Starts the game
-     * 
+     *
      * @param name The host who issued the command
      * @param message Any parameters along with the command
      */
@@ -824,7 +834,7 @@ public class twlbotstandard extends TWLBotExtension
             }
         };
         m_botAction.scheduleTaskAtFixedRate(watchPlayers, 2000, 3000);
-        
+
         TimerTask saveState = new TimerTask()
         {
             public void run()
@@ -1017,12 +1027,12 @@ public class twlbotstandard extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "A game is not running or has not started.");
             return;
         }
-        
+
         if( m_switchSubLock ) {
             m_botAction.sendPrivateMessage(name, "A player switch or substitution is already active.  Try again later.");
             return;
         }
-        
+
         int teamId = sql_getPlayersTeam(name);
         boolean isCap = sql_isCap(name);
         if (!name.equals(m_match.getRef()))
@@ -1115,12 +1125,12 @@ public class twlbotstandard extends TWLBotExtension
             m_botAction.sendPrivateMessage(name, "Switches can only be done during the game.");
             return;
         }
-        
+
         if( m_switchSubLock ) {
             m_botAction.sendPrivateMessage(name, "A player switch or substitution is already active.  Try again later.");
             return;
         }
-        
+
         int teamId = sql_getPlayersTeam(name);
         boolean isCap = sql_isCap(name);
         if (!name.equals(m_match.getRef()))
@@ -1167,7 +1177,7 @@ public class twlbotstandard extends TWLBotExtension
         if (m_match.getPlayer(pieces[0]).getShip() == 0 || m_match.getPlayer(pieces[1]).getShip() == 0) {
             m_botAction.sendPrivateMessage(name, "Unable to switch players: One or more are in spec.");
             return;
-        }            
+        }
 
         m_switchSubLock = true;
         m_botAction.scheduleTask(new SwitchTimer(pieces[0], pieces[1]), TIME_BEFORE_SWITCH * 1000); //in milliseconds
@@ -1223,7 +1233,7 @@ public class twlbotstandard extends TWLBotExtension
                 l.cancel();
                 m_laggers.remove(m_playerOut);
             }
-            
+
             m_switchSubLock = false; // Disable lock
         }
     }
@@ -1420,7 +1430,7 @@ public class twlbotstandard extends TWLBotExtension
         if ( m_match.getMatchTypeId() != TWLB ) {
             m_botAction.sendPrivateMessage(name, "This mode only applies to base matches." );
             return;
-        } 
+        }
 
         if ( m_isBasePlayoff ) {
             m_botAction.sendPrivateMessage( name, "This match will NO LONGER be played as a TWLB Playoff game." );
@@ -2062,7 +2072,7 @@ public class twlbotstandard extends TWLBotExtension
     public Collection getHelpMessages()
     {
         Vector help = new Vector();
-        
+
         help.add("---------------------- REF COMMANDS ------------------------------------");
         help.add("!loadgame <game#>                   - loads match identified by <game#>");
         help.add("!unloadgame                         - unloads the current match");
@@ -2091,7 +2101,7 @@ public class twlbotstandard extends TWLBotExtension
         help.add("!die                                - tells the bot to take a hike... off a cliff");
         help.add("!home                               - tells the bot to unlock and go home");
         help.add("!mybot                              - lets everyone know you are hosting instead of the former host");
-        
+
         return help;
     }
 

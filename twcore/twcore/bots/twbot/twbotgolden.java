@@ -1,6 +1,13 @@
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
+import twcore.core.util.Tools;
+
 import java.util.*;
 
 /**
@@ -303,7 +310,7 @@ public class twbotgolden extends TWBotExtension {
     * @param input is an string to be converted into an int.
     * @return the int value of the string
     */
-   public int getInteger( String input ){       
+   public int getInteger( String input ){
        try{
            return Integer.parseInt( input.trim() );
        } catch( Exception e ){

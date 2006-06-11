@@ -11,29 +11,33 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
 
 public class twbotpoll extends TWBotExtension {
     private Poll currentPoll = null;
-    
+
     /** Creates a new instance of twbotpoll */
     public twbotpoll() {
     }
-    
+
     public void cancel() {
-        
+
     }
-    
+
     public void handleEvent( Message event ){
         if( event.getMessageType() != Message.PRIVATE_MESSAGE ) return;
         String name = m_botAction.getPlayerName( event.getPlayerID() );
         String message = event.getMessage();
         int id = event.getPlayerID();
-        
+
         if( currentPoll != null ){
             currentPoll.handlePollCount( name, event.getMessage() );
         }
-        
+
         if( !m_opList.isER( name )) return;
         if( message.startsWith( "!poll " )){
             if( currentPoll != null ){
@@ -49,14 +53,14 @@ public class twbotpoll extends TWBotExtension {
                 + "is wrong." );
                 return;
             }
-            
+
             String[] polls = new String[tokens];
             int i = 0;
             while( izer.hasMoreTokens() ){
                 polls[i] = izer.nextToken();
                 i++;
             }
-            
+
             currentPoll = new Poll( polls );
         } else if( message.startsWith( "!endpoll" )){
             if( currentPoll == null ){
@@ -68,7 +72,7 @@ public class twbotpoll extends TWBotExtension {
             }
         }
     }
-    
+
     public String[] getHelpMessages() {
         String[] helps = {
             "------ Commands for the poll module -------",
@@ -77,13 +81,13 @@ public class twbotpoll extends TWBotExtension {
         };
         return helps;
     }
-    
+
     public class Poll{
-        
+
         private String[] poll;
         private int range;
         private HashMap votes;
-        
+
         public Poll( String[] poll ){
             this.poll = poll;
             votes = new HashMap();
@@ -95,7 +99,7 @@ public class twbotpoll extends TWBotExtension {
             m_botAction.sendArenaMessage(
             "Private message your answers to " + m_botAction.getBotName() );
         }
-        
+
         public void handlePollCount( String name, String message ){
             try{
                 if( !Tools.isAllDigits( message )){
@@ -110,26 +114,26 @@ public class twbotpoll extends TWBotExtension {
                     + "in the poll." );
                     return;
                 }
-                
+
                 if( !(vote > 0 && vote <= range )) {
                     return;
                 }
-                
+
                 votes.put( name, new Integer( vote ));
-                
+
                 m_botAction.sendSmartPrivateMessage( name, "Your vote has been "
                 + "counted." );
-                
+
             } catch( Exception e ){
                 m_botAction.sendArenaMessage( e.getMessage() );
                 m_botAction.sendArenaMessage( e.getClass().getName() );
             }
         }
-        
+
         public void endPoll(){
             m_botAction.sendArenaMessage( "The poll has ended! Question: "
             + poll[0] );
-            
+
             int[] counters = new int[range+1];
             Iterator iterator = votes.values().iterator();
             while( iterator.hasNext() ){
@@ -140,7 +144,7 @@ public class twbotpoll extends TWBotExtension {
                 + counters[i] );
             }
         }
-        
+
     }
-    
+
 }

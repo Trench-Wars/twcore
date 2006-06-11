@@ -13,6 +13,11 @@ package twcore.bots.zhbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.game.Ship;
+import twcore.core.util.Tools;
 
 public class twbotstandard extends TWBotExtension {
     int specPlayers = 0; //if >0, spec player at X deaths
@@ -85,9 +90,9 @@ public class twbotstandard extends TWBotExtension {
                     m_botAction.setFreqtoFreq(Integer.parseInt(parameters[0]), Integer.parseInt(parameters[1]));
                 }
             }catch( Exception e ){}
-        } 
+        }
     }
-    
+
     public void killEasy() {
     	Iterator it = m_botAction.getPlayingPlayerIterator();
     	while(it.hasNext()) {
@@ -100,16 +105,16 @@ public class twbotstandard extends TWBotExtension {
     }
 
     /** Creates the requested number of teams if possible
-	 * @param 
+	 * @param
 	 */
 	private void createNumberofTeams( int _teams ) {
-		
+
 		int current = 0;
 		int howmany = _teams - 1;
-		
+
 		Iterator i = m_botAction.getPlayingPlayerIterator();
 		while( i.hasNext() ) {
-			
+
 			if(current > howmany)
 				current = 0;
 			Player p = (Player)i.next();

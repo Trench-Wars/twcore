@@ -46,7 +46,11 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
 
 public class twbotprizes extends TWBotExtension
 {

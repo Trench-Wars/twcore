@@ -11,6 +11,11 @@
 package twcore.bots.bouncerbot;
 
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.io.*;
 public class bouncerbot extends SubspaceBot {
@@ -27,7 +32,7 @@ public class bouncerbot extends SubspaceBot {
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_ENTERED );
     }
-    
+
     public void logEvent( String event ){
         Calendar c = Calendar.getInstance();
         String timestamp = c.get( c.MONTH ) + "/" + c.get( c.DAY_OF_MONTH )
@@ -44,7 +49,7 @@ public class bouncerbot extends SubspaceBot {
             Tools.printStackTrace( e );
         }
     }
-    
+
     public void handleEvent( PlayerEntered event ){
         if( m_opList.isSmod( event.getPlayerName() )) return;
         if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
@@ -55,14 +60,14 @@ public class bouncerbot extends SubspaceBot {
         m_botAction.sendChatMessage( event.getPlayerName() + " went into a private arena without asking permission, and was mysteriously disconnected from the server." );
         logEvent( event.getPlayerName() + " entered the arena illegally!" );
     }
-    
+
     public void handleEvent( LoggedOn event ){
         m_botAction.joinArena( "#noseeum" );
         m_opList = m_botAction.getOperatorList();
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Smod Chat" ) );
         logEvent( "Logged in!" );
     }
-    
+
     public void handleCommand( String name, String message ){
         if( message.startsWith( "!invite " )){
             if( message.length() > 0 ){
@@ -78,10 +83,10 @@ public class bouncerbot extends SubspaceBot {
         } else if( message.startsWith( "!go " )){
             m_botAction.changeArena( message.substring( 4 ));
         }
-        
+
     }
     public void handleEvent( Message event ){
-        
+
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );

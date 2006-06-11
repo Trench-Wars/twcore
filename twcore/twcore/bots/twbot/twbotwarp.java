@@ -43,7 +43,11 @@ package twcore.bots.twbot;
 
 import java.util.*;
 import java.sql.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
 
 public class twbotwarp extends TWBotExtension
 {
@@ -229,7 +233,7 @@ public class twbotwarp extends TWBotExtension
   }
 
   /**
-   * PMs sender's current coords. 
+   * PMs sender's current coords.
    * @param sender Host who wants desperately to know own position
    */
   public void doWhereCmd(String sender) {
@@ -237,8 +241,8 @@ public class twbotwarp extends TWBotExtension
       if( p != null ) {
           m_botAction.sendSmartPrivateMessage( sender, "You are at: (" + new Integer(p.getXLocation() / 16) + "," + new Integer(p.getYLocation() / 16) + ")" );
       }
-  }  
-  
+  }
+
   public void doWarp(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup)
   {
     if(warpType < WARP_ALL || warpType > WARP_FIRST_FREQ)

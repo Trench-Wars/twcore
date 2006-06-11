@@ -2,12 +2,19 @@ package twcore.bots.starcon;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
 
 public class starcon extends SubspaceBot {
-    
+
     static final int RUNNING_STATE = 1;
     static final int STOPPED_STATE = 0;
-    
+
     int                 m_state;
     OperatorList        m_operatorList;
     BotSettings         m_settings;
@@ -15,55 +22,55 @@ public class starcon extends SubspaceBot {
     TimerTask           m_announcements;
     CommandInterpreter  m_commandInterpreter;
     TimerTask           m_scanForCapitalShips;
-    
+
     public starcon( BotAction botAction ){
-        
+
         super( botAction );
-        
+
         m_state = STOPPED_STATE;
-        
+
         m_settings = m_botAction.getBotSettings();
         m_commandInterpreter = new CommandInterpreter( m_botAction );
-        
+
         setupTimerTasks();
         registerCommands();
-        
+
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_ENTERED );
-        events.request( EventRequester.PLAYER_DEATH );            
+        events.request( EventRequester.PLAYER_DEATH );
 
     }
-    
+
     void registerCommands(){
         int         acceptedMessages;
-        
+
         acceptedMessages = Message.PRIVATE_MESSAGE;
-        
+
         m_commandInterpreter.registerCommand( "!ping", acceptedMessages, this, "handlePing" );
         m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "handleStop" );
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "handleStart" );
         m_commandInterpreter.registerCommand( "!trade", acceptedMessages, this, "handleTrade" );
         m_commandInterpreter.registerCommand( "!capital", acceptedMessages, this, "handleCapital" );
-        
+
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "registerShip" );
     }
-    
+
     void setupTimerTasks(){
-        
+
         final StringBag   bag = new StringBag();
         final StringBag   teamBag = new StringBag();
-        
+
         teamBag.add( "Want in? Private message me with :SCBot:3 (Rapid-Fire Fighter) or your other choice of ships." );
         teamBag.add( "I know you want to play.  You REALLY want to play.  So type :SCBot:2 (Bomber)" );
         teamBag.add( "Come on, don't you read these messages?  It's easy to play.  Type :SCBot:5 (Stunner ship) to play." );
         teamBag.add( "Fight for your planet's security!  Your enemies are controlling vast systems of space, the only way to prevent this is to join the battle.  Type :SCBot:1 (Fighter) to play." );
         teamBag.add( "They're coming, they're coming!  What do we do?  Fight back!  Join the alliance, type :SCBot:6 to play." );
         teamBag.add( "No, I'm not a bot.  I just have no life.  Type :SCBot:7 to play." );
-        
+
         bag.add( "Private message the bot with a ship type (as a number) for ship changes." );
         bag.add( "If you want to enter the game, type :scbot:<ship type>.  The <ship type> must be a number between 1 and 8, but not 4." );
-        
+
         m_scanForCapitalShips = new TimerTask(){
             public void run(){
                 if( !m_botAction.freqContainsShip( 0, 4 )){
@@ -74,20 +81,20 @@ public class starcon extends SubspaceBot {
                 }
             }
         };
-        
+
         m_announcements = new TimerTask(){
             public void run(){
                 m_botAction.sendArenaMessage( bag.toString() );
             }
         };
-        
+
         m_specannounce = new TimerTask(){
             public void run(){
                 m_botAction.sendTeamMessage( teamBag.toString() );
             }
         };
     }
-    
+
     public void handleEvent( PlayerDeath event ){
         Player killee = m_botAction.getPlayer( event.getKilleeID() );
         if( killee.getShipType() == 4 ){
@@ -99,14 +106,14 @@ public class starcon extends SubspaceBot {
             }, 8000 );
         }
     }
-    
+
     public void handleEvent( LoggedOn event ){
         String initialArena = m_settings.getString( "InitialArena" );
         m_botAction.joinArena( initialArena );
         m_operatorList = m_botAction.getOperatorList();
         m_botAction.sendUnfilteredPublicMessage( "?chat=robodev" );
     }
-    
+
     public void handleEvent( PlayerEntered event ){
         if( m_state == RUNNING_STATE ){
             m_botAction.sendPrivateMessage( event.getPlayerID(), "Welcome to " +
@@ -114,39 +121,39 @@ public class starcon extends SubspaceBot {
             "me the number of the ship you want to be on.");
         }
     }
-    
+
     public void handleEvent( Message event ){
-        
+
         m_commandInterpreter.handleEvent( event );
     }
-    
+
     public void handlePing( String name, String message ){
-        
+
         m_botAction.sendRemotePrivateMessage( name, "Pong!" );
     }
-    
+
     public void handleStart( String name, String message ){
-        
+
         if( m_operatorList.isER( name ) == true ){
             m_state = RUNNING_STATE;
-            
+
             m_botAction.sendArenaMessage( "Starcon bot activated by " + name );
             m_botAction.sendArenaMessage( "Private message the bot with a ship type (as a number) for ship changes." );
             m_botAction.sendTeamMessage( "If you would like to enter the game, message me with the ship type (as a number) and I will put you into the game." );
-            
+
             setupTimerTasks();
             m_botAction.scheduleTaskAtFixedRate( m_specannounce, 180000, 180000 );
             m_botAction.scheduleTaskAtFixedRate( m_announcements, 120000, 120000 );
             m_botAction.scheduleTaskAtFixedRate( m_scanForCapitalShips, 10000, 10000 );
-            
+
             m_botAction.toggleLocked();
         }
     }
-    
+
     //Not for capital ships...
     public void registerShip( String name, String message ){
         int shipType = 0;
-        
+
         if( m_state == RUNNING_STATE ){
             try{
                 shipType = Integer.parseInt( message );
@@ -154,12 +161,12 @@ public class starcon extends SubspaceBot {
                 m_botAction.sendPrivateMessage( name, "If you would like to change ships, message me with the ship number." );
                 return;
             }
-            
+
             if( shipType < 1 || shipType > 8 ){
                 m_botAction.sendPrivateMessage( name, "Valid ship types are from 1 to 8." );
                 return;
             }
-            
+
             if( m_botAction.getPlayer( name ).getShipType() == 0 ){
                 if( shipType != 4 ){
                     m_botAction.sendPrivateMessage( name, "Okay, putting you in as " + shipType );
@@ -181,13 +188,13 @@ public class starcon extends SubspaceBot {
             }
         }
     }
-    
+
     public void handleTrade( String name, String message ){
         String      otherName;
-        
+
         if( m_state == RUNNING_STATE ){
             otherName = message.toLowerCase().trim();
-            
+
             if( name.toLowerCase().equals( otherName.toLowerCase() )){
                 m_botAction.sendPrivateMessage( name, "Sorry, you cannot trade with yourself!" );
                 return;
@@ -212,7 +219,7 @@ public class starcon extends SubspaceBot {
             }
         }
     }
-    
+
     public void handleStop( String name, String message ){
         if( m_operatorList.isER( name ) == true ){
             if( m_state == RUNNING_STATE ){
@@ -228,15 +235,15 @@ public class starcon extends SubspaceBot {
             }
         }
     }
-    
+
     public void handleCapital( String name, String message ){
         Player          p;
         int             frequency;
-        
+
         if( m_state == RUNNING_STATE ){
             p = m_botAction.getPlayer( name );
             frequency = p.getFrequency();
-            
+
             if( p.getShipType() == 0 ){
                 m_botAction.sendPrivateMessage( name, "You need to be in the game before you can be a capital ship" );
             } else if( !m_botAction.freqContainsShip( frequency, 4 ) ){

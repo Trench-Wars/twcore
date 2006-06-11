@@ -1,6 +1,10 @@
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
 
 /** runs RaceElim
  * @author Jacen Solo
@@ -11,11 +15,11 @@ public class twbotraceelim extends TWBotExtension
 	boolean isRunning = false;
 	int requiredWins;
 	int requiredLosses;
-	
+
 	public twbotraceelim()
 	{
 	}
-	
+
 	/** checks if the person has the required ammounts of kills or deaths for the win
 	 */
 	public void handleEvent(PlayerDeath event)
@@ -30,7 +34,7 @@ public class twbotraceelim extends TWBotExtension
 				handleWin(m_botAction.getPlayerName(event.getKilleeID()), "dying " + requiredLosses + " times");
 		}
 	}
-	
+
 	/** handles a message event and calls handleCommand method if they are ER+ and it's a pm
 	 */
 	public void handleEvent(Message event)
@@ -43,7 +47,7 @@ public class twbotraceelim extends TWBotExtension
             	handleCommand(name, message);
         }
     }
-    
+
     /** handles a command from the message event
      * @param name is the name of the person
      * @param is the person's message
@@ -78,7 +82,7 @@ public class twbotraceelim extends TWBotExtension
     		m_botAction.sendArenaMessage(name + " has stopped RaceElim.");
     	}
     }
-    
+
     /** handles the win
      * @param name is the person that won
      * @param how is how they won
@@ -88,7 +92,7 @@ public class twbotraceelim extends TWBotExtension
     	isRunning = false;
     	m_botAction.sendArenaMessage(name + " has won the game by " + how + ".");
     }
-    
+
     /** returns the help message
      */
     public String[] getHelpMessages()
@@ -100,7 +104,7 @@ public class twbotraceelim extends TWBotExtension
         };
         return RaceElimHelp;
     }
-    
+
     /** required thing
      */
     public void cancel()

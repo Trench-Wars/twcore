@@ -6,7 +6,7 @@ public class SBTeam {
     private String name;
     private boolean ready = false;
     private int freq;
-    
+
     public SBTeam(String n, int f) {
 	name = n;
 	freq = f;
@@ -18,7 +18,7 @@ public class SBTeam {
 	return captain.equalsIgnoreCase(cap);
     }
     public String getCaptain() { return captain; }
-    
+
     public void setFreq(int i) {
 	assert(i >= 0 && i < 9999);
 	freq = i;

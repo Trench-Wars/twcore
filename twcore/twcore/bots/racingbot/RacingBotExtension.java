@@ -1,10 +1,36 @@
 package twcore.bots.racingbot;
 
 import twcore.core.*;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.BallPosition;
+import twcore.core.events.FileArrived;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FlagDropped;
+import twcore.core.events.FlagPosition;
+import twcore.core.events.FlagReward;
+import twcore.core.events.FlagVictory;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.Prize;
+import twcore.core.events.SQLResultEvent;
+import twcore.core.events.ScoreReset;
+import twcore.core.events.ScoreUpdate;
+import twcore.core.events.SoccerGoal;
+import twcore.core.events.SubspaceEvent;
+import twcore.core.events.TurfFlagUpdate;
+import twcore.core.events.WatchDamage;
+import twcore.core.events.WeaponFired;
+
 import java.util.*;
 
 public abstract class RacingBotExtension {
-    
+
     BotAction m_botAction;
     OperatorList m_opList;
     String m_sqlHost;
@@ -13,26 +39,26 @@ public abstract class RacingBotExtension {
 
     public RacingBotExtension() {
     }
-    
+
     public void set( BotAction action, String sql, racingbot bot) {
     	m_botAction = action;
     	m_sqlHost = sql;
     	m_bot = bot;
     	modules = m_bot.modules;
-    }    
+    }
 //    public final void set( BotAction action, OperatorList opList, twbot twBot ){
 //        m_botAction = action;
 //        m_opList = opList;
 //        m_twBot = twBot;
  //   }
-    
+
     //public abstract String[] getHelpMessages();
     //public abstract void cancel();
-    
+
  //   private final void sendBotCommand( String name, String message ){
  //       m_twBot.handleCommand( name, message );
  //   }
-    
+
     public final void handleEvent( SubspaceEvent event ){
         if( event instanceof ScoreReset )
             handleEvent( (ScoreReset)event );

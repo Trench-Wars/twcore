@@ -10,9 +10,15 @@
  */
 package twcore.bots.multibot.zombies;
 
-import twcore.misc.multibot.*;
 import java.util.*;
+
+import twcore.bots.MultiModule;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
+import twcore.core.util.Tools;
 
 public class zombies extends MultiModule {
     /** Creates a new instance of portabotTestModule */
@@ -20,7 +26,7 @@ public class zombies extends MultiModule {
         killmsgs = new StringBag();
         killmsgs.add( "dies a miserable horrible death at the hands of a Zombie!" );
     }
-    
+
     public void requestEvents(EventRequester events)	{
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.PLAYER_DEATH);
@@ -45,7 +51,7 @@ public class zombies extends MultiModule {
         m_lives = lives;
         modeSet = true;
     }
-    
+
     public void addShip(int srcship, String name)
     {
     	if(!(m_srcship.contains(new Integer(srcship))))
@@ -54,7 +60,7 @@ public class zombies extends MultiModule {
    			m_srcship.add(new Integer(srcship));
    		}
     }
-    
+
     public void delShip(int srcship, String name)
     {
     	if(m_srcship.contains(new Integer(srcship)))
@@ -189,7 +195,7 @@ public class zombies extends MultiModule {
           	killerShipSet = true;
           	m_botAction.sendPrivateMessage(name, "Ship " + killerShip + " has been set for killing a zombie.");
           }
-          
+
 /*        } else if( message.startsWith( "!setupwarp2" )){
             m_botAction.warpFreqToLocation( 0, 800, 240 );
             m_botAction.warpFreqToLocation( 2, 270, 840 );
@@ -215,7 +221,7 @@ public class zombies extends MultiModule {
                     String killmsg = killmsgs.toString();
                     int soundPos = killmsg.indexOf('%');
                     int soundCode = 0;
-                    
+
                     if( soundPos != -1){
                         try{
                             soundCode = Integer.parseInt(killmsg.substring(soundPos + 1));
@@ -224,18 +230,18 @@ public class zombies extends MultiModule {
                         }
                         if(soundCode == 12) {soundCode = 1;} //no naughty sounds
                     }
-                    
+
                     if( killmsg.startsWith( "'" ) == false){
                         killmsg = " " + killmsg;
                     }
-                    
+
                     if( soundCode > 0 ){
                         killmsg = killmsg.substring(0, soundPos + 1);
                         m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg, soundCode );
                     } else {
                         m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg );
                     }
-                    
+
                     //}
                 }
                 if(m_srcship.contains(new Integer(p2.getShipType())) && p2.getShipType() != m_destship && killerShipSet)
@@ -244,7 +250,7 @@ public class zombies extends MultiModule {
                         m_botAction.setShip(event.getKillerID(), killerShip);
                 }
             } catch (Exception e) {
-                
+
             }
         }
     }
@@ -267,7 +273,7 @@ public class zombies extends MultiModule {
     }
     public void cancel() {
     }
-    
+
     public boolean isUnloadable()	{
 		return true;
 	}

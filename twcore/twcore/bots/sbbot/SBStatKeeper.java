@@ -9,11 +9,11 @@ public class SBStatKeeper {
     private MatchStats[]  matchHistory;
     private int curIndex;
     private int historyLength;
-    
+
     public SBStatKeeper(BotAction botAction, SBMatchOperator o) {
 	m_botAction = botAction;
 	matchOp = o;
-	
+
 	matchOp.addListener(SBMatchOperator.GOAL, new GoalHandler());
 	matchOp.addListener(SBMatchOperator.THEDROP, new DropHandler());
 	matchOp.addListener(SBMatchOperator.GAMEOVER, new GameOverHandler());
@@ -39,7 +39,7 @@ public class SBStatKeeper {
 	    }
 	    curIndex++;
 	    */
-	    
+
 	    m_botAction.sendArenaMessage(getMVPString(), 7);
 	}
     }
@@ -68,7 +68,7 @@ public class SBStatKeeper {
 	// Tried to get stats for a match that was never fully recorded
 	if(match.endTime == null) {
 	    //throw new Exception("Tried to print graph for nonexistent match.");
-	    
+
 	    return null;
 	    //match.endTime = new Date();
 	}
@@ -101,22 +101,22 @@ public class SBStatKeeper {
 
 	int[] curScore = new int[2];
 	int[] lastPos = new int[2];
-	
+
 	for(GoalRecord r : match.goals) {
 	    long curPos = (r.time.getTime() - match.startTime.getTime()) / increment;
 	    // possible due to rounding.  Should be extremely unlikely though.
-	    if(curPos >= graphLength) curPos = graphLength - 1; 
+	    if(curPos >= graphLength) curPos = graphLength - 1;
 	    int oldScore = curScore[r.team]++;
 	    if(oldScore > 0) {
 		int lineNum = 10 - oldScore;
 		for(int i = lastPos[r.team]; i <= curPos; i++) {
-		    if(graphBody[lineNum][i] != ' ') 
+		    if(graphBody[lineNum][i] != ' ')
 			graphBody[lineNum][i] = '*';
-		    else if(r.team == 0) 
+		    else if(r.team == 0)
 			graphBody[lineNum][i] = '+';
-		    else 
+		    else
 			graphBody[lineNum][i] = 'x';
-		    
+
 		    if(i == curPos) {
 			if(graphBody[lineNum-1][i] != ' ')
 			    if((r.team == 0 && graphBody[lineNum-1][i] != '+') ||
@@ -145,13 +145,13 @@ public class SBStatKeeper {
 	graph[16] = border;
 	return graph;
     }
-    
+
     public void newGame(String[] teamNames) {
 	matchHistory[curIndex].initialize();
 	matchHistory[curIndex].team0 = teamNames[0];
         matchHistory[curIndex].team1 = teamNames[1];
     }
-    
+
     private class DropHandler extends SBEventListener {
 	public void notify(SBEventType type, SBEvent event) {
 	    pm("arceo","StatKeeper got drop!");
@@ -159,7 +159,7 @@ public class SBStatKeeper {
 	    matchHistory[curIndex].startTime = new Date();
 	}
     }
-    
+
     private class GoalHandler extends SBEventListener {
 	public void notify(SBEventType type, SBEvent event) {
 	    m_botAction.sendSmartPrivateMessage("arceo", "Goal scored by " + event.player.getPlayerName());
@@ -176,7 +176,7 @@ public class SBStatKeeper {
 	    matchHistory[curIndex].endTime = new Date();
 	}
     }
-    
+
     private class MatchStats {
 	public String team0;
 	public String team1;
@@ -186,7 +186,7 @@ public class SBStatKeeper {
 	public boolean recording;
 
 	public MatchStats() { initialize(); }
-	
+
 	public void initialize() {
 	    team0 = null;
 	    team1 = null;

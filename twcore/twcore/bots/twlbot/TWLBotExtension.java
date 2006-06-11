@@ -1,6 +1,8 @@
 package twcore.bots.twlbot;
 
 import twcore.core.*;
+import twcore.core.events.*;
+
 import java.util.*;
 
 /*

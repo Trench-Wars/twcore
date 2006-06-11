@@ -1,5 +1,7 @@
 package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.util.Tools;
+
 import java.util.*;
 
 /**
@@ -55,7 +57,7 @@ public class SBMatchCoordinator {
     private final int MINX = 0, MINY = 1, MAXX = 2, MAXY = 3, STARTX = 4, STARTY = 5;
     private int[] TEAM0BOX = { 469, 597, 480, 603, 474, 600 };
     private int[] TEAM1BOX = { 544, 597, 555, 603, 550, 600 };
-    
+
     public SBMatchCoordinator(BotCommandOperator op, BotAction botAction) {
 	botOp = op;
 	m_botAction = botAction;
@@ -96,7 +98,7 @@ public class SBMatchCoordinator {
 	}
     }
 
-    
+
     private class AllReadyMessageListener extends Listener {
 	public void notify(MessageType type, Message message) {
 	    m_botAction.sendUnfilteredPublicMessage("*restart");
@@ -104,7 +106,7 @@ public class SBMatchCoordinator {
 	    m_botAction.warpFreqToLocation( 0, TEAM0BOX[STARTX], TEAM0BOX[STARTY] );
 	    m_botAction.warpFreqToLocation( 1, TEAM1BOX[STARTX], TEAM0BOX[STARTY] );
 	    gameState = WAITING;
-	    
+
 	    TimerTask t = new TimerTask() {
 		    public void run() {
 			gameState = PREDROP;
@@ -145,7 +147,7 @@ public class SBMatchCoordinator {
 	    m_botAction.scheduleTask(t,3000);
 	}
     }
-    
+
     // --- Command handlers
     private class AddCommandHandler extends BotCommandListener {
 	public void notify(BotCommandType type, BotCommandEvent event) {
@@ -285,7 +287,7 @@ public class SBMatchCoordinator {
 	    }
 	}
     }
-    
+
     private class CapCommandHandler extends BotCommandListener {
 	public void notify(BotCommandType type,  BotCommandEvent event) {
 	    switch(gameState) {

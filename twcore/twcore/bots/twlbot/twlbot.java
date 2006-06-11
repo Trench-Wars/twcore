@@ -3,19 +3,22 @@ package twcore.bots.twlbot;
 import java.util.*;
 import java.io.*;
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.*;
+import twcore.core.util.Tools;
 
 /**
  * This is to function as the base class for the TWL bot
- * 
+ *
  * The bot gives a base upon which the twl extension is built.
  * Other extensions can be added upon request
- * 
+ *
  * @author - FoN
  * 		modified from twbot.java
  * @version 2.1
  */
 public class twlbot extends SubspaceBot
-{	
+{
     //essential subspace bot classes
     private BotAction m_botAction;
 	private OperatorList m_opList;
@@ -37,7 +40,7 @@ public class twlbot extends SubspaceBot
 	//setting files
 	private File m_botRoot;
 	private File m_coreRoot;
-	
+
 	//constants
 	private final double VERSION = 2.03;
 
@@ -54,7 +57,7 @@ public class twlbot extends SubspaceBot
 		m_botAction = botAction;
 		m_botSettings = m_botAction.getBotSettings();
 		m_extensions = new HashMap();
-		
+
 		//register commands
 		m_commandInterpreter = new CommandInterpreter(m_botAction);
 		registerCommands();
@@ -102,11 +105,11 @@ public class twlbot extends SubspaceBot
         m_commandInterpreter.registerCommand("!version", acceptedMessages, this, "do_version", "!version           - Displays the version of the bot");
         m_commandInterpreter.registerCommand("!mybot", acceptedMessages, this, "do_mybot", "!mybot             - Change of host");
     //    m_commandInterpreter.registerCommand("!die", acceptedMessages, this, "do_die", "!die               - Tells the bot to take a hike... off a cliff.");
-    //enable after test is complete     
-        
+    //enable after test is complete
+
         m_commandInterpreter.registerDefaultCommand(acceptedMessages, this, "do_nothing");
 	}
-	
+
 	/**
 	 * Commands that are issued as messages packets are parsed here
 	 * @param name The host
@@ -121,10 +124,10 @@ public class twlbot extends SubspaceBot
 	}
 
 	//COMMANDS FUNCTIONS START HERE
-	
+
 	/**
 	 * Loads a extenstion module if there is one
-	 * 
+	 *
 	 * @param name Name of the host loading the extension
 	 * @param extensionType Type of extension to be loaded
 	 */
@@ -155,10 +158,10 @@ public class twlbot extends SubspaceBot
 
 	/**
 	 * Lists the modules that can be loaded in the twlbot
-	 * 
+	 *
 	 * @param name The host
 	 * @param message the command issued
-	 */	
+	 */
 	public void do_moduleList(String name, String message)
 	{
 		String[] s = m_botRoot.list();
@@ -237,13 +240,13 @@ public class twlbot extends SubspaceBot
 	 * @param key Extension Name
 	 */
 	public void do_help(String name, String key)
-	{   
+	{
 	    if (key == "")
 	    {
 	        m_botAction.privateMessageSpam(name, m_commandInterpreter.getCommandHelps());
 	        return;
 	    }
-	    
+
 		key = key.toLowerCase();
 		if (m_extensions.containsKey(key))
 		{
@@ -291,7 +294,7 @@ public class twlbot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Sorry, but I am currently " + "locked.  Please !unlock me first.");
 		}
 	}
-	
+
 	/**
 	 * Makes the bot go to the default arena
 	 * @param name The name of the host who issued the command
@@ -313,7 +316,7 @@ public class twlbot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Seeya! It's quittin' time!");
 			do_unlock(name, message);
 			do_go(name, m_defaultArena);
-		}	    
+		}
 	}
 
 	/**
@@ -328,14 +331,14 @@ public class twlbot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "I'm already locked.  If you want to unlock me, use !unlock.");
 			return;
 		}
-		
+
 		loadDefaultModules(); //loads the twlstandard module
 		m_nameOfHost = name;
 		m_botAction.sendSmartPrivateMessage(name, "Locked. TWL module loaded.");
-	
+
 		locked = true;
 	}
-	
+
 	/**
 	 * Unlocks the bot if it is locked
 	 * The bot is also reset and all extensions removed
@@ -349,13 +352,13 @@ public class twlbot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "I'm already unlocked.");
 			return;
 		}
-		
+
 		//clear(); //reset the bot
 		m_botAction.sendSmartPrivateMessage(name, "Unlocked");
 		m_nameOfHost = null;
 		locked = false;
 	}
-	
+
 	/**
 	 * Displays the version of the bot
 	 * @param name Name of the host
@@ -365,7 +368,7 @@ public class twlbot extends SubspaceBot
 	{
 	    m_botAction.sendSmartPrivateMessage(name, "Version: " + VERSION);
 	}
-	
+
 	/**
 	 * Changes host to the person who has issued the command
 	 * @param name The new host
@@ -389,7 +392,7 @@ public class twlbot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "This bot is unowned, because the bot is unlocked.");
 		}
 	}
-	
+
 	/**
 	 * Allows the bot to die in grace.  Ie quit
 	 * @param name  Name of the person doing the hidious action
@@ -407,9 +410,9 @@ public class twlbot extends SubspaceBot
 		else
 		{
 			m_botAction.sendSmartPrivateMessage(name, "I am locked, sorry.");
-		}	    
+		}
 	}
-	
+
 	/**
 	 * This is a default method if command is wrong for a message type
 	 * @param name Name of the host
@@ -418,7 +421,7 @@ public class twlbot extends SubspaceBot
 	public void do_nothing(String name, String message)
 	{
 	}
-	
+
 	/**
 	 * Go to the arena specified
 	 * @param arena
@@ -470,7 +473,7 @@ public class twlbot extends SubspaceBot
 	{
 		m_botAction.setReliableKills(1);
 	}
-	
+
 	/**
 	 * Handles the message Event
 	 */
@@ -556,7 +559,7 @@ public class twlbot extends SubspaceBot
 		m_botAction.joinArena(m_defaultArena);
 		m_botAction.sendUnfilteredPublicMessage("?chat=robodev");
 		m_opList = m_botAction.getOperatorList();
-		
+
 		distributeEvent((SubspaceEvent) event);
 	}
 
@@ -649,8 +652,8 @@ public class twlbot extends SubspaceBot
 	}
 
 	/**
-	 * Distributes the subspace events to any extenstion that is registered 
-	 * @param event The event to be distributed 
+	 * Distributes the subspace events to any extenstion that is registered
+	 * @param event The event to be distributed
 	 */
 	private void distributeEvent(SubspaceEvent event)
 	{
@@ -661,6 +664,6 @@ public class twlbot extends SubspaceBot
 			TWLBotExtension ext = (TWLBotExtension) entry.getValue();
 			ext.handleEvent(event);
 		}
-	}	
+	}
 }
 

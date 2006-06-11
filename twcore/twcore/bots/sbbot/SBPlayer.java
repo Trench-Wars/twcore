@@ -1,5 +1,7 @@
 package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.game.Player;
+
 import java.util.*;
 
 
@@ -25,12 +27,12 @@ public class SBPlayer {
     public String getName() { return name; }
     public void setTeam(SBTeam t) { currentTeam = t; }
     public SBTeam getTeam() { return currentTeam; }
-    
+
     public boolean equalsPlayer(String p) {
 	if(name.equalsIgnoreCase(p)) return true;
-	return false;	
+	return false;
     }
-    
+
     public boolean equalsPlayer(Player p) {
 	return equalsPlayer(p.getPlayerName());
     }

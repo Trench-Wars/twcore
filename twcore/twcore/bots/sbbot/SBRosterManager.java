@@ -1,5 +1,7 @@
 package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.game.Player;
+
 import java.util.*;
 import java.io.*;
 
@@ -43,7 +45,7 @@ public class SBRosterManager {
 	matchOp.notifyEvent(STARTPICK, new Message("Ready to start picking!"));
 	picker = new PickHandler();
     }
-    
+
     public void showCaps(Player p) {
 	for(SBTeam t : teams) {
 	    if(t.getCaptain() != null)
@@ -89,7 +91,7 @@ public class SBRosterManager {
 	    }
 	}
     }
-    
+
     public void setCap(Player host, int teamNum, String arg) {
 	if(teamNum >= teams.size() || teamNum < 0) return; //should never happen
 	Player p = m_botAction.getFuzzyPlayer(arg);
@@ -120,7 +122,7 @@ public class SBRosterManager {
 		    break;
 		}
 	    }
-	} else 
+	} else
 	    currentRec = getFuzzyPlayerRec(currentName);
 	if(currentRec == null || currentRec.getTeam() != getCapTeam(capName)) {
 	    pm(capName, "You can't sub out a player who isn't on your team.");
@@ -189,10 +191,10 @@ public class SBRosterManager {
 	    team.setReady(false);
 	}
     }
-    
+
     public void ready(Player p) {
 	String capName = p.getPlayerName();
-	SBTeam team = getCapTeam(capName); 
+	SBTeam team = getCapTeam(capName);
 	int highestCount = 0;
 
 	if(!capCheck(capName)) return;
@@ -216,7 +218,7 @@ public class SBRosterManager {
 	}
 	matchOp.notifyEvent(ALLREADY, new Message("Good to go baby!"));
     }
-    
+
     public void notPlaying(Player p) {
 	String pName = p.getPlayerName();
 	if(notPlayers.contains(pName.toLowerCase())) {
@@ -234,7 +236,7 @@ public class SBRosterManager {
 	    notPlayers.add(pName.toLowerCase());
 	}
     }
-    
+
     public void lagout(Player p) {
 	String pName = p.getPlayerName();
 
@@ -251,7 +253,7 @@ public class SBRosterManager {
 	    shipify(pName,getPlayerRec(pName).getTeam().getFreq());
 	}
     }
-    
+
     public void pick(Player cap, String arg) {
 	String capName = cap.getPlayerName();
 	if(!capCheck(capName)) return;
@@ -268,7 +270,7 @@ public class SBRosterManager {
 	if(!maxPlayerCheck(team)) return;
 	if(!eligiblePlayerCheck(capName, arg)) return;
 	String pName = m_botAction.getFuzzyPlayerName(arg);
-	
+
 	if(!notPlayingCheck(capName, pName)) return;
 	if(!havePlayerRec(pName))
 	   createPlayerRec(pName);
@@ -352,13 +354,13 @@ public class SBRosterManager {
 		    pm(unluckySOB.getName(), "When there are enough players to allow teams to remain even, you will re-enter the game.");
 		}
 		if(!iter.hasNext()) {
-		    //wtfz?  
+		    //wtfz?
 		    break;
 		}
 	    }
 	}
     }
-    
+
     //I use a class since the picking process must maintain state, and I don't want to clutter
     // the main class.
     private class PickHandler {
@@ -383,7 +385,7 @@ public class SBRosterManager {
 	    // if t != currentTeam it means that the team that picked was making up for a
 	    // !remove and picking out-of-order, so we won't advance the pick order.
 	}
-	
+
 	private boolean teamCanPick(SBTeam team) {
 	    if(currentTeam == team) {
 		return true;
@@ -415,7 +417,7 @@ public class SBRosterManager {
 	    if(!notPlayingCheck(capName, pName)) return false;
 	    if(!eligiblePlayerCheck(capName,arg)) return false;
 	    int freq = t.getFreq();
-	    
+
 	    if(!havePlayerRec(pName)) createPlayerRec(pName);
 	    getPlayerRec(pName).setTeam(t);
 	    shipify(pName, t.getFreq());
@@ -424,7 +426,7 @@ public class SBRosterManager {
 	    return true;
 	}
     }
-	
+
         // -- utility/convenience functions ---
     private boolean capCheck(String capName) {
 	if(!isCaptain(capName)) {
@@ -433,13 +435,13 @@ public class SBRosterManager {
 	}
 	return true;
     }
-	    
+
     private void shipify(String pName, int freq) {
 	m_botAction.setShip(pName,(freq % 2) + 1);
 	m_botAction.setFreq(pName, freq);
 	getPlayerRec(pName).setStatus(SBPlayer.ACTIVE);
     }
-    
+
 
 
     private void pm(String name, String message, int sound) {
@@ -452,14 +454,14 @@ public class SBRosterManager {
     private void arena(String message, int sound) {
 	m_botAction.sendArenaMessage(message, sound);
     }
-    
+
     private void arena(String message) {
 	arena(message,0);
     }
 
     private SBPlayer getPlayerRec(String name) { return players.get(name.toLowerCase()); }
     private boolean havePlayerRec(String name) { return players.containsKey(name.toLowerCase()); }
-    
+
     private boolean isActive(String name) {
 	return havePlayerRec(name) && getPlayerRec(name).getStatus() == SBPlayer.ACTIVE;
     }
@@ -476,7 +478,7 @@ public class SBRosterManager {
 	}
 	return null;
     }
-    
+
     private boolean isPending(String name) {
 	name = name.toLowerCase();
 	if(!havePlayerRec(name) || getPlayerRec(name).getStatus() != SBPlayer.PENDING)
@@ -506,7 +508,7 @@ public class SBRosterManager {
 	}
 	return count;
     }
-    
+
     private int pendingPlayerCount(SBTeam team) {
 	int count = 0;
 	for(SBPlayer p : players.values()) {

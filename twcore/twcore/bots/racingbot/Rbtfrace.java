@@ -3,30 +3,33 @@
  *
  *Created By: Jacen Solo
  *
- *Created: 05/24/04 at 
+ *Created: 05/24/04 at
  */
- 
+
 package twcore.bots.racingbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.SoccerGoal;
+import twcore.core.game.Player;
 
 public class Rbtfrace extends RBExtender
 {
-	
+
 	int ship = 4;
 	Player p;
 	int k = 0;
-	
+
 	public Rbtfrace()
 	{
 
 	}
-	
+
 	public void cancel()
 	{
 	}
-	
+
 	public void handleEvent(Message event)
 	{
 		String message = event.getMessage();
@@ -37,14 +40,14 @@ public class Rbtfrace extends RBExtender
             	handleCommand(name, message);
         }
     }
-    
+
     public void handleEvent(SoccerGoal event)
     {
     	int winfreq = event.getFrequency();
     	m_botAction.sendArenaMessage("Congratulations to freq " + winfreq + " they have scored and won the game!!!", 5);
     	m_botAction.toggleLocked();
     }
-    
+
     public void handleCommand(String name, String message)
     {
     	String pieces[] = message.split(" ");
@@ -66,7 +69,7 @@ public class Rbtfrace extends RBExtender
     		freq3();
     		m_botAction.sendArenaMessage("Gooooo go go go gooooooo", 104);
     	}
-    	
+
     	if(message.toLowerCase().startsWith("!stop"))
     	{
     		m_botAction.sendArenaMessage("This race has been stopped by: " + name);
@@ -93,7 +96,7 @@ public class Rbtfrace extends RBExtender
     		m_botAction.warpTo(name,512,512);
     	}
     }
-    
+
     public void freq0()
     {
     	Iterator it = m_botAction.getPlayingPlayerIterator();
@@ -123,7 +126,7 @@ public class Rbtfrace extends RBExtender
     	}
     	k = 0;
     }
-    
+
     public void freq1()
     {
     	Iterator it = m_botAction.getPlayingPlayerIterator();
@@ -153,7 +156,7 @@ public class Rbtfrace extends RBExtender
     	}
     	k = 0;
     }
-    
+
     public void freq2()
     {
     	Iterator it = m_botAction.getPlayingPlayerIterator();
@@ -183,7 +186,7 @@ public class Rbtfrace extends RBExtender
     	}
     	k = 0;
     }
-    
+
     public void freq3()
     {
     	Iterator it = m_botAction.getPlayingPlayerIterator();
@@ -213,7 +216,7 @@ public class Rbtfrace extends RBExtender
     	}
     	k = 0;
     }
-    
+
     public String[] getHelpMessages()
 	{
 		String[] help = {

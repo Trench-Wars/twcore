@@ -1,14 +1,17 @@
 /* 08.01.02
- 
+
    Completely recoded. - Austin Barton (2d)
- 
+
  */
 
 package twcore.bots.multibot.enigma;
 
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
 import java.util.*;
 
 public class enigma extends MultiModule {
@@ -17,35 +20,35 @@ public class enigma extends MultiModule {
     TreeMap             rawData;
     CommandInterpreter  m_commandInterpreter;
     BotSettings         m_botSettings;
-    
+
     //EnigmaBot specific variables
     Random 				generator = new Random();
-    
+
     TimerTask			CheckTime, CheckAnimation;
     TimerTask			start1, start2, start3;
     TimerTask			stop1, stop2, stop3;
-    
+
     int					m_timeON;
     int					m_timeOFF;
     int					m_delay;
     String				m_arena;
-    
+
     int					checkDoors = 0, checkEvents = 0, checkMessages = 0, lastEvent;
     int					curTime = 0;
     boolean 			gameProgress = false, eventProgress = false, startProgress = false;
-    
-    
-    
+
+
+
     /****************************************************************/
     /*** Constructor                                              ***/
     /****************************************************************/
     public void init() {
-        
+
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         m_botSettings = moduleSettings;
-        
+
         registerCommands();
-        
+
         //Timer setup
         setupTimerTasks();
         m_botAction.scheduleTaskAtFixedRate(CheckTime,0,1000);
@@ -55,18 +58,18 @@ public class enigma extends MultiModule {
         m_delay		= m_botSettings.getInt("MessageDelay");
         m_arena 	= m_botSettings.getString("Arena");
     }
-    
+
     public void requestEvents(EventRequester events)	{
 		events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_ENTERED );
 	}
-    
+
     /****************************************************************/
     /*** Registers the bot commands.                              ***/
     /****************************************************************/
     void registerCommands() {
         int acceptedMessages;
-        
+
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", 	acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!help",  	acceptedMessages, this, "doShowHelp" );
@@ -79,7 +82,7 @@ public class enigma extends MultiModule {
         m_commandInterpreter.registerCommand( "!whatis", 	acceptedMessages, this, "doWhatIs" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doShowHelp" );
     }
-    
+
     /****************************************************************/
     /*** Starts a game of Enigma.                                 ***/
     /****************************************************************/
@@ -116,7 +119,7 @@ public class enigma extends MultiModule {
                                                 m_botAction.showObject(13);
                                                 checkDoors = curTime + 1;
                                                 m_botAction.sendUnfilteredPublicMessage("*shipreset");
-                                                
+
                                                 checkEvents = curTime + getRandom( 10, 15 );
                                                 if(checkEvents == checkDoors)
                                                     checkEvents++;
@@ -129,15 +132,15 @@ public class enigma extends MultiModule {
                         };
                         m_botAction.scheduleTask(start2,20500);
                     }
-                    
+
                 }
             };
             m_botAction.scheduleTask(start1,4000);
             //doSleep(3500);
-            
+
         }
     }
-    
+
     /****************************************************************/
     /*** Cancels the game.                                        ***/
     /****************************************************************/
@@ -167,7 +170,7 @@ public class enigma extends MultiModule {
             gameProgress = false;
         }
     }
-    
+
     /****************************************************************/
     /*** Stops the game.                                          ***/
     /****************************************************************/
@@ -226,10 +229,10 @@ public class enigma extends MultiModule {
             }
             else
                 m_botAction.sendPrivateMessage(name, "Cannot stop a game while it is starting. Please use !cancel or wait until the game has started.");
-            
+
         }
     }
-    
+
     /****************************************************************/
     /*** Resets arena settings in case bot lagged during a game.  ***/
     /****************************************************************/
@@ -252,7 +255,7 @@ public class enigma extends MultiModule {
                 m_botAction.sendPrivateMessage(name, "I will not reset the arena settings while a game is in progress");
         }
     }
-    
+
     /****************************************************************/
     /*** Shows help menu for players/staff                        ***/
     /****************************************************************/
@@ -282,7 +285,7 @@ public class enigma extends MultiModule {
             "|  !lagout         - Want in? Type this to me to play!!!        |",
             "|---------------------------------------------------------------|"
         };
-        
+
         final String[] helpPlayer = {
             "|---------------------------------------------------------------|",
             "|  Commands directed privately:                                 |",
@@ -290,7 +293,7 @@ public class enigma extends MultiModule {
             "|  !lagout         - Want in? Type this to me to play!!!        |",
             "|---------------------------------------------------------------|"
         };
-        
+
         if( m_botAction.getOperatorList().isSmod( playerName ) )
             m_botAction.remotePrivateMessageSpam( playerName, helpStaff2 );
         else if( m_botAction.getOperatorList().isER( playerName ) )
@@ -298,7 +301,7 @@ public class enigma extends MultiModule {
         else
             m_botAction.remotePrivateMessageSpam( playerName, helpPlayer );
     }
-    
+
     public  String[] getModHelpMessage() {
     	String[] message =
     	{
@@ -306,18 +309,18 @@ public class enigma extends MultiModule {
 	    };
         return message;
     }
-    
+
     public boolean isUnloadable() {
     	return true;
     }
-    
+
     /****************************************************************/
     /*** Tells what is Enigma. $$$                                ***/
     /****************************************************************/
     public void doWhatIs( String name, String message) {
         m_botAction.sendUnfilteredPrivateMessage(name, "*objon 52");
     }
-    
+
     /****************************************************************/
     /*** Kills EnigmaBot                                          ***/
     /****************************************************************/
@@ -327,7 +330,7 @@ public class enigma extends MultiModule {
             m_botAction.die();
         }
     }
-    
+
     /****************************************************************/
     /*** Places a player in the game.                             ***/
     /****************************************************************/
@@ -339,7 +342,7 @@ public class enigma extends MultiModule {
         else
             m_botAction.sendPrivateMessage( name, "The game hasn't started, just jump in, I'm very busy preparing.");
     }
-    
+
     /****************************************************************/
     /*** Moves the bot.                                           ***/
     /****************************************************************/
@@ -347,39 +350,39 @@ public class enigma extends MultiModule {
         if( m_botAction.getOperatorList().isSmod( name ))
             m_botAction.joinArena(message);
     }
-    
-    
+
+
     /****************************************************************/
     /*** Runs the timer tasks every second                        ***/
     /****************************************************************/
     void setupTimerTasks() {
-        
+
         CheckTime = new TimerTask() {
             public void run() {
                 curTime += 1;
                 //Checks to give door warning.
                 if( ( ( curTime + 1 ) == checkDoors ) && gameProgress )
                     m_botAction.showObject(50);
-                
+
                 //Checks for door action.
                 if(curTime == checkDoors)
                     doCheckDoors();
-                
+
                 //Checks for event action.
                 if( ( curTime == checkEvents ) && gameProgress)
                     doCheckEvents();
-                
+
                 //Checks messages.
                 if( curTime == checkMessages ) {
                     if( gameProgress )
                         m_botAction.sendTeamMessage( "If you'd like to play personal message (PM) me with !lagout" );
                     checkMessages += m_delay;
                 }
-                
+
             }
         };
     }
-    
+
     /****************************************************************/
     /*** Handles checking doors                                   ***/
     /****************************************************************/
@@ -398,10 +401,10 @@ public class enigma extends MultiModule {
             temp = getRandom( 15, 0 );
             if(temp == 1)
                 doFlashScreen();
-            
+
         }
     }
-    
+
     /****************************************************************/
     /*** Handles checking events                                  ***/
     /****************************************************************/
@@ -434,7 +437,7 @@ public class enigma extends MultiModule {
             int nextEvent = getRandom( 5, 0 );
             if(nextEvent == lastEvent)
                 nextEvent++;
-            
+
             switch(nextEvent) {
                 case 0:
                     eventZero();
@@ -460,11 +463,11 @@ public class enigma extends MultiModule {
                     eventZero();
                     lastEvent = 0;
             }
-            
+
             checkEvents = curTime + getRandom( 10, m_timeON );
         }
     }
-    
+
     /****************************************************************/
     /*** Flashes Screen Randomly                                  ***/
     /****************************************************************/
@@ -487,7 +490,7 @@ public class enigma extends MultiModule {
                 break;
         }
     }
-    
+
     /****************************************************************/
     /*** Sphere of Seclusion                                      ***/
     /****************************************************************/
@@ -511,7 +514,7 @@ public class enigma extends MultiModule {
             m_botAction.sendUnfilteredPublicMessage("?set warbird:initialspeed:2000");
         }
     }
-    
+
     /****************************************************************/
     /*** Shroud of Darkness                                       ***/
     /****************************************************************/
@@ -525,7 +528,7 @@ public class enigma extends MultiModule {
             m_botAction.hideObject(4);
         }
     }
-    
+
     /****************************************************************/
     /*** Unnatural Attraction                                     ***/
     /****************************************************************/
@@ -541,7 +544,7 @@ public class enigma extends MultiModule {
             m_botAction.sendUnfilteredPublicMessage("?set warbird:gravitytopspeed:0");
         }
     }
-    
+
     /****************************************************************/
     /*** Out of Control                                           ***/
     /****************************************************************/
@@ -561,7 +564,7 @@ public class enigma extends MultiModule {
             m_botAction.sendUnfilteredPublicMessage("?set misc:bouncefactor:28");
         }
     }
-    
+
     /****************************************************************/
     /*** Imperceptible Walls                                      ***/
     /****************************************************************/
@@ -574,7 +577,7 @@ public class enigma extends MultiModule {
         else
             m_botAction.hideObject(5);
     }
-    
+
     /****************************************************************/
     /*** Generates Random Integer                                 ***/
     /****************************************************************/
@@ -582,17 +585,17 @@ public class enigma extends MultiModule {
         int temp = Math.abs( generator.nextInt() ) % number + modifier;
         return temp;
     }
-        
+
     /****************************************************************/
     /*** Handles Messages                                         ***/
     /****************************************************************/
     public void handleEvent( Message event ) {
         m_commandInterpreter.handleEvent( event );
     }
-    
+
     public void handleEvent( PlayerEntered event ) {
         if(gameProgress)
             m_botAction.sendPrivateMessage(event.getPlayerName(), "Enigma has started, if you wish to play please pm me with :  !lagout");
     }
-    
+
 }

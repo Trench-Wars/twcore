@@ -24,8 +24,8 @@ public class BotCommandOperator extends SSEventOperator {
 	KILLGAME = new BotCommandType(),
 	SENDARENAMESSAGE = new BotCommandType(),
 	SENDPRIVATEMESSAGE = new BotCommandType();
-	
-	
+
+
     private HashMap<BotCommandType,HashSet<BotCommandListener>> listeners;
     public BotCommandOperator() {
 	super();

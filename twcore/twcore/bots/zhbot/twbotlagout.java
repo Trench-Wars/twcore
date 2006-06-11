@@ -59,6 +59,12 @@ package twcore.bots.zhbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
 
 public class twbotlagout extends TWBotExtension
 {

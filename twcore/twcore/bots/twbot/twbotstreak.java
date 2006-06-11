@@ -1,10 +1,15 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
 
 public class twbotstreak extends TWBotExtension {
-	
+
 	HashMap playerMap;
 	boolean running = false;
 	int 	streak = 3, reStreak = 3, bestStreak = 0;
@@ -18,11 +23,11 @@ public class twbotstreak extends TWBotExtension {
 		" God Like!",
 		" Cheater!",
 	};
-	
+
 	public twbotstreak() {
         playerMap = new HashMap();
     }
-    
+
     public void handleCommand( String name, String message ) {
     	if( message.toLowerCase().startsWith( "!streakoff" ) ) {
     		stopStreak( name );
@@ -36,10 +41,10 @@ public class twbotstreak extends TWBotExtension {
     			if( j < 0 ) j = 1;
     			if( j > 100 ) j = 100;
     			startStreak( name, i, j );
-    		} catch (Exception e ) { m_botAction.sendPrivateMessage( name, "Remember: !streak <start> <update> (Btw failed to start streak.)" ); }			
+    		} catch (Exception e ) { m_botAction.sendPrivateMessage( name, "Remember: !streak <start> <update> (Btw failed to start streak.)" ); }
     	}
     }
-    
+
     public void startStreak( String name, int i, int j ) {
     	if( !running ) {
     		running = true;
@@ -48,7 +53,7 @@ public class twbotstreak extends TWBotExtension {
     		m_botAction.sendPrivateMessage( name, "Watching for those streaks! Starting streaks at " + i +" and updating at " + j);
     	} else m_botAction.sendPrivateMessage( name, "Already monitoring arena for streaks! $$$" );
     }
-    
+
     public void stopStreak( String name ) {
     	if( running ) {
 		    streak = 3;
@@ -66,7 +71,7 @@ public class twbotstreak extends TWBotExtension {
 			m_botAction.sendPrivateMessage(name, "Best Streak of the Session: "+ bestStreakOwner + " ("+ bestStreak + ":0)");
 		}
 	}
-    
+
     public void checkStreak( String name, int kills ) {
 		String out = null;
 		for( int i = 0; i < sMessages.length; i++ ) {
@@ -88,7 +93,7 @@ public class twbotstreak extends TWBotExtension {
 			m_botAction.sendArenaMessage(out);
 		}
 	}
-    
+
     public void handleEvent( PlayerDeath event ) {
     	if( running ) {
 	        Player theKiller  = m_botAction.getPlayer( event.getKillerID() );
@@ -117,7 +122,7 @@ public class twbotstreak extends TWBotExtension {
 			}
 	  	}
     }
-    
+
     public void handleEvent( Message event ){
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
@@ -127,7 +132,7 @@ public class twbotstreak extends TWBotExtension {
 			if( m_opList.isER( name )) handleCommand( name, message );
         }
     }
-    
+
     public String[] getHelpMessages() {
         String[] messages = {
             "!streak <start> <update>  - Watches for streaks beginning at <start> and updated every <update>",
@@ -136,9 +141,9 @@ public class twbotstreak extends TWBotExtension {
         };
         return messages;
     }
-    
+
     public void cancel() {
         playerMap.clear();
     }
-    
+
 }

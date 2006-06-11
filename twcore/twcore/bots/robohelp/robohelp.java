@@ -6,6 +6,13 @@ import java.text.SimpleDateFormat;
 import java.sql.*;
 // import com.google.soap.search.*;
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.InterProcessEvent;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.util.IPCMessage;
+import twcore.core.util.SearchableStructure;
+import twcore.core.util.Tools;
 
 public class robohelp extends SubspaceBot {
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
@@ -912,7 +919,6 @@ public class robohelp extends SubspaceBot {
     public void handleOnIt( String name, String message ) {
         boolean recorded = false;
         int i = 0;
-        System.out.println(name + " IS ON IT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         while( !recorded && i < callList.size() ) {
             EventData e = (EventData)callList.elementAt( i );
             if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
@@ -1099,7 +1105,6 @@ public class robohelp extends SubspaceBot {
         if( event.getMessageType() == Message.ALERT_MESSAGE ){
             String command = event.getAlertCommandType().toLowerCase();
             if( command.equals( "help" )){
-            	System.out.println("ALERT: " + event.getMessager() + "> " + event.getMessage());
                 handleHelp( event.getMessager(), event.getMessage() );
             } else if( command.equals( "cheater" )){
                 handleCheater( event.getMessager(), event.getMessage() );
@@ -1108,7 +1113,6 @@ public class robohelp extends SubspaceBot {
             }
         }
         else if (event.getMessageType() == Message.CHAT_MESSAGE) {
-   			System.out.println(event.getMessager() + "> " + event.getMessage());
         	String message = event.getMessage().toLowerCase();
         	if (message.startsWith("on it"))
         		handleOnIt(event.getMessager(), event.getMessage());

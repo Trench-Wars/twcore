@@ -1,8 +1,15 @@
 package twcore.bots.multibot.gangwars;
 
-import twcore.misc.multibot.*;
 import java.util.*;
+
+import twcore.bots.MultiModule;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerPosition;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
+import twcore.core.util.Tools;
 
 
 public class gangwars extends MultiModule {
@@ -27,7 +34,7 @@ public class gangwars extends MultiModule {
 		playerList = new HashMap();
 		queueList = new Vector();
     }
-    
+
     public void requestEvents(EventRequester events)	{
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.PLAYER_POSITION);
@@ -239,7 +246,7 @@ public class gangwars extends MultiModule {
     }
     public void cancel() {
     }
-    
+
     public boolean isUnloadable()	{
 		return true;
 	}

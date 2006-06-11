@@ -80,7 +80,7 @@ class Cannon {
 		if (timeAttached() > 3000) {
 			owner.setCannon(null);
 			m_botAction.setShip(owner.getName(), 1);
-			owner = null; 
+			owner = null;
 		}
 	}
 

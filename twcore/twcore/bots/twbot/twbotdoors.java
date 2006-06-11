@@ -1,7 +1,10 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
 
 public class twbotdoors extends TWBotExtension
 {

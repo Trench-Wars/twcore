@@ -2,10 +2,13 @@ package twcore.bots.twlbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
 
 /**
  * Streaks can be added by the host in matches
- * 
+ *
  * @author - Someone
  * 		modified from twbotStreak.java
  * 		edited for twl by FoN
@@ -157,7 +160,7 @@ public class twlbotstreak extends TWLBotExtension
     public Collection getHelpMessages()
     {
         Vector messages = new Vector();
-        
+
         messages.add("!streak <start> <update>  - Watches for streaks beginning at <start> and updated every <update>");
         messages.add("!streakoff                - Turns off the streak watcher.");
 

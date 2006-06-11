@@ -3,14 +3,22 @@
  *
  * Created 5/27/2004 - Last modified 7/24/04.
  *
- */  
+ */
 
 
 
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Flag;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 
 /** TWBot Extension for use in ?go cnr.
@@ -28,12 +36,12 @@ import twcore.core.*;
  *
  *
  * DEFAULT POSITIONS
- *   
+ *
  *   - Robbers start game at 512 600
  *   - Cops start game at 512 290
  *   - Robbers respawn at 512 202 -- SET IN MAP'S CFG
  *   - Cops respawn near 512 500 -- SET IN MAP'S CFG
- * 
+ *
  *     IMPORTANT NOTE - Cops should not spawn near the flag!  This makes it too
  *                      easy for the swine.
  *
@@ -44,7 +52,7 @@ import twcore.core.*;
  *   - After start: set doors to 1 (all open except prison)
  *   - If robbers get flag, set doors to 0 (open)
  *   - If cops get flag, set doors to 1 (closed)
- * 
+ *
  * @version 1.8
  * @author qan
  *
@@ -96,7 +104,7 @@ public class twbotcnr extends TWBotExtension {
     boolean manual = false;
 
 
-    /** Handles event received message, and if from an ER or above, 
+    /** Handles event received message, and if from an ER or above,
      * tries to parse it as an event mod command.  Otherwise, parses
      * as a general command.
      * @param event Passed event.
@@ -173,7 +181,7 @@ public class twbotcnr extends TWBotExtension {
 
                     m_botAction.warpFreqToLocation( m_robberfreq, m_robstart_x, m_robstart_y );
                     m_botAction.warpFreqToLocation( m_copfreq, m_copstart_x, m_copstart_y );
-            
+
                     m_botAction.shipResetAll();
                     m_botAction.scoreResetAll();
                     m_botAction.resetFlagGame();
@@ -181,7 +189,7 @@ public class twbotcnr extends TWBotExtension {
                     m_botAction.sendArenaMessage( "The robbers are loose!  Cops and Robbers has begun!", 104 );
                     m_botAction.sendArenaMessage( "Removing Cops with " + m_lives + " deaths." );
                 }
-                
+
             }
         };
 
@@ -190,7 +198,7 @@ public class twbotcnr extends TWBotExtension {
             m_botAction.changeAllShipsOnFreq( m_robberfreq, m_robbership);
             m_botAction.changeAllShipsOnFreq( m_copfreq, m_copship);
             m_botAction.warpFreqToLocation( m_robberfreq, m_robstart_x, m_robstart_y );
-            m_botAction.warpFreqToLocation( m_copfreq, m_copstart_x, m_copstart_y );           
+            m_botAction.warpFreqToLocation( m_copfreq, m_copstart_x, m_copstart_y );
             m_botAction.shipResetAll();
             m_botAction.scoreResetAll();
             m_botAction.resetFlagGame();
@@ -211,7 +219,7 @@ public class twbotcnr extends TWBotExtension {
     }
 
 
- 
+
     /** Intermediary method that passes information from handleCommand to doInit
      * based on the parameters of the !start command.
      * @param name Name of mod executing !start command (for reporting purposes)
@@ -219,10 +227,10 @@ public class twbotcnr extends TWBotExtension {
      */
     public void start( String name, String[] params ){
         try{
-            
+
             switch( params.length){
             // All default
-            case 0: 
+            case 0:
                 setMode( f_defrobship, f_defcopship, f_deflives );
                 doInit();
 
@@ -230,7 +238,7 @@ public class twbotcnr extends TWBotExtension {
                 break;
 
             // Specifying number of cop deaths before spec
-            case 1: 
+            case 1:
                 int lives = Integer.parseInt(params[0]);
 
                 setMode( f_defrobship, f_defcopship, lives );
@@ -250,7 +258,7 @@ public class twbotcnr extends TWBotExtension {
 
                 m_botAction.sendPrivateMessage( name, "Cops and Robbers started." );
                 break;
-            } 
+            }
 
         }catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Invalid argument type, or invalid number of arguments.  Please try again." );
@@ -274,7 +282,7 @@ public class twbotcnr extends TWBotExtension {
             } else {
               m_botAction.sendPrivateMessage( name, "I can't do that, Dave.  Cops and Robbers is not currently running." );
             }
-              
+
         } else if( message.startsWith( "!start " )){
             if(isRunning == false) {
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
@@ -303,10 +311,10 @@ public class twbotcnr extends TWBotExtension {
                     int y = Integer.parseInt(parameters[1]);
                     setStart(name, f_defrobfreq, x, y);
                 } else {
-                    m_botAction.sendPrivateMessage( name, "Invalid number of parameters.  Format: !setrobstart <x-coord> <y-coord>" ); 
+                    m_botAction.sendPrivateMessage( name, "Invalid number of parameters.  Format: !setrobstart <x-coord> <y-coord>" );
                 }
             } catch (Exception e) {
-                m_botAction.sendPrivateMessage( name, "Format: !setrobstart <x-coord> <y-coord>" ); 
+                m_botAction.sendPrivateMessage( name, "Format: !setrobstart <x-coord> <y-coord>" );
             }
 
         } else if( message.startsWith( "!setcopstart ")) {
@@ -318,20 +326,20 @@ public class twbotcnr extends TWBotExtension {
                     int y = Integer.parseInt(parameters[1]);
                     setStart(name, f_defcopfreq, x, y);
                 } else {
-                    m_botAction.sendPrivateMessage( name, "Invalid number of parameters.  Format: !setcopstart <x-coord> <y-coord>" ); 
+                    m_botAction.sendPrivateMessage( name, "Invalid number of parameters.  Format: !setcopstart <x-coord> <y-coord>" );
                 }
 
             } catch (Exception e) {
-                m_botAction.sendPrivateMessage( name, "Format: !setrobstart <x-coord> <y-coord>" ); 
+                m_botAction.sendPrivateMessage( name, "Format: !setrobstart <x-coord> <y-coord>" );
             }
 
         } else if( message.startsWith( "!openjail")) {
             m_botAction.setDoors( f_alldoorsopen );  // open all doors
-            m_botAction.sendPrivateMessage( name, "Jail opened." ); 
+            m_botAction.sendPrivateMessage( name, "Jail opened." );
 
         } else if( message.startsWith( "!closejail")) {
             m_botAction.setDoors( f_prisondoorclosed );  // close jail
-            m_botAction.sendPrivateMessage( name, "Jail closed." ); 
+            m_botAction.sendPrivateMessage( name, "Jail closed." );
 
         } else if( message.startsWith( "!manual" )) {
             if( manual ) {
@@ -404,7 +412,7 @@ public class twbotcnr extends TWBotExtension {
             Flag f = m_botAction.getFlag( event.getFlagID() );
             Player p = m_botAction.getPlayer( event.getPlayerID() );
             String playerName = p.getPlayerName();
-        
+
             if( p.getShipType() == m_copship && p.getFrequency() == m_copfreq) {
                 m_botAction.setDoors( f_prisondoorclosed ); // close only jail door
                 m_botAction.sendArenaMessage("The cops have restored order to the jail and closed the gates.");
@@ -413,8 +421,8 @@ public class twbotcnr extends TWBotExtension {
                 m_botAction.setDoors( f_alldoorsopen ); // open all doors
                 m_botAction.sendArenaMessage(playerName + " has broken open the jail!  The robbers are free!");
                 final int warpx = f.getXLocation();
-                final int warpy = f.getYLocation();           
-            
+                final int warpy = f.getYLocation();
+
             }
         }
     }

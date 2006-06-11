@@ -3,7 +3,8 @@ package twcore.bots.twlbot;
 import java.sql.*;
 import java.util.*;
 import twcore.core.*;
-import twcore.misc.PlayerProfile;
+import twcore.core.util.Tools;
+import twcore.core.stats.PlayerProfile;
 
 public class TwlMatch
 {

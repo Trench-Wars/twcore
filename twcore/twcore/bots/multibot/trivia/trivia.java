@@ -8,14 +8,17 @@ package twcore.bots.multibot.trivia;
 import java.util.*;
 import java.sql.*;
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
-import twcore.misc.PlayerProfile;
+import twcore.core.stats.PlayerProfile;
 
 public class trivia extends MultiModule {
-    
+
     CommandInterpreter  m_commandInterpreter;
-    
+
     Random          m_rnd;
     String          mySQLHost = "local";
     TimerTask       startGame, timerQuestion, timerHint, timerAnswer, timerNext;
@@ -24,13 +27,13 @@ public class trivia extends MultiModule {
     HashMap         playerID = new HashMap();
     HashMap         accessList = new HashMap();
     Vector          topTen;
-    
+
     int             gameProgress = -1, toWin = 10, questionNumber = 1, curLeader = 0;
     int             m_mintimesused = -1;
 
     int             m_timeQuestion = 0, m_timeHint = 0, m_timeAnswer = 0, m_timeNext = 0;
     int             m_timePer1 = 0, m_timePer2 = 0;
-    
+
     double          giveTime;
     String          m_prec = "--|-- ";
     String          t_category, t_question, t_answer, f_answer;
@@ -45,22 +48,22 @@ public class trivia extends MultiModule {
       "To ?chat=trivia only:",
       "!pm            -- bot will pm you for remote play."
     };
-    String[]        opmsg = 
+    String[]        opmsg =
     { "!start         -- Starts a game of trivia to 10",
       "!start <num>   -- Starts a game of trivia to <num> (1-25)",
       "!cancel        -- Cancels a game of trivia",
       "!shutdown      -- Removes triviabot from the zone",
       "---------------------------------------------------------"
     };
-    
-    public void init() {        
+
+    public void init() {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         getTopTen();
         registerCommands();
         m_rnd = new Random();
         BotSettings m_botSettings = moduleSettings;
         m_botAction.sendUnfilteredPublicMessage( "?chat=trivia" );
-        
+
         //Gets variables from .cfg
         m_timeQuestion =  m_botSettings.getInt("QuestionTime");
         m_timeHint        =  m_botSettings.getInt("HintTime");
@@ -70,14 +73,14 @@ public class trivia extends MultiModule {
         m_timePer2     =  m_botSettings.getInt("Periodic2");
         toWin           =  m_botSettings.getInt("ToWin");
         String access[] =  m_botSettings.getString("SpecialAccess").split( ":" );
-        for( int i = 0; i < access.length; i++ ) 
+        for( int i = 0; i < access.length; i++ )
             accessList.put( access[i], access[i] );
     }
-    
+
     public void requestEvents(EventRequester events)	{
 		events.request(EventRequester.MESSAGE);
 	}
-	
+
 	public  String[] getModHelpMessage() {
     	String[] message =
     	{
@@ -85,17 +88,17 @@ public class trivia extends MultiModule {
 	    };
         return message;
     }
-    
+
     public boolean isUnloadable() {
     	return true;
     }
-    
+
     /****************************************************************/
     /*** Registers the bot commands.                              ***/
     /****************************************************************/
     public void registerCommands() {
         int acceptedMessages;
-        
+
         acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start",     acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!cancel",    acceptedMessages, this, "doCancelGame" );
@@ -108,11 +111,11 @@ public class trivia extends MultiModule {
         m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
         m_commandInterpreter.registerCommand( "!pm",        acceptedMessages, this, "doPm" );
         m_commandInterpreter.registerCommand( "!score",     acceptedMessages, this, "doScore" );
-        
+
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doCheckPrivate" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
-    
+
     public void doStartGame( String name, String message ) {
         if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) && gameProgress == -1 ) {
             curLeader = 0;
@@ -140,7 +143,7 @@ public class trivia extends MultiModule {
             doTimedArena();
         }
     }
-    
+
     public void doShutDown( String name, String message ) {
         if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) ) {
             m_botAction.sendSmartPrivateMessage( name, "Goodbye" );
@@ -149,11 +152,11 @@ public class trivia extends MultiModule {
             } catch (Exception e ) {}
         }
     }
-    
+
     /****************************************************************/
     /*** Cancels the game, stores results.                        ***/
     /****************************************************************/
-    
+
     public void doCancelGame( String name, String message) {
         if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) && gameProgress != -1 ){
             gameProgress = -1;
@@ -163,7 +166,7 @@ public class trivia extends MultiModule {
             m_botAction.cancelTasks();
         }
     }
-    
+
     /****************************************************************/
     /*** Displays the Question/Category.                          ***/
     /****************************************************************/
@@ -186,7 +189,7 @@ public class trivia extends MultiModule {
         };
         m_botAction.scheduleTask( timerQuestion, m_timeQuestion );
     }
-    
+
     /****************************************************************/
     /*** Displays the Hint.                                       ***/
     /****************************************************************/
@@ -213,7 +216,7 @@ public class trivia extends MultiModule {
         };
         m_botAction.scheduleTask( timerHint, m_timeHint );
     }
-    
+
     /****************************************************************/
     /*** Displays the Answer.                                     ***/
     /****************************************************************/
@@ -231,7 +234,7 @@ public class trivia extends MultiModule {
         };
         m_botAction.scheduleTask( timerAnswer, m_timeAnswer );
     }
-    
+
     /****************************************************************/
     /*** Starts the next round.                                   ***/
     /****************************************************************/
@@ -247,7 +250,7 @@ public class trivia extends MultiModule {
         };
         m_botAction.scheduleTask( timerNext, m_timeNext );
     }
-    
+
     /****************************************************************/
     /*** Ends the game, stores results.                           ***/
     /****************************************************************/
@@ -275,7 +278,7 @@ public class trivia extends MultiModule {
         m_botAction.cancelTasks();
         toWin = 10;
     }
-    
+
     public void doRepeat( String name, String message ){
         if( gameProgress == 4 ){
             m_botAction.sendSmartPrivateMessage( name, m_prec + "Question: " + t_question + "  ANSWER: " + t_answer );
@@ -283,12 +286,12 @@ public class trivia extends MultiModule {
             m_botAction.sendSmartPrivateMessage( name, m_prec + "Question: " + t_question );
         }
     }
-    
+
     public void doHelp( String name, String message ){
         if( m_botAction.getOperatorList().isModerator( name ) ){
             m_botAction.remotePrivateMessageSpam( name, opmsg );
         }
-        
+
         m_botAction.remotePrivateMessageSpam( name, helpmsg );
     }
 
@@ -320,7 +323,7 @@ public class trivia extends MultiModule {
     public void doPm( String name, String message ){
         m_botAction.sendSmartPrivateMessage( name, "Now you can use :: to submit your answers." );
     }
-    
+
     public void doScore( String name, String message ){
 
         if( gameProgress != -1 ){
@@ -333,8 +336,8 @@ public class trivia extends MultiModule {
                 Iterator it = set.iterator();
                 while( it.hasNext() ){
                     String curPlayer = (String)it.next();
-                    PlayerProfile tempPlayer;
-                    tempPlayer = (PlayerProfile)playerMap.get( curPlayer );
+                    twcore.core.stats.PlayerProfile tempPlayer;
+                    tempPlayer = (twcore.core.stats.PlayerProfile)playerMap.get( curPlayer );
                     if( tempPlayer.getData( 0 ) == curPoints ){
                         m_botAction.sendRemotePrivateMessage( name, "--|-- " + doTrimString( curPlayer, 18 ) + doTrimString( "" + tempPlayer.getData( 0 ), 10 ) + "|" );
                     }
@@ -343,11 +346,11 @@ public class trivia extends MultiModule {
             }
         }
     }
-    
+
     /****************************************************************/
     /*** Checks private commands                                  ***/
     /****************************************************************/
-    
+
     public void doCheckPrivate( String name, String message ) {
         if((gameProgress == 2) || (gameProgress == 3)) {
             StringTokenizer tokenizer = new StringTokenizer(t_answer, "|");
@@ -355,18 +358,18 @@ public class trivia extends MultiModule {
                 String curAns = tokenizer.nextToken();
                 if((message.toLowerCase().equals(curAns.toLowerCase()))) {
                     if( playerMap.containsKey( name ) ) {
-                        PlayerProfile tempP = (PlayerProfile)playerMap.get( name );
+                        twcore.core.stats.PlayerProfile tempP = (twcore.core.stats.PlayerProfile)playerMap.get( name );
                         //data 0 stores the score.
                         tempP.incData( 0 );
                         if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
                     }
                     else {
-                        playerMap.put( name, new PlayerProfile( name ) );
-                        PlayerProfile tempP = (PlayerProfile)playerMap.get( name );
+                        playerMap.put( name, new twcore.core.stats.PlayerProfile( name ) );
+                        twcore.core.stats.PlayerProfile tempP = (twcore.core.stats.PlayerProfile)playerMap.get( name );
                         tempP.setData( 0, 1 );
                         if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
                     }
-                    PlayerProfile tempP = (PlayerProfile)playerMap.get( name );
+                    twcore.core.stats.PlayerProfile tempP = (twcore.core.stats.PlayerProfile)playerMap.get( name );
                     if( gameProgress == 2 || gameProgress == 3 ) {
                         String trail = getRank( tempP.getData(0) );
                         m_botAction.sendChatMessage(1, m_prec + name + " got the correct answer, '"+ f_answer + "', " + trail);
@@ -382,7 +385,7 @@ public class trivia extends MultiModule {
             }
         }
     }
-    
+
     /****************************************************************/
     /*** Returns the correct string for pts and lead.             ***/
     /****************************************************************/
@@ -397,7 +400,7 @@ public class trivia extends MultiModule {
         else if( score == curLeader) return speed + "and is tied for the lead with " + score + pts;
         else return speed + "and has " + score + pts;
     }
-    
+
     /****************************************************************/
     /*** Shows scores.                                            ***/
     /****************************************************************/
@@ -412,8 +415,8 @@ public class trivia extends MultiModule {
                 Iterator it = set.iterator();
                 while (it.hasNext()) {
                     String curPlayer = (String) it.next();
-                    PlayerProfile tempPlayer;
-                    tempPlayer = (PlayerProfile)playerMap.get(curPlayer);
+                    twcore.core.stats.PlayerProfile tempPlayer;
+                    tempPlayer = (twcore.core.stats.PlayerProfile)playerMap.get(curPlayer);
                     if(tempPlayer.getData(0) == curPoints) {
                         numberShown++;
                         m_botAction.sendChatMessage(1, "--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
@@ -437,8 +440,8 @@ public class trivia extends MultiModule {
                 Iterator it = set.iterator();
                 while (it.hasNext()) {
                     String curPlayer = (String) it.next();
-                    PlayerProfile tempPlayer;
-                    tempPlayer = (PlayerProfile)playerMap.get(curPlayer);
+                    twcore.core.stats.PlayerProfile tempPlayer;
+                    tempPlayer = (twcore.core.stats.PlayerProfile)playerMap.get(curPlayer);
                     if(tempPlayer.getData(0) == curPoints) {
                         numberShown++;
                         m_botAction.sendArenaMessage("--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
@@ -451,7 +454,7 @@ public class trivia extends MultiModule {
             m_botAction.sendArenaMessage("--|-------------------------------|");
         }
     }
-    
+
     /****************************************************************/
     /*** Just adds blank space for alignment.                     ***/
     /****************************************************************/
@@ -465,15 +468,15 @@ public class trivia extends MultiModule {
         }
         return fragment;
     }
-    
+
     public void handleEvent( Message event ){
         m_commandInterpreter.handleEvent( event );
     }
-    
+
     /****************************************************************/
     /*** For periodic messages...                                 ***/
     /****************************************************************/
-    
+
     public void doTimedArena() {
         timedMessages = new TimerTask() {
             public void run() {
@@ -486,7 +489,7 @@ public class trivia extends MultiModule {
         };
         m_botAction.scheduleTask( timedMessages, m_timePer1 );
     }
-    
+
     /****************************************************************/
     /*** Gets a question from the database.                       ***/
     /****************************************************************/
@@ -498,7 +501,7 @@ public class trivia extends MultiModule {
                 qryQuestionData = m_botAction.SQLQuery( mySQLHost, "SELECT fnQuestionID, fcQuestion, fcAnswer, fcQuestionTypeName FROM tblquestion, tblquestiontype WHERE tblquestion.fnQuestionTypeID = tblquestiontype.fnQuestionTypeid AND fnTimesUsed="+m_mintimesused+" ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
                 if (!qryQuestionData.isBeforeFirst()) getMinTimesUsed();
             } while (!qryQuestionData.isBeforeFirst());
-            
+
             if( qryQuestionData.next() ) {
                 t_category = qryQuestionData.getString("fcQuestionTypeName").replaceAll("\\\\", "");
                 t_question = qryQuestionData.getString("fcQuestion").replaceAll("\\\\", "");
@@ -509,11 +512,11 @@ public class trivia extends MultiModule {
         } catch (Exception e) {
             Tools.printStackTrace(e);
         }
-        
+
         StringTokenizer tokenizer = new StringTokenizer(t_answer, "|");
         f_answer = tokenizer.nextToken();
     }
-    
+
     /****************************************************************/
     /*** Gets minimum times used for questions.                   ***/
     /****************************************************************/
@@ -528,7 +531,7 @@ public class trivia extends MultiModule {
             m_mintimesused = -1;
         }
     }
-    
+
     /****************************************************************/
     /*** Gets the current Topten.                                 ***/
     /****************************************************************/
@@ -541,16 +544,16 @@ public class trivia extends MultiModule {
         }
         catch (Exception e){}
     }
-    
+
     /****************************************************************/
     /*** Stores player statistics.                                ***/
     /****************************************************************/
-    
+
     public void storePlayerStats( String username, int points, boolean won ) {
         try {
             int wonAdd = 0;
             if (won) wonAdd = 1;
-            
+
             ResultSet qryHasTriviaRecord = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible FROM tblusertriviastats WHERE fcUserName = \"" + username+"\"");
             if (!qryHasTriviaRecord.next()) {
                 double rating = ( (points+.0) / toWin * 750.0 ) * ( 1.0 + (wonAdd / 3.0) );
@@ -567,7 +570,7 @@ public class trivia extends MultiModule {
             Tools.printStackTrace(e);
         }
     }
-    
+
     /****************************************************************/
     /*** Gets player statistics.                                  ***/
     /****************************************************************/

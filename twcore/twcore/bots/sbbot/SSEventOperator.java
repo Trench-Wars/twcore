@@ -1,5 +1,7 @@
 package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.events.*;
+
 import java.util.*;
 import java.io.*;
 
@@ -23,7 +25,7 @@ public class SSEventOperator extends Operator {
 	if(!listeners.containsKey(type)) return;
 	listeners.get(type).remove(l);
     }
-    
+
     public void notifyEvent(SSEventMessageType type, SubspaceEvent event) {
 	if(listeners.containsKey(type) && listeners.get(type) != null) {
 	    for(SSEventListener l : listeners.get(type)) {
@@ -31,7 +33,7 @@ public class SSEventOperator extends Operator {
 	    }
 	}
     }
-    
+
     public void notifyEvent(SSEventMessageType type, WatchDamage event) {
 	if(listeners.containsKey(type) && listeners.get(type) != null) {
 	    for(SSEventListener l : listeners.get(type)) {
@@ -56,7 +58,7 @@ public class SSEventOperator extends Operator {
 	}
     }
 
-    public void notifyEvent(SSEventMessageType type, twcore.core.Message event) {
+    public void notifyEvent(SSEventMessageType type, twcore.core.events.Message event) {
 	if(listeners.containsKey(type) && listeners.get(type) != null) {
 	    for(SSEventListener l : listeners.get(type)) {
 		l.notify(type, event);
@@ -103,7 +105,7 @@ public class SSEventOperator extends Operator {
 	    }
 	}
     }
-    
+
     public void notifyEvent(SSEventMessageType type, FrequencyChange event) {
 	if(listeners.containsKey(type) && listeners.get(type) != null) {
 	    for(SSEventListener l : listeners.get(type)) {

@@ -7,9 +7,16 @@
 
 package twcore.bots.multibot.baseassault;
 
-import twcore.misc.multibot.*;
 import java.util.*;
+
+import twcore.bots.MultiModule;
 import twcore.core.*;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
 
 
 /**
@@ -30,7 +37,7 @@ public class baseassault extends MultiModule {
         makeMapsTable();
         confirmedMap = (BasingMap) mapsTable.get("0");
     }
-    
+
     public void requestEvents(EventRequester events)	{
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.PLAYER_DEATH);
@@ -815,7 +822,7 @@ public class baseassault extends MultiModule {
    */
   public void cancel() {
   }
-  
+
   public boolean isUnloadable()	{
 		return true;
 	}

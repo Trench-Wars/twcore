@@ -2,6 +2,17 @@
 package twcore.bots.strikeballbot;
 
 import twcore.core.*;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.BallPosition;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.SoccerGoal;
+import twcore.core.game.Player;
+
 import java.util.*;
 import java.io.*;
 import java.util.Date;
@@ -332,7 +343,7 @@ public class strikeballbot extends SubspaceBot {
 
         m_botAction.sendUnfilteredPublicMessage("*lockpublic");
         do_changeState( STATE_READY );
-        
+
         if( m_roundPause != null )
             m_roundPause.cancel();
 
@@ -380,7 +391,7 @@ public class strikeballbot extends SubspaceBot {
             };
         };
         m_botAction.scheduleTask(m_roundPause, 1000 );
-        
+
     }
 
 
@@ -526,7 +537,7 @@ public class strikeballbot extends SubspaceBot {
         return scoreDisp;
     }
 
- 
+
 
     /** Stores the scores in a log file.
      */
@@ -540,7 +551,7 @@ public class strikeballbot extends SubspaceBot {
                 outBuffer.write( "*** SBL Season Match between " + m_team1Name + " and " + m_team2Name + " at " + m_gameEndTime.toString() + " ***" );
             else
                 outBuffer.write( "*** SBL Playoff Match between " + m_team1Name + " and " + m_team2Name + " at " + m_gameEndTime.toString() + " ***" );
-    
+
             outBuffer.newLine();
 
             if( m_forfeit == 0 ) {
@@ -565,7 +576,7 @@ public class strikeballbot extends SubspaceBot {
                 default:
                     message = "no reason given";
                 }
-                
+
                 if( m_forfeit == 1 ) {
                     outBuffer.write( "RESULT: " + m_team1Name + " defeats " + m_team2Name + " by way of forfeit (" + message + ")" );
                 } else {
@@ -1130,7 +1141,7 @@ public class strikeballbot extends SubspaceBot {
 
 
     /** Restarts the ball game.
-     */ 
+     */
     public void cmd_restart() {
         m_botAction.sendUnfilteredPublicMessage("*restart");
     }
@@ -1152,7 +1163,7 @@ public class strikeballbot extends SubspaceBot {
 //******************************** (4). DEBUG COMMANDS ***********************************
 //****************************************************************************************
 
-    
+
     /** Debug: Shows a list of all players marked as "playing," and indexes them.
      * @param name Ref's name
      */
@@ -1251,7 +1262,7 @@ public class strikeballbot extends SubspaceBot {
     }
 
 
- 
+
     /** Debug: Gets info on player
      * @param name Ref's name
      * @param playerName Player's name on which to retrieve info.
@@ -1266,11 +1277,11 @@ public class strikeballbot extends SubspaceBot {
                 return;
             }
         }
-        
+
         m_botAction.sendPrivateMessage( name, sbP.getName() + " of " + sbP.getTeamName() + " (Team " + sbP.getTeam() + ")" );
         m_botAction.sendPrivateMessage( name, "Lagged out: " + ( sbP.isLaggedOut()?"yes":"no" ) + "  Warned out: " + ( sbP.isWarnedOut()?"yes":"no" ) );
         String[] warnings = sbP.getWarningInfo();
-    
+
         try {
             m_botAction.sendPrivateMessage( name, "Warning #1: " + warnings[0] );
             m_botAction.sendPrivateMessage( name, "Warning #2: " + warnings[1] );
@@ -1278,7 +1289,7 @@ public class strikeballbot extends SubspaceBot {
         } catch (Exception e) {
             m_botAction.sendPrivateMessage( name, "Unexpected error occurred while displaying warnings!  Please report to upper staff." );
         }
-        
+
     }
 
 
@@ -1425,7 +1436,7 @@ public class strikeballbot extends SubspaceBot {
             if( freq == 0 )
                 freq = 1;
             else
-                freq = 0;           
+                freq = 0;
 
         if( m_gameState != STATE_PLAYING )
             return;
@@ -1464,7 +1475,7 @@ public class strikeballbot extends SubspaceBot {
                 m_botAction.sendArenaMessage( "Score: " + m_team1Name + " [" + m_team1Score + " - " + m_team2Score + "] " + m_team2Name );
                 sbP.incGoals();
             }
-            
+
         } else {
             m_team2Score++;
             if( hasAssist ) {
@@ -1627,7 +1638,7 @@ public class strikeballbot extends SubspaceBot {
             break;
         case STATE_PLAYING:
             if( m_opList.isZH( name ))
-                m_botAction.sendPrivateMessage( name, "STAFF MEMBER: Blueout is enabled; please do not speak in public chat." ); 
+                m_botAction.sendPrivateMessage( name, "STAFF MEMBER: Blueout is enabled; please do not speak in public chat." );
             dispString = dispString + "in game.";
             break;
         }
@@ -1801,7 +1812,7 @@ public class strikeballbot extends SubspaceBot {
                 cmd_dbg_rem( name, team, index );
             } catch (Exception e) {
             }
-	
+
         } else if( message.startsWith( "!dbg-state " )) {
             String[] params = message.split(" ", 2);
             try {

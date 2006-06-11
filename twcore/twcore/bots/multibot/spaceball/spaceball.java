@@ -1,9 +1,22 @@
 package twcore.bots.multibot.spaceball;
 
 import twcore.core.*;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.WeaponFired;
+import twcore.core.game.Player;
+import twcore.core.game.Ship;
+import twcore.core.util.Tools;
+
 import java.util.*;
+
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
 
 /**
  * Hosts a game of SpaceBall. Objectives:
@@ -14,7 +27,7 @@ import twcore.misc.multibot.*;
  */
 
 public class spaceball extends MultiModule {
-	
+
 	private BotSettings m_botSettings;
 	private Ship oShip;
 
@@ -60,7 +73,7 @@ public class spaceball extends MultiModule {
 			m_botAction.joinArena(thisArena, (short)6000, (short)6000);
 		} catch(Exception e) { m_botAction.joinArena(thisArena); }
 	}
-	
+
 	/** Request events that this bot requires to receive.  */
 	public void requestEvents(EventRequester req) {
 		req.request(EventRequester.MESSAGE);
@@ -72,16 +85,16 @@ public class spaceball extends MultiModule {
 		req.request(EventRequester.WEAPON_FIRED);
 		req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
 	}
-	
+
 	public boolean isUnloadable() {
 		return eventState == 0;
 	}
-	
+
 	public String[] getModHelpMessage() {
 		String[] bleh = { "" };
 		return bleh;
 	}
-	
+
 
 	public void handleEvent(Message event) {
 
@@ -111,7 +124,7 @@ public class spaceball extends MultiModule {
 				handleHelp(name);
 			}
 		}
-		
+
 		if (!m_botAction.getOperatorList().isER(name)) {
 			return;
 		}
@@ -152,7 +165,7 @@ public class spaceball extends MultiModule {
 			}
 			m_botAction.sendPrivateMessage(event.getPlayerID(), status);
 		}
-	}	
+	}
 
 
 	/**
@@ -179,7 +192,7 @@ public class spaceball extends MultiModule {
 	 *
 	 * @param event is the PlayerDeath event to handle
 	 */
-	
+
 	public void handleEvent(PlayerDeath event) {
 		if (eventState == 0) {
 			return;
@@ -305,8 +318,8 @@ public class spaceball extends MultiModule {
 
 		fired_projectiles.add(new Projectile(p, event.getXLocation() + (short)(10.0 * Math.sin(bearing)), event.getYLocation() - (short)(10.0 * Math.cos(bearing)), event.getXVelocity() + (short)(pSpeed * Math.sin(bearing)), event.getYVelocity() - (short)(pSpeed * Math.cos(bearing)), event.getWeaponType(), event.getWeaponLevel()));
 	}
-	
-	
+
+
 	/* set ReliableKills 1 (*relkills 1) to make sure your bot receives every packet */
 	public void handleEvent(ArenaJoined event) {
 		m_botAction.setReliableKills(1);
@@ -351,7 +364,7 @@ public class spaceball extends MultiModule {
 
 
 	/**
-	 * This method setups the game. 
+	 * This method setups the game.
 	 *
 	 */
 
@@ -462,7 +475,7 @@ public class spaceball extends MultiModule {
 				}
 			};
 		};
-		
+
 		Object[] sorted_p = (Object[]) players.keySet().toArray(new Object[players.size()]);
 		Arrays.sort(sorted_p, a);
 
@@ -605,7 +618,7 @@ public class spaceball extends MultiModule {
 		}
 		fiveSeconds = new TimerTask() {
 			public void run() {
-				finishGame();			
+				finishGame();
 			}
 		};
 		m_botAction.scheduleTask(fiveSeconds, 5000);
@@ -613,7 +626,7 @@ public class spaceball extends MultiModule {
 
 
 	/**
-	 * This method updates the bot location and detects collisions with 
+	 * This method updates the bot location and detects collisions with
 	 * walls/projectiles.
 	 */
 

@@ -43,6 +43,8 @@ package twcore.bots.racingbot;
 import java.util.*;
 import java.sql.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
 
 public class Rbwarp extends RBExtender
 {

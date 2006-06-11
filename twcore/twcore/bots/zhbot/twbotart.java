@@ -1,33 +1,36 @@
 package twcore.bots.zhbot;
 
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.game.Ship;
+
 import java.util.*;
 import java.io.*;
 import java.net.*;
 
 public class twbotart extends TWBotExtension
 {
-	
+
 	int move = 16;
-	
+
 	public twbotart()
 	{
 	}
-	
+
 	public void handleEvent(Message event)
 	{
 		String message = event.getMessage();
 		String name = "";
-		
+
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
 			name = m_botAction.getPlayerName(event.getPlayerID());
 		else if(event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
 			name = event.getMessager();
-			
+
 		if(m_opList.isZH(name))
 			handleCommand(name, message);
 	}
-	
+
 	public void handleCommand(String name, String message)
 	{
 		if(message.toLowerCase().startsWith("!draw "))
@@ -49,7 +52,7 @@ public class twbotart extends TWBotExtension
 			m_botAction.getShip().setShip(ship);
 		}
 	}
-		
+
 	public void download(String name, String message)
 	{
 		try {
@@ -100,10 +103,10 @@ public class twbotart extends TWBotExtension
 				m_botAction.sendPrivateMessage(name, "That file contains too many mines. You should try reducing it so I can draw all of it.");
 		} catch(Exception e) {m_botAction.sendPrivateMessage(name, "error... check URL and try again."); e.printStackTrace();}
 	}
-	
+
 	public int getWeapon(char c) {
 		Ship s = m_botAction.getShip();
-		
+
 		if(c == '.') return s.getWeaponNumber((byte)3, (byte)0, false, false, true, (byte)8, true);
 		if(c == '*') return s.getWeaponNumber((byte)3, (byte)1, false, false, true, (byte)8, true);
 		if(c == '#') return s.getWeaponNumber((byte)3, (byte)2, false, false, true, (byte)8, true);
@@ -114,11 +117,11 @@ public class twbotart extends TWBotExtension
 		if(c == '4') return s.getWeaponNumber((byte)4, (byte)3, false, false, true, (byte)8, true);
 		return 0;
 	}
-	
+
 	public void cancel()
 	{
 	}
-	
+
 	public String[] getHelpMessages()
 	{
 		String[] blah = {

@@ -1,9 +1,12 @@
 package twcore.bots.multibot;
 
+import twcore.bots.MultiModule;
 import twcore.core.*;
+import twcore.core.events.*;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.io.*;
-import twcore.misc.multibot.*;
 
 public class multibot extends SubspaceBot
 {
@@ -336,6 +339,7 @@ public class multibot extends SubspaceBot
       m_botAction.sendChatMessage(MultiModule.FIRST_CHAT, "Bot Module Unloaded due to exception.");
       m_botAction.sendArenaMessage("Fatal Error.  Module Unloaded.");
       unloadModule();
+      Tools.printStackTrace(e);
     }
   }
 

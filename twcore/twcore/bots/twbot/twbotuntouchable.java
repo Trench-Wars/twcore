@@ -2,7 +2,7 @@
  * twbotuntouchable - The Untouchable module - qan (gdugwyler@hotmail.com)
  *
  * Created 5/30/04 - Last modified 7/24/04
- * 
+ *
  *
  *
  * DESC: Normal elimination match, except:
@@ -11,14 +11,22 @@
  *       - Anyone who kills the Untouchable is spec'd!
  *       - Untouchable has unlimited lives, but of course can't be the winner of the game.
  *       - Players MUST NOT give away identity of the Untouchable (as it's cheating).
- */  
+ */
 
 
 
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 
 
@@ -58,7 +66,7 @@ public class twbotuntouchable extends TWBotExtension {
     boolean manual = false;        // Manual toggle for more personal hosting style
 
 
-    /** Handles event received message, and if from an ER or above, 
+    /** Handles event received message, and if from an ER or above,
      * tries to parse it as an event mod command.  Otherwise, parses
      * as a general command.
      * @param event Passed event.
@@ -82,7 +90,7 @@ public class twbotuntouchable extends TWBotExtension {
      * @param lives Number of lives to spec players at.
      * @param UTName Name of player to be the starting Untouchable.  If
      *                   left blank, random starting UT.
-     */    
+     */
     public void doInit( final int lives, String UTName ){
         m_lives = lives;
 
@@ -157,7 +165,7 @@ public class twbotuntouchable extends TWBotExtension {
     }
 
 
- 
+
     /** Intermediary method that passes information from handleCommand to doInit
      * based on the parameters of the !start command.
      * @param name Name of mod executing !start command (for reporting purposes)
@@ -165,18 +173,18 @@ public class twbotuntouchable extends TWBotExtension {
      */
     public void start( String name, String[] params ){
         try{
-            
+
             switch( params.length){
 
             // Default: 10 lives, random starting Untouchable
-            case 0: 
+            case 0:
                 m_untouchable = "";
                 doInit( 10, "" );
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
                 break;
 
             // User-defined number of lives, random starting Untouchable
-            case 1: 
+            case 1:
                 int lives = Integer.parseInt(params[0]);
                 m_untouchable = "";
                 doInit( lives, "" );
@@ -197,7 +205,7 @@ public class twbotuntouchable extends TWBotExtension {
                 }
 
                 break;
-            } 
+            }
 
         }catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Silly " + name + ".  You've made a mistake -- please try again." );
@@ -223,7 +231,7 @@ public class twbotuntouchable extends TWBotExtension {
             } else {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode is not currently enabled." );
             }
-              
+
         } else if( message.startsWith( "!start " )){
             if(isRunning == false) {
                 String[] parameters = Tools.stringChopper( message.substring( f_startmsglength ), ' ' );
@@ -283,7 +291,7 @@ public class twbotuntouchable extends TWBotExtension {
 
    }
 
-    
+
     /** Handles player leaving events.  If player who left is UT, reassign UT.
      * @param event Contains event information on player who left.
      */
@@ -300,7 +308,7 @@ public class twbotuntouchable extends TWBotExtension {
      * @param event Contains event information on player who changed ship or freq.
      */
     public void handleEvent( FrequencyShipChange event ) {
-       
+
         if( event.getShipType() == f_specship && isRunning ) {
 
             if( m_untouchable.equals( m_botAction.getPlayerName( event.getPlayerID() ) ) ) {
@@ -315,7 +323,7 @@ public class twbotuntouchable extends TWBotExtension {
 
                 if( numPs > 1 )
                     makeNewRandomUntouchable();
-            
+
             } else {
 
                 int numPlayers = 0;
@@ -346,7 +354,7 @@ public class twbotuntouchable extends TWBotExtension {
     }
 
 
-    
+
     /** Performs all necessary operations to stop bot.
      */
     public void doStop() {
@@ -364,7 +372,7 @@ public class twbotuntouchable extends TWBotExtension {
 
 
 
-    /** Handles player death events.  Spec killed at appropriate number of deaths, 
+    /** Handles player death events.  Spec killed at appropriate number of deaths,
      * and spec killer if they've kill the Untouchable.
      * @param event Contains event information on player who died.
      */
@@ -375,7 +383,7 @@ public class twbotuntouchable extends TWBotExtension {
             Player p = m_botAction.getPlayer( event.getKilleeID() );
 
             // If someone's shot the Untouchable . . .
-            if( m_untouchable.equals( p.getPlayerName() ) ) { 
+            if( m_untouchable.equals( p.getPlayerName() ) ) {
                 Player killer = m_botAction.getPlayer( event.getKillerID() );
                 String killerName = killer.getPlayerName();
 
@@ -394,11 +402,11 @@ public class twbotuntouchable extends TWBotExtension {
                 m_botAction.sendArenaMessage(playerName + " is out.  " + wins + " wins, " + losses + " losses.");
                 m_botAction.spec(playerName);
                 m_botAction.spec(playerName);
-            
+
             }
         }
     }
-    
+
 
 
     // DISPLAY/INFO SECTION -- a handy layout.  To use, replace your module's

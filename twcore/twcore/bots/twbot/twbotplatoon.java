@@ -5,7 +5,14 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
 
 /**
  *  Module for the platoon type games SuperDAVE(postal) created.
@@ -20,9 +27,9 @@ public class twbotplatoon extends TWBotExtension
 	HashSet exemptShips = new HashSet();
 	boolean isRunning = false;
 	boolean notReallyRunning = false;
-	
+
 	public twbotplatoon() {}
-	
+
 	public void handleEvent(Message event)
 	{
 		String name = event.getMessager() != null ? event.getMessager() : m_botAction.getPlayerName(event.getPlayerID());
@@ -30,11 +37,11 @@ public class twbotplatoon extends TWBotExtension
 
 
         String message = event.getMessage();
-        
+
         if(m_opList.isER(name))
         	handleCommand(name, message);
     }
-    
+
     public void handleCommand(String name, String message)
     {
     	if(message.toLowerCase().startsWith("!start ") && !isRunning)
@@ -61,11 +68,11 @@ public class twbotplatoon extends TWBotExtension
     		m_botAction.sendArenaMessage("Demoting - off");
     	}
     }
-    
+
     public void updateExempt(String name, String message)
     {
     	exemptShips = new HashSet();
-    	
+
     	String pieces[] = message.split(" ", 2);
     	String pieces2[] = pieces[1].split(":");
     	for(int k = 0;k < pieces2.length;k++)
@@ -75,7 +82,7 @@ public class twbotplatoon extends TWBotExtension
     				exemptShips.add(new Integer(Integer.parseInt(pieces2[k])));
     		} catch(Exception e) {}
     	}
-    	
+
     	String exemptShipList = "Exempt ships are: ";
     	Iterator it = exemptShips.iterator();
     	while(it.hasNext())
@@ -84,20 +91,20 @@ public class twbotplatoon extends TWBotExtension
     	}
     	m_botAction.sendPrivateMessage(name, exemptShipList);
     }
-    
+
     public void handleEvent(PlayerDeath event)
     {
     	if(!isRunning) return;
-    	
+
     	int ship = m_botAction.getPlayer(event.getKilleeID()).getShipType();
-    	
+
     	if(!exemptShips.contains(new Integer(ship)))
     	{
     		ship--;
-    		
+
     		while(exemptShips.contains(new Integer(ship)))
     			ship--;
-    		
+
     		if(ship == 0)
     		{
     			m_botAction.spec(event.getKilleeID());
@@ -105,9 +112,9 @@ public class twbotplatoon extends TWBotExtension
     			m_botAction.sendArenaMessage(m_botAction.getPlayerName(event.getKilleeID()) + " is out!");
     			Iterator it = m_botAction.getPlayingPlayerIterator();
 		    	int players = 0;
-		    	
+
 		    	while(it.hasNext()) { it.next(); players++; }
-		    	
+
 		    	if(players == 1 && !notReallyRunning)
 		    		gameOver();
 		    }
@@ -126,20 +133,20 @@ public class twbotplatoon extends TWBotExtension
 		    }
 		}
     }
-    
+
     public void handleEvent(PlayerLeft event)
     {
     	if(!isRunning)
     		return;
     	Iterator it = m_botAction.getPlayingPlayerIterator();
     	int players = 0;
-    	
+
     	while(it.hasNext()) { it.next(); players++; }
-    	
+
     	if(players == 1 && !notReallyRunning)
     		gameOver();
     }
-    
+
     public void handleEvent(FrequencyShipChange event)
     {
     	if(!isRunning)
@@ -148,20 +155,20 @@ public class twbotplatoon extends TWBotExtension
     	{
     		Iterator it = m_botAction.getPlayingPlayerIterator();
 	    	int players = 0;
-	    	
+
 	    	while(it.hasNext()) { it.next(); players++; }
-	    	
+
 	    	if(players == 1 && !notReallyRunning)
 	    		gameOver();
 	    }
 	}
-	
+
 	public void cancelGame(String name)
 	{
 		m_botAction.sendArenaMessage("This game has been killed by: " + name, 13);
 		isRunning = false;
 	}
-	
+
 	public void gameOver()
 	{
 		Iterator it = m_botAction.getPlayingPlayerIterator();
@@ -171,16 +178,16 @@ public class twbotplatoon extends TWBotExtension
     		Player p = (Player)it.next();
     		winner = p.getPlayerName();
     	}
-    	
+
     	m_botAction.sendArenaMessage(winner + " has won the game!", 104);
     	isRunning = false;
     }
-    
+
     public void startGame(String name)
     {
     	m_botAction.sendArenaMessage(name + " has started platoon mode!");
     	m_botAction.sendArenaMessage("Game begins in 10 seconds!", 2);
-    	
+
     	TimerTask five = new TimerTask()
     	{
     		public void run()
@@ -218,16 +225,16 @@ public class twbotplatoon extends TWBotExtension
     		}
     	};
     	notReallyRunning = false;
-    	
+
     	m_botAction.scheduleTask(five, 5000);
     	m_botAction.scheduleTask(three, 7000);
-    	m_botAction.scheduleTask(two, 8000);		
+    	m_botAction.scheduleTask(two, 8000);
     	m_botAction.scheduleTask(one, 9000);
     	m_botAction.scheduleTask(go, 10000);
     }
-    
+
     public void cancel() {}
-    
+
     public String[] getHelpMessages()
     {
     	String helps[] = {
@@ -238,7 +245,7 @@ public class twbotplatoon extends TWBotExtension
     		"!demote                -Demotes people even when game isn't going.",
     		"!stop                  -Stops demoting people."
     	};
-    	
+
     	return helps;
     }
 }

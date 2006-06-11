@@ -40,6 +40,10 @@ package twcore.bots.zhbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.game.Player;
 
 public class twbotmessages extends TWBotExtension
 {
@@ -177,7 +181,7 @@ public class twbotmessages extends TWBotExtension
 
   /**
    * This method adds a message to be PM'd when a specified target is killed.
-   * 
+   *
    * @param sender is the person that is using the bot.
    * @param argString are the arguments being supplied.
    */
@@ -191,13 +195,13 @@ public class twbotmessages extends TWBotExtension
       {
         String name = argTokens.nextToken();
         String msg = argTokens.nextToken();
-        
+
         Player p = m_botAction.getFuzzyPlayer( name );
-        
+
         if( p == null ) {
-            m_botAction.sendSmartPrivateMessage(sender, "Unable to find player \'" + name + "\'" );            
+            m_botAction.sendSmartPrivateMessage(sender, "Unable to find player \'" + name + "\'" );
         } else {
-            MsgTask msgTask = new MsgTask( msg, name );        
+            MsgTask msgTask = new MsgTask( msg, name );
         	msgList.add(msgTask);
             m_botAction.sendSmartPrivateMessage(sender, "Target message added for \'" + name + "\': \'" + msgTask.printMessage() + "\'");
         }
@@ -257,7 +261,7 @@ public class twbotmessages extends TWBotExtension
       throw new IllegalArgumentException("Please use the following format: !MsgDel <Msg Number>");
     }
   }
-  
+
   /**
    * This method cancels all of the message tasks.
    *
@@ -356,12 +360,12 @@ public class twbotmessages extends TWBotExtension
   public void handleEvent(PlayerDeath event)
   {
     MsgTask msgTask;
-    Player killer = m_botAction.getPlayer(event.getKillerID()); 
-    Player killed = m_botAction.getPlayer(event.getKilleeID()); 
-    
+    Player killer = m_botAction.getPlayer(event.getKillerID());
+    Player killed = m_botAction.getPlayer(event.getKilleeID());
+
     if( killer == null || killed == null )
       return;
-    
+
     String playerName = killer.getPlayerName();
     String victimName = killed.getPlayerName().toLowerCase();
 
@@ -540,7 +544,7 @@ public class twbotmessages extends TWBotExtension
         case GREET_TYPE:
           return "Greet Message: " + printMessage();
         case TARGET_TYPE:
-          return "Target Message on " + target + ": " + printMessage(); 
+          return "Target Message on " + target + ": " + printMessage();
         default:
           return "ERROR: Invalid task type.";
       }

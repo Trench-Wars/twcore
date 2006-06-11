@@ -4,6 +4,8 @@ import java.util.*;
 import java.io.*;
 import java.text.*;
 import twcore.core.*;
+import twcore.core.events.*;
+import twcore.core.util.Tools;
 
 public class zhbot extends SubspaceBot
 {
@@ -21,7 +23,7 @@ public class zhbot extends SubspaceBot
 	private AdaptiveClassLoader m_loader;
 	private File botRoot;
 	private File coreRoot;
-	
+
 	/** Creates a new instance of newportabot */
 	public zhbot(BotAction botAction)
 	{
@@ -182,7 +184,7 @@ public class zhbot extends SubspaceBot
 		        String[] helps = ((TWBotExtension) extensions.get(key)).getHelpMessages();
 		        m_botAction.privateMessageSpam(name, helps);
 		    } catch ( Exception e ) {
-				m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " module.  Try reloading it.");		        
+				m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " module.  Try reloading it.");
 		    }
 		}
 		else
@@ -264,8 +266,8 @@ public class zhbot extends SubspaceBot
 			}
 			if (!m_opList.isER(name)) {
 				if (message.startsWith("!help")) {
-					m_botAction.privateMessageSpam(name, playerhelps );				    
-				}             
+					m_botAction.privateMessageSpam(name, playerhelps );
+				}
 				return;
 			}
 			lastUse = 0;
@@ -465,7 +467,7 @@ public class zhbot extends SubspaceBot
 	public void handleUnlock(String name)
 	{
 	}
-	
+
 	public void addAccess(String name, String player) {
 		String accessList = m_botSettings.getString("Access");
 		if(accessList.equals(""))
@@ -477,7 +479,7 @@ public class zhbot extends SubspaceBot
 		updateAccess();
 		m_botAction.sendSmartPrivateMessage(name, player + " granted access.");
 	}
-	
+
 	public void removeAccess(String name, String player) {
 		String accessList = m_botSettings.getString("Access").toLowerCase();
 		String users[] = accessList.split(":");
@@ -495,7 +497,7 @@ public class zhbot extends SubspaceBot
 		updateAccess();
 		m_botAction.sendSmartPrivateMessage(name, player + "'s access removed.");
 	}
-	
+
 	public void updateAccess() {
 		m_opList = new OperatorList(m_botAction.getOperatorList());
 		String accessList = m_botSettings.getString("Access");
@@ -506,7 +508,7 @@ public class zhbot extends SubspaceBot
 				m_opList.changeAllMatches(users[k], OperatorList.ER_LEVEL );
 		}
 	}
-	
+
 	public void handleEvent(LoggedOn event)
 	{
 		distributeEvent((SubspaceEvent) event);
@@ -599,11 +601,11 @@ public class zhbot extends SubspaceBot
 	{
 		distributeEvent((SubspaceEvent) event);
 	}
-	public void handleEvent( TurretEvent event ) 
+	public void handleEvent( TurretEvent event )
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
-	public void handleEvent( PlayerBanner event ) 
+	public void handleEvent( PlayerBanner event )
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
@@ -611,7 +613,7 @@ public class zhbot extends SubspaceBot
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
-	
+
 	public void log(String logThis) {
 		try{
 			PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter( botRoot.toString() + "/command.log", true )));
@@ -625,7 +627,7 @@ public class zhbot extends SubspaceBot
 			ioe.printStackTrace();
 		}
 	}
-	
+
 	public String getTimeStamp(){
 		return new SimpleDateFormat("EEE MM-dd-yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
     }
@@ -653,5 +655,5 @@ public class zhbot extends SubspaceBot
 			"Hello, I'm an event bot!  You can use the following commands with me:",
 			"!host              - Tells you who, if anyone, is hosting with this bot.",
 			"!games             - Tells you who's hosting w/ me and where. (remote cmd)"
-	};	
+	};
 }

@@ -1,5 +1,8 @@
 package twcore.bots.guano;
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
 
 import java.sql.*;
 import java.util.*;
@@ -11,10 +14,10 @@ public class guano extends SubspaceBot
     public static final int CHECK_LENGTH = 180;
     public static final int CHECK_DURATION = 1;
     public static final int DIE_DELAY = 100;
-    
+
     private OperatorList opList;
     private AltCheck currentCheck;
-    
+
     /**
      *
      * @param botAction
@@ -24,7 +27,7 @@ public class guano extends SubspaceBot
         super(botAction);
         currentCheck = new AltCheck();
     }
-    
+
     /**
      * This method initializes the bot when it logs on.
      *
@@ -34,12 +37,12 @@ public class guano extends SubspaceBot
     {
         BotSettings botSettings = m_botAction.getBotSettings();
         String initialArena = botSettings.getString("InitialArena");
-        
+
         opList = m_botAction.getOperatorList();
         m_botAction.changeArena(initialArena);
         requestEvents();
     }
-    
+
     /**
      * This method handles a message sent to the bot.
      *
@@ -50,14 +53,14 @@ public class guano extends SubspaceBot
         String sender = getSender(event);
         String message = event.getMessage().trim();
         int messageType = event.getMessageType();
-        
+
         if(messageType == Message.ARENA_MESSAGE)
             handleArenaMessage(message);
         if(sender != null && opList.isHighmod(sender) &&
                 (messageType == Message.REMOTE_PRIVATE_MESSAGE || messageType == Message.PRIVATE_MESSAGE))
             handleCommand(sender, message);
     }
-    
+
     /**
      * This method handles an arena message.  If it is the result of a *locate
      * command, and a check is active, it will send the results of the find to the
@@ -69,7 +72,7 @@ public class guano extends SubspaceBot
     {
         String name;
         int endOfNameIndex;
-        
+
         if(currentCheck.isActive())
         {
             endOfNameIndex = message.indexOf(FIND_DELIMETER);
@@ -79,7 +82,7 @@ public class guano extends SubspaceBot
             }
         }
     }
-    
+
     /**
      * This private message handles a command sent to the bot.
      *
@@ -91,7 +94,7 @@ public class guano extends SubspaceBot
         try
         {
             String command = message.toLowerCase();
-            
+
             if(command.startsWith("!find "))
                 doFindCmd(sender, message.substring(6).trim());
             if(command.startsWith("!warning "))
@@ -106,13 +109,13 @@ public class guano extends SubspaceBot
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
     }
-    
+
     private void doDieCmd(String sender)
     {
         m_botAction.sendSmartPrivateMessage(sender, "Logging off.");
         m_botAction.scheduleTask(new DieTask(), DIE_DELAY);
     }
-    
+
     private void doHelpCmd(String sender)
     {
         String[] message =
@@ -124,7 +127,7 @@ public class guano extends SubspaceBot
         };
         m_botAction.smartPrivateMessageSpam(sender, message);
     }
-    
+
     /**
      * This method finds a player if they are in the zone, using any of their
      * known altnicks.
@@ -135,7 +138,7 @@ public class guano extends SubspaceBot
     {
         if(currentCheck.isActive())
             throw new RuntimeException("Already performing a check.  Please try again momentarily.");
-        
+
         Vector altNicks = getAltNicks(argString);
         if(altNicks.isEmpty())
             throw new RuntimeException("Player not found in database.");
@@ -143,7 +146,7 @@ public class guano extends SubspaceBot
         locateAll(altNicks);
         m_botAction.scheduleTask(new EndCheckTask(), CHECK_DURATION * 1000);
     }
-    
+
     /**
      *
      * @param sender
@@ -153,13 +156,13 @@ public class guano extends SubspaceBot
     {
         if(currentCheck.isActive())
             throw new RuntimeException("Already performing a check.  Please try again momentarily.");
-        
+
         Vector altNicks = getAltNicks(argString);
         if(altNicks.isEmpty())
             throw new RuntimeException("Player not found in database.");
         findWarnings(sender, argString, altNicks);
     }
-    
+
     private void queryWarnings(String sender, String playerName)
     {
         try
@@ -168,7 +171,7 @@ public class guano extends SubspaceBot
                     "SELECT * " +
                     "FROM tblWarnings " +
                     "WHERE name = \"" + playerName.toLowerCase() + "\"");
-            
+
             while (resultSet.next())
                 m_botAction.sendRemotePrivateMessage(sender, resultSet.getString("warning"));
         }
@@ -177,7 +180,7 @@ public class guano extends SubspaceBot
             throw new RuntimeException("Unable to connect to database.");
         }
     }
-    
+
     /**
      * This private method performs a locate command on a Vector of names.
      *
@@ -188,7 +191,7 @@ public class guano extends SubspaceBot
         for(int index = 0; index < altNicks.size(); index++)
             m_botAction.sendUnfilteredPublicMessage("*locate " + (String) altNicks.get(index));
     }
-    
+
     /**
      * This private method finds the warnings for a Vector of names.
      *
@@ -198,8 +201,8 @@ public class guano extends SubspaceBot
     {
         if( altNicks.size() <= 0 )
             throw new RuntimeException( "Unable to retreive any altnicks for player." );
-                       
-        m_botAction.sendRemotePrivateMessage(sender, "Warnings for " + name + ":");                
+
+        m_botAction.sendRemotePrivateMessage(sender, "Warnings for " + name + ":");
 
         try {
             Iterator i = altNicks.iterator();
@@ -210,10 +213,10 @@ public class guano extends SubspaceBot
             }
             m_botAction.sendRemotePrivateMessage(sender, "End of list.");
         } catch (Exception e) {
-            throw new RuntimeException( "Unexpected error while querying altnicks." );            
+            throw new RuntimeException( "Unexpected error while querying altnicks." );
         }
     }
-    
+
     /**
      * This private method performs an altnick query on a players name and returns
      * the results in the form of a ResultSet.
@@ -238,7 +241,7 @@ public class guano extends SubspaceBot
             String currName;
             if(resultSet == null)
                 throw new RuntimeException("ERROR: Cannot connect to database.");
-            
+
             while(resultSet.next())
             {
                 currName = resultSet.getString("U2.fcUserName");
@@ -253,17 +256,17 @@ public class guano extends SubspaceBot
             throw new RuntimeException("ERROR: Cannot connect to database.");
         }
     }
-    
+
     /**
      * This private method requests the events that the bot will use.
      */
     private void requestEvents()
     {
         EventRequester eventRequester = m_botAction.getEventRequester();
-        
+
         eventRequester.request(EventRequester.MESSAGE);
     }
-    
+
     /**
      * This method gets the sender of a message from a Message event.  If there
      * was no sender, then null is returned.
@@ -276,30 +279,30 @@ public class guano extends SubspaceBot
     {
         int messageType = event.getMessageType();
         int playerID;
-        
+
         if(messageType == Message.CHAT_MESSAGE ||
                 messageType == Message.REMOTE_PRIVATE_MESSAGE ||
                 messageType == Message.ALERT_MESSAGE)
             return event.getMessager();
-        
+
         playerID = event.getPlayerID();
         return m_botAction.getPlayerName(playerID);
     }
-    
+
     private class AltCheck
     {
         public static final int FIND_CHECK = 0;
-        
+
         private TreeMap checkResults;
         private String checkSender;
         private boolean isActive;
-        
+
         public AltCheck()
         {
             checkResults = new TreeMap();
             isActive = false;
         }
-        
+
         public void startCheck(String checkSender, Vector altNicks)
         {
             if(isActive)
@@ -309,12 +312,12 @@ public class guano extends SubspaceBot
             populateResults(altNicks);
             isActive = true;
         }
-        
+
         public String getCheckSender()
         {
             return checkSender;
         }
-        
+
         /**
          * This method stops the current check.
          */
@@ -322,7 +325,7 @@ public class guano extends SubspaceBot
         {
             isActive = false;
         }
-        
+
         /**
          * This method gets the number of checks that were made.
          *
@@ -332,7 +335,7 @@ public class guano extends SubspaceBot
         {
             return checkResults.size();
         }
-        
+
         /**
          * This method gets the results of a check.
          *
@@ -344,17 +347,17 @@ public class guano extends SubspaceBot
             Collection allResults = checkResults.values();
             Iterator iterator = allResults.iterator();
             String result;
-            
+
             while(iterator.hasNext())
             {
                 result = (String) iterator.next();
                 if(result != null)
                     results.add(result);
             }
-            
+
             return results;
         }
-        
+
         /**
          * This method adds a result to the result map.
          *
@@ -367,7 +370,7 @@ public class guano extends SubspaceBot
             if(checkResults.containsKey(lowerName))
                 checkResults.put(lowerName, result);
         }
-        
+
         /**
          * This method checks to see if a check is currently active.
          *
@@ -377,7 +380,7 @@ public class guano extends SubspaceBot
         {
             return isActive;
         }
-        
+
         /**
          * This private method populates the keys of the result map with the names
          * from the altNick check.
@@ -387,7 +390,7 @@ public class guano extends SubspaceBot
         private void populateResults(Vector altNicks)
         {
             String altNick;
-            
+
             for(int index = 0; index < altNicks.size(); index++)
             {
                 altNick = (String) altNicks.get(index);
@@ -395,7 +398,7 @@ public class guano extends SubspaceBot
             }
         }
     }
-    
+
     /**
      * This private method displays the results of a check.
      *
@@ -412,7 +415,7 @@ public class guano extends SubspaceBot
             m_botAction.sendSmartPrivateMessage(sender, (String) results.get(index));
         m_botAction.sendSmartPrivateMessage(sender, "Checked " + numNicks + " names.");
     }
-    
+
     /**
      * <p>Title: </p>
      * <p>Description: </p>
@@ -428,7 +431,7 @@ public class guano extends SubspaceBot
             Vector results = currentCheck.getResults();
             String checkSender = currentCheck.getCheckSender();
             int numNicks = currentCheck.getNumNicks();
-            
+
             try
             {
                 currentCheck.stopCheck();
@@ -440,7 +443,7 @@ public class guano extends SubspaceBot
             }
         }
     }
-    
+
     private class DieTask extends TimerTask
     {
         public void run()

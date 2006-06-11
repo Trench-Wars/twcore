@@ -13,7 +13,7 @@ public class SBMatchOperator extends SSEventOperator {
 	GAMEOVER = new SBEventType(),
 	PLAYERLEFT = new SBEventType(),
 	POSTGAME = new SBEventType();
-    
+
     public SBMatchOperator() {
 	super();
 	listeners = new HashMap<SBEventType,HashSet<SBEventListener>>();
@@ -30,10 +30,10 @@ public class SBMatchOperator extends SSEventOperator {
     public void addListener(SBEventType type, SBEventListener l) {
 	assert(l != null && type != null);
 	if(!listeners.containsKey(type)) {
-	    
+
 	    listeners.put(type, new HashSet<SBEventListener>());
 	}
 	listeners.get(type).add(l);
-	
+
     }
 }

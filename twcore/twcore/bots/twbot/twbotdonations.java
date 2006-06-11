@@ -3,15 +3,19 @@ package twcore.bots.twbot;
 import java.util.*;
 import java.sql.*;
 import java.text.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
 
 
 public class twbotdonations extends TWBotExtension {
-    
+
     public twbotdonations() {
     }
-    
-    
+
+
     public void handleEvent( Message event ){
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
@@ -19,7 +23,7 @@ public class twbotdonations extends TWBotExtension {
             if( m_opList.isSmod( name )) handleCommand( name, message );
         }
     }
-    
+
     public void handleCommand( String name, String message ) {
         if( message.toLowerCase().startsWith( "!listdonated" ) ) {
             do_listDonations( name, message );
@@ -29,7 +33,7 @@ public class twbotdonations extends TWBotExtension {
             do_removeDonation( name, message.substring( 15, message.length() ) );
         }
     }
-    
+
     public void do_listDonations( String name, String message ) {
         try {
             ResultSet result = m_botAction.SQLQuery( "website", "SELECT * FROM tblDonation ORDER BY fnDonationID DESC LIMIT 10" );
@@ -39,12 +43,12 @@ public class twbotdonations extends TWBotExtension {
                 int amount = result.getInt( "fnAmount" );
                 m_botAction.sendSmartPrivateMessage( name, "ID# " + donationId + "  :  " + formatString( userName, 26 ) + "$" + amount );
             }
-        } catch (Exception e) { 
-            m_botAction.sendSmartPrivateMessage( name, "Unable to list donations." ); 
-            m_botAction.sendSmartPrivateMessage( name, e.getMessage() ); 
+        } catch (Exception e) {
+            m_botAction.sendSmartPrivateMessage( name, "Unable to list donations." );
+            m_botAction.sendSmartPrivateMessage( name, e.getMessage() );
         }
     }
-    
+
     public void do_addDonation( String name, String message ) {
         Calendar thisTime = Calendar.getInstance();
         java.util.Date day = thisTime.getTime();
@@ -58,13 +62,13 @@ public class twbotdonations extends TWBotExtension {
             }
             m_botAction.SQLQuery( "website", "INSERT INTO tblDonation (fnUserID, fnAmount, fdDonated) VALUES ('"+id+"', '"+pieces[1]+"', '"+time+"')" );
             m_botAction.sendSmartPrivateMessage( name, "Donation Added:  " + pieces[0] + "    $" + pieces[1] );
-        } catch (Exception e) { 
+        } catch (Exception e) {
             m_botAction.sendSmartPrivateMessage( name, "Unable to add donation entry.");
-            m_botAction.sendSmartPrivateMessage( name, e.getMessage());        
+            m_botAction.sendSmartPrivateMessage( name, e.getMessage());
         }
-        
+
     }
-    
+
     public void do_removeDonation( String name, String message ) {
         try {
             int i = Integer.parseInt( message );
@@ -72,7 +76,7 @@ public class twbotdonations extends TWBotExtension {
             m_botAction.sendSmartPrivateMessage( name, "Donation #" + i +" + deleted." );
         } catch (Exception e) { m_botAction.sendSmartPrivateMessage( name, "Unable to remove donation" ); }
     }
-    
+
     public String sql_getUserName( int id ) {
         try {
             ResultSet result = m_botAction.SQLQuery( "website", "SELECT fcUserName FROM tblUser WHERE fnUserID = '"+id+"'" );
@@ -82,7 +86,7 @@ public class twbotdonations extends TWBotExtension {
                 return "Unknown";
         } catch (Exception e) { return "Unknown"; }
     }
-    
+
     public int sql_getPlayerId( String player ) {
         try {
             ResultSet result = m_botAction.SQLQuery( "website", "SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(player)+"'" );
@@ -92,7 +96,7 @@ public class twbotdonations extends TWBotExtension {
                 return -1;
         } catch (Exception e) { return -1; }
     }
-    
+
     public static String formatString(String fragment, int length) {
         String line;
         if(fragment.length() > length)
@@ -103,10 +107,10 @@ public class twbotdonations extends TWBotExtension {
         }
         return fragment;
     }
-    
+
     public void cancel() {
     }
-    
+
     public String[] getHelpMessages() {
         String help[] = {
             "!listdonated                   - list the last 10 donations",

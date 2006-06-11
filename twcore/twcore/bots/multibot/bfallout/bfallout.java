@@ -2,9 +2,21 @@ package twcore.bots.multibot.bfallout;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.Prize;
+import twcore.core.events.WeaponFired;
+import twcore.core.game.Player;
+import twcore.core.game.Projectile;
+import twcore.core.game.SpaceShip;
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
-import twcore.misc.spaceship.*;
 
 public class bfallout extends MultiModule {
 
@@ -65,7 +77,7 @@ public class bfallout extends MultiModule {
 		m_commandInterpreter.registerCommand("!start", acceptedMessages, this, "do_start");
 		m_commandInterpreter.registerCommand("!stop", acceptedMessages, this, "do_stop");
 		m_commandInterpreter.registerCommand("!spamrules", acceptedMessages, this, "do_spamRules");
-        
+
 //		m_commandInterpreter.registerDefaultCommand(acceptedMessages, this, "do_nothing");
 	}
 
@@ -95,7 +107,7 @@ public class bfallout extends MultiModule {
 				"|   !spamrules                 - *arena messages the rules   |",
 				"+------------------------------------------------------------+"
 			};
-			m_botAction.privateMessageSpam(name, out2);	
+			m_botAction.privateMessageSpam(name, out2);
 		}
 	}
 
@@ -136,7 +148,7 @@ public class bfallout extends MultiModule {
 
 		if (!opList.isER(name))
 			return;
-		
+
 		if (m_eventState == 2) {
 			stopEvent();
 		} else {
@@ -166,7 +178,7 @@ public class bfallout extends MultiModule {
 
 		TimerTask fiveSeconds = new TimerTask() {
 			public void run() {
-		
+
 				Iterator i = m_botAction.getPlayingPlayerIterator();
 				while (i.hasNext()) {
 					Player p = (Player)i.next();
@@ -188,7 +200,7 @@ public class bfallout extends MultiModule {
 
 		TimerTask tenSeconds = new TimerTask() {
 			public void run() {
-		
+
 				Iterator i = m_botAction.getPlayingPlayerIterator();
 				while (i.hasNext()) {
 					Player p = (Player)i.next();
@@ -386,7 +398,7 @@ public class bfallout extends MultiModule {
 		}
 
 		if (!m_spaceShip.changeTarget(newX, newY)) {
-			changeTarget();		
+			changeTarget();
 		} else {
 			if ((m_decoysEnabled) && (1 + (int)(Math.random() * 3) == 2) && (!getTimeString().equals("0:00"))) {
 				m_botAction.getShip().fire(6);
@@ -422,7 +434,7 @@ public class bfallout extends MultiModule {
 	public String getTimeString() {
 		int time = ((int)(System.currentTimeMillis()) - m_eventStartTime) / 1000;
 		if (time <= 0) {
-			return "0:00";            
+			return "0:00";
 		} else {
 			int minutes = time / 60;
 			int seconds = time % 60;

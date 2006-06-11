@@ -1,6 +1,13 @@
 package twcore.bots.messagebot;
 
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.InterProcessEvent;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.util.IPCMessage;
+import twcore.core.util.Tools;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;

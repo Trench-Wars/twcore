@@ -1,23 +1,27 @@
 package twcore.bots.accessbot;
 
 import twcore.core.*;
-import twcore.misc.database.DBPlayerData;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.stats.DBPlayerData;
+
 import java.util.*;
 import java.sql.*;
 
 public class accessbot extends SubspaceBot {
-	
+
 	String access_name;
-	
+
 	CommandInterpreter  m_commandInterpreter;
-	
+
 	public accessbot( BotAction botAction ) {
         super( botAction );
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_POSITION );
     }
-    
+
     public void handleEvent( Message event ){
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
@@ -30,23 +34,23 @@ public class accessbot extends SubspaceBot {
                 	m_botAction.die();
             	else if( message.startsWith( "!watch" ) )
             		m_botAction.spectatePlayer( name );
-       }   
+       }
     }
-    
+
     public void handleEvent( LoggedOn event ){
         BotSettings m_botSettings = m_botAction.getBotSettings();
         String initialArena = m_botSettings.getString( "Arena" );
         m_botAction.joinArena( initialArena );
     }
-    
+
 	public void updateAccess( String name, String message ) {
 		if( !m_botAction.SQLisOperational()	) {
 			m_botAction.sendSmartPrivateMessage( name, "Unable to update staff access, database down." );
 			return;
-		}	
+		}
 	    m_botAction.sendSmartPrivateMessage( access_name, "Please hold, updating staff access." );
 		try {
-			
+
 		//Used to cycle through those who have staff rank on local.
 		ResultSet result = m_botAction.SQLQuery( "local", "SELECT fnUserID, fnRankID, fnUserRankID FROM `tblUserRank` WHERE fnRankID > 4 AND fnRankID < 10" );
 			while( result.next() ) {
@@ -104,9 +108,9 @@ public class accessbot extends SubspaceBot {
 							man.giveRank( 5 );
 					}
 			}
-			
+
 			m_botAction.sendSmartPrivateMessage( access_name, "Access updated" );
 		} catch (Exception e ) { m_botAction.sendArenaMessage( ""+e ); }
     }
-    
+
 }

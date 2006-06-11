@@ -37,6 +37,8 @@ package twcore.bots.racingbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
 
 public class Rbmessages extends RBExtender
 {

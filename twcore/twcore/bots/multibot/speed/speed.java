@@ -2,8 +2,17 @@ package twcore.bots.multibot.speed;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
+import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
-import twcore.misc.multibot.*;
 
 public class speed extends MultiModule {
 
@@ -69,7 +78,7 @@ public class speed extends MultiModule {
 		m_commandInterpreter.registerCommand("!togglereversed", acceptedMessages, this, "do_toggleReversed");
 		m_commandInterpreter.registerCommand("!toggledoors", acceptedMessages, this, "do_toggleDoors");
 		m_commandInterpreter.registerCommand("!spamrules", acceptedMessages, this, "do_spamRules");
-        
+
 //		m_commandInterpreter.registerDefaultCommand(acceptedMessages, this, "do_nothing");
 	}
 
@@ -99,7 +108,7 @@ public class speed extends MultiModule {
 				"|   !spamrules                 - *arena messages the rules   |",
 				"+------------------------------------------------------------+"
 			};
-			m_botAction.privateMessageSpam(name, out2);	
+			m_botAction.privateMessageSpam(name, out2);
 		}
 	}
 
@@ -130,7 +139,7 @@ public class speed extends MultiModule {
 
 		if (!opList.isER(name))
 			return;
-		
+
 		if (m_eventState == 2) {
 			endGame(true);
 		} else {
@@ -312,7 +321,7 @@ public class speed extends MultiModule {
 				}
 				changeSpeedLimit();
 			}
-			
+
 			if (m_doorsActivated) {
 				setupDoors();
 			} else {
@@ -402,7 +411,7 @@ public class speed extends MultiModule {
 	public void endGame(boolean forced) {
 
 		m_eventState = 0;
-		
+
 		if (forced) {
 			m_botAction.sendArenaMessage("Event has been stopped.");
 		} else {
@@ -463,7 +472,7 @@ public class speed extends MultiModule {
 
 			if ((int)speedID != p.getSpeed() && p.timeFromUpdate() > 300) {
 				String objSet = "";
-				
+
 				if (p.getSpeed() < speedID) {
 					for (int i = p.getSpeed() + 1; i <= speedID; i++) {
 						objSet += "+"+i+",";
@@ -574,7 +583,7 @@ public class speed extends MultiModule {
 	public String getTimeString() {
 		int time = ((int)(System.currentTimeMillis()) - m_eventStartTime) / 1000;
 		if (time <= 0) {
-			return "0:00";            
+			return "0:00";
 		} else {
 			int minutes = time / 60;
 			int seconds = time % 60;

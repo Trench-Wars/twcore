@@ -4,9 +4,14 @@ package twcore.bots.zhbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
 
 public class twbotmisc extends TWBotExtension {
-	 
+
 	boolean 	event = false, tugAWar = false, boomBall = false;
 	TimerTask   startEvent;
 	/* Used for respawn timers */
@@ -18,10 +23,10 @@ public class twbotmisc extends TWBotExtension {
 	int			deathLimit = 1;
 	/* Boomball variables */
 	int[] 		areas = { 0, 0, 0, 0, 0, 0 };
-	  
+
     public twbotmisc() {
     }
-    
+
     public void handleCommand( String name, String message ) {
     	try {
 	    	if( message.toLowerCase().startsWith( "!start tugawar " ) ) {
@@ -38,10 +43,10 @@ public class twbotmisc extends TWBotExtension {
 	    		startBoomBall( name, message );
 	    	} else if( message.toLowerCase().startsWith( "!stop boomball" ) ) {
 	    		stopBoomBall( name, message );
-	    	} 
+	    	}
 	    } catch ( Exception e ) {}
     }
-    
+
     public void startTugAWar( String name, String message ) {
     	if( !event ) {
 	    	try {
@@ -77,7 +82,7 @@ public class twbotmisc extends TWBotExtension {
 						tugAWar = true;
 						m_botAction.sendUnfilteredPublicMessage( "?set kill:enterdelay:900" );
 					}
-	    		};    		
+	    		};
 				event = true;
 				m_botAction.sendArenaMessage( "Rules of TugAWar: DO NOT TEAM KILL! Also warping is illegal (use antiwarp.)" );
 				m_botAction.sendArenaMessage( "Kill the enemy cap " + deathLimit + " time(s) to win! Should a cap be eliminated, his team loses." );
@@ -86,7 +91,7 @@ public class twbotmisc extends TWBotExtension {
 			} catch ( Exception e ) {}
 		} else m_botAction.sendPrivateMessage( name, "Event already in progress." );
 	}
-	
+
 	public void stopTugAWar( String name, String message ) {
 		if( tugAWar ) {
 			deathLimit = 1;
@@ -100,7 +105,7 @@ public class twbotmisc extends TWBotExtension {
 			m_botAction.prizeAll( 7 );
 		} else m_botAction.sendPrivateMessage( name, "TugAWar is not in progress." );
 	}
-	
+
 	public void startBoomBall( String name, String message ) {
 		if( !event ) {
 			MiscTask thisCheck = new MiscTask( "Check__Players", -1 );
@@ -119,7 +124,7 @@ public class twbotmisc extends TWBotExtension {
 			boomBall = true;
 		} else  m_botAction.sendPrivateMessage( name, "Event already in progress." );
 	}
-	
+
 	public void stopBoomBall( String name, String message ) {
 		if( boomBall ) {
 			m_botAction.cancelTasks();
@@ -133,12 +138,12 @@ public class twbotmisc extends TWBotExtension {
    public void handleEvent( Message event ){
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
-            String name = m_botAction.getPlayerName( event.getPlayerID() );            
+            String name = m_botAction.getPlayerName( event.getPlayerID() );
             if( m_opList.isER( name ))
             handleCommand( name, message );
         }
     }
-    
+
     public void handleEvent( FrequencyChange event ) {
     	if( boomBall ) {
 	    	Player theKilled = m_botAction.getPlayer( event.getPlayerID() );
@@ -149,9 +154,9 @@ public class twbotmisc extends TWBotExtension {
 	    		m_botAction.scheduleTask( thisDeath, 1500 );
 	    		players.put( killed, killed );
 	    	}
-    	}	
+    	}
     }
-    
+
     public void handleEvent( FrequencyShipChange event ) {
 		Player theKilled = m_botAction.getPlayer( event.getPlayerID() );
 		String killed    = theKilled.getPlayerName();
@@ -167,9 +172,9 @@ public class twbotmisc extends TWBotExtension {
 	    		m_botAction.scheduleTask( thisDeath, 1500 );
 	    		players.put( killed, killed );
 	    	}
-    	}	
+    	}
     }
-    
+
     public void handleEvent( PlayerDeath event ) {
 	    Player theKilled  = m_botAction.getPlayer( event.getKilleeID() );
         String killed 	  = theKilled.getPlayerName();
@@ -206,9 +211,9 @@ public class twbotmisc extends TWBotExtension {
 	    	//	m_botAction.scheduleTask( thisCheck, 5000 );
 	    	//	players.put( "Check__Players", "checking" );
 	    	//}
-    	}	
+    	}
     }
-    
+
     public void registerDeath( String name, int freq ) {
     	if( !players.containsKey( name ) ) {
 			MiscTask thisDeath = new MiscTask( name, freq );
@@ -216,10 +221,10 @@ public class twbotmisc extends TWBotExtension {
 			players.put( name, name );
 	    }
     }
-    
+
     public String[] getHelpMessages() {
 		String[] helps = {
-			"------ Commands for the misc module -------",    
+			"------ Commands for the misc module -------",
 		    "!start tugawar    - Starts game for ?go tugawar",
 		    "!start tugawar <deaths>",
 		    "!stop tugawar     - Stops game for ?go tugawar",
@@ -228,23 +233,23 @@ public class twbotmisc extends TWBotExtension {
 		};
 		return helps;
 	}
-    
+
     public void cancel() {
     	m_botAction.cancelTasks();
     }
-    
-////////////////////////////////////////////////////////////  
-  
+
+////////////////////////////////////////////////////////////
+
     public class MiscTask extends TimerTask {
-    	
+
     	String thisName;
     	int	   thisFreq;
-    	
+
     	public MiscTask( String name, int freq ) {
     		thisName = name;
     		thisFreq = freq;
     	}
-    	
+
     	public void run() {
     		if( tugAWar ) {
 	    		if( thisFreq == 0 )
@@ -294,5 +299,5 @@ public class twbotmisc extends TWBotExtension {
 	    	}
     	}
     }
-    
+
 }

@@ -1,10 +1,16 @@
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+
 import java.util.*;
 
 /** Author: Ikrit
- *  
+ *
  *  Version: 1.0
  */
 
@@ -12,22 +18,22 @@ public class twbotpayback extends TWBotExtension
 {
 	HashMap payback;
 	HashMap beingTracked;
-	
+
 	int time = 30;
-	
+
 	boolean started = false;
-	
+
 	public twbotpayback() {
 		payback = new HashMap();
 		beingTracked = new HashMap();
 	}
-	
+
 	public void handleEvent(PlayerDeath event) {
 		if(!started) return;
-		
+
 		String killee = m_botAction.getPlayerName(event.getKilleeID()).toLowerCase();
 		String killer = m_botAction.getPlayerName(event.getKillerID()).toLowerCase();
-		
+
 		if(payback.containsKey(killee + killer)) {
 			Payback pb = (Payback)payback.get(killee + killer);
 			pb.cancel();
@@ -49,10 +55,10 @@ public class twbotpayback extends TWBotExtension
 			m_botAction.sendPrivateMessage(killee, "How can you continue to play after that? Avenge your death or be spec'd!");
 		}
 	}
-	
+
 	public void handleEvent(PlayerLeft event) {
 		if(!started) return;
-		
+
 		String player = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
 		if(beingTracked.containsKey(player)) {
 			Iterator it = ((HashSet)beingTracked.get(player)).iterator();
@@ -67,10 +73,10 @@ public class twbotpayback extends TWBotExtension
 			}
 		}
 	}
-	
+
 	public void handleEvent(FrequencyShipChange event) {
 		if(!started) return;
-		
+
 		if(event.getShipType() == 0) {
 			String player = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
 			if(beingTracked.containsKey(player)) {
@@ -87,7 +93,7 @@ public class twbotpayback extends TWBotExtension
 			}
 		}
 	}
-	
+
 	public void handleEvent(Message event) {
 		String message = event.getMessage();
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
@@ -97,7 +103,7 @@ public class twbotpayback extends TWBotExtension
             	handleCommand(name, message);
         }
     }
-    
+
     public void handleCommand(String name, String message) {
     	if(message.toLowerCase().startsWith("!start")) {
     		m_botAction.sendArenaMessage("Payback started, GO!", 104);
@@ -113,17 +119,17 @@ public class twbotpayback extends TWBotExtension
     		} catch(Exception e) {}
     	}
     }
-    
+
     public String[] getHelpMessages() {
     	String helps[] = {
     		"!start        -Starts payback.",
     		"!stop         -Stops payback.",
     		"!time #       -Sets time they have to do their payback thing, default: 30 sec's."
     	};
-    	
+
     	return helps;
     }
-    
+
     public void cancel() {
     	Iterator it = payback.values().iterator();
     	while(it.hasNext()) {
@@ -131,30 +137,30 @@ public class twbotpayback extends TWBotExtension
     		if(!pb.isCancelled())
     			pb.cancel();
     	}
-    	
+
     	payback.clear();
     	beingTracked.clear();
     }
 }
 
 class Payback extends TimerTask {
-	
+
 	String player;
 	BotAction m_botAction;
 	boolean cancelled = false;
-	
+
 	public Payback(String name, BotAction ba) {
 		player = name;
 		m_botAction = ba;
 	}
-	
+
 	public void run() {
 		m_botAction.spec(player);
 		m_botAction.spec(player);
 		m_botAction.sendPrivateMessage(player, "You're supposed to kill your killer... not sit around and eat grasshoppers in left field.");
 		cancelled = true;
 	}
-	
+
 	public boolean isCancelled() {
 		return cancelled;
 	}

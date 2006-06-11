@@ -1,6 +1,7 @@
 package twcore.bots.zhbot;
 
 import twcore.core.*;
+import twcore.core.events.*;
 
 /*
  * PortabotExtension.java
@@ -19,20 +20,20 @@ public abstract class TWBotExtension {
     /** Creates a new instance of PortabotExtension */
     public TWBotExtension() {
     }
-    
+
     public final void set( BotAction action, OperatorList opList, SubspaceBot twBot ){
         m_botAction = action;
         m_opList = opList;
         m_twBot = twBot;
     }
-    
+
     public abstract String[] getHelpMessages();
     public abstract void cancel();
-    
+
     private final void sendBotCommand( String name, String message ){
    //     m_twBot.handleCommand( name, message );
     }
-    
+
     public final void handleEvent( SubspaceEvent event ){
         if( event instanceof ScoreReset )
             handleEvent( (ScoreReset)event );

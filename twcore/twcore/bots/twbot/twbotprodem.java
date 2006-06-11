@@ -3,14 +3,20 @@
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
-import twcore.misc.PlayerProfile;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.game.Player;
+import twcore.core.stats.PlayerProfile;
 
 public class twbotprodem extends TWBotExtension {
-    
+
     TimerTask		timerUpdate;
     TimerTask		startGame;
-    
+
     int				curTime = 0,lastMessage = 0;
     int				gameProgress = -1;
     private HashMap	playerMap;
@@ -30,14 +36,14 @@ public class twbotprodem extends TWBotExtension {
     //3 - highest score
     //4 - lowest score
     int[] records = { 0, 0, 0, 0, 10000, 0, 0 };
-    
-    
+
+
     ///*** Constructor ///***
     public twbotprodem() {
         //Other setup
         playerMap = new HashMap();
     }
-    
+
     public void setupTimerTasks(){
         //Timer setup.
         timerUpdate = new TimerTask() {
@@ -50,15 +56,15 @@ public class twbotprodem extends TWBotExtension {
             }
         };
         m_botAction.scheduleTaskAtFixedRate( timerUpdate, 0, 30000 );
-        
+
     }
-    
+
     public void handleCommand( String name, String message ) {
         if( message.toLowerCase().startsWith( "!prodem on" )) botStart();
         else if( message.toLowerCase().startsWith( "!prodem off" ))  botStop( name );
         else if( message.toLowerCase().startsWith( "!prolag" )) botPlayerIn( name, message );
     }
-    
+
     ///*** Incomming Messages ///***
 public void handleEvent( Message event ) {
         String message = event.getMessage();
@@ -72,7 +78,7 @@ public void handleEvent( Message event ) {
             }
         }
     }
-    
+
     ///*** Starts the game. ///***
     public void botStart() {
         if( timerUpdate == null ){
@@ -80,12 +86,12 @@ public void handleEvent( Message event ) {
         }
         gameProgress = 0;
         lastMessage = 30;
-        
+
         //Locks and setships.
         m_botAction.toggleLocked();
         m_botAction.scoreResetAll();
         m_botAction.changeAllShips(8);
-        
+
         records[0] = 0;
         records[1] = 0;
         records[2] = 0;
@@ -93,7 +99,7 @@ public void handleEvent( Message event ) {
         records[4] = 10000;
         records[5] = 0;
         records[6] = 0;
-        
+
         //Stores players information.
         Iterator i = m_botAction.getPlayingPlayerIterator();
         if( i == null ) return;
@@ -102,7 +108,7 @@ public void handleEvent( Message event ) {
             String name = tempP.getPlayerName();
             playerMap.put( name, new PlayerProfile( name, 8, tempP.getFrequency() ) );
         }
-        
+
         startGame = new TimerTask() {
             public void run() {
                 if( gameProgress == 0 ) {
@@ -111,17 +117,17 @@ public void handleEvent( Message event ) {
                     m_botAction.sendArenaMessage( "ProDem begins!", 104 );
                     m_botAction.sendArenaMessage( "Lagout or want in just pm me with !prolag -" + m_botAction.getBotName() );
                 }
-                
+
             }
         };
         m_botAction.scheduleTask( startGame, 10000 );
-        
+
         m_botAction.sendArenaMessage( "Rules: Kill people of the same ship as you or higher (warbird high, shark low) to get promoted. ");
         m_botAction.sendArenaMessage( "Get killed by someone lower and get demoted! First one up the ladder of ranks wins!" );
         m_botAction.sendArenaMessage( "Game starts in 10 seconds!", 2 );
-        
+
     }
-    
+
     ///*** Stops the Game. ///***
     public void botStop( String name ) {
         if( gameProgress != -1 ) {
@@ -136,7 +142,7 @@ public void handleEvent( Message event ) {
         else
             m_botAction.sendPrivateMessage( name, "There is no game in progress." );
     }
-    
+
     public void botPlayerIn( String name, String message) {
         if(gameProgress == 1) {
             if(!playerMap.containsKey( name ) ) {
@@ -153,7 +159,7 @@ public void handleEvent( Message event ) {
             }
         }
     }
-    
+
     ///*** Player Death ///***
     public void handleEvent( PlayerDeath event ) {
         if( gameProgress == 1 ) {
@@ -171,7 +177,7 @@ public void handleEvent( Message event ) {
             }
         }
     }
-    
+
     ///*** Handles a kill ///***
     public void manageKill( String killer, String killee ) {
         PlayerProfile tempWin, tempLose;
@@ -186,12 +192,12 @@ public void handleEvent( Message event ) {
             tempWin.incData(1);
             if( tempWin.getData(1) > records[1] )
                 records[1] = tempWin.getData(1);
-            
+
             if( tempWin.getShip() == 1 )
                 botEnd( killer );
             else {
                 tempWin.setShip( tempWin.getShip() - 1 );
-                
+
                 m_botAction.setShip( killer, tempWin.getShip() );
                 m_botAction.sendSmartPrivateMessage( killer, "You have been promoted to " + ranks[tempWin.getShip()]  );
                 if( tempWin.getShip() < 3 )
@@ -202,7 +208,7 @@ public void handleEvent( Message event ) {
         else if( tempWin.getShip() > tempLose.getShip() ) {
             tempWin.setShip( tempWin.getShip() - 1 );
             m_botAction.setShip( killer, tempWin.getShip() );
-            
+
             //Stores data.
             tempWin.incData(2);
             if( tempWin.getData(2) > records[2] )
@@ -235,7 +241,7 @@ public void handleEvent( Message event ) {
             m_botAction.sendArenaMessage( killer + " has just been promoted to " + ranks[tempWin.getShip()] );
             if( tempLose.getShip() < 4 )
             m_botAction.sendArenaMessage( killee + " has just been demoted to " + ranks[tempLose.getShip()] );
-            	
+
         }
         else {
             tempWin.incData(0);
@@ -243,7 +249,7 @@ public void handleEvent( Message event ) {
                 records[0] = tempWin.getData(0);
         }
     }
-    
+
     ///*** Declares the end of game. ***///
     public void botEnd( String winner ) {
         //Sets the score for players.
@@ -275,7 +281,7 @@ public void handleEvent( Message event ) {
         records[4] = 10000;
         m_botAction.toggleLocked();
     }
-    
+
     public String getHolder( int location, int score ) {
         Set set = playerMap.keySet();
         Iterator i = set.iterator();
@@ -289,7 +295,7 @@ public void handleEvent( Message event ) {
         }
         return trimFill( recordH );
     }
-    
+
     public String getHolder( String location, int score ) {
         Set set = playerMap.keySet();
         Iterator i = set.iterator();
@@ -307,7 +313,7 @@ public void handleEvent( Message event ) {
         }
         return trimFill( recordH );
     }
-    
+
     public String trimFill( String line ) {
         if(line.length() < 38) {
             for(int i=line.length();i<38;i++)
@@ -315,13 +321,13 @@ public void handleEvent( Message event ) {
         }
         return line;
     }
-    
+
     public void handleEvent( PlayerEntered event ) {
         if(gameProgress == 1)
             m_botAction.sendPrivateMessage( event.getPlayerName(), "Lagout or want in just pm me with !prolag");
     }
-    
-    
+
+
     ///*** Help Messages ///***
     public String[] getHelpMessages() {
         String[] messages = {
@@ -333,9 +339,9 @@ public void handleEvent( Message event ) {
         };
         return messages;
     }
-    
+
     public void cancel() {
     	m_botAction.cancelTasks();
     }
-    
+
 }

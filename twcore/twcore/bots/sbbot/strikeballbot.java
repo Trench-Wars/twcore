@@ -1,5 +1,10 @@
-package twcore.bots.strikeballbot;
+package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.events.LoggedOn;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.io.*;
 import java.lang.*;
@@ -9,7 +14,7 @@ import java.lang.*;
  *     I have a bunch of debugging messages built into the bot.. it will attempt to pm me
  *     about thrown exceptions and some of the stat events so that I can observe it while
  *     it's in action.
- * 
+ *
  *     Right now the architecture is very strange.. this is due to the fact that I was
  *     unfamiliar with the specifics of generics, and assumed the compiler had a compile-time
  *     type inference engine similar to OCAML's.  Unfortunately, as I learned while trying
@@ -24,7 +29,7 @@ import java.lang.*;
  *     The bot will break in several places if the team freqs are randomized/made any other
  *     0 and 1.  At the moment I know it will break the SBStatKeeper in at least getGoalGraph
  *     (it uses the freq as an array index).  It might also possibly break the SBRosterManager.
- *   
+ *
  *         --Arceo
  */
 public class strikeballbot extends SSEventForwarder {
@@ -36,7 +41,7 @@ public class strikeballbot extends SSEventForwarder {
     private static OperatorList opList;
     private BotCommandOperator operator;
     private SBMatchCoordinator coordinator;
-    
+
     public strikeballbot(BotAction botAction) {
 	super(botAction);
 	operator = new BotCommandOperator();
@@ -51,7 +56,7 @@ public class strikeballbot extends SSEventForwarder {
     }
 
     protected BotCommandOperator getOperator() { return operator; }
-    
+
     // --- Command Implementations ---
     public void commandDie(String name, String args) {
 	try {
@@ -144,7 +149,7 @@ public class strikeballbot extends SSEventForwarder {
 	    pmStackTrace("arceo", e);
 	}
     }
-    
+
     public void commandList(String name, String args) {
 	try {
 	    Player p = m_botAction.getPlayer(name);
@@ -187,14 +192,14 @@ public class strikeballbot extends SSEventForwarder {
 	    operator.notifyEvent(BotCommandOperator.KILLGAME, new BotCommandEvent(p, args));
 	} catch(Exception e) {
 	    pmStackTrace("arceo", e);
-	}	    
+	}
     }
 
     public void commandReady(String name, String args) {
 	Player p = m_botAction.getPlayer(name);
 	operator.notifyEvent(BotCommandOperator.READY, new BotCommandEvent(p, args));
     }
-    
+
     private void loadSettings() {
 	m_botSettings = m_botAction.getBotSettings();
 	opList = m_botAction.getOperatorList();
@@ -210,7 +215,7 @@ public class strikeballbot extends SSEventForwarder {
 	    pmStackTrace("arceo", e);
 	}
     }
-    
+
     private class LogonHandler extends SSEventListener {
 	public void notify(SSEventMessageType type, LoggedOn event) {
 	    m_botAction.joinArena(m_botSettings.getString("Arena"));
@@ -220,19 +225,19 @@ public class strikeballbot extends SSEventForwarder {
     }
 
     private class CIMessagePasser extends SSEventListener {
-	public void notify(SSEventMessageType type, twcore.core.Message event) {
+	public void notify(SSEventMessageType type, twcore.core.events.Message event) {
 	    CI.handleEvent(event);
 	}
     }
 
     private class ArenaMessenger extends BotCommandListener {
 	public void notify(BotCommandType type, BotCommandEvent event) {
-	    
+
 	}
     }
 
     private void registerCommands() {
-	int mtype = twcore.core.Message.PRIVATE_MESSAGE;
+	int mtype = twcore.core.events.Message.PRIVATE_MESSAGE;
 	CI.registerCommand("!help", mtype, this, "commandHelp");
 	CI.registerCommand("!die", mtype, this, "commandDie");
 	CI.registerCommand("!add", mtype, this, "commandAdd");

@@ -13,6 +13,9 @@ package twcore.bots.relaybot;
 import java.util.*;
 import java.io.*;
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.util.Tools;
 
 public class relaybot extends SubspaceBot {
     private EventRequester m_req;
@@ -25,7 +28,7 @@ public class relaybot extends SubspaceBot {
     private long timeStarted = System.currentTimeMillis();
     private RadioStatusServer serv;
     private boolean someoneHosting = false;
-    
+
     /** Creates a new instance of relaybot */
     public relaybot( BotAction botAction ){
         super( botAction );
@@ -36,7 +39,7 @@ public class relaybot extends SubspaceBot {
         alreadyZoned = new LinkedList();
         currentPassword = m_botAction.getBotSettings().getString( "ServPass" );
     }
-    
+
     public void handleEvent( LoggedOn event ){
         m_botAction.joinArena( "radio" );
         m_botAction.setMessageLimit( 8 );
@@ -46,24 +49,24 @@ public class relaybot extends SubspaceBot {
             Tools.printLog( "Unable to start RadioBot server!" );
         }
     }
-    
+
     public void sendArenaMessage( String arenaMsg ){
         m_botAction.sendArenaMessage( arenaMsg + " -" + currentHost, 2 );
     }
-    
+
     public void sendSmartPrivateMessage( String name, String message ){
         m_botAction.sendSmartPrivateMessage( name + " -" + currentHost, message );
     }
-    
+
     public void handleEvent( Message event ){
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
-            
+
             String name = m_botAction.getPlayerName( event.getPlayerID() );
-            
+
             //Transmit data over the server...
-            
+
             transmitPrivateMessageToBot( name, event.getMessage() );
-            
+
             if( loggedInList.contains( name ) ){
                 handleStaffMessage( name, event.getPlayerID(),
                 event.getMessage() );
@@ -79,7 +82,7 @@ public class relaybot extends SubspaceBot {
             handleInfoMessage( event.getMessage() );
         }
     }
-    
+
     public void handleInfoMessage( String message ){
         if( message.startsWith( "IP:" ) ) {
             String[] pieces = message.split("  ");
@@ -93,7 +96,7 @@ public class relaybot extends SubspaceBot {
             }
         }
     }
-    
+
     public void transmitPrivateMessageToBot( String name, String message ){
         if( message.startsWith( "!shoutout " )
         || message.startsWith( "!request " )
@@ -105,7 +108,7 @@ public class relaybot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( name, "Your message has been received." );
         }
     }
-    
+
     public void handleStaffMessage( String name, int id, String message ){
         long time = System.currentTimeMillis();
         if( time >= 21600000 + timeStarted ){
@@ -120,7 +123,7 @@ public class relaybot extends SubspaceBot {
                 comment = "No Comment.";
                 m_botAction.sendArenaMessage( "Current Host: " + name + " ("
                 + comment + ")" );
-                
+
                 if( !announcing ){
                     String[] str = {
                         "Current Host: " + name + " (" + comment + ")" };
@@ -157,7 +160,7 @@ public class relaybot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( id, "Sorry, you must !unhost "
                 + "before you !host." );
             }
-            
+
         } else if( message.startsWith( "!unhost" )){
             if( someoneHosting ){
                 m_botAction.cancelTasks();
@@ -183,9 +186,9 @@ public class relaybot extends SubspaceBot {
         } else {
             handleCurrentHostOnly( name, id, message );
         }
-        
+
     }
-    
+
     public void handleCurrentHostOnly( String name, int id, String message ){
         if( !currentHost.equals( name )){
             if( message.startsWith( "!poll " )
@@ -198,7 +201,7 @@ public class relaybot extends SubspaceBot {
             }
             return;
         }
-        
+
         if( message.startsWith( "!poll " )){
             if( currentPoll != null ){
                 m_botAction.sendPrivateMessage( name, "A poll is currently in "
@@ -213,14 +216,14 @@ public class relaybot extends SubspaceBot {
                 + "is wrong." );
                 return;
             }
-            
+
             String[] polls = new String[tokens];
             int i = 0;
             while( izer.hasMoreTokens() ){
                 polls[i] = izer.nextToken();
                 i++;
             }
-            
+
             currentPoll = new Poll( polls );
         } else if( message.startsWith( "!endpoll" )){
             if( currentPoll == null ){
@@ -230,7 +233,7 @@ public class relaybot extends SubspaceBot {
                 currentPoll.endPoll();
                 currentPoll = null;
             }
-            
+
         } else if( message.startsWith( "!arena " )){
             m_botAction.sendArenaMessage( message.substring( 7 ) + " -"
             + name, 2 );
@@ -245,8 +248,8 @@ public class relaybot extends SubspaceBot {
             }
         }
     }
-    
-    
+
+
     public void handlePrivateMessage( String name, int id, String message ){
         if( message.startsWith( "!help" )){
             m_botAction.privateMessageSpam( id, pubHelp );
@@ -261,13 +264,13 @@ public class relaybot extends SubspaceBot {
             }
         }
     }
-    
+
     public class Poll{
-        
+
         private String[] poll;
         private int range;
         private HashMap votes;
-        
+
         public Poll( String[] poll ){
             this.poll = poll;
             votes = new HashMap();
@@ -279,7 +282,7 @@ public class relaybot extends SubspaceBot {
             m_botAction.sendArenaMessage(
             "Private message your answers to RadioBot" );
         }
-        
+
         public void handlePollCount( String name, String message ){
             try{
                 if( !Tools.isAllDigits( message )){
@@ -294,26 +297,26 @@ public class relaybot extends SubspaceBot {
                     + "in the poll." );
                     return;
                 }
-                
+
                 if( !(vote > 0 && vote <= range )) {
                     return;
                 }
-                
+
                 votes.put( name, new Integer( vote ));
-                
+
                 m_botAction.sendSmartPrivateMessage( name, "Your vote has been "
                 + "counted." );
-                
+
             } catch( Exception e ){
                 m_botAction.sendArenaMessage( e.getMessage() );
                 m_botAction.sendArenaMessage( e.getClass().getName() );
             }
         }
-        
+
         public void endPoll(){
             m_botAction.sendArenaMessage( "The poll has ended! Question: "
             + poll[0] );
-            
+
             int[] counters = new int[range+1];
             Iterator iterator = votes.values().iterator();
             while( iterator.hasNext() ){
@@ -324,27 +327,27 @@ public class relaybot extends SubspaceBot {
                 + counters[i] );
             }
         }
-        
+
     }
-    
+
     public class AnnounceTask extends TimerTask {
         private String[] announcement;
         public AnnounceTask( String[] announcement ){
             this.announcement = announcement;
         }
-        
+
         public void run() {
             for( int i = 0; i < announcement.length; i++ ){
                 m_botAction.sendArenaMessage( announcement[i] );
             }
         }
-        
+
     }
-    
+
     public void handleDisconnect(){
         serv.die();
     }
-    
+
     static String[] staffHelp = {
         "Radio Staff Help: ",
         "!who               - Shows who is currently logged into the bot",
@@ -357,7 +360,7 @@ public class relaybot extends SubspaceBot {
         "!endpoll           - Ends a poll and tallies the results.",
         "If you abuse the green messages, or write something inappropriate, your radio hosting priviliges will be revoked."
     };
-    
+
     static String[] pubHelp = {
         "Help: ",
         "!topic <topic>       - Sends your idea for a topic to the radio host.",
@@ -368,7 +371,7 @@ public class relaybot extends SubspaceBot {
         "!login <password>    - If you are a current radio host, please log into the bot.",
         "If you would like to become a radio host, read this: http://forums.trenchwars.org/showthread.php?threadid=5060"
     };
-    
+
     static String[] announcement = {
         "Trench Wars Radio! To listen, visit http://radio.trenchwars.org:8000 (Modem) http://radio.trenchwars.org:9000 (Cable/DSL) and click \"Listen\"",
         "If the high speed (9000) feed buffers too much for you, or doesn't work at all, try the low speed (8000) feed."

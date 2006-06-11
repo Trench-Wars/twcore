@@ -64,7 +64,7 @@ class SBPlayer {
 	public int getTotalFired() { return bulletsFired + bombsFired; }
 
 	public int getTotalHits() { return bulletsHit + bombsHit; }
-	
+
 	public void setCannon(Cannon tC) { c = tC; }
 
 	public Cannon getCannon() { return c; }
@@ -75,7 +75,7 @@ class SBPlayer {
 
 	public boolean isLagged() { return lagged; }
 
-	public int getAccuracy() { 
+	public int getAccuracy() {
 		if (getTotalHits() == 0 || getTotalFired() == 0) {
 			return 0;
 		} else {

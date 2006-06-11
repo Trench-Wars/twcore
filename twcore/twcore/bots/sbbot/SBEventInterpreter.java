@@ -1,5 +1,12 @@
 package twcore.bots.sbbot;
 import twcore.core.*;
+import twcore.core.events.BallPosition;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.SoccerGoal;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
+
 import java.util.*;
 import java.io.*;
 
@@ -21,7 +28,7 @@ public class SBEventInterpreter extends SSEventListener {
     private final int MINX = 0, MINY = 1, MAXX = 2, MAXY = 3, STARTX = 4, STARTY = 5;
     private int[] TEAM0BOX = { 469, 597, 480, 603, 474, 600 };
     private int[] TEAM1BOX = { 544, 597, 555, 603, 550, 600 };
-    
+
     public SBEventInterpreter(SSEventOperator op,
 			      SBMatchOperator m,
 			      SBMatchCoordinator mc,
@@ -42,7 +49,7 @@ public class SBEventInterpreter extends SSEventListener {
 	if((p = m_botAction.getPlayer(event.getPlayerID())) != null)
 	    matchOp.notifyEvent(SBMatchOperator.PLAYERLEFT, new SBEvent(p));
     }
-    
+
     public void notify(SSEventMessageType type, SoccerGoal event) {
 	if(match.getState() != SBMatchCoordinator.PLAYING) return;
 	matchOp.notifyEvent(SBMatchOperator.GOAL,
@@ -50,8 +57,8 @@ public class SBEventInterpreter extends SSEventListener {
     }
 
     String lastScorer = null;
-    public void notify(SSEventMessageType type, twcore.core.Message event) {
-	if(event.getMessageType() != twcore.core.Message.ARENA_MESSAGE) return;
+    public void notify(SSEventMessageType type, twcore.core.events.Message event) {
+	if(event.getMessageType() != twcore.core.events.Message.ARENA_MESSAGE) return;
 	if(match.getState() == SBMatchCoordinator.PLAYING &&
 	   event.getMessage().startsWith("Enemy Goal!")) {
 
@@ -99,7 +106,7 @@ public class SBEventInterpreter extends SSEventListener {
 	    } catch( Exception e ) {}
 	}
 	if(match.getState() != SBMatchCoordinator.PLAYING) return;
-	
+
     }
 
     public void notify(SSEventMessageType type, BallPosition event) {
@@ -108,6 +115,6 @@ public class SBEventInterpreter extends SSEventListener {
 	    m_botAction.sendSmartPrivateMessage("arceo","Ball Dropped!");
 	}
 	if(match.getState() != SBMatchCoordinator.PLAYING) return;
-	
+
     }
 }

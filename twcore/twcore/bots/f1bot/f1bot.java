@@ -3,6 +3,11 @@
 package twcore.bots.f1bot;
 
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerPosition;
+import twcore.core.game.Player;
+
 import java.util.*;
 
 public class f1bot extends SubspaceBot {

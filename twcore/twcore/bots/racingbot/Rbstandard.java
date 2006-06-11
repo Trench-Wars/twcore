@@ -13,6 +13,11 @@ package twcore.bots.racingbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.game.Ship;
+import twcore.core.util.Tools;
 
 public class Rbstandard extends RBExtender {
     int specPlayers = 0; //if >0, spec player at X deaths

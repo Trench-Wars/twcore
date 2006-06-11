@@ -3,7 +3,8 @@ package twcore.bots.twlbot;
 import java.sql.*;
 import java.util.*;
 import twcore.core.*;
-import twcore.misc.statistics.*;
+import twcore.core.stats.Statistics;
+import twcore.core.util.Tools;
 
 public class LeagueMatch
 {
@@ -54,24 +55,24 @@ public class LeagueMatch
     private int m_lagoutLimit;
 
     //constants
-    
+
     //matchTypeId constants
-    private final int TWLD = 1; //wb league 
+    private final int TWLD = 1; //wb league
     private final int TWLJ = 2; //jav league
     private final int TWLB = 3; //base league
-    
+
     //duel league constants
     private final int DUEL_ROSTER_LIMIT = 5; //players
     private final int DUEL_DEATH_LIMIT = 10; //deaths
     private final int DUEL_SUB_LIMIT = 2; //times
     private final int DUEL_LAGOUT_LIMIT = 3; //times
-    
+
     //base league constants
     private final int BASE_ROSTER_LIMIT = 8; //players
     private final int BASE_SUB_LIMIT = 3; //times
     private final int BASE_DEATH_LIMIT = 0; //deaths
     private final int BASE_LAGOUT_LIMIT = 5; //times
-    
+
     private final int TEAM_ONE_FREQ = 0;
     private final int TEAM_TWO_FREQ = 1;
 
@@ -86,7 +87,7 @@ public class LeagueMatch
             m_team2Id = result.getInt("fnTeam2ID");
             m_team1Name = result.getString("fcTeam1Name");
             m_team2Name = result.getString("fcTeam2Name");
-            
+
             if (m_matchTypeId != TWLB)
             {
                 m_rosterLimit = DUEL_ROSTER_LIMIT;
@@ -340,7 +341,7 @@ public class LeagueMatch
         else
             return false;
     }
-    
+
     /** Setting for playoff mode, to be set in twlbotstandard.  Keeps the match
      * timer in sync with the main bot.
      * @param isBasePlayoff True if this match is a base playoff match.
@@ -376,7 +377,7 @@ public class LeagueMatch
      * Displays warning depending on time remaining
      */
     private void giveTimeWarning(int time, int team)
-    {       
+    {
         if (    (m_isBasePlayoff  && time <= twlbotstandard.TIME_RACE_PLAYOFF_TARGET)
              || (!m_isBasePlayoff && time <= twlbotstandard.TIME_RACE_TARGET) ) {
 
@@ -403,14 +404,14 @@ public class LeagueMatch
                 target = twlbotstandard.TIME_RACE_PLAYOFF_TARGET;
             else
                 target = twlbotstandard.TIME_RACE_TARGET;
-                
+
             if (target - teamScore == time * 60) //3 mins * 60 secs
             {
                 if (teamId == getFlagOwner()) //no multiple warning
                     m_botAction.sendArenaMessage(name + " needs " + time + " min of flag time to win");
             }
-            
-            
+
+
         }
     }
 

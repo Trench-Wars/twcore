@@ -1,13 +1,38 @@
 package twcore.bots.racingbot;
 
 import twcore.core.*;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.BallPosition;
+import twcore.core.events.FileArrived;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FlagDropped;
+import twcore.core.events.FlagPosition;
+import twcore.core.events.FlagReward;
+import twcore.core.events.FlagVictory;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.Prize;
+import twcore.core.events.SQLResultEvent;
+import twcore.core.events.ScoreReset;
+import twcore.core.events.ScoreUpdate;
+import twcore.core.events.SoccerGoal;
+import twcore.core.events.SubspaceEvent;
+import twcore.core.events.TurfFlagUpdate;
+import twcore.core.events.WatchDamage;
+import twcore.core.events.WeaponFired;
 
 import java.io.*;
 import java.util.*;
 import java.sql.*;
 
 public class racingbot extends SubspaceBot {
-	
+
 	private AdaptiveClassLoader m_loader;
 	HashMap modules;
 	HashMap extensions;
@@ -17,26 +42,26 @@ public class racingbot extends SubspaceBot {
 	boolean locked = false;
 	File botRoot;
 	File coreRoot;
-	
+
 	final String mySQLHost = "local";
-	
+
 	public racingbot( BotAction botAction ) {
 		super( botAction );
-		
+
 		Vector repository = new Vector();
-        coreRoot = new File( botAction.getGeneralSettings().getString( "Core Location" ) + "/twcore/bots/racingbot/" );		
+        coreRoot = new File( botAction.getGeneralSettings().getString( "Core Location" ) + "/twcore/bots/racingbot/" );
 		m_loader = new AdaptiveClassLoader( repository, getClass().getClassLoader() );
 		modules = new HashMap();
 		extensions = new HashMap();
 		twrcOps = new HashSet();
-		
+
         coreRoot = new File( botAction.getGeneralSettings().getString( "Core Location" ) );
         botRoot = new File(coreRoot.getPath() + "/twcore/bots/racingbot");
-        
+
         m_botAction.getEventRequester().requestAll();
         m_botSettings = m_botAction.getBotSettings();
 	}
-	
+
 	public void handleEvent( LoggedOn event ) {
 		String allOps = m_botSettings.getString("TWRC Ops");
 		String ops[] = allOps.split(":");
@@ -44,9 +69,9 @@ public class racingbot extends SubspaceBot {
 			twrcOps.add(ops[k].toLowerCase());
 		m_botAction.joinArena("twrc");
 	}
-	
+
 	public void distributeEvent( SubspaceEvent event ){
-		
+
         Iterator i = modules.entrySet().iterator();
         while( i.hasNext() ){
             Map.Entry entry = (Map.Entry)i.next();
@@ -60,8 +85,8 @@ public class racingbot extends SubspaceBot {
             ext.handleEvent( event );
         }
     }
-    
-    
+
+
 	public void handleEvent( Message event ){
         distributeEvent( (SubspaceEvent)event );
         try {
@@ -69,7 +94,7 @@ public class racingbot extends SubspaceBot {
 			String message = event.getMessage().toLowerCase();
 			if(m_botAction.getOperatorList().isER(name) || twrcOps.contains(name.toLowerCase()))
 			{
-			
+
 				if( message.startsWith( "!go " )) {
 					if(!locked)
 					{
@@ -80,7 +105,7 @@ public class racingbot extends SubspaceBot {
 					}
 					else
 						m_botAction.sendPrivateMessage(name, "Please unlock before moving the bot.");
-					
+
 		    	}
 		    	else if(message.startsWith("!load "))
 		    	{
@@ -110,7 +135,7 @@ public class racingbot extends SubspaceBot {
 		    	if(message.startsWith("!die"))
 		    		m_botAction.die();
 		    }
-		   
+
 		    if(message.startsWith("!leave"))
 			{
 				m_botAction.spec(name);
@@ -118,7 +143,7 @@ public class racingbot extends SubspaceBot {
 			}
 		} catch(Exception e) {}
     }
-    
+
     public void load( String name, String extensionType ){
         if(locked && !extensionType.toLowerCase().equals("twrc") || !extensionType.toLowerCase().equals("trackmanager") || !extensionType.toLowerCase().equals("race")) {
             try{
@@ -134,7 +159,7 @@ public class racingbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "Please !lock the bot first before loading a module." );
         }
     }
-    
+
 	public void remove( String name, String key ){
         if( modules.containsKey( key )){
             modules.remove(key);
@@ -146,7 +171,7 @@ public class racingbot extends SubspaceBot {
             + "names are case sensitive." );
         }
     }
-    
+
     public void handleList( String name, String message )
     {
         String[] s = botRoot.list();
@@ -165,26 +190,26 @@ public class racingbot extends SubspaceBot {
             }
         }
     }
-    
+
     public void handleEvent( ArenaJoined event ){
-       
+
         distributeEvent( (SubspaceEvent)event );
-                
+
         RbRace mod = new RbRace();
         mod.set( m_botAction, mySQLHost, this);
         modules.put( "Race", mod );
-        
+
         RbTrackManager mod2 = new RbTrackManager();
         mod2.set( m_botAction, mySQLHost, this);
         modules.put( "Track Manager", mod2 );
-        
+
         RbTWRC mod3 = new RbTWRC();
        	mod3.set(m_botAction, mySQLHost, this);
         modules.put("TWRC", mod3);
-        
+
         m_botAction.setPlayerPositionUpdating( 250 );
-    } 
-   	
+    }
+
    	public void help( String name, String key ){
         key = key.toLowerCase();
         if( extensions.containsKey( key )){
@@ -195,8 +220,8 @@ public class racingbot extends SubspaceBot {
             + " has not been loaded." );
         }
     }
-    
-    
+
+
     public void handleEvent( PlayerLeft event ){
         distributeEvent( (SubspaceEvent)event );}
     public void handleEvent( SubspaceEvent event ){

@@ -1,13 +1,14 @@
 package twcore.bots.racingbot;
 
 import twcore.core.*;
+import twcore.core.events.Message;
 
 public class Rbopstuff extends RBExtender
 {
 	public Rbopstuff()
 	{
 	}
-	
+
 	public void handleEvent(Message event)
 	{
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
@@ -18,7 +19,7 @@ public class Rbopstuff extends RBExtender
 				handleCommand(name, message);
 		}
 	}
-	
+
 	public void handleCommand(String name, String message)
 	{
 		if(message.toLowerCase().startsWith("!specall"))
@@ -54,7 +55,7 @@ public class Rbopstuff extends RBExtender
 		else if(message.toLowerCase().startsWith("!lock"))
 			m_botAction.toggleLocked();
 	}
-	
+
 	public String[] getHelpMessages()
 	{
 		String[] help = {
@@ -66,12 +67,12 @@ public class Rbopstuff extends RBExtender
 			"!flagreset           -Resets flags.",
 			"!lock                -Toggles the arena from locked-unlocked or unlocked-locked"
 		};
-		
+
 		return help;
 	}
-	
+
 	public void cancel()
 	{
 	}
-			
+
 }

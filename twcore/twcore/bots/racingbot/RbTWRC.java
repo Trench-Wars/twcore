@@ -1,6 +1,8 @@
 package twcore.bots.racingbot;
 
 import twcore.core.*;
+import twcore.core.events.Message;
+
 import java.util.*;
 import java.io.*;
 import java.sql.ResultSet;
@@ -19,18 +21,18 @@ public class RbTWRC extends RacingBotExtension
 	boolean enableSignup = false;
 	int racePlayers;
 	Calendar calendar;
-	
+
 	/** Constructs a new instance of RbTWRC and sets up stuff for timestamp/logfile
 	 */
-	public RbTWRC() 
+	public RbTWRC()
 	{
 		String[] ids = TimeZone.getAvailableIDs(-6 * 60 * 60 * 1000);
 		SimpleTimeZone pdt = new SimpleTimeZone(-6 * 60 * 60 * 1000, ids[0]);
 		pdt.setStartRule(Calendar.APRIL, 1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
 		pdt.setEndRule(Calendar.OCTOBER, -1, Calendar.SUNDAY, 2 * 60 * 60 * 1000);
-		
+
 		calendar = new GregorianCalendar(pdt);
-		
+
 		try {
 			if(!log.exists())
 				log.createNewFile();
@@ -38,7 +40,7 @@ public class RbTWRC extends RacingBotExtension
 				people.createNewFile();
 			updatePeopleFile();
 		} catch(Exception e) {}
-		
+
 		try {
 			BufferedReader signedup = new BufferedReader(new FileReader(people));
 			String inLine;
@@ -48,7 +50,7 @@ public class RbTWRC extends RacingBotExtension
 			}
 		} catch(IOException e) {}
 	}
-	
+
 	public void updatePeopleFile()
 	{
 		Iterator it = signups.iterator();
@@ -56,21 +58,21 @@ public class RbTWRC extends RacingBotExtension
 			FileWriter out = new FileWriter(people, true);
 			while(it.hasNext())
 			{
-				String name = (String)it.next();	
+				String name = (String)it.next();
 				out.write(name + "\n");
 				out.flush();
 			}
 			out.close();
 		} catch(IOException e) {}
 	}
-	
+
 	public void sql(String name)
 	{
 		try {
 			m_botAction.SQLQuery("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
 		} catch(Exception e) {}
 	}
-	
+
 	/** Recieves a message event and handles it based on user permissions.
 	 */
 	public void handleEvent(Message event)
@@ -95,13 +97,13 @@ public class RbTWRC extends RacingBotExtension
 			}
 		}
 	}
-	
+
 	/** Handles the commands for updating a race or sending an arena message.
 	 */
 	public void handleCommand(String name, String message)
 	{
 		RbRace race = (RbRace)modules.get("Race");
-		
+
 		if(message.toLowerCase().startsWith("!help twrc"))
 			handleHelp(name);
 		else if(message.toLowerCase().startsWith("!help"))
@@ -146,7 +148,7 @@ public class RbTWRC extends RacingBotExtension
 			}
 		}
 	}
-	
+
 	/** PM's the player with the module's help message.
 	 *  @param name - name of help message requester.
 	 */
@@ -157,7 +159,7 @@ public class RbTWRC extends RacingBotExtension
 		m_botAction.sendPrivateMessage(name, "!marathon         -Updates player standings after a marathon.");
 		m_botAction.sendPrivateMessage(name, "!help             -Sends you this message...");
 	}
-	
+
 	/** Updates all the databases for the last normal race.
 	 *  2 points for leading a lap. 2 points for leading the most laps. top 10 get points
 	 *  1st = 10p, 2nd = 9p, 3rd = 8p......10th = 1p
@@ -234,7 +236,7 @@ public class RbTWRC extends RacingBotExtension
 		race.currentTrack = -1;
 		race.loadArena();
 	}
-	
+
 	/** Updates all the databases for the last race if it was a big/major race.
 	 *  2 points for leading a lap. 2 points for leading the most. Points - Position + 1 for finishing.
 	 */
@@ -311,7 +313,7 @@ public class RbTWRC extends RacingBotExtension
 		race.currentTrack = -1;
 		race.loadArena();
 	}
-	
+
 	/** Updates all of the databases for the last race if it was a marathon
 	 *  2 points for leading a lap. 10 points for leading the most. 30 points for winning.
 	 */
@@ -387,7 +389,7 @@ public class RbTWRC extends RacingBotExtension
 		race.currentTrack = -1;
 		race.loadArena();
 	}
-	
+
 	/** Writes point changes to log.txt
 	 *  @param message - message to be written to the log.txt file
 	 */
@@ -401,7 +403,7 @@ public class RbTWRC extends RacingBotExtension
 			out.close();
 		} catch(IOException e) {}
 	}
-	
+
 	/** Returns the points of the requested player.
 	 *  @param name - name of player.
 	 *  @return points that player has.
@@ -416,7 +418,7 @@ public class RbTWRC extends RacingBotExtension
 				return 0;
 		} catch(Exception e) {return 0;}
 	}
-	
+
 	/** Sets the racePlayers variable to the # of starters from the last race.
 	 */
 	public void getPlayers()
@@ -434,7 +436,7 @@ public class RbTWRC extends RacingBotExtension
 		racePlayers = players;
 		track.playerPositions = new ArrayList();
 	}
-	
+
 	/** Inserts the last race's data into tblRaceData
 	 *  @param type - Type of race
 	 *  @param host - host of the race.
@@ -450,7 +452,7 @@ public class RbTWRC extends RacingBotExtension
 			m_botAction.SQLQuery("website", "INSERT INTO tblRaceData (fldID, fldDate, fldTrack, fldLaps, fldStarters, fldFinishers, fldType, fldFirst, fldSecond, fldThird, fldHost) VALUES (0, \""+getTimeStamp()+"\", \""+trackName+"\", "+laps+", "+racePlayers+", "+track.positions.size()+", \""+type+"\", \""+track.winner+"\", \""+track.second+"\", \""+track.third+"\", \""+host+"\") ");
 		} catch(Exception e) {e.printStackTrace();}
 	}
-	
+
 	/** Inserts point change data into the tblPointsData sql table.
 	 *  @param player - Name of player whose points were changed.
 	 *  @param points - Change in points.
@@ -462,7 +464,7 @@ public class RbTWRC extends RacingBotExtension
 			m_botAction.SQLQuery("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0,  "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
 		} catch(Exception e) {}
 	}
-	
+
 	/** Returns the player's tblRacers fldID.
 	 *  @param name - Name of player.
 	 *  @return ID
@@ -476,7 +478,7 @@ public class RbTWRC extends RacingBotExtension
 		} catch(Exception e) {}
 		return 0;
 	}
-	
+
 	/** Returns a timestamp for the database.
 	 *  @return Returns a timestamp in the format MM/DD/YYYY HH:MM
 	 */
@@ -505,5 +507,5 @@ public class RbTWRC extends RacingBotExtension
 			date += ":" + calendar.get(Calendar.MINUTE);
 		return date;
 	}
-	
+
 }

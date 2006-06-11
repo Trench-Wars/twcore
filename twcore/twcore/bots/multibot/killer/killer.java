@@ -2,7 +2,7 @@
  * twbotkiller - Killer module - qan (gdugwyler@hotmail.com)
  *
  * Created 5/29/04 - Last modified 8/5/04
- * 
+ *
  *
  *
  * DESC: Normal elimination match, except:
@@ -11,18 +11,25 @@
  *       - Anyone dying by the killer's hand is spec'd w/o arena msg.
  *       - Players still in the game can PM the bot with the killer's name.
  *           ... if they're correct, they become the new killer, and a msg
- *               is displayed saying the killer's identity has changed.               
+ *               is displayed saying the killer's identity has changed.
  *           ... if they're not correct, they are spec'd.
  *       - Players MUST NOT give away identity of the Killer (as it's cheating).
- */  
+ */
 
 
 
 package twcore.bots.multibot.killer;
 
-import twcore.misc.multibot.*;
 import java.util.*;
+
+import twcore.bots.MultiModule;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 
 
@@ -39,7 +46,7 @@ public class killer extends MultiModule {
 
     public void init() {
     }
-	
+
 	public void requestEvents(EventRequester events)	{
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.PLAYER_DEATH);
@@ -57,7 +64,7 @@ public class killer extends MultiModule {
     final static int f_deflives = 10;        // the default number of deaths allowed
     final static int f_teamsize = 1;         // Teams of 1 (standard DM style)
     final static int f_guesscmdlength = 7;   // length of !guess command till args
-    
+
 
     TimerTask startGame;
     TimerTask giveStartWarning;
@@ -71,7 +78,7 @@ public class killer extends MultiModule {
 
 
 
-    /** Handles event received message, and if from an ER or above, 
+    /** Handles event received message, and if from an ER or above,
      * tries to parse it as an event mod command.  Otherwise, parses
      * as a general command.
      * @param event Passed event.
@@ -95,7 +102,7 @@ public class killer extends MultiModule {
      * @param lives Number of lives to spec players at.
      * @param killerName Name of player to be the starting Killer.  If
      *                   left blank, random starting killer.
-     */    
+     */
     public void doInit( final int lives, String killerName ){
         m_lives = lives;
 
@@ -109,7 +116,7 @@ public class killer extends MultiModule {
             }
         }
 
-        
+
         startGame = new TimerTask() {
             public void run() {
                 if( isRunning == false ) {
@@ -193,7 +200,7 @@ public class killer extends MultiModule {
      */
     public void start( String name, String[] params ){
         try{
-            
+
             switch( params.length){
 
             // Default # lives, random starting killer
@@ -204,7 +211,7 @@ public class killer extends MultiModule {
                 break;
 
             // User-defined number of lives, random starting killer
-            case 1: 
+            case 1:
                 int theLives = Integer.parseInt(params[0]);
                 doInit( theLives, "" );
                 m_botAction.sendPrivateMessage( name, "Killer mode started." );
@@ -223,7 +230,7 @@ public class killer extends MultiModule {
                     m_botAction.sendPrivateMessage( name, "Unrecognized user name.  Please check the spelling and try again." );
                 }
                 break;
-            } 
+            }
 
         }catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Silly " + name + ".  You've made a mistake -- please try again." );
@@ -246,7 +253,7 @@ public class killer extends MultiModule {
             } else {
                 m_botAction.sendPrivateMessage( name, "Killer mode is not currently enabled." );
             }
-              
+
         } else if( message.startsWith( "!start " )){
             if(isRunning == false) {
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
@@ -276,7 +283,7 @@ public class killer extends MultiModule {
                 manual = true;
                 m_botAction.sendPrivateMessage( name, "Manual ON.  !start won't display rules, give 10 seconds, say GO, etc." );
             }
-  
+
         } else
             handleGeneralCommand( name, message );    // pass the buck
 
@@ -324,8 +331,8 @@ public class killer extends MultiModule {
                     if( m_killer.equals( name ) ) {
                         m_botAction.sendPrivateMessage( name, "You ARE the Killer...  you don't need to make any guesses as to who you are." );
 
-                    } else {    
-                
+                    } else {
+
                         String[] parameters = Tools.stringChopper( message.substring( f_guesscmdlength ), ' ' );
 
                         Player guessK = m_botAction.getFuzzyPlayer( parameters[0] );
@@ -407,7 +414,7 @@ public class killer extends MultiModule {
 
                     try {
                        if( p != null && p.getShipType() != f_specship) {
-                           suddenDeath = true;                
+                           suddenDeath = true;
                            m_botAction.sendArenaMessage( p.getPlayerName() + " has been uncovered as the Killer!  The final showdown begins... and the next to die will perish.",103);
                        }
                     } catch (Exception e) {
@@ -451,7 +458,7 @@ public class killer extends MultiModule {
                 m_botAction.spec(playerName);
                 m_botAction.spec(playerName);
                 suddenDeath = false;
-            
+
             } else {
 
                 if( m_killer.equals( m_botAction.getPlayerName( event.getKillerID() ) ) ) {
@@ -461,8 +468,8 @@ public class killer extends MultiModule {
                     m_botAction.sendPrivateMessage(playerName, "REMEMBER: It is illegal to reveal the identity of the Killer!");
                     m_botAction.spec(playerName);
                     m_botAction.spec(playerName);
-                
-            
+
+
                 } else if( p.getLosses() >= m_lives ) {
 
                     String playerName = p.getPlayerName();
@@ -568,7 +575,7 @@ public class killer extends MultiModule {
         };
         return rules;
     }
-    
+
 
 
     /** Returns help message.
@@ -594,7 +601,7 @@ public class killer extends MultiModule {
      */
     public void cancel() {
     }
-    
+
     public boolean isUnloadable()	{
 		return true;
 	}

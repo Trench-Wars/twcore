@@ -1,6 +1,10 @@
 package twcore.bots.twbot;
 
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
+
 import java.util.*;
 
 public class twbotobjons extends TWBotExtension
@@ -8,7 +12,7 @@ public class twbotobjons extends TWBotExtension
 	public twbotobjons()
 	{
 	}
-	
+
 	public void handleEvent(Message event)
 	{
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
@@ -19,7 +23,7 @@ public class twbotobjons extends TWBotExtension
 				handleCommand(playerName, event.getMessage().toLowerCase());
 		}
 	}
-	
+
 	public void handleCommand(String name, String message)
 	{
 		if(message.startsWith("!obj"))
@@ -27,14 +31,14 @@ public class twbotobjons extends TWBotExtension
 		else if(message.startsWith("!stop"))
 			m_botAction.cancelTasks();
 	}
-	
+
 	public void Objon(String message)
 	{
 		String pieces[] = message.split(" ");
 		final String params[] = pieces[1].split(":");
-		
+
 		if(pieces[0].equals("!objon"))
-		{		
+		{
 			try {
 				switch(params.length)
 				{
@@ -50,7 +54,7 @@ public class twbotobjons extends TWBotExtension
 								m_botAction.hideObject(Integer.parseInt(params[0]));
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objoff, Integer.parseInt(params[1]) * 1000);
 						break;
 					case 3:
@@ -68,10 +72,10 @@ public class twbotobjons extends TWBotExtension
 								m_botAction.hideObject(Integer.parseInt(params[0]));
 							}
 						};
-						
+
 						m_botAction.scheduleTaskAtFixedRate(objoff2, Integer.parseInt(params[1]) * 1000, (Integer.parseInt(params[1]) + Integer.parseInt(params[2])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon, 0, (Integer.parseInt(params[1]) + Integer.parseInt(params[2])) * 1000);
-						break;						
+						break;
 				}
 			} catch(Exception e) {}
 		}
@@ -92,7 +96,7 @@ public class twbotobjons extends TWBotExtension
 								m_botAction.sendUnfilteredPrivateMessage(params[1], "*objoff " + params[0]);
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objoff, Integer.parseInt(params[2]) * 1000);
 						break;
 					case 4:
@@ -110,10 +114,10 @@ public class twbotobjons extends TWBotExtension
 								m_botAction.sendUnfilteredPrivateMessage(params[1], "*objon " + params[0]);
 							}
 						};
-						
+
 						m_botAction.scheduleTaskAtFixedRate(objoff2, Integer.parseInt(params[2]) * 1000, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon, 0, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
-						break;					
+						break;
 				}
 			} catch(Exception e) {}
 		}
@@ -155,7 +159,7 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objoff, Integer.parseInt(params[2]) * 1000);
 						break;
 					case 4:
@@ -187,10 +191,10 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTaskAtFixedRate(objoff2, Integer.parseInt(params[2]) * 1000, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon, 0, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
-						break;				
+						break;
 				}
 			} catch(Exception e) {}
 		}
@@ -232,7 +236,7 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objoff, Integer.parseInt(params[2]) * 1000);
 						break;
 					case 4:
@@ -264,10 +268,10 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTaskAtFixedRate(objoff2, Integer.parseInt(params[2]) * 1000, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon, 0, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
-						break;					
+						break;
 				}
 			} catch(Exception e) {}
 		}
@@ -288,7 +292,7 @@ public class twbotobjons extends TWBotExtension
 								m_botAction.showObject(Integer.parseInt(params[0]));
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objon, Integer.parseInt(params[1]) * 1000);
 						break;
 					case 3:
@@ -308,7 +312,7 @@ public class twbotobjons extends TWBotExtension
 						};
 						m_botAction.scheduleTaskAtFixedRate(objoff, 0, (Integer.parseInt(params[1]) + Integer.parseInt(params[2])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon2, Integer.parseInt(params[1]) * 1000, (Integer.parseInt(params[1]) + Integer.parseInt(params[2])) * 1000);
-						break;					
+						break;
 				}
 			} catch(Exception e) {}
 		}
@@ -329,7 +333,7 @@ public class twbotobjons extends TWBotExtension
 								m_botAction.sendUnfilteredPrivateMessage(params[1], "*objon " + params[0]);
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objon, Integer.parseInt(params[2]) * 1000);
 						break;
 					case 4:
@@ -347,10 +351,10 @@ public class twbotobjons extends TWBotExtension
 								m_botAction.sendUnfilteredPrivateMessage(params[1], "*objoff " + params[0]);
 							}
 						};
-						
+
 						m_botAction.scheduleTaskAtFixedRate(objoff, 0, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon2, Integer.parseInt(params[2]) * 1000, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
-						break;					
+						break;
 				}
 			} catch(Exception e) {}
 		}
@@ -392,7 +396,7 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objon, Integer.parseInt(params[2]) * 1000);
 						break;
 					case 4:
@@ -424,10 +428,10 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTaskAtFixedRate(objoff, 0, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon2, Integer.parseInt(params[2]) * 1000, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
-						break;					
+						break;
 				}
 			} catch(Exception e) {}
 		}
@@ -469,7 +473,7 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTask(objon, Integer.parseInt(params[2]) * 1000);
 						break;
 					case 4:
@@ -501,15 +505,15 @@ public class twbotobjons extends TWBotExtension
 								}
 							}
 						};
-						
+
 						m_botAction.scheduleTaskAtFixedRate(objoff, 0, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
 						m_botAction.scheduleTaskAtFixedRate(objon2, Integer.parseInt(params[2]) * 1000, (Integer.parseInt(params[2]) + Integer.parseInt(params[3])) * 1000);
-						break;				
+						break;
 				}
 			} catch(Exception e) {}
 		}
 	}
-	
+
 	public String[] getHelpMessages()
 	{
 		String help[] = {
@@ -538,10 +542,10 @@ public class twbotobjons extends TWBotExtension
 			"!ObjoffShip <#>:<ship>:<time>           -Turns off object <#> for ship <ship> for <time> seconds.",
 			"!ObjoffShip <#>:<ship>:<time>:<time2>   -Turns off object <#> for ship <ship> for <time> seconds, on for <time2> seconds and repeats."
 		};
-		
+
 		return help;
-	}			
-	
+	}
+
 	public void cancel()
 	{
 	}

@@ -1,5 +1,5 @@
 /*
- *Death Message Module 
+ *Death Message Module
  *
  *Created By: Jacen Solo
  *
@@ -11,6 +11,11 @@ package twcore.bots.zhbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
+import twcore.core.util.Tools;
 
 public class twbotdeathmessage extends TWBotExtension
 {
@@ -38,7 +43,7 @@ public class twbotdeathmessage extends TWBotExtension
 
         if( list.size() > 1 )
             m_botAction.sendPrivateMessage( name, "Removed: " + (String)list.remove( index ));
-        else 
+        else
         {
             m_botAction.sendPrivateMessage( name, "Sorry, but there must be at least one kill message loaded at all times." );
         }

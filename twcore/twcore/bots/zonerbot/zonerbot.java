@@ -2,6 +2,10 @@ package twcore.bots.zonerbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.util.IPCMessage;
+import twcore.core.util.Tools;
 
 /**
  * <p>Title: </p>Zonerbot
@@ -297,8 +301,8 @@ public class zonerbot extends SubspaceBot
     recentAdvertList.add(adverter, recentAdvertTime * 60 * 1000);
     removeFromQueue(0);
     //advert.record();
-    
-    IPCMessage msg = new IPCMessage( adverter + "@ad@" + advert.getArenaName( advertText ) + "@ad@" + advertText ); 
+
+    IPCMessage msg = new IPCMessage( adverter + "@ad@" + advert.getArenaName( advertText ) + "@ad@" + advertText );
     m_botAction.ipcTransmit( ZONE_CHANNEL, msg );
   }
 
@@ -722,7 +726,7 @@ public class zonerbot extends SubspaceBot
         doSmodHelpCmd(sender);
     }
   }
-  
+
   private void handleOwnerCommands(String sender, String message, int messageType) {
   	String command = message.toLowerCase();
     if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)

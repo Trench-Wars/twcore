@@ -3,29 +3,34 @@
  *
  *Created By: Jacen Solo
  *
- *Created: 05/24/04 at 
+ *Created: 05/24/04 at
  */
- 
+
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.Message;
+import twcore.core.events.SoccerGoal;
+import twcore.core.game.Player;
 
 public class twbottfrace extends TWBotExtension
 {
-	
+
 	int ship = 4;
 	Player p;
-	
+
 	public twbottfrace()
 	{
 
 	}
-	
+
 	public void cancel()
 	{
 	}
-	
+
 	public void handleEvent(Message event)
 	{
 		String message = event.getMessage();
@@ -36,14 +41,14 @@ public class twbottfrace extends TWBotExtension
             	handleCommand(name, message);
         }
     }
-    
+
     public void handleEvent(SoccerGoal event)
     {
     	int winfreq = event.getFrequency();
     	m_botAction.sendArenaMessage("Congratulations to freq " + winfreq + " they have scored and won the game!!!", 5);
     	m_botAction.toggleLocked();
     }
-    
+
     public void handleCommand(String name, String message)
     {
     	String pieces[] = message.split(" ");
@@ -59,9 +64,9 @@ public class twbottfrace extends TWBotExtension
 			m_botAction.changeAllShips(ship);
     		m_botAction.sendArenaMessage("Rules: Take the ball through your section of the course and pass the ball to your teammate at the end of your section",2);
     		m_botAction.sendArenaMessage("The first team to score wins, good luck and have fun!");
-    		
+
     		Iterator it = m_botAction.getPlayingPlayerIterator();
-    		
+
     		for(int i = 0;it.hasNext();i++) {
     			Player p = (Player)it.next();
     			if(i < 4) freq0(p, (i % 4));
@@ -69,10 +74,10 @@ public class twbottfrace extends TWBotExtension
     			else if(i < 12) freq2(p, (i % 4));
     			else freq3(p, (i % 4));
     		}
-    		
+
     		m_botAction.sendArenaMessage("Gooooo go go go gooooooo", 104);
     	}
-    	
+
     	if(message.toLowerCase().startsWith("!stop"))
     	{
     		m_botAction.sendArenaMessage("This race has been stopped by: " + name);
@@ -99,7 +104,7 @@ public class twbottfrace extends TWBotExtension
     		m_botAction.warpTo(name,512,512);
     	}
     }
-    
+
     public void freq0(Player p, int k)
     {
    		if(k == 0)
@@ -123,7 +128,7 @@ public class twbottfrace extends TWBotExtension
    			m_botAction.warpTo(p.getPlayerID(),250,264);
    		}
     }
-    
+
     public void freq1(Player p, int k)
     {
    		if(k == 0)
@@ -147,7 +152,7 @@ public class twbottfrace extends TWBotExtension
     		m_botAction.warpTo(p.getPlayerID(),250,464);
     	}
     }
-    
+
     public void freq2(Player p, int k)
     {
        	if(k == 0)
@@ -171,7 +176,7 @@ public class twbottfrace extends TWBotExtension
     		m_botAction.warpTo(p.getPlayerID(),250,664);
     	}
     }
-    
+
     public void freq3(Player p, int k)
     {
    		if(k == 0)
@@ -195,7 +200,7 @@ public class twbottfrace extends TWBotExtension
    			m_botAction.warpTo(p.getPlayerID(),250,864);
    		}
     }
-    
+
     public String[] getHelpMessages()
 	{
 		String[] help = {

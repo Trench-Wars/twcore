@@ -2,12 +2,19 @@
  *
  *Built by: Jacen Solo
  */
- 
+
 
 package twcore.bots.twbot;
 
 import java.util.*;
+
+import twcore.bots.TWBotExtension;
 import twcore.core.*;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.game.Player;
 
 public class twbotwipeout extends TWBotExtension
 {
@@ -19,11 +26,11 @@ public class twbotwipeout extends TWBotExtension
 	TimerTask starter;
 	TimerTask specer;
 	TimerTask tenSecWarn;
-	
+
 	public twbotwipeout()
 	{
 	}
-	
+
 	public void handleEvent(Message event)
 	{
 		String message = event.getMessage();
@@ -34,14 +41,14 @@ public class twbotwipeout extends TWBotExtension
 				handleCommand(name, message);
 		}
 	}
-	
+
 	public void handleEvent(PlayerDeath event)
 	{
 		String name = m_botAction.getPlayerName(event.getKillerID());
 		if(!gotKill.contains(name))
 			gotKill.add(name);
 	}
-	
+
 	public void handleEvent(PlayerLeft event)
 	{
 		String name = m_botAction.getPlayerName(event.getPlayerID());
@@ -52,7 +59,7 @@ public class twbotwipeout extends TWBotExtension
 		if(gotKill.contains(name))
 			gotKill.remove(name);
 	}
-	
+
 	public void handleEvent(FrequencyShipChange event)
 	{
 		String name = m_botAction.getPlayerName(event.getPlayerID());
@@ -78,7 +85,7 @@ public class twbotwipeout extends TWBotExtension
 		else if(message.toLowerCase().startsWith("!stop") && isRunning)
 			handleStop(name);
 	}
-	
+
 	public void handleStart(String name, String message)
 	{
 		String pieces[] = message.split(" ");
@@ -101,20 +108,20 @@ public class twbotwipeout extends TWBotExtension
 		m_botAction.scheduleTaskAtFixedRate(specer, speed * 1000 + 10 * 1000, speed * 1000);
 		m_botAction.scheduleTaskAtFixedRate(tenSecWarn, speed * 1000, speed * 1000);
 	}
-	
+
 	public void handleStop(String name)
 	{
 		isRunning = false;
 		m_botAction.sendArenaMessage("Wipeout stopped by: " + name, 13);
 		end();
-		
+
 	}
-	
+
 	public void handleTie()
 	{
 		m_botAction.sendArenaMessage("No one got a kill, time extended.", 2);
 	}
-	
+
 	public void handleWin()
 	{
 		Iterator it = players.iterator();
@@ -122,11 +129,11 @@ public class twbotwipeout extends TWBotExtension
 		m_botAction.sendArenaMessage(String.valueOf(it.next()) + " has won this round. Congratulations!");
 		end();
 	}
-	
+
 	public void spec()
 	{
 		Iterator it = players.iterator();
-		
+
 		while(it.hasNext())
 		{
 			String name = (String)it.next();
@@ -161,7 +168,7 @@ public class twbotwipeout extends TWBotExtension
 			gotKill.clear();
 		}
 	}
-			
+
 	public void end()
 	{
 		m_botAction.toggleLocked();
@@ -171,9 +178,9 @@ public class twbotwipeout extends TWBotExtension
 		playersKicked = new HashSet();
 		gotKill = new HashSet();
 		specer.cancel();
-		tenSecWarn.cancel();	
-	}	
-	
+		tenSecWarn.cancel();
+	}
+
 	void setupTimerTasks()
 	{
 		specer = new TimerTask()
@@ -184,7 +191,7 @@ public class twbotwipeout extends TWBotExtension
 				spec();
 			}
 		};
-		
+
 		starter = new TimerTask()
 		{
 			public void run()
@@ -193,7 +200,7 @@ public class twbotwipeout extends TWBotExtension
 				m_botAction.toggleLocked();
 				m_botAction.sendArenaMessage(" Goooooo go go go goooooooo",104);
 				isRunning = true;
-				
+
 				Iterator it = m_botAction.getPlayingPlayerIterator();
 				while(it.hasNext())
 				{
@@ -202,7 +209,7 @@ public class twbotwipeout extends TWBotExtension
 				}
 			}
 		};
-		
+
 		tenSecWarn = new TimerTask()
 		{
 			public void run()
@@ -211,7 +218,7 @@ public class twbotwipeout extends TWBotExtension
 			}
 		};
 	}
-	
+
 	public String[] getHelpMessages()
 	{
 		String[] help = {
@@ -221,7 +228,7 @@ public class twbotwipeout extends TWBotExtension
 		};
 		return help;
 	}
-	
+
 	public void cancel()
 	{
 	}
