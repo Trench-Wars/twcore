@@ -29,7 +29,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.06.01
+ * @version 06.06.12
  */
 public class bship extends MultiModule implements TSChangeListener
 {
@@ -185,6 +185,7 @@ public class bship extends MultiModule implements TSChangeListener
 		registerCommands();
 		m_tsm = m_botAction.getTSM();
 		m_tsm.setOperatorLevel(OperatorList.ER_LEVEL);
+		m_tsm.registerCommands(m_cmd);
 		registerSettings();
 
 		//Initial Game Settings
