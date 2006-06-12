@@ -1028,7 +1028,7 @@ public class bship extends MultiModule implements TSChangeListener
 			for(int y = 0; y < cslimit; y++)
 			{
 				Player p = m_botAction.getPlayer(plist[x].grabAndRemove());
-				m_botAction.setShip(p.getPlayerID(), 8 - (x % 5));
+				m_botAction.setShip(p.getPlayerID(), 8 - (y % 5));
 			}
 
 			// Put players in turrets and planes
