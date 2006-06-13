@@ -707,6 +707,7 @@ public class dangerous extends MultiModule {
         }
     }
     public boolean isUnloadable()	{
+    	clearRecords();
 		return true;
 	}
 }
