@@ -19,6 +19,7 @@ import twcore.core.util.Tools;
  * 1 - Zone Helper      extremely limited privileges                     [moderate.txt]
  * 2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]
  * 3 - Event Ref        regular privileges; first stage of real access   [moderate.txt]
+ * 4 - Developer		regular privileges; for more trusted coders      [develop.cfg ]
  * 4 - Moderator        expanded privileges for administrative duties    [moderate.txt]
  * 5 - High Moderator   additional privileges normally only for smods    [highmod.cfg ]
  * 6 - Super Moderator  nearly all privileges                            [smod.txt    ]
@@ -34,11 +35,12 @@ public class OperatorList {
     public static final int ZH_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
     public static final int ER_LEVEL = 3;
-    public static final int MODERATOR_LEVEL = 4;
-    public static final int HIGHMOD_LEVEL = 5;
-    public static final int SMOD_LEVEL = 6;
-    public static final int SYSOP_LEVEL = 7;
-    public static final int OWNER_LEVEL = 8;
+    public static final int DEV_LEVEL = 4;
+    public static final int MODERATOR_LEVEL = 5;
+    public static final int HIGHMOD_LEVEL = 6;
+    public static final int SMOD_LEVEL = 7;
+    public static final int SYSOP_LEVEL = 8;
+    public static final int OWNER_LEVEL = 9;
 
     /**
      * Creates a new instance of OperatorList.

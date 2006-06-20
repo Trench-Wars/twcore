@@ -171,6 +171,7 @@ public class HubBot extends SubspaceBot {
         m_botAction.getOperatorList().clearList();
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "owners.cfg" ), OperatorList.OWNER_LEVEL );
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "outsider.cfg" ), OperatorList.OUTSIDER_LEVEL );
+        m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "develop.cfg" ), OperatorList.DEV_LEVEL );
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "highmod.cfg" ), OperatorList.HIGHMOD_LEVEL );
         m_botAction.sendUnfilteredPublicMessage( "*getmodlist" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
