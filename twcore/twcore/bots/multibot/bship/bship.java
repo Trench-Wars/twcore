@@ -29,7 +29,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.06.12
+ * @version 06.06.21
  */
 public class bship extends MultiModule implements TSChangeListener
 {
@@ -892,18 +892,25 @@ public class bship extends MultiModule implements TSChangeListener
 			switch(m_teams[x].isOut(totalLives))
 			{
 				case 0: //still in
-				return;
+				break;
 
 				case 1: //no lives
 					m_botAction.sendArenaMessage("Team "+ x +" is out! (No team lives left)");
+					removeTeam(x);
 				break;
 
 				case 2: //no ships
 					m_botAction.sendArenaMessage("Team "+ x +" is out! (No ships left)");
+					removeTeam(x);
 				break;
 			}
-			removeTeam(x);
 		}
+
+		if(getTeamsLeft() <= 0)
+			m_botAction.sendArenaMessage("All teams appear to have been eliminated. Game ends in a draw.");
+
+		if(getTeamsLeft() <= 1)
+			postgame();
 
 	}
 
@@ -1071,8 +1078,8 @@ public class bship extends MultiModule implements TSChangeListener
 					break;
 				}
 
-			m_botAction.sendArenaMessage("Team "+ team +" wins!!!!", 5);
-			postgame();
+			if(team != -1)
+				m_botAction.sendArenaMessage("Team "+ team +" wins!!!!", 5);
 		}
 	}
 
