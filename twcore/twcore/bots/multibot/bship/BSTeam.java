@@ -1,6 +1,7 @@
 package twcore.bots.multibot.bship;
 
 import twcore.core.*;
+import twcore.core.game.Player;
 import java.util.*;
 import static twcore.bots.multibot.bship.bship.PLAYING;
 import static twcore.bots.multibot.bship.bship.SPEC;
@@ -11,7 +12,7 @@ import static twcore.bots.multibot.bship.bship.ALL;
  * BSPlayer objects and passes events to the players for stat tracking
  *
  * @author D1st0rt
- * @version 06.05.29
+ * @version 06.06.21
  */
 public class BSTeam
 {
@@ -225,6 +226,20 @@ public class BSTeam
 	{
 		BSPlayer ship = getPlayer(attachee);
 		BSPlayer turret = getPlayer(attacher);
+
+		if(ship == null)
+		{
+			Player sp = BotAction.getBotAction().getPlayer(attachee);
+			setShip(attachee, sp.getShipType());
+			ship = getPlayer(attachee);
+		}
+
+		if(turret == null)
+		{
+			Player tp = BotAction.getBotAction().getPlayer(attacher);
+			setShip(attacher, tp.getShipType());
+			turret = getPlayer(attachee);
+		}
 
 		ship.attaches++;
 		if(ship.attaches % 3 == 0 && ship.attaches > 0)
