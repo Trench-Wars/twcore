@@ -29,7 +29,7 @@ import static twcore.core.EventRequester.*;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.06.21
+ * @version 06.06.22
  */
 public class bship extends MultiModule implements TSChangeListener
 {
@@ -1652,15 +1652,19 @@ public class bship extends MultiModule implements TSChangeListener
 				StringBuffer carriers = new StringBuffer("Your Team's Carriers:");
 
 				//Find attachable ships
-				BSPlayer[] players = m_teams[x].getPlayers();
-				for(int y = 0; y < players.length; y++)
+				Iterator i = m_botAction.getPlayingPlayerIterator();
+				while(i.hasNext())
 				{
-					//turret attachable ships
-					if(players[y].ship == FRIGATE || players[y].ship == BATTLESHIP)
-						bships.append(" "+ players[y] +",");
-					//plane attachable ships
-					else if(players[y].ship == CARRIER)
-						carriers.append(" "+ players[y] +",");
+					Player p = (Player)i.next();
+					if(p.getFrequency() == x)
+					{
+						//turret attachable ships
+						if(p.getShipType() == FRIGATE || p.getShipType() == BATTLESHIP)
+							bships.append(" "+ p +",");
+						//plane attachable ships
+						else if(p.getShipType() == CARRIER)
+							carriers.append(" "+ p +",");
+					}
 				}
 
 				//remove trailing commas
