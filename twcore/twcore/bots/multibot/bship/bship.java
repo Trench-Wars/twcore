@@ -1263,6 +1263,10 @@ public class bship extends MultiModule implements TSChangeListener
 					else
 					{
 						buf.append(" "+ livesLeft);
+						int teamMax = cslimit * maxlives;
+						int teamLeft = teamMax - m_teams[dteam].getCapShipDeaths();
+						buf.append(" ("+ teamLeft);
+						buf.append(" Team)");
 						if(livesLeft > 1)
 							buf.append(" lives remaining.");
 						else
