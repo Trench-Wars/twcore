@@ -1211,64 +1211,71 @@ public class bship extends MultiModule implements TSChangeListener
 			short kteam = m_botAction.getPlayer(event.getKillerID()).getFrequency(); //Get killer's team #
 			short dteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get dead player's team #
 
-			m_teams[kteam].playerKill(killer, ship);
-
-			//change capital ships into planes when they run out of lives
-			int livesLeft = m_teams[dteam].playerDeath(name);
-
-			//no death message or respawn for ships that can attach
-			if(ship > PLANE)
+			if(kteam > 0 && kteam < m_teams.length)
 			{
+				m_teams[kteam].playerKill(killer, ship);
 
-				StringBuffer buf = new StringBuffer("Team ");
-				buf.append(dteam);
-				buf.append(" just lost ");
+				//change capital ships into planes when they run out of lives
+				int livesLeft = m_teams[dteam].playerDeath(name);
 
-				switch(ship)
+				//no death message or respawn for ships that can attach
+				if(ship > PLANE)
 				{
-					case MINESWEEPER:
-						buf.append("a Minesweeper! (");
-					break;
 
-					case SUB:
-						buf.append("a Submarine! (");
-					break;
+					StringBuffer buf = new StringBuffer("Team ");
+					buf.append(dteam);
+					buf.append(" just lost ");
 
-					case FRIGATE:
-						buf.append("a Frigate! (");
-					break;
+					switch(ship)
+					{
+						case MINESWEEPER:
+							buf.append("a Minesweeper! (");
+						break;
 
-					case BATTLESHIP:
-						buf.append("a BATTLESHIP! (");
-					break;
+						case SUB:
+							buf.append("a Submarine! (");
+						break;
 
-					case CARRIER:
-						buf.append("an AIRCRAFT CARRIER! (");
-					break;
-				}
+						case FRIGATE:
+							buf.append("a Frigate! (");
+						break;
 
-				buf.append(name);
-				buf.append(", killed by ");
-				buf.append(killer);
-				buf.append(")");
+						case BATTLESHIP:
+							buf.append("a BATTLESHIP! (");
+						break;
 
-				//respawn them if they have lives left
-				if(livesLeft < 1)
-				{
-					buf.append(" SHIP ELIMINATED!!!");
-					m_botAction.setShip(name, 3);
-				}
-				else
-				{
-					buf.append(" "+ livesLeft);
-					if(livesLeft > 1)
-						buf.append(" lives remaining.");
+						case CARRIER:
+							buf.append("an AIRCRAFT CARRIER! (");
+						break;
+					}
+
+					buf.append(name);
+					buf.append(", killed by ");
+					buf.append(killer);
+					buf.append(")");
+
+					//respawn them if they have lives left
+					if(livesLeft < 1)
+					{
+						buf.append(" SHIP ELIMINATED!!!");
+						m_botAction.setShip(name, 3);
+					}
 					else
-						buf.append(" life remaining.");
+					{
+						buf.append(" "+ livesLeft);
+						if(livesLeft > 1)
+							buf.append(" lives remaining.");
+						else
+							buf.append(" life remaining.");
+					}
+
+
+					m_botAction.sendArenaMessage(buf.toString(), 19);
 				}
-
-
-				m_botAction.sendArenaMessage(buf.toString(), 19);
+			}
+			else
+			{
+				m_botAction.sendPrivateMessage(name, "Please get on one of the playing teams");
 			}
 
 			checkForLosers();
