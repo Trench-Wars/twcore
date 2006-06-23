@@ -647,6 +647,9 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		try{
 
+		//Reset turf flag to keep one team from getting way more points than the other.
+		m_botAction.resetFlagGame();
+
 		//Prevent configuration changes to be made during a game
 		m_tsm.setLocked("teams", true);
 		m_tsm.setLocked("board", true);
