@@ -1665,6 +1665,8 @@ public class bship extends MultiModule implements TSChangeListener
 				StringBuffer bships = new StringBuffer("Your Team's Battleships:");
 				StringBuffer carriers = new StringBuffer("Your Team's Carriers:");
 
+				Player targetPlayer = null;
+
 				//Find attachable ships
 				Iterator i = m_botAction.getPlayingPlayerIterator();
 				while(i.hasNext())
@@ -1672,6 +1674,7 @@ public class bship extends MultiModule implements TSChangeListener
 					Player p = (Player)i.next();
 					if(p.getFrequency() == x)
 					{
+						targetPlayer = p;
 						//turret attachable ships
 						if(p.getShipType() == FRIGATE || p.getShipType() == BATTLESHIP)
 							bships.append(" "+ p +",");
@@ -1688,8 +1691,11 @@ public class bship extends MultiModule implements TSChangeListener
 					carriers.deleteCharAt(carriers.length() - 1);
 
 				//broadcast to team members
-				m_botAction.sendOpposingTeamMessageByFrequency(x, bships.toString());
-				m_botAction.sendOpposingTeamMessageByFrequency(x, carriers.toString());
+				if(targetPlayer != null)
+				{
+					m_botAction.sendOpposingTeamMessage(targetPlayer.getPlayerID(), bships.toString(), 0);
+					m_botAction.sendOpposingTeamMessage(targetPlayer.getPlayerID(), carriers.toString(), 0);
+				}
 			}
 		}
 	}
