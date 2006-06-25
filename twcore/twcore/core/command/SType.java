@@ -1,4 +1,4 @@
-package twcore.core.tempset;
+package twcore.core.command;
 
 /**
  * Defines the different classes of settings the TSM supports

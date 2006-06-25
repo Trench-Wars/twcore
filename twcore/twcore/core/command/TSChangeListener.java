@@ -1,4 +1,4 @@
-package twcore.core.tempset;
+package twcore.core.command;
 
 /**
  * This interface provides a callback for whenever a setting is modified

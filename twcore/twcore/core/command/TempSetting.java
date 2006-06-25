@@ -1,4 +1,4 @@
-package twcore.core.tempset;
+package twcore.core.command;
 
 import twcore.core.BotAction;
 import twcore.core.game.Player;
@@ -112,7 +112,7 @@ class Result
  * This class represents a setting that stores an integer value
  *
  * @author D1st0rt
- * @version 06.05.24
+ * @version 06.06.19
  */
 class IntSetting extends TempSetting
 {
@@ -200,7 +200,7 @@ class IntSetting extends TempSetting
 	 */
 	public String getInfo()
 	{
-		String info = "[INT    ] " + m_name;
+		String info = "[INTEGER] " + m_name;
 
 		if(m_restricted)
 		{

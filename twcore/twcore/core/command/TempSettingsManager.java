@@ -1,4 +1,4 @@
-package twcore.core.tempset;
+package twcore.core.command;
 
 import java.util.HashMap;
 import java.util.Vector;
@@ -7,7 +7,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import twcore.core.BotAction;
-import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
