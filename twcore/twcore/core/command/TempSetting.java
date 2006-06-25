@@ -573,7 +573,7 @@ class EnumSetting extends TempSetting
  * through a fuzzy search on the specified player name.
  *
  * @author D1st0rt
- * @version 06.05.24
+ * @version 06.06.26
  */
 class PlayerSetting extends TempSetting
 {
@@ -639,14 +639,14 @@ class PlayerSetting extends TempSetting
 				{
 					temp = p;
 					r.changed = true;
-					r.response = "Value for "+ m_name +" set to "+ m_player.getPlayerName();
+					r.response = "Value for "+ m_name +" set to "+ p;
 
 					if(m_restrictedShip)
 					{
 						if((p.getShipType() & m_shipMask) == 0)
 						{
 							r.changed = false;
-							r.response = m_name +" is not in an allowed ship.";
+							r.response = p +" is not in an allowed ship.";
 							temp = m_player;
 						}
 					}
@@ -656,7 +656,7 @@ class PlayerSetting extends TempSetting
 						if(p.getFrequency() <= m_minFreq || p.getFrequency() >= m_maxFreq)
 						{
 							r.changed = false;
-							r.response = m_name +" is not on an allowed freq.";
+							r.response = p +" is not on an allowed freq.";
 							temp = m_player;
 						}
 					}
