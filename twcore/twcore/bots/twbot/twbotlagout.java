@@ -482,7 +482,7 @@ public class twbotlagout extends TWBotExtension
 
     if(lagoutOn)
     {
-      String playerName = twbotspec.getSpeccedPlayerName(message);
+      String playerName = getSpeccedPlayerName(message);
       if(playerName != null && lagoutList.containsKey(playerName))
       {
         lagoutTask = (LagoutTask) lagoutList.get(playerName);
@@ -666,6 +666,15 @@ public class twbotlagout extends TWBotExtension
       returnString.append(timeAllowed + " seconds");
     return returnString.toString() + ".";
   }
+
+
+  public String getSpeccedPlayerName(String s)
+  {
+    int index = s.indexOf(" is out.  ");
+    if(index == -1)
+      return null;
+    return s.substring(0, index);
+   }
 
   /**
    * This private method adds a spec task to the task list.  It will spec any
