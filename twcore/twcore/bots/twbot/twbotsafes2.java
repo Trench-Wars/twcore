@@ -2,13 +2,11 @@ package twcore.bots.twbot;
 
 import twcore.bots.TWBotExtension;
 import twcore.core.BotAction;
-import twcore.core.command.CommandInterpreter;
+import twcore.core.command.*;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
-import twcore.core.tempset.TempSettingsManager;
-import twcore.core.tempset.TSChangeListener;
 import static twcore.core.OperatorList.ER_LEVEL;
-import static twcore.core.tempset.SType.*;
+import static twcore.core.command.SType.*;
 
 /**
  * Extended Safes Module (Based on twbotsafes by 2dragons)

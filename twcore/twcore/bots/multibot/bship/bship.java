@@ -2,7 +2,7 @@ package twcore.bots.multibot.bship;
 
 import twcore.bots.MultiModule;
 import twcore.core.*;
-import twcore.core.command.CommandInterpreter;
+import twcore.core.command.*;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -14,7 +14,6 @@ import twcore.core.events.TurretEvent;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
-import twcore.core.tempset.*;
 import java.util.*;
 import static twcore.core.EventRequester.*;
 

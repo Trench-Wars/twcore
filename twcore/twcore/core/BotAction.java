@@ -15,7 +15,7 @@ import twcore.core.util.IPCMessage;
 import twcore.core.util.InterProcessCommunicator;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
-import twcore.core.tempset.TempSettingsManager;
+import twcore.core.command.TempSettingsManager;
 
 /**
  * The main bot utility class, your bot's best and easiest method of performing
