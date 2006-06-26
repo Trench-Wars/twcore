@@ -5,15 +5,15 @@ package twcore.bots.multibot.bship;
  * related to the game in progress.
  *
  * @author D1st0rt
- * @version 06.04.26
+ * @version 06.06.26
  */
 public class BSPlayer
 {
 	/** Player's name */
-	private String _name;
+	private String name;
 
 	/** Player's frequency */
-	private short _freq;
+	private int freq;
 
 	/** Player's current ship */
 	public byte ship;
@@ -54,7 +54,8 @@ public class BSPlayer
      */
 	public BSPlayer(String name, int freq)
 	{
-		_name = name;
+		this.name = name;
+		this.freq = freq;
 		resetStats();
 	}
 
@@ -64,16 +65,16 @@ public class BSPlayer
      */
 	public String toString()
 	{
-		return _name;
+		return name;
 	}
 
 	/**
 	 * Gets the team the player is on
 	 * @return the player's frequency
 	 */
-	public short getFreq()
+	public int getFreq()
 	{
-		return _freq;
+		return freq;
 	}
 
 	/**
