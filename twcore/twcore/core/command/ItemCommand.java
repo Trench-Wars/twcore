@@ -27,9 +27,6 @@ public class ItemCommand<T> implements List<T>
 	/** A list of the items in use by the bot. */
 	private List<T> items;
 
-	///** A reference to the class of the item we want to create. */
-	//private Class<T> classRef;
-
 	/** Default values to initialize items to. */
 	private T defaults;
 
@@ -56,7 +53,6 @@ public class ItemCommand<T> implements List<T>
 	public ItemCommand(BotAction botAction, T defaults) throws Exception
 	{
 		m_botAction = botAction;
-		//classRef = (Class<T>)defaults.getClass();
 		items = Collections.synchronizedList( new ArrayList<T>() );
 		this.defaults = defaults;
 		setUpFields();
