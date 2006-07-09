@@ -80,6 +80,7 @@ public class twbotspec2 extends TWBotExtension
         "|   |           at least specify one of them.              |",
         "|   |                                                      |",
         "|   +- Player=\"<name>\", can be partial names like \"d1st\"   |",
+        "|   (You only have to use quotes if the name has spaces)   |",
         "|   +- Freq=<0-9999>, Freq and Ship can be used separately |",
         "|   +- Ship=<1-8>,    or together when making a rule.      |",
         "|   +- Deaths=<1-999>, default value is 10 if unspecified. |",
