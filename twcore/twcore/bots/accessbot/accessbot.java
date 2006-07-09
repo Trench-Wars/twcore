@@ -72,11 +72,11 @@ public class accessbot extends SubspaceBot {
 						if( rankId != 7 ) {
 							man.removeRank( userRankId );
 						}
-					} else if( m_botAction.getOperatorList().isER( curPlayer ) ) {
+					} else if( m_botAction.getOperatorList().isERExact( curPlayer ) ) {
 						if( rankId != 6 ) {
 							man.removeRank( userRankId );
 						}
-					} else if( m_botAction.getOperatorList().isZH( curPlayer ) ) {
+					} else if( m_botAction.getOperatorList().isZHExact( curPlayer ) ) {
 						if( rankId != 5 ) {
 							man.removeRank( userRankId );
 						}
