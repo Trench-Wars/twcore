@@ -100,10 +100,10 @@ public class accessbot extends SubspaceBot {
 					} else if( m_botAction.getOperatorList().isModerator( curPlayer ) ) {
 						if( !man.hasRank( 7 ) )
 							man.giveRank( 7 );
-					} else if( m_botAction.getOperatorList().isER( curPlayer ) ) {
+					} else if( m_botAction.getOperatorList().isERExact( curPlayer )) {
 						if( !man.hasRank( 6 ) )
 							man.giveRank( 6 );
-					} else if( m_botAction.getOperatorList().isZH( curPlayer ) && (!m_botAction.getOperatorList().isOutsiderExact( curPlayer ) || m_botAction.getOperatorList().isZHExact( curPlayer ))) {
+					} else if( m_botAction.getOperatorList().isZHExact( curPlayer )) {
 						if( !man.hasRank( 5 ) )
 							man.giveRank( 5 );
 					}
