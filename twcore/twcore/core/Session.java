@@ -7,6 +7,7 @@
 package twcore.core;
 import java.net.*;
 import java.util.*;
+import java.io.*;
 
 import twcore.core.game.Arena;
 import twcore.core.game.Ship;
@@ -27,6 +28,7 @@ public class Session extends Thread {
     private ThreadGroup     m_group;
     private Timer           m_timer;
     private DatagramSocket  m_socket;
+    private PrintWriter		m_chatLog;
     private CoreData        m_coreData;
     private String          m_password;
     private BotAction       m_botAction;
@@ -58,6 +60,7 @@ public class Session extends Thread {
         m_password = password;
         m_botNumber = botNum;
         m_timer = new Timer();
+        m_chatLog = null;
     }
 
     public void prepare(){
@@ -93,6 +96,19 @@ public class Session extends Thread {
         m_packetGenerator.setReliablePacketHandler( m_reliablePacketHandler );
 
         try {
+        	// Private Message logging
+        	int logpvt = m_coreData.getGeneralSettings().getInt("LogPrivateMessages");
+        	if(logpvt == 1)
+        	{
+	        	String botName = m_roboClass.getName();
+	        	if (botName.indexOf(".") != -1 ) {
+	            	botName = botName.substring(botName.lastIndexOf(".") + 1);
+	        	}
+	        	String filename = m_coreData.getGeneralSettings().getString("Core Location");
+	        	filename += "/logs/"+ botName + ".log";
+	        	m_chatLog = new PrintWriter(new FileWriter(filename, true));
+	        }
+
             Class[] parameterTypes = { m_botAction.getClass() };
             Object[] args = { m_botAction };
             m_subspaceBot = (SubspaceBot)m_roboClass.getConstructor( parameterTypes ).newInstance( args );
@@ -151,6 +167,10 @@ public class Session extends Thread {
     	return m_botNumber;
     }
 
+    public PrintWriter getChatLog(){
+    	return m_chatLog;
+    }
+
     public void disconnect(){
         if( m_state == NOT_RUNNING ){
             return;
@@ -179,6 +199,12 @@ public class Session extends Thread {
         if( !m_group.isDestroyed() ){
             m_group.destroy();
         }
+
+
+        m_chatLog.flush();
+        m_chatLog.close();
+
+
         m_socket.disconnect();
         Tools.printLog( m_name + " disconnected gracefully." );
         this.interrupt();

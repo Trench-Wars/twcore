@@ -6,33 +6,7 @@ import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.Session;
 import twcore.core.SubspaceBot;
-import twcore.core.events.ArenaJoined;
-import twcore.core.events.ArenaList;
-import twcore.core.events.BallPosition;
-import twcore.core.events.FileArrived;
-import twcore.core.events.FlagClaimed;
-import twcore.core.events.FlagDropped;
-import twcore.core.events.FlagPosition;
-import twcore.core.events.FlagReward;
-import twcore.core.events.FlagVictory;
-import twcore.core.events.FrequencyChange;
-import twcore.core.events.FrequencyShipChange;
-import twcore.core.events.LoggedOn;
-import twcore.core.events.Message;
-import twcore.core.events.PasswordPacketResponse;
-import twcore.core.events.PlayerBanner;
-import twcore.core.events.PlayerDeath;
-import twcore.core.events.PlayerEntered;
-import twcore.core.events.PlayerLeft;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.Prize;
-import twcore.core.events.ScoreReset;
-import twcore.core.events.ScoreUpdate;
-import twcore.core.events.SoccerGoal;
-import twcore.core.events.TurfFlagUpdate;
-import twcore.core.events.TurretEvent;
-import twcore.core.events.WatchDamage;
-import twcore.core.events.WeaponFired;
+import twcore.core.events.*;
 import twcore.core.game.Arena;
 import twcore.core.util.ByteArray;
 import twcore.core.util.MessageLimiter;
@@ -65,7 +39,7 @@ public class GamePacketInterpreter {
      * Creates a new instance of GamePacketInterpreter.
      * @param session Session this GPI is attached to
      * @param packetGenerator For creating new packets in response to certain packets interpreted
-     * @param ssEncryption Encryption class for decrypting packets 
+     * @param ssEncryption Encryption class for decrypting packets
      * @param arenaTracker Arena tracker to update with certain packet info
      * @param name Bot's login name, sent after encryption keys are exchanged
      * @param password Bot's password, sent after encryption keys are exchanged
@@ -157,15 +131,15 @@ public class GamePacketInterpreter {
      * 5. Add a new case in this switch statement corresponding to the event's
      * type, and have it send the information to your handling method in this class.<br>
      * 6. Start handling the event in your bot!<br>
-     *  
+     *
      * @param array Packet data
      * @param alreadyDecrypted True if packet has already been decrypted
      */
     void translateNormalPacket( ByteArray array, boolean alreadyDecrypted ){
         int index = array.readByte( 0 ) & 0xff;
         switch( index ){
-            // 0x00 - Special packet (see translateSpecialPacket()) 
-            // 0x01 - Bot's player ID has changed: Unhandled 
+            // 0x00 - Special packet (see translateSpecialPacket())
+            // 0x01 - Bot's player ID has changed: Unhandled
             case 0x02:
                 handleArenaJoined( array, alreadyDecrypted );
                 break;
@@ -223,7 +197,7 @@ public class GamePacketInterpreter {
                 handleFlagDropped( array, alreadyDecrypted );
                 break;
             // 0x17 - Unknown Packet: Unhandled
-            // 0x18 - Synchronization Request: Unhandled (This is why bot must be a sysop)                
+            // 0x18 - Synchronization Request: Unhandled (This is why bot must be a sysop)
             case 0x19:
                 handleFileRequest( array, alreadyDecrypted );
                 break;
@@ -247,33 +221,33 @@ public class GamePacketInterpreter {
             case 0x23:
                 handleFlagReward( array, alreadyDecrypted );
                 break;
-            // 0x24 - Speed game over: Unhandled                
-            // 0x25 - Bot's UFO flag toggled: Unhandled                
-            // 0x26 - Unknown: Unhandled                
-            // 0x27 - "Keep-Alive": Unhandled                
+            // 0x24 - Speed game over: Unhandled
+            // 0x25 - Bot's UFO flag toggled: Unhandled
+            // 0x26 - Unknown: Unhandled
+            // 0x27 - "Keep-Alive": Unhandled
             case 0x28:
                 handlePlayerPosition( array, alreadyDecrypted );
                 break;
-            // 0x29 - Map information (basic): Unhandled                
-            // 0x2A - Compressed map file: Unhandled                
-            // 0x2B - Set bot's KotH timer: Unhandled                
-            // 0x2C - KotH Game Reset: Unhandled                
-            // 0x2D - Unknown: Unhandled                               
+            // 0x29 - Map information (basic): Unhandled
+            // 0x2A - Compressed map file: Unhandled
+            // 0x2B - Set bot's KotH timer: Unhandled
+            // 0x2C - KotH Game Reset: Unhandled
+            // 0x2D - Unknown: Unhandled
             case 0x2E:
                 handleBallPosition( array, alreadyDecrypted );
                 break;
             case 0x2F:
                 handleArenaList( array, alreadyDecrypted );
                 break;
-            // 0x30 - Received zone banner ads: Unhandled                                
+            // 0x30 - Received zone banner ads: Unhandled
             // 0x31 - Bot is past the login sequence: Unhandled
             // ** CONTINUUM SPECIFIC PACKETS BELOW **
-            // 0x32 - Change bot's ship coords: Unhandled                                
-            // 0x33 - Custom login failure message: Unhandled                                
+            // 0x32 - Change bot's ship coords: Unhandled
+            // 0x33 - Custom login failure message: Unhandled
             // 0x34 - Continuum version packet: Unhandled
-            // 0x35 - Unknown: Unhandled                                
-            // 0x36 - Unknown: Unhandled                                
-            // 0x37 - Unknown: Unhandled                                                
+            // 0x35 - Unknown: Unhandled
+            // 0x36 - Unknown: Unhandled
+            // 0x37 - Unknown: Unhandled
             case 0x38:
                 handleWatchDamage( array, alreadyDecrypted );
                 break;
@@ -285,7 +259,7 @@ public class GamePacketInterpreter {
      * sent either to or from the server (in this case of course it's being sent
      * from the server).  Special packets have the first byte, normally the type
      * byte, set to 0x00, and use the second byte instead as their type byte.
-     * 
+     *
      * @param array Packet data
      * @param alreadyDecrypted True if packet has already been decrypted
      */
@@ -297,7 +271,7 @@ public class GamePacketInterpreter {
         }
 
         switch( index ){
-            // 0x01 - Encryption request: Unhandled (sent to server in GamePacketGenerator)                                
+            // 0x01 - Encryption request: Unhandled (sent to server in GamePacketGenerator)
             case 0x02:
                 m_ssEncryption.setServerKey( array.readLittleEndianInt( 2 ) );
                 m_packetGenerator.sendPasswordPacket( m_playerName, m_playerPassword );
@@ -327,7 +301,7 @@ public class GamePacketInterpreter {
             case 0x0A:
                 handleMassiveChunkMessage( array );
                 break;
-            // 0x0B-0x0D - Unknown (unused in protocol?)                                
+            // 0x0B-0x0D - Unknown (unused in protocol?)
             case 0x0E:
                 int         i=2;
                 int         size;
@@ -345,7 +319,7 @@ public class GamePacketInterpreter {
     }
 
     /**
-     * Handles the body portion of a small chunk packet. 
+     * Handles the body portion of a small chunk packet.
      * @param message Packet chunk data
      */
     public void handleChunk( ByteArray message ){
@@ -362,7 +336,7 @@ public class GamePacketInterpreter {
     }
 
     /**
-     * Handles the tail portion of a small chunk packet. 
+     * Handles the tail portion of a small chunk packet.
      * @param message Packet chunk data
      */
     public void handleChunkTail( ByteArray message ){
@@ -428,7 +402,7 @@ public class GamePacketInterpreter {
      * Translates packet into the appropriate event.
      * <p>
      * If the message limiter is active, Message events are handled by the message
-     * limiter before they are sent to the bot. 
+     * limiter before they are sent to the bot.
      * @param message Packet data
      * @param alreadyDecrypted True if packet has already been decrypted
      */
@@ -442,11 +416,29 @@ public class GamePacketInterpreter {
             m_ssEncryption.decrypt( message, message.size()-1, 1 );
         }
 
+        Message event = new Message(message);
+
+		synchronized(m_session.getChatLog())
+		{
+	        if(m_session.getChatLog() != null)
+	        {
+	        	if(event.getMessageType() == Message.PRIVATE_MESSAGE)
+	        	{
+					PrintWriter out = m_session.getChatLog();
+					out.print(Tools.getTimeStamp() + " (");
+					out.print(m_session.getBotAction().getBotName() + ") : ");
+					out.print(m_session.getBotAction().getPlayerName(event.getPlayerID()));
+					out.println(" > "+ event.getMessage());
+					out.flush();
+	        	}
+	        }
+	    }
+
         if( m_requester.check( EventRequester.MESSAGE )){
             if( m_limiter == null ){
-                m_subspaceBot.handleEvent( new Message( message ));
+                m_subspaceBot.handleEvent( event );
             } else {
-                m_limiter.handleEvent( new Message( message ));
+                m_limiter.handleEvent( event );
             }
         }
     }
@@ -1062,7 +1054,7 @@ public class GamePacketInterpreter {
      * Translates packet into the appropriate event.
      * @param message Packet data
      * @param alreadyDecrypted True if packet has already been decrypted
-     */    
+     */
     void handleArenaJoined( ByteArray message, boolean alreadyDecrypted ){
         if( m_requester.check( EventRequester.ARENA_JOINED ) ){
             m_subspaceBot.handleEvent( new ArenaJoined( null ) );
@@ -1077,7 +1069,7 @@ public class GamePacketInterpreter {
      * site: d1st0rt.sscentral.com.
      * @param message Packet data
      * @param alreadyDecrypted True if packet has already been decrypted
-     */    
+     */
     void handleArenaSettings( ByteArray message, boolean alreadyDecrypted ){
         if(message.size() < 1428) return;
         //TODO: add this at some point, 2dragons said he had a settings class
