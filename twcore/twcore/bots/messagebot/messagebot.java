@@ -695,7 +695,7 @@ public class messagebot extends SubspaceBot
 		try {
 			m_botAction.joinArena(m_botAction.getBotSettings().getString("Default arena"));
 			m_botAction.ipcSubscribe(IPCCHANNEL);
-
+			long before = Runtime.getRuntime().freeMemory();
 			String opList[] = (m_botAction.getBotSettings().getString("Ops")).split(":");
 			for(int k = 0;k < opList.length;k++)
 				ops.add(opList[k].toLowerCase());
@@ -736,7 +736,8 @@ public class messagebot extends SubspaceBot
 				}
 				results.close();
 			} catch(SQLException e) { Tools.printStackTrace(e); }
-
+			long after = Runtime.getRuntime().freeMemory();
+			m_botAction.sendSmartPrivateMessage("ikrit", "MessageBot memory usage: " + (before - after));
 		} catch(Exception e) {}
 		m_botAction.setMessageLimit(5);
 
