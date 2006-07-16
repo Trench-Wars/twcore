@@ -3,6 +3,8 @@ package twcore.bots.twbot;
 import twcore.bots.TWBotExtension;
 import twcore.core.*;
 import twcore.core.events.Message;
+import java.util.*;
+import twcore.core.util.*;
 
 public class twbottwrp extends TWBotExtension {
 	
@@ -38,7 +40,7 @@ public class twbottwrp extends TWBotExtension {
 	
 	public void handleCommand(String name, String message) {
 		if(message.toLowerCase().startsWith("!mvp ")) {
-			handleMvp(name, message.subString(5));
+			handleMvp(name, message.substring(5));
 		}
 	}
 	
