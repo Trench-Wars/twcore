@@ -45,11 +45,11 @@ public class twbottwrp extends TWBotExtension {
 	}
 	
 	public void handleMvp(String name, String mvp) {
-		String modulesLoaded = m_twBot.modulesToStringList();
+		String modulesLoaded = ((twbot)m_twBot).modulesToStringList();
 		String arena = m_botAction.getArenaName();
 		int atStartPop = lastPopRecord;
 		int atEndPop = m_botAction.getArenaSize();
-		String host = m_twBot.getHostName();
+		String host = ((twbot)m_twBot).getHostName();
 		m_botAction.SQLQuery(database, "INSERT INTO tblRewardPending "
 		+ "(fcMvpName, fcArenaName, fcHostName, fcModulesLoaded, fnArenaInitialPopulation, fnArenaFinalPopulation, fdDate) "
 		+ "VALUES ('"+Tools.addSlashesToString(mvp)+"', '"+arena+"', '"+Tools.addSlashesToString(host)+"', "
