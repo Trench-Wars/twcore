@@ -50,10 +50,12 @@ public class twbottwrp extends TWBotExtension {
 		int atStartPop = lastPopRecord;
 		int atEndPop = m_botAction.getArenaSize();
 		String host = ((twbot)m_twBot).getHostName();
-		m_botAction.SQLQuery(database, "INSERT INTO tblRewardPending "
-		+ "(fcMvpName, fcArenaName, fcHostName, fcModulesLoaded, fnArenaInitialPopulation, fnArenaFinalPopulation, fdDate) "
-		+ "VALUES ('"+Tools.addSlashesToString(mvp)+"', '"+arena+"', '"+Tools.addSlashesToString(host)+"', "
-		+ "'"+Tools.addSlashesToString(modulesLoaded)+"', "+atStartPop+", "+atEndPop+", NOW())");
+		try {
+			m_botAction.SQLQuery(database, "INSERT INTO tblRewardPending "
+				+ "(fcMvpName, fcArenaName, fcHostName, fcModulesLoaded, fnArenaInitialPopulation, fnArenaFinalPopulation, fdDate) "
+				+ "VALUES ('"+Tools.addSlashesToString(mvp)+"', '"+arena+"', '"+Tools.addSlashesToString(host)+"', "
+				+ "'"+Tools.addSlashesToString(modulesLoaded)+"', "+atStartPop+", "+atEndPop+", NOW())");
+		} catch(Exception e) { e.printStackTrace(); }
 	}
 	
 	public void recordPop() {
