@@ -12,6 +12,9 @@ public class twbottwrp extends TWBotExtension {
 	int lastPopRecord = 0;
 	
 	public twbottwrp() {
+	}
+	
+	public void init() {
 		if(m_botAction.getBotName().toLowerCase().startsWith("twbot") || m_botAction.getBotNumber() > 10) {
 			database = "website";
 		} else {
@@ -45,6 +48,8 @@ public class twbottwrp extends TWBotExtension {
 	}
 	
 	public void handleMvp(String name, String mvp) {
+		init();
+		
 		String modulesLoaded = ((twbot)m_twBot).modulesToStringList();
 		String arena = m_botAction.getArenaName();
 		int atStartPop = lastPopRecord;
