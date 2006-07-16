@@ -5,11 +5,13 @@ import twcore.core.*;
 import twcore.core.events.Message;
 import java.util.*;
 import twcore.core.util.*;
+import java.sql.*;
 
 public class twbottwrp extends TWBotExtension {
 	
 	String database;
 	int lastPopRecord = 0;
+	boolean initialized = false;
 	
 	public twbottwrp() {
 	}
@@ -23,6 +25,7 @@ public class twbottwrp extends TWBotExtension {
 	}
 	
 	public void handleEvent(Message event) {
+		if(!initialized) init();
 		String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
@@ -44,12 +47,34 @@ public class twbottwrp extends TWBotExtension {
 	public void handleCommand(String name, String message) {
 		if(message.toLowerCase().startsWith("!mvp ")) {
 			handleMvp(name, message.substring(5));
+		} else if(message.toLowerCase().startsWith("!last")) {
+			getLast(name);
 		}
 	}
 	
+	public void getLast(String name) {
+		try {
+			ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblRewardPending ORDER BY fdDate DESC LIMIT 0,1");
+			if(results.next()) {
+				String mvp = results.getString("fcMvpName");
+				String arena = results.getString("fcArenaName");
+				String host = results.getString("fcHostName");
+				String modules = results.getString("fcModulesLoaded");
+				int initPop = results.getString("fnArenaInitialPopulation");
+				int finalPop = results.getString("fnArenaFinalPopulation");
+				String date = results.getString("fdDate");
+				m_botAction.sendPrivateMessage(name, "MVP:        " + mvp);
+				m_botAction.sendPrivateMessage(name, "Arena:      " + arena);
+				m_botAction.sendPrivateMessage(name, "Host:       " + host);
+				m_botAction.sendPrivateMessage(name, "Modules:    " + modules);
+				m_botAction.sendPrivateMessage(name, "Init Pop:   " + initPop);
+				m_botAction.sendPrivateMessage(name, "Final Pop:  " + finalPop);
+				m_botAction.sendPrivateMessage(name, "Date:       " + date);
+			}
+		} catch(Exception e) {}
+	}
+	
 	public void handleMvp(String name, String mvp) {
-		init();
-		
 		String modulesLoaded = ((twbot)m_twBot).modulesToStringList();
 		String arena = m_botAction.getArenaName();
 		int atStartPop = lastPopRecord;
