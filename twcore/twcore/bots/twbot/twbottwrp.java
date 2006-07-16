@@ -60,8 +60,8 @@ public class twbottwrp extends TWBotExtension {
 				String arena = results.getString("fcArenaName");
 				String host = results.getString("fcHostName");
 				String modules = results.getString("fcModulesLoaded");
-				int initPop = results.getString("fnArenaInitialPopulation");
-				int finalPop = results.getString("fnArenaFinalPopulation");
+				int initPop = results.getInt("fnArenaInitialPopulation");
+				int finalPop = results.getInt("fnArenaFinalPopulation");
 				String date = results.getString("fdDate");
 				m_botAction.sendPrivateMessage(name, "MVP:        " + mvp);
 				m_botAction.sendPrivateMessage(name, "Arena:      " + arena);
