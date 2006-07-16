@@ -147,7 +147,7 @@ public class twbot extends SubspaceBot
 
 	public void remove(String name, String key)
 	{
-		if (extensions.containsKey(key))
+		if (extensions.containsKey(key) && !key.toLowerCase().equals("twrp"))
 		{
 			((TWBotExtension) extensions.remove(key)).cancel();
 			m_botAction.sendPrivateMessage(name, key + " Successfully Removed");
@@ -427,6 +427,9 @@ public class twbot extends SubspaceBot
 			twbotspec spec = new twbotspec();
 			spec.set(m_botAction, m_opList, this);
 			extensions.put("spec", spec);
+			twbottwrp twrp = new twbottwrp();
+			twrp.set(m_botAction, m_opList, this);
+			extensions.put("twrp", twrp);
 			nameOfHost = name;
 			m_botAction.sendPrivateMessage(name, "Locked.  Standard, Warp, and Spec modules loaded.");
 			locked = true;
@@ -460,6 +463,22 @@ public class twbot extends SubspaceBot
 				m_botAction.sendPrivateMessage(name, "I am locked, sorry.");
 			}
 		}
+	}
+	
+	public String modulesToStringList() {
+		Iterator it = extensions.keySet().iterator();
+		String modules = "";
+		while(it.hasNext()) {
+			modules += (String)it.next();
+			if(it.hasNext()) {
+				modules += ",";
+			}
+		}
+		return modules;
+	}
+	
+	public String getHostName() {
+		return nameOfHost;
 	}
 
 	public void handleUnlock(String name)
