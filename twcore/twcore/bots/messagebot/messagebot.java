@@ -738,7 +738,7 @@ public class messagebot extends SubspaceBot
 			} catch(SQLException e) { Tools.printStackTrace(e); }
 			long after = Runtime.getRuntime().freeMemory();
 			long memUsed = before - after;
-			m_botAction.sendSmartPrivateMessage("ikrit", "MessageBot memory usage: " + (memUsed));
+			m_botAction.sendSmartPrivateMessage("ikrit", "King free before: " + before + " and after: " + after);
 		} catch(Exception e) {}
 		m_botAction.setMessageLimit(5);
 
