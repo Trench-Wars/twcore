@@ -55,7 +55,7 @@ public class chatbot extends SubspaceBot {
     public void handleEvent(InterProcessEvent event) {
     	IPCMessage message = (IPCMessage)event.getObject();
     	if(message.getSender().equals(m_botAction.getBotName())) return;
-    	if(message.getRecipient().equals("staff")) m_botAction.sendChatMessage(1, message.getMessage());
-    	else if(message.getRecipient().equals("twdev")) m_botAction.sendChatMessage(2, message.getMessage());
+    	if(message.getRecipient().equals("staff")) m_botAction.sendChatMessage(2, message.getMessage());
+    	else if(message.getRecipient().equals("twdev")) m_botAction.sendChatMessage(1, message.getMessage());
     }
 }
