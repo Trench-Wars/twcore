@@ -32,12 +32,12 @@ public class chatbot extends SubspaceBot {
     		String sender = event.getMessager();
     		int chatNumber = event.getChatNumber();
     		String sendMessage = sender + "> " + message;
-    		if(chatNumber == 1) {
+    		if(chatNumber == 2) {
     			if(m_botAction.getOperatorList().isZH(sender)) {
     				IPCMessage sendIPCMessage = new IPCMessage(sendMessage, "staff", m_botAction.getBotName());
     				m_botAction.ipcTransmit("crosszones", sendIPCMessage);
     			}
-    		} else if(chatNumber == 2) {
+    		} else if(chatNumber == 1) {
     			IPCMessage sendIPCMessage = new IPCMessage(sendMessage, "twdev", m_botAction.getBotName());
     			m_botAction.ipcTransmit("crosszones", sendIPCMessage);
     		}
@@ -47,8 +47,8 @@ public class chatbot extends SubspaceBot {
     
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("arena"));
-        m_botAction.sendUnfilteredPublicMessage("?chat=staff,twdev");
-        m_botAction.sendUnfilteredPublicMessage("?chat=staff,twdev");
+        m_botAction.sendUnfilteredPublicMessage("?chat=twdev");
+        m_botAction.sendUnfilteredPublicMessage("?chat=twdev");
         m_botAction.ipcSubscribe("crosszones");
     }
     
