@@ -297,7 +297,7 @@ public class BotQueue extends Thread {
             Class roboClass = m_loader.loadClass( "twcore.bots." + rawClassName + "." + rawClassName );
             String altIP = botInfo.getString("AltIP"+currentBotCount);
             int altPort = botInfo.getInt("AltPort"+currentBotCount);
-            String altSysop = botInfo.getInt("AltSysop"+currentBotCount);
+            String altSysop = botInfo.getString("AltSysop"+currentBotCount);
             if(altIP != null && altSysop != null && altPort > 0)
             	childBot = new Session( cdata, roboClass, botName, botPassword, currentBotCount.intValue(), m_group, altIP, altPort, altSysop );
             else
