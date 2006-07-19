@@ -1,4 +1,4 @@
-package twcore.bots.basicbot;
+package twcore.bots.chatbot;
 
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
@@ -6,12 +6,12 @@ import twcore.core.*;
 import twcore.core.util.IPCMessage;
 import twcore.core.events.InterProcessEvent;
 
-public class basicbot extends SubspaceBot {
+public class chatbot extends SubspaceBot {
     
     private BotSettings m_botSettings;
     
     /** Creates a new instance of ultrabot */
-    public basicbot(BotAction botAction) {
+    public chatbot(BotAction botAction) {
         super(botAction);
         requestEvents();
         m_botSettings = m_botAction.getBotSettings();
@@ -56,6 +56,6 @@ public class basicbot extends SubspaceBot {
     	IPCMessage message = (IPCMessage)event.getObject();
     	if(message.getSender().equals(m_botAction.getBotName())) return;
     	if(message.getRecipient().equals("staff")) m_botAction.sendChatMessage(1, message.getMessage());
-    	else if(message.getRecipient().equals("twdev")) m_botAction.sendChatMessage(2, mesage.getMessage());
+    	else if(message.getRecipient().equals("twdev")) m_botAction.sendChatMessage(2, message.getMessage());
     }
 }
