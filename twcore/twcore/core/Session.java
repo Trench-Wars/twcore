@@ -40,6 +40,9 @@ public class Session extends Thread {
     private SSEncryption    m_ssEncryption;
     private Receiver        m_inboundQueue;
     private Sender          m_outboundQueue;
+    private String			m_ipAddress;
+    private String			m_sysopPassword;
+    private int				m_serverPort;
 
     private GamePacketGenerator     m_packetGenerator;
     private GamePacketInterpreter   m_packetInterpreter;
@@ -61,13 +64,32 @@ public class Session extends Thread {
         m_botNumber = botNum;
         m_timer = new Timer();
         m_chatLog = null;
+        m_ipAddress = m_coreData.getServerName();
+        m_serverPort = m_coreData.getServerPort();
+        m_sysopPassword = m_coreData.getGeneralSettings().getString( "Sysop Password" );
+    }
+    
+    public Session( CoreData cdata, Class roboClass, String name, String password, int botNum, ThreadGroup parentGroup, String altIP, int altPort, String altSysop ){
+        m_group = new ThreadGroup( parentGroup, name );
+        m_requester = new EventRequester();
+        m_roboClass = roboClass;
+        m_coreData = cdata;
+        m_name = name;
+        m_state = STARTING;
+        m_password = password;
+        m_botNumber = botNum;
+        m_timer = new Timer();
+        m_chatLog = null;
+        m_ipAddress = altIP;
+        m_sysopPassword = altSysop;
+        m_serverPort = altPort;
     }
 
     public void prepare(){
         try {
-            InetAddress inet = InetAddress.getByName( m_coreData.getServerName() );
+            InetAddress inet = InetAddress.getByName( m_ipAddress );
             m_socket = new DatagramSocket();
-            m_socket.connect( inet, m_coreData.getServerPort() );
+            m_socket.connect( inet, m_serverPort );
 
             m_outboundQueue = new Sender( m_group, m_socket );
             m_inboundQueue = new Receiver( m_group, m_socket );
@@ -87,7 +109,7 @@ public class Session extends Thread {
                 m_ssEncryption,
                 m_arenaTracker,
                 m_name,
-                m_password + "*" + m_coreData.getGeneralSettings().getString( "Sysop Password" ) );
+                m_password + "*" + m_sysopPassword );
 
         m_botAction = new BotAction( m_packetGenerator, m_arenaTracker, m_timer, m_botNumber, this );
         m_reliablePacketHandler = new ReliablePacketHandler( m_packetGenerator, m_packetInterpreter, m_ssEncryption );
