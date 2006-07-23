@@ -29,7 +29,9 @@ public class alertbot extends SubspaceBot {
     Pattern startPattern;
     String startMessage;
     String endMessage;
-
+	
+	boolean alertToChat = true;
+	
     private static Pattern failPattern = Pattern.compile("(?!)"); // will never match anything
     private static Pattern acceptable = Pattern.compile("^!(?:on|off|help)$",Pattern.CASE_INSENSITIVE);
     private static Pattern replaceMessage = Pattern.compile("(?<!\\\\)(\\\\\\\\)*\\$arena"); // setup in case someone wants \$arena to show up
@@ -94,6 +96,11 @@ public class alertbot extends SubspaceBot {
 
         String botName = m_botAction.getBotName();
         arena = config.getString( botName + "Arena" );
+        String toChat = config.getString("AlertChat");
+        if(toChat != null) {
+        	if(toChat.equals("false") || toChat.equals("f") || toChat.equals("no") || toChat.equals("n") || toChat.equals("0"))
+        		alertToChat = false;
+        }
         m_botAction.sendUnfilteredPublicMessage( "?chat="+ config.getString( botName + "Chat" )+",alerts,uberalerts" );
         m_botAction.joinArena( arena );
 
@@ -122,11 +129,13 @@ public class alertbot extends SubspaceBot {
                         }
                     }
                 }
-                m_botAction.sendChatMessage(1, startMessage);
-                m_botAction.sendChatMessage(2, startMessage);
-                m_botAction.sendChatMessage(3, startMessage);
+                if(alertToChat) {
+	                m_botAction.sendChatMessage(1, startMessage);
+	                m_botAction.sendChatMessage(2, startMessage);
+	                m_botAction.sendChatMessage(3, startMessage);
+                }
                 try {
-                    ResultSet set = m_botAction.SQLQuery("local","select name from alerts where id="+alertBotTypeID+" and date > NOW() order by date desc limit 100");
+                    ResultSet set = m_botAction.SQLQuery("server","select name from alerts where id="+alertBotTypeID+" and date > NOW() order by date desc limit 100");
                     if (set == null) return;
                     while ( set.next() ) {
                         m_botAction.sendSmartPrivateMessage( set.getString("name"), startMessage );
@@ -153,7 +162,7 @@ public class alertbot extends SubspaceBot {
         if(message.equalsIgnoreCase("!on")){
             try {
                 // let's be paranoid
-                ResultSet set = m_botAction.SQLQuery("local","REPLACE INTO alerts (id,name,date) values("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
+                ResultSet set = m_botAction.SQLQuery("server","REPLACE INTO alerts (id,name,date) values("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts activated for " + botType + "." );
                 if (set != null) set.close();
             } catch (SQLException e) {
@@ -164,7 +173,7 @@ public class alertbot extends SubspaceBot {
         }
         else if ( message.equalsIgnoreCase("!off") ) {
             try {
-                ResultSet set = m_botAction.SQLQuery("local","delete from alerts where id="+alertBotTypeID+" and name=\""+Tools.addSlashesToString(name)+"\"");
+                ResultSet set = m_botAction.SQLQuery("server","delete from alerts where id="+alertBotTypeID+" and name=\""+Tools.addSlashesToString(name)+"\"");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts deactivated for " + botType + "." );
                 if (set != null) set.close();
             } catch (SQLException e) {
