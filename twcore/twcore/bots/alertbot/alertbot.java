@@ -96,7 +96,7 @@ public class alertbot extends SubspaceBot {
 
         String botName = m_botAction.getBotName();
         arena = config.getString( botName + "Arena" );
-        String toChat = config.getString("AlertChat");
+        String toChat = config.getString("AlertChat"+m_botAction.getBotNumber());
         if(toChat != null) {
         	if(toChat.equals("false") || toChat.equals("f") || toChat.equals("no") || toChat.equals("n") || toChat.equals("0"))
         		alertToChat = false;
