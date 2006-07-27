@@ -97,7 +97,6 @@ public class pubbasebot extends SubspaceBot {
     	try {
 			freqs.get(currentHolder).endHold();
     	} catch(Exception e) {}
-		int secondsLeft = (secondsNeeded - freqs.get(currentHolder).getHoldSeconds());
 		currentHolder = p.getFrequency();
 		try {
 			freqs.get(currentHolder).startHold();
@@ -218,6 +217,7 @@ public class pubbasebot extends SubspaceBot {
     }
     
     public void handleEvent(PlayerEntered event) {
+    	if(!init) return;
     	String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
     	m_botAction.sendPrivateMessage(name, "Welcome to Pub Basing. The current game mode is: ");
     	if(privateFreqs)
@@ -329,6 +329,7 @@ public class pubbasebot extends SubspaceBot {
     		playerStats.put(lowerName, new PlayerStats(itP.getScore(), freq));
     		lowerToUpper.put(lowerName, name);
     	}
+    	m_botAction.sendArenaMessage("GO! GO! GO!", 104);
     	doBaseWarp();
     }
     
