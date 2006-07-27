@@ -70,6 +70,7 @@ public class pubbasebot extends SubspaceBot {
 		er.request(EventRequester.PLAYER_ENTERED);
 		er.request(EventRequester.PLAYER_LEFT);
 		er.request(EventRequester.ARENA_JOINED);
+		er.request(EventRequester.SCORE_RESET);
 	}
 	
 	public void handleEvent(Message event) {
@@ -81,6 +82,12 @@ public class pubbasebot extends SubspaceBot {
 			else
 				handleCommand(sender, message, false);
 		}
+	}
+	
+	public void handleEvent(ScoreReset event) {
+		try {
+			playerStats.get(m_botAction.getPlayerName(event.getPlayerID())).setCurrentPoints(0);
+		} catch(Exception e) {}
 	}
 	
 	public void handleEvent(FlagClaimed event) {
@@ -119,7 +126,6 @@ public class pubbasebot extends SubspaceBot {
 		playerStats.get(killer).addKill();
 		playerStats.get(killee).addDeath();
 		playerStats.get(killer).addPoints(m_botAction.getPlayer(killer).getScore());
-		playerStats.get(killee).addPoints(m_botAction.getPlayer(killee).getScore());
 	}
 	
 	public void handleEvent(LoggedOn event) {
@@ -633,16 +639,23 @@ class PlayerStats {
 		return array;
 	}
 	
+	public void setCurrentScore(int point) {
+		lastPoints = point;
+	}
+	
 	public double getPercentOnFreq() {
-		int totalTime = 0;
-		int freqTime = timeOnFreq.get(currentFreq).getTime();
-		Iterator it = timeOnFreq.values().iterator();
-		while(it.hasNext()) {
-			FreqTime ft = (FreqTime)it.next();
-			totalTime += ft.getTime();
-		}
-		double percent = ((double)freqTime/totalTime);
-		return percent;
+		try {
+			int totalTime = 0;
+			int freqTime = timeOnFreq.get(currentFreq).getTime();
+			Iterator it = timeOnFreq.values().iterator();
+			while(it.hasNext()) {
+				FreqTime ft = (FreqTime)it.next();
+				totalTime += ft.getTime();
+			}
+			double percent = ((double)freqTime/totalTime);
+			return percent;
+		} catch(Exception e) {}
+		return 0;
 	}
 	
 	public void changeFreq(int newFreq) {
