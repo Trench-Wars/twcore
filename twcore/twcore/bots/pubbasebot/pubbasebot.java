@@ -330,6 +330,7 @@ public class pubbasebot extends SubspaceBot {
     		lowerToUpper.put(lowerName, name);
     	}
     	m_botAction.sendArenaMessage("GO! GO! GO!", 104);
+    	isRunning = true;
     	doBaseWarp();
     }
     
@@ -474,6 +475,8 @@ public class pubbasebot extends SubspaceBot {
 					m_botSettings.put("BetweenTime"+m_botAction.getBotNumber(),new Integer(pieces[1]));
 					m_botAction.sendPrivateMessage(name, "Between time set to " + pieces[1]);
 				} catch(Exception e) {m_botAction.sendPrivateMessage(name, "Invalid input.");}
+			} else if(message.toLowerCase().startsWith("!die")) {
+				m_botAction.die();
 			}
 		}
 		
@@ -481,8 +484,7 @@ public class pubbasebot extends SubspaceBot {
 			String pieces[] = message.split(" ",2);
 			getStats(name, pieces[1]);
 		} else if(message.toLowerCase().startsWith("!stats")) {
-			String pieces[] = message.split(" ",2);
-			getStats(name, pieces[1]);
+			getStats(name, name);
 		} else if(message.toLowerCase().startsWith("!fstats ")) {
 			String pieces[] = message.split(" ");
 			try {
@@ -545,6 +547,7 @@ public class pubbasebot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(name, "!privoff               -Disables private frequencies");
 			m_botAction.sendPrivateMessage(name, "!secinround <secs>     -Sets seconds to win");
 			m_botAction.sendPrivateMessage(name, "!secbetween <secs>     -Sets seconds between rounds");
+			m_botAction.sendPrivateMessage(name, "!die                   -Kills the bot");
 		}
 			m_botAction.sendPrivateMessage(name, "!fstats <#>            -Returns stats for Freq <#>");
 			m_botAction.sendPrivateMessage(name, "!stats                 -Returns your stats");
