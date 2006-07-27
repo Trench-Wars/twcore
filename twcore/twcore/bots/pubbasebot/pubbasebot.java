@@ -118,6 +118,8 @@ public class pubbasebot extends SubspaceBot {
 		String killee = m_botAction.getPlayerName(event.getKilleeID()).toLowerCase();
 		playerStats.get(killer).addKill();
 		playerStats.get(killee).addDeath();
+		playerStats.get(killer).addPoints(m_botAction.getPlayer(killer).getScore());
+		playerStats.get(killee).addPoints(m_botAction.getPlayer(killee).getScore());
 	}
 	
 	public void handleEvent(LoggedOn event) {
