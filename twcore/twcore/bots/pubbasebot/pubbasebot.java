@@ -255,18 +255,18 @@ public class pubbasebot extends SubspaceBot {
     		}
     	};
     	m_botAction.scheduleTask(startRound, secondsBetweenRounds * 1000);
-    	m_botAction.sendArenaMessage("Welcome to Pub Basing. The current game mode is: ");
-    	if(privateFreqs)
-    		m_botAction.sendArenaMessage("Private frequencies: disabled");
-    	else 
-    		m_botAction.sendArenaMessage("Private frequencies: enabled");
-    	if(!levisAllowed)
-    		m_botAction.sendArenaMessage("Leviathans: disabled");
-    	else
-    		m_botAction.sendArenaMessage("Leviathans: enabled");
-    	m_botAction.sendArenaMessage("Time Race to: " + (secondsNeeded / 60) + " minutes " + (secondsNeeded % 60) + " seconds.");
-    	m_botAction.sendArenaMessage("PM me with !warp to be warped into base at start.", 2);
-    	m_botAction.sendArenaMessage("The next game will begin in: " + (secondsBetweenRounds / 60) + " minutes " + (secondsBetweenRounds % 60) + " seconds.");
+    	TimerTask tenSecWarning = new TimerTask() {
+    		public void run() {
+    			m_botAction.sendArenaMessage("Next round will begin in 10 seconds.",2);
+    		}
+    	};
+    	m_botAction.scheduleTask(tenSecWarning, ((secondsBetweenRounds * 1000) - (10 * 1000)));
+    	TimerTask thirtySecWarning = new TimerTask() {
+    		public void run() {
+    			m_botAction.sendArenaMessage("Next round will begin in 30 seconds.",1);
+    		}
+    	};
+    	m_botAction.scheduleTask(thirtySecWarning, ((secondsBetweenRounds * 1000) - (30 * 1000)));
     }
     
     public String addSpacesToString(String str, int totalLength) {
@@ -366,10 +366,12 @@ public class pubbasebot extends SubspaceBot {
     		m_botAction.sendUnfilteredPublicMessage("*objon 4"+(secondsLeft%10));
     		minutesLeftLast = minutesLeft;
     		secondsLeftLast = secondsLeft;
-    		if(secondsLeft <= 30 && secondsLeft > 10) {
-    			m_botAction.sendArenaMessage(maxStats[0] + " has 30 seconds remaining!",2);
-    		} else if(secondsLeft <= 10) {
-    			m_botAction.sendArenaMessage(maxStats[0] + " will win in 10 seconds!",2);
+	    	if(minutesLeft == 0) {
+	    		if(secondsLeft <= 30 && secondsLeft > 27) {
+	    			m_botAction.sendArenaMessage(maxStats[0] + " has 30 seconds remaining!",2);
+	    		} else if(secondsLeft <= 10 && secondsLeft > 7) {
+	    			m_botAction.sendArenaMessage(maxStats[0] + " will win in 10 seconds!",2);
+	    		}
     		}
     	}
     }
