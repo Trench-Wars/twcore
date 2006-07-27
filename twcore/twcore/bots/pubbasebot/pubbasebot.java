@@ -520,7 +520,7 @@ public class pubbasebot extends SubspaceBot {
 			return;
 		}
        	int[] stats = p.getStats();
-       	m_botAction.sendPrivateMessage(name, "Name: " + addSpacesToString(lowerToUpper.get(player),20) + " Rating: " + addSpacesToString(""+p.getRating(),5)
+       	m_botAction.sendPrivateMessage(name, "Name: " + addSpacesToString(lowerToUpper.get(player.toLowerCase()),20) + " Rating: " + addSpacesToString(""+p.getRating(),5)
        		+ " Kills: " + addSpacesToString(stats[0],3) + " Deaths: " + addSpacesToString(stats[1],3)
        		+ " Points: " + addSpacesToString(stats[3],5) + " Flag Claims: " +stats[2]);
 	}
