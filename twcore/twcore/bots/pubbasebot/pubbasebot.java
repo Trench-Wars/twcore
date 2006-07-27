@@ -122,7 +122,7 @@ public class pubbasebot extends SubspaceBot {
 	}
 	
 	public void handleEvent(LoggedOn event) {
-		
+		m_botAction.joinArena("#robopark");
 	}
 	
 	public void handleEvent(ArenaJoined event) {
