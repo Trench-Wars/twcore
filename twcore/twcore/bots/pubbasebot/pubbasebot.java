@@ -13,6 +13,7 @@ import twcore.core.events.FrequencyChange;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.ArenaJoined;
+import twcore.core.events.ScoreReset;
 import twcore.core.game.Player;
 import twcore.core.util.*;
 
@@ -338,6 +339,7 @@ public class pubbasebot extends SubspaceBot {
     		lowerToUpper.put(lowerName, name);
     	}
     	m_botAction.sendArenaMessage("GO! GO! GO!", 104);
+    	m_botAction.sendUnfilteredPublicMessage("*flagreset");
     	isRunning = true;
     	doBaseWarp();
     }
@@ -345,7 +347,7 @@ public class pubbasebot extends SubspaceBot {
     public void inTheLead() {
     	int[] leadStats = getMax();
     	m_botAction.sendArenaMessage("Current time in game: " + (updates*5) + ":00");
-    	m_botAction.sendArenaMessage("Frequency #" + leadStats[0] + " with " + (leadStats[1] / 60) + " minutes "+ (leadStats[1] % 60) + " seconds.");
+    	m_botAction.sendArenaMessage("Frequency #" + leadStats[0] + " in the lead with " + (leadStats[1] / 60) + " minutes "+ (leadStats[1] % 60) + " seconds.");
     	updates++;
     }
     
@@ -500,6 +502,11 @@ public class pubbasebot extends SubspaceBot {
 			try {
 				getFreqStats(name, new Integer(pieces[1]));
 			} catch(Exception e) {m_botAction.sendPrivateMessage(name, "Invalid input.");}
+		} else if(message.toLowerCase().startsWith("!fstats")) {
+			try {
+				int freq = m_botAction.getPlayer(name).getFrequency();
+				getFreqStats(name, new Integer(freq);
+			} catch(Exception e) {m_botAction.sendPrivateMessage(name, "Invalid input.");}
 		} else if(message.toLowerCase().startsWith("!warp")) {
 			if(baseWarp.remove(name.toLowerCase())) {
 				m_botAction.sendPrivateMessage(name, "Basewarp disabled.");
@@ -560,6 +567,7 @@ public class pubbasebot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(name, "!die                   -Kills the bot");
 		}
 			m_botAction.sendPrivateMessage(name, "!fstats <#>            -Returns stats for Freq <#>");
+			m_botAction.sendPrivateMessage(name, "!fstats                -Returns stats for your freq");
 			m_botAction.sendPrivateMessage(name, "!stats                 -Returns your stats");
 			m_botAction.sendPrivateMessage(name, "!stats <name>          -Returns <name>'s stats");
 			m_botAction.sendPrivateMessage(name, "!warp                  -Toggles basewarp");
