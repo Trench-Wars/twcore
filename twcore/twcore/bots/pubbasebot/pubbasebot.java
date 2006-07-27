@@ -12,6 +12,7 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.ArenaJoined;
 import twcore.core.game.Player;
 import twcore.core.util.*;
 
@@ -29,6 +30,7 @@ public class pubbasebot extends SubspaceBot {
 	boolean isRunning = false;
 	boolean levisAllowed = true;
 	boolean privateFreqs = true;
+	boolean init = false;
 	int secondsNeeded = 0;
 	int secondsBetweenRounds = 0;
 	
@@ -67,6 +69,7 @@ public class pubbasebot extends SubspaceBot {
 		er.request(EventRequester.FREQUENCY_CHANGE);
 		er.request(EventRequester.PLAYER_ENTERED);
 		er.request(EventRequester.PLAYER_LEFT);
+		er.request(EventRequester.ARENA_JOINED);
 	}
 	
 	public void handleEvent(Message event) {
@@ -119,7 +122,14 @@ public class pubbasebot extends SubspaceBot {
 	}
 	
 	public void handleEvent(LoggedOn event) {
-		m_botAction.requestArenaList();
+		
+	}
+	
+	public void handleEvent(ArenaJoined event) {
+		if(!init) {
+			m_botAction.requestArenaList();
+		}
+		init = true;
 	}
 	
 	public void handleEvent(ArenaList event) {
