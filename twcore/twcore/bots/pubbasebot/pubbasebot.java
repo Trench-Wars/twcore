@@ -124,9 +124,12 @@ public class pubbasebot extends SubspaceBot {
 		if(!isRunning) return;
 		String killer = m_botAction.getPlayerName(event.getKillerID()).toLowerCase();
 		String killee = m_botAction.getPlayerName(event.getKilleeID()).toLowerCase();
-		playerStats.get(killer).addKill();
-		playerStats.get(killee).addDeath();
-		playerStats.get(killer).addPoints(m_botAction.getPlayer(killer).getScore());
+		if(killer != null) {
+			playerStats.get(killer).addKill();
+			playerStats.get(killer).addPoints(m_botAction.getPlayer(killer).getScore());
+		}
+		if(killee != null)
+			playerStats.get(killee).addDeath();
 	}
 	
 	public void handleEvent(LoggedOn event) {
@@ -378,9 +381,9 @@ public class pubbasebot extends SubspaceBot {
     		secondsLeftLast = secondsLeft;
 	    	if(minutesLeft == 0) {
 	    		if(secondsLeft <= 30 && secondsLeft > 27) {
-	    			m_botAction.sendArenaMessage(maxStats[0] + " has 30 seconds remaining!",2);
+	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " has 30 seconds remaining!",2);
 	    		} else if(secondsLeft <= 10 && secondsLeft > 7) {
-	    			m_botAction.sendArenaMessage(maxStats[0] + " will win in 10 seconds!",2);
+	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " will win in 10 seconds!",2);
 	    		}
     		}
     	}
@@ -408,8 +411,10 @@ public class pubbasebot extends SubspaceBot {
     		String name = (String)it.next();
     		int rating = playerStats.get(name).getRating();
     		for(int k = 0;k < orderedRating.size();k++) {
-    			if(rating > playerStats.get((String)orderedRating.get(k)).getRating())
+    			if(rating > playerStats.get((String)orderedRating.get(k)).getRating()) {
     				orderedRating.add(k, name);
+    				break;
+    			}
     		}
     		if(orderedRating.indexOf(name) < 0) orderedRating.add(name);
        	}
