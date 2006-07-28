@@ -505,7 +505,7 @@ public class pubbasebot extends SubspaceBot {
 		} else if(message.toLowerCase().startsWith("!fstats")) {
 			try {
 				int freq = m_botAction.getPlayer(name).getFrequency();
-				getFreqStats(name, new Integer(freq);
+				getFreqStats(name, new Integer(freq));
 			} catch(Exception e) {m_botAction.sendPrivateMessage(name, "Invalid input.");}
 		} else if(message.toLowerCase().startsWith("!warp")) {
 			if(baseWarp.remove(name.toLowerCase())) {
