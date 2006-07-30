@@ -15,7 +15,7 @@ public class twbotikrit extends TWBotExtension {
 	}
 	
 	public void handleEvent(PlayerDeath event) {
-		Player killer = m_botAction.getPlayer(event.getPlayerID());
+		Player killer = m_botAction.getPlayer(event.getKillerID());
 		if(killer != null) {
 			m_botAction.sendPublicMessage("PlayerDeath event: " + killer.getScore());
 		}
