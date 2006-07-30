@@ -189,7 +189,7 @@ public class pubbasebot extends SubspaceBot {
     		} else {
     			m_botAction.setFreq(event.getPlayerID(), 0);
     		}
-    		m_botAction.sendPrivateMessage(event.getPlayerID(), "Private frequencies are currently disabled.");
+    		m_botAction.sendPrivateMessage(event.getPlayerID(), "Private frequencies are currently disabled in this arena.");
     	}
     	
     	if(!isRunning) return;
@@ -210,12 +210,12 @@ public class pubbasebot extends SubspaceBot {
     		} else {
     			m_botAction.setFreq(event.getPlayerID(), 0);
     		}
-    		m_botAction.sendPrivateMessage(event.getPlayerID(), "Private frequencies are currently disabled.");
+    		m_botAction.sendPrivateMessage(event.getPlayerID(), "Private frequencies are currently disabled in this arena.");
     	}
     	
     	if(!levisAllowed && event.getShipType() == 4) {
     		m_botAction.setShip(event.getPlayerID(), 1);
-    		m_botAction.sendPrivateMessage(event.getPlayerID(), "Leviathans are currently disabled.");
+    		m_botAction.sendPrivateMessage(event.getPlayerID(), "Leviathans are currently disabled in this arena.");
     	}
     	
     	if(!isRunning) return;
@@ -231,7 +231,7 @@ public class pubbasebot extends SubspaceBot {
     public void handleEvent(PlayerEntered event) {
     	if(!init) return;
     	String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
-    	m_botAction.sendPrivateMessage(name, "Welcome to Pub Basing. The current game mode is: ");
+    	m_botAction.sendPrivateMessage(name, "Welcome to Public Basing. The current game mode is: ");
     	if(privateFreqs)
     		m_botAction.sendPrivateMessage(name, "Private frequencies: disabled");
     	else 
@@ -240,8 +240,8 @@ public class pubbasebot extends SubspaceBot {
     		m_botAction.sendPrivateMessage(name, "Leviathans: disabled");
     	else
     		m_botAction.sendPrivateMessage(name, "Leviathans: enabled");
-    	m_botAction.sendPrivateMessage(name, "Time Race to: " + (secondsNeeded / 60) + " minutes " + (secondsNeeded % 60) + " seconds.");
-    	m_botAction.sendPrivateMessage(name, "PM me with !warp to be warped into base at start.");
+    	m_botAction.sendPrivateMessage(name, "Time Race to: " + (secondsNeeded / 60) + " minutes and " + (secondsNeeded % 60) + " seconds.");
+    	m_botAction.sendPrivateMessage(name, "PM me with !warp to be warped into the base at the beginning of next round.");
     	if(!isRunning) return;
     	if(playerStats.get(name) == null) {
     		playerStats.put(name, new PlayerStats(m_botAction.getPlayer(name).getScore(),m_botAction.getPlayer(name).getFrequency()));
@@ -259,7 +259,7 @@ public class pubbasebot extends SubspaceBot {
     public void startBot() {
     	secondsNeeded = m_botSettings.getInt("SecondsToWin"+m_botAction.getBotNumber());
     	levisAllowed = m_botSettings.getInt("LeviAllowed"+m_botAction.getBotNumber()) == 1;
-    	privateFreqs = m_botSettings.getInt("PrivateFreqs"+m_botAction.getBotNumber()) == 1;
+    	privateFreqs = m_botSettings.getInt("PrivFreqs"+m_botAction.getBotNumber()) == 1;
     	secondsBetweenRounds = m_botSettings.getInt("BetweenTime"+m_botAction.getBotNumber());
     	TimerTask startRound = new TimerTask() {
     		public void run() {
@@ -269,13 +269,13 @@ public class pubbasebot extends SubspaceBot {
     	m_botAction.scheduleTask(startRound, secondsBetweenRounds * 1000);
     	TimerTask tenSecWarning = new TimerTask() {
     		public void run() {
-    			m_botAction.sendArenaMessage("Next round will begin in 10 seconds.",2);
+    			m_botAction.sendArenaMessage("The next round of Public Basing will begin in 10 seconds.",2);
     		}
     	};
     	m_botAction.scheduleTask(tenSecWarning, ((secondsBetweenRounds * 1000) - (10 * 1000)));
     	TimerTask thirtySecWarning = new TimerTask() {
     		public void run() {
-    			m_botAction.sendArenaMessage("Next round will begin in 30 seconds.",1);
+    			m_botAction.sendArenaMessage("The next round of Public Basing will begin in 30 seconds.",1);
     		}
     	};
     	m_botAction.scheduleTask(thirtySecWarning, ((secondsBetweenRounds * 1000) - (30 * 1000)));
@@ -316,7 +316,7 @@ public class pubbasebot extends SubspaceBot {
     	};
     	secondsNeeded = m_botSettings.getInt("SecondsToWin"+m_botAction.getBotNumber());
     	levisAllowed = m_botSettings.getInt("LeviAllowed"+m_botAction.getBotNumber()) == 1;
-    	privateFreqs = m_botSettings.getInt("PrivateFreqs"+m_botAction.getBotNumber()) == 1;
+    	privateFreqs = m_botSettings.getInt("PrivFreqs"+m_botAction.getBotNumber()) == 1;
     	secondsBetweenRounds = m_botSettings.getInt("BetweenTime"+m_botAction.getBotNumber());
     	m_botAction.scheduleTaskAtFixedRate(checkTimes, 2 * 1000, 2 * 1000);
     	m_botAction.scheduleTaskAtFixedRate(updateAnnounce, 5 * 60 * 1000, 5 * 60 * 1000);
@@ -329,7 +329,7 @@ public class pubbasebot extends SubspaceBot {
     		int ship = itP.getShipType();
     		if(ship == 4 && !levisAllowed)
     			m_botAction.setShip(name, 1);
-    		if(freq > 1 && !privateFreqs) {
+    		if(freq > 1 && !privateFreqs && itP.getShipType() != 0) {
     			if(getFreqSize(0) > getFreqSize(1)) {
 	    			m_botAction.setFreq(name, 1);
 	    			freq = 1;
@@ -350,7 +350,7 @@ public class pubbasebot extends SubspaceBot {
     public void inTheLead() {
     	int[] leadStats = getMax();
     	m_botAction.sendArenaMessage("Current time in game: " + (updates*5) + ":00");
-    	m_botAction.sendArenaMessage("Frequency #" + leadStats[0] + " in the lead with " + (leadStats[1] / 60) + " minutes "+ (leadStats[1] % 60) + " seconds.");
+    	m_botAction.sendArenaMessage("Frequency #" + leadStats[0] + " is in the lead with " + (leadStats[1] / 60) + " minutes and "+ (leadStats[1] % 60) + " seconds.");
     	updates++;
     }
     
@@ -380,10 +380,10 @@ public class pubbasebot extends SubspaceBot {
     		minutesLeftLast = minutesLeft;
     		secondsLeftLast = secondsLeft;
 	    	if(minutesLeft == 0) {
-	    		if(secondsLeft <= 30 && secondsLeft > 27) {
-	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " has 30 seconds remaining!",2);
-	    		} else if(secondsLeft <= 10 && secondsLeft > 7) {
-	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " will win in 10 seconds!",2);
+	    		if(secondsLeft <= 30 && secondsLeft > 28) {
+	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " only needs 30 seconds of flag time to win!",2);
+	    		} else if(secondsLeft <= 10 && secondsLeft > 8) {
+	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " will be victorious in 10 seconds!",2);
 	    		}
     		}
     	}
@@ -418,7 +418,7 @@ public class pubbasebot extends SubspaceBot {
     		}
     		if(orderedRating.indexOf(name) < 0) orderedRating.add(name);
        	}
-       	m_botAction.sendArenaMessage("Top 5 Players: ", 2);
+       	m_botAction.sendArenaMessage("This games Top 5 Players are : ", 2);
        	for(int k = 0;k < 5 && k < orderedRating.size();k++) {
        		String name = (String)orderedRating.get(k);
        		PlayerStats p = playerStats.get(name);
@@ -431,9 +431,8 @@ public class pubbasebot extends SubspaceBot {
        		String name = (String)orderedRating.get(k);
        		PlayerStats p = playerStats.get(name);
        		int points = (int)(p.getRating() * freqHoldPercent(p.currentFreq));
-       		if(points > 1000) points = 1000;
-       		m_botAction.sendUnfilteredPrivateMessage(name, "*prize " + points);
-       		m_botAction.sendPrivateMessage(name, "You have received " + points + " points for having a rating of " + p.getRating() + " and your team holding the base " + (freqHoldPercent(p.currentFreq)*100) + "% of the game.");
+       		m_botAction.sendUnfilteredPrivateMessage(name, "*points " + points);
+       		m_botAction.sendPrivateMessage(name, "You have received " + points + " points for having a rating of " + p.getRating() + " and your team holding the flag " + (freqHoldPercent(p.currentFreq)*100) + "% of the game.");
        	}
        	playerStats.clear();
        	lowerToUpper.clear();
@@ -515,10 +514,10 @@ public class pubbasebot extends SubspaceBot {
 			} catch(Exception e) {m_botAction.sendPrivateMessage(name, "Invalid input.");}
 		} else if(message.toLowerCase().startsWith("!warp")) {
 			if(baseWarp.remove(name.toLowerCase())) {
-				m_botAction.sendPrivateMessage(name, "Basewarp disabled.");
+				m_botAction.sendPrivateMessage(name, "You have disabled Basewarp and WILL NOT be warped into the base upon the start of the round!");
 			} else {
 				baseWarp.add(name.toLowerCase());
-				m_botAction.sendPrivateMessage(name, "Basewarp enabled.");
+				m_botAction.sendPrivateMessage(name, "You have enabled Basewarp and WILL be warped into the base upon the start of the next round!");
 			}
 		} else if(message.toLowerCase().startsWith("!help")) {
 			handleHelp(name, smod);
@@ -568,16 +567,16 @@ public class pubbasebot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(name, "!levioff               -Disables levis next round");
 			m_botAction.sendPrivateMessage(name, "!privon                -Enables private frequencies");
 			m_botAction.sendPrivateMessage(name, "!privoff               -Disables private frequencies");
-			m_botAction.sendPrivateMessage(name, "!secinround <secs>     -Sets seconds to win");
+			m_botAction.sendPrivateMessage(name, "!secinround <secs>     -Sets seconds needed to win");
 			m_botAction.sendPrivateMessage(name, "!secbetween <secs>     -Sets seconds between rounds");
 			m_botAction.sendPrivateMessage(name, "!die                   -Kills the bot");
 		}
-			m_botAction.sendPrivateMessage(name, "!fstats <#>            -Returns stats for Freq <#>");
-			m_botAction.sendPrivateMessage(name, "!fstats                -Returns stats for your freq");
-			m_botAction.sendPrivateMessage(name, "!stats                 -Returns your stats");
-			m_botAction.sendPrivateMessage(name, "!stats <name>          -Returns <name>'s stats");
-			m_botAction.sendPrivateMessage(name, "!warp                  -Toggles basewarp");
-			m_botAction.sendPrivateMessage(name, "!help                  -Sends this");
+			m_botAction.sendPrivateMessage(name, "!fstats <#>            -Returns stats for Frequency <#>");
+			m_botAction.sendPrivateMessage(name, "!fstats                -Returns stats for your current frequency");
+			m_botAction.sendPrivateMessage(name, "!stats                 -Returns your Public Basing stats");
+			m_botAction.sendPrivateMessage(name, "!stats <name>          -Returns <name>'s Public Basing stats");
+			m_botAction.sendPrivateMessage(name, "!warp                  -Toggles Basewarp On/Off");
+			m_botAction.sendPrivateMessage(name, "!help                  -Sends the help message you are currently viewing");
 	}
 }
 
