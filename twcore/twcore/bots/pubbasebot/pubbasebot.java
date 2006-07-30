@@ -432,7 +432,7 @@ public class pubbasebot extends SubspaceBot {
        		PlayerStats p = playerStats.get(name);
        		int points = (int)(p.getRating() * freqHoldPercent(p.currentFreq));
        		if(points > 1000) points = 1000;
-       		m_botAction.sendUnfilteredPrivateMessage(name, "*points " + points);
+       		m_botAction.sendUnfilteredPrivateMessage(name, "*prize " + points);
        		m_botAction.sendPrivateMessage(name, "You have received " + points + " points for having a rating of " + p.getRating() + " and your team holding the base " + (freqHoldPercent(p.currentFreq)*100) + "% of the game.");
        	}
        	playerStats.clear();
