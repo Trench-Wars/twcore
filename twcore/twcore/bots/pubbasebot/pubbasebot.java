@@ -318,7 +318,7 @@ public class pubbasebot extends SubspaceBot {
     	levisAllowed = m_botSettings.getInt("LeviAllowed"+m_botAction.getBotNumber()) == 1;
     	privateFreqs = m_botSettings.getInt("PrivFreqs"+m_botAction.getBotNumber()) == 1;
     	secondsBetweenRounds = m_botSettings.getInt("BetweenTime"+m_botAction.getBotNumber());
-    	m_botAction.scheduleTaskAtFixedRate(checkTimes, 2 * 1000, 2 * 1000);
+    	m_botAction.scheduleTaskAtFixedRate(checkTimes, 1 * 1000, 1 * 1000);
     	m_botAction.scheduleTaskAtFixedRate(updateAnnounce, 5 * 60 * 1000, 5 * 60 * 1000);
     	Iterator it = m_botAction.getPlayerIterator();
     	while(it.hasNext()) {
@@ -366,7 +366,7 @@ public class pubbasebot extends SubspaceBot {
     		m_botAction.sendUnfilteredPublicMessage("*objoff 3"+(secondsLeftLast/10));
     		m_botAction.sendUnfilteredPublicMessage("*objoff 4"+(secondsLeftLast%10));
     	} else {
-    		int timeLeft = secondsNeeded - maxStats[1];
+    		int timeLeft = secondsNeeded - freqs.get(currentHolder).getHoldSeconds();
     		int minutesLeft = timeLeft / 60;
     		int secondsLeft = timeLeft % 60;
     		m_botAction.sendUnfilteredPublicMessage("*objoff 1"+(minutesLeftLast/10));
@@ -380,9 +380,9 @@ public class pubbasebot extends SubspaceBot {
     		minutesLeftLast = minutesLeft;
     		secondsLeftLast = secondsLeft;
 	    	if(minutesLeft == 0) {
-	    		if(secondsLeft <= 30 && secondsLeft > 28) {
+	    		if(secondsLeft == 30) {
 	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " only needs 30 seconds of flag time to win!",2);
-	    		} else if(secondsLeft <= 10 && secondsLeft > 8) {
+	    		} else if(secondsLeft == 10) {
 	    			m_botAction.sendArenaMessage("Freq #" + maxStats[0] + " will be victorious in 10 seconds!",2);
 	    		}
     		}
@@ -439,6 +439,7 @@ public class pubbasebot extends SubspaceBot {
        	lowerToUpper.clear();
        	freqs.clear();
        	isRunning = false;
+       	updates = 1;
     }
     
     public double freqHoldPercent(int f) {
@@ -528,7 +529,7 @@ public class pubbasebot extends SubspaceBot {
 	public void getFreqStats(String name, int freq) {
 		try {
 			FrequencyStats fs = freqs.get(freq);
-			m_botAction.sendPrivateMessage(name, "Freq #" + freq + " has held the flag for " + fs.getHoldSeconds() + " seconds.");
+			m_botAction.sendPrivateMessage(name, "Freq #" + freq + " has held the flag for " + (fs.getHoldSeconds()/60) + " minutes " + (fs.getHoldSeconds()%60) + " seconds.");
 		} catch(Exception e) {
 			m_botAction.sendPrivateMessage(name, "Could not find frequency.");
 		}
