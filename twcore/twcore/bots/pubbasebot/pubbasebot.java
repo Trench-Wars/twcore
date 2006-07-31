@@ -232,7 +232,7 @@ public class pubbasebot extends SubspaceBot {
     	if(!init) return;
     	String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
     	m_botAction.sendPrivateMessage(name, "Welcome to Public Basing. The current game mode is: ");
-    	if(privateFreqs)
+    	if(!privateFreqs)
     		m_botAction.sendPrivateMessage(name, "Private frequencies: disabled");
     	else 
     		m_botAction.sendPrivateMessage(name, "Private frequencies: enabled");
@@ -366,7 +366,10 @@ public class pubbasebot extends SubspaceBot {
     		m_botAction.sendUnfilteredPublicMessage("*objoff 3"+(secondsLeftLast/10));
     		m_botAction.sendUnfilteredPublicMessage("*objoff 4"+(secondsLeftLast%10));
     	} else {
-    		int timeLeft = secondsNeeded - freqs.get(currentHolder).getHoldSeconds();
+    		int timeLeft = secondsNeeded;
+    		try {
+    			timeLeft = secondsNeeded - freqs.get(currentHolder).getHoldSeconds();
+    		} catch(Exception e) {}
     		int minutesLeft = timeLeft / 60;
     		int secondsLeft = timeLeft % 60;
     		m_botAction.sendUnfilteredPublicMessage("*objoff 1"+(minutesLeftLast/10));
