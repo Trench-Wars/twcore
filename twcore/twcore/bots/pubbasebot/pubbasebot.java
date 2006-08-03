@@ -673,6 +673,7 @@ class PlayerStats {
 	public int getRating(int currentShip) {
 		int killPoints;
 		int negPoints;
+		int totalPoints;
 		if(switchedShips==true){
 			return(0.5*((kills*.05)-(deaths*.05)-(tks*.1)));
 		}
