@@ -121,12 +121,16 @@ public class pubbasebot extends SubspaceBot {
 	}
 	
 	public void handleEvent(PlayerDeath event) {
+		boolean tked=fales;
 		if(!isRunning) return;
 		String killer = m_botAction.getPlayerName(event.getKillerID());
 		String killee = m_botAction.getPlayerName(event.getKilleeID()).toLowerCase();
 		if(killer != null) {
 			killer = killer.toLowerCase();
-			playerStats.get(killer).addKill();
+			if(killer.getFreq().equals(killed.getFreq())){
+				tked = true;
+			}
+			playerStats.get(killer).addKill(killee.getShipType(),killer.getShipType(),tked);
 			playerStats.get(killer).addPoints(m_botAction.getPlayer(killer).getScore());
 		}
 		if(killee != null) {
@@ -204,7 +208,6 @@ public class pubbasebot extends SubspaceBot {
     		lowerToUpper.put(m_botAction.getPlayerName(event.getPlayerID()).toLowerCase(), m_botAction.getPlayerName(event.getPlayerID()));
     	}
     }
-    
     
     public void handleEvent(FrequencyShipChange event) {
     	if(!privateFreqs && event.getFrequency() > 1 && event.getShipType() != 0) {
@@ -415,7 +418,7 @@ public class pubbasebot extends SubspaceBot {
     	Iterator it = playerStats.keySet().iterator();
     	while(it.hasNext()) {
     		String name = (String)it.next();
-    		int rating = playerStats.get(name).getRating();
+    		int rating = playerStats.get(name).getRating());
     		for(int k = 0;k < orderedRating.size();k++) {
     			if(rating > playerStats.get((String)orderedRating.get(k)).getRating()) {
     				orderedRating.add(k, name);
@@ -616,12 +619,16 @@ class FrequencyStats {
 }
 
 class PlayerStats {
+	boolean switchedShips;
 	int kills;
 	int deaths;
+	int tks;
 	int flagClaims;
 	int points;
 	int lastPoints;
 	int currentFreq = -1;
+	int killedShips[] = {0,0,0,0,0,0,0,0};
+	int currentShip;
 	HashMap<Integer,FreqTime> timeOnFreq = new HashMap<Integer,FreqTime>();
 	
 	public PlayerStats(int startP, int currentF) {
@@ -630,11 +637,24 @@ class PlayerStats {
 		deaths = 0;
 		flagClaims = 0;
 		points = 0;
+		tks = 0;
+		currentShip = 0;
+		switchedShips = false;
 		changeFreq(currentF);
 	}
 	
-	public void addKill() {
-		kills++;
+	public void addKill(int killedShip,int playerShip,boolean tked) {
+		killedShips[killedShip]-1]++;
+		if(currentShip == 0){
+			currentShip = playerShip
+		}else if(currentShip != playerShip){
+			switchedShips = true;
+		}
+		if(tked==true){
+			tks++;
+		}else{
+			kills++;
+		}
 	}
 	
 	public void addDeath() {
@@ -650,9 +670,49 @@ class PlayerStats {
 		lastPoints = points;
 	}
 	
-	public int getRating() {
+	public int getRating(int currentShip) {
+		int killPoints;
+		int negPoints;
+		if(switchedShips==true){
+			return(0.5*((kills*.05)-(deaths*.05)-(tks*.1)));
+		}
+		if(currentShip = 1){
+			killPoints = (.07*killedShips[0])+(.07*killedShips[1])+(.05*killedShips[2])+(.05*killedShips[3])+
+				(.12*killedShips[4])+(.05*killedShips[5])+(.06*killedShips[6])+(.08*killedShips[7]);
+			negPoints = deaths*.04;
+			totalPoints = .6((killPoints) - negPoints);
+		}else if(currentShip = 2){
+			killPoints = (.05*killedShips[0])+(.05*killedShips[1])+(.06*killedShips[2])+(.05*killedShips[3])+
+			(.12*killedShips[4])+(.07*killedShips[5])+(.05*killedShips[6])+(.09*killedShips[7]);
+			negPoints = deaths*.05 + tks*.06;
+			totalPoints = .5((killPoints) - negPoints);
+		}else if(currentShip = 3){
+			killPoints = (.06*killedShips[0])+(.06*killedShips[1])+(.04*killedShips[2])+(.05*killedShips[3])+
+			(.08*killedShips[4])+(.05*killedShips[5])+(.05*killedShips[6])+(.09*killedShips[7]);
+			negPoints = deaths*.05;
+			totalPoints = .4((killPoints) - negPoints);
+		}else if(currentShip = 4){
+			totalPoints = 0.5*((kills*.05)-(deaths*.05)-(tks*.1));
+		}else if(currentShip = 5){
+			killPoints = (.06*killedShips[0])+(.06*killedShips[1])+(.08*killedShips[2])+(.05*killedShips[3])+
+			(.12*killedShips[4])+(.1*killedShips[5])+(.06*killedShips[6])+(.09*killedShips[7]);
+			negPoints = deaths*.12;
+			totalPoints = .8((killPoints) - negPoints);
+		}else if(currentShip = 6){
+			totalPoints = 0.8*((kills*.09)-(deaths*.05));
+		}else if(currentShip = 7){
+			killPoints = (.07*killedShips[0])+(.07*killedShips[1])+(.05*killedShips[2])+(.05*killedShips[3])+
+			(.12*killedShips[4])+(.05*killedShips[5])+(.06*killedShips[6])+(.08*killedShips[7]);
+			negPoints = deaths*.04;
+			totalPoints = .6((killPoints) - negPoints);
+		}else if(currentShip = 8){
+			killPoints = (.09*killedShips[0])+(.09*killedShips[1])+(.09*killedShips[2])+(.05*killedShips[3])+
+			(.12*killedShips[4])+(.09*killedShips[5])+(.09*killedShips[6])+(.09*killedShips[7]);
+			negPoints = deaths*.005 + tks*.1;
+			totalPoints = .6((killPoints) - negPoints);
+		}
 		int rating = (int)(((points / (deaths+1)) * (kills + flagClaims)) * getPercentOnFreq());
-		return rating;
+		return (totalPoints+(100*flagClaims);
 	}
 	
 	public int[] getStats() {
@@ -725,5 +785,6 @@ class PlayerStats {
 			}
 			return totalTime;
 		}
+	 
 	}
 }
