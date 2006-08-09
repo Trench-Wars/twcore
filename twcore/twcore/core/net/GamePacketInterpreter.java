@@ -418,21 +418,21 @@ public class GamePacketInterpreter {
 
         Message event = new Message(message);
 
-		synchronized(m_session.getChatLog())
+		if(m_session.getChatLog() != null) // Logging is enabled
 		{
-	        if(m_session.getChatLog() != null)
-	        {
-	        	if(event.getMessageType() == Message.PRIVATE_MESSAGE)
-	        	{
+			synchronized(m_session.getChatLog())
+			{
+				if(event.getMessageType() == Message.PRIVATE_MESSAGE)
+				{
 					PrintWriter out = m_session.getChatLog();
 					out.print(Tools.getTimeStamp() + " (");
 					out.print(m_session.getBotAction().getBotName() + ") : ");
 					out.print(m_session.getBotAction().getPlayerName(event.getPlayerID()));
 					out.println(" > "+ event.getMessage());
 					out.flush();
-	        	}
-	        }
-	    }
+				}
+			}
+		}
 
         if( m_requester.check( EventRequester.MESSAGE )){
             if( m_limiter == null ){
