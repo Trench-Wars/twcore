@@ -124,7 +124,7 @@ public class trivia extends MultiModule {
 
             try {
                 toWin = Integer.parseInt( message );
-                if( toWin < 1 || toWin > 25 ) toWin = 10;
+                if( toWin < 1 || toWin > 500 ) toWin = 10;
             }
             catch (Exception e) {}
             gameProgress = 0;
