@@ -13,6 +13,7 @@ package twcore.bots.twbot;
 
 import java.util.*;
 import twcore.core.*;
+import twcore.core.events.*;
 
 public class twbothunt extends TWBotExtension {
     int specPlayers = 5; //default unless changed by host
