@@ -3,6 +3,7 @@ package twcore.bots.twbot;
 import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.bots.*;
+import java.util.*;
 
 public class twbotikrit extends TWBotExtension {
 	
@@ -10,8 +11,8 @@ public class twbotikrit extends TWBotExtension {
 	int ship = 1;
 	int death = 10;
 	
-	HashMap<String,Integer> deaths = new hashMap<String,Integer>();
-	HashMap<String,Integer> ships = new hashMap<String,Integer>();
+	HashMap<String,Integer> deaths = new HashMap<String,Integer>();
+	HashMap<String,Integer> ships = new HashMap<String,Integer>();
 	
 	public twbotikrit() {
 		
@@ -24,9 +25,11 @@ public class twbotikrit extends TWBotExtension {
 				status = 1;
 			} else if(message.indexOf("Vote: How many") != -1) {
 				status = 2;
-			} else if(message.indexOf("Rules:")) {
+			} else if(message.indexOf("Rules:") != -1) {
 				status = 0;
 				calc();
+				deaths.clear();
+				ships.clear();
 				m_botAction.sendPrivateMessage("Robo Ref", "!override "+ship+" "+death);
 			}
 		} else if(event.getMessageType() == Message.PUBLIC_MESSAGE) {
@@ -55,7 +58,7 @@ public class twbotikrit extends TWBotExtension {
 			if(deathVotes.get(ds) == null) {
 				deathVotes.add(ds, 1);
 			} else {
-				deathVotes.add(ds, (deathVotes.get(ds) + 1));
+				deathVotes.add(ds, (((Integer)deathVotes.get(ds)) + 1));
 			}
 		}
 		while(it.hasNext()) {
@@ -63,7 +66,7 @@ public class twbotikrit extends TWBotExtension {
 			if(shipVotes.get(ss) == null) {
 				shipVotes.add(ss, 1);
 			} else {
-				shipVotes.add(ss, (shipVotes.get(ss) + 1));
+				shipVotes.add(ss, (((Integer)shipVotes.get(ss)) + 1));
 			}
 		}
 		int maxDeathVotes = 1;
