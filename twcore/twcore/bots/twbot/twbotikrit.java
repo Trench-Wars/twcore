@@ -1,39 +1,93 @@
 package twcore.bots.twbot;
 
 import twcore.core.*;
-import twcore.core.game.Player;
-import twcore.core.events.PlayerDeath;
-import twcore.core.events.ScoreUpdate;
-import twcore.core.events.PlayerEntered;
-import twcore.core.events.ScoreReset;
+import twcore.core.events.Message;
 import twcore.bots.*;
 
 public class twbotikrit extends TWBotExtension {
+	
+	int status = 0;
+	int ship = 1;
+	int death = 10;
+	
+	HashMap<String,Integer> deaths = new hashMap<String,Integer>();
+	HashMap<String,Integer> ships = new hashMap<String,Integer>();
 	
 	public twbotikrit() {
 		
 	}
 	
-	public void handleEvent(PlayerDeath event) {
-		Player killer = m_botAction.getPlayer(event.getKillerID());
-		if(killer != null) {
-			m_botAction.sendPublicMessage("PlayerDeath event: " + killer.getScore());
+	public void handleEvent(Message event) {
+		if(event.getMessageType() == Message.ARENA_MESSAGE) {
+			String message = event.getMessage();
+			if(message.indexOf("Vote: 1-WB Elim") != -1) {
+				status = 1;
+			} else if(message.indexOf("Vote: How many") != -1) {
+				status = 2;
+			} else if(message.indexOf("Rules:")) {
+				status = 0;
+				calc();
+				m_botAction.sendPrivateMessage("Robo Ref", "!override "+ship+" "+death);
+			}
+		} else if(event.getMessageType() == Message.PUBLIC_MESSAGE) {
+			if(status == 1) {
+				try {
+					int val = Integer.parseInt(event.getMessage());
+					if(val > 0 && val < 8)
+						ships.put(event.getMessager().toLowerCase(),val);
+				} catch(Exception e) {}
+			} else if(status == 2) {
+				try {
+					int val = Integer.parseInt(event.getMessage());
+					if(val > 0)
+						deaths.put(event.getMessager().toLowerCase(),val);
+				} catch(Exception e) {}
+			}
 		}
 	}
 	
-	public void handleEvent(ScoreUpdate event) {
-		Player p = m_botAction.getPlayer(event.getPlayerID());
-		m_botAction.sendPublicMessage("ScoreUpdate event: " + p.getScore());
-	}
-	
-	public void handleEvent(PlayerEntered event) {
-		Player p = m_botAction.getPlayer(event.getPlayerID());
-		m_botAction.sendPublicMessage("PlayerEntered event: " + p.getScore());
-	}
-	
-	public void handleEvent(ScoreReset event) {
-		Player p = m_botAction.getPlayer(event.getPlayerID());
-		m_botAction.sendPublicMessage("ScoreReset event: " + p.getScore() + " -" + p.getPlayerName());
+	public void calc() {
+		Iterator it = deaths.values().iterator();
+		ArrayList<Integer> deathVotes = new ArrayList<Integer>();
+		ArrayList<Integer> shipVotes = new ArrayList<Integer>();
+		while(it.hasNext()) {
+			int ds = (Integer)it.next();
+			if(deathVotes.get(ds) == null) {
+				deathVotes.add(ds, 1);
+			} else {
+				deathVotes.add(ds, (deathVotes.get(ds) + 1));
+			}
+		}
+		while(it.hasNext()) {
+			int ss = (Integer)it.next();
+			if(shipVotes.get(ss) == null) {
+				shipVotes.add(ss, 1);
+			} else {
+				shipVotes.add(ss, (shipVotes.get(ss) + 1));
+			}
+		}
+		int maxDeathVotes = 1;
+		int maxDeath = 10;
+		for(int k = 0;k < deathVotes.size();k++) {
+			if(deathVotes.get(k) != null) {
+				if(deathVotes.get(k) > maxDeathVotes) {
+					maxDeathVotes = deathVotes.get(k);
+					maxDeath = k;
+				}
+			}
+		}
+		int maxShipVotes = 1;
+		int maxShip = 1;
+		for(int k = 0;k < shipVotes.size();k++) {
+			if(shipVotes.get(k) != null) {
+				if(shipVotes.get(k) > maxShipVotes) {
+					maxShipVotes = shipVotes.get(k);
+					maxShip = k;
+				}
+			}
+		}
+		ship = maxShip;
+		death = maxDeath;
 	}
 	
 	public String[] getHelpMessages() {
@@ -42,5 +96,6 @@ public class twbotikrit extends TWBotExtension {
 	}
 	
 	public void cancel() {
+		
 	}
 }
