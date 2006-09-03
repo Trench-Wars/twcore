@@ -751,6 +751,19 @@ public class messagebot extends SubspaceBot
 	 */
 	public void readMessage(String name, String message)
 	{
+		if(!isAllDigits(message)) {
+			HashSet messageIDs = new HashSet();
+			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcChannel = '"
+				+ Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'");
+			while(results.next()) {
+				messageIDs.add(results.getInt("fnID"));
+			}
+			Iterator it = messageIDs.iterator();
+			while(it.hasNext()) {
+				int id = (Integer)it.next();
+				readMessage(name, ""+id);
+			}
+		}
 		int messageNumber = -1;
 		try{
 			messageNumber = Integer.parseInt(message);
@@ -1281,6 +1294,8 @@ public class messagebot extends SubspaceBot
      }
      
      public void registerAll(String name, String message) {
+     	if(!m_botAction.getOperatorList().isHighmod(name) && !ops.contains(name.toLowerCase()))
+     		return;
      	try {
     		String pieces[] = message.split(":",2);
     		URL site = new URL(pieces[1]);
@@ -1311,6 +1326,14 @@ public class messagebot extends SubspaceBot
     		}
     	} catch(Exception e) {}
      }
+     
+     public boolean isAllDigits(String test) {
+		boolean allDigits = true;
+		for(int k = 0;k < test.length() && allDigits;k++) {
+			if(!Character.isDigit(test.charAt(k))) allDigits = false;
+		}
+		return allDigits && test.length() != 0;
+	}
 }
 
 class Channel
