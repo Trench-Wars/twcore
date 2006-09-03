@@ -1305,8 +1305,11 @@ public class messagebot extends SubspaceBot
 							+ Tools.addSlashesToString(addName)+"', '"+Tools.addSlashesToString(pieces[0])+"', 1)");
 					}
     			}
+    			m_botAction.sendSmartPrivateMessage(name, "Done");
+    		} else {
+    			m_botAction.sendSmartPrivateMessage(name, "Please end the file name with .txt");
     		}
-    	} catch(IOException e) {e.printStackTrace(System.out);}
+    	} catch(Exception e) {}
      }
 }
 
