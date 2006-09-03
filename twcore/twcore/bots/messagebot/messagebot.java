@@ -752,17 +752,19 @@ public class messagebot extends SubspaceBot
 	public void readMessage(String name, String message)
 	{
 		if(!isAllDigits(message)) {
-			HashSet messageIDs = new HashSet();
-			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcChannel = '"
-				+ Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'");
-			while(results.next()) {
-				messageIDs.add(results.getInt("fnID"));
-			}
-			Iterator it = messageIDs.iterator();
-			while(it.hasNext()) {
-				int id = (Integer)it.next();
-				readMessage(name, ""+id);
-			}
+			try {
+				HashSet messageIDs = new HashSet();
+				ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcChannel = '"
+					+ Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'");
+				while(results.next()) {
+					messageIDs.add(results.getInt("fnID"));
+				}
+				Iterator it = messageIDs.iterator();
+				while(it.hasNext()) {
+					int id = (Integer)it.next();
+					readMessage(name, ""+id);
+				}
+			} catch(Exception e) {}
 		}
 		int messageNumber = -1;
 		try{
