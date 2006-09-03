@@ -176,6 +176,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
         m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
         m_CI.registerCommand( "!listnews",	 acceptedMessages, this, "listNews");
+        m_CI.registerCommand( "!regall",	 acceptedMessages, this, "registerAll");
 
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing");
 
@@ -1277,6 +1278,35 @@ public class messagebot extends SubspaceBot
      			m_botAction.sendSmartPrivateMessage(name, "Message sent.");
      		}
      	} catch(Exception e) {}
+     }
+     
+     public void registerAll(String name, String message) {
+     	try {
+    		String pieces[] = message.split(":",2);
+    		URL site = new URL(pieces[1]);
+    		HashSet nameList = new HashSet();
+    		if(site.getFile().toLowerCase().endsWith("txt"))
+    		{
+    			URLConnection file = site.openConnection();
+    			file.connect();
+    			BufferedReader getnames = new BufferedReader(new InputStreamReader(file.getInputStream()));
+    			String nextName;
+    			while((nextName = getnames.readLine()) != null)
+    				nameList.add(nextName);
+    			file.getInputStream().close();
+    			Iterator it = nameList.iterator();
+    			while(it.hasNext()) {
+    				String addName = (String)it.next();
+					ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblChannelUser WHERE fcName = '"
+						+ Tools.addSlashesToString(addName)+"' AND fcChannel = '"
+						+ Tools.addSlashesToString(pieces[0])+"'");
+					if(!results.next()) {
+						m_botAction.SQLQuery("local", "INSERT INTO tblChannelUser (fcName, fcChannel, fnLevel) VALUES ('"
+							+ Tools.addSlashesToString(addName)+"', '"+Tools.addSlashesToString(pieces[0])+"', 1)");
+					}
+    			}
+    		}
+    	} catch(IOException e) {e.printStackTrace(System.out);}
      }
 }
 
