@@ -754,7 +754,7 @@ public class messagebot extends SubspaceBot
 		if(!isAllDigits(message)) {
 			try {
 				HashSet messageIDs = new HashSet();
-				ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcChannel = '"
+				ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
 					+ Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'");
 				while(results.next()) {
 					messageIDs.add(results.getInt("fnID"));
@@ -765,6 +765,7 @@ public class messagebot extends SubspaceBot
 					readMessage(name, ""+id);
 				}
 			} catch(Exception e) {}
+			return;
 		}
 		int messageNumber = -1;
 		try{
