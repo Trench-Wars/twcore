@@ -1,6 +1,5 @@
 package twcore.bots.twbot;
 
-import twcore.core.events.SoccerGoal
 import twcore.core.*;
 import twcore.core.events.BallPosition;
 import twcore.bots.*;
@@ -95,8 +94,8 @@ public class twbotikrit extends TWBotExtension {
 	}
 	*/
 	
-	public void handleEvent(BallPosition event ) {
-		m_botAction.sendPublicMessage("ID: " + event.getBallID() + "   TimeStamp: " + event.getTimeStamp() + "   PlayerID: + " event.getPlayerID());
+	public void handleEvent(BallPosition event) {
+		m_botAction.sendPublicMessage("ID: " + event.getBallID() + "   TimeStamp: " + event.getTimeStamp() + "   PlayerID: " + event.getPlayerID());
 	}
 	
 	public String[] getHelpMessages() {
