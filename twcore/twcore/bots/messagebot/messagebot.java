@@ -754,8 +754,16 @@ public class messagebot extends SubspaceBot
 		if(!isAllDigits(message)) {
 			try {
 				HashSet messageIDs = new HashSet();
+				String addAnd = "";
+				String pieces[] = message.split(":", 2);
+				if(pieces.length == 2) {
+					message = pieces[0];
+					if(pieces[1].toLowerCase().startsWith("a")) addAnd = "";
+					else if(pieces[1].toLowerCase().startsWith("r")) addAnd = " AND fnRead = 1";
+					else if(pieces[1].toLowerCase().startsWith("u")) addAnd = " AND fnRead = 0";
+				}
 				ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
-					+ Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'");
+					+ Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'"+addAnd);
 				while(results.next()) {
 					messageIDs.add(results.getInt("fnID"));
 				}
