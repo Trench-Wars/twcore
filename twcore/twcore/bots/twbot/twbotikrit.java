@@ -1,7 +1,8 @@
 package twcore.bots.twbot;
 
+import twcore.core.events.SoccerGoal
 import twcore.core.*;
-import twcore.core.events.Message;
+import twcore.core.events.BallPosition;
 import twcore.bots.*;
 import java.util.*;
 
@@ -18,7 +19,7 @@ public class twbotikrit extends TWBotExtension {
 		
 	}
 	
-	public void handleEvent(Message event) {
+/*	public void handleEvent(Message event) {
 		if(event.getMessageType() == Message.ARENA_MESSAGE) {
 			String message = event.getMessage();
 			if(message.indexOf("Vote: 1-WB Elim") != -1) {
@@ -91,6 +92,11 @@ public class twbotikrit extends TWBotExtension {
 		}
 		ship = maxShip;
 		death = maxDeath;
+	}
+	*/
+	
+	public void handleEvent(BallPosition event ) {
+		m_botAction.sendPublicMessage("ID: " + event.getBallID() + "   TimeStamp: " + event.getTimeStamp() + "   PlayerID: + " event.getPlayerID());
 	}
 	
 	public String[] getHelpMessages() {
