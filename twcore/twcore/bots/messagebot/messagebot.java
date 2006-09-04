@@ -754,7 +754,7 @@ public class messagebot extends SubspaceBot
 		if(!isAllDigits(message)) {
 			try {
 				HashSet messageIDs = new HashSet();
-				String addAnd = "";
+				String addAnd = " AND fnRead = 0";
 				String pieces[] = message.split(":", 2);
 				if(pieces.length == 2) {
 					message = pieces[0];
