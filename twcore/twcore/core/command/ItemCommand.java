@@ -20,7 +20,7 @@ import twcore.core.util.Tools;
  * methods for adding, displaying, editing, and removing.
  *
  * @author D1st0rt
- * @version 06.07.08
+ * @version 06.10.01
  */
 public class ItemCommand<T> implements List<T>
 {
@@ -103,7 +103,6 @@ public class ItemCommand<T> implements List<T>
 			else if(fieldClass.getName().equals("twcore.core.game.Player"))
 			{
 				fieldParsers[i] = new PlayerSetting(fields[i].getName(), m_botAction);
-				System.out.println(defVal);
 			}
 			else
 			{
