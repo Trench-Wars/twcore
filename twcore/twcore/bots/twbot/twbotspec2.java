@@ -50,30 +50,34 @@ import twcore.core.game.Player;
  * !Spec freq=1 ship=2
  *
  * A specific player at 11 deaths (partial names can be used)
- * !Spec player=D1st0rt
+ * !Spec player=D1st0rt deaths=11
  *
  * @author D1st0rt
- * @version 06.07.08
+ * @version 06.10.01
  */
 public class twbotspec2 extends TWBotExtension
 {
     /** Stores kills/deaths when on internal tracking mode. */
-    private Map<Integer, PlayerData> playerData;
+    private Map<Short, PlayerData> playerData;
     /** Manages the individual Spec Tasks. */
     private ItemCommand<SpecTask> specTasks;
     /** The status of internal death tracking. */
     private boolean recordDeaths;
+    /** Whether remaining life notification per death is on or not. */
+    private boolean notifyLives;
 
     /** The help message to be sent to bot operators */
     private final String[] helpMessage =
     {
         "+-------------------Extended Spec Module-------------------+",
-        "|  Release 1.0 [07/08/06] - http://d1st0rt.sscentral.com   |",
+        "|  Release 1.1 [10/01/06] - http://d1st0rt.sscentral.com   |",
         "+----------------------------------------------------------+",
-        "| !recordDeaths - If this is on, the bot will track kills  |",
+        "| !RecordDeaths - If this is on, the bot will track kills  |",
         "|                 and deaths internally separate from      |",
         "|                 player records. (no scorereset needed)   |",
-        "| !resetDeaths  - Clears internally tracked death counts.  |",
+        "| !ResetDeaths  - Clears internally tracked death counts.  |",
+        "| !NotifyLives  - Toggles telling the player how many lives|",
+        "|                 they have left after every death         |",
         "|                                                          |",
         "| !Spec         - Create a new rule with given parameters  |",
         "|   |           All parameters are optional as long as you |",
@@ -95,6 +99,10 @@ public class twbotspec2 extends TWBotExtension
         "+----------------------------------------------------------+"
     };
 
+	/** The public help message sent to players. */
+    private final String publicHelp =
+    	"!rec               - Displays your current record and lives left.";
+
     /**
      * Creates a new instance of twbotspec2.
      * @throws Exception if ItemCommand has access problems in the reflection
@@ -103,7 +111,7 @@ public class twbotspec2 extends TWBotExtension
     public twbotspec2() throws Exception
     {
         //playerData = Collections.synchronizedMap(new HashMap<Integer, PlayerData>());
-        playerData = new HashMap<Integer, PlayerData>();
+        playerData = new HashMap<Short, PlayerData>();
 
         BotAction botAction = BotAction.getBotAction();
 
@@ -120,6 +128,7 @@ public class twbotspec2 extends TWBotExtension
         specTasks.restrictSetting("deaths", 1, 999);
 
         recordDeaths = false;
+        notifyLives = false;
     }
 
     /**
@@ -347,7 +356,7 @@ public class twbotspec2 extends TWBotExtension
     }
 
 	/**
-     * Command !ResetDeaths
+     * Command: !ResetDeaths
      * Clears any internally tracked deaths.
      */
     private void c_ResetDeaths(String name, String message)
@@ -364,6 +373,63 @@ public class twbotspec2 extends TWBotExtension
     }
 
     /**
+     * Command: !NotifyLives
+     * Toggles telling the player how many lives they have left upon death.
+     */
+    private void c_NotifyLives(String name, String message)
+    {
+		if(notifyLives = !notifyLives)
+            m_botAction.sendPrivateMessage(name, "Telling lives left every death.");
+        else
+            m_botAction.sendPrivateMessage(name, "Not telling lives left every death.");
+    }
+
+    /**
+     * Public Command: !Rec
+     * Displays the player's current record and lives remaining.
+     */
+    private void c_Rec(short playerID)
+    {
+    	int kills = 0;
+    	int deaths = 0;
+    	int lives = 0;
+    	Player p = m_botAction.getPlayer(playerID);
+
+    	if(recordDeaths)
+    	{
+			PlayerData pdata = playerData.get(playerID);
+			if(pdata != null)
+			{
+				kills = pdata.getKills();
+				deaths = pdata.getDeaths();
+			}
+    	}
+    	else
+    	{
+
+			kills = p.getWins();
+			deaths = p.getLosses();
+    	}
+
+    	SpecTask task = getBestSpecTask(p.getFrequency(), p.getShipType(), playerID);
+    	if(task != null)
+    		lives = task.deaths - deaths;
+
+    	StringBuffer s = new StringBuffer("Your record is ");
+    	s.append(kills);
+    	s.append("-");
+    	s.append(deaths);
+    	if(lives > 0)
+    	{
+	    	s.append(" with ");
+	    	s.append(lives);
+	    	s.append(" lives remaining.");
+	    }
+
+    	m_botAction.sendPrivateMessage(playerID, s.toString());
+    }
+
+    /**
 	 * Takes a command and passes it to the proper command function
 	 * @param name the name of the sender
 	 * @param message the text of the chat message
@@ -374,11 +440,11 @@ public class twbotspec2 extends TWBotExtension
             c_Spec(name, message.substring(6).trim());
         else if(message.startsWith("!specedit "))
             c_SpecEdit(name, message.substring(10).trim());
-        else if(message.equalsIgnoreCase("!speclist"))
+        else if(message.equals("!speclist"))
             c_SpecList(name, message);
         else if(message.startsWith("!specdel "))
             c_SpecDel(name, message.substring(9).trim());
-        else if(message.equalsIgnoreCase("!specoff"))
+        else if(message.equals("!specoff"))
             c_SpecOff(name, message);
         else if(message.equalsIgnoreCase("!recordDeaths"))
             c_RecordDeaths(name, message);
@@ -388,6 +454,8 @@ public class twbotspec2 extends TWBotExtension
             c_AddLife(name, message.substring(9).trim());
         else if(message.startsWith("!subtractlife "))
         	c_SubtractLife(name, message.substring(14).trim());
+        else if(message.equals("!notifylives"))
+        	c_NotifyLives(name, message);
     }
 
     /**
@@ -399,8 +467,17 @@ public class twbotspec2 extends TWBotExtension
         String name = m_botAction.getPlayerName(event.getPlayerID());
         String message = event.getMessage().toLowerCase().trim();
 
-        if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name))
-            delegateCommand(name, message);
+        if(event.getMessageType() == Message.PRIVATE_MESSAGE)
+        {
+        	if(m_opList.isER(name))
+            	delegateCommand(name, message);
+
+        	if(message.equals("!rec"))
+        		c_Rec(event.getPlayerID());
+
+        	if(message.startsWith("!help"))
+				m_botAction.sendPrivateMessage(name, publicHelp);
+        }
     }
 
     /**
@@ -409,7 +486,7 @@ public class twbotspec2 extends TWBotExtension
      */
     public void handleEvent(PlayerDeath event)
     {
-        int playerID = event.getKilleeID();
+        short playerID = event.getKilleeID();
         Player player = m_botAction.getPlayer(playerID);
         int freq = player.getFrequency();
         int ship = player.getShipType();
@@ -435,7 +512,7 @@ public class twbotspec2 extends TWBotExtension
             }
 
             kdata.addKill();
-            playerData.put((int)event.getKillerID(), kdata);
+            playerData.put(event.getKillerID(), kdata);
         }
         else
         {
@@ -446,6 +523,8 @@ public class twbotspec2 extends TWBotExtension
 
         if(specTask != null && specTask.deaths <= deaths)
             specPlayer(player, data);
+        else
+        	c_Rec(player.getPlayerID());
     }
 
     /**
