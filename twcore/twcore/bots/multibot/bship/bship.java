@@ -249,14 +249,14 @@ public class bship extends MultiModule implements TSChangeListener
 	private void registerSettings()
 	{
 		m_tsm.addSetting(SType.INT, "board", "2");
-		m_tsm.restrictSetting("board", 0, 5);
+		m_tsm.restrictSetting("board", 1, 5);
 		m_tsm.addSetting(SType.INT, "teams", "2");
-		m_tsm.restrictSetting("teams", 0, 4);
+		m_tsm.restrictSetting("teams", 1, 4);
 		m_tsm.addSetting(SType.BOOLEAN, "cslock", "false");
 		m_tsm.addSetting(SType.INT, "hour", "0");
 		m_tsm.restrictSetting("hour", 0, 23);
 		m_tsm.addSetting(SType.INT, "lives", "3");
-		m_tsm.restrictSetting("lives", 0, 10);
+		m_tsm.restrictSetting("lives", 1, 10);
 		m_tsm.addSetting(SType.INT, "cslimit", "5");
 		m_tsm.restrictSetting("cslimit", 1, 10);
 
