@@ -44,6 +44,8 @@ public class robohelp extends SubspaceBot {
 
     String				findPopulation = "";
 	int					setPopID = -1;
+	
+	String	 			lastStafferClaimedCall;
 
     public robohelp( BotAction botAction ){
         super( botAction );
@@ -919,13 +921,25 @@ public class robohelp extends SubspaceBot {
     public void handleOnIt( String name, String message ) {
         boolean recorded = false;
         int i = 0;
+        
+        if(callList.size()==0) {
+        	// A staffer did "on it" while there was no call to take.
+        	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
+        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim. The last person to claim a call was "+this.lastStafferClaimedCall+".");
+        	else 
+        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim.");
+        }
+        
         while( !recorded && i < callList.size() ) {
             EventData e = (EventData)callList.elementAt( i );
             if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
                 updateStatRecordsONIT( name );
                 callList.removeElementAt( i );
                 recorded = true;
-            } else callList.removeElementAt( i );
+                this.lastStafferClaimedCall = name;
+            } else {
+            	callList.removeElementAt( i );
+            }
             i++;
         }
     }
@@ -938,6 +952,15 @@ public class robohelp extends SubspaceBot {
     public void handleGotIt( String name, String message ) {
         boolean recorded = false;
         int i = 0;
+        
+        if(callList.size()==0) {
+        	// A staffer did "on it" while there was no call to take.
+        	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
+        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim. The last person to claim a call was "+this.lastStafferClaimedCall+".");
+        	else 
+        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim.");
+        }
+        
         while( !recorded && i < callList.size() ) {
             EventData e = (EventData)callList.elementAt( i );
             if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
@@ -949,7 +972,8 @@ public class robohelp extends SubspaceBot {
         }
     }
 
-    public void handleChat( String name, String message ) {
+    // NOT USED
+    /*public void handleChat( String name, String message ) {
         try {
             message = message.toLowerCase();
             boolean isON = false, isIT = false;
@@ -1001,7 +1025,7 @@ public class robohelp extends SubspaceBot {
             }
 
         } catch (Exception e) {}
-    }
+    }*/
 
     public void updateStatRecordsONIT( String name ) {
         try {
