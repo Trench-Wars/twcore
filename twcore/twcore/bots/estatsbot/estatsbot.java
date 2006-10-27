@@ -13,13 +13,19 @@ import java.sql.*;
 public class estatsbot extends SubspaceBot {
 
 	HashMap players;
+	HashMap lastPlayers;
 	boolean gameRunning = false;
-	ElimGame thisGame;
+	ElimGame thisGame = null;
+	ElimGame lastGame;
 	String ref;
+	Iterator playerRatingIt;
+	String getRating;
+	boolean ratingBefore = false;
 
 	public estatsbot(BotAction botAction) {
 		super(botAction);
 		players = new HashMap();
+		lastPlayers = new HashMap();
 		EventRequester events = m_botAction.getEventRequester();
 		events.request(events.MESSAGE);
 		events.request(events.PLAYER_DEATH);
@@ -47,7 +53,7 @@ public class estatsbot extends SubspaceBot {
 			handleMessage(event.getMessage());
 		} else if(event.getMessageType() == Message.PRIVATE_MESSAGE) {
 			String name = m_botAction.getPlayerName(event.getPlayerID());
-			if(name.equalsIgnoreCase(ref) && gameRunning) {
+			if(name.equalsIgnoreCase(ref)) {
 				handlePM(event.getMessage());
 			} else if(m_botAction.getOperatorList().isSmod(name) || name.equalsIgnoreCase("ikrit <er>")) {
 				if(event.getMessage().toLowerCase().startsWith("!die")) {
@@ -78,20 +84,76 @@ public class estatsbot extends SubspaceBot {
 	}
 
 	public void handlePM(String message) {
-		try {
-			String type = message.substring(15, message.indexOf(";"));
-			thisGame.setType(type);
-		} catch(Exception e) {}
+		if(gameRunning) {
+			if(message.startsWith("Rating")) {
+				String pieces[] = message.split(": ", 2);
+				String rating = "";
+				for(int k = 0;k < pieces[1].length();k++) {
+					if(pieces[1].charAt(k) == '(') break;
+					rating += pieces[1].charAt(k);
+				}
+				rating = rating.trim();
+				if(ratingBefore) {
+					Player p = (Player)players.get(getRating);
+					p.ratingBefore(rating);
+					if(playerRatingIt.hasNext()) {
+						getRating = (String)playerRatingIt.next();
+						m_botAction.sendPrivateMessage(ref, "!ranking " + getRating);
+					} else {
+						ratingBefore = false;
+						playerRatingIt = lastPlayers.keySet().iterator();
+						if(playerRatingIt.hasNext()) {
+							getRating = (String)playerRatingIt.next();
+							m_botAction.sendPrivateMessage(ref, "!ranking " + getRating);
+						} else {
+							updateSQL();
+						}
+					}
+				} else {
+					Player p = (Player)lastPlayers.get(getRating);
+					p.ratingAfter(rating);
+					if(playerRatingIt.hasNext()) {
+						getRating = (String)playerRatingIt.next();
+						m_botAction.sendPrivateMessage(ref, "!ranking " + getRating);
+					} else {
+						updateSQL();
+					}
+				}
+			} else {
+				try {
+					String type = message.substring(15, message.indexOf(";"));
+					thisGame.setType(type);
+					playerRatingIt = players.keySet().iterator();
+					ratingBefore = true;
+					if(playerRatingIt.hasNext()) {
+						getRating = (String)playerRatingIt.next();
+						m_botAction.sendPrivateMessage(ref, "!ranking " + getRating);
+					} else {
+						ratingBefore = false;
+						playerRatingIt = lastPlayers.keySet().iterator();
+						if(playerRatingIt.hasNext()) {
+							getRating = (String)playerRatingIt.next();
+							m_botAction.sendPrivateMessage(ref, "!ranking " + getRating);
+						} else {
+							updateSQL();
+						}
+					}
+				} catch(Exception e) {}
+			}
+		}
 	}
 
 	public void startGame() {
 		try {
+			lastPlayers = players.clone();
 			players.clear();
 			Iterator it = m_botAction.getPlayingPlayerIterator();
 			while(it.hasNext()) {
 				String name = ((Player)it.next()).getPlayerName();
 				players.put(name.toLowerCase(), new ElimPlayer(name));
 			}
+			if(thisGame != null)
+				lastGame = new ElimGame(thisGame);
 			thisGame = new ElimGame(players.size(), m_botAction.getArenaName().equalsIgnoreCase("elim"));
 			m_botAction.sendPrivateMessage(ref, "!status");
 		} catch(Exception e) {}
@@ -104,14 +166,20 @@ public class estatsbot extends SubspaceBot {
 			} else {
 				thisGame.setWinner("No winner");
 			}
-			m_botAction.SQLQuery("local", thisGame.getQuery());
+			
+		} catch(Exception e) { Tools.printStackTrace(e); }
+	}
+	
+	public void updateSQL() {
+		try {
+			m_botAction.SQLQuery("local", lastGame.getQuery());
 			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnGameID FROM tblElimRound ORDER BY fnGameID DESC");
 			results.next();
 			int gID = results.getInt("fnGameID");
-			Iterator it = players.values().iterator();
+			Iterator it = lastPlayers.values().iterator();
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
-				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(winner)));
+				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner)));
 			}
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
@@ -121,6 +189,7 @@ class ElimPlayer {
 	String name;
 	int kills;
 	int deaths;
+	String rBefore, rAfter;
 
 	public ElimPlayer(String n) {
 		name = n;
@@ -135,10 +204,18 @@ class ElimPlayer {
 	public void addKill() {
 		kills++;
 	}
+	
+	public void ratingBefore(String rating) {
+		rBefore = rating;
+	}
+	
+	public void ratingAfter(String rating) {
+		rAfter = rating;
+	}
 
 	public String getQuery(int gID, boolean won) {
 		int w = 0; if(won) w = 1;
-		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW());";
+		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter");";
 		return query;
 	}
 }
@@ -152,6 +229,13 @@ class ElimGame {
 	public ElimGame(int p, boolean elim) {
 		players = p;
 		isElim = elim;
+	}
+	
+	public ElimGame(ElimGame eg) {
+		gameType = eg.gameType;
+		players = eg.players;
+		winner = eg.winner;
+		isElim = eg.isElim;
 	}
 
 	public void setType(String type) {
