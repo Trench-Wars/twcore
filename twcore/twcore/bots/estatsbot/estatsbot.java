@@ -197,6 +197,8 @@ public class estatsbot extends SubspaceBot {
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
 				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+				m_botAction.sendPrivateMessage("ikrit", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+				m_botAction.SQLQuery("local", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
 			}
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
@@ -234,8 +236,13 @@ class ElimPlayer {
 
 	public String getQuery(int gID, boolean won, int isElim) {
 		int w = 0; if(won) w = 1;
-		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter+");"
-					 + "INSERT INTO tblElimPlayer (fcUserName, fnRating, fnKills, fnDeaths, fnElim, ftUpdated) VALUES('"+Tools.addSlashesToString(name)+"', "+rAfter+", "+killsFromBot+", "+deathsFromBot+", "+isElim+", NOW()) ON DUPLICATE KEY UPDATE fnKills = "+killsFromBot+", fnDeaths = "+deathsFromBot+", ftUpdated = NOW(), fnRating = "+rAfter+";";
+		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter+");";
+		return query;
+	}
+	
+	public String getQuery2(int gID, boolean won, int isElim) {
+		int w = 0; if(won) w = 1;
+		String query = "INSERT INTO tblElimPlayer (fcUserName, fnRating, fnKills, fnDeaths, fnElim, ftUpdated) VALUES('"+Tools.addSlashesToString(name)+"', "+rAfter+", "+killsFromBot+", "+deathsFromBot+", "+isElim+", NOW()) ON DUPLICATE KEY UPDATE fnKills = "+killsFromBot+", fnDeaths = "+deathsFromBot+", ftUpdated = NOW(), fnRating = "+rAfter+";
 		return query;
 	}
 }
