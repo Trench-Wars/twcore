@@ -88,11 +88,25 @@ public class estatsbot extends SubspaceBot {
 			if(message.startsWith("Rating")) {
 				String pieces[] = message.split(": ", 2);
 				String rating = "";
+				String pKills = "";
+				String pDeaths = "";
 				for(int k = 0;k < pieces[1].length();k++) {
 					if(pieces[1].charAt(k) == '(') break;
 					rating += pieces[1].charAt(k);
 				}
 				rating = rating.trim();
+				String pieces2[] = message.split("Kills:", 2);
+				for(int k = 0;k < pieces2[1].length();k++) {
+					if(pieces2[1].charAt(k) == ' ') break;
+					pKills += pieces2[1].charAt(k);
+				}
+				pKills = pKills.trim();
+				String pieces3[] = message.split("Deaths:", 2);
+				for(int k = 0;k < pieces3[1].length();k++) {
+					if(pieces3[1].charAt(k) == ' ') break;
+					pDeaths += pieces3[1].charAt(k);
+				}
+				pDeaths = pDeaths.trim();
 				if(ratingBefore) {
 					ElimPlayer p = (ElimPlayer)players.get(getRating);
 					p.ratingBefore(rating);
@@ -111,7 +125,7 @@ public class estatsbot extends SubspaceBot {
 					}
 				} else {
 					ElimPlayer p = (ElimPlayer)lastPlayers.get(getRating);
-					p.ratingAfter(rating);
+					p.ratingAfter(rating, pKills, pDeaths);
 					if(playerRatingIt.hasNext()) {
 						getRating = (String)playerRatingIt.next();
 						m_botAction.sendPrivateMessage(ref, "!ranking " + getRating);
@@ -177,10 +191,12 @@ public class estatsbot extends SubspaceBot {
 			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnGameID FROM tblElimRound ORDER BY fnGameID DESC");
 			results.next();
 			int gID = results.getInt("fnGameID");
+			int isElim = 0;
+			if(!lastGame.isElim) isElim = 1;
 			Iterator it = lastPlayers.values().iterator();
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
-				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner)));
+				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
 			}
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
@@ -190,7 +206,7 @@ class ElimPlayer {
 	String name;
 	int kills;
 	int deaths;
-	String rBefore, rAfter;
+	String rBefore, rAfter, killsFromBot, deathsFromBot;
 
 	public ElimPlayer(String n) {
 		name = n;
@@ -210,13 +226,16 @@ class ElimPlayer {
 		rBefore = rating;
 	}
 	
-	public void ratingAfter(String rating) {
+	public void ratingAfter(String rating, String kFB, String dFB) {
 		rAfter = rating;
+		killsFromBot = kFB;
+		deathsFromBot = dFB;
 	}
 
-	public String getQuery(int gID, boolean won) {
+	public String getQuery(int gID, boolean won, int isElim) {
 		int w = 0; if(won) w = 1;
-		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter+");";
+		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter+");"
+					 + "INSERT INTO tblElimPlayer (fcUserName, fnRating, fnKills, fnDeaths, fnElim, ftUpdated) VALUES('"+Tools.addSlashesToString(name)+"', "+rAfter+", "+killsFromBot+", "+deathsFromBot+", "+isElim+", NOW()) ON DUPLICATE KEY UPDATE fnKills = "+killsFromBot+", fnDeaths = "+deathsFromBot+", ftUpdated = NOW(), fnRating = "+rAfter+";";
 		return query;
 	}
 }
