@@ -93,7 +93,6 @@ public class estatsbot extends SubspaceBot {
 					rating += pieces[1].charAt(k);
 				}
 				rating = rating.trim();
-				m_botAction.sendPrivateMessage("ikrit", getRating + " " + rating + " " + ratingBefore);
 				if(ratingBefore) {
 					ElimPlayer p = (ElimPlayer)players.get(getRating);
 					p.ratingBefore(rating);
