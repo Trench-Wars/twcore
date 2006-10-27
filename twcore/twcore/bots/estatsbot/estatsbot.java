@@ -94,7 +94,7 @@ public class estatsbot extends SubspaceBot {
 				}
 				rating = rating.trim();
 				if(ratingBefore) {
-					Player p = (Player)players.get(getRating);
+					ElimPlayer p = (ElimPlayer)players.get(getRating);
 					p.ratingBefore(rating);
 					if(playerRatingIt.hasNext()) {
 						getRating = (String)playerRatingIt.next();
@@ -110,7 +110,7 @@ public class estatsbot extends SubspaceBot {
 						}
 					}
 				} else {
-					Player p = (Player)lastPlayers.get(getRating);
+					ElimPlayer p = (ElimPlayer)lastPlayers.get(getRating);
 					p.ratingAfter(rating);
 					if(playerRatingIt.hasNext()) {
 						getRating = (String)playerRatingIt.next();
@@ -215,7 +215,7 @@ class ElimPlayer {
 
 	public String getQuery(int gID, boolean won) {
 		int w = 0; if(won) w = 1;
-		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter");";
+		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter+");";
 		return query;
 	}
 }
