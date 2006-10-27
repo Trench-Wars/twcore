@@ -16,7 +16,7 @@ public class estatsbot extends SubspaceBot {
 	HashMap lastPlayers;
 	boolean gameRunning = false;
 	ElimGame thisGame = null;
-	ElimGame lastGame;
+	ElimGame lastGame = null;
 	String ref;
 	Iterator playerRatingIt;
 	String getRating;
@@ -145,7 +145,7 @@ public class estatsbot extends SubspaceBot {
 
 	public void startGame() {
 		try {
-			lastPlayers = players.clone();
+			lastPlayers = (HashMap)players.clone();
 			players.clear();
 			Iterator it = m_botAction.getPlayingPlayerIterator();
 			while(it.hasNext()) {
@@ -171,6 +171,7 @@ public class estatsbot extends SubspaceBot {
 	}
 	
 	public void updateSQL() {
+		if(lastGame == null) return;
 		try {
 			m_botAction.SQLQuery("local", lastGame.getQuery());
 			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnGameID FROM tblElimRound ORDER BY fnGameID DESC");
