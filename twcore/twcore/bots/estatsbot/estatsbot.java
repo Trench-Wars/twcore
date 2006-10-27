@@ -197,7 +197,7 @@ public class estatsbot extends SubspaceBot {
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
 				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
-				m_botAction.sendPrivateMessage("ikrit", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+			//	m_botAction.sendPrivateMessage("ikrit", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
 				m_botAction.SQLQuery("local", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
 			}
 		} catch(Exception e) { Tools.printStackTrace(e); }
