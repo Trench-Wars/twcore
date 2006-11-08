@@ -55,6 +55,13 @@ public class twrcbot extends SubspaceBot
 	 */
 	public void handleEvent(LoggedOn event)
 	{
+		m_botAction.sendUnfilteredPublicMessage("?blogin bangme");
+		TimerTask t = new TimerTask() {
+			public void run() {
+				m_botAction.sendUnfilteredPublicMessage("?liftban #14791");
+			}
+		};
+		m_botAction.scheduleTask(t, 5000);
 		m_botAction.joinArena("twrc");
 		String allOps = m_botSettings.getString("TWRC Ops");
 		String ops[] = allOps.split(":");
