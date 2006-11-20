@@ -121,13 +121,13 @@ public class pubbasebot extends SubspaceBot {
 	}
 	
 	public void handleEvent(PlayerDeath event) {
-		boolean tked=fales;
+		boolean tked=false;
 		if(!isRunning) return;
 		String killer = m_botAction.getPlayerName(event.getKillerID());
 		String killee = m_botAction.getPlayerName(event.getKilleeID()).toLowerCase();
 		if(killer != null) {
 			killer = killer.toLowerCase();
-			if(killer.getFreq().equals(killed.getFreq())){
+			if(killer.getFreq().equals(killer.getFreq())){
 				tked = true;
 			}
 			playerStats.get(killer).addKill(killee.getShipType(),killer.getShipType(),tked);
