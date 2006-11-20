@@ -1,10 +1,12 @@
 package twcore.bots.twbot;
 
-import twcore.core.*;
-import twcore.core.events.*;
-import twcore.core.game.*;
-import twcore.core.util.*;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Random;
+
+import twcore.bots.TWBotExtension;
+import twcore.core.events.Message;
+import twcore.core.game.Player;
+import twcore.core.util.StringBag;
 
 /**
  * Random module
