@@ -1,65 +1,111 @@
 package twcore.bots.accessbot;
 
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.stats.DBPlayerData;
 
-import java.util.*;
-import java.sql.*;
-
+/**
+ * Accessbot
+ * This bot is used for updating access to the website.
+ * 
+ * @author UNKNOWN
+ * 
+ */
 public class accessbot extends SubspaceBot {
-
-	String access_name;
 
 	CommandInterpreter  m_commandInterpreter;
 
+	/**
+	 * Initializes the EventRequester to only request Messages to be sent to this bot
+	 * 
+	 * @param botAction
+	 */
 	public accessbot( BotAction botAction ) {
         super( botAction );
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
-        events.request( EventRequester.PLAYER_POSITION );
     }
 
+    /**
+     * Handles the messages sent to the bot
+     * Available commands: !help !update !die [All SMOD+]
+     * 
+     * @param event Event object of handled event (packet)
+     */
     public void handleEvent( Message event ){
         String message = event.getMessage();
+        
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
-            if( m_botAction.getOperatorList().isSmod( name ) )
+            
+            // Checks if the operator is SMod or higher
+            if( m_botAction.getOperatorList().isSmod( name ) ) {
+            	if( message.startsWith( "!help")) {
+            		m_botAction.sendPrivateMessage(name, "Available commands: !help !update !die");
+            	}
             	if( message.startsWith( "!update" ) ) {
-            		access_name = name;
-                	updateAccess( name, message );
-                } else if( message.startsWith( "!die" ) )
+                	updateAccess( name );
+                } else if( message.startsWith( "!die" ) ) {
                 	m_botAction.die();
-            	else if( message.startsWith( "!watch" ) )
-            		m_botAction.spectatePlayer( name );
-       }
+                }
+            } else {
+            	// Sends a message if the operator isn't the correct level
+            	m_botAction.sendPrivateMessage(name, "Only a super moderator or higher can use this bot.");
+            }
+        }
     }
 
+    /**
+     * Handles the spawning of the bot, puts the bot in the correct initial arena
+     * @param event LoggedOn 
+     */
     public void handleEvent( LoggedOn event ){
         BotSettings m_botSettings = m_botAction.getBotSettings();
         String initialArena = m_botSettings.getString( "Arena" );
         m_botAction.joinArena( initialArena );
     }
 
-	public void updateAccess( String name, String message ) {
+    /**
+     * Updates access from staff lists to the trenchwars.org database
+     * @param name Operator's name
+     */
+	public void updateAccess( String name ) {
 		if( !m_botAction.SQLisOperational()	) {
 			m_botAction.sendSmartPrivateMessage( name, "Unable to update staff access, database down." );
 			return;
 		}
-	    m_botAction.sendSmartPrivateMessage( access_name, "Please hold, updating staff access." );
+	    
 		try {
-
-		//Used to cycle through those who have staff rank on local.
-		ResultSet result = m_botAction.SQLQuery( "local", "SELECT fnUserID, fnRankID, fnUserRankID FROM `tblUserRank` WHERE fnRankID > 4 AND fnRankID < 10" );
+			//Used to cycle through those who have staff rank on local.
+			ResultSet result = m_botAction.SQLQuery( "local", "SELECT fnUserID, fnRankID, fnUserRankID FROM `tblUserRank` WHERE fnRankID > 4 AND fnRankID < 10" );
+			
+			if(result == null) {
+				m_botAction.sendSmartPrivateMessage( name, "Unable to update staff access, database down." );
+				return;
+			}
+			
+			m_botAction.sendSmartPrivateMessage( name, "Please hold, updating staff access..." );
+			
 			while( result.next() ) {
 				int userId = result.getInt( "fnUserID" );
 				int rankId = result.getInt( "fnRankID" );
 				int userRankId = result.getInt( "fnUserRankID" );
+				
 				ResultSet result2 = m_botAction.SQLQuery( "local", "SELECT fcUserName FROM `tblUser` WHERE fnUserID = \""+userId+"\"" );
+				
 				if( result2.next() ) {
-        				String curPlayer = result2.getString( "fcUserName" );
+        			String curPlayer = result2.getString( "fcUserName" );
 					DBPlayerData man = new DBPlayerData( m_botAction, "local", result2.getString( "fcUserName" ) );
 					if( m_botAction.getOperatorList().isSysop( curPlayer ) ) {
 						//if( rankId != 9 )
@@ -85,6 +131,7 @@ public class accessbot extends SubspaceBot {
 					}
 				}
 			}
+			
 			Map access = m_botAction.getOperatorList().getList();
 			Set set = access.keySet();
 			Iterator it = set.iterator();
@@ -109,8 +156,14 @@ public class accessbot extends SubspaceBot {
 					}
 			}
 
-			m_botAction.sendSmartPrivateMessage( access_name, "Access updated" );
-		} catch (Exception e ) { m_botAction.sendArenaMessage( ""+e ); }
+			m_botAction.sendSmartPrivateMessage( name, "Done updating staff access" );
+			
+		} catch (SQLException e ) { 
+			// Inform operator about the exception
+			m_botAction.sendSmartPrivateMessage(name, "An error has occurred while updating the staff access.");
+			m_botAction.sendSmartPrivateMessage(name, "Please contact a bot developer with the following information: " + e.getMessage());
+			m_botAction.sendSmartPrivateMessage(name, e.toString());
+		}
     }
 
 }
