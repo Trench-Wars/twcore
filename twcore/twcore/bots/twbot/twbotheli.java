@@ -73,11 +73,11 @@ public class twbotheli extends TWBotExtension
 			}
 		};
 		m_botAction.scheduleTaskAtFixedRate(nextWall, speed, speed);
-		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*4 + speed/2, speed*4);
+		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*8 + speed/2, speed*8);
 	}
 	
 	public void nextWall() {
-		int slope = rand.nextInt(3) - 2;
+		int slope = (rand.nextInt(100) - 50) / 25;
 		slope *= 16;
 		int distance = rand.nextInt(2) + 1;
 		Ship ship = m_botAction.getShip();
