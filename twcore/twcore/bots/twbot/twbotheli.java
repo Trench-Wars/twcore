@@ -20,6 +20,7 @@ public class twbotheli extends TWBotExtension
 	int y = 0;
 	int x = 0;
 	int Slope = 4;
+	int yDiff = 0;
 
 	public twbotheli()
 	{
@@ -69,6 +70,7 @@ public class twbotheli extends TWBotExtension
 		Ship ship = m_botAction.getShip();
 		y = ship.getY();
 		x = ship.getX();
+		yDiff = 0;
 		nextWall = new TimerTask() {
 			public void run() {
 				nextWall();
@@ -85,6 +87,11 @@ public class twbotheli extends TWBotExtension
 	
 	public void nextWall() {
 		int slope = (rand.nextInt(200) - 100) / (100 / Slope);
+		if(yDiff > 25 && slope > 0) {
+			slope *= -1;
+		} else if(yDiff < -25 && slope < 0) {
+			slope *= -1;
+		}
 		slope *= 16;
 		int distance = rand.nextInt(50) / 10;
 		Ship ship = m_botAction.getShip();
@@ -93,6 +100,7 @@ public class twbotheli extends TWBotExtension
 			ship.moveAndFire(x, y + 25*16, getWeapon('#'));
 			x += move;
 			y -= slope;
+			yDiff += slope / 16;
 			if(x > (1024 * 16)) {
 				m_botAction.cancelTasks();
 			}
