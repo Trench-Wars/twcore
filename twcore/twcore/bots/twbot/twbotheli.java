@@ -73,13 +73,13 @@ public class twbotheli extends TWBotExtension
 			}
 		};
 		m_botAction.scheduleTaskAtFixedRate(nextWall, speed, speed);
-		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*4, speed*4);
+		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*4 + speed/2, speed*4);
 	}
 	
 	public void nextWall() {
-		int slope = rand.nextInt(6) - 3;
+		int slope = rand.nextInt(3) - 2;
 		slope *= 16;
-		int distance = rand.nextInt(5);
+		int distance = rand.nextInt(2) + 1;
 		Ship ship = m_botAction.getShip();
 		for(int k = 0;k < distance;k++) {
 			ship.moveAndFire(x, y, getWeapon('#'));
@@ -94,10 +94,12 @@ public class twbotheli extends TWBotExtension
 	
 	public void nextBarrier() {
 		Ship ship = m_botAction.getShip();
-		int tiles = rand.nextInt(10);
-		int length = rand.nextInt(3) + 2;
+		int tiles = rand.nextInt(25);
+		int length = 6;
+		int yStart = y;
+		int xStart = x;
 		for(int k = 0;k < length;k++) {
-			ship.moveAndFire(x, y + tiles*16 + k * 16, getWeapon('*'));
+			ship.moveAndFire(xStart, yStart + tiles*16 + k * 16, getWeapon('*'));
 		}
 	}
 
