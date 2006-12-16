@@ -82,7 +82,7 @@ public class twbotheli extends TWBotExtension
 			}
 		};
 		m_botAction.scheduleTaskAtFixedRate(nextWall, speed, speed);
-		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*8 + speed/2, speed*12);
+		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*8 + speed/2, speed*8);
 	}
 	
 	public void nextWall() {
