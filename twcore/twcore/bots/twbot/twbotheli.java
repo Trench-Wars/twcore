@@ -15,7 +15,7 @@ public class twbotheli extends TWBotExtension
 	int move = 16;
 	int speed = 100;
 	TimerTask nextWall;
-	TimerTask nextBarier;
+	TimerTask nextBarrier;
 	Random rand = new Random();
 	int y = 0;
 	int x = 0;
