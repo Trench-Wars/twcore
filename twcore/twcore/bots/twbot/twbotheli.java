@@ -57,7 +57,7 @@ public class twbotheli extends TWBotExtension
 		}
 	}
 
-	public void startThing(String name, String message)
+	public void startThing()
 	{
 		Ship ship = m_botAction.getShip();
 		y = ship.getY();
