@@ -19,6 +19,7 @@ public class twbotheli extends TWBotExtension
 	Random rand = new Random();
 	int y = 0;
 	int x = 0;
+	int Slope = 4;
 
 	public twbotheli()
 	{
@@ -54,6 +55,10 @@ public class twbotheli extends TWBotExtension
 			try {
 				speed = Integer.parseInt(message.substring(10));
 			} catch(Exception e) {}
+		} else if(message.toLowerCase().startsWith("!setslope ")) {
+			try {
+				Slope = Integer.parseInt(message.substring(10));
+			} catch(Exception e) {}
 		}
 	}
 
@@ -73,18 +78,18 @@ public class twbotheli extends TWBotExtension
 			}
 		};
 		m_botAction.scheduleTaskAtFixedRate(nextWall, speed, speed);
-		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*8 + speed/2, speed*8);
+		m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed*8 + speed/2, speed*12);
 	}
 	
 	public void nextWall() {
-		int slope = (rand.nextInt(100) - 50) / 25;
+		int slope = (rand.nextInt(200) - 100) / (100 / Slope);
 		slope *= 16;
-		int distance = rand.nextInt(2) + 1;
+		int distance = rand.nextInt(50) / 10;
 		Ship ship = m_botAction.getShip();
 		for(int k = 0;k < distance;k++) {
 			ship.moveAndFire(x, y, getWeapon('#'));
 			ship.moveAndFire(x, y + 25*16, getWeapon('#'));
-			x += 16;
+			x += move;
 			y -= slope;
 			if(x > (1024 * 16)) {
 				m_botAction.cancelTasks();
@@ -96,6 +101,7 @@ public class twbotheli extends TWBotExtension
 		Ship ship = m_botAction.getShip();
 		int tiles = rand.nextInt(25);
 		int length = 6;
+		if(19 - tiles < 0) length += 19 - tiles;
 		int yStart = y;
 		int xStart = x;
 		for(int k = 0;k < length;k++) {
@@ -124,7 +130,7 @@ public class twbotheli extends TWBotExtension
 	public String[] getHelpMessages()
 	{
 		String[] blah = {
-			"!draw <url>        -Draws the text file at <url>.",
+			"!start",
 			"!specbot           -Puts bot into spectator mode."
 		};
 		return blah;
