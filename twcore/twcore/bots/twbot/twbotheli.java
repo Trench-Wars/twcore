@@ -59,6 +59,8 @@ public class twbotheli extends TWBotExtension
 			try {
 				Slope = Integer.parseInt(message.substring(10));
 			} catch(Exception e) {}
+		} else if(message.toLowerCase().startsWith("!stop")) {
+			m_botAction.cancelTasks();
 		}
 	}
 
