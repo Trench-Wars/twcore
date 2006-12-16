@@ -83,7 +83,7 @@ public class twbotheli extends TWBotExtension
 		Ship ship = m_botAction.getShip();
 		for(int k = 0;k < distance;k++) {
 			ship.moveAndFire(x, y, getWeapon('#'));
-			ship.moveAndFire(x, y + 160, getWeapon('#'));
+			ship.moveAndFire(x, y + 25*16, getWeapon('#'));
 			x += 16;
 			y -= slope;
 			if(x > (1024 * 16)) {
