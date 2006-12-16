@@ -12,14 +12,14 @@ import java.net.*;
 public class twbotheli extends TWBotExtension
 {
 
-	int move = 16;
+	int move = 48;
 	int speed = 100;
 	TimerTask nextWall;
 	TimerTask nextBarrier;
 	Random rand = new Random();
 	int y = 0;
 	int x = 0;
-	int Slope = 4;
+	int Slope = 3;
 	int yDiff = 0;
 
 	public twbotheli()
@@ -140,7 +140,11 @@ public class twbotheli extends TWBotExtension
 	public String[] getHelpMessages()
 	{
 		String[] blah = {
-			"!start",
+			"!start             -DURRRRRRRRRRRRRRRRRRRRR",
+			"!setmove #         -Sets distance between barrier mines.",
+			"!setslope #        -Sets difficulty increases in difficulty as you get higher.",
+			"!setspeed #        -Sets bot's speed in milliseconds.",
+			"!stop              -DURRRRRRRRRRRRRRRRRRRRR",
 			"!specbot           -Puts bot into spectator mode."
 		};
 		return blah;
