@@ -1,0 +1,14 @@
+
+ TODO:
+ Function to determine if goal is scored on Left or Right goal
+ Distance calculated depends on left/right
+ Crease calculated on goal scored upon, not both
+ Host is PMed with the snipe message, etc.
+ 
+ !help commandlist
+ !rules rules of hockey
+ !grant <command> <name>
+ !ungrant <command> <name>
+ commentary in a special chat channel
+ check divide by zeros
+ !start !stop
