@@ -12,7 +12,6 @@ import java.util.*;
 
 public class f1bot extends SubspaceBot {
 
-	// Test change - Nockm
     static f1bot static_f1bot;
 
 
