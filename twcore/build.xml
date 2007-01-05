@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="twcore" default="all" basedir=".">
+        
+    <target name="all" depends="core,bots" description="Builds the entire TWCore distribution">    	
+    </target>
+    
+    <target name="core" description="Builds the TWCore core">
+    	<echo>Creating Temporary Directory</echo>
+    	<mkdir dir="temp"></mkdir>
+    	<echo>Compiling Core (this may take a moment)</echo>
+    	<javac srcdir="twcore/core" destdir="temp"/>    	    
+    	<javac classpath="temp" srcdir="twcore/bots" destdir="temp">
+    		<include name="**.java"/>    			
+    	</javac>
+    	<echo>Creating Jar File</echo>
+    	<jar destfile="twcore.jar">
+    		<fileset dir="temp"></fileset>
+    	</jar>
+    	<echo>Deleting Temporary Directory</echo>
+    	<delete dir="temp"/>
+    </target>    
+      
+    <target name="bots" description="Builds the TWCore bots">
+    	<echo>Compiling Bots (this may take a moment)</echo>
+    	<javac classpath="twcore.jar" srcdir="twcore/bots" destdir="."/>
+    </target> 
+
+    <target name="clean" description="Deletes the jar and all class files">
+    	<echo>Deleting Files</echo>
+  		<delete>  			
+  			<fileset dir=".">
+  				<include name="twcore.jar"/>
+  			</fileset>
+    		<fileset dir="twcore">
+		        <include name="**/**.class"/>
+		    </fileset>
+    	</delete>
+    </target>
+    
+</project>
