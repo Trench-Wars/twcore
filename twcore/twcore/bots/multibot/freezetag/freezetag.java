@@ -382,6 +382,8 @@ public class freezetag extends MultiModule {
                 m_botAction.specAll();
                 m_botAction.sendArenaMessage( "This game of freeze tag has "
                 + "been cancelled by " + name + ".", 13 );
+                m_botAction.sendArenaMessage( "If you are still frozen, PM "
+                + "!leave to " + m_botAction.getBotName() + " to be put to spectator.");
                 m_botAction.toggleLocked();
         } else {
                 m_botAction.sendPrivateMessage( name, "Freeze Tag mode is not "
