@@ -52,10 +52,25 @@ class Arena
 	public static final Position SINBIN_RIGHT = new Position ( 520, 442 );
 	public static final Position SINSPOT_LEFT = new Position ( 8080, 9172 );
 	public static final Position SINSPOT_RIGHT = new Position ( 8326, 9172 );
-
+	
+	
+	
 	public static boolean IsInFoCircle( Position pos )
 	{
 		return pos.IsInsideCircle( Arena.FACEOFF_CIRCLE_CENTER, Arena.FACEOFF_CIRCLE_RADIUS );
+	}
+
+	public static boolean IsInCrease( Position pos, int freq )
+	{
+		if( freq == 0 )
+			if( IsInCrease( pos, Arena.CREASE_CENTER_LEFT ) )
+				return true;
+
+		if( freq == 1 )
+			if( IsInCrease( pos, Arena.CREASE_CENTER_RIGHT ) )
+				return true;
+
+		return false;
 	}
 
 	public static boolean IsInCrease( Position pos )

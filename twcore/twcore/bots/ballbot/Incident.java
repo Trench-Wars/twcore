@@ -30,8 +30,6 @@ public class Incident
 	public static final int INCIDENT_PICKUP = 4;
 	public static final int INCIDENT_POST = 5;
 	
-	public int m_incidentType;
-
 	public int m_ballId;
 	public int m_playerId;
 	public int m_x;
@@ -39,6 +37,12 @@ public class Incident
 	public int m_vx;
 	public int m_vy;
 	public int m_timeStamp;
+	public int m_shipType;
+	
+	public int m_incidentType;
+
+	public Position m_pos;
+	public Position m_vel;
 
 	public String m_playerName;
 	public int m_freq = -1;
@@ -54,15 +58,22 @@ public class Incident
 		m_vy = event.getYVelocity();
 		m_timeStamp = event.getTimeStamp();
 		
-		// Copy incident type
+		// Data that doesn't exist in BallPosition
 		m_incidentType = incidentType;
-
-		// Use m_botAction to store convenience data for later use
+		m_pos = new Position( m_x, m_y );
+		m_vel = new Position( m_vx, m_vy );
 		m_playerName = bot.m_botAction.getPlayerName( m_playerId );
 		Player player = bot.m_botAction.getPlayer( m_playerId );
 
+
 		if( player != null )
+		{
 			m_freq = player.getFrequency();
+			m_shipType = player.getShipType();
+		}
+		else
+		{
+		}
 	}
 	
 	public Position GetPosition()

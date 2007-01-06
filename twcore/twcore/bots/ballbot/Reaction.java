@@ -44,31 +44,66 @@ public class Reaction
 			State.Override( State.FACE_OFF, 1 );
 		}
 		
-		if( picker.m_freq != passer.m_freq )
-			OnSteal( picker, passer );
-		else
-			OnCompletedPass( picker, passer );
+		if( State.Is( State.REG_PLAY ) || State.Is( State.FREE_PLAY ) )
+		{			
+			int dcCall = Interpret.GetDcCall( picker, passer );
+			
+			if( dcCall == Interpret.DC_CALL_DC )
+			{
+				OnDefensiveCrease( picker, passer );
+			}
+			
+			if( dcCall == Interpret.DC_CALL_BDC )
+			{
+				OnBadDefensiveCrease( picker, passer );
+			}
+
+			if( picker.m_freq != passer.m_freq )
+			{
+				OnSteal( picker, passer );
+			}
+			else
+			{
+				OnCompletedPass( picker, passer );
+			}
+		}
+	}
+	
+	private static void OnDefensiveCrease( Incident picker, Incident passer )
+	{
+		Speech.SayGoal( "DC against " + picker.m_playerName );
+	}
+	
+	private static void OnBadDefensiveCrease( Incident picker, Incident passer )
+	{
+		Speech.SayGoal( "BDC against " + picker.m_playerName );		
 	}
 
 	private static void OnSteal( Incident picker, Incident passer)
 	{
+		return;
+		/*
 		if( passer.m_playerName == null )
 			Speech.SayIncident( picker.m_playerName + " takes the ball" );
 		else
-			Speech.SayIncident( picker.m_playerName + " steals from " + passer.m_playerName );
+			Speech.SayIncident( picker.m_playerName + " steals from " + passer.m_playerName );*/
 	}
 
 	private static void OnCompletedPass( Incident picker, Incident passer)
 	{
+		return;/*
 		if( picker.m_playerId == passer.m_playerId )
 			Speech.SayIncident( passer.m_playerName + " passes to self!" );
 		else
-			Speech.SayIncident( passer.m_playerName + " passes to " + picker.m_playerName );
+			Speech.SayIncident( passer.m_playerName + " passes to " + picker.m_playerName );*/
 	}
 
 	public static void OnGoal( IncidentHistory history )
 	{
-		State.Override( State.SPOT_PUCK_BEFORE_FACE_OFF, 3 );
+		if( State.Is( REG_PLAY ) )
+		{
+			State.Override( State.SPOT_PUCK_BEFORE_FACE_OFF, 3 );
+		}
 		
 		Incident shot = history.GetIncident( 1 );
 
@@ -105,6 +140,7 @@ public class Reaction
 				" [" +
 				"  Distance: " + Unsorted.GetDistanceString( shotDistance ) +
 				"  Speed: " + Unsorted.GetSpeedString( shotSpeed ) +
+				"  Perfection: " + Unsorted.GetPerfectionString( dinkness ) +
 				" ]" );
 		Speech.SayGoal( Interpret.GetAssistantsString( history ) );
 

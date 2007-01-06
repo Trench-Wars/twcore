@@ -8,6 +8,12 @@ import twcore.core.events.BallPosition;
 
 import java.util.*;
 
+class GameStats
+{
+	int scoreA;
+	int scoreB;
+}
+
 public class State
 {
 	public static final int INVALID = 0;
@@ -22,13 +28,30 @@ public class State
 	private static Date ms_changeoverAt = null;
 	private static boolean ms_acknowledgedStateChange = true;
 	
+	private static boolean ms_autoHost = false;
+	
 	public static void Tick()
 	{
 		Update();
 	}	
 	
-	private static void Update()
+	public static void SetAutoHost( boolean autoHost )
 	{
+		ms_autoHost = autoHost;
+	}
+	
+	private static void Update()
+	{				
+		// Safety-catch
+		if( !ms_autoHost )
+		{
+			if( !Is( FREE_PLAY ) )
+			{
+				ms_currentState = FREE_PLAY;
+				ms_changeoverAt = null;
+			}
+		}
+		
 		if( !ms_acknowledgedStateChange )
 		{
 			ms_acknowledgedStateChange = true;
@@ -59,13 +82,13 @@ public class State
 			Speech.SayGoal( "Free play" );
 			break;
 		case REG_PLAY:
-			Speech.SayGoal( "GO!!!!!!!!!!" );
+			Speech.SayGoal( "GO!", 104 );
 			break;
 		case SPOT_PUCK_BEFORE_FACE_OFF:
-			Speech.SayGoal( "Grab the puck begin face-off" );
+			Speech.SayGoal( "Grab puck to begin the face-off", 17 );
 			break;
 		case FACE_OFF:
-			Speech.SayGoal( "Face off begins in 10 seconds... " );
+			Speech.SayGoal( "Face off begins in 10 seconds.", 14 );
 			State.Override( State.REG_PLAY, 10 );
 			break;
 		default:

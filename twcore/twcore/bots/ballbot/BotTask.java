@@ -56,6 +56,33 @@ public class BotTask
 		return acc;
 	}
 	
+	public static boolean IsGoalieInOwnCrease( int freq )
+	{		
+		Iterator it = m_bot.m_botAction.getPlayerIterator();
+		
+		while( it.hasNext() )
+		{
+			Player player = (Player)it.next();
+			
+			// Is it a goalie?
+			if( ( player.getShipType() == 7 ) || ( player.getShipType() == 8 ) )				
+			{
+				// In the specified frequency?
+				if( player.getFrequency() == freq )
+				{
+					// Is it in the crease?
+					Position goaliePos = new Position( player.getXLocation(), player.getYLocation() );
+					if( Arena.IsInCrease( goaliePos, player.getFrequency() ) )
+					{
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
 	public static void PlacePuckInCenter( Player victim, Position grabPos )
 	{		
 		int oldShipType = victim.getShipType();

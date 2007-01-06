@@ -30,22 +30,43 @@ import twcore.core.util.Tools;
 import java.util.*;
 import java.lang.Integer;
 
-class BotCommand_SetState extends Command
+class BotCommand_StartAutoHost extends Command
 {
-	BotCommand_SetState()
+	BotCommand_StartAutoHost()
 	{
 		super();
 		
-		m_description = "Test bot state machine";
-		m_command = "!state";
-		m_commandArgs = "<now> <until> <next>";
-		m_accessLevel = OperatorList.ER_LEVEL;
+		m_description = "Begin auto-host";
+		m_command = "!start";
+		m_commandArgs = "";
+		m_accessLevel = CommandRegistry.OPERATORLIST_ANYONE;
 		m_msgTypeFilter.SetPrivate( true );
 	}
 
 	void Execute( ballbot bot, Message message )
 	{	
+		State.SetAutoHost( true );
 		State.Override( State.SPOT_PUCK_BEFORE_FACE_OFF, 2 );
+	}
+}
+
+class BotCommand_EndAutoHost extends Command
+{
+	BotCommand_EndAutoHost()
+	{
+		super();
+		
+		m_description = "End auto-host";
+		m_command = "!stop";
+		m_commandArgs = "";
+		m_accessLevel = CommandRegistry.OPERATORLIST_ANYONE;
+		m_msgTypeFilter.SetPrivate( true );
+	}
+
+	void Execute( ballbot bot, Message message )
+	{	
+		State.SetAutoHost( false );
+		State.Override( State.REG_PLAY, 2 );
 	}
 }
 
@@ -58,7 +79,7 @@ class BotCommand_Enter extends Command
 		m_description = "Makes bot enter arena";
 		m_command = "!enter";
 		m_commandArgs = "";
-		m_accessLevel = OperatorList.ER_LEVEL;
+		m_accessLevel = CommandRegistry.OPERATORLIST_ANYONE;
 		m_msgTypeFilter.SetPrivate( true );
 	}
 
@@ -80,7 +101,7 @@ class BotCommand_Help extends Command
 		m_description = "Show this help";
 		m_command = "!help";
 		m_commandArgs = "";
-		m_accessLevel = OperatorList.ER_LEVEL;
+		m_accessLevel = CommandRegistry.OPERATORLIST_ANYONE;
 		m_msgTypeFilter.SetPrivate( true );
 	}
 
@@ -104,7 +125,7 @@ class BotCommand_SetSnipeMessage extends Command
 		m_description = "Set the snipe message";
 		m_command = "!snipe";
 		m_commandArgs = "<msg>";
-		m_accessLevel = OperatorList.ER_LEVEL;
+		m_accessLevel = CommandRegistry.OPERATORLIST_ANYONE;
 		m_msgTypeFilter.SetPrivate( true );
 	}
 	
@@ -134,7 +155,7 @@ class BotCommand_WhereAmI extends Command
 		
 		m_description = "Get your current coordinates";
 		m_command = "!whereami";
-		m_accessLevel = OperatorList.ER_LEVEL;
+		m_accessLevel = CommandRegistry.OPERATORLIST_ANYONE;
 		m_msgTypeFilter.SetPrivate( true );
 	}
 

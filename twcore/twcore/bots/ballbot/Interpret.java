@@ -16,6 +16,47 @@ package twcore.bots.ballbot;
 import java.util.*;
 public class Interpret
 {
+	public static final int DC_CALL_DC = 0;
+	public static final int DC_CALL_BDC = 1;
+	public static final int DC_CALL_NODC = 2;
+
+	public static int GetDcCall( Incident picker, Incident passer )
+	{
+		// NoDC if picker is goalie
+		if( ( picker.m_shipType == 8 ) || ( picker.m_shipType == 7 ) )
+		{
+			//Speech.SayIncident( "NoDC: passer was on same team" );
+			return DC_CALL_NODC;
+		}
+		
+		// NoDC if passer is on same team
+		if( picker.m_freq == passer.m_freq )
+		{
+			//Speech.SayIncident( "NoDC: passer was on same team" );
+			return DC_CALL_NODC;
+		}
+		
+		// NoDC if picker wasn't in his own crease		
+		if( !Arena.IsInCrease( picker.m_pos, picker.m_freq ) )
+		{
+			//Speech.SayIncident( "NoDC: picker wasn't in his own crease		" );
+			return DC_CALL_NODC;
+		}
+
+		// NoDC if picker's goalie(s) were out of crease
+		if( !BotTask.IsGoalieInOwnCrease( picker.m_freq ) )
+		{
+			//Speech.SayIncident( "NoDC: picker's goalie(s) were out of crease" );
+			return DC_CALL_NODC;
+		}
+		
+		// Was the shot going in? (Regardless of where goalie was... need to take goalie into account on a later revision...)
+		if( GetDinkness( passer.m_pos, passer.m_vel ) > 0 )
+			return DC_CALL_BDC;
+		else
+			return DC_CALL_DC;
+	}
+	
 	public static String GetAssistantsString( IncidentHistory history )
 	{
 		String[] assistants = Interpret.GetAssistants( history );
