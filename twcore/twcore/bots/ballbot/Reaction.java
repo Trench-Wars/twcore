@@ -36,6 +36,14 @@ public class Reaction
 
 	public static void OnPickup( Incident picker, Incident passer )
 	{
+		if( State.Is( State.FACE_OFF ) || State.Is( State.SPOT_PUCK_BEFORE_FACE_OFF ) )
+		{
+			Player spotter = BotTask.GetPlayer( picker.m_playerId );
+			Position grabPos = new Position( picker.m_x, picker.m_y );
+			BotTask.PlacePuckInCenter( spotter, grabPos );
+			State.Override( State.FACE_OFF, 1 );
+		}
+		
 		if( picker.m_freq != passer.m_freq )
 			OnSteal( picker, passer );
 		else
@@ -60,6 +68,8 @@ public class Reaction
 
 	public static void OnGoal( IncidentHistory history )
 	{
+		State.Override( State.SPOT_PUCK_BEFORE_FACE_OFF, 3 );
+		
 		Incident shot = history.GetIncident( 1 );
 
 		if( Arena.IsInCrease( shot.GetPosition() ) )

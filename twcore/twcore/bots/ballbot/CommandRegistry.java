@@ -31,6 +31,7 @@ public class CommandRegistry
 		m_rgdCommands.addElement( new BotCommand_SetSnipeMessage() );
 		m_rgdCommands.addElement( new BotCommand_Help() );
 		m_rgdCommands.addElement( new BotCommand_Enter() );	
+		m_rgdCommands.addElement( new BotCommand_SetState() );	
 	}
 
 	public void ProcessMessage( Message msg, ballbot bot )

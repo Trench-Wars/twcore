@@ -30,6 +30,25 @@ import twcore.core.util.Tools;
 import java.util.*;
 import java.lang.Integer;
 
+class BotCommand_SetState extends Command
+{
+	BotCommand_SetState()
+	{
+		super();
+		
+		m_description = "Test bot state machine";
+		m_command = "!state";
+		m_commandArgs = "<now> <until> <next>";
+		m_accessLevel = OperatorList.ER_LEVEL;
+		m_msgTypeFilter.SetPrivate( true );
+	}
+
+	void Execute( ballbot bot, Message message )
+	{	
+		State.Override( State.SPOT_PUCK_BEFORE_FACE_OFF, 2 );
+	}
+}
+
 class BotCommand_Enter extends Command
 {
 	BotCommand_Enter()

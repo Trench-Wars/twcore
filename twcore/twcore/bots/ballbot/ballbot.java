@@ -6,6 +6,8 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.BallPosition;
 
+import java.util.*;
+
 public class ballbot extends SubspaceBot
 {	
 	public CommandRegistry m_commandRegistry;
@@ -31,6 +33,7 @@ public class ballbot extends SubspaceBot
 		
 		// Static speech class needs a bot to use to talk
 		Speech.m_bot = this;
+		BotTask.m_bot = this;
 	}
 
 
@@ -52,11 +55,13 @@ public class ballbot extends SubspaceBot
 	
 	public void handleEvent( PlayerPosition event )
 	{
+		State.Tick();
 		m_posMonitor.SubmitEvent( event, this );
 	}
 	
 	public void handleEvent( BallPosition event )
 	{
+		State.Tick();
 		m_ballMonitor.SubmitEvent( event, this );
 	}
 	
