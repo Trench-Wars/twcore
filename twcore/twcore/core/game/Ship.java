@@ -6,7 +6,7 @@ import twcore.core.net.GamePacketGenerator;
 
 /**
  * Representation of the bot as as a Subspace ship for in-game playing.
- * 
+ *
  * @author  harvey
  */
 public class Ship extends Thread {
@@ -14,11 +14,15 @@ public class Ship extends Thread {
     public static final double VELOCITY_TIME = 10000.0;     // # ms to divide velocity by
                                                             //   to determine distance
 
+	public static final byte WARBIRD = 0, JAVELIN = 1, SPIDER = 2, LEVIATHAN = 3,
+							 TERRIER = 4, WEASEL = 5, LANCASTER = 6, SHARK = 7,
+							 SPEC = 8, PLAYING = 9, ALL = 10;
+
     private int         m_movingUpdateTime  = 100;          // How often a moving ship's
                                                             //   position is updated
     private int         m_unmovingUpdateTime = 1000;        // How often an unmoving ship's
                                                             //   position is updated
-    
+
     private short       x = 8192;           // X coord (0-16384)
     private short       y = 8192;           // Y coord (0-16384)
     private short       xVel = 0;           // X velocity (# pixels traveled in 10 secs)
@@ -38,8 +42,23 @@ public class Ship extends Thread {
     private int m_pAge = (int)System.currentTimeMillis();   // Last time packet sent
 
     private GamePacketGenerator     m_gen;  // Packet generator
-    
+
     private final short SPEC_SHIP = 8;
+
+	/**
+	 * Converts a ship type from the 1-8, 0 is spec format used in Player's
+	 * getShipType() method to the 0-7, 8 is spec format of the constants.
+	 * @param shipType the old style ship type to convert
+	 * @return the adjusted ship type value
+	 */
+    public static byte typeToConstant(byte shipType)
+    {
+    	shipType--;
+    	if(shipType == -1)
+    		shipType = SPEC;
+
+    	return shipType;
+    }
 
     /**
      * Create a new instance of the Ship class (a separate program Thread).
@@ -99,7 +118,7 @@ public class Ship extends Thread {
      * Returns whether or not a position packet needs to be sent.  If the velocity
      * has changed, the direction the ship is facing has changed, or the time since
      * the last packet update is greater than or equal to the update interval for
-     * an unmoving ship, this method will return true. 
+     * an unmoving ship, this method will return true.
      * @return True if a position packet needs to be sent
      */
     public boolean needsToBeSent()
@@ -126,7 +145,7 @@ public class Ship extends Thread {
         m_gen.sendPositionPacket( direction, (short)xVel, (short)y, (byte)togglables, (short)x, (short)yVel, (short)bounty, (short)energy, (short)weapon );
         m_pAge = (int)System.currentTimeMillis();
     }
-    
+
     /**
      * Sets various ship-related fields (not all are movement-related), and then sends
      * a position packet.
@@ -193,7 +212,7 @@ public class Ship extends Thread {
         if( shipType != SPEC_SHIP )
             sendPositionPacket();
     }
-    
+
     /**
      * Similar to move(int, int) except that it also causes the ship to fire the
      * specified weapon.
@@ -222,7 +241,7 @@ public class Ship extends Thread {
     {
         this.lastXV = this.xVel;
         this.lastYV = this.yVel;
-        this.lastD = this.direction; 
+        this.lastD = this.direction;
         this.xVel = (short)xVel;
         this.yVel = (short)yVel;
         this.direction = (byte)direction;
@@ -245,7 +264,7 @@ public class Ship extends Thread {
         if( shipType != SPEC_SHIP )
             sendPositionPacket();
     }
-    
+
     /**
      * Sets direction the ship is facing, in radians.
      * @param rads Radian direction to face ship
@@ -259,7 +278,7 @@ public class Ship extends Thread {
      * @param degrees Direction the ship is facing, in degrees
      */
     public void rotateDegrees( int degrees ){
-        if( degrees == 0 ) 
+        if( degrees == 0 )
             degrees = 360;
         int rotate = (Math.round( (float)degrees / (float)9 ) + 10) % 40;
         setRotation( rotate );
@@ -299,13 +318,13 @@ public class Ship extends Thread {
     public void unattach(){
         m_gen.sendAttachRequestPacket( (short)-1 );
     }
-    
+
     /**
      * Sets the time between position packet updates for when the bot is moving.
      * @param updateTime Time in ms between position packets while in movement
      */
     public void setMovingUpdateTime( int updateTime ) {
-        m_movingUpdateTime = updateTime;        
+        m_movingUpdateTime = updateTime;
     }
 
     /**
@@ -323,28 +342,28 @@ public class Ship extends Thread {
     public short getX(){
         return x;
     }
-    
+
     /**
      * @return Current y coordinate
      */
     public short getY(){
         return y;
     }
-    
+
     /**
      * @return Ship type (0-7 in-game, 8 spec'd)
      */
     public short getShip() {
         return shipType;
     }
-    
+
     /**
      * @return Direction ship is facing, in SS degrees (0-39)
      */
     public short getDirection() {
         return direction;
     }
-    
+
     /**
      * Returns a weapon number as used by the SS protocol based on information provided.
      * @param weaponType Type of weapon (0-15)
@@ -360,37 +379,37 @@ public class Ship extends Thread {
     {
     	BitSet bits = new BitSet(16);
     	bits.set(11, false);
-    	
+
     	if(weaponType >= 8) { bits.set(12, true); weaponType -= 8; }
     	if(weaponType >= 4) { bits.set(13, true); weaponType -= 4; }
     	if(weaponType >= 2) { bits.set(14, true); weaponType -= 2; }
     	if(weaponType >= 1) { bits.set(15, true); weaponType -= 1; }
-    	
+
     	if(weaponLevel >= 2) { bits.set(9, true); weaponLevel -= 2; }
     	if(weaponLevel >= 1) { bits.set(10, true); weaponLevel -= 1; }
-    	
+
     	if(bouncing) bits.set(8, true);
-    	
+
     	if(isEMP) bits.set(7, true);
-    	
+
     	if(isBomb) bits.set(6, true);
-    	
+
     	if(shrap >= 16) { bits.set(1, true); shrap -= 16; }
     	if(shrap >= 8) { bits.set(2, true); shrap -= 8; }
     	if(shrap >= 4) { bits.set(3, true); shrap -= 4; }
     	if(shrap >= 2) { bits.set(4, true); shrap -= 2; }
     	if(shrap >= 1) { bits.set(5, true); shrap -= 1; }
-    	
+
     	if(alternate) bits.set(0, true);
-    	
+
     	int total = 0;
     	int factor = 1;
-    	
+
     	for(int k = 15;k >= 0;k--) {
     		if(bits.get(k)) total += factor;
     		factor *= 2;
     	}
-    	
+
     	return total;
     }
 
@@ -400,7 +419,7 @@ public class Ship extends Thread {
     public int getAge() {
         return (int)System.currentTimeMillis() - m_mAge;
     }
-    
+
     /**
      * @return Interval in ms between position packet sendings while ship is moving
      */
@@ -413,5 +432,5 @@ public class Ship extends Thread {
      */
     public int getUnmovingUpdateTime() {
         return m_unmovingUpdateTime;
-    }    
+    }
 }
