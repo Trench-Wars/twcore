@@ -1,5 +1,13 @@
 package twcore.core;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.HashSet;
 
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.FileArrived;
@@ -58,6 +66,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage" );
         m_commandInterpreter.registerCommand( "!listbottypes", acceptedMessages, this, "handleListBotTypes" );
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess" );
+        m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
         m_commandInterpreter.registerCommand( "!restartlog", acceptedMessages, this, "handleClose");
 
@@ -286,6 +295,163 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but (s)he tried !listbots " + message );
         }
     }
+    
+    /**
+     * Lists operators registered with this hub/bots
+     * @param messager Name of the player who sent the command
+     * @param message Bot type to list
+     */
+    public void handleListOperators( String messager, String message ){
+
+    	int linelength = 63;
+    	
+        if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
+        	OperatorList list = m_botAction.getOperatorList();
+        	
+        	// Owners
+        	HashSet<String> owners = (list.getAllOfAccessLevel(OperatorList.OWNER_LEVEL));
+        	if(owners.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "Owners ("+owners.size()+"):");
+        		
+        		String pm = "  ";
+        		
+        		for(String owner:owners) {
+        			if(pm.length() < linelength) {
+        				pm += owner + ", ";
+        			} else {
+        				m_botAction.sendSmartPrivateMessage(messager, pm);
+        				pm = "  ";
+        			}
+        		}
+        		if(pm.length()>0) {
+        			m_botAction.sendSmartPrivateMessage(messager, pm);
+        		}
+        	}
+        	
+        	// Sysops
+        	HashSet<String> sysops = (list.getAllOfAccessLevel(OperatorList.SYSOP_LEVEL));
+        	if(sysops.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "Sysops ("+sysops.size()+"):");
+        		
+        		String pm = "  ";
+        		
+        		for(String sysop:sysops) {
+        			if(pm.length() < linelength) {
+        				pm += sysop + ", ";
+        			} else {
+        				m_botAction.sendSmartPrivateMessage(messager, pm);
+        				pm = "  ";
+        			}
+        		}
+        		if(pm.length()>0) {
+        			m_botAction.sendSmartPrivateMessage(messager, pm);
+        		}
+        	}
+        	
+        	// Smods
+        	HashSet<String> smods = (list.getAllOfAccessLevel(OperatorList.SMOD_LEVEL));
+        	if(smods.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "SMods ("+smods.size()+"):");
+        		
+        		String pm = "  ";
+        		
+        		for(String smod:smods) {
+        			if(pm.length() < linelength) {
+        				pm += smod + ", ";
+        			} else {
+        				m_botAction.sendSmartPrivateMessage(messager, pm);
+        				pm = "  ";
+        			}
+        		}
+        		if(pm.length()>0) {
+        			m_botAction.sendSmartPrivateMessage(messager, pm);
+        		}
+        	}
+        	
+        	// Mods
+        	HashSet<String> mods = (list.getAllOfAccessLevel(OperatorList.MODERATOR_LEVEL));
+        	if(mods.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "Mods ("+mods.size()+"):");
+        		
+        		String pm = "  ";
+        		
+        		for(String mod:mods) {
+        			if(pm.length() < linelength) {
+        				pm += mod + ", ";
+        			} else {
+        				m_botAction.sendSmartPrivateMessage(messager, pm);
+        				pm = "  ";
+        			}
+        		}
+        		if(pm.length()>0) {
+        			m_botAction.sendSmartPrivateMessage(messager, pm);
+        		}
+        	}
+        	
+        	// ERs
+        	HashSet<String> ers = (list.getAllOfAccessLevel(OperatorList.ER_LEVEL));
+        	if(ers.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "ERs ("+ers.size()+"):");
+        		
+        		String pm = "  ";
+        		
+        		for(String er:ers) {
+        			if(pm.length() < linelength) {
+        				pm += er + ", ";
+        			} else {
+        				m_botAction.sendSmartPrivateMessage(messager, pm);
+        				pm = "  ";
+        			}
+        		}
+        		if(pm.length()>0) {
+        			m_botAction.sendSmartPrivateMessage(messager, pm);
+        		}
+        	}
+        	
+        	// ZHs
+        	HashSet<String> zhs = (list.getAllOfAccessLevel(OperatorList.ZH_LEVEL));
+        	if(zhs.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "ZHs ("+zhs.size()+"):");
+        		
+        		String pm = "  ";
+        		
+        		for(String zh:zhs) {
+        			if(pm.length() < linelength) {
+        				pm += zh + ", ";
+        			} else {
+        				m_botAction.sendSmartPrivateMessage(messager, pm);
+        				pm = "  ";
+        			}
+        		}
+        		if(pm.length()>0) {
+        			m_botAction.sendSmartPrivateMessage(messager, pm);
+        		}
+        	}
+        	
+        	// Outsiders
+        	HashSet<String> outsiders = (list.getAllOfAccessLevel(OperatorList.OUTSIDER_LEVEL));
+        	if(outsiders.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "Outsiders ("+outsiders.size()+"):");
+        		
+        		String pm = "  ";
+        		
+        		for(String outsider:outsiders) {
+        			if(pm.length() < linelength) {
+        				pm += outsider + ", ";
+        			} else {
+        				m_botAction.sendSmartPrivateMessage(messager, pm);
+        				pm = "  ";
+        			}
+        		}
+        		if(pm.length()>0) {
+        			m_botAction.sendSmartPrivateMessage(messager, pm);
+        		}
+        	}
+        	
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but (s)he tried !listoperators " + message );
+        }
+    }
 
     /**
      * Sends an appropriate help message based on access privileges.
@@ -305,6 +471,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbottypes      - Lists the number of each bot type currently in use." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbots <type>   - Lists the names and spawners of a bot type." );
+            m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
         }
 
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
