@@ -317,11 +317,11 @@ public class OperatorList {
      * @param accessLevel A number corresponding to the OperatorList access standard
      * @return HashSet of all players of that access level.
      */
-    public HashSet getAllOfAccessLevel( int accessLevel ) {
+    public HashSet<String> getAllOfAccessLevel( int accessLevel ) {
         if( accessLevel < ZH_LEVEL || accessLevel > OWNER_LEVEL )
             return null;
 
-        HashSet gathered = new HashSet();
+        HashSet<String> gathered = new HashSet<String>();
         Iterator i = m_accessList.keySet().iterator();
         String player;
 
