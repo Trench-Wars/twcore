@@ -18,7 +18,7 @@ import twcore.core.util.Tools;
  * register the commands using the registerCommand method; send all Message events
  * received by your bot to the CommandInterpreter for handling.
  * <p>
- * Some examples of how to use various methods:<p><code><pre> 
+ * Some examples of how to use various methods:<p><code><pre>
  * registerCommand( "!help", Message.PRIVATE_MESSAGE, this, cmdHelp );
  * registerCommand( "!die", Message.PUBLIC_MESSAGE, this, cmdDie, "!die - Kills bot" );
  * registerCommand( "8th", Message.CHAT_MESSAGE, this, cmdSell, "8th - sell", OperatorList.HIGHMOD_LEVEL );
@@ -36,9 +36,9 @@ import twcore.core.util.Tools;
  * @version 1.5
  */
 public class CommandInterpreter {
-    private Map         m_commands;         // (String)Command trigger -> (Command) 
-    private BotAction   m_botAction;        // BotAction reference
-    private int         m_allCommandTypes;  // Bitvector holding all msg types handled
+    private Map<String, Command>    m_commands;         // (String)Command trigger -> (Command)
+    private BotAction               m_botAction;        // BotAction reference
+    private int                     m_allCommandTypes;  // Bitvector holding all msg types handled
 
     /**
      * Creates a new instance of CommandInterpreter.
@@ -48,16 +48,16 @@ public class CommandInterpreter {
 
         m_allCommandTypes = 0;
         m_botAction = botAction;
-        m_commands = Collections.synchronizedMap( new HashMap() );
+        m_commands = Collections.synchronizedMap( new HashMap<String, Command>() );
     }
 
     /**
      * Registers a command with a provided trigger, message type, class, and method
      * name.  The trigger is automatically defined as the default help message, and
      * the required access level will be set by default to 0 (no special access required).
-     * 
+     *
      * @param trigger The text trigger of the command, such as "!help" or "!go"
-     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types 
+     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types
      * @param methodClass Class to register the command with (use <code>this</code>)
      * @param methodName Method of methodClass to be called if the command's trigger and type match
      */
@@ -70,9 +70,9 @@ public class CommandInterpreter {
      * Registers a command with a provided trigger, message type, class, method
      * name, and help message.  Required access level will default to 0 (no special
      * access required).
-     * 
+     *
      * @param trigger The text trigger of the command, such as "!help" or "!go"
-     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types 
+     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types
      * @param methodClass Class to register the command with (use <code>this</code>)
      * @param methodName Method of methodClass to be called if the command's trigger and type match
      * @param helpMessage Help message used in getCommandHelps() and getCommandHelpsForAccessLevel()
@@ -86,9 +86,9 @@ public class CommandInterpreter {
      * Registers a command with a provided trigger, message type, class, method
      * name, and minimum necessary access level to execute.  The trigger is
      * automatically defined as the default help message.
-     * 
+     *
      * @param trigger The text trigger of the command, such as "!help" or "!go"
-     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types 
+     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types
      * @param methodClass Class to register the command with (use <code>this</code>)
      * @param methodName Method of methodClass to be called if the command's trigger and type match
      * @param opLevelReq Minimum access level needed to access this command as defined in OperatorList
@@ -101,9 +101,9 @@ public class CommandInterpreter {
     /**
      * Registers a command with a provided trigger, message type, class, method
      * name, help message, and minimum necessary access level to execute.
-     * 
+     *
      * @param trigger The text trigger of the command, such as "!help" or "!go"
-     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types 
+     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types
      * @param methodClass Class to register the command with (use <code>this</code>)
      * @param methodName Method of methodClass to be called if the command's trigger and type match
      * @param helpMessage Help message used in getCommandHelps() and getCommandHelpsForAccessLevel()
@@ -118,7 +118,7 @@ public class CommandInterpreter {
      * Registers a default command.  A default command is the command that executes when
      * no other command is found for the specified message type.
      *
-     * @param messageType Message type accepted as defined in Message (use only one) 
+     * @param messageType Message type accepted as defined in Message (use only one)
      * @param methodClass Class to register the command with (use <code>this</code>)
      * @param methodName Method of methodClass to be called when no trigger that accepts the message type matches
      */
@@ -130,23 +130,23 @@ public class CommandInterpreter {
      * Registers an automated !help command that PMs a help display to a player
      * based on access level.  If you do not define access levels for commands,
      * all commands will be displayed.
-     * 
-     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types 
+     *
+     * @param messageTypes Message types accepted as defined in Message; use | (bit OR) to combine multiple types
      * @param methodClass Class to register the command with (use <code>this</code>)
      */
     public void registerHelpCommand( int messageTypes, Object methodClass ){
         registerCommand( "!help", messageTypes, methodClass, "__autohelp" );
     }
-    
+
     /**
      * Returns all registered help messages, regardless of access level.  Use if you
      * are not specifying minimum access levels for your commands.
      * @return Vector as a collection containing the strings of all help messages
      */
     public Collection getCommandHelps(){
-        Vector      helps = new Vector( m_commands.size() );
-        Iterator    i = m_commands.keySet().iterator();
-        Command     command;
+        Vector<String>  helps = new Vector<String>( m_commands.size() );
+        Iterator        i = m_commands.keySet().iterator();
+        Command         command;
 
         while( i.hasNext() ){
             String      commandKey = (String)i.next();
@@ -167,16 +167,16 @@ public class CommandInterpreter {
      * @return Vector as a collection containing the strings of all help msgs for a given access level
      */
     public Collection getCommandHelpsForAccessLevel( int accessLevel ) {
-        Vector      helps = new Vector( m_commands.size() );
-        Iterator    i = m_commands.keySet().iterator();
-        Command     command;
+        Vector<String>  helps = new Vector<String>( m_commands.size() );
+        Iterator        i = m_commands.keySet().iterator();
+        Command         command;
 
         while( i.hasNext() ){
             String      commandKey = (String)i.next();
             command = (Command)m_commands.get( commandKey );
             if( command != null ){
-                if( !command.getHelpString().equals( "" ) && !command.getHelpString().startsWith( "default" ) && 
-                        accessLevel >= command.getOpLevelReq() ){                    
+                if( !command.getHelpString().equals( "" ) && !command.getHelpString().startsWith( "default" ) &&
+                        accessLevel >= command.getOpLevelReq() ){
                     helps.add( command.getHelpString() );
                 }
             }
@@ -206,7 +206,7 @@ public class CommandInterpreter {
      * Handles the Message event for a bot to interpret any incoming commands.
      * In order for CommandInterpreter to work properly, this method must be
      * called every time the bot received a Message event.
-     * 
+     *
      * The method checks the message text against its list of triggers, and if
      * message types & required access levels match, executes the command's
      * registered method.
@@ -220,7 +220,7 @@ public class CommandInterpreter {
         int             seperatorIndex;
 
         String          message;
-        String          messager;
+        String          messager = null;
         String          methodName;
         int             messageType;
 
@@ -245,16 +245,14 @@ public class CommandInterpreter {
         if( command == null ){
             seperatorIndex = 0;
             command = (Command)m_commands.get( "default" + messageType );
-        }
 
-        if( command != null ){
+        } else { //command != null
+
             if( (command.getMessageTypes() & messageType) != 0 ){
-                message = message.substring( seperatorIndex ).trim();
-                messager = event.getMessager();
-
-                if( messager == null ){
+                if(messageType == Message.REMOTE_PRIVATE_MESSAGE)
+                    messager = event.getMessager();
+                else
                     messager = m_botAction.getPlayerName( event.getPlayerID() );
-                }
 
                 if( messager == null ){
                     messager = "";
@@ -262,6 +260,8 @@ public class CommandInterpreter {
                     if( command.getOpLevelReq() > 0 )
                         return false;
                 }
+
+                message = message.substring( seperatorIndex ).trim();
 
                 if( m_botAction.getOperatorList().getAccessLevel( messager ) >= command.getOpLevelReq() ) {
                     try {
@@ -286,8 +286,8 @@ public class CommandInterpreter {
 
         return result;
     }
-    
-    
+
+
     /**
      * Stores all needed information on a given command.
      *
@@ -300,7 +300,7 @@ public class CommandInterpreter {
         private String      m_methodName;       // Method to call in class on command match
         private String      m_helpString;       // Text returned for help on this command
         private int         m_messageTypes;     // Message types accepted for this cmd (bitvector; see Message)
-        private int         m_opLevelReq;       // Minimum access level required to use cmd (see OperatorList) 
+        private int         m_opLevelReq;       // Minimum access level required to use cmd (see OperatorList)
 
 
         /**
@@ -343,5 +343,5 @@ public class CommandInterpreter {
         public int getOpLevelReq(){
             return m_opLevelReq;
         }
-    }    
+    }
 }
