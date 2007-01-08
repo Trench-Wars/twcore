@@ -46,7 +46,7 @@ public class BotAction
     private Timer               m_timer;            // Timer used to schedule TimerTasks
     private String              m_arenaName;        // Name of arena bot is currently in
     private Session             m_botSession;       // Reference to bot's Session
-    private LinkedList          m_timerTasks;       // List of TimerTasks being run
+    private LinkedList<TimerTask> m_timerTasks;       // List of TimerTasks being run
     private Arena               m_arenaTracker;     // Arena tracker holding player/flag data
     private GamePacketGenerator m_packetGenerator;  // Packet creator
     private Objset              m_objectSet;        // For automation of LVZ object setting
@@ -65,7 +65,7 @@ public class BotAction
         m_timer = timer;
         m_arenaTracker = arena;
         m_botSession = botSession;
-        m_timerTasks = new LinkedList();
+        m_timerTasks = new LinkedList<TimerTask>();
         m_packetGenerator = packetGenerator;
         m_botNumber = botNum;
         m_objectSet = new Objset();
@@ -1800,7 +1800,7 @@ public class BotAction
      */
     public void moveToTile(int x, int y)
     {
-        m_botSession.getShip().move(x * 16, y * 16);
+        m_botSession.getShip().move(x * 16 + 7, y * 16 + 7);
     }
 
     /**
@@ -2437,6 +2437,45 @@ public class BotAction
     public int getServerPort() {
         return getCoreData().getServerPort();
     }
+
+    /**
+     * @return The server time difference in 100ths of a second.
+     */
+	public int getServerTimeDifference() {
+		return m_packetGenerator.getServerTimeDifference();
+    }
+
+	/**
+	 * @return The server time in 100ths of a second.
+	 */
+    public int getServerTime() {
+    	return (int)(System.currentTimeMillis() / 10) + m_packetGenerator.getServerTimeDifference();
+    }
+
+    /**
+     * Used to expand the 2-byte timestamp in PlayPosition events to full 4-byte timestamp.
+     * @return The expanded timstamp in 100ths of a second.
+     */
+   	public int expandPlayerPositionTimestamp(int timestampLow) {
+
+		int timestampHi = getServerTime();// & 0x7FFFFFFF;
+		int serverTimeLow = timestampHi & 0x0000FFFF;
+		timestampLow &= 0x0000FFFF;
+
+		//outTimestamp &= 0xFFFF0000;
+
+		if(serverTimeLow >= timestampLow) {
+			if(serverTimeLow - timestampLow > 0x00007FFF) {
+				timestampHi += 0x00010000;
+			}
+		} else {
+			if(timestampLow - serverTimeLow > 0x00007FFF) {
+				timestampHi -= 0x00010000;
+			}
+		}
+		return (timestampHi & 0xFFFF0000) | timestampLow;
+	}
+
 
     /**
      * Gets the state of the bot.  This is only important from an internal
