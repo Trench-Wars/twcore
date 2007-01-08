@@ -13,7 +13,7 @@ public class GamePacketGenerator {
 
     private Timer                 m_timer;          // Schedules clustered packets
     private TimerTask             m_timerTask;      // Clustered packet send task
-    private List                  m_messageList;    // Msgs waiting for clustered send
+    private List<ByteArray>       m_messageList;    // Msgs waiting for clustered send
     private SSEncryption          m_ssEncryption;   // Encryption class
     private Sender                m_outboundQueue;  // Outgoing packet queue
     private int                   m_serverTimeDifference;   // Diff (*tinfo)
@@ -32,7 +32,7 @@ public class GamePacketGenerator {
         m_serverTimeDifference = 0;
         m_ssEncryption = ssEncryption;
         m_outboundQueue = outboundQueue;
-        m_messageList = Collections.synchronizedList(new LinkedList());
+        m_messageList = Collections.synchronizedList(new LinkedList<ByteArray>());
 
         m_timerTask = new TimerTask(){
             public void run(){
@@ -171,6 +171,13 @@ public class GamePacketGenerator {
     }
 
     /**
+     * Get server time difference
+     */
+    public int getServerTimeDifference() {
+    	return m_serverTimeDifference;
+    }
+
+    /**
      * Sends a reliable message that must receive an ACKnowledged packet in
      * response.  The ReliablePacketHandler will continue to resend the packet
      * until the ACK message is received.
@@ -211,7 +218,7 @@ public class GamePacketGenerator {
 
         bytearray.addByte( 0x00 );  // Type byte (specifies bidirectional)
         bytearray.addByte( 0x05 );  // Bidirectional: Synch request
-        bytearray.addLittleEndianInt( (int)((System.currentTimeMillis()/10) & 0xffffffff) );
+        bytearray.addLittleEndianInt( (int)(System.currentTimeMillis() / 10) );
         bytearray.addLittleEndianInt( numPacketsSent );
         bytearray.addLittleEndianInt( numPacketsReceived );
 
@@ -232,7 +239,7 @@ public class GamePacketGenerator {
         bytearray.addByte( 0x00 );  // Type byte (specifies bidirectional)
         bytearray.addByte( 0x06 );  // Bidirectional: Synch response
         bytearray.addLittleEndianInt( syncTime );
-        bytearray.addLittleEndianInt( (int)((System.currentTimeMillis()/10) & 0xffffffff) );
+        bytearray.addLittleEndianInt( (int)(System.currentTimeMillis() / 10) );
 
         composeImmediatePacket( bytearray, 10 );
     }
@@ -240,7 +247,7 @@ public class GamePacketGenerator {
     /**
      * Sends a password packet (C2S 0x09), including all necessary login data,
      * after receiving the server encryption key for this session.
-     * 
+     *
      * NOTE: User MUST exist before attempting to log in.  Core does not create
      * user accounts.
      * @param name Bot's pre-existing login name
@@ -262,9 +269,9 @@ public class GamePacketGenerator {
 
         bytearray.addByte( 0x04 ); // Connection type (UnknownNotRAS)
         bytearray.addByte( 0xE0 ); // Timezone bias (224; 240=EST) - 2 bytes
-        bytearray.addByte( 0x01 ); 
+        bytearray.addByte( 0x01 );
         bytearray.addByte( 0x57 ); // ? - 2bytes
-        bytearray.addByte( 0xFC ); 
+        bytearray.addByte( 0xFC );
 
         bytearray.addLittleEndianShort( (short)134 ); // Client version (SS 1.34)
         bytearray.addLittleEndianInt( 444 );          // Memory checksum
@@ -319,7 +326,7 @@ public class GamePacketGenerator {
 
     /**
      * Sends a position packet based on position information provided.
-     * @param direction Value from 0 to 39 representing direciton ship is facing in SS degrees 
+     * @param direction Value from 0 to 39 representing direciton ship is facing in SS degrees
      * @param xVelocity Velocity ship on the x axis
      * @param yPosition Current y position on the map (0-16384)
      * @param toggle Bitvector for cloak, stealth, UFO status
@@ -337,7 +344,7 @@ public class GamePacketGenerator {
 
         bytearray.addByte( 0x03 );      // Type byte
         bytearray.addByte( direction );
-        bytearray.addLittleEndianInt( (int)((System.currentTimeMillis()/10) & 0xffffffff) + m_serverTimeDifference );
+        bytearray.addLittleEndianInt( (int)(System.currentTimeMillis() / 10) + m_serverTimeDifference );
         bytearray.addLittleEndianShort( xVelocity );
         bytearray.addLittleEndianShort( yPosition );
         bytearray.addByte( 0 );         // Placeholder for the checksum
@@ -366,10 +373,10 @@ public class GamePacketGenerator {
      * @param userID For message types 0x04 and 0x05, player ID of target
      * @param message Text to send
      */
-    public void sendChatPacket( byte messageType, byte soundCode, short userID, String message ){    	
+    public void sendChatPacket( byte messageType, byte soundCode, short userID, String message ){
     	if( message.length() > 243 )
     		message = message.substring(0, 242);		// (hack) Don't send more than SS can handle
-    	
+
         int            size = message.length() + 6;
         ByteArray      bytearray = new ByteArray( size );
 
@@ -474,7 +481,7 @@ public class GamePacketGenerator {
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x08 );  // Type byte
         if( playerID == -1 ) {
-            bytearray.addByte( 0xFF );	// All high bits = stop spectating 
+            bytearray.addByte( 0xFF );	// All high bits = stop spectating
             bytearray.addByte( 0xFF );
         } else
             bytearray.addLittleEndianShort( playerID );
@@ -623,4 +630,5 @@ public class GamePacketGenerator {
 
         composePacket( data );
     }
+
 }
