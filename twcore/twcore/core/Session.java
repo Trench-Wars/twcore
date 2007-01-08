@@ -68,7 +68,7 @@ public class Session extends Thread {
         m_serverPort = m_coreData.getServerPort();
         m_sysopPassword = m_coreData.getGeneralSettings().getString( "Sysop Password" );
     }
-    
+
     public Session( CoreData cdata, Class roboClass, String name, String password, int botNum, ThreadGroup parentGroup, String altIP, int altPort, String altSysop ){
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
@@ -102,6 +102,10 @@ public class Session extends Thread {
         m_ssEncryption = new SSEncryption();
         m_packetGenerator = new GamePacketGenerator( m_outboundQueue, m_ssEncryption, m_timer );
         m_arenaTracker = new Arena( m_packetGenerator );
+        String login = m_password;
+        if(m_sysopPassword.trim().length() > 0)
+        	login += "*" + m_sysopPassword;
+
         m_packetInterpreter =
             new GamePacketInterpreter(
                 this,
@@ -109,7 +113,7 @@ public class Session extends Thread {
                 m_ssEncryption,
                 m_arenaTracker,
                 m_name,
-                m_password + "*" + m_sysopPassword );
+                login );
 
         m_botAction = new BotAction( m_packetGenerator, m_arenaTracker, m_timer, m_botNumber, this );
         m_reliablePacketHandler = new ReliablePacketHandler( m_packetGenerator, m_packetInterpreter, m_ssEncryption );
@@ -223,8 +227,11 @@ public class Session extends Thread {
         }
 
 
-        m_chatLog.flush();
-        m_chatLog.close();
+		if(m_chatLog != null)
+		{
+        	m_chatLog.flush();
+        	m_chatLog.close();
+		}
 
 
         m_socket.disconnect();
