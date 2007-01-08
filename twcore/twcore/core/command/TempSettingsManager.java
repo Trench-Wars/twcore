@@ -45,6 +45,7 @@ public class TempSettingsManager
 	private boolean m_locked;
 	private Vector<TSChangeListener> m_listeners;
 	private String[] customHelp;
+	private Pattern pattern;
 
 	/**
 	 * Creates a new instance of TempSettingsManager.
@@ -86,6 +87,7 @@ public class TempSettingsManager
 		m_settings = new HashMap<String, TempSetting>();
 		m_locked = false;
 		customHelp = null;
+		pattern = Pattern.compile("(\\w+)=((\\w+)|\"([^\"]+)\")");
 	}
 
 	/**
@@ -409,8 +411,7 @@ public class TempSettingsManager
 		}
 		else if(!m_locked)
 		{
-			Matcher regex;
-			regex = Pattern.compile("(\\w+)=((\\w+)|\"([^\"]+)\")").matcher(message);
+			Matcher regex = pattern.matcher(message);
 			while(regex.find())
 			{
 				String old = ""+ getSetting(regex.group(1));
