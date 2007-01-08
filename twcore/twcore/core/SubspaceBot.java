@@ -348,6 +348,17 @@ public abstract class SubspaceBot {
     }
 
     /**
+     * Request this event from EventRequester and override this method in your bot to
+     * handle this event (packet).  If you request this event and do not handle it,
+     * the default behavior defined here will be executed.  If you attempt to handle
+     * the event without requesting it from EventRequester, it will not be handled.
+     * @param event Event object of handled event (packet)
+     */
+    public void handleEvent(TurfFlagUpdate event) {
+    		Tools.printLog(m_botAction.getBotName() + ": TurfFlagUpdate event not handled; ignored");
+    }
+
+    /**
      * Default disconnection behavior (do nothing).  This method is called from
      * Session's disconnect() when the bot has been asked to die.  Override this
      * method to include custom disconnection behavior.  It is recommended if
@@ -358,4 +369,3 @@ public abstract class SubspaceBot {
     }
 
 }
-
