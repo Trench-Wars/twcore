@@ -287,7 +287,7 @@ public class GamePacketInterpreter {
                 m_packetGenerator.sendSyncResponse( array.readLittleEndianInt( 2 ) );
                 break;
             case 0x06:
-                m_packetGenerator.setServerTimeDifference( array.readLittleEndianInt( 2 ) - array.readLittleEndianInt( 6 ) );
+                m_packetGenerator.setServerTimeDifference( array.readLittleEndianInt( 6 ) - array.readLittleEndianInt( 2 ) );
                 break;
             case 0x07:
                 m_session.disconnect();
