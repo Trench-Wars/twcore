@@ -1,0 +1,548 @@
+&TWD &OP|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within (5) minutes of when the ?help call was placed, please leave a message for any of the following Ops found here: http://www.trenchwars.org/index.php?v=staff
+&Squad &Join &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
+&Squadjoin &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
+&Squad &Leave &How|To leave your current squad type ?squadleave.
+&SquadLeave &How|To leave your current squad type ?squadleave.
+&Squad &Create &How|To create a squad type ?squadcreate=Name:Password where <Name> is the name of the squad that you would like to create and <Password> is the squad's password.
+&Squad &Make &How|To make a squad type ?squadcreate=Name:Password where <Name> is the name of the squad that you would like to create and <Password> is the squad's password.
+&SquadCreate &How|To create a squad type ?squadcreate=Name:Password where <Name> is the name of the squad that you would like to create and <Password> is the squad's password.
+&Squad &Dissolve &How|To dissolve your squad type ?squaddissolve.  You must be the owner of the squad to do this.
+&Squaddissolve &How|To dissolve your squad type ?squaddissolve.  You must be the owner of the squad to do this.
+&Squad &Grant &How|To grant a squad to another player type ?squadgrant=Player where <Player> is the name of whom you are granting the squad to.  You must be the owner of the squad to do this.
+&Squadgrant &How|To grant a squad to another player type ?squadgrant=Player where <Player> is the name of whom you are granting the squad to.  You must be the owner of the squad to do this.
+&Squad &Owner &How|To check to see who the squad owner of a specific squad is type ?squadowner Squad where <Squad> is the name of the squad that you are checking.  If nothing returns that means the squad does not exist.
+&Squadowner &How|To check to see who the squad owner of a specific squad is type ?squadowner Squad where <Squad> is the name of the squad that you are checking.  If nothing returns that means the squad does not exist.
+&What &TWD|TWD stands for Trench Wars Divisions.  It is a automated, bot-run league consisting of Warbird dueling (TWDD), Javelin dueling (TWDJ) and Basing (TWDB).  The TWD website can be found at: http://twd.trenchwars.org.
+SayTWDDown|The website has currently lost connectivity with the matchbots which means that any roster changes made on the site will not be recognized by the bots.  Please keep this in mind when challenging other teams.  This issue should be resolved in the next day or two.  Thank you for your patience.
+&Accept &Squad|Squad applications are handled automatically by TWDBot. Please ?go twd and pm the bot with !help (:TWDBot:!help). To sign up a squad you have to be ?squadjoined, ?squadowner of the squad and !registered with TWDBot. If you have any problems with this, please contact a TWD Operator.
+&TWD &Squad|Squad applications are handled automatically by TWDBot. Please ?go twd and pm the bot with !help (:TWDBot:!help). To sign up a squad you have to be ?squadjoined, ?squadowner of the squad and !registered with TWDBot. If you have any problems with this, please contact a TWD Operator.
+RegisterHelp|If you got problems with the !register command, need to change names or other relative things please first read forum theard about how you can do it on your own (http://twd.trenchwars.org/documents/howsignup, ?go twd and :TWDBot:!help). If this guide does not help you and you really need two names registered on your computer, because you have two (or possibly more) TWD/TWL players in your family, please contact a TWD Operator.
+&!register|If you got problems with the !register command, need to change names or other relative things please first read forum theard about how you can do it on your own (http://forums.trenchwars.org/showthread.php?t=13296, ?go twd and :TWDBot:!help). If this guide does not help you and you really need two names registered on your computer, because you have two (or possibly more) TWD/TWL players in your family, please contact a TWD Operator.
+&What &TWEL|TWEL stands for Trench Wars Extreme League, a 1v1 duelling ladder hosted in ?go duel. The TWEL website can be found at: http://www.trenchwars.org/TWEL
+&TWEL &Signup &Problem| If you have problems signing up to the TWEL League because you share your connection with another person, please contact a TWEL Operator which can be found by PM'ing !ops to Duelbot.
+&TWEL &Signup &Problems|If you have problems signing up to the TWEL League because you share your connection with another person, please contact a TWEL Operator which can be found by PM'ing !ops to Duelbot.
+&Elim &What|Elim is an arena dedicated to elimination style matches for fighter ships (Warbird, Spider, Levi and Lancaster).  Everyone is put on their own freq and is specced after a certain number of deaths.  The last person standing is declared the winner.  Teaming, trucing or refusing to fight is illegal.  Elim requires 36 hours of usage.
+&BaseElim &What|BaseElim is an arena dedicated to elimination style matches for base ships (Javelin, Terrier, Weasel and Shark).  Everyone is put on their own freq and is specced after a certain number of deaths.  The last person standing is declared the winner.  Teaming, trucing, refusing to fight or not going to the base is illegal.  BaseElim requires 36 hours of usage.
+&36 &Hours|Elim and BaseElim require a minimum of 36 hours of usage.  If you have that amount but still cannot play, please exit Continuum and re-enter to fix it.
+&Event &List &Where|You can view a list of all events here: http://www.trenchwars.org/Trench_oldskool/index.php?action=Events .
+&Repel +What|When you use a repel, all nearby enemy bullets, bombs and ships will be pushed away from you.  The icon on the right side of your screen depicting a yellow circle indicates the number of repels that your ship currently has.  In public arenas, only the Shark (Ship 8) can equip repels.
+&Repel +How -Buy|To use a repel press <Shift> and <Ctrl> together.  In public arenas, only the Shark (Ship 8) can equip and use repels.
+&Portal +What|When you "drop" a portal, a marker will be placed on the map.  The next time that you warp, you will be transported to the marker as opposed to the spawn area.  Portals expire after a certain amount of time as indicated in the top right hand corner of the screen and you may only have one active portal at a given time.  The icon on the right side of your screen depicting a target indicates the number of portals that your ship currently has.  In public arenas, only the Leviathan (Ship 4), and the Terrier (Ship 5) can equip portals.
+&Portal +How -Buy|To use a portal, press <Shift> and <Ins> at the same time.  In public arenas, only the Leviathan (Ship 4), and the Terrier (Ship 5) can equip and use portals.  
+&Rocket +What|When used, a rocket gives your ship an intense burst of speed for a short period of time.  The icon on the right side of your screen depicting a flaming rocket indicates the number of rockets that your ship currently has.  In public arenas, only the Javelin (Ship 2), the Leviathan (Ship 4), and the Weasel (Ship 6) can equip rockets.
+&Rocket +How -Buy|To use a rocket, press <F3>.  In public arenas, only the Javelin (Ship 2), the Leviathan (Ship 4), and the Weasel (Ship 6) can equip and use rockets.
+&Decoy +What|When used, a decoy creates a false image of your ship that distracts and confuses enemies.  The decoy will disappear after a certain amount of time.  The icon on the right side of your screen depicting a blue triangle indicates the number of decoys that your ship currently has.  In public arenas, all of the ships can equip decoys.
+&Decoy +How -Buy|To use a decoy press <F4>.  In public arenas, all of the ships can equip and use decoys.
+&Burst +What|When used, a burst sends several bouncing bullets flying outwards from your ship.  The burst will not damage enemies until after it has bounced once and will disappear after a certain time.  The icon on the right side of your screen depicting a blue star indicates the number of bursts that your ship currently has.  In public arenas, only the Terrier (Ship 5) can equip bursts.
+&Burst +How -Buy|To use a burst press <Shift> and <Del> at the same time.  In public arenas, only the Terrier (Ship 5) can equip and use bursts.&Thor +What|When used, a thor shoots a powerful bomb from your ship.  This bomb will go through walls and asteroids and will disappear after a certain time.  The icon on the right side of your screen depicting a hammer over a blue background indicates the number of thors that your ship currently has.  In public arenas, no ships can equip thors.
+&Thor +How -Buy|To use a thor, press <F6>  In public arenas, no ships can equip or use thors.
+&Cloak +What|When activated, cloak prevents you from being seen on screen, but not on radar.  Using cloak also drains some of your energy.  In public arenas, only the Weasel (Ship 6) is equipped with cloak.
+&Cloak +How -Buy|To toggle cloak, press <Shift> and <Home> at the same time.  In public arenas, only the Weasel (Ship 6) is equipped with cloak.
+&Stealth +What|When activated, stealth prevents you from being seen on radar, but not on screen.  Stealth also drains some of your energy.  In public arenas, only the Leviathan (Ship 4) and the Weasel (Ship 6) is equipped with stealth.
+&Stealth +How -Buy|To toggle stealth, press <Home>.  In public arenas, only the Leviathan (Ship 4) and the Weasel (Ship 6) is equipped with stealth.
+&Xradar +What|When activated, XRadar allows you to ships that are currently stealthed and / or cloaked.  XRadar drains some of your energy when used.  In public arenas, only the Javelin (Ship 2), the Terrier (Ship 5) and the Lancaster (Ship 7) is equipped with XRadar.
+&Xradar +How -Buy|To toggle XRadar, press <End>.  In public arenas, only the Javelin (Ship 2), the Terrier (Ship 5) and the Lancaster (Ship 7) is equipped with XRadar.
+&Shrap +What|Shrap, or shrapnel, are bullets that fly outwards from bomb explosions.  In public arenas, only the Javelin (Ship 2) and the Shark (Ship 8) are able to equip shrap.
+&Antiwarp +What|When activated, antiwarp prevents enemy ships in radar range from warping, attaching or laying portals.  Antiwarp does not work if you are in a safe zone and it drains some of your energy when used.  In public arenas, only the Spider (Ship 3) is able to equip antiwarp and it must be bought.
+&Antiwarp +How -Buy|To toggle antiwarp, press <Shift> and <End> together.  In public arenas, only the Spider (Ship 3) is able to equip antiwarp and it must be bought.
+&Buy +How|To see a list of items that are available for purchase, type ?buy.  To buy an item, type ?buy Item where <Item> is the item that you wish to buy.  Buying things deducts from your points.  In public arenas, items can only be bought in safe zones.
+&Buy +Where|In public arenas, items can only be bought in safe zones.
+&Attach &How|To attach, select a person on the name list using the <Pg Up> and <Pg Dn> buttons then press <F7>.  Pressing <F7> while attached will make you detach.  In public arenas ships may only attach to the Terrier (Ship 5).
+&Detach &How|To detach, press <F7> when attached.
+&Boost &How|Hold on to shift when going forwards or backwards for a boost in speed.  Boosting takes up energy.
+&Freq &What -Change -Private|In subspace, a frequency is a team.  People with yellow names are on your frequency and the people with blue names are on a different frequency.
+&Frequency &What -Change -Private|In subspace, a frequency is a team.  People with yellow names are on your frequency and the people with blue names are on a different frequency.
+&Freqs &Change &How|To change frequencies, type =Number where <Number> is a number between 0 and 9998.  Any frequencies above 100 will not be seen on the name list.  Example: =1 will switch you to frequency 1.
+&Frequencies &Change &How|To change frequencies, type =Number where <Number> is a number between 0 and 9998.  Any frequencies above 99 will not be seen on the name list.  Example: =1 will switch you to frequency 1.
+&Teams &Change &How|To change frequencies, type =Number where <Number> is a number between 0 and 9998.  Any frequencies above 99 will not be seen on the name list.  Example: =1 will switch you to frequency 1.
+&Freq &Change &How|To change frequencies, type =Number where <Number> is a number between 0 and 9998.  Any frequencies above 100 will not be seen on the name list.  Example: =1 will switch you to frequency 1.
+&Frequency &Change &How|To change frequencies, type =Number where <Number> is a number between 0 and 9998.  Any frequencies above 99 will not be seen on the name list.  Example: =1 will switch you to frequency 1.
+&Team &Change &How|To change frequencies, type =Number where <Number> is a number between 0 and 9998.  Any frequencies above 99 will not be seen on the name list.  Example: =1 will switch you to frequency 1.
+&Freq &Private &How -Chat|To change to a private frequency type =Number where <Number> is a number above 99.  Private frequencies are not shown on the name list.
+&Frequency &Private &How -Chat|To change to a private frequency type =Number where <Number> is a number above 99.  Private frequencies are not shown on the name list.
+&Team &Private &How -Chat|To change to a private frequency type =Number where <Number> is a number above 99.  Private frequencies are not shown on the name list.
+&Ship &How &Change|To change ships, press <Esc> followed by a number from <1> to <8>.  Each number will put you in a different ship.
+&Ships &How &Change|To change ships, press <Esc> followed by a number from <1> to <8>.  Each number will put you in a different ship.
+&Ship &How &Switch|To change ships, press <Esc> followed by a number from <1> to <8>.  Each number will put you in a different ship.
+&Ships &How &Switch|To change ships, press <Esc> followed by a number from <1> to <8>.  Each number will put you in a different ship.
+&Shoot &How|To shoot bullets press <Ctrl>.  To shoot bombs press <Tab>.
+&Ctrl &Broken|If you can not shoot, try right clicking on your mouse several times.  Sometimes this fixes it.
+&Bullets +What|Bullets are the main weapons of most ships.  They usually damage only one target at a time and look like small fast moving balls.  The strength of bullets, from strongest to weakest is as follows: Blue bullets, yellow bullets, and then red bullets.
+&Bullets +How|To shoot bullets press <Ctrl>.  In public arenas all ships except for the Shark (Ship 8) are equipped with bullets and none of them bounce.
+&Bombs +What|Bombs are usually stronger than bullets.  They have area damage and explode on contact with walls.  The strength of bombs, from strongest to weakest is as follows: Blue bombs, yellow bombs, and then red bombs.
+&Bombs +How|To shoot bombs press <Tab>.  In public arenas only the Javelin (Ship 2), the Leviathan (Ship 4) and the Shark (Ship 8) are equipped with bombs.
+&Multi +What|When activated, multifire allows your ship to shoot a wider spread of bullets.  In public arenas, the Warbird (Ship 1), the Spider (Ship 3) and the Shark (Ship 8) are not able to use multifire.
+&Multifire +What| When activated, multifire allows your ship to shoot a wider spread of bullets.  In public arenas, the Warbird (Ship 1), the Spider (Ship 3) and the Shark (Ship 8) are not able to use multifire.
+&Multi +How|To toggle multifire press <Del>.  In public arenas, the Warbird (Ship 1), the Spider (Ship 3) and the Shark (Ship 8) are not able to use multifire.
+&Multifire +How|To toggle multifire press <Del>.  In public arenas, the Warbird (Ship 1), the Spider (Ship 3) and the Shark (Ship 8) are not able to use multifire.
+&Ball &What|The ball is used in games such as hockey or powerball.  Balls can be carried by ships and shot into goals for points.
+&Ball &Shoot &How|To shoot the ball, press <Ins>.
+&Ball &Pick &How|To pick the ball up, simply move over it.
+&Safekill &What|Safekilling is when you kill someone while they are holding the powerball in the safe.
+&Ballkill &What|Ballkilling is when you kill someone while they are holding the powerball in the safe.
+&Mines +What|Mines are stationary bombs that can only be removed if someone runs into them or if they are repelled.  In public arenas, only the Leviathan (Ship 4) and the Shark (Ship 8) can lay mines.
+&Mines +How|To lay mines press <Shift> and <Tab> at the same time.  In public arenas, only the Leviathan (Ship 4) and the Shark (Ship 8) can lay mines.
+&Warp &How|To warp press <Ins>.  You must have full energy to warp without a portal laid.
+&Spec &Mode &How|To enter spec mode press <F11>.
+&Spec &Someone &How|To follow someone in spec mode, select the person you wish to spec using <Pg Up> and <Pg Dn> then press <Ctrl>.
+&Spec &Two &People &How|To follow two people in spec mode, select the first person you wish to spec and press <Ctrl>.  Next, select the second person you wish to spec and press <F4>.
+&Spec &2 &People &How|To follow two people in spec mode, select the first person you wish to spec and press <Ctrl>.  Next, select the second person you wish to spec and press <F4>.
+&Spec &Check &How|To check who is speccing you, type: ?spec.
+&Go &Arena &How|There are 2 ways to switch arenas.  1) Press <Esc> followed by <A> or type ?arena to bring up your arena list.  Select the arena that you wish to go to using the <Pg Up> and <Pg Dn> keys.  Example: ?go Turretwarz.  2) Type ?go Arenaname, where <Arenaname> is the name of the arena you wish to go to.  To go to another public arena simply type ?go Number, where <Number> is the number of the pub.  Example: ?go 1.
+&Change &Arena &How| There are 2 ways to switch arenas.  1) Press <Esc> followed by <A> or type ?arena to bring up your arena list.  Select the arena that you wish to go to using the <Pg Up> and <Pg Dn> keys.  Example: ?go Turretwarz.  2) Type ?go Arenaname, where <Arenaname> is the name of the arena you wish to go to.  To go to another public arena simply type ?go Number, where <Number> is the number of the pub.  Example: ?go 1.
+&Private &Arena &How|To go to a private arena type ?go #Arenaname, where <Arenaname> is the name of the arena you wish to go to.  Example: ?go #PrivateArena.
+&Shoot &Safe &How|In the safe zones in the public arenas, it is possible to shoot by thrusting into the corner.
+&Find &Player &How|To find another player, type ?find Playername, where <Playername> is the name of they person that you would like to find.
+&Find &Someone &How|To find another player, type ?find Playername, where <Playername> is the name of they person that you would like to find.
+&Locate &Someone &How|To find another player, type ?find Playername, where <Playername> is the name of they person that you would like to find.
+&Trace &How|To perform a trace, exit to the splash screen and click on the button labeled "Trace".  A window labeled "Trace Zone" should appear.  Allow the trace to run for a bit and it will tell you where you are picking up your lag.
+&ER &What|ER stands for Event Referee.  They are staff members that are responsible for hosting games and other special events.
+&<ER> &What|ER stands for Event Referee.  They are staff members that are responsible for hosting games and other special events.
+&ZH &What|ZH stands for Zone Helper.  They answer your help questions if I am unable to.
+&<ZH> &What|ZH stands for Zone Helper.  They answer your help questions if I am unable to.
+&Staff &Join &How|SSCU Trench Wars staff is invite only.  Our recruiters look for people that are friendly, helpful, and knowledgeable and who show a desire to improving the zone.  Please do not request to join staff as this greatly decreases your chances.
+&Staff &Become &How|SSCU Trench Wars staff is invite only.  Our recruiters look for people that are friendly, helpful, and knowledgeable and who show a desire to improving the zone.  Please do not request to join staff as this greatly decreases your chances.
+&Staff &Invite|SSCU Trench Wars staff is invite only.  Our recruiters look for people that are friendly, helpful, and knowledgeable and who show a desire to improving the zone.  Please do not request to join staff as this greatly decreases your chances.
+&Sysop &Who|The sysops of SSCU Trench Wars are DoCk> and PriitK.
+Abuse Abusing Abused Abuser|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+&Staff &Complaint|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+Host H0st Ho$t H0$t hozt h-o-s-t tsoh -Zombies -Enigma -Twtown -Twcity -Gatez -Gatez2 -Base -Base2 -Base3 -Wbduel -Wbduel2 -Javduel -Javduel2 -Highschool -Jurassic|Any event referee <ER> can host a sub-arena.  If one is available they will host it.  If no one responds, no host is available.
+&Host &TWTown|TWTown zombies can only be hosted on weekends or when there are more than 650 people in Trench Wars.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&Host &TWCity|TWCity zombies can only be hosted on weekends or when there are more than 650 people in Trench Wars.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&Host &Zombies|Zombies can only be hosted on weekends or when there are more than 650 people in Trench Wars.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&Host &Highschool|Zombies can only be hosted on weekends or when there are more than 650 people in Trench Wars.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&Host &Enigma|Enigma can only be hosted on weekends or when there are more than 650 people in Trench Wars.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&Host &Gatez|Gatez can only be hosted on weekends or hollidays.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&Host &Gatez2|Gatez2 can only be hosted on weekends or hollidays.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&Host &Base|Staff is not allowed to advertise for base.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Base2|Staff is not allowed to advertise for base.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Base3|Staff is not allowed to advertise for base.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Wbduel|Staff is not allowed to advertise for wbduel.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Wbduel2|Staff is not allowed to advertise for wbduel.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Wbduel3|Staff is not allowed to advertise for wbduel.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Javduel|Staff is not allowed to advertise for Javduel.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Javduel2|Staff is not allowed to advertise for Javduel.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Javduel3|Staff is not allowed to advertise for Javduel.  If you already have enough people, then a staff member can start the bot up for you.
+&Host &Tourny|To prevent overhosting, Trench Wars staff has decided to let the TournyBot run only in the weekends from Friday morning till Sunday evening (EST).
+&Host &Bug|Bug can only be hosted on weekends or when there are more than 650 people in Trench Wars.  If these conditions are met and a host is available, someone will host it.  If no one responds, no host is available.
+&PriitK &Email|PriitK's email address is: priitk@trenchwars.org
+&DoCk> &Email|DoCk>'s email address is: dock@twsites.com
+&DoCk &Email|DoCk>'s email address is: dock@twsites.com
+&Arilou &Email|Arilou Lalee'Lay's email address is: arilou@ds98.com
+&Yomama &Email|Yomama!!!'s email address is mama.is@paladen.net
+&Pure &Email|Pure_Luck's email addres is pureluck@trenchwars.org
+&PureLuck &Email|Pure_Luck's email addres is pureluck@trenchwars.org
+&Pure_Luck &Email|Pure_Luck's email addres is pureluck@trenchwars.org
+&Overstrand &Email|Overstrand's email address is: overstrand@trenchwars.org
+&Spam &Email|Mr. Spam's email address is: mrspam@trenchwars.org
+&Weaver &Email|Weaver's email address is: weaver.is@comcast.net
+&2Dragons &Email|2Dragons' email address is: abarton@holly.colostate.edu
+&2D &Email|2Dragons' email address is: abarton@holly.colostate.edu
+&Mythrandir &Email|Mythrandir's email address is: mythrandir@trenchwars.org
+&Myth &Email|Mythrandir's email address is: mythrandir@trenchwars.org
+&Epinephrine &Email|Epinephrine's email address is: trenchwarsleagues@yahoo.com
+&Epi &Email|Epinephrine's email address is: trenchwarsleagues@yahoo.com
+&Guano &Email|Cpt.Guano!'s email address is: trenchwarsleagues@yahoo.com
+&Cpt.Guano! &Email|Cpt.Guano!'s email address is: Cpt.Guano@gmail.com
+&Cpt &Email|Cpt.Guano!'s email address is: Cpt.Guano@gmail.com
+&qan &Email|qan's email address is: qan@twdev.org
+&Ban &Email|To lodge appeals VS Bans, please send an Email to bans21@trenchwars.org detailing the circumstances regarding your ban.
+&TWL &Email|The Trench Wars League's email addres is: trenchwarsleagues@yahoo.com
+&TWL &Contact|The Trench Wars League's email addres is: trenchwarsleagues@yahoo.com
+&Lost &Password|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
+&TWD &Name &Change|To change name for TWD: 1. Log on with the name you wish to remove.  2. ?go TWD  3. PM TWDBot with !resetname  4. Wait 24 hours.  5. After 24 hours, log in with the new name you wish to register.  6. PM TWDBot with !register in the TWD arena.  If anyone else in your household is using the same connection, please contact a TWD op to change your name, or use the Contact form on twd.trenchwars.org.
+&Lost &Pass|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
+&Forgot &Password|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
+&Forgot &Pass|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
+&Change &Password &How|To change your password type ?password=Newpass where <Newpass> is your new password.
+&Change &Pass &How|To change your password type ?password=Newpass where <Newpass> is your new password.
+&Stolen &Name|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
+&Setemail &What|The setemail has currently been disabled.
+&Setemail &How|The setemail has currently been disabled.
+&Lostpassword &How|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
+&Where &Server|The SSCU Trench Wars server is located in Washington, D.C.
+&Who &Server|The SSCU Trench Wars server is being paid for by Priitk and the Subspace players that have donated.
+&Help &Server|For help setting up your own server please refer to: http://www.shanky.com/server.
+&Settings &Trench &Wars|Sorry but the Trench Wars settings are not publicly available.
+&Settings &TW|Sorry but the Trench Wars settings are not publicly available.
+&Banners &Download &Where|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE, http://www.subspacedownloads.com/index.php?act=banners&f=1, http://www.deathstarbattle.com/bannervault and http://www.mama.twzone.net/files .
+&Continuum &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/Continuum038Setup.exe .
+&Subspace &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/Continuum038Setup.exe .
+&Subspace &1.35 &Download &Where|Subspace v1.35 can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=11 .
+&SSME &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182 .
+&Map &Editor &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182 .
+&Tileedit &Download &Where|TileEdit can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=187 .
+&TeamSpeak &Download &where|Teamspeak can be downloaded from the following location: http://www.goteamspeak.com/index.php?page=downloads
+&Shipset &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspacedownloads.com.
+&Shipsets &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspacedownloads.com.
+&Team &Talk &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
+&Team &Chat &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
+&Team &Message &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
+&Talk &Yellow &How|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
+&Private &Talk &How|There are three ways to send a private message to another person.  1) If the person is in the same arena as you, select the person's name on the name list using <Pg Up> and <Pg Dn> and type </> in front of your message.  Example: /Hello!  2) If the person is in another arena type :Name: in front of your message, where <Name> is the persons name.  Example: :DoCk>:Hello DoCk>!  3) To respond to someone that has private messaged you type :: before your message.  Example: ::I'm responding!
+&Private &Chat &How|There are three ways to send a private message to another person.  1) If the person is in the same arena as you, select the person's name on the name list using <Pg Up> and <Pg Dn> and type </> in front of your message.  Example: /Hello!  2) If the person is in another arena type :Name: in front of your message, where <Name> is the persons name.  Example: :DoCk>:Hello DoCk>!  3) To respond to someone that has private messaged you type :: before your message.  Example: ::I'm responding!  The message should appear in green.
+&Private &Message &How|There are three ways to send a private message to another person.  1) If the person is in the same arena as you, select the person's name on the name list using <Pg Up> and <Pg Dn> and type </> in front of your message.  Example: /Hello!  2) If the person is in another arena type :Name: in front of your message, where <Name> is the persons name.  Example: :DoCk>:Hello DoCk>!  3) To respond to someone that has private messaged you type :: before your message.  Example: ::I'm responding!  The message should appear in green.
+&Talk &Green &How|There are three ways to send a private message to another person.  1) If the person is in the same arena as you, select the person's name on the name list using <Pg Up> and <Pg Dn> and type </> in front of your message.  Example: /Hello!  2) If the person is in another arena type :Name: in front of your message, where <Name> is the persons name.  Example: :DoCk>:Hello DoCk>!  3) To respond to someone that has private messaged you type :: before your message.  Example: ::I'm responding!  The message should appear in green.
+&Make &Chat &How|To create a chat type ?chat=Chat1,Chat2,Chat3 where <Chat1>, <Chat2> and <Chat3> are the names of your chats.  Example: ?chat=twhelp,trench,help.  To use your chats type ;ChatNumber;Message where <ChatNumber> is the number of the chat and <Message> is the message that you want to send.  Example: To use your second chat type the following: ;2;Hello second chat!  The message should appear in red.
+&Create &Chat &How|To create a chat type ?chat=Chat1,Chat2,Chat3 where <Chat1>, <Chat2> and <Chat3> are the names of your chats.  Example: ?chat=twhelp,trench,help.  To use your chats type ;ChatNumber;Message where <ChatNumber> is the number of the chat and <Message> is the message that you want to send.  Example: To use your second chat type the following: ;2;Hello second chat!  The message should appear in red.
+&Leave &Chat &How|To leave a chat, retype your chats but omit the one that you wish to leave.  Example: You are currently on: chat1, chat2 and chat3.  To leave chat2 type: ?chat=chat1,chat3.
+&Other &Freq &Talk &How|To send a message to another frequency, select a member of the frequency using <Pg Up> and <Pg Dn> and type <"> before your message.  The message will go to all the members of that person's team.  Example: "Hello other frequency!  Your name should appear in green and the message should appear in blue.
+&Other &Freq &Chat &How| To send a message to another frequency, select a member of the frequency using <Pg Up> and <Pg Dn> and type <"> before your message.  The message will go to all the members of that person's team.  Example: "Hello other frequency!  Your name should appear in green and the message should appear in blue.
+&Other &Freq &Message &How| To send a message to another frequency, select a member of the frequency using <Pg Up> and <Pg Dn> and type <"> before your message.  The message will go to all the members of that person's team.  Example: "Hello other frequency!  Your name should appear in green and the message should appear in blue.
+&Another &Freq &Talk &How| To send a message to another frequency, select a member of the frequency using <Pg Up> and <Pg Dn> and type <"> before your message.  The message will go to all the members of that person's team.  Example: "Hello other frequency!  Your name should appear in green and the message should appear in blue.
+&Another &Freq &Chat &How| To send a message to another frequency, select a member of the frequency using <Pg Up> and <Pg Dn> and type <"> before your message.  The message will go to all the members of that person's team.  Example: "Hello other frequency!  Your name should appear in green and the message should appear in blue.
+&Another &Freq &Message &How| To send a message to another frequency, select a member of the frequency using <Pg Up> and <Pg Dn> and type <"> before your message.  The message will go to all the members of that person's team.  Example: "Hello other frequency!  Your name should appear in green and the message should appear in blue.
+&Macro &Set -Sound -Voice &How|There are 2 ways to set your macros.  1) Type your message in chat but do not press enter.  Instead press <Shift> and a function key (eg. <F1>).  2) Exit to the splash screen and press <Ctrl> and <M> at the same time.  Enter your macros here.  To display your macros press <Shift> and the function key that corresponds to the appropriate macro.
+&Macro &Make -Sound -Voice &How|There are 2 ways to set your macros.  1) Type your message in chat but do not press enter.  Instead press <Shift> and a function key (eg. <F1>).  2) Exit to the splash screen and press <Ctrl> and <M> at the same time.  Enter your macros here.  To display your macros press <Shift> and the function key that corresponds to the appropriate macro.
+&Macro &Create -Sound -Voice &How|There are 2 ways to set your macros.  1) Type your message in chat but do not press enter.  Instead press <Shift> and a function key (eg. <F1>).  2) Exit to the splash screen and press <Ctrl> and <M> at the same time.  Enter your macros here.  To display your macros press <Shift> and the function key that corresponds to the appropriate macro.
+&Macro &Set &Sound &How|To create a sound macro, exit to the splash screen and press <Ctrl> and <M> at the same time.  A window labeled "Edit Macros" should appear.  Click on the button marked "Wave" and select a .wav file that is less than 32k.  This will create a sound macro.  Playing it is like playing a normal macro.
+&Macro &Make &Sound &How|To create a sound macro, exit to the splash screen and press <Ctrl> and <M> at the same time.  A window labeled "Edit Macros" should appear.  Click on the button marked "Wave" and select a .wav file that is less than 32k.  This will create a sound macro.  Playing it is like playing a normal macro.
+&Macro &Create &Sound &How|To create a sound macro, exit to the splash screen and press <Ctrl> and <M> at the same time.  A window labeled "Edit Macros" should appear.  Click on the button marked "Wave" and select a .wav file that is less than 32k.  This will create a sound macro.  Playing it is like playing a normal macro.
+&Macro &Set &Voice &How|To create a sound macro, exit to the splash screen and press <Ctrl> and <M> at the same time.  A window labeled "Edit Macros" should appear.  Click on the button marked "Wave" and select a .wav file that is less than 32k.  This will create a sound macro.  Playing it is like playing a normal macro.
+&Macro &Make &Voice &How|To create a sound macro, exit to the splash screen and press <Ctrl> and <M> at the same time.  A window labeled "Edit Macros" should appear.  Click on the button marked "Wave" and select a .wav file that is less than 32k.  This will create a sound macro.  Playing it is like playing a normal macro.
+&Macro &Create &Voice &How|To create a sound macro, exit to the splash screen and press <Ctrl> and <M> at the same time.  A window labeled "Edit Macros" should appear.  Click on the button marked "Wave" and select a .wav file that is less than 32k.  This will create a sound macro.  Playing it is like playing a normal macro.
+&Message &Squad &Another|To send a message to all of the members of another squad type :#Squadname:Message where <Squadname> is the name of the squad that you would like to message and <Message> is the message you would like to send.  Example: :#Lame:Hello Lame!  The message should appear in green.
+&Message &Squad -Another|To send a message to all of the members of your squad type #Message where <Message> is the message that you would like to send.  Example: #Hello squad!  The message should appear in green.
+&How &Bong &Noise|To make a bong noise type %Number where <Number> is the number of the noise that you would like to play.  In most arenas, nobody else can hear the bong noises.  A list of the sounds can be found at: http://www.shanky.com/server/commands.html.
+&How &Bong &Noises|To make a bong noise type %Number where <Number> is the number of the noise that you would like to play.  In most arenas, nobody else can hear the bong noises.  A list of the sounds can be found at: http://www.shanky.com/server/commands.html.
+&Away &Message &How|To set an away message type ?away Message where <Message> is the away message that you want to you set.  Example ?away I am away!  To turn your away message off type ?away.
+&Leave &Message &How|To leave a message to someone who is currently not active or not online type ?message Name:Message where <Name> is the name of the person you want to leave the message to and <Message> is the message that you want to leave.  Example: ?message DoCk>:Where is my money?!  To read the messages in your message box, type ?messages.
+&Leave &Msg &How|To leave a message to someone who is currently not active or not online type ?message Name:Message where <Name> is the name of the person you want to leave the message to and <Message> is the message that you want to leave.  Example: ?message DoCk>:Where is my money?!  To read the messages in your message box, type ?messages.
+&Offline &Message &How|To leave a message to someone who is currently not active or not online type ?message Name:Message where <Name> is the name of the person you want to leave the message to and <Message> is the message that you want to leave.  Example: ?message DoCk>:Where is my money?!  To read the messages in your message box, type ?messages.
+&Log +What|A log is a recorded transcript of your chat that is saved to a file.
+&Log +How|To toggle the logging of your chat on and off, type ?log Filename where <Filename> is the name of the log file to be created.  If no Filename is specified then it will be saved in Session.log.
+&Logbuffer +What|A logbuffer is a recorded transcript of your chat that is appended to the end of an already existing log file.
+&Logbuffer +How|To toggle the logging of your chat on and off, type ?log Filename where <Filename> is the name of the log file that the chat will be appended to.  If no Filename is specified then it will be saved in Session.log.
+&Score &Erase -When -Elim -Baseelim|Your request for a scorereset has been sent to the online moderators.  If one is available to reset your score, they will contact you shortly.  Please note, you are allowed a maximum of one scorereset a day.
+&Score &reset -When -Elim -Baseelim|Your request for a scorereset has been sent to the online moderators.  If one is available to reset your score, they will contact you shortly.  Please note, you are allowed a maximum of one scorereset a day.
+&Scorereset -When -Elim -Baseelim|Your request for a scorereset has been sent to the online moderators.  If one is available to reset your score, they will contact you shortly.  Please note, you are allowed a maximum of one scorereset a day.
+&Score &reset &When|Score resets are performed every other Wednesday.
+&Scorereset &When|Score resets are performed every other Wednesday.
+&Score &reset &Elim -Baseelim|Every once in a while, a script is run that wipes out games older than three weeks from your elim.  You cannot get a score reset in elim any other way than by just waiting.
+&Scorereset &Elim -Baseelim|Every once in a while, a script is run that wipes out games older than three weeks from your elim.  You cannot get a score reset in elim any other way than by just waiting.
+&Kill &Points|In public arenas, points received per kill are calculated as follows: Points received = (Your Bounty / 4) + Enemy's Bounty + 200 points if your team has the flag.
+&Kill &Bounty|You receive 6 bounty for each kill you make.
+&Kill &Bty|You receive 6 bounty for each kill you make.
+&Rating &What|Your rating, R is calculated as follows: Rating = (points from kills x 10 + (wins - losses) x 100) / (wins + 100)
+&R &What|Your rating, R is calculated as follows: Rating = (points from kills x 10 + (wins - losses) x 100) / (wins + 100)
+&Average &What|Your average, or Ave is calculated as follows: Average Kill = (points from kills) / (kills). It is the average number of points you get per kill.
+&Ave &What|Your average, or Ave is calculated as follows: Average Kill = (points from kills) / (kills). It is the average number of points you get per kill.
+&Banner &Make &How|There are 2 ways to make a banner.  1) Go to the splash screen and press <Ctrl> and <B> at the same time.  2) Use Paint to draw your banner.  The image size must be 12 x 8 pixels and it must be saved as a .bmp.  Banners must be stored in the continuum\banners directory.
+&Banners &Make &How|There are 2 ways to make a banner.  1) Go to the splash screen and press <Ctrl> and <B> at the same time.  2) Use Paint to draw your banner.  The image size must be 12 x 8 pixels and it must be saved as a .bmp.  Banners must be stored in the continuum\banners directory.
+&Banner &Set &How|To set a banner go to spectator mode <F11> then press <Esc> followed by <B> to open the banner selection window.  Use <Pg Up> and <Pg Dn> to select your banner and press <Enter>.
+&Banners &Set &How|To set a banner go to spectator mode <F11> then press <Esc> followed by <B> to open the banner selection window.  Use <Pg Up> and <Pg Dn> to select your banner and press <Enter>.
+&Map &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Maps &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Level &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Levels &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Arena &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Arenas &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Squad &Arena|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Email maps to: TWMaps@gmail.com
+&Squad &Map|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Email maps to: TWMaps@gmail.com
+&Zone &Make &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
+&Zone &Create &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
+&Submit &Map &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Submit &Maps &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  TWMaps@gmail.com.
+&Warbird &What|The Warbird (Ship 1), or WB, is primarily a dueling ship.  It is relatively fast and maneuverable and has bullets that can kill in one hit.  To switch to a Warbird, press <Esc> followed by <1>.
+&Wb &What|The Warbird (Ship 1), or WB, is primarily a dueling ship.  It is relatively fast and maneuverable and has bullets that can kill in one hit.  To switch to a Warbird, press <Esc> followed by <1>.
+&Javelin &What|The Javelin (Ship 2), or Jav, is an attack bomber.  It shoots a bomb that can bounce once and weak bullets out of its back.  To switch to a Javelin, press <Esc> followed by <2>.
+&Jav &What|The Javelin (Ship 2), or Jav, is an attack bomber.  It shoots a bomb that can bounce once and weak bullets out of its back.  To switch to a Javelin, press <Esc> followed by <2>.
+&Spider &What|The Spider (Ship 3), or Spid, is the primary basing ship.  It has decent maneuverability and speed and can shoot many weak bullets at a fast rate.  To switch to a Spider, press <Esc> followed by <3>.
+&Spid &What|The Spider (Ship 3), or Spid, is the primary basing ship.  It has decent maneuverability and speed and can shoot many weak bullets at a fast rate.  To switch to a Spider, press <Esc> followed by <3>.
+&Leviathan &What -attach|The Leviathan (Ship 4), or Levi, is a long-range bomber.  It is slow and has a poor recharge rate but its Level 3 bombs can destroy many enemies at once.  To switch to a Leviathan, press <Esc> followed by <4>.
+&Levi &What -attach|The Leviathan (Ship 4), or Levi, is a long-range bomber.  It is slow and has a poor recharge rate but its Level 3 bombs can destroy many enemies at once.  To switch to a Leviathan, press <Esc> followed by <4>.
+&Terrier &What|The Terrier (Ship 5), or Terr, is an attack carrier.  It is quite fast and is the only ship that can be attached to.  To switch to a Terrier, press <Esc> followed by <5>.
+&Terr &What|The Terrier (Ship 5), or Terr, is an attack carrier.  It is quite fast and is the only ship that can be attached to.  To switch to a Terrier, press <Esc> followed by <5>.
+&Weasel &What|The Weasel (Ship 6), or X, is the only ship that can use both cloak and stealth.  To switch to a Weasel, press <Esc> followed by <6>.
+&X &What|The Weasel (Ship 6), or X, is the only ship that can use both cloak and stealth.  To switch to a Weasel, press <Esc> followed by <6>.
+&Lancaster &What|The Lancaster, or Lanc, is a fighter equipped with wide spread level 2 bullets.  To switch to a Lancaster, press <Esc> followed by <7>.
+&Lanc &What|The Lancaster, or Lanc, is a fighter equipped with wide spread level 2 bullets.  To switch to a Lancaster, press <Esc> followed by <7>.
+&Shark &What|The Shark is a mining ship.  It is equipped with 4 mines and EMP bombs.  To switch to a Shark, press <Esc> followed by <8>.
+&Teamkilling &What|Teamkilling is when you kill your own teammate with a bomb or a mine.  Intentional teamkilling is illegal in Trenchwars.  To report a teamkiller use the ?cheater command.
+&Teamkill &What|Teamkilling is when you kill your own teammate with a bomb or a mine.  Intentional teamkilling is illegal in Trenchwars.  To report a teamkiller use the ?cheater command.
+&Typekilling &What|Typekilling is when you kill an enemy while they are typing.  Typekilling is not illegal in Trenchwars.
+&Typekill &What|Typekilling is when you kill an enemy while they are typing.  Typekilling is not illegal in Trenchwars.
+&TK &What|TK stands for either teamkill or typekill.
+&Spec &Hunting &What|Spechunting is when a person in spectator mode locates a player then either enters the game and hunts them or gives away their location.  Spechunting is illegal in Trenchwars.  To report a spechunter use the ?cheater command.
+&Spec &Hunt &What|Spechunting is when a person in spectator mode locates a player then either enters the game and hunts them or gives away their location.  Spechunting is illegal in Trenchwars.  To report a spechunter use the ?cheater command.
+&Spechunting &What|Spechunting is when a person in spectator mode locates a player then either enters the game and hunts them or gives away their location.  Spechunting is illegal in Trenchwars.  To report a spechunter use the ?cheater command.
+&Spechunt &What|Spechunting is when a person in spectator mode locates a player then either enters the game and hunts them or gives away their location.  Spechunting is illegal in Trenchwars.  To report a spechunter use the ?cheater command.
+&Vulching &What|Vulching is when you kill someone right after they have used all their energy to kill someone else.	
+&Vulch &What|Vulching is when you kill someone right after they have used all their energy to kill someone else.	
+&Spawn &What|Spawning has two definitions.  1) When you reappear after dying.  2) Short for spawnkilling: When you kill someone right after they appear after dying.  Spawnkilling is not illegal in Trench Wars.
+&Spawning &What|Spawning has two definitions.  1) When you reappear after dying.  2) Short for spawnkilling: When you kill someone right after they appear after dying.  Spawnkilling is not illegal in Trench Wars.
+&Spawnkill &What|Spawnkilling is when you kill someone right after they appear after dying.  Spawnkilling is not illegal in Trench Wars.
+&Spam &What|Spam is when someone floods chat with useless text.  Excessive spamming is illegal in Trench Wars.
+&Spamming &What|Spam is when someone floods chat with useless text.  Excessive spamming is illegal in Trench Wars.
+&Greens &What|Greens are the green, rotating prizes.  They upgrade your ship, and also provide bounty, which some ships require to attach.  To gather greens, just pass over them with your ship.
+&Greening &What|Greening is when a player allows a leviathan to kill them so that they can gain the 20 bounty needed to attach.
+&Bounty &What -attach|Bounty is a measure of how long your ship has been alive for and how many enemies you have killed.  You receive one bounty for each green you pick up and six bounty for each kill you make.  When you die, your bounty is reset.
+&Bty &What -attach|Bounty is a measure of how long your ship has been alive for and how many enemies you have killed.  You receive one bounty for each green you pick up and six bounty for each kill you make.  When you die, your bounty is reset.
+&Flag &What|The flag is an object that can give you point rewards for each kill you make and / or for holding it for a certain amount of time.  Often, acquiring the flag is the main objective of the game.
+&LeviTerr &What|A leviterr or LT is when a Leviathan (Ship 4) attaches to a Terrier (Ship 5) and remains as a turret.
+&LevTerr &What|A levterr or LT is when a Leviathan (Ship 4) attaches to a Terrier (Ship 5) and remains as a turret.
+&LT &What|An LT is when a Leviathan (Ship 4) attaches to a Terrier (Ship 5) and remains as a turret.
+&Attach &Bounty &What|In public arenas, Leviathans (Ship 4) and Terriers (Ship 5) need 20 bounty to attach.  If you are a Leviathan with 20 bounty and are still not able to attach, it is most likely Pure Basing Weekend.
+&Attach &Bty &What|In public arenas, Leviathans (Ship 4) and Terriers (Ship 5) need 20 bounty to attach.  If you are a Leviathan with 20 bounty and are still not able to attach, it is most likely Pure Basing Weekend.
+&Bounty &Not &High &Enough|In public arenas, Leviathans (Ship 4) and Terriers (Ship 5) need 20 bounty to attach.  If you are a Leviathan with 20 bounty and are still not able to attach, it is most likely Pure Basing Weekend.
+&Pure &Basing &Weekend &What|Pure Basing Weekend is a weekend (Friday to Monday) devoted to basing.  Levis are not allowed to attach in public arenas and Private frequencies are not allowed.
+&PBW &What|Pure Basing Weekend is a weekend (Friday to Monday) devoted to basing.  Levis are not allowed to attach in public arenas and Private frequencies are not allowed.
+&Lag &What -Fix -Lower|Lag is an overall assessment of your connection.  Both packetloss and ping contribute to lag.  To check your lag type ?lag.
+&Ping &What -Fix -Lower|Ping is the time (in milliseconds) that it takes for data to be sent to the server and back.  To check your ping type ?ping.
+&Packetloss &What -Limit -Fix -Lower|Packetloss is when data is being lost when sent from you to the server or from the server to you.  To check your packetloss, type ?packetloss.
+&Ploss &What -Limit -Fix -Lower|Packetloss is when data is being lost when sent from you to the server or from the server to you.  To check your packetloss, type ?packetloss.
+&Spike &What -Fix -Lower|Spike is when you have a really high ping for a short period of time.  To see if you are spiking, type ?ping and look at the value marked "High:".
+&Packetloss &Limit &What|The packetloss limit in public arenas is 13%.  The packetloss limit in the elimination arenas is 6.5%.
+&Ploss &Limit &What|The packetloss limit in public arenas is 13%.  The packetloss limit in the elimination arenas is 6.5%.
+&Robohelp &Who|Robohelp is a bot that is designed to answer your ?help calls.
+&Robohelp &What|Robohelp is a bot that is designed to answer your ?help calls.
+&Robo &Ref &who|Robo Ref is the bot that runs the automated event ?go elim. Private messaging it with !help will further assist you with using it.
+&Robo_Ref &who|Robo_Ref is the bot that runs the automated event ?go baseelim. Private messaging it with !help will further assist you with using it.
+&Arrogant &Who|Mr. Arrogant 2 is a bot written by DoCk>.  It is designed to roam Trench Wars and record information on the popularity of certain arenas.
+&Arrogant &What|Mr. Arrogant 2 is a bot written by DoCk>.  It is designed to roam Trench Wars and record information on the popularity of certain arenas.
+&Teaming &What|Teaming is when two or more people of different teams have a truce together and/or both attack other players together.  In certain arenas such as elim and baseelim, teaming is illegal.
+&Framerate &What|Framerate or FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
+&FPS &What|FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
+&FU &What|FU stands for F**k You.
+&GG &What|GG stands for either Good Going or Good Game.
+&NC &What|NC stands for No Count.  It is often used in one on one duels when two people kill each other at the same time.
+&NS &What|NS stands for Nice Shot.
+&PM &What|PM stands for Private Message.
+&AFK &What|AFK stands for Away From the Keyboard.
+&BRB &What|BRB stands for Be Right Back.
+&FFS &What|FFS stands for For F**ks Sake.
+&LOL &What|LOL stands for Laughing Out Loud.
+&MVP &What|MVP stands for Most Valuable Player.
+&WTF &What|WTF stands for What The F**k.
+&GTFO &What|GTFO stands for Get The F**k Off, Get The F**k On or Get The F**k Out.
+&ROFL &What|&ROFL stands for Rolling On the Floor Laughing.
+&STFU &What|STFU stands for Shut The F**k Up.
+&ASAP &What|ASAP stands for As Soon As Possible.
+&Kill &Messages|To toggle kill messages off, to chat, and to the center of your screen, type: ?kill.
+&Enter &Messages|To toggle enter messages off, to chat, and to the center of your screen, type: ?enter.
+&Leave &Messages|To toggle leave messages off, to chat, and to the center of your screen, type: ?leave.
+&Transparent &Stats &Box|To toggle the transparent stats box, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Display" and toggle the checkbox labeled "Transparent Stats Box".
+&Font &Size &How|To set the font size, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Chat" and select the font size from the field labeled "Font Style".
+&Chat &Window &How|To bring up your chat window press <Alt> and <Tab> at the same time.  If it does not appear, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Chat" and set the field labeled "Chat Window" so that it reads "Always Show".
+&Name &Length &How|To change the number of characters that are displayed in a player's name, type ?namelen=Number, where <Number> is the number of characters that you want to see.  Example: ?namelen=5.
+&Message &Lines &How|To set the number of chat lines that are displayed on your screen, type ?lines=Number, where <Number> is the number of lines that you want to see.  Example: ?lines=10.
+&Text &Lines &How|To set the number of chat lines that are displayed on your screen, type ?lines=Number, where <Number> is the number of lines that you want to see.  Example: ?lines=10.
+&Chat &Lines &How|To set the number of chat lines that are displayed on your screen, type ?lines=Number, where <Number> is the number of lines that you want to see.  Example: ?lines=10.
+&On &Public &Chat|To toggle public chat on and off, type ?nopubchat.
+&Off &Public &Chat|To toggle public chat on and off, type ?nopubchat.
+&Obscenity &How|To toggle the obscenity filter on and off, type ?obscene.
+&Obscene &How|To toggle the obscenity filter on and off, type ?obscene.
+&Duplicate &Messages &How|To toggle duplicate messages, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Chat" and toggle the checkbox labeled "No Duplicate Messages".
+&Ignore &Macro &How|To toggle ignore public macros on and off, press <Esc> followed by <I>.
+&Ignore &Macros &How|To toggle ignore public macros on and off, press <Esc> followed by <I>.
+&Transparent &Messages &How| To toggle transparent messages, exit to the splash and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Chat" and toggle the checkbox labeled "Transparent Messages".
+&Help &Messages &How|To toggle the help ticker on and off, press <Esc> followed by <F6>.
+&Help &Ticker &How|To toggle the help ticker on and off, press <Esc> followed by <F6>.
+&Message &Alarm &How|To toggle the message alarm, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Chat" and toggle the checkbox labeled "Message Alarm".
+&Message &Beep &How|To toggle the message alarm, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Chat" and toggle the checkbox labeled "Message Alarm".
+&3D &Sound &How|To toggle 3d Sound, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Sound" and toggle the checkbox labeled "3d Sound Effects".
+&Engine &Sound &How|To toggle the engine noise on and off, press <Esc> followed by <F8>.
+&Engine &Noise &How|To toggle the engine noise on and off, press <Esc> followed by <F8>.
+&Volume &How|To change the volume of the sounds in game, type ?sound=Number, where <Number> is a number from 0 to 10.  0 is off and 10 is the loudest.
+&Music &How|To change the volume of the victory music in game, type ?music=Number, where <Number> is a number from 0 to 10.  0 is off and 10 is the loudest.
+&Radar &Size &How|To change the size of your radar, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Radar" and set the radar size in the "Radar Mode" field.
+&Radar &Large &How|To change the size of your radar, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Radar" and set the radar size in the "Radar Mode" field.
+&Target &Bounty &What|Setting your target bounty allows you to see enemies above a certain bounty on your radar.  Enemies with a bounty equal or higher than your target bounty are shown as light blue dots.  Enemies with bounties lower than your target bounty are shown with dark blue dots.
+&Target &Bounty &How|To set your target bounty type ?target=Number, where <Number> is the new target bounty.
+&Transparent &Radar &How|To toggle transparent radar, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Radar" and toggle the checkbox labeled "Transparent Radar".
+&Transparent &Map &How|To toggle transparent map, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Radar" and toggle the checkbox labeled "Transparent Map".
+&Radar &Grid &How|To toggle radar grid, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Radar" and toggle the checkbox labeled "Show Radar Grid".
+&Clock &How|To toggle the clock display, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Radar" and toggle the checkbox labeled "Show Clock".
+&Rolling &Ship &How|To toggle the rolling ship, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Graphics" and toggle the checkbox labeled "Rolling Ship".
+&Visible &Thrust &How|To toggle the visible thrust, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Graphics" and toggle the checkbox labeled "Visible Thrust".
+&Brightness &How|To set the brightness, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Graphics" and toggle the checkbox labeled "Visible Thrust".
+&Gamma &How|To set the brightness, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Graphics" and enter different values in box labeled "Percentage" to vary the brightness of the screen.
+&Multi &Fire &Starts &On &How|To set multi fire starts on, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Other" and toggle the checkbox labeled "Multi-Fire starts on".
+&Resolution &How|To set your resolution, exit to the splash screen and click on the menu labeled "Resolution".  A series of possible resolutions should appear.  The maximum possible resolution in Trench Wars is 1280 x 1024.
+&Windowed &Mode &How|To toggle windowed mode, exit to the splash screen and click on the menu labeled "Resolution".  At the bottom of the list of possible resolutions, there should be the option labeled "Windowed".
+&Framerate &View &How|To check your framerate, press <Esc> followed by <F>.  Your frames per second should appear in red numbers at the top of your screen, near your energy bar.
+&FPS &View &How|To check your framerate, press <Esc> followed by <F>.  Your frames per second should appear in red numbers at the top of your screen, near your energy bar.
+&Framerate &Check &How|To check your framerate, press <Esc> followed by <F>.  Your frames per second should appear in red numbers at the top of your screen, near your energy bar.
+&FPS &Check &How|To check your framerate, press <Esc> followed by <F>.  Your frames per second should appear in red numbers at the top of your screen, near your energy bar.
+&Ignore &How -Macro -Macros -Stop|To ignore someone, type ?ignore Name, where <Name> is the name of the person you would like to ignore.  Example: ?ignore PriitK.
+&Ignore &How &Stop -Macro|To stop ignoring someone, type ?ignore Name, where <Name> is the name of the person you would like to take off of ignore.  Example: ?ignore PriitK.
+&Check &Ping &Other &How|To see other players ping times, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Other" and toggle the checkbox labeled "Show Player Ping Times".
+&See &Ping &Other &How|To see other players ping times, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Other" and toggle the checkbox labeled "Show Player Ping Times".
+&Check &Lag &Other &How|To see other players ping times, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Other" and toggle the checkbox labeled "Show Player Ping Times".
+&See &Lag &Other &How|To see other players ping times, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Other" and toggle the checkbox labeled "Show Player Ping Times".
+&Low &FPS &Fix &How|To increase your Framerate, try the following: Exit to the splash screen and press <Ctrl> and <A> at the same time.  A box labeled "Advanced Options" will appear.  Uncheck the box labeled "software emulation" and check the box labeled "avoid page flipping".
+&Increase &FPS &How|To increase your Framerate, try the following: Exit to the splash screen and press <Ctrl> and <A> at the same time.  A box labeled "Advanced Options" will appear.  Uncheck the box labeled "software emulation" and check the box labeled "avoid page flipping".
+&Tickname &Macro &How|To insert the name of a ticked player into a macro or a message, substitute the player's name with %tickname.  Example: Attach to %tickname to defend the base!
+&Selfname &Macro &How|To insert your own name into a macro or a message, substitute your name with %selfname.  Example: Hello my name is %selfname.
+&Squad &Macro &How|To insert the name of your squad into a macro or a message, substitute your squad's name with %squad.  Example: Hello my squad is %squad.
+&Freq &Macro &How|To insert the name of your frequency into a macro or a message, substitute your frequency number with %freq.  Example: Come and try to take the base from freq %freq!!
+&Frequency &Macro &How|To insert the name of your frequency into a macro or a message, substitute your frequency number with %freq.  Example: Come and try to take the base from freq %freq!!
+&Bounty &Macro &How|To insert the size of your bounty into a macro or a message, substitute your bounty with %bounty. Example: I have %bounty bounty!!
+&Bty &Macro &How|To insert the size of your bounty into a macro or a message, substitute your bounty with %bounty. Example: I have %bounty bounty!!
+&Flags &Macro &How|To insert the number of flags that you are carrying into a macro or a message, substitute the number of flags with %flags. Example: I am carrying %flags flags!!
+&Energy &Macro &How|To insert your energy that you have into a macro or a message, substitute your energy with %energy. Example: I have %energy energy!!
+&Killed &Macro &How|To insert the name of the person that you killed last into a macro or a message, substitute the name with %killed.  Example: I just killed %killed!!
+&Death &Macro &How|To insert the name of the person that killed you last into a macro or a message, substitute the name with %killer.  Example: I was just killed by %killer!!
+&Kill &Macro &How|To insert the name of the person that killed you last into a macro or a message, substitute the name with %killer.  To insert the name of the person that you killed last into a macro or a message, substitute the name with %killed.
+&Coordinates &Macro &How|To insert your current coordinates into a macro or a message, substitute your coordinates with %coord.  Example: I am at %coord!!
+&Coords &Macro &How|To insert your current coordinates into a macro or a message, substitute your coordinates with %coord.  Example: I am at %coord!!
+&Area &Macro &How|To insert your general area on the map into a macro or a message, substitute your area with %area.  Example: I am at %area!!!
+&Red &Macro &How|To insert the name, bounty and flags of the closest flag carrier into a macro or a message, substitute the information with %red.  Example: Flag carrier spotted: %red.
+&RedName &Macro &How|To insert the name of the closest flag carrier into a macro or a message, substitute the name with %redname.  Example: Flag carrier %redname spotted!!
+&RedBounty &Macro &How|To insert the bounty of the closest flag carrier into a macro or a message, substitute the bounty with %redbounty.  Example: Flag carrier has %redbounty bounty!!
+&RedFlags &Macro &How|To insert the number of flags that the closest flag carrier has into a macro or a message, substitute the flags with %redflags.  Example: Enemy with %redflags flags spotted!!
+&What &TW &Website|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &TW &Site|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &TW &Homepage|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &Trenchwars &Website|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &Trenchwars &Site|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &Trenchwars &Homepage|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &Trench &Website|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &Trench &Site|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &Trench &Homepage|The SSCU Trench Wars website is: http://www.trenchwars.org.
+&What &TWD &Website|The Trench Wars Divisions website is: http://twd.trenchwars.org.
+&What &TWD &Site|The Trench Wars Divisions website is: http://twd.trenchwars.org.
+&What &Divisons &Website|The Trench Wars Divisions website is: http://twd.trenchwars.org.
+&What &Divisons &Site|The Trench Wars Divisions website is: http://twd.trenchwars.org.
+&What &TWL &Website|The Trench Wars Leagues website is: http://twl.trenchwars.org.
+&What &TWL &Site|The Trench Wars Leagues website is: http://twl.trenchwars.org.
+&What &League &Website|The Trench Wars Leagues website is: http://twl.trenchwars.org.
+&What &League &Site|The Trench Wars Leagues website is: http://twl.trenchwars.org.
+&What &Gallery &Website|The Trench Wars Gallery website is: http://gallery.trenchwars.org/
+&What &Gallery &Site|The Trench Wars Gallery website is: http://gallery.trenchwars.org/
+&What &TWGallery &Website|The Trench Wars Gallery website is: http://gallery.trenchwars.org/
+&What &TWGallery &Site|The Trench Wars Gallery website is: http://gallery.trenchwars.org/
+&What &Forum &Website|The SSCU Trench Wars forums are at: http://www.trenchwars.org/forums/
+&What &Forum &Site|The SSCU Trench Wars forums are at: http://www.trenchwars.org/forums/
+&What &History &Trench &Website|The history of Trench Wars website is: http://www.trenchwars.org/index.php?v=gethelp&id=1
+&What &History &Trench &Site|The history of Trench Wars website is: http://www.trenchwars.org/index.php?v=gethelp&id=1
+&What &History &TW &Website|The history of Trench Wars website is: http://www.trenchwars.org/index.php?v=gethelp&id=1
+&What &History &TW &Site|The history of Trench Wars website is: http://www.trenchwars.org/index.php?v=gethelp&id=1
+&What &SubspaceDownloads &Website|The SubspaceDownloads website is: http://www.subspacedownloads.com/
+&What &SubspaceDownloads &Site|The SubspaceDownloads website is: http://www.subspacedownloads.com/
+&What &Shanky &Website|The Shanky Server website is: http://www.shanky.com/server.
+&What &Shanky &Site|The Shanky Server website is: http://www.shanky.com/server.
+&What &TWEL &Website|The TWEL Website is: http://www.trenchwars.org/TWEL.
+&What &TWEL &Site|The TWEL Website is: http://www.trenchwars.org/TWEL.
+&What &PlayerGuide &Site|For all basics about playing Continuum, check out the Player Help Guide: http://www.trenchwars.org/index.php?v=gethelp&id=2
+&New &38 &What|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
+&Different &38 &What|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
+Question (question)|What is your question?  Please type ?help followed with your question.  Example: ?help How do I shoot?
+&Message &Staff|Please directly message the staff member who is helping you out by typing :playername: before your message, or type :: to respond to the last person that messaged you.
+Msgstaff|Please directly message the staff member who is helping you out by typing :playername: before your message, or type :: to respond to the last person that messaged you.
+&Report &Cheater &How|To report a cheater, please type: ?cheater Message, where <Message> is a description including the person's name, and what they are doing.  Example: ?cheater X-Kroz teamkilling.
+&Ass -His -Her -Nice|Please do not use ?help unless you have a valid question.
+Nohost|Sorry, but there are no hosts available at this time.  Please try again at a later time.
+TwlHost|During TWL match times (Saturday and Sunday from 1pm to 6pm EST), no TWD matches or TW events will be hosted. Elim's will play on, but all other events and leagues are off during TWL gametime.
+WeekendHost|During the Scheduled Weekend Events no other TW events are hosted. However the Elims and WBduel/JavDuel and Base will play on.
+SayThankYou|The SSCU Trench Wars staff would like to say Thank You!
+SayWelcome|The SSCU Trench Wars staff would like to say You are Welcome!
+SaySpawn|Sorry, but spawning is not illegal in SSCU Trench Wars.
+SayCantKill|Sorry, but staff is not allowed to kill TWD matches.  If both teams !remove all of their players and wait for the time to run out, the match will be voided.
+SayUseHelp|Please use the ?help command to request assistance from staff.
+SayUseCheater|Please use the ?cheater command to report a cheater.
+SayCongrats|The SSCU Trench Wars staff would like to say congratulations!
+SayHi|Hi!
+SayHello|Hello!
+SayWait|The game will end shortly.  Please be patient and wait for it to end.
+SayPlease|What is the magic word?
+SayTechSupport|We are sorry, but we do not have the answer to your question.  If you wish to post it on our tech support forum, please do so at: http://forums.trenchwars.org/forumdisplay.php?f=5.
+NotIllegal|Sorry, but that is not illegal in Trench Wars.
+Dontberude|Please do not be rude to the staff.
+HelpAbuse|Please do not use ?help unless you have a valid question.
+CheaterAbuse|Please do not use ?cheater unless you have a valid cheater to report.
+AdvertAbuse|Please do not use ?advert.  If you would like to request an event, please use the ?help command.  Example: ?help Please host safewars!
+Onit|We have received your ?help or ?cheater call and are currently attending to it.  Please be assured that we will assist you in any way possible.
+ResetAbuse|Please do not ask for any more scoreresets.  You have been reset enough today.
+HostAbuse|Please do not make any more hosting requests.  All of our hosts are currently busy.
+BotsDied|The bots are currently out of order.  Sorry for the inconvenience. We are trying to fix them ASAP.
+SayPatience|Please be patient, we will assist you as soon as we possibly can.
+HappyBirthday|The staff at SSCU Trench Wars wish you a very HAPPY BIRTHDAY!!! :)
+MerryChristmas|The staff at SSCU Trench Wars wish you a very MERRY CHRISTMAS!!! :)
+UseIgnore|If someone is harassing you please use the ?ignore command by typing ?ignore Name, where <Name> is the name of the person you would like to ignore.  Example: ?ignore PriitK.
+NotTWRelated|Your question is not Trench Wars related and therefore Staff can't help you. Sorry!
+bangbangbang|I don't want to know your name, I just want.. Bang bang bang!
+&What &Meaning &Of &Life|The meaning of life is to play TrenchWars and die.
+&His &Nice &Ass|You have a nice ass!!
+&Her &Nice &Ass|Whoa mama!!!  You have a nice posterior!!
+&Stop &Slacking|Please pick up your monthly stats and get more active or you will get the axe from Push and Pure, TY.
+&Drinking &And &Driving|Please take care when operating your ship while under the influence of alcohol.
+&Erathia &Who|Erathia is an "Electronic Robotic Android Trained for Hazardous Infiltration and Assassinations". He is programmed for wanton destruction, merciless carnage and making waffles. He will now kill you for asking about him..
+&Weaver &Who|Weaver: If you've got a problem he's not your man, but if you're a problem he'll give you a ban! =)
+&Pusher &Who|THE PUSHER likes to push things!  See him in action at: http://www.rathergood.com/james/pusher/.
+&Dock> &Who|Dock is a sysop of SSCU Trench Wars.  He, along with Sphonk, created the bot core that is currently being used in Trench Wars.  His email address is DoCk@yaunet.com.
+&Cpt.Guano! &Who|Staff has no idea how Cpt.Guano! got smod :S
+&BH822 &Who|BH the MOD = the staff stoner.
+&Melostyle|Melo is a frenchy quebecquer mixed with an eskimo.. so please respect him he is such a nice guy :)
+&Priitk &Who|PriitK is a SSCU Trench Wars SysOp, a Billing Server Operator and the creator of Continuum.  His email address is priitk@trenchwars.org.
+&Pure_Luck &Who|Pure_Luck> greatest terr alive (base + lt) thanks
+&Farmer &Who|Da Farmer!> If you are good, I am a friend, mess up and I AM YOUR worst Nightmare! ;)
+&YoMama &Who|YoMama!!!> if you dont have boobies, I dont wanna chat to you
+&420 &Who|Bigger and Bolder and Rougher and Tougher in other words sucka, there is no other! I'm the one and only DOMINATOR! -Mr. 420
+&M_M &Who|M_M God is Candy King For Life!
+&Zeus &Who|ZeUs!! is TW Staff's first hermaphrodite Ipswich Town supporting member (kinky), Mike began his tw career as boot polisher to Mantra-Slider before his parents were orphaned in a javelin accident. He now lives with Jonas the pimp and his hoes, and eeks out a living as a rent boy/girl.
+&Demonic &Who|Demonic is a sexy wb flying pilot, and she is a model SS player!! Disagree?? Bah, Banned o.O
+&Predator &Who|Predator is one hot staff member. Born with hair that changes colour depending on the way you look at it. At the tender age of 12 he was recruted by a Fashion TV agent. As time went on, his key roll in the fashion industry gained him a position as Brad Pitt's 1st stunt man. However, it was not long before they realized Predator had an amazing potential as top quality pimp, working for the likes of Madonna and Ricky Martin. he never forgot Subspace where he has used his looks to make M_M god and Downdraft his trusty sidekicks, used for carrying umbrellas to spread crack to the ghettos of Trench Wars and polish his toe nail. All hail TW pimp of staff!
+&Reaver &Who|April Fools! Hahahaha
+&JDM37 &Who|JDM37 is always high so be patient :)
+&Mythrandir &Who|type ?help who is mythrandir and a staff member will help you out
+&Malladrin &Who|As the wife of Chewbacca, malladrin has the ability to perform puppetry and play spider simultaneously. Much to the joy of whiterabbit offspring
+&Diakka &Who|Diakka is a nobody, and nobody is perfect; therefore Diakka is perfect.
+&Leaf &Who|Wtf, Leaf is a jerk, if you're friends with this guy you are pathetic, get a life!
+&Parasect &Who|Parasect is so stupid that he can't even think what he wants to tell you
+&TSM &Who|TheSerpentMage is the nipple queen of Trench Wars! Even Janet Jackson couldnt tip to him
+&Beasty &Who|Beasty is the cute staffer! Shes like one of the Powerpuff Girls, except the pony tails.
+&Lunar &Who|The BanG Administrator will judge you-after Lunar Crescens is finished with you FIRST~!!!
+&koen &Who|Cool koen: This time was not made for me, I have nowhere to land, no place to rest, Like a bird without a nest -superman
+&Warthog &Who|Hi, I'm warthog, the laziest staffer in trench wars... OR AM I!? Maybe I'm just a super spy waiting to strike and kill you, or MAYBE I'm an ice cream truck driving around serving cold cold tasty ice cream.... OF DEATH.
+&Pred_FNM &Who|Pred_FNM usually dances around with Credit Account and M_M God in the late hours around the trenches.  Together they are the indestructible Mambo team! When you approach Pred make sure you have some beer in your hand and whatever you do.. NEVER! I repeat NEVER talk about salsa, it will get you killed.
+&Jacklyn &Who|Jacklyn own ALL cookies. She has amnesia though,  <:3)-  ..::Squeak::..
+&flabin &Who|FLaBiN is FLaBBy!
+&Rudy &Who|Rudy makes your shark look like a guppy. He is the undisputed God of bomberman and any attempts to defeat him will result in your DOOM
+&Nethila &Who|Nethila is the king of nerds. Listen to him or you will feel the wrath of his lvl 99 Mage
+&Bahamut &Who|Bahamut is a dog that sounds like a goat when he barks. He is a super duper shark and pimps goats. ?message me if you want some goats.
+&Hot &Rodder &Who|Supreme master of all that is hot rodding, and the most hateful person of ricers
+&Shayde &Who|Shayde is your ever friendly neighborhood moderator!
+&Dimboy &Who|Dimboy is that one guy you've always wanted to meet. His muscular physical appearance and witty humour makes him the one to die for. And if anyone has told you that internet relationships don't work, well you're wrong. I met someone in real life who I met on the internet only a few weeks ago and I DIDN'T GET MOLESTED!
+&Buja &Who|Buja X, the X is where it's at!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!
+&Fit &Who|Fit <ZH> aka Fit of Rage is an assistant captain of Disoblige, a prominent high school senior and a badass. I have a sensitive side too. I like seafood and taking strolls in the moonlight. Call me!
+&redlights &Who|Redlights = Pimp god! Enough beer makes the world a better place!
+&dameon &angell &Who|Dameon Angell spawns people with a weasel and doesn't feel guilty.
+&Asmodeus &Who|Asmodeus is thE one and ONLY Asmo.  Lame/wrong him and you WILL be sorry! ;)
+&Kim &Who|^______I AM KIMCHI, OVERMIND OF ENDLESS RICE FIELDS______^
+&Cranium &Who|Cranium is the god of using your head, now use it and dont abuse it, or you'll lose it!
+&Attacks &Who|Attacks is the most evilest, and slyest staffer of them all ;)
+&Dyers &Who|Dyers eve is the rockiest and nutties staff member around (prolly the suckiest at English aswell). You can always wake him up for help or a host.  Just make sure you do it quietly!
+&Danger &Who|DangerGirl is Danger, Danger, Will Robinson!
+&qan &Who|qan is afk.
+&Ikrit &Who|You're breaking the Jedi code by not know who Ikrit is (There is no ignorance, there is knowledge). Now, meditate... and discover that Ikrit used to be Jacen Solo, you will.
+&prizerecharge|The prize number for recharge is 1.
+&prizeenergy|The prize number for energy is 2.
+&prizerotation|The prize number for recharge is 3.
+&prizestealth|The prize number for stealth is 4.
+&prizecloak|The prize number for cloak is 5.
+&prizexradar|The prize number for xradar is 6.
+&prizewarp|The prize number for warp is 7.
+&prizeguns|The prize number for guns is 8.
+&prizebombs|The prize number for bombs is 9.
+&prizebouncingbullets|The prize number for bouncing bullets is 10.  Do not use in TW!
+&prizethruster|The prize number for thruster is 11.
+&prizetopspeed|The prize number for top speed is 12.
+&prizefullcharge|The prize number for full charge is 13.
+&prizeengineshutdown|The prize number for engine shutdown is 14.
+&prizemultifire|The prize number for multifire is 15.
+&prizeproximity|The prize number for proximity is 16.
+&prizesuper|The prize number for super is 17.
+&prizeshields|The prize number for shields is 18.
+&prizeshrapnel|The prize number for shrapnel is 19.
+&prizeantiwarp|The prize number for antiwarp is 20.
+&prizerepel|The prize number for repel is 21.
+&prizeburst|The prize number for burst is 22.
+&prizedecoy|The prize number for decoy is 23.
+&prizethor|The prize number for thor is 24.
+&prizemultiprize|The prize number for multiprize is 25.
+&prizebrick|The prize number for brick is 26.
+&prizerocket|The prize number for rocket is 27.
+&prizeportal|The prize number for portal is 28.
+&TWCore &Download|You can download TWCore at http://www.twcore.org.
+&TWcore &Info|You can find out more information about TWCore at http://www.twcore.org.
