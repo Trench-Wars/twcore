@@ -73,14 +73,16 @@ public class DBPlayerData {
             "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = " + getUserID() + " ORDER BY TU.fdJoined ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
 
-            if (qryPlayerSquadInfo.next()) {
+            if (qryPlayerSquadInfo != null && qryPlayerSquadInfo.next()) {
                 m_fnTeamID = qryPlayerSquadInfo.getInt("fnTeamID");
                 m_fcTeamName = qryPlayerSquadInfo.getString("fcTeamName");
                 m_fnTeamUserID = qryPlayerSquadInfo.getInt("fnTeamUserID");
                 m_fdTeamSignedUp = qryPlayerSquadInfo.getDate("fdJoined");
                 result = true;
             }
-            qryPlayerSquadInfo.close();
+            if(qryPlayerSquadInfo != null) {
+            	qryPlayerSquadInfo.close();
+            }
             return result;
         } catch (Exception e) {
             System.out.println("Database error! - " + e.getMessage());
@@ -99,7 +101,7 @@ public class DBPlayerData {
             ResultSet qryPlayerInfo = m_connection.SQLQuery(m_connName,
             "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
-            if (qryPlayerInfo.next()) {
+            if (qryPlayerInfo != null && qryPlayerInfo.next()) {
                 m_playerLoaded = true;
                 m_fcUserName = qryPlayerInfo.getString("fcUserName");
                 m_fnUserID = qryPlayerInfo.getInt("fnUserID");
@@ -109,7 +111,9 @@ public class DBPlayerData {
                 getPlayerSquadData();
                 result = true;
             }
-            qryPlayerInfo.close();
+            if(qryPlayerInfo != null) {
+            	qryPlayerInfo.close();
+            }
             return result;
         } catch (Exception e) {
             System.out.println("Database error! - " + e.getMessage());
@@ -127,10 +131,12 @@ public class DBPlayerData {
             ResultSet qryPlayerExist = m_connection.SQLQuery(m_connName,
             "SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
-            if (qryPlayerExist.next()) {
+            if (qryPlayerExist != null && qryPlayerExist.next()) {
                 result = true;
             }
-            qryPlayerExist.close();
+            if(qryPlayerExist != null) { 
+            	qryPlayerExist.close();
+            }
             return result;
         } catch (Exception e) {
             System.out.println("Database error! - " + e.getMessage());
@@ -144,13 +150,15 @@ public class DBPlayerData {
         try {
             ResultSet qryPlayerAlias = m_connection.SQLQuery( m_aliasConnName,
             "SELECT fcIP, fnMID, fnStatus FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID+" ORDER BY fnUserID ASC LIMIT 0,1");
-            if( qryPlayerAlias.next() ) {
+            if( qryPlayerAlias != null && qryPlayerAlias.next() ) {
                 m_fcIP = qryPlayerAlias.getString( "fcIP" );
                 m_fnMID = qryPlayerAlias.getInt( "fnMID" );
                 m_fnStatus = qryPlayerAlias.getInt( "fnStatus" );
                 result = true;
             }
-            qryPlayerAlias.close();
+            if( qryPlayerAlias != null ) {
+            	qryPlayerAlias.close();
+            }
             return result;
         } catch (Exception e) {
             System.out.println("Database error! - " + e.getMessage());
@@ -164,11 +172,12 @@ public class DBPlayerData {
             m_connName = "website";
 
            try {
-               ResultSet r = m_connection.SQLQuery(m_connName, "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())");
+        	   String query = "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())";
+               ResultSet r = m_connection.SQLQuery(m_connName, query );
                if (r != null) r.close();
                m_lastQuery = System.currentTimeMillis();
                if (getPlayerData()) return true; else return false;
-           } catch (Exception e) {
+           } catch (SQLException e) {
                System.out.println("Couldn't create user");
                return false;
            }
