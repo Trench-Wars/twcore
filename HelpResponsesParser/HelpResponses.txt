@@ -1,4 +1,5 @@
 &TWD &OP|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within (5) minutes of when the ?help call was placed, please leave a message for any of the following Ops found here: http://www.trenchwars.org/index.php?v=staff
+&TWD &Ops|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within (5) minutes of when the ?help call was placed, please leave a message for any of the following Ops found here: http://www.trenchwars.org/index.php?v=staff
 &Squad &Join &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
 &Squadjoin &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
 &Squad &Leave &How|To leave your current squad type ?squadleave.
@@ -128,27 +129,7 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh -Zombies -Enigma -Twtown -Twcity -Gatez -G
 &PriitK &Email|PriitK's email address is: priitk@trenchwars.org
 &DoCk> &Email|DoCk>'s email address is: dock@twsites.com
 &DoCk &Email|DoCk>'s email address is: dock@twsites.com
-&Arilou &Email|Arilou Lalee'Lay's email address is: arilou@ds98.com
-&Yomama &Email|Yomama!!!'s email address is mama.is@paladen.net
-&Pure &Email|Pure_Luck's email addres is pureluck@trenchwars.org
-&PureLuck &Email|Pure_Luck's email addres is pureluck@trenchwars.org
-&Pure_Luck &Email|Pure_Luck's email addres is pureluck@trenchwars.org
-&Overstrand &Email|Overstrand's email address is: overstrand@trenchwars.org
-&Spam &Email|Mr. Spam's email address is: mrspam@trenchwars.org
-&Weaver &Email|Weaver's email address is: weaver.is@comcast.net
-&2Dragons &Email|2Dragons' email address is: abarton@holly.colostate.edu
-&2D &Email|2Dragons' email address is: abarton@holly.colostate.edu
-&Mythrandir &Email|Mythrandir's email address is: mythrandir@trenchwars.org
-&Myth &Email|Mythrandir's email address is: mythrandir@trenchwars.org
-&Epinephrine &Email|Epinephrine's email address is: trenchwarsleagues@yahoo.com
-&Epi &Email|Epinephrine's email address is: trenchwarsleagues@yahoo.com
-&Guano &Email|Cpt.Guano!'s email address is: trenchwarsleagues@yahoo.com
-&Cpt.Guano! &Email|Cpt.Guano!'s email address is: Cpt.Guano@gmail.com
-&Cpt &Email|Cpt.Guano!'s email address is: Cpt.Guano@gmail.com
-&qan &Email|qan's email address is: qan@twdev.org
 &Ban &Email|To lodge appeals VS Bans, please send an Email to bans21@trenchwars.org detailing the circumstances regarding your ban.
-&TWL &Email|The Trench Wars League's email addres is: trenchwarsleagues@yahoo.com
-&TWL &Contact|The Trench Wars League's email addres is: trenchwarsleagues@yahoo.com
 &Lost &Password|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
 &TWD &Name &Change|To change name for TWD: 1. Log on with the name you wish to remove.  2. ?go TWD  3. PM TWDBot with !resetname  4. Wait 24 hours.  5. After 24 hours, log in with the new name you wish to register.  6. PM TWDBot with !register in the TWD arena.  If anyone else in your household is using the same connection, please contact a TWD op to change your name, or use the Contact form on twd.trenchwars.org.
 &Lost &Pass|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost.  The password for that name will be set to a temporary, randomly generated password and emailed to you.  The temporary password is valid for 24 hours.  If this does not work, or if your email address isnt set correctly, please fill out the form at http://www.ssbase.com/billing.shtml.
@@ -165,7 +146,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh -Zombies -Enigma -Twtown -Twcity -Gatez -G
 &Help &Server|For help setting up your own server please refer to: http://www.shanky.com/server.
 &Settings &Trench &Wars|Sorry but the Trench Wars settings are not publicly available.
 &Settings &TW|Sorry but the Trench Wars settings are not publicly available.
-&Banners &Download &Where|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE, http://www.subspacedownloads.com/index.php?act=banners&f=1, http://www.deathstarbattle.com/bannervault and http://www.mama.twzone.net/files .
+&Banners &Download &Where +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE, http://www.subspacedownloads.com/index.php?act=banners&f=1, http://www.deathstarbattle.com/bannervault and http://www.mama.twzone.net/files .
+&Banners &Website +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE, http://www.subspacedownloads.com/index.php?act=banners&f=1, http://www.deathstarbattle.com/bannervault and http://www.mama.twzone.net/files .
 &Continuum &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/Continuum038Setup.exe .
 &Subspace &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/Continuum038Setup.exe .
 &Subspace &1.35 &Download &Where|Subspace v1.35 can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=11 .
@@ -425,8 +407,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh -Zombies -Enigma -Twtown -Twcity -Gatez -G
 &What &TWEL &Website|The TWEL Website is: http://www.trenchwars.org/TWEL.
 &What &TWEL &Site|The TWEL Website is: http://www.trenchwars.org/TWEL.
 &What &PlayerGuide &Site|For all basics about playing Continuum, check out the Player Help Guide: http://www.trenchwars.org/index.php?v=gethelp&id=2
-&New &38 &What|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
-&Different &38 &What|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
+&New &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
+&Different &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
 Question (question)|What is your question?  Please type ?help followed with your question.  Example: ?help How do I shoot?
 &Message &Staff|Please directly message the staff member who is helping you out by typing :playername: before your message, or type :: to respond to the last person that messaged you.
 Msgstaff|Please directly message the staff member who is helping you out by typing :playername: before your message, or type :: to respond to the last person that messaged you.
@@ -467,55 +449,35 @@ bangbangbang|I don't want to know your name, I just want.. Bang bang bang!
 &Her &Nice &Ass|Whoa mama!!!  You have a nice posterior!!
 &Stop &Slacking|Please pick up your monthly stats and get more active or you will get the axe from Push and Pure, TY.
 &Drinking &And &Driving|Please take care when operating your ship while under the influence of alcohol.
-&Erathia &Who|Erathia is an "Electronic Robotic Android Trained for Hazardous Infiltration and Assassinations". He is programmed for wanton destruction, merciless carnage and making waffles. He will now kill you for asking about him..
 &Weaver &Who|Weaver: If you've got a problem he's not your man, but if you're a problem he'll give you a ban! =)
-&Pusher &Who|THE PUSHER likes to push things!  See him in action at: http://www.rathergood.com/james/pusher/.
 &Dock> &Who|Dock is a sysop of SSCU Trench Wars.  He, along with Sphonk, created the bot core that is currently being used in Trench Wars.  His email address is DoCk@yaunet.com.
-&Cpt.Guano! &Who|Staff has no idea how Cpt.Guano! got smod :S
-&BH822 &Who|BH the MOD = the staff stoner.
-&Melostyle|Melo is a frenchy quebecquer mixed with an eskimo.. so please respect him he is such a nice guy :)
 &Priitk &Who|PriitK is a SSCU Trench Wars SysOp, a Billing Server Operator and the creator of Continuum.  His email address is priitk@trenchwars.org.
 &Pure_Luck &Who|Pure_Luck> greatest terr alive (base + lt) thanks
-&Farmer &Who|Da Farmer!> If you are good, I am a friend, mess up and I AM YOUR worst Nightmare! ;)
-&YoMama &Who|YoMama!!!> if you dont have boobies, I dont wanna chat to you
-&420 &Who|Bigger and Bolder and Rougher and Tougher in other words sucka, there is no other! I'm the one and only DOMINATOR! -Mr. 420
 &M_M &Who|M_M God is Candy King For Life!
-&Zeus &Who|ZeUs!! is TW Staff's first hermaphrodite Ipswich Town supporting member (kinky), Mike began his tw career as boot polisher to Mantra-Slider before his parents were orphaned in a javelin accident. He now lives with Jonas the pimp and his hoes, and eeks out a living as a rent boy/girl.
-&Demonic &Who|Demonic is a sexy wb flying pilot, and she is a model SS player!! Disagree?? Bah, Banned o.O
-&Predator &Who|Predator is one hot staff member. Born with hair that changes colour depending on the way you look at it. At the tender age of 12 he was recruted by a Fashion TV agent. As time went on, his key roll in the fashion industry gained him a position as Brad Pitt's 1st stunt man. However, it was not long before they realized Predator had an amazing potential as top quality pimp, working for the likes of Madonna and Ricky Martin. he never forgot Subspace where he has used his looks to make M_M god and Downdraft his trusty sidekicks, used for carrying umbrellas to spread crack to the ghettos of Trench Wars and polish his toe nail. All hail TW pimp of staff!
 &Reaver &Who|April Fools! Hahahaha
-&JDM37 &Who|JDM37 is always high so be patient :)
-&Mythrandir &Who|type ?help who is mythrandir and a staff member will help you out
-&Malladrin &Who|As the wife of Chewbacca, malladrin has the ability to perform puppetry and play spider simultaneously. Much to the joy of whiterabbit offspring
 &Diakka &Who|Diakka is a nobody, and nobody is perfect; therefore Diakka is perfect.
 &Leaf &Who|Wtf, Leaf is a jerk, if you're friends with this guy you are pathetic, get a life!
-&Parasect &Who|Parasect is so stupid that he can't even think what he wants to tell you
-&TSM &Who|TheSerpentMage is the nipple queen of Trench Wars! Even Janet Jackson couldnt tip to him
 &Beasty &Who|Beasty is the cute staffer! Shes like one of the Powerpuff Girls, except the pony tails.
-&Lunar &Who|The BanG Administrator will judge you-after Lunar Crescens is finished with you FIRST~!!!
 &koen &Who|Cool koen: This time was not made for me, I have nowhere to land, no place to rest, Like a bird without a nest -superman
-&Warthog &Who|Hi, I'm warthog, the laziest staffer in trench wars... OR AM I!? Maybe I'm just a super spy waiting to strike and kill you, or MAYBE I'm an ice cream truck driving around serving cold cold tasty ice cream.... OF DEATH.
 &Pred_FNM &Who|Pred_FNM usually dances around with Credit Account and M_M God in the late hours around the trenches.  Together they are the indestructible Mambo team! When you approach Pred make sure you have some beer in your hand and whatever you do.. NEVER! I repeat NEVER talk about salsa, it will get you killed.
-&Jacklyn &Who|Jacklyn own ALL cookies. She has amnesia though,  <:3)-  ..::Squeak::..
-&flabin &Who|FLaBiN is FLaBBy!
-&Rudy &Who|Rudy makes your shark look like a guppy. He is the undisputed God of bomberman and any attempts to defeat him will result in your DOOM
+&Rudy &Who|Rudy is the Trench Wars ban administrator. He has a short temper and a shorter attention span. Do not waste his time with trivialities or (un)pleasantries, get to the point!
 &Nethila &Who|Nethila is the king of nerds. Listen to him or you will feel the wrath of his lvl 99 Mage
-&Bahamut &Who|Bahamut is a dog that sounds like a goat when he barks. He is a super duper shark and pimps goats. ?message me if you want some goats.
-&Hot &Rodder &Who|Supreme master of all that is hot rodding, and the most hateful person of ricers
 &Shayde &Who|Shayde is your ever friendly neighborhood moderator!
-&Dimboy &Who|Dimboy is that one guy you've always wanted to meet. His muscular physical appearance and witty humour makes him the one to die for. And if anyone has told you that internet relationships don't work, well you're wrong. I met someone in real life who I met on the internet only a few weeks ago and I DIDN'T GET MOLESTED!
-&Buja &Who|Buja X, the X is where it's at!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!  Do it!
-&Fit &Who|Fit <ZH> aka Fit of Rage is an assistant captain of Disoblige, a prominent high school senior and a badass. I have a sensitive side too. I like seafood and taking strolls in the moonlight. Call me!
-&redlights &Who|Redlights = Pimp god! Enough beer makes the world a better place!
 &dameon &angell &Who|Dameon Angell spawns people with a weasel and doesn't feel guilty.
 &Asmodeus &Who|Asmodeus is thE one and ONLY Asmo.  Lame/wrong him and you WILL be sorry! ;)
 &Kim &Who|^______I AM KIMCHI, OVERMIND OF ENDLESS RICE FIELDS______^
-&Cranium &Who|Cranium is the god of using your head, now use it and dont abuse it, or you'll lose it!
-&Attacks &Who|Attacks is the most evilest, and slyest staffer of them all ;)
-&Dyers &Who|Dyers eve is the rockiest and nutties staff member around (prolly the suckiest at English aswell). You can always wake him up for help or a host.  Just make sure you do it quietly!
 &Danger &Who|DangerGirl is Danger, Danger, Will Robinson!
-&qan &Who|qan is afk.
-&Ikrit &Who|You're breaking the Jedi code by not know who Ikrit is (There is no ignorance, there is knowledge). Now, meditate... and discover that Ikrit used to be Jacen Solo, you will.
+&Revolt &Who|Revolt is a high powered lawyer here to protect the rights of those in confusion.  Has your life been ruined?  Have you been injured fighting for your squad?  Break a finger trying to burst in base?  If so, give Revolt a call at 1800 -Call-Rev and press "1" for legal advice, and "2" for phone sex.
+&Acumo &Who|Acumo is TW's greatest jav and the sweetest lookin' boy!  o_O
+&Pascone &Who|pascone might be afk or might be banning you. also, dont spam. a`
+&Aqua &Who|The sky was dark, the moon was high. All alone just her and I. Her hair so soft, her eyes so blue. I knew just what she wanted to do. Her skin so soft, her legs so fine. I ran my fingers down her spine. I didn't know how, but I tried my best, to place my hand on her breast. I remember my fear, my fast beating heart, but slowly she spread her legs apart. And when she did I felt no shame, as all at once the white stuff came. At last it was finished, it's all over now, my first time... milking a cow.
+&Da1andonly &Who|Da1andonly is your friendly fellow SSCU Trench Wars Moderator! _o/
+&Punk &Who|hey, I'd like my tell to be: You just got PUNK'D!
+&Ewan &Who|Ewan is asleep. ZzZzZzZzZzZzZzZzZzZzZzZzZz ZzZzZzZzZzZzZzZzZzZzZzZzZz ZzZzZzZzZzZzZzZzZzZzZzZzZz ZzZzZzZzZzZzZzZzZzZzZzZzZz ZzZzZzZzZzZzZzZzZzZzZzZzZz ZzZzZzZzZzZzZzZzZzZzZzZzZz ZzZzZzZzZzZzZzZzZzZzZzZzZz ZzZzZzZzZzZzZzZzZzZzZzZzZz 
+&Falk &Who|WTFalK!
+&Scoop &Who|I'm a man who discovered the wheel and built the Eiffel Tower out of metal and brawn. That's what kind of man I am. You're just a woman with a small brain. With a brain a third the size of us. It's science.
+&Tera &Who|I am your daddy! >_<
+&Witness &Who|You want the truth?!?!? YOu CaNT Handle The TRUTH!! I was there.
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
 &prizerotation|The prize number for recharge is 3.
