@@ -1012,13 +1012,15 @@ public class bship extends MultiModule implements TSChangeListener
 	}
 
 	/**
-	 * Assigns all playing players to ships. Done randomly through each team, will
-	 * assign 1 of each ship 4-8, the next 3 as ship 2, next 3 as ship 1, and the rest
-	 * as ship 3.
+	 * Assigns all playing players to ships. Done randomly through each team,
+	 * will assign players to each capital ship in reverse order from carrier to
+	 * minesweeper until the capital ship limit is reached. The remaining
+	 * players will be assigned as turrets and planes.
 	 */
 	private void randomShips()
 	{
 		int teams = (Integer)m_tsm.getSetting("teams");
+		int cslimit = (Integer)m_tsm.getSetting("cslimit");
 		StringBag[] plist = new StringBag[teams];
 		for(int x = 0; x < plist.length; x++)
 			plist[x] = new StringBag();
@@ -1033,18 +1035,25 @@ public class bship extends MultiModule implements TSChangeListener
 
 		for(int x = 0; x < teams; x++)
 		{
-			// Put players in capital ships
-			for(int y = 0; y < cslimit; y++)
-			{
-				Player p = m_botAction.getPlayer(plist[x].grabAndRemove());
-				m_botAction.setShip(p.getPlayerID(), 8 - (y % 5));
-			}
+			int count = 0;
 
-			// Put players in turrets and planes
-			for(int z = 0, s = plist[x].size(); z < s; z++)
+			while(!plist[x].isEmpty())
 			{
-				Player p = m_botAction.getPlayer(plist[x].grabAndRemove());
-				m_botAction.setShip(p.getPlayerID(), z % 3);
+				String name = plist[x].grabAndRemove();
+				if(name != null)
+				{
+					if(count < cslimit)
+					{
+						//put players in capital ships up to the limit
+						m_botAction.setShip(name, 8 - (count % 5));
+					}
+					else
+					{
+						//put everyone else in turrets and planes
+						m_botAction.setShip(name, count % 3);
+					}
+					count++;
+				}
 			}
 		}
 	}
@@ -1210,7 +1219,7 @@ public class bship extends MultiModule implements TSChangeListener
 			short kteam = m_botAction.getPlayer(event.getKillerID()).getFrequency(); //Get killer's team #
 			short dteam = m_botAction.getPlayer(event.getKilleeID()).getFrequency(); //Get dead player's team #
 
-			if(kteam > 0 && kteam < m_teams.length)
+			if(kteam >= 0 && kteam < m_teams.length)
 			{
 				m_teams[kteam].playerKill(killer, ship);
 
