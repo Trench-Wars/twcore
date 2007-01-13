@@ -187,6 +187,8 @@ public abstract class MultiModule
         handleEvent((FlagClaimed) event);
       else if(event instanceof TurretEvent)
         handleEvent((TurretEvent) event);
+      else if(event instanceof SQLResultEvent)
+      	handleEvent((SQLResultEvent) event);
     }
     catch(Exception e)
     {
@@ -255,4 +257,6 @@ public abstract class MultiModule
   public void handleEvent(InterProcessEvent event){}
 
   public void handleEvent(TurretEvent event){}
+
+  public void handleEvent(SQLResultEvent event){}
 }
