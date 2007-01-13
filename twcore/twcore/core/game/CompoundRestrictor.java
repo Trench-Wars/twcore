@@ -9,7 +9,7 @@ import static twcore.core.game.Ship.*;
  * to define ship groups and assign a maximum value to each group.
  *
  * @author D1st0rt
- * @version 06.12.27
+ * @version 07.01.10
  */
 public class CompoundRestrictor implements ShipRestrictor
 {
@@ -22,6 +22,9 @@ public class CompoundRestrictor implements ShipRestrictor
 	/** The BotAction object to send messages with */
 	private BotAction m_botAction;
 
+	/** Classes signed up for denied ship change notifications */
+	private ArrayList<InvalidShipListener> listeners;
+
 	/**
 	 * Creates a new instance of CompoundRestrictor
 	 */
@@ -30,6 +33,7 @@ public class CompoundRestrictor implements ShipRestrictor
 		groups = new ArrayList<ShipGroup>();
 		fallback = SPEC;
 		m_botAction = BotAction.getBotAction();
+		listeners = new ArrayList<InvalidShipListener>();
 	}
 
 	/**
@@ -117,7 +121,10 @@ public class CompoundRestrictor implements ShipRestrictor
 
 		if(!allowed)
 		{
-			m_botAction.sendPrivateMessage(p.getPlayerID(), "You are not permitted in that ship.");
+			for(InvalidShipListener l : listeners)
+			{
+				l.changeDenied(p, ship, team);
+			}
 		}
 		return allowed;
 	}
@@ -141,6 +148,32 @@ public class CompoundRestrictor implements ShipRestrictor
 	public byte fallbackShip()
 	{
 		return fallback;
+	}
+
+	/**
+	 * Adds the specified InvalidShipListener to the event queue. It will now
+	 * receive notification of denied ship change attempts.
+	 * @param l the listener to add
+	 */
+	public void addListener(InvalidShipListener l)
+	{
+		if(l != null && !listeners.contains(l))
+		{
+			listeners.add(l);
+		}
+	}
+
+	/**
+	 * Adds the specified InvalidShipListener to the event queue. It will no
+	 * longer recieve notification of denied ship change attempts.
+	 * @param l the listener to remove
+	 */
+	public void removeListener(InvalidShipListener l)
+	{
+		if(l != null && listeners.contains(l))
+		{
+			listeners.remove(l);
+		}
 	}
 
 	/**

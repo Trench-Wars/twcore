@@ -9,7 +9,7 @@ import java.util.*;
  * team to determine whether a player is allowed to switch or not.
  *
  * @author D1st0rt
- * @version 06.12.27
+ * @version 07.01.10
  */
 public class BasicRestrictor implements ShipRestrictor
 {
@@ -22,6 +22,9 @@ public class BasicRestrictor implements ShipRestrictor
 	/** The BotAction object to send messages with */
 	private BotAction m_botAction;
 
+	/** Classes signed up for denied ship change notifications */
+	private ArrayList<InvalidShipListener> listeners;
+
 	/**
 	 * Creates a new instance of BasicRestrictor
 	 */
@@ -31,6 +34,7 @@ public class BasicRestrictor implements ShipRestrictor
 		Arrays.fill(restrictions, UNRESTRICTED);
 		fallback = Ship.SPEC;
 		m_botAction = BotAction.getBotAction();
+		listeners = new ArrayList<InvalidShipListener>();
 	}
 
 	/**
@@ -94,7 +98,10 @@ public class BasicRestrictor implements ShipRestrictor
 
 		if(!allowed)
 		{
-			m_botAction.sendPrivateMessage(p.getPlayerID(), "You are not permitted in that ship.");
+			for(InvalidShipListener l : listeners)
+			{
+				l.changeDenied(p, ship, team);
+			}
 		}
 		return allowed;
 	}
@@ -118,5 +125,31 @@ public class BasicRestrictor implements ShipRestrictor
 	public byte fallbackShip()
 	{
 		return fallback;
+	}
+
+	/**
+	 * Adds the specified InvalidShipListener to the event queue. It will now
+	 * receive notification of denied ship change attempts.
+	 * @param l the listener to add
+	 */
+	public void addListener(InvalidShipListener l)
+	{
+		if(l != null && !listeners.contains(l))
+		{
+			listeners.add(l);
+		}
+	}
+
+	/**
+	 * Adds the specified InvalidShipListener to the event queue. It will no
+	 * longer recieve notification of denied ship change attempts.
+	 * @param l the listener to remove
+	 */
+	public void removeListener(InvalidShipListener l)
+	{
+		if(l != null && listeners.contains(l))
+		{
+			listeners.remove(l);
+		}
 	}
 }
