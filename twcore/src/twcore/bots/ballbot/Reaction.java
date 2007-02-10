@@ -14,14 +14,7 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
-import twcore.core.events.LoggedOn;
-import twcore.core.events.Message;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.BallPosition;
-import twcore.core.game.Ship;
 import twcore.core.game.Player;
-import java.util.*;
 
 public class Reaction
 {
@@ -100,7 +93,7 @@ public class Reaction
 
 	public static void OnGoal( IncidentHistory history )
 	{
-		if( State.Is( REG_PLAY ) )
+		if( State.Is( State.REG_PLAY ) )
 		{
 			State.Override( State.SPOT_PUCK_BEFORE_FACE_OFF, 3 );
 		}
