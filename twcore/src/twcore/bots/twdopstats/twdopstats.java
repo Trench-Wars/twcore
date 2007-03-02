@@ -50,7 +50,7 @@ public class twdopstats extends SubspaceBot {
          m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
          
          // Load the TWD Operators list
-         //loadTWDOps();
+         loadTWDOps();
     }
     
     private void loadTWDOps() {
@@ -138,9 +138,9 @@ public class twdopstats extends SubspaceBot {
         	return;
         }
         
-        /*if(twdops.containsKey(name.toLowerCase()) == false) {
+        if(twdops.containsKey(name.toLowerCase()) == false) {
         	return;
-        }*/
+        }
         
         while( !recorded && i < callList.size() ) {
             EventData e = callList.elementAt( i );
