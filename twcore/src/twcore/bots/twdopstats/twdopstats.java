@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.core.BotAction;
@@ -14,6 +15,7 @@ import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.SQLResultEvent;
 
 public class twdopstats extends SubspaceBot {
 
@@ -27,6 +29,9 @@ public class twdopstats extends SubspaceBot {
 	public static final int CALL_EXPIRATION_TIME = 90000;
 	
 	private HashMap<String,String> twdops = new HashMap<String,String>();
+	
+	private updateTWDOpsTask updateOpsList;
+	private String updateTWDOpDelay = String.valueOf(24 * 60 * 60 * 1000); // once every day
 	
 	public twdopstats(BotAction botAction) {
 		super(botAction);
@@ -51,14 +56,51 @@ public class twdopstats extends SubspaceBot {
          
          // Load the TWD Operators list
          loadTWDOps();
+         
+         // Start the task to update the TWD Operator list
+         updateOpsList = new updateTWDOpsTask(this);
+         m_botAction.scheduleTaskAtFixedRate(updateOpsList, Long.valueOf(this.updateTWDOpDelay).longValue(), Long.valueOf(this.updateTWDOpDelay).longValue());
+    }
+    
+    /**
+     * @see twcore.core.SubspaceBot.handleDisconnect() 
+     */
+    public void handleDisconnect() {
+    	this.updateOpsList.cancel();
+    	updateOpsList = null;
     }
     
     private void loadTWDOps() {
-    	String accessList = m_botAction.getBotSettings().getString( "AccessList" );
-        String pieces[] = accessList.split( ":" );
-        for( int i = 0; i < pieces.length; i++ ) {
-        	twdops.put( pieces[i].toLowerCase(), pieces[i] );
-        }
+    	String query = "SELECT tblUser.fcUsername FROM `tbluserrank`, `tblUser` WHERE `fnRankID` = '14' AND tblUser.fnUserID = tbluserrank.fnUserID";
+    	m_botAction.SQLBackgroundQuery("local", "TWDOpsUpdate", query);
+    }
+    
+    /**
+     * Handle the background sql process once it's finished
+     * and update the TWD Operator list
+     */
+    public void handleEvent( SQLResultEvent event) {
+    	if(event.getIdentifier().equals("TWDOpsUpdate")) {
+    		ResultSet resultSet = event.getResultSet();
+    		
+    		if(resultSet == null) {
+    			throw new RuntimeException("ERROR: Null resultSet returned; connection may be down.");
+    		}
+    		
+			// Clear current list of TWD Operators
+   			twdops.clear();
+   			
+    		// Iterate over all the TWD Operators from the database and add them to the hashmap
+    		try {    		
+    			while(resultSet.next()) {
+    				String name = resultSet.getString("fcUsername");
+    				twdops.put( name.toLowerCase(), name );
+        		}
+    		} catch(SQLException sqle) {
+    			throw new RuntimeException("SQL Error: " + sqle.getMessage(), sqle);
+    		}
+    		
+    	}
     }
     
     public void handleEvent( Message event ){
@@ -74,7 +116,7 @@ public class twdopstats extends SubspaceBot {
                 }
             }
         }
-        else if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
+        else if (event.getMessageType() == Message.CHAT_MESSAGE) {
         	String message = event.getMessage().toLowerCase();
         	if (message.startsWith("on it"))
         		handleOnIt(event.getMessager(), event.getMessage());
@@ -175,6 +217,23 @@ public class twdopstats extends SubspaceBot {
     }
     
     
+    
+    /**
+     * Returns the number of rows in the ResultSet
+     * @param rs : ResultSet
+     * @return count
+     */
+    public static int getRowCount(ResultSet rs) throws SQLException{
+        int numResults = 0;
+        
+        rs.last();
+        numResults = rs.getRow();
+        rs.beforeFirst();
+
+        return numResults;
+    }
+    
+    
     class EventData {
 
         String  arena;
@@ -202,6 +261,18 @@ public class twdopstats extends SubspaceBot {
         public String getArena() { return arena; }
         public long getTime() { return time; }
         public int getDups() { return dups; }
+    }
+    
+    private class updateTWDOpsTask extends TimerTask {
+    	twdopstats botInstance;
+    	
+    	public updateTWDOpsTask(twdopstats botInstance) {
+    		this.botInstance = botInstance;
+    	}
+    	
+    	public void run() {
+    		botInstance.loadTWDOps();
+    	}
     }
 
 }
