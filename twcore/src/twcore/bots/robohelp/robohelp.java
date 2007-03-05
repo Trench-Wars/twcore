@@ -182,7 +182,7 @@ public class robohelp extends SubspaceBot {
 
 	}
         try {
-        m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall" );
+        m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
         m_botAction.sendChatMessage( "Statistic Recording: Operational" );
 
 	} catch (Exception e ) {
@@ -1036,7 +1036,7 @@ public class robohelp extends SubspaceBot {
             if(result.next()) {
                 m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             } else {
-				m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('', '"+name+"', '1', '0', '"+time+"')" );
+				m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
 		    }
         } catch ( Exception e ) {
 		    System.out.println( "Could not update Stat Records" );
@@ -1056,7 +1056,7 @@ public class robohelp extends SubspaceBot {
 
             if(result.next()) {
                 m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
-            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fnCallID`, `fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('', '"+name+"', '1', '1', '"+time+"')" );
+            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
         } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
     }
 
