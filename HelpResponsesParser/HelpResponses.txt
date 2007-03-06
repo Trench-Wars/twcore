@@ -478,6 +478,8 @@ bangbangbang|I don't want to know your name, I just want.. Bang bang bang!
 &Scoop &Who|I'm a man who discovered the wheel and built the Eiffel Tower out of metal and brawn. That's what kind of man I am. You're just a woman with a small brain. With a brain a third the size of us. It's science.
 &Tera &Who|Tera is your friendly super sexy, super pretty, super hot, super javelin, TW Moderator ^_^
 &Witness &Who|You want the truth?!?!? YOu CaNT Handle The TRUTH!! I was there.
+&O.M.G. &Who|O.M.G. is the one who will be pulling off the impossible or sitting in spec disgusted.. face it, the name says it all, Oh. My. God...
+&420 &Who|Bigger and Bolder and Rougher and Tougher in other words sucka, there is no other! I'm the one and only DOMINATOR! -Mr. 420
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
 &prizerotation|The prize number for recharge is 3.
