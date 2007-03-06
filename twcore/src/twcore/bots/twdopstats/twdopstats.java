@@ -17,6 +17,11 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SQLResultEvent;
 
+/**
+ * TWDOpStats bot is like Robohelp for "on it" gathering but only 
+ * for TWD Ops and TWD calls.
+ * @author Maverick / MMaverick
+ */
 public class twdopstats extends SubspaceBot {
 
 	private EventRequester events; 
@@ -33,6 +38,11 @@ public class twdopstats extends SubspaceBot {
 	private updateTWDOpsTask updateOpsList;
 	private String updateTWDOpDelay = String.valueOf(24 * 60 * 60 * 1000); // once every day
 	
+	/**
+	 * Constructor
+	 * Set the EventRequester
+	 * @param botAction
+	 */
 	public twdopstats(BotAction botAction) {
 		super(botAction);
 		
@@ -42,6 +52,9 @@ public class twdopstats extends SubspaceBot {
         registerCommands();
 	}
 	
+	/**
+	 * Registers the command to the CommandInterpreter
+	 */
 	private void registerCommands(){
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         m_commandInterpreter.registerCommand( "!status", Message.CHAT_MESSAGE, this, "handleStatusCommand" );
@@ -49,7 +62,17 @@ public class twdopstats extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!update", Message.PRIVATE_MESSAGE, this, "handleUpdateCommand" );
         m_commandInterpreter.registerCommand( "!die", Message.PRIVATE_MESSAGE, this, "handleDieCommand");
     }
-	
+
+	/**
+	 * This method is called when the bot logs on.
+	 * 
+	 * The bot joins the arena #robopark, set its chat, 
+	 * updates its TWD Operator list and starts the task 
+	 * to repeat this each day
+	 * 
+	 * @param event
+	 * @see twcore.core.SubspaceBot.handleEvent(LoggedOn event)
+	 */
     public void handleEvent(LoggedOn event) {
     	 m_botAction.joinArena( "#robopark" );
          m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
@@ -70,6 +93,10 @@ public class twdopstats extends SubspaceBot {
     	updateOpsList = null;
     }
     
+    /**
+     * Initiates the update of the TWD Operator list by starting
+     * a background query
+     */
     private void loadTWDOps() {
     	String query = "SELECT tblUser.fcUsername FROM `tbluserrank`, `tblUser` WHERE `fnRankID` = '14' AND tblUser.fnUserID = tbluserrank.fnUserID";
     	m_botAction.SQLBackgroundQuery("local", "TWDOpsUpdate", query);
@@ -78,6 +105,7 @@ public class twdopstats extends SubspaceBot {
     /**
      * Handle the background sql process once it's finished
      * and update the TWD Operator list
+     * @see twcore.core.SubspaceBot.handleEvent(SQLResultEvent event)
      */
     public void handleEvent( SQLResultEvent event) {
     	if(event.getIdentifier().equals("TWDOpsUpdate")) {
@@ -103,6 +131,12 @@ public class twdopstats extends SubspaceBot {
     	}
     }
     
+    /**
+     * Handles any messages send to the bot. 
+     * The bot triggers on the ?help alerts and "on it" in chat
+     * 
+     * @see twcore.core.SubspaceBot.handleEvent( Message event )
+     */
     public void handleEvent( Message event ){
 
         m_commandInterpreter.handleEvent( event );
@@ -123,6 +157,11 @@ public class twdopstats extends SubspaceBot {
         }
     }
     
+    /**
+     * This method returns the !help menu
+     * @param playerName the player who did !help
+     * @param message the message of the player (will always start with !help)
+     */
     public void handleHelpCommand( String playerName, String message ) {
     	String[] helpText = {
                 "TWDOpStats commands:",
@@ -154,11 +193,21 @@ public class twdopstats extends SubspaceBot {
         }
     }
     
+    /**
+     * Initiates TWD Operator list update on the !update command.
+     * @param playerName the player who did !help
+     * @param message the message of the player (will always start with !update)
+     */
     public void handleUpdateCommand( String name, String message) {
     	loadTWDOps();
-    	m_botAction.sendSmartPrivateMessage(name, "TWD Operator list updated.");
+    	m_botAction.sendSmartPrivateMessage(name, "TWD Operator list update initiated.");
     }
     
+    /**
+     * Logs off the bot on the !die command.
+     * @param playerName the player who did !help
+     * @param message the message of the player (will always start with !die)
+     */
     public void handleDieCommand( String name, String message ) {
     	if(m_botAction.getOperatorList().isSmod(name)) {
     		m_botAction.die();
@@ -168,7 +217,8 @@ public class twdopstats extends SubspaceBot {
     
     
     /**
-     * For strict onits, requiring the "on it" to be at the start of the message.
+     * Records the staffer's claim for the call once he has said "on it" on cha.
+     * The call must be twd related ("twd" word in the call) and the staffer must be a TWD Operator.
      * @param name Name of person saying on it
      * @param message Message containing on it
      */
@@ -197,7 +247,11 @@ public class twdopstats extends SubspaceBot {
         }
     }
     
-    public void updateStatRecordsONIT( String name ) {
+    /**
+     * Records the call to the database
+     * @param name the staffer who claimed the call
+     */
+    private void updateStatRecordsONIT( String name ) {
         try {
             Calendar thisTime = Calendar.getInstance();
             Date day = thisTime.getTime();
@@ -263,6 +317,9 @@ public class twdopstats extends SubspaceBot {
         public int getDups() { return dups; }
     }
     
+    /**
+     * This TimerTask initiates the TWD Operator list update 
+     */
     private class updateTWDOpsTask extends TimerTask {
     	twdopstats botInstance;
     	
