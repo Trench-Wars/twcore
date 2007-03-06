@@ -98,7 +98,7 @@ public class twdopstats extends SubspaceBot {
      * a background query
      */
     private void loadTWDOps() {
-    	String query = "SELECT tblUser.fcUsername FROM `tbluserrank`, `tblUser` WHERE `fnRankID` = '14' AND tblUser.fnUserID = tbluserrank.fnUserID";
+    	String query = "SELECT tblUser.fcUsername FROM `tblUserRank`, `tblUser` WHERE `fnRankID` = '14' AND tblUser.fnUserID = tblUserRank.fnUserID";
     	m_botAction.SQLBackgroundQuery("local", "TWDOpsUpdate", query);
     }
     
@@ -112,7 +112,7 @@ public class twdopstats extends SubspaceBot {
     		ResultSet resultSet = event.getResultSet();
     		
     		if(resultSet == null) {
-    			throw new RuntimeException("ERROR: Null resultSet returned; connection may be down.");
+    			throw new RuntimeException("ERROR: Null resultSet returned; the database connection might be down");
     		}
     		
 			// Clear current list of TWD Operators
@@ -170,7 +170,7 @@ public class twdopstats extends SubspaceBot {
                 "[PM  ] !die     - Tells the bot to go parachuting (without the parachute)"
             };
     	
-    	if( m_botAction.getOperatorList().isSmod(playerName)) {
+    	if( m_botAction.getOperatorList().isHighmod(playerName) || (twdops != null && twdops.containsKey(playerName.toLowerCase()))) {
     		m_botAction.smartPrivateMessageSpam( playerName, helpText );
     	}
     }
@@ -179,18 +179,21 @@ public class twdopstats extends SubspaceBot {
      * Returns the (mysql) status of the bot when the !status command is given on the chat
      */
     public void handleStatusCommand( String name, String message ) {
-    	if( !m_botAction.SQLisOperational() ){
-            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
-            return;
+    	if( m_botAction.getOperatorList().isHighmod(name) || (twdops != null && twdops.containsKey(name.toLowerCase()))) { 
+    		
+	    	if( !m_botAction.SQLisOperational() ){
+	            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
+	            return;
+	    	}
+	        
+	    	try {
+	            m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
+	            m_botAction.sendChatMessage( "Statistic Recording: Operational" );
+	
+	    	} catch (Exception e ) {
+	            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
+	        }
     	}
-        
-    	try {
-            m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
-            m_botAction.sendChatMessage( "Statistic Recording: Operational" );
-
-    	} catch (Exception e ) {
-            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
-        }
     }
     
     /**
@@ -199,8 +202,10 @@ public class twdopstats extends SubspaceBot {
      * @param message the message of the player (will always start with !update)
      */
     public void handleUpdateCommand( String name, String message) {
-    	loadTWDOps();
-    	m_botAction.sendSmartPrivateMessage(name, "TWD Operator list update initiated.");
+    	if( m_botAction.getOperatorList().isHighmod(name) || (twdops != null && twdops.containsKey(name.toLowerCase()))) {
+    		loadTWDOps();
+    		m_botAction.sendSmartPrivateMessage(name, "TWD Operator list update initiated.");
+    	}
     }
     
     /**
@@ -209,7 +214,7 @@ public class twdopstats extends SubspaceBot {
      * @param message the message of the player (will always start with !die)
      */
     public void handleDieCommand( String name, String message ) {
-    	if(m_botAction.getOperatorList().isSmod(name)) {
+    	if( m_botAction.getOperatorList().isHighmod(name) || (twdops != null && twdops.containsKey(name.toLowerCase()))) {
     		m_botAction.die();
     	}
     }
