@@ -52,7 +52,7 @@ public class MessageLimiter {
             m_bot.handleEvent( event );
             return;
         }
-        if( m_botAction.getOperatorList().isHighmod( name ) ) {
+        if( m_botAction.getOperatorList().isZH( name ) ) {
             m_bot.handleEvent( event );
             return;
         }
