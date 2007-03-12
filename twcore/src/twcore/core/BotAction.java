@@ -1557,6 +1557,42 @@ public class BotAction
             setFreq(((Integer) i.next()).intValue(), destFreq);
         }
     }
+    
+    /**
+     * Sends all ships on a specific frequency into spectator mode, without locking
+     * them in spectator mode.  (Arena should be *lock'd first.) 
+     * @param freq Frequency to spec
+     */
+    public void specAllOnFreq(int freq) {
+        Iterator i = m_arenaTracker.getFreqIDIterator(freq);
+        if (i == null)
+            return;
+        while (i.hasNext())
+        {
+            specWithoutLock(((Integer) i.next()).intValue());
+        }
+    }
+    
+    /**
+     * Sends all ships into spectator mode, but keeps their freq as what it was prior
+     * to being spec'd.  Does not lock in spectator mode, so arena should be *lock'd.
+     * @param freq Frequency to spec
+     */
+    public void specAllAndKeepFreqs() {
+        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        Player p;
+        int priorfreq;
+        
+        if (i == null)
+            return;
+        while (i.hasNext()) {
+            p = (Player)i.next();
+            priorfreq = p.getFrequency();
+            specWithoutLock(p.getPlayerID());
+            setFreq(p.getPlayerID(), priorfreq);
+        }
+    }
+    
 
     /**
      * Checks every player in the game for X number of deaths, and places them
@@ -2873,6 +2909,15 @@ public class BotAction
     public Iterator getPlayingPlayerIterator()
     {
         return m_arenaTracker.getPlayingPlayerIterator();
+    }
+
+    /**
+     * @param freq Frequency to fetch
+     * @return An iterator of all players on a frequency.  (Should now be working)
+     */
+    public Iterator getFreqIDIterator(int freq)
+    {
+        return m_arenaTracker.getFreqIDIterator(freq);
     }
 
     /**
