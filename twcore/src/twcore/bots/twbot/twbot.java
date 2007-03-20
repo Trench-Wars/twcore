@@ -150,14 +150,14 @@ public class twbot extends SubspaceBot
 		if (extensions.containsKey(key) && !key.toLowerCase().equals("twrp"))
 		{
 			((TWBotExtension) extensions.remove(key)).cancel();
-			m_botAction.sendPrivateMessage(name, key + " Successfully Removed");
+			m_botAction.sendPrivateMessage(name, key + " successfully unloaded.");
 		}
 		else
 		{
 			m_botAction.sendPrivateMessage(name, key + " is not loaded, so it cannot be removed.  Keep in mind the " + "names are case sensitive.");
 		}
 	}
-
+	
 	public void listLoaded(String name)
 	{
 		if (extensions.size() == 0)
@@ -248,6 +248,24 @@ public class twbot extends SubspaceBot
 		//twbotstandard std = new twbotstandard();
 		//std.set( m_botAction, m_opList, this );
 		//extensions.put( "standard", std );
+	}
+	
+	private void goHome( String name ) {
+		if (currentArena.equals(defaultArena) && !locked)
+		{
+			m_botAction.sendPrivateMessage(name, "I'm already home.");
+		}
+		else if (currentArena.equals(defaultArena) && locked)
+		{
+			m_botAction.sendPrivateMessage(name, "Unlocked.  I'm already home, though.");
+		}
+		else
+		{
+			m_botAction.sendPrivateMessage(name, "Going back to " + defaultArena + ".");
+			nameOfHost = null;
+			locked = false;
+			handleGo(name, defaultArena);
+		}
 	}
 
 	public void handleEvent(Message event)
@@ -353,7 +371,7 @@ public class twbot extends SubspaceBot
 		else if (message.startsWith("!off"))
 		{
 			clear();
-			m_botAction.sendPrivateMessage(name, "TWBot Reset");
+			m_botAction.sendPrivateMessage(name, "All modules unloaded.");
 		}
 		else if (message.startsWith("!help "))
 		{
@@ -377,21 +395,13 @@ public class twbot extends SubspaceBot
 		}
 		else if (message.startsWith("!home"))
 		{
-			if (currentArena.equals(defaultArena) && !locked)
-			{
-				m_botAction.sendPrivateMessage(name, "I'm already home.");
-			}
-			else if (currentArena.equals(defaultArena) && locked)
-			{
-				m_botAction.sendPrivateMessage(name, "Unlocked.  I'm already home, though.");
-			}
-			else
-			{
-				m_botAction.sendPrivateMessage(name, "Seeya! It's quittin' time!");
-				nameOfHost = null;
-				locked = false;
-				handleGo(name, defaultArena);
-			}
+			goHome(name);
+		}
+		else if (message.startsWith("!gtfo"))
+		{
+			m_botAction.sendPrivateMessage(name, "OK, I'm getting TFO.  All modules unloaded.");
+			clear();
+			goHome(name);
 		}
 		else if (message.startsWith("!mybot"))
 		{
@@ -598,12 +608,13 @@ public class twbot extends SubspaceBot
 			"!load <module>     - Loads a module",
 			"!unload <module>   - Removes a loaded module",
 			"!loaded            - Lists the modules that are currently loaded",
-			"!off               - Cleans up the bot and shuts down all modules",
+			"!off               - Shuts down all modules",
 			"!lock              - Locks bot so it can't be moved.",
 			"!unlock            - Unlocks bot so it can be moved.",
 			"!come, !go <arena> - Tells the bot to come to an arena",
 			"!die               - Tells the bot to take a hike... off a cliff.",
 			"!home              - Tells the bot to unlock and go home",
+			"!gtfo              - Shuts down all modules, unlocks, and sends the bot home.",
 			"!mybot             - Lets everyone know you are hosting instead of the former host." };
 
 	static final String[] playerhelps =
