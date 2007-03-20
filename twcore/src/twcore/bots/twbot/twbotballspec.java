@@ -150,6 +150,7 @@ public class twbotballspec extends TWBotExtension {
      * @param message Message sent
      */
     public void handleCommand( String name, String message ){
+    	/*
         if( message.startsWith( "!balls " )) {
             if( !( m_botAction.getOperatorList().isModerator(name) ) ) {
                 m_botAction.sendPrivateMessage( name, "You must be a moderator to use this command." );
@@ -167,7 +168,9 @@ public class twbotballspec extends TWBotExtension {
                 m_botAction.sendPrivateMessage( name, "Invalid input.  Please give a number." );
             }
 
-        } else if( message.startsWith( "!stop" )){
+        } else
+        */	
+        if( message.startsWith( "!stop" )){
             if( isRunning == true ) {
                 m_botAction.sendPrivateMessage( name, "BallSpec mode stopped." );
                 m_eliminator = "";
@@ -424,7 +427,7 @@ public class twbotballspec extends TWBotExtension {
             "!stop               - Ends BallSpec mode.",
             "!rules              - Displays basic rules of BallSpec mode to the arena.",
             "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)",
-            "!balls #            - (Mod+) Sets # balls in the arena.",
+//            "!balls #            - (Mod+) Sets # balls in the arena.",
             "!bothelp            - Displays help on commands for players."
         };
         return ballspecHelp;
