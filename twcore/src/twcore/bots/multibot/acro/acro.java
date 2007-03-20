@@ -4,14 +4,15 @@ import twcore.core.*;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
+import twcore.core.util.Spy;
 import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
 import java.util.*;
 
 public class acro extends MultiModule{
 
     CommandInterpreter  m_commandInterpreter;
     Random              generator;
+    // -1 = pregame; 0 = not playing; 1 = entering acro; 2 = voting 
     int                 gameState = 0;
     int                 length = 0;
     int                 numIdeas = 0;
@@ -23,6 +24,7 @@ public class acro extends MultiModule{
     HashMap             playerScores = new HashMap();
     Vector              phrases;
     int                 votes[];
+    Spy                 racismSpy = new Spy( m_botAction );
 
     public void init()    {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
@@ -44,7 +46,7 @@ public class acro extends MultiModule{
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "doStopGame" );
-        //m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "doDie" ); Not needed now that this is a multimodule
+        m_commandInterpreter.registerCommand( "!showanswers", acceptedMessages, this, "doShowAnswers" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
@@ -72,6 +74,22 @@ public class acro extends MultiModule{
         }
     }
 
+    public void doShowAnswers(String name, String message) {
+        if(m_botAction.getOperatorList().isModerator( name )) {
+            if( gameState == 2 ) {
+                Iterator it = playerIdeas.keySet().iterator();
+                String player, answer;
+                while (it.hasNext()) {
+                    player = (String) it.next();
+                    answer = (String) playerIdeas.get(player);
+                    m_botAction.sendPrivateMessage( name, player + ":  " + answer );                    
+                }            	
+            } else {
+                m_botAction.sendPrivateMessage( name, "Currently the game isn't in the voting stage." );
+            }
+        }
+    }
+    
     public void setUpShow() {
         gameState = 1;
         length = Math.abs( generator.nextInt() ) % 2 + 4;
@@ -93,7 +111,7 @@ public class acro extends MultiModule{
                 }
                 votes = new int[i];
                 numIdeas = i;
-                m_botAction.sendArenaMessage( "Vote: Personal Message me the # of your favorite phrase! -" + m_botAction.getBotName(), 103 );
+                m_botAction.sendArenaMessage( "Vote: Private Message me the # of your favorite phrase! -" + m_botAction.getBotName(), 103 );
                 setUpVotes();
             }
         };
@@ -173,6 +191,11 @@ public class acro extends MultiModule{
                 }
 
                 if( valid ) {
+                	if( racismSpy.isRacist(message) ) {
+                        m_botAction.sendUnfilteredPublicMessage("?cheater Racist acro: (" + name + "): " + message);
+                        m_botAction.sendPrivateMessage( name, "You have been reported for attempting to use racism in your answer." );
+                		return;
+                	}
                     if( !playerIdeas.containsKey( name ) ) {
                         playerIdeas.put( name, message );
                         m_botAction.sendPrivateMessage( name, "Your answer has been recorded." );
@@ -253,8 +276,9 @@ public class acro extends MultiModule{
 
     public String[] getModHelpMessage() {
         String[] help = {
-                "!start - Starts a game of acromania",
-                "!stop  - Stops a game currently in progress",
+                "!start       - Starts a game of Acromania.",
+                "!stop        - Stops a game currently in progress.",
+                "!showanswers - Shows who has entered which answer.",
                 "NOTE: This event should only be hosted by Mod+!"
         };
         return help;

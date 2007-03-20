@@ -6,9 +6,11 @@ import twcore.core.*;
 import twcore.core.events.Message;
 
 /**
- * Extremely similar to PubBot's spy module.  When instantiated, a bot can send
- * a copy of all message events received to the 
- * 
+ * Racism spy.  Extremely similar to PubBot's spy module.  When instantiated, a bot
+ * can send a copy of all message events received to the Spy, which then checks
+ * the message for racism, and sends a ?cheater call if necessary.
+ *  
+ * This could easily be altered to check for other words or perform another action. 
  */
 public class Spy {
     public static final String keywords = "j3w jew chink nig nigger n1g n1gg3r nigg3r paki gook nigg@ n1gg@ nigga";
@@ -80,7 +82,7 @@ public class Spy {
              formattedMessage.indexOf(" " + lowerWord + "s ") != -1;
     }
 
-    private boolean isRacist(String message)
+    public boolean isRacist(String message)
     {
       StringTokenizer keywordTokens = new StringTokenizer(keywords);
 
