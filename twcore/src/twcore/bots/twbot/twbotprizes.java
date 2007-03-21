@@ -63,6 +63,8 @@ public class twbotprizes extends TWBotExtension
       "Repel", "Burst", "Decoy", "Thor",
       "Multiprize", "Brick", "Rocket", "Portal"
   };
+  
+  private static final int[] RESTRICTED_PRIZES = { 1, 2, 3, 8, 9, 10, 11, 12, 16 };
 
   public double MIN_INTERVAL = 0.1;
   public int MIN_FREQ = 0;
@@ -184,11 +186,18 @@ public class twbotprizes extends TWBotExtension
     }
 
     int prizeNumber = fuzzyStringArraySearch(PRIZE_NAMES, prizeString) + 1;
-    if(prizeNumber != 0)
+    
+    if(prizeNumber != 0) {
+      if(isRestricted(prizeNumber))
+        throw new IllegalArgumentException("Sorry, that prize is restricted (known to cause disconnections), and can't be used.");
       return prizeNumber * negativePrizing;
+    }
+    
     prizeNumber = Integer.parseInt(prizeString);
     if(Math.abs(prizeNumber) > MAX_PRIZE || Math.abs(prizeNumber) < MIN_PRIZE)
       throw new IllegalArgumentException("That prize does not exist.");
+    if(isRestricted(prizeNumber))
+      throw new IllegalArgumentException("Sorry, that prize is restricted (known to cause disconnections), and can't be used.");
     return prizeNumber * negativePrizing;
   }
 
@@ -255,6 +264,18 @@ public class twbotprizes extends TWBotExtension
     if(playerName == null)
       throw new IllegalArgumentException("Player not found in arena.");
     return playerName;
+  }
+
+  /**
+   * Checks to see if a given prize number is restricted from use.
+   * @param prizeNum Prize to check
+   * @return True if prize is not allowed
+   */
+  public boolean isRestricted(int prizeNum) {
+	  for(int i = 0; i < RESTRICTED_PRIZES.length; i++ )
+		  if( RESTRICTED_PRIZES[i] == prizeNum )
+			  return true;
+	  return false;
   }
 
   /**
@@ -603,13 +624,14 @@ public class twbotprizes extends TWBotExtension
   public void doListPrizeNames(String sender)
   {
     String[] prizeNames = {
-        "1) Recharge          8) Guns             15) MultiFire        22) Burst",
-        "2) Energy            9) Bombs            16) Proximity        23) Decoy",
-        "3) Rotation         10) Bounce           17) Super            24) Thor",
-        "4) Stealth          11) Thruster         18) Shields          25) MultiPrize",
-        "5) Cloak            12) Top Speed        19) Shrapnel         26) Brick",
+        "1) (Recharge)        8) (Guns)           15) MultiFire        22) Burst",
+        "2) (Energy)          9) (Bombs)          16) (Proximity)      23) Decoy",
+        "3) (Rotation)       10) (Bounce)         17) Super            24) Thor",
+        "4) Stealth          11) (Thruster)       18) Shields          25) MultiPrize",
+        "5) Cloak            12) (Top Speed)      19) Shrapnel         26) Brick",
         "6) XRadar           13) Full Charge      20) AntiWarp         27) Rocket",
         "7) Warp             14) Engine Shutdown  21) Repel            28) Portal",
+        "  (Prizes in parentheses are restricted, being known to cause problems.)"
     };
 
     m_botAction.smartPrivateMessageSpam(sender, prizeNames);
