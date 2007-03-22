@@ -18,7 +18,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 
 public class spreebot extends SubspaceBot {
-    HashMap map;
+    HashMap<String, SpreeInfo> map;
     int spreeBegin = 3;
     int spreeInterval = 3;
     String largestSpreeName = "Noone";
@@ -39,7 +39,7 @@ public class spreebot extends SubspaceBot {
     /** Creates a new instance of spreebot */
     public spreebot( BotAction botAction ) {
         super( botAction );
-        map = new HashMap();
+        map = new HashMap<String, SpreeInfo>();
         EventRequester req = botAction.getEventRequester();
         req.request( EventRequester.MESSAGE );
         req.request( EventRequester.PLAYER_ENTERED );
@@ -99,12 +99,11 @@ public class spreebot extends SubspaceBot {
     }
 
     public void handleEvent( Message event ){
-        String name = m_botAction.getPlayerName( event.getPlayerID() );
         long temp = lastAnnounceTime + 60000 * announceTime;
         temp -= System.currentTimeMillis();
         temp /= 1000;
 
-        if( event.getMessageType() == event.PRIVATE_MESSAGE ){
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             if( event.getMessage().equalsIgnoreCase( "!time" )){
                 m_botAction.sendPrivateMessage( event.getPlayerID(),
                 "The next announcement will occur in " + temp/60 + " minutes "
