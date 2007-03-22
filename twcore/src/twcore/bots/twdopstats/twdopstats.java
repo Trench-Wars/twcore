@@ -179,21 +179,18 @@ public class twdopstats extends SubspaceBot {
      * Returns the (mysql) status of the bot when the !status command is given on the chat
      */
     public void handleStatusCommand( String name, String message ) {
-    	if( m_botAction.getOperatorList().isHighmod(name) || (twdops != null && twdops.containsKey(name.toLowerCase()))) { 
-    		
-	    	if( !m_botAction.SQLisOperational() ){
-	            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
-	            return;
-	    	}
-	        
-	    	try {
-	            m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
-	            m_botAction.sendChatMessage( "Statistic Recording: Operational" );
-	
-	    	} catch (Exception e ) {
-	            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
-	        }
+    	if( !m_botAction.SQLisOperational() ){
+            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
+            return;
     	}
+        
+    	try {
+            m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
+            m_botAction.sendChatMessage( "Statistic Recording: Operational" );
+
+    	} catch (Exception e ) {
+            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
+        }
     }
     
     /**
