@@ -145,8 +145,15 @@ public class twdopstats extends SubspaceBot {
             String command = event.getAlertCommandType().toLowerCase();
             if( command.equals( "help" ) || command.equals("cheater")){
             	if( event.getMessager().compareTo( m_botAction.getBotName() ) != 0 &&
-            		event.getMessage().toLowerCase().indexOf("twd") != -1) {
+            		(
+            			event.getMessage().toLowerCase().contains("twd") || 
+            			event.getMessage().toLowerCase().contains("twbd") ||
+            			event.getMessage().toLowerCase().contains("twdd") ||
+            			event.getMessage().toLowerCase().contains("twsd") ||
+            			event.getMessage().toLowerCase().contains("twjd")
+            		)) {
                 	callList.addElement( new EventData( new Date().getTime() ) );
+                	// add:  twbd, twdd, twsd and twjd
                 }
             }
         }
