@@ -3,6 +3,7 @@ package twcore.core;
 import java.util.*;
 import java.io.*;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.SQLException;
 
 import twcore.core.game.Arena;
@@ -40,6 +41,14 @@ import twcore.core.command.TempSettingsManager;
  * <p>
  * If you are currently viewing the JavaDoc, and wish to see a more logical and in-depth
  * organization of all BotAction has to offer, <b><u>look at the BotAction source</b></u>.
+ * <p><br>
+ * BotAction Method Directory  (search source by number and title)
+ * <p>
+ * 1. TASK SCHEDULING - scheduling events w/ TimerTasks to run at a later time
+ * 2. MESSAGING - sending single and multi-line messages of all kinds
+ * 3. MISC OPERATIONS - everything else: setting ships & freqs, changing arenas,
+ * SQL DB ops, inter-process communications, etc.  
+ * 4. GETTERS - getting accessible data, usually from instances of other classes
  */
 public class BotAction
 {
@@ -73,10 +82,11 @@ public class BotAction
 
 
 
+    
 
     // **********************************************************************************
     //
-    //                                TASK SCHEDULING
+    //                               1. TASK SCHEDULING
     //
     // **********************************************************************************
     /*
@@ -148,7 +158,7 @@ public class BotAction
 
     // **********************************************************************************
     //
-    //                                    MESSAGING
+    //                                  2. MESSAGING
     //
     // **********************************************************************************
     /*
@@ -819,7 +829,7 @@ public class BotAction
 
     // **********************************************************************************
     //
-    //                                  MISC OPERATIONS
+    //                                 3. MISC OPERATIONS
     //
     // **********************************************************************************
     /*
@@ -2180,6 +2190,10 @@ public class BotAction
      * results will be returned to you in a ResultSet.  Search for ResultSet
      * inside various bots to see examples of usage -- it's very simple to do,
      * and adds a tremendous amount of functionality to a bot.
+     * <p>
+     * NOTE: After retrieving the ResultSet of a query, you absolutely <b>MUST</b>
+     * run BotAction's SQLClose() on the ResultSet to free it from memory, regardless
+     * of whether or not you use the results of the ResultSet in your code!
      */
 
     /**
@@ -2187,6 +2201,9 @@ public class BotAction
      * else, so be careful while using it.  Queries should be quick.  Only use it for
      * queries where the performance of the bot depends primarily upon the value
      * returned by this query.
+     * NOTE: After retrieving the ResultSet of the query, you absolutely <b>MUST</b>
+     * run BotAction's SQLClose() on the ResultSet to free it from memory, regardless
+     * of whether or not you use the results of the ResultSet in your code!
      * @param connectName The connection name as specified in sql.cfg
      * @param query The SQL query to be executed
      * @throws SQLException SQLException
@@ -2204,12 +2221,16 @@ public class BotAction
      * program thread should not be blocked (for example if the query is large).
      * <p>Background queries are returned to the bot by handling an SQLResultEvent
      * and checking for a specific identifier to determine if it's the right query.
+     * NOTE: After retrieving the ResultSet of the background query, you <b>MUST</b>
+     * run BotAction's SQLClose() on the ResultSet to free it from memory, regardless
+     * of whether or not you use the results of the ResultSet in your code.
      * @param connectName The connection name as specified in sql.cfg
      * @param identifier A unique identifier that describes what the query is.
      * This identifier will be found in the SQLResultEvent when it is returned.
      * The ID allows you to handle different sorts of background queries differently
      * when they come out the other end.  If the identifier is null, the result
-     * of the query will not be delivered.
+     * of the query will not be delivered.  However, a null identifier SHOULD NOT
+     * be used, as you always need to get the result in order to SQLClose() it.
      * @param query The SQL query to be executed.
      */
     public void SQLBackgroundQuery(String connectName, String identifier, String query)
@@ -2222,12 +2243,16 @@ public class BotAction
      * other background queries.  This is useful for when you know the queue will be
      * rather large, and you need a query done very quickly, but still wish to run it
      * in the background without blocking the bot's thread.
+     * NOTE: After retrieving the ResultSet of the background query, you <b>MUST</b>
+     * run BotAction's SQLClose() on the ResultSet to free it from memory, regardless
+     * of whether or not you use the results of the ResultSet in your code.
      * @param connectName The connection name as specified in sql.cfg
      * @param identifier A unique identifier that describes what the query is.
      * This identifier will be found in the SQLResultEvent when it is returned.
      * The ID allows you to handle different sorts of background queries differently
      * when they come out the other end.  If the identifier is null, the result
-     * of the query will not be delivered.
+     * of the query will not be delivered.  However, a null identifier SHOULD NOT
+     * be used, as you always need to get the result in order to SQLClose() it.
      * @param query The SQL query to be executed
      */
     public void SQLHighPriorityBackgroundQuery(String connectName, String identifier, String query)
@@ -2240,6 +2265,8 @@ public class BotAction
      * values that correspond to those fields.  This is a helper method that
      * forms the query for you.  Experienced users of SQL may wish to form the
      * query themselves using the SQLQuery() method.
+     * NOTE: This method runs SQLClose() automatically for you; unlike other SQL
+     * operations in TWCore you do not need to run this method after using it.
      * @param connectName The connection name as specified in sql.cfg
      * @param tableName The name of the table you wish to insert the values into.
      * @param fields The field names you want to enter data into.
@@ -2271,7 +2298,7 @@ public class BotAction
         String query = beginning.toString() + end.toString() + ")";
         try
         {
-            SQLQuery(connectName, query);
+            SQLClose( SQLQuery(connectName, query) );  // Run query & close ResultSet
         }
         catch (Exception e)
         {
@@ -2288,6 +2315,7 @@ public class BotAction
      * @param fields The field names you want to enter data into.
      * @param values The corresponding values for the field names.
      * @see #SQLBackgroundQuery(String, String, String)
+     * @deprecated Doesn't allow ResultSet to be closed; use SQLBackGroundQuery instead.
      */
     public void SQLBackgroundInsertInto(String connectName, String tableName, String[] fields, String[] values)
     {
@@ -2319,6 +2347,40 @@ public class BotAction
         catch (Exception e)
         {
         }
+    }
+    
+    /**
+     * Closes a ResultSet and the Statement that called it.  After you have made
+     * a query and are done with its ResultSet, you <b>MUST</b> call this method --
+     * otherwise it will not be garbage-collected, and will continue to use memory.
+     * You also must call this method whether you choose to get the returned
+     * ResultSet from a query or not.  If you don't use the ResultSet, an easy way
+     * to avoid SQL-related memory leaks is to do something like this:
+     * <code>
+     *   m_botAction.SQLClose( m_botAction.SQLQuery( myquery ) );
+     * </code>
+     * @param rs ResultSet you wish to close
+     */
+    public void SQLClose( ResultSet rs ) {
+        if (rs != null) {
+            Statement smt = null;
+            try {
+                smt = rs.getStatement();      
+            } catch (SQLException sqlEx) {} // ignore any errors
+
+            try {
+                rs.close();
+            } catch (SQLException sqlEx) {} // ignore any errors
+            rs=null;
+
+            if (smt != null) {
+                try {
+                    smt.close();
+                } catch (SQLException sqlEx) {} // ignore any errors
+                smt=null;
+            }
+        }
+
     }
 
 
@@ -2403,7 +2465,7 @@ public class BotAction
 
     // **********************************************************************************
     //
-    //                                     GETTERS
+    //                                   4. GETTERS
     //
     // **********************************************************************************
     /*
