@@ -35,6 +35,11 @@ import twcore.core.util.Tools;
  * <b>High-priority background</b> -  Same as a background query, but added to the
  * head of the queue.  Combines the versatility of a background queue with the
  * foreground's ability to return the result set almost instantly.
+ * <p>
+ * <b><u>IMPORTANT NOTE</b></u>
+ * For every query you MUST run BotAction's SQLClose(), or manually run the close()
+ * method on both the ResultSet and the Statement that created it.  If you do not,  
+ * memory leaks may occur!
  */
 public class SQLManager extends Thread {
     BotSettings sqlcfg;                          // Reference to SQL config file
