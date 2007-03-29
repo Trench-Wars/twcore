@@ -15,8 +15,9 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 
 /**
+ * An elimination bot, similar to elim's RoboRef.
+ * 
  * @author MMaverick
- *
  */
 public class elimbot extends SubspaceBot {
 

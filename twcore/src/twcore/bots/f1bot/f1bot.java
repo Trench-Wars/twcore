@@ -1,5 +1,3 @@
-/* Hello World Example Bot
- */
 package twcore.bots.f1bot;
 
 import twcore.core.*;
@@ -10,6 +8,9 @@ import twcore.core.game.Player;
 
 import java.util.*;
 
+/**
+ * Racing bot for arenas set up to match the racing track specification.  
+ */
 public class f1bot extends SubspaceBot {
 
     static f1bot static_f1bot;
