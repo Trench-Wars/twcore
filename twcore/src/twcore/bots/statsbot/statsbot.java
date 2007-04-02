@@ -1,6 +1,3 @@
-/*
- * Created on Jan 3, 2005
- */
 package twcore.bots.statsbot;
 
 import twcore.core.BotAction;
@@ -18,6 +15,12 @@ import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 
 /**
+ * An early form of stats tracking.
+ * 
+ * Updates:
+ *   - Now allows mods (and not just 2d) to use the special commands
+ *   - Added !help 
+ * 
  * @author 2dragons
  */
 public class statsbot extends SubspaceBot {
@@ -75,7 +78,10 @@ public class statsbot extends SubspaceBot {
         String name = m_botAction.getPlayerName( _event.getPlayerID() );
         String message = _event.getMessage();
 
-		if( !name.equals( "2dragons" ) ) return;
+                // Nice, 2d.  Nice :P
+		// if( !name.equals( "2dragons" ) ) return;
+                if( !m_botAction.getOperatorList().isModerator( name ) )
+                    return;
 
 		if( message.startsWith( "!go " ) ) {
 			m_botAction.joinArena( message.substring( 4 ) );
@@ -90,6 +96,16 @@ public class statsbot extends SubspaceBot {
 		}
 		else if( message.startsWith( "!spam" ) )
 			m_tracker.spamStats();
+                if( message.startsWith( "!help" ) ) {
+                    String[] spam = {
+                            "!go <arena>   - You figure it out",
+                            "!begin        - Start tracking",
+                            "!end          - Stop tracking",
+                            "!s <player>   - Sends stats of particular player to spectators",
+                            "!spam         - Spams stats of all players to spectators"
+                    };
+                    m_botAction.privateMessageSpam( name, spam );
+                }
 	}
 
 	public void handleEvent( PlayerDeath _event ) {
