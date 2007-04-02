@@ -9,6 +9,9 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.SoccerGoal;
 
+/**
+ * Used for hockey or other powerball-based games. 
+ */
 public class powerballbot extends SubspaceBot {
 
 	PowerBallManager m_manager;

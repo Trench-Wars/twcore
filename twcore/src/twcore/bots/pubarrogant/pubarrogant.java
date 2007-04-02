@@ -10,6 +10,10 @@ import java.util.*;
 import java.text.*;
 import java.io.*;
 
+/**
+ * The pub-roaming form of the ever-popular TW personality, Mr. Arrogant.
+ * Kicks idlers in pub arenas.
+ */
 public class pubarrogant extends SubspaceBot
 {
   public static final int MIN_ROAM_TIME = 1 * 60 * 1000;

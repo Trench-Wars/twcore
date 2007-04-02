@@ -17,6 +17,12 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 
+/**
+ * Tracks killing sprees.  The most important functionality of this bot is
+ * represented in the TWBot module "streak."  This bot should either be made
+ * into a MultiBot module (as it seems to host a specific event, as found in
+ * arena spree), or removed if this event is not hosted anymore. 
+ */
 public class spreebot extends SubspaceBot {
     HashMap<String, SpreeInfo> map;
     int spreeBegin = 3;
@@ -57,7 +63,7 @@ public class spreebot extends SubspaceBot {
     }
 
     public void handleEvent( PlayerEntered event ){
-        System.out.println( "Added a spree info:" + event.getPlayerName() );
+        //System.out.println( "Added a spree info:" + event.getPlayerName() );
         map.put( event.getPlayerName(), new SpreeInfo() );
     }
 

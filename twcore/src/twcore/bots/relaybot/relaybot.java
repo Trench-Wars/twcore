@@ -1,13 +1,3 @@
-/*
- * relaybot.java
- *
- * Created on July 7, 2003, 11:50 PM
- */
-
-/**
- *
- * @author  DoCk>
- */
 package twcore.bots.relaybot;
 
 import java.util.*;
@@ -17,6 +7,9 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
+/**
+ * To assist in hosting radio (while not requiring a host to have staff access). 
+ */
 public class relaybot extends SubspaceBot {
     private EventRequester m_req;
     private LinkedList loggedInList;

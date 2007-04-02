@@ -10,6 +10,11 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 
+/**
+ * For hosting the event Starcon.
+ * 
+ * This bot should be removed, as its code is mimicked in MultiBot.  
+ */
 public class starcon extends SubspaceBot {
 
     static final int RUNNING_STATE = 1;
