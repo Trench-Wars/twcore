@@ -299,7 +299,6 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh -Zombies -Enigma -Twtown -Twcity -Gatez -G
 &WTF &What|WTF stands for What The F**k.
 &GTFO &What|GTFO stands for Get The F**k Off, Get The F**k On or Get The F**k Out.
 &ROFL &What|&ROFL stands for Rolling On the Floor Laughing.
-&STFU &What|STFU stands for Shut The F**k Up.
 &ASAP &What|ASAP stands for As Soon As Possible.
 &Kill &Messages|To toggle kill messages off, to chat, and to the center of your screen, type: ?kill.
 &Enter &Messages|To toggle enter messages off, to chat, and to the center of your screen, type: ?enter.
