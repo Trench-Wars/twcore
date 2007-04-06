@@ -101,7 +101,7 @@ public class twrcbot extends SubspaceBot
 	public void sql(String name)
 	{
 		try {
-			m_botAction.SQLQuery("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
+			m_botAction.SQLQueryAndClose("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
 		} catch(Exception e) {}
 	}
 
@@ -230,7 +230,7 @@ public class twrcbot extends SubspaceBot
 			writeLog(name + " changed " + params[0] + "'s points from " + currentPoints + " to " + (currentPoints + points) + ". Reason: " + params[2]);
 			currentPoints += points;
 
-			m_botAction.SQLQuery("website", "UPDATE tblRacers SET fldPoints = "+currentPoints+" WHERE fldName = \'"+pName+"\'");
+			m_botAction.SQLQueryAndClose("website", "UPDATE tblRacers SET fldPoints = "+currentPoints+" WHERE fldName = \'"+pName+"\'");
 			m_botAction.sendPrivateMessage(name, "Updated.");
 		} catch(Exception e) {e.printStackTrace();}
 		pointChange(pName, points, params[2]);
@@ -243,10 +243,11 @@ public class twrcbot extends SubspaceBot
 	{
 		try {
 			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldPoints FROM tblRacers WHERE fldName = \'"+name+"\'");
+            int points = 0;
 			if(results.next())
-				return results.getInt("fldPoints");
-			else
-				return 0;
+				points = results.getInt("fldPoints");
+            m_botAction.SQLClose(results);
+            return points;
 		} catch(Exception e) {return 0;}
 	}
 
@@ -299,6 +300,7 @@ public class twrcbot extends SubspaceBot
 				k++;
 				ranks.put(result.getString("fldName").toLowerCase(), new Integer(k));
 			}
+            m_botAction.SQLClose(result);
 		} catch(Exception e) {}
 		try {
 			return ((Integer)ranks.get(name.toLowerCase())).intValue();
@@ -331,6 +333,7 @@ public class twrcbot extends SubspaceBot
 					m_botAction.sendPrivateMessage(name, result.getString("fldName") + " is currently in " + rank + ending + " place with " + result.getInt("fldPoints") + " points.");
 				}
 			}
+            m_botAction.SQLClose(result);
 		} catch(Exception e) {}
 		if(!found)
 			m_botAction.sendPrivateMessage(name, "Cannot find anyone with that rank.");
@@ -344,7 +347,7 @@ public class twrcbot extends SubspaceBot
 	public void pointChange(String player, int points, String reason)
 	{
 		try {
-			m_botAction.SQLQuery("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0, "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
+			m_botAction.SQLQueryAndClose("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0, "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
 		} catch(Exception e) {e.printStackTrace();}
 	}
 
@@ -357,7 +360,9 @@ public class twrcbot extends SubspaceBot
 		try {
 			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldID FROM tblRacers WHERE fldName = \'"+name+"\'");
 			results.next();
-			return results.getInt("fldID");
+            int id = results.getInt("fldID");
+            m_botAction.SQLClose(results);
+            return id;
 		} catch(Exception e) {e.printStackTrace();}
 		return 0;
 	}

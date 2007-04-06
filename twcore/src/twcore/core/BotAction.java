@@ -2200,18 +2200,35 @@ public class BotAction
      * Runs a direct SQL Query.  This method does block up the bot from doing anything
      * else, so be careful while using it.  Queries should be quick.  Only use it for
      * queries where the performance of the bot depends primarily upon the value
-     * returned by this query.
-     * NOTE: After retrieving the ResultSet of the query, you absolutely <b>MUST</b>
-     * run BotAction's SQLClose() on the ResultSet to free it from memory, regardless
-     * of whether or not you use the results of the ResultSet in your code!
+     * returned by this query.<p>
+     * <u>NOTE</u>: After retrieving the ResultSet of the query from this method, you <b>MUST</b>
+     * run BotAction's SQLClose() on the ResultSet to free it from memory!  If
+     * you do not wish to do it manually, use the SQLQueryAndClose method, which
+     * closes your ResultSet automatically (useful for INSERT, DELETE, UPDATE, etc).
      * @param connectName The connection name as specified in sql.cfg
      * @param query The SQL query to be executed
      * @throws SQLException SQLException
-     * @return ResultSet from the SQL Query.
+     * @return ResultSet from the SQL Query.  You must close w/ {@link #SQLClose(ResultSet)} after use.
+     * @see #SQLQueryAndClose(String, String)
      */
     public ResultSet SQLQuery(String connectName, String query) throws SQLException
     {
         return getCoreData().getSQLManager().query(connectName, query);
+    }
+
+    /**
+     * Runs a direct SQL Query, and then closes its ResultSet.  This is useful for
+     * UPDATE, INSERT and DELETE queries.<p>
+     * This method does block up the bot from doing anything else, so be careful
+     * while using it.  Queries should be quick.  Only use it for queries where the
+     * performance of the bot depends primarily upon the value returned by this query.
+     * @param connectName The connection name as specified in sql.cfg
+     * @param query The SQL query to be executed
+     * @throws SQLException SQLException
+     */
+    public void SQLQueryAndClose(String connectName, String query) throws SQLException
+    {
+        SQLClose( getCoreData().getSQLManager().query(connectName, query) );
     }
 
     /**
@@ -2221,16 +2238,15 @@ public class BotAction
      * program thread should not be blocked (for example if the query is large).
      * <p>Background queries are returned to the bot by handling an SQLResultEvent
      * and checking for a specific identifier to determine if it's the right query.
-     * NOTE: After retrieving the ResultSet of the background query, you <b>MUST</b>
-     * run BotAction's SQLClose() on the ResultSet to free it from memory, regardless
-     * of whether or not you use the results of the ResultSet in your code.
+     * NOTE: If you retrieve the ResultSet of the background query, you <b>MUST</b>
+     * run BotAction's SQLClose() on the ResultSet.  If you do not wish to retrieve
+     * the ResultSet, provide a null identifier and it will be closed automatically.
      * @param connectName The connection name as specified in sql.cfg
      * @param identifier A unique identifier that describes what the query is.
      * This identifier will be found in the SQLResultEvent when it is returned.
      * The ID allows you to handle different sorts of background queries differently
      * when they come out the other end.  If the identifier is null, the result
-     * of the query will not be delivered.  However, a null identifier SHOULD NOT
-     * be used, as you always need to get the result in order to SQLClose() it.
+     * of the query won't be delivered, and the ResultSet will be closed automatically.
      * @param query The SQL query to be executed.
      */
     public void SQLBackgroundQuery(String connectName, String identifier, String query)
@@ -2243,16 +2259,15 @@ public class BotAction
      * other background queries.  This is useful for when you know the queue will be
      * rather large, and you need a query done very quickly, but still wish to run it
      * in the background without blocking the bot's thread.
-     * NOTE: After retrieving the ResultSet of the background query, you <b>MUST</b>
-     * run BotAction's SQLClose() on the ResultSet to free it from memory, regardless
-     * of whether or not you use the results of the ResultSet in your code.
+     * NOTE: If you retrieve the ResultSet of the background query, you <b>MUST</b>
+     * run BotAction's SQLClose() on the ResultSet.  If you do not wish to retrieve
+     * the ResultSet, provide a null identifier and it will be closed automatically.
      * @param connectName The connection name as specified in sql.cfg
      * @param identifier A unique identifier that describes what the query is.
      * This identifier will be found in the SQLResultEvent when it is returned.
      * The ID allows you to handle different sorts of background queries differently
      * when they come out the other end.  If the identifier is null, the result
-     * of the query will not be delivered.  However, a null identifier SHOULD NOT
-     * be used, as you always need to get the result in order to SQLClose() it.
+     * of the query will not be delivered, and the ResultSet will be closed automatically.
      * @param query The SQL query to be executed
      */
     public void SQLHighPriorityBackgroundQuery(String connectName, String identifier, String query)
@@ -2264,9 +2279,8 @@ public class BotAction
      * Runs an insert query into the specified table, given a set of fields and
      * values that correspond to those fields.  This is a helper method that
      * forms the query for you.  Experienced users of SQL may wish to form the
-     * query themselves using the SQLQuery() method.
-     * NOTE: This method runs SQLClose() automatically for you; unlike other SQL
-     * operations in TWCore you do not need to run this method after using it.
+     * query themselves using the {@link #SQLQuery(String, String)} method.<p>
+     * NOTE: This method runs SQLClose() automatically for you.
      * @param connectName The connection name as specified in sql.cfg
      * @param tableName The name of the table you wish to insert the values into.
      * @param fields The field names you want to enter data into.
@@ -2309,13 +2323,13 @@ public class BotAction
      * Runs an insert query into the specified table, given a set of fields and
      * values that correspond to those fields.  This is a helper method that
      * forms the query for you.  Experienced users of SQL may wish to form the
-     * query themselves using the SQLBackgroundQuery() method.
+     * query themselves using the SQLBackgroundQuery() method.<p>
+     * NOTE: This method automatically closes the ResultSet for you.
      * @param connectName The connection name as specified in sql.cfg.
      * @param tableName The name of the table you wish to insert the values into.
      * @param fields The field names you want to enter data into.
      * @param values The corresponding values for the field names.
      * @see #SQLBackgroundQuery(String, String, String)
-     * @deprecated Doesn't allow ResultSet to be closed; use SQLBackGroundQuery instead.
      */
     public void SQLBackgroundInsertInto(String connectName, String tableName, String[] fields, String[] values)
     {
@@ -2354,11 +2368,9 @@ public class BotAction
      * a query and are done with its ResultSet, you <b>MUST</b> call this method --
      * otherwise it will not be garbage-collected, and will continue to use memory.
      * You also must call this method whether you choose to get the returned
-     * ResultSet from a query or not.  If you don't use the ResultSet, an easy way
-     * to avoid SQL-related memory leaks is to do something like this:
-     * <code>
-     *   m_botAction.SQLClose( m_botAction.SQLQuery( myquery ) );
-     * </code>
+     * ResultSet from a query or not.  If you don't use the ResultSet, use
+     * {@link #SQLQueryAndClose(String, String)} instead of {@link #SQLQuery(String, String)};
+     * this will close the ResultSet automatically.
      * @param rs ResultSet you wish to close
      */
     public void SQLClose( ResultSet rs ) {

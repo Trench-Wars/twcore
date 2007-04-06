@@ -1,13 +1,3 @@
-/*
- * bouncerbot.java
- *
- * Created on January 21, 2002, 12:57 AM
- */
-
-/**
- *
- * @author  harvey
- */
 package twcore.bots.bouncerbot;
 
 import twcore.core.*;
@@ -18,6 +8,13 @@ import twcore.core.util.Tools;
 
 import java.util.*;
 import java.io.*;
+
+/**
+ * A bot designed to kick players off the server who enter into a particular arena
+ * without being invited -- a personal bouncer.
+ *
+ * @author  harvey
+ */
 public class bouncerbot extends SubspaceBot {
     OperatorList m_opList;
     HashSet invitedPlayers;

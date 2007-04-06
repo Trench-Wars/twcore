@@ -43,6 +43,7 @@ public class twbotdonations extends TWBotExtension {
                 int amount = result.getInt( "fnAmount" );
                 m_botAction.sendSmartPrivateMessage( name, "ID# " + donationId + "  :  " + formatString( userName, 26 ) + "$" + amount );
             }
+            m_botAction.SQLClose( result );
         } catch (Exception e) {
             m_botAction.sendSmartPrivateMessage( name, "Unable to list donations." );
             m_botAction.sendSmartPrivateMessage( name, e.getMessage() );
@@ -57,10 +58,10 @@ public class twbotdonations extends TWBotExtension {
         try {
             int id = sql_getPlayerId( pieces[0] );
             if( id == -1 ) {
-                m_botAction.SQLQuery( "website", "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(pieces[0])+"', NOW())");
+                m_botAction.SQLQueryAndClose( "website", "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(pieces[0])+"', NOW())");
                 id = sql_getPlayerId( pieces[0] );
             }
-            m_botAction.SQLQuery( "website", "INSERT INTO tblDonation (fnUserID, fnAmount, fdDonated) VALUES ('"+id+"', '"+pieces[1]+"', '"+time+"')" );
+            m_botAction.SQLQueryAndClose( "website", "INSERT INTO tblDonation (fnUserID, fnAmount, fdDonated) VALUES ('"+id+"', '"+pieces[1]+"', '"+time+"')" );
             m_botAction.sendSmartPrivateMessage( name, "Donation Added:  " + pieces[0] + "    $" + pieces[1] );
         } catch (Exception e) {
             m_botAction.sendSmartPrivateMessage( name, "Unable to add donation entry.");
@@ -72,7 +73,7 @@ public class twbotdonations extends TWBotExtension {
     public void do_removeDonation( String name, String message ) {
         try {
             int i = Integer.parseInt( message );
-            m_botAction.SQLQuery( "website", "DELETE FROM tblDonation WHERE fnDonationID = "+i );
+            m_botAction.SQLQueryAndClose( "website", "DELETE FROM tblDonation WHERE fnDonationID = "+i );
             m_botAction.sendSmartPrivateMessage( name, "Donation #" + i +" + deleted." );
         } catch (Exception e) { m_botAction.sendSmartPrivateMessage( name, "Unable to remove donation" ); }
     }
@@ -80,20 +81,22 @@ public class twbotdonations extends TWBotExtension {
     public String sql_getUserName( int id ) {
         try {
             ResultSet result = m_botAction.SQLQuery( "website", "SELECT fcUserName FROM tblUser WHERE fnUserID = '"+id+"'" );
+            String username = "Unknown"; 
             if( result.next() )
-                return result.getString( "fcUserName" );
-            else
-                return "Unknown";
+                username = result.getString( "fcUserName" );
+            m_botAction.SQLClose( result );
+            return username;
         } catch (Exception e) { return "Unknown"; }
     }
 
     public int sql_getPlayerId( String player ) {
         try {
             ResultSet result = m_botAction.SQLQuery( "website", "SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(player)+"'" );
+            int id = -1;
             if( result.next() )
-                return result.getInt( "fnUserID" );
-            else
-                return -1;
+                id = result.getInt( "fnUserID" );
+            m_botAction.SQLClose( result );
+            return id;
         } catch (Exception e) { return -1; }
     }
 

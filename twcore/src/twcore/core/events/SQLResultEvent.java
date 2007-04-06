@@ -7,7 +7,10 @@ import twcore.core.sql.SQLWorker;
 
 /**
  * Event used to return the ResultSet of an SQL background query.  All bots
- * using SQL background queries must opt to handle this event.
+ * using SQL background queries must opt to handle this event, even if you
+ * do not use the ResultSet (as in the event of an INSERT, UPDATE or DELETE).
+ * In this case you still need to catch the ResultSet so that you may run
+ * BotAction's SQLClose method in order to free up memory allocated to the set.
  */
 public class SQLResultEvent extends SubspaceEvent {
     
@@ -53,14 +56,15 @@ public class SQLResultEvent extends SubspaceEvent {
     /**
      * Sets the result set of this event to a specific ResultSet, and then handles
      * the SQLResultEvent on the bot that made the query.  If the identifier is
-     * null, then the event will not be handled.  Called by SQLWorker.
+     * null, then the event will not be handled, and the ResultSet will be closed
+     * automatically.  This method is called by SQLWorker.
      * @param set Result set to assign to this event (may be null)
      * @see SQLWorker
      */
     public void setResultSet( ResultSet set ){
         m_set = set;
         if( m_identifier == null )
-            return;
+            closeResultSet( set );
         m_bot.handleEvent( this );
     }
     
@@ -71,4 +75,29 @@ public class SQLResultEvent extends SubspaceEvent {
         return m_set;
     }
     
+    /**
+     * Internal version of BotAction's SQLClose for closing queries that
+     * do not need to access a ResultSet.
+     * @param rs ResultSet to close
+     */
+    private void closeResultSet( ResultSet rs ) {
+        if (rs != null) {
+            Statement smt = null;
+            try {
+                smt = rs.getStatement();      
+            } catch (SQLException sqlEx) {} // ignore any errors
+
+            try {
+                rs.close();
+            } catch (SQLException sqlEx) {} // ignore any errors
+            rs=null;
+
+            if (smt != null) {
+                try {
+                    smt.close();
+                } catch (SQLException sqlEx) {} // ignore any errors
+                smt=null;
+            }
+        }
+    }
 }

@@ -7,6 +7,10 @@ import twcore.core.util.Tools;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * A semi-functional bot that attempts to find a player on any altnick,
+ * or retrieve all warnings for a particular person based on altnick info.
+ */
 public class guano extends SubspaceBot
 {
     public static final String TWSITES_DATABASE = "server";
@@ -174,6 +178,7 @@ public class guano extends SubspaceBot
 
             while (resultSet.next())
                 m_botAction.sendRemotePrivateMessage(sender, resultSet.getString("warning"));
+            m_botAction.SQLClose( resultSet );
         }
         catch(SQLException e)
         {
@@ -249,6 +254,7 @@ public class guano extends SubspaceBot
                     altNicks.add(currName);
                 lastName = currName;
             }
+            m_botAction.SQLClose( resultSet );
             return altNicks;
         }
         catch(SQLException e)

@@ -1,6 +1,5 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
@@ -188,6 +187,7 @@ public class RbRace extends RacingBotExtension {
 				loadTrack( result );
 
 			}
+                        m_botAction.SQLClose( result );
 		} catch (Exception e) { Tools.printStackTrace(e); }
 		m_botAction.sendPublicMessage("Bot ready for use.");
 	}
@@ -319,6 +319,7 @@ public class RbRace extends RacingBotExtension {
 
 			ResultSet tList = m_botAction.SQLQuery( m_sqlHost, "SELECT * FROM tblRaceCheckPoint WHERE fnTrackID = "+uId );
 			thisTrack.loadCheckPoints( tList );
+                        m_botAction.SQLClose( tList );
 
 		} catch (Exception e) { Tools.printStackTrace(e); }
 	}
@@ -336,8 +337,11 @@ public class RbRace extends RacingBotExtension {
 
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT * FROM tblRace WHERE fcArena = '"+m_botAction.getArenaName()+"'" );
-			if( !result.next() ) return -1;
-			else return result.getInt( "fnRaceID" );
+                        int id = -1;
+			if( result.next() )
+                            id = result.getInt( "fnRaceID" );
+                        m_botAction.SQLClose( result ); 
+                        return id;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
 			return -1;
@@ -387,7 +391,7 @@ public class RbRace extends RacingBotExtension {
 		m_botAction.sendUnfilteredPublicMessage("*objon 4");
 		try {
 			String query = "INSERT INTO tblRaceWinners (arena, trackWon, name ) VALUES("+getArenaID() +", "+currentTrack+", '"+winnee+"')";
-			m_botAction.SQLQuery(m_sqlHost, query);
+			m_botAction.SQLQueryAndClose(m_sqlHost, query);
 		} catch(Exception e) {}
 		m_botAction.toggleLocked();
 	}

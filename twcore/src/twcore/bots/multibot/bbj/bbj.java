@@ -70,7 +70,7 @@ public class bbj extends MultiModule
 		else if(event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
 			name = event.getMessager();
 
-		if(m_botAction.getOperatorList().isModerator(name) || name.equalsIgnoreCase("ikrit <er>"))
+		if(m_botAction.getOperatorList().isModerator(name) )
 			handleCommand(name, message);
 
 		handleNormalCommand(name, message);

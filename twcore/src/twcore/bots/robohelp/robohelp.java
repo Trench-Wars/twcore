@@ -177,16 +177,16 @@ public class robohelp extends SubspaceBot {
 
         if( !m_botAction.SQLisOperational() ){
 
-        m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
-	return;
+            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
+            return;
 
 	}
         try {
-        m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
-        m_botAction.sendChatMessage( "Statistic Recording: Operational" );
+            m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
+            m_botAction.sendChatMessage( "Statistic Recording: Operational" );
 
 	} catch (Exception e ) {
-        m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
+            m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
         }
 
     }
@@ -394,7 +394,7 @@ public class robohelp extends SubspaceBot {
             String query = "INSERT INTO `tblAdvert` (`fnAdvertID`, `fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
             query += "('', '"+Tools.addSlashesToString(host)+"', '"+arena+"', '"+Tools.addSlashesToString(advert)+"', '"+time+"')";
             try {
-                m_botAction.SQLQuery( mySQLHost, query );
+                m_botAction.SQLQueryAndClose( mySQLHost, query );
             } catch (Exception e ) { Tools.printLog( "Could not insert advert record." ); }
         }
     }
@@ -406,10 +406,6 @@ public class robohelp extends SubspaceBot {
 	}
 
     public void handleDisplayHosted( String name, String message ) {
-        if( !m_botAction.SQLisOperational() ){
-            return;
-        }
-
         int span = 1;
         try {
             span = Integer.parseInt( message );
@@ -1034,13 +1030,14 @@ public class robohelp extends SubspaceBot {
             String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             if(result.next()) {
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             } else {
-				m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
-		    }
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
+            }
+            m_botAction.SQLClose( result );
         } catch ( Exception e ) {
-		    System.out.println( "Could not update Stat Records" );
-		}
+            System.out.println( "Could not update Stat Records" );
+        }
     }
 
     public void updateStatRecordsGOTIT( String name ) {
@@ -1055,8 +1052,9 @@ public class robohelp extends SubspaceBot {
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
 
             if(result.next()) {
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
-            } else m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
+            } else 
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
         } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
     }
 

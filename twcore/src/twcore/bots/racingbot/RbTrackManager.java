@@ -1,6 +1,5 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
@@ -164,7 +163,7 @@ public class RbTrackManager extends RacingBotExtension {
 			int flagId = ((Integer)it.next()).intValue();
 			int checkPointId = ((Integer)checkPointList.get( new Integer( flagId ) )).intValue();
 			try {
-				m_botAction.SQLQuery( m_sqlHost, "INSERT INTO tblRaceCheckPoint (fnTrackID, fnCheckPoint, fnFlagID) VALUES ("+id+", "+checkPointId+", "+flagId+")" );
+			    m_botAction.SQLQueryAndClose( m_sqlHost, "INSERT INTO tblRaceCheckPoint (fnTrackID, fnCheckPoint, fnFlagID) VALUES ("+id+", "+checkPointId+", "+flagId+")" );
 			} catch (Exception e) { Tools.printStackTrace(e); }
 		}
 
@@ -184,6 +183,7 @@ public class RbTrackManager extends RacingBotExtension {
 		try {
 			String a = m_botAction.getArenaName();
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "INSERT INTO tblRace (fcArena, fcName) VALUES ('"+a+"', '"+a+"')" );
+                        m_botAction.SQLClose( result );
 			m_botAction.sendPublicMessage( "Arena setup. To change the name of this arena later please use !name" );
 			m_botAction.sendPublicMessage( "You may setup tracks for this map using !newtrack" );
 		} catch (Exception e) {
@@ -201,7 +201,7 @@ public class RbTrackManager extends RacingBotExtension {
 		}
 
 		try {
-			m_botAction.SQLQuery( m_sqlHost, "UPDATE tblRace SET fcName = '"+Tools.addSlashesToString(name)+"' WHERE fcArena = '"+m_botAction.getArenaName()+"'" );
+		    m_botAction.SQLQueryAndClose( m_sqlHost, "UPDATE tblRace SET fcName = '"+Tools.addSlashesToString(name)+"' WHERE fcArena = '"+m_botAction.getArenaName()+"'" );
 			m_botAction.sendPublicMessage( "Arena Name Changed To: " + name );
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
@@ -221,7 +221,7 @@ public class RbTrackManager extends RacingBotExtension {
 		}
 
 		try {
-			m_botAction.SQLQuery( m_sqlHost, "UPDATE tblRaceTrack SET fcTrackName = '"+Tools.addSlashesToString(pieces[1])+"' WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
+		    m_botAction.SQLQueryAndClose( m_sqlHost, "UPDATE tblRaceTrack SET fcTrackName = '"+Tools.addSlashesToString(pieces[1])+"' WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
 			m_botAction.sendPublicMessage( "Track #"+id+" name to "+pieces[1] );
 		} catch (Exception e) {
 			m_botAction.sendPrivateMessage( name, "Unable to name track." );
@@ -251,7 +251,7 @@ public class RbTrackManager extends RacingBotExtension {
 				}
 			}
 
-			m_botAction.SQLQuery( m_sqlHost, "UPDATE tblRaceTrack SET fcAllowedShips = '"+pieces[1]+"' WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
+			m_botAction.SQLQueryAndClose( m_sqlHost, "UPDATE tblRaceTrack SET fcAllowedShips = '"+pieces[1]+"' WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
 			m_botAction.sendPrivateMessage( name, "Ships set to: (" + pieces[1] +  ") :on track #"+id);
 		} catch (Exception e) {
 			m_botAction.sendPrivateMessage( name, "Unable to set ships for track, please use numerical digits 1-8." );
@@ -270,7 +270,7 @@ public class RbTrackManager extends RacingBotExtension {
 
 		try {
 			Player p = m_botAction.getPlayer( name );
-			m_botAction.SQLQuery( m_sqlHost, "UPDATE tblRaceTrack SET fnXWarp = "+(int)(p.getXLocation()/16)+", fnYWarp = "+(int)(p.getYLocation()/16)+" WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
+			m_botAction.SQLQueryAndClose( m_sqlHost, "UPDATE tblRaceTrack SET fnXWarp = "+(int)(p.getXLocation()/16)+", fnYWarp = "+(int)(p.getYLocation()/16)+" WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
 			m_botAction.sendPrivateMessage( name, "Warppoint set for track #"+id );
 		} catch (Exception e) {
 			m_botAction.sendPrivateMessage( name, "Unable to set warppoint for track");
@@ -290,6 +290,7 @@ public class RbTrackManager extends RacingBotExtension {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT fnXWarp, fnYWarp FROM tblRaceTrack WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
 			if( result.next() )
 				m_botAction.warpTo( name, result.getInt("fnXWarp"), result.getInt("fnYWarp") );
+                        m_botAction.SQLClose( result );
 		} catch (Exception e) {}
 
 	}
@@ -307,7 +308,7 @@ public class RbTrackManager extends RacingBotExtension {
 	public boolean sql_insertNewTrack() {
 
 		try {
-			m_botAction.SQLQuery( m_sqlHost, "INSERT INTO tblRaceTrack (fnRaceID, fnArenaTrackID ) VALUES ("+sql_getArenaID()+", "+sql_getNextArenaTrackID()+")" );
+		    m_botAction.SQLQueryAndClose( m_sqlHost, "INSERT INTO tblRaceTrack (fnRaceID, fnArenaTrackID ) VALUES ("+sql_getArenaID()+", "+sql_getNextArenaTrackID()+")" );
 			return true;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
@@ -319,8 +320,11 @@ public class RbTrackManager extends RacingBotExtension {
 
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT * FROM tblRace WHERE fcArena = '"+m_botAction.getArenaName()+"'" );
-			if( !result.next() ) return false;
-			else return true;
+			boolean exists = true;
+			if( !result.next() )
+			    exists = false;
+			m_botAction.SQLClose( result );
+			return exists;
 		} catch (Exception e) { return false; }
 	}
 
@@ -328,8 +332,11 @@ public class RbTrackManager extends RacingBotExtension {
 
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT * FROM tblRace WHERE fcArena = '"+m_botAction.getArenaName()+"'" );
-			if( !result.next() ) return -1;
-			else return result.getInt( "fnRaceID" );
+                        int id = -1;
+			if( result.next() )
+			    id = result.getInt( "fnRaceID" );
+                        m_botAction.SQLClose( result );
+                        return id;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
 			return -1;
@@ -340,9 +347,11 @@ public class RbTrackManager extends RacingBotExtension {
 
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT MAX(fnTrackID) AS id FROM `tblRaceTrack`" );
+                        int id = -1;
 			if( result.next() )
-				return result.getInt("id");
-			else return -1;
+				id = result.getInt("id");
+                        m_botAction.SQLClose( result );
+			return id;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
 			return -1;
@@ -353,9 +362,11 @@ public class RbTrackManager extends RacingBotExtension {
 
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT MAX(fnArenaTrackID) AS id FROM `tblRaceTrack` WHERE fnRaceID = "+sql_getArenaID() );
+                        int id = 1;
 			if( result.next() )
-				return result.getInt("id")+1;
-			else return 1;
+				id = result.getInt("id")+1;
+                        m_botAction.SQLClose( result );
+			return id;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
 			return -1;

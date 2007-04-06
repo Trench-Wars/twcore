@@ -9,7 +9,10 @@ import twcore.core.util.Tools;
 
 import java.util.*;
 import java.sql.*;
-/* Version something */
+
+/**
+ * Records statistics from elimination matches in a database. 
+ */
 public class estatsbot extends SubspaceBot {
 
 	HashMap players;
@@ -55,7 +58,7 @@ public class estatsbot extends SubspaceBot {
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 			if(name.equalsIgnoreCase(ref)) {
 				handlePM(event.getMessage());
-			} else if(m_botAction.getOperatorList().isSmod(name) || name.equalsIgnoreCase("ikrit <er>")) {
+			} else if(m_botAction.getOperatorList().isSmod(name) ) {
 				if(event.getMessage().toLowerCase().startsWith("!die")) {
 					m_botAction.die();
 				} else {
@@ -187,7 +190,7 @@ public class estatsbot extends SubspaceBot {
 	public void updateSQL() {
 		if(lastGame == null) return;
 		try {
-			m_botAction.SQLQuery("local", lastGame.getQuery());
+            m_botAction.SQLQueryAndClose("local", lastGame.getQuery());
 			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnGameID FROM tblElimRound ORDER BY fnGameID DESC");
 			results.next();
 			int gID = results.getInt("fnGameID");
@@ -196,10 +199,11 @@ public class estatsbot extends SubspaceBot {
 			Iterator it = lastPlayers.values().iterator();
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
-				m_botAction.SQLQuery("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+                m_botAction.SQLQueryAndClose("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
 			//	m_botAction.sendPrivateMessage("ikrit", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
-				m_botAction.SQLQuery("local", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+                m_botAction.SQLQueryAndClose("local", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
 			}
+            m_botAction.SQLClose( results );
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
 }

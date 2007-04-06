@@ -10,6 +10,11 @@ import twcore.core.util.Tools;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * A bot designed to collect banners from players and place them in a database.
+ * 
+ * @author 2dragons
+ */
 public class bannerboy extends SubspaceBot {
 
 	//mySQL database to use
@@ -70,10 +75,12 @@ public class bannerboy extends SubspaceBot {
 
 		String banner = getBannerString( b );
 		try {
+                        boolean exists = false;
 			String query = "SELECT * FROM tblBanner WHERE fcBanner = '"+banner+"'";
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
-			if( result.next() ) return true;
-			else return false;
+			if( result.next() ) exists = true;
+                        m_botAction.SQLClose( result );
+                        return exists;
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 			return true;
@@ -88,7 +95,7 @@ public class bannerboy extends SubspaceBot {
 		try {
 			String query = "INSERT INTO tblBanner (fnUserID, fcBanner, fdDateFound) VALUES ";
 			query += "('"+fnUserID+"', '"+banner+"', NOW() )";
-			m_botAction.SQLQuery( m_sqlHost, query );
+			m_botAction.SQLQueryAndClose( m_sqlHost, query );
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
@@ -105,11 +112,13 @@ public class bannerboy extends SubspaceBot {
 		String banner = getBannerString( b );
 
 		try {
+                        int id = -1;
 			String query = "SELECT fnBannerID FROM tblBanner WHERE fcBanner = '"+banner+"'";
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
-			if( result.next() ) {
-				return result.getInt( "fnBannerID" );
-			} else return -1;
+			if( result.next() )
+				id = result.getInt( "fnBannerID" );
+                        m_botAction.SQLClose( result );
+                        return id;
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 			return -1;
@@ -121,7 +130,7 @@ public class bannerboy extends SubspaceBot {
 		player = Tools.addSlashesToString( player );
 		try {
 			String query = "INSERT INTO tblUser (fcUserName) VALUES ('"+player+"')";
-			m_botAction.SQLQuery( m_sqlHost, query );
+                         m_botAction.SQLQueryAndClose( m_sqlHost, query );
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
@@ -139,7 +148,7 @@ public class bannerboy extends SubspaceBot {
 		try {
 			String query = "INSERT into tblWore (fnUserId, fnBannerId) VALUES ";
 			query += "("+userId+", "+bannerId+")";
-			m_botAction.SQLQuery( m_sqlHost, query );
+                         m_botAction.SQLQueryAndClose( m_sqlHost, query );
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
@@ -148,10 +157,12 @@ public class bannerboy extends SubspaceBot {
 	private boolean alreadyMarked( int userId, int bannerId ) {
 
 		try {
+                        boolean marked = false;
 			String query = "SELECT fnUserId FROM tblWore WHERE fnUserID = "+userId+" AND fnBannerID = "+bannerId;
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
-			if( result.next() ) return true;
-			else return false;
+			if( result.next() ) marked = true;
+                        m_botAction.SQLClose( result );
+                        return marked;
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 			return true;

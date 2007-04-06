@@ -127,7 +127,7 @@ public class twdopstats extends SubspaceBot {
     		} catch(SQLException sqle) {
     			throw new RuntimeException("SQL Error: " + sqle.getMessage(), sqle);
     		}
-    		
+    		m_botAction.SQLClose(resultSet);
     	}
     }
     
@@ -192,7 +192,7 @@ public class twdopstats extends SubspaceBot {
     	}
         
     	try {
-            m_botAction.SQLQuery( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
+            m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
             m_botAction.sendChatMessage( "Statistic Recording: Operational" );
 
     	} catch (Exception e ) {
@@ -269,10 +269,11 @@ public class twdopstats extends SubspaceBot {
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblTWDCall WHERE fcUserName = '"+name+"' AND fdDate = '"+time+"' LIMIT 0,1" );
             
             if(result.next()) {
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblTWDCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fdDate = '"+time+"'" );
+                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblTWDCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fdDate = '"+time+"'" );
             } else {
-				m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblTWDCall (`fcUserName`, `fnCount`, `fdDate`) VALUES ('"+name+"', '1', '"+time+"')" );
+				m_botAction.SQLQueryAndClose( mySQLHost, "INSERT INTO tblTWDCall (`fcUserName`, `fnCount`, `fdDate`) VALUES ('"+name+"', '1', '"+time+"')" );
 		    }
+            m_botAction.SQLClose(result);
             
         } catch ( SQLException e ) {
 		    m_botAction.sendChatMessage(2,"EXCEPTION: Unable to update the tblTWDCall table: " + e.getMessage() );

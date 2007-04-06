@@ -1,9 +1,3 @@
-/*
- * Created on Aug 6, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
 package twcore.bots.locaterbot;
 
 import java.sql.ResultSet;
@@ -22,10 +16,8 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.stats.DBPlayerData;
 
 /**
+ * Locates physical location of players on the Earth by their IP addresses.  
  * @author Austin
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
  */
 public class locaterbot extends SubspaceBot {
 
@@ -127,8 +119,8 @@ public class locaterbot extends SubspaceBot {
 				int countryID = result.getInt( "fnCountryID" );
 				createPlayerIPEntry( playerID, countryID );
 			}
+                        m_botAction.SQLClose( result );
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			m_botAction.sendSmartPrivateMessage( "2dragons", e.getMessage() );
 		}
 	}
@@ -141,6 +133,7 @@ public class locaterbot extends SubspaceBot {
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, qry );
 			if( !result.next() ) exists = false;
+                        m_botAction.SQLClose( result );
 		} catch (SQLException e) {
 		}
 
@@ -151,9 +144,8 @@ public class locaterbot extends SubspaceBot {
 
 		String qry = "INSERT INTO tblUserLocation VALUES ("+id+", "+cid+")";
 		try {
-			m_botAction.SQLQuery( m_sqlHost, qry );
+		    m_botAction.SQLQueryAndClose( m_sqlHost, qry );
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

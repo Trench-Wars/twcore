@@ -1,5 +1,5 @@
 /**
- * Spec module for TWBot.
+ * Warp module for TWBot.
  *
  * This module allows the user 4 methods of warping:
  *
@@ -178,6 +178,7 @@ public class twbotwarp extends TWBotExtension
         m_botAction.sendSmartPrivateMessage(sender, "!SetupWarp " + padSpaces(argument, 31) + "-- " + description);
         count++;
       }
+      m_botAction.SQLClose( resultSet );
       if(count == 0)
         m_botAction.sendSmartPrivateMessage(sender, "No setup warps are registered for this arena.");
     }
@@ -217,6 +218,7 @@ public class twbotwarp extends TWBotExtension
         doWarp(warpType, warpID, xCoord, yCoord, radius, true);
         count++;
       }
+      m_botAction.SQLClose( resultSet );
       if(count == 0)
         m_botAction.sendSmartPrivateMessage(sender, "Invalid argument.  Please use !SetupWarpList to see the setup warps available");
       else

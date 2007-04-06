@@ -71,6 +71,7 @@ public class twbottwrp extends TWBotExtension {
 				m_botAction.sendPrivateMessage(name, "Final Pop:  " + finalPop);
 				m_botAction.sendPrivateMessage(name, "Date:       " + date);
 			}
+                        m_botAction.SQLClose( results );
 		} catch(Exception e) {}
 	}
 	
@@ -81,7 +82,7 @@ public class twbottwrp extends TWBotExtension {
 		int atEndPop = m_botAction.getArenaSize();
 		String host = ((twbot)m_twBot).getHostName();
 		try {
-			m_botAction.SQLQuery(database, "INSERT INTO tblRewardPending "
+		    m_botAction.SQLQueryAndClose(database, "INSERT INTO tblRewardPending "
 				+ "(fcMvpName, fcArenaName, fcHostName, fcModulesLoaded, fnArenaInitialPopulation, fnArenaFinalPopulation, fdDate) "
 				+ "VALUES ('"+Tools.addSlashesToString(mvp)+"', '"+arena+"', '"+Tools.addSlashesToString(host)+"', "
 				+ "'"+Tools.addSlashesToString(modulesLoaded)+"', "+atStartPop+", "+atEndPop+", NOW())");

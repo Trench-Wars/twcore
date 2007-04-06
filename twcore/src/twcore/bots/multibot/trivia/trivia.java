@@ -507,8 +507,9 @@ public class trivia extends MultiModule {
                 t_question = qryQuestionData.getString("fcQuestion").replaceAll("\\\\", "");
                 t_answer   = qryQuestionData.getString("fcAnswer").replaceAll("\\\\", "");
                 int ID = qryQuestionData.getInt("fnQuestionID");
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblquestion SET fnTimesUsed = fnTimesUsed + 1 WHERE fnQuestionID = "+ ID);
+                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblquestion SET fnTimesUsed = fnTimesUsed + 1 WHERE fnQuestionID = "+ ID);
             }
+            m_botAction.SQLClose( qryQuestionData );
         } catch (Exception e) {
             Tools.printStackTrace(e);
         }
@@ -526,6 +527,7 @@ public class trivia extends MultiModule {
             qryMinTimesUsed.next();
             int minUsed = qryMinTimesUsed.getInt("fnMinTimesUsed");
             m_mintimesused = minUsed;
+            m_botAction.SQLClose( qryMinTimesUsed );
         } catch (Exception e) {
             Tools.printStackTrace(e);
             m_mintimesused = -1;
@@ -541,6 +543,7 @@ public class trivia extends MultiModule {
             ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tblusertriviastats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
             while(result.next())
                 topTen.add(doTrimString(result.getString("fcUsername"), 17 ) + "Games Won ("+ doTrimString(""+result.getInt("fnWon") +":" + result.getInt("fnPlayed") +")",9) + "Pts Scored (" +doTrimString(""+ result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")", 10) + "Rating: " + result.getInt("fnRating"));
+            m_botAction.SQLClose( result );
         }
         catch (Exception e){}
     }
@@ -557,15 +560,16 @@ public class trivia extends MultiModule {
             ResultSet qryHasTriviaRecord = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible FROM tblusertriviastats WHERE fcUserName = \"" + username+"\"");
             if (!qryHasTriviaRecord.next()) {
                 double rating = ( (points+.0) / toWin * 750.0 ) * ( 1.0 + (wonAdd / 3.0) );
-                m_botAction.SQLQuery( mySQLHost, "INSERT INTO tblusertriviastats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""+username+"\",1,"+wonAdd+","+points+","+toWin+","+rating+")");
+                m_botAction.SQLQueryAndClose( mySQLHost, "INSERT INTO tblusertriviastats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""+username+"\",1,"+wonAdd+","+points+","+toWin+","+rating+")");
             } else {
                 double played = qryHasTriviaRecord.getInt("fnPlayed") + 1.0;
                 double wins   = qryHasTriviaRecord.getInt("fnWon") + wonAdd;
                 double pts    = qryHasTriviaRecord.getInt("fnPoints") + points;
                 double pos    = qryHasTriviaRecord.getInt("fnPossible") + toWin;
                 double rating = ( pts / pos * 750.0) * ( 1.0 + (wins / played / 3.0) );
-                m_botAction.SQLQuery( mySQLHost, "UPDATE tblusertriviastats SET fnPlayed = fnPlayed+1, fnWon = fnWon + "+wonAdd+", fnPoints = fnPoints + "+ points+", fnPossible = fnPossible + "+ toWin +", fnRating = "+rating+" WHERE fcUserName = \"" + username+"\"");
+                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblusertriviastats SET fnPlayed = fnPlayed+1, fnWon = fnWon + "+wonAdd+", fnPoints = fnPoints + "+ points+", fnPossible = fnPossible + "+ toWin +", fnRating = "+rating+" WHERE fcUserName = \"" + username+"\"");
             }
+            m_botAction.SQLClose( qryHasTriviaRecord );
         } catch (Exception e) {
             Tools.printStackTrace(e);
         }
@@ -578,11 +582,11 @@ public class trivia extends MultiModule {
         try{
 
             ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnPoints, fnWon, fnPlayed, fnPossible, fnRating FROM tblusertriviastats WHERE fcUserName = \"" + username+"\"");
-            if(result.next()) {
-                return username + "- Games Won: ("+ result.getInt("fnWon") + ":" + result.getInt("fnPlayed") + ")  Pts Scored: (" +result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")  Rating: " + result.getInt("fnRating");
-            } else {
-                return "There is no record of player " + username;
-            }
+            String info = "There is no record of player " + username; 
+            if(result.next())
+                info = username + "- Games Won: ("+ result.getInt("fnWon") + ":" + result.getInt("fnPlayed") + ")  Pts Scored: (" +result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")  Rating: " + result.getInt("fnRating");
+            m_botAction.SQLClose( result );
+            return info;
         } catch (Exception e) {
             Tools.printStackTrace(e);
             return "Can't retrieve stats.";

@@ -178,6 +178,7 @@ public class twbotwarp extends TWBotExtension
       }
       if(count == 0)
         m_botAction.sendSmartPrivateMessage(sender, "No setup warps are registered for this arena.");
+      m_botAction.SQLClose(resultSet);
     }
 
     catch(SQLException e)
@@ -219,6 +220,7 @@ public class twbotwarp extends TWBotExtension
         m_botAction.sendSmartPrivateMessage(sender, "Invalid argument.  Please use !SetupWarpList to see the setup warps available");
       else
         m_botAction.sendSmartPrivateMessage(sender, "Setup warps completed.");
+      m_botAction.SQLClose(resultSet);
     }
     catch(SQLException e)
     {

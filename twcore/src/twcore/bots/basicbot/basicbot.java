@@ -9,7 +9,8 @@ import twcore.core.events.Message;
  * This is a barebones template bot for use when creating a new bot.  With slight
  * modification, it can suit just about any purpose.  Note that if you are
  * thinking of creating a typical eventbot, you should strongly consider creating
- * a MultiBot module instead, which is more simple.
+ * a MultiBot module instead, which is more simple; also, you might consider the
+ * UltraBot template, which includes a command interpreter for easy command setup.
  *
  * @author  Stefan / Mythrandir
  */

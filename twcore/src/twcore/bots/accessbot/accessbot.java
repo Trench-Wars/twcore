@@ -16,11 +16,7 @@ import twcore.core.events.Message;
 import twcore.core.stats.DBPlayerData;
 
 /**
- * Accessbot
- * This bot is used for updating access to the website.
- * 
- * @author UNKNOWN
- * 
+ * Used for updating staff access to the TW website.
  */
 public class accessbot extends SubspaceBot {
 
@@ -130,7 +126,10 @@ public class accessbot extends SubspaceBot {
 						man.removeRank( userRankId );
 					}
 				}
+                                m_botAction.SQLClose( result2 );
 			}
+                        
+                        m_botAction.SQLClose( result );
 			
 			Map access = m_botAction.getOperatorList().getList();
 			Set set = access.keySet();

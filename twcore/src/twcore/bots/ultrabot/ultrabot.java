@@ -1,12 +1,3 @@
-/*
- * ultrabot.java
- *
- * Created on March 17, 2004, 11:45 AM
- *
- * This is the most simple form of a bot. You can use this template whenever
- * you create a new bot
- */
-
 package twcore.bots.ultrabot;
 
 import twcore.core.*;
@@ -18,7 +9,8 @@ import twcore.core.events.Message;
 import twcore.core.command.*;
 
 /**
- *
+ * A basic form of a bot, but with command interpretation not provided in
+ * the "basicbot" class template.  Use this one instead.
  * @author  Stefan / Mythrandir
  */
 public class ultrabot extends SubspaceBot {

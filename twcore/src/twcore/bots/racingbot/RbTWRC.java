@@ -69,7 +69,7 @@ public class RbTWRC extends RacingBotExtension
 	public void sql(String name)
 	{
 		try {
-			m_botAction.SQLQuery("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
+		    m_botAction.SQLQueryAndClose("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
 		} catch(Exception e) {}
 	}
 
@@ -183,7 +183,7 @@ public class RbTWRC extends RacingBotExtension
 		{
 			String name = (String)it2.next();
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 2 WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 2 WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given 2 points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved 2 points for leading a lap and now have " + getPoints(name) + " points.");
 				pointChange(name, 2, "Lead a lap.");
@@ -196,7 +196,7 @@ public class RbTWRC extends RacingBotExtension
 			}
 		}
 		try {
-			m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 2 WHERE fldName = \'"+leadName+"\'");
+		    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 2 WHERE fldName = \'"+leadName+"\'");
 			writeLog(leadName + " given 2 points.");
 			m_botAction.sendSmartPrivateMessage(leadName, "You just recieved 2 points for leading the most laps and now have " + getPoints(leadName) + " points.");
 			pointChange(leadName, 2, "Lead most laps.");
@@ -208,7 +208,7 @@ public class RbTWRC extends RacingBotExtension
 			String name = (String)positions.get(new Integer(k + 1));
 			int points = 10 - k;
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given " + points + " points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
 				pointChange(name, points, "Top ten in normal race.");
@@ -220,7 +220,7 @@ public class RbTWRC extends RacingBotExtension
 			it.next();
 			String name = (String)positions.get(new Integer(k + 1));
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 1 WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 1 WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given 1 point.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved 1 point and now have " + getPoints(name) + " points.");
 				pointChange(name, 1, "Finished normal race.");
@@ -259,7 +259,7 @@ public class RbTWRC extends RacingBotExtension
 		{
 			String name = (String)it2.next();
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 3 WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 3 WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given 3 points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved 3 points for leading a lap and now have " + getPoints(name) + " points.");
 				pointChange(name, 3, "Lead a lap.");
@@ -272,7 +272,7 @@ public class RbTWRC extends RacingBotExtension
 			}
 		}
 		try {
-			m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 5 WHERE fldName = \'"+leadName+"\'");
+		    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 5 WHERE fldName = \'"+leadName+"\'");
 			writeLog(leadName + " given 2 points.");
 			m_botAction.sendSmartPrivateMessage(leadName, "You just recieved 5 points for leading the most laps and now have " + getPoints(leadName) + " points.");
 			pointChange(leadName, 5, "Lead most laps.");
@@ -284,7 +284,7 @@ public class RbTWRC extends RacingBotExtension
 			String name = (String)positions.get(new Integer(k + 1));
 			int points = 20 - k;
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given " + points + " points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
 				pointChange(name, points, "Finished a major race.");
@@ -297,7 +297,7 @@ public class RbTWRC extends RacingBotExtension
 			String name = (String)positions.get(new Integer(k + 1));
 			int points = 2;
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given " + points + " points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
 				pointChange(name, points, "Finished a major race.");
@@ -336,7 +336,7 @@ public class RbTWRC extends RacingBotExtension
 		{
 			String name = (String)it2.next();
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 5 WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 5 WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given 5 points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved 5 points for leading a lap and now have " + getPoints(name) + " points.");
 				pointChange(name, 5, "Lead a lap.");
@@ -349,7 +349,7 @@ public class RbTWRC extends RacingBotExtension
 			}
 		}
 		try {
-			m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 10 WHERE fldName = \'"+leadName+"\'");
+		    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + 10 WHERE fldName = \'"+leadName+"\'");
 			writeLog(leadName + " given 10 points.");
 			m_botAction.sendSmartPrivateMessage(leadName, "You just recieved 10 points for leading the most laps and now have " + getPoints(leadName) + " points.");
 			pointChange(leadName, 10, "Lead most laps.");
@@ -361,7 +361,7 @@ public class RbTWRC extends RacingBotExtension
 			String name = (String)positions.get(new Integer(k + 1));
 			int points = 30 - k;
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given " + points + " points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
 				pointChange(name, points, "Finished a major race.");
@@ -374,7 +374,7 @@ public class RbTWRC extends RacingBotExtension
 			String name = (String)positions.get(new Integer(k + 1));
 			int points = 10;
 			try {
-				m_botAction.SQLQuery(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers Set fldPoints = fldPoints + "+points+" WHERE fldName = \'"+name+"\'");
 				writeLog(name + " given " + points + " points.");
 				m_botAction.sendSmartPrivateMessage(name, "You just recieved " + points + " points and now have " + getPoints(name) + " points.");
 				pointChange(name, points, "Finished a major race.");
@@ -412,10 +412,11 @@ public class RbTWRC extends RacingBotExtension
 	{
 		try {
 			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldPoints FROM tblRacers WHERE fldName = \'"+name+"\'");
+			int points = 0;
 			if(results.next())
-				return results.getInt("fldPoints");
-			else
-				return 0;
+			    points = results.getInt("fldPoints");
+			m_botAction.SQLClose( results );
+			return points;
 		} catch(Exception e) {return 0;}
 	}
 
@@ -449,7 +450,7 @@ public class RbTWRC extends RacingBotExtension
 		String trackName = track.trackName;
 		int laps = race.laps;
 		try {
-			m_botAction.SQLQuery("website", "INSERT INTO tblRaceData (fldID, fldDate, fldTrack, fldLaps, fldStarters, fldFinishers, fldType, fldFirst, fldSecond, fldThird, fldHost) VALUES (0, \""+getTimeStamp()+"\", \""+trackName+"\", "+laps+", "+racePlayers+", "+track.positions.size()+", \""+type+"\", \""+track.winner+"\", \""+track.second+"\", \""+track.third+"\", \""+host+"\") ");
+		    m_botAction.SQLQueryAndClose("website", "INSERT INTO tblRaceData (fldID, fldDate, fldTrack, fldLaps, fldStarters, fldFinishers, fldType, fldFirst, fldSecond, fldThird, fldHost) VALUES (0, \""+getTimeStamp()+"\", \""+trackName+"\", "+laps+", "+racePlayers+", "+track.positions.size()+", \""+type+"\", \""+track.winner+"\", \""+track.second+"\", \""+track.third+"\", \""+host+"\") ");
 		} catch(Exception e) {e.printStackTrace();}
 	}
 
@@ -461,7 +462,7 @@ public class RbTWRC extends RacingBotExtension
 	public void pointChange(String player, int points, String reason)
 	{
 		try {
-			m_botAction.SQLQuery("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0,  "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
+		    m_botAction.SQLQueryAndClose("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0,  "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
 		} catch(Exception e) {}
 	}
 
@@ -474,7 +475,9 @@ public class RbTWRC extends RacingBotExtension
 		try {
 			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldID FROM tblRacers WHERE fldName = \'"+name+"\'");
 			results.next();
-			return results.getInt("fldID");
+                        int id = results.getInt("fldID");
+                        m_botAction.SQLClose( results );
+                        return id;
 		} catch(Exception e) {}
 		return 0;
 	}

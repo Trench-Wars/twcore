@@ -65,7 +65,8 @@ public class twbotmisc extends TWBotExtension {
 	    			k++;
 	    		}
 	    	}
-	    	m_botAction.sendPrivateMessage("Ikrit", "Deleted " + k + " records.");
+                m_botAction.SQLClose( results );
+                //m_botAction.sendPrivateMessage("Ikrit", "Deleted " + k + " records.");
 	    } catch(Exception e) {e.printStackTrace();}
     }
 
