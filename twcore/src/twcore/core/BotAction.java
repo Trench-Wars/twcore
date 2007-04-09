@@ -1537,7 +1537,7 @@ public class BotAction
 
     /**
      * Changes all the players on one freq to another freq.  Great for
-     * consolidating teams.
+     * consolidating teams.  (Merge operation.)
      * @param initialFreq Frequency of the players you wish to change
      * @param destFreq The frequency you wish to change the players to
      */
@@ -1569,6 +1569,24 @@ public class BotAction
     }
     
     /**
+     * Changes all players in a particular ship to a particular freq.
+     * @param shipType The ship type you wish to set to a freq
+     * @param freq The frequency to switch the players to
+     */
+    public void changeAllInShipToFreq(int shipType, int freq)
+    {
+        if (!(shipType >= 1 && shipType <= 8))
+            return;
+        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        if (i == null)
+            return;
+        while (i.hasNext())
+        {
+            setFreq(((Integer) i.next()).intValue(), freq);
+        }
+    }
+
+    /**
      * Sends all ships on a specific frequency into spectator mode, without locking
      * them in spectator mode.  (Arena should be *lock'd first.) 
      * @param freq Frequency to spec
@@ -1580,6 +1598,23 @@ public class BotAction
         while (i.hasNext())
         {
             specWithoutLock(((Integer) i.next()).intValue());
+        }
+    }
+    
+    /**
+     * Sends all ships on a specific frequency into spectator mode, without locking
+     * them in spectator mode, and then sets their freq to the old freq. 
+     * @param freq Frequency to spec
+     */
+    public void specFreqAndKeepFreq(int freq) {
+        Iterator i = m_arenaTracker.getFreqPlayerIterator(freq);
+        if (i == null)
+            return;
+        while (i.hasNext())
+        {
+            int id = (int)((Player)i.next()).getPlayerID();
+            specWithoutLock(id);
+            setFreq(id, freq);
         }
     }
     

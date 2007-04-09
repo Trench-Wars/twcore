@@ -1,31 +1,24 @@
-/*
- * portabotTestModule.java
- *
- * Created on March 21, 2002, 4:14 PM
- */
-
-/**
- *
- * @author  harvey
- */
-
 package twcore.bots.twbot;
 
 import java.util.*;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
-import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
 import twcore.core.util.Tools;
 
+/**
+ * twbotstandard.java - a general utility module for event refs, haphazardly-arranged.
+ * Contains some unlisted commands for controlling bot in-game (with some problems).
+ *
+ * @author  harvey
+ */
 public class twbotstandard extends TWBotExtension {
-    int specPlayers = 0; //if >0, spec player at X deaths
     LinkedList arenaTasks = new LinkedList();
+    HashMap<String,StoredPlayer> storedPlayers = new HashMap<String,StoredPlayer>();
 
-    /** Creates a new instance of portabotTestModule */
+    /** Creates a new instance of the TWBot standard module */
     public twbotstandard() {
     }
 
@@ -58,7 +51,7 @@ public class twbotstandard extends TWBotExtension {
         if( message.startsWith( "!random " )){
             m_botAction.createRandomTeams( getInteger( message.substring(8) ));
         } else if( message.startsWith( "!teams " )){
-        	createNumberofTeams( getInteger( message.substring(7) ));
+            createNumberofTeams( getInteger( message.substring(7) ));
         } else if( message.startsWith( "!door " )){
             m_botAction.setDoors( getInteger( message.substring( 6 )));
         } else if( message.startsWith( "!setship " )){
@@ -77,14 +70,52 @@ public class twbotstandard extends TWBotExtension {
             String[] parameters = Tools.stringChopper( message.substring( 8 ).trim(), ' ' );
             try{
                 if( parameters.length == 2 ){
-                    int freq = Integer.parseInt(parameters[0]);
-                    int shiptype = Integer.parseInt(parameters[1]);
-                    m_botAction.setFreqtoFreq( freq, shiptype );
+                    int shiptype = Integer.parseInt(parameters[0]);
+                    int freq = Integer.parseInt(parameters[1]);
+                    m_botAction.changeAllInShipToFreq( shiptype, freq );
                 } else if( parameters.length == 1 ){
                     int freq = Integer.parseInt( parameters[0] );
                     m_botAction.setAlltoFreq( freq );
                 }
             }catch( Exception e ){}
+        } else if( message.startsWith( "!merge ")) {
+            String[] parameters = Tools.stringChopper( message.substring( 7 ).trim(), ' ' );
+            try{
+                if( parameters.length == 2 ){
+                    m_botAction.setFreqtoFreq(Integer.parseInt(parameters[0]), Integer.parseInt(parameters[1]));
+                }
+            }catch( Exception e ){}
+        } else if( message.startsWith( "!restart" )){
+            m_botAction.sendUnfilteredPublicMessage("*restart");
+        } else if( message.startsWith( "!specallkeepfreqs" )){
+            storePlayerInfo( -1 );
+            m_botAction.specAllAndKeepFreqs();
+        } else if( message.startsWith( "!specfreq " )){
+            try {
+                int i = Integer.parseInt( message.substring(10).trim() );
+                storePlayerInfo( i );
+                m_botAction.specFreqAndKeepFreq( i );
+            } catch (Exception e ) {
+                m_botAction.sendSmartPrivateMessage( name, "Input confusing.  Where is your God now?" );
+            }
+        } else if( message.startsWith( "!teamsspec " )){
+            try {
+                int i = Integer.parseInt( message.substring(10) );
+                createNumberofTeams( i );
+                storePlayerInfo( -1 );
+                m_botAction.specAllAndKeepFreqs();
+            } catch (Exception e ) {
+                m_botAction.sendSmartPrivateMessage( name, "Input confusing.  Where is your God now?" );
+            }
+        } else if( message.startsWith( "!restore" )){
+            restorePlayers();
+            m_botAction.sendSmartPrivateMessage( name, "Players restored to prior ships and freqs." );
+        } else if( message.startsWith( "!clearinfo" )){
+            clearStoredInfo();
+            m_botAction.sendSmartPrivateMessage( name, "Player ship and frequency data cleared." );
+            
+        // ************ "EASTER EGG" COMMANDS *************
+
         } else if( message.startsWith( "!move " )){
             String[] parameters = Tools.stringChopper( message.substring( 6 ).trim(), ' ' );
             try{
@@ -118,282 +149,134 @@ public class twbotstandard extends TWBotExtension {
                 s.setRotation( i % 40 );
                 s.fire( i );
             }
-        } else if( message.startsWith( "!restart" )){
-            m_botAction.sendUnfilteredPublicMessage("*restart");
-        } else if( message.startsWith( "!merge ")) {
-            String[] parameters = Tools.stringChopper( message.substring( 7 ).trim(), ' ' );
-            try{
-                if( parameters.length == 2 ){
-                    m_botAction.setFreqtoFreq(Integer.parseInt(parameters[0]), Integer.parseInt(parameters[1]));
-                }
-            }catch( Exception e ){}
         } else if( message.startsWith("!easy") ) {
-        	TimerTask ezT = new TimerTask() {
-        		public void run() {
-        			killEasy();
-        		}
-        	};
-        	m_botAction.setPlayerPositionUpdating(200);
-        	m_botAction.scheduleTask(ezT, 5000);
+            TimerTask ezT = new TimerTask() {
+                public void run() {
+                    killEasy();
+                }
+            };
+            m_botAction.setPlayerPositionUpdating(200);
+            m_botAction.scheduleTask(ezT, 5000);
         }
-
-        /*else if( message.startsWith( "!spec " )){
-            specPlayers = getInteger( message.substring( 6 ));
-            m_botAction.sendArenaMessage( "Removing players with " + specPlayers + " deaths - " + name );
-            m_botAction.checkAndSpec( specPlayers );
-
-        } else if( message.startsWith( "!spec" s)){
-            m_botAction.sendArenaMessage( "Removing players off - " + name );
-            specPlayers = 0;
-        }   else if( message.startsWith( "!warpto " )){
-            handleWarp( name, message );
-        }   else if( message.startsWith( "!addmsg " )){
-            handleAddMsg( name, message.substring(8) );
-        } else if( message.startsWith( "!clearmsg" )){
-            handleClearMsgs( name );
-        } else if( message.startsWith( "!delmsg " )){
-            handleDelMsg( name, getInteger( message.substring(8), -1 ) );
-        } else if( message.startsWith( "!listmsg" )){
-            handleListMsg( name );
-        }*/
     }
 
     public void killEasy() {
-    	Iterator it = m_botAction.getPlayingPlayerIterator();
-    	while(it.hasNext()) {
-    		Player p = (Player)it.next();
-    		Ship s = m_botAction.getShip();
-    		s.moveAndFire(p.getXLocation(), p.getYLocation(), s.getWeaponNumber((byte)4, (byte)2, false, false, true, (byte)8, false));
-    	}
-    //	m_botAction.setPlayerPositionUpdating(201);
-    	m_botAction.setPlayerPositionUpdating(0);
+        m_botAction.setPlayerPositionUpdating(200);
+        Iterator it = m_botAction.getPlayingPlayerIterator();
+        while(it.hasNext()) {
+            Player p = (Player)it.next();
+            Ship s = m_botAction.getShip();
+            s.moveAndFire(p.getXLocation(), p.getYLocation(), s.getWeaponNumber((byte)4, (byte)2, false, false, true, (byte)8, false));
+        }
+        m_botAction.setPlayerPositionUpdating(0);
     }
-
-    /** Creates the requested number of teams if possible
-	 * @param
-	 */
-	private void createNumberofTeams( int _teams ) {
-
-		int current = 0;
-		int howmany = _teams - 1;
-
-		Iterator i = m_botAction.getPlayingPlayerIterator();
-		while( i.hasNext() ) {
-
-			if(current > howmany)
-				current = 0;
-			Player p = (Player)i.next();
-			m_botAction.setFreq( p.getPlayerID(), current );
-			current++;
-		}
-	}
-
-	public void handleEvent( PlayerDeath event ){
-        if( specPlayers <= 0 ) return;
-
-        Player p = m_botAction.getPlayer( event.getKilleeID() );
-
-        if( p.getLosses() >= specPlayers ){
-            m_botAction.spec( event.getKilleeID() );
-            m_botAction.spec( event.getKilleeID() );
-
-            m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + " is out with " + p.getWins() + " wins, " + p.getLosses() + " losses." );
+    
+    /**
+     * Stores ship and freq info on a freq specified (or -1 for all players
+     * currently in the game).  The information can later be used to !restore
+     * the previous status of the stored players.
+     * @param freq Frequency to store; -1 for all players 
+     */
+    private void storePlayerInfo( int freq ) {
+        Iterator i;
+        if( freq == -1 )
+            i = m_botAction.getPlayingPlayerIterator();
+        else
+            i = m_botAction.getFreqPlayerIterator( freq );
+        
+        while( i.hasNext() ) {
+            Player p = (Player)i.next();
+            try {
+                storedPlayers.put( p.getPlayerName(), new StoredPlayer(p.getShipType(),p.getFrequency()) );
+            } catch (Exception e) {}
         }
     }
-
-    public void handleWarp( String name, String message ){
-/*          "!warp                     - Warps everyone to a random location",
-            "!warp <freq>              - Warps everyone on <freq> to a random location",
-            "!warpto <x> <y>           - Warps everyone in the arena to x,y",
-            "!warpto <freq> <x> <y>    - Warps everyone on freq <freq> to x,y",
-            "!warpto <area>            - Warps everyone in the arena to predefined area <area>",
-            "!warpto <freq> <area>     - Warps everyone on freq <freq> to predefined area <area>",
-            "!where                    - The bot will tell you where you are on the map (DEBUGGING)"*/
-
-        String[] parameters = Tools.stringChopper( message.trim().substring( 7 ), ' ' );
-
-        if( parameters == null ){
-            return;
-        }
-
-        try{
-            if( parameters.length == 2 ){
-                int x = Integer.parseInt(parameters[0]);
-                int y = Integer.parseInt(parameters[1]);
-                m_botAction.warpAllToLocation( x, y );
-            } else if( parameters.length == 3 ){
-                int freq = Integer.parseInt( parameters[0] );
-                int x = Integer.parseInt( parameters[1] );
-                int y = Integer.parseInt( parameters[2] );
-                m_botAction.warpFreqToLocation( freq, x, y );
-            }
-        }catch( Exception e ){}
-    }
-
-    public void handleAddMsg( String name, String message ){
-        int soundCode;
-        int pos;
-        int interval = 0;
-
-        if( arenaTasks.size() >= 15 ){
-            m_botAction.sendPrivateMessage( name, "There is a max of 15 arena messages. You will need to remove some if you wish to use another");
-            return;
-        }
-
-        message = message.trim();
-        if( message != null ){
-            pos = message.indexOf(',');
-            if( pos != -1 ){
-                interval = getInteger( message.substring( 0, pos ), 0 );
-                if( interval < 1 || interval > 3600 ){
-                    m_botAction.sendPrivateMessage( name, "Invalid interval. It must be between 1 and 3600 seconds" );
-                    return;
+    
+    /**
+     * Restores players to prior ship & freq before they were spec'd with one
+     * of the memory-enabled commands. 
+     */
+    private void restorePlayers() {
+        Iterator i = storedPlayers.keySet().iterator();
+        
+        while( i.hasNext() ) {
+            String player = (String)i.next();
+            if( player != null ) {
+                StoredPlayer p = storedPlayers.get( player );
+                if( p != null ) {
+                    m_botAction.setShip(player, p.ship);
+                    m_botAction.setFreq(player, p.freq);
                 }
-
-                message = message.substring( pos + 1 );
-                message = message.trim();
-                interval = (interval * 1000);
-            } else {
-                m_botAction.sendPrivateMessage( name, "Invalid interval. Use !addmsg <interval>,<message>" );
-                return;
-            }
-
-            if( message.equals("") || message == null ){
-                m_botAction.sendPrivateMessage( name, "Please use !addmsg <interval>,<message>" );
-                return;
-            }
-
-            pos = message.lastIndexOf('%');
-            if( pos != -1 ){
-                int temp = (message.length() - pos);
-                if( temp <= 4 ){
-                    soundCode = getInteger( message.substring( pos + 1 ), 0 );
-                    if( soundCode < 1 || soundCode > 999 ){
-                        m_botAction.sendPrivateMessage( name, "Invalid sound number" );
-                        return;
-                    }
-
-                    message = message.substring( 0, pos );
-
-                    arenaTasks.add( new ArenaMsgTask( message, soundCode ) );
-                    m_botAction.scheduleTaskAtFixedRate( (ArenaMsgTask)arenaTasks.getLast(), 0, interval );
-                } else {
-                    m_botAction.sendPrivateMessage( name, "Invalid sound number" );
-                    return;
-                }
-            } else {
-                arenaTasks.add( new ArenaMsgTask( message ) );
-                m_botAction.scheduleTaskAtFixedRate( (ArenaMsgTask)arenaTasks.getLast(), 0, interval );
-            }
-        } else {
-            m_botAction.sendPrivateMessage( name, "Please use !addmsg <interval>,<message>" );
-        }
-    }
-
-    public void handleListMsg( String name ){
-        ArenaMsgTask task;
-
-        if( arenaTasks.size() == 0 ){
-            m_botAction.sendPrivateMessage( name, "There currently are no scheduled messages" );
-        }
-
-        for( int i = 0; i < arenaTasks.size(); i++ ){
-            task = (ArenaMsgTask)arenaTasks.get(i);
-            String message = i + ". " + task.getMessage();
-            if( task.getSoundCode() != 0 ){
-                message += "%" + task.getSoundCode();
-            }
-            m_botAction.sendPrivateMessage( name, message );
-        }
-    }
-
-    public void handleClearMsgs( String name ){
-        clearArenaMsgs();
-        m_botAction.sendPrivateMessage( name, "All repeating arena messages have been cleared" );
-    }
-
-    public void clearArenaMsgs(){
-        for( int i = 0; i < arenaTasks.size(); i++){
-            ((ArenaMsgTask)arenaTasks.get(i)).cancel();
-        }
-        arenaTasks.clear();
-    }
-
-    public void handleDelMsg( String name, int index ){
-        ArenaMsgTask task;
-
-        try{
-            task = (ArenaMsgTask)arenaTasks.get(index);
-        } catch( Exception e ){
-            m_botAction.sendPrivateMessage( name, "Invalid message number" );
-            return;
-        }
-
-        arenaTasks.remove(index);
-        task.cancel();
-
-        String message = "Removed: " + task.getMessage();
-        if( task.getSoundCode() != 0 ){
-            message += "%" + task.getSoundCode();
-        }
-        m_botAction.sendPrivateMessage( name, message );
-    }
-
-    public class ArenaMsgTask extends TimerTask{
-        String message;
-        int soundCode = 0;
-
-        public ArenaMsgTask( String newMessage ){
-            message = newMessage;
-        }
-
-        public ArenaMsgTask( String newMessage, int newSoundCode ){
-            message = newMessage;
-            soundCode = newSoundCode;
-        }
-
-        public void run(){
-            if( soundCode != 0 ){
-                m_botAction.sendArenaMessage( message, soundCode );
-            } else {
-                m_botAction.sendArenaMessage( message );
             }
         }
+        
+        storedPlayers.clear();
+    }
 
-        public String getMessage(){
-            return message;
-        }
+    /**
+     * Clears stored ship/freq info on players.
+     */
+    private void clearStoredInfo() {
+        storedPlayers.clear();
+    }
+    
+    /**
+     * Creates the requested number of teams, if possible.
+     * @param
+     */
+    private void createNumberofTeams( int _teams ) {
 
-        public int getSoundCode(){
-            return soundCode;
+        int current = 0;
+        int howmany = _teams - 1;
+
+        Iterator i = m_botAction.getPlayingPlayerIterator();
+        while( i.hasNext() ) {
+
+            if(current > howmany)
+                current = 0;
+            Player p = (Player)i.next();
+            m_botAction.setFreq( p.getPlayerID(), current );
+            current++;
         }
     }
 
+    /**
+     * Returns String array of help for this module.
+     */
     public String[] getHelpMessages() {
         String[] help = {
-            "!random <numberFreqs>     - Makes random freqs of a particular size.",
-			"!teams <numberTeams>      - Makes the requested number of teams.",
-            "!door <-2 to 255>         - Changes door mode.  -2 and -1 are random modes.",
-            "!where                    - Robo will tell you his location. Remote PM or squad msg only.",
-            "!setship <ship>           - Changes everyone to <ship>",
-            "!setship <freq> <ship>    - Changes everyone on <freq> to <ship>",
-            "!restart                  - Restarts the ball game",
-            "!merge <freq1> <freq2>    - Changes everyone on <freq1> to <freq2>"
-//            "!spec <numdeaths>         - Specs players when they reach <numdeaths>",
-//            "!warp                     - Warps everyone to a random location",
-//            "!warp <freq>              - Warps everyone on <freq> to a random location",
-//            "!warpto <x> <y>           - Warps everyone in the arena to x,y",
-//            "!warpto <freq> <x> <y>    - Warps everyone on freq <freq> to x,y",
-//            "!move <x> <y>             - Warps the bot to x, y.",
-//            "!addmsg <seconds>,<msg>   - Adds a timed *arena message. To use a sound, place %%<sound> at the end",
-//            "!delmsg <num>             - Removes a specified timed *arena message",
-//            "!clearmsgs                - Removes ALL timed *arena messages",
-//            "!listmsgs                 - Shows a list of the *arena messages scheduled"
+            "!random <sizeOfFreqs>   - Randomizes players to freqs of a given size.",
+            "!teams <numberTeams>    - Makes the requested number of teams.",
+            "!door <-2 to 255>       - Changes door mode.  -2 and -1 are random/on-off modes.",
+            "!restart                - Restarts the ball game.",
+            "!where                  - Robo will tell you his location. Remote PM or squad msg only.",
+            "!setship <ship>         - Changes everyone to <ship>",
+            "!setship <freq> <ship>  - Changes everyone on <freq> to <ship>",
+            "!setfreq <freq>         - Changes everyone to <freq>",
+            "!setfreq <ship> <freq>  - Changes everyone in <ship> to <freq>",
+            "!merge <freq1> <freq2>  - Changes everyone on <freq1> to <freq2>.",
+            "!teamsspec <numTeams>   - Makes requested # of teams, specs all, & keeps freqs.   *",
+            "!specfreq <freq>        - Specs everyone on <freq>, but keeps them on their freq. *",
+            "!specallkeepfreqs       - Specs everyone, but keeps them on their freq.           *",
+            "!restore                - Setship/setfreq to prior state anyone spec'd by these.  ^",
+            "!clearinfo              - Clear all information stored about player freqs & ships."
         };
         return help;
     }
 
     public void cancel() {
-        clearArenaMsgs();
+    }
+
+    /**
+     * Used to store freq and ship info.
+     */
+    private class StoredPlayer {
+        int ship;
+        int freq;
+        
+        public StoredPlayer( int ship, int freq ) {
+            this.ship = ship;
+            this.freq = freq;
+        }        
     }
 }
