@@ -206,7 +206,7 @@ public class zonerbot extends SubspaceBot
   }
 
   /**
-   * This private method handles all of the ZH commands.
+   * This private method handles all of the ER commands.
    *
    * @param sender is the sender of the command.
    * @param message is the message that was sent.
@@ -496,7 +496,7 @@ public class zonerbot extends SubspaceBot
     advert = new Advert(sender, isGrant);
     advertQueue.put(lowerSender, advert);
 
-    if(advertQueue.size() == 1)
+    if(advertQueue.size() == 1 && (advertTimer == null || advertTimer.isExpired()))
       setIdleTimer(idleTime * 60 * 1000);
     notifyQueuePosition(sender);
   }
