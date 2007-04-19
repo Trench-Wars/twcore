@@ -152,6 +152,7 @@ public class twdopstats extends SubspaceBot {
             			event.getMessage().toLowerCase().contains("twsd") ||
             			event.getMessage().toLowerCase().contains("twjd")
             		)) {
+            		m_botAction.sendChatMessage("...");
                 	callList.addElement( new EventData( new Date().getTime() ) );
                 	// add:  twbd, twdd, twsd and twjd
                 }
