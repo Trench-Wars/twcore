@@ -3,6 +3,8 @@ package twcore.bots.elimbot;
 import java.util.Iterator;
 import java.util.TimerTask;
 
+import twcore.core.util.Tools;
+
 public class shipVote extends TimerTask {
 
 	private elimbot bot;
@@ -20,10 +22,16 @@ public class shipVote extends TimerTask {
 		int voters = bot.votes.size();				// Number of total players who voted
 		int voteWin = countVotes();					// Vote option that won
 		int voteWinners = countVotes(voteWin);		// Number of players that voted for the winning option
-		if(voters == 0)	voters = 1;					// Prevent divide by zero errors
-		int voteWinnersPerc = (100 * voteWinners)/voters;
 		
-		bot.m_botAction.sendArenaMessage("VOTE RESULT: "+voteWinnersPerc+"% of "+voters+" players voted for ship #"+voteWin+" - "+elimbotConfiguration.shipNames[voteWin].toUpperCase()+".");
+		if(voters > 0)	{
+			float voteWinnersPerc = (100 * voteWinners)/voters;
+			bot.m_botAction.sendArenaMessage("VOTE RESULT: "+Math.round(voteWinnersPerc)+"% of "+voters+" players voted for ship #"+voteWin+" - "+Tools.shipName(voteWin).toUpperCase()+".");
+		} else {
+			voteWin = bot.getConfiguration().getCurrentConfig().getShipsDefault();
+			String shipName = Tools.shipName(voteWin);
+			bot.m_botAction.sendArenaMessage("VOTE RESULT: 0 votes. Defaulted to "+shipName+".");
+		}
+		
 		bot.ship = voteWin;
 		bot.state = ElimState.SHIPVOTE;
 		bot.start();
@@ -35,21 +43,18 @@ public class shipVote extends TimerTask {
 	 */
 	private int countVotes() {
 		Iterator<Integer> voteValues = bot.votes.values().iterator();
-		int[][] voteResult = new int[9][1];
+		int[] voteResult = new int[9];
 		int voteWin = 2;
 		
 		while(voteValues.hasNext()) {
 			int vote = voteValues.next().intValue();
-			
-			if(vote < 9) {
-				voteResult[vote][0]++; 
-			}
+			voteResult[vote] = voteResult[vote] + 1; 
 		}
 		
 		int tmp =0;
 		for(int i = 0 ; i < voteResult.length ; i++) {
-			if(voteResult[i][0] < tmp) {
-				tmp = voteResult[i][0];
+			if(voteResult[i] > tmp) {
+				tmp = voteResult[i];
 				voteWin = i;
 			}
 		}

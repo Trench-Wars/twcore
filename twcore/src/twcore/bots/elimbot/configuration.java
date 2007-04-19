@@ -5,18 +5,18 @@ import java.util.HashMap;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 
-public class elimbotConfiguration {
+public class configuration {
 	
 	private BotAction m_botAction;
-	private HashMap<String, elimConfiguration> configurations = new HashMap<String, elimConfiguration>();
+	private HashMap<String, fileConfiguration> configurations = new HashMap<String, fileConfiguration>();
 	private String arena;
-	
-	public static String shipNames[] = {"", "Warbird", "Javelin", "Spider", "Leviathan", "Terrier", "Weasle", "Lancaster", "Shark"};
 	
 	private int currentConfig = 1;
 	private int playerMin = 3;
 	
-	public elimbotConfiguration(BotAction m_botAction) {
+	private boolean rulesShown = false;
+	
+	public configuration(BotAction m_botAction) {
 		this.m_botAction = m_botAction;
 		this.initialize();
 	}
@@ -33,9 +33,11 @@ public class elimbotConfiguration {
 		while(config.getString("config"+i) != null) {
 			String name = config.getString("config"+i);
 			
-			elimConfiguration elimConf = new elimConfiguration(i,name);
+			fileConfiguration elimConf = new fileConfiguration(i,name);
 			elimConf.setShips(config.getString(name+"-ships"));
+			elimConf.setShipsDefault(config.getInt(name+"-ships-default"));
 			elimConf.setDeathLimit(config.getString(name+"-deathlimit"));
+			elimConf.setDeathLimitDefault(config.getInt(name+"-deathlimit-default"));
 			if(config.getString(name+"-spawn") != null) {
 				elimConf.setSpawn(config.getString(name+"-spawn"));
 			}
@@ -59,7 +61,7 @@ public class elimbotConfiguration {
 	 * @param key The configuration key, always of the format "config#"
 	 * @return elimConfiguration
 	 */
-	public elimConfiguration getConfig(String key) {
+	public fileConfiguration getConfig(String key) {
 		return configurations.get(key);
 	}
 
@@ -67,7 +69,7 @@ public class elimbotConfiguration {
 	 * Returns the current configuration
 	 * @return elimConfiguration
 	 */
-	public elimConfiguration getCurrentConfig() {
+	public fileConfiguration getCurrentConfig() {
 		return configurations.get(String.valueOf(this.currentConfig));
 	}
 	
@@ -80,5 +82,21 @@ public class elimbotConfiguration {
 		if(configurations.get(this.currentConfig)==null) {
 			this.currentConfig = 1;
 		}
+		
+		this.setRulesShown(false);
+	}
+
+	/**
+	 * @return the rulesShown
+	 */
+	public boolean isRulesShown() {
+		return rulesShown;
+	}
+
+	/**
+	 * @param rulesShown the rulesShown to set
+	 */
+	public void setRulesShown(boolean rulesShown) {
+		this.rulesShown = rulesShown;
 	}
 }

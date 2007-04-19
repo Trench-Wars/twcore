@@ -2,28 +2,44 @@ package twcore.bots.elimbot;
 
 import twcore.core.util.Tools;
 
-public class elimConfiguration {
+public class fileConfiguration {
 	private int id;
 	private String name;
 	
 	private boolean shipsVote;
 	private int[] ships = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	private int shipsDefault;
 	// Let's not use the 1st digit (position 0)
 	// 0 = ship disabled
 	// 1 = ship enabled
 	
 	private boolean deathLimitVote;
 	private int[] deathLimit = {0,0};
+	private int deathLimitDefault;
 	private int spawnX,spawnY,spawnRadius;
 	private boolean spawnSet;
 
-	public elimConfiguration() {
+	public fileConfiguration() {
 		super();
 	}
 	
-	public elimConfiguration(int id, String name) {
+	public fileConfiguration(int id, String name) {
 		this.id = id;
 		this.name = name;
+	}
+	
+	/**
+	 * @return the deathLimitDefault
+	 */
+	public int getDeathLimitDefault() {
+		return deathLimitDefault;
+	}
+
+	/**
+	 * @param deathLimitDefault the deathLimitDefault to set
+	 */
+	public void setDeathLimitDefault(int deathLimitDefault) {
+		this.deathLimitDefault = deathLimitDefault;
 	}
 
 	/**
@@ -132,6 +148,20 @@ public class elimConfiguration {
 				this.ships[ship] = 1;
 			}  
 		}
+	}
+
+	/**
+	 * @return the shipsDefault
+	 */
+	public int getShipsDefault() {
+		return shipsDefault;
+	}
+
+	/**
+	 * @param shipsDefault the shipsDefault to set
+	 */
+	public void setShipsDefault(int shipsDefault) {
+		this.shipsDefault = shipsDefault;
 	}
 
 	/**
