@@ -104,6 +104,8 @@ public abstract class RacingBotExtension {
             handleEvent( (FlagDropped)event );
         else if( event instanceof FlagClaimed )
             handleEvent( (FlagClaimed)event );
+        else if( event instanceof TurfFlagUpdate )
+            handleEvent( (TurfFlagUpdate)event );
         else if( event instanceof SQLResultEvent )
             handleEvent( (SQLResultEvent)event );
     }

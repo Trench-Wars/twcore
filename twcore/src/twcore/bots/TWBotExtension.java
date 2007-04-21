@@ -87,6 +87,8 @@ public abstract class TWBotExtension {
         	handleEvent( (PlayerBanner)event );
         else if( event instanceof ArenaList )
         	handleEvent( (ArenaList)event);
+        else if( event instanceof TurfFlagUpdate )
+            handleEvent( (TurfFlagUpdate)event);
     }
     public void handleEvent( ScoreReset event ){}
     public void handleEvent( PlayerEntered event ){}
@@ -114,4 +116,5 @@ public abstract class TWBotExtension {
     public void handleEvent( TurretEvent event ){}
     public void handleEvent( PlayerBanner event ){}
     public void handleEvent( ArenaList event ){}
+    public void handleEvent( TurfFlagUpdate event ){}
 }

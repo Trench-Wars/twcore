@@ -650,7 +650,12 @@ public class twlbot extends SubspaceBot
 	{
 		distributeEvent((SubspaceEvent) event);
 	}
+    public void handleEvent(TurfFlagUpdate event)
+    {
+        distributeEvent((SubspaceEvent) event);
+    }
 
+    
 	/**
 	 * Distributes the subspace events to any extenstion that is registered
 	 * @param event The event to be distributed
