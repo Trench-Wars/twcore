@@ -382,7 +382,7 @@ public class BotQueue extends Thread {
                         childBot = (ChildBot)m_botStable.get( key );
                         if( childBot.getBot().getBotState() == Session.NOT_RUNNING ){
                             removeBot( key );
-                            m_botAction.sendChatMessage( 1, key + " has disconnected." );
+                            m_botAction.sendChatMessage( 1, key + "(" + childBot.getClassName() + ") has disconnected." );
                             childBot = null;
                         }
                     }

@@ -211,8 +211,8 @@ public class Session extends Thread {
 
         m_state = NOT_RUNNING;
 
+        Tools.printLog( m_name + "(" + m_subspaceBot.getClass().getSimpleName() + " is disconnecting..." );
         m_subspaceBot.handleDisconnect();
-        Tools.printLog( m_name + " is disconnecting..." );
 
         m_group.interrupt();
         while( m_group.activeCount() != 0 ){
