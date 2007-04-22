@@ -275,7 +275,7 @@ public class GamePacketInterpreter {
             case 0x02:
                 m_ssEncryption.setServerKey( array.readLittleEndianInt( 2 ) );
                 m_packetGenerator.sendPasswordPacket( m_playerName, m_playerPassword );
-                Tools.printLog( m_session.getBotName() + " (" + m_session.getClass().getSimpleName() + ") is logging in." );
+                Tools.printLog( m_session.getBotName() + " (" + m_subspaceBot.getClass().getSimpleName() + ") is logging in." );
                 break;
             case 0x03:
                 m_reliablePacketHandler.handleReliableMessage( array );
