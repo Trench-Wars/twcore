@@ -42,9 +42,12 @@ public class estatsbot extends SubspaceBot {
 
 	public void handleEvent(PlayerDeath event) {
 		if(!gameRunning) return;
-
-		String killer = m_botAction.getPlayerName(event.getKillerID());
-		String killee = m_botAction.getPlayerName(event.getKilleeID());
+        Player p1 = m_botAction.getPlayer(event.getKillerID());
+        Player p2 = m_botAction.getPlayer(event.getKilleeID());;
+        if( p1 == null || p2 == null )
+            return;
+		String killer = p1.getPlayerName();
+		String killee = p2.getPlayerName();
 		if(players.containsKey((killer.toLowerCase())))
 			((ElimPlayer)players.get(killer.toLowerCase())).addKill();
 		if(players.containsKey((killee.toLowerCase())))

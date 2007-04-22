@@ -719,8 +719,8 @@ public class messagebot extends SubspaceBot
 					c.reload();
 					channels.put(channelName.toLowerCase(), c);
 				}
-                                m_botAction.SQLClose(results);
-			} catch(Exception e) { Tools.printStackTrace( e ); }
+                m_botAction.SQLClose(results);
+			} catch(SQLException e) { Tools.printStackTrace( e ); }
 
 			query = "SELECT * FROM tblBotNews ORDER BY fnID DESC";
 			try {
@@ -735,7 +735,7 @@ public class messagebot extends SubspaceBot
 					news.put(id, na);
 					newsIDs.add(id);
 				}
-                                m_botAction.SQLClose(results);
+                m_botAction.SQLClose(results);
 			} catch(SQLException e) { Tools.printStackTrace(e); }
 			//long after = Runtime.getRuntime().freeMemory();
 			//long memUsed = before - after;
@@ -909,16 +909,20 @@ public class messagebot extends SubspaceBot
 	 	try {
 	 		ResultSet results = m_botAction.SQLQuery("local", query);
 
-	 		if(!results.next()) { results.close(); return false; }
+            if( results == null || !results.next() ) { 
+                m_botAction.SQLClose(results);
+                return false;
+             }
 
 	 		if(results.getString("fcName").toLowerCase().equals(name)) {
-                                m_botAction.SQLClose(results);
+                m_botAction.SQLClose(results);
 	 			return true;
 	 		} else {
-                                m_botAction.SQLClose(results);
+                m_botAction.SQLClose(results);
 	 			return false;
 	 		}
-	 	} catch(Exception e) { Tools.printStackTrace(e); }
+	 	} catch(Exception e) { 
+        }
 	 	return false;
 	 }
 
@@ -1800,8 +1804,12 @@ class Channel
 			k++;
 			if(k % 10 == 0 || !it.hasNext())
 			{
-				m_bA.sendSmartPrivateMessage(name, message.substring(0, message.length() - 2));
-				message = "";
+                if( message.length() > 2 ) {
+                    m_bA.sendSmartPrivateMessage(name, message.substring(0, message.length() - 2));
+                    message = "";
+                } else {
+                    m_bA.sendSmartPrivateMessage(name, "Error: no members found.  Please use ?help to report this problem." );
+                }
 			}
 		}
 	}
