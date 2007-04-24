@@ -1,19 +1,14 @@
-/*
- * portabotTestModule.java
- *
- * Created on March 21, 2002, 4:14 PM
- */
-
 /**
- *
+ * The old Zombies module, with features for new times.
+ * 
  * @author  harvey
  */
 package twcore.bots.multibot.zombies;
 
-import java.util.*;
-
+import java.util.HashSet;
+import java.util.List;
+import twcore.core.EventRequester;
 import twcore.bots.MultiModule;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
@@ -21,7 +16,7 @@ import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
 public class zombies extends MultiModule {
-    /** Creates a new instance of portabotTestModule */
+
     public void init() {
         killmsgs = new StringBag();
         killmsgs.add( "dies a miserable horrible death at the hands of a Zombie!" );
@@ -32,23 +27,25 @@ public class zombies extends MultiModule {
 		events.request(EventRequester.PLAYER_DEATH);
 	}
 
-    int m_srcfreq;
-    HashSet m_srcship = new HashSet();
-    int killerShip;
-    int m_destfreq;
-    int m_destship;
+    HashSet <Integer>m_srcship = new HashSet<Integer>();
+    int m_humanfreq;
+    int m_killerShip;
+    int m_zombiefreq;
+    int m_zombieship;
     int m_lives;
+    int m_rebirthkills;
     StringBag killmsgs;
     boolean isRunning = false;
     boolean modeSet = false;
     boolean killerShipSet = false;
 
-    public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives ){
-        m_srcfreq = srcfreq;
+    public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
+        m_humanfreq = srcfreq;
         m_srcship.add(new Integer(srcship));
-        m_destfreq = destfreq;
-        m_destship = destship;
+        m_zombiefreq = destfreq;
+        m_zombieship = destship;
         m_lives = lives;
+        m_rebirthkills = rebirthkills;
         modeSet = true;
     }
 
@@ -119,23 +116,33 @@ public class zombies extends MultiModule {
 
     public void start( String name, String[] params ){
         try{
-            if( params.length == 5 ){
+            if( params.length == 6 ){
                 int srcfreq = Integer.parseInt(params[0]);
                 int srcship = Integer.parseInt(params[1]);
                 int destfreq = Integer.parseInt(params[2]);
                 int destship = Integer.parseInt(params[3]);
                 int lives = Integer.parseInt(params[4]);
-                setMode( srcfreq, srcship, destfreq, destship, lives );
+                int rebirthkills = Integer.parseInt(params[5]);
+                setMode( srcfreq, srcship, destfreq, destship, lives, rebirthkills );
+                isRunning = true;
+                modeSet = true;                
+            } else if( params.length == 5 ){
+                int srcfreq = Integer.parseInt(params[0]);
+                int srcship = Integer.parseInt(params[1]);
+                int destfreq = Integer.parseInt(params[2]);
+                int destship = Integer.parseInt(params[3]);
+                int lives = Integer.parseInt(params[4]);
+                setMode( srcfreq, srcship, destfreq, destship, lives, 0 );
                 isRunning = true;
                 modeSet = true;
             } else if( params.length == 1 ){
                 int lives = Integer.parseInt(params[0]);
-                setMode( 0, 1, 2, 3, lives );
+                setMode( 0, 1, 2, 3, lives, 0 );
                 isRunning = true;
                 modeSet = true;
             }
         }catch( Exception e ){
-            m_botAction.sendPrivateMessage( name, "Sorry, you made a mistake, please try again." );
+            m_botAction.sendPrivateMessage( name, "Sorry, you made a mistake; please try again." );
             isRunning = false;
             modeSet = false;
         }
@@ -152,11 +159,13 @@ public class zombies extends MultiModule {
         } else if( message.startsWith( "!start " )){
             String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
             start( name, parameters );
+            m_botAction.scoreResetAll();
             m_botAction.sendPrivateMessage( name, "Zombies mode started" );
         } else if( message.startsWith( "!start" )){
-            setMode( 0, 1, 2, 3, 1 );
+            setMode( 0, 1, 2, 3, 1, 0 );
             isRunning = true;
             modeSet = true;
+            m_botAction.scoreResetAll();
             m_botAction.sendPrivateMessage( name, "Zombies mode started" );
         } else if( message.startsWith( "!del " ))
             deleteKillMessage( name, getInteger( message.substring( 5 )));
@@ -191,9 +200,9 @@ public class zombies extends MultiModule {
           	} catch(Exception e) {}
           	if(ship > 8 || ship < 1)
           		ship = 1;
-          	killerShip = ship;
+          	m_killerShip = ship;
           	killerShipSet = true;
-          	m_botAction.sendPrivateMessage(name, "Ship " + killerShip + " has been set for killing a zombie.");
+          	m_botAction.sendPrivateMessage(name, "Ship " + m_killerShip + " will now be given to anyone who kills a zombie.");
           }
 
 /*        } else if( message.startsWith( "!setupwarp2" )){
@@ -214,10 +223,13 @@ public class zombies extends MultiModule {
         if( modeSet && isRunning ){
             Player p = m_botAction.getPlayer( event.getKilleeID() );
             Player p2 = m_botAction.getPlayer( event.getKillerID() );
+            if( p == null || p2 == null )
+                return;
             try {
-                if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_srcfreq ){
-                    m_botAction.setShip( event.getKilleeID(), m_destship );
-                    m_botAction.setFreq( event.getKilleeID(), m_destfreq );
+                if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq ){
+                    m_botAction.setShip( event.getKilleeID(), m_zombieship );
+                    m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
+                    m_botAction.scoreReset( event.getKilleeID() );
                     String killmsg = killmsgs.toString();
                     int soundPos = killmsg.indexOf('%');
                     int soundCode = 0;
@@ -237,17 +249,22 @@ public class zombies extends MultiModule {
 
                     if( soundCode > 0 ){
                         killmsg = killmsg.substring(0, soundPos + 1);
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg, soundCode );
+                        m_botAction.sendArenaMessage( p.getPlayerName() + killmsg, soundCode );
                     } else {
-                        m_botAction.sendArenaMessage( m_botAction.getPlayerName( event.getKilleeID() ) + killmsg );
+                        m_botAction.sendArenaMessage( p.getPlayerName() + killmsg );
                     }
-
-                    //}
                 }
-                if(m_srcship.contains(new Integer(p2.getShipType())) && p2.getShipType() != m_destship && killerShipSet)
+                // Check ship upgrade for a zombie killer
+                if(killerShipSet && m_srcship.contains(new Integer(p2.getShipType())) && p2.getShipType() != m_zombieship)
                 {
-                    if(p2.getShipType() != killerShip)
-                        m_botAction.setShip(event.getKillerID(), killerShip);
+                    if(p2.getShipType() != m_killerShip)
+                        m_botAction.setShip(event.getKillerID(), m_killerShip);
+                }
+                // Rebirth kill check
+                if( m_rebirthkills > 0 && m_zombieship == p2.getShipType() && p2.getWins() >= m_rebirthkills ) {
+                    int shipNum = m_srcship.iterator().next().intValue(); // Get any ship available, as there's no preference
+                    m_botAction.setShip(event.getKillerID(), shipNum);
+                    m_botAction.scoreReset( p2.getPlayerName() );
                 }
             } catch (Exception e) {
 
@@ -264,7 +281,8 @@ public class zombies extends MultiModule {
             "!del <index>        - Deletes a kill message.  The number for the index is taken from !list",
             "!stop               - Shuts down zombies mode",
             "!start              - Starts a standard zombies mode",
-            "!start <srcfreq> <srcship> <destfreq> <destship> <lives> - Starts a special zombies mode",
+            "!start <humanfreq> <humanship> <zombfreq> <zombship> <lives> [rebirthkills] - Special zombies",
+            "       (rebirthkills is optional: # kills needed to turn zombie back to human.  Default 0/off)",
             "!addship            - Adds a ship to the list of human ships.",
             "!delship            - Deletes ship from list of human ships.",
             "!killership         - Sets the ship for a human that kills a zombie."
