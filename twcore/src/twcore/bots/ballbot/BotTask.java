@@ -11,7 +11,6 @@
 package twcore.bots.ballbot;
 
 import twcore.core.*;
-import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
 import java.util.*;
 
@@ -106,7 +105,7 @@ public class BotTask
 	public static void Prize( Player player, int prize )
 	{
 		m_bot.m_botAction.sendUnfilteredPrivateMessage( player.getPlayerName(), "*prize #-" + prize );
-		m_bot.m_botAction.prize( player.getPlayerID(), prize );
+		m_bot.m_botAction.specificPrize( player.getPlayerID(), prize );
 	}
 }
 
