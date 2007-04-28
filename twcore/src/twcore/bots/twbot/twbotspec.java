@@ -38,6 +38,7 @@
  * !SpecShip <Ship>:<Deaths>                      -- Specs ship <Ship> at <Deaths> deaths.",
  * !SpecPlayer <Player>:<Deaths>                  -- Specs player <Player> at <Deaths> deaths.",
  * !AddDeath <Player>                             -- Specs player <Player> at one more death.",
+ * !SpecShared <Deaths>                           -- Specs everyone on a freq at COMBINED <Deaths>.",
  * !SpecList                                      -- Shows a list of spec tasks.",
  * !SpecDel <Task Number>                         -- Removes spec task number <Task Number>.",
  * !SpecOff                                       -- Stops watching deaths."
@@ -57,7 +58,6 @@ package twcore.bots.twbot;
 import java.util.*;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
@@ -66,33 +66,32 @@ public class twbotspec extends TWBotExtension
 {
   public static final String COLON = ":";
 
-  private Vector specTasks;
+  private Vector <SpecTask>specTasks;
 
   /**
    * Initializes the spec module.
    */
-
   public twbotspec()
   {
-    specTasks = new Vector();
+    specTasks = new Vector<SpecTask>();
   }
 
   /**
    * Displays a help message.
    */
-
   public String[] getHelpMessages()
   {
     String[] message =
     {
-        "!Spec <Deaths>                                 -- Specs everyone at <Deaths> deaths.",
-        "!SpecFreq <Freq>:<Deaths>                      -- Specs freq <Freq> at <Deaths> deaths.",
-        "!SpecShip <Ship>:<Deaths>                      -- Specs ship <Ship> at <Deaths> deaths.",
-        "!SpecPlayer <Player>:<Deaths>                  -- Specs player <Player> at <Deaths> deaths.",
-        "!AddDeath <Player>                             -- Specs player <Player> at one more death.",
-        "!SpecList                                      -- Shows a list of spec tasks.",
-        "!SpecDel <Task Number>                         -- Removes spec task number <Task Number>.",
-        "!SpecOff                                       -- Stops watching deaths."
+        "!Spec <Deaths>                     -- Specs everyone at <Deaths> deaths.",
+        "!SpecFreq <Freq>:<Deaths>          -- Specs freq <Freq> at <Deaths> deaths.",
+        "!SpecShip <Ship>:<Deaths>          -- Specs ship <Ship> at <Deaths> deaths.",
+        "!SpecPlayer <Player>:<Deaths>      -- Specs player <Player> at <Deaths> deaths.",
+        "!SpecShared <Deaths>               -- Specs everyone on a freq at COMBINED <Deaths>.",
+        "!AddDeath <Player>                 -- Specs player <Player> at one more death.",
+        "!SpecList                          -- Shows list of all spec tasks you've entered.",
+        "!SpecDel <Task Number>             -- Removes spec task number <Task Number>.",
+        "!SpecOff                           -- Stops watching deaths."
     };
     return message;
   }
@@ -104,7 +103,6 @@ public class twbotspec extends TWBotExtension
    * @param argString is the string to split up.
    * @return A StringTokenizer of the arguments is returned.
    */
-
   private StringTokenizer getArgTokens(String argString)
   {
     if(argString.indexOf(COLON) != -1)
@@ -119,7 +117,6 @@ public class twbotspec extends TWBotExtension
    *
    * @param specTask is the Spec Task to be added.
    */
-
   private void addTask(SpecTask specTask)
   {
     int replaceIndex = specTasks.indexOf(specTask);
@@ -135,7 +132,6 @@ public class twbotspec extends TWBotExtension
    * This private method is called when a new spec task is added.  It specs
    * any players that are currently over the loss limit.
    */
-
   private void updateSpec()
   {
     Iterator iterator = m_botAction.getPlayingPlayerIterator();
@@ -168,7 +164,6 @@ public class twbotspec extends TWBotExtension
    * @param sender is the person operating the bot.
    * @param argString is the string of the arguments.
    */
-
   public void doSpecCmd(String sender, String argString)
   {
     StringTokenizer argTokens = getArgTokens(argString);
@@ -197,7 +192,6 @@ public class twbotspec extends TWBotExtension
    * @param sender is the person operating the bot.
    * @param argString is the string of the arguments.
    */
-
   public void doSpecFreqCmd(String sender, String argString)
   {
     StringTokenizer argTokens = getArgTokens(argString);
@@ -227,7 +221,6 @@ public class twbotspec extends TWBotExtension
    * @param sender is the person operating the bot.
    * @param argString is the string of the arguments.
    */
-
   public void doSpecShipCmd(String sender, String argString)
   {
     StringTokenizer argTokens = getArgTokens(argString);
@@ -258,7 +251,6 @@ public class twbotspec extends TWBotExtension
    * @param sender is the person operating the bot.
    * @param argString is the string of the arguments.
    */
-
   public void doSpecPlayerCmd(String sender, String argString)
   {
     StringTokenizer argTokens = getArgTokens(argString);
@@ -285,6 +277,36 @@ public class twbotspec extends TWBotExtension
   }
 
   /**
+   * This method specs a freq when a certain number of COMBINED deaths is reached.
+   * The syntax is as follows: !SpecShared <Deaths> where <Deaths> is the number of
+   * combined deaths to spec at.  For example, if this number was 30, and there were
+   * 3 people on a freq, one with 3 deaths, one with 7 deaths, and one with 19, the
+   * next time any player died, the 30 death limit would be reached and the entire
+   * freq would be sent to spec.
+   *
+   * @param sender is the person operating the bot.
+   * @param argString is the string of the arguments.
+   */
+  public void doSpecSharedCmd(String sender, String argString)
+  {
+    StringTokenizer argTokens = getArgTokens(argString);
+
+    if(argTokens.countTokens() != 1)
+      throw new IllegalArgumentException("Please use the following format: !SpecShared <Deaths>.");
+    try
+    {
+      int deaths = Integer.parseInt(argTokens.nextToken());
+      SpecTask specTask = new SpecTask( -1, deaths, SpecTask.SPEC_SHARED);
+      addTask(specTask);
+      m_botAction.sendArenaMessage(specTask.toString() + " -" + sender);
+    }
+    catch(NumberFormatException e)
+    {
+      throw new NumberFormatException("Please use the following format: !Spec <Deaths>.");
+    }
+  }
+
+  /**
    * This method makes a player spec one death later.  If the player is not
    * registered with the lagout handler, the command will not execute.  After
    * successful execution of this method, a new SpecTask will be present for the
@@ -293,7 +315,6 @@ public class twbotspec extends TWBotExtension
    * @param sender is the person that messaged the bot.
    * @param argString is the name of the player.
    */
-
   public void doAddDeathCmd(String sender, String argString)
   {
     String playerName = m_botAction.getFuzzyPlayerName(argString);
@@ -319,7 +340,6 @@ public class twbotspec extends TWBotExtension
    *
    * @param sender is the person that messaged the bot.
    */
-
   public void doSpecListCmd(String sender)
   {
     int numTasks = specTasks.size();
@@ -341,7 +361,6 @@ public class twbotspec extends TWBotExtension
    * @param sender is the person that messaged the bot.
    * @param argString is the spec task number that is to be removed.
    */
-
   public void doSpecDelCmd(String sender, String argString)
   {
     StringTokenizer argTokens = getArgTokens(argString);
@@ -369,7 +388,6 @@ public class twbotspec extends TWBotExtension
   /**
    * This method clears all of the spec tasks.
    */
-
   public void doSpecOffCmd(String sender)
   {
     if(specTasks.isEmpty())
@@ -384,7 +402,6 @@ public class twbotspec extends TWBotExtension
    * @sender is the person that messaged the bot.
    * @command is the command string.
    */
-
   public void handleCommand(String sender, String command)
   {
     try
@@ -397,6 +414,8 @@ public class twbotspec extends TWBotExtension
         doSpecShipCmd(sender, command.substring(10).trim());
       if(command.startsWith("!specplayer "))
         doSpecPlayerCmd(sender, command.substring(12).trim());
+      if(command.startsWith("!specshared "))
+        doSpecSharedCmd(sender, command.substring(12).trim());
       if(command.startsWith("!adddeath "))
         doAddDeathCmd(sender, command.substring(10).trim());
       if(command.equalsIgnoreCase("!speclist"))
@@ -419,7 +438,6 @@ public class twbotspec extends TWBotExtension
    *
    * @param event is the message event.
    */
-
   public void handleEvent(Message event)
   {
     int senderID = event.getPlayerID();
@@ -435,7 +453,6 @@ public class twbotspec extends TWBotExtension
    *
    * @param event is the player death event.
    */
-
   public void handleEvent(PlayerDeath event)
   {
     int playerID = event.getKilleeID();
@@ -445,8 +462,33 @@ public class twbotspec extends TWBotExtension
     int deaths = player.getLosses();
     SpecTask specTask = getValidSpecTask(freq, ship, playerID);
 
-    if(specTask != null && specTask.getDeaths() <= deaths)
-      specPlayer(player);
+    if(specTask != null) {
+        if( specTask.getSpecType() == SpecTask.SPEC_SHARED ) {
+            Iterator i = m_botAction.getFreqPlayerIterator( freq );
+            int combineddeaths = 0;
+            int combinedkills = 0;
+            while( i.hasNext() ) {
+                Player p = (Player)i.next();
+                if( p != null && p.getShipType() != 0 ) {
+                    combinedkills += p.getWins();
+                    combineddeaths += p.getLosses();
+                }
+            }
+            if( specTask.getDeaths() <= combineddeaths ) {
+                m_botAction.sendArenaMessage( "[ Freq " + freq + " is out!  " + combinedkills + " wins, " + combineddeaths + " losses. ]");
+                i = null;
+                i = m_botAction.getFreqPlayerIterator( freq );
+                while( i.hasNext() ) {
+                    Player p = (Player)i.next();
+                    if( p != null && p.getShipType() != 0 ) {
+                        specPlayer(p);
+                    }
+                }                
+            }
+        } else 
+            if( specTask.getDeaths() <= deaths )
+                specPlayer(player);
+    }
   }
 
   /**
@@ -476,7 +518,6 @@ public class twbotspec extends TWBotExtension
    *
    * @param player is the player to be specced.
    */
-
   private void specPlayer(Player player)
   {
     String playerName = player.getPlayerName();
@@ -491,7 +532,6 @@ public class twbotspec extends TWBotExtension
   /**
    * This method cancels all of the spec tasks.
    */
-
   public void cancel()
   {
     specTasks.clear();
@@ -507,7 +547,6 @@ public class twbotspec extends TWBotExtension
    * @return the player name is returned if the string was valid.  If not, null
    * is returned.
    */
-
   public static String getSpeccedPlayerName(String s)
   {
     int index = s.indexOf(" is out.  ");
@@ -520,13 +559,13 @@ public class twbotspec extends TWBotExtension
    * This private class is a spec task.  It holds the type of spec task, the
    * number of deaths and who it affects.
    */
-
   private class SpecTask
   {
     public static final int SPEC_ALL = 0;
     public static final int SPEC_FREQ = 1;
     public static final int SPEC_SHIP = 2;
     public static final int SPEC_PLAYER = 3;
+    public static final int SPEC_SHARED = 4;
 
     public static final int MAX_FREQ = 9999;
     public static final int MIN_FREQ = 0;
@@ -543,7 +582,6 @@ public class twbotspec extends TWBotExtension
      *
      * @param deaths is the number of deaths to spec at.
      */
-
     public SpecTask(int deaths)
     {
       if(deaths <= 0)
@@ -562,10 +600,9 @@ public class twbotspec extends TWBotExtension
      * @param specType this is the type of task and defines who the task
      * affects.
      */
-
     public SpecTask(int specID, int deaths, int specType)
     {
-      if(specType < 0 || specType > 3)
+      if(specType < 0 || specType > 4)
         throw new IllegalArgumentException("ERROR: Unknown Spec Type.");
       if((specID < MIN_FREQ || specID > MAX_FREQ) && specType == SPEC_FREQ)
         throw new IllegalArgumentException("Invalid freq number.");
@@ -584,7 +621,6 @@ public class twbotspec extends TWBotExtension
      *
      * @return the spec type is returned.
      */
-
     public int getSpecType()
     {
       return specType;
@@ -595,14 +631,13 @@ public class twbotspec extends TWBotExtension
      *
      * @return the number of deaths to spec at is returned.
      */
-
     public int getDeaths()
     {
       return deaths;
     }
 
     /**
-     * This method checks to see if a player with the given attributs will
+     * This method checks to see if a player with the given attributes will
      * be specced by this particular spec task.
      *
      * @param freq is the freq of the player.
@@ -610,7 +645,6 @@ public class twbotspec extends TWBotExtension
      * @playerID is the ID of the player.
      * @return True if the player is affected, false if not.
      */
-
     public boolean isSameType(int freq, int ship, int playerID)
     {
       switch(specType)
@@ -623,6 +657,8 @@ public class twbotspec extends TWBotExtension
           return ship == specID;
         case SPEC_PLAYER:
           return playerID == specID;
+        case SPEC_SHARED:
+          return true;  // Logic is handled in PlayerDeath
       }
       return false;
     }
@@ -632,7 +668,6 @@ public class twbotspec extends TWBotExtension
      *
      * @return a string representation of the spec task is returned.
      */
-
     public String toString()
     {
       String specTypeName;
@@ -652,6 +687,9 @@ public class twbotspec extends TWBotExtension
         case SPEC_PLAYER:
           specTypeName = "player " + m_botAction.getPlayerName(specID);
           break;
+        case SPEC_SHARED:
+            specTypeName = "entire frequency (shared lives)";
+            break;
         default:
           specTypeName = "ERROR: Unknown Spec Type";
       }
@@ -668,7 +706,6 @@ public class twbotspec extends TWBotExtension
      * @return True if the spec tasks have the same specID and the same
      * specType.  False if not.
      */
-
     public boolean equals(Object obj)
     {
       SpecTask specTask = (SpecTask) obj;
@@ -683,9 +720,9 @@ public class twbotspec extends TWBotExtension
    * SPEC_ALL.  In each subcategory they are ordered in order of descending
    * deaths.
    */
-
   private class SpecTaskComparator implements Comparator
   {
+      
     /**
      * This method provides a compare function for two specTasks.  This is used
      * for ordering the tasks in the list.
@@ -695,7 +732,6 @@ public class twbotspec extends TWBotExtension
      * @return a numerical representation of the difference of the two spec
      * tasks.
      */
-
     public int compare(Object obj1, Object obj2)
     {
       SpecTask task1 = (SpecTask) obj1;
