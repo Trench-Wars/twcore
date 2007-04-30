@@ -598,6 +598,10 @@ public class twbot extends SubspaceBot
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
+    public void handleEvent(TurfFlagUpdate event)
+    {
+        distributeEvent( (SubspaceEvent)event);
+    }
 
 
 	static final String[] helps =
