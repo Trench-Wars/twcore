@@ -245,9 +245,9 @@ public class CommandInterpreter {
         if( command == null ){
             seperatorIndex = 0;
             command = (Command)m_commands.get( "default" + messageType );
-
-        } else { //command != null
-
+        }
+        
+        if( command != null ){
             if( (command.getMessageTypes() & messageType) != 0 ){
                 if(messageType == Message.REMOTE_PRIVATE_MESSAGE)
                     messager = event.getMessager();
