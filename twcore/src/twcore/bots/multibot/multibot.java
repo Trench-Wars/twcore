@@ -157,12 +157,22 @@ public class multibot extends SubspaceBot
     
     Arrays.sort( files );
 
-    m_botAction.sendPrivateMessage(sender, "Listing available modules..");
+    m_botAction.sendPrivateMessage(sender, "TW MULTIBOT GAME LIBRARY" );
+    m_botAction.sendPrivateMessage(sender, "------------------------" );
 
-	for (int i = 0; i < files.length; i++) {
-	  String name = files[i] + "";
-	  name = name.substring(modulePath.length() + 1);
-      m_botAction.sendPrivateMessage(sender, "-- " + name);
+    String moduleNames = "";
+    int namesinline = 0;
+
+    for (int i = 0; i < files.length; i++) {
+      String name = files[i] + "";
+      name = name.substring(modulePath.length() + 1);
+      moduleNames += Tools.formatString( name, 20 );
+      namesinline++;
+      if( namesinline >= 3 ) {
+          m_botAction.sendPrivateMessage(sender, moduleNames);
+          namesinline = 0;
+          moduleNames = "";
+      }
 	}
   }
 
