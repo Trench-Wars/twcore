@@ -154,6 +154,8 @@ public class multibot extends SubspaceBot
   {
     File directory = new File(modulePath);
 	File[] files = directory.listFiles(fnf);
+    
+    Arrays.sort( files );
 
     m_botAction.sendPrivateMessage(sender, "Listing available modules..");
 
