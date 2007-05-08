@@ -194,7 +194,16 @@ public class BotAction
     }
 
     /**
-     * Displays a green arena message to the arena the bot is in, with a sound code.
+     * Displays a green arena message to the arena the bot is in, with a sound code.<p>
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
      */
@@ -215,6 +224,15 @@ public class BotAction
     /**
      * Sends a zone wide advertisement.  Do not use unless absolutely necessary.
      * Includes a sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param message The away message to be sent
      * @param soundCode Sound code to be sent along with the message.
      */
@@ -234,6 +252,15 @@ public class BotAction
 
     /**
      * Sends a normal (blue) message to the public chat with a sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
      */
@@ -269,6 +296,15 @@ public class BotAction
      * be ignored by players if they choose.  A suggested use for this command would
      * be to print regular rules displays for new players, allowing experienced players
      * to ignore them if they choose.  This method can also play a sound w/ the macro.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
      */
@@ -316,6 +352,15 @@ public class BotAction
      * Sends a private message to someone in the same arena.  Do not attempt to use
      * this method if you are not absolutely certain that the player is in the arena.
      * If you are at all unsure, use sendSmartPrivateMessage instead.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param name The name of the player.
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
@@ -330,6 +375,15 @@ public class BotAction
      * Sends a private message to someone in the same arena.  Do not attempt to use
      * this method if you are not absolutely certain that the player is in the arena.
      * If you are at all unsure, use sendSmartPrivateMessage instead.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param playerID Player ID of the player you wish to send the message to.
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
@@ -369,6 +423,15 @@ public class BotAction
      * arena, the message will be sent as a remote private message.  Otherwise, the
      * message will be sent as a private message.  Using this will help save server
      * time over remote private messages, and appear more natural to players.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param name The name of the player.
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
@@ -402,6 +465,15 @@ public class BotAction
      * Sends a remote private message.  Remote private messages look like (Name)> to
      * the player, even if the player is in the same arena as you.  Try to use smart
      * private messages instead.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param name The name of the player.
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
@@ -436,6 +508,15 @@ public class BotAction
     /**
      * Sends a message to bot's teammates.  If the bot is in spectator mode, it will
      * speak with the players in spectator mode.  Includes a sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
      */
@@ -466,6 +547,15 @@ public class BotAction
 
     /**
      * Sends a message to a whole frequency of players ("), with sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param frequency The frequency this message is to be sent to.
      * @param message The message to be sent
      * @param soundCode Sound code to be sent along with the message (0 if none).
@@ -496,7 +586,16 @@ public class BotAction
 
     /**
      * Sends a message to a whole frequency of players based on the ID of one player
-     * on the frequency.
+     * on the frequency.  Includes sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param playerID The id of the player whose frequency this message is to be sent to.
      * @param message The message to be sent
      * @param soundCode Sound code to be sent along with the message (0 if none).
@@ -518,7 +617,16 @@ public class BotAction
 
     /**
      * Sends a message to a whole frequency of players based on the name of a player
-     * on that frequency.
+     * on that frequency.  Includes sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param playerName The name of the player whose frequency this message is to be sent to.
      * @param message The message to be sent
      * @param soundCode Sound code to be sent along with the message (0 if none).
@@ -551,6 +659,15 @@ public class BotAction
 
     /**
      * Sends a chat message to a specific chat number, with a sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param chatNumber Number of the chat to send information to.
      * @param message The message to be displayed.
      * @param soundCode Sound code to be sent along with the message.
@@ -584,6 +701,15 @@ public class BotAction
 
     /**
      * Sends a squad message to a specific squad with a sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param squadName Name of the squad
      * @param message Message to send to that squad
      * @param soundCode Sound code to be sent along with the message.
@@ -653,6 +779,15 @@ public class BotAction
      * Sends a private message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param name Name of the person the message is to be sent to.
      * @param message Message to be sent.
      * @param soundCode Sound code to be sent along with the message.
@@ -667,6 +802,15 @@ public class BotAction
      * Sends a private message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param playerID Player ID of the player you wish to send the message to.
      * @param message Message to be sent.
      * @param soundCode Sound code to be sent along with the message.
@@ -691,6 +835,15 @@ public class BotAction
      * Sends a public message without any filtration.  Use this ONLY in situations
      * where you are hard coding in commands to be sent.  For the sake of security, use
      * the filtered methods for *everything* else.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param message Message to be sent.
      * @param soundCode Sound code to be sent along with the message.
      */
@@ -712,6 +865,15 @@ public class BotAction
     /**
      * Sends a public macro without any filtration.  For the sake of security, use
      * the filtered macro methods unless you know what you're doing.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
      * @param message Message to be sent.
      * @param soundCode Sound code to be sent along with the message.
      */
