@@ -502,7 +502,10 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
             spawn( messager, message );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but (s)he tried !spawn " + message );
+            if( m_botAction.getOperatorList().isZH(messager) && message.toLowerCase() == "matchbot" )
+                spawn( messager, message );
+            else
+                m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but (s)he tried !spawn " + message );
         }
     }
 }
