@@ -144,7 +144,7 @@ public class BotQueue extends Thread {
             for( i = m_botStable.values().iterator(); i.hasNext(); ){
                 bot = (ChildBot)i.next();
                 if( bot.getClassName().compareTo( className ) == 0 ){
-                    m_botAction.sendSmartPrivateMessage( messager, bot.getBot().getBotName() + ", created by " + bot.getCreator() );
+                    m_botAction.sendSmartPrivateMessage( messager, bot.getBot().getBotName() + " (in "+ bot.getBot().getBotAction().getArenaName() +"), created by " + bot.getCreator());
                 }
             }
 
