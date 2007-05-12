@@ -18,6 +18,7 @@ import twcore.core.events.ScoreUpdate;
 import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.TurretEvent;
 import twcore.core.net.GamePacketGenerator;
+import twcore.core.CoreData;
 
 /**
  * Arena is used to keep track of player information in the Arena a bot is in.  
@@ -35,30 +36,36 @@ import twcore.core.net.GamePacketGenerator;
  * two players with the same 1-byte ID, but a bot core does.  Fair warning!  -qan
  */
 public class Arena {
-    Map         m_playerList;           // (Integer)PlayerID -> Player
-    Map         m_playerIDList;         // (String)Player Name -> (Integer)PlayerID
-    Map         m_frequencyList;        // (Integer)Freq -> ((Integer)PlayerID -> Player))
-    Map         m_flagIDList;           // (Integer)FlagID -> Flag
+    Map <Integer,Player>m_playerList;   // (Integer)PlayerID -> Player
+    Map <String,Integer>m_playerIDList; // (String)Player Name -> (Integer)PlayerID
+    Map <Integer,Map<Integer,Player>>m_frequencyList; // (Integer)Freq -> ((Integer)PlayerID -> Player))
+    Map <Integer,Flag>m_flagIDList;     // (Integer)FlagID -> Flag
     
-    private List m_tracker;             // Queue list for spectating (gathers position data)
-    private int  m_updateTimer = 5000;  // Time to spectate (setPlayerPositionUpdateDelay)
+    private List <Integer>m_tracker;    // Queue list for spectating (gathers position data)
+    private int  m_updateTimer;         // Time to spectate (setPlayerPositionUpdateDelay)
     private GamePacketGenerator m_gen;  // For generating spectate packets
     private int lastPlayer;				// ID of last player to have been spectated on
     
     /**
      * Creates a new instance of an Arena object.
      */
-    public Arena( GamePacketGenerator generator ) {
+    public Arena( GamePacketGenerator generator, CoreData coredata ) {
         
-        m_playerList = Collections.synchronizedMap( new HashMap() );
-        m_playerIDList = Collections.synchronizedMap( new HashMap() );
-        m_frequencyList = Collections.synchronizedMap( new HashMap() );
-        m_flagIDList = Collections.synchronizedMap( new HashMap() );
+        m_playerList = Collections.synchronizedMap( new HashMap<Integer,Player>() );
+        m_playerIDList = Collections.synchronizedMap( new HashMap<String,Integer>() );
+        m_frequencyList = Collections.synchronizedMap( new HashMap<Integer,Map<Integer,Player>>() );
+        m_flagIDList = Collections.synchronizedMap( new HashMap<Integer,Flag>() );
         
-        m_tracker = Collections.synchronizedList( new LinkedList() );
+        m_tracker = Collections.synchronizedList( new LinkedList<Integer>() );
         m_gen = generator;
         
         lastPlayer = -9999;
+        
+        Integer time = coredata.getGeneralSettings().getInteger( "DefaultSpectateTime" );
+        if( time != null )
+            m_updateTimer = time;
+        else
+            m_updateTimer = 5000;            
     }
     
     /**
@@ -108,7 +115,7 @@ public class Arena {
      * @return Iterator over players in ships other than 0/spec in arena
      */    
     public Iterator getPlayingPlayerIterator(){
-        LinkedList list = new LinkedList();
+        LinkedList <Player>list = new LinkedList<Player>();
         for( Iterator i = getPlayerIterator(); i.hasNext(); ){
             Player player = (Player)i.next();
             if( player.getShipType() != 0 ){
@@ -123,7 +130,7 @@ public class Arena {
      * @return Iterator over IDs of players in ships other than 0/spec in arena
      */    
     public Iterator getPlayingIDIterator(){
-        LinkedList list = new LinkedList();
+        LinkedList <Integer>list = new LinkedList<Integer>();
         for( Iterator i = getPlayerIterator(); i.hasNext(); ){
             Player player = (Player)i.next();
             if( player.getShipType() != 0 ){
@@ -266,8 +273,8 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( PlayerEntered message ){
-        int             frequency;
-        Map             frequencyList;
+        int                 frequency;
+        Map <Integer,Player>frequencyList;
         
         frequency = message.getTeam();
         Player player = new Player( message );
@@ -276,9 +283,9 @@ public class Arena {
         m_playerList.put( playerID, player );
         m_playerIDList.put( player.getPlayerName().toLowerCase(), playerID );
         
-        frequencyList = (Map)m_frequencyList.get( new Integer( frequency ) );
+        frequencyList = m_frequencyList.get( new Integer( frequency ) );
         if( frequencyList == null ){
-            frequencyList = Collections.synchronizedMap( new HashMap() );
+            frequencyList = Collections.synchronizedMap( new HashMap<Integer,Player>() );
             m_frequencyList.put( new Integer( frequency ), frequencyList );
         }
         
@@ -316,10 +323,10 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( FrequencyChange message ){
-        int             oldFrequency;
-        int             newFrequency;
-        Map             frequencyList;
-        Player          player;
+        int                 oldFrequency;
+        int                 newFrequency;
+        Map <Integer,Player>frequencyList;
+        Player              player;
         
         player = (Player)m_playerList.get( new Integer( message.getPlayerID() ) );
         if( player == null ){
@@ -331,12 +338,12 @@ public class Arena {
         player.updatePlayer( message );
         newFrequency = message.getFrequency();
         
-        frequencyList = (Map)m_frequencyList.get( new Integer( oldFrequency ) );
+        frequencyList = m_frequencyList.get( new Integer( oldFrequency ) );
         frequencyList.remove( new Integer( message.getPlayerID() ) );
         
-        frequencyList = (Map)m_frequencyList.get( new Integer( newFrequency ) );
+        frequencyList = m_frequencyList.get( new Integer( newFrequency ) );
         if( frequencyList == null ){
-            frequencyList = Collections.synchronizedMap( new HashMap() );
+            frequencyList = Collections.synchronizedMap( new HashMap<Integer,Player>() );
             m_frequencyList.put( new Integer( newFrequency ), frequencyList );
         }
         
@@ -353,10 +360,10 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( FrequencyShipChange message ){
-        int             oldFrequency;
-        int             newFrequency;
-        Map             frequencyList;
-        Player          player;
+        int                 oldFrequency;
+        int                 newFrequency;
+        Map <Integer,Player>frequencyList;
+        Player              player;
         
         player = (Player)m_playerList.get( new Integer( message.getPlayerID() ) );
         if( player == null ){
@@ -368,12 +375,12 @@ public class Arena {
         player.updatePlayer( message );
         newFrequency = message.getFrequency();
         
-        frequencyList = (Map)m_frequencyList.get( new Integer( oldFrequency ) );
+        frequencyList = m_frequencyList.get( new Integer( oldFrequency ) );
         frequencyList.remove( new Integer( message.getPlayerID() ) );
         
-        frequencyList = (Map)m_frequencyList.get( new Integer( newFrequency ) );
+        frequencyList = m_frequencyList.get( new Integer( newFrequency ) );
         if( frequencyList == null ){
-            frequencyList = Collections.synchronizedMap( new HashMap() );
+            frequencyList = Collections.synchronizedMap( new HashMap<Integer,Player>() );
             m_frequencyList.put( new Integer( newFrequency ), frequencyList );
         }
         

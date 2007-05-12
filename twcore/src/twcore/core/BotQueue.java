@@ -11,16 +11,16 @@ import twcore.core.util.Tools;
  * enforced.
  */
 public class BotQueue extends Thread {
-    private Map         m_botTypes;       // Bot type -> number of bots of type
-    private Map         m_botStable;      // Bot name -> instance of ChildBot
+    private Map <String,Integer>m_botTypes;    // Bot type -> number of bots of type
+    private Map <String,ChildBot>m_botStable;  // Bot name -> instance of ChildBot
     private BotAction   m_botAction;      // Reference to utility class
-    private List        m_spawnQueue;     // Queue of bots waiting to be spawned
+    private List <ChildBot>m_spawnQueue;  // Queue of bots waiting to be spawned
     private long        m_lastSpawnTime;  // Time of last spawn (in system ms)
     private ThreadGroup m_group;          // Thread group this bot belongs to
     private int   SPAWN_DELAY = 20000;    // Delay in ms between bot spawnings
 
     private AdaptiveClassLoader m_loader; // Instance of dynamic loader
-    private Vector repository;            // Recursively built directory list
+    private Vector <File>repository;      // Recursively built directory list
     private File directory;               // Root directory of TWCore
 
     /**
@@ -32,20 +32,24 @@ public class BotQueue extends Thread {
      */
     BotQueue( ThreadGroup group, BotAction botAction ){
         super( group, "BotQueue" );
-        repository = new Vector();
+        repository = new Vector<File>();
         m_group = group;
         m_lastSpawnTime = 0;
         m_botAction = botAction;
         directory = new File( m_botAction.getCoreData().getGeneralSettings().getString( "Core Location" ));
 
-        if (m_botAction.getCoreData().getGeneralSettings().getString( "Server" ).equals("localhost"))
+        int delay = m_botAction.getGeneralSettings().getInt( "SpawnDelay" );
+        if( delay == 0 )
+            SPAWN_DELAY = 20000;
+        
+        if (m_botAction.getGeneralSettings().getString( "Server" ).equals("localhost"))
             SPAWN_DELAY = 100;
 
         resetRepository();
 
-        m_botTypes = Collections.synchronizedMap( new HashMap() );
-        m_botStable = Collections.synchronizedMap( new HashMap() );
-        m_spawnQueue = Collections.synchronizedList( new LinkedList() );
+        m_botTypes = Collections.synchronizedMap( new HashMap<String,Integer>() );
+        m_botStable = Collections.synchronizedMap( new HashMap<String,ChildBot>() );
+        m_spawnQueue = Collections.synchronizedList( new LinkedList<ChildBot>() );
 
         m_botTypes.put( "hubbot", new Integer( 1 ));
         if( repository.size() == 0 ){
@@ -236,14 +240,23 @@ public class BotQueue extends Thread {
     }
 
     /**
-     * Spawns a bot into existence based on a given class name.  In order to
-     * be spawned, the class must exist, the CFG must exist and be properly
-     * formed, and the maximum number of bots of the type allowed must be
+     * Spawns a bot into existence based on a given class name.  Wrapper for
+     * spawnBot(String,String,String,String).
+     */
+    void spawnBot( String className, String messager ) {
+        spawnBot( className, null, null, messager );
+    }
+    
+    /**
+     * Spawns a bot into existence based on a given class name.  In order for
+     * the bot to be spawned, the class must exist, and the CFG must exist and
+     * be properly formed.  Additionally, if a "force spawn" is not being
+     * performed, the maximum number of bots of the type allowed must be
      * less than the number currently active.
      * @param className Class name of bot to spawn
      * @param messager Name of player trying to spawn the bot
      */
-    void spawnBot( String className, String messager ){
+    void spawnBot( String className, String login, String password, String messager ){
         CoreData cdata = m_botAction.getCoreData();
         long         currentTime;
 
@@ -265,7 +278,7 @@ public class BotQueue extends Thread {
             return;
         }
 
-        if( maxBots.intValue() == 0 ){
+        if( login == null && maxBots.intValue() == 0 ){
             m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Spawning for this type is disabled on this hub." );
             m_botAction.sendSmartPrivateMessage( messager, "Bots of this type are currently disabled on this hub.  If you are running another hub, please try from it instead." );
             return;
@@ -276,15 +289,21 @@ public class BotQueue extends Thread {
             m_botTypes.put( rawClassName, currentBotCount );
         }
 
-        if( currentBotCount.intValue() >= maxBots.intValue() ){
+        if( login == null && currentBotCount.intValue() >= maxBots.intValue() ){
             m_botAction.sendChatMessage( 1, messager + " tried to spawn a new bot of type " + className + ".  Maximum number already reached (" + maxBots + ")" );
             m_botAction.sendSmartPrivateMessage( messager, "Maximum number of bots of this type (" + maxBots + ") has been reached." );
             return;
         }
 
+        String botName, botPassword;
         currentBotCount = new Integer( getFreeBotNumber( botInfo ) );
-        String botName = botInfo.getString( "Name" + currentBotCount );
-        String botPassword = botInfo.getString( "Password" + currentBotCount );
+        if( login == null || password == null ) {
+            botName = botInfo.getString( "Name" + currentBotCount );
+            botPassword = botInfo.getString( "Password" + currentBotCount );
+        } else {
+            botName = login;
+            botPassword = password;
+        }
 
         Session childBot = null;
         try{

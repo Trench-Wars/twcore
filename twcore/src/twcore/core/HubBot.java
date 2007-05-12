@@ -64,6 +64,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!hardremove", acceptedMessages, this, "handleHardRemove" );
         m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "handleListBots" );
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage" );
+        m_commandInterpreter.registerCommand( "!forcespawn", acceptedMessages, this, "handleForceSpawnMessage" );
         m_commandInterpreter.registerCommand( "!listbottypes", acceptedMessages, this, "handleListBotTypes" );
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess" );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
@@ -476,6 +477,7 @@ public class HubBot extends SubspaceBot {
 
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
+            m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
         }
     }
 
@@ -499,13 +501,38 @@ public class HubBot extends SubspaceBot {
      * @param message Bot type to spawn
      */
     public void handleSpawnMessage( String messager, String message ){
-        if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
+        if( m_botAction.getOperatorList().isOutsider( messager ) ){
             spawn( messager, message );
         } else {
-            if( m_botAction.getOperatorList().isZH(messager) && message.toLowerCase() == "matchbot" )
-                spawn( messager, message );
-            else
-                m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but (s)he tried !spawn " + message );
+            if( m_botAction.getOperatorList().isZH(messager) ) {
+                int allowSpawn = m_botAction.getGeneralSettings().getInt( "AllowZHSpawning" );
+                if( allowSpawn == 2 || allowSpawn == 1 && message.toLowerCase() == "matchbot" )
+                    spawn( messager, message );
+            } else {
+                m_botAction.sendChatMessage( 1, messager + " doesn't have access, but (s)he tried to !spawn " + message );
+            }
         }
     }
+    
+    /**
+     * Forces the spawn of a bot of a given type by manually supplying a login.   
+     * @param messager Name of the player who sent the command
+     * @param message Bot to spawn and relevant login info
+     */
+    public void handleForceSpawnMessage( String messager, String message ){
+        if( m_botAction.getOperatorList().isSmod( messager ) ){
+            String args[] = message.split( " " );
+            if( args.length == 3 ) {
+                String className = args[0];
+                String login = args[1];
+                String password = args[2];
+                m_botQueue.spawnBot( className, login, password, messager );
+            } else {
+                m_botAction.sendSmartPrivateMessage( messager, "Usage: !forcespawn <bot type> <login> <password>" );                
+            }
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but (s)he tried to use !forcespawn." );
+        }
+    }
+
 }

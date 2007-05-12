@@ -101,7 +101,7 @@ public class Session extends Thread {
 
         m_ssEncryption = new SSEncryption();
         m_packetGenerator = new GamePacketGenerator( m_outboundQueue, m_ssEncryption, m_timer );
-        m_arenaTracker = new Arena( m_packetGenerator );
+        m_arenaTracker = new Arena( m_packetGenerator, m_coreData );
         String login = m_password;
         if(m_sysopPassword.trim().length() > 0)
         	login += "*" + m_sysopPassword;
@@ -264,9 +264,6 @@ public class Session extends Thread {
         final int TIMEOUT_DELAY = 60000;
         int clientKey = (int)(-Math.random() * Integer.MAX_VALUE);
 
-        long lastPositionUpdate = System.currentTimeMillis();
-        int positionUpdateTime = 5000;
-
         m_packetInterpreter.setSubspaceBot( m_subspaceBot );
 
         m_ssEncryption.setClientKey( clientKey );
@@ -310,14 +307,6 @@ public class Session extends Thread {
                     lastPacketTime = currentTime;
                     m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
                 }
-
-                /*if( currentTime - lastPositionUpdate > positionUpdateTime ) {
-                	lastPositionUpdate = currentTime;
-                    m_arenaTracker.checkPositionChange();
-                    // Synch times
-                    if( positionUpdateTime != m_arenaTracker.getUpdateTime() )
-                        positionUpdateTime = m_arenaTracker.getUpdateTime();
-                }*/
 
                 Thread.sleep(5);
             }
