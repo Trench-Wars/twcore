@@ -422,10 +422,14 @@ public class purepubbot extends SubspaceBot
                 doPrivFreqsCmd(sender);
             else if(command.startsWith("!starttime "))
                 doStartTimeCmd(sender, message.substring(11));
-            else if(command.startsWith("!startstricttime "))
-                doStartStrictTimeCmd(sender, message.substring(17));
+            else if(command.startsWith("!stricttime"))
+                doStrictTimeCmd(sender);
             else if(command.equals("!stoptime"))
                 doStopTimeCmd(sender);
+            else if(command.equals("!listships"))
+                doListShipsCmd(sender);
+            else if(command.startsWith("!set "))
+                doSetCmd(sender, message.substring(5));
             else if(command.equals("!die"))
                 doDieCmd(sender);
         }
@@ -560,21 +564,26 @@ public class purepubbot extends SubspaceBot
 
 
     /**
-     * Starts a "flag time" mode in which a team must hold the flag for a certain
-     * consecutive number of minutes in order to win the round.
-     *
-     * Differs from normal time in that all players are first warped automatically
-     * into safe (must be set), and then warped into base.
+     * Toggles "strict" flag time mode in which all players are first warped
+     * automatically into safe (must be set), and then warped into base.
      *
      * @param sender is the person issuing the command.
-     * @param argString is the number of minutes to hold the game to.
      */
-    public void doStartStrictTimeCmd(String sender, String argString ) {
-        if(flagTimeStarted)
-            throw new RuntimeException( "Flag Time mode has already been started.  Disable and re-enable if you want to run strict flag time." );
-
-        strictFlagTime = true;
-        doStartTimeCmd(sender, argString );
+    public void doStrictTimeCmd(String sender ) {
+        if( strictFlagTime ) {
+            strictFlagTime = false;            
+            if( flagTimeStarted )
+                m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode disabled.  Changes will go into effect next round.");
+            else
+                m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode disabled.  !startflagtime <minutes> to begin a normal flag time game.");
+        } else {
+            strictFlagTime = true;
+            if(flagTimeStarted) {
+                m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode enabled.  All players will be warped into base next round.");
+            } else {
+                m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode enabled.  !startflagtime <minutes> to begin a strict flag time game.");                
+            }
+        }
     }
 
 
@@ -660,7 +669,57 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask(new DieTask(), 100);
     }
 
+    
+    /**
+     * Lists any ship restrictions in effect.
+     * 
+     * @param sender is the person issuing the command.
+     */
+    public void doListShipsCmd(String sender) {
+        int weight;
+        for( int i = 1; i < 9; i++ ) {
+            weight = ((Integer)shipWeights.get( i )).intValue();
+            if( weight == 0 )
+                m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( i ) + "s disabled." );
+            else if( weight > 1 )
+                m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( i ) + "s limited to 1/" + weight + " of the size of a frequency (but 1 always allowed).");
+        }
+    }
 
+    
+    /**
+     * Sets a given ship to a particular restriction.
+     * 
+     * @param sender is the person issuing the command.
+     */
+    public void doSetCmd(String sender, String argString) {
+        String[] args = argString.split(" ");
+        if( args.length != 2 )
+            throw new RuntimeException("Usage: !set <ship#> <weight#>");
+        
+        try {
+            Integer ship = Integer.valueOf(args[0]);
+            Integer weight = Integer.valueOf(args[1]);
+            if( ship > 0 && ship < 9 ) {
+                if( weight >= 0 ) {
+                    shipWeights.set( ship.intValue(), weight );
+                    if( weight == 0 )
+                        m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( ship ) + "s: disabled." );
+                    if( weight == 1 )
+                        m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( ship ) + "s: unrestricted." );
+                    if( weight > 1 )
+                        m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( ship ) + "s: limited to 1/" + weight + " of the size of a frequency (but 1 always allowed).");
+                    specRestrictedShips();
+                } else
+                    throw new RuntimeException("Weight must be >= 0.");                
+            } else
+                throw new RuntimeException("Invalid ship number.");                
+        } catch (Exception e) {
+            throw new RuntimeException("Usage: !set <ship#> <weight#>");
+        }
+    }
+
+    
     /**
      * Displays a help message depending on access level.
      *
@@ -670,17 +729,20 @@ public class purepubbot extends SubspaceBot
     {
         String[] helpMessage =
         {
-                "!Go <ArenaName>                  -- Moves the bot to <ArenaName>.",
-                "!Start                           -- Starts pure pub settings.",
-                "!Stop                            -- Stops pure pub settings.",
-                "!Privfreqs                       -- Toggles Private Frequencies.",
-                "!StartTime #                     -- Starts Flag Time mode (a team wins",
-                "                                    with # consecutive min of flagtime).",
-                "!StopTime                        -- Ends Flag Time mode.",
-                "!StartStrictTime #               -- Starts a 'Strict' Flag Time mode",
-                "!Time                            -- Provides time remaining in Flag Time mode.",
-                "!Die                             -- Logs the bot off of the server.",
-                "!Help                            -- Displays this help message."
+                "!go <ArenaName>         -- Moves the bot to <ArenaName>.",
+                "!start                  -- Starts pure pub settings.",
+                "!stop                   -- Stops pure pub settings.",
+                "!privfreqs              -- Toggles Private Frequencies.",
+                "!starttime #            -- Starts Flag Time mode (a team wins",
+                "                           with # consecutive min of flagtime).",
+                "!stoptime               -- Ends Flag Time mode.",
+                "!stricttime             -- Toggles strict mode (all players warped)",
+                "!listships              -- Lists all current ship restrictions.",
+                "!set <ship> <#>         -- Sets <ship> to restriction <#>.",
+                "                           0=disabled; 1=any amount; other=weighted:",
+                "                           2 = 1/2 of freq can be this ship, 5 = 1/5, ...",
+                "!time                   -- Provides time remaining in Flag Time mode.",
+                "!die                    -- Logs the bot off of the server.",
         };
 
         String[] playerHelpMessage =
