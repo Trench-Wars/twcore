@@ -19,7 +19,6 @@ import twcore.bots.MultiModule;
 import twcore.bots.multibot.*;
 
 public class gravbomber extends MultiModule {
-    OperatorList        m_opList;
     BotAction           m_botAction;
     BotSettings         m_botSettings;
     HashMap             m_playerData;
@@ -50,7 +49,6 @@ public class gravbomber extends MultiModule {
     /* Initialization Code */
     public void init() {
         m_botSettings = moduleSettings;
-        m_opList = m_botAction.getOperatorList();
         setupWeapons();
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat Name" ) + ",spamchat" );
         m_botAction.sendUnfilteredPublicMessage( "*relkills 1" );
@@ -89,7 +87,7 @@ public class gravbomber extends MultiModule {
 
     public void handleCommand( String name, String message, int messageType ){
     	//Host Commands
-    	if( m_opList.isER(name) && messageType == Message.PRIVATE_MESSAGE ){
+    	if( opList.isER(name) && messageType == Message.PRIVATE_MESSAGE ){
             if( message.toLowerCase().equals("!die") ){
                 if(!m_gameStarted){
                     m_botAction.sendPrivateMessage( name, "Unloading..." );
