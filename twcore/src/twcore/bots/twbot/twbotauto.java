@@ -50,16 +50,16 @@ public class twbotauto extends TWBotExtension
                 cmdOff( name );
             } else if( msg.startsWith("!list") ) {
                 cmdList( name );
-            } else if( msg.startsWith("!add") ) {
-                cmdAdd( name, msg );
-            } else if( msg.startsWith("!remove") ) {
-                cmdRemove( name, msg );
+            } else if( msg.startsWith("!add ") ) {
+                cmdAdd( name, msg.substring(5) );
+            } else if( msg.startsWith("!remove ") ) {
+                cmdRemove( name, msg.substring(8) );
             }
         }
         if( msg.startsWith("!info") ) {
             cmdInfo( name );
         } else {
-            cmdDefault( name, msg );            
+            cmdDefault( name, msg );
         }
     }
     
@@ -244,7 +244,7 @@ public class twbotauto extends TWBotExtension
                 "This module sends commands to other loaded modules, allowing you to create",
                 "automatically-hosted arenas if desired.  Simply provide the full command,",
                 "number of votes required to run it, and the description players will see.",
-                "Sample usage:   !start;8;Starts a game of Killer.",
+                "Sample usage:   !add !start;8;Starts a game of Killer.",
                 "-- IMPORTANT: ALL COMMANDS ARE MONITORED ON CHAT AND LOGGED PERMANENTLY! --",
                 "!add <Command>;<#VotesRequired>;<Description>     - See above.",
                 "!remove <Command#>    - Remove command <Command#> as found in !list.",
