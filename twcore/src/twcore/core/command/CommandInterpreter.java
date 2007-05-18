@@ -19,9 +19,9 @@ import twcore.core.util.Tools;
  * received by your bot to the CommandInterpreter for handling.
  * <p>
  * Some examples of how to use various methods:<p><code><pre>
- * registerCommand( "!help", Message.PRIVATE_MESSAGE, this, cmdHelp );
- * registerCommand( "!die", Message.PUBLIC_MESSAGE, this, cmdDie, "!die - Kills bot" );
- * registerCommand( "8th", Message.CHAT_MESSAGE, this, cmdSell, "8th - sell", OperatorList.HIGHMOD_LEVEL );
+ * registerCommand( "!help", Message.PRIVATE_MESSAGE, this, "cmdHelp" );
+ * registerCommand( "!die", Message.PUBLIC_MESSAGE, this, "cmdDie", "!die - Kills bot" );
+ * registerCommand( "8th", Message.CHAT_MESSAGE, this, "cmdSell", "8th - sell", OperatorList.HIGHMOD_LEVEL );
  * </pre></code>
  * <p>
  * Here is how the CommandInterpreter algorithm goes:<p>
