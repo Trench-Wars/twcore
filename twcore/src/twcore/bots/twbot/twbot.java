@@ -84,6 +84,7 @@ public class twbot extends SubspaceBot
 			catch (Exception e)
 			{
 				m_botAction.sendPrivateMessage(name, "Failed to load " + extensionType);
+                Tools.printStackTrace(e);
 			}
 		}
 		else
@@ -402,6 +403,8 @@ public class twbot extends SubspaceBot
 			m_botAction.sendPrivateMessage(name, "OK, I'm getting TFO.  All modules unloaded.");
 			clear();
 			goHome(name);
+            nameOfHost = null;
+            locked = false;
 		}
 		else if (message.startsWith("!mybot"))
 		{
