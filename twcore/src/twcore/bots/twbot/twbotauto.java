@@ -30,29 +30,37 @@ public class twbotauto extends TWBotExtension
      * Constructor.
      */
     public twbotauto() {
-        registerCommands();
     }
 
-
-    /**
-     * Register commands.
-     */
-    public void registerCommands() {
-        int accepted = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
-        m_comm.registerCommand("!cmdon", accepted, this, "cmdOn", OperatorList.MODERATOR_LEVEL );
-        m_comm.registerCommand("!cmdoff", accepted, this, "cmdOff", OperatorList.MODERATOR_LEVEL );
-        m_comm.registerCommand("!add", accepted, this, "cmdAdd", OperatorList.MODERATOR_LEVEL );
-        m_comm.registerCommand("!rem", accepted, this, "cmdRemove", OperatorList.MODERATOR_LEVEL );
-        m_comm.registerCommand("!list", accepted, this, "cmdList", OperatorList.MODERATOR_LEVEL );
-        m_comm.registerCommand("!info", accepted, this, "cmdInfo" );
-        m_comm.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "cmdDefault" );
-    }    
     
     /**
-     * Handle Messages through CommandInterpreter.
+     * Handle Messages.
      */
     public void handleEvent(Message event) {
-        m_comm.handleEvent(event);
+        if( event.getMessageType() != Message.PRIVATE_MESSAGE && event.getMessageType() != Message.REMOTE_PRIVATE_MESSAGE )
+            return;
+        Player p = m_botAction.getPlayer( event.getPlayerID() );
+        if( p == null ) return;
+        String name = p.getPlayerName();
+        String msg = event.getMessage();
+        if( m_opList.isModerator( name ) ) {
+            if( msg.startsWith("!cmdon") ) {
+                cmdOn( name );
+            } else if( msg.startsWith("!cmdoff") ) {
+                cmdOff( name );
+            } else if( msg.startsWith("!list") ) {
+                cmdList( name );
+            } else if( msg.startsWith("!add") ) {
+                cmdAdd( name, msg );
+            } else if( msg.startsWith("!remove") ) {
+                cmdRemove( name, msg );
+            }
+        }
+        if( msg.startsWith("!info") ) {
+            cmdInfo( name );
+        } else {
+            cmdDefault( name, msg );            
+        }
     }
     
     
@@ -145,7 +153,7 @@ public class twbotauto extends TWBotExtension
      * @param name Name of op
      * @param msg Command parameters
      */
-    public void cmdList( String name, String msg ) {
+    public void cmdList( String name ) {
         if( tasks.size() == 0 ) {            
             m_botAction.sendSmartPrivateMessage(name, "No commands entered yet." );
             return;
@@ -163,7 +171,7 @@ public class twbotauto extends TWBotExtension
      * @param name Name of player
      * @param msg Command parameters
      */
-    public void cmdInfo( String name, String msg ) {
+    public void cmdInfo( String name ) {
         if( !isEnabled ) {
             m_botAction.sendSmartPrivateMessage(name, "Autopilot is not currently enabled.  Please hang up and try again later." );
             return;
@@ -209,7 +217,7 @@ public class twbotauto extends TWBotExtension
      * @param name Name of op
      * @param msg Command parameters
      */
-    public void cmdOn( String name, String msg ) {
+    public void cmdOn( String name ) {
         isEnabled = true;
         m_botAction.sendSmartPrivateMessage(name, "Autopilot engaged." );
     }
@@ -220,7 +228,7 @@ public class twbotauto extends TWBotExtension
      * @param name Name of op
      * @param msg Command parameters
      */
-    public void cmdOff( String name, String msg ) {
+    public void cmdOff( String name ) {
         isEnabled = false;
         m_botAction.sendSmartPrivateMessage(name, "Autopilot disengaged." );
     }
