@@ -44,9 +44,9 @@ public class twbotauto extends TWBotExtension
         String name = p.getPlayerName();
         String msg = event.getMessage();
         if( m_opList.isModerator( name ) ) {
-            if( msg.startsWith("!cmdon") ) {
+            if( msg.startsWith("!autoon") ) {
                 cmdOn( name );
-            } else if( msg.startsWith("!cmdoff") ) {
+            } else if( msg.startsWith("!autooff") ) {
                 cmdOff( name );
             } else if( msg.startsWith("!list") ) {
                 cmdList( name );
@@ -100,20 +100,23 @@ public class twbotauto extends TWBotExtension
         if( args.length != 3 ) {
             m_botAction.sendSmartPrivateMessage(name, "Incorrect number of arguments found.  Use ; to separate each.  Ex: !add !start;8;Starts the game." );
             return;
-        }
+        }        
 
         try {
             String command = args[0];
-            Integer votesReq = Integer.getInteger(args[1]);
+            int votesReq = Integer.parseInt(args[1]);
             String display = args[2];
             if( !command.startsWith("!") ) {
                 m_botAction.sendSmartPrivateMessage(name, "Command must begin with !" );
                 String s = "Autopilot: " + name + " tried to add nonstandard command: " + command;
                 m_botAction.sendChatMessage( s );
-                Tools.printLog( s );                
+                Tools.printLog( s );
+                return;
             }
+            
             Command c = new Command( command, votesReq, display );
             tasks.add(c);
+            m_botAction.sendSmartPrivateMessage( name, "Command added: "+ command );
             String s = "Autopilot: " + name + " has added command: " + command;
             // Log for everyone, but
             Tools.printLog( s );
@@ -178,7 +181,9 @@ public class twbotauto extends TWBotExtension
         }
                 
         m_botAction.sendSmartPrivateMessage(name, "Autopilot - The automated event host controlled by players." );
-        m_botAction.sendSmartPrivateMessage(name, "If you wish for the bot " );
+        m_botAction.sendSmartPrivateMessage(name, "If you wish for the bot to run one of the following tasks, send the command" );
+        m_botAction.sendSmartPrivateMessage(name, "next to it (!task#).  Your vote will be counted.  When enough votes have been" );
+        m_botAction.sendSmartPrivateMessage(name, "reached, the task will run.  If you leave the arena all your votes are removed." );
         
         m_botAction.sendSmartPrivateMessage(name, "List of tasks available to run:" );
         if( tasks.size() == 0 )
@@ -187,7 +192,7 @@ public class twbotauto extends TWBotExtension
         for( int i = 0; i < tasks.size(); i++ ) {
             Command c = tasks.get( i );
             if( c != null )
-                m_botAction.sendSmartPrivateMessage(name, "!task" + (i + 1) + " - Votes: " + c.getVotes() + " of " + c.getVotesReq() + " needed." + c.getDisplay() );
+                m_botAction.sendSmartPrivateMessage(name, "!task" + (i + 1) + " (" + c.getVotes() + " of " + c.getVotesReq() + " votes needed)  " + c.getDisplay() );
         }        
     }
 
@@ -201,7 +206,7 @@ public class twbotauto extends TWBotExtension
         if( !isEnabled || tasks.size() == 0 || !msg.startsWith("!task" ))
             return;
         try {
-            int num = Integer.getInteger(msg.substring(6));
+            int num = Integer.parseInt(msg.substring(5));
             Command c = tasks.get(num);
             String execute = c.doVote(name);
             if( execute != null )
@@ -250,8 +255,8 @@ public class twbotauto extends TWBotExtension
                 "!remove <Command#>    - Remove command <Command#> as found in !list.",
                 "!list                 - Lists all commands.",
                 "!info                 - (For players) Shows cmds & number of votes needed to run.",
-                "!cmdon                - Monitor for player votes.",
-                "!cmdoff               - Stop monitoring for player votes."
+                "!autoon               - Monitor for player votes.",
+                "!autooff              - Stop monitoring for player votes."
         };
         return help;
     }
