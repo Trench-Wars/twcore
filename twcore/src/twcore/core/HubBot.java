@@ -1,12 +1,7 @@
 package twcore.core;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.PrintStream;
-import java.io.PrintWriter;
+import java.util.Date;
 import java.util.HashSet;
 
 import twcore.core.command.CommandInterpreter;
@@ -26,6 +21,8 @@ public class HubBot extends SubspaceBot {
     private ThreadGroup         m_kingGroup;            // Thread grouping the
                                                         // hub belongs to
     private CommandInterpreter  m_commandInterpreter;   // Handles commands
+    
+    private long 				spawnutime;				// Stores the unix timestamp when the bot gets spawned for !uptime use
 
     /**
      * Creates the hub bot's thread grouping, registers commands, sets up
@@ -69,52 +66,10 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess" );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
-        m_commandInterpreter.registerCommand( "!restartlog", acceptedMessages, this, "handleClose");
+        m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand" );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleInvalidMessage" );
-    }
-
-    public void handleClose(String name, String message) {
-    	if(!m_botAction.getOperatorList().isSmod(name)) {
-    		return;
-    	}
-    	try {
-	    	System.out.close();
-	    	System.err.close();
-	    	File f1 = new File("currentOut.log");
-	    	File f2 = new File("currentErr.log");
-	    	File f3 = new File("out.log");
-	    	File f4 = new File("err.log");
-	    	if(!f3.exists()) f3.createNewFile();
-	    	if(!f4.exists()) f4.createNewFile();
-	    	if(f1.exists()) {
-	    		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f3, true )));
-	    		BufferedReader in = new BufferedReader(new FileReader(f1));
-	    		String inLine;
-	    		out.println(Tools.getTimeStamp());
-	    		while((inLine = in.readLine()) != null) {
-	    			out.println(inLine);
-	    		}
-	    		out.close();
-	    	}
-	    	if(f2.exists()) {
-	    		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f4, true )));
-	    		BufferedReader in = new BufferedReader(new FileReader(f2));
-	    		String inLine;
-	    		out.println(Tools.getTimeStamp());
-	    		while((inLine = in.readLine()) != null) {
-	    			out.println(inLine);
-	    		}
-	    		out.close();
-	    	}
-	    	f1.delete();
-	    	f2.delete();
-	    	f1.createNewFile();
-	    	f2.createNewFile();
-	    	System.setOut(new PrintStream(new FileOutputStream(f1)));
-	    	System.setErr(new PrintStream(new FileOutputStream(f2)));
-	    } catch(Exception e) {}
     }
 
     /**
@@ -122,7 +77,9 @@ public class HubBot extends SubspaceBot {
      * autoload.cfg to the bot loading queue.
      */
     public void handleEvent( LoggedOn event ){
-
+    	// Stores the unix timestamp for use with !uptime
+    	spawnutime = new Date().getTime();
+    	
         m_botAction.joinArena( "#robopark" );
         m_botAction.sendUnfilteredPublicMessage( "*g*misc:alertcommand" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat name" ) );
@@ -143,7 +100,6 @@ public class HubBot extends SubspaceBot {
         } catch( Exception e ){
             Tools.printStackTrace( "Exception while auto-loading bots", e );
         }
-        handleClose(m_botAction.getBotName(), "");
     }
 
     /**
@@ -151,7 +107,6 @@ public class HubBot extends SubspaceBot {
      * @param event Event received
      */
     public void handleEvent( Message event ){
-
         m_commandInterpreter.handleEvent( event );
     }
 
@@ -453,6 +408,40 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but (s)he tried !listoperators " + message );
         }
     }
+    
+    /**
+     * Returns the uptime of this bot
+     * @param messager Name of the player who sent the command
+     * @param message is irrelevant
+     */
+    public void handleUptimeCommand( String messager, String message ){
+    	// Calculate the uptime by using the spawnutime variable (ms)
+    	long uptime = Math.round((new Date().getTime() - spawnutime)/1000); // Difference, uptime (sec)
+    	String response = new String();
+    	
+    	if(uptime > (24*60*60)) {	// Days
+    		int days = Math.round(uptime / (24*60*60));
+    		uptime = uptime - (days * (24*60*60));
+    		
+    		response += days+" day(s), ";
+    	}
+    	if(uptime > (60*60)) {		// Hours
+    		int hours = Math.round(uptime / (60*60));
+    		uptime = uptime - (hours * (60*60));
+    		
+    		response += hours+" hour(s), ";
+    	}
+    	if(uptime > 60) {			// Minutes
+    		int minutes = Math.round(uptime / 60);
+    		uptime = uptime - (minutes * 60);
+    		
+    		response += minutes+" minute(s) and ";
+    	}
+    	response += uptime + " second(s).";
+    	
+    	m_botAction.sendSmartPrivateMessage(messager, "Uptime: "+response);
+    	
+    }
 
     /**
      * Sends an appropriate help message based on access privileges.
@@ -472,12 +461,13 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbottypes      - Lists the number of each bot type currently in use." );
             m_botAction.sendSmartPrivateMessage( messager, "!listbots <type>   - Lists the names and spawners of a bot type." );
-            m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
+            m_botAction.sendSmartPrivateMessage( messager, "!uptime            - Returns the current uptime of this bot." );
         }
 
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
             m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
+            m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
         }
     }
 
