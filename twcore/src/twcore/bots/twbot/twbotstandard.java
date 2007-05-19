@@ -17,12 +17,27 @@ import twcore.core.util.Tools;
 public class twbotstandard extends TWBotExtension {
     LinkedList arenaTasks = new LinkedList();
     HashMap<String,StoredPlayer> storedPlayers = new HashMap<String,StoredPlayer>();
+    // Lock toggle, for internal use.  0=ignore lock msgs; 1=lock arena; 2=unlock arena
+    int doLock = 0;
 
     /** Creates a new instance of the TWBot standard module */
     public twbotstandard() {
     }
 
     public void handleEvent( Message event ){
+        if(event.getMessageType() == Message.ALERT_MESSAGE && doLock != 0 ) {
+            if(event.getMessage().equals("Arena UNLOCKED")) {
+                if(doLock == 1) {
+                    doLock = 0;
+                    m_botAction.toggleLocked();
+                }
+            } else if(event.getMessage().equals("Arena LOCKED")) {
+                if(doLock == 2) {
+                    doLock = 0;
+                    m_botAction.toggleLocked();
+                }
+            }
+        }
 
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
@@ -54,6 +69,12 @@ public class twbotstandard extends TWBotExtension {
             createNumberofTeams( getInteger( message.substring(7) ));
         } else if( message.startsWith( "!door " )){
             m_botAction.setDoors( getInteger( message.substring( 6 )));
+        } else if( message.startsWith( "!lock" )){
+            doLock = 1;
+            m_botAction.toggleLocked();
+        } else if( message.startsWith( "!unlock" )){
+            doLock = 2;
+            m_botAction.toggleLocked();
         } else if( message.startsWith( "!setship " )){
             String[] parameters = Tools.stringChopper( message.substring( 8 ).trim(), ' ' );
             try{
@@ -248,7 +269,9 @@ public class twbotstandard extends TWBotExtension {
             "!random <sizeOfFreqs>   - Randomizes players to freqs of a given size.",
             "!teams <numberTeams>    - Makes the requested number of teams.",
             "!door <-2 to 255>       - Changes door mode.  -2 and -1 are random/on-off modes.",
-            "!restart                - Restarts the ball game.",
+            "!restart                - Restarts the ball game. (*restart)",
+            "!lock                   - Locks the arena (will guarantee lock; is NOT a toggle)",
+            "!unlock                 - Unlocks the arena (will guarantee unlock; is NOT a toggle)",
             "!where                  - Robo will tell you his location. Remote PM or squad msg only.",
             "!setship <ship>         - Changes everyone to <ship>",
             "!setship <freq> <ship>  - Changes everyone on <freq> to <ship>",
