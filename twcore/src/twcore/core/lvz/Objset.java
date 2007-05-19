@@ -1,6 +1,9 @@
 package twcore.core.lvz;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A useful class for keeping track of and formatting *objset commands.  Stores which

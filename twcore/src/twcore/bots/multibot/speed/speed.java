@@ -1,7 +1,11 @@
 package twcore.bots.multibot.speed;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TimerTask;
+
+import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -11,8 +15,6 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
 
 public class speed extends MultiModule {
 

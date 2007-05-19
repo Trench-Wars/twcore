@@ -1,7 +1,9 @@
 package twcore.bots.twlbot;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+
 import twcore.core.stats.Statistics;
-import java.util.*;
 
 public class LeaguePlayer
 {

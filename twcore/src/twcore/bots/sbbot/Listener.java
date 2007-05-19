@@ -1,5 +1,4 @@
 package twcore.bots.sbbot;
-import java.io.*;
 
 public abstract class Listener {
     public Listener() {}

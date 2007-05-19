@@ -1,11 +1,17 @@
 package twcore.core;
 
-import java.util.*;
-import java.io.*;
+import java.io.File;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import twcore.core.command.TempSettingsManager;
 import twcore.core.game.Arena;
 import twcore.core.game.Flag;
 import twcore.core.game.Player;
@@ -16,7 +22,6 @@ import twcore.core.util.IPCMessage;
 import twcore.core.util.InterProcessCommunicator;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
-import twcore.core.command.TempSettingsManager;
 
 /**
  * The main bot utility class, your bot's best and easiest method of performing

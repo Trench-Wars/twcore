@@ -1,7 +1,22 @@
 package twcore.bots.purepubbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
 import twcore.core.events.FlagClaimed;
@@ -12,8 +27,8 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
-import twcore.core.util.Tools;
 import twcore.core.lvz.Objset;
+import twcore.core.util.Tools;
 
 /**
  * "Pure" pub bot that can enforce ship restrictions, freq restrictions, and run

@@ -8,8 +8,9 @@
 
 package twcore.bots.zhbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;

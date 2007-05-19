@@ -1,6 +1,6 @@
 package twcore.core.sql;
 
-import java.util.*;
+import java.util.LinkedList;
 
 import twcore.core.events.SQLResultEvent;
 

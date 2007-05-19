@@ -1,6 +1,9 @@
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.TimerTask;
 
 import twcore.bots.TWBotExtension;
 import twcore.core.events.Message;

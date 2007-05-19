@@ -1,8 +1,9 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
-import twcore.core.util.Tools;
+import java.util.HashSet;
+import java.util.TimerTask;
 
-import java.util.*;
+import twcore.core.BotAction;
+import twcore.core.util.Tools;
 
 /**
  * Synopsis of game state sequence:

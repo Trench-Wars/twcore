@@ -1,7 +1,13 @@
 package twcore.core.game;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
+import twcore.core.CoreData;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.FlagDropped;
 import twcore.core.events.FlagPosition;
@@ -18,7 +24,6 @@ import twcore.core.events.ScoreUpdate;
 import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.TurretEvent;
 import twcore.core.net.GamePacketGenerator;
-import twcore.core.CoreData;
 
 /**
  * Arena is used to keep track of player information in the Arena a bot is in.  

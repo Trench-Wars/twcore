@@ -1,12 +1,6 @@
 package twcore.bots.ballbot;
 
-import twcore.core.*;
-import twcore.core.events.LoggedOn;
-import twcore.core.events.Message;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.BallPosition;
-
-import java.util.*;
+import java.util.Date;
 
 class GameStats
 {

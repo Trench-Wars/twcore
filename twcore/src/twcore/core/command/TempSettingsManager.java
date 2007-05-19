@@ -1,16 +1,17 @@
 package twcore.core.command;
 
+import static twcore.core.OperatorList.ER_LEVEL;
+import static twcore.core.OperatorList.OWNER_LEVEL;
+
 import java.util.HashMap;
-import java.util.Vector;
 import java.util.Iterator;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import twcore.core.BotAction;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
-
-import static twcore.core.OperatorList.*;
 
 /**
  * This class provides an easy way to allow an op to modify temporary settings.

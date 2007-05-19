@@ -1,11 +1,11 @@
 package twcore.bots.twbot;
 
+import java.util.Iterator;
+import java.util.TimerTask;
+
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
-
-import java.util.*;
 
 public class twbotobjons extends TWBotExtension
 {

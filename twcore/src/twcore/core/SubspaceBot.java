@@ -1,6 +1,34 @@
 package twcore.core;
 
-import twcore.core.events.*;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.ArenaList;
+import twcore.core.events.BallPosition;
+import twcore.core.events.FileArrived;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FlagDropped;
+import twcore.core.events.FlagPosition;
+import twcore.core.events.FlagReward;
+import twcore.core.events.FlagVictory;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.InterProcessEvent;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerBanner;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.Prize;
+import twcore.core.events.SQLResultEvent;
+import twcore.core.events.ScoreReset;
+import twcore.core.events.ScoreUpdate;
+import twcore.core.events.SoccerGoal;
+import twcore.core.events.SubspaceEvent;
+import twcore.core.events.TurfFlagUpdate;
+import twcore.core.events.TurretEvent;
+import twcore.core.events.WatchDamage;
+import twcore.core.events.WeaponFired;
 import twcore.core.util.Tools;
 
 /**

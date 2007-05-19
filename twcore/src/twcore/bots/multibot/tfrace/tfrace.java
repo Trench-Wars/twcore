@@ -8,10 +8,10 @@
 
 package twcore.bots.multibot.tfrace;
 
-import java.util.*;
+import java.util.Iterator;
 
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;

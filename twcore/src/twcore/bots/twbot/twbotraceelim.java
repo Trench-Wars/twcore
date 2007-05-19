@@ -1,7 +1,6 @@
 package twcore.bots.twbot;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

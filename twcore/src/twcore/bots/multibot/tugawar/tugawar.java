@@ -1,11 +1,16 @@
 package twcore.bots.multibot.tugawar;
 
-import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
 import static twcore.core.EventRequester.FREQUENCY_CHANGE;
+import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
 import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.TimerTask;
+import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -14,8 +19,6 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
-
-import java.sql.*;
 
 /**
  * Hosts "Tugawar" or "Boomball" events.

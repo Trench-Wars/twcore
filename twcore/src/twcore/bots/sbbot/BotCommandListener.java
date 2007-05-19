@@ -1,5 +1,4 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
 
 
 public class BotCommandListener extends SSEventListener {

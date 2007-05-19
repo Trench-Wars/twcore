@@ -1,9 +1,9 @@
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Random;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.game.Flag;

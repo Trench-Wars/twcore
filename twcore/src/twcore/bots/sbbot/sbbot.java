@@ -1,13 +1,13 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
+import java.util.HashSet;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.OperatorList;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.LoggedOn;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-
-import java.util.*;
-import java.io.*;
-import java.lang.*;
 
 /**
  * A few notes to my future self and other bot coders:

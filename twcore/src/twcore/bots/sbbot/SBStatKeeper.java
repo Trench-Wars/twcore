@@ -1,6 +1,9 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Vector;
+
+import twcore.core.BotAction;
 
 
 public class SBStatKeeper {

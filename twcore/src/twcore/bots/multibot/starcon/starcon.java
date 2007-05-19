@@ -1,15 +1,16 @@
  package twcore.bots.multibot.starcon;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.TimerTask;
+
+import twcore.bots.MultiModule;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
 
 public class starcon extends MultiModule {
 

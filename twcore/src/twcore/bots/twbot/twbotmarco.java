@@ -1,14 +1,20 @@
 package twcore.bots.twbot;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Random;
+
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
-import java.util.*;
-import java.net.*;
-import java.io.*;
 
 /** TWBot module that hosts the game Marco Polo.
  * The host adds words to the list and when the host says marco

@@ -1,6 +1,8 @@
 package twcore.bots.powerballbot;
 
-import twcore.core.*;
+import twcore.core.BotAction;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;

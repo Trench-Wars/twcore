@@ -3,7 +3,6 @@ package twcore.core.lvz;
 import java.util.HashMap;
 import java.util.Vector;
 
-import twcore.core.BotAction;
 import twcore.core.Session;
 import twcore.core.net.GamePacketGenerator;
 import twcore.core.util.ByteArray;

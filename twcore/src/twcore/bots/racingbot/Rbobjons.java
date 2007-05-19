@@ -1,10 +1,10 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
+import java.util.Iterator;
+import java.util.TimerTask;
+
 import twcore.core.events.Message;
 import twcore.core.game.Player;
-
-import java.util.*;
 
 public class Rbobjons extends RBExtender
 {

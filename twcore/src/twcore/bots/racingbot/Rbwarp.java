@@ -3,8 +3,14 @@
  */
 package twcore.bots.racingbot;
 
-import java.util.*;
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.Vector;
+
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 

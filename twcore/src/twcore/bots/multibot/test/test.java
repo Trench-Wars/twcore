@@ -1,10 +1,16 @@
 package twcore.bots.multibot.test;
 
-import twcore.core.*;
-import twcore.core.events.Message;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.TreeSet;
+import java.util.Vector;
+
 import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
-import java.util.*;
+import twcore.core.EventRequester;
+import twcore.core.events.Message;
 
 public class test extends MultiModule
 {

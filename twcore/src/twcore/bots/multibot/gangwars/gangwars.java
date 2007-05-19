@@ -1,9 +1,11 @@
 package twcore.bots.multibot.gangwars;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
 
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerPosition;

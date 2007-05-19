@@ -1,12 +1,12 @@
 package twcore.bots.zhbot;
 
-import twcore.core.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+
 import twcore.core.events.Message;
 import twcore.core.game.Ship;
-
-import java.util.*;
-import java.io.*;
-import java.net.*;
 
 public class twbotart extends TWBotExtension
 {

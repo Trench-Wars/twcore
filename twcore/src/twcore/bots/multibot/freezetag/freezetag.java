@@ -11,15 +11,17 @@
 
 package twcore.bots.multibot.freezetag;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TimerTask;
+
+import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
 
 /**
  * This class is sort of a variant of the zombies module.  It is to be used

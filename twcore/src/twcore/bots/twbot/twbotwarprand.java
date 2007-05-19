@@ -1,12 +1,17 @@
 package twcore.bots.twbot;
 
 import java.awt.Point;
-import java.io.*;
-import java.util.*;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.TimerTask;
+
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
-import twcore.core.events.*;
-import twcore.core.util.*;
+import twcore.core.BotSettings;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerPosition;
+import twcore.core.util.MapRegions;
+import twcore.core.util.Tools;
 
 /**
  * Warps players that enter one defined region to a random point contained within

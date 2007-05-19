@@ -1,6 +1,6 @@
 package twcore.core;
 
-import java.io.*;
+import java.io.File;
 
 import twcore.core.sql.SQLManager;
 import twcore.core.util.InterProcessCommunicator;

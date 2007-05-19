@@ -8,10 +8,10 @@
 
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;

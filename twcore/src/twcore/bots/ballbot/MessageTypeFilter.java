@@ -14,9 +14,8 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
+import twcore.core.SubspaceBot;
 import twcore.core.events.Message;
-import java.util.*;
 
 class Speech
 {

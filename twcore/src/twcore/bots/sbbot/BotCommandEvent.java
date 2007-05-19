@@ -1,5 +1,4 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
 import twcore.core.game.Player;
 
 public class BotCommandEvent extends twcore.bots.sbbot.Message {

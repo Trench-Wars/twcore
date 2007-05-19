@@ -1,9 +1,17 @@
 package twcore.core.game;
 
-import java.util.*;
+import static twcore.core.game.Ship.ALL;
+import static twcore.core.game.Ship.PLAYING;
+import static twcore.core.game.Ship.SPEC;
+import static twcore.core.game.Ship.WARBIRD;
+
+import java.util.ArrayList;
+
 import twcore.core.BotAction;
-import twcore.core.events.*;
-import static twcore.core.game.Ship.*;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
 
 /**
  * Represents a team of players. Provides basic ship tracking by team

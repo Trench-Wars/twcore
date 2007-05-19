@@ -10,9 +10,7 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
-import twcore.core.events.Message;
-import java.util.*;
+import java.util.Vector;
 
 public class Help
 {

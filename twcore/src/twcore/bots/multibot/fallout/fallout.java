@@ -1,12 +1,14 @@
 package twcore.bots.multibot.fallout;
 
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TimerTask;
+
+import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
-import java.util.*;
 
 public class fallout extends MultiModule {
 

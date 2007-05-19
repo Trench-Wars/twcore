@@ -1,11 +1,12 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import twcore.core.BotAction;
 import twcore.core.events.FlagClaimed;
 import twcore.core.util.Tools;
-
-import java.sql.*;
-import java.util.*;
 
 public class Track {
 

@@ -30,8 +30,12 @@
 
 package twcore.bots.powerballbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.EventRequester;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;

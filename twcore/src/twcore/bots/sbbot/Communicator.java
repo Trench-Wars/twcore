@@ -1,6 +1,4 @@
 package twcore.bots.sbbot;
-import java.util.*;
-import twcore.core.*;
 
 public class Communicator {
     private final Operator operator;

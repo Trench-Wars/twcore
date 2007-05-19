@@ -1,12 +1,16 @@
 package twcore.bots.racingbot;
 
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TimerTask;
+
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-
-import java.sql.*;
-import java.util.*;
 
 public class RbRace extends RacingBotExtension {
 

@@ -14,9 +14,8 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
+import twcore.core.OperatorList;
 import twcore.core.events.Message;
-import java.util.*;
 
 // Description of a command suppliable to the bot
 abstract class Command

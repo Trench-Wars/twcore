@@ -1,6 +1,18 @@
 package twcore.bots.roboreplacement;
 
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
@@ -8,9 +20,6 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
-
-import java.util.*;
-import java.sql.*;
 
 /**
  * A replacement for RoboRef in elim, spawned as needed.

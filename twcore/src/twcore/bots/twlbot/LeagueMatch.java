@@ -1,8 +1,12 @@
 package twcore.bots.twlbot;
 
-import java.sql.*;
-import java.util.*;
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Vector;
+
+import twcore.core.BotAction;
 import twcore.core.stats.Statistics;
 import twcore.core.util.Tools;
 

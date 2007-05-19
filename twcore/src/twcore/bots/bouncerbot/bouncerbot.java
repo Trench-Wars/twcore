@@ -1,13 +1,20 @@
 package twcore.bots.bouncerbot;
 
-import twcore.core.*;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Iterator;
+
+import twcore.core.BotAction;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.util.Tools;
-
-import java.util.*;
-import java.io.*;
 
 /**
  * A bot designed to kick players off the server who enter into a particular arena

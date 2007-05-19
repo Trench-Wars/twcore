@@ -8,8 +8,8 @@
 
 package twcore.bots.racingbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.Iterator;
+
 import twcore.core.events.Message;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;

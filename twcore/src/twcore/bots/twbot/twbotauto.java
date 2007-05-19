@@ -1,14 +1,16 @@
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Vector;
+
 import twcore.bots.TWBotExtension;
+import twcore.core.OperatorList;
+import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
-import twcore.core.OperatorList;
-import twcore.core.util.Tools;
 import twcore.core.game.Player;
-import twcore.core.command.CommandInterpreter;
+import twcore.core.util.Tools;
 
 /**
  * AutoPilot.  For the lazy mod.

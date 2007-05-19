@@ -2,7 +2,7 @@ package twcore.core.util;
 
 import java.util.StringTokenizer;
 
-import twcore.core.*;
+import twcore.core.BotAction;
 import twcore.core.events.Message;
 
 /**

@@ -1,6 +1,8 @@
 package twcore.core.events;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import twcore.core.SubspaceBot;
 import twcore.core.sql.SQLWorker;

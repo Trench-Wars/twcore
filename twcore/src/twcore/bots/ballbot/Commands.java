@@ -14,21 +14,12 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
-import twcore.core.events.ArenaJoined;
-import twcore.core.events.FrequencyShipChange;
+import java.util.Vector;
+
+import twcore.core.OperatorList;
 import twcore.core.events.Message;
-import twcore.core.events.PlayerDeath;
-import twcore.core.events.PlayerEntered;
-import twcore.core.events.PlayerLeft;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
-import twcore.core.util.Tools;
-
-import java.util.*;
-import java.lang.Integer;
 
 class BotCommand_StartAutoHost extends Command
 {

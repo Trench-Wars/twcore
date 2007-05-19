@@ -1,8 +1,10 @@
 package twcore.core.stats;
 
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
-import java.util.*;
+import twcore.core.BotAction;
 
 //With intentions of being able to use this for a variety of things.
 

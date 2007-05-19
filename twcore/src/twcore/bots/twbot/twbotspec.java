@@ -55,7 +55,11 @@
 
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 import twcore.bots.TWBotExtension;
 import twcore.core.events.Message;

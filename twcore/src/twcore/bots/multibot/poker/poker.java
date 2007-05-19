@@ -1,10 +1,14 @@
 package twcore.bots.multibot.poker;
 
-import java.util.*;
-import java.sql.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerLeft;
 import twcore.core.util.Tools;

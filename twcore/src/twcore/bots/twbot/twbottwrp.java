@@ -1,11 +1,11 @@
 package twcore.bots.twbot;
 
+import java.sql.ResultSet;
+import java.util.TimerTask;
+
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
-import java.util.*;
-import twcore.core.util.*;
-import java.sql.*;
+import twcore.core.util.Tools;
 
 public class twbottwrp extends TWBotExtension {
 	

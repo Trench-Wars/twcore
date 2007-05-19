@@ -1,10 +1,13 @@
 package twcore.bots.chatbot;
 
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
+import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-import twcore.core.*;
 import twcore.core.util.IPCMessage;
-import twcore.core.events.InterProcessEvent;
 
 public class chatbot extends SubspaceBot {
     

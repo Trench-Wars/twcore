@@ -1,6 +1,6 @@
 package twcore.bots.racingbot;
 
-import java.util.*;
+import java.util.ArrayList;
 
 public class RacePlayer {
 

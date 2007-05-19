@@ -1,13 +1,11 @@
 package twcore.bots.twbot;
 
+import java.util.Random;
+import java.util.TimerTask;
+
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.game.Ship;
-
-import java.util.*;
-import java.io.*;
-import java.net.*;
 
 public class twbotheli extends TWBotExtension
 {

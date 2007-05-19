@@ -1,6 +1,5 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
 import twcore.core.events.Message;
 
 public class Rbopstuff extends RBExtender

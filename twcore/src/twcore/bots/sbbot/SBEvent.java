@@ -1,8 +1,7 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
-import twcore.core.game.Player;
+import java.util.Date;
 
-import java.util.*;
+import twcore.core.game.Player;
 
 public class SBEvent extends Message {
     public final Player player;

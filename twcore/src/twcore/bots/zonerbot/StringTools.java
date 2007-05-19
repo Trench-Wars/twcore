@@ -1,6 +1,6 @@
 package twcore.bots.zonerbot;
 
-import java.util.*;
+import java.util.Vector;
 
 /**
  * <p>Title: </p>StringTools

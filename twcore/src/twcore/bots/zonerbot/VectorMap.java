@@ -1,6 +1,11 @@
 package twcore.bots.zonerbot;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
 
 public class VectorMap implements Map
 {

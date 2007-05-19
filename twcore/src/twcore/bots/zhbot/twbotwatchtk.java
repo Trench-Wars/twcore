@@ -8,8 +8,9 @@
 
 package twcore.bots.zhbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.TimerTask;
+
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;

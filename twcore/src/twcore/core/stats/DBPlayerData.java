@@ -1,9 +1,10 @@
 package twcore.core.stats;
 
-import twcore.core.*;
-import twcore.core.util.Tools;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import java.sql.*;
+import twcore.core.BotAction;
+import twcore.core.util.Tools;
 
 /**
 * Used to store information about a player in a database.

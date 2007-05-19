@@ -7,15 +7,18 @@
 
 package twcore.bots.multibot.rabbit;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TimerTask;
+
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
-
-import java.util.*;
 
 /**
  *

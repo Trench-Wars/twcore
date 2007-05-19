@@ -1,6 +1,6 @@
 package twcore.bots.multibot.spaceball;
 
-import twcore.core.*;
+import twcore.core.BotAction;
 
 /**
  * SpaceBall Cannon class

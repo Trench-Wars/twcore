@@ -1,10 +1,15 @@
 package twcore.bots;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.io.*;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
-import twcore.core.*;
+import twcore.core.AdaptiveClassLoader;
+import twcore.core.BotAction;
 import twcore.core.events.SubspaceEvent;
 import twcore.core.util.Tools;
 

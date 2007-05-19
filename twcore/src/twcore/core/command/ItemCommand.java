@@ -1,12 +1,16 @@
 package twcore.core.command;
 
-import java.util.*;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.lang.reflect.*;
 
 import twcore.core.BotAction;
-import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**

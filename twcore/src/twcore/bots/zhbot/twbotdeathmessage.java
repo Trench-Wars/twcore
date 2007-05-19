@@ -9,8 +9,8 @@
 
 package twcore.bots.zhbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.List;
+
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

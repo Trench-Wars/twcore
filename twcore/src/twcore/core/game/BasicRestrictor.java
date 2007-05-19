@@ -1,7 +1,9 @@
 package twcore.core.game;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import twcore.core.BotAction;
-import java.util.*;
 
 /**
  * Basic implementation of the ShipRestrictor interface. Uses per-ship maximum

@@ -1,6 +1,9 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
+import java.util.HashMap;
+
+import twcore.core.BotAction;
+import twcore.core.OperatorList;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FileArrived;
@@ -26,8 +29,6 @@ import twcore.core.events.SubspaceEvent;
 import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
-
-import java.util.*;
 
 public abstract class RacingBotExtension {
 

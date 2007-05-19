@@ -1,11 +1,11 @@
 package twcore.bots.multibot.remote;
 
-import twcore.core.*;
+import java.util.StringTokenizer;
+
+import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
-import java.util.*;
 
 public class remote extends MultiModule
 {

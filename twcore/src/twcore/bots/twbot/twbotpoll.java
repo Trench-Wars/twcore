@@ -10,10 +10,11 @@
  */
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
 

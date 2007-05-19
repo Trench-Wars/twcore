@@ -11,15 +11,19 @@ import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
 import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import static twcore.core.EventRequester.PLAYER_LEFT;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TimerTask;
+
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
-
-import java.util.*;
 
 /**
  * This class provides the functionality for a sort of half-breed hunt/deathmatch.

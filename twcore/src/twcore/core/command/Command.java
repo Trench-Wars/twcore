@@ -6,13 +6,11 @@
 
 package twcore.core.command;
 
-import twcore.core.*;
-import twcore.core.command.CommandDefinition;
-import twcore.core.command.CommandParameterDefinition;
+import java.util.ArrayList;
+
+import twcore.core.BotAction;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
-
-import java.util.*;
 
 /**
  *

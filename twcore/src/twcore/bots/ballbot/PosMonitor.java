@@ -10,10 +10,11 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
+import java.util.Vector;
+
+import twcore.core.SubspaceBot;
 import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
-import java.util.*;
 
 public class PosMonitor
 {

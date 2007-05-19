@@ -1,11 +1,13 @@
 package twcore.core.game;
 
-import twcore.core.*;
+import java.util.LinkedList;
+import java.util.ListIterator;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.WeaponFired;
 import twcore.core.util.Tools;
-
-import java.util.*;
 
 /**
  * Moves bot from location to another and detects hits.

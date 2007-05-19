@@ -1,9 +1,12 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
-import twcore.core.game.Player;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TimerTask;
+import java.util.Vector;
 
-import java.util.*;
-import java.io.*;
+import twcore.core.BotAction;
+import twcore.core.game.Player;
 
 public class SBRosterManager {
     public static MessageType

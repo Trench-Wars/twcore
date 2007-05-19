@@ -35,8 +35,10 @@
 
 package twcore.bots.racingbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.Vector;
+
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 

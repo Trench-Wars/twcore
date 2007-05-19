@@ -10,9 +10,10 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
+import java.util.Iterator;
+
+import twcore.core.SubspaceBot;
 import twcore.core.game.Player;
-import java.util.*;
 
 public class BotTask
 {	

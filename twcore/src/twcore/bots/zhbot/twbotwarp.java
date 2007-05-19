@@ -41,9 +41,14 @@
 
 package twcore.bots.zhbot;
 
-import java.util.*;
-import java.sql.*;
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.Vector;
+
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 

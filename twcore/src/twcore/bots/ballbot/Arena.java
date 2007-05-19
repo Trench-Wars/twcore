@@ -16,10 +16,6 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
-import twcore.core.events.Message;
-import twcore.core.game.Player;
-import java.util.*;
 
 class Arena
 {

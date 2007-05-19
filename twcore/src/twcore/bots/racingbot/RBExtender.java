@@ -1,6 +1,7 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
+import twcore.core.BotAction;
+import twcore.core.OperatorList;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FileArrived;

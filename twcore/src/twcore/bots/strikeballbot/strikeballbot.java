@@ -1,7 +1,21 @@
 
 package twcore.bots.strikeballbot;
 
-import twcore.core.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyShipChange;
@@ -12,10 +26,6 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;
-
-import java.util.*;
-import java.io.*;
-import java.util.Date;
 
 
 /** strikeballbot - an implementation of the Strikeball League bot.

@@ -1,12 +1,19 @@
 package twcore.bots.f1bot;
 
-import twcore.core.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
-
-import java.util.*;
 
 /**
  * Racing bot for arenas set up to match the racing track specification.  

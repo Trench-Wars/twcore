@@ -10,7 +10,11 @@ package twcore.core.util;
  *
  * @author  harvey
  */
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.TreeMap;
 public class SearchableStructure {
     //Stores keywords mapped to SearchData objects
     HashMap data;

@@ -1,6 +1,9 @@
 package twcore.bots.basicbot;
 
-import twcore.core.*;
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;

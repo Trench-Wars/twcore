@@ -1,7 +1,10 @@
 package twcore.core.net;
 
-import java.net.*;
-import java.util.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A packet sending queue.  Packets are formatted properly from inside

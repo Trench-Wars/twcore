@@ -1,12 +1,27 @@
 package twcore.bots.twrcbot;
 
-import twcore.core.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
+import java.util.TimerTask;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-
-import java.util.*;
-import java.sql.ResultSet;
-import java.io.*;
 
 
 /** Bot for TWRC signups

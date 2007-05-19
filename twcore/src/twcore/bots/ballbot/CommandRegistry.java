@@ -14,9 +14,10 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
+import java.util.Vector;
+
+import twcore.core.OperatorList;
 import twcore.core.events.Message;
-import java.util.*;
 
 // Collection of commands that the bot recognises
 public class CommandRegistry

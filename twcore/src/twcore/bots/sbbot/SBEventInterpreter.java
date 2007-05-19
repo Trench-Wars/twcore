@@ -1,14 +1,13 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
+import java.util.TimerTask;
+
+import twcore.core.BotAction;
 import twcore.core.events.BallPosition;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-
-import java.util.*;
-import java.io.*;
 
 
 /**

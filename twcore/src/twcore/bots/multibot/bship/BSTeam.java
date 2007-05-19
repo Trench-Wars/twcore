@@ -1,11 +1,13 @@
 package twcore.bots.multibot.bship;
 
-import twcore.core.*;
-import twcore.core.game.Player;
-import java.util.*;
+import static twcore.bots.multibot.bship.bship.ALL;
 import static twcore.bots.multibot.bship.bship.PLAYING;
 import static twcore.bots.multibot.bship.bship.SPEC;
-import static twcore.bots.multibot.bship.bship.ALL;
+
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.game.Player;
 
 /**
  * Represents a team of players in the main battleship game. Manages individual

@@ -2,7 +2,6 @@ package twcore.bots.sbbot;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
-import java.io.*;
 
 /**
  * Handles routing of all messages between senders and interested listeners.   I use HashSets

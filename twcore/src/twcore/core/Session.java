@@ -5,9 +5,11 @@
  */
 
 package twcore.core;
-import java.net.*;
-import java.util.*;
-import java.io.*;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.util.Timer;
 
 import twcore.core.game.Arena;
 import twcore.core.game.Ship;

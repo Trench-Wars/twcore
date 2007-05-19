@@ -2,8 +2,12 @@
 
 package twcore.bots.zhbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.TimerTask;
+import java.util.Vector;
+
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;

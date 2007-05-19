@@ -1,12 +1,13 @@
 package twcore.bots.racingbot;
 
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Iterator;
+
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-
-import java.sql.*;
-import java.util.*;
 
 public class RbTrackManager extends RacingBotExtension {
 

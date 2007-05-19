@@ -7,10 +7,11 @@
 
 package twcore.bots.multibot.baseassault;
 
-import java.util.*;
+import java.util.Hashtable;
+import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;

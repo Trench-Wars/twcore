@@ -1,7 +1,11 @@
 package twcore.core.sql;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Vector;
 
 /**
  * Main workhorse of the TWCore SQL system.  Handles all connections of a given

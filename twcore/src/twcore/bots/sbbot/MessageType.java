@@ -1,5 +1,4 @@
 package twcore.bots.sbbot;
-import java.lang.*;
 
 /**
  * This class doesn't really have to do anything.  I'm just using it instead of ints

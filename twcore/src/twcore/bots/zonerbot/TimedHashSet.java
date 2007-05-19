@@ -1,6 +1,10 @@
 package twcore.bots.zonerbot;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Timer;
 
 public class TimedHashSet implements Set
 {

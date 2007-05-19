@@ -1,5 +1,4 @@
 package twcore.bots.sbbot;
-import java.io.*;
 
 public class SBTeam {
     private String captain;

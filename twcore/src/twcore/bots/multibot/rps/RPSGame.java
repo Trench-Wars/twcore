@@ -1,6 +1,6 @@
 package twcore.bots.multibot.rps;
 
-import twcore.core.*;
+import twcore.core.BotAction;
 
 public class RPSGame
 {

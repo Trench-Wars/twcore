@@ -5,15 +5,23 @@
 
 package twcore.bots.multibot.trivia;
 
-import java.util.*;
-import java.sql.*;
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.TreeMap;
+import java.util.Vector;
+
+import twcore.bots.MultiModule;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
-import twcore.core.util.Tools;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
 import twcore.core.stats.PlayerProfile;
+import twcore.core.util.Tools;
 
 public class trivia extends MultiModule {
 

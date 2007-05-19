@@ -6,13 +6,17 @@
 
 package twcore.bots.multibot.enigma;
 
-import twcore.core.*;
+import java.util.Random;
+import java.util.TimerTask;
+import java.util.TreeMap;
+
+import twcore.bots.MultiModule;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
-import java.util.*;
 
 public class enigma extends MultiModule {
     //Standard variables

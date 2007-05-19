@@ -1,8 +1,11 @@
 package twcore.core.game;
 
+import static twcore.core.game.Ship.SPEC;
+import static twcore.core.game.Ship.WARBIRD;
+
+import java.util.ArrayList;
+
 import twcore.core.BotAction;
-import java.util.*;
-import static twcore.core.game.Ship.*;
 
 /**
  * A more flexible implementation of the ShipRestrictor interface, allows you

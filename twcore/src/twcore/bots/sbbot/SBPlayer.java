@@ -1,8 +1,5 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
 import twcore.core.game.Player;
-
-import java.util.*;
 
 
 public class SBPlayer {

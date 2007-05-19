@@ -1,7 +1,7 @@
 package twcore.bots.powerballbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.HashMap;
+
 import twcore.core.game.Player;
 
 public class PowerBallPlayer {

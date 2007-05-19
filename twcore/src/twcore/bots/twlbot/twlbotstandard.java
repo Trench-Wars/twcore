@@ -6,10 +6,17 @@
 
 package twcore.bots.twlbot;
 
-import java.sql.*;
-import java.util.*;
-import java.text.*;
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.OperatorList;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.FlagReward;
 import twcore.core.events.FrequencyShipChange;

@@ -55,7 +55,8 @@ package twcore.core.util;
  *
  */
 
-import java.io.*;
+import java.io.File;
+import java.io.FilenameFilter;
 
 /**
  * Class that implements the java.io.FilenameFilter

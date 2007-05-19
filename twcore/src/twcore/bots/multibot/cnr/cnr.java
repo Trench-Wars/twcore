@@ -9,10 +9,10 @@
 
 package twcore.bots.multibot.cnr;
 
-import java.util.*;
+import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;

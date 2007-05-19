@@ -57,8 +57,15 @@
 
 package twcore.bots.zhbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;

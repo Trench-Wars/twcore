@@ -1,7 +1,6 @@
 package twcore.bots.sbbot;
-import twcore.core.*;
-import java.util.*;
-import java.io.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class SBMatchOperator extends SSEventOperator {
     private HashMap<SBEventType,HashSet<SBEventListener>> listeners;

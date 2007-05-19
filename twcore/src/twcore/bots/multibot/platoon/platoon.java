@@ -5,10 +5,12 @@ import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import static twcore.core.EventRequester.PLAYER_LEFT;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;

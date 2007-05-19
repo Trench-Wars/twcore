@@ -6,16 +6,19 @@
  */
 package twcore.bots.alertbot;
 
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.regex.Pattern;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-
-import java.util.*;
-import java.util.regex.*;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * Sends alerts to players when specific games begin.

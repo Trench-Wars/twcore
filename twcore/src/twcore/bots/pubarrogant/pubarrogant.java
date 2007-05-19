@@ -1,14 +1,25 @@
 package twcore.bots.pubarrogant;
 
-import twcore.core.*;
+import java.io.FileWriter;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaList;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
-
-import java.util.*;
-import java.text.*;
-import java.io.*;
 
 /**
  * The pub-roaming form of the ever-popular TW personality, Mr. Arrogant.

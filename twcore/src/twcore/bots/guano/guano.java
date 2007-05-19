@@ -1,11 +1,20 @@
 package twcore.bots.guano;
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.TimerTask;
+import java.util.TreeMap;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
-
-import java.sql.*;
-import java.util.*;
 
 /**
  * A semi-functional bot that attempts to find a player on any altnick,

@@ -1,6 +1,17 @@
 package twcore.bots.distensionbot;
 
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Vector;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.FlagClaimed;
@@ -11,9 +22,6 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-
-import java.util.*;
-import java.sql.*;
 
 
 /**

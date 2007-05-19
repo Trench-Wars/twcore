@@ -7,11 +7,15 @@
 package twcore.core.command;
 
 
-import java.util.*;
-import twcore.core.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import twcore.core.BotAction;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
-import twcore.core.command.Command;
 
 /**
  *

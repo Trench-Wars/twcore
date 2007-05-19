@@ -1,6 +1,7 @@
 package twcore.bots.multibot.poker;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class PokerDeck {
 	public static void main(String args[]) { PokerDeck d = new PokerDeck(2, true); }

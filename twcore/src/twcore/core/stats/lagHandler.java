@@ -1,10 +1,15 @@
 package twcore.core.stats;
 
-import twcore.core.*;
-import twcore.core.util.Tools;
+import java.text.DecimalFormat;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.Vector;
 
-import java.util.*;
-import java.text.*;
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.util.Tools;
 
 public class lagHandler
 {

@@ -1,6 +1,7 @@
 package twcore.core.util;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import twcore.core.BotAction;
 import twcore.core.SubspaceBot;

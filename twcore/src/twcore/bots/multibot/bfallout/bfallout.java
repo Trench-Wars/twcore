@@ -1,7 +1,11 @@
 package twcore.bots.multibot.bfallout;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TimerTask;
+
+import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
@@ -15,8 +19,6 @@ import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.game.Projectile;
 import twcore.core.game.SpaceShip;
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
 
 public class bfallout extends MultiModule {
 

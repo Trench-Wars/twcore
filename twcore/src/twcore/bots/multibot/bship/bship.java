@@ -1,8 +1,24 @@
 package twcore.bots.multibot.bship;
 
+import static twcore.core.EventRequester.FREQUENCY_CHANGE;
+import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
+import static twcore.core.EventRequester.MESSAGE;
+import static twcore.core.EventRequester.PLAYER_DEATH;
+import static twcore.core.EventRequester.PLAYER_ENTERED;
+import static twcore.core.EventRequester.PLAYER_LEFT;
+import static twcore.core.EventRequester.PLAYER_POSITION;
+import static twcore.core.EventRequester.TURRET_EVENT;
+
+import java.util.Iterator;
+import java.util.TimerTask;
+
 import twcore.bots.MultiModule;
-import twcore.core.*;
-import twcore.core.command.*;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.command.CommandInterpreter;
+import twcore.core.command.SType;
+import twcore.core.command.TSChangeListener;
+import twcore.core.command.TempSettingsManager;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -14,8 +30,6 @@ import twcore.core.events.TurretEvent;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
-import java.util.*;
-import static twcore.core.EventRequester.*;
 
 /**
  * Battleship Bot

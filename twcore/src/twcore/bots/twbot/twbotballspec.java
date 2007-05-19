@@ -15,10 +15,10 @@
 
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.TimerTask;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;

@@ -15,7 +15,8 @@
 
 package twcore.bots.ballbot;
 
-import java.util.*;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 public class Unsorted
 {

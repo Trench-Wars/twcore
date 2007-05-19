@@ -14,9 +14,7 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
 import twcore.core.events.BallPosition;
-import java.util.*;
 
 public class BallMonitor
 {

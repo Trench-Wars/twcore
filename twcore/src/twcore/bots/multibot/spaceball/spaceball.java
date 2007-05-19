@@ -1,6 +1,17 @@
 package twcore.bots.multibot.spaceball;
 
-import twcore.core.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.TimerTask;
+
+import twcore.bots.MultiModule;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -12,11 +23,6 @@ import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
 import twcore.core.util.Tools;
-
-import java.util.*;
-
-import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
 
 /**
  * Hosts a game of SpaceBall. Objectives:

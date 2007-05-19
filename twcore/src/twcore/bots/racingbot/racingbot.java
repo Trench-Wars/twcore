@@ -1,6 +1,17 @@
 package twcore.bots.racingbot;
 
-import twcore.core.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.core.AdaptiveClassLoader;
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FileArrived;
@@ -26,10 +37,6 @@ import twcore.core.events.SubspaceEvent;
 import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
-
-import java.io.*;
-import java.util.*;
-import java.sql.*;
 
 public class racingbot extends SubspaceBot {
 

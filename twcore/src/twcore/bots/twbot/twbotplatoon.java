@@ -4,10 +4,11 @@
  */
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TimerTask;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;

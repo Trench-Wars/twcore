@@ -1,11 +1,16 @@
 package twcore.core.util;
 
-import java.io.*;
-import java.awt.*;
-import java.awt.image.*;
-import java.util.*;
-import javax.imageio.*;
-import twcore.core.*;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
+
+import twcore.core.BotSettings;
+import twcore.core.CoreData;
+import twcore.core.Session;
 import twcore.core.game.Player;
 
 /**

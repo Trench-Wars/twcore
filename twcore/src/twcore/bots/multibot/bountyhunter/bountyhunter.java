@@ -2,9 +2,8 @@ package twcore.bots.multibot.bountyhunter;
 
 import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
-
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

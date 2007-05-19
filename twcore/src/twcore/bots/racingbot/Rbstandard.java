@@ -11,8 +11,9 @@
 
 package twcore.bots.racingbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.LinkedList;
+import java.util.TimerTask;
+
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

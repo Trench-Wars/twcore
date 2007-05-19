@@ -14,12 +14,9 @@
 
 package twcore.bots.ballbot;
 
-import twcore.core.*;
-import twcore.core.events.Message;
+import twcore.core.SubspaceBot;
 import twcore.core.events.BallPosition;
-import twcore.core.game.Ship;
 import twcore.core.game.Player;
-import java.util.*;
 
 public class Incident
 {

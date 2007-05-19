@@ -1,10 +1,11 @@
 package twcore.bots.multibot.rps;
 
-import java.util.*;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.bots.multibot.*;
-import twcore.core.*;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
 import twcore.core.events.Message;
 
 public class rps extends MultiModule

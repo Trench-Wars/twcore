@@ -1,18 +1,27 @@
 package twcore.bots.messagebot;
 
-import twcore.core.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TimerTask;
+
+import twcore.core.BotAction;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.IPCMessage;
 import twcore.core.util.Tools;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.net.*;
-import java.io.*;
 
 /** Bot to host "channels" that allow a player to ?message or pm
  *  everyone on the channel so that information can be spread easily.

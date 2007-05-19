@@ -1,14 +1,14 @@
 package twcore.bots.twbot;
 
+import java.util.Iterator;
+import java.util.TimerTask;
+
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
-
-import java.util.*;
 
 /**
  * Golden Gun module

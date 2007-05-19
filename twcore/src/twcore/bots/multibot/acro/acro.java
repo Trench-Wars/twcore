@@ -1,12 +1,18 @@
 package twcore.bots.multibot.acro;
 
-import twcore.core.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.Vector;
+
+import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
-import twcore.core.util.Tools;
 import twcore.core.util.Spy;
-import twcore.bots.MultiModule;
-import java.util.*;
+import twcore.core.util.Tools;
 
 public class acro extends MultiModule{
 

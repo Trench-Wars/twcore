@@ -15,7 +15,6 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
-import twcore.core.game.Ship;
 
 /**
  * @author Austin

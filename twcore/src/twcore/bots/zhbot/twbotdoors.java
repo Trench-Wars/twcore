@@ -1,7 +1,9 @@
 package twcore.bots.zhbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.Vector;
+
 import twcore.core.events.Message;
 
 public class twbotdoors extends TWBotExtension

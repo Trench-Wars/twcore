@@ -6,7 +6,6 @@
 
 package twcore.core.command;
 
-import twcore.core.*;
 import twcore.core.util.Tools;
 
 /**

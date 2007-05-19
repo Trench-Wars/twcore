@@ -1,17 +1,25 @@
 package twcore.bots.multibot.marco;
 
-import static twcore.core.EventRequester.PLAYER_LEFT;
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
 import static twcore.core.EventRequester.MESSAGE;
+import static twcore.core.EventRequester.PLAYER_LEFT;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Random;
+
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.EventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
-import java.util.*;
-import java.net.*;
-import java.io.*;
 
 /**
  * MultiBot module that hosts the game Marco Polo.

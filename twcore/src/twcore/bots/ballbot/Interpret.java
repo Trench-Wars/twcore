@@ -13,7 +13,7 @@
 //////////////////////////////////////////////////////
 package twcore.bots.ballbot;
 
-import java.util.*;
+import java.util.Vector;
 public class Interpret
 {
 	public static final int DC_CALL_DC = 0;

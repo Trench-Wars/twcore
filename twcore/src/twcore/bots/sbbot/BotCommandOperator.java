@@ -1,7 +1,8 @@
 package twcore.bots.sbbot;
-import java.util.*;
-import twcore.core.*;
-import java.io.*;
+import java.util.HashMap;
+import java.util.HashSet;
+
+import twcore.core.BotAction;
 
 public class BotCommandOperator extends SSEventOperator {
     private BotAction m_botAction;

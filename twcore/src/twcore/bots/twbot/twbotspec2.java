@@ -1,10 +1,12 @@
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
-import twcore.core.command.*;
+import twcore.core.BotAction;
+import twcore.core.command.ItemCommand;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

@@ -1,10 +1,13 @@
 package twcore.bots.twlbot;
 
-import java.sql.*;
-import java.util.*;
-import twcore.core.*;
-import twcore.core.util.Tools;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+
+import twcore.core.BotAction;
 import twcore.core.stats.PlayerProfile;
+import twcore.core.util.Tools;
 
 public class TwlMatch
 {

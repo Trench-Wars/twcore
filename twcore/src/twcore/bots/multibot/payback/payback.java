@@ -1,17 +1,22 @@
 package twcore.bots.multibot.payback;
 
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
+import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import static twcore.core.EventRequester.PLAYER_LEFT;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TimerTask;
+
 import twcore.bots.MultiModule;
-import twcore.core.*;
+import twcore.core.BotAction;
+import twcore.core.EventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
-
-import java.util.*;
 
 /** 
  * Payback module.

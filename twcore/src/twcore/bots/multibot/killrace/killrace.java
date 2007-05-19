@@ -1,9 +1,10 @@
 package twcore.bots.multibot.killrace;
 
-import twcore.bots.MultiModule;
 import java.util.HashMap;
 import java.util.Iterator;
-import twcore.core.*;
+
+import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

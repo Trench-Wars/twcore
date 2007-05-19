@@ -1,14 +1,17 @@
 package twcore.bots.estatsbot;
 
-import twcore.core.*;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Iterator;
+
+import twcore.core.BotAction;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-
-import java.util.*;
-import java.sql.*;
 
 /**
  * Records statistics from elimination matches in a database. 

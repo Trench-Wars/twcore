@@ -7,8 +7,9 @@
 
 package twcore.bots.strikeballbot;
 
-import twcore.core.*;
-import java.util.*;
+import java.util.TimerTask;
+
+import twcore.core.BotAction;
 
 public class StrikeballPlayer {
 

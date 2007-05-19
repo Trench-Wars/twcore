@@ -7,8 +7,9 @@ package twcore.bots.multibot.zombies;
 
 import java.util.HashSet;
 import java.util.List;
-import twcore.core.EventRequester;
+
 import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

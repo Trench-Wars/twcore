@@ -6,11 +6,10 @@
 
 package twcore.core.command;
 
-import twcore.core.*;
+import java.util.ArrayList;
+
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
-
-import java.util.*;
 
 /**
  *

@@ -1,7 +1,9 @@
 package twcore.bots.twlbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Vector;
+
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;

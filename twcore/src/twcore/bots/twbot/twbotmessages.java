@@ -38,10 +38,11 @@
 
 package twcore.bots.twbot;
 
-import java.util.*;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.Vector;
 
 import twcore.bots.TWBotExtension;
-import twcore.core.*;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;

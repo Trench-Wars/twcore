@@ -1,7 +1,13 @@
 package twcore.bots.zonerbot;
 
-import java.util.*;
-import twcore.core.*;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.IPCMessage;

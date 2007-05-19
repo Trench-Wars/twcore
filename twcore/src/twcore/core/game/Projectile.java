@@ -1,6 +1,5 @@
 package twcore.core.game;
 
-import twcore.core.*;
 
 /**
  * SpaceBall Projectile class

@@ -1,12 +1,15 @@
 package twcore.bots.twbot;
 
+import static twcore.core.OperatorList.ER_LEVEL;
+import static twcore.core.command.SType.BOOLEAN;
+import static twcore.core.command.SType.INT;
+import static twcore.core.command.SType.STRING;
 import twcore.bots.TWBotExtension;
 import twcore.core.BotAction;
-import twcore.core.command.*;
+import twcore.core.command.TSChangeListener;
+import twcore.core.command.TempSettingsManager;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
-import static twcore.core.OperatorList.ER_LEVEL;
-import static twcore.core.command.SType.*;
 
 /**
  * Extended Safes Module (Based on twbotsafes by 2dragons)
