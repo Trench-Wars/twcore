@@ -189,7 +189,6 @@ public class messagebot extends SubspaceBot
 
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing");
 
-        m_botAction.ipcSubscribe(IPCCHANNEL);
     }
 
     /** Creates a channel
@@ -750,7 +749,7 @@ public class messagebot extends SubspaceBot
 			//long memUsed = before - after;
 		} catch(Exception e) {}
 		m_botAction.setMessageLimit(5);
-
+        m_botAction.ipcSubscribe(IPCCHANNEL);
 	}
 
 	/** Reads a message from the database.
