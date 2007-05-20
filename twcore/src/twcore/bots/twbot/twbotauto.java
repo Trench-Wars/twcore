@@ -5,27 +5,24 @@ import java.util.Vector;
 
 import twcore.bots.TWBotExtension;
 import twcore.core.OperatorList;
-import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
-import twcore.core.util.Tools;
 
 /**
  * AutoPilot.  For the lazy mod.
  * 
- * Allows Mod+ to create commands that players can then vote on to execute.
- * Useful for creating an automated event bot that can wait in an arena for
- * enough players to join. 
+ * Allows Mod+ to create lists of commands (tasks) that players can then vote on
+ * to execute.  Useful for creating an automated event bot that can wait in an
+ * arena for enough players to join. 
  * 
  * @author dugwyler
  */
 public class twbotauto extends TWBotExtension
 {
-    CommandInterpreter m_comm;      // Command handler
-    boolean isEnabled = false;      // Whether or not commands are being processed.
-    Vector <Command>tasks = new Vector<Command>();
+    boolean isEnabled = false;      // Whether or not tasks are being processed.
+    Vector <AutoTask>tasks = new Vector<AutoTask>();
     
     
     /**
@@ -85,7 +82,7 @@ public class twbotauto extends TWBotExtension
         if( p == null ) return;
             
         for( int i = 0; i < tasks.size(); i++ ) {
-            Command c = tasks.get( i );
+            AutoTask c = tasks.get( i );
             if( c != null )
                 c.removeVote( p.getPlayerName() );
         }
@@ -93,7 +90,7 @@ public class twbotauto extends TWBotExtension
 
     
     /**
-     * Adds a new command.
+     * Adds a new task.
      * @param name Name of op
      * @param msg Command parameters
      */
@@ -107,27 +104,17 @@ public class twbotauto extends TWBotExtension
         try {
             String command = args[0];
             int votesReq = Integer.parseInt(args[1]);
-            String display = args[2];
-            if( !command.startsWith("!") ) {
-                m_botAction.sendSmartPrivateMessage(name, "Command must begin with !" );
-                String s = "Autopilot: " + name + " tried to add nonstandard command: " + command;
-                m_botAction.sendChatMessage( s );
-                Tools.printLog( s );
-                return;
-            }
-            
-            Command c = new Command( command, votesReq, display );
+            String display = args[2];            
+            AutoTask c = new AutoTask( command, votesReq, display );
             tasks.add(c);
-            m_botAction.sendSmartPrivateMessage( name, "Command added: "+ command );
-            String s = "Autopilot: " + name + " has added command: " + command;
-            // Log for everyone, but
-            Tools.printLog( s );
+            m_botAction.sendSmartPrivateMessage( name, "Task added: "+ command );
+            String s = "Autopilot: " + name + " has added this task: " + command;
             // Display to chat for people who are not extremely important
             if( m_opList.getAccessLevel(name) < OperatorList.SMOD_LEVEL ) {
                 m_botAction.sendChatMessage( s );
             }
         } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(name, "Couldn't parse that.  Ex: !add !start;8;Starts the game." );            
+            m_botAction.sendSmartPrivateMessage(name, "Couldn't parse that.  Ex: !add lock,setship 2,spec 10;8;Starts the game." );            
         }
     }
 
@@ -140,7 +127,7 @@ public class twbotauto extends TWBotExtension
     public void cmdRemove( String name, String msg ) {
         try {
             int num = Integer.parseInt(msg);            
-            Command c = tasks.remove( num - 1 );
+            AutoTask c = tasks.remove( num - 1 );
             if( c != null ) {
                 m_botAction.sendSmartPrivateMessage(name, "Removed command: " + c.getCommand() + "  (" + c.getDisplay() + ")" );
             } else {
@@ -164,7 +151,7 @@ public class twbotauto extends TWBotExtension
             return;
         }
         for( int i = 0; i < tasks.size(); i++ ) {
-            Command c = tasks.get( i );
+            AutoTask c = tasks.get( i );
             if( c != null )
                 m_botAction.sendSmartPrivateMessage(name, (i + 1) + ") '" + c.getCommand() + "'  Votes: " + c.getVotes() + " of " + c.getVotesReq() + " needed.  Text: " + c.getDisplay() );
         }
@@ -192,7 +179,7 @@ public class twbotauto extends TWBotExtension
             m_botAction.sendSmartPrivateMessage(name, "No tasks have been entered yet." );
         
         for( int i = 0; i < tasks.size(); i++ ) {
-            Command c = tasks.get( i );
+            AutoTask c = tasks.get( i );
             if( c != null )
                 m_botAction.sendSmartPrivateMessage(name, "!task" + (i + 1) + " (" + c.getVotes() + " of " + c.getVotesReq() + " votes needed)  " + c.getDisplay() );
         }        
@@ -200,7 +187,8 @@ public class twbotauto extends TWBotExtension
 
     
     /**
-     * Default command.  Checks for players sending commands.
+     * Default command.  Checks for players voting for tasks, and executes the
+     * task if enough votes have been reached.
      * @param name Name of player
      * @param msg Command parameters
      */
@@ -209,10 +197,18 @@ public class twbotauto extends TWBotExtension
             return;
         try {
             int num = Integer.parseInt(msg.substring(5));
-            Command c = tasks.get(num);
+            AutoTask c = tasks.get(num);
             String execute = c.doVote(name);
-            if( execute != null )
-                m_botAction.sendPrivateMessage(m_botAction.getBotName(), execute);
+            // Execute if number of votes have been reached
+            if( execute != null ) {
+                if( execute.contains(",") ) {
+                    String cmds[] = execute.split(",");
+                    for( int i = 0; i<cmds.length; i++ )
+                        m_botAction.sendPrivateMessage(m_botAction.getBotName(), cmds[i]);
+                } else {
+                    m_botAction.sendPrivateMessage(m_botAction.getBotName(), execute);
+                }
+            }
         } catch (Exception e ) {
             m_botAction.sendSmartPrivateMessage(name, "Which task do you want to vote for?  Please try !info to verify this task still exists." );            
         }
@@ -247,18 +243,18 @@ public class twbotauto extends TWBotExtension
     public String[] getHelpMessages()
     {
         String[] help = {
-                "Autopilot, by dugwyler - executes a command when enough players vote for it.",
+                "Autopilot, by dugwyler - executes a task when enough players vote for it.",
                 "This module sends commands to other loaded modules, allowing you to create",
-                "automatically-hosted arenas if desired.  Simply provide the full command,",
-                "number of votes required to run it, and the description players will see.",
-                "Sample usage:   !add !start;8;Starts a game of Killer.",
-                "-- IMPORTANT: ALL COMMANDS ARE MONITORED ON CHAT AND LOGGED PERMANENTLY! --",
-                "!add <Command>;<#VotesRequired>;<Description>     - See above.",
-                "!remove <Command#>    - Remove command <Command#> as found in !list.",
-                "!list                 - Lists all commands.",
-                "!info                 - (For players) Shows cmds & number of votes needed to run.",
-                "!autoon               - Monitor for player votes.",
-                "!autooff              - Stop monitoring for player votes."
+                "automatically-hosted arenas if desired.  Provide a list of commands the task",
+                "will execute (separated by commas) WITHOUT the !, number of votes required to",
+                "run the task, and the description players will see when they use !info.",
+                "Sample usage:   !add lock,setship 2,spec 10;8;Starts a game of twisted.",
+                "!add <cmd1,cmd2,cmd3,etc>;<#VotesRequired>;<Description>     - See above.",
+                "!remove <Task#>       - Removes task <Task#> as found in !list.",
+                "!list                 - Lists all tasks currently set up.",
+                "!info                 - (For players) Shows tasks & number of votes needed to run.",
+                "!autoon               - Starts player vote monitoring and task execution.",
+                "!autooff              - Stops player vote monitoring and task execution."
         };
         return help;
     }
@@ -275,14 +271,14 @@ public class twbotauto extends TWBotExtension
     /**
      * Stores command data.
      */
-    public class Command {
+    public class AutoTask {
         String cmd;
         int votesReq;
         int votes;
         String display;
         HashSet <String>voters;
         
-        public Command( String cmd, int votesReq, String display ) {
+        public AutoTask( String cmd, int votesReq, String display ) {
             this.cmd = cmd;
             this.votesReq = votesReq;
             this.display = display;
@@ -292,7 +288,8 @@ public class twbotauto extends TWBotExtension
         
         public String doVote( String name ) {
             if( voters.contains(name) ) {
-                m_botAction.sendSmartPrivateMessage(name, "You've already voted to run this task.  " + (votesReq - votes) + " more votes are needed to run it.  Get your friends, if you have any.  Well, do ya, punk?" );
+                m_botAction.sendSmartPrivateMessage(name, "Removing your vote for: \"" + display + "\"" );
+                removeVote(name);
                 return null;
             }
             voters.add(name);
@@ -310,6 +307,8 @@ public class twbotauto extends TWBotExtension
         
         public void removeVote( String name ) {
             voters.remove(name);
+            if( votes > 0 )
+                votes--;
         }
         
         public String getCommand() {
