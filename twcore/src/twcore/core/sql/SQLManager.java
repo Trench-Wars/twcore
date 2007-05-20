@@ -44,13 +44,13 @@ import twcore.core.util.Tools;
  * memory leaks may occur!
  */
 public class SQLManager extends Thread {
-    BotSettings sqlcfg;                          // Reference to SQL config file
-    HashMap     pools;                           // Connection pool storage
-    HashMap     queues;                          // Background queue storage
-    boolean     operational = true;              // Status of SQL system
-    final static int THREAD_SLEEP_TIME = 60000;  // Length of time for thread to
-                                                 // sleep, in ms, after all
-                                                 // background queries are done.
+    BotSettings sqlcfg;                            // Reference to SQL config file
+    HashMap     <String,SQLConnectionPool>pools;   // Connection pool storage
+    HashMap     <String,SQLBackgroundQueue>queues; // Background queue storage
+    boolean     operational = true;                // Status of SQL system
+    final static int THREAD_SLEEP_TIME = 60000;    // Length of time for thread to
+                                                   // sleep, in ms, after all
+                                                   // background queries are done.
     
     /**
      * Initialize SQL functionality with the information given in the specified
@@ -58,9 +58,10 @@ public class SQLManager extends Thread {
      * @param configFile Properly formatted CFG file containing SQL system data
      */
     public SQLManager( File configFile ) {
-        pools = new HashMap();
-        queues = new HashMap();
+        pools = new HashMap<String,SQLConnectionPool>();
+        queues = new HashMap<String,SQLBackgroundQueue>();
         sqlcfg = new BotSettings( configFile );
+        System.out.println( "=== SQL Initialization ===" );
         try{
             for( int i = 1; i <= sqlcfg.getInt( "ConnectionCount" ); i++ ){
                 String name = sqlcfg.getString( "Name" + i );
@@ -80,7 +81,7 @@ public class SQLManager extends Thread {
                 pools.put( name, db );
                 queues.put( name, new SQLBackgroundQueue() );
             }
-            Tools.printLog( "SQL Connection Pools Initialized Successfully." );
+            Tools.printLog( "SQL Connection Pools initialized successfully." );
             for( Iterator i = pools.values().iterator(); i.hasNext(); ){
                 Tools.printLog( ((SQLConnectionPool)i.next()).toString() );
             }
@@ -91,10 +92,11 @@ public class SQLManager extends Thread {
         }
         if( operational ){
             start();
-            Tools.printLog( "Background Queues Initialized" );
+            Tools.printLog( "SQL Background Queues initialized." );
         } else {
-            Tools.printLog( "Background Queues NOT Initialized" );
+            Tools.printLog( "SQL Background Queues NOT initialized." );
         }
+        System.out.println();
     }
     
     /**

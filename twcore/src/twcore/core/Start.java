@@ -39,6 +39,12 @@ public class Start {
      * @param setupFile File identified as a core setup file
      */
     static void startHub( File setupFile ){
+        System.out.println();
+        System.out.println("+-------------------------+");
+        System.out.println("|     TWCore Startup      |");
+        System.out.println("+-------------------------+");        
+        System.out.println();
+        
         CoreData        coreData = new CoreData( setupFile );
         BotSettings     generalSettings = coreData.getGeneralSettings();
 
@@ -59,6 +65,7 @@ public class Start {
 	    } catch(Exception e) {}*/
 
         while( true ){
+            System.out.println("=== Starting Hub ...   ===");
             Tools.printLog( "Attempting to connect to server at ss://" + coreData.getServerName() + ":" + coreData.getServerPort() );
 
             ThreadGroup     group = new ThreadGroup( "Main" );

@@ -65,6 +65,8 @@ public class BotQueue extends Thread {
         } else {
             System.out.println( "Looking through " + directory.getAbsolutePath()
             + " for bots.  " + (repository.size() - 1) + " child directories." );
+            System.out.println();
+            System.out.println("=== Loading bots ...   ===");
         }
         m_loader = new AdaptiveClassLoader( repository, getClass().getClassLoader() );
     }
