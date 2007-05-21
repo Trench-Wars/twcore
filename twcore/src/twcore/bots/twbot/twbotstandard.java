@@ -72,10 +72,10 @@ public class twbotstandard extends TWBotExtension {
             createNumberofTeams( getInteger( message.substring(7) ));
         } else if( message.startsWith( "!door " )){
             m_botAction.setDoors( getInteger( message.substring( 6 )));
-        } else if( message.startsWith( "!lockarena" )){
+        } else if( message.startsWith( "!dolock" )){
             doLock = 1;
             m_botAction.toggleLocked();
-        } else if( message.startsWith( "!unlockarena" )){
+        } else if( message.startsWith( "!dounlock" )){
             doLock = 2;
             m_botAction.toggleLocked();
         } else if( message.startsWith( "!setship " )){
@@ -273,8 +273,8 @@ public class twbotstandard extends TWBotExtension {
             "!teams <numberTeams>    - Makes the requested number of teams.",
             "!door <-2 to 255>       - Changes door mode.  -2 and -1 are random/on-off modes.",
             "!restart                - Restarts the ball game. (*restart)",
-            "!lockarena              - Locks the arena (will guarantee lock; is NOT a toggle)",
-            "!unlockarena            - Unlocks the arena (will guarantee unlock; is NOT a toggle)",
+            "!dolock                 - Locks the arena (will guarantee lock; is NOT a toggle)",
+            "!dounlock               - Unlocks the arena (will guarantee unlock; is NOT a toggle)",
             "!where                  - Robo will tell you his location. Remote PM only.",
             "!setship <ship>         - Changes everyone to <ship>",
             "!setship <freq> <ship>  - Changes everyone on <freq> to <ship>",
