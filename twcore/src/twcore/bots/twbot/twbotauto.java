@@ -204,9 +204,9 @@ public class twbotauto extends TWBotExtension
                 if( execute.contains(",") ) {
                     String cmds[] = execute.split(",");
                     for( int i = 0; i<cmds.length; i++ )
-                        m_botAction.sendPrivateMessage(m_botAction.getBotName(), cmds[i]);
+                        m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!" + cmds[i]);
                 } else {
-                    m_botAction.sendPrivateMessage(m_botAction.getBotName(), execute);
+                    m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!" + execute);
                 }
             }
         } catch (Exception e ) {
