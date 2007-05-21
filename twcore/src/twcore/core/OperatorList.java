@@ -26,25 +26,25 @@ import twcore.core.util.Tools;
  * 1 - Zone Helper      extremely limited privileges                     [moderate.txt]
  * 2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]
  * 3 - Event Ref        regular privileges; first stage of real access   [moderate.txt]
- * 4 - Developer		regular privileges; for more trusted coders      [develop.cfg ]
  * 4 - Moderator        expanded privileges for administrative duties    [moderate.txt]
  * 5 - High Moderator   additional privileges normally only for smods    [highmod.cfg ]
- * 6 - Super Moderator  nearly all privileges                            [smod.txt    ]
- * 7 - Sysop            nearly all privileges (used to test if a bot)    [sysop.txt   ]
- * 8 - Owner            all privileges                                   [owner.cfg   ]
+ * 6 - Developer        additional privileges; for staff coders only     [develop.cfg ]
+ * 7 - Super Moderator  nearly all privileges                            [smod.txt    ]
+ * 8 - Sysop            nearly all privileges (used to test if a bot)    [sysop.txt   ]
+ * 9 - Owner            all privileges                                   [owner.cfg   ]
  * </pre></code>
  */
 public class OperatorList {
 
-    Map             m_accessList;
+    Map             <String,Integer>m_accessList;
 
     public static final int PLAYER_LEVEL = 0;
     public static final int ZH_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
     public static final int ER_LEVEL = 3;
-    public static final int DEV_LEVEL = 4;
-    public static final int MODERATOR_LEVEL = 5;
-    public static final int HIGHMOD_LEVEL = 6;
+    public static final int MODERATOR_LEVEL = 4;
+    public static final int HIGHMOD_LEVEL = 5;
+    public static final int DEV_LEVEL = 6;
     public static final int SMOD_LEVEL = 7;
     public static final int SYSOP_LEVEL = 8;
     public static final int OWNER_LEVEL = 9;
@@ -54,11 +54,11 @@ public class OperatorList {
      */
     public OperatorList(){
 
-        m_accessList = Collections.synchronizedMap( new HashMap() );
+        m_accessList = Collections.synchronizedMap( new HashMap<String,Integer>() );
     }
 
     public OperatorList(OperatorList o) {
-    	m_accessList = Collections.synchronizedMap( new HashMap() );
+    	m_accessList = Collections.synchronizedMap( new HashMap<String,Integer>() );
     	m_accessList.putAll(o.m_accessList);
     }
 
@@ -151,7 +151,6 @@ public class OperatorList {
         }
     }
 
-
     /**
      * Check if a given name is at least of ER status.
      * @param name Name in question
@@ -239,6 +238,34 @@ public class OperatorList {
         }
     }
 
+    /**
+     * Check if a given name is at least of Developer status.
+     * @param name Name in question
+     * @return True if player is at least an ER
+     */
+    public boolean isDeveloper( String name ){
+
+        if( getAccessLevel( name ) >= DEV_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a given name is a Developer.
+     * @param name Name in question
+     * @return True if player is a Developer
+     */
+    public boolean isDeveloperExact( String name ){
+
+        if( getAccessLevel( name ) == DEV_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     /**
      * Check if a given name is at least of SMod status.
      * @param name Name in question
