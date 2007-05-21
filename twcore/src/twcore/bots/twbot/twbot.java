@@ -50,7 +50,7 @@ public class twbot extends SubspaceBot
 	private BotAction m_botAction;
 	private TimerTask checkTime;
 	private int lastUse = 0;
-	private HashMap extensions;
+	private HashMap <String,TWBotExtension>extensions;
 	private OperatorList m_opList;
 	private BotSettings m_botSettings;
 	private boolean locked = false;
@@ -65,7 +65,7 @@ public class twbot extends SubspaceBot
 	public twbot(BotAction botAction)
 	{
 		super(botAction);
-		Vector repository = new Vector();
+		Vector <File>repository = new Vector<File>();
 		coreRoot = new File(botAction.getGeneralSettings().getString("Core Location"));
 		botRoot = new File(coreRoot.getPath() + "/twcore/bots/twbot");
 		repository.add(coreRoot);
@@ -74,7 +74,7 @@ public class twbot extends SubspaceBot
 		m_botAction = botAction;
 
 		m_botSettings = m_botAction.getBotSettings();
-		extensions = new HashMap();
+		extensions = new HashMap<String,TWBotExtension>();
 
 		idleTime = m_botSettings.getInt("IdleReturnTime");
 		defaultArena = m_botSettings.getString("InitialArena");
@@ -248,7 +248,7 @@ public class twbot extends SubspaceBot
 	{
 		if (!locked)
 		{
-		    if( !Tools.isAllDigits(arena) || m_opList.isHighmod( name ) ) {
+		    if( (!Tools.isAllDigits(arena) || m_opList.isHighmod( name )) && name != m_botAction.getBotName() ) {
 			    actualGo(arena);
 		    } else {
 				m_botAction.sendSmartPrivateMessage( name, "Sorry, but you are not authorized to move TWBots into pubs." );
