@@ -67,11 +67,11 @@ import twcore.core.util.Tools;
  */
 public class messagebot extends SubspaceBot
 {
-	HashMap channels;
+	HashMap <String,Channel>channels;
 	HashMap defaultChannel;
-	HashSet ops;
-	HashMap news;
-	ArrayList newsIDs;
+	HashSet <String>ops;
+	HashMap <Integer,NewsArticle>news;
+	ArrayList <Integer>newsIDs;
 	int newsID;
 	CommandInterpreter m_CI;
 	TimerTask messageDeleteTask, messageBotSync, newsTask, newsChatTask;
@@ -88,11 +88,11 @@ public class messagebot extends SubspaceBot
 		EventRequester events = m_botAction.getEventRequester();
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.LOGGED_ON);
-		channels = new HashMap();
+		channels = new HashMap<String,Channel>();
 		defaultChannel = new HashMap();
-		ops = new HashSet();
-		news = new HashMap();
-		newsIDs = new ArrayList();
+		ops = new HashSet<String>();
+		news = new HashMap<Integer,NewsArticle>();
+		newsIDs = new ArrayList<Integer>();
 		newsID = 0;
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
@@ -110,9 +110,6 @@ public class messagebot extends SubspaceBot
 	{
 		IPCMessage ipcMessage = (IPCMessage) event.getObject();
 		String message = ipcMessage.getMessage();
-		String recipient = ipcMessage.getRecipient();
-		String sender = ipcMessage.getSender();
-		String botSender = event.getSenderName();
 		checkNewMessages(message.toLowerCase());
 	}
 
@@ -760,7 +757,7 @@ public class messagebot extends SubspaceBot
 	{
 		if(!isAllDigits(message)) {
 			try {
-				HashSet messageIDs = new HashSet();
+				HashSet <Integer>messageIDs = new HashSet<Integer>();
 				String addAnd = " AND fnRead = 0";
 				String pieces[] = message.split(":", 2);
 				if(pieces.length == 2) {
@@ -883,7 +880,6 @@ public class messagebot extends SubspaceBot
 	public void myMessages(String name, String message)
 	{
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
-		String messageNumbers = "";
 		m_botAction.sendSmartPrivateMessage(name, "You have the following messages: ");
 		try {
 			ResultSet results = m_botAction.SQLQuery("local", query);
@@ -988,9 +984,9 @@ public class messagebot extends SubspaceBot
 	 /** Announces to a channel that they have recieved a new message.
 	  *  @param Name of channel
 	  */
-	 public Set messageSentFromWebsite(String channel)
+	 public Set<String> messageSentFromWebsite(String channel)
 	 {
-	 	Set s = null;
+	 	Set <String>s = null;
 
 	 	try {
 		 	Channel c = (Channel)channels.get(channel.toLowerCase());
@@ -1036,7 +1032,7 @@ public class messagebot extends SubspaceBot
 		{
 			public void run()
 			{
-				HashSet peopleToTell = new HashSet();
+				HashSet <String>peopleToTell = new HashSet<String>();
 
 				String query = "SELECT * FROM tblMessageToBot ORDER BY fnID ASC";
 				String query2 = "DELETE FROM tblMessageToBot";
@@ -1342,7 +1338,7 @@ public class messagebot extends SubspaceBot
      	try {
     		String pieces[] = message.split(":",2);
     		URL site = new URL(pieces[1]);
-    		HashSet nameList = new HashSet();
+    		HashSet <String>nameList = new HashSet<String>();
     		if(site.getFile().toLowerCase().endsWith("txt"))
     		{
     			URLConnection file = site.openConnection();
@@ -1385,8 +1381,8 @@ class Channel
 	String owner;
 	String channelName;
 	BotAction m_bA;
-	HashMap members;
-	HashSet banned;
+	HashMap <String,Integer>members;
+	HashSet <String>banned;
 	boolean isOpen;
 
 	/** Constructs the new channel.
@@ -1397,8 +1393,8 @@ class Channel
 		owner = creator;
 		channelName = cName.toLowerCase();
 		isOpen = pub;
-		members = new HashMap();
-		banned = new HashSet();
+		members = new HashMap<String,Integer>();
+		banned = new HashSet<String>();
 		members.put(owner.toLowerCase(), new Integer(3));
 		updateSQL(owner.toLowerCase(), 3);
 
@@ -1797,6 +1793,11 @@ class Channel
 		Iterator it = members.keySet().iterator();
 		String message = "";
 		m_bA.sendSmartPrivateMessage(name, "List of players on " + channelName + ": ");
+        if( !it.hasNext() ) {
+            m_bA.sendSmartPrivateMessage(name, "Error: no members found.  Please use ?help to report this problem." );
+            return;
+        }
+        
 		for(int k = 0;it.hasNext();)
 		{
 			String pName = (String)it.next();
@@ -1815,8 +1816,6 @@ class Channel
                 if( message.length() > 2 ) {
                     m_bA.sendSmartPrivateMessage(name, message.substring(0, message.length() - 2));
                     message = "";
-                } else {
-                    m_bA.sendSmartPrivateMessage(name, "Error: no members found.  Please use ?help to report this problem." );
                 }
 			}
 		}
