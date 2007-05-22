@@ -32,7 +32,6 @@ public class radiobot extends SubspaceBot {
     final static int MAX_ANNOUNCE_LINES = 3;
 
     private String[] m_announcement = {
-        "Trenchwars Radio! Trenchwars Radio! Trenchwars Radio!",
         "Trenchwars Radio! Trenchwars Radio! Trenchwars Radio!"
     };
 
@@ -124,6 +123,10 @@ public class radiobot extends SubspaceBot {
             handleStaffMessage(name, event.getPlayerID(), message);
         }
 
+        if(name.equals(m_currentHost)) {
+        	handleCurrentHostOnly(name, id, message);
+        }
+
         handlePrivateMessage(name, event.getPlayerID(), message);
 
         if(m_botAction.getOperatorList().isER(name)) {
@@ -143,6 +146,7 @@ public class radiobot extends SubspaceBot {
             m_currentPoll.handlePollCount(name, event.getMessage());
         }
     }
+
 
     public void handleStaffMessage( String name, int id, String message ){
         long time = System.currentTimeMillis();
@@ -191,7 +195,7 @@ public class radiobot extends SubspaceBot {
                 m_comment = "";
                 m_someoneHosting = false;
             } else {
-                m_botAction.sendPrivateMessage( id, "There is no current host." );
+                m_botAction.sendPrivateMessage(id, "There is no current host.");
             }
         } else if(message.startsWith("!who")) {
             m_botAction.sendPrivateMessage(id, "Radio hosts who are logged in:");
@@ -199,22 +203,18 @@ public class radiobot extends SubspaceBot {
             while(i.hasNext()) {
                 m_botAction.sendPrivateMessage(id, (String)i.next());
             }
-        } else {
-            handleCurrentHostOnly(name, id, message);
+        } else if(!m_currentHost.equals(name)
+        		&& (message.startsWith("!poll ")
+        		|| message.startsWith("!arena ")
+		        || message.startsWith("!zone ")
+		        || message.startsWith("!endpoll"))) {
+            m_botAction.sendPrivateMessage(id, "Sorry, only the current radio host may use that command."
+            	+ " If you are hosting, use the !host command.");
         }
     }
 
+
     public void handleCurrentHostOnly(String name, int id, String message) {
-        if(!m_currentHost.equals(name)) {
-            if(message.startsWith("!poll ")
-		            || message.startsWith("!arena ")
-		            || message.startsWith("!zone ")
-		            || message.startsWith("!endpoll")) {
-                m_botAction.sendPrivateMessage( id, "Sorry, only the current radio host may use that command."
-                	+ " If you are hosting, use the !host command." );
-            }
-            return;
-        }
 
         if(message.startsWith("!poll ")) {
             if(m_currentPoll != null) {
@@ -252,61 +252,76 @@ public class radiobot extends SubspaceBot {
                 m_botAction.sendZoneMessage(message.substring(6) + " -" + name, 2);
                 m_alreadyZoned.add(name);
             }
+
         } else if(message.startsWith("!nextshout")) {
-        	int i;
-        	try {
-        		i = Integer.parseInt(message.substring(11));
-        	} catch(NumberFormatException e) {
-        		i = 1;
+        	int i = 1;
+        	if(message.startsWith("!nextshout ")) {
+	        	try {
+	        		i = Integer.parseInt(message.substring(11));
+	        	} catch(NumberFormatException e) {
+	        		i = 1;
+	        	}
         	}
         	i = i < m_shoutouts.size() ? i : m_shoutouts.size();
         	for(; i > 0; i--) {
         		m_botAction.sendPrivateMessage(id, "Shout: " + m_shoutouts.remove());
         	}
+
         } else if(message.startsWith("!nextreq")) {
-        	int i;
-        	try {
-        		i = Integer.parseInt(message.substring(9));
-        	} catch(NumberFormatException e) {
-        		i = 1;
+        	int i = 1;
+        	if(message.startsWith("!nextreq ")) {
+	        	try {
+	        		i = Integer.parseInt(message.substring(9));
+	        	} catch(NumberFormatException e) {
+	        		i = 1;
+	        	}
         	}
         	i = i < m_requests.size() ? i : m_requests.size();
         	for(; i > 0; i--) {
         		m_botAction.sendPrivateMessage(id, "Reqst: " + m_requests.remove());
         	}
+
         } else if(message.startsWith("!nexttop")) {
-        	int i;
-        	try {
-        		i = Integer.parseInt(message.substring(9));
-        	} catch(NumberFormatException e) {
-        		i = 1;
+        	int i = 1;
+        	if(message.startsWith("!nexttop ")) {
+	        	try {
+	        		i = Integer.parseInt(message.substring(9));
+	        	} catch(NumberFormatException e) {
+	        		i = 1;
+	        	}
         	}
         	i = i < m_topics.size() ? i : m_topics.size();
         	for(; i > 0; i--) {
         		m_botAction.sendPrivateMessage(id, "Topic: " + m_topics.remove());
         	}
+
         } else if(message.startsWith("!nextques")) {
-        	int i;
-        	try {
-        		i = Integer.parseInt(message.substring(10));
-        	} catch(NumberFormatException e) {
-        		i = 1;
+        	int i = 1;
+        	if(message.startsWith("!nextques ")) {
+	        	try {
+	        		i = Integer.parseInt(message.substring(10));
+	        	} catch(NumberFormatException e) {
+	        		i = 1;
+	        	}
         	}
         	i = i < m_questions.size() ? i : m_questions.size();
         	for(; i > 0; i--) {
         		m_botAction.sendPrivateMessage(id, "Quest: " + m_questions.remove());
         	}
+
         } else if(message.startsWith("!nextall")) {
        		m_botAction.sendPrivateMessage(id, "Shout: " + m_shoutouts.remove());
        		m_botAction.sendPrivateMessage(id, "Reqst: " + m_requests.remove());
     		m_botAction.sendPrivateMessage(id, "Topic: " + m_topics.remove());
     		m_botAction.sendPrivateMessage(id, "Quest: " + m_questions.remove());
+
         } else if(message.startsWith("!clear")) {
         	m_shoutouts.clear();
         	m_requests.clear();
         	m_topics.clear();
         	m_questions.clear();
         	m_botAction.sendPrivateMessage(id, "All requests cleared.");
+
         } else if(message.startsWith("!addannounce ")) {
         	if(m_announcement.length >= MAX_ANNOUNCE_LINES) {
         		m_botAction.sendPrivateMessage(id, "Max announce lines reached.");
@@ -317,9 +332,11 @@ public class radiobot extends SubspaceBot {
 	        	m_announcement = temp;
 	        	m_botAction.sendPrivateMessage(id, "Message added.");
         	}
-        } else if(message.startsWith("!clrannounce ")) {
+
+        } else if(message.startsWith("!clrannounce")) {
 			m_announcement = new String[0];
 			m_botAction.sendPrivateMessage(id, "Announcement cleared.");
+
         } else if(message.startsWith("!setmax ")) {
         	int i;
         	try {
@@ -336,6 +353,11 @@ public class radiobot extends SubspaceBot {
         	m_maxShoutouts = i;
         	m_maxTopics = i;
         	m_botAction.sendPrivateMessage(id, "Requests limit set to " + i);
+
+        } else if(message.startsWith("!help")) {
+        	m_botAction.privateMessageSpam(id, currentRadioHostHelp);
+        } else if(message.startsWith("!viewannounce")) {
+        	m_botAction.privateMessageSpam(id, m_announcement);
         }
     }
 
@@ -395,10 +417,12 @@ public class radiobot extends SubspaceBot {
                     return;
                 }
 
+				if(votes.containsKey(name))
+	                m_botAction.sendSmartPrivateMessage(name, "Your vote has been changed.");
+				else
+	                m_botAction.sendSmartPrivateMessage(name, "Your vote has been counted.");
+
                 votes.put(name, new Integer(vote));
-
-                m_botAction.sendSmartPrivateMessage(name, "Your vote has been counted.");
-
             } catch( Exception e ){
                 m_botAction.sendArenaMessage( e.getMessage() );
                 m_botAction.sendArenaMessage( e.getClass().getName() );
@@ -407,7 +431,7 @@ public class radiobot extends SubspaceBot {
 
         public void endPoll(){
             m_botAction.sendArenaMessage( "The poll has ended! Question: "
-            + poll[0] );
+            	+ poll[0] );
 
             int[] counters = new int[range+1];
             Iterator iterator = votes.values().iterator();
@@ -487,7 +511,10 @@ public class radiobot extends SubspaceBot {
         " --Radio Staff Help",
         "!who                  - Shows who is currently logged into the bot",
         "!host <comment>       - Announces that you are hosting, allows you to use Current Radio Host commands",
-        "!unhost               - Logs you out of the radio",
+        "!unhost               - Logs you out of the radio"
+    };
+
+    static String[] currentRadioHostHelp = {
         " --Current Radio Host Only",
         "!arena <message>      - Sends an arena message.",
         "!zone <message>       - Limited to once a day.",
@@ -495,6 +522,7 @@ public class radiobot extends SubspaceBot {
         "!endpoll              - Ends a poll and tallies the results.",
         "!addannounce <msg>    - Adds a line to the announcement. 3 lines max.",
         "!clrannounce          - Clears the announcement.",
+        "!viewannounce         - View the current announcement.",
         " --Read requests (append a number to retrieve several at once)",
         "!nextshout !nextreq !nexttop !nextques !nextall",
         "!clear                - Erases all pending requests.",
