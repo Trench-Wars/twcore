@@ -140,6 +140,7 @@ public class twbot extends SubspaceBot
 			ext.handleEvent(event);
 		}
 	}
+    
 	public void handleWhatsNew(String name)
 	{
 		try
@@ -248,7 +249,7 @@ public class twbot extends SubspaceBot
 	{
 		if (!locked)
 		{
-		    if( (!Tools.isAllDigits(arena) || m_opList.isHighmod( name )) && name != m_botAction.getBotName() ) {
+		    if( !Tools.isAllDigits(arena) || m_opList.isHighmod( name ) ) {
 			    actualGo(arena);
 		    } else {
 				m_botAction.sendSmartPrivateMessage( name, "Sorry, but you are not authorized to move TWBots into pubs." );
@@ -306,8 +307,14 @@ public class twbot extends SubspaceBot
 		}
 	}
 
-	public void handleEvent(Message event)
-	{
+    /**
+     * Handles a Message event.  If the bot itself is PMing, set the name of
+     * the messager to a specially-created internal access name that has only
+     * ER access.  In this way the safety of the autopilot module is ensured.
+     */
+	public void handleEvent(Message event) {
+        if( event.getMessager() == m_botAction.getBotName() )
+            event.setMessager("/autoER");
 		distributeEvent((SubspaceEvent) event);
 		String message = event.getMessage();
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE)
@@ -540,6 +547,7 @@ public class twbot extends SubspaceBot
 		m_botAction.joinArena(currentArena);
 		m_botAction.sendUnfilteredPublicMessage("?chat=robodev");
 		m_opList = m_botAction.getOperatorList();
+        m_opList.addOperator("/autoER", OperatorList.ER_LEVEL);
 	}
 
 	public void handleEvent(PlayerLeft event)

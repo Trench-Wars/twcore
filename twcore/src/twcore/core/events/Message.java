@@ -161,4 +161,12 @@ public class Message extends SubspaceEvent {
 
         return m_chatNumber;
     }
+    
+    /**
+     * Special use only.
+     * @param name The sender's name to set the message to
+     */
+    public void setMessager(String name){
+        m_messager = name;
+    }
 }

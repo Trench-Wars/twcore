@@ -447,6 +447,19 @@ public class OperatorList {
     }
 
     /**
+     * Manually adds an operator to the access list.  For special use only.
+     * (Not needed in any normal procedure.)
+     * @param name Name to add
+     * @param accessLevel Access level at which to add the name
+     */
+    public void addOperator( String name, int accessLevel ) {
+        if( accessLevel < PLAYER_LEVEL || accessLevel > OWNER_LEVEL )
+            return;
+        m_accessList.remove(name);
+        m_accessList.put( name.trim().toLowerCase(), new Integer( accessLevel ) );        
+    }
+    
+    /**
      * Clears the access list.
      */
     void clearList(){
