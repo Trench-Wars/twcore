@@ -114,7 +114,7 @@ public class twbotauto extends TWBotExtension
                 m_botAction.sendChatMessage( s );
             }
         } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(name, "Couldn't parse that.  Ex: !add lock,setship 2,spec 10;8;Starts the game." );            
+            m_botAction.sendSmartPrivateMessage(name, "Couldn't parse that.  Ex: !add dolock,setship 2,spec 10;8;Starts the game." );            
         }
     }
 
@@ -196,7 +196,7 @@ public class twbotauto extends TWBotExtension
         if( !isEnabled || tasks.size() == 0 || !msg.startsWith("!task" ))
             return;
         try {
-            int num = Integer.parseInt(msg.substring(5));
+            int num = Integer.parseInt(msg.substring(5).trim()) - 1;
             AutoTask c = tasks.get(num);
             String execute = c.doVote(name);
             // Execute if number of votes have been reached
@@ -248,7 +248,7 @@ public class twbotauto extends TWBotExtension
                 "automatically-hosted arenas if desired.  Provide a list of commands the task",
                 "will execute (separated by commas) WITHOUT the !, number of votes required to",
                 "run the task, and the description players will see when they use !info.",
-                "Sample usage:   !add lock,setship 2,spec 10;8;Starts a game of twisted.",
+                "Sample usage:   !add dolock,setship 2,spec 10;8;Starts a game of twisted.",
                 "!add <cmd1,cmd2,cmd3,etc>;<#VotesRequired>;<Description>     - See above.",
                 "!remove <Task#>       - Removes task <Task#> as found in !list.",
                 "!list                 - Lists all tasks currently set up.",
