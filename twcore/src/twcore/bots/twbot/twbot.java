@@ -45,6 +45,9 @@ import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 import twcore.core.util.Tools;
 
+/**
+ * TW's event utility bot.  Soon to be merged with MultiBot. 
+ */
 public class twbot extends SubspaceBot
 {
 	private BotAction m_botAction;
@@ -61,7 +64,8 @@ public class twbot extends SubspaceBot
 	private AdaptiveClassLoader m_loader;
 	private File botRoot;
 	private File coreRoot;
-	/** Creates a new instance of newportabot */
+    
+	/** Creates a new instance of twbot */
 	public twbot(BotAction botAction)
 	{
 		super(botAction);
@@ -284,9 +288,6 @@ public class twbot extends SubspaceBot
 			((TWBotExtension) i.next()).cancel();
 		}
 		extensions.clear();
-		//twbotstandard std = new twbotstandard();
-		//std.set( m_botAction, m_opList, this );
-		//extensions.put( "standard", std );
 	}
 	
 	private void goHome( String name ) {
@@ -313,8 +314,6 @@ public class twbot extends SubspaceBot
      * ER access.  In this way the safety of the autopilot module is ensured.
      */
 	public void handleEvent(Message event) {
-        if( event.getMessager() == m_botAction.getBotName() )
-            event.setMessager("/autoER");
 		distributeEvent((SubspaceEvent) event);
 		String message = event.getMessage();
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE)
@@ -547,7 +546,9 @@ public class twbot extends SubspaceBot
 		m_botAction.joinArena(currentArena);
 		m_botAction.sendUnfilteredPublicMessage("?chat=robodev");
 		m_opList = m_botAction.getOperatorList();
-        m_opList.addOperator("/autoER", OperatorList.ER_LEVEL);
+        // Internally reduce bot to ER level.  This does not affect any functionality;
+        // only used to protect against malicious commands sent through Autopilot module.  
+        m_opList.addOperator(m_botAction.getBotName(), OperatorList.ER_LEVEL);
 	}
 
 	public void handleEvent(PlayerLeft event)
