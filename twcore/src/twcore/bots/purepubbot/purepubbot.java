@@ -443,6 +443,8 @@ public class purepubbot extends SubspaceBot
                 doStopTimeCmd(sender);
             else if(command.equals("!listships"))
                 doListShipsCmd(sender);
+            else if(command.equals("!team"))
+                doShowTeamCmd(sender);
             else if(command.startsWith("!set "))
                 doSetCmd(sender, message.substring(5));
             else if(command.equals("!die"))
@@ -736,6 +738,49 @@ public class purepubbot extends SubspaceBot
 
     
     /**
+     * Shows who on the team is in which ship.
+     * 
+     * @param sender is the person issuing the command.
+     */
+    public void doShowTeamCmd(String sender) {
+        Player p = m_botAction.getPlayer(sender);
+        if( p == null )
+            throw new RuntimeException("Can't find you.  Please report this to staff.");
+        if( p.getShipType() == 0 )
+            throw new RuntimeException("You must be in a ship for this command to work.");
+        Vector[] team = getTeamData( p.getFrequency() );
+        for(int i = 0; i < team.length; i++ ) {
+            if( team[i].size() > 0) {
+                String text = Tools.formatString(Tools.shipName(i) + "s", 11);
+                text += "(" + team[i].size() + "):  ";
+                for( int j = 0; j < team[i].size(); j++) {
+                   text += (String)team[i].get(j) + " ";
+                }
+                m_botAction.sendSmartPrivateMessage(sender, text);
+            }
+        }
+    }
+    
+    
+    /**
+     * Collects names of players on a freq into a Vector array by ship.
+     * @param freq Frequency to collect info on
+     * @return Vector array containing player names on given freq
+     */
+    public Vector<String>[] getTeamData( int freq ) {
+        Vector<String>[] team = new Vector[8];
+        for( int i = 0; i < team.length; i++ )
+            team[i] = new Vector<String>(); 
+        Iterator i = m_botAction.getFreqPlayerIterator(freq);
+        while( i.hasNext() ) {
+            Player p = (Player)i.next();
+            team[p.getShipType() - 1].add(p.getPlayerName());
+        }            
+        return team;
+    }
+    
+    
+    /**
      * Displays a help message depending on access level.
      *
      * @param sender is the person issuing the command.
@@ -757,17 +802,18 @@ public class purepubbot extends SubspaceBot
                 "                           0=disabled; 1=any amount; other=weighted:",
                 "                           2 = 1/2 of freq can be this ship, 5 = 1/5, ...",
                 "!time                   -- Provides time remaining in Flag Time mode.",
+                "!team                   -- Shows which ships team members are in.",
                 "!die                    -- Logs the bot off of the server.",
         };
 
         String[] playerHelpMessage =
         {
-                "Hello!  I am a bot designed to enforce 'pure pub' rules.",
-                "When enabled, I may restrict certain ships, prevent private frequencies, or run Flag Time mode.",
-                "Flag Time mode commands (a freq must hold flag for an amount of consecutive minutes to win):",
-                "!Time                            -- Provides time remaining in Flag Time mode.",
-                "!Warp                            -- Warps you into flagroom at start of next round.",
-                "!Help                            -- Displays this help message."
+                "Hi.  I'm a bot designed to enforce pure pub rules.",
+                "I restrict ships, manage private frequencies, and run Flag Time mode.",
+                "Commands:",
+                "!team                   -- Tells you which ships your team members are in.",
+                "!time                   -- Provides time remaining when Flag Time mode.",
+                "!warp                   -- Warps you into flagroom at start of next round (flag time)",
         };
 
         if( opList.isHighmod( sender ) )
