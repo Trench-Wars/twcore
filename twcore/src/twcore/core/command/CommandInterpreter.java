@@ -226,7 +226,6 @@ public class CommandInterpreter {
 
         String          message;
         String          messager = null;
-        String          methodName;
         int             messageType;
 
         result = false;
