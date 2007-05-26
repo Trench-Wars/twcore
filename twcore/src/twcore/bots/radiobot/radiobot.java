@@ -4,21 +4,25 @@ import java.util.*;
 import twcore.core.*;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
 import twcore.core.util.Tools;
 
 /**
  * To assist in hosting radio (while not requiring a host to have staff access).
+ * based on relaybot
  */
-public class radiobot extends SubspaceBot {
+public final class radiobot extends SubspaceBot {
     private EventRequester m_req;
+    private OperatorList m_opList;
     private LinkedList<String> m_loggedInList;
     private String m_currentPassword;
     private LinkedList<String> m_alreadyZoned;
     private String m_currentHost = "", m_comment = "";
     private Poll m_currentPoll = null;
     private boolean m_announcing = false;
-    private long m_timeStarted = System.currentTimeMillis();
     private boolean m_someoneHosting = false;
+    private long m_timeStarted;
+    private long m_timeToZone;
 
     private RadioQueue m_shoutouts;
     private RadioQueue m_requests;
@@ -29,11 +33,13 @@ public class radiobot extends SubspaceBot {
     private int m_maxTopics = 20;
     private int m_maxQuestions = 20;
 
-    final static int MAX_ANNOUNCE_LINES = 3;
+	private final static String NO_HOST = "No one is currently hosting.";
+    private final static int MAX_ANNOUNCE_LINES = 3;
+    private final static long TWO_HOURS = 7200000;
 
-    private String[] m_announcement = {
-        "Trenchwars Radio! Trenchwars Radio! Trenchwars Radio!"
-    };
+    private String[] m_announcement;
+    private int m_announceLength;
+    private String m_welcome;
 
     /** Creates a new instance of radiobot */
     public radiobot(BotAction botAction) {
@@ -41,6 +47,8 @@ public class radiobot extends SubspaceBot {
         m_req = botAction.getEventRequester();
         m_req.request(EventRequester.LOGGED_ON);
         m_req.request(EventRequester.MESSAGE);
+        m_req.request(EventRequester.PLAYER_ENTERED);
+        m_opList = botAction.getOperatorList();
         m_loggedInList = new LinkedList<String>();
         m_alreadyZoned = new LinkedList<String>();
         m_currentPassword = m_botAction.getBotSettings().getString("ServPass");
@@ -49,14 +57,33 @@ public class radiobot extends SubspaceBot {
         m_requests = new RadioQueue();
         m_topics = new RadioQueue();
         m_questions = new RadioQueue();
+
+        m_announcement = new String[MAX_ANNOUNCE_LINES];
+        m_announcement[0] = "Trenchwars Radio! Trenchwars Radio! Trenchwars Radio!";
+        m_announcement[1] = m_announcement[2] = "";
+        m_announceLength = 1;
+        m_welcome = "";
+
+        m_timeStarted = System.currentTimeMillis();
+        m_timeToZone = m_timeStarted + TWO_HOURS;
     }
 
-    public void handleEvent( LoggedOn event ){
+
+    public void handleEvent(LoggedOn event) {
         m_botAction.joinArena("radio");
         m_botAction.setMessageLimit(10);
     }
 
+
+    public void handleEvent(PlayerEntered event) {
+		if(!m_welcome.equals("")) {
+			m_botAction.sendPrivateMessage(event.getPlayerID(), m_welcome);
+		}
+    }
+
+
     public void handleEvent(Message event) {
+
         if(event.getMessageType() != Message.PRIVATE_MESSAGE)
         	return;
 
@@ -65,102 +92,89 @@ public class radiobot extends SubspaceBot {
         if(name == null)
         	return;
 		String message = event.getMessage();
+		boolean isLoggedIn = m_loggedInList.contains(name);
+		boolean isCurrentHost = isLoggedIn && m_currentHost.equals(name);
+		boolean isER = m_opList.isER(name);
 
-		if(message.startsWith("!arena ") && name.equals(m_currentHost)) {
-			m_botAction.sendArenaMessage(message.substring(7) + " -" + m_currentHost
-				, event.getSoundCode() == 12 ? 2 : event.getSoundCode());
-			return;
-		}
+		//make command part lowercase
+		message = message.trim();
+		int indexOfSpace = message.indexOf(' ');
+		if(indexOfSpace > 0)
+			message = message.substring(0, indexOfSpace).toLowerCase() + message.substring(indexOfSpace);
+		else
+			message = message.toLowerCase();
 
-		if((message.startsWith("!shoutout ")
-				|| message.startsWith("!request ")
-				|| message.startsWith("!topic ")
-				|| message.startsWith("!question "))
-				&& !m_someoneHosting) {
-			m_botAction.sendPrivateMessage(id, "A host is not currently using RadioBot.");
-			return;
-		}
-
-	    if(message.startsWith("!shoutout ")) {
-	    	if(m_shoutouts.size() >= m_maxShoutouts) {
-	    		m_botAction.sendPrivateMessage(id, "Sorry, shoutouts box is full. Try again later.");
-	    	} else {
-		    	if(m_shoutouts.add(name, message.substring(10)))
-		    		m_botAction.sendPrivateMessage(id, "Updated shoutout request.");
-		    	else
-		    		m_botAction.sendPrivateMessage(id, "Added shoutout request.");
-	    	}
-	    } else if(message.startsWith("!request ")) {
-	    	if(m_requests.size() >= m_maxRequests) {
-	    		m_botAction.sendPrivateMessage(id, "Sorry, requests box is full. Try again later.");
-	    	} else {
-		    	if(m_requests.add(name, message.substring(9)))
-		    		m_botAction.sendPrivateMessage(id, "Updated song request.");
-		    	else
-		    		m_botAction.sendPrivateMessage(id, "Added song request.");
-	    	}
-	    } else if(message.startsWith("!topic ")) {
-	    	if(m_topics.size() >= m_maxTopics) {
-	    		m_botAction.sendPrivateMessage(id, "Sorry, topics box is full. Try again later.");
-	    	} else {
-		    	if(m_topics.add(name, message.substring(7)))
-		    		m_botAction.sendPrivateMessage(id, "Updated topic request.");
-		    	else
-		    		m_botAction.sendPrivateMessage(id, "Added topic request.");
-	    	}
-	    } else if(message.startsWith("!question ")) {
-	    	if(m_questions.size() >= m_maxQuestions) {
-	    		m_botAction.sendPrivateMessage(id, "Sorry, questions box is full. Try again later.");
-	    	} else {
-		    	if(m_questions.add(name, message.substring(10)))
-		    		m_botAction.sendPrivateMessage(id, "Updated question request.");
-		    	else
-		    		m_botAction.sendPrivateMessage(id, "Added question request.");
-	    	}
-	    }
-
-        if(m_loggedInList.contains(name)) {
-            handleStaffMessage(name, event.getPlayerID(), message);
-        }
-
-        if(name.equals(m_currentHost)) {
-        	handleCurrentHostOnly(name, id, message);
-        }
-
-        handlePrivateMessage(name, event.getPlayerID(), message);
-
-        if(m_botAction.getOperatorList().isER(name)) {
-        	if(message.startsWith("!setpw ")) {
-	    		m_currentPassword = message.substring(7);
-	    		m_botAction.sendPrivateMessage(id, "Password changed.");
-			} else if(message.startsWith("!go ")) {
-				m_botAction.changeArena(message.substring(4));
-			} else if(message.equals("!die")) {
-				m_botAction.die();
-			} else if(message.startsWith("!help")) {
-	           	m_botAction.privateMessageSpam(id, erHelp);
+		/**
+		 * Handle !help
+		 */
+		if(message.startsWith("!help")) {
+			if(isLoggedIn) {
+            	m_botAction.privateMessageSpam(id, staffHelp);
+	            if(isCurrentHost) {
+    	    		m_botAction.privateMessageSpam(id, currentRadioHostHelp);
+	            }
 			}
+            m_botAction.privateMessageSpam(id, pubHelp);
+			if(isER) {
+				m_botAction.privateMessageSpam(id, erHelp);
+			}
+			return;
         }
 
-        if(m_currentPoll != null){
-            m_currentPoll.handlePollCount(name, event.getMessage());
+        /**
+         * Handle logged in commands
+         */
+        if(isLoggedIn && handleStaffMessage(name, id, message)) {
+        	return;
+        }
+
+        /**
+         * Handle current host only commands
+         */
+        if(isCurrentHost && handleCurrentHostOnly(name, id, message, event.getSoundCode())) {
+        	return;
+        }
+
+        /**
+         * Handle public commands
+         */
+        if(handlePrivateMessage(name, id, message)) {
+        	return;
+        }
+
+		/**
+		 * Handle ER+ commands
+		 */
+		if(isER && handleModMessage(name, id, message)) {
+			return;
+		}
+
+		/**
+		 * Handle poll votes
+		 */
+		if(m_currentPoll != null){
+            m_currentPoll.handlePollCount(name, message);
         }
     }
 
 
-    public void handleStaffMessage( String name, int id, String message ){
-        long time = System.currentTimeMillis();
-        if(time >= 21600000 + m_timeStarted){
-            m_alreadyZoned.clear();
-            m_timeStarted = time;
-        }
-        if( message.startsWith( "!help" )){
-            m_botAction.privateMessageSpam( id, staffHelp );
-        } else if( message.equals( "!host" )){
+	/**
+	 * Handle logged in commands
+	 */
+    private boolean handleStaffMessage(String name, int id, String message) {
+
+    	boolean handled = false;
+
+		if(message.startsWith("!host")) {
+        	handled = true;
             if(!m_someoneHosting){
                 m_currentHost = name;
-                m_comment = "^_^";
-                m_botAction.sendArenaMessage( "Current Host: " + name + " (" + m_comment + ")" );
+				if(message.startsWith("!host ")) {
+					m_comment = message.substring(6);
+				} else {
+	                m_comment = "^_^";
+				}
+                m_botAction.sendArenaMessage("Current Host: " + name + " (" + m_comment + ")");
 
                 if(!m_announcing) {
                     m_botAction.scheduleTaskAtFixedRate(
@@ -169,24 +183,11 @@ public class radiobot extends SubspaceBot {
                 }
                 m_someoneHosting = true;
             } else {
-                m_botAction.sendPrivateMessage( id, "Sorry, you must !unhost before you !host." );
-            }
-        } else if(message.startsWith("!host ")) {
-            if(!m_someoneHosting){
-                m_comment = message.substring(6);
-                m_currentHost = name;
-                m_botAction.sendArenaMessage("Current Host: " + name + " (" + m_comment + ")");
-                if(!m_announcing) {
-                    m_botAction.scheduleTaskAtFixedRate(
-	                    new AnnounceTask(), 30000, 150000);
-                    m_announcing = true;
-                }
-                m_someoneHosting = true;
-            } else {
                 m_botAction.sendPrivateMessage(id, "Sorry, you must !unhost before you !host.");
             }
 
         } else if(message.startsWith("!unhost")) {
+        	handled = true;
             if(m_someoneHosting) {
                 m_botAction.cancelTasks();
                 m_announcing = false;
@@ -195,49 +196,87 @@ public class radiobot extends SubspaceBot {
                 m_comment = "";
                 m_someoneHosting = false;
             } else {
-                m_botAction.sendPrivateMessage(id, "There is no current host.");
+                m_botAction.sendPrivateMessage(id, NO_HOST);
             }
+
         } else if(message.startsWith("!who")) {
+        	handled = true;
             m_botAction.sendPrivateMessage(id, "Radio hosts who are logged in:");
             Iterator i = m_loggedInList.iterator();
+            String who;
             while(i.hasNext()) {
-                m_botAction.sendPrivateMessage(id, (String)i.next());
+            	who = (String)i.next();
+                m_botAction.sendPrivateMessage(id, who + (who.equals(m_currentHost) ? " (current host)" : ""));
             }
+
+        } else if(message.startsWith("!status")) {
+        	handled = true;
+        	if(!m_someoneHosting) {
+        		m_botAction.sendPrivateMessage(id, NO_HOST);
+        	} else {
+        		m_botAction.sendPrivateMessage(id, "Current host: " + m_currentHost + " - Can zone: " + !m_alreadyZoned.contains(m_currentHost));
+        	}
+            m_botAction.sendPrivateMessage(id,
+            	"Shoutouts:" + m_shoutouts.size()
+            	+ " Requests:" + m_requests.size()
+            	+ " Topics:" + m_topics.size()
+            	+ " Questions:" + m_questions.size());
+            m_botAction.sendPrivateMessage(id, "Poll running: " + (m_currentPoll != null));
+
+            long ontime = System.currentTimeMillis() - m_timeStarted;
+            m_botAction.sendPrivateMessage(id, "Online for " + (ontime / 1000 / 60 / 60) + " hours and " + (ontime / 1000 / 60 % 60) + " minutes.");
+
         } else if(!m_currentHost.equals(name)
         		&& (message.startsWith("!poll ")
         		|| message.startsWith("!arena ")
 		        || message.startsWith("!zone ")
 		        || message.startsWith("!endpoll"))) {
+        	handled = true;
             m_botAction.sendPrivateMessage(id, "Sorry, only the current radio host may use that command."
             	+ " If you are hosting, use the !host command.");
         }
+
+        return handled;
     }
 
 
-    public void handleCurrentHostOnly(String name, int id, String message) {
+	/**
+	 * Handle current host only commands
+	 */
+    private boolean handleCurrentHostOnly(String name, int id, String message, int sound) {
 
-        if(message.startsWith("!poll ")) {
+    	boolean handled = false;
+
+		if(message.startsWith("!arena ") && name.equals(m_currentHost)) {
+        	handled = true;
+			m_botAction.sendArenaMessage(message.substring(7) + " -" + m_currentHost
+				, sound == 12 ? 2 : sound);
+
+		} else if(message.startsWith("!poll ")) {
+        	handled = true;
             if(m_currentPoll != null) {
                 m_botAction.sendPrivateMessage(name, "A poll is currently in session."
                 	+ " End this poll before beginning another one.");
-                return;
+                return true;
             }
             StringTokenizer izer = new StringTokenizer(message.substring(6), ":");
             int tokens = izer.countTokens();
             if(tokens < 2) {
                 m_botAction.sendPrivateMessage(id, "Sorry but the poll format is wrong.");
-                return;
+                return true;
             }
 
             String[] polls = new String[tokens];
             int i = 0;
-            while( izer.hasMoreTokens() ){
+            while(izer.hasMoreTokens()) {
                 polls[i] = izer.nextToken();
                 i++;
             }
 
             m_currentPoll = new Poll(polls);
+
         } else if(message.startsWith("!endpoll")) {
+        	handled = true;
             if(m_currentPoll == null) {
                 m_botAction.sendPrivateMessage(id, "There is no poll running right now.");
             } else {
@@ -245,7 +284,12 @@ public class radiobot extends SubspaceBot {
                 m_currentPoll = null;
             }
 
-        } else if( message.startsWith( "!zone " )){
+        } else if(message.startsWith("!zone ")) {
+        	handled = true;
+   	        if(System.currentTimeMillis() >= m_timeToZone) {
+	            m_alreadyZoned.clear();
+	            m_timeToZone += TWO_HOURS;
+	        }
             if(m_alreadyZoned.contains(name)) {
                 m_botAction.sendPrivateMessage(id, "Sorry, you used your zone message today.");
             } else {
@@ -254,6 +298,7 @@ public class radiobot extends SubspaceBot {
             }
 
         } else if(message.startsWith("!nextshout")) {
+        	handled = true;
         	int i = 1;
         	if(message.startsWith("!nextshout ")) {
 	        	try {
@@ -268,6 +313,7 @@ public class radiobot extends SubspaceBot {
         	}
 
         } else if(message.startsWith("!nextreq")) {
+        	handled = true;
         	int i = 1;
         	if(message.startsWith("!nextreq ")) {
 	        	try {
@@ -282,6 +328,7 @@ public class radiobot extends SubspaceBot {
         	}
 
         } else if(message.startsWith("!nexttop")) {
+        	handled = true;
         	int i = 1;
         	if(message.startsWith("!nexttop ")) {
 	        	try {
@@ -296,6 +343,7 @@ public class radiobot extends SubspaceBot {
         	}
 
         } else if(message.startsWith("!nextques")) {
+        	handled = true;
         	int i = 1;
         	if(message.startsWith("!nextques ")) {
 	        	try {
@@ -310,12 +358,14 @@ public class radiobot extends SubspaceBot {
         	}
 
         } else if(message.startsWith("!nextall")) {
+        	handled = true;
        		m_botAction.sendPrivateMessage(id, "Shout: " + m_shoutouts.remove());
        		m_botAction.sendPrivateMessage(id, "Reqst: " + m_requests.remove());
     		m_botAction.sendPrivateMessage(id, "Topic: " + m_topics.remove());
     		m_botAction.sendPrivateMessage(id, "Quest: " + m_questions.remove());
 
         } else if(message.startsWith("!clear")) {
+        	handled = true;
         	m_shoutouts.clear();
         	m_requests.clear();
         	m_topics.clear();
@@ -323,21 +373,21 @@ public class radiobot extends SubspaceBot {
         	m_botAction.sendPrivateMessage(id, "All requests cleared.");
 
         } else if(message.startsWith("!addannounce ")) {
-        	if(m_announcement.length >= MAX_ANNOUNCE_LINES) {
+        	handled = true;
+        	if(m_announceLength >= MAX_ANNOUNCE_LINES) {
         		m_botAction.sendPrivateMessage(id, "Max announce lines reached.");
         	} else {
-	        	String[] temp = new String[m_announcement.length + 1];
-	        	System.arraycopy(m_announcement, 0, temp, 0, m_announcement.length);
-	        	temp[m_announcement.length] = message.substring(13);
-	        	m_announcement = temp;
+	        	m_announcement[m_announceLength++] = message.substring(13);
 	        	m_botAction.sendPrivateMessage(id, "Message added.");
         	}
 
         } else if(message.startsWith("!clrannounce")) {
-			m_announcement = new String[0];
+        	handled = true;
+			m_announceLength = 0;
 			m_botAction.sendPrivateMessage(id, "Announcement cleared.");
 
         } else if(message.startsWith("!setmax ")) {
+        	handled = true;
         	int i;
         	try {
         		i = Integer.parseInt(message.substring(8));
@@ -354,40 +404,134 @@ public class radiobot extends SubspaceBot {
         	m_maxTopics = i;
         	m_botAction.sendPrivateMessage(id, "Requests limit set to " + i);
 
-        } else if(message.startsWith("!help")) {
-        	m_botAction.privateMessageSpam(id, currentRadioHostHelp);
         } else if(message.startsWith("!viewannounce")) {
-        	m_botAction.privateMessageSpam(id, m_announcement);
+        	handled = true;
+        	for(int i = 0; i < m_announceLength; i++) {
+        		m_botAction.sendPrivateMessage(id, m_announcement[i]);
+        	}
         }
+        return handled;
     }
 
 
-    public void handlePrivateMessage(String name, int id, String message) {
-        if(message.startsWith("!help")) {
-            m_botAction.privateMessageSpam(id, pubHelp);
-        } else if( message.startsWith("!login ")) {
+	/**
+	 * Handle public commands
+	 */
+    private boolean handlePrivateMessage(String name, int id, String message) {
+
+    	boolean handled = false;
+
+		if((message.startsWith("!shoutout ")
+				|| message.startsWith("!request ")
+				|| message.startsWith("!topic ")
+				|| message.startsWith("!question "))
+				&& !m_someoneHosting) {
+			handled = true;
+			m_botAction.sendPrivateMessage(id, NO_HOST);
+		} else if(message.startsWith("!shoutout ")) {
+			handled = true;
+	    	if(m_shoutouts.size() >= m_maxShoutouts) {
+	    		m_botAction.sendPrivateMessage(id, "Sorry, shoutouts box is full. Try again later.");
+	    	} else {
+		    	if(m_shoutouts.add(name, message.substring(10)))
+		    		m_botAction.sendPrivateMessage(id, "Updated shoutout request.");
+		    	else
+		    		m_botAction.sendPrivateMessage(id, "Added shoutout request.");
+	    	}
+	    } else if(message.startsWith("!request ")) {
+			handled = true;
+	    	if(m_requests.size() >= m_maxRequests) {
+	    		m_botAction.sendPrivateMessage(id, "Sorry, requests box is full. Try again later.");
+	    	} else {
+		    	if(m_requests.add(name, message.substring(9)))
+		    		m_botAction.sendPrivateMessage(id, "Updated song request.");
+		    	else
+		    		m_botAction.sendPrivateMessage(id, "Added song request.");
+	    	}
+	    } else if(message.startsWith("!topic ")) {
+			handled = true;
+	    	if(m_topics.size() >= m_maxTopics) {
+	    		m_botAction.sendPrivateMessage(id, "Sorry, topics box is full. Try again later.");
+	    	} else {
+		    	if(m_topics.add(name, message.substring(7)))
+		    		m_botAction.sendPrivateMessage(id, "Updated topic request.");
+		    	else
+		    		m_botAction.sendPrivateMessage(id, "Added topic request.");
+	    	}
+	    } else if(message.startsWith("!question ")) {
+			handled = true;
+	    	if(m_questions.size() >= m_maxQuestions) {
+	    		m_botAction.sendPrivateMessage(id, "Sorry, questions box is full. Try again later.");
+	    	} else {
+		    	if(m_questions.add(name, message.substring(10)))
+		    		m_botAction.sendPrivateMessage(id, "Updated question request.");
+		    	else
+		    		m_botAction.sendPrivateMessage(id, "Added question request.");
+	    	}
+	    } else if( message.startsWith("!login ")) {
+			handled = true;
         	if(m_currentPassword.equals("")) {
         		m_botAction.sendPrivateMessage(id, "Login currently disabled.");
-        		return;
-        	}
-            if(m_currentPassword.equals(message.substring(7))) {
-                if( !m_loggedInList.contains(m_botAction.getPlayerName(id))) {
+        	} else if(m_currentPassword.equals(message.substring(7))) {
+                if(!m_loggedInList.contains(m_botAction.getPlayerName(id))) {
                     m_loggedInList.add(name);
-                    m_botAction.sendPrivateMessage(id, "Login Successful");
+                    m_botAction.sendPrivateMessage(id, "Login Successful.");
+                } else {
+                	m_botAction.sendPrivateMessage(id, "You are already logged in.");
                 }
             } else {
-                m_botAction.sendPrivateMessage(id, "Incorrect password");
+                m_botAction.sendPrivateMessage(id, "Incorrect password.");
             }
         }
+        return handled;
     }
 
-    public class Poll {
+
+	/**
+	 * Handle ER+ commands
+	 */
+	private boolean handleModMessage(String name, int id, String message) {
+
+		boolean handled = false;
+
+    	if(message.startsWith("!setpw ")) {
+    		handled = true;
+    		m_currentPassword = message.substring(7);
+    		m_botAction.sendPrivateMessage(id, "Password changed.");
+		} else if(message.startsWith("!go ")) {
+    		handled = true;
+			m_botAction.changeArena(message.substring(4));
+		} else if(message.equals("!die")) {
+    		handled = true;
+			m_botAction.die();
+		} else if(message.startsWith("!grantzone")) {
+    		handled = true;
+			if(m_alreadyZoned.remove(m_currentHost)) {
+				m_botAction.sendPrivateMessage(id, "Zoner granted to " + m_currentHost);
+				m_botAction.sendPrivateMessage(m_currentHost, name + " has granted you another zone message.");
+			} else {
+				m_botAction.sendPrivateMessage(id, "No current host or host is already granted a zone.");
+			}
+		} else if(message.startsWith("!setwelcome ")) {
+			handled = true;
+			m_welcome = message.substring(12);
+			m_botAction.sendPrivateMessage(id, "Welcome message set.");
+		} else if(message.startsWith("!welcomeoff")) {
+			handled = true;
+			m_welcome = "";
+			m_botAction.sendPrivateMessage(id, "Welcome message turned off.");
+		}
+		return handled;
+	}
+
+
+    private class Poll {
 
         private String[] poll;
         private int range;
         private HashMap<String,Integer> votes;
 
-        public Poll( String[] poll ){
+        public Poll(String[] poll) {
             this.poll = poll;
             votes = new HashMap<String,Integer>();
             range = poll.length - 1;
@@ -395,7 +539,7 @@ public class radiobot extends SubspaceBot {
             for(int i = 1; i < poll.length; i++) {
                 m_botAction.sendArenaMessage(i + ": " + poll[i]);
             }
-            m_botAction.sendArenaMessage("Private message your answers to RadioBot");
+            m_botAction.sendArenaMessage("Private message your answers to " + m_botAction.getBotName());
         }
 
         public void handlePollCount(String name, String message) {
@@ -405,11 +549,11 @@ public class radiobot extends SubspaceBot {
                 }
                 int vote;
                 try {
-                    vote = Integer.parseInt( message );
-                } catch( NumberFormatException nfe ){
-                    m_botAction.sendSmartPrivateMessage( name, "Invalid vote. "
+                    vote = Integer.parseInt(message);
+                } catch(NumberFormatException nfe) {
+                    m_botAction.sendSmartPrivateMessage(name, "Invalid vote. "
                     + "Your vote must be a number corresponding to the choices "
-                    + "in the poll." );
+                    + "in the poll.");
                     return;
                 }
 
@@ -423,24 +567,23 @@ public class radiobot extends SubspaceBot {
 	                m_botAction.sendSmartPrivateMessage(name, "Your vote has been counted.");
 
                 votes.put(name, new Integer(vote));
-            } catch( Exception e ){
-                m_botAction.sendArenaMessage( e.getMessage() );
-                m_botAction.sendArenaMessage( e.getClass().getName() );
+            } catch(Exception e) {
+                m_botAction.sendArenaMessage(e.getMessage());
+                m_botAction.sendArenaMessage(e.getClass().getName());
             }
         }
 
-        public void endPoll(){
-            m_botAction.sendArenaMessage( "The poll has ended! Question: "
-            	+ poll[0] );
+        public void endPoll() {
+            m_botAction.sendArenaMessage("The poll has ended! Question: " + poll[0]);
 
             int[] counters = new int[range+1];
             Iterator iterator = votes.values().iterator();
-            while( iterator.hasNext() ){
+            while(iterator.hasNext()) {
                 counters[((Integer)iterator.next()).intValue()]++;
             }
-            for( int i = 1; i < counters.length; i++ ){
-                m_botAction.sendArenaMessage( i + ". " + poll[i] + ": "
-                + counters[i] );
+            for(int i = 1; i < counters.length; i++) {
+                m_botAction.sendArenaMessage(i + ". " + poll[i] + ": "
+                + counters[i]);
             }
         }
 
@@ -449,7 +592,7 @@ public class radiobot extends SubspaceBot {
     private class AnnounceTask extends TimerTask {
         public void run() {
             m_botAction.sendArenaMessage("Current Host: " + m_currentHost + " (" + m_comment + ")");
-            for(int i = 0; i < m_announcement.length; i++) {
+            for(int i = 0; i < m_announceLength; i++) {
                 m_botAction.sendArenaMessage(m_announcement[i]);
             }
             m_botAction.sendSmartPrivateMessage(m_currentHost,
@@ -459,6 +602,7 @@ public class radiobot extends SubspaceBot {
             	+ " Questions:" + m_questions.size());
         }
     }
+
 
     private class RadioQueue {
     	private LinkedList<String> m_queue;
@@ -504,17 +648,20 @@ public class radiobot extends SubspaceBot {
     	}
     }
 
+
     public void handleDisconnect(){
     }
 
-    static String[] staffHelp = {
+
+    private final static String[] staffHelp = {
         " --Radio Staff Help",
         "!who                  - Shows who is currently logged into the bot",
         "!host <comment>       - Announces that you are hosting, allows you to use Current Radio Host commands",
-        "!unhost               - Logs you out of the radio"
+        "!unhost               - Logs you out of the radio",
+        "!status               - Shows bot status."
     };
 
-    static String[] currentRadioHostHelp = {
+    private final static String[] currentRadioHostHelp = {
         " --Current Radio Host Only",
         "!arena <message>      - Sends an arena message.",
         "!zone <message>       - Limited to once a day.",
@@ -530,14 +677,16 @@ public class radiobot extends SubspaceBot {
         "Do not abuse the green messages, or write anything inappropriate. Thanks!"
     };
 
-    static String[] erHelp = {
+    private final static String[] erHelp = {
     	" --Mod Commands",
     	"!go <arena>           - Moves bot to <arena>.",
     	"!die                  - Disconnects bot.",
-    	"!setpw <password>     - Changes login password for this session."
+    	"!setpw <password>     - Changes login password for this session.",
+    	"!grantzone            - Grants the radio host another zoner.",
+    	"!setwelcome           - Sets welcome message (!welcomeoff to disable)."
     };
 
-    static String[] pubHelp = {
+    private final static String[] pubHelp = {
         " --Help",
         "!topic <topic>        - Suggest an idea/topic/poll to the radio host.",
         "!request <artist - title>  - Request a song.",
@@ -548,4 +697,3 @@ public class radiobot extends SubspaceBot {
     };
 
 }
-
