@@ -18,7 +18,7 @@ public class ReliablePacketHandler {
 
     Map                     m_sentPackets;        // (Integer)ACK ID -> ReliablePacket
     Map                     m_receivedPackets;    // (Integer)ACK ID -> ReliablePacket
-    int                     m_nextOutboundAck;    // ACK ID of next outbound packet 
+    int                     m_nextOutboundAck;    // ACK ID of next outbound packet
     int                     m_expectedReliable;   // ACK ID of the next expected packet
 
     SSEncryption            m_ssEncryption;       // Encryption class
@@ -87,11 +87,10 @@ public class ReliablePacketHandler {
             subMessage.addPartialByteArray( message, 0, 6, message.size() - 6 );
             m_packetInterpreter.translateGamePacket( subMessage, true );
 
-            subMessage = (ByteArray)m_receivedPackets.remove( new Integer( m_expectedReliable ) );
-            while( subMessage != null ) {
+            while((subMessage = (ByteArray)m_receivedPackets.remove(new Integer(m_expectedReliable)))
+            		!= null) {
                 m_expectedReliable++;
                 m_packetInterpreter.translateGamePacket( subMessage, true );
-                subMessage = (ByteArray)m_receivedPackets.remove( new Integer( m_expectedReliable ) );
             }
         } else if( receivedAck > m_expectedReliable ){
             subMessage = new ByteArray( message.size() - 6 );
