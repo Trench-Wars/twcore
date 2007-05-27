@@ -299,7 +299,7 @@ public class hunt extends MultiModule {
     	    	if( keys.indexOf( name.toLowerCase() ) == -1 ){
     	    	    m_botAction.spec( event.getPlayerID() );
     	    	    m_botAction.spec( event.getPlayerID() );
-                    m_botAction.sendChatMessage( "Hunt Error: Unregistered player (" + name + ") forced to spec" );
+                    //m_botAction.sendChatMessage( "Hunt Error: Unregistered player (" + name + ") forced to spec" );
                     m_botAction.sendPrivateMessage( name, "You cannot join a Hunt game while it is in progress" );
     	    	}
     	    }
