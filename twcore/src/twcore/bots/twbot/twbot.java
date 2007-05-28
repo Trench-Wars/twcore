@@ -500,7 +500,6 @@ public class twbot extends SubspaceBot
 			m_botAction.sendPrivateMessage(name, "Unlocked.  You may now move me with !go and !come or disconnect me with !die");
 			nameOfHost = null;
 			locked = false;
-			clear();
 		}
 		else if (message.startsWith("!whatsnew"))
 		{
