@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
+import java.util.ArrayList;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -748,13 +749,13 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException("Can't find you.  Please report this to staff.");
         if( p.getShipType() == 0 )
             throw new RuntimeException("You must be in a ship for this command to work.");
-        Vector[] team = getTeamData( p.getFrequency() );
-        for(int i = 0; i < team.length; i++ ) {
-            if( team[i].size() > 0) {
-                String text = Tools.formatString(Tools.shipName(i) + "s", 11);
-                text += "(" + team[i].size() + "):  ";
-                for( int j = 0; j < team[i].size(); j++) {
-                   text += (String)team[i].get(j) + " ";
+        ArrayList<Vector<String>>  team = getTeamData( p.getFrequency() );
+        for(int i = 0; i < team.size(); i++ ) {
+            if( team.get(i).size() > 0) {
+                String text = Tools.formatString(Tools.shipName(i+1) + "s", 11);
+                text += "(" + team.get(i).size() + "):  ";
+                for( int j = 0; j < team.get(i).size(); j++) {
+                   text += (String)team.get(i).get(j) + " ";
                 }
                 m_botAction.sendSmartPrivateMessage(sender, text);
             }
@@ -767,14 +768,15 @@ public class purepubbot extends SubspaceBot
      * @param freq Frequency to collect info on
      * @return Vector array containing player names on given freq
      */
-    public Vector<String>[] getTeamData( int freq ) {
-        Vector<String>[] team = new Vector[8];
-        for( int i = 0; i < team.length; i++ )
-            team[i] = new Vector<String>(); 
+    public ArrayList<Vector<String>> getTeamData( int freq ) {
+        ArrayList<Vector<String>> team = new ArrayList<Vector<String>>();
+        for( int i = 0; i < team.size(); i++ ) {
+            team.add( new Vector<String>() );
+        }
         Iterator i = m_botAction.getFreqPlayerIterator(freq);
         while( i.hasNext() ) {
             Player p = (Player)i.next();
-            team[p.getShipType() - 1].add(p.getPlayerName());
+            team.get(p.getShipType() - 1).add(p.getPlayerName());
         }            
         return team;
     }
