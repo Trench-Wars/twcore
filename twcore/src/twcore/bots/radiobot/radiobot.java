@@ -468,7 +468,7 @@ public final class radiobot extends SubspaceBot {
 		    	else
 		    		m_botAction.sendPrivateMessage(id, "Added question request.");
 	    	}
-	    } else if( message.startsWith("!login ")) {
+	    } else if(message.startsWith("!login ")) {
 			handled = true;
         	if(m_currentPassword.equals("")) {
         		m_botAction.sendPrivateMessage(id, "Login currently disabled.");
@@ -498,12 +498,20 @@ public final class radiobot extends SubspaceBot {
     		handled = true;
     		m_currentPassword = message.substring(7);
     		m_botAction.sendPrivateMessage(id, "Password changed.");
+
 		} else if(message.startsWith("!go ")) {
     		handled = true;
-			m_botAction.changeArena(message.substring(4));
+    		String arena = message.substring(4);
+    		if(Tools.isAllDigits(arena)) {
+    			m_botAction.sendPrivateMessage(id, "You cannot move me to a public arena.");
+    		} else {
+				m_botAction.changeArena(arena);
+    		}
+
 		} else if(message.equals("!die")) {
     		handled = true;
 			m_botAction.die();
+
 		} else if(message.startsWith("!grantzone")) {
     		handled = true;
 			if(m_alreadyZoned.remove(m_currentHost)) {
