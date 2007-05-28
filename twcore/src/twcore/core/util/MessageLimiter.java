@@ -9,13 +9,13 @@ import twcore.core.events.Message;
 
 /**
  * Optional class for limiting the number of messages that can be sent to
- * a bot from a given player within 60 seconds.  (Does not apply to HighMod+.)
+ * a bot from a given player within 60 seconds.  (Does not apply to staff.)
  * Use BotAction's setMessageLimit(int) to run this class with a bot.
  */
 public class MessageLimiter {
     private BotAction   m_botAction;    // Bot utility class
     private SubspaceBot m_bot;          // Bot the limiter applies to
-    private HashMap     m_timeMap;      // (String)Name -> (Integer)# times msgd/last min.
+    private HashMap <String,Integer>m_timeMap;  // (String)Name -> (Integer)# times msgd/last min.
     private int         m_rate = 6;     // # msgs allowed per player per minute
     private long        lastCheckTime;  // Last time anyone sent a msg
     private long        time;           // Time allowed per message (from m_rate)
@@ -29,7 +29,7 @@ public class MessageLimiter {
      */
     public MessageLimiter( BotAction botAction, SubspaceBot bot, int rate ) {
         m_botAction = botAction;
-        m_timeMap = new HashMap();
+        m_timeMap = new HashMap<String,Integer>();
         m_rate = rate + 1;
         m_bot = bot;
         lastCheckTime = System.currentTimeMillis();
