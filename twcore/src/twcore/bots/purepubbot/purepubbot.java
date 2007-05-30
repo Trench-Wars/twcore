@@ -750,7 +750,7 @@ public class purepubbot extends SubspaceBot
         if( p.getShipType() == 0 )
             throw new RuntimeException("You must be in a ship for this command to work.");
         ArrayList<Vector<String>>  team = getTeamData( p.getFrequency() );
-        for(int i = 0; i < team.size(); i++ ) {
+        for(int i = 0; i < 9; i++ ) {
             if( team.get(i).size() > 0) {
                 String text = Tools.formatString(Tools.shipName(i+1) + "s", 11);
                 text += "(" + team.get(i).size() + "):  ";
@@ -770,13 +770,14 @@ public class purepubbot extends SubspaceBot
      */
     public ArrayList<Vector<String>> getTeamData( int freq ) {
         ArrayList<Vector<String>> team = new ArrayList<Vector<String>>();
-        for( int i = 0; i < team.size(); i++ ) {
+        // 8 ships plus potential spectators
+        for( int i = 0; i < 9; i++ ) {
             team.add( new Vector<String>() );
         }
         Iterator i = m_botAction.getFreqPlayerIterator(freq);
         while( i.hasNext() ) {
             Player p = (Player)i.next();
-            team.get(p.getShipType() - 1).add(p.getPlayerName());
+            team.get(p.getShipType()).add(p.getPlayerName());
         }            
         return team;
     }
