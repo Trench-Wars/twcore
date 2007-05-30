@@ -752,7 +752,7 @@ public class purepubbot extends SubspaceBot
         ArrayList<Vector<String>>  team = getTeamData( p.getFrequency() );
         for(int i = 0; i < 9; i++ ) {
             if( team.get(i).size() > 0) {
-                String text = Tools.formatString(Tools.shipName(i+1) + "s", 11);
+                String text = Tools.formatString(Tools.shipName(i) + "s", 11);
                 text += "(" + team.get(i).size() + "):  ";
                 for( int j = 0; j < team.get(i).size(); j++) {
                    text += (String)team.get(i).get(j) + " ";
