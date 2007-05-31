@@ -15,7 +15,7 @@ public final class radiobot extends SubspaceBot {
     private EventRequester m_req;
     private OperatorList m_opList;
     private LinkedList<String> m_loggedInList;
-    private String m_currentPassword;
+    private String m_currentPassword = "";
     private LinkedList<String> m_alreadyZoned;
     private String m_currentHost = "", m_comment = "";
     private Poll m_currentPoll = null;
@@ -52,6 +52,8 @@ public final class radiobot extends SubspaceBot {
         m_loggedInList = new LinkedList<String>();
         m_alreadyZoned = new LinkedList<String>();
         m_currentPassword = m_botAction.getBotSettings().getString("ServPass");
+        if(m_currentPassword == null)
+        	m_currentPassword = "";
 
         m_shoutouts = new RadioQueue();
         m_requests = new RadioQueue();
