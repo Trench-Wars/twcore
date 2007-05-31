@@ -62,7 +62,6 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "handleListBots" );
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage" );
         m_commandInterpreter.registerCommand( "!forcespawn", acceptedMessages, this, "handleForceSpawnMessage" );
-        m_commandInterpreter.registerCommand( "!listbottypes", acceptedMessages, this, "handleListBotTypes" );
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess" );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
@@ -221,19 +220,6 @@ public class HubBot extends SubspaceBot {
     }
 
     /**
-     * Lists the numbers of all bots spawned of each type.
-     * @param messager Name of the player who sent the command
-     * @param message Text of the message
-     */
-    public void handleListBotTypes( String messager, String message ){
-        if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
-            m_botQueue.listBotTypes( messager );
-        } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but (s)he tried !listbottypes " + message );
-        }
-    }
-
-    /**
      * Lists bot names of a given bot type
      * @param messager Name of the player who sent the command
      * @param message Bot type to list
@@ -245,7 +231,7 @@ public class HubBot extends SubspaceBot {
             if( className.length() > 0 ){
                 m_botQueue.listBots( className, messager );
             } else {
-                m_botAction.sendSmartPrivateMessage( messager, "Usage: !listbots <bot type>" );
+            	m_botQueue.listBotTypes( messager );
             }
         } else {
             m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but (s)he tried !listbots " + message );
@@ -459,8 +445,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!remove <name>     - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)" );
             m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
-            m_botAction.sendSmartPrivateMessage( messager, "!listbottypes      - Lists the number of each bot type currently in use." );
-            m_botAction.sendSmartPrivateMessage( messager, "!listbots <type>   - Lists the names and spawners of a bot type." );
+            m_botAction.sendSmartPrivateMessage( messager, "!listbots [type]   - Returns the bottypes or lists the names and spawners of a bot [type]." );
             m_botAction.sendSmartPrivateMessage( messager, "!uptime            - Returns the current uptime of this bot." );
         }
 
