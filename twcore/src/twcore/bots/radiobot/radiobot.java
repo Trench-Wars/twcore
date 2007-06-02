@@ -64,7 +64,7 @@ public final class radiobot extends SubspaceBot {
 
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena("radio");
-        m_botAction.setMessageLimit(15);
+        m_botAction.setMessageLimit(10);
     }
 
 
