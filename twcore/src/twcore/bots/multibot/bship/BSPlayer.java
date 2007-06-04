@@ -1,11 +1,15 @@
 package twcore.bots.multibot.bship;
 
+import twcore.core.BotAction;
+import twcore.core.util.Tools;
+import java.sql.*;
+
 /**
  * Represents a player in the main battleship game and stores statistics
  * related to the game in progress.
  *
  * @author D1st0rt
- * @version 06.06.26
+ * @version 07.01.13
  */
 public class BSPlayer
 {
@@ -48,6 +52,11 @@ public class BSPlayer
 	/** Used to prevent being added to a team when inappropriate */
 	public boolean locked;
 
+	/** This player's playerId in the mysql database */
+	public int sqlId;
+
+	private static final String[] fields = { "name" };
+
 	/**
      * Creates a new instance of BSPlayer
      * @param name the Player's name
@@ -57,6 +66,38 @@ public class BSPlayer
 		this.name = name;
 		this.freq = freq;
 		resetStats();
+
+		BotAction m_botAction = BotAction.getBotAction();
+
+		if(m_botAction.SQLisOperational())
+		{
+			name = Tools.addSlashesToString(name);
+			try {
+				ResultSet s = m_botAction.SQLQuery(bship.dbConn,
+				 "select id from players where name=\'"+ name +"\'");
+				if (s.next())
+				{
+					sqlId = s.getInt("id");
+				}
+				else
+				{
+					m_botAction.SQLInsertInto(bship.dbConn, "players", fields,
+					new String[]{ name });
+
+					ResultSet r = m_botAction.SQLQuery(bship.dbConn, "SELECT MAX(id) AS sqlId FROM players");
+					if (r.next())
+						sqlId = r.getInt("sqlId");
+					m_botAction.SQLClose(r);
+				}
+				m_botAction.SQLClose(s);
+
+			} catch (Exception e)
+			{
+				Tools.printStackTrace(e);
+				sqlId = -1;
+			}
+		}
+
 	}
 
 	/**
@@ -91,6 +132,7 @@ public class BSPlayer
 		takeoffs = 0;
 		attaches = 0;
 		rating = 0;
+		sqlId = -1;
 		ships = new boolean[8];
 	}
 

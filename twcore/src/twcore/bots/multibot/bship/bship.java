@@ -11,6 +11,7 @@ import static twcore.core.EventRequester.TURRET_EVENT;
 
 import java.util.Iterator;
 import java.util.TimerTask;
+import java.sql.ResultSet;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -42,7 +43,7 @@ import twcore.core.util.Tools;
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
- * @version 06.06.22
+ * @version 07.01.14
  */
 public class bship extends MultiModule implements TSChangeListener
 {
@@ -61,11 +62,11 @@ public class bship extends MultiModule implements TSChangeListener
 
 	// Game Data //
 	private byte state;
-	private boolean cslock;
-	private static final byte IDLE = 0, ACTIVE = 1;
+	private boolean cslock, usedb;
+	private static final byte IDLE = 0, PREGAME = 1, ACTIVE = 2;
 	private int[][] points;
 	private BSTeam[] m_teams;
-	private int cslimit, maxlives;
+	private int cslimit, maxlives, gameId;
 
 	// TimerTasks //
 	private StartWarp startWarp;
@@ -78,6 +79,9 @@ public class bship extends MultiModule implements TSChangeListener
 
 	// Geometry //
 	private static final byte X = 0, Y = 1, HEIGHT = 2, WIDTH = 3;
+
+	// SQL //
+	public static final String dbConn = "bship";
 
 	//////////////////////////////////
 	/*       Message Strings        */
@@ -112,7 +116,7 @@ public class bship extends MultiModule implements TSChangeListener
 
 	/** aboutMsg: Tells the player information about the bot, used by !about */
 	private final String[] aboutMsg = {
-		"+-Battleship Bot by D1st0rt--------v3.0-+",
+		"+-Battleship Bot by D1st0rt--------v3.2-+",
 		"| -Attach Regulation                    |",
 		"| -Night Mode LVZ Automation            |",
 		"| -Battleship Games                     |",
@@ -182,6 +186,12 @@ public class bship extends MultiModule implements TSChangeListener
 		"+---------------------------------------+"
 	};
 
+	/** Fields for sql insert of a player's postgame score */
+	private static final String[] scoreFields = {
+		"gameId", "playerId", "freq", "rating", "shipsPlayed", "sKills",
+		"tKills", "pKills", "deaths", "attaches", "attached"
+	};
+
 	//////////////////////////////////
 	/*			  Setup				*/
 	//////////////////////////////////
@@ -207,6 +217,8 @@ public class bship extends MultiModule implements TSChangeListener
 		cslock = false;
 		cslimit = 5;
 		maxlives = 3;
+		usedb = true;
+		gameId = -1;
 
 		int teams = (Integer)m_tsm.getSetting("teams");
 		m_teams = new BSTeam[teams];
@@ -262,17 +274,18 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void registerSettings()
 	{
-		m_tsm.addSetting(SType.INT, "board", "2");
+		m_tsm.addSetting("board", 2);
 		m_tsm.restrictSetting("board", 1, 5);
-		m_tsm.addSetting(SType.INT, "teams", "2");
+		m_tsm.addSetting("teams", 2);
 		m_tsm.restrictSetting("teams", 1, 4);
-		m_tsm.addSetting(SType.BOOLEAN, "cslock", "false");
-		m_tsm.addSetting(SType.INT, "hour", "0");
+		m_tsm.addSetting("cslock", false);
+		m_tsm.addSetting("hour", 0);
 		m_tsm.restrictSetting("hour", 0, 23);
-		m_tsm.addSetting(SType.INT, "lives", "3");
+		m_tsm.addSetting("lives", 3);
 		m_tsm.restrictSetting("lives", 1, 10);
-		m_tsm.addSetting(SType.INT, "cslimit", "5");
+		m_tsm.addSetting("cslimit", 5);
 		m_tsm.restrictSetting("cslimit", 1, 10);
+		m_tsm.addSetting("usedb", true);
 
 		m_tsm.addTSChangeListener(this);
 		m_tsm.setCustomHelp(setHelp);
@@ -302,6 +315,8 @@ public class bship extends MultiModule implements TSChangeListener
 			cslimit = (Integer)value;
 		else if(name.equals("lives"))
 			maxlives = (Integer)value;
+		else if(name.equals("usedb"))
+			usedb = (Boolean)value;
 	}
 
 
@@ -452,7 +467,7 @@ public class bship extends MultiModule implements TSChangeListener
 			//For staff, display current main game configuration
 			if(opList.isZH(name))
 				m_botAction.sendPrivateMessage(name, "Setup:  Teams="+ teams +" Board="+ board
-												+" Cap Ship Locking="+ cslock + " Limit="+ cslimit);
+						+" Lives="+ maxlives +" Cap Ship Locking="+ cslock + " Limit="+ cslimit);
 		}
 		else
 		{
@@ -485,7 +500,7 @@ public class bship extends MultiModule implements TSChangeListener
 			if(state == IDLE)
 			{
 				m_botAction.sendPrivateMessage(name, "Starting.");
-				pregame();
+				pregame(name);
 			}
 			else
 				m_botAction.sendPrivateMessage(name, "Chill dude, there's already one going!");
@@ -501,9 +516,24 @@ public class bship extends MultiModule implements TSChangeListener
 	{
 		if(opList.isER(name))
 		{
-			if(state != IDLE)
+			if(state == ACTIVE)
 			{
 				m_botAction.sendArenaMessage("Game Stopped.");
+				if(usedb)
+				{
+					StringBuffer query = new StringBuffer("UPDATE games SET winner=-1");
+					query.append(" WHERE id=");
+					query.append(gameId);
+					m_botAction.SQLHighPriorityBackgroundQuery(dbConn, null, query.toString());
+
+					query = new StringBuffer("INSERT INTO elims");
+					query.append("(gameId,team,reason,time) VALUES (");
+					query.append(gameId); query.append(",");
+					query.append(-1); query.append(",\"");
+					query.append("Game stopped by "+ name); query.append("\",");
+					query.append("now())");
+					m_botAction.SQLBackgroundQuery(dbConn, null, query.toString());
+				}
 				postgame();
 			}
 			else
@@ -656,7 +686,7 @@ public class bship extends MultiModule implements TSChangeListener
 	/**
 	 * Sets up everything before a main game starts
 	 */
-	private void pregame()
+	private void pregame(String host)
 	{
 		try{
 
@@ -667,16 +697,16 @@ public class bship extends MultiModule implements TSChangeListener
 		m_tsm.setLocked("teams", true);
 		m_tsm.setLocked("board", true);
 		m_tsm.setLocked("lives", true);
+		m_tsm.setLocked("usedb", true);
 
 		//Retrieve values of required settings
 		int teams = (Integer)m_tsm.getSetting("teams");
 		int board = (Integer)m_tsm.getSetting("board");
-		int lives = (Integer)m_tsm.getSetting("lives");
 
 		//Initialize main game data storage
 		m_teams = new BSTeam[teams];
 		for(int x = 0; x < m_teams.length; x++)
-			m_teams[x] = new BSTeam(x, lives);
+			m_teams[x] = new BSTeam(x, maxlives);
 
 		//Report game configuration
 		StringBuffer buf = new StringBuffer("Initializing Battleship Game: ");
@@ -742,6 +772,48 @@ public class bship extends MultiModule implements TSChangeListener
 
 		//Update internal game state
 		m_botAction.sendArenaMessage("Game will begin in 10 seconds.");
+		state = PREGAME;
+
+		if(usedb && m_botAction.SQLisOperational())
+		{
+			StringBuffer query = new StringBuffer(
+				"INSERT INTO games(host,startTime,board,teams,cslimit,lives,cslock) VALUES (");
+			query.append("\"");
+			query.append(host);
+			query.append("\"");
+			query.append(",");
+			query.append("now()");
+			query.append(",");
+			query.append(board);
+			query.append(",");
+			query.append(teams);
+			query.append(",");
+			query.append(cslimit);
+			query.append(",");
+			query.append(maxlives);
+			query.append(",");
+			query.append(cslock);
+			query.append(")");
+
+			try {
+				m_botAction.SQLQuery(dbConn, query.toString());
+				ResultSet s = m_botAction.SQLQuery(dbConn, "SELECT MAX(id) AS gameId FROM games");
+				if (s.next())
+				{
+					gameId = s.getInt("gameId");
+				}
+				else
+					gameId = -1;
+
+				m_botAction.SQLClose(s);
+
+			} catch (Exception e) {
+				m_tsm.setLocked("usedb", false);
+				m_tsm.setValue("usedb", "false");
+				m_tsm.setLocked("usedb", true);
+				gameId = -1;
+			};
+		}
 
 		//Reset tasks
 		notify = new CapshipNotify();
@@ -750,6 +822,7 @@ public class bship extends MultiModule implements TSChangeListener
 		//Begin tasks
 		m_botAction.scheduleTask(startWarp,10000);
 		m_botAction.scheduleTaskAtFixedRate(notify,2000,300000);
+
 		}catch(Exception e)
 		{
 			Tools.printStackTrace(e);
@@ -761,6 +834,11 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void postgame()
 	{
+		if(usedb)
+		{
+			m_botAction.SQLBackgroundQuery(dbConn, null, "update games set endTime=now() where id="+gameId);
+		}
+
 		//Destroy tasks
 		startWarp.cancel();
 		notify.cancel();
@@ -777,14 +855,19 @@ public class bship extends MultiModule implements TSChangeListener
 
 		//Show end-game statistics
 		displayStats();
+		if(usedb)
+			m_botAction.sendArenaMessage("Complete Game Summary at http://bship.slopeout.com/games/"+ gameId);
 
 		//Update internal game state
 		state = IDLE;
+		gameId = -1;
 
 		//Allow changes to be made to main game configuration
 		m_tsm.setLocked("teams", false);
 		m_tsm.setLocked("board", false);
 		m_tsm.setLocked("lives", false);
+		if(m_botAction.SQLisOperational())
+			m_tsm.setLocked("usedb", false);
 	}
 
 	/**
@@ -834,6 +917,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void displayStats()
 	{
+
 		for(int x = 0; x < m_teams.length; x++)
 		{
 			BSPlayer[] players = m_teams[x].getPlayers();
@@ -868,6 +952,19 @@ public class bship extends MultiModule implements TSChangeListener
 				buf.append(rightAlign(""+ p.attaches, 6));
 				buf.append("|");
 				msg[5 + y] = buf.toString();
+
+				if(usedb)
+				{
+					String[] vals = new String[]{
+						String.valueOf(gameId), String.valueOf(p.sqlId),
+						String.valueOf(x), String.valueOf(p.rating),
+						p.shipsPlayed(), String.valueOf(p.cskills),
+						String.valueOf(p.tkills), String.valueOf(p.pkills),
+						String.valueOf(p.deaths), String.valueOf(p.takeoffs),
+						String.valueOf(p.attaches)
+					};
+					m_botAction.SQLBackgroundInsertInto(dbConn, null, scoreFields, vals);
+				}
 			}
 			msg[msg.length - 1] = msg[2];
 
@@ -902,28 +999,53 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void checkForLosers()
 	{
+		String reason = "";
 		int totalLives = cslimit * maxlives;
 		for(int x = 0; x < m_teams.length; x++)
 		{
-			switch(m_teams[x].isOut(totalLives))
+			int code = m_teams[x].isOut(totalLives);
+			if(code > 0)
 			{
-				case 0: //still in
-				break;
+				if(code == 1)
+					reason = "(No team lives left)";
+				else if(code == 2)
+					reason = "(No ships left)";
 
-				case 1: //no lives
-					m_botAction.sendArenaMessage("Team "+ x +" is out! (No team lives left)");
-					removeTeam(x);
-				break;
+				m_botAction.sendArenaMessage("Team "+ x +" is out! "+ reason);
 
-				case 2: //no ships
-					m_botAction.sendArenaMessage("Team "+ x +" is out! (No ships left)");
-					removeTeam(x);
-				break;
+				if(usedb)
+				{
+					StringBuffer query = new StringBuffer("UPDATE games SET winner=-1");
+					query.append(" WHERE id=");
+					query.append(gameId);
+					m_botAction.SQLHighPriorityBackgroundQuery(dbConn, null, query.toString());
+
+					query = new StringBuffer("INSERT INTO elims");
+					query.append("(gameId,team,reason,time) VALUES (");
+					query.append(gameId); query.append(",");
+					query.append(x); query.append(",\"");
+					query.append(reason); query.append("\",");
+					query.append("now())");
+					m_botAction.SQLBackgroundQuery(dbConn, null, query.toString());
+				}
+				removeTeam(x);
 			}
 		}
 
 		if(getTeamsLeft() <= 0)
+		{
 			m_botAction.sendArenaMessage("All teams appear to have been eliminated. Game ends in a draw.");
+			if(usedb)
+			{
+				StringBuffer query = new StringBuffer("INSERT INTO elims");
+				query.append("(gameId,team,reason,time) VALUES (");
+				query.append(gameId); query.append(",");
+				query.append(-1); query.append(",\"");
+				query.append("All teams eliminated. Draw."); query.append("\",");
+				query.append("now())");
+				m_botAction.SQLBackgroundQuery(dbConn, null, query.toString());
+			}
+		}
 
 		if(getTeamsLeft() <= 1)
 			postgame();
@@ -1104,7 +1226,15 @@ public class bship extends MultiModule implements TSChangeListener
 				}
 
 			if(team != -1)
+			{
 				m_botAction.sendArenaMessage("Team "+ team +" wins!!!!", 5);
+				StringBuffer query = new StringBuffer("UPDATE games SET winner=");
+				query.append(team);
+				query.append(" WHERE id=");
+				query.append(gameId);
+
+				m_botAction.SQLHighPriorityBackgroundQuery(dbConn, null, query.toString());
+			}
 		}
 	}
 
@@ -1297,6 +1427,27 @@ public class bship extends MultiModule implements TSChangeListener
 
 
 					m_botAction.sendArenaMessage(buf.toString(), 19);
+
+					if(usedb)
+					{
+						BSPlayer k = m_teams[kteam].getPlayer(killer);
+						BSPlayer d = m_teams[dteam].getPlayer(name);
+
+						StringBuffer query = new StringBuffer("INSERT INTO kills");
+						query.append("(gameId,time,killerId,killedId,killerShip,killedShip,killerTeam,killedTeam,eliminated) VALUES (");
+						query.append(gameId); query.append(",");
+						query.append("now()"); query.append(",");
+						query.append(k.sqlId); query.append(",");
+						query.append(d.sqlId); query.append(",");
+						query.append(k.ship); query.append(",");
+						query.append(d.ship); query.append(",");
+						query.append(kteam); query.append(",");
+						query.append(dteam); query.append(",");
+						query.append(livesLeft < 1 ? 1 : 0);
+						query.append(")");
+
+						m_botAction.SQLBackgroundQuery(dbConn, null, query.toString());
+					}
 				}
 			}
 			else
@@ -1351,7 +1502,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(FrequencyChange event)
 	{
-		if(state == ACTIVE)
+		if(state >= PREGAME)
 		{
 			Player p = m_botAction.getPlayer(event.getPlayerID());
 			String name = p.getPlayerName();
@@ -1399,7 +1550,10 @@ public class bship extends MultiModule implements TSChangeListener
 
 			}
 
-			checkForLosers();
+			if(state == ACTIVE)
+			{
+				checkForLosers();
+			}
 		}
 	}
 
@@ -1410,7 +1564,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public void handleEvent(FrequencyShipChange event)
 	{
-		if(state == ACTIVE)
+		if(state >= PREGAME)
 		{
 			Player p = m_botAction.getPlayer(event.getPlayerID());
 			short freq = p.getFrequency();
@@ -1469,7 +1623,8 @@ public class bship extends MultiModule implements TSChangeListener
 							m_teams[freq].setShip(name, ship); //add player to the game
 							int x = points[p.getFrequency()][X];
 							int y = points[p.getFrequency()][Y];
-							m_botAction.warpTo(event.getPlayerID(), x, y); //warp them
+							if(state == ACTIVE)
+								m_botAction.warpTo(event.getPlayerID(), x, y); //warp them
 						}
 					}
 				}
@@ -1487,7 +1642,10 @@ public class bship extends MultiModule implements TSChangeListener
 				}
 			}
 
-			checkForLosers();
+			if(state == ACTIVE)
+			{
+				checkForLosers();
+			}
 		}
 	}
 
