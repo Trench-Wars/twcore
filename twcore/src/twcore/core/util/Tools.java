@@ -1,15 +1,5 @@
 package twcore.core.util;
 
-/*
-  * Tools.java
-  *
-  * Created on February 1, 2002, 12:27 PM
-  */
-
-/**
- *
- * @author  harvey
- */
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -20,11 +10,24 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 
+/**
+ * Cluttered but somewhat useful toolkit of common operations.  Should be referenced
+ * statically only.
+ */
 public class Tools {
     public static boolean debugging = true;
     public static String exceptionLogFilePath = null;
-    public static String[] stringChopper( String input, char deliniator ){
-        LinkedList list = new LinkedList();
+    
+    /**
+     * Chops a string into pieces around a given character.  Very similar to
+     * String's split method, only slower and less powerful.  Nearly useless.
+     * Also replaces ? and ! with whitespace, for who knows what reason.
+     * @param input Input string
+     * @param delimiter Character to split around
+     * @return String array containing pieces
+     */
+    public static String[] stringChopper( String input, char delimiter ){
+        LinkedList <String>list = new LinkedList<String>();
 
         int nextSpace = 0;
         int previousSpace = 0;
@@ -35,7 +38,7 @@ public class Tools {
 
         do{
             previousSpace = nextSpace;
-            nextSpace = input.indexOf( deliniator, nextSpace + 1 );
+            nextSpace = input.indexOf( delimiter, nextSpace + 1 );
 
             if ( nextSpace!= -1 ){
                 String stuff = input.substring( previousSpace, nextSpace ).trim().toLowerCase();
@@ -52,8 +55,15 @@ public class Tools {
         return (String[])list.toArray(new String[list.size()]);
     }
     
+    /**
+     * Chops a string into pieces around a given character.  Very similar to
+     * String's split method, only slower and less powerful.  Nearly useless.
+     * @param input Input string
+     * @param delimiter Character to split around
+     * @return String array containing pieces
+     */
     public static String[] cleanStringChopper ( String input, char delimiter ) {
-        ArrayList list = new ArrayList();
+        ArrayList <String>list = new ArrayList<String>();
         int startpos = 0;
         
         for (int i=0; i<input.length(); i++) {
@@ -68,8 +78,16 @@ public class Tools {
         return (String[])list.toArray(new String[list.size()]);
     }
     
+    /**
+     * Chops a string into pieces around a given character.  Very similar to
+     * String's split method, only slower and less powerful.  Nearly useless.
+     * Also replaces ? and ! with whitespace, for who knows what reason.
+     * @param input Input string
+     * @param delimiter Character to split around
+     * @return String array containing pieces
+     */
     public static LinkedList linkedStringChopper( String input, char deliniator ){
-        LinkedList list = new LinkedList();
+        LinkedList <String>list = new LinkedList<String>();
 
         int nextSpace = 0;
         int previousSpace = 0;
@@ -93,17 +111,31 @@ public class Tools {
         return list;
     }
 
+    /**
+     * Prints to the log (console) a message with a preformatted timestamp.
+     * For this to work one should redirect output to a file.
+     * @param value Message
+     */
     public static void printLog( String value ){
-        String output = getTimeStamp() + " " + value;
+        String output = getTimeStamp() + "   " + value;
         System.out.println( output );
 
     }
 
+    /**
+     * Prints to specified PrintWriter a message with a preformatted timestamp.
+     * @param value Message
+     * @param writer Writer to use 
+     */
     public static void printLog( String value, PrintWriter writer ){
-        String output = getTimeStamp() + " " + value;
+        String output = getTimeStamp() + "   " + value;
         writer.println( output );
     }
 
+    /**
+     * Print exception to the log (console) with formatted output and timestamp.
+     * @param e Exception
+     */
     public static void printStackTrace( Exception e ){
         if( !debugging ){
             printLog( "Warning! Exception message:" );
@@ -125,6 +157,13 @@ public class Tools {
             }
         }
     }
+
+    /**
+     * Print exception to the log (console) with formatted output, timestamp,
+     * and the specified note.
+     * @param note Note to print 
+     * @param e Exception
+     */
     public static void printStackTrace( String note, Exception e ){
         if( !debugging ){
             printLog( "Warning! " + note + ":" );
@@ -147,10 +186,20 @@ public class Tools {
         }
     }
 
+    /**
+     * Our signature timestamp.
+     * @return Formatted timestamp 
+     */
     public static String getTimeStamp(){
-		return new SimpleDateFormat("EEE MM-dd-yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
+		return new SimpleDateFormat("dd MMM yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
     }
 
+    /**
+     * Returns ship name based on number provided, as found in-game (and not the packet).
+     * 1-8 are in-game ships, 0 is spec, and 9+ is unknown.
+     * @param shipNumber Number of ship to identify
+     * @return String containing name of ship
+     */
     public static String shipName( int shipNumber ){
         switch( shipNumber ){
             case 0:
@@ -177,9 +226,9 @@ public class Tools {
     }
 
     /**
-     * Returns true if a string is all digits.
+     * Returns true if a String is all digits.
      * @param str String to determine if all digits.
-     * @return True if string is all digits.
+     * @return True if String is all digits.
      */
     public static boolean isAllDigits( String str ){
         try {
@@ -194,6 +243,11 @@ public class Tools {
         }
     }
     
+    /**
+     * Add slashes to a String as is required for a database query.
+     * @param t String to format
+     * @return String formatted with slashes
+     */
     public static String addSlashesToString( String t) {
         String n = null;
         if (t != null) {
@@ -207,22 +261,25 @@ public class Tools {
         }
         return n;
     }
-    
+
     //returns null if not found, a file if found
+    
+    /**
+     * Recursively searches for a file in directory.  Null if the file can't be found.
+     * @param directory Directory to begin recursive search
+     * @param fileName Name of file to search for
+     */
     public static File getRecursiveFileInDirectory( File directory, String fileName ){
         File[] files = directory.listFiles();
         for( int i = 0; i < files.length; i++ ){
             if( files[i].isDirectory() ){
-                //System.out.println( "Reading Directory: " + files[i].getAbsolutePath() );
                 File f = getRecursiveFileInDirectory( files[i], fileName );
                 if( f != null ){
                     return f;
                 }
-                //System.out.println( "File not found in: " + files[i].getAbsolutePath() );
             } else {
                 String filename = files[i].getName();
                 if( filename.equals( fileName )){
-                    //System.out.println( "Found: " + fileName );
                     return files[i];
                 }
             }
@@ -230,10 +287,24 @@ public class Tools {
         return null;
     }
 
+    /**
+     * Formats a String to a particular length by padding it with spaces at its end.
+     * @param fragment Fragment to pad
+     * @param length Length to pad to
+     * @return Padded string
+     */
     public static String formatString( String fragment, int length ) {
         return formatString( fragment, length, " " );
     }
 
+    /**
+     * Formats a String to a particular length by padding it with a provided character
+     * at its tail.
+     * @param fragment Fragment to pad
+     * @param length Length to pad to
+     * @param padding String to pad with (usually 1 character)
+     * @return Padded string
+     */
     public static String formatString( String fragment, int length, String padding ) {
         if(fragment.length() > length)
             fragment = fragment.substring(0,length-1);
@@ -244,10 +315,25 @@ public class Tools {
         return fragment;
     }
 
+    /**
+     * Center a String over a given number of characters, padded on the left
+     * and right with spaces.
+     * @param fragment Fragment to center
+     * @param length Total length of returned string
+     * @return Centered string
+     */
     public static String centerString (String fragment, int length) {
         return centerString(fragment, length, ' ');
     }
 
+    /**
+     * Center a String over a given number of characters, padded on the left
+     * and right with the provided character
+     * @param fragment Fragment to center
+     * @param length Total length of returned string
+     * @param padding Character to pad with
+     * @return Centered string
+     */
     public static String centerString (String fragment, int length, char padding) {
         int curLength = fragment.length(),
             startPos = (length / 2) - (curLength/2);
