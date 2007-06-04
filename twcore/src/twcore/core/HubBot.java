@@ -66,6 +66,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand" );
+        m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand" );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleInvalidMessage" );
@@ -161,15 +162,18 @@ public class HubBot extends SubspaceBot {
         message = message.trim();
 
         if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
+            m_botAction.sendPrivateMessage( messager, "attempting to remove " + message + "...  " +
+            (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take 30 seconds or more.":"" ) );
             boolean success = m_botQueue.removeBot( message );
             if( success ) {
                 m_botAction.sendPrivateMessage( messager, "Removed." );
                 m_botAction.sendChatMessage( 1, messager + " force-disconnected " + message );
+                System.gc();
             } else {
                 m_botAction.sendPrivateMessage( messager, "Bot has NOT been removed.  Use exact casing of the name, i.e., !remove TWDBot" );
             }
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't a highmod, but (s)he tried !remove " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't a HighMod+, but (s)he tried !remove " + message );
         }
     }
 
@@ -182,12 +186,14 @@ public class HubBot extends SubspaceBot {
         message = message.trim();
 
         if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
-            m_botAction.sendPrivateMessage( messager, "Removing all bots of type " + message + ".  Please be patient, this may take a while." );
+            m_botAction.sendPrivateMessage( messager, "Removing all bots of type " + message + "." +
+                    (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take on average 30 seconds per bot ...":"" ) );
+            m_botAction.sendChatMessage( 1, messager + " is force-disconnecting all bots of type " + message );
             m_botQueue.hardRemoveAllBotsOfType( message );
             m_botAction.sendPrivateMessage( messager, "Removed all bots of type " + message + " (if possible).  Count reset to 0." );
-            m_botAction.sendChatMessage( 1, messager + " force-disconnected all bots of type " + message );
+            System.gc();
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't a highmod, but (s)he tried !hardremove " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't a HighMod+, but (s)he tried !hardremove " + message );
         }
     }
 
@@ -430,6 +436,32 @@ public class HubBot extends SubspaceBot {
     }
 
     /**
+     * Shuts down the core.
+     * @param messager Name of the player who sent the command
+     * @param message is irrelevant
+     */
+    public void handleShutdownCommand( String messager, String message ){    
+        if( m_botAction.getOperatorList().isSysop( messager ) == true ) {
+            m_botAction.sendSmartPrivateMessage( messager, "Beginning shutdown of the core ..." + 
+                    (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take on average 30 seconds per bot ...":"" ) );
+            
+            m_botAction.sendChatMessage( 1, "--- CORE SHUTDOWN initiated by " + messager + " ---" );
+            System.out.println();
+            System.out.println( "=== Shutdown initiated ===" );
+            Tools.printLog( "Beginning shutdown by " + messager + ".");
+            m_botQueue.shutdownAllBots();
+            m_botAction.sendChatMessage( 1, "--- Shutdown complete.  Going away ... ---" );
+            try {
+                Thread.sleep(3000);
+            } catch( InterruptedException e ){
+            }
+            m_botAction.die();
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to shut down the core.");
+        }
+    }
+    
+    /**
      * Sends an appropriate help message based on access privileges.
      * @param messager Name of the player who sent the command
      * @param message Text of the message
@@ -451,8 +483,12 @@ public class HubBot extends SubspaceBot {
 
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
-            m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
             m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
+        }
+        
+        if( m_botAction.getOperatorList().isSysop( messager ) == true ){
+            m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );            
         }
     }
 
@@ -499,7 +535,7 @@ public class HubBot extends SubspaceBot {
      * @param message Bot to spawn and relevant login info
      */
     public void handleForceSpawnMessage( String messager, String message ){
-        if( m_botAction.getOperatorList().isSmod( messager ) ){
+        if( m_botAction.getOperatorList().isSysop( messager ) ){
             String args[] = message.split( " " );
             if( args.length == 3 ) {
                 String className = args[0];

@@ -1,9 +1,3 @@
-/*
- * Session.java
- *
- * Created on December 12, 2001, 9:10 AM
- */
-
 package twcore.core;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -21,6 +15,11 @@ import twcore.core.net.SSEncryption;
 import twcore.core.net.Sender;
 import twcore.core.util.Tools;
 
+/**
+ * Main class of a bot session, holding a reference to all pieces necessary
+ * for internal/behind-the-scenes operation.  Instantiates SubspaceBot,
+ * the class inherited by all external/front-end bots.
+ */
 public class Session extends Thread {
 
     private Ship            m_ship;
@@ -215,7 +214,11 @@ public class Session extends Thread {
         String classname = m_subspaceBot.getClass().getSimpleName();
         Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
         m_subspaceBot.handleDisconnect();
-
+        
+        // All threads in the group should not need to be interrupted.  This group includes
+        // every bot spawned, plus BotQueue itself -- it's extremely odd that a bot disconnect
+        // order requires that all other bot threads are inactive before executing the order.
+        /*
         m_group.interrupt();
         while( m_group.activeCount() != 0 ){
             try {
@@ -227,7 +230,7 @@ public class Session extends Thread {
         if( !m_group.isDestroyed() ){
             m_group.destroy();
         }
-
+        */
 
 		if(m_chatLog != null)
 		{
@@ -235,8 +238,15 @@ public class Session extends Thread {
         	m_chatLog.close();
 		}
 
-
-        m_socket.disconnect();
+        // If a socket is in need of disconnection, there is no need to wait for it to
+        // stop sending and receiving packets: those packets will not be used anyhow!
+        // It's best to improve response time by 30 seconds or more by closing it immediately.
+        // This causes an exception to be thrown, and this is perfectly acceptable because
+        // we understand what we are doing.  Option included in CFG for old method if desired.
+        if( m_coreData.getGeneralSettings().getInt("FastDisconnect") == 1 )
+            m_socket.close();
+        else
+            m_socket.disconnect();
         Tools.printLog( m_name + " (" + classname + ") disconnected gracefully." );
         this.interrupt();
 
@@ -249,7 +259,7 @@ public class Session extends Thread {
     public void loggedOn(){
         m_state = RUNNING;
         long time = System.currentTimeMillis() - m_initialTime;
-        System.out.println( m_name + " logged in: " + time + " ms." );
+        Tools.printLog( m_name + " logged in: " + time + " ms." );
     }
 
     public void run(){
@@ -313,7 +323,11 @@ public class Session extends Thread {
                 Thread.sleep(5);
             }
         } catch( InterruptedException e ){
-            Tools.printLog( "Session destroyed, all threads recovered for " + m_name );
+            // Printing a message here is not necessary, as interrupting a thread in order to
+            // shut it down is a completely legitimate (and recommended) activity.  The
+            // other alternative is to wait 30 seconds per bot while unneeded packets are
+            // sent and received -- an exercise in futility.
+            // Tools.printLog( "Session destroyed, all threads recovered for " + m_name );
             return;
         } catch( Exception e ){
             disconnect();

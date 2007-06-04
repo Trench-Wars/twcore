@@ -49,6 +49,8 @@ public class BotQueue extends Thread {
         int delay = m_botAction.getGeneralSettings().getInt( "SpawnDelay" );
         if( delay == 0 )
             SPAWN_DELAY = 20000;
+        else
+            SPAWN_DELAY = delay;
         
         if (m_botAction.getGeneralSettings().getString( "Server" ).equals("localhost"))
             SPAWN_DELAY = 100;
@@ -209,7 +211,6 @@ public class BotQueue extends Thread {
      * @return True if removal succeeded
      */
     boolean removeBot( String name ){
-
         ChildBot deadBot = (ChildBot)m_botStable.remove( name );
         if( deadBot != null ){
             Session deadSesh = deadBot.getBot();
@@ -220,7 +221,6 @@ public class BotQueue extends Thread {
             // Decrement count for this type of bot
             addToBotCount( deadBot.getClassName(), (-1) );
             deadBot = null;
-            System.gc();
             return true;
         }
         return false;
@@ -233,20 +233,48 @@ public class BotQueue extends Thread {
     void hardRemoveAllBotsOfType( String className ) {
         String       rawClassName = className.toLowerCase();
         ChildBot c;
+        LinkedList <String>names = new LinkedList<String>();
 
         Iterator i = m_botStable.values().iterator();
         while( i.hasNext() ) {
             c = (ChildBot)i.next();
-            if( c != null ) {
-                if( c.getClassName() == rawClassName ) {
-                    removeBot( c.getBot().getName() );
-                }
-            }
+            if( c != null )
+                if( c.getClassName().equals( rawClassName ) )
+                    names.add( c.getBot().getBotName() );
+        }
+        i = names.iterator();
+        while( i.hasNext() ) {
+            String name = (String)i.next();
+            removeBot( name );
+            m_botAction.sendChatMessage( 1, name + " logged off." );
         }
         Integer numBots = (Integer)m_botTypes.get( rawClassName );
         if( numBots != null )
             if( numBots.intValue() != 0 )
                 m_botTypes.put( rawClassName, new Integer(0) );
+    }
+    
+    /**
+     * Shuts down (removes) all bots.
+     */
+    void shutdownAllBots() {
+        ChildBot c;
+        LinkedList <String>names = new LinkedList<String>();
+
+        Iterator i = m_botStable.values().iterator();
+        while( i.hasNext() ) {
+            c = (ChildBot)i.next();
+            if( c != null ) {
+                names.add( c.getBot().getBotName() );
+            }
+        }
+        i = names.iterator();
+        while( i.hasNext() ) {
+            String name = (String)i.next();
+            removeBot( name );
+            m_botAction.sendChatMessage( 1, name + " logged off." );
+        }
+        m_botTypes.clear();
     }
 
     /**
@@ -353,7 +381,7 @@ public class BotQueue extends Thread {
             m_botAction.sendChatMessage( 1, messager + " in queue to spawn bot of type " + className );
         }
 
-        ChildBot newChildBot = new ChildBot( className, messager, childBot );
+        ChildBot newChildBot = new ChildBot( rawClassName, messager, childBot );
         addToBotCount( rawClassName, 1 );
         m_botStable.put( botName, newChildBot );
         m_spawnQueue.add( newChildBot );
