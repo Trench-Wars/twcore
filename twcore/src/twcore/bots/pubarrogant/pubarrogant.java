@@ -1,15 +1,11 @@
 package twcore.bots.pubarrogant;
 
-import java.io.FileWriter;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -37,20 +33,12 @@ public class pubarrogant extends SubspaceBot
   public static final int ENTER_DELAY = 5000;
   public static final int DEFAULT_CHECK_TIME = 30;
 
-  private SimpleDateFormat dateFormat;
-  private SimpleDateFormat fileNameFormat;
   private OperatorList opList;
   private String currentArena;
   private RoamTask roamTask;
-  private HashSet accessList;
+  private HashSet <String>accessList;
   private String target;
-  private Date lastLogDate;
-  private Vector commandQueue;
-  private FileWriter logFile;
-  private String logFileName;
-  private int year;
   private boolean isStaying;
-  private boolean isArroSpy;
 
   /**
    * This method initializes the mrarrogant class.
@@ -62,9 +50,7 @@ public class pubarrogant extends SubspaceBot
 
     requestEvents();
     roamTask = new RoamTask();
-    lastLogDate = null;
-    commandQueue = new Vector();
-    accessList = new HashSet();
+    accessList = new HashSet<String>();
     isStaying = false;
   }
 
@@ -102,39 +88,6 @@ public class pubarrogant extends SubspaceBot
       handleCommand(sender, message);
   }
 
-  /**
-   * This method gets a string representation of the message type.
-   *
-   * @param messageType is the type of message to handle
-   * @returns a string representation of the message is returned.
-   */
-  private String getMessageTypeString(int messageType)
-  {
-    switch(messageType)
-    {
-      case Message.PUBLIC_MESSAGE:
-        return "Public";
-      case Message.PRIVATE_MESSAGE:
-        return "Private";
-      case Message.TEAM_MESSAGE:
-        return "Team";
-      case Message.OPPOSING_TEAM_MESSAGE:
-        return "Opp. Team";
-      case Message.ARENA_MESSAGE:
-        return "Arena";
-      case Message.PUBLIC_MACRO_MESSAGE:
-        return "Pub. Macro";
-      case Message.REMOTE_PRIVATE_MESSAGE:
-        return "Private";
-      case Message.WARNING_MESSAGE:
-        return "Warning";
-      case Message.SERVER_ERROR:
-        return "Serv. Error";
-      case Message.ALERT_MESSAGE:
-        return "Alert";
-    }
-    return "Other";
-  }
 
   /**
    * This method handles server output.
@@ -169,49 +122,6 @@ public class pubarrogant extends SubspaceBot
     int idleTime = getIdleTime(message);
     if(idleTime > LOWERSTAFF_IDLE_KICK_TIME || (idleTime > IDLE_KICK_TIME && !opList.isZH(target)))
       m_botAction.sendUnfilteredPrivateMessage(target, "*kill");
-  }
-
-
-  /**
-   * This method gets the sender of a command.
-   *
-   * @param message is the message to parse.
-   * @return the sender of the command is returned.
-   */
-
-  private String getFromPlayer(String message)
-  {
-    int endIndex = message.indexOf(" (");
-    if(endIndex == -1)
-      return null;
-    return message.substring(0, endIndex);
-  }
-
-  /**
-   * This method gets the player that the command is destined for.  If there is
-   * no target of the command, then an empty string is returned.
-   *
-   * @param message is the log message to parse.
-   * @return the name of the target of the command is returned.  If there is
-   * no target then an empty string is returned.
-   */
-
-  private String getToPlayer(String message)
-  {
-    int beginIndex = 0;
-    int endIndex;
-
-    for(;;)
-    {
-      beginIndex = message.indexOf(") to ", beginIndex);
-      if(beginIndex == -1)
-        return "";
-      beginIndex += 5;
-      endIndex = message.indexOf(":", beginIndex);
-      if(endIndex != -1)
-        break;
-    }
-    return message.substring(beginIndex, endIndex);
   }
 
   /**
