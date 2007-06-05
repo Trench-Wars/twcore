@@ -17,10 +17,10 @@ import twcore.core.util.Tools;
  * @author Jeremy
  */
 public class Receiver extends Thread {
-    private DatagramSocket   m_socket;          // Connection to SS server
-    private List             m_packets;         // Received packet queue
-    private int              m_packetsReceived; // # packets received
-    
+    private DatagramSocket   	 m_socket;          // Connection to SS server
+    private List<DatagramPacket> m_packets;         // Received packet queue
+    private int              	 m_packetsReceived; // # packets received
+
     /**
      * Creates a new instance of Receiver, a packet receiving queue.
      * @param group ThreadGroup of this Session
@@ -30,45 +30,45 @@ public class Receiver extends Thread {
         super( group, "Receiver" );
         m_socket = socket;
         m_packetsReceived = 0;
-        m_packets = Collections.synchronizedList( new LinkedList() );
+        m_packets = Collections.synchronizedList( new LinkedList<DatagramPacket>() );
         start();
     }
-    
+
     /**
      * @return Total number of packets received
      */
     public int getNumPacketsReceived(){
-        
+
         return m_packetsReceived;
     }
 
     /**
-     * @return True if the connection to the SS server is still active 
+     * @return True if the connection to the SS server is still active
      */
     public boolean isConnected(){
 
         return m_socket.isConnected();
     }
-    
+
     /**
      * @return Next packet in the queue in the form of a ByteArray
      */
     public ByteArray get(){
         if( m_packets.isEmpty() == false ){
-            return new ByteArray( (DatagramPacket)m_packets.remove( 0 ) );
+            return new ByteArray( m_packets.remove( 0 ) );
         } else {
             return null;
         }
     }
-    
+
     /**
      * @return True if there are packets in the queue still waiting to be processed
      */
     public boolean containsMoreElements(){
-        
+
         return !m_packets.isEmpty();
     }
-    
+
     /**
      * As long as the connection is maintained, attempts to receive a new
      * packet.  The DatagramSocket's receive(DatagramPacket) method will
@@ -85,9 +85,9 @@ public class Receiver extends Thread {
             Tools.printStackTrace( e );
             m_socket.disconnect();
         }
-        
+
         while( m_socket.isConnected() == true && !interrupted() ){
-            try {                
+            try {
                 packet = new DatagramPacket( new byte[520], 520 );
                 m_socket.receive( packet );
                 m_packets.add( packet );

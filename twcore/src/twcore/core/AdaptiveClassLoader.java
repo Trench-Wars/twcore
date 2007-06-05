@@ -146,7 +146,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      * Cache of the loaded classes. This contains ClassCacheEntry keyed
      * by class names.
      */
-    private Hashtable cache;
+    private Hashtable<String, ClassCacheEntry> cache;
 
     /**
      * Save our class loader for chaining, and speed purposes.
@@ -232,7 +232,7 @@ public class AdaptiveClassLoader extends ClassLoader {
         myParentClassLoader = chainedClassLoader;
 
         // Create the cache of loaded classes
-        cache = new Hashtable();
+        cache = new Hashtable<String, ClassCacheEntry>();
 
         // Verify that all the repository are valid.
         Enumeration e = classRepository.elements();
@@ -321,7 +321,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      */
     public synchronized boolean shouldReload(String classname) {
 
-        ClassCacheEntry entry = (ClassCacheEntry) cache.get(classname);
+        ClassCacheEntry entry = cache.get(classname);
 
         if (entry == null) {
             // class wasn't even loaded
@@ -419,7 +419,7 @@ public class AdaptiveClassLoader extends ClassLoader {
 
         // Use the cached value, if this class is already loaded into
         // this classloader.
-        ClassCacheEntry entry = (ClassCacheEntry) cache.get(name);
+        ClassCacheEntry entry = cache.get(name);
 
         if (entry != null) {
             // Class found in our cache
@@ -827,7 +827,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      * @throws ClassNotFoundException if class is not found
      */
     public long lastModified(String name) throws ClassNotFoundException {
-        ClassCacheEntry entry = (ClassCacheEntry) cache.get(name);
+        ClassCacheEntry entry = cache.get(name);
         if (entry == null) {
             throw new ClassNotFoundException("Could not find class: " + name);
         } else {

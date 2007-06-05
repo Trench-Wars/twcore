@@ -34,7 +34,7 @@ public class Session extends Thread {
     private String          m_password;
     private BotAction       m_botAction;
     private EventRequester  m_requester;
-    private Class           m_roboClass;
+    private Class<? extends SubspaceBot> m_roboClass;
     private long            m_initialTime;
     private SubspaceBot     m_subspaceBot;
     private Arena           m_arenaTracker;
@@ -54,7 +54,7 @@ public class Session extends Thread {
     public static int NOT_RUNNING = 0;
     public static int INVALID_CLASS = (-1);
 
-    public Session( CoreData cdata, Class roboClass, String name, String password, int botNum, ThreadGroup parentGroup ){
+    public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup ){
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
         m_roboClass = roboClass;
@@ -70,7 +70,7 @@ public class Session extends Thread {
         m_sysopPassword = m_coreData.getGeneralSettings().getString( "Sysop Password" );
     }
 
-    public Session( CoreData cdata, Class roboClass, String name, String password, int botNum, ThreadGroup parentGroup, String altIP, int altPort, String altSysop ){
+    public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup, String altIP, int altPort, String altSysop ){
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
         m_roboClass = roboClass;
@@ -138,7 +138,7 @@ public class Session extends Thread {
 
             Class[] parameterTypes = { m_botAction.getClass() };
             Object[] args = { m_botAction };
-            m_subspaceBot = (SubspaceBot)m_roboClass.getConstructor( parameterTypes ).newInstance( args );
+            m_subspaceBot = m_roboClass.getConstructor( parameterTypes ).newInstance( args );
             m_ship = new Ship( m_group, m_packetGenerator );
             m_ship.start();
         } catch( Exception e ){
@@ -214,7 +214,7 @@ public class Session extends Thread {
         String classname = m_subspaceBot.getClass().getSimpleName();
         Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
         m_subspaceBot.handleDisconnect();
-        
+
         // All threads in the group should not need to be interrupted.  This group includes
         // every bot spawned, plus BotQueue itself -- it's extremely odd that a bot disconnect
         // order requires that all other bot threads are inactive before executing the order.

@@ -82,7 +82,7 @@ public class OperatorList {
             return PLAYER_LEVEL;
         }
 
-        accessLevel = (Integer)m_accessList.get( name.trim().toLowerCase() );
+        accessLevel = m_accessList.get( name.trim().toLowerCase() );
         if( accessLevel == null ){
             return PLAYER_LEVEL;
         } else {
@@ -265,7 +265,7 @@ public class OperatorList {
             return false;
         }
     }
-    
+
     /**
      * Check if a given name is at least of SMod status.
      * @param name Name in question
@@ -337,6 +337,7 @@ public class OperatorList {
      * @return True if player is an owner
      * @deprecated Exactly the same functionality as isOwner, as no higher access level exists.
      */
+    @Deprecated
     public boolean isOwnerExact( String name ){
 
         if( getAccessLevel( name ) == OWNER_LEVEL ){
@@ -430,7 +431,7 @@ public class OperatorList {
                     firstCharacter = inBuffer.charAt( 0 );
                     if( firstCharacter != ' ' && firstCharacter != '-' && firstCharacter != '+' && firstCharacter != '/' ){
                         name = inBuffer.trim().toLowerCase();
-                        oldAccessLevel = (Integer)m_accessList.get( name );
+                        oldAccessLevel = m_accessList.get( name );
                         if( oldAccessLevel != null ){
                             if( oldAccessLevel.intValue() >= accessLevel ){
                                 continue;
@@ -456,9 +457,9 @@ public class OperatorList {
         if( accessLevel < PLAYER_LEVEL || accessLevel > OWNER_LEVEL )
             return;
         m_accessList.remove(name);
-        m_accessList.put( name.trim().toLowerCase(), new Integer( accessLevel ) );        
+        m_accessList.put( name.trim().toLowerCase(), new Integer( accessLevel ) );
     }
-    
+
     /**
      * Clears the access list.
      */

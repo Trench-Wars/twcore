@@ -49,7 +49,7 @@ public class Player {
     private short   m_flagsCarried;     // Number of flags carried
     private short   m_timeStamp;        // Timestamp of the last position packet
     private short   m_identTurretee;    // Player ID of player this player is attached to
-    private LinkedList m_turrets;       // List of player IDs (Integer) that are attached
+    private LinkedList<Integer> m_turrets;       // List of player IDs (Integer) that are attached
 
     private boolean m_stealthOn;        // Status of Stealth
     private boolean m_cloakOn;          // Status of Cloaking
@@ -104,7 +104,7 @@ public class Player {
 
         m_score = m_flagPoints + m_killPoints;
 
-        m_turrets = new LinkedList();
+        m_turrets = new LinkedList<Integer>();
     }
 
     /**
@@ -129,7 +129,7 @@ public class Player {
 
         m_score = m_flagPoints + m_killPoints;
 
-        m_turrets = new LinkedList();
+        m_turrets = new LinkedList<Integer>();
     }
 
     /**
@@ -181,7 +181,7 @@ public class Player {
         m_rocket = 0;
         m_portal = 0;
 
-        m_turrets = new LinkedList();
+        m_turrets = new LinkedList<Integer>();
     }
 
     /**
@@ -341,7 +341,7 @@ public class Player {
      * @param playerID ID of the player this player has attached to
      */
     public void setAttached( short playerID ) {
-        m_identTurretee = (short)playerID;
+        m_identTurretee = playerID;
     }
 
     /**
@@ -690,6 +690,7 @@ public class Player {
      * @return Total number of bricks player currently possesses
      * @deprecated "Walls" is not a clear term.  Made this a wrapper for getBrickCount
      */
+	@Deprecated
     public int getWallCount(){
         return getBrickCount();
     }

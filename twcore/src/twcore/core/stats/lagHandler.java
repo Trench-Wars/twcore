@@ -51,16 +51,16 @@ public class lagHandler
 
     int[] serverTime = new int[2];
     int[] userTime = new int[2];
-    Vector tinfoValues;
+    Vector<Integer> tinfoValues;
 
-    LinkedList m_lagRequest;
+    LinkedList<lagRequest> m_lagRequest;
 
     public lagHandler(BotAction botAction, BotSettings botSettings, Object b, String mN)
     {
         m_botAction = botAction;
         m_botSettings = botSettings;
-        m_lagRequest = new LinkedList();
-        tinfoValues = new Vector();
+        m_lagRequest = new LinkedList<lagRequest>();
+        tinfoValues = new Vector<Integer>();
         bot = b;
         methodName = mN;
 
@@ -207,7 +207,7 @@ public class lagHandler
             spamLagInfo(false, true);
         }
     }
-	
+
     private void doGetPing(String message)
     {
         currentPing = parsePing(message, "Ping:");
@@ -366,7 +366,7 @@ public class lagHandler
 
         for (int index = 0; index < tinfoValues.size(); index++)
         {
-            tinfoValue = (Integer) tinfoValues.get(index);
+            tinfoValue = tinfoValues.get(index);
             mean = mean + tinfoValue.intValue();
         }
         return mean / tinfoValues.size();
@@ -380,7 +380,7 @@ public class lagHandler
 
         for (int index = 0; index < tinfoValues.size(); index++)
         {
-            tinfoValue = (Integer) tinfoValues.get(index);
+            tinfoValue = tinfoValues.get(index);
             delta = tinfoValue.intValue() - spikeMean;
             sd = sd + delta * delta;
         }
@@ -390,13 +390,13 @@ public class lagHandler
     private int calcNumSpikes()
     {
         int spikeCount = 0;
-        Integer tinfoValue = (Integer) tinfoValues.get(0);
+        Integer tinfoValue = tinfoValues.get(0);
         int lastTinfo = tinfoValue.intValue();
         int thisTinfo;
 
         for (int index = 1; index < tinfoValues.size(); index++)
         {
-            tinfoValue = (Integer) tinfoValues.get(index);
+            tinfoValue = tinfoValues.get(index);
             thisTinfo = tinfoValue.intValue();
 
             if (Math.abs(lastTinfo - thisTinfo) * 10 > spikeSize)
@@ -419,7 +419,7 @@ public class lagHandler
         Integer tinfoValue;
 		for (int index = 1; index < tinfoValues.size(); index++)
         {
-            tinfoValue = (Integer) tinfoValues.get(index);
+            tinfoValue = tinfoValues.get(index);
             int newValue = tinfoValue.intValue() - (int)(delta * index);
 //			m_botAction.sendPrivateMessage("Sika", tinfoValue.intValue() + " -> " + newValue);
             tinfoValues.set(index, new Integer(newValue));
@@ -451,7 +451,7 @@ public class lagHandler
         LagReport report;
 
         if (present) {
-        
+
             String[] lag = new String[2];
             lag[0] = playerName + ": PING Cur: " + currentPing + "ms Ave: " + averagePing + "ms Low: " + lowPing + "ms Hi: " + highPing + "ms PLOSS S2C: " + s2C + "% C2S: " + c2S + "% S2CWeapons: " + s2CWeapons + "%";
             if (!tI) {
@@ -465,7 +465,7 @@ public class lagHandler
             if (lagLimitsInEffect) {
 
                 boolean spec = false;
-    
+
                 if (m_botSettings.getInt("CurPing") < currentPing && !spec) {
                     spec = true;
                     lagReport = "PING Cur. [" + currentPing + "  LIMIT: " + m_botSettings.getInt("CurPing") + "]";
@@ -494,7 +494,7 @@ public class lagHandler
                     spec = true;
                     lagReport = "PLOSS Slow C2S [" + c2SSlowPercent + "  LIMIT: " + m_botSettings.getDouble("SlowC2S") + "]";
                 }
-    
+
                 if (tI) {
                     if (m_botSettings.getInt("Med") < spikeSD && !spec) {
                         spec = true;

@@ -42,9 +42,9 @@ public class Start {
         System.out.println();
         System.out.println("+-------------------------+");
         System.out.println("|     TWCore Startup      |");
-        System.out.println("+-------------------------+");        
+        System.out.println("+-------------------------+");
         System.out.println();
-        
+
         CoreData        coreData = new CoreData( setupFile );
         BotSettings     generalSettings = coreData.getGeneralSettings();
 
@@ -70,10 +70,10 @@ public class Start {
 
             ThreadGroup     group = new ThreadGroup( "Main" );
 
-            Class           roboClass = null;
+            Class<? extends SubspaceBot>   roboClass = null;
 
             try {
-                roboClass = ClassLoader.getSystemClassLoader().loadClass( "twcore.core.HubBot" );
+                roboClass = ClassLoader.getSystemClassLoader().loadClass( "twcore.core.HubBot" ).asSubclass(SubspaceBot.class);
             } catch( ClassNotFoundException cnfe ){
                 System.err.println( "Class not found: HubBot" );
                 System.err.println( "Please verify that you have properly compiled using the bld script or your IDE.");

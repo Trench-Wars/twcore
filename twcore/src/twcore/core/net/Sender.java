@@ -10,14 +10,14 @@ import java.util.List;
  * A packet sending queue.  Packets are formatted properly from inside
  * GamePacketGenerator, and then added to Sender's queue to be sent out as
  * soon as possible.  Packets added as high priority are sent first.
- * 
+ *
  * @author Jeremy
  */
 public class Sender extends Thread {
     private DatagramSocket   m_socket;              // Connection to server
-    private List             m_packets;             // Regular send packet queue
+    private List<DatagramPacket> m_packets;             // Regular send packet queue
     private int              m_packetsSent;         // # packets sent
-    private List             m_highPriorityPackets; // High priority send packet queue
+    private List<DatagramPacket> m_highPriorityPackets; // High priority send packet queue
 
     /**
      * Creates a new instance of Sender, a packet sending queue.
@@ -28,16 +28,16 @@ public class Sender extends Thread {
         super( group, "Sender" );
         m_socket = socket;
         m_packetsSent = 0;
-        m_packets = Collections.synchronizedList( new LinkedList() );
-        m_highPriorityPackets = Collections.synchronizedList( new LinkedList() );
+        m_packets = Collections.synchronizedList( new LinkedList<DatagramPacket>() );
+        m_highPriorityPackets = Collections.synchronizedList( new LinkedList<DatagramPacket>() );
         start();
     }
-    
+
     /**
      * @return Total number of packets that have been sent
      */
     public int getNumPacketsSent(){
-        
+
         return m_packetsSent;
     }
 
@@ -50,23 +50,23 @@ public class Sender extends Thread {
     }
 
     /**
-     * Initiates sending of a created packet by adding it to the send queue. 
-     * @param packet Packet to send 
+     * Initiates sending of a created packet by adding it to the send queue.
+     * @param packet Packet to send
      */
     public void send( DatagramPacket packet ){
         m_packets.add( packet );
     }
-    
+
     /**
      * Initiates sending of a high priority packet by adding it to the high
-     * priority send queue. 
-     * @param packet Packet to send 
+     * priority send queue.
+     * @param packet Packet to send
      */
     public void highPrioritySend( DatagramPacket packet ){
-        
+
         m_highPriorityPackets.add( packet );
     }
-    
+
     /**
      * Checks the queue for packets waiting to be sent, and sends any that are
      * in waiting.
@@ -75,13 +75,13 @@ public class Sender extends Thread {
         while( m_socket.isConnected() == true && !interrupted()){
             try{
                 if( m_highPriorityPackets.isEmpty() == false ){
-                    m_socket.send( (DatagramPacket)m_highPriorityPackets.remove( 0 ));
+                    m_socket.send( m_highPriorityPackets.remove( 0 ));
                     m_packetsSent++;
                 } else if( m_packets.isEmpty() == false ){
-                    m_socket.send( (DatagramPacket)m_packets.remove( 0 ));
+                    m_socket.send( m_packets.remove( 0 ));
                     m_packetsSent++;
                 }
- 
+
                 Thread.sleep( 5 );
             } catch( Exception e ){
                 m_socket.disconnect();

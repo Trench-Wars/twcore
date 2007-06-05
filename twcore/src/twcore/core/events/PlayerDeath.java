@@ -19,7 +19,7 @@ import twcore.core.util.ByteArray;
  * The bounty, along with the other kill score modifiers in settings are added
  * to the players kill points. The flags are how many flags were transferred
  * as a result of the kill.
- * 
+ *
  * NOTE: When getting IDs of the killer or victim, they very occasionally may
  * not match to an ID stored in Arena.  This is because one of the players may
  * leave the arena or zone only a moment after the death event is fired, clearing
@@ -27,7 +27,7 @@ import twcore.core.util.ByteArray;
  * a valid ID in the PlayerDeath event.  It's therefore extremely important to
  * check for a null value when attempting to reference by ID anything related to
  * the Player object stored in Arena.  (This includes any getPlayer, getPlayerName,
- * etc. checks from BotAction.)  
+ * etc. checks from BotAction.)
  */
 public class PlayerDeath extends SubspaceEvent {
     short     m_score;
@@ -43,10 +43,10 @@ public class PlayerDeath extends SubspaceEvent {
      */
     public PlayerDeath( ByteArray array ){
         // m_deathGreen = (byte)array.readByte( 1 );
-        m_killerID = (short)array.readLittleEndianShort( 2 );
-        m_killeeID = (short)array.readLittleEndianShort( 4 );
-        m_score = (short)array.readLittleEndianShort( 6 );
-        m_flags = (short)array.readLittleEndianShort( 8 );
+        m_killerID = array.readLittleEndianShort( 2 );
+        m_killeeID = array.readLittleEndianShort( 4 );
+        m_score = array.readLittleEndianShort( 6 );
+        m_flags = array.readLittleEndianShort( 8 );
     }
 
     /**

@@ -16,7 +16,7 @@ import twcore.core.util.Tools;
  * Initializes and manages SQL connection pools and queries, and runs
  * background queries on a semi-regular basis.
  * <p>
- * 
+ *
  * Choosing a standard query vs. background/high-priority background query:
  * <p>
  * <b>Standard / foreground</b>    -  Runs exactly when needed.  Does not wait in
@@ -40,7 +40,7 @@ import twcore.core.util.Tools;
  * <p>
  * <b><u>IMPORTANT NOTE</b></u>
  * For every query you MUST run BotAction's SQLClose(), or manually run the close()
- * method on both the ResultSet and the Statement that created it.  If you do not,  
+ * method on both the ResultSet and the Statement that created it.  If you do not,
  * memory leaks may occur!
  */
 public class SQLManager extends Thread {
@@ -51,7 +51,7 @@ public class SQLManager extends Thread {
     final static int THREAD_SLEEP_TIME = 60000;    // Length of time for thread to
                                                    // sleep, in ms, after all
                                                    // background queries are done.
-    
+
     /**
      * Initialize SQL functionality with the information given in the specified
      * configuration file.
@@ -65,7 +65,7 @@ public class SQLManager extends Thread {
         try{
             for( int i = 1; i <= sqlcfg.getInt( "ConnectionCount" ); i++ ){
                 String name = sqlcfg.getString( "Name" + i );
-                
+
                 String dburl = "jdbc:mysql://" + sqlcfg.getString( "Server" + i )
                 + ":" + sqlcfg.getInt( "Port" + i ) + "/"
                 + sqlcfg.getString( "Database" + i ) + "?user="
@@ -98,7 +98,7 @@ public class SQLManager extends Thread {
         }
         System.out.println();
     }
-    
+
     /**
      * Adds a regular background query to the end of the queue.  If there are no
      * queued queries ahead of it, the background query will be executed nearly
@@ -117,12 +117,12 @@ public class SQLManager extends Thread {
             Tools.printLog( "Unable to process query: " + query );
         } else {
             if( !pools.containsKey( connName )) return;
-            SQLBackgroundQueue queue = (SQLBackgroundQueue)queues.get( connName );
+            SQLBackgroundQueue queue = queues.get( connName );
             queue.addQuery( new SQLResultEvent( query, identifier, bot ));
             interrupt();
         }
     }
-    
+
     /**
      * Adds a background query to the front of the queue.  A high-priority
      * background query will be executed nearly as quickly as a regularly
@@ -140,12 +140,12 @@ public class SQLManager extends Thread {
             Tools.printLog( "Unable to process background high priority query: " + query );
         } else {
             if( !pools.containsKey( connName )) return;
-            SQLBackgroundQueue queue = (SQLBackgroundQueue)queues.get( connName );
+            SQLBackgroundQueue queue = queues.get( connName );
             queue.addHighPriority( new SQLResultEvent( query, identifier, bot ));
             interrupt();
         }
     }
-    
+
     /**
      * Runs a regular SQL query using the specified database connection.  Your
      * bot's thread will not continue while the query is in effect.  Use a
@@ -162,10 +162,10 @@ public class SQLManager extends Thread {
             return null;
         } else {
             if( !pools.containsKey( connectionName )) return null;
-            return ((SQLConnectionPool)pools.get( connectionName )).query( query );
+            return pools.get( connectionName ).query( query );
         }
     }
-    
+
     /**
      * @return True if the SQL system is operational
      */
@@ -174,7 +174,7 @@ public class SQLManager extends Thread {
     }
 
     /**
-     * Prints to the log file the status of all connection pools. 
+     * Prints to the log file the status of all connection pools.
      */
     public void status(){
         if( !operational ){
@@ -186,11 +186,11 @@ public class SQLManager extends Thread {
             }
         }
     }
-    
+
     /**
      * Checks the background queue for queries waiting to be run, and dispatches
      * them each to a separate SQLWorker thread.  After the result is received,
-     * it's then returned as an SQLResultEvent to the bot that made the query.  
+     * it's then returned as an SQLResultEvent to the bot that made the query.
      * The SQLManager thread will sleep for a defined amount of time, but will
      * interrupt/return when a background query requires processing.
      */
@@ -199,8 +199,8 @@ public class SQLManager extends Thread {
             Iterator i = queues.keySet().iterator();
             while( i.hasNext() ){
                 String name = (String)i.next();
-                SQLBackgroundQueue queue = (SQLBackgroundQueue)queues.get( name );
-                SQLConnectionPool pool = (SQLConnectionPool)pools.get( name );
+                SQLBackgroundQueue queue = queues.get( name );
+                SQLConnectionPool pool = pools.get( name );
                 while( !queue.isEmpty() && !pool.reachedMaxBackground() ){
                     SQLResultEvent event = queue.getNextInLine();
                     new SQLWorker( pool, event, this );
@@ -211,5 +211,5 @@ public class SQLManager extends Thread {
             } catch( InterruptedException e ){}
         }
     }
-    
+
 }

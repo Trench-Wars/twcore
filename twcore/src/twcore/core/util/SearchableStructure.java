@@ -15,37 +15,38 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
+
 public class SearchableStructure {
     //Stores keywords mapped to SearchData objects
-    HashMap data;
+    HashMap<Object, ArrayList<SearchableStructure.SearchData>> data;
     /** Creates a new instance of SearchableStructure */
     public SearchableStructure() {
-        data = new HashMap();
+        data = new HashMap<Object, ArrayList<SearchableStructure.SearchData>>();
     }
-    
+
     public void add( String result, String keywords ){
         SearchableStructure.SearchData value =
         new SearchableStructure.SearchData( keywords, result );
-        
-        ArrayList list = new ArrayList();
+
+        ArrayList<SearchableStructure.SearchData> list = new ArrayList<SearchableStructure.SearchData>();
         list.add(value);
-        
+
         for( Iterator i = value.getAllKeysIterator(); i.hasNext(); ){
             Object o = i.next();
             if( data.containsKey( o ))
-                ((ArrayList)data.get(o)).add(value);
+                data.get(o).add(value);
             else
                 data.put( o, list );
-            
+
         }
     }
-    
+
     public String[] search( String keywordsAsString ){
         //Stages:
         //Stage 1: Grab the SearchData objects from the hashmap that correspond to the data
         //and add to a hashmap that maps them by match count
-        HashMap mapDataToMatchCount = new HashMap();        
-        LinkedList keywords = SearchableStructure.stringChopper( keywordsAsString, ' ' );
+        HashMap<SearchableStructure.SearchData, Integer> mapDataToMatchCount = new HashMap<SearchableStructure.SearchData, Integer>();
+        LinkedList<String> keywords = SearchableStructure.stringChopper( keywordsAsString, ' ' );
         for( Iterator i = keywords.iterator(); i.hasNext(); ){
             String keyword = (String)i.next();
             if( data.containsKey( keyword )){
@@ -55,10 +56,10 @@ public class SearchableStructure {
                     (SearchableStructure.SearchData)i2.next();
                     if( listing.isValid( keywords )){
                         if( mapDataToMatchCount.containsKey( listing )){
-                            Integer oldValue = (Integer)mapDataToMatchCount.get( listing );
+                            Integer oldValue = mapDataToMatchCount.get( listing );
                             Integer newValue = new Integer( oldValue.intValue() + 1 );
                             mapDataToMatchCount.put( listing, newValue );
-                        } else {                    
+                        } else {
                             int modifier = listing.getPointAdjusterValue( keywords );
                             if( modifier != 0 )
                                 mapDataToMatchCount.put( listing, new Integer( modifier + 1 ));
@@ -71,50 +72,50 @@ public class SearchableStructure {
 
         //Keys: Integers representing number of matches
         //Values: Data objects
-        TreeMap orderedMap = new TreeMap();
+        TreeMap<Integer, ArrayList<SearchableStructure.SearchData>> orderedMap = new TreeMap<Integer, ArrayList<SearchableStructure.SearchData>>();
         //Populate the orderedMap...
         for( Iterator i = mapDataToMatchCount.keySet().iterator(); i.hasNext(); ){
             SearchableStructure.SearchData dataObject = (SearchableStructure.SearchData)i.next();
-            Integer hitCount = (Integer)mapDataToMatchCount.get( dataObject );
+            Integer hitCount = mapDataToMatchCount.get( dataObject );
             if( orderedMap.containsKey( hitCount )){
-                ((ArrayList)orderedMap.get( hitCount )).add( dataObject );
+                orderedMap.get( hitCount ).add( dataObject );
             }else{
-                ArrayList list = new ArrayList();
+                ArrayList<SearchableStructure.SearchData> list = new ArrayList<SearchableStructure.SearchData>();
                 list.add( dataObject );
                 orderedMap.put( hitCount, list );
             }
         }
 
-        ArrayList endList = new ArrayList();
+        ArrayList<String> endList = new ArrayList<String>();
         for( int i = 0; i< orderedMap.size(); i++ ){
-            ArrayList list = (ArrayList)orderedMap.remove( orderedMap.lastKey() );
+            ArrayList<SearchableStructure.SearchData> list = orderedMap.remove( orderedMap.lastKey() );
             for( Iterator i2 = list.iterator(); i2.hasNext(); ){
                 endList.add(((SearchableStructure.SearchData)i2.next()).getResult());
             }
 
         }
-        return (String[])endList.toArray(new String[endList.size()]);
+        return endList.toArray(new String[endList.size()]);
     }
 
     //Wrapper class for each value
     static class SearchData{
-        LinkedList mayMatch;
-        LinkedList mustMatch;
-        LinkedList exclusions;
-        LinkedList pointAdjusters;
+        LinkedList<String> mayMatch;
+        LinkedList<String> mustMatch;
+        LinkedList<String> exclusions;
+        LinkedList<String> pointAdjusters;
         String entry;
         public SearchData( String keywords, String entry ){
-            mayMatch = new LinkedList();
-            mustMatch = new LinkedList();
-            exclusions = new LinkedList();
-            pointAdjusters = new LinkedList();
+            mayMatch = new LinkedList<String>();
+            mustMatch = new LinkedList<String>();
+            exclusions = new LinkedList<String>();
+            pointAdjusters = new LinkedList<String>();
             this.entry = entry;
             LinkedList keywordList = SearchableStructure.stringChopper( keywords, ' ' );
             for( Iterator i = keywordList.iterator(); i.hasNext(); ){
                 addKeyword( ((String)i.next()).trim() );
             }
         }
-        
+
         public void addKeyword( String keyword ){
             if( keyword.charAt(0) == '&' )
                 addMustMatch( keyword.substring( 1 ));
@@ -125,13 +126,13 @@ public class SearchableStructure {
             else
                 mayMatch.add( keyword );
         }
-        
+
         public Iterator getAllKeysIterator(){
-            LinkedList returnList = new LinkedList( mayMatch );
+            LinkedList<String> returnList = new LinkedList<String>( mayMatch );
             returnList.addAll( mustMatch );
             return returnList.iterator();
         }
-                
+
         public void addMustMatch( String keyword ){
             mustMatch.add( keyword );
         }
@@ -141,7 +142,7 @@ public class SearchableStructure {
         public void addPointAdjuster( String keyword ){
             pointAdjusters.add( keyword );
         }
-        
+
         public Iterator getMustMatchIterator(){
             return mustMatch.iterator();
         }
@@ -154,8 +155,8 @@ public class SearchableStructure {
         public Iterator getPointAdjusterIterator(){
             return pointAdjusters.iterator();
         }
-        
-        public boolean matchesAllMustMatch( LinkedList keywords ){
+
+        public boolean matchesAllMustMatch( LinkedList<String> keywords ){
             if( keywords.containsAll( mustMatch ))
                 return true;
             else return false;
@@ -168,19 +169,19 @@ public class SearchableStructure {
             }
             return returnValue;
         }
-        
-        //Checks if the given keywords contain any of the 
+
+        //Checks if the given keywords contain any of the
         public boolean containsNoExcluded( LinkedList keywords ){
             for( Iterator i = getExclusionsIterator(); i.hasNext(); ){
                 if(keywords.contains( i.next() )) return false;
             }
             return true;
         }
-        
-        public boolean isValid( LinkedList keywords ){
+
+        public boolean isValid( LinkedList<String> keywords ){
             return matchesAllMustMatch( keywords ) && containsNoExcluded( keywords );
         }
-        
+
         public int mustMatchSize(){
             return mustMatch.size();
         }
@@ -188,36 +189,36 @@ public class SearchableStructure {
         public String getResult(){
             return toString();
         }
-        
+
         public String toString(){
             return entry;
         }
     }
-    
-    public static LinkedList stringChopper( String input, char deliniator ){
-        LinkedList list = new LinkedList();
-        
+
+    public static LinkedList<String> stringChopper( String input, char deliniator ){
+        LinkedList<String> list = new LinkedList<String>();
+
         int nextSpace = 0;
         int previousSpace = 0;
-        
+
         do{
             previousSpace = nextSpace;
             nextSpace = input.indexOf( deliniator, nextSpace + 1 );
-            
+
             if ( nextSpace!= -1 ){
                 String stuff = input.substring( previousSpace, nextSpace ).trim().toLowerCase();
                 stuff=stuff.replace('?',' ').replace('!',' ');
                 if( stuff!=null && !stuff.equals("") )
                     list.add( stuff );
             }
-            
+
         }while( nextSpace != -1 );
         String stuff = input.substring( previousSpace ).toLowerCase();
         stuff=stuff.replace('?',' ').replace('!',' ').trim();
         list.add( stuff );
-        
+
         return list;
     }
-    
+
 }
 

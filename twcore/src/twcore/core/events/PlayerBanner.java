@@ -28,7 +28,7 @@ public class PlayerBanner extends SubspaceEvent {
      */
     public PlayerBanner( ByteArray array ) {
 
-        m_playerID = (short)array.readLittleEndianShort( 1 );
+        m_playerID = array.readLittleEndianShort( 1 );
         m_banner = new byte[96];
         for( int i = 3; i < 99; i++ )
             m_banner[i-3] = array.readByte( i );

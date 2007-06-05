@@ -131,7 +131,7 @@ public class Ship extends Thread {
      */
     public void sendPositionPacket()
     {
-        m_gen.sendPositionPacket( direction, (short)xVel, (short)y, (byte)togglables, (short)x, (short)yVel, (short)bounty, (short)energy, (short)0 );
+        m_gen.sendPositionPacket( direction, xVel, y, togglables, x, yVel, bounty, energy, (short)0 );
         m_pAge = (int)System.currentTimeMillis();
     }
 
@@ -142,7 +142,7 @@ public class Ship extends Thread {
      * @see #getWeaponNumber(byte, byte, boolean, boolean, boolean, byte, boolean)
      */
     public void fire( int weapon ){
-        m_gen.sendPositionPacket( direction, (short)xVel, (short)y, (byte)togglables, (short)x, (short)yVel, (short)bounty, (short)energy, (short)weapon );
+        m_gen.sendPositionPacket( direction, xVel, y, togglables, x, yVel, bounty, energy, (short)weapon );
         m_pAge = (int)System.currentTimeMillis();
     }
 

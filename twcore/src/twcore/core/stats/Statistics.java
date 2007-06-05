@@ -9,7 +9,7 @@ import java.util.Vector;
 		 */
 		public class Statistics
 		{
-			private Vector m_statistics;
+			private Vector<Statistic> m_statistics;
 
 
 			//stats
@@ -40,13 +40,13 @@ import java.util.Vector;
 			public static final int TOTAL_TEAMKILLS = 21;
 			public static final int REPELS_PER_DEATH = 22;
 			public static final int RATING = 23;
-			
+
 			private int m_shipType;
 
 			public Statistics(int shipType)
 			{
 				m_shipType = shipType;
-				m_statistics = new Vector(TOTAL_NORMAL_NUMBER);
+				m_statistics = new Vector<Statistic>(TOTAL_NORMAL_NUMBER);
 				fillStatistics();
 			}
 
@@ -82,61 +82,61 @@ import java.util.Vector;
 
 			public int getIntStatistic(int statType)
 			{
-					return ((Statistic) m_statistics.get(statType)).getIntValue();
+					return m_statistics.get(statType).getIntValue();
 			}
-			
+
 			public double getDoubleStatistic(int statType)
 			{
-				return ((Statistic) m_statistics.get(statType)).getDoubleValue();
+				return m_statistics.get(statType).getDoubleValue();
 			}
 
 			public Statistic getStatistic(int statType)
 			{
-				return (Statistic)m_statistics.get(statType);
+				return m_statistics.get(statType);
 			}
-			
+
 			public double getWeightedStatistic(int statType)
 			{
-				return ((Statistic)m_statistics.get(statType)).getWeightedValue();
+				return m_statistics.get(statType).getWeightedValue();
 			}
-			
+
 			public void setStatistic(int statType)
 			{
-				((Statistic)m_statistics.get(statType)).setValue();
+				m_statistics.get(statType).setValue();
 			}
-			
+
 			public void setStatistic(int statType, int value)
 			{
-				((Statistic)m_statistics.get(statType)).setValue(value);
+				m_statistics.get(statType).setValue(value);
 			}
-			
+
 			public void setStatistic(int statType, double value)
 			{
-				((Statistic)m_statistics.get(statType)).setValue(value);
+				m_statistics.get(statType).setValue(value);
 			}
-			
+
 			public void changeStatistic(int statType, int value)
 			{
-				((Statistic)m_statistics.get(statType)).changeValue(value);
+				m_statistics.get(statType).changeValue(value);
 			}
-			
+
 			public void changeStatistic(int statType, double value)
 			{
-				((Statistic)m_statistics.get(statType)).changeValue(value);
+				m_statistics.get(statType).changeValue(value);
 			}
-			
+
 			public void decrementStatistic(int statType)
 			{
-				((Statistic)m_statistics.get(statType)).decrement();
+				m_statistics.get(statType).decrement();
 			}
-	
+
 			/**
 			 * Method getStatistics.
 			 * @return String depending on the ship type
 			 */
 			public String[] getStatisticsSummary()
 			{
-				Vector stats = new Vector(2);
+				Vector<String> stats = new Vector<String>(2);
 
 				final int STATS = 0;
 				final int TEAMKILLS = 1;
@@ -144,7 +144,7 @@ import java.util.Vector;
 				switch (m_shipType)
 				{
 					case 1 : //warbird
-								
+
 						stats.add(
 							STATS,
 								""
@@ -215,7 +215,7 @@ import java.util.Vector;
 						break;
 
 					case 4 : //lev
-						stats.add(STATS, getStatistic(SCORE));
+						stats.add(STATS, getStatistic(SCORE).toString());
 						break;
 
 					case 5 : //terr
@@ -303,13 +303,13 @@ import java.util.Vector;
 						break;
 
 					default : //if errored
-						stats.add(STATS, getStatistic(SCORE));
+						stats.add(STATS, getStatistic(SCORE).toString());
 						break;
 
 				}
 
 				stats.trimToSize();
-				return (String[]) stats.toArray(new String[stats.size()]);
+				return stats.toArray(new String[stats.size()]);
 
 			}
 
@@ -335,7 +335,7 @@ import java.util.Vector;
 					super(DEATHS, "D");
 				}
 			}
-			
+
 			private class Score extends Statistic
 			{
 				public Score()
@@ -343,7 +343,7 @@ import java.util.Vector;
 					super(SCORE, "S");
 				}
 			}
-			
+
 			private class FlagTouches extends Statistic
 			{
 				public FlagTouches()
@@ -351,7 +351,7 @@ import java.util.Vector;
 					super(FLAG_CLAIMED, "F");
 				}
 			}
-			
+
 			private class RepelsUsed extends Statistic
 			{
 				public RepelsUsed()
@@ -375,7 +375,7 @@ import java.util.Vector;
 					super(JAVELIN_KILL, "Jk");
 				}
 			}
-			
+
 			private class SpiderKills extends Statistic
 			{
 				public SpiderKills()
@@ -383,7 +383,7 @@ import java.util.Vector;
 					super(SPIDER_KILL, "Sk");
 				}
 			}
-			
+
 			private class LeviathanKills extends Statistic
 			{
 				public LeviathanKills()
@@ -391,7 +391,7 @@ import java.util.Vector;
 					super(LEVIATHAN_KILL, "Levk");
 				}
 			}
-			
+
 			private class TerrierKills extends Statistic
 			{
 				public TerrierKills()
@@ -399,7 +399,7 @@ import java.util.Vector;
 					super(TERRIER_KILL, "Tek");
 				}
 			}
-			
+
 			private class WeaselKills extends Statistic
 			{
 				public WeaselKills()
@@ -407,7 +407,7 @@ import java.util.Vector;
 					super(WEASEL_KILL, "Xk");
 				}
 			}
-			
+
 			private class LancasterKills extends Statistic
 			{
 				public LancasterKills()
@@ -415,7 +415,7 @@ import java.util.Vector;
 					super(LANCASTER_KILL, "Lk");
 				}
 			}
-			
+
 			private class SharkKills extends Statistic
 			{
 				public SharkKills()
@@ -423,7 +423,7 @@ import java.util.Vector;
 					super(SHARK_KILL, "Shk");
 				}
 			}
-			
+
 			private class WarbirdTeamKills extends Statistic
 			{
 				public WarbirdTeamKills()
@@ -439,7 +439,7 @@ import java.util.Vector;
 					super(JAVELIN_TEAMKILL, "Jtk");
 				}
 			}
-			
+
 			private class SpiderTeamKills extends Statistic
 			{
 				public SpiderTeamKills()
@@ -447,7 +447,7 @@ import java.util.Vector;
 					super(SPIDER_TEAMKILL, "Stk");
 				}
 			}
-			
+
 			private class LeviathanTeamKills extends Statistic
 			{
 				public LeviathanTeamKills()
@@ -455,7 +455,7 @@ import java.util.Vector;
 					super(LEVIATHAN_TEAMKILL, "Levtk");
 				}
 			}
-			
+
 			private class TerrierTeamKills extends Statistic
 			{
 				public TerrierTeamKills()
@@ -463,7 +463,7 @@ import java.util.Vector;
 					super(TERRIER_TEAMKILL, "Tetk");
 				}
 			}
-			
+
 			private class WeaselTeamKills extends Statistic
 			{
 				public WeaselTeamKills()
@@ -471,7 +471,7 @@ import java.util.Vector;
 					super(WEASEL_TEAMKILL, "Xtk");
 				}
 			}
-			
+
 			private class LancasterTeamKills extends Statistic
 			{
 				public LancasterTeamKills()
@@ -479,14 +479,14 @@ import java.util.Vector;
 					super(LANCASTER_TEAMKILL, "Ltk");
 				}
 			}
-			
+
 			private class SharkTeamKills extends Statistic
 			{
 				public SharkTeamKills()
 				{
 					super(SHARK_TEAMKILL, "Shtk");
 				}
-			}		
+			}
 
 			//Derived Stats
 			private class TotalKills extends Statistic implements DerivedStatisticInterface
@@ -507,7 +507,7 @@ import java.util.Vector;
 						+ getIntStatistic(LANCASTER_KILL)
 						+ getIntStatistic(SHARK_KILL);
 				}
-				
+
 				public double derivedDouble()
 				{
 					return (double)derivedInt();
@@ -520,7 +520,7 @@ import java.util.Vector;
 				{
 					super(TOTAL_TEAMKILLS, "TK", true);
 				}
-				
+
 				public int derivedInt()
 				{
 					return getIntStatistic(WARBIRD_TEAMKILL)
@@ -532,23 +532,23 @@ import java.util.Vector;
 						+ getIntStatistic(LANCASTER_TEAMKILL)
 						+ getIntStatistic(SHARK_TEAMKILL);
 				}
-				
+
 				public double derivedDouble()
 				{
 					return (double)derivedInt();
-				}	
+				}
 			}
 
 			private class RepelsPerDeath extends Statistic implements DerivedStatisticInterface
 			{
 			    private int m_shipType;
-			    
+
 			    public RepelsPerDeath(int shipType)
 			    {
 			        super(REPELS_PER_DEATH, "R/D", true); //derived is true
 			        m_shipType = shipType;
 			    }
-			    
+
 			    public double derivedDouble()
 			    {
 			        if (m_shipType == 8) //shark
@@ -561,24 +561,24 @@ import java.util.Vector;
 			        else
 			            return 0; //if any other ship
 			    }
-			    
+
 			    public int derivedInt()
 			    {
 			        return (int)derivedDouble();
 			    }
 			}
-			
+
 			private class Rating extends Statistic implements DerivedStatisticInterface
 			{
 				private int m_shipType;
-				
+
 				public Rating(int shipType)
 				{
 					super(RATING, "R", true); //derived is true
 					m_shipType = shipType;
 					setWeights();
 				}
-				
+
 				/**
 				 * Method getRating.
 				 * This returns the rating for the player according to this:
@@ -608,102 +608,102 @@ import java.util.Vector;
 					switch(m_shipType)
 					{
 						case 1: //wb
-							((Statistic)m_statistics.get(SCORE)).setWeight(0.45);
-							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.12);
-							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.06);
-							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.08);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.04);
+							m_statistics.get(SCORE).setWeight(0.45);
+							m_statistics.get(WARBIRD_KILL).setWeight(0.07);
+							m_statistics.get(JAVELIN_KILL).setWeight(0.07);
+							m_statistics.get(SPIDER_KILL).setWeight(0.05);
+							m_statistics.get(TERRIER_KILL).setWeight(0.12);
+							m_statistics.get(WEASEL_KILL).setWeight(0.05);
+							m_statistics.get(LANCASTER_KILL).setWeight(0.06);
+							m_statistics.get(SHARK_KILL).setWeight(0.08);
+							m_statistics.get(DEATHS).setWeight(0.04);
 							break;
 						case 2: //jav
-							((Statistic)m_statistics.get(SCORE)).setWeight(0.6);
-							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.06);
-							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.066);
-							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.14);
-							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.05);
-														
+							m_statistics.get(SCORE).setWeight(0.6);
+							m_statistics.get(WARBIRD_KILL).setWeight(0.05);
+							m_statistics.get(JAVELIN_KILL).setWeight(0.06);
+							m_statistics.get(SPIDER_KILL).setWeight(0.066);
+							m_statistics.get(TERRIER_KILL).setWeight(0.14);
+							m_statistics.get(WEASEL_KILL).setWeight(0.07);
+							m_statistics.get(LANCASTER_KILL).setWeight(0.05);
+							m_statistics.get(SHARK_KILL).setWeight(0.09);
+							m_statistics.get(DEATHS).setWeight(0.05);
+
 							//teamkills
-							((Statistic)m_statistics.get(WARBIRD_TEAMKILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(JAVELIN_TEAMKILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(SPIDER_TEAMKILL)).setWeight(0.06);
-							((Statistic)m_statistics.get(TERRIER_TEAMKILL)).setWeight(0.13);
-							((Statistic)m_statistics.get(WEASEL_TEAMKILL)).setWeight(0.06);
-							((Statistic)m_statistics.get(LANCASTER_TEAMKILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(SHARK_TEAMKILL)).setWeight(0.09);							
+							m_statistics.get(WARBIRD_TEAMKILL).setWeight(0.07);
+							m_statistics.get(JAVELIN_TEAMKILL).setWeight(0.07);
+							m_statistics.get(SPIDER_TEAMKILL).setWeight(0.06);
+							m_statistics.get(TERRIER_TEAMKILL).setWeight(0.13);
+							m_statistics.get(WEASEL_TEAMKILL).setWeight(0.06);
+							m_statistics.get(LANCASTER_TEAMKILL).setWeight(0.07);
+							m_statistics.get(SHARK_TEAMKILL).setWeight(0.09);
 							break;
 						case 3: //spider
-							((Statistic)m_statistics.get(SCORE)).setWeight(0.4);
-							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.06);
-							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.06);
-							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.04);
-							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.089);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.05);
+							m_statistics.get(SCORE).setWeight(0.4);
+							m_statistics.get(WARBIRD_KILL).setWeight(0.06);
+							m_statistics.get(JAVELIN_KILL).setWeight(0.06);
+							m_statistics.get(SPIDER_KILL).setWeight(0.04);
+							m_statistics.get(TERRIER_KILL).setWeight(0.09);
+							m_statistics.get(WEASEL_KILL).setWeight(0.05);
+							m_statistics.get(LANCASTER_KILL).setWeight(0.05);
+							m_statistics.get(SHARK_KILL).setWeight(0.089);
+							m_statistics.get(DEATHS).setWeight(0.05);
 							break;
 						case 4: //lev
 							break;
 						case 5: //terrier
-							((Statistic)m_statistics.get(SCORE)).setWeight(2.45);
-							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.03);
-							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.03);
-							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.036);
-							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.12);
-							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.035);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.025);
-							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.052);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.21);
+							m_statistics.get(SCORE).setWeight(2.45);
+							m_statistics.get(WARBIRD_KILL).setWeight(0.03);
+							m_statistics.get(JAVELIN_KILL).setWeight(0.03);
+							m_statistics.get(SPIDER_KILL).setWeight(0.036);
+							m_statistics.get(TERRIER_KILL).setWeight(0.12);
+							m_statistics.get(WEASEL_KILL).setWeight(0.035);
+							m_statistics.get(LANCASTER_KILL).setWeight(0.025);
+							m_statistics.get(SHARK_KILL).setWeight(0.052);
+							m_statistics.get(DEATHS).setWeight(0.21);
 							break;
 						case 6: //x
-							((Statistic)m_statistics.get(SCORE)).setWeight(0.8);
-							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.9);
-							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.09);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.05);			
+							m_statistics.get(SCORE).setWeight(0.8);
+							m_statistics.get(WARBIRD_KILL).setWeight(0.09);
+							m_statistics.get(JAVELIN_KILL).setWeight(0.09);
+							m_statistics.get(SPIDER_KILL).setWeight(0.09);
+							m_statistics.get(TERRIER_KILL).setWeight(0.9);
+							m_statistics.get(WEASEL_KILL).setWeight(0.09);
+							m_statistics.get(LANCASTER_KILL).setWeight(0.09);
+							m_statistics.get(SHARK_KILL).setWeight(0.09);
+							m_statistics.get(DEATHS).setWeight(0.05);
 							break;
 						case 7: //lanc
-							((Statistic)m_statistics.get(SCORE)).setWeight(0.6);
-							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.055);
-							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.12);
-							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.06);
-							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.08);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.04);						
+							m_statistics.get(SCORE).setWeight(0.6);
+							m_statistics.get(WARBIRD_KILL).setWeight(0.07);
+							m_statistics.get(JAVELIN_KILL).setWeight(0.07);
+							m_statistics.get(SPIDER_KILL).setWeight(0.055);
+							m_statistics.get(TERRIER_KILL).setWeight(0.12);
+							m_statistics.get(WEASEL_KILL).setWeight(0.05);
+							m_statistics.get(LANCASTER_KILL).setWeight(0.06);
+							m_statistics.get(SHARK_KILL).setWeight(0.08);
+							m_statistics.get(DEATHS).setWeight(0.04);
 							break;
 						case 8: //shark
-							((Statistic)m_statistics.get(SCORE)).setWeight(1);
-							((Statistic)m_statistics.get(REPELS_PER_DEATH)).setWeight(0.65);
-							((Statistic)m_statistics.get(WARBIRD_KILL)).setWeight(0.001);
-							((Statistic)m_statistics.get(JAVELIN_KILL)).setWeight(0.001);
-							((Statistic)m_statistics.get(SPIDER_KILL)).setWeight(0.001);
-							((Statistic)m_statistics.get(TERRIER_KILL)).setWeight(0.005);
-							((Statistic)m_statistics.get(WEASEL_KILL)).setWeight(0.001);
-							((Statistic)m_statistics.get(LANCASTER_KILL)).setWeight(0.001);
-							((Statistic)m_statistics.get(SHARK_KILL)).setWeight(0.0015);
-							((Statistic)m_statistics.get(DEATHS)).setWeight(0.001);											
-							
+							m_statistics.get(SCORE).setWeight(1);
+							m_statistics.get(REPELS_PER_DEATH).setWeight(0.65);
+							m_statistics.get(WARBIRD_KILL).setWeight(0.001);
+							m_statistics.get(JAVELIN_KILL).setWeight(0.001);
+							m_statistics.get(SPIDER_KILL).setWeight(0.001);
+							m_statistics.get(TERRIER_KILL).setWeight(0.005);
+							m_statistics.get(WEASEL_KILL).setWeight(0.001);
+							m_statistics.get(LANCASTER_KILL).setWeight(0.001);
+							m_statistics.get(SHARK_KILL).setWeight(0.0015);
+							m_statistics.get(DEATHS).setWeight(0.001);
+
 							//teamkills
-							((Statistic)m_statistics.get(WARBIRD_TEAMKILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(JAVELIN_TEAMKILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(SPIDER_TEAMKILL)).setWeight(0.072);
-							((Statistic)m_statistics.get(TERRIER_TEAMKILL)).setWeight(0.15);
-							((Statistic)m_statistics.get(WEASEL_TEAMKILL)).setWeight(0.05);
-							((Statistic)m_statistics.get(LANCASTER_TEAMKILL)).setWeight(0.07);
-							((Statistic)m_statistics.get(SHARK_TEAMKILL)).setWeight(0.08);							
+							m_statistics.get(WARBIRD_TEAMKILL).setWeight(0.07);
+							m_statistics.get(JAVELIN_TEAMKILL).setWeight(0.07);
+							m_statistics.get(SPIDER_TEAMKILL).setWeight(0.072);
+							m_statistics.get(TERRIER_TEAMKILL).setWeight(0.15);
+							m_statistics.get(WEASEL_TEAMKILL).setWeight(0.05);
+							m_statistics.get(LANCASTER_TEAMKILL).setWeight(0.07);
+							m_statistics.get(SHARK_TEAMKILL).setWeight(0.08);
 							break;
 					};
 				}
@@ -758,7 +758,7 @@ import java.util.Vector;
 
 					}
 				}
-				
+
 				private double getTotalWeightedKills()
 				{
 					return (getWeightedStatistic(WARBIRD_KILL)
@@ -769,7 +769,7 @@ import java.util.Vector;
 							+ getWeightedStatistic(LANCASTER_KILL)
 							+ getWeightedStatistic(SHARK_KILL));
 				}
-				
+
 				private double getTotalWeightedTeamKills()
 				{
 					return (getWeightedStatistic(WARBIRD_TEAMKILL)

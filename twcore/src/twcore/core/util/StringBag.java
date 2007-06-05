@@ -8,10 +8,10 @@ package twcore.core.util;
 import java.util.ArrayList;
 import java.util.List;
 public class StringBag {
-    ArrayList list;
+    ArrayList<String> list;
     /** Creates a new instance of StringBag */
     public StringBag(){
-        list = new ArrayList();
+        list = new ArrayList<String>();
     }
 
     public StringBag( String string ){
@@ -35,7 +35,7 @@ public class StringBag {
         if( isEmpty() ){
             return null;
         } else {
-            return (String)list.get( random( list.size() ));
+            return list.get( random( list.size() ));
         }
     }
 
@@ -46,7 +46,7 @@ public class StringBag {
             int i = random( list.size() );
             String grabbed;
 
-            grabbed =(String)list.get( i ) ;
+            grabbed =list.get( i ) ;
             list.remove( i );
             return grabbed;
         }

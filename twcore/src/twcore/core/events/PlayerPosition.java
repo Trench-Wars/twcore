@@ -14,7 +14,7 @@ public class PlayerPosition extends SubspaceEvent{
     private short m_yVelocity;
     private short m_yLocation;
     private short m_xVelocity;
-    
+
     private byte m_togglables;
 
     // Used in packet containing energy information only
@@ -23,11 +23,11 @@ public class PlayerPosition extends SubspaceEvent{
     private short m_timer = 0;
     // DISABLED: Checksum
     // private int m_checksum;
-    
+
     // DISABLED: Weapon info
     // Used in weapons (long) packet only
     // private short m_weaponInfo = 0;
-    
+
     //Togglables
     private boolean m_stealthOn;
     private boolean m_cloakOn;
@@ -38,7 +38,7 @@ public class PlayerPosition extends SubspaceEvent{
     private boolean m_ufoOn;
     // DISABLED: Unknown toggleable
     // private boolean m_unknown;
-    
+
     // This information may or may not be present
     private boolean m_shields = false;
     private boolean m_super = false;
@@ -49,20 +49,20 @@ public class PlayerPosition extends SubspaceEvent{
     private int m_decoy = -1;
     private int m_rocket = -1;
     private int m_portal = -1;
-    
+
     public PlayerPosition( ByteArray array ){
         m_type = array.readByte( 0 );
         m_size = array.size();
-        
+
         if( m_type == 0x28 ){
             m_rotation = array.readByte(1);
             m_timeStamp = array.readLittleEndianShort(2);
             m_xLocation = array.readLittleEndianShort(4);
             m_ping = array.readByte(6);
-            
+
             // Bounty is sent as a byte, so >255 bty will lead to errors from short pos packet.
             m_bounty = array.readByte(7);
-                        
+
             // YES, we are only reading the lower byte for the short ver of the position packet.
             // YES, this means player position data may update sporadically because
             // Player checks vs. ID before updating (due to this problem).  Players with the
@@ -91,10 +91,10 @@ public class PlayerPosition extends SubspaceEvent{
             m_yVelocity = array.readLittleEndianShort(6);
             m_playerID = array.readLittleEndianShort(8);
             m_xVelocity = array.readLittleEndianShort(10);
-            
+
             // Checksum currently unused.  Uncomment and add to Player to use
             // m_checksum = array.readByte(12);
-            
+
             m_togglables = array.readByte( 13 );
             parseTogglables( m_togglables );
             m_ping = array.readByte(14);
@@ -103,7 +103,7 @@ public class PlayerPosition extends SubspaceEvent{
 
             // Weapon info currently unused.  Uncomment and add to Player to use
             // m_weaponInfo = array.readLittleEndianShort(19);
-            
+
             if( m_size > 21 ){
                 //parse beginning until size 23
                 m_energy = array.readLittleEndianShort(21);
@@ -116,9 +116,9 @@ public class PlayerPosition extends SubspaceEvent{
                 parseItemCount( array.readLittleEndianInt( 27 ));
             }
         }
-        
+
     }
-    
+
     public void parseTogglables( byte togglables ){
         m_stealthOn = ( togglables & 0x01 ) == 1;
         m_cloakOn = ( togglables & 0x02 ) >> 1 == 1;
@@ -130,7 +130,7 @@ public class PlayerPosition extends SubspaceEvent{
         // Unknown toggleable currently unused.  Uncomment and add to Player to use
         // m_unknown = ( togglables & 0x80 ) >> 7 == 1;
     }
-    
+
     public void parseItemCount( int items ){
         m_shields= ( items & 0x00000001 ) == 1;
         m_super=   ( items & 0x00000002 ) >> 1 == 1;
@@ -142,43 +142,43 @@ public class PlayerPosition extends SubspaceEvent{
         m_rocket=  ( items & 0x03c00000 ) >> 22;
         m_portal=  ( items & 0x3c000000 ) >> 26;
     }
-    
+
     public byte getRotation(){
         return m_rotation;
     }
-    
+
     public short getXLocation(){
         return m_xLocation;
     }
-    
+
     public byte getTogglables(){
         return m_togglables;
     }
-    
+
     public byte getPing(){
         return m_ping;
     }
-    
+
     public short getBounty(){
         return m_bounty;
     }
-    
+
     public short getPlayerID(){
         return m_playerID;
     }
-    
+
     public short getYVelocity(){
         return m_yVelocity;
     }
-    
+
     public short getYLocation(){
         return m_yLocation;
     }
-    
+
     public short getXVelocity(){
         return m_xVelocity;
     }
-    
+
     public boolean containsEnergy(){
         if( m_type == 0x05 && m_size == 21 ) {
             return false;
@@ -188,55 +188,56 @@ public class PlayerPosition extends SubspaceEvent{
             return true;
         }
     }
-    
+
     public boolean containsWeaponsInfo(){
         return m_type == 0x05;
     }
-    
+
     public boolean containsItemCount(){
         return( m_type == 0x05 && m_size == 31 )
         || ( m_type == 0x28 && m_size == 0x26 );
     }
-    
+
     public short getEnergy(){
         return m_energy;
     }
-    
+
     public short getS2CLag(){
         return m_s2clag;
     }
-    
+
     public short getTimer(){
         return m_timer;
     }
-        
+
     public short getTimeStamp(){
         return m_timeStamp;
     }
-    
+
     public boolean hasShields(){
         return m_shields;
     }
-    
+
     public boolean hasSuper(){
         return m_super;
     }
-    
+
     public int getBurstCount(){
         return m_burst;
     }
-    
+
     public int getRepelCount(){
         return m_repel;
     }
-    
+
     public int getThorCount(){
         return m_thor;
     }
-    
+
     /**
      * @deprecated Who calls them walls?
      */
+    @Deprecated
     public int getWallCount(){
         return getBrickCount();
     }
@@ -244,47 +245,47 @@ public class PlayerPosition extends SubspaceEvent{
     public int getBrickCount(){
         return m_brick;
     }
-    
+
     public int getDecoyCount(){
         return m_decoy;
     }
-    
+
     public int getRocketCount(){
         return m_rocket;
     }
-    
+
     public int getPortalCount(){
         return m_portal;
     }
-    
+
     public boolean isStealthed(){
         return m_stealthOn;
     }
 
     public boolean isCloaked(){
-        return m_cloakOn; 
+        return m_cloakOn;
     }
-    
+
     public boolean hasXRadarOn(){
-        return m_xradarOn; 
+        return m_xradarOn;
     }
-    
+
     public boolean hasAntiwarpOn(){
-        return m_antiOn; 
+        return m_antiOn;
     }
-    
+
     public boolean isWarpingIn(){
-        return m_warpedIn; 
+        return m_warpedIn;
     }
-    
+
     public boolean isInSafe(){
-        return m_inSafe; 
+        return m_inSafe;
     }
-    
+
     public boolean isUFO(){
-        return m_ufoOn; 
+        return m_ufoOn;
     }
-    
+
     /**
      * DISABLED.
      * @return 0
@@ -293,7 +294,7 @@ public class PlayerPosition extends SubspaceEvent{
         return 0;
         // return m_checksum;
     }
-    
+
     /**
      * DISABLED.
      * @return 0
@@ -309,7 +310,7 @@ public class PlayerPosition extends SubspaceEvent{
      */
     public boolean Unknown(){
         return false;
-        //return m_unknown; 
+        //return m_unknown;
     }
-    
+
 }

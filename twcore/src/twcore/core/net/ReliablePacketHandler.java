@@ -16,8 +16,8 @@ import twcore.core.util.ByteArray;
  */
 public class ReliablePacketHandler {
 
-    Map                     m_sentPackets;        // (Integer)ACK ID -> ReliablePacket
-    Map                     m_receivedPackets;    // (Integer)ACK ID -> ReliablePacket
+    Map<Integer, ReliablePacket> m_sentPackets;        // (Integer)ACK ID -> ReliablePacket
+    Map<Integer, ByteArray> m_receivedPackets;    // (Integer)ACK ID -> ByteArray
     int                     m_nextOutboundAck;    // ACK ID of next outbound packet
     int                     m_expectedReliable;   // ACK ID of the next expected packet
 
@@ -38,8 +38,8 @@ public class ReliablePacketHandler {
         m_ssEncryption = ssEncryption;
         m_packetGenerator = packetGenerator;
         m_packetInterpreter = packetInterpreter;
-        m_sentPackets = Collections.synchronizedMap( new HashMap() );
-        m_receivedPackets = Collections.synchronizedMap( new HashMap() );
+        m_sentPackets = Collections.synchronizedMap( new HashMap<Integer, ReliablePacket>() );
+        m_receivedPackets = Collections.synchronizedMap( new HashMap<Integer, ByteArray>() );
     }
 
     /**
@@ -87,7 +87,7 @@ public class ReliablePacketHandler {
             subMessage.addPartialByteArray( message, 0, 6, message.size() - 6 );
             m_packetInterpreter.translateGamePacket( subMessage, true );
 
-            while((subMessage = (ByteArray)m_receivedPackets.remove(new Integer(m_expectedReliable)))
+            while((subMessage = m_receivedPackets.remove(new Integer(m_expectedReliable)))
             		!= null) {
                 m_expectedReliable++;
                 m_packetInterpreter.translateGamePacket( subMessage, true );
@@ -131,7 +131,7 @@ public class ReliablePacketHandler {
 
                 while( iterator.hasNext() == true ){
                     i = (Integer)iterator.next();
-                    message = (ReliablePacket)m_sentPackets.get( i );
+                    message = m_sentPackets.get( i );
                     if( message != null ){
                         if( message.getTimeSent() + RESEND_DELAY < currentTime ){
                             packet = message.getPacket();

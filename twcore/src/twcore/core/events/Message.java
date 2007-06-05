@@ -53,8 +53,8 @@ public class Message extends SubspaceEvent {
         m_chatNumber = 0;
         m_messager = null;
         m_messageType = (1 << (int)array.readByte( 1 ));
-        m_soundCode = (byte)array.readByte( 2 );
-        m_playerID = (short)array.readLittleEndianShort( 3 );
+        m_soundCode = array.readByte( 2 );
+        m_playerID = array.readLittleEndianShort( 3 );
         m_message = array.readString( 5, array.size() - 6 );
 
         if( m_messageType == Message.ARENA_MESSAGE && m_message.startsWith( "misc:alertcommand:" )){
@@ -161,7 +161,7 @@ public class Message extends SubspaceEvent {
 
         return m_chatNumber;
     }
-    
+
     /**
      * Special use only.
      * @param name The sender's name to set the message to

@@ -29,7 +29,7 @@ public class SpaceShip extends Thread
 	Object m_bot;
 	String m_methodName;
 
-	LinkedList fired_projectiles = new LinkedList();
+	LinkedList<Projectile> fired_projectiles = new LinkedList<Projectile>();
 
 	BotAction m_botAction;
 	BotSettings m_botSettings;
@@ -237,7 +237,7 @@ public class SpaceShip extends Thread
 
 	public void thrust() {
 
-		double bearing = (double)Math.PI * 2 * (double)d / (double)40.0;
+		double bearing = Math.PI * 2 * (double)d / 40.0;
 		vX += (short)(THRUST * Math.sin(bearing));
 		vY -= (short)(THRUST * Math.cos(bearing));
 
@@ -245,7 +245,7 @@ public class SpaceShip extends Thread
 
 		if (speed > SPEED) {
 			int nS = speed - SPEED;
-			bearing = (double)Math.PI * 2 * (double)getDirection(vX, vY) / (double)40.0;
+			bearing = Math.PI * 2 * getDirection(vX, vY) / 40.0;
 			vX -= (short)(nS * Math.sin(bearing));
 			vY += (short)(nS * Math.cos(bearing));
 		}
@@ -344,7 +344,7 @@ public class SpaceShip extends Thread
 		return nN;
 	}
 
-	public boolean hasTarget() { 
+	public boolean hasTarget() {
 		return (targetX != 0 && targetY != 0);
 	}
 
@@ -390,7 +390,7 @@ public class SpaceShip extends Thread
 			pSpeed = BOMB_SPEED;
 		} else { return; }
 
-		double bearing = (double)Math.PI * 2 * (double)event.getRotation() / (double)40.0;
+		double bearing = Math.PI * 2 * (double)event.getRotation() / 40.0;
 
 		double bVX = event.getXVelocity() + (short)(pSpeed * Math.sin(bearing));
 		double bVY = event.getYVelocity() - (short)(pSpeed * Math.cos(bearing));
@@ -404,7 +404,7 @@ public class SpaceShip extends Thread
 
 	public void setLocation(int tX, int tY) {
 		x = (short)tX;
-		y = (short)tY; 
+		y = (short)tY;
 	}
 
 	public int getVX() { return vX; }

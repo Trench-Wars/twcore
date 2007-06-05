@@ -125,7 +125,7 @@ public class ItemCommand<T> implements List<T>
 	private void setDefaultValues(T object)
 	{
 		try{
-			Field[] fields = ((Class<T>)defaults.getClass()).getFields();
+			Field[] fields = defaults.getClass().getFields();
 			for(Field field : fields)
 			{
 				field.set(object, field.get(defaults));
@@ -502,7 +502,7 @@ public class ItemCommand<T> implements List<T>
 	 * Returns an iterator over the elements in this list in proper sequence.
 	 * @see java.util.List#iterator()
 	 */
-	public Iterator iterator()
+	public Iterator<T> iterator()
 	{
 		return items.iterator();
 	}
@@ -688,7 +688,7 @@ public class ItemCommand<T> implements List<T>
 	 * Returns a list iterator of the elements in this list (in proper sequence).
 	 * @see java.util.List#listIterator()
 	 */
-	public ListIterator listIterator()
+	public ListIterator<T> listIterator()
 	{
 		return items.listIterator();
 	}
@@ -698,7 +698,7 @@ public class ItemCommand<T> implements List<T>
 	 * starting at the specified position in this list.
 	 * @see java.util.List#listIterator(int)
 	 */
-	public ListIterator listIterator(int index)
+	public ListIterator<T> listIterator(int index)
 	{
 		return items.listIterator(index);
 	}

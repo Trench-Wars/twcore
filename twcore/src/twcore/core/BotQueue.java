@@ -351,7 +351,7 @@ public class BotQueue extends Thread {
                 m_loader = m_loader.reinstantiate();
             }
 
-            Class roboClass = m_loader.loadClass( "twcore.bots." + rawClassName + "." + rawClassName );
+            Class<? extends SubspaceBot> roboClass = m_loader.loadClass( "twcore.bots." + rawClassName + "." + rawClassName ).asSubclass(SubspaceBot.class);
             String altIP = botInfo.getString("AltIP"+currentBotCount);
             int altPort = botInfo.getInt("AltPort"+currentBotCount);
             String altSysop = botInfo.getString("AltSysop"+currentBotCount);

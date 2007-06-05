@@ -27,17 +27,17 @@ public class SQLConnectionPool implements Runnable {
                                                 //         none is available
                                                 // False - throw SQLException if no
                                                 //         connection is available
-    private Vector  availableConnections;       // Connections not in use
-    private Vector  busyConnections;            // Connections currently querying
+    private Vector<Connection>  availableConnections;       // Connections not in use
+    private Vector<Connection>  busyConnections;            // Connections currently querying
     private boolean connectionPending = false;  // True if a connection is being made
     private int     currentBackground = 0;      // Total number of background queries
 
     /**
      * Creates a new connection pool.  A number of connections are made equal
      * to the minimum amount of connections allowed, which are then all added
-     * to the available connection list.  
+     * to the available connection list.
      * @param poolName Name of the connection pool
-     * @param dbURL URL of the database connection 
+     * @param dbURL URL of the database connection
      * @param minPool Minimum number of active connections in the pool at any one time
      * @param maxPool Maximum number of connections allowed
      * @param wait 0 - do not wait for a connection to unlock; 1 - wait (safer)
@@ -45,7 +45,7 @@ public class SQLConnectionPool implements Runnable {
      * @throws SQLException
      */
     public SQLConnectionPool(String poolName, String dbURL, int minPool, int maxPool, int wait, String driver) throws SQLException {
-        
+
         this.poolName = poolName;
         if( wait == 0 )
             waitIfBusy = false;
@@ -58,19 +58,19 @@ public class SQLConnectionPool implements Runnable {
         if (initialConnections > maxConnections) {
             initialConnections = maxConnections;
         }
-        availableConnections = new Vector(initialConnections);
-        busyConnections = new Vector();
+        availableConnections = new Vector<Connection>(initialConnections);
+        busyConnections = new Vector<Connection>();
         for(int i=0; i<initialConnections; i++) {
             availableConnections.addElement(makeNewConnection());
         }
     }
-    
+
     /**
      * Runs a straight SQL query using an available connection.  Once done,
      * the connection is freed back into the available pool and the result
      * set of the query is returned.  Unlike most SQL handlers, the ResultSet
      * MAY be returned null (in the case that an SQLException is encountered).
-     * @param query A properly-formed SQL query 
+     * @param query A properly-formed SQL query
      * @return The result set of the query (MAY be null)
      * @throws SQLException
      */
@@ -85,13 +85,13 @@ public class SQLConnectionPool implements Runnable {
             free( conn );
 
             //throw e;
-            
+
             // DEBUG: Returning null to generate NullPointerExceptions in bots that
             // do not catch SQLExceptions
             return null;
-        }        
+        }
     }
-    
+
     /**
      * Attempts to retrieve a connection from the connection pool.  If there is
      * one available, it will be returned and added to the busy connection list.
@@ -104,7 +104,7 @@ public class SQLConnectionPool implements Runnable {
      */
     public synchronized Connection getConnection() throws SQLException {
         if (!availableConnections.isEmpty()) {
-            Connection existingConnection = (Connection)availableConnections.lastElement();
+            Connection existingConnection = availableConnections.lastElement();
             int lastIndex = availableConnections.size() - 1;
             availableConnections.removeElementAt(lastIndex);
             if (existingConnection.isClosed()) {
@@ -127,7 +127,7 @@ public class SQLConnectionPool implements Runnable {
             return getConnection();
         }
     }
-    
+
     /**
      * Creates a new connection in the background (separate thread).
      */
@@ -139,13 +139,13 @@ public class SQLConnectionPool implements Runnable {
         } catch(OutOfMemoryError oome) {
         }
     }
-    
+
     /**
      * Method for running in a separate thread to make a new connection in the
-     * background.  Once the connection is made, it's added to the list of 
+     * background.  Once the connection is made, it's added to the list of
      * available connections, and any threads waiting (using wait()) for a
      * connection inside getConnection() will be notified that one is now
-     * available. 
+     * available.
      */
     public void run() {
         try {
@@ -158,11 +158,11 @@ public class SQLConnectionPool implements Runnable {
         } catch(Exception e) {
         }
     }
-    
+
     /**
      * Makes a new connection and returns a reference to it.  This is done when
      * all initial connections are busy, but the number of total active connections
-     * is less than the max allowed. 
+     * is less than the max allowed.
      * @return A new connection
      * @throws SQLException
      */
@@ -175,7 +175,7 @@ public class SQLConnectionPool implements Runnable {
             throw new SQLException("Can't find class for driver: " + driver);
         }
     }
-    
+
     /**
      * Free a connection back to the available connection pool.  This will notify
      * other threads that are waiting (using wait()) for a connection in getConnection()
@@ -188,7 +188,7 @@ public class SQLConnectionPool implements Runnable {
         // Wake up threads that are waiting for a connection
         notifyAll();
     }
-    
+
     /**
      * @return Total number of connections either available or currently busy
      */
@@ -196,17 +196,17 @@ public class SQLConnectionPool implements Runnable {
         return(availableConnections.size() +
         busyConnections.size());
     }
-    
+
     /**
      * Closes all of the connections monitored by this connection pool.
      */
     public synchronized void closeAllConnections() {
         closeConnections(availableConnections);
-        availableConnections = new Vector();
+        availableConnections = new Vector<Connection>();
         closeConnections(busyConnections);
-        busyConnections = new Vector();
+        busyConnections = new Vector<Connection>();
     }
-    
+
     /**
      * Closes all of the connections in a given vector.
      * @param connections Vector containing connections to close
@@ -222,46 +222,46 @@ public class SQLConnectionPool implements Runnable {
         } catch(SQLException sqle) {
         }
     }
-    
+
     /**
      * @return True if there is at least one connection in the pool available.
      */
     public synchronized boolean isAvailable(){
         return !availableConnections.isEmpty();
     }
-    
+
     /**
      * @return Number of connections busy, available and maximum allowed.
      */
     public synchronized String toString() {
         String info =
-        "SQL Status: " + poolName + " pool has " 
+        "SQL Status: " + poolName + " pool has "
         + (availableConnections.size() + busyConnections.size()) + "/"
         + maxConnections + " connections online.  " + busyConnections.size()
         + " of them are busy.";
         return(info);
     }
-    
+
     /**
      * @return Number of connections running background queries
      */
     public synchronized int getNumBackground(){
         return currentBackground;
     }
-    
+
     /**
      * XXX: Intentional comparison?  This allows the number of total connections
-     * to exceed the maximum allotted connections.  Perhaps: 
-     * 
+     * to exceed the maximum allotted connections.  Perhaps:
+     *
      * <code>(totalConnections() + currentBackground) == maxConnections</code>
-     * 
+     *
      * is what was really intended?
      * @return True if # background connections is equal to max # connections allowed
      */
     public synchronized boolean reachedMaxBackground(){
         return currentBackground == maxConnections;
-    }    
-    
+    }
+
     /**
      * Returns the maximum number of connections allowed.  However, background
      * connections don't appear to apply to this figure.
@@ -270,7 +270,7 @@ public class SQLConnectionPool implements Runnable {
     public synchronized int getMaxConnections(){
         return maxConnections;
     }
-    
+
     /**
      * Adds one to the current number of background queries running.
      */

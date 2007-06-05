@@ -58,11 +58,11 @@ public class Prize extends SubspaceEvent {
      * @param array the ByteArray containing the packet data
      */
     public Prize(ByteArray array){
-        m_timeStamp = (int)array.readLittleEndianInt( 1 );
-        m_xTiles = (short)array.readLittleEndianShort( 5 );
-        m_yTiles = (short)array.readLittleEndianShort( 7 );
-        m_prizeType = (short)array.readLittleEndianShort( 9 );
-        m_playerID = (short)array.readLittleEndianShort( 11 );
+        m_timeStamp = array.readLittleEndianInt( 1 );
+        m_xTiles = array.readLittleEndianShort( 5 );
+        m_yTiles = array.readLittleEndianShort( 7 );
+        m_prizeType = array.readLittleEndianShort( 9 );
+        m_playerID = array.readLittleEndianShort( 11 );
     }
 
     /**
