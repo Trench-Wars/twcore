@@ -13,16 +13,16 @@ import twcore.core.events.InterProcessEvent;
  * Main class of the Inter-process Communication protocol of TWCore, handling routing
  * of messages between bots along specific channels.  Also handles channel subscriptions,
  * creation/deletion of channels, and firing of InterProcessEvents.
- * 
+ *
  * @author  harvey
  */
 public class InterProcessCommunicator {
 
-    private Map channels;       // (String)Channel name -> IPCChannel
+    private Map<String, IPCChannel> channels;       // (String)Channel name -> IPCChannel
 
     /** Creates a new instance of InterProcessCommunicator */
     public InterProcessCommunicator() {
-        channels = Collections.synchronizedMap(new HashMap());
+        channels = Collections.synchronizedMap(new HashMap<String, IPCChannel>());
     }
 
     /**
@@ -48,7 +48,7 @@ public class InterProcessCommunicator {
         }
         InterProcessEvent event = new InterProcessEvent( senderName,
         channelName, o );
-        IPCChannel channel = (IPCChannel)channels.get( channelName );
+        IPCChannel channel = channels.get( channelName );
         channel.broadcast( event );
     }
 
@@ -60,14 +60,14 @@ public class InterProcessCommunicator {
     public synchronized String[] getSubscribedChannels( SubspaceBot bot ){
         synchronized (channels) {
             Iterator i = channels.values().iterator();
-            ArrayList list = new ArrayList();
+            ArrayList<String> list = new ArrayList<String>();
             while( i.hasNext() ){
                 IPCChannel ipc = (IPCChannel)i.next();
                 if( ipc.isSubscribed( bot )){
                     list.add( ipc.getName() );
                 }
             }
-            return (String[])list.toArray( new String[ list.size() ]);
+            return list.toArray( new String[ list.size() ]);
         }
     }
 
@@ -86,7 +86,7 @@ public class InterProcessCommunicator {
         if( !channelExists( channel )){
             channels.put( channel, new IPCChannel( channel ));
         }
-        IPCChannel ipcChan = (IPCChannel)channels.get( channel );
+        IPCChannel ipcChan = channels.get( channel );
         if( !ipcChan.isSubscribed( bot )){
             ipcChan.subscribe( bot );
         }
@@ -99,7 +99,7 @@ public class InterProcessCommunicator {
      */
     public synchronized void unSubscribe( String channel, SubspaceBot bot ){
         if( !channelExists( channel )) return;
-        ((IPCChannel)channels.get( channel )).unsubscribe( bot );
+        channels.get( channel ).unsubscribe( bot );
     }
 
     /**
@@ -129,14 +129,14 @@ public class InterProcessCommunicator {
 
     /**
      * Internal class of InterProcessCommunicator, IPCChannel
-     * 
+     *
      * Representation of an IPC communications channel in the IPC message protocol.
      */
     class IPCChannel {
-        private List bots;
+        private List<SubspaceBot> bots;
         private String channel;
         public IPCChannel( String channelName ){
-            bots = Collections.synchronizedList(new ArrayList());
+            bots = Collections.synchronizedList(new ArrayList<SubspaceBot>());
             channel = channelName;
         }
 
@@ -188,7 +188,7 @@ public class InterProcessCommunicator {
         }
 
         /**
-         * @return True if no bots are subscribed to this channel 
+         * @return True if no bots are subscribed to this channel
          */
         public boolean isEmpty() {
             return bots.size() == 0;

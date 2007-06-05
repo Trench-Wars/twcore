@@ -45,7 +45,7 @@ public class GamePacketGenerator {
                 synchronized (m_messageList) {
                     size = m_messageList.size();
                     if( size == 1 ){
-                        sendReliableMessage( (ByteArray)m_messageList.remove(0) );
+                        sendReliableMessage( m_messageList.remove(0) );
                     } else if( size > 1 ){
                         sendClusteredPacket();
                     }
@@ -417,7 +417,7 @@ public class GamePacketGenerator {
 
                 // We now need to add as many as we can before we fill up the 500 bytes.
                 if( m_messageList.size() > 0 ){
-                    tempMessage = (ByteArray)m_messageList.remove(0);
+                    tempMessage = m_messageList.remove(0);
                     nextSize = tempMessage.size();
                 } else {
                     done = true;
@@ -430,7 +430,7 @@ public class GamePacketGenerator {
                     bytearray.addByteArray( tempMessage );
 
                     if( m_messageList.size() > 0 ){
-                        tempMessage = (ByteArray)m_messageList.remove(0);
+                        tempMessage = m_messageList.remove(0);
                         sizeLeft -= nextSize + 1;
                         nextSize = tempMessage.size();
                     } else {

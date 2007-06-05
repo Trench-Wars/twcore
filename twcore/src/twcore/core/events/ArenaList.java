@@ -21,14 +21,14 @@ End of repeated section
 */
 
 public class ArenaList extends SubspaceEvent {
-    Map            m_arenaList;
-    
+    Map<String, Integer>            m_arenaList;
+
     public ArenaList( ByteArray array ){
         int         i = 1;
         String      name;
         int         size;
 
-        m_arenaList = Collections.synchronizedMap( new HashMap() );
+        m_arenaList = Collections.synchronizedMap( new HashMap<String, Integer>() );
 
         while( i < array.size() ){
             name = array.readNullTerminatedString( i );
@@ -49,16 +49,16 @@ public class ArenaList extends SubspaceEvent {
         }
         return arena;
     }
-    
+
     public int getSizeOfArena( String arenaName ){
-        return Math.abs( ((Integer)m_arenaList.get( arenaName.toLowerCase() )).intValue() );
+        return Math.abs( m_arenaList.get( arenaName.toLowerCase() ).intValue() );
     }
 
     public String getCurrentArenaName(){
         Iterator i = m_arenaList.keySet().iterator();
         while( i.hasNext() ){
             String key = (String)i.next();
-            Integer value = (Integer)m_arenaList.get( key );
+            Integer value = m_arenaList.get( key );
             if( value.intValue() < 0 ){
                 return key;
             }

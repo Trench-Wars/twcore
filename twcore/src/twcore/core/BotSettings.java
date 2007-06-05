@@ -16,14 +16,14 @@ import twcore.core.util.Tools;
  */
 public class BotSettings {
 
-    private String              m_fileName;     // Name & location of the CFG
-    private HashMap             m_data;         // CFG field -> value mapping
+    private String              	m_fileName;     // Name & location of the CFG
+    private HashMap<String, String> m_data;         // CFG field -> value mapping
 
     /**
      * Constructs a BotSettings object with no data.
      */
     public BotSettings(){
-        m_data = new HashMap();
+        m_data = new HashMap<String, String>();
     }
 
     /**
@@ -43,7 +43,7 @@ public class BotSettings {
     public BotSettings( File file ) {
         m_fileName = file.getPath();
 
-        m_data = new HashMap();
+        m_data = new HashMap<String, String>();
         try{
             String          key;
             String          line;
@@ -109,7 +109,7 @@ public class BotSettings {
      * @return Data associated with the specified field
      */
     public int getInt( String keyName ){
-        String      value = (String)m_data.get( keyName.toLowerCase() );
+        String      value = m_data.get( keyName.toLowerCase() );
 
         if( value != null ){
             return Integer.valueOf( value ).intValue();
@@ -124,7 +124,7 @@ public class BotSettings {
      * @return Data associated with the specified field
      */
     public Integer getInteger( String keyName ){
-        String      value = (String)m_data.get( keyName.toLowerCase() );
+        String      value = m_data.get( keyName.toLowerCase() );
 
         if( value != null ){
             return Integer.valueOf(value);
@@ -139,7 +139,7 @@ public class BotSettings {
      * @return Data associated with the specified field
      */
     public String getString( String keyName ){
-        String      value = (String)m_data.get( keyName.toLowerCase() );
+        String      value = m_data.get( keyName.toLowerCase() );
 
         if( value != null ){
             return new String( value );
@@ -154,7 +154,7 @@ public class BotSettings {
      * @return Data associated with the specified field
      */
     public double getDouble( String keyName ){
-        String      value = (String)m_data.get( keyName.toLowerCase() );
+        String      value = m_data.get( keyName.toLowerCase() );
 
         if( value != null ){
             return Double.valueOf( value ).doubleValue();

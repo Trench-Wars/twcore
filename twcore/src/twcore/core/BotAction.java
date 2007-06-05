@@ -52,7 +52,7 @@ import twcore.core.util.Tools;
  * 1. TASK SCHEDULING - scheduling events w/ TimerTasks to run at a later time
  * 2. MESSAGING - sending single and multi-line messages of all kinds
  * 3. MISC OPERATIONS - everything else: setting ships & freqs, changing arenas,
- * SQL DB ops, inter-process communications, etc.  
+ * SQL DB ops, inter-process communications, etc.
  * 4. GETTERS - getting accessible data, usually from instances of other classes
  */
 public class BotAction
@@ -87,7 +87,7 @@ public class BotAction
 
 
 
-    
+
 
     // **********************************************************************************
     //
@@ -150,7 +150,7 @@ public class BotAction
 
         while (m_timerTasks.size() > 0)
         {
-            temp = (TimerTask) m_timerTasks.removeFirst();
+            temp = m_timerTasks.removeFirst();
             if (temp != null)
             {
                 temp.cancel();
@@ -1734,7 +1734,7 @@ public class BotAction
             setFreq(((Integer) i.next()).intValue(), destFreq);
         }
     }
-    
+
     /**
      * Changes all players in a particular ship to a particular freq.
      * @param shipType The ship type you wish to set to a freq
@@ -1755,7 +1755,7 @@ public class BotAction
 
     /**
      * Sends all ships on a specific frequency into spectator mode, without locking
-     * them in spectator mode.  (Arena should be *lock'd first.) 
+     * them in spectator mode.  (Arena should be *lock'd first.)
      * @param freq Frequency to spec
      */
     public void specAllOnFreq(int freq) {
@@ -1767,10 +1767,10 @@ public class BotAction
             specWithoutLock(((Integer) i.next()).intValue());
         }
     }
-    
+
     /**
      * Sends all ships on a specific frequency into spectator mode, without locking
-     * them in spectator mode, and then sets their freq to the old freq. 
+     * them in spectator mode, and then sets their freq to the old freq.
      * @param freq Frequency to spec
      */
     public void specFreqAndKeepFreq(int freq) {
@@ -1784,7 +1784,7 @@ public class BotAction
             setFreq(id, freq);
         }
     }
-    
+
     /**
      * Sends all ships into spectator mode, but keeps their freq as what it was prior
      * to being spec'd.  Does not lock in spectator mode, so arena should be *lock'd.
@@ -1794,7 +1794,7 @@ public class BotAction
         Iterator i = m_arenaTracker.getPlayingPlayerIterator();
         Player p;
         int priorfreq;
-        
+
         if (i == null)
             return;
         while (i.hasNext()) {
@@ -1804,7 +1804,7 @@ public class BotAction
             setFreq(p.getPlayerID(), priorfreq);
         }
     }
-    
+
 
     /**
      * Checks every player in the game for X number of deaths, and places them
@@ -2564,7 +2564,7 @@ public class BotAction
         {
         }
     }
-    
+
     /**
      * Closes a ResultSet and the Statement that called it.  After you have made
      * a query and are done with its ResultSet, you <b>MUST</b> call this method --
@@ -2579,7 +2579,7 @@ public class BotAction
         if (rs != null) {
             Statement smt = null;
             try {
-                smt = rs.getStatement();      
+                smt = rs.getStatement();
             } catch (SQLException sqlEx) {} // ignore any errors
 
             try {

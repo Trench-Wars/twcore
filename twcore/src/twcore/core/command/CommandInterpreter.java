@@ -155,7 +155,7 @@ public class CommandInterpreter {
 
         while( i.hasNext() ){
             String      commandKey = (String)i.next();
-            command = (Command)m_commands.get( commandKey );
+            command = m_commands.get( commandKey );
             if( command != null ){
                 if( !command.getHelpString().equals( "" ) ){
                     helps.add( command.getHelpString() );
@@ -178,7 +178,7 @@ public class CommandInterpreter {
 
         while( i.hasNext() ){
             String      commandKey = (String)i.next();
-            command = (Command)m_commands.get( commandKey );
+            command = m_commands.get( commandKey );
             if( command != null ){
                 if( !command.getHelpString().equals( "" ) && !command.getHelpString().startsWith( "default" ) &&
                         accessLevel >= command.getOpLevelReq() ){
@@ -199,7 +199,7 @@ public class CommandInterpreter {
      */
     public String getCommandHelp( String trigger ){
         String      help = "";
-        Command     command = (Command)m_commands.get( trigger );
+        Command     command = m_commands.get( trigger );
         if( command != null ){
             help = command.getHelpString();
         }
@@ -245,12 +245,12 @@ public class CommandInterpreter {
             trigger = message.substring( 0, seperatorIndex ).toLowerCase();
         }
 
-        command = (Command)m_commands.get( trigger );
+        command = m_commands.get( trigger );
         if( command == null ){
             seperatorIndex = 0;
-            command = (Command)m_commands.get( "default" + messageType );
+            command = m_commands.get( "default" + messageType );
         }
-        
+
         if( command != null ){
             if( (command.getMessageTypes() & messageType) != 0 ){
                 if(messageType == Message.REMOTE_PRIVATE_MESSAGE)

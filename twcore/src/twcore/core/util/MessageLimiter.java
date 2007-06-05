@@ -19,7 +19,7 @@ public class MessageLimiter {
     private int         m_rate = 6;     // # msgs allowed per player per minute
     private long        lastCheckTime;  // Last time anyone sent a msg
     private long        time;           // Time allowed per message (from m_rate)
-    
+
     /**
      * Creates a new instance of MessageLimiter with the specified message
      * limit per minute per person.
@@ -57,22 +57,22 @@ public class MessageLimiter {
             m_bot.handleEvent( event );
             return;
         }
-        
+
         recordTime( name );
-        
+
         long currentTime = System.currentTimeMillis();
         long diff = currentTime - lastCheckTime;
         if( diff > time ){
             lastCheckTime = currentTime;
             reduce( diff );
         }
-        
-        Integer val = (Integer)m_timeMap.get( name );
+
+        Integer val = m_timeMap.get( name );
         if( val == null || val.intValue() < m_rate ){
             m_bot.handleEvent( event );
         }
     }
-    
+
     /**
      * Reduces the count of messages from all players by the difference
      * supplied (should be difference between current time and last time
@@ -85,7 +85,7 @@ public class MessageLimiter {
             Iterator i = m_timeMap.keySet().iterator();
             while( i.hasNext() ){
                 String name = (String)i.next();
-                Integer theInteger = (Integer)m_timeMap.get( name );
+                Integer theInteger = m_timeMap.get( name );
                 int intval = theInteger.intValue();
                 if( intval == 1 || intval == 0 ){
                     i.remove();
@@ -95,15 +95,15 @@ public class MessageLimiter {
             }
         }
     }
-    
+
     /**
      * Record the supplied player name as having sent a message at this time
      * by incrementing their message count.  If over the limit, warn them.
-     * @param name 
+     * @param name
      */
     public void recordTime( String name ){
         if( m_timeMap.containsKey( name )){
-            int value = ((Integer)m_timeMap.get( name )).intValue();
+            int value = m_timeMap.get( name ).intValue();
             if( value < m_rate ){
                 m_timeMap.put( name,  new Integer( ++value ));
                 if( value == m_rate ){

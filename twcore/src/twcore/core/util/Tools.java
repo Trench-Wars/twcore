@@ -17,7 +17,7 @@ import java.util.LinkedList;
 public class Tools {
     public static boolean debugging = true;
     public static String exceptionLogFilePath = null;
-    
+
     /**
      * Chops a string into pieces around a given character.  Very similar to
      * String's split method, only slower and less powerful.  Nearly useless.
@@ -52,9 +52,9 @@ public class Tools {
         stuff=stuff.replace('?',' ').replace('!',' ').trim();
         if (stuff.length() > 0) list.add( stuff );
 
-        return (String[])list.toArray(new String[list.size()]);
+        return list.toArray(new String[list.size()]);
     }
-    
+
     /**
      * Chops a string into pieces around a given character.  Very similar to
      * String's split method, only slower and less powerful.  Nearly useless.
@@ -65,19 +65,19 @@ public class Tools {
     public static String[] cleanStringChopper ( String input, char delimiter ) {
         ArrayList <String>list = new ArrayList<String>();
         int startpos = 0;
-        
+
         for (int i=0; i<input.length(); i++) {
             if (input.charAt(i) == delimiter) {
                 list.add(input.substring(startpos, i));
                 startpos = i + 1;
             }
         }
-        
+
         if ((startpos != input.length()-1) || startpos == 0) list.add(input.substring(startpos));
-        
-        return (String[])list.toArray(new String[list.size()]);
+
+        return list.toArray(new String[list.size()]);
     }
-    
+
     /**
      * Chops a string into pieces around a given character.  Very similar to
      * String's split method, only slower and less powerful.  Nearly useless.
@@ -125,7 +125,7 @@ public class Tools {
     /**
      * Prints to specified PrintWriter a message with a preformatted timestamp.
      * @param value Message
-     * @param writer Writer to use 
+     * @param writer Writer to use
      */
     public static void printLog( String value, PrintWriter writer ){
         String output = getTimeStamp() + "   " + value;
@@ -161,7 +161,7 @@ public class Tools {
     /**
      * Print exception to the log (console) with formatted output, timestamp,
      * and the specified note.
-     * @param note Note to print 
+     * @param note Note to print
      * @param e Exception
      */
     public static void printStackTrace( String note, Exception e ){
@@ -188,7 +188,7 @@ public class Tools {
 
     /**
      * Our signature timestamp.
-     * @return Formatted timestamp 
+     * @return Formatted timestamp
      */
     public static String getTimeStamp(){
 		return new SimpleDateFormat("dd MMM yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
@@ -242,7 +242,7 @@ public class Tools {
             return false;
         }
     }
-    
+
     /**
      * Add slashes to a String as is required for a database query.
      * @param t String to format
@@ -263,7 +263,7 @@ public class Tools {
     }
 
     //returns null if not found, a file if found
-    
+
     /**
      * Recursively searches for a file in directory.  Null if the file can't be found.
      * @param directory Directory to begin recursive search

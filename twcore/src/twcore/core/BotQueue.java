@@ -51,7 +51,7 @@ public class BotQueue extends Thread {
             SPAWN_DELAY = 20000;
         else
             SPAWN_DELAY = delay;
-        
+
         if (m_botAction.getGeneralSettings().getString( "Server" ).equals("localhost"))
             SPAWN_DELAY = 100;
 
@@ -88,7 +88,7 @@ public class BotQueue extends Thread {
      * @return Number of bots of the class
      */
     int getNumberOfBots( String className ){
-        Integer         number = (Integer)m_botTypes.get( className );
+        Integer         number = m_botTypes.get( className );
 
         if( number == null ){
             return 0;
@@ -129,7 +129,7 @@ public class BotQueue extends Thread {
         m_botAction.sendSmartPrivateMessage( messager, "Listing bot types:" );
         for( i = m_botTypes.keySet().iterator(); i.hasNext(); ){
             className = (String)i.next();
-            number = (Integer)m_botTypes.get( className );
+            number = m_botTypes.get( className );
             if( number.intValue() > 0 )
                 m_botAction.sendSmartPrivateMessage( messager, className + ": " + number );
         }
@@ -173,7 +173,7 @@ public class BotQueue extends Thread {
         Integer      newBotCount;
         Integer      oldBotCount;
 
-        oldBotCount = (Integer)m_botTypes.get( className );
+        oldBotCount = m_botTypes.get( className );
         if( oldBotCount != null ){
             if( oldBotCount.intValue() + valueToAdd >= 0 ) {
                 newBotCount = new Integer( oldBotCount.intValue() + valueToAdd );
@@ -211,7 +211,7 @@ public class BotQueue extends Thread {
      * @return True if removal succeeded
      */
     boolean removeBot( String name ){
-        ChildBot deadBot = (ChildBot)m_botStable.remove( name );
+        ChildBot deadBot = m_botStable.remove( name );
         if( deadBot != null ){
             Session deadSesh = deadBot.getBot();
             if( deadSesh != null ) {
@@ -248,12 +248,12 @@ public class BotQueue extends Thread {
             removeBot( name );
             m_botAction.sendChatMessage( 1, name + " logged off." );
         }
-        Integer numBots = (Integer)m_botTypes.get( rawClassName );
+        Integer numBots = m_botTypes.get( rawClassName );
         if( numBots != null )
             if( numBots.intValue() != 0 )
                 m_botTypes.put( rawClassName, new Integer(0) );
     }
-    
+
     /**
      * Shuts down (removes) all bots.
      */
@@ -284,7 +284,7 @@ public class BotQueue extends Thread {
     void spawnBot( String className, String messager ) {
         spawnBot( className, null, null, messager );
     }
-    
+
     /**
      * Spawns a bot into existence based on a given class name.  In order for
      * the bot to be spawned, the class must exist, and the CFG must exist and
@@ -308,7 +308,7 @@ public class BotQueue extends Thread {
         }
 
         Integer      maxBots = botInfo.getInteger( "Max Bots" );
-        Integer      currentBotCount = (Integer)m_botTypes.get( rawClassName );
+        Integer      currentBotCount = m_botTypes.get( rawClassName );
 
         if( maxBots == null ){
             m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Invalid settings file. (MaxBots improperly defined)" );
@@ -410,7 +410,7 @@ public class BotQueue extends Thread {
                 currentTime = System.currentTimeMillis() + 1000;
                 if( m_spawnQueue.isEmpty() == false ){
                     if( m_lastSpawnTime + SPAWN_DELAY < currentTime ){
-                        childBot = (ChildBot)m_spawnQueue.remove( 0 );
+                        childBot = m_spawnQueue.remove( 0 );
                         bot = childBot.getBot();
 
                         bot.start();
@@ -436,7 +436,7 @@ public class BotQueue extends Thread {
                 if( lastStateDetection + DETECTION_TIME < currentTime ){
                     for( i = m_botStable.keySet().iterator(); i.hasNext(); ){
                         key = (String)i.next();
-                        childBot = (ChildBot)m_botStable.get( key );
+                        childBot = m_botStable.get( key );
                         if( childBot.getBot().getBotState() == Session.NOT_RUNNING ){
                             removeBot( key );
                             m_botAction.sendChatMessage( 1, key + "(" + childBot.getClassName() + ") has disconnected." );

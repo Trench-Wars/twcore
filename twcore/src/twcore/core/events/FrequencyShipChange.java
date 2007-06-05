@@ -30,8 +30,8 @@ public class FrequencyShipChange extends SubspaceEvent {
      */
     public FrequencyShipChange(ByteArray array){
         m_shipType = (byte)((array.readByte( 1 ) + 1) % 9);
-        m_playerID = (short)array.readLittleEndianShort( 2 );
-        m_freq = (short)array.readLittleEndianShort( 4 );
+        m_playerID = array.readLittleEndianShort( 2 );
+        m_freq = array.readLittleEndianShort( 4 );
     }
 
     /**

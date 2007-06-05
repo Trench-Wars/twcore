@@ -24,8 +24,8 @@ public class FrequencyChange extends SubspaceEvent {
 	 * @param array the ByteArray containing the packet data
 	 */
     public FrequencyChange(ByteArray array){
-        m_playerID = (short)array.readLittleEndianShort( 1 );
-        m_frequency = (short)array.readLittleEndianShort( 3 );
+        m_playerID = array.readLittleEndianShort( 1 );
+        m_frequency = array.readLittleEndianShort( 3 );
     }
 
     /**
