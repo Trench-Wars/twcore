@@ -262,7 +262,7 @@ public class Rbstandard extends RBExtender {
 
     public void clearArenaMsgs(){
     	for( int i = 0; i < arenaTasks.size(); i++){
-    	    ((ArenaMsgTask)arenaTasks.get(i)).cancel();
+            m_botAction.cancelTask((ArenaMsgTask)arenaTasks.get(i));
     	}
         arenaTasks.clear();
     }
@@ -278,7 +278,7 @@ public class Rbstandard extends RBExtender {
         }
 
         arenaTasks.remove(index);
-        task.cancel();
+        m_botAction.cancelTask(task);
 
         String message = "Removed: " + task.getMessage();
         if( task.getSoundCode() != 0 ){

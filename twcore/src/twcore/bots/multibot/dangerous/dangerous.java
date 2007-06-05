@@ -171,11 +171,11 @@ public class dangerous extends MultiModule {
         while( i.hasNext() ) {
             PlayerInfo p = (PlayerInfo)i.next();
             p.setNotPlaying();
-            p.cancel();
+            m_botAction.cancelTask(p);
         }
 
         m_players = new HashMap();
-        timeUpdate.cancel();
+        m_botAction.cancelTask(timeUpdate);
     }
 
 

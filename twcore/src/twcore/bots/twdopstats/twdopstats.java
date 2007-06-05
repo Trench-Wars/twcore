@@ -89,7 +89,7 @@ public class twdopstats extends SubspaceBot {
      * @see twcore.core.SubspaceBot.handleDisconnect() 
      */
     public void handleDisconnect() {
-    	this.updateOpsList.cancel();
+        m_botAction.cancelTask(this.updateOpsList);
     	updateOpsList = null;
     }
     

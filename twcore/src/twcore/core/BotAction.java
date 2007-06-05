@@ -119,7 +119,6 @@ public class BotAction
      */
     public void scheduleTask(TimerTask task, long delayms)
     {
-        m_timerTasks.add(task);
         m_timer.schedule(task, delayms);
     }
 
@@ -137,11 +136,25 @@ public class BotAction
         m_timerTasks.add(task);
         m_timer.scheduleAtFixedRate(task, delayms, periodms);
     }
+    
+    /**
+     * Cancels a TimerTask cleanly.  You SHOULD NOT cancel an individual TimerTask by using
+     * task.cancel()!  Use this method instead to aid in garbage collection.
+     * @param task
+     */
+    public void cancelTask(TimerTask task) {
+        m_timerTasks.remove(task);
+        if(task != null ) {
+            try {
+                task.cancel();
+            } catch ( Exception e ) {}
+        }
+    }
 
     /**
-     * Cancels all pending TimerTasks.  You can cancel an individual TimerTask by using
-     * task.cancel().  Note that if you cancel a TimerTask and it has already been cancelled,
-     * an exception will be generated, which should be caught.
+     * Cancels all pending TimerTasks.  You SHOULD NOT cancel an individual TimerTask by using
+     * task.cancel()!  Use cancelTask(TimerTask) instead.  Note that if you cancel a TimerTask
+     * and it has already been cancelled, an exception will be generated, which should be caught.
      * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
      */
     public void cancelTasks()
@@ -1767,10 +1780,10 @@ public class BotAction
             specWithoutLock(((Integer) i.next()).intValue());
         }
     }
-
+    
     /**
      * Sends all ships on a specific frequency into spectator mode, without locking
-     * them in spectator mode, and then sets their freq to the old freq.
+     * them in spectator mode, and then sets their freq to the old freq. 
      * @param freq Frequency to spec
      */
     public void specFreqAndKeepFreq(int freq) {
@@ -1784,7 +1797,7 @@ public class BotAction
             setFreq(id, freq);
         }
     }
-
+    
     /**
      * Sends all ships into spectator mode, but keeps their freq as what it was prior
      * to being spec'd.  Does not lock in spectator mode, so arena should be *lock'd.
@@ -1794,7 +1807,7 @@ public class BotAction
         Iterator i = m_arenaTracker.getPlayingPlayerIterator();
         Player p;
         int priorfreq;
-
+        
         if (i == null)
             return;
         while (i.hasNext()) {
@@ -1804,7 +1817,7 @@ public class BotAction
             setFreq(p.getPlayerID(), priorfreq);
         }
     }
-
+    
 
     /**
      * Checks every player in the game for X number of deaths, and places them
@@ -2564,7 +2577,7 @@ public class BotAction
         {
         }
     }
-
+    
     /**
      * Closes a ResultSet and the Statement that called it.  After you have made
      * a query and are done with its ResultSet, you <b>MUST</b> call this method --

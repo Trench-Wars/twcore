@@ -298,7 +298,7 @@ public class strikeballbot extends SubspaceBot {
             m_team2 = new HashMap();
             m_allPlayers = new HashMap();
             if( m_endRound != null )
-                m_endRound.cancel();
+                m_botAction.cancelTask(m_endRound);
             do_showLogo();
             m_gameState = STATE_LOADED;
             break;
@@ -326,7 +326,7 @@ public class strikeballbot extends SubspaceBot {
             m_prevCarrierID = -1;
             m_currentRound = 0;
             if( m_endRound != null )
-                m_endRound.cancel();
+                m_botAction.cancelTask(m_endRound);
             m_botAction.sendUnfilteredPublicMessage("*restart");
             m_gameState = STATE_INACTIVE;
         }
@@ -355,7 +355,7 @@ public class strikeballbot extends SubspaceBot {
         do_changeState( STATE_READY );
 
         if( m_roundPause != null )
-            m_roundPause.cancel();
+            m_botAction.cancelTask(m_roundPause);
 
         m_roundPause = new TimerTask() {
             public void run() {
@@ -414,7 +414,7 @@ public class strikeballbot extends SubspaceBot {
         if( m_team1Score == m_team2Score ) {
 
             if( m_endRound != null )
-                m_endRound.cancel();
+                m_botAction.cancelTask(m_endRound);
             m_endRound = new TimerTask() {
                 public void run() {
                     do_endGame();
@@ -442,7 +442,7 @@ public class strikeballbot extends SubspaceBot {
 
 
         if( m_scoreDelay != null )
-            m_scoreDelay.cancel();
+            m_botAction.cancelTask(m_scoreDelay);
         m_scoreDelay = new TimerTask() {
             public void run() {
                 do_storeScores( do_showScores() );
@@ -669,7 +669,7 @@ public class strikeballbot extends SubspaceBot {
         m_team2Name = team2;
 
         if( m_scoreDelay != null )
-            m_scoreDelay.cancel();
+            m_botAction.cancelTask(m_scoreDelay);
         m_scoreDelay = new TimerTask() {
             public void run() {
                 do_showTeamVs();
@@ -805,7 +805,7 @@ public class strikeballbot extends SubspaceBot {
         final String fName = name;
 
         if( m_specRef != null )
-            m_specRef.cancel();
+            m_botAction.cancelTask(m_specRef);
         m_specRef = new TimerTask() {
             public void run() {
                 m_botAction.spec( fName );
@@ -817,7 +817,7 @@ public class strikeballbot extends SubspaceBot {
 
 
         if( m_endRound != null )
-            m_endRound.cancel();
+            m_botAction.cancelTask(m_endRound);
         m_endRound = new TimerTask() {
             public void run() {
                 do_endRound();
@@ -1128,13 +1128,13 @@ public class strikeballbot extends SubspaceBot {
         m_botAction.sendArenaMessage( message, 1 );
 
         if( m_scoreDelay != null )
-            m_scoreDelay.cancel();
+            m_botAction.cancelTask(m_scoreDelay);
 
         m_forfeit = team;
         m_forfeitType = reason;
 
         if( m_scoreDelay != null)
-            m_scoreDelay.cancel();
+            m_botAction.cancelTask(m_scoreDelay);
         m_scoreDelay = new TimerTask() {
             public void run() {
                 do_storeScores( do_showScores() );

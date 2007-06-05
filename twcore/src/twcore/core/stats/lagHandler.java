@@ -178,7 +178,7 @@ public class lagHandler
 
                             if (tinfoValues.size() >= 32)
                             {
-                                tITimer.cancel();
+                                m_botAction.cancelTask(tITimer);
 								tInfoCheck();
                             }
                         }

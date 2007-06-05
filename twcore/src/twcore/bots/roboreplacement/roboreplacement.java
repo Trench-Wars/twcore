@@ -184,7 +184,7 @@ public class roboreplacement extends SubspaceBot
             if(message.toLowerCase().startsWith("!zoneoff") && zoneOn) //Turns the zoning ability off
             {
                 try {
-                    zonerTrue.cancel();
+                    m_botAction.cancelTask(zonerTrue);
                 }catch (Exception e) {
                     m_botAction.sendSmartPrivateMessage(name, "Problem turning off zoners.");
                 }
@@ -194,7 +194,7 @@ public class roboreplacement extends SubspaceBot
             if(message.toLowerCase().startsWith("!zoneon") && !zoneOn) //Turns the zoning ability on
             {
                 try {
-                    zonerTrue.cancel();
+                    m_botAction.cancelTask(zonerTrue);
                     setupZoner();
                     m_botAction.scheduleTaskAtFixedRate(zonerTrue, 15 * 60 * 1000, 15 * 60 * 1000);
                 }catch (Exception e) {

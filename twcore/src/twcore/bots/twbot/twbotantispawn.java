@@ -54,7 +54,7 @@ public class twbotantispawn extends TWBotExtension
     if(!antiSpawnEnabled)
       throw new IllegalArgumentException("AntiSpawn module is already disabled.");
     antiSpawnEnabled = false;
-    shieldTask.cancel();
+    m_botAction.cancelTask(shieldTask);
     m_botAction.sendArenaMessage("Antispawn module disabled.");
   }
 
@@ -115,7 +115,7 @@ public class twbotantispawn extends TWBotExtension
 
   public void cancel()
   {
-    shieldTask.cancel();
+      m_botAction.cancelTask(shieldTask);
   }
 
   private class ShieldTask extends TimerTask

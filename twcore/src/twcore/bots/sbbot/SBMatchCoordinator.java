@@ -204,7 +204,7 @@ public class SBMatchCoordinator {
     private class DieCommandHandler extends BotCommandListener {
 	public void notify(BotCommandType type, BotCommandEvent event) {
 	    for(TimerTask t : tasks) {
-		t.cancel();
+            m_botAction.cancelTask(t);
 	    }
 	}
     }

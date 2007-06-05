@@ -620,9 +620,9 @@ public class purepubbot extends SubspaceBot
 
         try {
             flagTimer.endGame();
-            flagTimer.cancel();
-            intermissionTimer.cancel();
-            startTimer.cancel();
+            m_botAction.cancelTask(flagTimer);
+            m_botAction.cancelTask(intermissionTimer);
+            m_botAction.cancelTask(startTimer);
         } catch (Exception e ) {
         }
 
@@ -1097,7 +1097,7 @@ public class purepubbot extends SubspaceBot
 
         try {
             flagTimer.endGame();
-            flagTimer.cancel();
+            m_botAction.cancelTask(flagTimer);
         } catch (Exception e ) {
         }
 
@@ -1130,10 +1130,7 @@ public class purepubbot extends SubspaceBot
 
         m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")  Type :" + m_botAction.getBotName() +":!warp to warp into FR."  );
 
-        try {
-            startTimer.cancel();
-        } catch (Exception e ) {
-        }
+        m_botAction.cancelTask(startTimer);
 
         startTimer = new StartRoundTask();
         m_botAction.scheduleTask( startTimer, INTERMISSION_SECS * 1000 );
@@ -1382,8 +1379,8 @@ public class purepubbot extends SubspaceBot
 
         try {
             flagTimer.endGame();
-            flagTimer.cancel();
-            intermissionTimer.cancel();
+            m_botAction.cancelTask(flagTimer);
+            m_botAction.cancelTask(intermissionTimer);
         } catch (Exception e ) {
         }
 

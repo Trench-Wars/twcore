@@ -255,7 +255,7 @@ public class twbotmessages extends TWBotExtension
       if(index >= msgList.size())
         throw new IllegalArgumentException("Invalid message number.");
       MsgTask msgTask = (MsgTask) msgList.get(index);
-      msgTask.cancel();
+      m_botAction.cancelTask(msgTask);
       msgList.remove(index);
       m_botAction.sendSmartPrivateMessage(sender, "\'" + msgTask.toString() + "\' was removed.");
     }
@@ -394,7 +394,7 @@ public class twbotmessages extends TWBotExtension
     for(int index = 0; index < msgList.size(); index++)
     {
       msgTask = (MsgTask) msgList.get(index);
-      msgTask.cancel();
+      m_botAction.cancelTask(msgTask);
     }
   }
 

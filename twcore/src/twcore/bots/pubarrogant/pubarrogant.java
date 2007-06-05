@@ -358,7 +358,7 @@ public class pubarrogant extends SubspaceBot
   private void scheduleRoamTask()
   {
     int roamTime = MIN_ROAM_TIME + (int) (Math.random() * (MAX_ROAM_TIME - MIN_ROAM_TIME));
-    roamTask.cancel();
+    m_botAction.cancelTask(roamTask);
     roamTask = new RoamTask();
 
     m_botAction.scheduleTask(roamTask, roamTime);

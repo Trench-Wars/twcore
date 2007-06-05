@@ -72,10 +72,10 @@ public class elimbot extends SubspaceBot {
 	}
 	
 	private void removeTimerTasks() {
-		this.shipVote.cancel();
-		this.deathlimitVote.cancel();
-		this.prepareGame.cancel();
-		this.startGame.cancel();
+        m_botAction.cancelTask(this.shipVote);
+        m_botAction.cancelTask(this.deathlimitVote);
+        m_botAction.cancelTask(this.prepareGame);
+        m_botAction.cancelTask(this.startGame);
 	}
 
 	@Override

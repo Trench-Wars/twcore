@@ -56,7 +56,7 @@ public class payback extends MultiModule
 
         if(payback.containsKey(killee + killer)) {
             Payback pb = (Payback)payback.get(killee + killer);
-            pb.cancel();
+            m_botAction.cancelTask(pb);
             payback.remove(killee + killer);
             m_botAction.sendPrivateMessage(killer, "You have avenged your death and may continue to play.");
         } else {
@@ -86,7 +86,7 @@ public class payback extends MultiModule
                 String avenger = (String)it.next();
                 if(payback.containsKey(player + avenger)) {
                     Payback pb = (Payback)payback.get(player + avenger);
-                    pb.cancel();
+                    m_botAction.cancelTask(pb);
                     payback.remove(player + avenger);
                     m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");
                 }
@@ -105,7 +105,7 @@ public class payback extends MultiModule
                     String avenger = (String)it.next();
                     if(payback.containsKey(player + avenger)) {
                         Payback pb = (Payback)payback.get(player + avenger);
-                        pb.cancel();
+                        m_botAction.cancelTask(pb);
                         payback.remove(player + avenger);
                         m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");
                     }
@@ -157,7 +157,7 @@ public class payback extends MultiModule
         while(it.hasNext()) {
             Payback pb = (Payback)it.next();
             if(!pb.isCancelled())
-                pb.cancel();
+                m_botAction.cancelTask(pb);
         }
 
         payback.clear();

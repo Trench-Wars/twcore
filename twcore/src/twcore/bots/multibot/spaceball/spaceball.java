@@ -439,7 +439,7 @@ public class spaceball extends MultiModule {
 
 	public void finishGame() {
 		if (updateState != null)
-			updateState.cancel();
+            m_botAction.cancelTask(updateState);
 
 		botX = 8200;
 		botY = 8200;
@@ -574,7 +574,7 @@ public class spaceball extends MultiModule {
 
 	public void gameOver() {
 		eventState = 3;
-		updateState.cancel();
+        m_botAction.cancelTask(updateState);
 		killLosers = new TimerTask() {
 
 			int c = 0;
@@ -616,7 +616,7 @@ public class spaceball extends MultiModule {
 	 */
 
 	public void announceWinner() {
-		killLosers.cancel();
+        m_botAction.cancelTask(killLosers);
 		if (winner == 1) {
 			m_botAction.sendArenaMessage("Planet 1 has survived!!", 5);
 		} else {

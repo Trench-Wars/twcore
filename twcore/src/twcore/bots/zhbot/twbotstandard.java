@@ -251,7 +251,7 @@ public class twbotstandard extends TWBotExtension {
 
     public void clearArenaMsgs(){
         for( int i = 0; i < arenaTasks.size(); i++){
-            ((ArenaMsgTask)arenaTasks.get(i)).cancel();
+            m_botAction.cancelTask((ArenaMsgTask)arenaTasks.get(i));
         }
         arenaTasks.clear();
     }
@@ -267,7 +267,7 @@ public class twbotstandard extends TWBotExtension {
         }
 
         arenaTasks.remove(index);
-        task.cancel();
+        m_botAction.cancelTask(task);
 
         String message = "Removed: " + task.getMessage();
         if( task.getSoundCode() != 0 ){

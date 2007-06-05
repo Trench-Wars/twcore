@@ -122,7 +122,7 @@ public class test extends MultiModule
     if(!isVoting)
       throw new RuntimeException("Voting not in progress.");
 
-    announceTask.cancel();
+    m_botAction.cancelTask(announceTask);
     tallyVotes();
     displayResults();
     isVoting = false;

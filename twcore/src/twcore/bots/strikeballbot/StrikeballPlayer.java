@@ -96,7 +96,7 @@ public class StrikeballPlayer {
         if( m_isLaggedOut == true ) {
 
             if( m_lagoutTimer != null )
-                m_lagoutTimer.cancel();
+                m_botAction.cancelTask(m_lagoutTimer);
             m_lagoutTimer = new TimerTask() {
                 public void run() {
                     allowLagout();
@@ -120,7 +120,7 @@ public class StrikeballPlayer {
 
     public void cancelLagoutTask() {
         if( m_lagoutTimer != null )
-            m_lagoutTimer.cancel();
+            m_botAction.cancelTask(m_lagoutTimer);
     }
 
 

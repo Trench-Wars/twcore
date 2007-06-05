@@ -514,7 +514,7 @@ public class baseassault extends MultiModule {
         Player tempPlayer = m_botAction.getPlayer(event.getPlayerID());
 
         if (tempPlayer.getFrequency() == attackingTeam && gameStarted && !betweenRounds) {
-            timeExpired.cancel();
+            m_botAction.cancelTask(timeExpired);
             endTime = System.currentTimeMillis();
             long elapsedTime = endTime - startTime;
 

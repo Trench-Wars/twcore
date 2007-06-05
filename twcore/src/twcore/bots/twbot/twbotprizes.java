@@ -536,7 +536,7 @@ public class twbotprizes extends TWBotExtension
       {
         int prizeIndex = getPrizeIndex(argTokens.nextToken());
         PrizeTask prizeTask = (PrizeTask) timerTasks.remove(prizeIndex);
-        prizeTask.cancel();
+        m_botAction.cancelTask(prizeTask);
         m_botAction.sendSmartPrivateMessage(sender, "\'" + prizeTask.toString() + "\' was removed");
       }
       catch(NumberFormatException e)
@@ -718,7 +718,7 @@ public class twbotprizes extends TWBotExtension
     for(int index = 0; index < timerTasks.size(); index++)
     {
       prizeTask = (PrizeTask) timerTasks.get(index);
-      prizeTask.cancel();
+      m_botAction.cancelTask(prizeTask);
     }
   }
 

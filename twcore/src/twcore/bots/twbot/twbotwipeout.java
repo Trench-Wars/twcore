@@ -178,8 +178,8 @@ public class twbotwipeout extends TWBotExtension
 		players = new HashSet();
 		playersKicked = new HashSet();
 		gotKill = new HashSet();
-		specer.cancel();
-		tenSecWarn.cancel();
+        m_botAction.cancelTask(specer);
+        m_botAction.cancelTask(tenSecWarn);
 	}
 
 	void setupTimerTasks()

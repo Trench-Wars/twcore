@@ -74,7 +74,7 @@ class twbotwarprand extends TWBotExtension
 	public void cancel()
 	{
 		if(jumpTask != null)
-			jumpTask.cancel();
+            m_botAction.cancelTask(jumpTask);
 	}
 
 	/**
@@ -249,7 +249,7 @@ class twbotwarprand extends TWBotExtension
 		else
 		{
 			m_botAction.sendPrivateMessage(name, "Warping disabled.");
-			jumpTask.cancel();
+            m_botAction.cancelTask(jumpTask);
 			jumpTask = null;
 		}
 	}

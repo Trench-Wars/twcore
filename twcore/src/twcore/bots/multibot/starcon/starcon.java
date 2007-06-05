@@ -241,9 +241,9 @@ public class starcon extends MultiModule {
                 m_state = STOPPED_STATE;
                 m_botAction.sendArenaMessage( "Starcon Bot Disabled by " + name );
                 m_botAction.toggleLocked();
-                m_specannounce.cancel();
-                m_announcements.cancel();
-                m_scanForCapitalShips.cancel();
+                m_botAction.cancelTask(m_specannounce);
+                m_botAction.cancelTask(m_announcements);
+                m_botAction.cancelTask(m_scanForCapitalShips);
                 m_specannounce = null;
                 m_announcements = null;
                 m_scanForCapitalShips = null;

@@ -1237,7 +1237,7 @@ public class twlbotstandard extends TWLBotExtension
             if (m_laggers.containsKey(m_playerOut))
             {
                 Lagger l = (Lagger) m_laggers.get(m_playerOut);
-                l.cancel();
+                m_botAction.cancelTask(l);
                 m_laggers.remove(m_playerOut);
             }
 
@@ -1285,7 +1285,7 @@ public class twlbotstandard extends TWLBotExtension
             if (m_laggers.containsKey(name))
             {
                 Lagger l = (Lagger) m_laggers.get(name);
-                l.cancel();
+                m_botAction.cancelTask(l);
                 m_laggers.remove(name);
             }
             return;
@@ -1313,7 +1313,7 @@ public class twlbotstandard extends TWLBotExtension
             if (m_laggers.containsKey(name))
             {
                 Lagger l = (Lagger) m_laggers.get(name);
-                l.cancel();
+                m_botAction.cancelTask(l);
                 m_laggers.remove(name);
             }
             m_match.getPlayer(name).updateTimer();
@@ -1773,7 +1773,7 @@ public class twlbotstandard extends TWLBotExtension
             {
                 if (m_laggers.containsKey(p.getPlayerName()))
                 {
-                    ((Lagger) m_laggers.get(p.getPlayerName())).cancel();
+                    m_botAction.cancelTask((Lagger) m_laggers.get(p.getPlayerName()));
                     m_laggers.remove(p.getPlayerName());
                 }
                 m_laggers.put(p.getPlayerName(), new Lagger(p.getPlayerName(), m_match, m_laggers));
@@ -1817,7 +1817,7 @@ public class twlbotstandard extends TWLBotExtension
         {
             if (m_laggers.containsKey(p.getPlayerName()))
             {
-                ((Lagger) m_laggers.get(p.getPlayerName())).cancel();
+                m_botAction.cancelTask((Lagger) m_laggers.get(p.getPlayerName()));
                 m_laggers.remove(p.getPlayerName());
             }
             m_laggers.put(p.getPlayerName(), new Lagger(p.getPlayerName(), m_match, m_laggers));
@@ -2231,7 +2231,7 @@ public class twlbotstandard extends TWLBotExtension
                     {
                         if (m_laggers.containsKey(name))
                         {
-                            ((Lagger) m_laggers.get(name)).cancel();
+                            m_botAction.cancelTask((Lagger) m_laggers.get(name));
                             m_laggers.remove(name);
                         }
                         m_laggers.put(name, new Lagger(name, m_match, m_laggers));
