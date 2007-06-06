@@ -93,7 +93,7 @@ public class Arena {
      * Gets an Iterator over the players in the arena.
      * @return Iterator over players in arena
      */
-    public Iterator getPlayerIterator(){
+    public Iterator<Player> getPlayerIterator(){
 
         return m_playerList.values().iterator();
     }

@@ -3195,7 +3195,7 @@ public class BotAction
      * </pre></code>
      * @return An Iterator of all Players who are currently playing in the arena.
      */
-    public Iterator getPlayingPlayerIterator()
+    public Iterator<Player> getPlayingPlayerIterator()
     {
         return m_arenaTracker.getPlayingPlayerIterator();
     }
@@ -3204,7 +3204,7 @@ public class BotAction
      * @param freq Frequency to fetch
      * @return An iterator of all players on a frequency.  (Should now be working)
      */
-    public Iterator getFreqIDIterator(int freq)
+    public Iterator<Integer> getFreqIDIterator(int freq)
     {
         return m_arenaTracker.getFreqIDIterator(freq);
     }
@@ -3213,7 +3213,7 @@ public class BotAction
      * @param freq Frequency to fetch
      * @return An iterator of all players on a frequency.  (Should now be working)
      */
-    public Iterator getFreqPlayerIterator(int freq)
+    public Iterator<Player> getFreqPlayerIterator(int freq)
     {
         return m_arenaTracker.getFreqPlayerIterator(freq);
     }
@@ -3221,7 +3221,7 @@ public class BotAction
     /**
      * @return An Iterator of all Players in the arena, both spec'd and playing.
      */
-    public Iterator getPlayerIterator()
+    public Iterator<Player> getPlayerIterator()
     {
         return m_arenaTracker.getPlayerIterator();
     }
@@ -3235,10 +3235,18 @@ public class BotAction
     }
 
     /**
-     * @return An Iterator of all Flags in the arena.
+     * @return An Iterator of all Flag IDs in the arena.
      */
     public Iterator<Integer> getFlagIDIterator()
     {
         return m_arenaTracker.getFlagIDIterator();
+    }
+
+    /**
+     * @return An Iterator of all Flag objects in the arena.
+     */
+    public Iterator<Flag> getFlagIterator()
+    {
+        return m_arenaTracker.getFlagIterator();
     }
 }
