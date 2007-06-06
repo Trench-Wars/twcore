@@ -15,14 +15,14 @@ public class twbotantispawn extends TWBotExtension
   public static final int SHIELD_DELAY = 100;
   public static final int DEATH_DELAY = 1000;
 
-  private HashSet antiSpawnTasks;
+  private HashSet<String> antiSpawnTasks;
   private ShieldTask shieldTask;
   private double safeTime;
   private boolean antiSpawnEnabled;
 
   public twbotantispawn()
   {
-    antiSpawnTasks = new HashSet();
+    antiSpawnTasks = new HashSet<String>();
     safeTime = SAFE_TIME_DEFAULT;
     antiSpawnEnabled = false;
   }

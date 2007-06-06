@@ -50,12 +50,12 @@ public class twbotrevenge extends TWBotExtension
 	private int revengePenalty = 7;
 	private int timeLimit = 10;
 	private int shipType = ANY_SHIP;
-	private HashMap playerMap;
+	private HashMap<String, RevengePlayer> playerMap;
 
 	/** Creates an instance of the module. */
 	public twbotrevenge ()
 		{
-		playerMap = new HashMap(30);
+		playerMap = new HashMap<String, RevengePlayer>(30);
 		}
 
 	/**
@@ -113,8 +113,8 @@ public class twbotrevenge extends TWBotExtension
 
 			if ( killerName != null && killedName != null)
 				{
-				RevengePlayer killer = (RevengePlayer)playerMap.get( killerName );
-				RevengePlayer killed = (RevengePlayer)playerMap.get( killedName );
+				RevengePlayer killer = playerMap.get( killerName );
+				RevengePlayer killed = playerMap.get( killedName );
 
 				if ( killed.hasKilled( killerName ) )
 					{
@@ -150,8 +150,8 @@ public class twbotrevenge extends TWBotExtension
 					+ normalPenalty + " points for being killed by " + killerName
 					+ ". (Total: " + killed.getScore() + ")" );
 					}
-				playerMap.remove( killerName );
-				playerMap.remove( killedName );
+				//playerMap.remove( killerName );
+				//playerMap.remove( killedName );
 				playerMap.put( killerName, killer);
 				playerMap.put( killedName, killed );
 				}
@@ -238,10 +238,10 @@ public class twbotrevenge extends TWBotExtension
 					 */
 
 					int playerCount = getPlayerCount();
-					Iterator it = m_botAction.getPlayingPlayerIterator();
+					Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 					while ( it.hasNext() )
 						{
-						Player p = (Player)it.next();
+						Player p = it.next();
 						playerMap.put( p.getPlayerName(), new RevengePlayer(
 p.getPlayerName(), playerCount ) );
 						}
@@ -494,7 +494,7 @@ p.getPlayerName(), playerCount ) );
 		{
 		if ( playerMap.containsKey( name ) )
 			{
-			RevengePlayer tempPlayer = (RevengePlayer)playerMap.get( name );
+			RevengePlayer tempPlayer = playerMap.get( name );
 			m_botAction.sendPrivateMessage( name, "You currently have "
 			+ tempPlayer.getScore() + " points." );
 			}
@@ -565,12 +565,12 @@ p.getPlayerName(), playerCount ) );
 		{
 		int freq = -1;
 		int playerCount = 1;
-		Iterator it = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 		if (it == null)
 			return 0;
 		while ( it.hasNext() )
 			{
-			Player p = (Player)it.next();
+			Player p = it.next();
 			if ( freq == -1 )
 				freq = p.getFrequency();
 			if ( p.getFrequency() != freq )
@@ -588,10 +588,11 @@ p.getPlayerName(), playerCount ) );
 		{
 		int bestScore = 0;
 		String playerName = "";
-		Iterator it = m_botAction.getPlayerIterator();
+		//Iterator it = m_botAction.getPlayerIterator(); <- WRONG
+		Iterator<RevengePlayer> it = playerMap.values().iterator();
 		while ( it.hasNext() )
 			{
-			RevengePlayer p = (RevengePlayer)it.next();
+			RevengePlayer p = it.next();
 			if ( p.getScore() > bestScore )
 				{
 				bestScore = p.getScore();
@@ -610,7 +611,7 @@ p.getPlayerName(), playerCount ) );
 class RevengePlayer
 	{
 	private String playerName;
-	private ArrayList playersKilled;
+	private ArrayList<String> playersKilled;
 	private int score;
 
 	/**
@@ -622,7 +623,7 @@ class RevengePlayer
 	public RevengePlayer( String name, int totalPlayers )
 		{
 		playerName = name;
-		playersKilled = new ArrayList( totalPlayers - 1 );
+		playersKilled = new ArrayList<String>( totalPlayers - 1 );
 		score = 0;
 		}
 

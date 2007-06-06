@@ -12,14 +12,14 @@ public class twbotspawnpmer extends TWBotExtension
     public static final int SAFE_TIME_DEFAULT = 200;
 
     private String controller;
-    private HashMap times;
+    private HashMap<Player, Long> times;
     private int safeTime;
     private boolean enabled;
 
     public twbotspawnpmer()
     {
         String controller;
-        times = new HashMap();
+        times = new HashMap<Player, Long>();
         safeTime = SAFE_TIME_DEFAULT;
         enabled = false;
     }
@@ -125,7 +125,7 @@ public class twbotspawnpmer extends TWBotExtension
 
                 if ( times.get( player ) != null )
                 {
-                    long difference = time - ( (Long)times.get( player ) ).longValue();
+                    long difference = time - times.get( player ).longValue();
                     if ( times.containsKey( player ) && difference <= safeTime )
                     {
                         m_botAction.sendSmartPrivateMessage( controller, player.getPlayerName() + " spawned by " + killer.getPlayerName() + ": " + ((float)difference / 1000) + " seconds." );

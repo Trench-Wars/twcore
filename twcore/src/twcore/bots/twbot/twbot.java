@@ -46,7 +46,7 @@ import twcore.core.events.WeaponFired;
 import twcore.core.util.Tools;
 
 /**
- * TW's event utility bot.  Soon to be merged with MultiBot. 
+ * TW's event utility bot.  Soon to be merged with MultiBot.
  */
 public class twbot extends SubspaceBot
 {
@@ -64,7 +64,7 @@ public class twbot extends SubspaceBot
 	private AdaptiveClassLoader m_loader;
 	private File botRoot;
 	private File coreRoot;
-    
+
 	/** Creates a new instance of twbot */
 	public twbot(BotAction botAction)
 	{
@@ -144,7 +144,7 @@ public class twbot extends SubspaceBot
 			ext.handleEvent(event);
 		}
 	}
-    
+
 	public void handleWhatsNew(String name)
 	{
 		try
@@ -192,7 +192,7 @@ public class twbot extends SubspaceBot
 	{
 		if (extensions.containsKey(key) && !key.toLowerCase().equals("twrp"))
 		{
-			((TWBotExtension) extensions.remove(key)).cancel();
+			extensions.remove(key).cancel();
 			m_botAction.sendPrivateMessage(name, key + " successfully unloaded.");
 		}
 		else
@@ -200,7 +200,7 @@ public class twbot extends SubspaceBot
 			m_botAction.sendPrivateMessage(name, key + " is not loaded, so it cannot be removed.  Keep in mind the " + "names are case sensitive.");
 		}
 	}
-	
+
 	public void listLoaded(String name)
 	{
 		if (extensions.size() == 0)
@@ -224,7 +224,7 @@ public class twbot extends SubspaceBot
 		if (extensions.containsKey(key))
 		{
 		    try {
-		        String[] helps = ((TWBotExtension) extensions.get(key)).getHelpMessages();
+		        String[] helps = extensions.get(key).getHelpMessages();
 		        m_botAction.privateMessageSpam(name, helps);
 		    } catch ( Exception e ) {
 				m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " module.  Try reloading it.");
@@ -243,7 +243,7 @@ public class twbot extends SubspaceBot
 		while (i.hasNext())
 		{
 			String key = (String) i.next();
-			TWBotExtension ext = (TWBotExtension) extensions.get(key);
+			TWBotExtension ext = extensions.get(key);
 			m_botAction.sendPrivateMessage(name, key + " module contains:");
 			m_botAction.privateMessageSpam(name, ext.getHelpMessages());
 		}
@@ -289,7 +289,7 @@ public class twbot extends SubspaceBot
 		}
 		extensions.clear();
 	}
-	
+
 	private void goHome( String name ) {
 		if (currentArena.equals(defaultArena) && !locked)
 		{
@@ -520,7 +520,7 @@ public class twbot extends SubspaceBot
 			}
 		}
 	}
-	
+
 	public String modulesToStringList() {
 		Iterator it = extensions.keySet().iterator();
 		String modules = "";
@@ -532,7 +532,7 @@ public class twbot extends SubspaceBot
 		}
 		return modules;
 	}
-	
+
 	public String getHostName() {
 		return nameOfHost;
 	}
@@ -547,7 +547,7 @@ public class twbot extends SubspaceBot
 		m_botAction.sendUnfilteredPublicMessage("?chat=robodev");
 		m_opList = m_botAction.getOperatorList();
         // Internally reduce bot to ER level.  This does not affect any functionality;
-        // only used to protect against malicious commands sent through Autopilot module.  
+        // only used to protect against malicious commands sent through Autopilot module.
         m_opList.addOperator(m_botAction.getBotName(), OperatorList.ER_LEVEL);
 	}
 
@@ -557,7 +557,7 @@ public class twbot extends SubspaceBot
 	}
 	public void handleEvent(SubspaceEvent event)
 	{
-		distributeEvent((SubspaceEvent) event);
+		distributeEvent(event);
 	}
 	public void handleEvent(ScoreReset event)
 	{

@@ -92,7 +92,7 @@ public class twbotballspec extends TWBotExtension {
             String[] params = Tools.stringChopper( msg.substring( index ), ' ' );
 
             String pname = params[0];
-            return (Player)m_botAction.getFuzzyPlayer( pname );
+            return m_botAction.getFuzzyPlayer( pname );
 
         } catch (Exception e) {
             return null;
@@ -169,7 +169,7 @@ public class twbotballspec extends TWBotExtension {
             }
 
         } else
-        */	
+        */
         if( message.startsWith( "!stop" )){
             if( isRunning == true ) {
                 m_botAction.sendPrivateMessage( name, "BallSpec mode stopped." );

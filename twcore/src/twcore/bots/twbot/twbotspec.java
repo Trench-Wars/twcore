@@ -354,7 +354,7 @@ public class twbotspec extends TWBotExtension
     else
       for(int index = 0; index < numTasks; index++)
       {
-        specTask = (SpecTask) specTasks.get(index);
+        specTask = specTasks.get(index);
         m_botAction.sendSmartPrivateMessage(sender, "Task " + index + ") " + specTask);
       }
   }
@@ -374,7 +374,7 @@ public class twbotspec extends TWBotExtension
     try
     {
       int taskNumber = Integer.parseInt(argTokens.nextToken());
-      SpecTask specTask = (SpecTask) specTasks.get(taskNumber);
+      SpecTask specTask = specTasks.get(taskNumber);
 
       specTasks.remove(taskNumber);
       m_botAction.sendArenaMessage("Removing Task: " + specTask.toString() + " -" + sender);
@@ -487,9 +487,9 @@ public class twbotspec extends TWBotExtension
                     if( p != null && p.getShipType() != 0 ) {
                         specPlayer(p);
                     }
-                }                
+                }
             }
-        } else 
+        } else
             if( specTask.getDeaths() <= deaths )
                 specPlayer(player);
     }
@@ -510,7 +510,7 @@ public class twbotspec extends TWBotExtension
 
     for(int index = 0; index < specTasks.size(); index++)
     {
-      specTask = (SpecTask) specTasks.get(index);
+      specTask = specTasks.get(index);
       if(specTask.isSameType(freq, ship, playerID))
         return specTask;
     }
@@ -724,9 +724,9 @@ public class twbotspec extends TWBotExtension
    * SPEC_ALL.  In each subcategory they are ordered in order of descending
    * deaths.
    */
-  private class SpecTaskComparator implements Comparator
+  private class SpecTaskComparator implements Comparator<SpecTask>
   {
-      
+
     /**
      * This method provides a compare function for two specTasks.  This is used
      * for ordering the tasks in the list.
@@ -736,10 +736,8 @@ public class twbotspec extends TWBotExtension
      * @return a numerical representation of the difference of the two spec
      * tasks.
      */
-    public int compare(Object obj1, Object obj2)
+    public int compare(SpecTask task1, SpecTask task2)
     {
-      SpecTask task1 = (SpecTask) obj1;
-      SpecTask task2 = (SpecTask) obj2;
       int value1 = task1.getSpecType() * SpecTask.MAX_FREQ + task1.specID;
       int value2 = task2.getSpecType() * SpecTask.MAX_FREQ + task2.specID;
 

@@ -226,7 +226,7 @@ public class twbotturret extends TWBotExtension
 			if(rules[anchor][x])
 				buf.append(Tools.shipName(x + 1) + " ");
 
-		if(buf.toString().endsWith(": ")); //no ships appended, buf is unaltered
+		if(buf.toString().endsWith(": ")) //no ships appended, buf is unaltered
 			buf.append("none");
 
 		//grab rule and inform
@@ -257,7 +257,7 @@ public class twbotturret extends TWBotExtension
 			if(rules[x][turret])
 				buf.append(Tools.shipName(x + 1) + " ");
 
-		if(buf.toString().endsWith(": ")); //no ships appended, buf is unaltered
+		if(buf.toString().endsWith(": ")) //no ships appended, buf is unaltered
 			buf.append("none");
 
 		//grab rule and inform

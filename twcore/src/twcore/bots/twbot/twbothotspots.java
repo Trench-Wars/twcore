@@ -56,7 +56,7 @@ public class twbothotspots extends TWBotExtension {
             TimerTask change = new TimerTask() {
                 public void run() {
                     try {
-                        watch = (String)queueList.elementAt(0);
+                        watch = queueList.elementAt(0);
                         queueList.removeElementAt(0);
                         queueList.addElement( watch );
                     } catch (Exception e) {}
@@ -148,7 +148,7 @@ public class twbothotspots extends TWBotExtension {
 
     public void resetPlayerQueue( String name ) {
         for( int i = 0; i < queueList.size(); i++ ) {
-            String thisName = (String)queueList.elementAt( i );
+            String thisName = queueList.elementAt( i );
             if( thisName != null && thisName.equals( name ) ) {
                 queueList.removeElementAt( i );
                 queueList.addElement( name );
@@ -192,7 +192,7 @@ public class twbothotspots extends TWBotExtension {
         hotSpots.add( new HotSpot( values ) );
         m_botAction.sendPrivateMessage( name, "Prize hotspot added." );
     }
-    
+
     /**
      * Clears all hotspots.
      * @param name
@@ -201,7 +201,7 @@ public class twbothotspots extends TWBotExtension {
         hotSpots.clear();
         m_botAction.sendPrivateMessage( name, "All hotspots cleared." );
     }
-    
+
     public String[] getHelpMessages() {
         String help[] = {
                 "HotSpot Module - 'Enter one coordinate, warp to another; maybe get a prize.'",
@@ -244,7 +244,7 @@ class HotSpot {
             r = values[2];
             x2 = values[3];
             y2 = values[4];
-            prize = values[5];            
+            prize = values[5];
         }
     }
 

@@ -9,7 +9,7 @@ import twcore.core.game.Player;
 
 public class twbotstreak extends TWBotExtension {
 
-	HashMap playerMap;
+	HashMap<String, String> playerMap;
 	boolean running = false;
 	int 	streak = 3, reStreak = 3, bestStreak = 0;
 	String bestStreakOwner;
@@ -24,7 +24,7 @@ public class twbotstreak extends TWBotExtension {
 	};
 
 	public twbotstreak() {
-        playerMap = new HashMap();
+        playerMap = new HashMap<String, String>();
     }
 
     public void handleCommand( String name, String message ) {
@@ -104,7 +104,7 @@ public class twbotstreak extends TWBotExtension {
 	        if( !playerMap.containsKey( killer) )
 	        	playerMap.put( killer, "0" );
 	    	if( playerMap.containsKey( killer ) ) {
-	    		String ct = (String)playerMap.get( killer );
+	    		String ct = playerMap.get( killer );
 	    		int it = Integer.parseInt( ct );
 	    		it++;
 	    		playerMap.remove( killer );
@@ -112,7 +112,7 @@ public class twbotstreak extends TWBotExtension {
 	    		checkStreak( killer, it );
 	    	}
 	    	if( playerMap.containsKey( killee ) ) {
-	    		String ct = (String)playerMap.get( killee );
+	    		String ct = playerMap.get( killee );
 	    		int it = Integer.parseInt( ct );
 				if (it == bestStreak && killee.equals(bestStreakOwner)) {
 					m_botAction.sendArenaMessage("And the best Streak of the Session ends for "+killee+" ("+it+" kills)!");

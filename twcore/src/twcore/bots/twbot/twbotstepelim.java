@@ -33,26 +33,26 @@ public class twbotstepelim extends TWBotExtension {
 	private int m_roundShipType;
 	private boolean m_uneven;
 
-	private HashMap m_teamOne;
-	private HashMap m_teamTwo;
+	private HashMap<String, String> m_teamOne;
+	private HashMap<String, String> m_teamTwo;
 
 	public twbotstepelim() {
 
-		m_teamOne = new HashMap();
-		m_teamTwo = new HashMap();
+		m_teamOne = new HashMap<String, String>();
+		m_teamTwo = new HashMap<String, String>();
 		m_state = STOPPED;
 
 		m_uneven = false;
 	}
 
-	private void beginNextRound( HashMap _team ) {
+	private void beginNextRound( HashMap<String, String> _team ) {
 
 		int count = 0;
 
-		Iterator it = _team.keySet().iterator();
+		Iterator<String> it = _team.keySet().iterator();
 		while( it.hasNext() ) {
 
-			String name = (String)it.next();
+			String name = it.next();
 			m_botAction.setShip( name, m_roundShipType );
 
 			if( m_botAction.getFuzzyPlayerName( name ) != null )
@@ -93,10 +93,10 @@ public class twbotstepelim extends TWBotExtension {
 		m_teamOne.clear();
 		m_teamTwo.clear();
 
-		Iterator it = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 		while( it.hasNext() ) {
 
-			Player player = (Player)it.next();
+			Player player = it.next();
 			if( player.getFrequency() == 0 )
 				m_teamOne.put( player.getPlayerName(), player.getPlayerName() );
 			else
@@ -109,10 +109,10 @@ public class twbotstepelim extends TWBotExtension {
 		String name = "";
 
 		int playing = 0;
-		Iterator it = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 
 		while( it.hasNext() ) {
-			Player p = (Player)it.next();
+			Player p = it.next();
 			if( p.getFrequency() != _freq )
 				playing++;
 
@@ -124,11 +124,11 @@ public class twbotstepelim extends TWBotExtension {
 			m_state = BETWEEN_ROUNDS;
 
 			//Get the winning frequency
-			HashMap winningFreq;
+			HashMap<String, String> winningFreq;
 			if( _freq == 0 )
-				winningFreq = new HashMap( m_teamOne );
+				winningFreq = new HashMap<String, String>( m_teamOne );
 			else
-				winningFreq = new HashMap( m_teamTwo );
+				winningFreq = new HashMap<String, String>( m_teamTwo );
 
 			//Determine if the event is over
 			boolean over = false;

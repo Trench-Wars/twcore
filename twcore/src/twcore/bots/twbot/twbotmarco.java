@@ -26,8 +26,8 @@ import twcore.core.game.Player;
 
 public class twbotmarco extends TWBotExtension
 {
-	HashSet deCloaked = new HashSet();    //List of people that have not said the word to get their cloak back
-	ArrayList wordList = new ArrayList(); //List of words that are randomly chosen as 'polo'
+	HashSet<String> deCloaked = new HashSet<String>();    //List of people that have not said the word to get their cloak back
+	ArrayList<String> wordList = new ArrayList<String>(); //List of words that are randomly chosen as 'polo'
 	String currentWord;                   //Current 'polo' word
 	boolean isRunning = false;            //boolean variable to determine if the marco mode is activated
 	Random rand = new Random();           //Random object to pick the 'polo' word

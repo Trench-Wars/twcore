@@ -227,7 +227,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     	{
     		String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(channel) + "'";
@@ -257,7 +257,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	c.joinRequest(name);
     }
 
@@ -274,7 +274,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOwner(name))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "You cannot leave while you are owner.");
@@ -297,7 +297,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
   		  	c.acceptPlayer(name, pieces[1]);
   		else
@@ -318,7 +318,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.rejectPlayer(name, pieces[1]);
     	else
@@ -339,7 +339,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.announceToChannel(name, pieces[1]);
     	else
@@ -360,7 +360,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.messageChannel(name, pieces[1]);
     	else
@@ -380,7 +380,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listRequests(name);
     	else
@@ -401,7 +401,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.banPlayer(name, pieces[1]);
     	else
@@ -422,7 +422,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.unbanPlayer(name, pieces[1]);
     	else
@@ -442,7 +442,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listBanned(name);
     	else
@@ -462,7 +462,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     //	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.listMembers(name);
     //	else
@@ -483,7 +483,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makeOp(name, pieces[1]);
     	else
@@ -504,7 +504,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(!c.isOp(name))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That player is not an operator.");
@@ -531,7 +531,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(pieces[0].toLowerCase());
+    	Channel c = channels.get(pieces[0].toLowerCase());
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.newOwner(name, pieces[1]);
     	else
@@ -551,7 +551,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	m_botAction.sendSmartPrivateMessage(name, "Owner: " + c.owner);
     }
 
@@ -568,7 +568,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makePublic(name);
     	else
@@ -588,7 +588,7 @@ public class messagebot extends SubspaceBot
     		return;
     	}
 
-    	Channel c = (Channel)channels.get(channel);
+    	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     		c.makePrivate(name);
     	else
@@ -609,7 +609,7 @@ public class messagebot extends SubspaceBot
     		{
     			String channel = results.getString("fcChannel");
     			channel = channel.toLowerCase();
-    			Channel c = (Channel)channels.get(channel);
+    			Channel c = channels.get(channel);
     			if( c == null)
     			    return;
     			if(c.isOwner(name.toLowerCase()))
@@ -913,7 +913,7 @@ public class messagebot extends SubspaceBot
 	 	try {
 	 		ResultSet results = m_botAction.SQLQuery("local", query);
 
-            if( results == null || !results.next() ) { 
+            if( results == null || !results.next() ) {
                 m_botAction.SQLClose(results);
                 return false;
              }
@@ -925,7 +925,7 @@ public class messagebot extends SubspaceBot
                 m_botAction.SQLClose(results);
 	 			return false;
 	 		}
-	 	} catch(Exception e) { 
+	 	} catch(Exception e) {
         }
 	 	return false;
 	 }
@@ -989,7 +989,7 @@ public class messagebot extends SubspaceBot
 	 	Set <String>s = null;
 
 	 	try {
-		 	Channel c = (Channel)channels.get(channel.toLowerCase());
+		 	Channel c = channels.get(channel.toLowerCase());
 		 	s = c.members.keySet();
 		 	s.removeAll(c.banned);
 		} catch(Exception e) {  Tools.printStackTrace( e ); }
@@ -1005,7 +1005,7 @@ public class messagebot extends SubspaceBot
 	 public void accessUpdateFromWebsite(String channel, String name, int level)
 	 {
 	 	try {
-	 		Channel c = (Channel)channels.get(channel.toLowerCase());
+	 		Channel c = channels.get(channel.toLowerCase());
 	 		c.updateAccess(name, level);
 	 	} catch(Exception e) { Tools.printStackTrace( e ); }
 	 }
@@ -1131,7 +1131,7 @@ public class messagebot extends SubspaceBot
      		String query = "DELETE FROM tblBotNews WHERE fnID = " + id;
      		try {
      		    m_botAction.SQLClose(m_botAction.SQLQuery("local", query));
-     		} catch(Exception e) { 
+     		} catch(Exception e) {
                     m_botAction.sendSmartPrivateMessage(name, "Delete failed.");
                     return;
                 }
@@ -1153,7 +1153,7 @@ public class messagebot extends SubspaceBot
      	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Someone needs to go back to 1st grade to learn what a number is."); }
      	if(id == 9283749) return;
 
-     	NewsArticle na = (NewsArticle)news.get(id);
+     	NewsArticle na = news.get(id);
      	if(na == null) {
      		m_botAction.sendSmartPrivateMessage(name, "Invalid news id.");
      		return;
@@ -1175,7 +1175,7 @@ public class messagebot extends SubspaceBot
      	if(newsID >= newsIDs.size()) newsID = 0;
      	if(newsIDs.isEmpty()) return;
 
-     	NewsArticle na = (NewsArticle)news.get(newsIDs.get(newsID));
+     	NewsArticle na = news.get(newsIDs.get(newsID));
      	m_botAction.sendChatMessage(na.toString());
      	if(!na.url.equals(""))
      		m_botAction.sendChatMessage("For more information, click on this link: " + na.url);
@@ -1189,7 +1189,7 @@ public class messagebot extends SubspaceBot
      	String message = "";
 
      	for(int k = 0;k < newsIDs.size();k++) {
-     		message += (Integer)newsIDs.get(k) + ", ";
+     		message += newsIDs.get(k) + ", ";
      	}
      	m_botAction.sendSmartPrivateMessage(name, "News IDs: ");
      	m_botAction.sendSmartPrivateMessage(name, message);
@@ -1331,7 +1331,7 @@ public class messagebot extends SubspaceBot
      		}
      	} catch(Exception e) {}
      }
-     
+
      public void registerAll(String name, String message) {
      	if(!m_botAction.getOperatorList().isHighmod(name) && !ops.contains(name.toLowerCase()))
      		return;
@@ -1366,7 +1366,7 @@ public class messagebot extends SubspaceBot
     		}
     	} catch(Exception e) {}
      }
-     
+
      public boolean isAllDigits(String test) {
 		boolean allDigits = true;
 		for(int k = 0;k < test.length() && allDigits;k++) {
@@ -1410,7 +1410,7 @@ class Channel
 		if(!members.containsKey(name.toLowerCase()))
 			return false;
 
-		int level = ((Integer)members.get(name.toLowerCase())).intValue();
+		int level = members.get(name.toLowerCase()).intValue();
 		if(level == 3) return true;
 		else return false;
 	}
@@ -1423,7 +1423,7 @@ class Channel
 		if(!members.containsKey(name.toLowerCase()))
 			return false;
 
-		int level = ((Integer)members.get(name.toLowerCase())).intValue();
+		int level = members.get(name.toLowerCase()).intValue();
 		if(level >= 2) return true;
 		else return false;
 	}
@@ -1536,7 +1536,7 @@ class Channel
 		while(it.hasNext())
 		{
 			String player = (String)it.next();
-			int level = ((Integer)members.get(player.toLowerCase())).intValue();
+			int level = members.get(player.toLowerCase()).intValue();
 			if(level > 0)
 			{
 				leaveMessage(name, player, message);
@@ -1551,12 +1551,12 @@ class Channel
 	 */
 	public void announceToChannel(String name, String message)
 	{
-		Iterator it = members.keySet().iterator();
+		Iterator<String> it = members.keySet().iterator();
 
 		while(it.hasNext())
 		{
-			String player = (String)it.next();
-			int level = ((Integer)members.get(player.toLowerCase())).intValue();
+			String player = it.next();
+			int level = members.get(player.toLowerCase()).intValue();
 			if(level > 0)
 			{
 				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + "> " + message);
@@ -1598,7 +1598,7 @@ class Channel
 	{
 		if(members.containsKey(name.toLowerCase()))
 		{
-			int level = ((Integer)members.get(name.toLowerCase())).intValue();
+			int level = members.get(name.toLowerCase()).intValue();
 			if(level < 0)
 			{
 				m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
@@ -1620,14 +1620,14 @@ class Channel
 	 */
 	public void listRequests(String name)
 	{
-		Iterator it = members.keySet().iterator();
+		Iterator<String> it = members.keySet().iterator();
 
 		m_bA.sendSmartPrivateMessage(name, "People requesting to join: ");
 
 		while(it.hasNext())
 		{
-			String p = (String)it.next();
-			int level = ((Integer)members.get(p)).intValue();
+			String p = it.next();
+			int level = members.get(p).intValue();
 			if(level == 0)
 				m_bA.sendSmartPrivateMessage(name, p);
 		}
@@ -1689,7 +1689,7 @@ class Channel
 		}
 		if(members.containsKey(player.toLowerCase()))
 		{
-			int level = ((Integer)members.get(player.toLowerCase())).intValue();
+			int level = members.get(player.toLowerCase()).intValue();
 			level *= -1;
 			updateSQL(player, level);
 		}
@@ -1713,7 +1713,7 @@ class Channel
 		}
 		if(members.containsKey(player.toLowerCase()))
 		{
-			int level = ((Integer)members.get(player.toLowerCase())).intValue();
+			int level = members.get(player.toLowerCase()).intValue();
 			level *= -1;
 			updateSQL(player, level);
 		}
@@ -1797,12 +1797,12 @@ class Channel
             m_bA.sendSmartPrivateMessage(name, "Error: no members found.  Please use ?help to report this problem." );
             return;
         }
-        
+
 		for(int k = 0;it.hasNext();)
 		{
 			String pName = (String)it.next();
 
-			int level = (Integer)members.get(pName.toLowerCase());
+			int level = members.get(pName.toLowerCase());
 
 			if(isOwner(pName))
 				message += pName + " (Owner), ";

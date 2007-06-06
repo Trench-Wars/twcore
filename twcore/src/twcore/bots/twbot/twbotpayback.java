@@ -19,16 +19,16 @@ import twcore.core.events.PlayerLeft;
 
 public class twbotpayback extends TWBotExtension
 {
-	HashMap payback;
-	HashMap beingTracked;
+	HashMap<String, Payback> payback;
+	HashMap<String, HashSet<String>> beingTracked;
 
 	int time = 30;
 
 	boolean started = false;
 
 	public twbotpayback() {
-		payback = new HashMap();
-		beingTracked = new HashMap();
+		payback = new HashMap<String, Payback>();
+		beingTracked = new HashMap<String, HashSet<String>>();
 	}
 
 	public void handleEvent(PlayerDeath event) {
@@ -38,7 +38,7 @@ public class twbotpayback extends TWBotExtension
 		String killer = m_botAction.getPlayerName(event.getKillerID()).toLowerCase();
 
 		if(payback.containsKey(killee + killer)) {
-			Payback pb = (Payback)payback.get(killee + killer);
+			Payback pb = payback.get(killee + killer);
 			pb.cancel();
 			payback.remove(killee + killer);
 			m_botAction.sendPrivateMessage(killer, "You have avenged your death and may continue to play.");
@@ -46,11 +46,11 @@ public class twbotpayback extends TWBotExtension
 			Payback pb = new Payback(killee, m_botAction);
 			payback.put(killer + killee, pb);
 			if(beingTracked.containsKey(killer)) {
-				HashSet killed = (HashSet)beingTracked.get(killer);
+				HashSet<String> killed = beingTracked.get(killer);
 				killed.add(killee);
 				beingTracked.put(killer, killed);
 			} else {
-				HashSet killed = new HashSet();
+				HashSet<String> killed = new HashSet<String>();
 				killed.add(killee);
 				beingTracked.put(killer, killed);
 			}
@@ -68,7 +68,7 @@ public class twbotpayback extends TWBotExtension
 			while(it.hasNext()) {
 				String avenger = (String)it.next();
 				if(payback.containsKey(player + avenger)) {
-					Payback pb = (Payback)payback.get(player + avenger);
+					Payback pb = payback.get(player + avenger);
 					pb.cancel();
 					payback.remove(player + avenger);
 					m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");
@@ -87,7 +87,7 @@ public class twbotpayback extends TWBotExtension
 				while(it.hasNext()) {
 					String avenger = (String)it.next();
 					if(payback.containsKey(player + avenger)) {
-						Payback pb = (Payback)payback.get(player + avenger);
+						Payback pb = payback.get(player + avenger);
 						pb.cancel();
 						payback.remove(player + avenger);
 						m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");

@@ -25,7 +25,7 @@ import twcore.core.game.Player;
  */
 public class twbotplatoon extends TWBotExtension
 {
-	HashSet exemptShips = new HashSet();
+	HashSet<Integer> exemptShips = new HashSet<Integer>();
 	boolean isRunning = false;
 	boolean notReallyRunning = false;
 
@@ -72,7 +72,7 @@ public class twbotplatoon extends TWBotExtension
 
     public void updateExempt(String name, String message)
     {
-    	exemptShips = new HashSet();
+    	exemptShips = new HashSet<Integer>();
 
     	String pieces[] = message.split(" ", 2);
     	String pieces2[] = pieces[1].split(":");

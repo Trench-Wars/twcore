@@ -264,11 +264,11 @@ public class twbotwarp extends TWBotExtension
 
     if(warpType == WARP_FIRST_FREQ)
     {
-      Vector freqNumbers = getFreqNumbers();
+      Vector<Integer> freqNumbers = getFreqNumbers();
 
       if(warpID < freqNumbers.size())
       {
-        Integer freq = (Integer) freqNumbers.get(warpID);
+        Integer freq = freqNumbers.get(warpID);
         doWarpGroup(WARP_FIRST_FREQ, freq.intValue(), xCoord, yCoord, radius, resetGroup);
       }
     }
@@ -278,12 +278,12 @@ public class twbotwarp extends TWBotExtension
 
   public void doWarpGroup(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup)
   {
-    Iterator iterator = m_botAction.getPlayingPlayerIterator();
+    Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
     Player player;
 
     while(iterator.hasNext())
     {
-      player = (Player) iterator.next();
+      player = iterator.next();
       if(isWarpable(player, warpType, warpID))
       {
         if(resetGroup)
@@ -349,19 +349,19 @@ public class twbotwarp extends TWBotExtension
     return new StringTokenizer(string);
   }
 
-  private Vector getFreqNumbers()
+  private Vector<Integer> getFreqNumbers()
   {
-    TreeSet freqNumbers = new TreeSet();
-    Iterator iterator = m_botAction.getPlayingPlayerIterator();
+    TreeSet<Integer> freqNumbers = new TreeSet<Integer>();
+    Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
     Player player;
     int freq;
 
     while(iterator.hasNext())
     {
-      player = (Player) iterator.next();
+      player = iterator.next();
       freqNumbers.add(new Integer(player.getFrequency()));
     }
-    return new Vector((Collection) freqNumbers);
+    return new Vector<Integer>(freqNumbers);
   }
 
   private boolean isWarpable(Player player, int warpType, int warpID)

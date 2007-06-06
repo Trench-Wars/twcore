@@ -20,8 +20,8 @@ public class FrequencyShipChange extends SubspaceEvent {
 
     //Variable Declarations
     short           m_playerID;
-    byte            m_shipType;
     short           m_freq;
+    byte            m_shipType;
 
     /**
      * Creates a new instance of FrequencyShipChange, this is called by
@@ -29,7 +29,7 @@ public class FrequencyShipChange extends SubspaceEvent {
      * @param array the ByteArray containing the packet data
      */
     public FrequencyShipChange(ByteArray array){
-        m_shipType = (byte)((array.readByte( 1 ) + 1) % 9);
+        m_shipType = array.readByte( 1 );
         m_playerID = array.readLittleEndianShort( 2 );
         m_freq = array.readLittleEndianShort( 4 );
     }
@@ -43,11 +43,21 @@ public class FrequencyShipChange extends SubspaceEvent {
     }
 
     /**
-     * This gets the player's new ship type
+     * This gets the player's new ship type using intuitive numbering
+     * ie. 0=Spec, 1=Warbird, 2=Javelin, ...
      * @return the type of ship the player is in
      */
     public byte getShipType(){
-        return m_shipType;
+        return (byte)((m_shipType + 1) % 9);
+    }
+
+    /**
+     * This gets the player's new ship type using SS protocol numbering
+     * ie. 0=Warbird, 1=Javelin, ..., 8=Spec
+     * @return the type of ship the player is in
+     */
+    public byte getShipTypeRaw() {
+    	return m_shipType;
     }
 
     /**
