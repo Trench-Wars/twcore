@@ -7,7 +7,7 @@ import twcore.core.game.Player;
 public class PowerBallPlayer {
 
 	String 	name;
-	HashMap stats;
+	HashMap<Integer, PlayerStats> stats;
 	int     m_freq;
 
 	public PowerBallPlayer( Player player ) {
@@ -15,7 +15,7 @@ public class PowerBallPlayer {
 		name = player.getPlayerName();
 		m_freq = player.getFrequency();
 
-		stats = new HashMap();
+		stats = new HashMap<Integer, PlayerStats>();
 		stats.put( new Integer( m_freq ), new PlayerStats() );
 	}
 
@@ -36,7 +36,7 @@ public class PowerBallPlayer {
 	//Takes current record and modifies the frequency which it is stored under
 	public void changeRecordFreq( int freq ) {
 
-		PlayerStats thisStat = (PlayerStats)stats.get( new Integer( m_freq ) );
+		PlayerStats thisStat = stats.get( new Integer( m_freq ) );
 		stats.remove( new Integer( m_freq ) );
 		stats.put( new Integer( freq ), thisStat );
 	}
@@ -50,14 +50,14 @@ public class PowerBallPlayer {
 
 	public PlayerStats getPlayer() {
 
-		return (PlayerStats)stats.get( new Integer( m_freq ) );
+		return stats.get( new Integer( m_freq ) );
 	}
 
 }
 
 class PlayerStats {
 
-	HashMap		pickUp;
+	HashMap<Integer, Integer> pickUp;
 	int kills = 0, teamkills = 0, deaths = 0;
 	int goals = 0, assists = 0;
 	int steals = 0, turnOvers = 0;
@@ -65,7 +65,7 @@ class PlayerStats {
 	int timeCarried = 0, lastCarry = 0;
 
 	public PlayerStats() {
-		pickUp = new HashMap();
+		pickUp = new HashMap<Integer, Integer>();
 	}
 
 	public void addKill() { kills++; }
@@ -106,7 +106,7 @@ class PlayerStats {
 
 	public void endPickUp( int ballId ) {
 		try {
-			int time = ((Integer)pickUp.get( new Integer( ballId ) )).intValue();
+			int time = pickUp.get( new Integer( ballId ) ).intValue();
 			lastCarry = (int)(System.currentTimeMillis()/1000)-time;
 			timeCarried += lastCarry;
 		} catch (Exception e) {}

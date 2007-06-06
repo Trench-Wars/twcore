@@ -48,8 +48,8 @@ import twcore.core.util.Tools;
 public class PowerBallManager {
 
 	BotAction m_botAction;
-	HashMap   m_playerList;
-	HashMap	  m_powerballList;
+	HashMap<String, PowerBallPlayer> m_playerList;
+	HashMap<Integer, PowerBall>      m_powerballList;
 
 	int lastBallReleased = 0;
 	boolean shotOnGoal = false;
@@ -58,8 +58,8 @@ public class PowerBallManager {
 
 	public PowerBallManager( BotAction botAction ) {
 		m_botAction = botAction;
-		m_playerList = new HashMap();
-		m_powerballList = new HashMap();
+		m_playerList = new HashMap<String, PowerBallPlayer>();
+		m_powerballList = new HashMap<Integer, PowerBall>();
 
 		EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.BALL_POSITION );
@@ -74,7 +74,7 @@ public class PowerBallManager {
 
 		m_botAction = botAction;
 		m_recordType = recordType;
-		m_playerList = new HashMap();
+		m_playerList = new HashMap<String, PowerBallPlayer>();
 
 		EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.BALL_POSITION );
@@ -96,7 +96,7 @@ public class PowerBallManager {
 			m_powerballList.put( new Integer( event.getBallID() ), new PowerBall() );
 
 		//Get associated powerball
-		PowerBall ball = (PowerBall)m_powerballList.get( new Integer( event.getBallID() ) );
+		PowerBall ball = m_powerballList.get( new Integer( event.getBallID() ) );
 
 		//Ball carried
 		if( event.getTimeStamp() == 0 ) {
@@ -107,7 +107,7 @@ public class PowerBallManager {
 				Player player = m_botAction.getPlayer( name );
 
 				//Set player as having picked up the ball
-				PowerBallPlayer thisPlayer = (PowerBallPlayer)m_playerList.get( name );
+				PowerBallPlayer thisPlayer = m_playerList.get( name );
 				getPlayer( name ).setPickUp( event.getBallID() );
 				//Check if it was a steal/save
 				if( ball.steal( player.getFrequency() ) ) {
@@ -167,7 +167,7 @@ public class PowerBallManager {
 
 		if( player.getShipType() == 0 ) return;
 
-		PowerBallPlayer thisPlayer = (PowerBallPlayer)m_playerList.get( name );
+		PowerBallPlayer thisPlayer = m_playerList.get( name );
 		if( !thisPlayer.sameFrequency( player.getFrequency() ) ) return;
 
 		if( m_recordType == 1 )
@@ -193,7 +193,7 @@ public class PowerBallManager {
 				m_playerList.put( name, new PowerBallPlayer( player ) );
 			//Old player
 			else {
-				PowerBallPlayer thisPlayer = (PowerBallPlayer)m_playerList.get( name );
+				PowerBallPlayer thisPlayer = m_playerList.get( name );
 				if( !thisPlayer.sameFrequency( player.getFrequency() ) ) return;
 
 				if( m_recordType == 1 )
@@ -238,7 +238,7 @@ public class PowerBallManager {
 		PowerBallEvent thisEvent = new PowerBallEvent();
 
 		//Get associated powerball
-		PowerBall ball = (PowerBall)m_powerballList.get( new Integer( lastBallReleased ) );
+		PowerBall ball = m_powerballList.get( new Integer( lastBallReleased ) );
 
 		//Get associated scorer and update goals
 		String scorer = ball.getLastCarrier();
@@ -288,7 +288,7 @@ public class PowerBallManager {
 		if( !m_playerList.containsKey( name ) )
 			m_playerList.put( name, new PowerBallPlayer( m_botAction.getPlayer(name) ) );
 
-		return ((PowerBallPlayer)m_playerList.get( name )).getPlayer();
+		return m_playerList.get( name ).getPlayer();
 	}
 
 	/**
@@ -393,11 +393,11 @@ public class PowerBallManager {
 
 class PowerBall {
 
-	Vector carrierList;
+	Vector<String> carrierList;
 	boolean carried = false;
 
 	public PowerBall() {
-		carrierList = new Vector();
+		carrierList = new Vector<String>();
 	}
 
 	public void reset() {
@@ -428,12 +428,12 @@ class PowerBall {
 
 	public String getLastCarrier() {
 		if( carrierList.size() == 0 ) return null;
-		else return (String)carrierList.elementAt(0);
+		else return carrierList.elementAt(0);
 	}
 
 	public String getTouch( int t ) {
 		if( carrierList.size() < t ) return null;
-		else return (String)carrierList.elementAt(t-1);
+		else return carrierList.elementAt(t-1);
 	}
 
 	public boolean setCarried() {
@@ -451,7 +451,7 @@ class PowerBall {
 	public boolean steal( int freq ) {
 		if( carrierList.size() == 0 ) return false;
 
-		String last = (String)carrierList.elementAt(0);
+		String last = carrierList.elementAt(0);
 
 		try {
 			if( m_botAction.getPlayer(last).getFrequency() == freq ) return false;

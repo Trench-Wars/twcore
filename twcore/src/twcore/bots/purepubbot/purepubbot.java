@@ -199,10 +199,8 @@ public class purepubbot extends SubspaceBot
 
         Comparator <String>a = new Comparator<String>()
         {
-            public int compare(String oa, String ob)
+            public int compare(String a, String b)
             {
-                String a = (String)oa;
-                String b = (String)ob;
                 if (Tools.isAllDigits(a) && !a.equals("") ) {
                     if (Tools.isAllDigits(b) && !b.equals("") ) {
                         if (Integer.parseInt(a) < Integer.parseInt(b)) {
@@ -342,7 +340,7 @@ public class purepubbot extends SubspaceBot
                 int weight;
 
                 for( int i = 1; i < 9; i++ ) {
-                    weight = ((Integer)shipWeights.get( i )).intValue();
+                    weight = shipWeights.get( i ).intValue();
                     if( weight == 0 )
                         restrictions += Tools.shipName( i ) + "s disabled.  ";
                     if( weight > 1 )
@@ -589,7 +587,7 @@ public class purepubbot extends SubspaceBot
      */
     public void doStrictTimeCmd(String sender ) {
         if( strictFlagTime ) {
-            strictFlagTime = false;            
+            strictFlagTime = false;
             if( flagTimeStarted )
                 m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode disabled.  Changes will go into effect next round.");
             else
@@ -599,7 +597,7 @@ public class purepubbot extends SubspaceBot
             if(flagTimeStarted) {
                 m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode enabled.  All players will be warped into base next round.");
             } else {
-                m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode enabled.  !startflagtime <minutes> to begin a strict flag time game.");                
+                m_botAction.sendSmartPrivateMessage(sender, "Strict flag time mode enabled.  !startflagtime <minutes> to begin a strict flag time game.");
             }
         }
     }
@@ -687,16 +685,16 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask(new DieTask(), 100);
     }
 
-    
+
     /**
      * Lists any ship restrictions in effect.
-     * 
+     *
      * @param sender is the person issuing the command.
      */
     public void doListShipsCmd(String sender) {
         int weight;
         for( int i = 1; i < 9; i++ ) {
-            weight = ((Integer)shipWeights.get( i )).intValue();
+            weight = shipWeights.get( i ).intValue();
             if( weight == 0 )
                 m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( i ) + "s disabled." );
             else if( weight > 1 )
@@ -704,17 +702,17 @@ public class purepubbot extends SubspaceBot
         }
     }
 
-    
+
     /**
      * Sets a given ship to a particular restriction.
-     * 
+     *
      * @param sender is the person issuing the command.
      */
     public void doSetCmd(String sender, String argString) {
         String[] args = argString.split(" ");
         if( args.length != 2 )
             throw new RuntimeException("Usage: !set <ship#> <weight#>");
-        
+
         try {
             Integer ship = Integer.valueOf(args[0]);
             Integer weight = Integer.valueOf(args[1]);
@@ -729,18 +727,18 @@ public class purepubbot extends SubspaceBot
                         m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( ship ) + "s: limited to 1/" + weight + " of the size of a frequency (but 1 always allowed).");
                     specRestrictedShips();
                 } else
-                    throw new RuntimeException("Weight must be >= 0.");                
+                    throw new RuntimeException("Weight must be >= 0.");
             } else
-                throw new RuntimeException("Invalid ship number.");                
+                throw new RuntimeException("Invalid ship number.");
         } catch (Exception e) {
             throw new RuntimeException("Usage: !set <ship#> <weight#>");
         }
     }
 
-    
+
     /**
      * Shows who on the team is in which ship.
-     * 
+     *
      * @param sender is the person issuing the command.
      */
     public void doShowTeamCmd(String sender) {
@@ -755,14 +753,14 @@ public class purepubbot extends SubspaceBot
                 String text = Tools.formatString(Tools.shipName(i) + "s", 11);
                 text += "(" + team.get(i).size() + "):  ";
                 for( int j = 0; j < team.get(i).size(); j++) {
-                   text += (String)team.get(i).get(j) + " ";
+                   text += team.get(i).get(j) + " ";
                 }
                 m_botAction.sendSmartPrivateMessage(sender, text);
             }
         }
     }
-    
-    
+
+
     /**
      * Collects names of players on a freq into a Vector array by ship.
      * @param freq Frequency to collect info on
@@ -778,11 +776,11 @@ public class purepubbot extends SubspaceBot
         while( i.hasNext() ) {
             Player p = (Player)i.next();
             team.get(p.getShipType()).add(p.getPlayerName());
-        }            
+        }
         return team;
     }
-    
-    
+
+
     /**
      * Displays a help message depending on access level.
      *
@@ -882,7 +880,7 @@ public class purepubbot extends SubspaceBot
         if( player == null )
             return;
 
-        int weight = ((Integer)shipWeights.get(player.getShipType())).intValue();
+        int weight = shipWeights.get(player.getShipType()).intValue();
 
         // If weight is 1, unlimited number of that shiptype is allowed.  (Spec is also set to 1.)
         if( weight == 1 )
@@ -928,7 +926,7 @@ public class purepubbot extends SubspaceBot
 
         if( numShipsOfType > freqTotal / weight ) {
             // If unlimited spiders are allowed, set them to spider; else spec
-            if( ((Integer)shipWeights.get(3)).intValue() == 1 ) {
+            if( shipWeights.get(3).intValue() == 1 ) {
                 m_botAction.setShip(playerID, 3);
                 m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "There are too many ships of that kind (" + (numShipsOfType - 1) + "), or not enough people on the freq to allow you to play that ship.");
             } else {
@@ -1151,7 +1149,7 @@ public class purepubbot extends SubspaceBot
         int maxScore         = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
         int secs = flagTimer.getTotalSecs();
         int mins = secs / 60;
-        int weight = ((int)(secs * 3 ) / 60);
+        int weight = (secs * 3 ) / 60;
 
         try {
 
@@ -1220,7 +1218,7 @@ public class purepubbot extends SubspaceBot
                     if(player.getFrequency() == flagholdingFreq ) {
                         String playerName = player.getPlayerName();
 
-                        Integer i = (Integer)playerTimes.get( playerName );
+                        Integer i = playerTimes.get( playerName );
 
                         if( i != null ) {
                             // Calculate amount of time actually spent on freq
@@ -1682,7 +1680,7 @@ public class purepubbot extends SubspaceBot
          * @param name Name of player.
          */
         public void addFlagClaim( String name ) {
-            Integer count = (Integer)flagClaims.get( name );
+            Integer count = flagClaims.get( name );
             if( count == null ) {
                 flagClaims.put( name, new Integer(1) );
             } else {
@@ -1696,19 +1694,19 @@ public class purepubbot extends SubspaceBot
          * a tie, does not care because it's only bragging rights anyway. :P
          * @return Array of size 2, index 0 being the team leader and 1 being # flaggrabs
          */
-        public String[] getTeamLeader( HashSet MVPs ) {
+        public String[] getTeamLeader( HashSet<String> MVPs ) {
             String[] leaderInfo = {"", ""};
 
             if( MVPs == null )
                 return leaderInfo;
             try {
-                Iterator i = MVPs.iterator();
+                Iterator<String> i = MVPs.iterator();
                 Integer dummyClaim, highClaim = new Integer(0);
                 String leader = "", dummyPlayer;
 
                 while( i.hasNext() ) {
-                    dummyPlayer = (String)i.next();
-                    dummyClaim = (Integer)flagClaims.get( dummyPlayer );
+                    dummyPlayer = i.next();
+                    dummyClaim = flagClaims.get( dummyPlayer );
                     if( dummyClaim != null ) {
                         if( dummyClaim.intValue() > highClaim.intValue() ) {
                             leader = dummyPlayer;
@@ -1815,7 +1813,7 @@ public class purepubbot extends SubspaceBot
             if( (totalSecs % (5 * 60)) == 0 && ( (flagMinutesRequired * 60) - secondsHeld > 30) ) {
                 m_botAction.sendArenaMessage( getTimeInfo() );
             }
-            
+
             do_updateTimer();
 
             if( isBeingClaimed ) {
@@ -1842,9 +1840,9 @@ public class purepubbot extends SubspaceBot
                 m_botAction.sendArenaMessage( (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "Private freq" ) + " will win in 10 seconds . . ." );
             }
         }
-        
+
         /**
-         * Runs the LVZ-based timer. 
+         * Runs the LVZ-based timer.
          */
         private void do_updateTimer() {
             int secsNeeded = flagMinutesRequired * 60 - secondsHeld;

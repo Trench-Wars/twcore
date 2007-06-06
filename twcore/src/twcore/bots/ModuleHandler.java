@@ -16,7 +16,7 @@ import twcore.core.util.Tools;
 public class ModuleHandler
 {
   private AdaptiveClassLoader loader;
-  private ConcurrentHashMap moduleList;
+  private ConcurrentHashMap<String, Module> moduleList;
   private File moduleLocation;
   private String moduleGroup;
   private BotAction m_botAction;
@@ -35,7 +35,7 @@ public class ModuleHandler
     m_botAction = botAction;
     initializeLoader(modulePath);
     this.moduleGroup = moduleGroup;
-    moduleList = new ConcurrentHashMap();
+    moduleList = new ConcurrentHashMap<String, Module>();
   }
 
   /**
@@ -125,7 +125,7 @@ public class ModuleHandler
 
     if(!moduleList.containsKey(lowerName))
       throw new IllegalArgumentException("ERROR: " + moduleName + " is not loaded.");
-    return (Module) moduleList.get(lowerName);
+    return moduleList.get(lowerName);
   }
 
   /**
@@ -136,12 +136,12 @@ public class ModuleHandler
    * @return a sorted collection of module names is returned.
    */
 
-  public Collection getModuleNames()
+  public Collection<? extends String> getModuleNames()
   {
     String[] fileNames = moduleLocation.list(new ModuleFilenameFilter());
     int beginIndex = moduleGroup.length();
     String fileName;
-    Vector modules = new Vector();
+    Vector<String> modules = new Vector<String>();
 
     for(int index = 0; index < fileNames.length; index++)
     {
@@ -160,7 +160,7 @@ public class ModuleHandler
 
   public void handleEvent(SubspaceEvent event)
   {
-    Collection collection = moduleList.values();    
+    Collection collection = moduleList.values();
     Iterator iterator = collection.iterator();
     Module module;
 
@@ -188,7 +188,7 @@ public class ModuleHandler
 
   private void initializeLoader(String modulePath)
   {
-    Vector repository = new Vector();
+    Vector<File> repository = new Vector<File>();
 
     repository.add( new File( m_botAction.getGeneralSettings().getString( "Core Location" ) ) );
     moduleLocation = new File(modulePath);

@@ -277,12 +277,10 @@ public class pubarrogant extends SubspaceBot
     {
       String[] arenaNames = event.getArenaNames();
 
-        Comparator a = new Comparator()
+        Comparator<String> a = new Comparator<String>()
         {
-            public int compare(Object oa, Object ob)
+            public int compare(String a, String b)
             {
-                String a = (String)oa;
-                String b = (String)ob;
                 if (Tools.isAllDigits(a) && !a.equals("") ) {
                     if (Tools.isAllDigits(b) && !b.equals("") ) {
                         if (Integer.parseInt(a) < Integer.parseInt(b)) {
