@@ -28,15 +28,15 @@ public class Interpret
 			//Speech.SayIncident( "NoDC: passer was on same team" );
 			return DC_CALL_NODC;
 		}
-		
+
 		// NoDC if passer is on same team
 		if( picker.m_freq == passer.m_freq )
 		{
 			//Speech.SayIncident( "NoDC: passer was on same team" );
 			return DC_CALL_NODC;
 		}
-		
-		// NoDC if picker wasn't in his own crease		
+
+		// NoDC if picker wasn't in his own crease
 		if( !Arena.IsInCrease( picker.m_pos, picker.m_freq ) )
 		{
 			//Speech.SayIncident( "NoDC: picker wasn't in his own crease		" );
@@ -49,14 +49,14 @@ public class Interpret
 			//Speech.SayIncident( "NoDC: picker's goalie(s) were out of crease" );
 			return DC_CALL_NODC;
 		}
-		
+
 		// Was the shot going in? (Regardless of where goalie was... need to take goalie into account on a later revision...)
 		if( GetDinkness( passer.m_pos, passer.m_vel ) > 0 )
 			return DC_CALL_BDC;
 		else
 			return DC_CALL_DC;
 	}
-	
+
 	public static String GetAssistantsString( IncidentHistory history )
 	{
 		String[] assistants = Interpret.GetAssistants( history );
@@ -82,7 +82,7 @@ public class Interpret
 
 	private static String[] GetAssistants( IncidentHistory history )
 	{
-		Vector assVec = new Vector();
+		Vector<String> assVec = new Vector<String>();
 
 		Incident goal = history.GetIncident( 1 );
 
@@ -113,7 +113,7 @@ public class Interpret
 		String[] assArray = new String[ assVec.size() ];
 		for( int i=0; i<assVec.size(); i++ )
 		{
-			assArray[i] = (String)assVec.elementAt(i);
+			assArray[i] = assVec.elementAt(i);
 		}
 
 		return assArray;

@@ -2,8 +2,8 @@
 //
 // Filename:
 // CommandRegistry.java
-// 
-// Description: 
+//
+// Description:
 // Holds a list of commands available to the bot.
 //
 // Usage:
@@ -22,8 +22,8 @@ import twcore.core.events.Message;
 // Collection of commands that the bot recognises
 public class CommandRegistry
 {
-	public static int OPERATORLIST_ANYONE = 313354; // Magic number. ;)	
-	private Vector m_rgdCommands = new Vector();	// Registered commands
+	public static int OPERATORLIST_ANYONE = 313354; // Magic number. ;)
+	private Vector<Command> m_rgdCommands = new Vector<Command>();	// Registered commands
 
 	public CommandRegistry()
 	{
@@ -31,25 +31,25 @@ public class CommandRegistry
 		m_rgdCommands.addElement( new BotCommand_WhereAmI() );
 		m_rgdCommands.addElement( new BotCommand_SetSnipeMessage() );
 		m_rgdCommands.addElement( new BotCommand_Help() );
-		m_rgdCommands.addElement( new BotCommand_Enter() );	
-		m_rgdCommands.addElement( new BotCommand_StartAutoHost() );	
-		m_rgdCommands.addElement( new BotCommand_EndAutoHost() );	
+		m_rgdCommands.addElement( new BotCommand_Enter() );
+		m_rgdCommands.addElement( new BotCommand_StartAutoHost() );
+		m_rgdCommands.addElement( new BotCommand_EndAutoHost() );
 	}
 
 	public void ProcessMessage( Message msg, ballbot bot )
 	{
 		for( int i=0; i< m_rgdCommands.size(); i++ )
-			ProcessCommand( (Command)m_rgdCommands.elementAt(i), msg, bot );
+			ProcessCommand( m_rgdCommands.elementAt(i), msg, bot );
 	}
-	
+
 	private void ProcessCommand( Command command, Message msg, ballbot bot )
-	{				
+	{
 		if( !command.AllowCommand( msg.getMessage() ) )
 			return;
-		
+
 		if( !command.GetMessageTypeFilter().PassesFilter( msg ))
 			return;
-		
+
 		String playerName = bot.m_botAction.getPlayerName( msg.getPlayerID() );
 
 		if(   command.GetAccessLevel() == CommandRegistry.OPERATORLIST_ANYONE )  {  command.DoCommand( bot, msg );  	return; }
@@ -59,7 +59,7 @@ public class CommandRegistry
 		if( ( command.GetAccessLevel() == OperatorList.SYSOP_LEVEL  		&&  bot.m_botAction.getOperatorList().isSysop( playerName ) ) ) 		{ command.DoCommand( bot, msg );  	return; }
 		if( ( command.GetAccessLevel() == OperatorList.OWNER_LEVEL  		&&  bot.m_botAction.getOperatorList().isOwner( playerName ) ) ) 		{ command.DoCommand( bot, msg );  	return; }
 	}
-	
+
 	public Vector GetHelpText()
 	{
 		return Help.GetHelpText( m_rgdCommands );

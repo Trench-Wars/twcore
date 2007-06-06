@@ -30,7 +30,7 @@ public class Help
 
 
 
-		Vector help = new Vector();
+		Vector<String> help = new Vector<String>();
 
 		help.addElement( totalWidthLine );
 		help.addElement( Unsorted.GetRow( m_titles, m_widths, m_delim ) );

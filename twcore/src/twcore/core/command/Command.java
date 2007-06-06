@@ -128,7 +128,7 @@ public class Command {
 
 }
 
-
+@SuppressWarnings("serial")
 class InvalidCommandException extends Exception {
     public InvalidCommandException(String msg) {
         super(msg);

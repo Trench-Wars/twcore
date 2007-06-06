@@ -8,7 +8,7 @@
 //
 //Usage:
 //Create an instance of this and use the "set" functions to define the filter.
-//Invoke PassesFilter( Message ) to filter Message objects by using the returned boolean. 
+//Invoke PassesFilter( Message ) to filter Message objects by using the returned boolean.
 //
 //////////////////////////////////////////////////////
 
@@ -20,36 +20,36 @@ import twcore.core.events.Message;
 class Speech
 {
 	public static SubspaceBot m_bot;
-	
+
 	public static void Say( int msgType, String msg, int sound )
 	{
 		if( msgType == Message.ARENA_MESSAGE ) 			m_bot.m_botAction.sendArenaMessage( msg, sound );
-		if( msgType == Message.CHAT_MESSAGE ) 			;
-		if( msgType == Message.OPPOSING_TEAM_MESSAGE ) 	;
-		if( msgType == Message.PRIVATE_MESSAGE ) 		;
-		if( msgType == Message.PUBLIC_MACRO_MESSAGE ) 	;
+		if( msgType == Message.CHAT_MESSAGE ) 			{};
+		if( msgType == Message.OPPOSING_TEAM_MESSAGE ) 	{};
+		if( msgType == Message.PRIVATE_MESSAGE ) 		{};
+		if( msgType == Message.PUBLIC_MACRO_MESSAGE ) 	{};
 		if( msgType == Message.PUBLIC_MESSAGE ) 		m_bot.m_botAction.sendPublicMessage( msg, sound );
-		if( msgType == Message.REMOTE_PRIVATE_MESSAGE ) ;
-		if( msgType == Message.SERVER_ERROR ) 			;
-		if( msgType == Message.TEAM_MESSAGE ) 			;
-		if( msgType == Message.WARNING_MESSAGE ) 		;
+		if( msgType == Message.REMOTE_PRIVATE_MESSAGE ) {};
+		if( msgType == Message.SERVER_ERROR ) 			{};
+		if( msgType == Message.TEAM_MESSAGE ) 			{};
+		if( msgType == Message.WARNING_MESSAGE ) 		{};
 	}
-	
+
 	public static void Say( int msgType, String msg  )
 	{
 		Say( msgType, msg, 300 );
 	}
-	
+
 	public static void SayIncident( String msg )
 	{
 		Say( Message.PUBLIC_MESSAGE, msg );
 	}
-	
+
 	public static void SayGoal( String msg, int sound )
 	{
 		Say( Message.ARENA_MESSAGE, msg, sound );
 	}
-	
+
 	public static void SayGoal( String msg )
 	{
 		Say( Message.ARENA_MESSAGE, msg );
@@ -69,15 +69,15 @@ public class MessageTypeFilter
 	private boolean m_server_error 		= false;
 	private boolean m_team 				= false;
 	private boolean m_warning 			= false;
-	
+
 	public MessageTypeFilter()
 	{
 	}
 
 	public MessageTypeFilter(
 			boolean alert, boolean arena, boolean chat,
-			boolean opposing_team, boolean _private, boolean public_macro, 
-			boolean _public, boolean remote_private, boolean server_error, 
+			boolean opposing_team, boolean _private, boolean public_macro,
+			boolean _public, boolean remote_private, boolean server_error,
 			boolean team, boolean warning)
 	{
 		m_alert 			= alert;

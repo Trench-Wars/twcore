@@ -12,18 +12,18 @@ import java.net.DatagramPacket;
  */
 public class ByteArray {
 
-    byte[]     m_array;             // Byte data of the array 
+    byte[]     m_array;             // Byte data of the array
     int        m_pointer=0;         // Index of the current insertion point
 
     /**
-     * Constructs an empty ByteArray. 
+     * Constructs an empty ByteArray.
      */
     public ByteArray(){
     }
 
     /**
      * Constructs an empty ByteArray of a given size.  If size is not ample,
-     * problems will occur (not a user-friendly datatype). 
+     * problems will occur (not a user-friendly datatype).
      * @param size Size of ByteArray to construct
      */
     public ByteArray( int size ){
@@ -125,7 +125,7 @@ public class ByteArray {
             m_pointer++;
         }
     }
-    
+
     // ***** VARIOUS DATATYPE ADDERS (self-explanatory) *****
 
     public void addByte( byte theByte ){
@@ -416,7 +416,7 @@ public class ByteArray {
     }
 
     // ***** repeatAdd methods *****
-    
+
     public void repeatAdd( byte theByte, int number ){
         for( int i=0; i<number; i++ ){
             m_array[m_pointer++] = theByte;
@@ -449,7 +449,7 @@ public class ByteArray {
     }
 
     // ***** read methods *****
-    
+
     public byte readByte( int index ){
         return m_array[index];
     }
@@ -463,13 +463,13 @@ public class ByteArray {
     }
 
     public int readInt( int index ){
-        return (int)(((m_array[index] & 0xff)<<24) | ((m_array[index+1] & 0xff)<<16) |
-        ((m_array[index+2] & 0xff)<<8) | ((m_array[index+3] & 0xff)));
+        return ((m_array[index] & 0xff)<<24) | ((m_array[index+1] & 0xff)<<16) |
+        ((m_array[index+2] & 0xff)<<8) | ((m_array[index+3] & 0xff));
     }
 
     public int readLittleEndianInt( int index ){
-        return (int)(((m_array[index+3] & 0xff)<<24) | ((m_array[index+2] & 0xff)<<16) |
-        ((m_array[index+1] & 0xff)<<8) | ((m_array[index] & 0xff)));
+        return ((m_array[index+3] & 0xff)<<24) | ((m_array[index+2] & 0xff)<<16) |
+        ((m_array[index+1] & 0xff)<<8) | ((m_array[index] & 0xff));
     }
 
     public long readLong( int index ){
@@ -507,12 +507,12 @@ public class ByteArray {
         }
         return new ByteArray(newarray);
     }
-    
+
     // ***** show methods *****
 
     /**
      * Sends contents of a passed byte array to the console, in hex format.
-     * @param b byte array to display 
+     * @param b byte array to display
      */
     public static void show( byte[] b ){
         for( int i=0; i<b.length; i++ ){
@@ -524,7 +524,7 @@ public class ByteArray {
 
     /**
      * Sends short contents of a passed byte array to the console, in hex format.
-     * @param b byte array to display 
+     * @param b byte array to display
      */
     public static void showShort( byte[] b ){
         for( int i=0; i<b.length && i<26; i++ ){
@@ -536,7 +536,7 @@ public class ByteArray {
 
     /**
      * Sends short contents of a passed ByteArray to the console, in hex format.
-     * @param byteArray ByteAray to display 
+     * @param byteArray ByteAray to display
      */
     public static void showShort( ByteArray byteArray ){
         byte[] b = byteArray.getByteArray();
@@ -548,7 +548,7 @@ public class ByteArray {
     }
 
     /**
-     * Sends contents of the internal byte array to the console, in hex format. 
+     * Sends contents of the internal byte array to the console, in hex format.
      */
     public void show(){
         for( int i=0; i<m_array.length; i++ ){
