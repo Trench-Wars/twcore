@@ -23,8 +23,8 @@ public class gangwars extends MultiModule {
     StringBag killmsgs;
     boolean isRunning = false;
     boolean modeSet = false;
-	HashMap playerList;
-	Vector  queueList;
+	HashMap<String, Integer> playerList;
+	Vector<String>  queueList;
 	String watch = "";
 	final int SWITCH_TIME = 2000;
 	int lancCops;
@@ -33,8 +33,8 @@ public class gangwars extends MultiModule {
         killmsgs = new StringBag();
         killmsgs.add( "has come to the good side and is now a Cop!" );
 
-		playerList = new HashMap();
-		queueList = new Vector();
+		playerList = new HashMap<String, Integer>();
+		queueList = new Vector<String>();
     }
 
     public void requestEvents(EventRequester events)	{
@@ -170,7 +170,7 @@ public class gangwars extends MultiModule {
 
 	public void resetPlayerQueue( String name ) {
 		for( int i = 0; i < queueList.size(); i++ ) {
-			String thisName = (String)queueList.elementAt( i );
+			String thisName = queueList.elementAt( i );
 			if( thisName.equals( name ) ) {
 				queueList.removeElementAt( i );
 				queueList.addElement( name );

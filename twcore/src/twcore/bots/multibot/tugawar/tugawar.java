@@ -113,8 +113,8 @@ public class tugawar extends MultiModule {
                         Random generator = new Random();
                         int randZero = Math.abs( generator.nextInt() ) % zeroTeam.size();
                         int randOne  = Math.abs( generator.nextInt() ) % oneTeam.size();
-                        capZero = (String)zeroTeam.elementAt( randZero);
-                        capOne = (String)oneTeam.elementAt( randOne );
+                        capZero = zeroTeam.elementAt( randZero);
+                        capOne = oneTeam.elementAt( randOne );
                         m_botAction.sendArenaMessage( "GO GO GO!!!", 104);
                         m_botAction.sendArenaMessage( "Team 0 Cap: " + capZero );
                         m_botAction.sendArenaMessage( "Team 1 Cap: " + capOne );

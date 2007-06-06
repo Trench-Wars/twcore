@@ -126,8 +126,8 @@ public class revenge extends MultiModule
 
             if ( killerName != null && killedName != null)
             {
-                RevengePlayer killer = (RevengePlayer)playerMap.get( killerName );
-                RevengePlayer killed = (RevengePlayer)playerMap.get( killedName );
+                RevengePlayer killer = playerMap.get( killerName );
+                RevengePlayer killed = playerMap.get( killedName );
 
                 if ( killed.hasKilled( killerName ) )
                 {
@@ -507,7 +507,7 @@ public class revenge extends MultiModule
     {
         if ( playerMap.containsKey( name ) )
         {
-            RevengePlayer tempPlayer = (RevengePlayer)playerMap.get( name );
+            RevengePlayer tempPlayer = playerMap.get( name );
             m_botAction.sendPrivateMessage( name, "You currently have "
                     + tempPlayer.getScore() + " points." );
         }
@@ -542,7 +542,7 @@ public class revenge extends MultiModule
 
     public boolean isUnloadable() {
         return true;
-    }    
+    }
 
     /** This method cancels any pending TimerTasks, should the game be !stopped. */
     public void cancel()

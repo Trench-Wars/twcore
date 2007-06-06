@@ -50,10 +50,10 @@ public class freezetag extends MultiModule {
      * Here are the class-wide variables.
      */
 
-    HashSet freq0WarbirdSet;     //set to keep track of freq 0 wbs
-    HashSet freq0LevSet;         //set to keep track of freq 0 levs
-    HashSet freq1JavSet;         //set to keep track of freq 1 javs
-    HashSet freq1SpidSet;        //set to keep track of freq 1 spids
+    HashSet<String> freq0WarbirdSet;     //set to keep track of freq 0 wbs
+    HashSet<String> freq0LevSet;         //set to keep track of freq 0 levs
+    HashSet<String> freq1JavSet;         //set to keep track of freq 1 javs
+    HashSet<String> freq1SpidSet;        //set to keep track of freq 1 spids
     int timeLimit;               //defaults to 0 if game is not timed
     boolean isRunning;           //whether or not the game is currently running
 
@@ -62,10 +62,10 @@ public class freezetag extends MultiModule {
      */
 
     public void init() {
-            freq0WarbirdSet  = new HashSet();
-            freq0LevSet      = new HashSet();
-            freq1JavSet      = new HashSet();
-            freq1SpidSet     = new HashSet();
+            freq0WarbirdSet  = new HashSet<String>();
+            freq0LevSet      = new HashSet<String>();
+            freq1JavSet      = new HashSet<String>();
+            freq1SpidSet     = new HashSet<String>();
             timeLimit        = 0; //default if game is not timed
         isRunning        = false;
     }

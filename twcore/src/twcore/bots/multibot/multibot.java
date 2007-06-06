@@ -122,8 +122,7 @@ public class multibot extends SubspaceBot
           doListGamesCmd(sender);
         if(command.startsWith("!lock "))
           doLockCmd(sender, message.substring(6).trim());
-        if(command.equals("!lock"))
-          ;
+        if(command.equals("!lock")) {}
         if(command.equals("!home"))
           doHomeCmd(sender);
         if(command.equals("!die"))
@@ -188,7 +187,7 @@ public class multibot extends SubspaceBot
   {
     File directory = new File(modulePath);
 	File[] files = directory.listFiles(fnf);
-    
+
     Arrays.sort( files );
 
     m_botAction.sendPrivateMessage(sender, "TW MULTIBOT GAME LIBRARY" );
@@ -413,7 +412,7 @@ public class multibot extends SubspaceBot
   private void loadModule(String moduleName)
   {
     AdaptiveClassLoader loader;
-    Vector repository = new Vector();
+    Vector<File> repository = new Vector<File>();
     BotSettings moduleSettings;
     String lowerName = moduleName.toLowerCase();
     File directory = new File(modulePath, lowerName);

@@ -23,7 +23,7 @@ public class speed extends MultiModule {
 
 	CommandInterpreter m_commandInterpreter;
 
-	HashMap players;
+	HashMap<String, SpeedPlayer> players;
 
 	int m_eventStartTime;
 	int m_eventState = 0;		// 0 = nothing, 1 = starting, 2 = playing, 3 = stalling
@@ -42,7 +42,7 @@ public class speed extends MultiModule {
 		m_commandInterpreter = new CommandInterpreter(m_botAction);
 		registerCommands();
 
-		players = new HashMap();
+		players = new HashMap<String, SpeedPlayer>();
     }
 
 	public boolean isUnloadable() {
@@ -463,7 +463,7 @@ public class speed extends MultiModule {
 		String name = m_botAction.getPlayerName(event.getPlayerID());
 		if (m_eventState > 0 && players.containsKey(name)) {
 
-			SpeedPlayer p = (SpeedPlayer)players.get(name);
+			SpeedPlayer p = players.get(name);
 
 			int speed = getSpeed(event.getXVelocity(), event.getYVelocity());
 			double speedID = (speed / (double)MAX_SPEED) * 40;
@@ -520,7 +520,7 @@ public class speed extends MultiModule {
 			String name = m_botAction.getPlayerName(event.getKilleeID());
 
 			if (players.containsKey(name)) {
-				SpeedPlayer p = (SpeedPlayer)players.get(name);
+				SpeedPlayer p = players.get(name);
 				p.died();
 			}
 		}
@@ -557,7 +557,7 @@ public class speed extends MultiModule {
 
 	public void handleSoccerGoal(String name) {
 		if (m_eventState == 2 && m_bombDisarmable && players.containsKey(name)) {
-			SpeedPlayer p = (SpeedPlayer)players.get(name);
+			SpeedPlayer p = players.get(name);
 
 			p.incGoals();
 

@@ -15,7 +15,7 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
-/** 
+/**
  * A MultiBot Extension for ?go elimination.  ER passes bot someone to be the
  * eliminator, who is the only person allowed to touch the ball -- everyone
  * else is spec'd when they do so.  Last remaining besides eliminator wins.
@@ -34,7 +34,7 @@ public class ballspec extends MultiModule {
         events.request(BALL_POSITION);
         events.request(FREQUENCY_SHIP_CHANGE);
     }
-    
+
 
     // Bot stats
     final static String f_version = "1.8";         // Version of bot
@@ -90,7 +90,7 @@ public class ballspec extends MultiModule {
             String[] params = Tools.stringChopper( msg.substring( index ), ' ' );
 
             String pname = params[0];
-            return (Player)m_botAction.getFuzzyPlayer( pname );
+            return m_botAction.getFuzzyPlayer( pname );
 
         } catch (Exception e) {
             return null;
@@ -167,7 +167,7 @@ public class ballspec extends MultiModule {
             }
 
         } else
-         */	
+         */
         if( message.startsWith( "!stop" )){
             if( isRunning == true ) {
                 m_botAction.sendPrivateMessage( name, "BallSpec mode stopped." );
@@ -429,7 +429,7 @@ public class ballspec extends MultiModule {
         return ballspecHelp;
     }
 
-    
+
     public boolean isUnloadable() {
         return true;
     }

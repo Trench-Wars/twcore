@@ -25,7 +25,7 @@ public class bfallout extends MultiModule {
 	SpaceShip m_spaceShip;
 	CommandInterpreter m_commandInterpreter;
 
-	HashMap players;
+	HashMap<String, BFPlayer> players;
 
 	TimerTask fallOutCheck;
 
@@ -44,7 +44,7 @@ public class bfallout extends MultiModule {
 		m_commandInterpreter = new CommandInterpreter(m_botAction);
 		registerCommands();
 
-		players = new HashMap();
+		players = new HashMap<String, BFPlayer>();
     }
 
 	public boolean isUnloadable() {
@@ -316,7 +316,7 @@ public class bfallout extends MultiModule {
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 
 			if (players.containsKey(name)) {
-				BFPlayer p = (BFPlayer)players.get(name);
+				BFPlayer p = players.get(name);
 				p.incGreens();
 			}
 		}
@@ -338,7 +338,7 @@ public class bfallout extends MultiModule {
 
 	public void handleFallOut(String name) {
 
-		BFPlayer p = (BFPlayer)players.get(name);
+		BFPlayer p = players.get(name);
 
 		m_botAction.sendArenaMessage(name + " fell out!  Time: "+getTimeString()+"  Greens: "+p.getGreens());
 
@@ -371,7 +371,7 @@ public class bfallout extends MultiModule {
 
 	public void handleShipEvent(Projectile p) {
 		if (m_repsEnabled && players.containsKey(p.getOwner())) {
-			BFPlayer pl = (BFPlayer)players.get(p.getOwner());
+			BFPlayer pl = players.get(p.getOwner());
 
 			if (pl.canUseRep()) {
 				m_botAction.getShip().fire(5);
@@ -416,7 +416,7 @@ public class bfallout extends MultiModule {
 		Iterator i = players.keySet().iterator();
 		while (i.hasNext()) {
 			winner = (String)i.next();
-			p = (BFPlayer)players.get(winner);
+			p = players.get(winner);
 			g = p.getGreens();
 
 			if (bestGreener == null || bestGreener.getGreens() < p.getGreens()) {

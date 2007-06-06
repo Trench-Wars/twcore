@@ -14,7 +14,7 @@ public class fallout extends MultiModule {
 
 
 	/* Fallout variables */
-	HashMap     players = new HashMap();
+	HashMap<String, String> players = new HashMap<String, String>();
 	final int	arenaRad = 1216;
 	int			startTime = 0;
 	int			arenaCur = 0;

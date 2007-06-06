@@ -76,9 +76,9 @@ class Projectile {
 		return dist;
 	}
 
-	public double getXLocation() { return x + vX * getAge() / (double) 10000.0; }
+	public double getXLocation() { return x + vX * getAge() / 10000.0; }
 
-	public double getYLocation() { return y + vY * getAge() / (double) 10000.0; }
+	public double getYLocation() { return y + vY * getAge() / 10000.0; }
 
 	public int getXVelocity() { return vX; }
 

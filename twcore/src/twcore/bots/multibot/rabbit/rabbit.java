@@ -44,7 +44,7 @@ public class rabbit extends MultiModule
 	private boolean	inProgress = false;
 	private int timeLimit = 15;
 	private int shipType = ANY_SHIP;
-	private ArrayList rabbitList = new ArrayList(4);
+	private ArrayList<String> rabbitList = new ArrayList<String>(4);
 	private StringBag fcMsgs = new StringBag();
 	private StringBag killMsgs = new StringBag();
 

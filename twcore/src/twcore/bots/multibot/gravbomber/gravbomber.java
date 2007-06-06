@@ -23,10 +23,10 @@ import twcore.core.util.Tools;
 public class gravbomber extends MultiModule {
     BotAction           m_botAction;
     BotSettings         m_botSettings;
-    HashMap             m_playerData;
-    HashMap             m_turnTasks;
-    LinkedList          m_playerList;
-    LinkedList          m_weapons;
+    HashMap<String, GBPlayer> m_playerData;
+    HashMap<String, TurnTask> m_turnTasks;
+    LinkedList<String>   m_playerList;
+    LinkedList<GBWeapon> m_weapons;
     Player              m_currentPlayer;
     GBPlayer            m_currentGBPlayer;
     int                 m_currentWeapon;
@@ -75,7 +75,7 @@ public class gravbomber extends MultiModule {
         Player p = m_botAction.getPlayer( event.getPlayerID() );
         if( p == null )
             return;
-    	String name = p.getPlayerName(); 
+    	String name = p.getPlayerName();
         String message = event.getMessage();
 
         if( message.startsWith("!") ) {
@@ -310,7 +310,7 @@ public class gravbomber extends MultiModule {
 
     /* Game Code */
     public void setupWeapons(){
-    	m_weapons = new LinkedList();
+    	m_weapons = new LinkedList<GBWeapon>();
         m_weapons.add( WEAP_ROCKET, new GBWeapon("Grav Inverter", m_botSettings.getInt("RocketPrice") ) );
         m_weapons.add( WEAP_L1BOMB, new GBWeapon("Normal Bomb", m_botSettings.getInt("L1BombPrice") ) );
         m_weapons.add( WEAP_TRACER, new GBWeapon("Tracer Orbs", m_botSettings.getInt("TracerPrice") ) );
@@ -341,15 +341,15 @@ public class gravbomber extends MultiModule {
         m_boughtWeapon = false;
         m_timer = new Timer( true );
     	Player pTemp;
-    	m_playerData = new HashMap();
-    	m_turnTasks = new HashMap();
-        m_playerList = new LinkedList();
+    	m_playerData = new HashMap<String, GBPlayer>();
+    	m_turnTasks = new HashMap<String, TurnTask>();
+        m_playerList = new LinkedList<String>();
     	PlayerBag GBPlayerBag = new PlayerBag();
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
     	if( i == null ) return;
         while( i.hasNext() ){
-       	    pTemp = (Player)i.next();
+       	    pTemp = i.next();
             GBPlayerBag.add( pTemp.getPlayerName() );
         }
 
@@ -390,7 +390,7 @@ public class gravbomber extends MultiModule {
     	    m_gameStarted = false;
 
     	    for( int i = 0; i <= m_playerList.size(); i++ ){
-    	        remPlayer( (String)m_playerList.getFirst(), false, false );
+    	        remPlayer( m_playerList.getFirst(), false, false );
     	    }
 
     	    m_botAction.sendUnfilteredPublicMessage( "?set All:InitialRecharge:5000" );
@@ -401,7 +401,7 @@ public class gravbomber extends MultiModule {
     public void gameOver(){
     	if(!m_gameStarted) return;
 
-    	GBPlayer winner = (GBPlayer)m_playerData.get( m_playerList.getFirst() );
+    	GBPlayer winner = m_playerData.get( m_playerList.getFirst() );
     	stopGame();
 
     	m_botAction.sendArenaMessage("GAME OVER! Winner is " + winner.getName(), 6 );
@@ -418,11 +418,11 @@ public class gravbomber extends MultiModule {
 
         try{
             m_currentPlayer = m_botAction.getPlayer( playerName );
-            m_currentGBPlayer = (GBPlayer)m_playerData.get( playerName );
+            m_currentGBPlayer = m_playerData.get( playerName );
         } catch( NullPointerException e) {
             //player left or lagged out before bot removed him from the list
             m_currentPlayer = m_botAction.getPlayer( getNextPlayer( true, false ) );
-            m_currentGBPlayer = (GBPlayer)m_playerData.get( playerName );
+            m_currentGBPlayer = m_playerData.get( playerName );
         } catch( Exception e ) {
             Tools.printStackTrace( e );
         }
@@ -478,7 +478,7 @@ public class gravbomber extends MultiModule {
 
         m_currentTurnDamage = 0;
 
-        GBPlayer gbplayer = (GBPlayer)m_playerData.get( playerName );
+        GBPlayer gbplayer = m_playerData.get( playerName );
         gbplayer.decrementTurnsTillNextRocket();
 
         if(startNext && m_gameStarted){
@@ -554,7 +554,7 @@ public class gravbomber extends MultiModule {
             int max = m_botSettings.getInt("MaxPower");
 
             if( power >= min && power <= max ){
-            	GBPlayer gbplayer = (GBPlayer)m_playerData.get( playerName );
+            	GBPlayer gbplayer = m_playerData.get( playerName );
 
                 if( m_currentPlayer.getPlayerName().equals( playerName ) ){
                     m_botAction.sendUnfilteredPublicMessage( "?set All:bombspeed:" + power );
@@ -579,7 +579,7 @@ public class gravbomber extends MultiModule {
     	GBWeapon weapon = new GBWeapon();
 
     	try{
-    	    weapon = (GBWeapon)m_weapons.get( weaponID );
+    	    weapon = m_weapons.get( weaponID );
     	} catch( IndexOutOfBoundsException e){
             m_botAction.sendPrivateMessage( playerName, "Invalid weapon number");
             return;
@@ -591,7 +591,7 @@ public class gravbomber extends MultiModule {
 
     	if( player.getScore() >= weapon.getPrice() ){
             if( weaponID == WEAP_ROCKET ){
-                GBPlayer gbplayer = (GBPlayer)m_playerData.get( playerName );
+                GBPlayer gbplayer = m_playerData.get( playerName );
                 if( gbplayer.getTurnsTillNextRocket() > 0 ){
                     m_botAction.sendPrivateMessage( playerName, "There is a turn limit for buying " + weapon.getName() + "s. Turns left to wait: " + gbplayer.getTurnsTillNextRocket() );
                     return;
@@ -814,10 +814,10 @@ public class gravbomber extends MultiModule {
     }
 
     class PlayerBag {
-        ArrayList list;
+        ArrayList<String> list;
 
         public PlayerBag(){
-            list = new ArrayList();
+            list = new ArrayList<String>();
         }
 
         public PlayerBag( String string ){
@@ -844,7 +844,7 @@ public class gravbomber extends MultiModule {
                 int i = random( list.size() );
                 String grabbed;
 
-                grabbed =(String)list.get( i ) ;
+                grabbed = list.get( i ) ;
                 list.remove( i );
                 return grabbed;
             }

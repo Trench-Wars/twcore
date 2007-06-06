@@ -55,7 +55,7 @@ public class dangerous extends MultiModule {
 
     private boolean isRunning = false;
 
-    private HashMap m_players;
+    private HashMap<String, PlayerInfo> m_players;
 
     private int m_totalTime = 0;
     private int m_stolenTime = 0;
@@ -141,12 +141,12 @@ public class dangerous extends MultiModule {
      * and starts their clocks running.
      */
     public void createPlayerRecords() {
-        m_players = new HashMap();
+        m_players = new HashMap<String, PlayerInfo>();
 
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
         while( i.hasNext() ) {
-            Player p = (Player)i.next();
+            Player p = i.next();
 
             PlayerInfo player = new PlayerInfo( p.getPlayerName(), p.getPlayerID(), p.getShipType() );
             m_botAction.scheduleTaskAtFixedRate( player, 1000, 1000 );
@@ -174,7 +174,7 @@ public class dangerous extends MultiModule {
             m_botAction.cancelTask(p);
         }
 
-        m_players = new HashMap();
+        m_players = new HashMap<String, PlayerInfo>();
         m_botAction.cancelTask(timeUpdate);
     }
 
@@ -190,7 +190,7 @@ public class dangerous extends MultiModule {
         Iterator i = m_botAction.getPlayingPlayerIterator();
         Player winner = (Player) i.next();
 
-        PlayerInfo player = (PlayerInfo) m_players.get( winner.getPlayerName() );
+        PlayerInfo player = m_players.get( winner.getPlayerName() );
         m_botAction.sendArenaMessage( "It is " + getTimeString( m_totalTime ) + "!  Someone has survived the Game.", 13 );
 
         if( player != null )
@@ -298,7 +298,7 @@ public class dangerous extends MultiModule {
 
         if( message.startsWith( "!time" )) {
             if(isRunning == true) {
-                PlayerInfo player = (PlayerInfo) m_players.get( name );
+                PlayerInfo player = m_players.get( name );
                 if( player != null ) {
                     m_botAction.sendPrivateMessage( name, "So far, you have survived for " + getTimeString( m_totalTime ) + "." );
                     m_botAction.sendPrivateMessage( name, "You have " + player.getTime() + " remaining to live, dead one.");
@@ -309,7 +309,7 @@ public class dangerous extends MultiModule {
 
         } else if( message.startsWith( "!lagout" )) {
             if(isRunning == true) {
-                PlayerInfo player = (PlayerInfo) m_players.get( name );
+                PlayerInfo player = m_players.get( name );
                 if( player != null ) {
                     if( player.isLagged() ) {
                         player.returnedFromLagout();
@@ -325,7 +325,7 @@ public class dangerous extends MultiModule {
 
         } else if( message.startsWith( "!invest " )) {
             if(isRunning == true) {
-                PlayerInfo player = (PlayerInfo) m_players.get( name );
+                PlayerInfo player = m_players.get( name );
 
                 if( player != null ) {
                     String[] parameters = Tools.stringChopper( message.substring( 8 ), ' ' );
@@ -428,13 +428,13 @@ public class dangerous extends MultiModule {
             Player killer = m_botAction.getPlayer( event.getKillerID() );
 
             if( killed != null ) {
-                PlayerInfo player = (PlayerInfo) m_players.get( killed.getPlayerName() );
+                PlayerInfo player = m_players.get( killed.getPlayerName() );
                 if( player != null )
                     player.hadDeath();
             }
 
             if( killed != null ) {
-                PlayerInfo player = (PlayerInfo) m_players.get( killer.getPlayerName() );
+                PlayerInfo player = m_players.get( killer.getPlayerName() );
                 if( player != null )
                     player.hadKill();
             }
@@ -455,7 +455,7 @@ public class dangerous extends MultiModule {
                 if( m_botAction.getNumPlayers() <= 1 ) {
                     declareWinner();
                 } else {
-                    PlayerInfo player = (PlayerInfo) m_players.get( p.getPlayerName() );
+                    PlayerInfo player = m_players.get( p.getPlayerName() );
                     if( player != null ) {
                         if( player.isPlaying() )
                             player.laggedOut();
@@ -481,7 +481,7 @@ public class dangerous extends MultiModule {
                     if( m_botAction.getNumPlayers() <= 1 ) {
                         declareWinner();
                     } else {
-                        PlayerInfo player = (PlayerInfo) m_players.get( p.getPlayerName() );
+                        PlayerInfo player = m_players.get( p.getPlayerName() );
                     	if( player != null ) {
                         	if( player.isPlaying() )
                         	    player.laggedOut();
@@ -698,7 +698,7 @@ public class dangerous extends MultiModule {
         }
 
         public void run() {
-            PlayerInfo p = (PlayerInfo)m_players.get(investor);
+            PlayerInfo p = m_players.get(investor);
             if( p != null ) {
                 boolean investSucceed = p.addInvestment( time );
                 if( !investSucceed ) {

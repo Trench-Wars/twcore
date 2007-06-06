@@ -22,7 +22,7 @@ public class prodem extends MultiModule {
 
     int				curTime = 0,lastMessage = 0;
     int				gameProgress = -1;
-    private HashMap	playerMap;
+    private HashMap<String, PlayerProfile> playerMap;
     final String[]	ranks = { "",
     "General",
     "Lt. General",
@@ -44,7 +44,7 @@ public class prodem extends MultiModule {
     ///*** Constructor ///***
     public void init() {
         //Other setup
-        playerMap = new HashMap();
+        playerMap = new HashMap<String, PlayerProfile>();
     }
 
     public void requestEvents(EventRequester events)	{
@@ -162,7 +162,7 @@ public void handleEvent( Message event ) {
             }
             else {
                 PlayerProfile tempP;
-                tempP = (PlayerProfile)playerMap.get( name );
+                tempP = playerMap.get( name );
                 m_botAction.setShip( name, tempP.getShip() );
                 m_botAction.setFreq( name, tempP.getFreq() );
             }
@@ -189,8 +189,8 @@ public void handleEvent( Message event ) {
     ///*** Handles a kill ///***
     public void manageKill( String killer, String killee ) {
         PlayerProfile tempWin, tempLose;
-        tempWin  = (PlayerProfile)playerMap.get(killer);
-        tempLose = (PlayerProfile)playerMap.get(killee);
+        tempWin  = playerMap.get(killer);
+        tempLose = playerMap.get(killee);
         tempWin.addKill();
         if( tempWin.getKills() > records[5] ) records[5] = tempWin.getKills();
         tempLose.addDeath();
@@ -266,7 +266,7 @@ public void handleEvent( Message event ) {
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
             PlayerProfile tempPlayer;
-            tempPlayer = (PlayerProfile)playerMap.get(curPlayer);
+            tempPlayer = playerMap.get(curPlayer);
             //Formula for calculating scores:
             //(kh * 2) + (ks) - (kl) - (d) + ((8-cs)*2)
             int sc = (tempPlayer.getData(2) * 2) + tempPlayer.getData(1) - tempPlayer.getData(0) + ((8 - tempPlayer.getShip()) * 2);
@@ -297,7 +297,7 @@ public void handleEvent( Message event ) {
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
             PlayerProfile tempPlayer;
-            tempPlayer = (PlayerProfile)playerMap.get(curPlayer);
+            tempPlayer = playerMap.get(curPlayer);
             if( tempPlayer.getData(location) == score )
                 recordH += "  " + curPlayer;
         }
@@ -311,7 +311,7 @@ public void handleEvent( Message event ) {
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
             PlayerProfile tempPlayer;
-            tempPlayer = (PlayerProfile)playerMap.get(curPlayer);
+            tempPlayer = playerMap.get(curPlayer);
             int curScore;
             if(location.equals("Kills")) curScore = tempPlayer.getKills();
             else if(location.equals("Deaths")) curScore = tempPlayer.getDeaths();

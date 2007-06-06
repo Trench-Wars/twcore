@@ -15,15 +15,15 @@ import twcore.core.events.PlayerEntered;
 public class bbj extends MultiModule
 {
 
-	HashMap playersHands;
+	HashMap<String, Integer> playersHands;
 
-	HashSet blocked;
+	HashSet<String> blocked;
 
-	ArrayList cardsLeft;
-	ArrayList thisRound;
-	ArrayList playingBJ;
-	ArrayList nextRound;
-	ArrayList winners;
+	ArrayList<Integer> cardsLeft;
+	ArrayList<String> thisRound;
+	ArrayList<String> playingBJ;
+	ArrayList<String> nextRound;
+	ArrayList<String> winners;
 
 	TimerTask nextTimer;
 
@@ -40,12 +40,12 @@ public class bbj extends MultiModule
 
 	public void init()
 	{
-		playingBJ = new ArrayList();
-		winners = new ArrayList();
+		playingBJ = new ArrayList<String>();
+		winners = new ArrayList<String>();
 
 		rand = new Random();
 
-		blocked = new HashSet();
+		blocked = new HashSet<String>();
 	}
 
 	public void requestEvents(EventRequester events)	{
@@ -167,9 +167,9 @@ public class bbj extends MultiModule
 		m_botAction.sendArenaMessage("A round of BlackJack is starting.");
 		thisRound = playingBJ;
 		pot += thisRound.size() * 25;
-		playersHands = new HashMap();
+		playersHands = new HashMap<String, Integer>();
 		resetCards();
-		nextRound = new ArrayList();
+		nextRound = new ArrayList<String>();
 		for(int k = 0;k < playingBJ.size();k++)
 			m_botAction.sendUnfilteredPrivateMessage(String.valueOf(playingBJ.get(k)), "*points -25");
 
@@ -223,9 +223,9 @@ public class bbj extends MultiModule
 				return;
 			}
 			thisRound = nextRound;
-			nextRound = new ArrayList();
+			nextRound = new ArrayList<String>();
 		}
-		turn = (String) thisRound.get(0);
+		turn = thisRound.get(0);
 		m_botAction.sendArenaMessage(turn + ", please choose to !hit or !stay.");
 		startTimer();
 	}
@@ -254,7 +254,7 @@ public class bbj extends MultiModule
 			thisRound.remove(name);
 		}
 		int k = rand.nextInt(cardsLeft.size());
-		int card = ((Integer)cardsLeft.get(k)).intValue();
+		int card = cardsLeft.get(k).intValue();
 		cardsLeft.remove(k);
 		if(cardsLeft.isEmpty())
 		{
@@ -264,7 +264,7 @@ public class bbj extends MultiModule
 		if(!playersHands.containsKey(name))
 			thisHand = 0;
 		else
-			thisHand = ((Integer)playersHands.get(name)).intValue();
+			thisHand = playersHands.get(name).intValue();
 
 		thisHand += card;
 		playersHands.put(name, new Integer(thisHand));
@@ -300,7 +300,7 @@ public class bbj extends MultiModule
 
 	public void resetCards()
 	{
-		cardsLeft = new ArrayList();
+		cardsLeft = new ArrayList<Integer>();
 		for(int k = 0;k < 8;k++)
 			cardsLeft.add(new Integer(1));
 
@@ -316,7 +316,7 @@ public class bbj extends MultiModule
 	{
 		if(playersHands.containsKey(name))
 		{
-			int score = ((Integer)playersHands.get(name)).intValue();
+			int score = playersHands.get(name).intValue();
 			return score;
 		}
 		else

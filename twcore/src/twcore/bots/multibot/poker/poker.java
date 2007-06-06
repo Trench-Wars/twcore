@@ -15,8 +15,8 @@ import twcore.core.util.Tools;
 
 public class poker extends MultiModule
 {
-	HashMap seats;
-	ArrayList playerSeat;
+	HashMap<String, PokerPlayer> seats;
+	ArrayList<String> playerSeat;
 	String[] onTable;
 	boolean isRunning;
 	String turn;
@@ -31,9 +31,9 @@ public class poker extends MultiModule
 
 	public void init()
 	{
-		seats = new HashMap();
+		seats = new HashMap<String, PokerPlayer>();
 		d = new PokerDeck();
-		playerSeat = new ArrayList();
+		playerSeat = new ArrayList<String>();
 		isRunning = true;
 		dealer = 0;
 		curBet = 0;
@@ -89,7 +89,7 @@ public class poker extends MultiModule
 	public void handleEvent(PlayerLeft event) {
 		String name = m_botAction.getPlayerName(event.getPlayerID());
 		if(playerSeat.indexOf(name.toLowerCase()) >= 0) {
-			PokerPlayer pPlayer = (PokerPlayer)seats.get(name.toLowerCase());
+			PokerPlayer pPlayer = seats.get(name.toLowerCase());
 			pPlayer.fold();
 			m_botAction.sendArenaMessage(name + " folds because he left the arena.");
 			if(isTurn(name)) { playerDidSomething(); nextPlayer(); }
@@ -145,7 +145,7 @@ public class poker extends MultiModule
 
 	public void playerQuit(String name) {
 		if(playerSeat.indexOf(name.toLowerCase()) >= 0) {
-			PokerPlayer pPlayer = (PokerPlayer)seats.get(name.toLowerCase());
+			PokerPlayer pPlayer = seats.get(name.toLowerCase());
 			pPlayer.fold();
 			m_botAction.sendArenaMessage(name + " folds because he left the game.");
 			if(isTurn(name)) { playerDidSomething(); nextPlayer(); }
@@ -182,7 +182,7 @@ public class poker extends MultiModule
 			m_botAction.sendPrivateMessage(name, "It is not your turn.");
 			return;
 		}
-		PokerPlayer pPlayer = (PokerPlayer)seats.get(name.toLowerCase());
+		PokerPlayer pPlayer = seats.get(name.toLowerCase());
 		if(pPlayer.getBet() >= curBet) {
 			playerDidSomething();
 			nextPlayer();
@@ -200,7 +200,7 @@ public class poker extends MultiModule
 			m_botAction.sendPrivateMessage(name, "It is not your turn.");
 			return;
 		}
-		PokerPlayer pPlayer = (PokerPlayer)seats.get(name.toLowerCase());
+		PokerPlayer pPlayer = seats.get(name.toLowerCase());
 		pPlayer.fold();
 		m_botAction.sendArenaMessage(name + " folds.");
 		playerDidSomething();
@@ -217,7 +217,7 @@ public class poker extends MultiModule
 			m_botAction.sendPrivateMessage(name, "It is not your turn.");
 			return;
 		}
-		PokerPlayer pPlayer = (PokerPlayer)seats.get(name.toLowerCase());
+		PokerPlayer pPlayer = seats.get(name.toLowerCase());
 		if(call) {
 			int bet = curBet - pPlayer.getBet();
 			if(pPlayer.bet(bet)) {
@@ -254,7 +254,7 @@ public class poker extends MultiModule
 			m_botAction.sendPrivateMessage(name, "You are not in this game.");
 			return;
 		}
-		PokerPlayer pPlayer = (PokerPlayer)seats.get(name.toLowerCase());
+		PokerPlayer pPlayer = seats.get(name.toLowerCase());
 		String[] hand = pPlayer.getHand();
 		String m_hand = "";
 		for(int k = 0;k < hand.length;k++)
@@ -316,8 +316,8 @@ public class poker extends MultiModule
 	public void nextPlayer() {
 		int index = playerSeat.indexOf(turn) + 1;
 		if(index >= playerSeat.size()) index = 0;
-		turn = (String)playerSeat.get(index);
-		PokerPlayer pPlayer = (PokerPlayer)seats.get(turn);
+		turn = playerSeat.get(index);
+		PokerPlayer pPlayer = seats.get(turn);
 		/*if(!pPlayer.isPlaying()) { nextPlayer(); return; }
 		if(nextRound()) {
 			for(int k = 0;k < playerSeat.size();k++) {
@@ -353,7 +353,7 @@ public class poker extends MultiModule
 	}
 
 	public void removePlayer(String name) {
-		PokerPlayer pPlayer = (PokerPlayer)seats.get(name.toLowerCase());
+		PokerPlayer pPlayer = seats.get(name.toLowerCase());
 		playerSeat.remove(playerSeat.indexOf(name.toLowerCase()));
 		seats.remove(name.toLowerCase());
 		m_botAction.sendArenaMessage(name + " thrown out of the game for failure to play in a timely manner.");
@@ -368,8 +368,8 @@ public class poker extends MultiModule
 		boolean allChecked = true;
 		boolean betsSame = true;
 		for(int k = 0;k < playerSeat.size();k++) {
-			String name = (String)playerSeat.get(k);
-			PokerPlayer pPlayer = (PokerPlayer)seats.get(name);
+			String name = playerSeat.get(k);
+			PokerPlayer pPlayer = seats.get(name);
 			allChecked = allChecked && pPlayer.hasChecked();
 			betsSame = betsSame && (pPlayer.getBet() == curBet);
 		}
@@ -401,6 +401,7 @@ public class poker extends MultiModule
 				break;
 			case 4:
 				end();
+				break;
 			default:
 				break;
 		}
@@ -409,8 +410,8 @@ public class poker extends MultiModule
 	public void initial() {
 		d = new PokerDeck();
 		for(int k = 0;k < playerSeat.size();k++) {
-			String name = (String)playerSeat.get(k);
-			((PokerPlayer)seats.get(name)).reset();
+			String name = playerSeat.get(k);
+			(seats.get(name)).reset();
 		}
 		String[][] hands = new String[playerSeat.size()][2];
 		String[] cards = d.drawCards((playerSeat.size() * 2));
@@ -421,8 +422,8 @@ public class poker extends MultiModule
 			}
 		}
 		for(int k = 0;k < playerSeat.size();k++) {
-			String name = (String)playerSeat.get(k);
-			PokerPlayer pPlayer = (PokerPlayer)seats.get(name);
+			String name = playerSeat.get(k);
+			PokerPlayer pPlayer = seats.get(name);
 			pPlayer.setHand(hands[k]);
 		}
 	}
@@ -431,8 +432,8 @@ public class poker extends MultiModule
 		d.drawCard();
 		String[] cards = d.drawCards(3);
 		for(int k = 0;k < playerSeat.size();k++) {
-			String name = (String)playerSeat.get(k);
-			PokerPlayer pPlayer = (PokerPlayer)seats.get(name);
+			String name = playerSeat.get(k);
+			PokerPlayer pPlayer = seats.get(name);
 			pPlayer.addCardToHand(cards[0]);
 			pPlayer.addCardToHand(cards[1]);
 			pPlayer.addCardToHand(cards[2]);
@@ -443,24 +444,24 @@ public class poker extends MultiModule
 		d.drawCard();
 		String card = d.drawCard();
 		for(int k = 0;k < playerSeat.size();k++) {
-			String name = (String)playerSeat.get(k);
-			PokerPlayer pPlayer = (PokerPlayer)seats.get(name);
+			String name = playerSeat.get(k);
+			PokerPlayer pPlayer = seats.get(name);
 			pPlayer.addCardToHand(card);
 		}
 	}
 
 	public void end() {
-		HashMap scores = new HashMap();
+		HashMap<Integer, HashSet<String>> scores = new HashMap<Integer, HashSet<String>>();
 		for(int k = 0;k < playerSeat.size();k++) {
-			String name = (String)playerSeat.get(k);
-			PokerPlayer pPlayer = (PokerPlayer)seats.get(name);
+			String name = playerSeat.get(k);
+			PokerPlayer pPlayer = seats.get(name);
 			int pScore = 0;//getScore(pPlayer.getHand());
-			HashSet players;
+			HashSet<String> players;
 			if(scores.containsKey(pScore)) {
-				players = (HashSet)scores.get(pScore);
+				players = scores.get(pScore);
 				players.add(name);
 			} else {
-				players = new HashSet();
+				players = new HashSet<String>();
 				players.add(name);
 			}
 			scores.put(pScore, players);

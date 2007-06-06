@@ -36,7 +36,7 @@ public class baseassault extends MultiModule {
     /** Creates a new instance of twbotbaseassault */
     public void init() {
         makeMapsTable();
-        confirmedMap = (BasingMap) mapsTable.get("0");
+        confirmedMap = mapsTable.get("0");
     }
 
     public void requestEvents(EventRequester events)	{
@@ -49,7 +49,7 @@ public class baseassault extends MultiModule {
 
     //info
     private String hostName;
-    private Hashtable mapsTable = new Hashtable();
+    private Hashtable<String, BasingMap> mapsTable = new Hashtable<String, BasingMap>();
 
     //settings
     private int maxTime = 900000; //15 mins
@@ -308,7 +308,7 @@ public class baseassault extends MultiModule {
         m_botAction.sendPrivateMessage(name, "Currently available maps: ");
         m_botAction.sendPrivateMessage(name, "------------------------- ");
         for (int i = 0; i < numMaps; i++) {
-            BasingMap tempMap = (BasingMap) mapsTable.get(Integer.toString(i));
+            BasingMap tempMap = mapsTable.get(Integer.toString(i));
             m_botAction.sendPrivateMessage(name, i + ". " + tempMap);
         }
     }
@@ -389,7 +389,7 @@ public class baseassault extends MultiModule {
     public void setMap(String name, String message) {
         String mapIndex = message.trim().substring(8);
         if (mapsTable.containsKey(mapIndex)) {
-            confirmedMap = (BasingMap) mapsTable.get(mapIndex);
+            confirmedMap = mapsTable.get(mapIndex);
             m_botAction.sendPrivateMessage(name, "Map number " + mapIndex + " selected.");
         }
         else {

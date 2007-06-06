@@ -31,10 +31,10 @@ public class trivia extends MultiModule {
     String          mySQLHost = "server";
     TimerTask       startGame, timerQuestion, timerHint, timerAnswer, timerNext;
     TimerTask       timedMessages, timedMessages2;
-    TreeMap         playerMap = new TreeMap();
-    HashMap         playerID = new HashMap();
-    HashMap         accessList = new HashMap();
-    Vector          topTen;
+    TreeMap<String, PlayerProfile> playerMap = new TreeMap<String, PlayerProfile>();
+    //HashMap         playerID = new HashMap();
+    HashMap<String, String> accessList = new HashMap<String, String>();
+    Vector<String>  topTen;
 
     int             gameProgress = -1, toWin = 10, questionNumber = 1, curLeader = 0;
     int             m_mintimesused = -1;
@@ -275,7 +275,7 @@ public class trivia extends MultiModule {
         Iterator it = set.iterator();
         while (it.hasNext()) {
             String curPlayer = (String) it.next();
-            PlayerProfile tempPlayer = (PlayerProfile)playerMap.get(curPlayer);
+            PlayerProfile tempPlayer = playerMap.get(curPlayer);
             if( name.equals(curPlayer) )
                 storePlayerStats( curPlayer, tempPlayer.getData( 0 ), true );
             else
@@ -309,7 +309,7 @@ public class trivia extends MultiModule {
             m_botAction.sendSmartPrivateMessage( name, "No one has qualified yet!");
         } else {
             for( int i=0; i<topTen.size(); i++ ){
-                m_botAction.sendSmartPrivateMessage( name, (String)topTen.elementAt( i ) );
+                m_botAction.sendSmartPrivateMessage( name, topTen.elementAt( i ) );
             }
         }
     }
@@ -345,7 +345,7 @@ public class trivia extends MultiModule {
                 while( it.hasNext() ){
                     String curPlayer = (String)it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
-                    tempPlayer = (twcore.core.stats.PlayerProfile)playerMap.get( curPlayer );
+                    tempPlayer = playerMap.get( curPlayer );
                     if( tempPlayer.getData( 0 ) == curPoints ){
                         m_botAction.sendRemotePrivateMessage( name, "--|-- " + doTrimString( curPlayer, 18 ) + doTrimString( "" + tempPlayer.getData( 0 ), 10 ) + "|" );
                     }
@@ -366,18 +366,18 @@ public class trivia extends MultiModule {
                 String curAns = tokenizer.nextToken();
                 if((message.toLowerCase().equals(curAns.toLowerCase()))) {
                     if( playerMap.containsKey( name ) ) {
-                        twcore.core.stats.PlayerProfile tempP = (twcore.core.stats.PlayerProfile)playerMap.get( name );
+                        twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
                         //data 0 stores the score.
                         tempP.incData( 0 );
                         if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
                     }
                     else {
                         playerMap.put( name, new twcore.core.stats.PlayerProfile( name ) );
-                        twcore.core.stats.PlayerProfile tempP = (twcore.core.stats.PlayerProfile)playerMap.get( name );
+                        twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
                         tempP.setData( 0, 1 );
                         if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
                     }
-                    twcore.core.stats.PlayerProfile tempP = (twcore.core.stats.PlayerProfile)playerMap.get( name );
+                    twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
                     if( gameProgress == 2 || gameProgress == 3 ) {
                         String trail = getRank( tempP.getData(0) );
                         m_botAction.sendChatMessage(1, m_prec + name + " got the correct answer, '"+ f_answer + "', " + trail);
@@ -424,7 +424,7 @@ public class trivia extends MultiModule {
                 while (it.hasNext()) {
                     String curPlayer = (String) it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
-                    tempPlayer = (twcore.core.stats.PlayerProfile)playerMap.get(curPlayer);
+                    tempPlayer = playerMap.get(curPlayer);
                     if(tempPlayer.getData(0) == curPoints) {
                         numberShown++;
                         m_botAction.sendChatMessage(1, "--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
@@ -449,7 +449,7 @@ public class trivia extends MultiModule {
                 while (it.hasNext()) {
                     String curPlayer = (String) it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
-                    tempPlayer = (twcore.core.stats.PlayerProfile)playerMap.get(curPlayer);
+                    tempPlayer = playerMap.get(curPlayer);
                     if(tempPlayer.getData(0) == curPoints) {
                         numberShown++;
                         m_botAction.sendArenaMessage("--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
@@ -546,7 +546,7 @@ public class trivia extends MultiModule {
     /*** Gets the current Topten.                                 ***/
     /****************************************************************/
     public void getTopTen() {
-        topTen = new Vector();
+        topTen = new Vector<String>();
         try {
             ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tblusertriviastats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
             while(result.next())
@@ -590,7 +590,7 @@ public class trivia extends MultiModule {
         try{
 
             ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnPoints, fnWon, fnPlayed, fnPossible, fnRating FROM tblusertriviastats WHERE fcUserName = \"" + username+"\"");
-            String info = "There is no record of player " + username; 
+            String info = "There is no record of player " + username;
             if(result.next())
                 info = username + "- Games Won: ("+ result.getInt("fnWon") + ":" + result.getInt("fnPlayed") + ")  Pts Scored: (" +result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")  Rating: " + result.getInt("fnRating");
             m_botAction.SQLClose( result );

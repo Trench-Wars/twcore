@@ -27,8 +27,8 @@ import twcore.core.game.Player;
 
 public class hunt extends MultiModule {
     int specPlayers = 5; //default unless changed by host
-    private HashMap data;
-    private LinkedList keys;
+    private HashMap<String, HuntPlayer> data;
+    private LinkedList<String> keys;
     private boolean gameStarted = false;
     private String mvpName;
     private int mvpScore;
@@ -51,14 +51,14 @@ public class hunt extends MultiModule {
     	Player p;
         String addPlayerName;
         mvpScore = 0; //reset from previous game
-    	data = new HashMap();
-        keys = new LinkedList();
+    	data = new HashMap<String, HuntPlayer>();
+        keys = new LinkedList<String>();
     	PlayerBag huntPlayerBag = new PlayerBag();
 
-    	Iterator i = m_botAction.getPlayingPlayerIterator();
+    	Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
         if( i == null ) return;
         while( i.hasNext() ){
-       	    p = (Player)i.next();
+       	    p = i.next();
             addPlayerName = p.getPlayerName();
             //HuntPlayer temp;
 
@@ -107,7 +107,7 @@ public class hunt extends MultiModule {
     	HuntPlayer winner;
 
         checkMVP(winnerName);
-    	winner = (HuntPlayer)data.get( winnerName.toLowerCase() );
+    	winner = data.get( winnerName.toLowerCase() );
 
         gameStarted = false;
         m_botAction.sendArenaMessage ("GAME OVER!", 5);
@@ -120,7 +120,7 @@ public class hunt extends MultiModule {
             HuntPlayer tempPlayer;
 
             try{
-                tempPlayer = (HuntPlayer)data.get( playerName.toLowerCase() );
+                tempPlayer = data.get( playerName.toLowerCase() );
                 return new Integer(tempPlayer.getPoints());
             } catch( Exception e ){
                 return null;
@@ -155,10 +155,10 @@ public class hunt extends MultiModule {
 
     	    i = keys.indexOf( hunterName.toLowerCase() );
     	    if (i > 0){
-    	    	prey = (HuntPlayer)data.get(keys.get( --i ));
+    	    	prey = data.get(keys.get( --i ));
     	    	return prey.getName();
     	    } else if (i == 0){
-    	    	prey = (HuntPlayer)data.get(keys.get( keys.size() - 1 ));
+    	    	prey = data.get(keys.get( keys.size() - 1 ));
     	    	return prey.getName();
     	    }
     	}
@@ -184,7 +184,7 @@ public class hunt extends MultiModule {
 
     public void checkMVP( String playerName ){
         HuntPlayer checkPlayer;
-        checkPlayer = (HuntPlayer)data.get(playerName.toLowerCase());
+        checkPlayer = data.get(playerName.toLowerCase());
 
         if (mvpScore <= checkPlayer.getPoints()){
             mvpName = checkPlayer.getName();
@@ -246,25 +246,25 @@ public class hunt extends MultiModule {
                 m_botAction.spec( event.getKilleeID() );
                 m_botAction.spec( event.getKilleeID() );
 
-                tempPlayer = (HuntPlayer)data.get( killedName.toLowerCase() );
+                tempPlayer = data.get( killedName.toLowerCase() );
                 if(tempPlayer != null){
                     m_botAction.sendArenaMessage( killedName + " (" + tempPlayer.getPoints() + " points) has been hunted and killed by " + killerName );
 
-                    tempPlayer = (HuntPlayer)data.get( killerName.toLowerCase() );
+                    tempPlayer = data.get( killerName.toLowerCase() );
                     tempPlayer.addHuntKill();
                     tempPlayer.addPoints(huntReward);
                     m_botAction.sendPrivateMessage( killerName, "Successful hunt! " + huntReward + " points added to your score." );
                 }
                 return;
             } else if( killerName.equals( findPreyName( killedName ) ) ) { //Prey kills hunter
-            	tempPlayer = (HuntPlayer)data.get( killerName.toLowerCase() );
+            	tempPlayer = data.get( killerName.toLowerCase() );
 
             	if(tempPlayer != null){
             	    tempPlayer.addPoints(preyReward);
             	    m_botAction.sendPrivateMessage( killerName, "You killed your hunter! " + preyReward + " points added to your score." );
             	}
             } else { //Player kills wrong person
-            	tempPlayer = (HuntPlayer)data.get( killerName.toLowerCase() );
+            	tempPlayer = data.get( killerName.toLowerCase() );
 
             	if(tempPlayer != null){
             	    tempPlayer.remPoints(huntPenalty);
@@ -276,7 +276,7 @@ public class hunt extends MultiModule {
                 m_botAction.spec( event.getKilleeID() );
                 m_botAction.spec( event.getKilleeID() );
 
-                tempPlayer = (HuntPlayer)data.get( killedName.toLowerCase() );
+                tempPlayer = data.get( killedName.toLowerCase() );
                 m_botAction.sendArenaMessage( killedName + " is out with " + tempPlayer.getPoints() + " points, " + pKilled.getLosses() + " losses." );
             }
         }
@@ -442,10 +442,10 @@ class HuntPlayer {
 }
 
 class PlayerBag {
-    ArrayList list;
+    ArrayList<String> list;
 
     public PlayerBag(){
-        list = new ArrayList();
+        list = new ArrayList<String>();
     }
 
     public PlayerBag( String string ){
@@ -472,7 +472,7 @@ class PlayerBag {
             int i = random( list.size() );
             String grabbed;
 
-            grabbed =(String)list.get( i ) ;
+            grabbed = list.get( i ) ;
             list.remove( i );
             return grabbed;
         }

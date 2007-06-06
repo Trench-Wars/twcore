@@ -45,10 +45,10 @@ public class spaceball extends MultiModule {
 	double BULLET_SPEED = 5000.0;
 	double BOMB_SPEED = 8000.0;
 
-	LinkedList fired_projectiles = new LinkedList();
-	LinkedList team1_cannons = new LinkedList();
-	LinkedList team2_cannons = new LinkedList();
-	HashMap players = new HashMap();
+	LinkedList<Projectile> fired_projectiles = new LinkedList<Projectile>();
+	LinkedList<Cannon> team1_cannons = new LinkedList<Cannon>();
+	LinkedList<Cannon> team2_cannons = new LinkedList<Cannon>();
+	HashMap<String, SBPlayer> players = new HashMap<String, SBPlayer>();
 
 	TimerTask updateState;
 	TimerTask killLosers;
@@ -113,7 +113,7 @@ public class spaceball extends MultiModule {
 			if (eventState != 0) {
 				Player p = m_botAction.getPlayer(name);
 				if (p != null && p.isShip(0)) {
-					SBPlayer sbP = (SBPlayer) players.get(name);
+					SBPlayer sbP = players.get(name);
 					if (sbP != null && sbP.isLagged()) {
 						m_botAction.setShip(name, 1);
 						m_botAction.setFreq(name, sbP.getTeam());
@@ -186,7 +186,7 @@ public class spaceball extends MultiModule {
 			return;
 		}
 
-		SBPlayer p = (SBPlayer) players.get(m_botAction.getPlayerName(event.getPlayerID()));
+		SBPlayer p = players.get(m_botAction.getPlayerName(event.getPlayerID()));
 		if (p != null && !p.isLagged()) {
 			p.setLagged(true);
 		}
@@ -204,8 +204,8 @@ public class spaceball extends MultiModule {
 			return;
 		}
 
-		SBPlayer killer = (SBPlayer) players.get(m_botAction.getPlayerName(event.getKillerID()));
-		SBPlayer killee = (SBPlayer) players.get(m_botAction.getPlayerName(event.getKilleeID()));
+		SBPlayer killer = players.get(m_botAction.getPlayerName(event.getKillerID()));
+		SBPlayer killee = players.get(m_botAction.getPlayerName(event.getKilleeID()));
 
 		if (killer != null) {
 			killer.incrementKills();
@@ -229,7 +229,7 @@ public class spaceball extends MultiModule {
 		}
 
 		Player p2 = m_botAction.getPlayer(event.getPlayerID());
-		SBPlayer p = (SBPlayer) players.get(p2.getPlayerName());
+		SBPlayer p = players.get(p2.getPlayerName());
 		if (p != null && event.getShipType() == 0) {
 			p.setLagged(true);
 			m_botAction.sendPrivateMessage(p2.getPlayerName(), "Use !return to get back in");
@@ -251,7 +251,7 @@ public class spaceball extends MultiModule {
 		if (eventState != 2 && eventState != 3) {
 			return;
 		}
-		SBPlayer p = (SBPlayer)players.get(m_botAction.getPlayerName(event.getPlayerID()));
+		SBPlayer p = players.get(m_botAction.getPlayerName(event.getPlayerID()));
 		if (p == null) {
 			Player p2 = m_botAction.getPlayer(event.getPlayerID());
 			if (p2 == null) {
@@ -299,7 +299,7 @@ public class spaceball extends MultiModule {
 		if (eventState != 2) {
 			return;
 		}
-		SBPlayer p = (SBPlayer)players.get(m_botAction.getPlayerName(event.getPlayerID()));
+		SBPlayer p = players.get(m_botAction.getPlayerName(event.getPlayerID()));
 		if (p == null) {
 //			m_botAction.spec(m_botAction.getPlayerName(event.getPlayerID()));
 //			m_botAction.spec(m_botAction.getPlayerName(event.getPlayerID()));
@@ -315,7 +315,7 @@ public class spaceball extends MultiModule {
 			pSpeed = BOMB_SPEED;
 		} else { return; }
 
-		double bearing = (double)Math.PI * 2 * (double)event.getRotation() / (double)40.0;
+		double bearing = Math.PI * 2 * (double)event.getRotation() / 40.0;
 
 		double bVX = event.getXVelocity() + (short)(pSpeed * Math.sin(bearing));
 		double bVY = event.getYVelocity() - (short)(pSpeed * Math.cos(bearing));
@@ -471,9 +471,9 @@ public class spaceball extends MultiModule {
 
 	public void displayScores() {
 
-		Comparator a = new Comparator() {
-			public int compare(Object oa, Object ob) {
-				SBPlayer pa = (SBPlayer) players.get(oa), pb = (SBPlayer) players.get(ob);
+		Comparator<String> a = new Comparator<String>() {
+			public int compare(String oa, String ob) {
+				SBPlayer pa = players.get(oa), pb = players.get(ob);
 				if (pb.getTotalHits() > pa.getTotalHits()) {
 					return 1;
 				} else {
@@ -482,7 +482,7 @@ public class spaceball extends MultiModule {
 			};
 		};
 
-		Object[] sorted_p = (Object[]) players.keySet().toArray(new Object[players.size()]);
+		String[] sorted_p = players.keySet().toArray(new String[players.size()]);
 		Arrays.sort(sorted_p, a);
 
 		m_botAction.sendArenaMessage(",----------------+ Planet "+winner+" has survived +----------------.");
@@ -491,8 +491,8 @@ public class spaceball extends MultiModule {
 		m_botAction.sendArenaMessage("| Name          | Hits Acc% | | Name          | Hits Acc% |");
 		m_botAction.sendArenaMessage("+---------------+-----------+ +---------------+-----------+");
 
-		ArrayList p_1out = new ArrayList();
-		ArrayList p_2out = new ArrayList();
+		ArrayList<String> p_1out = new ArrayList<String>();
+		ArrayList<String> p_2out = new ArrayList<String>();
 
 		SBPlayer mostHits = null;
 		SBPlayer bestAcc = null;
@@ -500,7 +500,7 @@ public class spaceball extends MultiModule {
 		SBPlayer mostDeaths = null;
 
 		for (int i = 0; i < sorted_p.length; i++) {
-			SBPlayer p = (SBPlayer) players.get(sorted_p[i]);
+			SBPlayer p = players.get(sorted_p[i]);
 			if (mostHits == null || p.getTotalHits() > mostHits.getTotalHits()) {
 				mostHits = p;
 			}
@@ -519,8 +519,8 @@ public class spaceball extends MultiModule {
 				p_2out.add(Tools.formatString(p.getName(), 14)+"  "+rightenString(Integer.toString(p.getTotalHits()), 4)+" "+rightenString(p.getAccuracy() + "%", 4)+" |");
 			}
 		}
-		String out1[] = (String[]) p_1out.toArray(new String[p_1out.size()]);
-		String out2[] = (String[]) p_2out.toArray(new String[p_2out.size()]);
+		String out1[] = p_1out.toArray(new String[p_1out.size()]);
+		String out2[] = p_2out.toArray(new String[p_2out.size()]);
 
 		int s;
 		if (out1.length > 5 || out2.length > 5) {
@@ -691,7 +691,7 @@ public class spaceball extends MultiModule {
 			lBotX = (int)getBotX();
 			lBotY = (int)getBotY();
 			lastMove = (int)(System.currentTimeMillis());
-			botVY = (int)(botVY * (-1) * (double)0.9);
+			botVY = (int)(botVY * (-1) * 0.9);
 		}
 	}
 
@@ -722,7 +722,7 @@ public class spaceball extends MultiModule {
 	 * @return bX is the new bot x location
 	 */
 
-	public double getBotX() { double bX = lBotX + (botVX * getAge() / (double) 10000.0); return bX; }
+	public double getBotX() { double bX = lBotX + (botVX * getAge() / 10000.0); return bX; }
 
 
 	/**
@@ -731,7 +731,7 @@ public class spaceball extends MultiModule {
 	 * @return bY is the new bot y location
 	 */
 
-	public double getBotY() { double bY = lBotY + (botVY * getAge() / (double) 10000.0); return bY; }
+	public double getBotY() { double bY = lBotY + (botVY * getAge() / 10000.0); return bY; }
 
 
 	/**

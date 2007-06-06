@@ -5,13 +5,13 @@ import java.util.Random;
 
 public class PokerDeck {
 	public static void main(String args[]) { PokerDeck d = new PokerDeck(2, true); }
-	Queue cards;
+	Queue<PokerCard> cards;
 	Random rand;
 	int decks;
 
 	public PokerDeck() {
 		decks = 1;
-		cards = new Queue();
+		cards = new Queue<PokerCard>();
 		rand = new Random();
 		addDeck(false);
 		for(int k = 0;k < 8;k++)
@@ -21,7 +21,7 @@ public class PokerDeck {
 
 	public PokerDeck(int decks) {
 		this.decks = decks;
-		cards = new Queue();
+		cards = new Queue<PokerCard>();
 		rand = new Random();
 		for(int k = 0;k < decks;k++)
 			addDeck(false);
@@ -32,7 +32,7 @@ public class PokerDeck {
 
 	public PokerDeck(int decks, boolean jokers) {
 		this.decks = decks;
-		cards = new Queue();
+		cards = new Queue<PokerCard>();
 		rand = new Random();
 		for(int k = 0;k < decks;k++)
 			addDeck(true);
@@ -42,12 +42,12 @@ public class PokerDeck {
 	}
 
 	public void addDeck(boolean jokers) {
-		ArrayList suits = new ArrayList();
+		ArrayList<String> suits = new ArrayList<String>();
 		suits.add("Diamond");
 		suits.add("Heart");
 		suits.add("Club");
 		suits.add("Spade");
-		ArrayList values = new ArrayList();
+		ArrayList<String> values = new ArrayList<String>();
 		values.add("Ace");
 		values.add("2");
 		values.add("3");
@@ -63,9 +63,9 @@ public class PokerDeck {
 		values.add("King");
 
 		for(int k = 0;k < suits.size();k++) {
-			String suit = (String)suits.get(k);
+			String suit = suits.get(k);
 			for(int i = 0;i < values.size();i++) {
-				String value = (String)values.get(i);
+				String value = values.get(i);
 				PokerCard c = new PokerCard(suit, value);
 				cards.add(c);
 			}
@@ -78,8 +78,8 @@ public class PokerDeck {
 	}
 
 	public void shuffleDeck() {
-		Queue split1 = new Queue();
-		Queue split2 = new Queue();
+		Queue<PokerCard> split1 = new Queue<PokerCard>();
+		Queue<PokerCard> split2 = new Queue<PokerCard>();
 		int numCards = cards.size();
 		int cutAt = cards.size() / 2 + rand.nextInt(10 * decks) - 5 * decks;
 		for(int k = 0;k < cutAt;k++)
@@ -99,7 +99,7 @@ public class PokerDeck {
 
 	public String drawCard() {
 		if(cards.isEmpty()) return "";
-		PokerCard c = (PokerCard)cards.next();
+		PokerCard c = cards.next();
 		return c.toString();
 	}
 
@@ -117,23 +117,23 @@ public class PokerDeck {
 	}
 }
 
-class Queue
+class Queue<E>
 {
-	ArrayList objects;
+	ArrayList<E> objects;
 
 	public Queue()
 	{
-		objects = new ArrayList();
+		objects = new ArrayList<E>();
 	}
 
-	public Object next()
+	public E next()
 	{
-		Object obj = objects.get(0);
+		E obj = objects.get(0);
 		objects.remove(0);
 		return obj;
 	}
 
-	public void add(Object obj)
+	public void add(E obj)
 	{
 		objects.add(obj);
 	}

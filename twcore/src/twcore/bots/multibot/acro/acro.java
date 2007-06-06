@@ -18,17 +18,17 @@ public class acro extends MultiModule{
 
     CommandInterpreter  m_commandInterpreter;
     Random              generator;
-    // -1 = pregame; 0 = not playing; 1 = entering acro; 2 = voting 
+    // -1 = pregame; 0 = not playing; 1 = entering acro; 2 = voting
     int                 gameState = 0;
     int                 length = 0;
     int                 numIdeas = 0;
     int                 maxVote = -1;
     int                 round = 1;
     String              curAcro = "";
-    HashMap             playerIdeas = new HashMap();
-    HashMap             playerVotes = new HashMap();
-    HashMap             playerScores = new HashMap();
-    Vector              phrases;
+    HashMap<String, String> playerIdeas = new HashMap<String, String>();
+    HashMap<String, String> playerVotes = new HashMap<String, String>();
+    HashMap<String, String> playerScores = new HashMap<String, String>();
+    Vector<String>      phrases;
     int                 votes[];
     Spy                 racismSpy = new Spy( m_botAction );
 
@@ -83,19 +83,19 @@ public class acro extends MultiModule{
     public void doShowAnswers(String name, String message) {
         if(m_botAction.getOperatorList().isModerator( name )) {
             if( gameState == 2 ) {
-                Iterator it = playerIdeas.keySet().iterator();
+                Iterator<String> it = playerIdeas.keySet().iterator();
                 String player, answer;
                 while (it.hasNext()) {
-                    player = (String) it.next();
-                    answer = (String) playerIdeas.get(player);
-                    m_botAction.sendPrivateMessage( name, player + ":  " + answer );                    
-                }            	
+                    player = it.next();
+                    answer = playerIdeas.get(player);
+                    m_botAction.sendPrivateMessage( name, player + ":  " + answer );
+                }
             } else {
                 m_botAction.sendPrivateMessage( name, "Currently the game isn't in the voting stage." );
             }
         }
     }
-    
+
     public void setUpShow() {
         gameState = 1;
         length = Math.abs( generator.nextInt() ) % 2 + 4;
@@ -103,7 +103,7 @@ public class acro extends MultiModule{
 
         TimerTask end = new TimerTask() {
             public void run() {
-                phrases = new Vector();
+                phrases = new Vector<String>();
                 gameState = 2;
                 m_botAction.sendArenaMessage( "Submitted Answers: " );
                 int i = 0;
@@ -130,11 +130,11 @@ public class acro extends MultiModule{
                 m_botAction.sendArenaMessage( "Round Winners: " );
                 for( int i = 0; i < phrases.size(); i++ ) {
                     if( votes[i] == maxVote ) {
-                        String piece[] = Tools.stringChopper( ((String)phrases.elementAt( i )), '%' );
+                        String piece[] = Tools.stringChopper( phrases.elementAt( i ), '%' );
                         if( playerVotes.containsKey( piece[0] ) ) {
 
                             if( playerScores.containsKey( piece[0] ) ) {
-                                int s = Integer.parseInt( (String)playerScores.get( piece[0] ) );
+                                int s = Integer.parseInt( playerScores.get( piece[0] ) );
                                 s += 10;
                                 playerScores.put( piece[0], ""+s );
                             } else
@@ -218,7 +218,7 @@ public class acro extends MultiModule{
             try { vote = Integer.parseInt( message ); } catch (Exception e ) {}
             if( vote > 0 && vote <= numIdeas ) {
                 try {
-                    String cur     = (String)phrases.elementAt( vote - 1);
+                    String cur     = phrases.elementAt( vote - 1);
                     String parts[] = Tools.stringChopper( cur, '%' );
 
                     if( playerVotes.containsKey( name.toLowerCase() ) ) {
