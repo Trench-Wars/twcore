@@ -22,7 +22,7 @@ import twcore.core.util.Tools;
 
 public class Rbstandard extends RBExtender {
     int specPlayers = 0; //if >0, spec player at X deaths
-    LinkedList arenaTasks = new LinkedList();
+    LinkedList<ArenaMsgTask> arenaTasks = new LinkedList<ArenaMsgTask>();
 
     /** Creates a new instance of portabotTestModule */
     public Rbstandard() {
@@ -224,14 +224,14 @@ public class Rbstandard extends RBExtender {
                     message = message.substring( 0, pos );
 
                     arenaTasks.add( new ArenaMsgTask( message, soundCode ) );
-                    m_botAction.scheduleTaskAtFixedRate( (ArenaMsgTask)arenaTasks.getLast(), 0, interval );
+                    m_botAction.scheduleTaskAtFixedRate( arenaTasks.getLast(), 0, interval );
                 } else {
                     m_botAction.sendPrivateMessage( name, "Invalid sound number" );
                     return;
                 }
             } else {
                 arenaTasks.add( new ArenaMsgTask( message ) );
-                m_botAction.scheduleTaskAtFixedRate( (ArenaMsgTask)arenaTasks.getLast(), 0, interval );
+                m_botAction.scheduleTaskAtFixedRate( arenaTasks.getLast(), 0, interval );
             }
         } else {
             m_botAction.sendPrivateMessage( name, "Please use !addmsg <interval>,<message>" );
@@ -246,7 +246,7 @@ public class Rbstandard extends RBExtender {
     	}
 
         for( int i = 0; i < arenaTasks.size(); i++ ){
-            task = (ArenaMsgTask)arenaTasks.get(i);
+            task = arenaTasks.get(i);
             String message = i + ". " + task.getMessage();
             if( task.getSoundCode() != 0 ){
                 message += "%" + task.getSoundCode();
@@ -262,7 +262,7 @@ public class Rbstandard extends RBExtender {
 
     public void clearArenaMsgs(){
     	for( int i = 0; i < arenaTasks.size(); i++){
-            m_botAction.cancelTask((ArenaMsgTask)arenaTasks.get(i));
+            m_botAction.cancelTask(arenaTasks.get(i));
     	}
         arenaTasks.clear();
     }
@@ -271,7 +271,7 @@ public class Rbstandard extends RBExtender {
     	ArenaMsgTask task;
 
     	try{
-            task = (ArenaMsgTask)arenaTasks.get(index);
+            task = arenaTasks.get(index);
         } catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Invalid message number" );
             return;

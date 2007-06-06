@@ -297,19 +297,19 @@ public class Rbwarp extends RBExtender
         return new StringTokenizer(string);
     }
 
-    private Vector getFreqNumbers()
+    private Vector<Integer> getFreqNumbers()
     {
-        TreeSet freqNumbers = new TreeSet();
-        Iterator iterator = m_botAction.getPlayingPlayerIterator();
+        TreeSet<Integer> freqNumbers = new TreeSet<Integer>();
+        Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
         int freq;
 
         while(iterator.hasNext())
         {
-            player = (Player) iterator.next();
+            player = iterator.next();
             freqNumbers.add(new Integer(player.getFrequency()));
         }
-        return new Vector((Collection) freqNumbers);
+        return new Vector<Integer>(freqNumbers);
     }
 
     private boolean isWarpable(Player player, int warpType, int warpID)

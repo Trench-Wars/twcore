@@ -12,14 +12,14 @@ import twcore.core.util.Tools;
 public class RbTrackManager extends RacingBotExtension {
 
 
-	HashMap checkPointList;
+	HashMap<Integer, Integer> checkPointList;
 	String action = "";
 
 	int    checkPoint;
 	int    state;
 
 	public RbTrackManager() {
-		checkPointList = new HashMap();
+		checkPointList = new HashMap<Integer, Integer>();
 	}
 
 	public void handleEvent( Message event ) {
@@ -116,7 +116,7 @@ public class RbTrackManager extends RacingBotExtension {
 		int count = 0;
 		while( it.hasNext() ) {
 			Integer point = (Integer)it.next();
-			if( ((Integer)checkPointList.get(point)).intValue() == checkPoint ) count++;
+			if( checkPointList.get(point).intValue() == checkPoint ) count++;
 		}
 
 		if( count == 0 ) {
@@ -146,7 +146,7 @@ public class RbTrackManager extends RacingBotExtension {
 		Iterator it = checkPointList.keySet().iterator();
 		while( it.hasNext() ) {
 			Integer point = (Integer)it.next();
-			if( ((Integer)checkPointList.get(point)).intValue() == checkPoint ) it.remove();
+			if( checkPointList.get(point).intValue() == checkPoint ) it.remove();
 		}
 		m_botAction.sendPublicMessage( "Last checkpoint was not correct, please mark that checkpoint again." );
 		state = 2;
@@ -162,7 +162,7 @@ public class RbTrackManager extends RacingBotExtension {
 		Iterator it = checkPointList.keySet().iterator();
 		while( it.hasNext() ) {
 			int flagId = ((Integer)it.next()).intValue();
-			int checkPointId = ((Integer)checkPointList.get( new Integer( flagId ) )).intValue();
+			int checkPointId = checkPointList.get( new Integer( flagId ) ).intValue();
 			try {
 			    m_botAction.SQLQueryAndClose( m_sqlHost, "INSERT INTO tblRaceCheckPoint (fnTrackID, fnCheckPoint, fnFlagID) VALUES ("+id+", "+checkPointId+", "+flagId+")" );
 			} catch (Exception e) { Tools.printStackTrace(e); }
@@ -271,7 +271,7 @@ public class RbTrackManager extends RacingBotExtension {
 
 		try {
 			Player p = m_botAction.getPlayer( name );
-			m_botAction.SQLQueryAndClose( m_sqlHost, "UPDATE tblRaceTrack SET fnXWarp = "+(int)(p.getXLocation()/16)+", fnYWarp = "+(int)(p.getYLocation()/16)+" WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
+			m_botAction.SQLQueryAndClose( m_sqlHost, "UPDATE tblRaceTrack SET fnXWarp = "+(p.getXLocation()/16)+", fnYWarp = "+(p.getYLocation()/16)+" WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
 			m_botAction.sendPrivateMessage( name, "Warppoint set for track #"+id );
 		} catch (Exception e) {
 			m_botAction.sendPrivateMessage( name, "Unable to set warppoint for track");

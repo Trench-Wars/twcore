@@ -23,7 +23,7 @@ import twcore.core.game.Player;
 
 /**
  * A replacement for RoboRef in elim, spawned as needed.
- * 
+ *
  * Terrible indentation fixed. -dugwyler
  */
 public class roboreplacement extends SubspaceBot
@@ -39,11 +39,11 @@ public class roboreplacement extends SubspaceBot
     boolean deathsVote = false; //variable for determining if deaths are being voted on
     boolean voting = false;     //true if there is any voting going on
 
-    HashSet players = new HashSet(); //contains ID's of all the players that started the game
-    HashMap votes = new HashMap();   //key is ID of the person that voted, value is the person's vote
-    HashMap deaths = new HashMap();  //key is ID of the person, value is the person's number of deaths
-    HashMap kills = new HashMap();   //key is ID of the person, value is the person's number of kills
-    HashMap lastDeaths = new HashMap();
+    HashSet<Integer> players = new HashSet<Integer>(); //contains ID's of all the players that started the game
+    HashMap<Integer, Integer> votes = new HashMap<Integer, Integer>();   //key is ID of the person that voted, value is the person's vote
+    HashMap<Integer, Integer> deaths = new HashMap<Integer, Integer>();  //key is ID of the person, value is the person's number of deaths
+    HashMap<Integer, Integer> kills = new HashMap<Integer, Integer>();   //key is ID of the person, value is the person's number of kills
+    HashMap<Integer, Integer> lastDeaths = new HashMap<Integer, Integer>();
 
     Vector topTen; //Vector of people with the top ten ratings
 
@@ -60,8 +60,8 @@ public class roboreplacement extends SubspaceBot
     String num;                  //bot #
     String ships[] = {"", "Warbird", "Javelin", "Spider", "Leviathan", "Terrier", "Weasle", "Lancaster", "Shark", "Any Ship"}; //array list of ship type names
 
-    ArrayList voters = new ArrayList();       //list of the people that have voted already
-    ArrayList allowedShips = new ArrayList(); //list of ships allowed in this type of elim
+    ArrayList<Integer> voters = new ArrayList<Integer>();       //list of the people that have voted already
+    ArrayList<Integer> allowedShips = new ArrayList<Integer>(); //list of ships allowed in this type of elim
 
     /*Creates a new instance of the roboreplacement bot.
      */
@@ -246,14 +246,14 @@ public class roboreplacement extends SubspaceBot
             Player p = m_botAction.getPlayer(event.getKilleeID());
             if(kills.containsKey(new Integer(event.getKillerID()))) //updates killer's kills
             {
-                int winz = ((Integer)kills.get(new Integer(event.getKillerID()))).intValue() + 1;
+                int winz = kills.get(new Integer(event.getKillerID())).intValue() + 1;
                 kills.put(new Integer(event.getKillerID()), new Integer(winz));
             }
             else //adds killer to kills hashmap if they arent there yet
                 kills.put(new Integer(event.getKillerID()), new Integer(1));
             if(deaths.containsKey(new Integer(event.getKilleeID()))) //adds the killee's death to their death total
             {
-                int lossez = ((Integer)deaths.get(new Integer(event.getKilleeID()))).intValue() + 1;
+                int lossez = deaths.get(new Integer(event.getKilleeID())).intValue() + 1;
                 deaths.put(new Integer(event.getKilleeID()), new Integer(lossez));
             }
             else  //adds the killee to the deaths hashmap if they are not there yet
@@ -342,7 +342,7 @@ public class roboreplacement extends SubspaceBot
                     {
                         Player p = (Player)it2.next();
                         if(!allowedShips.contains(new Integer(p.getShipType()))) //sets person to default (first entered) elim ship type if they are in an illegal ship
-                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), "*setship " + ((Integer)allowedShips.get(0)).intValue());
+                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), "*setship " + allowedShips.get(0).intValue());
                     }
                 }
                 else //if it is not an anyship elim it sets everyone to the correct ship then starts
@@ -370,7 +370,7 @@ public class roboreplacement extends SubspaceBot
         //creates the message for the ship voting
         String tempShip = "Vote on ship: ";
         for(int k = 1;k <= shipz;k++)
-            tempShip += k + " - " + ships[((Integer)allowedShips.get(k)).intValue()] + " ";
+            tempShip += k + " - " + ships[allowedShips.get(k).intValue()] + " ";
         m_botAction.sendArenaMessage(tempShip);
 
 
@@ -379,7 +379,7 @@ public class roboreplacement extends SubspaceBot
             public void run()
             {
 
-                elimShip = ((Integer)allowedShips.get(countVotes(false))).intValue(); //counts the votes and sets the elimShip to the proper thing
+                elimShip = allowedShips.get(countVotes(false)).intValue(); //counts the votes and sets the elimShip to the proper thing
                 m_botAction.sendArenaMessage("It will be a " + ships[elimShip] + " elim."); //announces the result of the vote and starts death voting
                 m_botAction.sendArenaMessage("Vote on deaths (1-10)");
                 shipVoting = false;
@@ -422,7 +422,7 @@ public class roboreplacement extends SubspaceBot
         for(int k = 0;k < voters.size();k++)
         {
             try {
-                int vote = ((Integer)votes.get(voters.get(k))).intValue();
+                int vote = votes.get(voters.get(k)).intValue();
                 voters.remove(k);
                 voteTally[vote]++;
             } catch(Exception e) {}
@@ -469,8 +469,8 @@ public class roboreplacement extends SubspaceBot
             while(it.hasNext())
             {
                 String username = m_botAction.getPlayerName(((Integer)it.next()).intValue());
-                int losses = ((Integer)deaths.get(new Integer(m_botAction.getPlayerID(username)))).intValue();
-                int killz = ((Integer)kills.get(new Integer(m_botAction.getPlayerID(username)))).intValue();
+                int losses = deaths.get(new Integer(m_botAction.getPlayerID(username))).intValue();
+                int killz = kills.get(new Integer(m_botAction.getPlayerID(username))).intValue();
                 int winz;
                 if(m_botAction.getPlayerID(username) == winnerID)
                     winz = 1;

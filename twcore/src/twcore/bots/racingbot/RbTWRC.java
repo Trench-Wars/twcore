@@ -30,7 +30,7 @@ public class RbTWRC extends RacingBotExtension
 	String sqlHost = "website";
 	File log = new File("log.txt");
 	File people = new File("people.txt");
-	HashSet signups = new HashSet();
+	HashSet<String> signups = new HashSet<String>();
 	boolean enableSignup = false;
 	int racePlayers;
 	Calendar calendar;
@@ -241,8 +241,8 @@ public class RbTWRC extends RacingBotExtension
 			k++;
 		}
 		m_botAction.sendPrivateMessage(opName, "Done.");
-		track.lapLeaders = new HashMap();
-		track.positions = new HashMap();
+		track.lapLeaders = new HashMap<String, Integer>();
+		track.positions = new HashMap<Integer, String>();
 		writeLog("Normal race log done.");
 		writeLog("");
 		writeLog("");
@@ -318,8 +318,8 @@ public class RbTWRC extends RacingBotExtension
 			k++;
 		}
 		m_botAction.sendPrivateMessage(opName, "Done.");
-		track.lapLeaders = new HashMap();
-		track.positions = new HashMap();
+		track.lapLeaders = new HashMap<String, Integer>();
+		track.positions = new HashMap<Integer, String>();
 		writeLog("Major race log done.");
 		writeLog("");
 		writeLog("");
@@ -394,8 +394,8 @@ public class RbTWRC extends RacingBotExtension
 			} catch(Exception e) {m_botAction.sendPrivateMessage(opName, "Error while giving people points.");}
 			k++;
 		}
-		track.lapLeaders = new HashMap();
-		track.positions = new HashMap();
+		track.lapLeaders = new HashMap<String, Integer>();
+		track.positions = new HashMap<Integer, String>();
 		writeLog("Marathon race log done.");
 		writeLog("");
 		writeLog("");
@@ -448,7 +448,7 @@ public class RbTWRC extends RacingBotExtension
 			players += currentLap.size();
 		}
 		racePlayers = players;
-		track.playerPositions = new ArrayList();
+		track.playerPositions = new ArrayList<ArrayList<String>>();
 	}
 
 	/** Inserts the last race's data into tblRaceData
@@ -503,21 +503,21 @@ public class RbTWRC extends RacingBotExtension
 		Date trialTime = new Date();
 		calendar.setTime(trialTime);
 		String date = "";
-		if(((int)calendar.get(Calendar.MONTH) < 9))
+		if(calendar.get(Calendar.MONTH) < 9)
 			date += "0" + (calendar.get(Calendar.MONTH) + 1);
 		else
 			date += (calendar.get(Calendar.MONTH) + 1);
-		if(((int)calendar.get(Calendar.DAY_OF_MONTH) < 10))
+		if(calendar.get(Calendar.DAY_OF_MONTH) < 10)
 			date += "/" + "0" + (calendar.get(Calendar.DAY_OF_MONTH));
 		else
 			date += "/" + calendar.get(Calendar.DAY_OF_MONTH);
 		date += "/" + calendar.get(Calendar.YEAR);
 		date += " ";
-		if(((int)calendar.get(Calendar.HOUR_OF_DAY) < 10))
+		if(calendar.get(Calendar.HOUR_OF_DAY) < 10)
 			date += "0" + calendar.get(Calendar.HOUR_OF_DAY);
 		else
 			date += calendar.get(Calendar.HOUR_OF_DAY);
-		if(((int)calendar.get(Calendar.MINUTE) < 10))
+		if(calendar.get(Calendar.MINUTE) < 10)
 			date += ":0" + calendar.get(Calendar.MINUTE);
 		else
 			date += ":" + calendar.get(Calendar.MINUTE);

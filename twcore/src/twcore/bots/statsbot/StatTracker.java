@@ -53,14 +53,14 @@ public class StatTracker {
 	private boolean		m_trackingStats;
 
 	//Holds a collection of players that are being tracked
-	private HashMap		m_players;
+	private HashMap<String, PlayerStatistics> m_players;
 
 	public StatTracker( BotAction _botAction, boolean _scoreboardEnabled ) {
 
 		m_botAction 		= _botAction;
 		m_scoreboardEnabled = _scoreboardEnabled;
 
-		m_players			= new HashMap();
+		m_players			= new HashMap<String, PlayerStatistics>();
 		m_trackingStats 	= TRACKING_OFF;
 	}
 
@@ -151,7 +151,7 @@ public class StatTracker {
 	 */
 	private PlayerStatistics getPlayer( String _name ) {
 
-		return (PlayerStatistics)m_players.get( _name );
+		return m_players.get( _name );
 	}
 
 	private boolean trackingPlayer( String _name ) {

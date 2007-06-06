@@ -73,7 +73,7 @@ public class Rbprizes extends RBExtender
   public int MAX_SHIP = 8;
   public int MIN_SHIP = 1;
 
-  private Vector timerTasks;
+  private Vector<PrizeTask> timerTasks;
 
   /**
    * Creates a new twbotprizes instance.
@@ -81,7 +81,7 @@ public class Rbprizes extends RBExtender
 
   public Rbprizes()
   {
-    timerTasks = new Vector();
+    timerTasks = new Vector<PrizeTask>();
   }
 
   /**
@@ -513,7 +513,7 @@ public class Rbprizes extends RBExtender
       try
       {
         int prizeIndex = getPrizeIndex(argTokens.nextToken());
-        PrizeTask prizeTask = (PrizeTask) timerTasks.remove(prizeIndex);
+        PrizeTask prizeTask = timerTasks.remove(prizeIndex);
         m_botAction.cancelTask(prizeTask);
         m_botAction.sendSmartPrivateMessage(sender, "\'" + prizeTask.toString() + "\' was removed");
       }
@@ -560,7 +560,7 @@ public class Rbprizes extends RBExtender
       m_botAction.sendSmartPrivateMessage(sender, "No prizes registered.");
     for(int index = 0; index < timerTasks.size(); index++)
     {
-      prizeTask = (PrizeTask) timerTasks.get(index);
+      prizeTask = timerTasks.get(index);
       m_botAction.sendSmartPrivateMessage(sender, "Prize " + index + ": " + prizeTask.toString());
     }
   }
@@ -694,7 +694,7 @@ public class Rbprizes extends RBExtender
 
     for(int index = 0; index < timerTasks.size(); index++)
     {
-      prizeTask = (PrizeTask) timerTasks.get(index);
+      prizeTask = timerTasks.get(index);
       m_botAction.cancelTask(prizeTask);
     }
   }

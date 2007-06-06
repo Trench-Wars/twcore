@@ -23,11 +23,11 @@ public class RacePlayer {
 			lastCheck = checkPoint;
 			if(laps > 0)
 			{
-				ArrayList positions = currentTrack.playerPositions;
+				ArrayList<ArrayList<String>> positions = currentTrack.playerPositions;
 				if(laps < positions.size())
 				{
-					ArrayList thisLap = (ArrayList)positions.get(laps);
-					ArrayList lastLap = (ArrayList)positions.get(laps - 1);
+					ArrayList<String> thisLap = positions.get(laps);
+					ArrayList<String> lastLap = positions.get(laps - 1);
 
 					lastLap.remove(lastLap.indexOf(name.toLowerCase()));
 					positions.remove(laps - 1);
@@ -39,8 +39,8 @@ public class RacePlayer {
 				}
 				else
 				{
-					ArrayList thisLap = new ArrayList();
-					ArrayList lastLap = (ArrayList)positions.get(laps - 1);
+					ArrayList<String> thisLap = new ArrayList<String>();
+					ArrayList<String> lastLap = positions.get(laps - 1);
 
 					lastLap.remove(lastLap.indexOf(name.toLowerCase()));
 					positions.remove(laps - 1);

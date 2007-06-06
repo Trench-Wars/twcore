@@ -88,11 +88,11 @@ public class Rbpoll extends RBExtender {
 
         private String[] poll;
         private int range;
-        private HashMap votes;
+        private HashMap<String, Integer> votes;
 
         public Poll( String[] poll ){
             this.poll = poll;
-            votes = new HashMap();
+            votes = new HashMap<String, Integer>();
             range = poll.length - 1;
             m_botAction.sendArenaMessage( "Poll: " + poll[0] );
             for( int i = 1; i < poll.length; i++ ){

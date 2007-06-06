@@ -14,9 +14,9 @@ import twcore.core.util.Tools;
 
 public class RbRace extends RacingBotExtension {
 
-	HashMap trackIDList;
-	HashMap trackNameList;
-	HashSet pitFlags;
+	HashMap<Integer, Track> trackIDList;
+	HashMap<String, Track> trackNameList;
+	HashSet<Integer> pitFlags;
 
 	int racing = 0;
 	int laps = 0;
@@ -28,9 +28,9 @@ public class RbRace extends RacingBotExtension {
 	boolean updated = true;
 
 	public RbRace() {
-		trackIDList = new HashMap();
-		trackNameList = new HashMap();
-		pitFlags = new HashSet();
+		trackIDList = new HashMap<Integer, Track>();
+		trackNameList = new HashMap<String, Track>();
+		pitFlags = new HashSet<Integer>();
 	}
 
 	public void handleEvent( Message event ) {
@@ -66,7 +66,7 @@ public class RbRace extends RacingBotExtension {
 				}
 				else if(message.startsWith("!clearpits"))
 				{
-					pitFlags = new HashSet();
+					pitFlags = new HashSet<Integer>();
 					m_botAction.sendPrivateMessage(name, "Pit flags cleared.");
 				}
 				else if( message.startsWith("!raceover"))
@@ -94,7 +94,7 @@ public class RbRace extends RacingBotExtension {
 				}
 				else if(message.startsWith("!clearpits"))
 				{
-					pitFlags = new HashSet();
+					pitFlags = new HashSet<Integer>();
 					m_botAction.sendPrivateMessage(name, "Pit flags cleared.");
 				}
 				else if( message.startsWith("!raceover"))
@@ -232,7 +232,7 @@ public class RbRace extends RacingBotExtension {
 			public void run() {
 				m_botAction.toggleLocked();
 				Track thisTrack = getTrack( currentTrack );
-				ArrayList zeroLap = new ArrayList();
+				ArrayList<String> zeroLap = new ArrayList<String>();
 				Iterator it = m_botAction.getPlayingPlayerIterator();
 				while( it.hasNext() ) {
 					Player p = (Player)it.next();
@@ -332,7 +332,7 @@ public class RbRace extends RacingBotExtension {
 		Iterator it = trackIDList.keySet().iterator();
 		while( it.hasNext() ) {
 			int i = ((Integer)it.next()).intValue();
-			Track n = (Track)trackIDList.get( new Integer( i ) );
+			Track n = trackIDList.get( new Integer( i ) );
 			m_botAction.sendPublicMessage( n.getName()+"  "+i);
 		}
 	}
@@ -344,7 +344,7 @@ public class RbRace extends RacingBotExtension {
                         int id = -1;
 			if( result.next() )
                             id = result.getInt( "fnRaceID" );
-                        m_botAction.SQLClose( result ); 
+                        m_botAction.SQLClose( result );
                         return id;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
@@ -353,7 +353,7 @@ public class RbRace extends RacingBotExtension {
 	}
 
 	public Track getTrack( int id ) {
-		return (Track)trackIDList.get( new Integer(id) );
+		return trackIDList.get( new Integer(id) );
 	}
 
 
@@ -407,8 +407,8 @@ public class RbRace extends RacingBotExtension {
 		m_botAction.sendArenaMessage("Race over! Winner is " + getTrack(currentTrack).winner + "!",5);
 		racing = 0;
 		m_botAction.toggleLocked();
-		thisTrack.lapLeaders = new HashMap();
-		thisTrack.positions = new HashMap();
+		thisTrack.lapLeaders = new HashMap<String, Integer>();
+		thisTrack.positions = new HashMap<Integer, String>();
 		loadArena();
 		currentTrack = -1;
 	}

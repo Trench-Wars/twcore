@@ -81,11 +81,11 @@ public class strikeballbot extends SubspaceBot {
 
     // Team Data
     private String m_team1Name;                  // Team 1 Name as displayed in msgs
-    private HashMap m_team1 = new HashMap();     // Teammates for team1
+    private HashMap<String, StrikeballPlayer> m_team1 = new HashMap<String, StrikeballPlayer>();     // Teammates for team1
     private String m_team2Name;                  // Team 2 Name as displayed in msgs
-    private HashMap m_team2 = new HashMap();     // Teammates for team1
+    private HashMap<String, StrikeballPlayer> m_team2 = new HashMap<String, StrikeballPlayer>();     // Teammates for team1
 
-    private HashMap m_allPlayers = new HashMap();// Records of all players (for final stats).
+    private HashMap<String, StrikeballPlayer> m_allPlayers = new HashMap<String, StrikeballPlayer>();// Records of all players (for final stats).
                                                  // This is also a temporary storage for
                                                  // players that lag out, leave, etc.
 
@@ -201,7 +201,7 @@ public class strikeballbot extends SubspaceBot {
             return;
 
         // Check if player is already stored
-        StrikeballPlayer dummy = (StrikeballPlayer)m_allPlayers.get( sbP.getName() );
+        StrikeballPlayer dummy = m_allPlayers.get( sbP.getName() );
 
         // If so, remove before adding so as not to have dup's
         if( dummy != null )
@@ -220,7 +220,7 @@ public class strikeballbot extends SubspaceBot {
         if( m_allPlayers == null )
             return null;
 
-        StrikeballPlayer sbP = (StrikeballPlayer) m_allPlayers.get( playerName );
+        StrikeballPlayer sbP = m_allPlayers.get( playerName );
         if( sbP == null )
             return null;
 
@@ -244,9 +244,9 @@ public class strikeballbot extends SubspaceBot {
         if( m_team1 == null || m_team2 == null )
             return null;
 
-        sbP = (StrikeballPlayer) m_team1.get( p.getPlayerName() );
+        sbP = m_team1.get( p.getPlayerName() );
         if( sbP == null )
-            sbP = (StrikeballPlayer) m_team2.get( p.getPlayerName() );
+            sbP = m_team2.get( p.getPlayerName() );
         if( sbP == null )
             return null;
 
@@ -268,9 +268,9 @@ public class strikeballbot extends SubspaceBot {
         if( m_team1 == null || m_team2 == null )
             return null;
 
-        sbP = (StrikeballPlayer) m_team1.get( p.getPlayerName() );
+        sbP = m_team1.get( p.getPlayerName() );
         if( sbP == null )
-            sbP = (StrikeballPlayer) m_team2.get( p.getPlayerName() );
+            sbP = m_team2.get( p.getPlayerName() );
         if( sbP == null )
             return null;
 
@@ -294,9 +294,9 @@ public class strikeballbot extends SubspaceBot {
             m_team1Score = 0;
             m_team2Score = 0;
             m_forfeit = 0;
-            m_team1 = new HashMap();
-            m_team2 = new HashMap();
-            m_allPlayers = new HashMap();
+            m_team1 = new HashMap<String, StrikeballPlayer>();
+            m_team2 = new HashMap<String, StrikeballPlayer>();
+            m_allPlayers = new HashMap<String, StrikeballPlayer>();
             if( m_endRound != null )
                 m_botAction.cancelTask(m_endRound);
             do_showLogo();
@@ -465,11 +465,12 @@ public class strikeballbot extends SubspaceBot {
         String line, val, space = "";
         int length;
         int[] stats;
-        Vector scoreDisp = new Vector();
-        Collection players = m_allPlayers.values();
+        Vector<String> scoreDisp = new Vector<String>();
+        Collection<StrikeballPlayer> players = m_allPlayers.values();
         StrikeballPlayer sbP;
-        Iterator i;
-        Collection team1, team2;
+        Iterator<StrikeballPlayer> i;
+        Iterator<String> scoreIter;
+        Collection<StrikeballPlayer> team1, team2;
 
         // Add everyone into one big happy ol' hashmap, m_allPlayers
         team1 = m_team1.values();
@@ -477,13 +478,13 @@ public class strikeballbot extends SubspaceBot {
 
         i = team1.iterator();
         while( i.hasNext() ) {
-            sbP = (StrikeballPlayer) i.next();
+            sbP = i.next();
             do_storePlayer( sbP );
         }
 
         i = team2.iterator();
         while( i.hasNext() ) {
-            sbP = (StrikeballPlayer) i.next();
+            sbP = i.next();
             do_storePlayer( sbP );
         }
 
@@ -500,7 +501,7 @@ public class strikeballbot extends SubspaceBot {
         while( i.hasNext() ) {
 
             // Name display
-            sbP = (StrikeballPlayer) i.next();
+            sbP = i.next();
             stats = sbP.getAllStats();
 
             space = "";
@@ -538,9 +539,9 @@ public class strikeballbot extends SubspaceBot {
         }
 
         // Spit that sh*t out.
-        i = scoreDisp.iterator();
-        while( i.hasNext() ) {
-            line = (String)i.next();
+        scoreIter = scoreDisp.iterator();
+        while( scoreIter.hasNext() ) {
+            line = scoreIter.next();
             m_botAction.sendArenaMessage( line );
         }
 
@@ -1179,10 +1180,10 @@ public class strikeballbot extends SubspaceBot {
      */
     public void cmd_dbg_show( String name ) {
         String formatString = "";
-        Collection t1 = m_team1.values();
-        Collection t2 = m_team2.values();
-        StrikeballPlayer[] team1 = (StrikeballPlayer[]) t1.toArray( new StrikeballPlayer[0] );
-        StrikeballPlayer[] team2 = (StrikeballPlayer[]) t2.toArray( new StrikeballPlayer[0] );
+        Collection<StrikeballPlayer> t1 = m_team1.values();
+        Collection<StrikeballPlayer> t2 = m_team2.values();
+        StrikeballPlayer[] team1 = t1.toArray( new StrikeballPlayer[0] );
+        StrikeballPlayer[] team2 = t2.toArray( new StrikeballPlayer[0] );
 
         if( team1 == null || team2 == null ) {
             m_botAction.sendPrivateMessage( name, "One or more teams were reported as null (!).  Can't show." );
@@ -1222,13 +1223,13 @@ public class strikeballbot extends SubspaceBot {
         }
 
         StrikeballPlayer[] teamArray;
-        Collection t1 = m_team1.values();
-        Collection t2 = m_team2.values();
+        Collection<StrikeballPlayer> t1 = m_team1.values();
+        Collection<StrikeballPlayer> t2 = m_team2.values();
 
         if( team == 1 )
-            teamArray = (StrikeballPlayer[]) t1.toArray( new StrikeballPlayer[0] );
+            teamArray = t1.toArray( new StrikeballPlayer[0] );
         else
-            teamArray = (StrikeballPlayer[]) t2.toArray( new StrikeballPlayer[0] );
+            teamArray = t2.toArray( new StrikeballPlayer[0] );
 
         if( index < 0 || index > teamArray.length - 1 ) {
             m_botAction.sendPrivateMessage( name, "Index out of bounds.  Must be between 0 and " + m_maxTeamSize + "." );
@@ -1281,7 +1282,7 @@ public class strikeballbot extends SubspaceBot {
         StrikeballPlayer sbP = do_getSBPlayer( playerName );
 
         if( sbP == null ) {
-            sbP = (StrikeballPlayer) m_allPlayers.get( playerName );
+            sbP = m_allPlayers.get( playerName );
             if( sbP == null ) {
                 m_botAction.sendPrivateMessage( name, "Player not found (either active or inactive)." );
                 return;
@@ -1312,7 +1313,7 @@ public class strikeballbot extends SubspaceBot {
         StrikeballPlayer sbP = do_getSBPlayer( playerName );
 
         if( sbP == null ) {
-            sbP = (StrikeballPlayer) m_allPlayers.get( playerName );
+            sbP = m_allPlayers.get( playerName );
             if( sbP == null ) {
                 m_botAction.sendPrivateMessage( name, "Player not found (either active or inactive)." );
                 return;

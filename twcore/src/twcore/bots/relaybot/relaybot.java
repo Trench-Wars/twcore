@@ -15,13 +15,13 @@ import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
 /**
- * To assist in hosting radio (while not requiring a host to have staff access). 
+ * To assist in hosting radio (while not requiring a host to have staff access).
  */
 public class relaybot extends SubspaceBot {
     private EventRequester m_req;
-    private LinkedList loggedInList;
+    private LinkedList<String> loggedInList;
     private String currentPassword;
-    private LinkedList alreadyZoned;
+    private LinkedList<String> alreadyZoned;
     private String currentHost = "", comment = "";
     private Poll currentPoll = null;
     private boolean announcing = false;
@@ -35,8 +35,8 @@ public class relaybot extends SubspaceBot {
         m_req = botAction.getEventRequester();
         m_req.request( EventRequester.LOGGED_ON );
         m_req.request( EventRequester.MESSAGE );
-        loggedInList = new LinkedList();
-        alreadyZoned = new LinkedList();
+        loggedInList = new LinkedList<String>();
+        alreadyZoned = new LinkedList<String>();
         currentPassword = m_botAction.getBotSettings().getString( "ServPass" );
     }
 
@@ -269,11 +269,11 @@ public class relaybot extends SubspaceBot {
 
         private String[] poll;
         private int range;
-        private HashMap votes;
+        private HashMap<String, Integer> votes;
 
         public Poll( String[] poll ){
             this.poll = poll;
-            votes = new HashMap();
+            votes = new HashMap<String, Integer>();
             range = poll.length - 1;
             m_botAction.sendArenaMessage( "Poll: " + poll[0] );
             for( int i = 1; i < poll.length; i++ ){

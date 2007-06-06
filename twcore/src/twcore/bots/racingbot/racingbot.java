@@ -41,9 +41,9 @@ import twcore.core.events.WeaponFired;
 public class racingbot extends SubspaceBot {
 
 	private AdaptiveClassLoader m_loader;
-	HashMap modules;
-	HashMap extensions;
-	HashSet twrcOps;
+	HashMap<String, RacingBotExtension> modules;
+	HashMap<String, RBExtender> extensions;
+	HashSet<String> twrcOps;
 	BotSettings m_botSettings;
 	TimerTask resetFlags;
 	boolean locked = false;
@@ -58,9 +58,9 @@ public class racingbot extends SubspaceBot {
 		Vector repository = new Vector();
         coreRoot = new File( botAction.getGeneralSettings().getString( "Core Location" ) + "/twcore/bots/racingbot/" );
 		m_loader = new AdaptiveClassLoader( repository, getClass().getClassLoader() );
-		modules = new HashMap();
-		extensions = new HashMap();
-		twrcOps = new HashSet();
+		modules = new HashMap<String, RacingBotExtension>();
+		extensions = new HashMap<String, RBExtender>();
+		twrcOps = new HashSet<String>();
 
         coreRoot = new File( botAction.getGeneralSettings().getString( "Core Location" ) );
         botRoot = new File(coreRoot.getPath() + "/twcore/bots/racingbot");
@@ -220,7 +220,7 @@ public class racingbot extends SubspaceBot {
    	public void help( String name, String key ){
         key = key.toLowerCase();
         if( extensions.containsKey( key )){
-            String[] helps = ((RBExtender)extensions.get( key )).getHelpMessages();
+            String[] helps = extensions.get( key ).getHelpMessages();
             m_botAction.privateMessageSpam( name, helps );
         } else {
             m_botAction.sendPrivateMessage( name, "Sorry, but the module " + key
@@ -232,7 +232,7 @@ public class racingbot extends SubspaceBot {
     public void handleEvent( PlayerLeft event ){
         distributeEvent( (SubspaceEvent)event );}
     public void handleEvent( SubspaceEvent event ){
-        distributeEvent( (SubspaceEvent)event );}
+        distributeEvent( event );}
     public void handleEvent( ScoreReset event ){
         distributeEvent( (SubspaceEvent)event );}
     public void handleEvent( PlayerEntered event ){

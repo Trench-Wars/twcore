@@ -44,7 +44,7 @@ import twcore.core.events.PlayerEntered;
 
 public class Rbmessages extends RBExtender
 {
-  private Vector msgList;
+  private Vector<MsgTask> msgList;
 
   /**
    * This method initializes the messages module.
@@ -52,7 +52,7 @@ public class Rbmessages extends RBExtender
 
   public Rbmessages()
   {
-    msgList = new Vector();
+    msgList = new Vector<MsgTask>();
   }
 
   /**
@@ -188,7 +188,7 @@ public class Rbmessages extends RBExtender
     {
       for(int index = 0; index < msgList.size(); index++)
       {
-        msgTask = (MsgTask) msgList.get(index);
+        msgTask = msgList.get(index);
         m_botAction.sendSmartPrivateMessage(sender, "Msg " + index + ") " + msgTask.toString());
       }
     }
@@ -211,7 +211,7 @@ public class Rbmessages extends RBExtender
 
       if(index >= msgList.size())
         throw new IllegalArgumentException("Invalid message number.");
-      MsgTask msgTask = (MsgTask) msgList.get(index);
+      MsgTask msgTask = msgList.get(index);
       m_botAction.cancelTask(msgTask);
       msgList.remove(index);
       m_botAction.sendSmartPrivateMessage(sender, "\'" + msgTask.toString() + "\' was removed.");
@@ -302,7 +302,7 @@ public class Rbmessages extends RBExtender
 
     for(int index = 0; index < msgList.size(); index++)
     {
-      msgTask = (MsgTask) msgList.get(index);
+      msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE)
         m_botAction.sendSmartPrivateMessage(playerName, msgTask.getMessage(), msgTask.getSoundCode());
     }
@@ -318,7 +318,7 @@ public class Rbmessages extends RBExtender
 
     for(int index = 0; index < msgList.size(); index++)
     {
-      msgTask = (MsgTask) msgList.get(index);
+      msgTask = msgList.get(index);
       m_botAction.cancelTask(msgTask);
     }
   }

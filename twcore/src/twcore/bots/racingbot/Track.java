@@ -11,11 +11,11 @@ import twcore.core.util.Tools;
 public class Track {
 
 	BotAction m_botAction;
-	HashMap checkPoints;
-	HashMap playerMap;
-	HashMap positions;
-	HashMap lapLeaders;
-	ArrayList playerPositions;
+	HashMap<Integer, Integer> checkPoints;
+	HashMap<Integer, RacePlayer> playerMap;
+	HashMap<Integer, String> positions;
+	HashMap<String, Integer> lapLeaders;
+	ArrayList<ArrayList<String>> playerPositions;
 
 	String trackName;
 	String winner = "";
@@ -32,11 +32,11 @@ public class Track {
 
 	public Track( ResultSet result, BotAction botAction ) {
 		m_botAction = botAction;
-		checkPoints = new HashMap();
-		playerMap   = new HashMap();
-		positions = new HashMap();
-		lapLeaders = new HashMap();
-		playerPositions = new ArrayList();
+		checkPoints = new HashMap<Integer, Integer>();
+		playerMap   = new HashMap<Integer, RacePlayer>();
+		positions = new HashMap<Integer, String>();
+		lapLeaders = new HashMap<String, Integer>();
+		playerPositions = new ArrayList<ArrayList<String>>();
 		try {
 			trackName = result.getString( "fcTrackName" );
 			x_pos = result.getInt( "fnXWarp" );
@@ -66,7 +66,7 @@ public class Track {
 		int checkPoint = -1;
 		int playerId = event.getPlayerID();
 		try {
-			checkPoint = ((Integer)checkPoints.get( new Integer( event.getFlagID() ) ) ).intValue();
+			checkPoint = checkPoints.get( new Integer( event.getFlagID() ) ).intValue();
 		} catch (Exception e) {}
 
 		if( checkPoint == -1 ) return true;
@@ -76,7 +76,7 @@ public class Track {
 		if( !playerMap.containsKey( new Integer( playerId ) ) )
 			playerMap.put( new Integer( playerId ), new RacePlayer( lastPoint ) );
 
-		RacePlayer thisP = (RacePlayer)playerMap.get( new Integer( playerId ) );
+		RacePlayer thisP = playerMap.get( new Integer( playerId ) );
 		int laps = thisP.hitPoint( checkPoint , m_botAction.getPlayerName(playerId), this);
 
 		if( laps == lapsToWin ) {
@@ -90,7 +90,7 @@ public class Track {
 				positions.put(new Integer(1), winner);
 				if(lapLeaders.containsKey(winner))
 				{
-					int lapz = ((Integer)lapLeaders.get(winner)).intValue();
+					int lapz = lapLeaders.get(winner).intValue();
 					lapz++;
 					lapLeaders.put(winner, new Integer(lapz));
 				}
@@ -119,7 +119,7 @@ public class Track {
 				m_botAction.sendArenaMessage( m_botAction.getPlayerName( playerId ) +" is in the lead. "+out );
 				if(lapLeaders.containsKey(m_botAction.getPlayerName(playerId)))
 				{
-					int lapz = ((Integer)lapLeaders.get(m_botAction.getPlayerName(playerId))).intValue();
+					int lapz = lapLeaders.get(m_botAction.getPlayerName(playerId)).intValue();
 					lapz++;
 					lapLeaders.put(m_botAction.getPlayerName(playerId), new Integer(lapz));
 				}

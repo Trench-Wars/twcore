@@ -33,9 +33,9 @@ public class RadioStatusServer extends Thread {
     private String              serverPass;
     private String              adminPass;
     private boolean             running = true;
-    private HashMap             map = new HashMap();
+    private HashMap<String, Integer> map = new HashMap<String, Integer>();
     private Timer               timer = new Timer();
-    private LinkedList          tracker = new LinkedList();
+    private LinkedList<RadioServerTCPComm> tracker = new LinkedList<RadioServerTCPComm>();
 
     /** Creates a new instance of RadioStatusServer */
     public RadioStatusServer( String serverPass, String adminPass,
@@ -66,12 +66,12 @@ public class RadioStatusServer extends Thread {
 
                 if( !map.containsKey( host )){
                     map.put( host, new Integer( 1 ));
-                } else if( ((Integer)map.get( host )).intValue() >= 2 ){
+                } else if( map.get( host ).intValue() >= 2 ){
                     socket.close();
                     continue;
                 } else {
                     map.put( host, new Integer(
-                    ((Integer)map.get( host )).intValue() + 1 ));
+                    map.get( host ).intValue() + 1 ));
                 }
 
                 rcomm =  new RadioServerTCPComm( this, socket, tracker );
@@ -122,7 +122,7 @@ public class RadioStatusServer extends Thread {
             while( i.hasNext() ){
 
                 String key = (String)i.next();
-                Integer currentValue = (Integer)map.get( key );
+                Integer currentValue = map.get( key );
 
                 if( currentValue.intValue() <= 1 ){
                     i.remove();

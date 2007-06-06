@@ -43,8 +43,8 @@ public class robohelp extends SubspaceBot {
 
     SearchableStructure search;
     OperatorList        opList;
-    TreeMap             rawData;
-    Map                 m_playerList;
+    TreeMap<String, String> rawData;
+    Map<String, HelpRequest> m_playerList;
 
     CommandInterpreter  m_commandInterpreter;
     String              lastHelpRequestName = null;
@@ -52,13 +52,13 @@ public class robohelp extends SubspaceBot {
     boolean             backupAdvertiser = false;
 
     final String        mySQLHost = "local";
-    Vector              eventList = new Vector();
-    TreeMap             events = new TreeMap();
-    Vector              callList = new Vector();
+    Vector<EventData>   eventList = new Vector<EventData>();
+    TreeMap<String, EventData> events = new TreeMap<String, EventData>();
+    Vector<EventData>   callList = new Vector<EventData>();
 
     String				findPopulation = "";
 	int					setPopID = -1;
-	
+
 	String	 			lastStafferClaimedCall;
 
     public robohelp( BotAction botAction ){
@@ -68,7 +68,7 @@ public class robohelp extends SubspaceBot {
 
         populateSearch();
         opList = botAction.getOperatorList();
-        m_playerList = Collections.synchronizedMap( new HashMap() );
+        m_playerList = Collections.synchronizedMap( new HashMap<String, HelpRequest>() );
 
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
@@ -144,7 +144,7 @@ public class robohelp extends SubspaceBot {
             //10 minutes - difference betweeen current time and previous time
             long difference = TIME_BETWEEN_ADS - (System.currentTimeMillis() - lastAdvTime);
             int minutes = (int)Math.floor( difference / 60000 );
-            int seconds = (int)Math.round( (difference % 60000)/1000 );
+            int seconds = Math.round( (difference % 60000)/1000 );
             return "There are " + minutes + " minutes, " + seconds + " seconds until the next advertisement is free";
         }
 
@@ -290,7 +290,7 @@ public class robohelp extends SubspaceBot {
 
     public void populateSearch(){
         search = new SearchableStructure();
-        rawData = new TreeMap();
+        rawData = new TreeMap<String, String>();
         try {
             BufferedReader in = new BufferedReader(new FileReader( m_botAction.getDataFile( "HelpResponses.txt" )));
             String line;
@@ -430,10 +430,10 @@ public class robohelp extends SubspaceBot {
         long time = new java.util.Date().getTime();
 
         for( int i = eventList.size() - 1; i >= 0; i-- ) {
-            EventData dat = (EventData)eventList.elementAt( i );
+            EventData dat = eventList.elementAt( i );
             if( dat.getTime() + span*3600000 > time ) {
                 if( events.containsKey( dat.getArena() ) ) {
-                    EventData d = (EventData)events.get( dat.getArena() );
+                    EventData d = events.get( dat.getArena() );
                     d.inc();
                 } else  events.put( dat.getArena(), new EventData( dat.getArena() ) );
             }
@@ -444,7 +444,7 @@ public class robohelp extends SubspaceBot {
         Iterator i = set.iterator();
         while (i.hasNext()) {
             String curEvent = (String)i.next();
-            EventData d = (EventData)events.get( curEvent );
+            EventData d = events.get( curEvent );
             m_botAction.sendSmartPrivateMessage( name, trimFill( curEvent ) + d.getDups() );
         }
     }
@@ -497,7 +497,7 @@ public class robohelp extends SubspaceBot {
         }
 
         callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
-        helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
+        helpRequest = m_playerList.get( playerName.toLowerCase() );
         if( helpRequest == null ){
             helpRequest = new HelpRequest( playerName, null, null );
             m_playerList.put( playerName.toLowerCase(), helpRequest );
@@ -536,7 +536,7 @@ public class robohelp extends SubspaceBot {
         lastHelpRequestName = playerName;
 
         callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
-        helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
+        helpRequest = m_playerList.get( playerName.toLowerCase() );
         if( helpRequest == null ){
             helpRequest = new HelpRequest( playerName, null, null );
             m_playerList.put( playerName.toLowerCase(), helpRequest );
@@ -569,7 +569,7 @@ public class robohelp extends SubspaceBot {
         callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
         response = search.search( message );
 
-        helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
+        helpRequest = m_playerList.get( playerName.toLowerCase() );
         if( helpRequest == null ){
             helpRequest = new HelpRequest( playerName, message, response );
             m_playerList.put( playerName.toLowerCase(), helpRequest );
@@ -597,7 +597,7 @@ public class robohelp extends SubspaceBot {
         String          response;
         HelpRequest     helpRequest;
 
-        helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
+        helpRequest = m_playerList.get( playerName.toLowerCase() );
 
         if( helpRequest == null ){
             m_botAction.sendRemotePrivateMessage( playerName, "If you have a question, ask with ?help <question>" );
@@ -624,7 +624,7 @@ public class robohelp extends SubspaceBot {
     public void handleSummon( String playerName, String message ){
         HelpRequest     helpRequest;
 
-        helpRequest = (HelpRequest)m_playerList.get( playerName.toLowerCase() );
+        helpRequest = m_playerList.get( playerName.toLowerCase() );
 
         if( helpRequest == null ){
             m_botAction.sendRemotePrivateMessage( playerName, "If you have a question, ask with ?help <question>" );
@@ -661,7 +661,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendRemotePrivateMessage( playerName, "No one has done a help call yet!" );
         }
 
-        helpRequest = (HelpRequest)m_playerList.get( lastHelpRequestName.toLowerCase() );
+        helpRequest = m_playerList.get( lastHelpRequestName.toLowerCase() );
         if( helpRequest == null ){
             m_botAction.sendRemotePrivateMessage( playerName, "No response was given." );
         } else {
@@ -789,7 +789,7 @@ public class robohelp extends SubspaceBot {
         } else if( name.length() == 0 ){
             m_botAction.sendChatMessage( "There hasn't been a help call yet." );
         } else {
-            helpRequest = (HelpRequest)m_playerList.get( name.toLowerCase() );
+            helpRequest = m_playerList.get( name.toLowerCase() );
             if( helpRequest == null ){
                 m_botAction.sendChatMessage( name + " hasn't done a help call yet." );
             } else {
@@ -865,7 +865,7 @@ public class robohelp extends SubspaceBot {
             } else if( opList.isZH( name ) ){
                 m_botAction.sendChatMessage( "Are you nuts?  You can't ban a staff member!" );
             } else {
-                helpRequest = (HelpRequest)m_playerList.get( name.toLowerCase() );
+                helpRequest = m_playerList.get( name.toLowerCase() );
                 if( helpRequest == null ){
                     m_botAction.sendChatMessage( name + " hasn't done a help call yet." );
                 } else {
@@ -906,7 +906,7 @@ public class robohelp extends SubspaceBot {
         } else if( name.length() == 0 ){
             m_botAction.sendChatMessage( "There hasn't been a help call yet." );
         } else {
-            helpRequest = (HelpRequest)m_playerList.get( name.toLowerCase() );
+            helpRequest = m_playerList.get( name.toLowerCase() );
             if( helpRequest == null ){
                 m_botAction.sendChatMessage( name + " hasn't done a help call yet." );
             } else {
@@ -931,17 +931,17 @@ public class robohelp extends SubspaceBot {
     public void handleOnIt( String name, String message ) {
         boolean recorded = false;
         int i = 0;
-        
+
         if(callList.size()==0) {
         	// A staffer did "on it" while there was no call to take.
         	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
         		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim. The last person to claim a call was "+this.lastStafferClaimedCall+".");
-        	else 
+        	else
         		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim.");
         }
-        
+
         while( !recorded && i < callList.size() ) {
-            EventData e = (EventData)callList.elementAt( i );
+            EventData e = callList.elementAt( i );
             if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
                 updateStatRecordsONIT( name );
                 callList.removeElementAt( i );
@@ -962,17 +962,17 @@ public class robohelp extends SubspaceBot {
     public void handleGotIt( String name, String message ) {
         boolean recorded = false;
         int i = 0;
-        
+
         if(callList.size()==0) {
         	// A staffer did "on it" while there was no call to take.
         	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
         		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim. The last person to claim a call was "+this.lastStafferClaimedCall+".");
-        	else 
+        	else
         		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim.");
         }
-        
+
         while( !recorded && i < callList.size() ) {
-            EventData e = (EventData)callList.elementAt( i );
+            EventData e = callList.elementAt( i );
             if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
                 updateStatRecordsGOTIT( name );
                 callList.removeElementAt( i );
@@ -1067,7 +1067,7 @@ public class robohelp extends SubspaceBot {
 
             if(result.next()) {
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
-            } else 
+            } else
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
         } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
     }
@@ -1115,7 +1115,7 @@ public class robohelp extends SubspaceBot {
 
     private String[] formatResponse(String response)
     {
-      LinkedList formattedResp = new LinkedList();
+      LinkedList<String> formattedResp = new LinkedList<String>();
       int startIndex = indexNotOf(response, ' ', 0);
       int breakIndex = getBreakIndex(response, 0);
 
@@ -1125,7 +1125,7 @@ public class robohelp extends SubspaceBot {
         startIndex = indexNotOf(response, ' ', breakIndex);
         breakIndex = breakIndex = getBreakIndex(response, startIndex);
       }
-      return (String[]) formattedResp.toArray(new String[formattedResp.size()]);
+      return formattedResp.toArray(new String[formattedResp.size()]);
     }
 
     private void displayResponses(String name, String[] responses)
