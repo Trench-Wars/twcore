@@ -110,7 +110,7 @@ public class Arena {
      * Gets an Iterator over IDs of players in the arena.
      * @return Iterator over IDs of players in arena
      */
-    public Iterator getPlayerIDIterator(){
+    public Iterator<Integer> getPlayerIDIterator(){
 
         return m_playerList.keySet().iterator();
     }
@@ -119,7 +119,7 @@ public class Arena {
      * Gets an Iterator over players in ships other than 0/spec in the arena.
      * @return Iterator over players in ships other than 0/spec in arena
      */
-    public Iterator getPlayingPlayerIterator(){
+    public Iterator<Player> getPlayingPlayerIterator(){
         LinkedList <Player>list = new LinkedList<Player>();
         for( Iterator i = getPlayerIterator(); i.hasNext(); ){
             Player player = (Player)i.next();
@@ -134,7 +134,7 @@ public class Arena {
      * Gets an Iterator over IDs of players in ships other than 0/spec in the arena.
      * @return Iterator over IDs of players in ships other than 0/spec in arena
      */
-    public Iterator getPlayingIDIterator(){
+    public Iterator<Integer> getPlayingIDIterator(){
         LinkedList <Integer>list = new LinkedList<Integer>();
         for( Iterator i = getPlayerIterator(); i.hasNext(); ){
             Player player = (Player)i.next();
@@ -150,9 +150,9 @@ public class Arena {
      * @param freq Frequency of particular interest
      * @return Iterator over IDs of players on a given freq in arena
      */
-    public Iterator getFreqIDIterator( int freq ){
+    public Iterator<Integer> getFreqIDIterator( int freq ){
 
-        Map freqMap = (Map)m_frequencyList.get( new Integer( freq ));
+        Map<Integer, Player> freqMap = m_frequencyList.get( new Integer( freq ));
         if( freqMap == null ){
             return null;
         } else {
@@ -165,20 +165,29 @@ public class Arena {
      * @param freq Frequency of particular interest
      * @return Iterator over players on a given freq in arena
      */
-    public Iterator getFreqPlayerIterator( int freq ){
+    public Iterator<Player> getFreqPlayerIterator( int freq ){
 
-        Map freqMap = (Map)m_frequencyList.get( new Integer( freq ));
+        Map<Integer, Player> freqMap = m_frequencyList.get( new Integer( freq ));
         if( freqMap == null ) return null;
         return freqMap.values().iterator();
     }
 
     /**
-     * Gets an Iterator over all flags in the arena.
+     * Gets an Iterator over all flags IDs in the arena.
      * @return Iterator over all flags in arena
      */
-    public Iterator getFlagIDIterator() {
+    public Iterator<Integer> getFlagIDIterator() {
 
-        return m_flagIDList.values().iterator();
+        return m_flagIDList.keySet().iterator();
+    }
+
+    /**
+     * Gets an Iterator over all flag objects in the arena.
+     * @return Iterator over all flags in arena
+     */
+    public Iterator<Flag> getFlagIterator() {
+
+    	return m_flagIDList.values().iterator();
     }
 
     /**

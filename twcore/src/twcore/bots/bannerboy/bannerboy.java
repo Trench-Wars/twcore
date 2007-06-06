@@ -16,7 +16,7 @@ import twcore.core.util.Tools;
 
 /**
  * A bot designed to collect banners from players and place them in a database.
- * 
+ *
  * @author 2dragons
  */
 public class bannerboy extends SubspaceBot {
@@ -28,7 +28,7 @@ public class bannerboy extends SubspaceBot {
 	private long m_lastBannerSet = 0;
 
 	//queue for banner checks
-	private Vector m_toCheck;
+	private Vector<BannerCheck> m_toCheck;
 
 	//Boolean to track if 'talking' mode is on
 	private boolean m_talk;
@@ -41,7 +41,7 @@ public class bannerboy extends SubspaceBot {
 		req.request( EventRequester.MESSAGE );
 		req.request( EventRequester.ARENA_LIST );
 
-		m_toCheck = new Vector();
+		m_toCheck = new Vector<BannerCheck>();
 
 		m_talk = false;
 	}
@@ -251,7 +251,7 @@ public class bannerboy extends SubspaceBot {
 			public void run() {
 
 				if( m_toCheck.size() <= 0 ) return;
-				BannerCheck bc = (BannerCheck)m_toCheck.remove(0);
+				BannerCheck bc = m_toCheck.remove(0);
 				byte banner[] = bc.getBanner();
 				String player = bc.getPlayer();
 

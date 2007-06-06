@@ -24,14 +24,14 @@ import twcore.core.util.Tools;
  */
 public class bouncerbot extends SubspaceBot {
     OperatorList m_opList;
-    HashSet invitedPlayers;
-    ArrayList log;
+    HashSet<String> invitedPlayers;
+    ArrayList<String> log;
     String bouncemessage;
     public bouncerbot( BotAction botAction ){
         super( botAction );
-        invitedPlayers = new HashSet();
+        invitedPlayers = new HashSet<String>();
         bouncemessage = "Entering a private arena without being invited is against the rules.  Goodbye!";
-        log = new ArrayList();
+        log = new ArrayList<String>();
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_ENTERED );

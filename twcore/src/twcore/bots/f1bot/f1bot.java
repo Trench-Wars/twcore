@@ -16,7 +16,7 @@ import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
 
 /**
- * Racing bot for arenas set up to match the racing track specification.  
+ * Racing bot for arenas set up to match the racing track specification.
  */
 public class f1bot extends SubspaceBot {
 
@@ -198,7 +198,7 @@ public class f1bot extends SubspaceBot {
                                         t.start_point.get_y() );
         m_botAction.sendArenaMessage("Race begins in 10 seconds",2);            // Notify players that game is starting
 
-        Iterator it = m_botAction.getPlayerIDIterator();                        // Get a way to get all players in arena
+        Iterator<Integer> it = m_botAction.getPlayerIDIterator();                        // Get a way to get all players in arena
         race_records_obj = new RaceRecords(it, this);                           // Create a new 'RaceRecords' out of it.
 
 	// 'RaceRecords' holds info on eacn player's race progress
@@ -600,7 +600,7 @@ class Racer implements Comparable
 
 class RaceRecords
 {
-    Vector racer_vector;                                                        // Vector of Racer objects
+    Vector<Racer> racer_vector;                                                        // Vector of Racer objects
     f1bot parent_f1bot;                                                         // Reference to the bot from whence this came
 
     //  This object is constructed anew for every race (i.e. one for every GO!!%104).
@@ -624,7 +624,7 @@ class RaceRecords
 
         for(int i=0; i<racer_vector.size(); i++)
         {
-            resultsArray[i] = ((Racer)racer_vector.elementAt(i)).getResultString();
+            resultsArray[i] = racer_vector.elementAt(i).getResultString();
         }
         return resultsArray;
     }
@@ -635,7 +635,7 @@ class RaceRecords
     public RaceRecords(f1bot parent_f1bot)
     {
         this.parent_f1bot       = parent_f1bot;
-        this.racer_vector       = new Vector();
+        this.racer_vector       = new Vector<Racer>();
     }
 
     public void addPlayer(int playerID)
@@ -645,13 +645,13 @@ class RaceRecords
 	racer_vector.addElement(r);                      //        player and add it to the racer_vector
     }
 
-    public RaceRecords(Iterator it, f1bot parent_f1bot)
+    public RaceRecords(Iterator<Integer> it, f1bot parent_f1bot)
     {
         this.parent_f1bot       = parent_f1bot;
-        this.racer_vector       = new Vector();
+        this.racer_vector       = new Vector<Racer>();
 
         // Let's store the player IDs derived from the iterator
-        Vector v = new Vector();                                                      // Get somewhere to store the player IDs
+        Vector<Integer> v = new Vector<Integer>();                                                      // Get somewhere to store the player IDs
         while(it.hasNext())                                                           // While there are more player IDs to collect..
 	    {
 		v.add(it.next());                                                         //    Add it to the vector
@@ -660,7 +660,7 @@ class RaceRecords
             // Let's create a Racer object for each player in-game and store in the vector
         for(int i=0; i<v.size(); i++)                                                 // For each player ID in the vector,
 	    {
-		Player p = getBotAction().getPlayer(((Integer)v.elementAt(i)).intValue());   //    Derive a player object
+		Player p = getBotAction().getPlayer(v.elementAt(i).intValue());   //    Derive a player object
 		if(p.isPlaying())                                                         //    If it is a player not in spec..
 		    {
 			Racer r = new Racer(p.getPlayerID(), this);      //        Create a new racer object for the
@@ -697,7 +697,7 @@ class RaceRecords
 
         for(int i=0; i<racer_vector.size(); i++)
         {
-            outputStringArray[i+1] = ((Racer)racer_vector.elementAt(i)).toString();
+            outputStringArray[i+1] = racer_vector.elementAt(i).toString();
         }
         return outputStringArray;
     }
@@ -713,7 +713,7 @@ class RaceRecords
     {
         for(int i=0; i<racer_vector.size(); i++)
 	    {
-		Racer r = (Racer)racer_vector.elementAt(i);
+		Racer r = racer_vector.elementAt(i);
 		if(r.getID() == playerID)
 		    return r;
 	    }
@@ -772,7 +772,7 @@ class RaceRecords
 class RacerTimeRecords
 {
     private Date time_race_started;               // GO! GO! time
-    private Vector time_laps_finished_vector = new Vector();     // Date objects.. elementAt(x) = time lap x finished
+    private Vector<Date> time_laps_finished_vector = new Vector<Date>();     // Date objects.. elementAt(x) = time lap x finished
 
     public void setTimeRaceStarted(Date time_race_started){
         this.time_race_started = time_race_started;
@@ -788,8 +788,8 @@ class RacerTimeRecords
 
     public long getLapTime(int lap_number)
     {
-        Date started  = (Date)time_laps_finished_vector.elementAt(lap_number-1);
-        Date finished = (Date)time_laps_finished_vector.elementAt(lap_number);
+        Date started  = time_laps_finished_vector.elementAt(lap_number-1);
+        Date finished = time_laps_finished_vector.elementAt(lap_number);
         long duration = getDurationMilliseconds(started,finished);
         return duration;
     }
@@ -824,7 +824,7 @@ class RacerTimeRecords
         for(int i=0; i<time_laps_finished_vector.size(); i++)
         {
             returnString+="["+
-            ((Date)time_laps_finished_vector.elementAt(i)).getTime()
+            time_laps_finished_vector.elementAt(i).getTime()
             +"]";
         }
 
@@ -837,8 +837,8 @@ class RacerTimeRecords
             return -1;
 
         long returnLong = getDurationMilliseconds(
-            (Date)time_laps_finished_vector.elementAt(0),
-            (Date)time_laps_finished_vector.elementAt(time_laps_finished_vector.size()-1)
+            time_laps_finished_vector.elementAt(0),
+            time_laps_finished_vector.elementAt(time_laps_finished_vector.size()-1)
         );
 
         return returnLong;

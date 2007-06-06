@@ -14,11 +14,11 @@ import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
- * Records statistics from elimination matches in a database. 
+ * Records statistics from elimination matches in a database.
  */
 public class estatsbot extends SubspaceBot {
 
-	HashMap players;
+	HashMap<String, ElimPlayer> players;
 	HashMap lastPlayers;
 	boolean gameRunning = false;
 	ElimGame thisGame = null;
@@ -30,7 +30,7 @@ public class estatsbot extends SubspaceBot {
 
 	public estatsbot(BotAction botAction) {
 		super(botAction);
-		players = new HashMap();
+		players = new HashMap<String, ElimPlayer>();
 		lastPlayers = new HashMap();
 		EventRequester events = m_botAction.getEventRequester();
 		events.request(events.MESSAGE);
@@ -52,9 +52,9 @@ public class estatsbot extends SubspaceBot {
 		String killer = p1.getPlayerName();
 		String killee = p2.getPlayerName();
 		if(players.containsKey((killer.toLowerCase())))
-			((ElimPlayer)players.get(killer.toLowerCase())).addKill();
+			players.get(killer.toLowerCase()).addKill();
 		if(players.containsKey((killee.toLowerCase())))
-			((ElimPlayer)players.get(killee.toLowerCase())).addDeath();
+			players.get(killee.toLowerCase()).addDeath();
 	}
 
 	public void handleEvent(Message event) {
@@ -117,7 +117,7 @@ public class estatsbot extends SubspaceBot {
 				}
 				pDeaths = pDeaths.trim();
 				if(ratingBefore) {
-					ElimPlayer p = (ElimPlayer)players.get(getRating);
+					ElimPlayer p = players.get(getRating);
 					p.ratingBefore(rating);
 					if(playerRatingIt.hasNext()) {
 						getRating = (String)playerRatingIt.next();
@@ -189,10 +189,10 @@ public class estatsbot extends SubspaceBot {
 			} else {
 				thisGame.setWinner("No winner");
 			}
-			
+
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
-	
+
 	public void updateSQL() {
 		if(lastGame == null) return;
 		try {
@@ -233,11 +233,11 @@ class ElimPlayer {
 	public void addKill() {
 		kills++;
 	}
-	
+
 	public void ratingBefore(String rating) {
 		rBefore = rating;
 	}
-	
+
 	public void ratingAfter(String rating, String kFB, String dFB) {
 		rAfter = rating;
 		killsFromBot = kFB;
@@ -249,7 +249,7 @@ class ElimPlayer {
 		String query = "INSERT INTO tblElimRoundPlayer (fnGameID, fcUserName, fnKill, fnDeath, fnWon, ftDate, fnOldRating, fnNewRating) VALUES ("+gID+", '"+Tools.addSlashesToString(name)+"', "+kills+", "+deaths+", "+w+", NOW(), "+rBefore+", "+rAfter+");";
 		return query;
 	}
-	
+
 	public String getQuery2(int gID, boolean won, int isElim) {
 		int w = 0; if(won) w = 1;
 		String query = "INSERT INTO tblElimPlayer (fcUserName, fnRating, fnKills, fnDeaths, fnElim, ftUpdated) VALUES('"+Tools.addSlashesToString(name)+"', "+rAfter+", "+killsFromBot+", "+deathsFromBot+", "+isElim+", NOW()) ON DUPLICATE KEY UPDATE fnKills = "+killsFromBot+", fnDeaths = "+deathsFromBot+", ftUpdated = NOW(), fnRating = "+rAfter;
@@ -267,7 +267,7 @@ class ElimGame {
 		players = p;
 		isElim = elim;
 	}
-	
+
 	public ElimGame(ElimGame eg) {
 		gameType = eg.gameType;
 		players = eg.players;

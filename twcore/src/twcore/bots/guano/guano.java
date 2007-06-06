@@ -241,7 +241,7 @@ public class guano extends SubspaceBot
     {
         try
         {
-            Vector altNicks = new Vector();
+            Vector<String> altNicks = new Vector<String>();
             ResultSet resultSet = m_botAction.SQLQuery(TWSITES_DATABASE,
                     "SELECT * " +
                     "FROM tblAlias A1, tblAlias A2, tblUser U1, tblUser U2 " +
@@ -308,13 +308,13 @@ public class guano extends SubspaceBot
     {
         public static final int FIND_CHECK = 0;
 
-        private TreeMap checkResults;
+        private TreeMap<String, String> checkResults;
         private String checkSender;
         private boolean isActive;
 
         public AltCheck()
         {
-            checkResults = new TreeMap();
+            checkResults = new TreeMap<String, String>();
             isActive = false;
         }
 
@@ -358,14 +358,14 @@ public class guano extends SubspaceBot
          */
         public Vector getResults()
         {
-            Vector results = new Vector();
-            Collection allResults = checkResults.values();
-            Iterator iterator = allResults.iterator();
+            Vector<String> results = new Vector<String>();
+            Collection<String> allResults = checkResults.values();
+            Iterator<String> iterator = allResults.iterator();
             String result;
 
             while(iterator.hasNext())
             {
-                result = (String) iterator.next();
+                result = iterator.next();
                 if(result != null)
                     results.add(result);
             }
