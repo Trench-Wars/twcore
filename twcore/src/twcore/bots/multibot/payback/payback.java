@@ -28,7 +28,7 @@ import twcore.core.events.PlayerLeft;
 
 public class payback extends MultiModule
 {
-    HashMap <String,Payback>payback;
+    HashMap <String,PaybackTask>payback;
     HashMap <String,HashSet<String>>beingTracked;
 
     int time = 30;
@@ -36,7 +36,7 @@ public class payback extends MultiModule
     boolean started = false;
 
     public void init() {
-        payback = new HashMap<String,Payback>();
+        payback = new HashMap<String,PaybackTask>();
         beingTracked = new HashMap<String,HashSet<String>>();
     }
 
@@ -55,12 +55,12 @@ public class payback extends MultiModule
         String killer = m_botAction.getPlayerName(event.getKillerID()).toLowerCase();
 
         if(payback.containsKey(killee + killer)) {
-            Payback pb = (Payback)payback.get(killee + killer);
+            PaybackTask pb = (PaybackTask)payback.get(killee + killer);
             m_botAction.cancelTask(pb);
             payback.remove(killee + killer);
             m_botAction.sendPrivateMessage(killer, "You have avenged your death and may continue to play.");
         } else {
-            Payback pb = new Payback(killee, m_botAction);
+            PaybackTask pb = new PaybackTask(killee, m_botAction);
             payback.put(killer + killee, pb);
             if(beingTracked.containsKey(killer)) {
                 HashSet <String>killed = beingTracked.get(killer);
@@ -85,7 +85,7 @@ public class payback extends MultiModule
             while(it.hasNext()) {
                 String avenger = (String)it.next();
                 if(payback.containsKey(player + avenger)) {
-                    Payback pb = (Payback)payback.get(player + avenger);
+                    PaybackTask pb = (PaybackTask)payback.get(player + avenger);
                     m_botAction.cancelTask(pb);
                     payback.remove(player + avenger);
                     m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");
@@ -104,7 +104,7 @@ public class payback extends MultiModule
                 while(it.hasNext()) {
                     String avenger = (String)it.next();
                     if(payback.containsKey(player + avenger)) {
-                        Payback pb = (Payback)payback.get(player + avenger);
+                        PaybackTask pb = (PaybackTask)payback.get(player + avenger);
                         m_botAction.cancelTask(pb);
                         payback.remove(player + avenger);
                         m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");
@@ -155,7 +155,7 @@ public class payback extends MultiModule
     public void cancel() {
         Iterator it = payback.values().iterator();
         while(it.hasNext()) {
-            Payback pb = (Payback)it.next();
+            PaybackTask pb = (PaybackTask)it.next();
             if(!pb.isCancelled())
                 m_botAction.cancelTask(pb);
         }
@@ -170,13 +170,13 @@ public class payback extends MultiModule
 
 }
 
-class Payback extends TimerTask {
+class PaybackTask extends TimerTask {
 
     String player;
     BotAction m_botAction;
     boolean cancelled = false;
 
-    public Payback(String name, BotAction ba) {
+    public PaybackTask(String name, BotAction ba) {
         player = name;
         m_botAction = ba;
     }
