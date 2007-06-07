@@ -215,38 +215,35 @@ public class Session extends Thread {
         Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
         m_subspaceBot.handleDisconnect();
 
-        // All threads in the group should not need to be interrupted.  This group includes
-        // every bot spawned, plus BotQueue itself -- it's extremely odd that a bot disconnect
-        // order requires that all other bot threads are inactive before executing the order.
-        /*
-        m_group.interrupt();
-        while( m_group.activeCount() != 0 ){
-            try {
-                m_group.interrupt();
-                Thread.sleep( 100 );
-            } catch( InterruptedException except ){
-            }
-        }
-        if( !m_group.isDestroyed() ){
-            m_group.destroy();
-        }
-        */
-
 		if(m_chatLog != null)
 		{
         	m_chatLog.flush();
         	m_chatLog.close();
 		}
 
-        // If a socket is in need of disconnection, there is no need to wait for it to
-        // stop sending and receiving packets: those packets will not be used anyhow!
-        // It's best to improve response time by 30 seconds or more by closing it immediately.
-        // This causes an exception to be thrown, and this is perfectly acceptable because
-        // we understand what we are doing.  Option included in CFG for old method if desired.
-        if( m_coreData.getGeneralSettings().getInt("FastDisconnect") == 1 )
+        // Experimental fast disconnect mode destroys the socket immediately.
+        if( m_coreData.getGeneralSettings().getInt("FastDisconnect") == 1 ) {
+            m_group.interrupt();
             m_socket.close();
-        else
-            m_socket.disconnect();
+        // Standard behavior: 30 second shutdown procedure
+        } else {
+            // All threads in the group should not need to be interrupted.  This group includes
+            // every bot spawned, plus BotQueue itself -- it's extremely odd that a bot disconnect
+            // order requires that all other bot threads are inactive before executing the order.
+            m_group.interrupt();
+            while( m_group.activeCount() != 0 ){
+                try {
+                    m_group.interrupt();
+                    Thread.sleep( 100 );
+                } catch( InterruptedException except ){
+                }
+            }
+            if( !m_group.isDestroyed() ){
+                m_group.destroy();
+            }
+
+            m_socket.disconnect();            
+        }
         Tools.printLog( m_name + " (" + classname + ") disconnected gracefully." );
         this.interrupt();
 
