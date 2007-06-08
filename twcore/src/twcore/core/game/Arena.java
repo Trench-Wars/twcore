@@ -551,7 +551,7 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( FlagDropped message ) {
-        Iterator it = getFlagIDIterator();
+        Iterator it = getFlagIterator();
         while( it.hasNext() ) {
             Flag flag = (Flag)it.next();
             if( flag.getPlayerID() == message.getPlayerID() )
