@@ -408,31 +408,7 @@ public class HubBot extends SubspaceBot {
      */
     public void handleUptimeCommand( String messager, String message ){
     	// Calculate the uptime by using the spawnutime variable (ms)
-    	long uptime = Math.round((new Date().getTime() - spawnutime)/1000); // Difference, uptime (sec)
-    	String response = new String();
-    	
-    	if(uptime > (24*60*60)) {	// Days
-    		int days = Math.round(uptime / (24*60*60));
-    		uptime = uptime - (days * (24*60*60));
-    		
-    		response += days+" day(s), ";
-    	}
-    	if(uptime > (60*60)) {		// Hours
-    		int hours = Math.round(uptime / (60*60));
-    		uptime = uptime - (hours * (60*60));
-    		
-    		response += hours+" hour(s), ";
-    	}
-    	if(uptime > 60) {			// Minutes
-    		int minutes = Math.round(uptime / 60);
-    		uptime = uptime - (minutes * 60);
-    		
-    		response += minutes+" minute(s) and ";
-    	}
-    	response += uptime + " second(s).";
-    	
-    	m_botAction.sendSmartPrivateMessage(messager, "Uptime: "+response);
-    	
+    	m_botAction.sendSmartPrivateMessage(messager, "Uptime: "+ Tools.getTimeDiffString(spawnutime, false) + ".");    	
     }
 
     /**
@@ -442,15 +418,17 @@ public class HubBot extends SubspaceBot {
      */
     public void handleShutdownCommand( String messager, String message ){    
         if( m_botAction.getOperatorList().isSysop( messager ) == true ) {
-            m_botAction.sendSmartPrivateMessage( messager, "Beginning shutdown of the core ..." + 
+            m_botAction.sendSmartPrivateMessage( messager, "Shutting down the core ..." + 
                     (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take on average 30 seconds per bot ...":"" ) );
             
             m_botAction.sendChatMessage( 1, "--- CORE SHUTDOWN initiated by " + messager + " ---" );
             System.out.println();
             System.out.println( "=== Shutdown initiated ===" );
+            String upString = Tools.getTimeDiffString( spawnutime, true);
             Tools.printLog( "Beginning shutdown by " + messager + ".");
+            Tools.printLog( "Total uptime: " + upString );
             m_botQueue.shutdownAllBots();
-            m_botAction.sendChatMessage( 1, "--- Shutdown complete.  Going away ... ---" );
+            m_botAction.sendChatMessage( 1, "--- Shutdown complete.  Uptime: " + upString + " ---" );
             try {
                 Thread.sleep(3000);
             } catch( InterruptedException e ){

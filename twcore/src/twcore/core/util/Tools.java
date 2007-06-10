@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 
 /**
@@ -187,7 +188,7 @@ public class Tools {
     }
 
     /**
-     * Our signature timestamp.
+     * Our signature timestamp.  (07 May 2007 14:12:32)
      * @return Formatted timestamp
      */
     public static String getTimeStamp(){
@@ -344,5 +345,60 @@ public class Tools {
         for (int j=result.length(); j < length; j++) result = result + padding;
 
         return result;
+    }
+    
+    
+    /**
+     * Based on a date given in milliseconds, return a String describing the
+     * difference between that time and the present time, such as:<p>
+     * <code>  2 days, 1 hour, 31 minutes and 45 seconds.</code><p>
+     * If abbrev is set to true, then the String is much less verbose:<p>
+     *  <code>  3d:14h:30m:21s</code>
+     * @param dateInMillis A date given in milliseconds.
+     * @param abbrev Whether or not to abbreviate the time string.
+     * @return
+     */
+    public static String getTimeDiffString( long dateInMillis, boolean abbrev ) {
+        long diffTime = Math.round((new Date().getTime() - dateInMillis )/1000);
+        String response = new String();
+        if(diffTime > (24*60*60)) {   // Days
+            int days = Math.round(diffTime / (24*60*60));
+            diffTime = diffTime - (days * (24*60*60));
+            if( abbrev )
+                response += days + "d:";
+            else
+                response += days+" day" + (days==1?"":"s") +", ";
+        }
+        if(diffTime > (60*60)) {    // Hours
+            int hours = Math.round(diffTime / (60*60));
+            diffTime = diffTime - (hours * (60*60));
+            if( abbrev )
+                response += hours + "h:";
+            else
+            response += hours+" hour" + (hours==1?"":"s") +", ";
+        }
+        if(diffTime > 60) {         // Minutes
+            int minutes = Math.round(diffTime / 60);
+            diffTime = diffTime - (minutes * 60);
+            if( abbrev )
+                response += minutes + "m:";
+            else
+            response += minutes+" minute" + (minutes==1?"":"s");
+        }
+        if( abbrev ) {
+            response += diffTime + "s";
+        } else {                 
+            if( diffTime != 0 ) {
+                if( !response.equals("") )
+                    response += " and ";
+                response += diffTime + " second" + (diffTime==1?"":"s");
+            } else {
+                if( !response.equals("") )
+                    response += " exactly";
+                else
+                    response = "0 seconds";
+            }
+        }
+        return response;
     }
 }
