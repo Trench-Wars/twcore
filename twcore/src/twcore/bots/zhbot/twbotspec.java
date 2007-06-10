@@ -68,7 +68,7 @@ public class twbotspec extends TWBotExtension
 {
   public static final String COLON = ":";
 
-  private Vector specTasks;
+  private Vector<SpecTask> specTasks;
 
   /**
    * Initializes the spec module.
@@ -76,7 +76,7 @@ public class twbotspec extends TWBotExtension
 
   public twbotspec()
   {
-    specTasks = new Vector();
+    specTasks = new Vector<SpecTask>();
   }
 
   /**
@@ -140,7 +140,7 @@ public class twbotspec extends TWBotExtension
 
   private void updateSpec()
   {
-    Iterator iterator = m_botAction.getPlayingPlayerIterator();
+    Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
     Player player;
     int playerID;
     int freq;
@@ -150,7 +150,7 @@ public class twbotspec extends TWBotExtension
 
     while(iterator.hasNext())
     {
-      player = (Player) iterator.next();
+      player = iterator.next();
       playerID = player.getPlayerID();
       freq = player.getFrequency();
       ship = player.getShipType();
@@ -332,7 +332,7 @@ public class twbotspec extends TWBotExtension
     else
       for(int index = 0; index < numTasks; index++)
       {
-        specTask = (SpecTask) specTasks.get(index);
+        specTask = specTasks.get(index);
         m_botAction.sendSmartPrivateMessage(sender, "Task " + index + ") " + specTask);
       }
   }
@@ -353,7 +353,7 @@ public class twbotspec extends TWBotExtension
     try
     {
       int taskNumber = Integer.parseInt(argTokens.nextToken());
-      SpecTask specTask = (SpecTask) specTasks.get(taskNumber);
+      SpecTask specTask = specTasks.get(taskNumber);
 
       specTasks.remove(taskNumber);
       m_botAction.sendArenaMessage("Removing Task: " + specTask.toString() + " -" + sender);
@@ -466,7 +466,7 @@ public class twbotspec extends TWBotExtension
 
     for(int index = 0; index < specTasks.size(); index++)
     {
-      specTask = (SpecTask) specTasks.get(index);
+      specTask = specTasks.get(index);
       if(specTask.isSameType(freq, ship, playerID))
         return specTask;
     }
@@ -686,7 +686,7 @@ public class twbotspec extends TWBotExtension
    * deaths.
    */
 
-  private class SpecTaskComparator implements Comparator
+  private class SpecTaskComparator implements Comparator<SpecTask>
   {
     /**
      * This method provides a compare function for two specTasks.  This is used
@@ -698,10 +698,8 @@ public class twbotspec extends TWBotExtension
      * tasks.
      */
 
-    public int compare(Object obj1, Object obj2)
+    public int compare(SpecTask task1, SpecTask task2)
     {
-      SpecTask task1 = (SpecTask) obj1;
-      SpecTask task2 = (SpecTask) obj2;
       int value1 = task1.getSpecType() * SpecTask.MAX_FREQ + task1.specID;
       int value2 = task2.getSpecType() * SpecTask.MAX_FREQ + task2.specID;
 

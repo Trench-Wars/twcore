@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.ArrayList;
 
 import twcore.core.BotAction;
 import twcore.core.stats.Statistics;
@@ -23,8 +24,8 @@ public class LeagueMatch
     private String m_team2Name;
     private int m_team1Size = 0;
     private int m_team2Size = 0;
-    private HashMap m_team1List;
-    private HashMap m_team2List;
+    private HashMap<String, LeaguePlayer> m_team1List;
+    private HashMap<String, LeaguePlayer> m_team2List;
     private int m_team1Subs = 0;
     private int m_team2Subs = 0;
     private int m_team1Switches = 0;
@@ -48,8 +49,8 @@ public class LeagueMatch
     private int m_overTime = 1;
     private String m_restartTime = "00:00";
     private BotAction m_botAction;
-    private Vector m_playerList;
-    private HashMap m_justSaw;
+    private Vector<String> m_playerList;
+    private HashMap<String, String> m_justSaw;
 
     //limits
     private int m_rosterLimit;
@@ -112,10 +113,10 @@ public class LeagueMatch
             Tools.printStackTrace(e);
             //m_botAction.sendPrivateMessage
         }
-        m_team1List = new HashMap();
-        m_team2List = new HashMap();
-        m_justSaw = new HashMap();
-        m_playerList = new Vector();
+        m_team1List = new HashMap<String, LeaguePlayer>();
+        m_team2List = new HashMap<String, LeaguePlayer>();
+        m_justSaw = new HashMap<String, String>();
+        m_playerList = new Vector<String>();
         m_botAction = botAction;
     }
 
@@ -317,11 +318,11 @@ public class LeagueMatch
             return true;
     }
 
-    public Iterator getTeam1List()
+    public Iterator<String> getTeam1List()
     {
         return m_team1List.keySet().iterator();
     }
-    public Iterator getTeam2List()
+    public Iterator<String> getTeam2List()
     {
         return m_team2List.keySet().iterator();
     }
@@ -476,10 +477,10 @@ public class LeagueMatch
     public int getTeam1Deaths()
     {
         int score = 0;
-        Iterator it = m_team1List.keySet().iterator();
+        Iterator<String> it = m_team1List.keySet().iterator();
         while (it.hasNext())
         {
-            String player = (String) it.next();
+            String player = it.next();
             score += getPlayer(player).getStatistic(Statistics.DEATHS);
         }
         score += (5 - m_team1Size) * 10;
@@ -489,10 +490,10 @@ public class LeagueMatch
     public int getTeam2Deaths()
     {
         int score = 0;
-        Iterator it = m_team2List.keySet().iterator();
+        Iterator<String> it = m_team2List.keySet().iterator();
         while (it.hasNext())
         {
-            String player = (String) it.next();
+            String player = it.next();
             score += getPlayer(player).getStatistic(Statistics.DEATHS);
         }
         score += (5 - m_team2Size) * 10;
@@ -522,11 +523,11 @@ public class LeagueMatch
     public boolean gameOver()
     {
         boolean over1 = true, over2 = true;
-        Iterator it = getTeam1List();
+        Iterator<String> it = getTeam1List();
         while (it.hasNext())
         {
             boolean playerOut = false;
-            String player = (String) it.next();
+            String player = it.next();
             if (getPlayer(player).isOutOfGame())
                 playerOut = true;
             if (!playerOut)
@@ -536,7 +537,7 @@ public class LeagueMatch
         while (it.hasNext())
         {
             boolean playerOut = false;
-            String player = (String) it.next();
+            String player = it.next();
             if (getPlayer(player).isOutOfGame())
                 playerOut = true;
             if (!playerOut)
@@ -552,17 +553,17 @@ public class LeagueMatch
 
     public String getClosestMatch(String name)
     {
-        Iterator it = getTeam1List();
+        Iterator<String> it = getTeam1List();
         while (it.hasNext())
         {
-            String player = (String) it.next();
+            String player = it.next();
             if (player.toLowerCase().startsWith(name))
                 return player;
         }
         it = getTeam2List();
         while (it.hasNext())
         {
-            String player = (String) it.next();
+            String player = it.next();
             if (player.toLowerCase().startsWith(name))
                 return player;
         }
@@ -601,7 +602,7 @@ public class LeagueMatch
             m_team2Size--;
         }
         for (int i = 0; i < m_playerList.size(); i++)
-            if (((String) m_playerList.elementAt(i)).equals(name))
+            if (m_playerList.elementAt(i).equals(name))
                 m_playerList.removeElementAt(i);
     }
 
@@ -637,7 +638,7 @@ public class LeagueMatch
 
         //Adds/removes players to 'watch' queue
         for (int i = 0; i < m_playerList.size(); i++)
-            if (((String) m_playerList.elementAt(i)).equals(playerOut))
+            if (m_playerList.elementAt(i).equals(playerOut))
                 m_playerList.removeElementAt(i);
         m_playerList.addElement(playerIn);
 
@@ -684,9 +685,9 @@ public class LeagueMatch
     public LeaguePlayer getPlayer(String name)
     {
         if (m_team1List.containsKey(name))
-            return ((LeaguePlayer) m_team1List.get(name));
+            return (m_team1List.get(name));
         else if (m_team2List.containsKey(name))
-            return ((LeaguePlayer) m_team2List.get(name));
+            return (m_team2List.get(name));
         else
             return null;
     }
@@ -696,10 +697,10 @@ public class LeagueMatch
         boolean first = true;
         String team1 = "In for " + getTeam1Name() + ": ";
         String team2 = "In for " + getTeam2Name() + ": ";
-        Iterator i = getTeam1List();
+        Iterator<String> i = getTeam1List();
         while (i.hasNext())
         {
-            String player = (String) i.next();
+            String player = i.next();
             m_botAction.setShip(player, getPlayer(player).getShip());
             m_botAction.setFreq(player, getPlayer(player).getFreq());
             if (first)
@@ -714,7 +715,7 @@ public class LeagueMatch
         i = getTeam2List();
         while (i.hasNext())
         {
-            String player = (String) i.next();
+            String player = i.next();
             m_botAction.setShip(player, getPlayer(player).getShip());
             m_botAction.setFreq(player, getPlayer(player).getFreq());
             if (first)
@@ -856,14 +857,14 @@ public class LeagueMatch
     {
         String mvp = "";
         int score = 0;
-        Iterator it;
+        Iterator<String> it;
         if (team == 1)
             it = m_team1List.keySet().iterator();
         else
             it = m_team2List.keySet().iterator();
         while (it.hasNext())
         {
-            String name = (String) it.next();
+            String name = it.next();
             if (score < getPlayer(name).getStatistic(Statistics.RATING))
             {
                 mvp = name;
@@ -877,19 +878,21 @@ public class LeagueMatch
     {
 
         int diff = Integer.MIN_VALUE;
-        Iterator i;
+        Iterator<String> strIter;
 
-        HashSet mvps = new HashSet();
-        HashMap[] teams = { m_team1List, m_team2List }; // just exists so I don't have to copy and paste code
+        HashSet<LeaguePlayer> mvps = new HashSet<LeaguePlayer>();
+        //HashMap[] teams = { m_team1List, m_team2List }; // just exists so I don't have to copy and paste code
+        ArrayList<HashMap<String, LeaguePlayer>> teams = new ArrayList<HashMap<String, LeaguePlayer>>(2);
+        teams.add(m_team1List); teams.add(m_team2List);
 
-        for (int j = 0;j < teams.length; j++) {
-            i = teams[j].keySet().iterator();
-            while (i.hasNext()) {
-                String player = (String) i.next();
+        for(int j = 0;j< teams.size()/*j < teams.length*/; j++) {
+        	strIter = teams.get(j).keySet().iterator();
+            while (strIter.hasNext()) {
+                String player = strIter.next();
                 LeaguePlayer lp = getPlayer(player);
                 int rate = lp.getStatistic(Statistics.TOTAL_KILLS) - lp.getStatistic(Statistics.TOTAL_TEAMKILLS) - lp.getStatistic(Statistics.DEATHS);
                 if (diff < rate) {
-                    mvps = new HashSet();
+                    mvps = new HashSet<LeaguePlayer>();
                     mvps.add(lp);
                     diff = rate;
                 } else if (diff == rate) {
@@ -899,15 +902,15 @@ public class LeagueMatch
         }
 
         // we now have a HashSet of mvps, let's filter out the ones with the most kills
-        i = mvps.iterator();
+        Iterator<LeaguePlayer> lpIter = mvps.iterator();
         int kills = Integer.MIN_VALUE;
-        HashSet finalmvps = new HashSet();
+        HashSet<String> finalmvps = new HashSet<String>();
 
-        while (i.hasNext()) {
-            LeaguePlayer lp = (LeaguePlayer) i.next();
+        while (lpIter.hasNext()) {
+            LeaguePlayer lp = lpIter.next();
             int weighted_kills = lp.getStatistic(Statistics.TOTAL_KILLS);
             if (kills < weighted_kills) {
-                finalmvps = new HashSet();
+                finalmvps = new HashSet<String>();
                 finalmvps.add(lp.getName());
                 kills = weighted_kills;
             } else if (kills == weighted_kills) {
@@ -921,16 +924,16 @@ public class LeagueMatch
             return "Nobody!";
         }
 
-        i = finalmvps.iterator();
-        String mvp_string = (String) i.next();
+        strIter = finalmvps.iterator();
+        String mvp_string = strIter.next();
 
-        if (! i.hasNext())
+        if (! strIter.hasNext())
             return mvp_string;
 
-        mvp_string = (String) i.next() + " and " + mvp_string;
+        mvp_string = strIter.next() + " and " + mvp_string;
 
-        while (i.hasNext())
-            mvp_string = (String) i.next() + ", " + mvp_string;
+        while (strIter.hasNext())
+            mvp_string = strIter.next() + ", " + mvp_string;
 
         return mvp_string;
 
@@ -938,14 +941,14 @@ public class LeagueMatch
 
     public void addFlagReward(int freq, int pts)
     {
-        Iterator it;
+        Iterator<String> it;
         if (freq == TEAM_ONE_FREQ)
             it = m_team1List.keySet().iterator();
         else
             it = m_team2List.keySet().iterator();
         while (it.hasNext())
         {
-            String player = (String) it.next();
+            String player = it.next();
             if (m_botAction.getFuzzyPlayerName(player) != null)
                 if (m_botAction.getPlayer(player).getShipType() != 0)
                     getPlayer(player).reportStatistic(Statistics.SCORE, pts);
@@ -955,10 +958,10 @@ public class LeagueMatch
     public String getTeam1Players()
     {
         String output = m_team1Name + "  ";
-        Iterator it = getTeam1List();
+        Iterator<String> it = getTeam1List();
         while (it.hasNext())
         {
-            String player = (String) it.next();
+            String player = it.next();
             output += Tools.formatString(" (" + getPlayer(player).getShip() + ") " + player, 17);
         }
         return output;
@@ -967,10 +970,10 @@ public class LeagueMatch
     public String getTeam2Players()
     {
         String output = m_team2Name + "  ";
-        Iterator it = getTeam2List();
+        Iterator<String> it = getTeam2List();
         while (it.hasNext())
         {
-            String player = (String) it.next();
+            String player = it.next();
             output += Tools.formatString(" (" + getPlayer(player).getShip() + ") " + player, 17);
         }
         return output;
@@ -1038,10 +1041,10 @@ public class LeagueMatch
         m_botAction.sendArenaMessage(Tools.formatString("", 67, "-"));
         m_botAction.sendArenaMessage(Tools.formatString("_  " + getTeam1Name(), 29) + "Kills   Deaths   TKs   LOs   SubbedBy");
         m_botAction.sendArenaMessage(Tools.formatString("", 67, "-"));
-        Iterator i = getTeam1List();
+        Iterator<String> i = getTeam1List();
         while (i.hasNext())
         {
-            String player = (String) i.next();
+            String player = i.next();
             String out = Tools.formatString(player, 29);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
@@ -1064,7 +1067,7 @@ public class LeagueMatch
         i = getTeam2List();
         while (i.hasNext())
         {
-            String player = (String) i.next();
+            String player = i.next();
             String out = Tools.formatString(player, 29);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
@@ -1096,10 +1099,10 @@ public class LeagueMatch
         m_botAction.sendArenaMessage(Tools.formatString("", 79, "-"));
         m_botAction.sendArenaMessage(Tools.formatString("_  " + getTeam1Name(), 29) + "Kills   Deaths   TKs   TeK   LOs   Score   SubbedBy");
         m_botAction.sendArenaMessage(Tools.formatString("", 79, "-"));
-        Iterator i = getTeam1List();
+        Iterator<String> i = getTeam1List();
         while (i.hasNext())
         {
-            String player = (String) i.next();
+            String player = i.next();
             String out = "_" + Tools.formatString(player, 28);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
@@ -1120,7 +1123,7 @@ public class LeagueMatch
         i = getTeam2List();
         while (i.hasNext())
         {
-            String player = (String) i.next();
+            String player = i.next();
             String out = "_" + Tools.formatString(player, 28);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.TOTAL_KILLS), 8);
             out += Tools.formatString("" + getPlayer(player).getStatistic(Statistics.DEATHS), 9);
@@ -1187,7 +1190,7 @@ public class LeagueMatch
         String name = "";
         try
         {
-            name = (String) m_playerList.elementAt(0);
+            name = m_playerList.elementAt(0);
             m_playerList.removeElementAt(0);
             m_playerList.addElement(name);
         }
@@ -1196,7 +1199,7 @@ public class LeagueMatch
         }
         if (m_justSaw.containsKey(name))
         {
-            int time = Integer.parseInt((String) m_justSaw.get(name));
+            int time = Integer.parseInt(m_justSaw.get(name));
             m_justSaw.remove(name);
             if ((int) (System.currentTimeMillis() / 1000) - time > 5)
                 return name;
@@ -1210,7 +1213,7 @@ public class LeagueMatch
     public void removeFromWatch(String name)
     {
         for (int i = 0; i < m_playerList.size(); i++)
-            if (((String) m_playerList.elementAt(i)).equals(name))
+            if (m_playerList.elementAt(i).equals(name))
                 m_playerList.removeElementAt(i);
     }
 

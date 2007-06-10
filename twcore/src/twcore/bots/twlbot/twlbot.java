@@ -69,7 +69,7 @@ public class twlbot extends SubspaceBot
 	private int m_idleTime;
 
 	private TimerTask m_checkTime;
-	private HashMap m_extensions;
+	private HashMap<String, TWLBotExtension> m_extensions;
 
 	//setting files
 	private File m_botRoot;
@@ -82,7 +82,7 @@ public class twlbot extends SubspaceBot
 	public twlbot(BotAction botAction)
 	{
 		super(botAction);
-		Vector repository = new Vector();
+		Vector<File> repository = new Vector<File>();
 		m_coreRoot = new File(botAction.getGeneralSettings().getString("Core Location"));
 		m_botRoot = new File(m_coreRoot.getPath() + "/twcore/bots/twlbot");
 		repository.add(m_coreRoot);
@@ -90,7 +90,7 @@ public class twlbot extends SubspaceBot
 
 		m_botAction = botAction;
 		m_botSettings = m_botAction.getBotSettings();
-		m_extensions = new HashMap();
+		m_extensions = new HashMap<String, TWLBotExtension>();
 
 		//register commands
 		m_commandInterpreter = new CommandInterpreter(m_botAction);
@@ -230,7 +230,7 @@ public class twlbot extends SubspaceBot
 	    {
 	        if (m_extensions.containsKey(key))
 	        {
-	            ((TWLBotExtension) m_extensions.remove(key)).cancel();
+	            m_extensions.remove(key).cancel();
 	            m_botAction.sendSmartPrivateMessage(name, key + " Successfully Removed");
 	        }
 	        else
@@ -259,10 +259,10 @@ public class twlbot extends SubspaceBot
 		else
 		{
 			m_botAction.sendSmartPrivateMessage(name, "Loaded modules are:");
-			Iterator i = m_extensions.keySet().iterator();
+			Iterator<String> i = m_extensions.keySet().iterator();
 			while (i.hasNext())
 			{
-				m_botAction.sendSmartPrivateMessage(name, (String) i.next());
+				m_botAction.sendSmartPrivateMessage(name, i.next());
 			}
 		}
 	}
@@ -284,7 +284,7 @@ public class twlbot extends SubspaceBot
 		key = key.toLowerCase();
 		if (m_extensions.containsKey(key))
 		{
-			Collection helps = ((TWLBotExtension) m_extensions.get(key)).getHelpMessages();
+			Collection<String> helps = m_extensions.get(key).getHelpMessages();
 			m_botAction.privateMessageSpam(name, helps);
 		}
 		else
@@ -301,11 +301,11 @@ public class twlbot extends SubspaceBot
 	public void do_allHelp(String name, String message)
 	{
 		m_botAction.privateMessageSpam(name, m_commandInterpreter.getCommandHelps());
-		Iterator i = m_extensions.keySet().iterator();
+		Iterator<String> i = m_extensions.keySet().iterator();
 		while (i.hasNext())
 		{
-			String key = (String) i.next();
-			TWLBotExtension ext = (TWLBotExtension) m_extensions.get(key);
+			String key = i.next();
+			TWLBotExtension ext = m_extensions.get(key);
 			m_botAction.sendSmartPrivateMessage(name, key + " module contains:");
 			m_botAction.privateMessageSpam(name, ext.getHelpMessages());
 		}
@@ -480,10 +480,10 @@ public class twlbot extends SubspaceBot
 	 */
 	private void clear()
 	{
-		Iterator i = m_extensions.values().iterator();
+		Iterator<TWLBotExtension> i = m_extensions.values().iterator();
 		while (i.hasNext())
 		{
-			((TWLBotExtension) i.next()).cancel();
+			i.next().cancel();
 		}
 		m_extensions.clear();
 	}
@@ -606,7 +606,7 @@ public class twlbot extends SubspaceBot
 	}
 	public void handleEvent(SubspaceEvent event)
 	{
-		distributeEvent((SubspaceEvent) event);
+		distributeEvent(event);
 	}
 	public void handleEvent(ScoreReset event)
 	{
@@ -689,18 +689,18 @@ public class twlbot extends SubspaceBot
         distributeEvent((SubspaceEvent) event);
     }
 
-    
+
 	/**
 	 * Distributes the subspace events to any extenstion that is registered
 	 * @param event The event to be distributed
 	 */
 	private void distributeEvent(SubspaceEvent event)
 	{
-		Iterator i = m_extensions.entrySet().iterator();
+		Iterator<Map.Entry<String, TWLBotExtension>> i = m_extensions.entrySet().iterator();
 		while (i.hasNext())
 		{
-			Map.Entry entry = (Map.Entry) i.next();
-			TWLBotExtension ext = (TWLBotExtension) entry.getValue();
+			Map.Entry<String, TWLBotExtension> entry = i.next();
+			TWLBotExtension ext = entry.getValue();
 			ext.handleEvent(event);
 		}
 	}

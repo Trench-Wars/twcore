@@ -49,7 +49,7 @@ import twcore.core.game.Player;
 
 public class twbotmessages extends TWBotExtension
 {
-  private Vector msgList;
+  private Vector<MsgTask> msgList;
   private boolean haveTargets;
 
   /**
@@ -58,7 +58,7 @@ public class twbotmessages extends TWBotExtension
 
   public twbotmessages()
   {
-    msgList = new Vector();
+    msgList = new Vector<MsgTask>();
     haveTargets = false;
   }
 
@@ -230,7 +230,7 @@ public class twbotmessages extends TWBotExtension
     {
       for(int index = 0; index < msgList.size(); index++)
       {
-        msgTask = (MsgTask) msgList.get(index);
+        msgTask = msgList.get(index);
         m_botAction.sendSmartPrivateMessage(sender, "Msg " + index + ") " + msgTask.toString());
       }
     }
@@ -253,7 +253,7 @@ public class twbotmessages extends TWBotExtension
 
       if(index >= msgList.size())
         throw new IllegalArgumentException("Invalid message number.");
-      MsgTask msgTask = (MsgTask) msgList.get(index);
+      MsgTask msgTask = msgList.get(index);
       m_botAction.cancelTask(msgTask);
       msgList.remove(index);
       m_botAction.sendSmartPrivateMessage(sender, "\'" + msgTask.toString() + "\' was removed.");
@@ -346,7 +346,7 @@ public class twbotmessages extends TWBotExtension
 
     for(int index = 0; index < msgList.size(); index++)
     {
-      msgTask = (MsgTask) msgList.get(index);
+      msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE)
         m_botAction.sendSmartPrivateMessage(playerName, msgTask.getMessage(), msgTask.getSoundCode());
     }
@@ -373,7 +373,7 @@ public class twbotmessages extends TWBotExtension
 
     for(int index = 0; index < msgList.size(); index++)
     {
-      msgTask = (MsgTask) msgList.get(index);
+      msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.TARGET_TYPE)
         if(msgTask.getTarget().equals(victimName)) {
           m_botAction.sendSmartPrivateMessage(playerName, msgTask.getMessage(), msgTask.getSoundCode());
@@ -392,7 +392,7 @@ public class twbotmessages extends TWBotExtension
 
     for(int index = 0; index < msgList.size(); index++)
     {
-      msgTask = (MsgTask) msgList.get(index);
+      msgTask = msgList.get(index);
       m_botAction.cancelTask(msgTask);
     }
   }

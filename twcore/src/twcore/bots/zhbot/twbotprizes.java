@@ -73,7 +73,7 @@ public class twbotprizes extends TWBotExtension
   public int MAX_SHIP = 8;
   public int MIN_SHIP = 1;
 
-  private Vector timerTasks;
+  private Vector<PrizeTask> timerTasks;
 
   /**
    * Creates a new twbotprizes instance.
@@ -81,7 +81,7 @@ public class twbotprizes extends TWBotExtension
 
   public twbotprizes()
   {
-    timerTasks = new Vector();
+    timerTasks = new Vector<PrizeTask>();
   }
 
   /**
@@ -514,7 +514,7 @@ public class twbotprizes extends TWBotExtension
       try
       {
         int prizeIndex = getPrizeIndex(argTokens.nextToken());
-        PrizeTask prizeTask = (PrizeTask) timerTasks.remove(prizeIndex);
+        PrizeTask prizeTask = timerTasks.remove(prizeIndex);
         m_botAction.cancelTask(prizeTask);
         m_botAction.sendSmartPrivateMessage(sender, "\'" + prizeTask.toString() + "\' was removed");
       }
@@ -561,7 +561,7 @@ public class twbotprizes extends TWBotExtension
       m_botAction.sendSmartPrivateMessage(sender, "No prizes registered.");
     for(int index = 0; index < timerTasks.size(); index++)
     {
-      prizeTask = (PrizeTask) timerTasks.get(index);
+      prizeTask = timerTasks.get(index);
       m_botAction.sendSmartPrivateMessage(sender, "Prize " + index + ": " + prizeTask.toString());
     }
   }
@@ -695,7 +695,7 @@ public class twbotprizes extends TWBotExtension
 
     for(int index = 0; index < timerTasks.size(); index++)
     {
-      prizeTask = (PrizeTask) timerTasks.get(index);
+      prizeTask = timerTasks.get(index);
       m_botAction.cancelTask(prizeTask);
     }
   }
@@ -735,11 +735,11 @@ public class twbotprizes extends TWBotExtension
   {
     try
     {
-      Iterator iterator = m_botAction.getPlayerIterator();
+      Iterator<Player> iterator = m_botAction.getPlayerIterator();
       Player player;
       while(iterator.hasNext())
       {
-        player = (Player) iterator.next();
+        player = iterator.next();
         if(player.getFrequency() == freqID)
           prizePlayer(player.getPlayerName(), prizeNum );
       }
@@ -760,11 +760,11 @@ public class twbotprizes extends TWBotExtension
   {
     try
     {
-      Iterator iterator = m_botAction.getPlayerIterator();
+      Iterator<Player> iterator = m_botAction.getPlayerIterator();
       Player player;
       while(iterator.hasNext())
       {
-        player = (Player) iterator.next();
+        player = iterator.next();
         if(player.getShipType() == ship)
           prizePlayer(player.getPlayerName(), prizeNum);
       }

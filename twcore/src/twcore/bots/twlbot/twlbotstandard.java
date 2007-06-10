@@ -43,14 +43,14 @@ public class twlbotstandard extends TWLBotExtension
     private boolean m_isBasePlayoff = false;    // Switch for playoff mode
     private boolean m_switchSubLock = false;    // To disallow multiple switch/sub cmds
 
-    private HashMap m_laggers;
+    private HashMap<String, Lagger> m_laggers;
     private int m_watch;
     private Objset m_myObjects;
     private java.util.Date m_lockDate;
     private java.util.Date m_lastRoundCutoffDate;
     private int m_season = 0; //current twl season defined in constructor from config file
-    private Vector m_twlCoordinators;
-    private Vector m_twlStaff;
+    private Vector<String> m_twlCoordinators;
+    private Vector<String> m_twlStaff;
 
     private String addingPlayer;
 
@@ -100,7 +100,7 @@ public class twlbotstandard extends TWLBotExtension
 
     public twlbotstandard()
     {
-        m_laggers = new HashMap();
+        m_laggers = new HashMap<String, Lagger>();
     }
 
     /**
@@ -924,10 +924,10 @@ public class twlbotstandard extends TWLBotExtension
         {
             int seconds = m_generalTime % 60;
             int minutes = (m_generalTime - seconds) / 60;
-            m_myObjects.showObject(730 + (int) ((minutes - minutes % 10) / 10));
-            m_myObjects.showObject(720 + (int) (minutes % 10));
-            m_myObjects.showObject(710 + (int) ((seconds - seconds % 10) / 10));
-            m_myObjects.showObject(700 + (int) (seconds % 10));
+            m_myObjects.showObject(730 + ((minutes - minutes % 10) / 10));
+            m_myObjects.showObject(720 + (minutes % 10));
+            m_myObjects.showObject(710 + ((seconds - seconds % 10) / 10));
+            m_myObjects.showObject(700 + (seconds % 10));
         }
         do_showTeamNames(m_match.getTeam1Name(), m_match.getTeam2Name());
         m_botAction.setObjects();
@@ -1236,7 +1236,7 @@ public class twlbotstandard extends TWLBotExtension
 
             if (m_laggers.containsKey(m_playerOut))
             {
-                Lagger l = (Lagger) m_laggers.get(m_playerOut);
+                Lagger l = m_laggers.get(m_playerOut);
                 m_botAction.cancelTask(l);
                 m_laggers.remove(m_playerOut);
             }
@@ -1284,7 +1284,7 @@ public class twlbotstandard extends TWLBotExtension
             m_match.getPlayer(name).notLaggedOut();
             if (m_laggers.containsKey(name))
             {
-                Lagger l = (Lagger) m_laggers.get(name);
+                Lagger l = m_laggers.get(name);
                 m_botAction.cancelTask(l);
                 m_laggers.remove(name);
             }
@@ -1312,7 +1312,7 @@ public class twlbotstandard extends TWLBotExtension
 
             if (m_laggers.containsKey(name))
             {
-                Lagger l = (Lagger) m_laggers.get(name);
+                Lagger l = m_laggers.get(name);
                 m_botAction.cancelTask(l);
                 m_laggers.remove(name);
             }
@@ -1773,11 +1773,11 @@ public class twlbotstandard extends TWLBotExtension
             {
                 if (m_laggers.containsKey(p.getPlayerName()))
                 {
-                    m_botAction.cancelTask((Lagger) m_laggers.get(p.getPlayerName()));
+                    m_botAction.cancelTask(m_laggers.get(p.getPlayerName()));
                     m_laggers.remove(p.getPlayerName());
                 }
                 m_laggers.put(p.getPlayerName(), new Lagger(p.getPlayerName(), m_match, m_laggers));
-                Lagger l = (Lagger) m_laggers.get(p.getPlayerName());
+                Lagger l = m_laggers.get(p.getPlayerName());
                 m_botAction.scheduleTask(l, LAGOUT_LIMIT * 60000);// 60000 is the number of milliseconds in a minute
             }
         }
@@ -1817,11 +1817,11 @@ public class twlbotstandard extends TWLBotExtension
         {
             if (m_laggers.containsKey(p.getPlayerName()))
             {
-                m_botAction.cancelTask((Lagger) m_laggers.get(p.getPlayerName()));
+                m_botAction.cancelTask(m_laggers.get(p.getPlayerName()));
                 m_laggers.remove(p.getPlayerName());
             }
             m_laggers.put(p.getPlayerName(), new Lagger(p.getPlayerName(), m_match, m_laggers));
-            Lagger l = (Lagger) m_laggers.get(p.getPlayerName());
+            Lagger l = m_laggers.get(p.getPlayerName());
             m_botAction.scheduleTask(l, LAGOUT_LIMIT * 60000); // 60000 is the number of milliseconds in a minute
         }
 
@@ -2076,9 +2076,9 @@ public class twlbotstandard extends TWLBotExtension
         }
     }
 
-    public Collection getHelpMessages()
+    public Collection<String> getHelpMessages()
     {
-        Vector help = new Vector();
+        Vector<String> help = new Vector<String>();
 
         help.add("---------------------- REF COMMANDS ------------------------------------");
         help.add("!loadgame <game#>                   - loads match identified by <game#>");
@@ -2231,11 +2231,11 @@ public class twlbotstandard extends TWLBotExtension
                     {
                         if (m_laggers.containsKey(name))
                         {
-                            m_botAction.cancelTask((Lagger) m_laggers.get(name));
+                            m_botAction.cancelTask(m_laggers.get(name));
                             m_laggers.remove(name);
                         }
                         m_laggers.put(name, new Lagger(name, m_match, m_laggers));
-                        Lagger l = (Lagger) m_laggers.get(name);
+                        Lagger l = m_laggers.get(name);
                         m_botAction.scheduleTask(l, 180000);
                         m_botAction.sendArenaMessage(name + " not here for " + m_match.getTeamName(name) + " and has 3 minutes to be subbed or return.");
                     }
@@ -2455,10 +2455,10 @@ public class twlbotstandard extends TWLBotExtension
                         + "' WHERE fnMatchID = "
                         + matchId);
 
-            Iterator it = m_match.getTeam1List();
+            Iterator<String> it = m_match.getTeam1List();
             while (it.hasNext())
             {
-                String name = (String) it.next();
+                String name = it.next();
                 LeaguePlayer p = m_match.getPlayer(name);
                 int outOfGame = 0;
                 if (p.isOutOfGame())
@@ -2548,7 +2548,7 @@ public class twlbotstandard extends TWLBotExtension
             it = m_match.getTeam2List();
             while (it.hasNext())
             {
-                String name = (String) it.next();
+                String name = it.next();
                 LeaguePlayer p = m_match.getPlayer(name);
                 int outOfGame = 0;
                 if (p.isOutOfGame())
@@ -2711,10 +2711,10 @@ public class twlbotstandard extends TWLBotExtension
             return;
         }
 
-        Iterator i = m_match.getTeam1List();
+        Iterator<String> i = m_match.getTeam1List();
         while (i.hasNext())
         {
-            String name = (String) i.next();
+            String name = i.next();
             DBPlayerData p = new DBPlayerData(m_botAction, mySQLHost, name, true);
             LeaguePlayer pp = m_match.getPlayer(name);
             String playerQuery =
@@ -2748,7 +2748,7 @@ public class twlbotstandard extends TWLBotExtension
         i = m_match.getTeam2List();
         while (i.hasNext())
         {
-            String name = (String) i.next();
+            String name = i.next();
             DBPlayerData p = new DBPlayerData(m_botAction, mySQLHost, name, true);
             LeaguePlayer pp = m_match.getPlayer(name);
             String playerQuery =
@@ -2810,12 +2810,12 @@ public class twlbotstandard extends TWLBotExtension
         java.util.Date m_ftTimeStarted;
         java.util.Date m_ftTimeEnded;
         LeaguePlayer.LeaguePlayerShip LPS;
-        Iterator i = m_match.getPlayer(name).getPlayerShips();
+        Iterator<LeaguePlayer.LeaguePlayerShip> i = m_match.getPlayer(name).getPlayerShips();
         String started, ended;
 
         while (i.hasNext())
         {
-            LPS = (LeaguePlayer.LeaguePlayerShip) i.next();
+            LPS = i.next();
             m_ftTimeStarted = LPS.getTimeStarted();
             m_ftTimeEnded = LPS.getTimeEnded();
 

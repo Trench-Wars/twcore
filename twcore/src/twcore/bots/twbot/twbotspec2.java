@@ -124,7 +124,7 @@ public class twbotspec2 extends TWBotExtension
         defaults.ship = -1;
         defaults.player = null;
 
-        specTasks = new ItemCommand<SpecTask>(botAction, defaults);
+        specTasks = new ItemCommand<SpecTask>(botAction, defaults, defaults.getClass());
         specTasks.restrictSetting("freq", 0, 9999);
         specTasks.restrictSetting("ship", 1, 8);
         specTasks.restrictSetting("deaths", 1, 999);

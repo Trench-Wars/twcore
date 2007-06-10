@@ -41,9 +41,9 @@ public class zonerbot extends SubspaceBot
   public static final int REQUEST_LIFE_TIME = 120;
   public static final int NATURAL_LINE_LENGTH = 200;
 
-  private VectorMap requestList;
-  private VectorMap advertQueue;
-  private TimedHashSet recentAdvertList;
+  private VectorMap<String, RequestRecord> requestList;
+  private VectorMap<String, Advert> advertQueue;
+  private TimedHashSet<String> recentAdvertList;
   private AdvertTimer advertTimer;
   private IdleTimer idleTimer;
   private int advertTime;
@@ -61,9 +61,9 @@ public class zonerbot extends SubspaceBot
   {
     super(botAction);
     requestEvents();
-    requestList = new VectorMap();
-    advertQueue = new VectorMap();
-    recentAdvertList = new TimedHashSet();
+    requestList = new VectorMap<String, RequestRecord>();
+    advertQueue = new VectorMap<String, Advert>();
+    recentAdvertList = new TimedHashSet<String>();
     advertTime = 10;
     idleTime = 5;
     recentAdvertTime = 5;
@@ -169,7 +169,7 @@ public class zonerbot extends SubspaceBot
 
     for(int index = 0; index < requestList.size(); index++)
     {
-      requestRecord = (RequestRecord) requestList.get(index);
+      requestRecord = requestList.get(index);
       m_botAction.sendSmartPrivateMessage(sender, requestRecord.toString());
     }
   }
@@ -271,7 +271,7 @@ public class zonerbot extends SubspaceBot
   private void doAdvertCmd(String sender)
   {
     String lowerSender = sender.toLowerCase();
-    Advert advert = (Advert) advertQueue.get(lowerSender);
+    Advert advert = advertQueue.get(lowerSender);
 
     if(advert == null)
       throw new RuntimeException("You must claim an advert first.");
@@ -335,7 +335,7 @@ public class zonerbot extends SubspaceBot
   private void doOldAdvertCmd(String sender, String argString)
   {
     String lowerSender = sender.toLowerCase();
-    Advert advert = (Advert) advertQueue.get(lowerSender);
+    Advert advert = advertQueue.get(lowerSender);
 
     if(advert == null )
       throw new RuntimeException("You must claim an advert first.");
@@ -362,7 +362,7 @@ public class zonerbot extends SubspaceBot
    */
   private void doSetAdvertCmd(String sender, String argString)
   {
-    Advert advert = (Advert) advertQueue.get(sender.toLowerCase());
+    Advert advert = advertQueue.get(sender.toLowerCase());
 
     if(advert == null)
       throw new RuntimeException("You must claim an advert first.");
@@ -388,7 +388,7 @@ public class zonerbot extends SubspaceBot
   {
     try
     {
-      Advert advert = (Advert) advertQueue.get(sender.toLowerCase());
+      Advert advert = advertQueue.get(sender.toLowerCase());
       int sound = Integer.parseInt(argString);
 
       if(advert == null)
@@ -417,7 +417,7 @@ public class zonerbot extends SubspaceBot
   private void doViewAdvertCmd(String sender, String argString)
   {
     OperatorList opList = m_botAction.getOperatorList();
-    Advert advert = (Advert) advertQueue.get(argString.toLowerCase());
+    Advert advert = advertQueue.get(argString.toLowerCase());
     String advertText;
 
     if(!opList.isZH(argString))
@@ -443,7 +443,7 @@ public class zonerbot extends SubspaceBot
    */
   private void doViewAdvertCmd(String sender)
   {
-    Advert advert = (Advert) advertQueue.get(sender.toLowerCase());
+    Advert advert = advertQueue.get(sender.toLowerCase());
     String advertText;
 
     if (advert == null)
@@ -468,7 +468,7 @@ public class zonerbot extends SubspaceBot
    */
   private void doClearAdvertCmd(String sender)
   {
-    Advert advert = (Advert) advertQueue.get(sender.toLowerCase());
+    Advert advert = advertQueue.get(sender.toLowerCase());
 
     if (advert == null)
       throw new RuntimeException("You must claim an advert first.");
@@ -566,7 +566,7 @@ public class zonerbot extends SubspaceBot
     if(removeIndex == 0)
       removeCurrentAdverter();
     for(int notifyIndex = removeIndex; notifyIndex < advertQueue.size(); notifyIndex++)
-      notifyQueuePosition((String) advertQueue.getKey(notifyIndex));
+      notifyQueuePosition(advertQueue.getKey(notifyIndex));
   }
 
   /**
@@ -590,12 +590,12 @@ public class zonerbot extends SubspaceBot
   private void doStatusCmd(String sender)
   {
     if(advertQueue.size() > 0)
-      m_botAction.sendSmartPrivateMessage(sender, "Current advert belongs to: " + (String) advertQueue.firstKey() + ".");
+      m_botAction.sendSmartPrivateMessage(sender, "Current advert belongs to: " + advertQueue.firstKey() + ".");
     if(advertQueue.size() > 1)
     {
       m_botAction.sendSmartPrivateMessage(sender, "People in queue:");
       for(int index = 1; index < advertQueue.size(); index++)
-        m_botAction.sendSmartPrivateMessage(sender, index + ". " + (String) advertQueue.getKey(index));
+        m_botAction.sendSmartPrivateMessage(sender, index + ". " + advertQueue.getKey(index));
     }
     notifyQueuePosition(sender);
   }
@@ -675,7 +675,7 @@ public class zonerbot extends SubspaceBot
    */
   private void doApproveCmd(String sender, String argString)
   {
-    Advert advert = (Advert) advertQueue.get(argString.toLowerCase());
+    Advert advert = advertQueue.get(argString.toLowerCase());
 
     if(advert == null)
       throw new RuntimeException(argString + " has not claimed an advert yet.");
@@ -967,7 +967,7 @@ public class zonerbot extends SubspaceBot
 
     for(;;)
     {
-      requestRecord = (RequestRecord) requestList.get(index);
+      requestRecord = requestList.get(index);
       if(requestRecord == null ||
          System.currentTimeMillis() - requestRecord.getTimeRequested() > REQUEST_LIFE_TIME)
         break;
@@ -1075,7 +1075,7 @@ public class zonerbot extends SubspaceBot
 
     public void run()
     {
-      String idleAdverter = (String) advertQueue.firstKey();
+      String idleAdverter = advertQueue.firstKey();
 
       m_botAction.sendSmartPrivateMessage(idleAdverter, "You have failed to use your advert and it has expired.");
       removeFromQueue(0);
@@ -1103,7 +1103,7 @@ public class zonerbot extends SubspaceBot
      */
     public void run()
     {
-      String currentAdverter = (String) advertQueue.firstKey();
+      String currentAdverter = advertQueue.firstKey();
 
       if(currentAdverter != null)
       {

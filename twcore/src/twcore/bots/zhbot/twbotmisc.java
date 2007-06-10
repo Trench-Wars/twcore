@@ -19,7 +19,7 @@ public class twbotmisc extends TWBotExtension {
 	boolean 	event = false, tugAWar = false, boomBall = false;
 	TimerTask   startEvent;
 	/* Used for respawn timers */
-	HashMap     players = new HashMap();
+	HashMap<String, String> players = new HashMap<String, String>();
 	/* Tugawar variables */
 	String		capZero, capOne;
 	int			capZeroD = 0, capOneD = 0;
@@ -57,12 +57,12 @@ public class twbotmisc extends TWBotExtension {
 	    		m_botAction.sendUnfilteredPublicMessage( "?set kill:enterdelay:0" );
 	    		startEvent = new TimerTask() {
 	    			public void run() {
-	    				Iterator i = m_botAction.getPlayingPlayerIterator();
+	    				Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 						if( i == null ) return;
-						Vector zeroTeam = new Vector();
-						Vector oneTeam = new Vector();
+						Vector<String> zeroTeam = new Vector<String>();
+						Vector<String> oneTeam = new Vector<String>();
 						while( i.hasNext() ){
-							Player player = (Player)i.next();
+							Player player = i.next();
 							String curName   = player.getPlayerName();
 							int    freq	  = player.getFrequency();
 						    if( freq == 0 ) {
@@ -76,8 +76,8 @@ public class twbotmisc extends TWBotExtension {
 	    				Random generator = new Random();
 						int randZero = Math.abs( generator.nextInt() ) % zeroTeam.size();
 						int randOne  = Math.abs( generator.nextInt() ) % oneTeam.size();
-						capZero = (String)zeroTeam.elementAt( randZero);
-						capOne = (String)oneTeam.elementAt( randOne );
+						capZero = zeroTeam.elementAt( randZero);
+						capOne = oneTeam.elementAt( randOne );
 						m_botAction.sendArenaMessage( "GO GO GO!!!", 104);
 						m_botAction.sendArenaMessage( "Team 0 Cap: " + capZero );
 						m_botAction.sendArenaMessage( "Team 1 Cap: " + capOne );
@@ -114,9 +114,9 @@ public class twbotmisc extends TWBotExtension {
 		if( !event ) {
 			MiscTask thisCheck = new MiscTask( "Check__Players", -1 );
 	    	m_botAction.scheduleTaskAtFixedRate( thisCheck, 0, 1000 );
-			Iterator i = m_botAction.getPlayingPlayerIterator();
+			Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 			while( i.hasNext() ){
-				Player player = (Player)i.next();
+				Player player = i.next();
 				String curName   = player.getPlayerName();
 				int    freq	  = player.getFrequency();
 				if( freq == 0 ) m_botAction.warpTo( curName, 511, 549 );
@@ -268,10 +268,10 @@ public class twbotmisc extends TWBotExtension {
     				for( int i=0; i < 6; i++ )
     				 areas[i] = 0;
     				//Checks player positions to toggle doors
-    				Iterator i = m_botAction.getPlayingPlayerIterator();
+    				Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 					if( i == null ) return;
 					while( i.hasNext() ){
-						Player player = (Player)i.next();
+						Player player = i.next();
 						String curName= player.getPlayerName();
 						int    xpos	  = player.getXLocation();
 						int    ypos   = player.getYLocation();

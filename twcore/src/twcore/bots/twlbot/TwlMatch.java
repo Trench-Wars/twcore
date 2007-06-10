@@ -28,8 +28,8 @@ public class TwlMatch
 	int team2Subs = 0;
 	int team1Swaps = 0;
 	int team2Swaps = 0;
-	HashMap team1 = new HashMap();
-	HashMap team2 = new HashMap();
+	HashMap<String, PlayerProfile> team1 = new HashMap<String, PlayerProfile>();
+	HashMap<String, PlayerProfile> team2 = new HashMap<String, PlayerProfile>();
 	int team1Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	int team2Ships[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	final int shipLimits[] = { 8, 8, 8, 0, 1, 8, 8, 2 };
@@ -269,9 +269,9 @@ public class TwlMatch
 	public PlayerProfile getPlayer(String player)
 	{
 		if (team1.containsKey(player))
-			return (PlayerProfile) team1.get(player);
+			return team1.get(player);
 		else if (team2.containsKey(player))
-			return (PlayerProfile) team2.get(player);
+			return team2.get(player);
 		else
 			return new PlayerProfile();
 	}
@@ -329,11 +329,11 @@ public class TwlMatch
 	public String getTeam1Players()
 	{
 		String output = team1Name + "  ";
-		Set set = team1.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team1.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			output += Tools.formatString(" (" + getPlayer(player).getShip() + ") " + player, 17);
 		}
 		return output;
@@ -342,11 +342,11 @@ public class TwlMatch
 	public String getTeam2Players()
 	{
 		String output = team2Name + "  ";
-		Set set = team2.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team2.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			output += Tools.formatString(" (" + getPlayer(player).getShip() + ") " + player, 17);
 		}
 		return output;
@@ -372,11 +372,11 @@ public class TwlMatch
 	public int getTeam1Score()
 	{
 		int score = 0;
-		Set set = team1.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team1.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			score += getPlayer(player).getData(4);
 		}
 		return score;
@@ -385,11 +385,11 @@ public class TwlMatch
 	public int getTeam2Score()
 	{
 		int score = 0;
-		Set set = team2.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team2.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			score += getPlayer(player).getData(4);
 		}
 		return score;
@@ -398,11 +398,11 @@ public class TwlMatch
 	public int getTeam1Deaths()
 	{
 		int score = 0;
-		Set set = team1.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team1.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			score += getPlayer(player).getDeaths();
 		}
 		score += (5 - team1Size) * 10;
@@ -412,11 +412,11 @@ public class TwlMatch
 	public int getTeam2Deaths()
 	{
 		int score = 0;
-		Set set = team2.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team2.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			score += getPlayer(player).getDeaths();
 		}
 		score += (5 - team2Size) * 10;
@@ -426,17 +426,17 @@ public class TwlMatch
 	public int getTeamScore(int id)
 	{
 		int score = 0;
-		Set set = null;
+		Set<String> set = null;
 		if (id == team1Id)
 			set = team1.keySet();
 		else if (id == team2Id)
 			set = team2.keySet();
 		else
 			return 0;
-		Iterator it = set.iterator();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			score += getPlayer(player).getData(4);
 		}
 		return score;
@@ -459,11 +459,11 @@ public class TwlMatch
 
 	public void addFlagReward(BotAction m_botAction, int freq, int pts)
 	{
-		Set set = team1.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team1.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			if (m_botAction.getFuzzyPlayerName(player) != null)
 				if (getPlayer(player).getFreq() == freq && m_botAction.getPlayer(player).getShipType() != 0)
 					getPlayer(player).setData(4, getPlayer(player).getData(4) + pts);
@@ -472,7 +472,7 @@ public class TwlMatch
 		it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			if (m_botAction.getFuzzyPlayerName(player) != null)
 				if (getPlayer(player).getFreq() == freq && m_botAction.getPlayer(player).getShipType() != 0)
 					getPlayer(player).setData(4, getPlayer(player).getData(4) + pts);
@@ -482,12 +482,12 @@ public class TwlMatch
 	public boolean gameOver(BotAction m_botAction)
 	{
 		boolean over1 = true, over2 = true;
-		Set set = team1.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team1.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
 			boolean playerOut = false;
-			String player = (String) it.next();
+			String player = it.next();
 			if (getPlayer(player).getData(9) == -1)
 				playerOut = true;
 			if (getPlayer(player).getData(1) >= 3)
@@ -503,7 +503,7 @@ public class TwlMatch
 		while (it.hasNext())
 		{
 			boolean playerOut = false;
-			String player = (String) it.next();
+			String player = it.next();
 			if (getPlayer(player).getData(9) == -1)
 				playerOut = true;
 			if (getPlayer(player).getData(1) >= 3)
@@ -520,15 +520,15 @@ public class TwlMatch
 			return false;
 	}
 
-	public Iterator getTeam1List()
+	public Iterator<String> getTeam1List()
 	{
-		Set set = team1.keySet();
+		Set<String> set = team1.keySet();
 		return set.iterator();
 	}
 
-	public Iterator getTeam2List()
+	public Iterator<String> getTeam2List()
 	{
-		Set set = team2.keySet();
+		Set<String> set = team2.keySet();
 		return set.iterator();
 	}
 
@@ -537,11 +537,11 @@ public class TwlMatch
 		int kills = 0;
 		int rec = -20;
 		String mvp = "";
-		Set set = team1.keySet();
-		Iterator it = set.iterator();
+		Set<String> set = team1.keySet();
+		Iterator<String> it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			int pRec = getPlayer(player).getKills() - getPlayer(player).getDeaths();
 			if (rec < pRec)
 			{
@@ -566,7 +566,7 @@ public class TwlMatch
 		it = set.iterator();
 		while (it.hasNext())
 		{
-			String player = (String) it.next();
+			String player = it.next();
 			int pRec = getPlayer(player).getKills() - getPlayer(player).getDeaths();
 			if (rec < pRec)
 			{

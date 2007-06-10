@@ -7,15 +7,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-public class VectorMap implements Map
+public class VectorMap<K,V> implements Map<K,V>
 {
-  private Vector keys;
-  private Vector values;
+  private Vector<K> keys;
+  private Vector<V> values;
 
   public VectorMap()
   {
-    keys = new Vector();
-    values = new Vector();
+    keys = new Vector<K>();
+    values = new Vector<V>();
   }
 
   /**
@@ -79,7 +79,7 @@ public class VectorMap implements Map
    * @return the value indexed by o is returned.  If o is not a key then null
    * is returned.
    */
-  public Object get(Object o)
+  public V get(Object o)
   {
     int index = indexOfKey(o);
 
@@ -93,7 +93,7 @@ public class VectorMap implements Map
    *
    * @return the first value in the VectorMap is returned.
    */
-  public Object firstValue()
+  public V firstValue()
   {
     if(values.isEmpty())
       return null;
@@ -105,7 +105,7 @@ public class VectorMap implements Map
    *
    * @return the first key in the VectorMap is returned.
    */
-  public Object firstKey()
+  public K firstKey()
   {
     if(keys.isEmpty())
       return null;
@@ -117,7 +117,7 @@ public class VectorMap implements Map
    *
    * @return the last value in the VectorMap is returned.
    */
-  public Object lastValue()
+  public V lastValue()
   {
     if(values.isEmpty())
       return null;
@@ -129,7 +129,7 @@ public class VectorMap implements Map
    *
    * @return the last key in the VectorMap is returned.
    */
-  public Object lastKey()
+  public K lastKey()
   {
     if(keys.isEmpty())
       return null;
@@ -143,7 +143,7 @@ public class VectorMap implements Map
    * @return the value at the specified index is returned.  If the index is
    * invalid then null is returned.
    */
-  public Object get(int index)
+  public V get(int index)
   {
     if(index < 0 || index >= values.size())
       return null;
@@ -157,7 +157,7 @@ public class VectorMap implements Map
    * @return the key at the specified index is returned.  If the index is
    * invalid then null is returned.
    */
-  public Object getKey(int index)
+  public K getKey(int index)
   {
     if(index < 0 || index >= keys.size())
       return null;
@@ -173,7 +173,7 @@ public class VectorMap implements Map
    * @param value is the value to add.
    * @return the value that was added is returned.
    */
-  public Object put(Object key, Object value)
+  public V put(K key, V value)
   {
     int index = indexOfKey(key);
 
@@ -197,14 +197,14 @@ public class VectorMap implements Map
    * @param value is the value to add.
    * @return the value that was added is returned.
    */
-  public Object put(int index, Object key, Object value)
+  public V put(int index, K key, V value)
   {
     int oldIndex = indexOfKey(key);
 
     if(oldIndex != -1)
       remove(oldIndex);
     keys.add(index, key);
-    keys.add(index, value);
+    values.add(index, value);
     return value;
   }
 
@@ -214,7 +214,7 @@ public class VectorMap implements Map
    * @param o is the key to remove.
    * @return the value that was removed is returned.
    */
-  public Object remove(Object o)
+  public V remove(Object o)
   {
     int index = indexOfKey(o);
 
@@ -232,7 +232,7 @@ public class VectorMap implements Map
    * @param index is the location of the value to remove.
    * @return the value that was removed is returned.
    */
-  public Object remove(int index)
+  public V remove(int index)
   {
     if(index < 0 || index >= keys.size())
       return null;
@@ -246,12 +246,12 @@ public class VectorMap implements Map
    *
    * @param m is the map to copy.
    */
-  public void putAll(Map m)
+  public void putAll(Map<? extends K, ? extends V> m)
   {
-    Set set = m.keySet();
-    Iterator iterator = set.iterator();
-    Object key;
-    Object value;
+    Set<? extends K> set = m.keySet();
+    Iterator<? extends K> iterator = set.iterator();
+    K key;
+    V value;
 
 
     while(iterator.hasNext())
@@ -277,9 +277,9 @@ public class VectorMap implements Map
    *
    * @return the set of keys is returned.
    */
-  public Set keySet()
+  public Set<K> keySet()
   {
-    LinkedHashSet set = new LinkedHashSet(keys);
+    LinkedHashSet<K> set = new LinkedHashSet<K>(keys);
     return set;
   }
 
@@ -288,7 +288,7 @@ public class VectorMap implements Map
    *
    * @return the values of the map is returned.
    */
-  public Collection values()
+  public Collection<V> values()
   {
     return values;
   }
@@ -298,7 +298,7 @@ public class VectorMap implements Map
    *
    * @return a RuntimeException is thrown.
    */
-  public Set entrySet()
+  public Set<Map.Entry<K,V>> entrySet()
   {
     throw new RuntimeException("VectorMap does not support entrySet()");
   }

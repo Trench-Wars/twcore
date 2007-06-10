@@ -34,7 +34,7 @@ public class StringTools
 
   public static String[] wrapString(String string, int lineLength)
   {
-    Vector result = new Vector();
+    Vector<String> result = new Vector<String>();
     int beginIndex = 0;
     int endIndex = 0;
 
@@ -47,7 +47,7 @@ public class StringTools
       endIndex = getWrapIndex(string, lineLength, beginIndex);
       result.add(string.substring(beginIndex, endIndex));
     } while(endIndex != string.length());
-    return (String[]) result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
   }
 
   /**

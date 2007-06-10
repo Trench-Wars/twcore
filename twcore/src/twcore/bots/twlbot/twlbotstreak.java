@@ -19,7 +19,7 @@ import twcore.core.game.Player;
 public class twlbotstreak extends TWLBotExtension
 {
 
-    HashMap playerMap;
+    HashMap<String, String> playerMap;
     boolean running = false;
     int streak = 3, reStreak = 3;
     String sMessages[] = { 	" On Fire!",
@@ -33,7 +33,7 @@ public class twlbotstreak extends TWLBotExtension
 
     public twlbotstreak()
     {
-        playerMap = new HashMap();
+        playerMap = new HashMap<String, String>();
     }
 
     /**
@@ -129,7 +129,7 @@ public class twlbotstreak extends TWLBotExtension
                 playerMap.put(killer, "0");
             if (playerMap.containsKey(killer))
             {
-                String ct = (String) playerMap.get(killer);
+                String ct = playerMap.get(killer);
                 int it = Integer.parseInt(ct);
                 it++;
                 playerMap.remove(killer);
@@ -159,9 +159,9 @@ public class twlbotstreak extends TWLBotExtension
     /**
      * Help messages for the streak Module
      */
-    public Collection getHelpMessages()
+    public Collection<String> getHelpMessages()
     {
-        Vector messages = new Vector();
+        Vector<String> messages = new Vector<String>();
 
         messages.add("!streak <start> <update>  - Watches for streaks beginning at <start> and updated every <update>");
         messages.add("!streakoff                - Turns off the streak watcher.");

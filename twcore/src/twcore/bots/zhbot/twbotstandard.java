@@ -23,7 +23,7 @@ import twcore.core.util.Tools;
 
 public class twbotstandard extends TWBotExtension {
     int specPlayers = 0; //if >0, spec player at X deaths
-    LinkedList arenaTasks = new LinkedList();
+    LinkedList<ArenaMsgTask> arenaTasks = new LinkedList<ArenaMsgTask>();
 
     /** Creates a new instance of portabotTestModule */
     public twbotstandard() {
@@ -96,9 +96,9 @@ public class twbotstandard extends TWBotExtension {
     }
 
     public void killEasy() {
-    	Iterator it = m_botAction.getPlayingPlayerIterator();
+    	Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
     	while(it.hasNext()) {
-    		Player p = (Player)it.next();
+    		Player p = it.next();
     		Ship s = m_botAction.getShip();
     		s.moveAndFire(p.getXLocation(), p.getYLocation(), s.getWeaponNumber((byte)4, (byte)2, false, false, true, (byte)8, false));
     	}
@@ -114,12 +114,12 @@ public class twbotstandard extends TWBotExtension {
 		int current = 0;
 		int howmany = _teams - 1;
 
-		Iterator i = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 		while( i.hasNext() ) {
 
 			if(current > howmany)
 				current = 0;
-			Player p = (Player)i.next();
+			Player p = i.next();
 			m_botAction.setFreq( p.getPlayerID(), current );
 			current++;
 		}
@@ -213,14 +213,14 @@ public class twbotstandard extends TWBotExtension {
                     message = message.substring( 0, pos );
 
                     arenaTasks.add( new ArenaMsgTask( message, soundCode ) );
-                    m_botAction.scheduleTaskAtFixedRate( (ArenaMsgTask)arenaTasks.getLast(), 0, interval );
+                    m_botAction.scheduleTaskAtFixedRate( arenaTasks.getLast(), 0, interval );
                 } else {
                     m_botAction.sendPrivateMessage( name, "Invalid sound number" );
                     return;
                 }
             } else {
                 arenaTasks.add( new ArenaMsgTask( message ) );
-                m_botAction.scheduleTaskAtFixedRate( (ArenaMsgTask)arenaTasks.getLast(), 0, interval );
+                m_botAction.scheduleTaskAtFixedRate( arenaTasks.getLast(), 0, interval );
             }
         } else {
             m_botAction.sendPrivateMessage( name, "Please use !addmsg <interval>,<message>" );
@@ -235,7 +235,7 @@ public class twbotstandard extends TWBotExtension {
         }
 
         for( int i = 0; i < arenaTasks.size(); i++ ){
-            task = (ArenaMsgTask)arenaTasks.get(i);
+            task = arenaTasks.get(i);
             String message = i + ". " + task.getMessage();
             if( task.getSoundCode() != 0 ){
                 message += "%" + task.getSoundCode();
@@ -251,7 +251,7 @@ public class twbotstandard extends TWBotExtension {
 
     public void clearArenaMsgs(){
         for( int i = 0; i < arenaTasks.size(); i++){
-            m_botAction.cancelTask((ArenaMsgTask)arenaTasks.get(i));
+            m_botAction.cancelTask(arenaTasks.get(i));
         }
         arenaTasks.clear();
     }
@@ -260,7 +260,7 @@ public class twbotstandard extends TWBotExtension {
         ArenaMsgTask task;
 
         try{
-            task = (ArenaMsgTask)arenaTasks.get(index);
+            task = arenaTasks.get(index);
         } catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Invalid message number" );
             return;

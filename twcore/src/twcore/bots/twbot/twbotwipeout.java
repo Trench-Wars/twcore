@@ -21,9 +21,9 @@ public class twbotwipeout extends TWBotExtension
 {
 	boolean isRunning = false;
 	int speed = 30;
-	HashSet players = new HashSet();
-	HashSet playersKicked = new HashSet();
-	HashSet gotKill = new HashSet();
+	HashSet<String> players = new HashSet<String>();
+	HashSet<String> playersKicked = new HashSet<String>();
+	HashSet<String> gotKill = new HashSet<String>();
 	TimerTask starter;
 	TimerTask specer;
 	TimerTask tenSecWarn;
@@ -125,7 +125,7 @@ public class twbotwipeout extends TWBotExtension
 
 	public void handleWin()
 	{
-		Iterator it = players.iterator();
+		Iterator<String> it = players.iterator();
 		m_botAction.sendArenaMessage("Game over!", 5);
 		m_botAction.sendArenaMessage(String.valueOf(it.next()) + " has won this round. Congratulations!");
 		end();
@@ -133,11 +133,11 @@ public class twbotwipeout extends TWBotExtension
 
 	public void spec()
 	{
-		Iterator it = players.iterator();
+		Iterator<String> it = players.iterator();
 
 		while(it.hasNext())
 		{
-			String name = (String)it.next();
+			String name = it.next();
 			if(!gotKill.contains(name))
 			{
 				playersKicked.add(name);
@@ -150,9 +150,9 @@ public class twbotwipeout extends TWBotExtension
 		else {
 			boolean allFreq = true;
 			int freq = -1;
-			Iterator it2 = players.iterator();
+			Iterator<String> it2 = players.iterator();
 			while(it2.hasNext()) {
-				String name = (String)it2.next();
+				String name = it2.next();
 				if(!playersKicked.contains(name)) {
 					if(freq == -1) freq = m_botAction.getPlayer(name).getFrequency();
 					else if(freq != m_botAction.getPlayer(name).getFrequency()) allFreq = false;
@@ -160,7 +160,7 @@ public class twbotwipeout extends TWBotExtension
 			}
 			it = playersKicked.iterator();
 			while(it.hasNext()) {
-				String name = (String)it2.next();
+				String name = it2.next();
 				m_botAction.spec(name);
 				m_botAction.spec(name);
 				players.remove(name);
@@ -175,9 +175,9 @@ public class twbotwipeout extends TWBotExtension
 		m_botAction.toggleLocked();
 		isRunning = false;
 		speed = 60;
-		players = new HashSet();
-		playersKicked = new HashSet();
-		gotKill = new HashSet();
+		players = new HashSet<String>();
+		playersKicked = new HashSet<String>();
+		gotKill = new HashSet<String>();
         m_botAction.cancelTask(specer);
         m_botAction.cancelTask(tenSecWarn);
 	}
@@ -202,10 +202,10 @@ public class twbotwipeout extends TWBotExtension
 				m_botAction.sendArenaMessage(" Goooooo go go go goooooooo",104);
 				isRunning = true;
 
-				Iterator it = m_botAction.getPlayingPlayerIterator();
+				Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 				while(it.hasNext())
 				{
-					Player p = (Player) it.next();
+					Player p = it.next();
 					players.add(p.getPlayerName());
 				}
 			}

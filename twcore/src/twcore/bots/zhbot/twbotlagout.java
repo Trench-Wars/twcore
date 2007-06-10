@@ -78,9 +78,9 @@ public class twbotlagout extends TWBotExtension
   public static final int DEFAULT_LAGOUTS_ALLOWED = 3;
   public static final double DEFAULT_TIME_ALLOWED = 90;
 
-  private HashMap lagoutList;
+  private HashMap<String, LagoutTask> lagoutList;
   private String host;
-  private Vector notifyList;
+  private Vector<NotifyTask> notifyList;
   private int lagoutsAllowed;
   private double timeAllowed;
   private boolean enterMsg;
@@ -92,8 +92,8 @@ public class twbotlagout extends TWBotExtension
 
   public twbotlagout()
   {
-    lagoutList = new HashMap();
-    notifyList = new Vector();
+    lagoutList = new HashMap<String, LagoutTask>();
+    notifyList = new Vector<NotifyTask>();
     enterMsg = true;
     lagoutOn = false;
   }
@@ -346,7 +346,7 @@ public class twbotlagout extends TWBotExtension
       m_botAction.sendSmartPrivateMessage(sender, "Bot not notifying of any lagouts.");
     for(int index = 0; index < notifyList.size(); index++)
     {
-      notifyTask = (NotifyTask) notifyList.get(index);
+      notifyTask = notifyList.get(index);
       m_botAction.sendSmartPrivateMessage(sender, "Task " + index + ") " + notifyTask.toString());
     }
   }
@@ -367,7 +367,7 @@ public class twbotlagout extends TWBotExtension
      int delIndex = Integer.parseInt(argString);
      if(delIndex < 0 || delIndex >= notifyList.size())
        throw new IllegalArgumentException("Invalid notify number.");
-     NotifyTask notifyTask = (NotifyTask) notifyList.get(delIndex);
+     NotifyTask notifyTask = notifyList.get(delIndex);
      notifyList.remove(delIndex);
      m_botAction.sendSmartPrivateMessage(sender, "Removing Task: " + notifyTask.toString());
    }
@@ -445,7 +445,7 @@ public class twbotlagout extends TWBotExtension
 
   public void doPlayerStatusCmd(String sender)
   {
-    LagoutTask lagoutTask = (LagoutTask) lagoutList.get(sender);
+    LagoutTask lagoutTask = lagoutList.get(sender);
 
     m_botAction.sendSmartPrivateMessage(sender, getSettingString());
     m_botAction.sendSmartPrivateMessage(sender, lagoutTask.getStatusString());
@@ -459,7 +459,7 @@ public class twbotlagout extends TWBotExtension
 
   public void doPlayerLagoutCmd(String sender)
   {
-    LagoutTask lagoutTask = (LagoutTask) lagoutList.get(sender);
+    LagoutTask lagoutTask = lagoutList.get(sender);
 
     lagoutTask.lagIn();
   }
@@ -490,7 +490,7 @@ public class twbotlagout extends TWBotExtension
       String playerName = twbotspec.getSpeccedPlayerName(message);
       if(playerName != null && lagoutList.containsKey(playerName))
       {
-        lagoutTask = (LagoutTask) lagoutList.get(playerName);
+        lagoutTask = lagoutList.get(playerName);
         lagoutTask.specOut();
       }
     }
@@ -521,7 +521,7 @@ public class twbotlagout extends TWBotExtension
 
     if(lagoutList.containsKey(playerName))
     {
-      lagoutTask = (LagoutTask) lagoutList.get(playerName);
+      lagoutTask = lagoutList.get(playerName);
       lagoutTask.updatePlayerID();
       if(lagoutOn)
         lagoutTask.displayLagoutMessage();
@@ -534,11 +534,11 @@ public class twbotlagout extends TWBotExtension
     int freq = lagoutTask.getFreq();
     int ship = lagoutTask.getShip();
     int playerID = lagoutTask.getPlayerID();
-    Iterator iterator = notifyList.iterator();
+    Iterator<NotifyTask> iterator = notifyList.iterator();
 
     while(iterator.hasNext())
     {
-      notifyTask = (NotifyTask) iterator.next();
+      notifyTask = iterator.next();
       if(notifyTask.isSameType(freq, ship, playerID))
         return true;
     }
@@ -549,14 +549,14 @@ public class twbotlagout extends TWBotExtension
   {
     int playerID = event.getPlayerID();
     LagoutTask lagoutTask;
-    Collection collection = lagoutList.values();
-    Iterator iterator = collection.iterator();
+    Collection<LagoutTask> collection = lagoutList.values();
+    Iterator<LagoutTask> iterator = collection.iterator();
 
     if(lagoutOn)
     {
       while(iterator.hasNext())
       {
-        lagoutTask = (LagoutTask) iterator.next();
+        lagoutTask = iterator.next();
         if(lagoutTask.getPlayerID() == playerID)
         {
           lagoutTask.lagOut();
@@ -575,7 +575,7 @@ public class twbotlagout extends TWBotExtension
 
     if(lagoutOn && lagoutList.containsKey(playerName))
     {
-      lagoutTask = (LagoutTask) lagoutList.get(playerName);
+      lagoutTask = lagoutList.get(playerName);
       lagoutTask.update(m_botAction.getPlayer(playerID));
     }
   }
@@ -592,7 +592,7 @@ public class twbotlagout extends TWBotExtension
     {
       if(lagoutList.containsKey(playerName))
       {
-        lagoutTask = (LagoutTask) lagoutList.get(playerName);
+        lagoutTask = lagoutList.get(playerName);
         if(ship == 0)
         {
           lagoutTask.lagOut();
@@ -620,20 +620,20 @@ public class twbotlagout extends TWBotExtension
 
   private void updatePlayers()
   {
-    Iterator iterator = m_botAction.getPlayingPlayerIterator();
+    Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
     Player player;
     String playerName;
     LagoutTask lagoutTask;
 
     while(iterator.hasNext())
     {
-      player = (Player) iterator.next();
+      player = iterator.next();
       playerName = player.getPlayerName();
       if(!lagoutList.containsKey(playerName))
         lagoutList.put(playerName, new LagoutTask(player));
       else
       {
-        lagoutTask = (LagoutTask) lagoutList.get(playerName);
+        lagoutTask = lagoutList.get(playerName);
         lagoutTask.update(player);
       }
     }
@@ -641,14 +641,14 @@ public class twbotlagout extends TWBotExtension
 
   private String getFuzzyLaggot(String argString)
   {
-    Set set = lagoutList.keySet();
-    Iterator iterator = set.iterator();
+    Set<String> set = lagoutList.keySet();
+    Iterator<String> iterator = set.iterator();
     String playerName = null;
     String checkName;
 
     while(iterator.hasNext())
     {
-      checkName = (String) iterator.next();
+      checkName = iterator.next();
       if(playerName == null && checkName.toLowerCase().startsWith(argString))
         playerName = checkName;
       if(checkName.equalsIgnoreCase(argString))
@@ -767,7 +767,7 @@ public class twbotlagout extends TWBotExtension
 
       for(int index = 0; index < notifyList.size(); index++)
       {
-        notifyTask = (NotifyTask) notifyList.get(index);
+        notifyTask = notifyList.get(index);
         notifyTask.updatePlayerID(playerID, newPlayerID);
       }
       playerID = newPlayerID;
@@ -948,7 +948,7 @@ public class twbotlagout extends TWBotExtension
    * deaths.
    */
 
-  private class NotifyTaskComparator implements Comparator
+  private class NotifyTaskComparator implements Comparator<NotifyTask>
   {
     /**
      * This method provides a compare function for two specTasks.  This is used
@@ -960,10 +960,8 @@ public class twbotlagout extends TWBotExtension
      * tasks.
      */
 
-    public int compare(Object obj1, Object obj2)
+    public int compare(NotifyTask task1, NotifyTask task2)
     {
-      NotifyTask task1 = (NotifyTask) obj1;
-      NotifyTask task2 = (NotifyTask) obj2;
       int value1 = task1.getNotifyType() * NotifyTask.MAX_FREQ + task1.notifyID;
       int value2 = task2.getNotifyType() * NotifyTask.MAX_FREQ + task2.notifyID;
 

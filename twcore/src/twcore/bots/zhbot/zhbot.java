@@ -54,7 +54,7 @@ public class zhbot extends SubspaceBot
 	private BotAction m_botAction;
 	private TimerTask checkTime;
 	private int lastUse = 0;
-	private HashMap extensions;
+	private HashMap<String, TWBotExtension> extensions;
 	private OperatorList m_opList;
 	private BotSettings m_botSettings;
 	private boolean locked = false;
@@ -70,7 +70,7 @@ public class zhbot extends SubspaceBot
 	public zhbot(BotAction botAction)
 	{
 		super(botAction);
-		Vector repository = new Vector();
+		Vector<File> repository = new Vector<File>();
 		coreRoot = new File(botAction.getGeneralSettings().getString("Core Location"));
 		botRoot = new File(coreRoot.getPath() + "/twcore/bots/zhbot");
 		repository.add(coreRoot);
@@ -79,7 +79,7 @@ public class zhbot extends SubspaceBot
 		m_botAction = botAction;
 
 		m_botSettings = m_botAction.getBotSettings();
-		extensions = new HashMap();
+		extensions = new HashMap<String, TWBotExtension>();
 
 		idleTime = m_botSettings.getInt("IdleReturnTime");
 		defaultArena = m_botSettings.getString("InitialArena");
@@ -136,11 +136,11 @@ public class zhbot extends SubspaceBot
 
 	public void distributeEvent(SubspaceEvent event)
 	{
-		Iterator i = extensions.entrySet().iterator();
+		Iterator<Map.Entry<String, TWBotExtension>> i = extensions.entrySet().iterator();
 		while (i.hasNext())
 		{
-			Map.Entry entry = (Map.Entry) i.next();
-			TWBotExtension ext = (TWBotExtension) entry.getValue();
+			Map.Entry<String, TWBotExtension> entry = i.next();
+			TWBotExtension ext = entry.getValue();
 			ext.handleEvent(event);
 		}
 	}
@@ -191,7 +191,7 @@ public class zhbot extends SubspaceBot
 	{
 		if (extensions.containsKey(key))
 		{
-			((TWBotExtension) extensions.remove(key)).cancel();
+			extensions.remove(key).cancel();
 			m_botAction.sendPrivateMessage(name, key + " Successfully Removed");
 		}
 		else
@@ -209,10 +209,10 @@ public class zhbot extends SubspaceBot
 		else
 		{
 			m_botAction.sendPrivateMessage(name, "Loaded modules are:");
-			Iterator i = extensions.keySet().iterator();
+			Iterator<String> i = extensions.keySet().iterator();
 			while (i.hasNext())
 			{
-				m_botAction.sendPrivateMessage(name, (String) i.next());
+				m_botAction.sendPrivateMessage(name, i.next());
 			}
 		}
 	}
@@ -223,7 +223,7 @@ public class zhbot extends SubspaceBot
 		if (extensions.containsKey(key))
 		{
 		    try {
-		        String[] helps = ((TWBotExtension) extensions.get(key)).getHelpMessages();
+		        String[] helps = extensions.get(key).getHelpMessages();
 		        m_botAction.privateMessageSpam(name, helps);
 		    } catch ( Exception e ) {
 				m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " module.  Try reloading it.");
@@ -238,11 +238,11 @@ public class zhbot extends SubspaceBot
 	public void allhelp(String name)
 	{
 		m_botAction.privateMessageSpam(name, helps);
-		Iterator i = extensions.keySet().iterator();
+		Iterator<String> i = extensions.keySet().iterator();
 		while (i.hasNext())
 		{
-			String key = (String) i.next();
-			TWBotExtension ext = (TWBotExtension) extensions.get(key);
+			String key = i.next();
+			TWBotExtension ext = extensions.get(key);
 			m_botAction.sendPrivateMessage(name, key + " module contains:");
 			m_botAction.privateMessageSpam(name, ext.getHelpMessages());
 		}
@@ -281,10 +281,10 @@ public class zhbot extends SubspaceBot
 
 	private void clear()
 	{
-		Iterator i = extensions.values().iterator();
+		Iterator<TWBotExtension> i = extensions.values().iterator();
 		while (i.hasNext())
 		{
-			((TWBotExtension) i.next()).cancel();
+			i.next().cancel();
 		}
 		extensions.clear();
 		//twbotstandard std = new twbotstandard();
@@ -565,7 +565,7 @@ public class zhbot extends SubspaceBot
 	}
 	public void handleEvent(SubspaceEvent event)
 	{
-		distributeEvent((SubspaceEvent) event);
+		distributeEvent(event);
 	}
 	public void handleEvent(ScoreReset event)
 	{

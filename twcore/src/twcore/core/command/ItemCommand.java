@@ -33,6 +33,7 @@ public class ItemCommand<T> implements List<T>
 
 	/** Default values to initialize items to. */
 	private T defaults;
+	private Class<? extends T> cls;
 
 	/** The fields contained in the item. */
 	private Field[] fields;
@@ -54,11 +55,12 @@ public class ItemCommand<T> implements List<T>
 	 * @throws Exception if any reflection access is denied in initial creation,
 	 *         the object will fail to create
 	 */
-	public ItemCommand(BotAction botAction, T defaults) throws Exception
+	public ItemCommand(BotAction botAction, T defaults, Class<? extends T> cls) throws Exception
 	{
 		m_botAction = botAction;
 		items = Collections.synchronizedList( new ArrayList<T>() );
 		this.defaults = defaults;
+		this.cls = cls;
 		setUpFields();
 	}
 
@@ -454,7 +456,8 @@ public class ItemCommand<T> implements List<T>
 
 		try
 		{
-			newRef = ((Class<T>)defaults.getClass()).newInstance();
+			//newRef = ((Class<T>)defaults.getClass()).newInstance();
+			newRef = cls.newInstance();
 			setDefaultValues(newRef);
 		}
 		catch(Exception e)
@@ -563,7 +566,7 @@ public class ItemCommand<T> implements List<T>
 	 * collection's iterator (optional operation).
 	 * @see java.util.List#addAll(Collection)
 	 */
-	public boolean addAll(Collection c)
+	public boolean addAll(Collection<? extends T> c)
 	{
 		return items.addAll(c);
 	}
@@ -573,7 +576,7 @@ public class ItemCommand<T> implements List<T>
 	 * at the specified position (optional operation).
 	 * @see java.util.List#addAll(int, Collection)
 	 */
-	public boolean addAll(int index, Collection c)
+	public boolean addAll(int index, Collection<? extends T> c)
 	{
 		return items.addAll(index, c);
 	}

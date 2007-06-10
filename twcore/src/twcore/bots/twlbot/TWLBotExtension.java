@@ -64,7 +64,7 @@ public abstract class TWLBotExtension
         m_botSettings = m_botAction.getBotSettings();
     }
 
-    public abstract Collection getHelpMessages();
+    public abstract Collection<String> getHelpMessages();
 
     public abstract void cancel();
 

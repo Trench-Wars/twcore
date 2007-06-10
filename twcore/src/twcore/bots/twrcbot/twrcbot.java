@@ -32,8 +32,8 @@ import twcore.core.events.Message;
  */
 public class twrcbot extends SubspaceBot
 {
-	HashSet signups = new HashSet();
-	HashSet twrcOps = new HashSet();
+	HashSet<String> signups = new HashSet<String>();
+	HashSet<String> twrcOps = new HashSet<String>();
 	File people = new File("people.txt");
 	File log = new File("log.txt");
 	boolean isRunning = true;
@@ -172,7 +172,7 @@ public class twrcbot extends SubspaceBot
 			}
 			else if(message.toLowerCase().startsWith("!clear"))
 			{
-				signups = new HashSet();
+				signups = new HashSet<String>();
 				updatePeopleFile();
 			}
 			else if(message.toLowerCase().startsWith("!die"))
@@ -219,12 +219,12 @@ public class twrcbot extends SubspaceBot
 	 */
 	public void updatePeopleFile()
 	{
-		Iterator it = signups.iterator();
+		Iterator<String> it = signups.iterator();
 		try {
 			FileWriter out = new FileWriter(people, true);
 			while(it.hasNext())
 			{
-				String name = (String)it.next();
+				String name = it.next();
 				out.write(name + "\n");
 				out.flush();
 			}
@@ -307,7 +307,7 @@ public class twrcbot extends SubspaceBot
 	public int getRank(String name)
 	{
 		int k = 0;
-		HashMap ranks = new HashMap();
+		HashMap<String, Integer> ranks = new HashMap<String, Integer>();
 		try {
 			ResultSet result = m_botAction.SQLQuery("website", "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC");
 			while(result.next())
@@ -318,7 +318,7 @@ public class twrcbot extends SubspaceBot
             m_botAction.SQLClose(result);
 		} catch(Exception e) {}
 		try {
-			return ((Integer)ranks.get(name.toLowerCase())).intValue();
+			return ranks.get(name.toLowerCase()).intValue();
 		} catch(Exception e) {return 0;}
 	}
 
@@ -390,21 +390,21 @@ public class twrcbot extends SubspaceBot
 		Date trialTime = new Date();
 		calendar.setTime(trialTime);
 		String date = "";
-		if(((int)calendar.get(Calendar.MONTH) < 9))
+		if((calendar.get(Calendar.MONTH) < 9))
 			date += "0" + (calendar.get(Calendar.MONTH) + 1);
 		else
 			date += (calendar.get(Calendar.MONTH) + 1);
-		if(((int)calendar.get(Calendar.DAY_OF_MONTH) < 10))
+		if((calendar.get(Calendar.DAY_OF_MONTH) < 10))
 			date += "/" + "0" + (calendar.get(Calendar.DAY_OF_MONTH));
 		else
 			date += "/" + calendar.get(Calendar.DAY_OF_MONTH);
 		date += "/" + calendar.get(Calendar.YEAR);
 		date += " ";
-		if(((int)calendar.get(Calendar.HOUR_OF_DAY) < 10))
+		if((calendar.get(Calendar.HOUR_OF_DAY) < 10))
 			date += "0" + calendar.get(Calendar.HOUR_OF_DAY);
 		else
 			date += calendar.get(Calendar.HOUR_OF_DAY);
-		if(((int)calendar.get(Calendar.MINUTE) < 10))
+		if((calendar.get(Calendar.MINUTE) < 10))
 			date += ":0" + calendar.get(Calendar.MINUTE);
 		else
 			date += ":" + calendar.get(Calendar.MINUTE);

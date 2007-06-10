@@ -86,11 +86,11 @@ public class twbotpoll extends TWBotExtension {
 
         private String[] poll;
         private int range;
-        private HashMap votes;
+        private HashMap<String, Integer> votes;
 
         public Poll( String[] poll ){
             this.poll = poll;
-            votes = new HashMap();
+            votes = new HashMap<String, Integer>();
             range = poll.length - 1;
             m_botAction.sendArenaMessage( "Poll: " + poll[0] );
             for( int i = 1; i < poll.length; i++ ){
@@ -135,9 +135,9 @@ public class twbotpoll extends TWBotExtension {
             + poll[0] );
 
             int[] counters = new int[range+1];
-            Iterator iterator = votes.values().iterator();
+            Iterator<Integer> iterator = votes.values().iterator();
             while( iterator.hasNext() ){
-                counters[((Integer)iterator.next()).intValue()]++;
+                counters[iterator.next().intValue()]++;
             }
             for( int i = 1; i < counters.length; i++ ){
                 m_botAction.sendArenaMessage( i + ". " + poll[i] + ": "

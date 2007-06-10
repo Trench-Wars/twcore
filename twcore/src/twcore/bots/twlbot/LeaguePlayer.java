@@ -95,11 +95,11 @@ public class LeaguePlayer
 	private class TotalStatistics
 	{
 		private LeaguePlayerShip m_currentShip;
-		private LinkedList m_ships;
+		private LinkedList<LeaguePlayerShip> m_ships;
 
 		public TotalStatistics()
 		{
-			m_ships = new LinkedList();
+			m_ships = new LinkedList<LeaguePlayerShip>();
 		}
 
 		/**
@@ -175,11 +175,11 @@ public class LeaguePlayer
 		 */
 		public String[] getTotalStatisticsSummary()
 		{
-			Iterator i = m_ships.iterator();
-			LinkedList summary = new LinkedList();
+			Iterator<LeaguePlayerShip> i = m_ships.iterator();
+			LinkedList<String> summary = new LinkedList<String>();
 			while (i.hasNext())
 			{
-				String[] summ = ((LeaguePlayerShip) i.next()).getStatisticsSummary();
+				String[] summ = i.next().getStatisticsSummary();
 				for (int j = 0; j < summ.length; j++)
 					summary.add(summ[j]);
 			}
@@ -203,12 +203,12 @@ public class LeaguePlayer
 		 */
 		public int getTotalStatistic(int statType)
 		{
-			Iterator i = m_ships.iterator();
+			Iterator<LeaguePlayerShip> i = m_ships.iterator();
 			int total = 0;
 
 			while (i.hasNext())
 			{
-				total += ((LeaguePlayerShip) i.next()).getStatistic(statType);
+				total += i.next().getStatistic(statType);
 			}
 
 			return total;
@@ -228,7 +228,7 @@ public class LeaguePlayer
 		 * Gets the linked list of ships
 		 * @return Iterator to the linked list of ships
 		 */
-		public Iterator getShips()
+		public Iterator<LeaguePlayerShip> getShips()
 		{
 			return m_ships.iterator();
 		}
@@ -338,7 +338,7 @@ public class LeaguePlayer
 		return m_statisticTracker.getTotalStatistic(statType);
 	}
 
-	public Iterator getPlayerShips()
+	public Iterator<LeaguePlayerShip> getPlayerShips()
 	{
 		return m_statisticTracker.getShips();
 	}
