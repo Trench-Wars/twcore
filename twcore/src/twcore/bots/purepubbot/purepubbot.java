@@ -1667,8 +1667,6 @@ public class purepubbot extends SubspaceBot
                 }
             }
 
-            m_botAction.setTimer( flagMinutesRequired );
-
             isBeingClaimed = false;
             flagClaimingFreq = -1;
             secondsHeld = 0;
