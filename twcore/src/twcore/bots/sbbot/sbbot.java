@@ -204,7 +204,6 @@ public class sbbot extends SSEventForwarder {
 	m_botSettings = m_botAction.getBotSettings();
 	opList = m_botAction.getOperatorList();
 	parameters = new BotSettings( m_botSettings.getString( "paramfile" ) );
-	System.out.println("Paramfile: " + m_botSettings.getString( "paramfile" ));
 	SBOpSettings = new BotSettings( m_botSettings.getString( "opfile" ) );
 	bigBallers = new HashSet<String>();
 	try {

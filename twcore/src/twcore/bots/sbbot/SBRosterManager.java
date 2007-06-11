@@ -15,7 +15,7 @@ public class SBRosterManager {
     private final BotAction m_botAction;
     private SBMatchOperator matchOp;
     private PickHandler picker;
-    private int MAXPLAYERS = 5;
+    private int MAXPLAYERS = 7;
     private int MINPLAYERS = 2;
     HashMap<String,SBPlayer> players;
     Vector<SBTeam> teams; // I use a vector to force clean implementation
@@ -565,6 +565,5 @@ public class SBRosterManager {
     }
 
     private void debug(String str) {
-	System.out.println(str);
     }
 }

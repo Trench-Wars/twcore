@@ -2,31 +2,7 @@ package twcore.bots.sbbot;
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
-import twcore.core.events.ArenaJoined;
-import twcore.core.events.ArenaList;
-import twcore.core.events.BallPosition;
-import twcore.core.events.FileArrived;
-import twcore.core.events.FlagClaimed;
-import twcore.core.events.FlagDropped;
-import twcore.core.events.FlagPosition;
-import twcore.core.events.FlagReward;
-import twcore.core.events.FlagVictory;
-import twcore.core.events.FrequencyChange;
-import twcore.core.events.FrequencyShipChange;
-import twcore.core.events.InterProcessEvent;
-import twcore.core.events.LoggedOn;
-import twcore.core.events.PlayerDeath;
-import twcore.core.events.PlayerEntered;
-import twcore.core.events.PlayerLeft;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.Prize;
-import twcore.core.events.SQLResultEvent;
-import twcore.core.events.ScoreReset;
-import twcore.core.events.ScoreUpdate;
-import twcore.core.events.SoccerGoal;
-import twcore.core.events.SubspaceEvent;
-import twcore.core.events.WatchDamage;
-import twcore.core.events.WeaponFired;
+import twcore.core.events.*;
 
 /**
  * This class will interpret all the low-level events and notify all interested listeners.
@@ -60,7 +36,8 @@ public abstract class SSEventForwarder extends SubspaceBot {
 	LOGGEDON = new SSEventMessageType(),
 	ARENALIST = new SSEventMessageType(),
 	INTERPROCESSEVENT = new SSEventMessageType(),
-	SQLRESULTEVENT = new SSEventMessageType();
+	SQLRESULTEVENT = new SSEventMessageType(),
+    PLAYERBANNER = new SSEventMessageType();
 
     protected EventRequester events;
 
@@ -176,6 +153,10 @@ public abstract class SSEventForwarder extends SubspaceBot {
 
     public void handleEvent( SQLResultEvent event ){
 	getOperator().notifyEvent(SQLRESULTEVENT, event);
+    }
+
+    public void handleEvent( PlayerBanner event ){
+    getOperator().notifyEvent(PLAYERBANNER, event);
     }
 
     public void handleDisconnect(){

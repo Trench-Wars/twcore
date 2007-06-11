@@ -36,7 +36,6 @@ public class BotCommandOperator extends SSEventOperator {
     public void notifyEvent(BotCommandType type, BotCommandEvent event) {
 	if(listeners.containsKey(type) && listeners.get(type) != null) {
 	    for(BotCommandListener l : listeners.get(type)) {
-		System.out.println("Notifying BotCommandEvent listener.");
 		l.notify(type, event);
 	    }
 	}
@@ -46,7 +45,6 @@ public class BotCommandOperator extends SSEventOperator {
 	assert(l != null && type != null);
 	if(!listeners.containsKey(type))
 	    listeners.put(type, new HashSet<BotCommandListener>());
-	System.out.println("Adding listener to BotCommandOperator");
 	listeners.get(type).add(l);
     }
 }

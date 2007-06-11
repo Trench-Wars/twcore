@@ -40,11 +40,8 @@ public class Operator {
 
 
     public void notifyEvent(MessageType type, Message message) {
-	System.out.println("Notifying for message: " + type.toString() + "\n");
-	//System.out.println("Message: " + message.toString() + "\n");
 	if(listeners.containsKey(type) && listeners.get(type) != null) {
 	    for(Listener l : listeners.get(type)) {
-		System.out.println("Listener being notified: " + l.toString());
 		l.notify(type, message);
 	    }
 	}
@@ -90,7 +87,6 @@ public class Operator {
 	assert(l != null && type != null);
 	if(!listeners.containsKey(type))
 	    listeners.put(type, new HashSet<Listener>());
-	System.out.println("Added listener: " + l.toString() + " Listening for: " + type.toString());
 	listeners.get(type).add(l);
     }
 
