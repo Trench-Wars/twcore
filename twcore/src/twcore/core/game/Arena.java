@@ -102,7 +102,7 @@ public class Arena {
      * Gets a mapping of IDs to players in the arena.
      * @return Map (ID -> Player)
      */
-    public Map getPlayerMap() {
+    public Map<Integer, Player> getPlayerMap() {
     	return m_playerList;
     }
 
@@ -121,8 +121,8 @@ public class Arena {
      */
     public Iterator<Player> getPlayingPlayerIterator(){
         LinkedList <Player>list = new LinkedList<Player>();
-        for( Iterator i = getPlayerIterator(); i.hasNext(); ){
-            Player player = (Player)i.next();
+        for( Iterator<Player> i = getPlayerIterator(); i.hasNext(); ){
+            Player player = i.next();
             if( player.getShipType() != 0 ){
                 list.add(player);
             }
@@ -136,8 +136,8 @@ public class Arena {
      */
     public Iterator<Integer> getPlayingIDIterator(){
         LinkedList <Integer>list = new LinkedList<Integer>();
-        for( Iterator i = getPlayerIterator(); i.hasNext(); ){
-            Player player = (Player)i.next();
+        for( Iterator<Player> i = getPlayerIterator(); i.hasNext(); ){
+            Player player = i.next();
             if( player.getShipType() != 0 ){
                 list.add( new Integer( player.getPlayerID() ));
             }
@@ -232,9 +232,9 @@ public class Arena {
         Player p = m_playerList.get( m_playerIDList.get( searchName.toLowerCase() ) );
         if( p == null ){
             //hack to support really long names
-            Iterator i = getPlayerIterator();
+            Iterator<Player> i = getPlayerIterator();
             while( i.hasNext() ){
-                Player q = (Player)i.next();
+                Player q = i.next();
                 if( q.getPlayerName().startsWith( searchName ) ) {
                     return q;
                 }
@@ -466,8 +466,8 @@ public class Arena {
                 player.updatePlayer( message );
             }
         } else {
-            for( Iterator i = getPlayerIterator(); i.hasNext(); ){
-                Player player = (Player)i.next();
+            for( Iterator<Player> i = getPlayerIterator(); i.hasNext(); ){
+                Player player = i.next();
                 player.scoreReset();
             }
         }
@@ -480,13 +480,13 @@ public class Arena {
      */
     public void processEvent( FlagVictory message ){
         Player          player;
-        Map             frequencyList;
+        Map<Integer, Player> frequencyList;
 
-        frequencyList = (Map)m_frequencyList.get( new Integer( message.getFrequency() ) );
+        frequencyList = m_frequencyList.get( new Integer( message.getFrequency() ) );
 
         if( frequencyList != null ){
-            for( Iterator i = frequencyList.values().iterator(); i.hasNext(); ){
-                player = (Player)i.next();
+            for( Iterator<Player> i = frequencyList.values().iterator(); i.hasNext(); ){
+                player = i.next();
                 player.updatePlayer( message );
             }
         }
@@ -499,13 +499,13 @@ public class Arena {
      */
     public void processEvent( FlagReward message ){
         Player          player;
-        Map             frequencyList;
+        Map<Integer, Player> frequencyList;
 
-        frequencyList = (Map)m_frequencyList.get( new Integer( message.getFrequency() ) );
+        frequencyList = m_frequencyList.get( new Integer( message.getFrequency() ) );
 
         if( frequencyList != null ){
-            for( Iterator i = frequencyList.values().iterator(); i.hasNext(); ){
-                player = (Player)i.next();
+            for( Iterator<Player> i = frequencyList.values().iterator(); i.hasNext(); ){
+                player = i.next();
                 player.updatePlayer( message );
             }
         }
@@ -551,9 +551,9 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( FlagDropped message ) {
-        Iterator it = getFlagIterator();
+        Iterator<Flag> it = getFlagIterator();
         while( it.hasNext() ) {
-            Flag flag = (Flag)it.next();
+            Flag flag = it.next();
             if( flag.getPlayerID() == message.getPlayerID() )
                 flag.dropped();
         }

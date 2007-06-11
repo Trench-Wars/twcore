@@ -148,13 +148,13 @@ public class CommandInterpreter {
      * are not specifying minimum access levels for your commands.
      * @return Vector as a collection containing the strings of all help messages
      */
-    public Collection getCommandHelps(){
-        Vector<String>  helps = new Vector<String>( m_commands.size() );
-        Iterator        i = m_commands.keySet().iterator();
+    public Collection<String> getCommandHelps(){
+        Vector<String>   helps = new Vector<String>( m_commands.size() );
+        Iterator<String> i = m_commands.keySet().iterator();
         Command         command;
 
         while( i.hasNext() ){
-            String      commandKey = (String)i.next();
+            String      commandKey = i.next();
             command = m_commands.get( commandKey );
             if( command != null ){
                 if( !command.getHelpString().equals( "" ) ){
@@ -171,13 +171,13 @@ public class CommandInterpreter {
      * Returns all help messages for commands available to a given access level.
      * @return Vector as a collection containing the strings of all help msgs for a given access level
      */
-    public Collection getCommandHelpsForAccessLevel( int accessLevel ) {
+    public Collection<String> getCommandHelpsForAccessLevel( int accessLevel ) {
         Vector<String>  helps = new Vector<String>( m_commands.size() );
-        Iterator        i = m_commands.keySet().iterator();
+        Iterator<String> i = m_commands.keySet().iterator();
         Command         command;
 
         while( i.hasNext() ){
-            String      commandKey = (String)i.next();
+            String      commandKey = i.next();
             command = m_commands.get( commandKey );
             if( command != null ){
                 if( !command.getHelpString().equals( "" ) && !command.getHelpString().startsWith( "default" ) &&
@@ -273,7 +273,7 @@ public class CommandInterpreter {
                         Object methodClass = command.getMethodClass();
                         if( command.getMethodName() == "__autohelp" ) {
                             // Autohelp
-                            Collection msgs = getCommandHelpsForAccessLevel( m_botAction.getOperatorList().getAccessLevel( messager ) );
+                            Collection<String> msgs = getCommandHelpsForAccessLevel( m_botAction.getOperatorList().getAccessLevel( messager ) );
                             m_botAction.privateMessageSpam( messager, msgs );
                         } else {
                             // Standard command execution

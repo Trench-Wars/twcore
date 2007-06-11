@@ -105,11 +105,11 @@ public class BotQueue extends Thread {
     void listWaitingList( String messager ){
         int          i;
         ChildBot     bot;
-        ListIterator iterator;
+        ListIterator<ChildBot> iterator;
 
         m_botAction.sendSmartPrivateMessage( messager, "Waiting list:" );
         for( iterator=m_spawnQueue.listIterator(), i=1; iterator.hasNext(); i++ ){
-            bot = (ChildBot)iterator.next();
+            bot = iterator.next();
             m_botAction.sendSmartPrivateMessage( messager, i + ": " + bot.getBot().getBotName() + ", created by " + bot.getCreator() + "." );
         }
         m_botAction.sendSmartPrivateMessage( messager, "End of list" );
@@ -122,13 +122,13 @@ public class BotQueue extends Thread {
      * @param messager Name of the player who will receive the message
      */
     void listBotTypes( String messager ){
-        Iterator        i;
+        Iterator<String> i;
         Integer         number;
         String          className;
 
         m_botAction.sendSmartPrivateMessage( messager, "Listing bot types:" );
         for( i = m_botTypes.keySet().iterator(); i.hasNext(); ){
-            className = (String)i.next();
+            className = i.next();
             number = m_botTypes.get( className );
             if( number.intValue() > 0 )
                 m_botAction.sendSmartPrivateMessage( messager, className + ": " + number );
@@ -143,7 +143,7 @@ public class BotQueue extends Thread {
      * @param messager Name of the player who will receive the message
      */
     void listBots( String className, String messager ){
-        Iterator     i;
+        Iterator<ChildBot> i;
         ChildBot     bot;
         String       rawClassName = className.toLowerCase();
 
@@ -154,7 +154,7 @@ public class BotQueue extends Thread {
         } else {
             m_botAction.sendSmartPrivateMessage( messager, className + ":" );
             for( i = m_botStable.values().iterator(); i.hasNext(); ){
-                bot = (ChildBot)i.next();
+                bot = i.next();
                 if( bot.getClassName().compareTo( className ) == 0 ){
                     m_botAction.sendSmartPrivateMessage( messager, bot.getBot().getBotName() + " (in "+ bot.getBot().getBotAction().getArenaName() +"), created by " + bot.getCreator());
                 }
@@ -233,7 +233,7 @@ public class BotQueue extends Thread {
     void hardRemoveAllBotsOfType( String className ) {
         String       rawClassName = className.toLowerCase();
         ChildBot c;
-        LinkedList <String>names = new LinkedList<String>();
+        LinkedList<String> names = new LinkedList<String>();
 
         Iterator i = m_botStable.values().iterator();
         while( i.hasNext() ) {
@@ -259,7 +259,7 @@ public class BotQueue extends Thread {
      */
     void shutdownAllBots() {
         ChildBot c;
-        LinkedList <String>names = new LinkedList<String>();
+        LinkedList<String> names = new LinkedList<String>();
 
         Iterator i = m_botStable.values().iterator();
         while( i.hasNext() ) {
@@ -392,7 +392,7 @@ public class BotQueue extends Thread {
      * the waiting list, if the proper delay time has been reached.
      */
     public void run(){
-        Iterator        i;
+        Iterator<String> i;
         String          key;
         Session         bot;
         ChildBot        childBot;
@@ -435,7 +435,7 @@ public class BotQueue extends Thread {
                 // Removes bots that are no longer running.
                 if( lastStateDetection + DETECTION_TIME < currentTime ){
                     for( i = m_botStable.keySet().iterator(); i.hasNext(); ){
-                        key = (String)i.next();
+                        key = i.next();
                         childBot = m_botStable.get( key );
                         if( childBot.getBot().getBotState() == Session.NOT_RUNNING ){
                             removeBot( key );

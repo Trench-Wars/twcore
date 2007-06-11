@@ -580,7 +580,7 @@ public class BotAction
      */
     public void sendOpposingTeamMessageByFrequency(int frequency, String message, int soundCode)
     {
-        Iterator i;
+        Iterator<Integer> i;
         int playerID;
         char firstChar;
         String temp = message.trim();
@@ -594,7 +594,7 @@ public class BotAction
                 if (i != null)
                 {
                     if( i.hasNext() ) {
-                        playerID = ((Integer) i.next()).intValue();
+                        playerID = i.next().intValue();
                         m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
                     }
                 }
@@ -940,12 +940,12 @@ public class BotAction
      * @param playerID ID of the player to be spammed
      * @param messages The collection of messages (Need to be String Objects or typed to string objects)
      */
-    public void privateMessageSpam(int playerID, Collection messages)
+    public void privateMessageSpam(int playerID, Collection<String> messages)
     {
-        Iterator i = messages.iterator();
+        Iterator<String> i = messages.iterator();
         while (i.hasNext())
         {
-            sendPrivateMessage(playerID, (String)i.next());
+            sendPrivateMessage(playerID, i.next());
         }
     }
 
@@ -956,12 +956,12 @@ public class BotAction
      * @param playerName Name of the player to be spammed
      * @param messages The collection of messages (Need to be String Objects or typed to string objects)
      */
-    public void privateMessageSpam(String playerName, Collection messages)
+    public void privateMessageSpam(String playerName, Collection<String> messages)
     {
-        Iterator i = messages.iterator();
+        Iterator<String> i = messages.iterator();
         while (i.hasNext())
         {
-            sendSmartPrivateMessage(playerName, (String)i.next());
+            sendSmartPrivateMessage(playerName, i.next());
         }
     }
 
@@ -1316,9 +1316,9 @@ public class BotAction
     {
         try
         {
-            for (Iterator i = m_arenaTracker.getFreqIDIterator(freqID); i.hasNext();)
+            for (Iterator<Integer> i = m_arenaTracker.getFreqIDIterator(freqID); i.hasNext();)
             {
-                specificPrize(((Integer) i.next()).intValue(), prizeNum);
+                specificPrize(i.next().intValue(), prizeNum);
             }
         }
         catch (Exception e)
@@ -1587,9 +1587,9 @@ public class BotAction
         String name;
 
         //stick all of the players in randomizer
-        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
         while(i.hasNext())
-            plist.add(((Player)i.next()).getPlayerName());
+            plist.add(i.next().getPlayerName());
 
         while(!plist.isEmpty() && freq > -1)
         {
@@ -1621,9 +1621,9 @@ public class BotAction
         String name;
 
         // stick all of the players in randomizer
-        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
         while(i.hasNext())
-            plist.add(((Player)i.next()).getPlayerName());
+            plist.add(i.next().getPlayerName());
 
         // assign players to teams
         while(!plist.isEmpty())
@@ -1643,12 +1643,12 @@ public class BotAction
      */
     public void warpAllToLocation(int x, int y)
     {
-        Iterator i = m_arenaTracker.getPlayerIDIterator();
+        Iterator<Integer> i = m_arenaTracker.getPlayerIDIterator();
         if (i == null)
             return;
         while (i.hasNext())
         {
-            warpTo(((Integer) i.next()).intValue(), x, y);
+            warpTo(i.next().intValue(), x, y);
         }
     }
 
@@ -1660,7 +1660,7 @@ public class BotAction
      */
     public void warpFreqToLocation(int freq, int x, int y)
     {
-        Iterator i = m_arenaTracker.getFreqIDIterator(freq);
+        Iterator<Integer> i = m_arenaTracker.getFreqIDIterator(freq);
         if (i == null)
         {
             Tools.printLog("Arena: Freq " + freq + " does not exist.");
@@ -1669,7 +1669,7 @@ public class BotAction
 
         while (i.hasNext())
         {
-            int next = ((Integer) i.next()).intValue();
+            int next = i.next().intValue();
             warpTo(next, x, y);
         }
     }
@@ -1691,9 +1691,9 @@ public class BotAction
     {
         if (!(shipType >= 1 && shipType <= 8))
             return;
-        for (Iterator i = m_arenaTracker.getPlayingIDIterator(); i.hasNext();)
+        for (Iterator<Integer> i = m_arenaTracker.getPlayingIDIterator(); i.hasNext();)
         {
-            setShip(((Integer) i.next()).intValue(), shipType);
+            setShip(i.next().intValue(), shipType);
         }
     }
 
@@ -1706,12 +1706,12 @@ public class BotAction
     {
         if (!(shipType >= 1 && shipType <= 8))
             return;
-        Iterator i = m_arenaTracker.getFreqIDIterator(freq);
+        Iterator<Integer> i = m_arenaTracker.getFreqIDIterator(freq);
         if (i == null)
             return;
         while (i.hasNext())
         {
-            setShip(((Integer) i.next()).intValue(), shipType);
+            setShip(i.next().intValue(), shipType);
         }
     }
 
@@ -1723,12 +1723,12 @@ public class BotAction
      */
     public void setFreqtoFreq(int initialFreq, int destFreq)
     {
-        Iterator i = m_arenaTracker.getFreqIDIterator(initialFreq);
+        Iterator<Integer> i = m_arenaTracker.getFreqIDIterator(initialFreq);
         if (i == null)
             return;
         while (i.hasNext())
         {
-            setFreq(((Integer) i.next()).intValue(), destFreq);
+            setFreq(i.next().intValue(), destFreq);
         }
     }
 
@@ -1739,12 +1739,12 @@ public class BotAction
      */
     public void setAlltoFreq(int destFreq)
     {
-        Iterator i = m_arenaTracker.getPlayingIDIterator();
+        Iterator<Integer> i = m_arenaTracker.getPlayingIDIterator();
         if (i == null)
             return;
         while (i.hasNext())
         {
-            setFreq(((Integer) i.next()).intValue(), destFreq);
+            setFreq(i.next().intValue(), destFreq);
         }
     }
 
@@ -1757,12 +1757,14 @@ public class BotAction
     {
         if (!(shipType >= 1 && shipType <= 8))
             return;
-        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
         if (i == null)
             return;
         while (i.hasNext())
         {
-            setFreq(((Integer) i.next()).intValue(), freq);
+        	Player p = i.next();
+        	if(p.getShipType() == shipType)
+            	setFreq(p.getPlayerID(), freq);
         }
     }
 
@@ -1772,12 +1774,12 @@ public class BotAction
      * @param freq Frequency to spec
      */
     public void specAllOnFreq(int freq) {
-        Iterator i = m_arenaTracker.getFreqIDIterator(freq);
+        Iterator<Integer> i = m_arenaTracker.getFreqIDIterator(freq);
         if (i == null)
             return;
         while (i.hasNext())
         {
-            specWithoutLock(((Integer) i.next()).intValue());
+            specWithoutLock(i.next().intValue());
         }
     }
 
@@ -1787,12 +1789,12 @@ public class BotAction
      * @param freq Frequency to spec
      */
     public void specFreqAndKeepFreq(int freq) {
-        Iterator i = m_arenaTracker.getFreqPlayerIterator(freq);
+        Iterator<Player> i = m_arenaTracker.getFreqPlayerIterator(freq);
         if (i == null)
             return;
         while (i.hasNext())
         {
-            int id = (int)((Player)i.next()).getPlayerID();
+            int id = (int)i.next().getPlayerID();
             specWithoutLock(id);
             setFreq(id, freq);
         }
@@ -1804,14 +1806,14 @@ public class BotAction
      * @param freq Frequency to spec
      */
     public void specAllAndKeepFreqs() {
-        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
         Player p;
         int priorfreq;
 
         if (i == null)
             return;
         while (i.hasNext()) {
-            p = (Player)i.next();
+            p = i.next();
             priorfreq = p.getFrequency();
             specWithoutLock(p.getPlayerID());
             setFreq(p.getPlayerID(), priorfreq);
@@ -1829,10 +1831,10 @@ public class BotAction
     public void checkAndSpec(int deaths)
     {
 
-        Iterator i = m_arenaTracker.getPlayerIterator();
+        Iterator<Player> i = m_arenaTracker.getPlayerIterator();
         while (i.hasNext())
         {
-            Player p = (Player) i.next();
+            Player p = i.next();
             if (p.getShipType() != 0 && p.getLosses() >= deaths)
             {
                 spec(p.getPlayerID());
@@ -3039,13 +3041,13 @@ public class BotAction
      */
     public String getFuzzyPlayerName(String playerName)
     {
-        Map m_playerMap = m_arenaTracker.getPlayerMap();
-        Iterator i = m_playerMap.values().iterator();
+        Map<Integer, Player> m_playerMap = m_arenaTracker.getPlayerMap();
+        Iterator<Player> i = m_playerMap.values().iterator();
         String answ, best = null;
         synchronized(m_playerMap) {
             while (i.hasNext())
             {
-                answ = ((Player) i.next()).getPlayerName();
+                answ = i.next().getPlayerName();
                 if (answ.toLowerCase().startsWith(playerName.toLowerCase()))
                     if (best == null)
                         best = answ;
@@ -3081,7 +3083,7 @@ public class BotAction
      */
     public int getNumPlayers() {
         int numPlayers = 0;
-        Iterator i = m_arenaTracker.getPlayingPlayerIterator();
+        Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
 
         while ( i.hasNext() ) {
             numPlayers++;
@@ -3098,10 +3100,10 @@ public class BotAction
      */
     public boolean freqContainsShip(int freq, int ship)
     {
-        Iterator i = m_arenaTracker.getPlayerIterator();
+        Iterator<Player> i = m_arenaTracker.getPlayerIterator();
         while (i.hasNext())
         {
-            Player p = (Player) i.next();
+            Player p = i.next();
             if (p.getShipType() == ship && p.getFrequency() == freq)
             {
                 return true;
@@ -3118,10 +3120,10 @@ public class BotAction
     public int getScoreForFreq(int freq)
     {
         int result = 0;
-        Iterator i = m_arenaTracker.getPlayerIterator(); //if( i == null ) return 0;
+        Iterator<Player> i = m_arenaTracker.getPlayerIterator(); //if( i == null ) return 0;
         while (i.hasNext())
         {
-            Player p = (Player) i.next();
+            Player p = i.next();
             if (p.isPlaying() && p.getFrequency() == freq)
                 result += p.getScore();
         }
@@ -3183,9 +3185,9 @@ public class BotAction
     /**
      * Returns an iterator of all non-specced Players in the arena.  Example usage:
      * <code><pre>
-     * Iterator i = m_botAction.getPlayingPlayerIterator();
+     * Iterator&lt;Player&gt; i = m_botAction.getPlayingPlayerIterator();
      * while( i.hasNext() ){
-     *    Player p = (Player)i.next();
+     *    Player p = i.next();
      *    if( p.getPlayerName().equals( "DoCk>" )){
      *        m_botAction.sendPrivateMessage( p.getPlayerID(), "Hi DoCk>!" );
      *    } else if( p.getFrequency() == 223 && p.getSquadName().equals( "LAME" )){
