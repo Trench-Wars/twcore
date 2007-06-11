@@ -1428,7 +1428,8 @@ public class purepubbot extends SubspaceBot
      * Ensures !warpers on freqs are warped all to 'their' side, but not predictably.
      */
     private void warpPlayers() {
-        Iterator i;
+        Iterator i;        
+        
         if( strictFlagTime )
             i = m_botAction.getPlayingPlayerIterator();
         else
@@ -1483,12 +1484,32 @@ public class purepubbot extends SubspaceBot
      * starting.  This gives a semi-official feeling to the game, and resets
      * all mines, etc.
      */
-    private void safeWarp() {
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+    private void safeWarp() {        
+        // Prevent pre-laid mines and portals in strict flag time by setting to WB and back again (slightly hacky)
+        HashMap<String,Integer> players = new HashMap<String,Integer>();
+        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         Player p;
+        while( it.hasNext() ) {
+            p = it.next();
+            if( p != null ) {
+                if( p.getShipType() == Tools.SHIP_SHARK || p.getShipType() == Tools.SHIP_TERRIER || p.getShipType() == Tools.SHIP_LEVIATHAN ) {
+                    players.put( p.getPlayerName(), new Integer(p.getShipType()) );
+                    m_botAction.setShip(p.getPlayerName(), 1);
+                }
+            }
+        }
+        Iterator<String> it2 = players.keySet().iterator();
+        String name;
+        int ship;
+        while( it2.hasNext() ) {
+            name = it2.next();
+            ship = players.get(name);
+            m_botAction.setShip(name, ship);
+        }
 
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
         while( i.hasNext() ) {
-            p = (Player)i.next();
+            p = i.next();
             if( p != null ) {
                 if( p.getFrequency() % 2 == 0 )
                     m_botAction.warpTo( p.getPlayerID(), SAFE_LEFT_X, SAFE_LEFT_Y );
