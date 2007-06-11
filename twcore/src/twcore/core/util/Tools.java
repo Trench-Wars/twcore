@@ -18,7 +18,7 @@ import java.util.LinkedList;
 public class Tools {
     public static boolean debugging = true;
     public static String exceptionLogFilePath = null;
-
+    
     /**
      * Chops a string into pieces around a given character.  Very similar to
      * String's split method, only slower and less powerful.  Nearly useless.
@@ -203,25 +203,25 @@ public class Tools {
      */
     public static String shipName( int shipNumber ){
         switch( shipNumber ){
-            case 0:
+            case SHIP_SPECTATOR:
                 return "Spectator";
-            case 1:
+            case SHIP_WARBIRD:
                 return "Warbird";
-            case 2:
+            case SHIP_JAVELIN:
                 return "Javelin";
-            case 3:
+            case SHIP_SPIDER:
                 return "Spider";
-            case 4:
+            case SHIP_LEVIATHAN:
                 return "Leviathan";
-            case 5:
+            case SHIP_TERRIER:
                 return "Terrier";
-            case 6:
+            case SHIP_WEASEL:
                 return "Weasel";
-            case 7:
+            case SHIP_LANCASTER:
                 return "Lancaster";
-            case 8:
+            case SHIP_SHARK:
                 return "Shark";
-            default: case 9:
+            default:
                 return "UFO";
         }
     }
@@ -401,4 +401,82 @@ public class Tools {
         }
         return response;
     }
+    
+    
+    // *** ENUMS ***
+    
+    // Prizes
+    public static final int PRIZE_RECHARGE = 1;
+    public static final int PRIZE_ENERGY = 2;
+    public static final int PRIZE_ROTATION = 3;
+    public static final int PRIZE_STEALTH = 4;
+    public static final int PRIZE_CLOAK = 5;
+    public static final int PRIZE_XRADAR = 6;
+    public static final int PRIZE_WARP = 7;
+    public static final int PRIZE_GUNS = 8;
+    public static final int PRIZE_BOMBS = 9;
+    public static final int PRIZE_BOUNCING_BULLETS = 10;
+    public static final int PRIZE_THRUST = 11;
+    public static final int PRIZE_TOPSPEED = 12;
+    public static final int PRIZE_FULLCHARGE = 13;
+    public static final int PRIZE_ENGINE_SHUTDOWN = 14;
+    public static final int PRIZE_MULTIFIRE = 15;
+    public static final int PRIZE_PROXIMITY = 16;
+    public static final int PRIZE_SUPER = 17;
+    public static final int PRIZE_SHIELDS = 18;
+    public static final int PRIZE_SHRAPNEL = 19;
+    public static final int PRIZE_ANTIWARP = 20;
+    public static final int PRIZE_REPEL = 21;
+    public static final int PRIZE_BURST = 22;
+    public static final int PRIZE_DECOY = 23;
+    public static final int PRIZE_THOR = 24;
+    public static final int PRIZE_MULTIPRIZE = 25;
+    public static final int PRIZE_BRICK = 26;
+    public static final int PRIZE_ROCKET = 27;
+    public static final int PRIZE_PORTAL = 28;
+    
+    // Sounds
+    public static final int SOUND_BEEP1 = 1;
+    public static final int SOUND_BEEP2 = 2;
+    public static final int SOUND_NOT_DEALING_WITH_ATT = 3;
+    public static final int SOUND_VIOLENT_CONTENT = 4;
+    public static final int SOUND_HALLELUJAH = 5;
+    public static final int SOUND_REAGAN = 6;
+    public static final int SOUND_INCONCEIVABLE = 7;
+    public static final int SOUND_WINSTON_CHURCHILL = 8;
+    public static final int SOUND_LISTEN_TO_ME = 9;
+    public static final int SOUND_CRYING = 10;
+    public static final int SOUND_BURP = 11;
+    public static final int SOUND_ORGASM_DO_NOT_USE = 12;
+    public static final int SOUND_SCREAM = 13;
+    public static final int SOUND_FART1 = 14;
+    public static final int SOUND_FART2 = 15;
+    public static final int SOUND_PHONE_RING = 16;
+    public static final int SOUND_UNDER_ATTACK = 17;
+    public static final int SOUND_GIBBERISH = 18;
+    public static final int SOUND_CROWD_OOO = 19;
+    public static final int SOUND_CROWD_GEE = 20;
+    public static final int SOUND_CROWD_OHH = 21;
+    public static final int SOUND_CROWD_AWW = 22;
+    public static final int SOUND_GAME_SUCKS = 23;
+    public static final int SOUND_SHEEP = 24;
+    public static final int SOUND_CANT_LOG_IN = 25;
+    public static final int SOUND_BEEP3 = 26;
+    public static final int SOUND_START_MUSIC = 100;
+    public static final int SOUND_STOP_MUSIC = 101;
+    public static final int SOUND_PLAY_MUSIC_ONCE = 102;
+    public static final int SOUND_VICTORY_BELL = 103;
+    public static final int SOUND_GOAL = 104;
+    public static final int SOUND_GOGOGO = 104; // Just in case :P
+    
+    // Ships
+    public static final int SHIP_SPECTATOR = 0;
+    public static final int SHIP_WARBIRD = 1;
+    public static final int SHIP_JAVELIN = 2;
+    public static final int SHIP_SPIDER = 3;
+    public static final int SHIP_LEVIATHAN = 4;
+    public static final int SHIP_TERRIER = 5;
+    public static final int SHIP_WEASEL = 6;
+    public static final int SHIP_LANCASTER = 7;
+    public static final int SHIP_SHARK = 8;
 }
