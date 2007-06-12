@@ -43,8 +43,6 @@ class PrFaceOff extends PosReaction
 
 	void React( PlayerPosition event, SubspaceBot bot )
 	{
-		boolean faceOff = true;
-
 		if( !State.Is( State.FACE_OFF ) )
 			return;
 

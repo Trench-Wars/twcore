@@ -487,7 +487,6 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleAdvert ( String playerName, String message ){
-        String[]        response2;
         HelpRequest     helpRequest;
 
         lastHelpRequestName = playerName;
@@ -1123,7 +1122,7 @@ public class robohelp extends SubspaceBot {
       {
         formattedResp.add(response.substring(startIndex, breakIndex));
         startIndex = indexNotOf(response, ' ', breakIndex);
-        breakIndex = breakIndex = getBreakIndex(response, startIndex);
+        breakIndex = getBreakIndex(response, startIndex);
       }
       return formattedResp.toArray(new String[formattedResp.size()]);
     }

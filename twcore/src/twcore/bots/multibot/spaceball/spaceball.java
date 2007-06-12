@@ -10,7 +10,6 @@ import java.util.ListIterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
@@ -34,7 +33,6 @@ import twcore.core.util.Tools;
 
 public class spaceball extends MultiModule {
 
-	private BotSettings m_botSettings;
 	private Ship oShip;
 
 	int PLANET_1_BORDER = 7776;
@@ -72,7 +70,6 @@ public class spaceball extends MultiModule {
 	int winner;
 
 	public void init() {
-		m_botSettings = moduleSettings;
 		oShip = m_botAction.getShip();
 		String thisArena = m_botAction.getArenaName();
 		try {
@@ -317,8 +314,8 @@ public class spaceball extends MultiModule {
 
 		double bearing = Math.PI * 2 * (double)event.getRotation() / 40.0;
 
-		double bVX = event.getXVelocity() + (short)(pSpeed * Math.sin(bearing));
-		double bVY = event.getYVelocity() - (short)(pSpeed * Math.cos(bearing));
+		/*double bVX = event.getXVelocity() + (short)(pSpeed * Math.sin(bearing));
+		double bVY = event.getYVelocity() - (short)(pSpeed * Math.cos(bearing));*/
 
 //		m_botAction.sendArenaMessage("Weapon phyred! " + p + " X:" + event.getXLocation() + " Y:" + event.getYLocation() + " VX:" + event.getXVelocity() + " BVX:" + bVX + " VY:" + event.getYVelocity() + " BVY:" + bVY);
 

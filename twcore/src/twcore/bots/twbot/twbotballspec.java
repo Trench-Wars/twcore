@@ -293,8 +293,6 @@ public class twbotballspec extends TWBotExtension {
     public void handleEvent( BallPosition event ){
 
         Player p;
-        int numPlayers = 0;
-        Iterator i;
         String pname;
 
         if( isRunning ) {

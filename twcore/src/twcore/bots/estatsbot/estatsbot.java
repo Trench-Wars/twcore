@@ -33,9 +33,9 @@ public class estatsbot extends SubspaceBot {
 		players = new HashMap<String, ElimPlayer>();
 		lastPlayers = new HashMap();
 		EventRequester events = m_botAction.getEventRequester();
-		events.request(events.MESSAGE);
-		events.request(events.PLAYER_DEATH);
-		events.request(events.LOGGED_ON);
+		events.request(EventRequester.MESSAGE);
+		events.request(EventRequester.PLAYER_DEATH);
+		events.request(EventRequester.LOGGED_ON);
 	}
 
 	public void handleEvent(LoggedOn event) {
@@ -251,7 +251,7 @@ class ElimPlayer {
 	}
 
 	public String getQuery2(int gID, boolean won, int isElim) {
-		int w = 0; if(won) w = 1;
+		//int w = 0; if(won) w = 1;
 		String query = "INSERT INTO tblElimPlayer (fcUserName, fnRating, fnKills, fnDeaths, fnElim, ftUpdated) VALUES('"+Tools.addSlashesToString(name)+"', "+rAfter+", "+killsFromBot+", "+deathsFromBot+", "+isElim+", NOW()) ON DUPLICATE KEY UPDATE fnKills = "+killsFromBot+", fnDeaths = "+deathsFromBot+", ftUpdated = NOW(), fnRating = "+rAfter;
 		return query;
 	}

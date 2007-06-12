@@ -118,7 +118,6 @@ public class twbotdeathmessage extends TWBotExtension
     {
         if( modeSet && isRunning )
         {
-            Player p = m_botAction.getPlayer(event.getKilleeID());
             String killmsg = killmsgs.toString();
             int soundPos = killmsg.indexOf('%');
             int soundCode = 0;

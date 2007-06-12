@@ -489,7 +489,7 @@ public class roboreplacement extends SubspaceBot
                 }
                 else //updates a persons record
                 {
-                    double played = qryHasElimtwoRecord.getInt("fnPlayed") + 1.0;
+                    //double played = qryHasElimtwoRecord.getInt("fnPlayed") + 1.0;
                     double wines = qryHasElimtwoRecord.getInt("fnWon") + winz;
                     double killez = qryHasElimtwoRecord.getInt("fnKills") + killz;
                     double lossez = qryHasElimtwoRecord.getInt("fnDeaths") + losses;

@@ -39,9 +39,9 @@ public class bouncerbot extends SubspaceBot {
 
     public void logEvent( String event ){
         Calendar c = Calendar.getInstance();
-        String timestamp = c.get( c.MONTH ) + "/" + c.get( c.DAY_OF_MONTH )
-        + "/" + c.get( c.YEAR ) + ": " + c.get( c.HOUR ) + ":"
-        + c.get( c.MINUTE ) + ":" + c.get( c.SECOND ) + " - ";
+        String timestamp = c.get( Calendar.MONTH ) + "/" + c.get( Calendar.DAY_OF_MONTH )
+        + "/" + c.get( Calendar.YEAR ) + ": " + c.get( Calendar.HOUR ) + ":"
+        + c.get( Calendar.MINUTE ) + ":" + c.get( Calendar.SECOND ) + " - ";
         try{
             PrintWriter out = new PrintWriter( new FileWriter( "bouncerbot.log" ));
             log.add( timestamp + event );

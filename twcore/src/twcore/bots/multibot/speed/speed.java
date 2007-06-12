@@ -298,11 +298,11 @@ public class speed extends MultiModule {
 			}
 			m_botAction.changeAllShips(1);
 
-			TimerTask positionCheck = new TimerTask() {
+			/*TimerTask positionCheck = new TimerTask() {
 				public void run() {
 					updatePositions();
 				}
-			};
+			};*/
 //			m_botAction.scheduleTaskAtFixedRate(positionCheck, 100, 100);
 
 			if (m_fixedSpeedLimit) {

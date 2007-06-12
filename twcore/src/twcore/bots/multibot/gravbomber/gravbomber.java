@@ -615,7 +615,6 @@ public class gravbomber extends MultiModule {
     }
 
     public void loadWeapon( String playerName, int weaponID ){
-    	Player player = m_botAction.getPlayer( playerName );
 
     	switch(weaponID){
     	    case WEAP_ROCKET:
@@ -666,7 +665,6 @@ public class gravbomber extends MultiModule {
     }
 
     public void unloadWeapon( String playerName, int weaponID ){
-    	Player player = m_botAction.getPlayer( playerName );
 
     	switch(weaponID){
     	    case WEAP_ROCKET:

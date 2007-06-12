@@ -16,7 +16,6 @@ import twcore.core.EventRequester;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
-import twcore.core.game.Flag;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -415,7 +414,7 @@ public class cnr extends MultiModule {
     public void handleEvent( FlagClaimed event ) {
         if( isRunning ){
 
-            Flag f = m_botAction.getFlag( event.getFlagID() );
+            //Flag f = m_botAction.getFlag( event.getFlagID() );
             Player p = m_botAction.getPlayer( event.getPlayerID() );
             String playerName = p.getPlayerName();
 
@@ -426,8 +425,8 @@ public class cnr extends MultiModule {
             } else if ( p.getShipType() == m_robbership && p.getFrequency() == m_robberfreq) {
                 m_botAction.setDoors( f_alldoorsopen ); // open all doors
                 m_botAction.sendArenaMessage(playerName + " has broken open the jail!  The robbers are free!");
-                final int warpx = f.getXLocation();
-                final int warpy = f.getYLocation();
+                /*final int warpx = f.getXLocation();
+                final int warpy = f.getYLocation();*/
 
             }
         }

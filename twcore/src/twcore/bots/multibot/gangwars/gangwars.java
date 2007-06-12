@@ -157,7 +157,6 @@ public class gangwars extends MultiModule {
     }
 
     public void handleEvent( PlayerPosition event ) {
-		Player p = m_botAction.getPlayer( event.getPlayerID() );
 		String name = m_botAction.getPlayerName( event.getPlayerID() );
 
 		if( !playerList.containsKey( name ) ) {

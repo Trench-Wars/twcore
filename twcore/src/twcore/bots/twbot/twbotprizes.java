@@ -76,7 +76,7 @@ public class twbotprizes extends TWBotExtension
   public int MAX_SHIP = 8;
   public int MIN_SHIP = 1;
 
-  private Vector timerTasks;
+  private Vector<PrizeTask> timerTasks;
 
   /**
    * Creates a new twbotprizes instance.
@@ -84,7 +84,7 @@ public class twbotprizes extends TWBotExtension
 
   public twbotprizes()
   {
-    timerTasks = new Vector();
+    timerTasks = new Vector<PrizeTask>();
   }
 
   /**
@@ -311,7 +311,6 @@ public class twbotprizes extends TWBotExtension
     StringTokenizer argTokens = getArgTokens(argString);
     int numArgs = argTokens.countTokens();
     int prizeNumber;
-    int freq;
     double interval;
 
     try

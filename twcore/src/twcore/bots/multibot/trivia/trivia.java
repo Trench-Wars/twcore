@@ -441,8 +441,6 @@ public class trivia extends MultiModule {
             m_botAction.sendArenaMessage("--|-------------------------------|");
             m_botAction.sendArenaMessage("--|-- " + doTrimString("     Current Scores",28) + "|");
             m_botAction.sendArenaMessage("--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
-            Set set2 = playerMap.keySet();
-            Iterator it2 = set2.iterator();
             while( numberShown < 8 && curPoints != 0) {
                 Set set = playerMap.keySet();
                 Iterator it = set.iterator();
@@ -467,7 +465,6 @@ public class trivia extends MultiModule {
     /*** Just adds blank space for alignment.                     ***/
     /****************************************************************/
     public String doTrimString(String fragment, int length) {
-        String line;
         if(fragment.length() > length)
             fragment = fragment.substring(0,length-1);
         else {

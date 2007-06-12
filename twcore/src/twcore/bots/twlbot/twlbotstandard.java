@@ -44,7 +44,6 @@ public class twlbotstandard extends TWLBotExtension
     private boolean m_switchSubLock = false;    // To disallow multiple switch/sub cmds
 
     private HashMap<String, Lagger> m_laggers;
-    private int m_watch;
     private Objset m_myObjects;
     private java.util.Date m_lockDate;
     private java.util.Date m_lastRoundCutoffDate;
@@ -957,7 +956,6 @@ public class twlbotstandard extends TWLBotExtension
     public void show_string(String new_n, int pos_offs, int alph_offs)
     {
         int i, t;
-        char to;
 
         for (i = 0; i < new_n.length(); i++)
         {

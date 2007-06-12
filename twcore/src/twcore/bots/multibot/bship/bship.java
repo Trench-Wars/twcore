@@ -9,15 +9,14 @@ import static twcore.core.EventRequester.PLAYER_LEFT;
 import static twcore.core.EventRequester.PLAYER_POSITION;
 import static twcore.core.EventRequester.TURRET_EVENT;
 
+import java.sql.ResultSet;
 import java.util.Iterator;
 import java.util.TimerTask;
-import java.sql.ResultSet;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.command.CommandInterpreter;
-import twcore.core.command.SType;
 import twcore.core.command.TSChangeListener;
 import twcore.core.command.TempSettingsManager;
 import twcore.core.events.FrequencyChange;

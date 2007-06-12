@@ -81,7 +81,7 @@ import twcore.core.util.Tools;
  */
 public class distensionbot extends SubspaceBot {
 
-    private static int SCRAP_PERCENTAGE = 60;               // % of $ returned for scrapping upgrades
+    //private static int SCRAP_PERCENTAGE = 60;               // % of $ returned for scrapping upgrades
     private static int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private static String DB_PROB_MSG = "DAMN!  We've got a database problem!  That last one didn't go through.  Please tell somebody!";
                                                             // Msg displayed for DB error

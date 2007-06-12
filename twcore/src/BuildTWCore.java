@@ -30,8 +30,8 @@ public class BuildTWCore {
     boolean bbuildAllBots = false;  // True to build bots
     boolean bclearAll = false;      // True to remove all class files and twcore.jar after compile
     boolean bclearNBATT = false;    // True to remove all NetBeans project .nbattr files after compile
-    LinkedList botList;             // List of specific bots to compile
-    LinkedList coreList;            // List of specific parts of misc to compile
+    LinkedList<String> botList;             // List of specific bots to compile
+    LinkedList<String> coreList;            // List of specific parts of misc to compile
     String currentOS;               // Operating system running
 
     long startTime;                 // Time when the compile began
@@ -43,8 +43,8 @@ public class BuildTWCore {
     public BuildTWCore(String[] args) {
         // get runtime environment
         runtime = Runtime.getRuntime();
-        botList = new LinkedList();
-        coreList = new LinkedList();
+        botList = new LinkedList<String>();
+        coreList = new LinkedList<String>();
         extraCP = extraCP.replace(':', File.pathSeparatorChar);
         handleArguments(args);
     }

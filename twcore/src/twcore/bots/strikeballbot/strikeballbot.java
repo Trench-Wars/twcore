@@ -409,7 +409,6 @@ public class strikeballbot extends SubspaceBot {
     /** Ends the game if scores are not tied.
      */
     public void do_endGame() {
-        StrikeballPlayer sbP;
 
         if( m_team1Score == m_team2Score ) {
 

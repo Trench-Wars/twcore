@@ -392,8 +392,8 @@ public class SpaceShip extends Thread
 
 		double bearing = Math.PI * 2 * (double)event.getRotation() / 40.0;
 
-		double bVX = event.getXVelocity() + (short)(pSpeed * Math.sin(bearing));
-		double bVY = event.getYVelocity() - (short)(pSpeed * Math.cos(bearing));
+		//double bVX = event.getXVelocity() + (short)(pSpeed * Math.sin(bearing));
+		//double bVY = event.getYVelocity() - (short)(pSpeed * Math.cos(bearing));
 
 		fired_projectiles.add(new Projectile(m_botAction.getPlayerName(event.getPlayerID()), event.getXLocation() + (short)(10.0 * Math.sin(bearing)), event.getYLocation() - (short)(10.0 * Math.cos(bearing)), event.getXVelocity() + (short)(pSpeed * Math.sin(bearing)), event.getYVelocity() - (short)(pSpeed * Math.cos(bearing)), event.getWeaponType(), event.getWeaponLevel()));
 	}

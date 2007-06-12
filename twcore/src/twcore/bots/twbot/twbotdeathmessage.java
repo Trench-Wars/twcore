@@ -14,7 +14,6 @@ import java.util.List;
 import twcore.bots.TWBotExtension;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
-import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
@@ -119,7 +118,6 @@ public class twbotdeathmessage extends TWBotExtension
     {
         if( modeSet && isRunning )
         {
-            Player p = m_botAction.getPlayer(event.getKilleeID());
             String killmsg = killmsgs.toString();
             int soundPos = killmsg.indexOf('%');
             int soundCode = 0;

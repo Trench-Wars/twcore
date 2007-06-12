@@ -289,7 +289,6 @@ public class Rbprizes extends RBExtender
     StringTokenizer argTokens = getArgTokens(argString);
     int numArgs = argTokens.countTokens();
     int prizeNumber;
-    int freq;
     double interval;
 
     try

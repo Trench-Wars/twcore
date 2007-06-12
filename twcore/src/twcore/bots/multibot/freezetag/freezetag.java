@@ -36,7 +36,7 @@ public class freezetag extends MultiModule {
      * Here are some constants.
      */
 
-     private static final int SPEC_FREQ   = 9999; //spec freq #
+     //private static final int SPEC_FREQ   = 9999; //spec freq #
      private static final int WARBIRD     = 1;    //wb ship #
      private static final int JAVELIN     = 2;    //jav ship #
      private static final int SPIDER      = 3;    //spid ship #

@@ -100,8 +100,6 @@ public class RPSGame
   {
     int weapon1 = player1.getWeapon();
     int weapon2 = player2.getWeapon();
-    RPSPlayer winner;
-    RPSPlayer loser;
 
     if(weapon1 != -1 && weapon2 != -1)
     {

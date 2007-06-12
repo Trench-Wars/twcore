@@ -310,7 +310,6 @@ public class DBPlayerData {
     }
 
     public boolean aliasMatch( String ip, String mid ) {
-        String pieces[] = ip.split(".");
         ip = ip.substring( 0, ip.lastIndexOf( "." ) )+".%";
         boolean result = false;
 
@@ -332,7 +331,6 @@ public class DBPlayerData {
      * @return
      */
     public boolean aliasMatchCrude( String ip, String mid ) {
-        String pieces[] = ip.split(".");
         ip = ip.substring( 0, ip.lastIndexOf( "." ) )+".%";
         boolean result = false;
 

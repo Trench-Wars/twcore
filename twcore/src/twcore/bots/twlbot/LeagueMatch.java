@@ -388,7 +388,6 @@ public class LeagueMatch
 
             int teamId = 0;
             int target;
-            boolean warning = true;
             String name = "";
             int teamScore = 0;
 

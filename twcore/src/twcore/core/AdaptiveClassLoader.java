@@ -411,7 +411,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      * @exception  ClassNotFoundException  if the class loader cannot
      *             find a the requested class.
      */
-    protected synchronized Class loadClass(String name, boolean resolve)
+    protected synchronized Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException
     {
         // The class object that will be returned.

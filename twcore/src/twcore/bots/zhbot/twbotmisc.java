@@ -272,7 +272,7 @@ public class twbotmisc extends TWBotExtension {
 					if( i == null ) return;
 					while( i.hasNext() ){
 						Player player = i.next();
-						String curName= player.getPlayerName();
+						//String curName= player.getPlayerName();
 						int    xpos	  = player.getXLocation();
 						int    ypos   = player.getYLocation();
 						//m_botAction.sendArenaMessage( curName + "   " + xpos + "," + ypos );

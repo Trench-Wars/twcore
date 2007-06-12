@@ -173,7 +173,6 @@ public class StatTracker {
 		//Don't ignore message events, but only process arena messages
 		if( _event.getMessageType() != Message.ARENA_MESSAGE ) return;
 
-		String message = _event.getMessage();
 	}
 
 	public void handleEvent( PlayerDeath _event ) {

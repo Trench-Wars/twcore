@@ -129,7 +129,7 @@ public class bannerboy extends SubspaceBot {
 		}
 	}
 
-	private void createPlayer( String player ) {
+	/*private void createPlayer( String player ) {
 
 		player = Tools.addSlashesToString( player );
 		try {
@@ -138,7 +138,7 @@ public class bannerboy extends SubspaceBot {
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
-	}
+	}*/
 
 	private void markSeen( String player, byte[] banner ) {
 

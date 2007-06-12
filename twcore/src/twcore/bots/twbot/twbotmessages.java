@@ -51,7 +51,6 @@ import twcore.core.game.Player;
 public class twbotmessages extends TWBotExtension
 {
   private Vector<MsgTask> msgList;
-  private boolean haveTargets;
 
   /**
    * This method initializes the messages module.
@@ -60,7 +59,6 @@ public class twbotmessages extends TWBotExtension
   public twbotmessages()
   {
     msgList = new Vector<MsgTask>();
-    haveTargets = false;
   }
 
   /**

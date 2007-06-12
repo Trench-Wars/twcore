@@ -1,7 +1,6 @@
 package twcore.bots.powerballbot;
 
 import twcore.core.BotAction;
-import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyChange;
@@ -21,7 +20,7 @@ public class powerballbot extends SubspaceBot {
 	public powerballbot( BotAction botAction ) {
 
 		super( botAction );
-		EventRequester events = m_botAction.getEventRequester();
+		//EventRequester events = m_botAction.getEventRequester();
         //events.request( EventRequester.MESSAGE );
         //events.request( EventRequester.FREQUENCY_SHIP_CHANGE );
         //events.request( EventRequester.PLAYER_LEFT );

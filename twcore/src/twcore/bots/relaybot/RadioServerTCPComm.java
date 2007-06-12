@@ -39,7 +39,6 @@ public class RadioServerTCPComm extends Thread {
         //Client has 500 milliseconds to reach OK status after the handshake.
         //before the client is dropped.
 
-        long time = System.currentTimeMillis();
 
         //Wait for client to initiate contact...
         try{

@@ -43,7 +43,6 @@ package twcore.bots.twbot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
@@ -354,7 +353,6 @@ public class twbotwarp extends TWBotExtension
     TreeSet<Integer> freqNumbers = new TreeSet<Integer>();
     Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
     Player player;
-    int freq;
 
     while(iterator.hasNext())
     {

@@ -107,7 +107,6 @@ public class PowerBallManager {
 				Player player = m_botAction.getPlayer( name );
 
 				//Set player as having picked up the ball
-				PowerBallPlayer thisPlayer = m_playerList.get( name );
 				getPlayer( name ).setPickUp( event.getBallID() );
 				//Check if it was a steal/save
 				if( ball.steal( player.getFrequency() ) ) {

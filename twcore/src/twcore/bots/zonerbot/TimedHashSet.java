@@ -346,5 +346,9 @@ public class TimedHashSet<E> implements Set<E>
       if(timedAction != null)
         timedAction.objectExpired(o);
     }
+    
+    public long getStartTime() {
+    	return this.startTime;
+    }
   }
 }

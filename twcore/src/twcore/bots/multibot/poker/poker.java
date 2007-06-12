@@ -56,9 +56,9 @@ public class poker extends MultiModule
 
 	public void requestEvents(EventRequester events)
 	{
-		events.request(events.MESSAGE);
-		events.request(events.LOGGED_ON);
-		events.request(events.PLAYER_LEFT);
+		events.request(EventRequester.MESSAGE);
+		events.request(EventRequester.LOGGED_ON);
+		events.request(EventRequester.PLAYER_LEFT);
 	}
 
 	/*public pokerbot(BotAction botAction) {
@@ -317,8 +317,8 @@ public class poker extends MultiModule
 		int index = playerSeat.indexOf(turn) + 1;
 		if(index >= playerSeat.size()) index = 0;
 		turn = playerSeat.get(index);
-		PokerPlayer pPlayer = seats.get(turn);
-		/*if(!pPlayer.isPlaying()) { nextPlayer(); return; }
+		/*PokerPlayer pPlayer = seats.get(turn);
+		if(!pPlayer.isPlaying()) { nextPlayer(); return; }
 		if(nextRound()) {
 			for(int k = 0;k < playerSeat.size();k++) {
 				String name = (String)playerSeat.get(k);

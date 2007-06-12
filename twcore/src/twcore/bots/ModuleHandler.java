@@ -74,8 +74,6 @@ public class ModuleHandler
 
   public void unloadModule(String moduleName)
   {
-    String lowerName = moduleName.toLowerCase();
-
     if(!moduleList.containsKey(moduleName))
       throw new IllegalArgumentException("ERROR: Module: " + moduleName + " is not loaded.");
     moduleList.remove(moduleName);

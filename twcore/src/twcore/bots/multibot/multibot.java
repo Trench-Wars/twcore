@@ -50,7 +50,6 @@ public class multibot extends SubspaceBot
 
   private OperatorList opList;
   private MultiModule multiModule;
-  private String followTarget;
   private String initialArena;
   private String modulePath;
   private String botChat;

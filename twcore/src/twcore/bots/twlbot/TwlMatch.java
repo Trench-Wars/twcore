@@ -492,7 +492,6 @@ public class TwlMatch
 				playerOut = true;
 			if (getPlayer(player).getData(1) >= 3)
 				playerOut = true; //Checks for 3 lagouts.
-			int time = (int) (System.currentTimeMillis() / 1000);
 			if (getPlayer(player).getData(-9) == -2)
 				playerOut = true; //Checks for lagged out too long.
 			if (!playerOut)
@@ -508,7 +507,6 @@ public class TwlMatch
 				playerOut = true;
 			if (getPlayer(player).getData(1) >= 3)
 				playerOut = true; //Checks for 3 lagouts.
-			int time = (int) (System.currentTimeMillis() / 1000);
 			if (getPlayer(player).getData(-9) == -2)
 				playerOut = true; //Checks for lagged out too long.
 			if (!playerOut)

@@ -18,7 +18,6 @@ public class twbotspawnpmer extends TWBotExtension
 
     public twbotspawnpmer()
     {
-        String controller;
         times = new HashMap<Player, Long>();
         safeTime = SAFE_TIME_DEFAULT;
         enabled = false;

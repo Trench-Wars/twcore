@@ -297,7 +297,7 @@ public class f1bot extends SubspaceBot {
         int x         = event.getXLocation();                                   // Current x-pos of the player
         int y         = event.getYLocation();                                   // Current y-pos of the player
         int playerID  = event.getPlayerID();
-        String player = m_botAction.getPlayerName( playerID );                  // Name of the player
+        //String player = m_botAction.getPlayerName( playerID );                  // Name of the player
         Track t       = tracks[current_track];                                  // Reference to the current track object
 
         Point     c   = new Point(x,y);
@@ -574,8 +574,8 @@ class Racer implements Comparable
 	    {
 		finished = true;
                 {
-		    Date started  = getParentRaceRecordsObject().getParentF1Bot().getTimeRaceStarted();
-      		    Date finished = new Date();
+		    //Date started  = getParentRaceRecordsObject().getParentF1Bot().getTimeRaceStarted();
+      		//    Date finished = new Date();
 
 		    //f1bot.static_f1bot.m_botAction.sendArenaMessage(playerName + " finished!  Time takeN: "+mins+":"+secs+"."+ms,5);
 
