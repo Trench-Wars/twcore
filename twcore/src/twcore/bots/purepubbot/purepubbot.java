@@ -1126,7 +1126,7 @@ public class purepubbot extends SubspaceBot
             roundTitle = "Round " + roundNum;
         }
 
-        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")  Type :" + m_botAction.getBotName() +":!warp to warp into FR."  );
+        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")" + (strictFlagTime?"":(" Type :" + m_botAction.getBotName() +":!warp to warp into FR.")) );
 
         m_botAction.cancelTask(startTimer);
 
@@ -1487,6 +1487,7 @@ public class purepubbot extends SubspaceBot
     private void safeWarp() {        
         // Prevent pre-laid mines and portals in strict flag time by setting to WB and back again (slightly hacky)
         HashMap<String,Integer> players = new HashMap<String,Integer>();
+        HashMap<String,Integer> bounties = new HashMap<String,Integer>();
         Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         Player p;
         while( it.hasNext() ) {
@@ -1494,17 +1495,22 @@ public class purepubbot extends SubspaceBot
             if( p != null ) {
                 if( p.getShipType() == Tools.SHIP_SHARK || p.getShipType() == Tools.SHIP_TERRIER || p.getShipType() == Tools.SHIP_LEVIATHAN ) {
                     players.put( p.getPlayerName(), new Integer(p.getShipType()) );
+                    bounties.put( p.getPlayerName(), new Integer(p.getBounty()) );
                     m_botAction.setShip(p.getPlayerName(), 1);
                 }
             }
         }
         Iterator<String> it2 = players.keySet().iterator();
         String name;
-        int ship;
+        Integer ship, bounty;
         while( it2.hasNext() ) {
             name = it2.next();
             ship = players.get(name);
-            m_botAction.setShip(name, ship);
+            bounty = bounties.get(name);
+            if( ship != null )
+                m_botAction.setShip( name, ship.intValue() );
+            if( bounty != null )
+                m_botAction.giveBounty( name, bounty.intValue() - 3 );
         }
 
         Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
