@@ -190,25 +190,19 @@ public class robohelp extends SubspaceBot {
     public void handleStatus( String name, String message ){
 
         if( !m_botAction.SQLisOperational() ){
-
             m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might  experience problems too." );
             return;
-
-	}
+        }
         try {
             m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblCall LIMIT 0,1" );
             m_botAction.sendChatMessage( "Statistic Recording: Operational" );
-
-	} catch (Exception e ) {
+        } catch (Exception e ) {
             m_botAction.sendChatMessage( "NOTE: The database connection is down. Some other bots might experience problems too." );
         }
-
     }
 
-/*    public void handleGoogle( String name, String message ){
-
+    /*public void handleGoogle( String name, String message ){
         m_botAction.sendChatMessage( "Google search results for " + message + ": " + doGoogleSearch( message ) );
-
     }*/
 
     /**
@@ -217,9 +211,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleDictionary( String name, String message ) {
-
         m_botAction.sendChatMessage( "Dictionary definition:  http://dictionary.reference.com/search?q=" + message );
-
     }
 
     /**
@@ -228,9 +220,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleThesaurus( String name, String message ) {
-
         m_botAction.sendChatMessage( "Thesaurus entry:  http://thesaurus.reference.com/search?q=" + message );
-
     }
 
     /**
@@ -239,9 +229,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleJavadocs( String name, String message ) {
-
         m_botAction.sendChatMessage( "Javadocs entry:  http://javadocs.org/" + message );
-
     }
 
 /*    public String doGoogleSearch( String searchString ){
@@ -263,8 +251,7 @@ public class robohelp extends SubspaceBot {
    }*/
 
    public void handleBanNumber( String name, String message ){
-
-        String        number;
+        String number;
 
         if( message.startsWith( "activated #" ) ){
             number = message.substring( message.indexOf( ' ' ) );
@@ -1073,7 +1060,7 @@ public class robohelp extends SubspaceBot {
 
     public void mainHelpScreen( String playerName, String message ){
         final String[] helpText = {
-            "Commands given in the staff chat:",
+            "Chat commands:",
             "!repeat <optional name> - Repeats the response to the specified name.  If no name is specified, the last response is repeated.",
             "!tell <name>:<keyword> - Private messages the specified name with the response to the keyword given.",
             "!warn <optional name> - Warns the specified player.  If no name is given, warns the last person.",
@@ -1083,14 +1070,37 @@ public class robohelp extends SubspaceBot {
             "!dictionary word - Returns a link for a definition of the word.",
             "!thesaurus word - Returns a link for a thesaurus entry for the word.",
             "!javadocs term - Returns a link for a javadocs lookup of the term.",
-            "Commands sent via private message to me:",
+            "",
+            "PM commands:",
             "!lookup <keyword> - Tells you the response when the specified key word is given",
             "!last <optional name> - Tells you what the response to the specified player was.  If no name is specified, the last response is given.",
-            "!hosted <hours> - Displays the hosted events in the last specified <hours>, <hours> can be ommitted."
+            "!hosted <hours> - Displays the hosted events in the last specified <hours>, <hours> can be ommitted.",
         };
-
         if( m_botAction.getOperatorList().isZH( playerName ) ){
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
+        }
+        
+        String[] ERHelpText = {
+            "!adv - Sets the text for the advertisement system",
+            "!time - Returns the time left before the next zone"
+        };
+        if( m_botAction.getOperatorList().isER( playerName )) {
+        	m_botAction.remotePrivateMessageSpam( playerName, ERHelpText );
+        }
+        
+        String[] SmodHelpText = {
+            "!backupadv - Starts/stops the advertisement system (periodically zones a preset message)"
+        };
+        if( m_botAction.getOperatorList().isSmod( playerName )) {
+        	m_botAction.remotePrivateMessageSpam( playerName, SmodHelpText );
+        }
+        
+        String [] OwnerHelpText = {
+            "!reload - Reloads the HelpResponses database from file",
+            "!saychat <messages> - Makes the bot say the <message> in the staff chat"
+        };
+        if( m_botAction.getOperatorList().isOwner( playerName )) {
+        	m_botAction.remotePrivateMessageSpam( playerName, OwnerHelpText );
         }
     }
 
