@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
+import twcore.core.game.Ship;
 
 /**
  * Cluttered but somewhat useful toolkit of common operations.  Should be referenced
@@ -203,23 +204,23 @@ public class Tools {
      */
     public static String shipName( int shipNumber ){
         switch( shipNumber ){
-            case SHIP_SPECTATOR:
+            case Ship.SPEC:
                 return "Spectator";
-            case SHIP_WARBIRD:
+            case Ship.WARBIRD:
                 return "Warbird";
-            case SHIP_JAVELIN:
+            case Ship.JAVELIN:
                 return "Javelin";
-            case SHIP_SPIDER:
+            case Ship.SPIDER:
                 return "Spider";
-            case SHIP_LEVIATHAN:
+            case Ship.LEVIATHAN:
                 return "Leviathan";
-            case SHIP_TERRIER:
+            case Ship.TERRIER:
                 return "Terrier";
-            case SHIP_WEASEL:
+            case Ship.WEASEL:
                 return "Weasel";
-            case SHIP_LANCASTER:
+            case Ship.LANCASTER:
                 return "Lancaster";
-            case SHIP_SHARK:
+            case Ship.SHARK:
                 return "Shark";
             default:
                 return "UFO";
@@ -406,77 +407,72 @@ public class Tools {
     // *** ENUMS ***
     
     // Prizes
-    public static final int PRIZE_RECHARGE = 1;
-    public static final int PRIZE_ENERGY = 2;
-    public static final int PRIZE_ROTATION = 3;
-    public static final int PRIZE_STEALTH = 4;
-    public static final int PRIZE_CLOAK = 5;
-    public static final int PRIZE_XRADAR = 6;
-    public static final int PRIZE_WARP = 7;
-    public static final int PRIZE_GUNS = 8;
-    public static final int PRIZE_BOMBS = 9;
-    public static final int PRIZE_BOUNCING_BULLETS = 10;
-    public static final int PRIZE_THRUST = 11;
-    public static final int PRIZE_TOPSPEED = 12;
-    public static final int PRIZE_FULLCHARGE = 13;
-    public static final int PRIZE_ENGINE_SHUTDOWN = 14;
-    public static final int PRIZE_MULTIFIRE = 15;
-    public static final int PRIZE_PROXIMITY = 16;
-    public static final int PRIZE_SUPER = 17;
-    public static final int PRIZE_SHIELDS = 18;
-    public static final int PRIZE_SHRAPNEL = 19;
-    public static final int PRIZE_ANTIWARP = 20;
-    public static final int PRIZE_REPEL = 21;
-    public static final int PRIZE_BURST = 22;
-    public static final int PRIZE_DECOY = 23;
-    public static final int PRIZE_THOR = 24;
-    public static final int PRIZE_MULTIPRIZE = 25;
-    public static final int PRIZE_BRICK = 26;
-    public static final int PRIZE_ROCKET = 27;
-    public static final int PRIZE_PORTAL = 28;
+    public class Prize {
+        public static final int RECHARGE = 1;
+        public static final int ENERGY = 2;
+        public static final int ROTATION = 3;
+        public static final int STEALTH = 4;
+        public static final int CLOAK = 5;
+        public static final int XRADAR = 6;
+        public static final int WARP = 7;
+        public static final int GUNS = 8;
+        public static final int BOMBS = 9;
+        public static final int BOUNCING_BULLETS = 10;
+        public static final int THRUST = 11;
+        public static final int TOPSPEED = 12;
+        public static final int FULLCHARGE = 13;
+        public static final int ENGINE_SHUTDOWN = 14;
+        public static final int MULTIFIRE = 15;
+        public static final int PROXIMITY = 16;
+        public static final int SUPER = 17;
+        public static final int SHIELDS = 18;
+        public static final int SHRAPNEL = 19;
+        public static final int ANTIWARP = 20;
+        public static final int REPEL = 21;
+        public static final int BURST = 22;
+        public static final int DECOY = 23;
+        public static final int THOR = 24;
+        public static final int MULTIPRIZE = 25;
+        public static final int BRICK = 26;
+        public static final int ROCKET = 27;
+        public static final int PORTAL = 28;        
+    }
     
     // Sounds
-    public static final int SOUND_BEEP1 = 1;
-    public static final int SOUND_BEEP2 = 2;
-    public static final int SOUND_NOT_DEALING_WITH_ATT = 3;
-    public static final int SOUND_VIOLENT_CONTENT = 4;
-    public static final int SOUND_HALLELUJAH = 5;
-    public static final int SOUND_REAGAN = 6;
-    public static final int SOUND_INCONCEIVABLE = 7;
-    public static final int SOUND_WINSTON_CHURCHILL = 8;
-    public static final int SOUND_LISTEN_TO_ME = 9;
-    public static final int SOUND_CRYING = 10;
-    public static final int SOUND_BURP = 11;
-    public static final int SOUND_ORGASM_DO_NOT_USE = 12;
-    public static final int SOUND_SCREAM = 13;
-    public static final int SOUND_FART1 = 14;
-    public static final int SOUND_FART2 = 15;
-    public static final int SOUND_PHONE_RING = 16;
-    public static final int SOUND_UNDER_ATTACK = 17;
-    public static final int SOUND_GIBBERISH = 18;
-    public static final int SOUND_CROWD_OOO = 19;
-    public static final int SOUND_CROWD_GEE = 20;
-    public static final int SOUND_CROWD_OHH = 21;
-    public static final int SOUND_CROWD_AWW = 22;
-    public static final int SOUND_GAME_SUCKS = 23;
-    public static final int SOUND_SHEEP = 24;
-    public static final int SOUND_CANT_LOG_IN = 25;
-    public static final int SOUND_BEEP3 = 26;
-    public static final int SOUND_START_MUSIC = 100;
-    public static final int SOUND_STOP_MUSIC = 101;
-    public static final int SOUND_PLAY_MUSIC_ONCE = 102;
-    public static final int SOUND_VICTORY_BELL = 103;
-    public static final int SOUND_GOAL = 104;
-    public static final int SOUND_GOGOGO = 104; // Just in case :P
+    public class Sound {
+        public static final int BEEP1 = 1;
+        public static final int BEEP2 = 2;
+        public static final int NOT_DEALING_WITH_ATT = 3;
+        public static final int VIOLENT_CONTENT = 4;
+        public static final int HALLELUJAH = 5;
+        public static final int REAGAN = 6;
+        public static final int INCONCEIVABLE = 7;
+        public static final int WINSTON_CHURCHILL = 8;
+        public static final int LISTEN_TO_ME = 9;
+        public static final int CRYING = 10;
+        public static final int BURP = 11;
+        public static final int ORGASM_DO_NOT_USE = 12;
+        public static final int SCREAM = 13;
+        public static final int FART1 = 14;
+        public static final int FART2 = 15;
+        public static final int PHONE_RING = 16;
+        public static final int UNDER_ATTACK = 17;
+        public static final int GIBBERISH = 18;
+        public static final int CROWD_OOO = 19;
+        public static final int CROWD_GEE = 20;
+        public static final int CROWD_OHH = 21;
+        public static final int CROWD_AWW = 22;
+        public static final int GAME_SUCKS = 23;
+        public static final int SHEEP = 24;
+        public static final int CANT_LOG_IN = 25;
+        public static final int BEEP3 = 26;
+        public static final int START_MUSIC = 100;
+        public static final int STOP_MUSIC = 101;
+        public static final int PLAY_MUSIC_ONCE = 102;
+        public static final int VICTORY_BELL = 103;
+        public static final int GOAL = 104;
+        public static final int GOGOGO = 104; // Just in case :P
+    }
     
-    // Ships
-    public static final int SHIP_SPECTATOR = 0;
-    public static final int SHIP_WARBIRD = 1;
-    public static final int SHIP_JAVELIN = 2;
-    public static final int SHIP_SPIDER = 3;
-    public static final int SHIP_LEVIATHAN = 4;
-    public static final int SHIP_TERRIER = 5;
-    public static final int SHIP_WEASEL = 6;
-    public static final int SHIP_LANCASTER = 7;
-    public static final int SHIP_SHARK = 8;
+    // For ships, see twcore.core.game.Ship    
 }
