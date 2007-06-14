@@ -28,6 +28,7 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
+import twcore.core.game.Ship;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Tools;
 
@@ -1493,7 +1494,7 @@ public class purepubbot extends SubspaceBot
         while( it.hasNext() ) {
             p = it.next();
             if( p != null ) {
-                if( p.getShipType() == Tools.SHIP_SHARK || p.getShipType() == Tools.SHIP_TERRIER || p.getShipType() == Tools.SHIP_LEVIATHAN ) {
+                if( p.getShipType() == Ship.SHARK || p.getShipType() == Ship.TERRIER || p.getShipType() == Ship.LEVIATHAN ) {
                     players.put( p.getPlayerName(), new Integer(p.getShipType()) );
                     bounties.put( p.getPlayerName(), new Integer(p.getBounty()) );
                     m_botAction.setShip(p.getPlayerName(), 1);
