@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,13 +87,14 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!last", acceptedMessages, this, "handleLast" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen" );
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload" );
+        m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
 
         m_commandInterpreter.registerCommand( "!backupadv", acceptedMessages, this, "handleEnableBackup" );
         m_commandInterpreter.registerCommand( "!adv", acceptedMessages, this, "handleAdv" );
         m_commandInterpreter.registerCommand( "!time", acceptedMessages, this, "handleTime" );
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted" );
         m_commandInterpreter.registerCommand( "!saychat", acceptedMessages, this, "handleSayChat" );
-
+        
         acceptedMessages = Message.CHAT_MESSAGE;
 
         m_commandInterpreter.registerCommand( "!repeat", acceptedMessages, this, "handleRepeat" );
@@ -104,8 +106,13 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary" );
         m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
         m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs" );
+        
 		if (!m_strictOnIts)
             m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );
+		
+        acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE | Message.CHAT_MESSAGE;
+        
+        m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
 
         acceptedMessages = Message.ARENA_MESSAGE;
 
@@ -933,6 +940,7 @@ public class robohelp extends SubspaceBot {
                 callList.removeElementAt( i );
                 recorded = true;
                 this.lastStafferClaimedCall = name;
+                m_botAction.sendRemotePrivateMessage(name, "Call registered.");
             } else {
             	callList.removeElementAt( i );
             }
@@ -963,10 +971,123 @@ public class robohelp extends SubspaceBot {
                 updateStatRecordsGOTIT( name );
                 callList.removeElementAt( i );
                 recorded = true;
-            } else callList.removeElementAt( i );
+                m_botAction.sendRemotePrivateMessage(name, "Call registered.");
+            } else {
+            	callList.removeElementAt( i );
+            }
             i++;
         }
     }
+    
+    /**
+     * Returns the call statistics of the <name> staffer.
+     * @param name
+     * @param message
+     */
+    public void handleMystats( String name, String message ) {
+    	// 1. Check the level of the staff member - Mod / ER / ZH
+    	// 2. Query the database
+    	
+    	String date = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
+    	String query, title="", title2="";
+    	HashMap<String, String> stats = new HashMap<String, String>();
+    	ArrayList<String> rank = new ArrayList<String>();
+    	
+    	if((opList.isZHExact(name) || opList.isModerator(name)) && message.trim().isEmpty()) {
+    		// Call list for ZHs / Moderators+
+    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' ORDER BY fcUserName, fnType";
+    		title =  "Top 5 call count";
+    		title2 = "Your call count";
+    		
+    		// Order and create a list out of the results
+    		try {
+    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
+    			while(results != null && results.next()) {
+    				String staffer = results.getString("fcUserName");
+    				String count = results.getString("fnCount");
+    				
+    				if(stats.containsKey(staffer)) {
+    					// query sets the fnType=1 as second, so this is the "got it"s
+    					stats.put(staffer, stats.get(staffer)+" ("+count+")");
+    				} else {
+    					// query sets the fnType=0 as first, so this is the "on it"s
+    					stats.put(staffer, Tools.formatString(count,3));
+    				}
+    			}
+                m_botAction.SQLClose(results);
+    		} catch(Exception e) { Tools.printStackTrace( e ); }
+    		
+    		// Determine the rank
+    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 ORDER BY fnCount DESC";
+    		try {
+    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
+    			while(results != null && results.next()) {
+    				rank.add(results.getString("fcUserName"));
+    			}
+                m_botAction.SQLClose(results);
+    		} catch(Exception e) { Tools.printStackTrace( e ); }
+    		
+    	} else if(opList.isERExact(name) || message.equalsIgnoreCase("er")) {
+    		// Adverts list for ERs
+    		query = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
+    		
+    		title =  "Top 5 advert count";
+    		title2 = "Your advert count";
+    		
+    		// Create a list out of the results
+    		try {
+    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
+    			while(results.next()) {
+   					stats.put(results.getString("fcUserName"), results.getString("count"));
+   					rank.add(results.getString("fcUserName"));
+    			}
+                m_botAction.SQLClose(results);
+    		} catch(Exception e) {
+    			Tools.printStackTrace( e ); 
+    		}
+    	}
+    	
+    	// Return the top 5
+    	m_botAction.sendSmartPrivateMessage(name, title);
+    	m_botAction.sendSmartPrivateMessage(name, "------------------");
+    	for(int i = 0 ; i < 5 ; i++) {
+    		if(i < rank.size())
+    			m_botAction.sendSmartPrivateMessage(name, " "+
+    					Tools.formatString((i+1)+")", 5)+
+    					Tools.formatString(rank.get(i),20)+" "+
+    					stats.get(rank.get(i)));
+    		else
+    			m_botAction.sendSmartPrivateMessage(name, " "+(i+1)+") ");
+    	}
+    	
+    	// Return your position, one previous and one next
+    	int yourPosition = -1;
+    	
+    	// Determine your position in the rank
+    	for(int i = 0 ; i < rank.size(); i++) {
+    		if(rank.get(i).equals(name)) {
+    			yourPosition = i;
+    			break;
+    		}
+    	}
+    
+    	// Response
+    	m_botAction.sendSmartPrivateMessage(name, "• ");
+    	m_botAction.sendSmartPrivateMessage(name, title2);
+    	m_botAction.sendSmartPrivateMessage(name, "-----------------");
+    	if(yourPosition == -1) {
+    		m_botAction.sendSmartPrivateMessage(name, " There is no statistic from your name found.");
+    	} else {
+	    	for( int i = yourPosition-1; i < yourPosition+2; i++) {
+	    		if(i > -1 && i < rank.size())
+	    			m_botAction.sendSmartPrivateMessage(name, " "+
+	    					Tools.formatString((i+1)+")", 5)+
+	    					Tools.formatString(rank.get(i),20)+" "+
+	    					stats.get(rank.get(i)));
+	    	}
+    	}
+    }
+    
 
     // NOT USED
     /*public void handleChat( String name, String message ) {
@@ -1025,9 +1146,7 @@ public class robohelp extends SubspaceBot {
 
     public void updateStatRecordsONIT( String name ) {
         try {
-            Calendar thisTime = Calendar.getInstance();
-            java.util.Date day = thisTime.getTime();
-            String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
+            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             if(result.next()) {
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
@@ -1061,43 +1180,45 @@ public class robohelp extends SubspaceBot {
     public void mainHelpScreen( String playerName, String message ){
         final String[] helpText = {
             "Chat commands:",
-            "!repeat <optional name> - Repeats the response to the specified name.  If no name is specified, the last response is repeated.",
-            "!tell <name>:<keyword> - Private messages the specified name with the response to the keyword given.",
-            "!warn <optional name> - Warns the specified player.  If no name is given, warns the last person.",
-            "!ban <optional name> - Bans the specified player.  If no name is given, bans the last person.",
-            "!status - Gives back status from systems.",
-//            "!google search - Returns first page found by Googling the search term.",
-            "!dictionary word - Returns a link for a definition of the word.",
-            "!thesaurus word - Returns a link for a thesaurus entry for the word.",
-            "!javadocs term - Returns a link for a javadocs lookup of the term.",
-            "",
+            " !repeat <optional name> - Repeats the response to the specified name.  If no name is specified, the last response is repeated.",
+            " !tell <name>:<keyword> - Private messages the specified name with the response to the keyword given.",
+            " !warn <optional name> - Warns the specified player.  If no name is given, warns the last person.",
+            " !ban <optional name> - Bans the specified player.  If no name is given, bans the last person.",
+            " !status - Gives back status from systems.",
+//            " !google search - Returns first page found by Googling the search term.",
+            " !dictionary word - Returns a link for a definition of the word.",
+            " !thesaurus word - Returns a link for a thesaurus entry for the word.",
+            " !javadocs term - Returns a link for a javadocs lookup of the term.",
+            " !mystats - Returns the top 5 and your call statistics",
+            "--",
             "PM commands:",
-            "!lookup <keyword> - Tells you the response when the specified key word is given",
-            "!last <optional name> - Tells you what the response to the specified player was.  If no name is specified, the last response is given.",
-            "!hosted <hours> - Displays the hosted events in the last specified <hours>, <hours> can be ommitted.",
+            " !lookup <keyword> - Tells you the response when the specified key word is given",
+            " !last <optional name> - Tells you what the response to the specified player was.  If no name is specified, the last response is given.",
+            " !hosted <hours> - Displays the hosted events in the last specified <hours>, <hours> can be ommitted.",
+            " !mystats - Returns the top 5 and your call statistics",
         };
         if( m_botAction.getOperatorList().isZH( playerName ) ){
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
         }
         
         String[] ERHelpText = {
-            "!adv - Sets the text for the advertisement system",
-            "!time - Returns the time left before the next zone"
+            " !adv - Sets the text for the advertisement system",
+            " !time - Returns the time left before the next zone"
         };
         if( m_botAction.getOperatorList().isER( playerName )) {
         	m_botAction.remotePrivateMessageSpam( playerName, ERHelpText );
         }
         
         String[] SmodHelpText = {
-            "!backupadv - Starts/stops the advertisement system (periodically zones a preset message)"
+            " !backupadv - Starts/stops the advertisement system (periodically zones a preset message)"
         };
         if( m_botAction.getOperatorList().isSmod( playerName )) {
         	m_botAction.remotePrivateMessageSpam( playerName, SmodHelpText );
         }
         
         String [] OwnerHelpText = {
-            "!reload - Reloads the HelpResponses database from file",
-            "!saychat <messages> - Makes the bot say the <message> in the staff chat"
+            " !reload - Reloads the HelpResponses database from file",
+            " !saychat <messages> - Makes the bot say the <message> in the staff chat"
         };
         if( m_botAction.getOperatorList().isOwner( playerName )) {
         	m_botAction.remotePrivateMessageSpam( playerName, OwnerHelpText );
