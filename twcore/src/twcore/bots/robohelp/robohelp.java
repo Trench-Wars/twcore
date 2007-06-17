@@ -993,7 +993,7 @@ public class robohelp extends SubspaceBot {
     	HashMap<String, String> stats = new HashMap<String, String>();
     	ArrayList<String> rank = new ArrayList<String>();
     	
-    	if((opList.isZHExact(name) || opList.isModerator(name)) && message.trim().isEmpty()) {
+    	if((opList.isZHExact(name) || opList.isModerator(name)) && message.trim().length() == 0) {
     		// Call list for ZHs / Moderators+
     		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' ORDER BY fcUserName, fnType";
     		title =  "Top 5 call count";
