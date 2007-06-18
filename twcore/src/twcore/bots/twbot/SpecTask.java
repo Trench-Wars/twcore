@@ -90,7 +90,7 @@ public class SpecTask
 
        	// spec freq
        	if(freq != -1 && freq == f)
-       		return SHIP;
+       		return FREQ;
 
        	// spec all
     	if(freq == -1 && ship == -1 && player == null)
