@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerPosition;
@@ -37,10 +38,9 @@ public class gangwars extends MultiModule {
 		queueList = new Vector<String>();
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_POSITION);
-		events.request(EventRequester.PLAYER_DEATH);
+    public void requestEvents(ModuleEventRequester events)	{
+		events.request(this, EventRequester.PLAYER_POSITION);
+		events.request(this, EventRequester.PLAYER_DEATH);
 	}
 
     public void setMode( int srcship, int destship, int leadership, int lives ){

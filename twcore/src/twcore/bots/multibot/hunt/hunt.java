@@ -19,6 +19,7 @@ import java.util.List;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -40,11 +41,10 @@ public class hunt extends MultiModule {
 	public void init()    {
 	}
 
-	public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_DEATH);
-		events.request(EventRequester.PLAYER_LEFT);
-		events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+	public void requestEvents(ModuleEventRequester events)	{
+		events.request(this, EventRequester.PLAYER_DEATH);
+		events.request(this, EventRequester.PLAYER_LEFT);
+		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 	}
 
     public void startHunt ( String hostName ){

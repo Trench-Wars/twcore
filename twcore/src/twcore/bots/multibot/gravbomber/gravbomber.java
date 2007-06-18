@@ -11,6 +11,7 @@ import twcore.bots.MultiModule;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -56,13 +57,12 @@ public class gravbomber extends MultiModule {
         m_botAction.sendUnfilteredPublicMessage( "*relkills 1" );
     }
 
-    public void requestEvents(EventRequester req)	{
-		req.request( EventRequester.MESSAGE );
-		req.request( EventRequester.WEAPON_FIRED );
-		req.request( EventRequester.WATCH_DAMAGE );
-		req.request( EventRequester.PLAYER_LEFT );
-		req.request( EventRequester.FREQUENCY_SHIP_CHANGE );
-		req.request( EventRequester.PLAYER_DEATH );
+    public void requestEvents(ModuleEventRequester req) {
+		req.request( this, EventRequester.WEAPON_FIRED );
+		req.request( this, EventRequester.WATCH_DAMAGE );
+		req.request( this, EventRequester.PLAYER_LEFT );
+		req.request( this, EventRequester.FREQUENCY_SHIP_CHANGE );
+		req.request( this, EventRequester.PLAYER_DEATH );
 	}
 
     public long getRequestedEvents(){
@@ -354,7 +354,7 @@ public class gravbomber extends MultiModule {
         }
 
         if( GBPlayerBag.size() < 2 ){
-            m_botAction.sendPrivateMessage( hostName,  "Cannot start game with less then 2 people in play" );
+            m_botAction.sendPrivateMessage( hostName,  "Cannot start game with less than 2 people in play" );
             return;
         }
 

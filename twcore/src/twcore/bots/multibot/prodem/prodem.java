@@ -1,5 +1,3 @@
-// 2dragons 11.05.02
-
 package twcore.bots.multibot.prodem;
 
 import java.util.HashMap;
@@ -9,12 +7,18 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.stats.PlayerProfile;
 
+/**
+ * Prodem: promotion-demotion.
+ * 
+ * @author 2dragons 11.05.02
+ */
 public class prodem extends MultiModule {
 
     TimerTask		timerUpdate;
@@ -47,10 +51,9 @@ public class prodem extends MultiModule {
         playerMap = new HashMap<String, PlayerProfile>();
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_DEATH);
-		events.request(EventRequester.PLAYER_ENTERED);
+    public void requestEvents(ModuleEventRequester events) {
+		events.request(this, EventRequester.PLAYER_DEATH);
+		events.request(this, EventRequester.PLAYER_ENTERED);
 	}
 
     public void setupTimerTasks(){

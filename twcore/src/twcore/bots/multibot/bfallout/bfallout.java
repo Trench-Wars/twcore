@@ -6,6 +6,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
@@ -58,18 +59,17 @@ public class bfallout extends MultiModule {
 		return message;
 	}
 
-	public void requestEvents(EventRequester eventRequester) {
+	public void requestEvents(ModuleEventRequester eventRequester) {
 
-		eventRequester.request(EventRequester.MESSAGE);
-		eventRequester.request(EventRequester.ARENA_JOINED);
-		eventRequester.request(EventRequester.PLAYER_ENTERED);
-		eventRequester.request(EventRequester.PLAYER_LEFT);
-		eventRequester.request(EventRequester.PLAYER_DEATH);
-		eventRequester.request(EventRequester.LOGGED_ON);
-		eventRequester.request(EventRequester.PLAYER_POSITION);
-		eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
-		eventRequester.request(EventRequester.PRIZE);
-		eventRequester.request(EventRequester.WEAPON_FIRED);
+		eventRequester.request(this, EventRequester.ARENA_JOINED);
+		eventRequester.request(this, EventRequester.PLAYER_ENTERED);
+		eventRequester.request(this, EventRequester.PLAYER_LEFT);
+		eventRequester.request(this, EventRequester.PLAYER_DEATH);
+		eventRequester.request(this, EventRequester.LOGGED_ON);
+		eventRequester.request(this, EventRequester.PLAYER_POSITION);
+		eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+		eventRequester.request(this, EventRequester.PRIZE);
+		eventRequester.request(this, EventRequester.WEAPON_FIRED);
 	}
 
 	public void registerCommands() {

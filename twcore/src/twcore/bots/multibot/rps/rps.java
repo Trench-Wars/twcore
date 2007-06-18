@@ -4,7 +4,7 @@ import java.util.StringTokenizer;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.events.Message;
 
@@ -17,8 +17,7 @@ public class rps extends MultiModule
     rpsGame = new RPSGame(m_botAction);
   }
 
-  public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
+  public void requestEvents(ModuleEventRequester events)	{
   }
 
   public void doHelp(String sender)

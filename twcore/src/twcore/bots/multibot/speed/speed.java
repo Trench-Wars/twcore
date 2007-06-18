@@ -6,6 +6,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -56,14 +57,12 @@ public class speed extends MultiModule {
 		return message;
 	}
 
-	public void requestEvents(EventRequester eventRequester) {
-
-		eventRequester.request(EventRequester.MESSAGE);
-		eventRequester.request(EventRequester.PLAYER_ENTERED);
-		eventRequester.request(EventRequester.PLAYER_LEFT);
-		eventRequester.request(EventRequester.PLAYER_DEATH);
-		eventRequester.request(EventRequester.PLAYER_POSITION);
-		eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+	public void requestEvents(ModuleEventRequester eventRequester) {
+		eventRequester.request(this, EventRequester.PLAYER_ENTERED);
+		eventRequester.request(this, EventRequester.PLAYER_LEFT);
+		eventRequester.request(this, EventRequester.PLAYER_DEATH);
+		eventRequester.request(this, EventRequester.PLAYER_POSITION);
+		eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 	}
 
 	public void registerCommands() {

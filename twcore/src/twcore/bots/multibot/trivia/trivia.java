@@ -1,8 +1,3 @@
-// 2dragons - 11.05.02
-//
-// Games to 1 work now, rating system added.
-// Scramble, Trivia, Pictionary hopefully at some point
-
 package twcore.bots.multibot.trivia;
 
 import java.sql.ResultSet;
@@ -17,12 +12,19 @@ import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.stats.PlayerProfile;
 import twcore.core.util.Tools;
 
+/**
+ * Trivia.
+ *
+ * Games to 1 work now, rating system added.
+ *
+ * @author 2dragons - 11.05.02
+ */
 public class trivia extends MultiModule {
 
     CommandInterpreter  m_commandInterpreter;
@@ -85,8 +87,7 @@ public class trivia extends MultiModule {
             accessList.put( access[i], access[i] );
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
+    public void requestEvents(ModuleEventRequester events) {
 	}
 
 	public  String[] getModHelpMessage() {

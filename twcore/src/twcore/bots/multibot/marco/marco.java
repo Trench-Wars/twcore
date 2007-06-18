@@ -1,7 +1,6 @@
 package twcore.bots.multibot.marco;
 
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_LEFT;
 
 import java.io.BufferedReader;
@@ -15,7 +14,7 @@ import java.util.Iterator;
 import java.util.Random;
 
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerLeft;
@@ -30,7 +29,6 @@ import twcore.core.game.Player;
  * @author Jacen Solo / modified by qan
  * @version 1.0
  */
-
 public class marco extends MultiModule
 {
     HashSet <String>deCloaked = new HashSet<String>();    //List of people that have not said the word to get their cloak back
@@ -48,11 +46,10 @@ public class marco extends MultiModule
         wordList.add("polo");
     }
 
-    public void requestEvents(EventRequester events)
+    public void requestEvents(ModuleEventRequester events)
     {
-        events.request(MESSAGE);
-        events.request(PLAYER_LEFT);
-        events.request(FREQUENCY_SHIP_CHANGE);
+        events.request(this, PLAYER_LEFT);
+        events.request(this, FREQUENCY_SHIP_CHANGE);
     }
 
     /**

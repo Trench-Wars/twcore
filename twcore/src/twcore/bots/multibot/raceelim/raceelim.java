@@ -1,9 +1,8 @@
 package twcore.bots.multibot.raceelim;
 
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
@@ -23,9 +22,8 @@ public class raceelim extends MultiModule
     {
     }
 
-    public void requestEvents(EventRequester events) {
-        events.request(MESSAGE);
-        events.request(PLAYER_DEATH);
+    public void requestEvents(ModuleEventRequester events) {
+        events.request(this, PLAYER_DEATH);
     }
 
     /** checks if the person has the required ammounts of kills or deaths for the win

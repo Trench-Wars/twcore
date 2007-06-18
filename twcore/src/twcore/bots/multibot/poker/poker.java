@@ -9,6 +9,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerLeft;
 import twcore.core.util.Tools;
@@ -54,11 +55,10 @@ public class poker extends MultiModule
 		return new String[0];
 	}
 
-	public void requestEvents(EventRequester events)
+	public void requestEvents(ModuleEventRequester events)
 	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.LOGGED_ON);
-		events.request(EventRequester.PLAYER_LEFT);
+		events.request(this, EventRequester.LOGGED_ON);
+		events.request(this, EventRequester.PLAYER_LEFT);
 	}
 
 	/*public pokerbot(BotAction botAction) {
@@ -450,7 +450,12 @@ public class poker extends MultiModule
 		}
 	}
 
+    /**
+     * This method is clearly unfinished.
+     *
+     */
 	public void end() {
+        
 		HashMap<Integer, HashSet<String>> scores = new HashMap<Integer, HashSet<String>>();
 		for(int k = 0;k < playerSeat.size();k++) {
 			String name = playerSeat.get(k);

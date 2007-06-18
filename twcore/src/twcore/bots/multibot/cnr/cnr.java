@@ -1,18 +1,10 @@
-/*
- * twbotcnr.java - Cops and Robbers module - qan (gdugwyler@hotmail.com)
- *
- * Created 5/27/2004 - Last modified 7/24/04.
- *
- */
-
-
-
 package twcore.bots.multibot.cnr;
 
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -20,7 +12,9 @@ import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 
-/** TWBot Extension for use in ?go cnr.
+/**
+ * MultiBot Module for use in ?go cnr.
+ * 
  * Cops have a limited amount of lives, robbers do not.  Robbers are jailed on death.
  * A cop can close the jail by touching the flag, and a robber can open it the same
  * way.  Cops win by jailing all robbers, and robbers win by jailing all cops.
@@ -52,8 +46,11 @@ import twcore.core.util.Tools;
  *   - If robbers get flag, set doors to 0 (open)
  *   - If cops get flag, set doors to 1 (closed)
  *
+ * Created 5/27/2004 - Last modified 7/24/04.
  * @version 1.8
  * @author qan
+ * 
+
  *
  */
 
@@ -63,10 +60,9 @@ public class cnr extends MultiModule {
     public void init() {
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_DEATH);
-		events.request(EventRequester.FLAG_CLAIMED);
+    public void requestEvents(ModuleEventRequester events) {
+		events.request(this, EventRequester.PLAYER_DEATH);
+		events.request(this, EventRequester.FLAG_CLAIMED);
 	}
 
 

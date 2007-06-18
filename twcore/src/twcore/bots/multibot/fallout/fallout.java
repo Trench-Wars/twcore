@@ -6,6 +6,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
@@ -36,9 +37,8 @@ public class fallout extends MultiModule {
 		return message;
 	}
 
-	public void requestEvents(EventRequester eventRequester) {
-        eventRequester.request( EventRequester.MESSAGE );
-        eventRequester.request( EventRequester.PLAYER_POSITION );
+	public void requestEvents(ModuleEventRequester eventRequester) {
+        eventRequester.request( this, EventRequester.PLAYER_POSITION );
 	}
 
 	public void handleEvent( Message event ){

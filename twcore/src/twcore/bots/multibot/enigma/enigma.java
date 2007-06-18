@@ -1,8 +1,3 @@
-/* 08.01.02
-
-   Completely recoded. - Austin Barton (2d)
-
- */
 
 package twcore.bots.multibot.enigma;
 
@@ -13,11 +8,18 @@ import java.util.TreeMap;
 import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 
+/**
+ * Enigma.
+ * 
+ *  08.01.02 
+ * Completely recoded. - Austin Barton (2d)
+*/
 public class enigma extends MultiModule {
     //Standard variables
     OperatorList        opList;
@@ -63,9 +65,8 @@ public class enigma extends MultiModule {
         m_arena 	= m_botSettings.getString("Arena");
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request( EventRequester.MESSAGE );
-        events.request( EventRequester.PLAYER_ENTERED );
+    public void requestEvents(ModuleEventRequester events)	{
+        events.request( this, EventRequester.PLAYER_ENTERED );
 	}
 
     /****************************************************************/

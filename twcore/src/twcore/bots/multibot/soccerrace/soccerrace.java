@@ -1,22 +1,22 @@
-/*
- *Team Freq Race Module
- *
- *Created By: Jacen Solo
- *
- *Created: 05/24/04 at
- */
-
-package twcore.bots.multibot.tfrace;
+package twcore.bots.multibot.soccerrace;
 
 import java.util.Iterator;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;
 
-public class tfrace extends MultiModule
+/*
+ * Soccer Race Module - race to score one goal.
+ *
+ * Created By: Jacen Solo
+ *
+ * Created: 05/24/04 at
+ */
+public class soccerrace extends MultiModule
 {
 
 	int ship = 4;
@@ -24,9 +24,8 @@ public class tfrace extends MultiModule
 
 	public void init() { }
 
-	public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.SOCCER_GOAL);
+	public void requestEvents(ModuleEventRequester events)	{
+		events.request(this, EventRequester.SOCCER_GOAL);
 	}
 
 	public void cancel()
@@ -47,7 +46,7 @@ public class tfrace extends MultiModule
     public void handleEvent(SoccerGoal event)
     {
     	int winfreq = event.getFrequency();
-    	m_botAction.sendArenaMessage("Congratulations to freq " + winfreq + " they have scored and won the game!!!", 5);
+    	m_botAction.sendArenaMessage("Congratulations to Freq " + winfreq + " - They have scored and won the game!", 5);
     	m_botAction.toggleLocked();
     }
 
@@ -61,7 +60,10 @@ public class tfrace extends MultiModule
     		{
     			Ship = Integer.parseInt(pieces[1]);
     		}
-    		catch(Exception e) {}
+    		catch(Exception e) {
+                return;
+            }
+            m_botAction.sendUnfilteredPublicMessage("*restart");
     		ship = Ship;
 			m_botAction.changeAllShips(ship);
     		m_botAction.sendArenaMessage("Rules: Take the ball through your section of the course and pass the ball to your teammate at the end of your section",2);
@@ -77,13 +79,12 @@ public class tfrace extends MultiModule
     			else freq3(p, (i % 4));
     		}
 
-    		m_botAction.sendArenaMessage("Gooooo go go go gooooooo", 104);
+    		m_botAction.sendArenaMessage("Gooooo go go go gooooooo!", 104);
     	}
 
     	if(message.toLowerCase().startsWith("!stop"))
     	{
     		m_botAction.sendArenaMessage("This race has been stopped by: " + name);
-    //		m_botAction.sendArenaMessage("Have fun in Trench Wars", 19);
     	}
     	if(message.toLowerCase().startsWith("!ballplace"))
     	{
@@ -206,6 +207,7 @@ public class tfrace extends MultiModule
     public String[] getModHelpMessage()
 	{
 		String[] help = {
+        "Soccer race -- 4 teams race to score a goal.  (Requires specific arena -- tfrace?)",
 		"!start                         - starts race with wb's",
 		"!start <#>                     - starts race with that ship #.",
 		"!stop                          - stops the race",

@@ -9,6 +9,7 @@ import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.util.Spy;
@@ -38,8 +39,7 @@ public class acro extends MultiModule{
         generator = new Random();
     }
 
-    public void requestEvents(EventRequester events)    {
-        events.request(EventRequester.MESSAGE);
+    public void requestEvents(ModuleEventRequester events)    {
     }
 
     public boolean isUnloadable()   {

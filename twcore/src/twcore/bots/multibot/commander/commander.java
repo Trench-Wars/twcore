@@ -1,6 +1,6 @@
 /************************************************************************************
  *                                                                                  *
- * twbotcommander.java - Commander Module - qan (gdugwyler@hotmail.com)             *
+ * twbotcommander.java - Commander Module - qan                                     *
  *                                                                                  *
  * Created 6/04/2004 - Last modified 6/14/04                                        *
  *                                                                                  *
@@ -117,34 +117,29 @@ ANY PLAYER
 */
 
 
-/**
-*
-* @author  qan
-*/
-
-
-
 package twcore.bots.multibot.commander;
 
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 
 import java.util.*;
-import twcore.core.*;
 import twcore.core.game.Player;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 import twcore.bots.MultiModule;
 
+/**
+* Commander -- strange RTS + SS style game.  90% complete; needs map.
+* @author  qan
+*/
 public class commander extends MultiModule {
 
     public void init() {
     }
     
-    public void requestEvents(EventRequester events) {
-        events.request(MESSAGE);
-        events.request(PLAYER_DEATH);
+    public void requestEvents(ModuleEventRequester events) {
+        events.request(this, PLAYER_DEATH);
     }
 
     TimerTask startGame;

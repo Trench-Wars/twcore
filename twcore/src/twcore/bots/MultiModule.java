@@ -2,7 +2,7 @@ package twcore.bots;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
@@ -49,7 +49,7 @@ public abstract class MultiModule
    * @param botAction is the botAction of the bot that the module is loaded
    * into.
    */
-  public void initialize(BotAction botAction, BotSettings moduleSettings)
+  public void initialize(BotAction botAction, BotSettings moduleSettings, ModuleEventRequester modEventReq)
   {
     if(botAction == null)
       throw new IllegalArgumentException("Invalid BotAction instance.");
@@ -60,7 +60,7 @@ public abstract class MultiModule
     this.moduleSettings = moduleSettings;
     opList = m_botAction.getOperatorList();
     init();
-    requestEvents(m_botAction.getEventRequester());
+    requestEvents(modEventReq);
   }
 
   /**
@@ -135,7 +135,7 @@ public abstract class MultiModule
    *
    * @param eventRequester is the EventRequester of the bot.
    */
-  public abstract void requestEvents(EventRequester eventRequester);
+  public abstract void requestEvents(ModuleEventRequester eventRequester);
 
   /**
    * This method gets the help message for the module.

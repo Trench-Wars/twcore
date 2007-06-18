@@ -1,9 +1,8 @@
 package twcore.bots.multibot.bountyhunter;
 
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
@@ -22,10 +21,9 @@ public class bountyhunter extends MultiModule
     {
     }
 
-    public void requestEvents(EventRequester events)
+    public void requestEvents(ModuleEventRequester events)
     {
-        events.request(MESSAGE);
-        events.request(PLAYER_DEATH);
+        events.request(this, PLAYER_DEATH);
     }
 
     public void handleEvent(Message event)

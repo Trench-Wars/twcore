@@ -1,5 +1,5 @@
 /*
- * twbotdangerous - Most Dangerous Game module - qan (dugwyler@gmail.com)
+ * twbotdangerous - Most Dangerous Game module - qan
  *
  * 2/29/05
  *
@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.EventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -42,11 +43,10 @@ public class dangerous extends MultiModule {
     public void init() {
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_DEATH);
-		events.request(EventRequester.PLAYER_LEFT);
-		events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+    public void requestEvents(ModuleEventRequester events) {
+		events.request(this, EventRequester.PLAYER_DEATH);
+		events.request(this, EventRequester.PLAYER_LEFT);
+		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 	}
 
     private TimerTask startGame;

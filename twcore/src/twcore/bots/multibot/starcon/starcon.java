@@ -5,6 +5,7 @@ import java.util.TimerTask;
 import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -40,11 +41,10 @@ public class starcon extends MultiModule {
       m_botAction.cancelTasks();
     }
 
-    public void requestEvents(EventRequester events)
+    public void requestEvents(ModuleEventRequester events)
     {
-      events.request( EventRequester.MESSAGE );
-      events.request( EventRequester.PLAYER_ENTERED );
-      events.request( EventRequester.PLAYER_DEATH );
+      events.request( this, EventRequester.PLAYER_ENTERED );
+      events.request( this, EventRequester.PLAYER_DEATH );
     }
 
     public boolean isUnloadable()

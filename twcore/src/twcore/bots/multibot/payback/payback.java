@@ -1,7 +1,6 @@
 package twcore.bots.multibot.payback;
 
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import static twcore.core.EventRequester.PLAYER_LEFT;
 
@@ -12,7 +11,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.BotAction;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -25,7 +24,6 @@ import twcore.core.events.PlayerLeft;
  *
  *  Version: 1.0
  */
-
 public class payback extends MultiModule
 {
     HashMap <String,PaybackTask>payback;
@@ -40,12 +38,11 @@ public class payback extends MultiModule
         beingTracked = new HashMap<String,HashSet<String>>();
     }
 
-    public void requestEvents(EventRequester events)
+    public void requestEvents(ModuleEventRequester events)
     {
-        events.request(MESSAGE);
-        events.request(PLAYER_DEATH);
-        events.request(PLAYER_LEFT);
-        events.request(FREQUENCY_SHIP_CHANGE);
+        events.request(this, PLAYER_DEATH);
+        events.request(this, PLAYER_LEFT);
+        events.request(this, FREQUENCY_SHIP_CHANGE);
     }
 
     public void handleEvent(PlayerDeath event) {

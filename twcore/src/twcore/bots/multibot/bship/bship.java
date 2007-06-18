@@ -2,7 +2,6 @@ package twcore.bots.multibot.bship;
 
 import static twcore.core.EventRequester.FREQUENCY_CHANGE;
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import static twcore.core.EventRequester.PLAYER_ENTERED;
 import static twcore.core.EventRequester.PLAYER_LEFT;
@@ -14,7 +13,7 @@ import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.command.TSChangeListener;
@@ -1327,16 +1326,15 @@ public class bship extends MultiModule implements TSChangeListener
 	/**
 	 * Registers all of the events to be used by the bot with the core
 	 */
-	 public void requestEvents(EventRequester events)
+	 public void requestEvents(ModuleEventRequester events)
 	 {
-		events.request(MESSAGE);
-		events.request(TURRET_EVENT);
-		events.request(PLAYER_DEATH);
-		events.request(PLAYER_ENTERED);
-		events.request(PLAYER_LEFT);
-		events.request(FREQUENCY_SHIP_CHANGE);
-		events.request(FREQUENCY_CHANGE);
-		events.request(PLAYER_POSITION);
+		events.request(this, TURRET_EVENT);
+		events.request(this, PLAYER_DEATH);
+		events.request(this, PLAYER_ENTERED);
+		events.request(this, PLAYER_LEFT);
+		events.request(this, FREQUENCY_SHIP_CHANGE);
+		events.request(this, FREQUENCY_CHANGE);
+		events.request(this, PLAYER_POSITION);
 	 }
 
 	/**

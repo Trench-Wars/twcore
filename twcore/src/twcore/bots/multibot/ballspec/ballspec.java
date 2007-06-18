@@ -2,13 +2,12 @@ package twcore.bots.multibot.ballspec;
 
 import static twcore.core.EventRequester.BALL_POSITION;
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
-import static twcore.core.EventRequester.MESSAGE;
 
 import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -28,11 +27,10 @@ public class ballspec extends MultiModule {
     public void init() {
     }
 
-    public void requestEvents(EventRequester events)
+    public void requestEvents(ModuleEventRequester events)
     {
-        events.request(MESSAGE);
-        events.request(BALL_POSITION);
-        events.request(FREQUENCY_SHIP_CHANGE);
+        events.request(this, BALL_POSITION);
+        events.request(this, FREQUENCY_SHIP_CHANGE);
     }
 
 

@@ -17,6 +17,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -83,12 +84,11 @@ public class freezetag extends MultiModule {
     /**
      * This method requests the events used by this module.
      */
-    public void requestEvents(EventRequester eventRequester)
+    public void requestEvents(ModuleEventRequester eventRequester)
     {
-      eventRequester.request(EventRequester.MESSAGE);
-      eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
-      eventRequester.request(EventRequester.PLAYER_DEATH);
-      eventRequester.request(EventRequester.PLAYER_LEFT);
+      eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+      eventRequester.request(this, EventRequester.PLAYER_DEATH);
+      eventRequester.request(this, EventRequester.PLAYER_LEFT);
     }
 
     /**

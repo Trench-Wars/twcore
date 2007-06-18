@@ -1,7 +1,6 @@
 package twcore.bots.multibot.platoon;
 
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 import static twcore.core.EventRequester.PLAYER_LEFT;
 
@@ -10,7 +9,7 @@ import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -36,11 +35,10 @@ public class platoon extends MultiModule
 
     public void init() {}
 
-    public void requestEvents(EventRequester events) {
-        events.request(MESSAGE);
-        events.request(PLAYER_DEATH);
-        events.request(PLAYER_LEFT);
-        events.request(FREQUENCY_SHIP_CHANGE);
+    public void requestEvents(ModuleEventRequester events) {
+        events.request(this, PLAYER_DEATH);
+        events.request(this, PLAYER_LEFT);
+        events.request(this, FREQUENCY_SHIP_CHANGE);
     }
 
     public void handleEvent(Message event)

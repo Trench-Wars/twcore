@@ -2,7 +2,6 @@ package twcore.bots.multibot.tugawar;
 
 import static twcore.core.EventRequester.FREQUENCY_CHANGE;
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
-import static twcore.core.EventRequester.MESSAGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 
 import java.sql.ResultSet;
@@ -13,7 +12,7 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -43,11 +42,10 @@ public class tugawar extends MultiModule {
     public void init() {
     }
 
-    public void requestEvents(EventRequester events) {
-        events.request(MESSAGE);
-        events.request(PLAYER_DEATH);
-        events.request(FREQUENCY_SHIP_CHANGE);
-        events.request(FREQUENCY_CHANGE);
+    public void requestEvents(ModuleEventRequester events) {
+        events.request(this, PLAYER_DEATH);
+        events.request(this, FREQUENCY_SHIP_CHANGE);
+        events.request(this, FREQUENCY_CHANGE);
     }
 
     public void handleCommand( String name, String message ) {

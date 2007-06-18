@@ -9,6 +9,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 
@@ -48,9 +49,8 @@ public class bbj extends MultiModule
 		blocked = new HashSet<String>();
 	}
 
-	public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_ENTERED);
+	public void requestEvents(ModuleEventRequester events)	{
+		events.request(this, EventRequester.PLAYER_ENTERED);
 	}
 
 	public void handleEvent(PlayerEntered event)

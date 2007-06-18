@@ -1,8 +1,3 @@
-/**
- * The old Zombies module, with features for new times.
- * 
- * @author  harvey
- */
 package twcore.bots.multibot.zombies;
 
 import java.util.HashSet;
@@ -10,12 +5,18 @@ import java.util.List;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
+/**
+ * The old Zombies module, with features for new times.
+ * 
+ * @author harvey yau; modded by dugwyler and others
+ */
 public class zombies extends MultiModule {
 
     public void init() {
@@ -23,9 +24,8 @@ public class zombies extends MultiModule {
         killmsgs.add( "dies a miserable horrible death at the hands of a Zombie!" );
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_DEATH);
+    public void requestEvents(ModuleEventRequester events)	{
+		events.request(this, EventRequester.PLAYER_DEATH);
 	}
 
     HashSet <Integer>m_srcship = new HashSet<Integer>();

@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
@@ -25,9 +26,8 @@ public class killrace extends MultiModule {
     public void init() {       
     }
 
-    public void requestEvents(EventRequester events) {
-        events.request(EventRequester.MESSAGE);
-        events.request(EventRequester.PLAYER_DEATH);
+    public void requestEvents(ModuleEventRequester events) {
+        events.request(this, EventRequester.PLAYER_DEATH);
     }
 
     public void handleEvent( PlayerDeath event ){

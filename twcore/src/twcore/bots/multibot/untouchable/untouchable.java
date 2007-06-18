@@ -1,20 +1,3 @@
-/*
- * twbotuntouchable - The Untouchable module - qan (gdugwyler@hotmail.com)
- *
- * Created 5/30/04 - Last modified 7/24/04
- *
- *
- *
- * DESC: Normal elimination match, except:
- *
- *       - One person privately designated at the start of match as "the Untouchable"
- *       - Anyone who kills the Untouchable is spec'd!
- *       - Untouchable has unlimited lives, but of course can't be the winner of the game.
- *       - Players MUST NOT give away identity of the Untouchable (as it's cheating).
- */
-
-
-
 package twcore.bots.multibot.untouchable;
 
 import java.util.Iterator;
@@ -22,6 +5,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -29,12 +13,15 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
-
-
-/** TWBot Extension for use in any arena, particularly deathmatch.  One person
+/**
+ * The Untouchable module
+ * 
+ * Multibot Module for use in any arena, particularly deathmatch.  One person
  * is the untouchable, and anyone who kills them is spec'd w/o message.
  * When there are two people left (the UT and one other), the non-UT
  * is declared the winner.  Other than that, a normal elim.
+ *
+ * Created 5/30/04 - Last modified 7/24/04
  *
  * @author  qan
  * @version 1.7
@@ -57,11 +44,10 @@ public class untouchable extends MultiModule {
     public void init() {
     }
 
-    public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.PLAYER_DEATH);
-		events.request(EventRequester.PLAYER_LEFT);
-		events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+    public void requestEvents(ModuleEventRequester events)	{
+		events.request(this, EventRequester.PLAYER_DEATH);
+		events.request(this, EventRequester.PLAYER_LEFT);
+		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 	}
 
     TimerTask startGame;

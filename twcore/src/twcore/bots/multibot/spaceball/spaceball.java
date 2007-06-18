@@ -11,6 +11,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
@@ -78,15 +79,14 @@ public class spaceball extends MultiModule {
 	}
 
 	/** Request events that this bot requires to receive.  */
-	public void requestEvents(EventRequester req) {
-		req.request(EventRequester.MESSAGE);
-		req.request(EventRequester.ARENA_JOINED);
-		req.request(EventRequester.PLAYER_ENTERED);
-		req.request(EventRequester.PLAYER_POSITION);
-		req.request(EventRequester.PLAYER_LEFT);
-		req.request(EventRequester.PLAYER_DEATH);
-		req.request(EventRequester.WEAPON_FIRED);
-		req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+	public void requestEvents(ModuleEventRequester req) {
+		req.request(this, EventRequester.ARENA_JOINED);
+		req.request(this, EventRequester.PLAYER_ENTERED);
+		req.request(this, EventRequester.PLAYER_POSITION);
+		req.request(this, EventRequester.PLAYER_LEFT);
+		req.request(this, EventRequester.PLAYER_DEATH);
+		req.request(this, EventRequester.WEAPON_FIRED);
+		req.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 	}
 
 	public boolean isUnloadable() {

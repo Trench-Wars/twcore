@@ -1,10 +1,3 @@
-/*
- * twbotrabbit.java
- *
- * Created on March 26, 2005, 4:30 AM
- *
- */
-
 package twcore.bots.multibot.rabbit;
 
 import java.util.ArrayList;
@@ -14,6 +7,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -21,10 +15,12 @@ import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 
 /**
+ * For hosting rabbit.
+ *
+ * Created on March 26, 2005, 4:30 AM
  *
  * @author  Stultus
  */
-
 public class rabbit extends MultiModule
 	{
 	private static final int ANY_SHIP = 0;
@@ -50,10 +46,9 @@ public class rabbit extends MultiModule
 
 	public void init() { }
 
-	public void requestEvents(EventRequester events)	{
-		events.request(EventRequester.MESSAGE);
-		events.request(EventRequester.FLAG_CLAIMED);
-		events.request(EventRequester.PLAYER_DEATH);
+	public void requestEvents(ModuleEventRequester events)	{
+		events.request(this, EventRequester.FLAG_CLAIMED);
+		events.request(this, EventRequester.PLAYER_DEATH);
 	}
 
 	public void handleEvent(Message event)
