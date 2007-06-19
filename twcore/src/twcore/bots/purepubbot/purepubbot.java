@@ -423,6 +423,10 @@ public class purepubbot extends SubspaceBot
                 doHelpCmd(sender);
             else if(command.equals("!warp"))
                 doWarpCmd(sender);
+            else if(command.equals("!listships"))
+                doListShipsCmd(sender);
+            else if(command.equals("!team"))
+                doShowTeamCmd(sender);
 
             if ( !opList.isHighmod(sender) && !sender.equals(m_botAction.getBotName()) )
                 return;
@@ -441,10 +445,6 @@ public class purepubbot extends SubspaceBot
                 doStrictTimeCmd(sender);
             else if(command.equals("!stoptime"))
                 doStopTimeCmd(sender);
-            else if(command.equals("!listships"))
-                doListShipsCmd(sender);
-            else if(command.equals("!team"))
-                doShowTeamCmd(sender);
             else if(command.startsWith("!set "))
                 doSetCmd(sender, message.substring(5));
             else if(command.equals("!die"))
@@ -494,6 +494,7 @@ public class purepubbot extends SubspaceBot
         started = true;
         specRestrictedShips();
         m_botAction.sendArenaMessage("Pure pub settings enabled.  Ship restrictions are now in effect.", 2);
+        m_botAction.sendArenaMessage("Public Commands:  !help  !time  !warp  !listships  !team");
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully enabled.");
     }
 
@@ -694,6 +695,7 @@ public class purepubbot extends SubspaceBot
      */
     public void doListShipsCmd(String sender) {
         int weight;
+        m_botAction.sendSmartPrivateMessage(sender, "Ship limitations/restrictions (if any):" );
         for( int i = 1; i < 9; i++ ) {
             weight = shipWeights.get( i ).intValue();
             if( weight == 0 )
@@ -716,6 +718,7 @@ public class purepubbot extends SubspaceBot
 
         try {
             Integer ship = Integer.valueOf(args[0]);
+            ship = ship.intValue() - 1;
             Integer weight = Integer.valueOf(args[1]);
             if( ship > 0 && ship < 9 ) {
                 if( weight >= 0 ) {
@@ -814,6 +817,7 @@ public class purepubbot extends SubspaceBot
                 "I restrict ships, manage private frequencies, and run Flag Time mode.",
                 "Commands:",
                 "!team                   -- Tells you which ships your team members are in.",
+                "!listships              -- Lists all current ship restrictions.",
                 "!time                   -- Provides time remaining when Flag Time mode.",
                 "!warp                   -- Warps you into flagroom at start of next round (flag time)",
         };
