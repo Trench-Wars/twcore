@@ -87,7 +87,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!last", acceptedMessages, this, "handleLast" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen" );
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload" );
-        m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
 
         m_commandInterpreter.registerCommand( "!backupadv", acceptedMessages, this, "handleEnableBackup" );
         m_commandInterpreter.registerCommand( "!adv", acceptedMessages, this, "handleAdv" );
@@ -110,7 +109,7 @@ public class robohelp extends SubspaceBot {
 		if (!m_strictOnIts)
             m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );
 		
-        acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE | Message.CHAT_MESSAGE;
+        acceptedMessages = Message.CHAT_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
         
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
 
@@ -988,14 +987,19 @@ public class robohelp extends SubspaceBot {
     	// 1. Check the level of the staff member - Mod / ER / ZH
     	// 2. Query the database
     	
-    	String date = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
+    	// Only staff allowed to do this command
+    	if(opList.isZH(name)==false)
+    		return;
+    	
+    	String date = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() );
     	String query, title="", title2="";
     	HashMap<String, String> stats = new HashMap<String, String>();
     	ArrayList<String> rank = new ArrayList<String>();
     	
-    	if((opList.isZHExact(name) || opList.isModerator(name)) && message.trim().length() == 0) {
-    		// Call list for ZHs / Moderators+
-    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' ORDER BY fcUserName, fnType";
+    	if((opList.isModerator(name) && message.trim().length() == 0) || message.equalsIgnoreCase("mod")) {
+    		// Call list for Moderators+
+    		date = date + "-01";
+    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
     		title =  "Top 5 call count";
     		title2 = "Your call count";
     		
@@ -1018,7 +1022,7 @@ public class robohelp extends SubspaceBot {
     		} catch(Exception e) { Tools.printStackTrace( e ); }
     		
     		// Determine the rank
-    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 ORDER BY fnCount DESC";
+    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
     		try {
     			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
     			while(results != null && results.next()) {
@@ -1027,7 +1031,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.SQLClose(results);
     		} catch(Exception e) { Tools.printStackTrace( e ); }
     		
-    	} else if(opList.isERExact(name) || message.equalsIgnoreCase("er")) {
+    	} else if((opList.isERExact(name) && message.trim().length() == 0) || message.equalsIgnoreCase("er")) {
     		// Adverts list for ERs
     		query = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
     		
@@ -1045,7 +1049,43 @@ public class robohelp extends SubspaceBot {
     		} catch(Exception e) {
     			Tools.printStackTrace( e ); 
     		}
+    	} else if((opList.isZHExact(name) && message.trim().length() == 0) || message.equalsIgnoreCase("zh")) {
+    		// Call list for ZHs / Moderators+
+    		date = date + "-01";
+    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName LIKE '%<zh>%' ORDER BY fcUserName, fnType";
+    		title =  "Top 5 call count";
+    		title2 = "Your call count";
+    		
+    		// Order and create a list out of the results
+    		try {
+    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
+    			while(results != null && results.next()) {
+    				String staffer = results.getString("fcUserName");
+    				String count = results.getString("fnCount");
+    				
+    				if(stats.containsKey(staffer)) {
+    					// query sets the fnType=1 as second, so this is the "got it"s
+    					stats.put(staffer, stats.get(staffer)+" ("+count+")");
+    				} else {
+    					// query sets the fnType=0 as first, so this is the "on it"s
+    					stats.put(staffer, Tools.formatString(count,3));
+    				}
+    			}
+                m_botAction.SQLClose(results);
+    		} catch(Exception e) { Tools.printStackTrace( e ); }
+    		
+    		// Determine the rank
+    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName LIKE '%<zh>%' ORDER BY fnCount DESC";
+    		try {
+    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
+    			while(results != null && results.next()) {
+    				rank.add(results.getString("fcUserName"));
+    			}
+                m_botAction.SQLClose(results);
+    		} catch(Exception e) { Tools.printStackTrace( e ); }
     	}
+    	
+    	
     	
     	// Return the top 5
     	m_botAction.sendSmartPrivateMessage(name, title);
@@ -1190,7 +1230,7 @@ public class robohelp extends SubspaceBot {
             " !thesaurus word - Returns a link for a thesaurus entry for the word.",
             " !javadocs term - Returns a link for a javadocs lookup of the term.",
             " !mystats - Returns the top 5 and your call statistics",
-            "--",
+            "`     ",
             "PM commands:",
             " !lookup <keyword> - Tells you the response when the specified key word is given",
             " !last <optional name> - Tells you what the response to the specified player was.  If no name is specified, the last response is given.",
