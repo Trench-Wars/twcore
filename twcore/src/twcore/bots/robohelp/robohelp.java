@@ -1072,6 +1072,7 @@ public class robohelp extends SubspaceBot {
     	}
     
     	// Response
+    	m_botAction.sendSmartPrivateMessage(name, "`    "); // spacer
     	m_botAction.sendSmartPrivateMessage(name, title2);
     	m_botAction.sendSmartPrivateMessage(name, "-----------------");
     	if(yourPosition == -1) {
