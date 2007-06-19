@@ -50,7 +50,6 @@ public class CommandInterpreter {
      * @param botAction Reference to BotAction
      */
     public CommandInterpreter( BotAction botAction ){
-
         m_allCommandTypes = 0;
         m_botAction = botAction;
         m_commands = Collections.synchronizedMap( new HashMap<String, Command>() );
@@ -253,7 +252,7 @@ public class CommandInterpreter {
 
         if( command != null ){
             if( (command.getMessageTypes() & messageType) != 0 ){
-                if(messageType == Message.REMOTE_PRIVATE_MESSAGE)
+                if(messageType == Message.REMOTE_PRIVATE_MESSAGE || messageType == Message.CHAT_MESSAGE)
                     messager = event.getMessager();
                 else
                     messager = m_botAction.getPlayerName( event.getPlayerID() );
