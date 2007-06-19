@@ -25,6 +25,7 @@ import twcore.core.command.CommandInterpreter;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.util.IPCMessage;
 import twcore.core.util.SearchableStructure;
 import twcore.core.util.Tools;
@@ -343,6 +344,9 @@ public class robohelp extends SubspaceBot {
     	  Tools.printStackTrace(e);
       }
     }
+    
+    // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results
+    public void handleEvent( SQLResultEvent event) {}
 
     public void handleZone( String name, String message ) {
         if( !m_botAction.SQLisOperational() ){
