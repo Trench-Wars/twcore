@@ -36,6 +36,7 @@ public class robohelp extends SubspaceBot {
     public static final int LINE_SIZE = 100;
     public static final int CALL_EXPIRATION_TIME = 90000;  // Time after which a call can't
                                                            // can't be claimed (onit/gotit)
+    													   // (90 secs - 1,5 min)
     public static final String ZONE_CHANNEL = "Zone Channel";
 
     boolean             m_banPending = false;
@@ -500,30 +501,14 @@ public class robohelp extends SubspaceBot {
             m_playerList.put( playerName.toLowerCase(), helpRequest );
         }
         if( helpRequest.AdvertTell() == true ){
-        m_botAction.sendChatMessage( "NOTICE: " + playerName + " has used ?advert before. Please use !warn if needed." );
+        	m_botAction.sendChatMessage( "NOTICE: " + playerName + " has used ?advert before. Please use !warn if needed." );
         }
         else {
-        m_botAction.sendRemotePrivateMessage( playerName, "Please do not use ?advert. "
+        	m_botAction.sendRemotePrivateMessage( playerName, "Please do not use ?advert. "
                 +"If you would like to request an event, please use the ?help command." );
-        helpRequest.setAdvertTell( true );
-        m_botAction.sendChatMessage( playerName + " has been notified that ?advert is not for non-staff." );
+        	helpRequest.setAdvertTell( true );
+        	m_botAction.sendChatMessage( playerName + " has been notified that ?advert is not for non-staff." );
         }
-
-
-
- //       m_botAction.sendRemotePrivateMessage( playerName, "WARNING: Do NOT use the ?advert "
- //               +"command.  It is for Staff Members only, and is punishable by a ban. Further abuse "
- //               +"will not be tolerated!", 1 );
- //       m_botAction.sendChatMessage( "NOTICE: "+ playerName + " has been warned for ?advert abuse." );
- //
- //       Calendar thisTime = Calendar.getInstance();
- //       java.util.Date day = thisTime.getTime();
- //       String warntime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
- //       String[] paramNames = { "name", "warning", "staffmember", "timeofwarning" };
- //       String date = new java.sql.Date( System.currentTimeMillis() ).toString();
- //       String[] data = { playerName.toLowerCase().trim(), new String( warntime + ": Warning to " + playerName + " from Robohelp for ?advert abuse."), "RoboHelp", date };
- //
- //      m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
 
     }
 
@@ -578,7 +563,7 @@ public class robohelp extends SubspaceBot {
         if( response.length <= 0 ){
             m_botAction.sendChatMessage( "..." );
         } else {
-            m_botAction.sendChatMessage( "On it!" );
+            m_botAction.sendChatMessage( "[Giving player "+playerName+" information from database]" );
             m_botAction.sendRemotePrivateMessage( playerName, helpRequest.getNextResponse() );
 
             if( helpRequest.hasMoreResponses() == false ){
@@ -922,51 +907,38 @@ public class robohelp extends SubspaceBot {
 
     /**
      * For strict onits, requiring the "on it" to be at the start of the message.
-     * @param name Name of person saying on it
-     * @param message Message containing on it
+     * For strict gotits, requiring the "got it" to be at the start of the message.
+     * 
+     * @param name Name of person claiming a call by saying 'on it' or 'got it'
+     * @param message Message the chat message
      */
-    public void handleOnIt( String name, String message ) {
-        
+    public void handleClaim( String name, String message) {
         boolean record = false;
         Date now = new Date();
         
-        // TEST
-        // 1) what happens if you do "on it" when there is no call at all?
-        //		Expected: count=false - response that no call was found
-        // 2) Test:					Expected result
-        //		?help bla
-        //		on it			--> registered
-        //		------
-        // 		?help bla2
-        //		?help bla2
-        //		on it			--> registered
-        //		(first call expires)
-        //		------
-        //		?help bla3
-        //		on it			--> registered <<<<< FIX! Previous situation = no response
-        //		(previous expired call should be gone)
-        //		on it			--> no call found <<<<< FIX! Previous situation = registered
-        
-        // Previous situation can be done using got it
-        
-        
         // Clear the queue of expired calls, get the first non-expired call but leave other non-expired calls
-        for(int i = 0 ; i < callList.size(); i++) {
-        	EventData e = callList.elementAt( i );
+        Iterator<EventData> iter = callList.iterator();
+        while(iter.hasNext()) {
+        	EventData e = iter.next();
         	
         	if( record == false && now.getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
         		// This is a non-expired call and no call has been counted yet. 
         		record = true;
-        		callList.removeElementAt(i);
+        		iter.remove();
         	} else if(now.getTime() >= e.getTime() + CALL_EXPIRATION_TIME) {
         		// This is an expired call
-        		callList.removeElementAt(i);
+        		iter.remove();
         	}
         }
         
         // if a non-expired call was found, record it to the database
         if(record) {
-        	updateStatRecordsONIT( name );
+        	// Save
+        	if(message.startsWith("on it"))
+        		updateStatRecordsONIT( name );
+        	else if(message.startsWith("got it"))
+        		updateStatRecordsGOTIT( name );
+        	
             this.lastStafferClaimedCall = name;
             m_botAction.sendRemotePrivateMessage(name, "Call registered.");
         } else {
@@ -978,37 +950,6 @@ public class robohelp extends SubspaceBot {
         }
     }
 
-    /**
-     * For strict gotits, requiring the "got it" to be at the start of the message.
-     * @param name Name of person saying got it
-     * @param message Message containing got it
-     */
-    public void handleGotIt( String name, String message ) {
-        boolean recorded = false;
-        int i = 0;
-
-        if(callList.size()==0) {
-        	// A staffer did "on it" while there was no call to take.
-        	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
-        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim. The last person to claim a call was "+this.lastStafferClaimedCall+".");
-        	else
-        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim.");
-        }
-
-        while( !recorded && i < callList.size() ) {
-            EventData e = callList.elementAt( i );
-            if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
-                updateStatRecordsGOTIT( name );
-                callList.removeElementAt( i );
-                recorded = true;
-                m_botAction.sendRemotePrivateMessage(name, "Call registered.");
-            } else {
-            	callList.removeElementAt( i );
-            }
-            i++;
-        }
-    }
-    
     /**
      * Returns the call statistics of the <name> staffer.
      * @param name
@@ -1158,64 +1099,11 @@ public class robohelp extends SubspaceBot {
 	    	}
     	}
     }
-    
-
-    // NOT USED
-    /*public void handleChat( String name, String message ) {
-        try {
-            message = message.toLowerCase();
-            boolean isON = false, isIT = false;
-            for( int i = 0; i < message.length(); i++ ) {
-                if( message.charAt( i ) == 'o' ) {
-                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 'n' ) isON = true;
-                }
-                if( message.charAt( i ) == 'i' ) {
-                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 't' ) isIT = true;
-                }
-            }
-
-            boolean isGOT = false, isIT2 = false;
-            for( int i = 0; i < message.length(); i++ ) {
-                if( message.charAt( i ) == 'g' ) {
-                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 'o' && message.charAt( Math.min( i+2, message.length() - 1 ) ) == 't') isGOT = true;
-                }
-                if( message.charAt( i ) == 'i' ) {
-                    if( message.charAt( Math.min( i+1, message.length() - 1 ) ) == 't' ) isIT2 = true;
-                }
-            }
-
-            if( isON && isIT && !name.toLowerCase().equals( m_botAction.getBotName().toLowerCase() ) ) {
-                boolean recorded = false;
-                int i = 0;
-                while( !recorded && i < callList.size() ) {
-                    EventData e = (EventData)callList.elementAt( i );
-                    if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
-                        updateStatRecordsONIT( name );
-                        callList.removeElementAt( i );
-                        recorded = true;
-                    } else callList.removeElementAt( i );
-                    i++;
-                }
-            }
-
-            if( isGOT && isIT2 && !name.toLowerCase().equals( m_botAction.getBotName().toLowerCase() ) ) {
-                boolean recorded = false;
-                int i = 0;
-                while( !recorded && i < callList.size() ) {
-                    EventData e = (EventData)callList.elementAt( i );
-                    if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
-                        updateStatRecordsGOTIT( name );
-                        callList.removeElementAt( i );
-                        recorded = true;
-                    } else callList.removeElementAt( i );
-                    i++;
-                }
-            }
-
-        } catch (Exception e) {}
-    }*/
 
     public void updateStatRecordsONIT( String name ) {
+    	if( !m_botAction.SQLisOperational())
+            return;
+    	
         try {
             String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
@@ -1226,26 +1114,27 @@ public class robohelp extends SubspaceBot {
             }
             m_botAction.SQLClose( result );
         } catch ( Exception e ) {
-            System.out.println( "Could not update Stat Records" );
+        	m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
+        	Tools.printStackTrace(e);
         }
     }
 
     public void updateStatRecordsGOTIT( String name ) {
-        if( !m_botAction.SQLisOperational() ){
+        if( !m_botAction.SQLisOperational())
             return;
-        }
 
         try {
-            Calendar thisTime = Calendar.getInstance();
-            java.util.Date day = thisTime.getTime();
-            String time = new SimpleDateFormat("yyyy-MM").format( day ) + "-01";
+            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
 
             if(result.next()) {
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
             } else
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
-        } catch ( Exception e ) { System.out.println( "Could not update Stat Records" ); }
+        } catch ( Exception e ) { 
+        	m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
+        	Tools.printStackTrace(e);
+        }
     }
 
     public void mainHelpScreen( String playerName, String message ){
@@ -1350,11 +1239,9 @@ public class robohelp extends SubspaceBot {
             }
         }
         else if (event.getMessageType() == Message.CHAT_MESSAGE) {
-        	String message = event.getMessage().toLowerCase();
-        	if (message.startsWith("on it"))
-        		handleOnIt(event.getMessager(), event.getMessage());
-        	else if (message.startsWith("got it"))
-        		handleGotIt(event.getMessager(), event.getMessage());
+        	String message = event.getMessage().toLowerCase().trim();
+        	if (message.startsWith("on it") || message.startsWith("got it"))
+        		handleClaim(event.getMessager(), event.getMessage());
         }
     }
 
