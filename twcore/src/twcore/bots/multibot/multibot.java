@@ -105,6 +105,8 @@ public class multibot extends SubspaceBot {
                 doListUtilsCmd(sender);
             else if (command.startsWith("!load "))
                 doLoadCmd(sender, message.substring(6).trim());
+            else if (command.startsWith("!load"))
+                doLoadDefaultCmd(sender);
             else if (command.startsWith("!unload "))
                 doUnloadCmd(sender, message.substring(8).trim());
             else if (command.equals("!unloadall"))
@@ -136,6 +138,8 @@ public class multibot extends SubspaceBot {
             } else {
                 if (command.equals("!help"))
                     doLockedHelpMessage(sender);
+                if (command.equals("!modhelp"))
+                    m_botAction.smartPrivateMessageSpam(sender, multiModule.getModHelpMessage());
                 else if (command.equals("!unlock"))
                     doUnlockCmd(sender);
                 else if (command.equals("!module"))
@@ -374,6 +378,17 @@ public class multibot extends SubspaceBot {
     }
 
     /**
+     * Loads default modules -- standard, warp and spec.
+     * @param name
+     *          Person trying to load 
+     */
+    public void doLoadDefaultCmd(String name) {
+        doLoadCmd(name, "standard");
+        doLoadCmd(name, "warp");
+        doLoadCmd(name, "spec");
+    }
+
+    /**
      * Unload a specific utility.
      * 
      * @param name
@@ -470,13 +485,14 @@ public class multibot extends SubspaceBot {
                 "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
                 "!Lock <Game>             -- Locks the bot and loads game <Game>.",
                 "!Load <Utility>          -- Loads utility <Utility>.",
+                "!Load                    -- Loads standard, warp and spec modules.",
                 "!Unload <Utility>        -- Unloads the loaded utility <Utility>.",
                 "!UnloadAll               -- Unloads all utilities.",
                 "!Loaded                  -- Shows currently loaded utilties.",
                 "!Help <Utility>          -- Shows help for utility <Utility>.",
                 "!Home                    -- Returns the bot to " + initialArena + ".",
                 "!GTFO                    -- Shuts down everything, unlocks, and sends the bot home.",
-                "!Die                     -- Logs the bot off.", };
+                "!Die                     -- Logs the bot off." };
 
         m_botAction.smartPrivateMessageSpam(sender, message);
     }
@@ -489,14 +505,20 @@ public class multibot extends SubspaceBot {
      */
     private void doLockedHelpMessage(String sender) {
         String[] message = {
+                "MultiBot Help:  *** USE !MODHELP *** for help on the currently loaded module",
                 "!Module                  -- Displays the module and version that is currently loaded.",
-                "!Unlock                  -- Unlocks the bot.",
+                "!Unlock                  -- Unlocks the bot, which unloads the presently-loaded module.",
+                "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
                 "!Load <Utility>          -- Loads utility <Utility>.",
                 "!Unload <Utility>        -- Unloads the loaded utility <Utility>.",
                 "!UnloadAll               -- Unloads all utilities.",
-                "!Loaded                  -- Shows currently loaded utilties.", };
+                "!Loaded                  -- Shows currently loaded utilties.",
+                "!Help <Utility>          -- Shows help for utility <Utility>.",
+                "!GTFO                    -- Shuts down everything, unlocks, and sends the bot home.",
+                "!Die                     -- Logs the bot off.",
+                "!ModHelp                 -- Displays help message for currently-loaded module."
+                };
 
-        m_botAction.smartPrivateMessageSpam(sender, multiModule.getModHelpMessage());
         m_botAction.smartPrivateMessageSpam(sender, message);
     }
 
