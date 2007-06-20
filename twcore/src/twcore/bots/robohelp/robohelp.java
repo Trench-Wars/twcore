@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -925,29 +926,55 @@ public class robohelp extends SubspaceBot {
      * @param message Message containing on it
      */
     public void handleOnIt( String name, String message ) {
-        boolean recorded = false;
-        int i = 0;
-
-        if(callList.size()==0) {
-        	// A staffer did "on it" while there was no call to take.
-        	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
-        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim. The last person to claim a call was "+this.lastStafferClaimedCall+".");
-        	else
-        		m_botAction.sendRemotePrivateMessage(name, "No call was found to match your claim.");
+        
+        boolean record = false;
+        Date now = new Date();
+        
+        // TEST
+        // 1) what happens if you do "on it" when there is no call at all?
+        //		Expected: count=false - response that no call was found
+        // 2) Test:					Expected result
+        //		?help bla
+        //		on it			--> registered
+        //		------
+        // 		?help bla2
+        //		?help bla2
+        //		on it			--> registered
+        //		(first call expires)
+        //		------
+        //		?help bla3
+        //		on it			--> registered <<<<< FIX! Previous situation = no response
+        //		(previous expired call should be gone)
+        //		on it			--> no call found <<<<< FIX! Previous situation = registered
+        
+        // Previous situation can be done using got it
+        
+        
+        // Clear the queue of expired calls, get the first non-expired call but leave other non-expired calls
+        for(int i = 0 ; i < callList.size(); i++) {
+        	EventData e = callList.elementAt( i );
+        	
+        	if( record == false && now.getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
+        		// This is a non-expired call and no call has been counted yet. 
+        		record = true;
+        		callList.removeElementAt(i);
+        	} else if(now.getTime() >= e.getTime() + CALL_EXPIRATION_TIME) {
+        		// This is an expired call
+        		callList.removeElementAt(i);
+        	}
         }
-
-        while( !recorded && i < callList.size() ) {
-            EventData e = callList.elementAt( i );
-            if( new java.util.Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
-                updateStatRecordsONIT( name );
-                callList.removeElementAt( i );
-                recorded = true;
-                this.lastStafferClaimedCall = name;
-                m_botAction.sendRemotePrivateMessage(name, "Call registered.");
-            } else {
-            	callList.removeElementAt( i );
-            }
-            i++;
+        
+        // if a non-expired call was found, record it to the database
+        if(record) {
+        	updateStatRecordsONIT( name );
+            this.lastStafferClaimedCall = name;
+            m_botAction.sendRemotePrivateMessage(name, "Call registered.");
+        } else {
+        	// A staffer did "on it" while there was no call to take (or all calls were expired).
+        	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
+        		m_botAction.sendRemotePrivateMessage(name, "The call expired or no call found to match your claim. The last person to claim a call was "+this.lastStafferClaimedCall+".");
+        	else
+        		m_botAction.sendRemotePrivateMessage(name, "The call expired or no call found to match your claim.");
         }
     }
 
