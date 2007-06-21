@@ -547,7 +547,7 @@ public class trivia extends MultiModule {
         topTen = new Vector<String>();
         try {
             ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tblusertriviastats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
-            while(result.next())
+            while(result != null && result.next())
                 topTen.add(doTrimString(result.getString("fcUsername"), 17 ) + "Games Won ("+ doTrimString(""+result.getInt("fnWon") +":" + result.getInt("fnPlayed") +")",9) + "Pts Scored (" +doTrimString(""+ result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")", 10) + "Rating: " + result.getInt("fnRating"));
             m_botAction.SQLClose( result );
         }
