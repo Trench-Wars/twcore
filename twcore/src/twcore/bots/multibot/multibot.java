@@ -105,19 +105,19 @@ public class multibot extends SubspaceBot {
                 doListUtilsCmd(sender);
             else if (command.startsWith("!load "))
                 doLoadCmd(sender, message.substring(6).trim());
-            else if (command.startsWith("!load"))
+            else if (command.equalsIgnoreCase("!load"))
                 doLoadDefaultCmd(sender);
             else if (command.startsWith("!unload "))
                 doUnloadCmd(sender, message.substring(8).trim());
-            else if (command.equals("!unloadall"))
+            else if (command.equalsIgnoreCase("!unloadall"))
                 doUnloadAllCmd(sender);
-            else if (command.equals("!loaded"))
+            else if (command.equalsIgnoreCase("!loaded"))
                 doListLoadedCmd(sender);
             else if (command.startsWith("!help "))
                 doUtilHelpCmd(sender, message.substring(6).trim());
-            else if (command.equals("!where"))
+            else if (command.equalsIgnoreCase("!where"))
                 doWhereCmd(sender, true);
-            else if (command.equals("!gtfo"))
+            else if (command.equalsIgnoreCase("!gtfo"))
                 doGTFOCmd(sender);
 
             if (!isLocked()) {
@@ -125,24 +125,24 @@ public class multibot extends SubspaceBot {
                     doGoCmd(sender, message.substring(4).trim());
                 else if (command.startsWith("!lock "))
                     doLockCmd(sender, message.substring(6).trim());
-                else if (command.equals("!help"))
+                else if (command.equalsIgnoreCase("!help"))
                     doUnlockedHelpMessage(sender);
-                else if (command.equals("!listgames"))
+                else if (command.equalsIgnoreCase("!listgames"))
                     doListGamesCmd(sender);
-                else if (command.equals("!home"))
+                else if (command.equalsIgnoreCase("!home"))
                     doHomeCmd(sender);
-                else if (command.equals("!die"))
+                else if (command.equalsIgnoreCase("!die"))
                     doDieCmd(sender);
-                else if (command.equals("!follow"))
+                else if (command.equalsIgnoreCase("!follow"))
                     doFollowCmd(sender);
             } else {
-                if (command.equals("!help"))
+                if (command.equalsIgnoreCase("!help"))
                     doLockedHelpMessage(sender);
-                if (command.equals("!modhelp"))
+                if (command.equalsIgnoreCase("!modhelp"))
                     m_botAction.smartPrivateMessageSpam(sender, multiModule.getModHelpMessage());
-                else if (command.equals("!unlock"))
+                else if (command.equalsIgnoreCase("!unlock"))
                     doUnlockCmd(sender);
-                else if (command.equals("!module"))
+                else if (command.equalsIgnoreCase("!module"))
                     doModuleCmd(sender);
             }
         } catch (RuntimeException e) {
