@@ -203,7 +203,7 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh -Zombies -Enigma -Twtown -Twcity -Gatez -G
 &Scorereset &When|Score resets are performed every other Wednesday.
 &Score &reset &Elim -Baseelim|Every once in a while, a script is run that wipes out games older than three weeks from your elim.  You cannot get a score reset in elim any other way than by just waiting.
 &Scorereset &Elim -Baseelim|Every once in a while, a script is run that wipes out games older than three weeks from your elim.  You cannot get a score reset in elim any other way than by just waiting.
-&Kill &Points|In public arenas, points received per kill are calculated as follows: Points received = (Your Bounty / 4) + Enemy's Bounty + 200 points if your team has the flag.
+&Kill &Points|In public arenas, points received per kill are calculated as follows:             Points received = (Your Bounty \ 4) + Enemy's Bounty + 200 points if your team has the flag.
 &Kill &Bounty|You receive 6 bounty for each kill you make.
 &Kill &Bty|You receive 6 bounty for each kill you make.
 &Rating &What|Your rating, R is calculated as follows: Rating = (points from kills x 10 + (wins - losses) x 100) / (wins + 100)
