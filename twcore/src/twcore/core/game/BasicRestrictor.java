@@ -34,7 +34,7 @@ public class BasicRestrictor implements ShipRestrictor
 	{
 		restrictions = new int[8];
 		Arrays.fill(restrictions, UNRESTRICTED);
-		fallback = Ship.SPEC;
+		fallback = Ship.INTERNAL_SPECTATOR;
 		m_botAction = BotAction.getBotAction();
 		listeners = new ArrayList<InvalidShipListener>();
 	}
@@ -114,7 +114,7 @@ public class BasicRestrictor implements ShipRestrictor
 	 */
 	public void setFallback(byte ship)
 	{
-		if(ship >= Ship.WARBIRD && ship <= Ship.SPEC)
+		if(ship >= Ship.INTERNAL_WARBIRD && ship <= Ship.INTERNAL_SPECTATOR)
 		{
 			fallback = ship;
 		}

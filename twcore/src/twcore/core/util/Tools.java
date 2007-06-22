@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
-import twcore.core.game.Ship;
 
 /**
  * Cluttered but somewhat useful toolkit of common operations.  Should be referenced
@@ -204,23 +203,23 @@ public class Tools {
      */
     public static String shipName( int shipNumber ){
         switch( shipNumber ){
-            case Ship.SPEC:
+            case Tools.Ship.SPECTATOR:
                 return "Spectator";
-            case Ship.WARBIRD:
+            case Tools.Ship.WARBIRD:
                 return "Warbird";
-            case Ship.JAVELIN:
+            case Tools.Ship.JAVELIN:
                 return "Javelin";
-            case Ship.SPIDER:
+            case Tools.Ship.SPIDER:
                 return "Spider";
-            case Ship.LEVIATHAN:
+            case Tools.Ship.LEVIATHAN:
                 return "Leviathan";
-            case Ship.TERRIER:
+            case Tools.Ship.TERRIER:
                 return "Terrier";
-            case Ship.WEASEL:
+            case Tools.Ship.WEASEL:
                 return "Weasel";
-            case Ship.LANCASTER:
+            case Tools.Ship.LANCASTER:
                 return "Lancaster";
-            case Ship.SHARK:
+            case Tools.Ship.SHARK:
                 return "Shark";
             default:
                 return "UFO";
@@ -474,5 +473,16 @@ public class Tools {
         public static final int GOGOGO = 104; // Just in case :P
     }
     
-    // For ships, see twcore.core.game.Ship    
+    // Ships (not to be confused with numbering system used in Ship, which is for internal/packet use only)
+    public class Ship {
+        public static final int SPECTATOR = 0;
+        public static final int WARBIRD = 1;
+        public static final int JAVELIN = 2;
+        public static final int SPIDER = 3;
+        public static final int LEVIATHAN = 4;
+        public static final int TERRIER = 5;
+        public static final int WEASEL = 6;
+        public static final int LANCASTER = 7;
+        public static final int SHARK = 8;
+    }    
 }

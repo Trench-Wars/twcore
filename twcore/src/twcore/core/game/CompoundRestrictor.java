@@ -1,7 +1,7 @@
 package twcore.core.game;
 
-import static twcore.core.game.Ship.SPEC;
-import static twcore.core.game.Ship.WARBIRD;
+import static twcore.core.game.Ship.INTERNAL_SPECTATOR;
+import static twcore.core.game.Ship.INTERNAL_WARBIRD;
 
 import java.util.ArrayList;
 
@@ -34,7 +34,7 @@ public class CompoundRestrictor implements ShipRestrictor
 	public CompoundRestrictor()
 	{
 		groups = new ArrayList<ShipGroup>();
-		fallback = SPEC;
+		fallback = INTERNAL_SPECTATOR;
 		m_botAction = BotAction.getBotAction();
 		listeners = new ArrayList<InvalidShipListener>();
 	}
@@ -70,7 +70,7 @@ public class CompoundRestrictor implements ShipRestrictor
 
 		for(byte b : ships)
 		{
-			if(b >= WARBIRD && b <= SPEC)
+			if(b >= INTERNAL_WARBIRD && b <= INTERNAL_SPECTATOR)
 			{
 				mask |= 1 << b;
 			}
@@ -105,7 +105,7 @@ public class CompoundRestrictor implements ShipRestrictor
 			if((group.getMask() & pMask) != 0)
 			{
 				short total = 0;
-				for(byte i = WARBIRD; i < SPEC; i++)
+				for(byte i = INTERNAL_WARBIRD; i < INTERNAL_SPECTATOR; i++)
 				{
 					int mask = 1 << i;
 					if((group.getMask() & mask) != 0)
@@ -138,7 +138,7 @@ public class CompoundRestrictor implements ShipRestrictor
 	 */
 	public void setFallback(byte ship)
 	{
-		if(ship >= Ship.WARBIRD && ship <= Ship.SPEC)
+		if(ship >= Ship.INTERNAL_WARBIRD && ship <= Ship.INTERNAL_SPECTATOR)
 		{
 			fallback = ship;
 		}
@@ -202,7 +202,7 @@ public class CompoundRestrictor implements ShipRestrictor
 		{
 			for(byte b : ships)
 			{
-				if(b >= WARBIRD && b < SPEC)
+				if(b >= INTERNAL_WARBIRD && b < INTERNAL_SPECTATOR)
 				{
 					mask |= 1 << b;
 				}

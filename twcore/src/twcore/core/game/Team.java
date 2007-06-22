@@ -1,9 +1,9 @@
 package twcore.core.game;
 
-import static twcore.core.game.Ship.ALL;
-import static twcore.core.game.Ship.PLAYING;
-import static twcore.core.game.Ship.SPEC;
-import static twcore.core.game.Ship.WARBIRD;
+import static twcore.core.game.Ship.INTERNAL_ALL;
+import static twcore.core.game.Ship.INTERNAL_PLAYINGSHIP;
+import static twcore.core.game.Ship.INTERNAL_SPECTATOR;
+import static twcore.core.game.Ship.INTERNAL_WARBIRD;
 
 import java.util.ArrayList;
 
@@ -71,7 +71,7 @@ public class Team
 
 			public byte fallbackShip()
 			{
-				return Ship.SPEC;
+				return Ship.INTERNAL_SPECTATOR;
 			}
 		};
 	}
@@ -95,14 +95,14 @@ public class Team
      */
 	public Player[] getPlayers(byte ship)
 	{
-		if(ship > -1 && ship < PLAYING)
+		if(ship > -1 && ship < INTERNAL_PLAYINGSHIP)
 		{
 			return ships[ship];
 		}
-		else if(ship == PLAYING)
+		else if(ship == INTERNAL_PLAYINGSHIP)
 		{
 			ArrayList<Player> list = new ArrayList<Player>();
-			for(int i = WARBIRD; i < SPEC; i++)
+			for(int i = INTERNAL_WARBIRD; i < INTERNAL_SPECTATOR; i++)
 			{
 				for(Player p : ships[i])
 				{
@@ -111,7 +111,7 @@ public class Team
 			}
 			return list.toArray(new Player[list.size()]);
 		}
-		else if(ship == ALL)
+		else if(ship == INTERNAL_ALL)
 		{
 			return plist;
 		}
@@ -231,7 +231,7 @@ public class Team
 
 				public byte fallbackShip()
 				{
-					return Ship.SPEC;
+					return Ship.INTERNAL_SPECTATOR;
 				}
 			};
 		}
@@ -301,7 +301,7 @@ public class Team
 	 */
 	private byte getOldShip(Player p)
 	{
-		for(byte i = WARBIRD; i < SPEC; i++)
+		for(byte i = INTERNAL_WARBIRD; i < INTERNAL_SPECTATOR; i++)
 		{
 			for(Player pl : ships[i])
 			{
@@ -333,7 +333,7 @@ public class Team
 			}
 			else
 			{
-				if(restrict.fallbackShip() == Ship.SPEC)
+				if(restrict.fallbackShip() == Ship.INTERNAL_SPECTATOR)
 				{
 					m_botAction.spec(id);
 					m_botAction.spec(id);
@@ -404,7 +404,7 @@ public class Team
 			}
 			else
 			{
-				if(restrict.fallbackShip() == Ship.SPEC)
+				if(restrict.fallbackShip() == Ship.INTERNAL_SPECTATOR)
 				{
 					m_botAction.spec(id);
 					m_botAction.spec(id);
@@ -456,7 +456,7 @@ public class Team
 			}
 			else
 			{
-				if(restrict.fallbackShip() == Ship.SPEC)
+				if(restrict.fallbackShip() == Ship.INTERNAL_SPECTATOR)
 				{
 					m_botAction.spec(id);
 					m_botAction.spec(id);

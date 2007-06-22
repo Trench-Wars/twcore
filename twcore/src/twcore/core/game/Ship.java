@@ -14,9 +14,10 @@ public class Ship extends Thread {
     public static final double VELOCITY_TIME = 10000.0;     // # ms to divide velocity by
                                                             //   to determine distance
 
-	public static final byte WARBIRD = 0, JAVELIN = 1, SPIDER = 2, LEVIATHAN = 3,
-							 TERRIER = 4, WEASEL = 5, LANCASTER = 6, SHARK = 7,
-							 SPEC = 8, PLAYING = 9, ALL = 10;
+    // Internal ship number enum; should be used for packet construction but not normal ship #'s 
+	public static final byte INTERNAL_WARBIRD = 0, INTERNAL_JAVELIN = 1, INTERNAL_SPIDER = 2, INTERNAL_LEVIATHAN = 3,
+							 INTERNAL_TERRIER = 4, INTERNAL_WEASEL = 5, INTERNAL_LANCASTER = 6, INTERNAL_SHARK = 7,
+							 INTERNAL_SPECTATOR = 8, INTERNAL_PLAYINGSHIP = 9, INTERNAL_ALL = 10;
 
     private int         m_movingUpdateTime  = 100;          // How often a moving ship's
                                                             //   position is updated
@@ -43,8 +44,6 @@ public class Ship extends Thread {
 
     private GamePacketGenerator     m_gen;  // Packet generator
 
-    private final short SPEC_SHIP = 8;
-
 	/**
 	 * Converts a ship type from the 1-8, 0 is spec format used in Player's
 	 * getShipType() method to the 0-7, 8 is spec format of the constants.
@@ -55,7 +54,7 @@ public class Ship extends Thread {
     {
     	shipType--;
     	if(shipType == -1)
-    		shipType = SPEC;
+    		shipType = INTERNAL_SPECTATOR;
 
     	return shipType;
     }
@@ -81,7 +80,7 @@ public class Ship extends Thread {
         try {
             while( !interrupted() ){
                 updatePosition();
-                if ( shipType == SPEC_SHIP || xVel == 0 && yVel == 0 ){
+                if ( shipType == INTERNAL_SPECTATOR || xVel == 0 && yVel == 0 ){
                     Thread.sleep( getUnmovingUpdateTime() );
                 } else {
                     Thread.sleep( getMovingUpdateTime() );
@@ -170,7 +169,7 @@ public class Ship extends Thread {
         this.togglables = (byte)togglables;
         this.energy = (short)energy;
         this.bounty = (short)bounty;
-        if( shipType != SPEC_SHIP )
+        if( shipType != INTERNAL_SPECTATOR )
             sendPositionPacket();
     }
 
@@ -188,7 +187,7 @@ public class Ship extends Thread {
         this.lastYV = this.yVel;
         this.xVel = (short)xVel;
         this.yVel = (short)yVel;
-        if( shipType != SPEC_SHIP )
+        if( shipType != INTERNAL_SPECTATOR )
             sendPositionPacket();
     }
 
@@ -209,7 +208,7 @@ public class Ship extends Thread {
         this.lastYV = this.yVel;
         this.xVel = 0;
         this.yVel = 0;
-        if( shipType != SPEC_SHIP )
+        if( shipType != INTERNAL_SPECTATOR )
             sendPositionPacket();
     }
 
@@ -226,7 +225,7 @@ public class Ship extends Thread {
         this.y = (short)y;
         this.xVel = 0;
         this.yVel = 0;
-        if( shipType != SPEC_SHIP )
+        if( shipType != INTERNAL_SPECTATOR )
             fire( weapon );
     }
 
@@ -245,7 +244,7 @@ public class Ship extends Thread {
         this.xVel = (short)xVel;
         this.yVel = (short)yVel;
         this.direction = (byte)direction;
-        if( shipType != SPEC_SHIP )
+        if( shipType != INTERNAL_SPECTATOR )
             sendPositionPacket();
     }
 
@@ -261,7 +260,7 @@ public class Ship extends Thread {
     public void setRotation( int rotation ){
         lastD = (byte)rotation;
         direction = (byte)rotation;
-        if( shipType != SPEC_SHIP )
+        if( shipType != INTERNAL_SPECTATOR )
             sendPositionPacket();
     }
 
