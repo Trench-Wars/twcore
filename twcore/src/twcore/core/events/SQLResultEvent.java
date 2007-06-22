@@ -64,9 +64,11 @@ public class SQLResultEvent extends SubspaceEvent {
      * @see SQLWorker
      */
     public void setResultSet( ResultSet set ){
-        m_set = set;
-        if( m_identifier == null )
+        if( m_identifier == null ) {
             closeResultSet( set );
+            return;
+        }
+        m_set = set;
         m_bot.handleEvent( this );
     }
     
