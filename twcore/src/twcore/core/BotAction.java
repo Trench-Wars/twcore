@@ -2207,8 +2207,8 @@ public class BotAction
 
     /**
      * Sets up spam protection for the bot, allowing only the specified number of
-     * messages to be sent to the bot before it begins to ignore them.
-     * <p>This protection does not apply to HighMod+ (who should know what they
+     * messages per minute to be sent to the bot before it begins to ignore them.
+     * <p>This protection does not apply to staff (who should know what they
      * are doing!).
      * @param msgsPerMin Number of messages per minute the bot will allow.
      */
