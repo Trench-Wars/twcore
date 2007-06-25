@@ -235,10 +235,9 @@ public class SQLConnectionPool implements Runnable {
      */
     public synchronized String toString() {
         String info =
-        "SQL Status: " + poolName + " pool has "
-        + (availableConnections.size() + busyConnections.size()) + "/"
-        + maxConnections + " connections online.  " + busyConnections.size()
-        + " of them are busy.";
+        "SQL pool " + poolName + ": " + totalConnections() + "/"
+        + maxConnections + " connections online, " + busyConnections.size()
+        + " in use";
         return(info);
     }
 

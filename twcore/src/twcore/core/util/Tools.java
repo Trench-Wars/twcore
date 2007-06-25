@@ -111,7 +111,7 @@ public class Tools {
 
         return list;
     }
-
+    
     /**
      * Prints to the log (console) a message with a preformatted timestamp.
      * For this to work one should redirect output to a file.
@@ -121,6 +121,15 @@ public class Tools {
         String output = getTimeStamp() + "   " + value;
         System.out.println( output );
 
+    }
+
+    /**
+     * Does a spam (multiline) print to log.
+     * @param msg
+     */
+    public static void spamLog( String[] msg ) {
+        for( int i = 0; i<msg.length; i++ )
+            printLog( msg[i] );
     }
 
     /**

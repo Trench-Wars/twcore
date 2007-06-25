@@ -67,6 +67,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand" );
         m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand" );
+        m_commandInterpreter.registerCommand( "!sqlstatus", acceptedMessages, this, "handleSQLStatus" );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleInvalidMessage" );
@@ -173,7 +174,7 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( messager, "Bot has NOT been removed.  Use exact casing of the name, i.e., !remove TWDBot" );
             }
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't a HighMod+, but (s)he tried !remove " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't a HighMod+, but tried !remove " + message );
         }
     }
 
@@ -193,7 +194,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendPrivateMessage( messager, "Removed all bots of type " + message + " (if possible).  Count reset to 0." );
             System.gc();
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't a HighMod+, but (s)he tried !hardremove " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't a HighMod+, but tried !hardremove " + message );
         }
     }
 
@@ -206,7 +207,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
             m_botQueue.listWaitingList( messager );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but (s)he tried !waitinglist" );
+            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but tried !waitinglist" );
         }
     }
 
@@ -221,7 +222,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "Updating access levels..." );
             m_botAction.sendChatMessage( 1, "Updating access levels at " + messager + "'s request" );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an smod, but (s)he tried !updateaccess " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't an SMod, but tried !updateaccess " + message );
         }
     }
 
@@ -233,14 +234,14 @@ public class HubBot extends SubspaceBot {
     public void handleListBots( String messager, String message ){
         String className = message.trim();
 
-        if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
+        if( m_botAction.getOperatorList().isModerator( messager ) == true ){
             if( className.length() > 0 ){
                 m_botQueue.listBots( className, messager );
             } else {
             	m_botQueue.listBotTypes( messager );
             }
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but (s)he tried !listbots " + message );
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried !listbots " + message );
         }
     }
     
@@ -397,7 +398,7 @@ public class HubBot extends SubspaceBot {
         	}
         	
         } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but (s)he tried !listoperators " + message );
+            m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but tried !listoperators " + message );
         }
     }
     
@@ -417,7 +418,7 @@ public class HubBot extends SubspaceBot {
      * @param message is irrelevant
      */
     public void handleShutdownCommand( String messager, String message ){    
-        if( m_botAction.getOperatorList().isSysop( messager ) == true ) {
+        if( m_botAction.getOperatorList().isSysop( messager ) || m_botAction.getOperatorList().isDeveloperExact( messager ) ) {
             m_botAction.sendSmartPrivateMessage( messager, "Shutting down the core ..." + 
                     (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take on average 30 seconds per bot ...":"" ) );
             
@@ -446,26 +447,34 @@ public class HubBot extends SubspaceBot {
      */
     public void handleHelp( String messager, String message ){
 
-        if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
+        if( m_botAction.getOperatorList().isOutsider( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!help              - Displays this message." );
             m_botAction.sendSmartPrivateMessage( messager, "!spawn <bot type>  - spawns a new bot." );
             m_botAction.sendSmartPrivateMessage( messager, "!waitinglist       - Displays the waiting list." );
         }
 
-        if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
+        if( m_botAction.getOperatorList().isModerator( messager ) ){
+            m_botAction.sendSmartPrivateMessage( messager, "!listbots [type]   - Returns the bottypes or lists the names and spawners of a bot [type]." );
+            m_botAction.sendSmartPrivateMessage( messager, "!uptime            - Returns the current uptime of this bot." );            
+            m_botAction.sendSmartPrivateMessage( messager, "!sqlstatus         - Shows status of SQL connections." );            
+        }
+        
+        if( m_botAction.getOperatorList().isHighmod( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!remove <name>     - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)" );
             m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
-            m_botAction.sendSmartPrivateMessage( messager, "!listbots [type]   - Returns the bottypes or lists the names and spawners of a bot [type]." );
-            m_botAction.sendSmartPrivateMessage( messager, "!uptime            - Returns the current uptime of this bot." );
         }
-
-        if( m_botAction.getOperatorList().isSmod( messager ) == true ){
+        
+        if( m_botAction.getOperatorList().isSmod( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
             m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
         }
         
-        if( m_botAction.getOperatorList().isSysop( messager ) == true ){
+        if( m_botAction.getOperatorList().isSysop( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );            
+        }
+        
+        if( m_botAction.getOperatorList().isDeveloperExact( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );            
         }
     }
@@ -502,7 +511,7 @@ public class HubBot extends SubspaceBot {
                             ", but (s)he tried '!spawn " + message + "'");
                 }
             } else {
-                m_botAction.sendChatMessage( 1, messager + " doesn't have access, but (s)he tried '!spawn " + message + "'");
+                m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried '!spawn " + message + "'");
             }
         }
     }
@@ -524,8 +533,20 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage( messager, "Usage: !forcespawn <bot type> <login> <password>" );                
             }
         } else {
-            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but (s)he tried to use !forcespawn." );
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !forcespawn." );
         }
     }
-
+    
+    /**
+     * 
+     * @param messager
+     * @param message
+     */
+    public void handleSQLStatus( String messager, String message ) {
+        if( m_botAction.getOperatorList().isModerator( messager ) ){        
+            m_botAction.privateMessageSpam( messager, m_botAction.getCoreData().getSQLManager().getPoolStatus() );
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !sqlstatus." );            
+        }
+    }
 }

@@ -404,7 +404,7 @@ public class BotQueue extends Thread {
         while( m_botAction.getBotState() != Session.NOT_RUNNING ){
             if( SQLStatusTime == 2400 ){
                 SQLStatusTime = 0;
-                m_botAction.getCoreData().getSQLManager().status();
+                m_botAction.getCoreData().getSQLManager().printStatusToLog();
             }
             try {
                 currentTime = System.currentTimeMillis() + 1000;

@@ -172,21 +172,32 @@ public class SQLManager extends Thread {
     public boolean isOperational(){
         return operational;
     }
+    
+    
 
     /**
      * Prints to the log file the status of all connection pools.
      */
-    public void status(){
+    public void printStatusToLog(){
         if( !operational ){
             Tools.printLog( "SQL Connection Not Operational" );
         } else {
-            Iterator i = pools.values().iterator();
-            while( i.hasNext() ){
-                Tools.printLog( ((SQLConnectionPool)i.next()).toString() );
-            }
+            Tools.spamLog( getPoolStatus() );
         }
     }
 
+    /**
+     * Gets status of all connection pools. 
+     * @return String array containing status of each individual connection pool.
+     */
+    public String[] getPoolStatus() {
+        String[] status = new String[pools.size()];
+        Iterator i = pools.values().iterator();
+        for(int j = 0; j<status.length; j++)
+            status[j] = ((SQLConnectionPool)i.next()).toString();
+        return status;
+    }
+    
     /**
      * Checks the background queue for queries waiting to be run, and dispatches
      * them each to a separate SQLWorker thread.  After the result is received,
