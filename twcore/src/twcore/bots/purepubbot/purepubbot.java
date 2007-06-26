@@ -353,11 +353,11 @@ public class purepubbot extends SubspaceBot
                 checkPlayer(playerID);
                 if(!privFreqs)
                     checkFreq(playerID, player.getFrequency(), false);
+                m_botAction.sendPrivateMessage(playerName, "Commands available: !help, !team, !listships, !time, !warp");
             }
             if(flagTimeStarted)
                 if( flagTimer != null)
                     m_botAction.sendPrivateMessage(playerName, flagTimer.getTimeInfo() );
-            m_botAction.sendPrivateMessage(playerName, "Commands available: !help, !team, !listships, !time, !warp");
         } catch (Exception e) {
         }
 
@@ -494,7 +494,6 @@ public class purepubbot extends SubspaceBot
         started = true;
         specRestrictedShips();
         m_botAction.sendArenaMessage("Pure pub settings enabled.  Ship restrictions are now in effect.", 2);
-        m_botAction.sendArenaMessage("Public commands available: !help, !team, !listships, !time, !warp");
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully enabled.");
     }
 
@@ -1294,7 +1293,7 @@ public class purepubbot extends SubspaceBot
             }
 
             String[] leaderInfo = flagTimer.getTeamLeader( MVPs );
-            if( leaderInfo.length != 2 )
+            if( leaderInfo.length != 3 )
                 return;
             String name, MVplayers = "";
             MVPs.remove( leaderInfo[0] );
