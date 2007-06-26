@@ -80,6 +80,8 @@ public class dangerous extends MultiModule {
         m_botAction.setReliableKills( 1 );
 
         m_totalTime = 0;
+        m_stolenTime = 0;
+        m_numStolen = 0;
 
         m_starttime = starttime;
         m_killtime = killtime;
@@ -161,7 +163,9 @@ public class dangerous extends MultiModule {
      * Clears all player records, and cancels all timer tasks.
      */
     public void clearRecords() {
-        if( m_players != null )
+        m_botAction.cancelTask(timeUpdate);
+
+        if( m_players == null )
             return;
         if( m_players.values() == null )
             return;
@@ -175,7 +179,6 @@ public class dangerous extends MultiModule {
         }
 
         m_players = new HashMap<String, PlayerInfo>();
-        m_botAction.cancelTask(timeUpdate);
     }
 
 
@@ -710,6 +713,7 @@ public class dangerous extends MultiModule {
     }
     public boolean isUnloadable()	{
     	clearRecords();
+        isRunning = false;
 		return true;
 	}
 }
