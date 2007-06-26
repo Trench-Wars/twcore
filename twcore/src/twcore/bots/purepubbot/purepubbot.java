@@ -348,7 +348,7 @@ public class purepubbot extends SubspaceBot
                 }
 
                 if( restrictions != "" )
-                    m_botAction.sendSmartPrivateMessage(playerName, "Ship restrictions: " + restrictions );
+                    m_botAction.sendPrivateMessage(playerName, "Ship restrictions: " + restrictions );
 
                 checkPlayer(playerID);
                 if(!privFreqs)
@@ -356,7 +356,8 @@ public class purepubbot extends SubspaceBot
             }
             if(flagTimeStarted)
                 if( flagTimer != null)
-                    m_botAction.sendSmartPrivateMessage(playerName, flagTimer.getTimeInfo() );
+                    m_botAction.sendPrivateMessage(playerName, flagTimer.getTimeInfo() );
+            m_botAction.sendPrivateMessage(playerName, "Commands available: !help, !team, !listships, !time, !warp");
         } catch (Exception e) {
         }
 
@@ -493,7 +494,7 @@ public class purepubbot extends SubspaceBot
         started = true;
         specRestrictedShips();
         m_botAction.sendArenaMessage("Pure pub settings enabled.  Ship restrictions are now in effect.", 2);
-        m_botAction.sendArenaMessage("Public Commands:  !help  !time  !warp  !listships  !team");
+        m_botAction.sendArenaMessage("Public commands available: !help, !team, !listships, !time, !warp");
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully enabled.");
     }
 
@@ -756,7 +757,7 @@ public class purepubbot extends SubspaceBot
                 String text = Tools.formatString(Tools.shipName(i) + "s", 11);
                 text += "(" + team.get(i).size() + "):  ";
                 for( int j = 0; j < team.get(i).size(); j++) {
-                   text += team.get(i).get(j) + " ";
+                   text += team.get(i).get(j) + "  ";
                 }
                 m_botAction.sendSmartPrivateMessage(sender, text);
             }
@@ -1234,9 +1235,14 @@ public class purepubbot extends SubspaceBot
                             if( percentOnFreq == 100 ) {
                                 MVPs.add( playerName );
                                 m_botAction.sendPrivateMessage( playerName, "For staying with the same freq and ship the entire match, you are an MVP and receive the full bonus: " + modbounty );
+                                int grabs = flagTimer.getFlagGrabs( playerName );
                                 if( special == 4 ) {
                                     m_botAction.sendPrivateMessage( playerName, "You also receive an additional " + weight + " bounty as a special prize!" );
                                     modbounty *= 2;
+                                }
+                                if( grabs != 0 ) {
+                                    modbounty += (int)(modbounty * (grabs / 10));  
+                                    m_botAction.sendPrivateMessage( playerName, "For your " + grabs + " flag grabs, you also receive an additional " + grabs + "0% bounty, for a total of " + modbounty );
                                 }
 
                             } else {
@@ -1321,18 +1327,23 @@ public class purepubbot extends SubspaceBot
                     m_botAction.sendArenaMessage( "Prize for MVPs: Personal Body-Guard!" );
                     break;
                 }
-
+                
                 MVplayers = (String)i.next();
+                MVplayers += "(" + flagTimer.getFlagGrabs(MVplayers) + ")";
             }
             while( i.hasNext() ) {
                 name = (String)i.next();
-                MVplayers = MVplayers + ", " + name;
+                MVplayers = MVplayers + ", " + name + "(" + flagTimer.getFlagGrabs(name) + ")";
             }
 
-            if( leaderInfo[0] != "" )
-                m_botAction.sendArenaMessage( "The Team Leader was " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
+            if( leaderInfo[0] != "" ) {
+                if( leaderInfo[2] == "" )
+                    m_botAction.sendArenaMessage( "Team Leader was " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
+                else
+                    m_botAction.sendArenaMessage( "Team Leaders were " + leaderInfo[2] + " and " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
+            }
             if( MVplayers != "" )
-                m_botAction.sendArenaMessage( "MVPs: " + MVplayers );
+                m_botAction.sendArenaMessage( "MVPs (+ claims): " + MVplayers );
 
         } catch(Exception e) {
             Tools.printStackTrace( e );
@@ -1719,42 +1730,6 @@ public class purepubbot extends SubspaceBot
         }
 
         /**
-         * Gives the name of the top flag claimers out of the MVPs.  If there is
-         * a tie, does not care because it's only bragging rights anyway. :P
-         * @return Array of size 2, index 0 being the team leader and 1 being # flaggrabs
-         */
-        public String[] getTeamLeader( HashSet<String> MVPs ) {
-            String[] leaderInfo = {"", ""};
-
-            if( MVPs == null )
-                return leaderInfo;
-            try {
-                Iterator<String> i = MVPs.iterator();
-                Integer dummyClaim, highClaim = new Integer(0);
-                String leader = "", dummyPlayer;
-
-                while( i.hasNext() ) {
-                    dummyPlayer = i.next();
-                    dummyClaim = flagClaims.get( dummyPlayer );
-                    if( dummyClaim != null ) {
-                        if( dummyClaim.intValue() > highClaim.intValue() ) {
-                            leader = dummyPlayer;
-                            highClaim = dummyClaim;
-                        }
-                    }
-                }
-                leaderInfo[0] = leader;
-                leaderInfo[1] = highClaim.toString();
-                return leaderInfo;
-
-            } catch (Exception e ) {
-                Tools.printStackTrace( e );
-                return leaderInfo;
-            }
-
-        }
-
-        /**
          * Ends the game for the timer's internal purposes.
          */
         public void endGame() {
@@ -1776,6 +1751,62 @@ public class purepubbot extends SubspaceBot
          */
         public boolean isRunning() {
             return isRunning;
+        }
+
+        /**
+         * Gives the name of the top flag claimers out of the MVPs.  If there is
+         * a tie, does not care because it's only bragging rights anyway. :P
+         * @return Array of size 2, index 0 being the team leader and 1 being # flaggrabs
+         */
+        public String[] getTeamLeader( HashSet<String> MVPs ) {
+            String[] leaderInfo = {"", "", ""};
+            HashSet <String>ties = new HashSet<String>();
+
+            if( MVPs == null )
+                return leaderInfo;
+            try {
+                Iterator<String> i = MVPs.iterator();
+                Integer dummyClaim, highClaim = new Integer(0);
+                String leader = "", dummyPlayer;
+
+                while( i.hasNext() ) {
+                    dummyPlayer = i.next();
+                    dummyClaim = flagClaims.get( dummyPlayer );
+                    if( dummyClaim != null ) {
+                        if( dummyClaim.intValue() > highClaim.intValue() ) {
+                            leader = dummyPlayer;
+                            highClaim = dummyClaim;
+                            ties.clear();
+                        } else if ( dummyClaim.intValue() == highClaim.intValue() ) {
+                            ties.add(dummyPlayer);
+                        }
+                    }
+                }                
+                leaderInfo[0] = leader;
+                leaderInfo[1] = highClaim.toString();
+                i = ties.iterator();
+                while( i.hasNext() )
+                    leaderInfo[2] += i.next() + ", ";
+                return leaderInfo;
+
+            } catch (Exception e ) {
+                Tools.printStackTrace( e );
+                return leaderInfo;
+            }
+
+        }
+        
+        /**
+         * Returns number of flag grabs for given player.
+         * @param name Name of player
+         * @return Flag grabs
+         */
+        public int getFlagGrabs( String name ) {
+            Integer grabs = flagClaims.get( name );
+            if( grabs == null )
+                return 0;
+            else
+                return grabs;
         }
 
         /**
