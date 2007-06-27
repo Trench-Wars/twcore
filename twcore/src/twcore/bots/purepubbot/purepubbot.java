@@ -1190,26 +1190,26 @@ public class purepubbot extends SubspaceBot
             }
 
             int special = 0;
-            // Special prizes for long battles (add more if you think of any!)
-            if( mins > 12 ) {
+            // Special prizes for longer battles (add more if you think of any!)
+            if( mins > 15 ) {
                 Random r = new Random();
                 int chance = r.nextInt(100);
 
                 if( chance == 99 ) {
                     special = 8;
-                } else if( chance >= 97 ) {
+                } else if( chance == 98 ) {
                     special = 7;
                 } else if( chance >= 94 ) {
                     special = 6;
                 } else if( chance >= 90 ) {
                     special = 5;
-                } else if( chance >= 80 ) {
+                } else if( chance >= 75 ) {
                     special = 4;
-                } else if( chance >= 70 ) {
-                    special = 3;
                 } else if( chance >= 60 ) {
+                    special = 3;
+                } else if( chance >= 35 ) {
                     special = 2;
-                } else if( chance > 20 ) {
+                } else {
                     special = 1;
                 }
             }
@@ -1297,12 +1297,17 @@ public class purepubbot extends SubspaceBot
                 return;
             String name, MVplayers = "";
             MVPs.remove( leaderInfo[0] );
+            if( !leaderInfo[2].equals("") ) {
+                String otherleaders[] = leaderInfo[2].split(", ");
+                for( int j = 0; j<otherleaders.length; j++ )
+                    MVPs.remove( otherleaders[j] );
+            }
             Iterator i = MVPs.iterator();
 
             if( i.hasNext() ) {
                 switch( special ) {
                 case 1:  // "Refreshments" -- replenishes all essentials + gives anti
-                    m_botAction.sendArenaMessage( "Prize for MVPs: Refreshments!" );
+                    m_botAction.sendArenaMessage( "Prize for MVPs: Refreshments! (+ AntiWarp for all loyal spiders)" );
                     break;
                 case 2:  // "Full shrap"
                     m_botAction.sendArenaMessage( "Prize for MVPs: Full shrap!" );
@@ -1330,16 +1335,21 @@ public class purepubbot extends SubspaceBot
                 MVplayers = (String)i.next();
                 MVplayers += "(" + flagTimer.getFlagGrabs(MVplayers) + ")";
             }
+            int grabs = 0;
             while( i.hasNext() ) {
                 name = (String)i.next();
-                MVplayers = MVplayers + ", " + name + "(" + flagTimer.getFlagGrabs(name) + ")";
+                grabs = flagTimer.getFlagGrabs(name);
+                if( grabs > 0 )
+                    MVplayers = MVplayers + ", " + name + "(" + grabs + ")";
+                else
+                    MVplayers = MVplayers + ", " + name;
             }
 
             if( leaderInfo[0] != "" ) {
                 if( leaderInfo[2] == "" )
                     m_botAction.sendArenaMessage( "Team Leader was " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
                 else
-                    m_botAction.sendArenaMessage( "Team Leaders were " + leaderInfo[2] + " and " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
+                    m_botAction.sendArenaMessage( "Team Leaders were " + leaderInfo[2] + "and " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
             }
             if( MVplayers != "" )
                 m_botAction.sendArenaMessage( "MVPs (+ claims): " + MVplayers );
