@@ -6,9 +6,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import twcore.bots.robohelp.robohelp.EventData;
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
@@ -233,8 +235,8 @@ public class twdopstats extends SubspaceBot {
      * @param message Message containing on it
      */
     public void handleOnIt( String name, String message ) {
-        boolean recorded = false;
-        int i = 0;
+        boolean record = false;
+        Date now = new Date();
         
         if(callList.size()==0) {
         	return;
@@ -244,17 +246,23 @@ public class twdopstats extends SubspaceBot {
         	return;
         }
         
-        while( !recorded && i < callList.size() ) {
-            EventData e = callList.elementAt( i );
-            if( new Date().getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
-                updateStatRecordsONIT( name );
-                callList.removeElementAt( i );
-                recorded = true;
-            } else {
-            	callList.removeElementAt( i );
-            }
-            i++;
+        // Clear the queue of expired calls, get the first non-expired call but leave other non-expired calls
+        Iterator<EventData> iter = callList.iterator();
+        while(iter.hasNext()) {
+        	EventData e = iter.next();
+        	
+        	if( record == false && now.getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
+        		// This is a non-expired call and no call has been counted yet. 
+        		record = true;
+        		iter.remove();
+        	} else if(now.getTime() >= e.getTime() + CALL_EXPIRATION_TIME) {
+        		// This is an expired call
+        		iter.remove();
+        	}
         }
+        
+        if(record) 
+        	updateStatRecordsONIT( name );
     }
     
     /**
