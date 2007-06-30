@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.Vector;
 
-import twcore.bots.robohelp.robohelp.EventData;
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
