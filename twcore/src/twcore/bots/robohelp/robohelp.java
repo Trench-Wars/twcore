@@ -563,7 +563,7 @@ public class robohelp extends SubspaceBot {
         if( response.length <= 0 ){
             m_botAction.sendChatMessage( "..." );
         } else {
-            m_botAction.sendChatMessage( "[Giving player "+playerName+" information from database]" );
+            m_botAction.sendChatMessage( "I'll take it!" );
             m_botAction.sendRemotePrivateMessage( playerName, helpRequest.getNextResponse() );
 
             if( helpRequest.hasMoreResponses() == false ){
@@ -1055,6 +1055,8 @@ public class robohelp extends SubspaceBot {
     			}
                 m_botAction.SQLClose(results);
     		} catch(Exception e) { Tools.printStackTrace( e ); }
+    	} else {
+    		m_botAction.sendSmartPrivateMessage(name, "Syntax error. Only the arguments 'ZH', 'ER' or 'mod' are allowed. For example: !mystats ER");
     	}
     	
     	
@@ -1150,6 +1152,7 @@ public class robohelp extends SubspaceBot {
             " !thesaurus word - Returns a link for a thesaurus entry for the word.",
             " !javadocs term - Returns a link for a javadocs lookup of the term.",
             " !mystats - Returns the top 5 and your call statistics",
+            " !mystats ER/ZH/Mod - Returns the top 5 from the ER/ZH or moderator call statistics",
             "`     ",
             "PM commands:",
             " !lookup <keyword> - Tells you the response when the specified key word is given",
