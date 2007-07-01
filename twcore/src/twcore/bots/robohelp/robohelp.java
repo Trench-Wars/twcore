@@ -40,7 +40,6 @@ public class robohelp extends SubspaceBot {
     public static final String ZONE_CHANNEL = "Zone Channel";
 
     boolean             m_banPending = false;
-    boolean             m_zonerbotForAdverts = true;
     boolean             m_strictOnIts = true;
     String              m_lastBanner = null;
     BotSettings         m_botSettings;
@@ -119,10 +118,6 @@ public class robohelp extends SubspaceBot {
         acceptedMessages = Message.ARENA_MESSAGE;
 
         m_commandInterpreter.registerCommand( "Ban", acceptedMessages, this, "handleBanNumber" );
-
-        if(m_zonerbotForAdverts == false ) {
-        	m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleZone" );
-        }
     }
 
     AdvertisementThread advertisementThread;
@@ -331,10 +326,9 @@ public class robohelp extends SubspaceBot {
      * @param event IPC event to handle
      */
     public void handleEvent( InterProcessEvent event ) {
-
       IPCMessage ipcMessage = (IPCMessage) event.getObject();
+      
       String message = ipcMessage.getMessage();
-
       try {
           String parts[] = message.toLowerCase().split( "@ad@" );
           String host = parts[0];
@@ -349,46 +343,6 @@ public class robohelp extends SubspaceBot {
     
     // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results
     public void handleEvent( SQLResultEvent event) {}
-
-    public void handleZone( String name, String message ) {
-        if( !m_botAction.SQLisOperational() ){
-            return;
-        }
-        try {
-            String pieces[] = message.toLowerCase().split( " " );
-            //Gets arena;
-            String arena = "";
-            for( int i = 0; i < pieces.length; i++ )
-                if( pieces[i].equals( "?go" ) ) arena = pieces[Math.min( i+1, pieces.length)];
-            for( int i = 0; i < arena.length(); i++ )
-                if( !Character.isLetterOrDigit( arena.charAt( i ) ) && arena.charAt( i ) != '#' )
-                    arena = arena.substring( 0, i );
-            //Gets host;
-            String host = "Unknown Host";
-            int start = message.length()-1;
-            for( int i = message.length()-1; i >= 0; i-- ) {
-                String pName = message.substring( i, message.length() ).trim();
-                if( opList.isZH( pName ) ) {
-                    host = pName;
-                    start = i;
-                    i = -1;
-                }
-            }
-            //Gets advert;
-            for( int i = start; i >= 0; i-- )
-                if( message.charAt( i ) == '-' ) {
-                    start = i;
-                    i = -1;
-                }
-            String advert = message.substring( 0, start ).trim();
-
-            storeAdvert( host, arena, advert );
-            m_botAction.sendSmartPrivateMessage(host, "Advert for '"+arena+"' registered.");
-        } catch (Exception e ) {
-        	Tools.printStackTrace(e);
-        }
-
-    }
 
     /**
      * Stores data of an advert into the database.
@@ -405,8 +359,8 @@ public class robohelp extends SubspaceBot {
         if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) && !arena.equals( "tourny" ) ) {
             if( eventList.size() > 511 ) eventList.remove( 0 );
             eventList.addElement( new EventData( arena, new java.util.Date().getTime() ) );
-            String query = "INSERT INTO `tblAdvert` (`fnAdvertID`, `fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
-            query += "('', '"+Tools.addSlashesToString(host)+"', '"+arena+"', '"+Tools.addSlashesToString(advert)+"', '"+time+"')";
+            String query = "INSERT INTO `tblAdvert` (`fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
+            query += "('"+Tools.addSlashesToString(host)+"', '"+arena+"', '"+Tools.addSlashesToString(advert)+"', '"+time+"')";
             try {
                 m_botAction.SQLQueryAndClose( mySQLHost, query );
             } catch (Exception e ) { Tools.printLog( "Could not insert advert record." ); }
