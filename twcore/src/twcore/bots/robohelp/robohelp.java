@@ -383,6 +383,7 @@ public class robohelp extends SubspaceBot {
             String advert = message.substring( 0, start ).trim();
 
             storeAdvert( host, arena, advert );
+            m_botAction.sendSmartPrivateMessage(host, "Advert for '"+arena+"' registered.");
         } catch (Exception e ) {
         	Tools.printStackTrace(e);
         }
