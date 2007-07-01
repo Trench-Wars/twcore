@@ -8,10 +8,10 @@ import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
+import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.IPCMessage;
-import twcore.core.util.Tools;
 
 /**
  * <p>Title: </p>Zonerbot
@@ -102,6 +102,9 @@ public class zonerbot extends SubspaceBot
       m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
     }
   }
+  
+  // This is to catch any IPC events though none of them need to be catched to do something with the results
+  public void handleEvent( InterProcessEvent event ) {}
 
   /**
    * This private method handles all of the ZH commands.
@@ -306,9 +309,9 @@ public class zonerbot extends SubspaceBot
     setAdvertTimer(advertTime * 60 * 1000);
     recentAdvertList.add(adverter, recentAdvertTime * 60 * 1000);
     removeFromQueue(0);
-    //advert.record();
 
-    IPCMessage msg = new IPCMessage( adverter + "@ad@" + advert.getArenaName( advertText ) + "@ad@" + advertText );
+    // Send an IPC message to Robohelp to record the advert
+    IPCMessage msg = new IPCMessage( adverter + "@ad@" + advert.getArenaName( advertText ) + "@ad@" + advertText);
     m_botAction.ipcTransmit( ZONE_CHANNEL, msg );
   }
 
@@ -1352,25 +1355,6 @@ public class zonerbot extends SubspaceBot
     public String toString()
     {
       return advertText + " -" + adverter;
-    }
-
-    /**
-     * This method records the information of an advert into the database.
-     */
-    public void record()
-    {
-      m_botAction.sendSmartPrivateMessage("Cpt.Guano!", "INSERT INTO `tblAdvert`(fnAdvertID, fcUserName, fcEventName, fcAdvert, fdTime)" +
-        "VALUES (\"\", \"" + Tools.addSlashesToString(adverter) + "\", \"" + getArenaName(advertText) + "\", \"" + advertText + "\", NOW())");
-/*      try
-      {
-        m_botAction.SQLQuery(HOSTNAME,
-        "INSERT INTO `tblAdvert`(fnAdvertID, fcUserName, fcEventName, fcAdvert, fdTime)" +
-        "VALUES (\"\", \"" + Tools.addSlashesToString(adverter) + "\", \"" + getArenaName(advertText) + "\", \"" + advertText + "\", NOW())");
-      }
-      catch(SQLException e)
-      {
-        // Might wanna do something?  i dunno...
-      }*/
     }
 
     /**
