@@ -242,7 +242,7 @@ public class Session extends Thread {
                 m_group.destroy();
             }
 
-            m_socket.disconnect();            
+            m_socket.disconnect();
         }
         Tools.printLog( m_name + " (" + classname + ") disconnected gracefully." );
         this.interrupt();
@@ -281,21 +281,34 @@ public class Session extends Thread {
         lastPacketTime = System.currentTimeMillis();
 
         try {
-            while( (m_state == RUNNING || m_state == STARTING) && !interrupted() ){
+        	while(m_state == STARTING && !interrupted()) {
                 currentTime = System.currentTimeMillis();
 
-                if( m_state == STARTING ){
-                    if( System.currentTimeMillis() - m_initialTime > 5000 ){
-                        Tools.printLog( m_name + " failed to log in.  Login timed out." );
-                        disconnect();
-                        return;
-                    }
-                }
-
-                if( m_outboundQueue.isConnected() == false || m_inboundQueue.isConnected() == false ){
+                if( currentTime - m_initialTime > 5000 ){
+                    Tools.printLog( m_name + " failed to log in.  Login timed out." );
                     disconnect();
                     return;
                 }
+
+                if( currentTime - lastResendTime > RESEND_TIME ){
+                    lastResendTime = currentTime;
+                    m_reliablePacketHandler.resendUnackedPacket();
+                }
+
+                if( m_inboundQueue.containsMoreElements() ){
+                    lastPacketTime = currentTime;
+                    m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
+                } else {
+	                if(!m_socket.isConnected()){
+	                    disconnect();
+	                    return;
+	                }
+	                Thread.sleep(5); //sleep if no packets waiting
+                }
+        	}
+
+            while( m_state == RUNNING && !interrupted() ){
+                currentTime = System.currentTimeMillis();
 
                 if( currentTime - lastPacketTime > TIMEOUT_DELAY ){
                     disconnect();
@@ -315,9 +328,13 @@ public class Session extends Thread {
                 if( m_inboundQueue.containsMoreElements() ){
                     lastPacketTime = currentTime;
                     m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
+                } else {
+	                if(!m_socket.isConnected()){
+	                    disconnect();
+	                    return;
+	                }
+	                Thread.sleep(5); //sleep if no packets waiting
                 }
-
-                Thread.sleep(5);
             }
         } catch( InterruptedException e ){
             // Printing a message here is not necessary, as interrupting a thread in order to
