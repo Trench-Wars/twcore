@@ -1035,7 +1035,7 @@ public class robohelp extends SubspaceBot {
     	
     	// Determine your position in the rank
     	for(int i = 0 ; i < rank.size(); i++) {
-    		if(rank.get(i).equals(name)) {
+    		if(rank.get(i).equalsIgnoreCase(name)) {
     			yourPosition = i;
     			break;
     		}
