@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 import twcore.core.CoreData;
 import twcore.core.events.FlagClaimed;
@@ -128,6 +129,21 @@ public class Arena {
             }
         }
         return list.iterator();
+    }
+
+    /**
+     * Gets a List of players in ships other than spec in the arena.
+     * The returned List may be modified, but do not modify the Player objects.
+     * @return List of players in ships
+     */
+    public List<Player> getPlayingPlayers() {
+    	List<Player> list = new ArrayList<Player>(m_playerList.size());
+    	for(Player player : m_playerList.values()) {
+    		if(player.getShipType() != 0) {
+    			list.add(player);
+    		}
+    	}
+    	return list;
     }
 
     /**

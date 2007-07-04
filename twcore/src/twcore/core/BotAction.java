@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.List;
 
 import twcore.core.command.TempSettingsManager;
 import twcore.core.game.Arena;
@@ -3201,6 +3202,14 @@ public class BotAction
     {
         return m_arenaTracker.getPlayingPlayerIterator();
     }
+
+	/**
+	 * Gets a List of playing players (ie. players in ships and not in spec)
+	 * @return A List of players in ships
+	 */
+	public List<Player> getPlayingPlayers() {
+		return m_arenaTracker.getPlayingPlayers();
+	}
 
     /**
      * @param freq Frequency to fetch
