@@ -80,9 +80,10 @@ public class Sender extends Thread {
                 } else if( m_packets.isEmpty() == false ){
                     m_socket.send( m_packets.remove( 0 ));
                     m_packetsSent++;
+                } else {
+	                Thread.sleep( 5 );
                 }
 
-                Thread.sleep( 5 );
             } catch( Exception e ){
                 m_socket.disconnect();
             }

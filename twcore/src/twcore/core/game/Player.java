@@ -405,7 +405,7 @@ public class Player {
      */
     public String getPlayerName(){
 
-        return new String( m_playerName );
+        return m_playerName; //Strings are immutable
     }
 
     /**
@@ -413,7 +413,7 @@ public class Player {
      */
     public String getSquadName(){
 
-        return new String( m_squadName );
+        return m_squadName; //Strings are immutable
     }
 
     /**
