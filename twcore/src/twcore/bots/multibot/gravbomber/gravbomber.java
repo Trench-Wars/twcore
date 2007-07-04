@@ -22,7 +22,6 @@ import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 public class gravbomber extends MultiModule {
-    BotAction           m_botAction;
     BotSettings         m_botSettings;
     HashMap<String, GBPlayer> m_playerData;
     HashMap<String, TurnTask> m_turnTasks;
