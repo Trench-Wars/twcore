@@ -1333,7 +1333,9 @@ public class purepubbot extends SubspaceBot
                 }
                 
                 MVplayers = (String)i.next();
-                MVplayers += "(" + flagTimer.getFlagGrabs(MVplayers) + ")";
+                int grabs = flagTimer.getFlagGrabs(MVplayers);
+                if( grabs > 0 )
+                    MVplayers += "(" + grabs + ")";
             }
             int grabs = 0;
             while( i.hasNext() ) {
