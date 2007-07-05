@@ -504,10 +504,10 @@ public class HubBot extends SubspaceBot {
         } else {
             if( m_botAction.getOperatorList().isZH(messager) ) {
                 int allowSpawn = m_botAction.getGeneralSettings().getInt( "AllowZHSpawning" );
-                if( allowSpawn == 2 || allowSpawn == 1 && message.toLowerCase().trim() == "matchbot" ) {
+                if( allowSpawn == 2 || allowSpawn == 1 && message.toLowerCase().trim().equals("matchbot") ) {
                     spawn( messager, message );
                 } else {
-                    m_botAction.sendChatMessage( 1, messager + " doesn't have access (ZHs not allowed to spawn " + (allowSpawn == 0?"bots":"bots other than matchbot") +
+                    m_botAction.sendChatMessage( 1, messager + " doesn't have access (ZHs not allowed to spawn " + (allowSpawn == 0?"bots)":"bots other than matchbot)") +
                             ", but (s)he tried '!spawn " + message + "'");
                 }
             } else {
