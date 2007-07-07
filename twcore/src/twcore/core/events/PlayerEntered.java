@@ -51,7 +51,7 @@ public class PlayerEntered extends SubspaceEvent {
      */
     public PlayerEntered( ByteArray array ){
 
-        m_shipType = (byte)((array.readByte( 1 ) + 1) % 9);
+        m_shipType = array.readByte( 1 );
         m_acceptsAudio = array.readByte( 2 ) == 1;
         m_playerName = array.readString( 3, 20 );
         m_squadName = array.readString( 23,20 );
@@ -103,12 +103,20 @@ public class PlayerEntered extends SubspaceEvent {
     }
 
     /**
-     * Gets entering player's ship type
+     * Gets entering player's ship type (warbird == 1)
      * @return player's ship number
      */
     public byte getShipType(){
 
-        return m_shipType;
+        return (byte)((m_shipType + 1) % 9);
+    }
+
+    /**
+     * Gets entering player's ship type raw form (warbird == 0)
+     * @return player's ship number raw form
+     */
+    public byte getShipTypeRaw() {
+    	return m_shipType;
     }
 
     /**

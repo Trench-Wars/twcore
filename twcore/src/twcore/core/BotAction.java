@@ -4,9 +4,10 @@ import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.WeakHashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -61,7 +62,7 @@ public class BotAction
     private Timer               m_timer;            // Timer used to schedule TimerTasks
     private String              m_arenaName;        // Name of arena bot is currently in
     private Session             m_botSession;       // Reference to bot's Session
-    private LinkedList<TimerTask> m_timerTasks;       // List of TimerTasks being run
+    private Map<TimerTask, Object> m_timerTasks;    // List of TimerTasks being run (TimerTask -> null)
     private Arena               m_arenaTracker;     // Arena tracker holding player/flag data
     private GamePacketGenerator m_packetGenerator;  // Packet creator
     private Objset              m_objectSet;        // For automation of LVZ object setting
@@ -80,7 +81,7 @@ public class BotAction
         m_timer = timer;
         m_arenaTracker = arena;
         m_botSession = botSession;
-        m_timerTasks = new LinkedList<TimerTask>();
+        m_timerTasks = Collections.synchronizedMap(new WeakHashMap<TimerTask, Object>());
         m_packetGenerator = packetGenerator;
         m_botNumber = botNum;
         m_objectSet = new Objset();
@@ -106,8 +107,8 @@ public class BotAction
      * schedule the task, and you're done.
      *
      * If you ever need to cancel the task, hold a reference to it and call the cancel
-     * method.  Make sure to catch any exceptions that can possibly arise from the
-     * task already being cancelled.
+     * method.  Make sure your tasks finish an execution as quickly as possible so as to
+     * avoid delaying other task from running.
      */
 
     /**
@@ -120,13 +121,31 @@ public class BotAction
      */
     public void scheduleTask(TimerTask task, long delayms)
     {
+    	m_timerTasks.put(task, null);
         m_timer.schedule(task, delayms);
     }
 
     /**
-     * Schedules a TimerTask to occur repeatedly at an interval.  TimerTask is part of
-     * the package java.util.  The only method that a TimerTask must override is
-     * public void run().
+     * Schedules a TimerTask to occur repeatedly at an interval.  Execution is fixed-delay
+     * which means each execution will happen at least <b>periodms</b> from the last one whether
+     * it was delayed or not, resulting in more smoothness over time.  TimerTask is part of the
+     * <i>java.util</i> package.  The only method that a TimerTask must override is
+     * <i>public void run()</i>.
+     * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
+     * @param task TimerTask to be executed
+     * @param delayms Length of time before execution, in milliseconds
+     * @param periodms Delay between executions after the initial execution, in milliseconds
+     */
+    public void scheduleTask(TimerTask task, long delayms, long periodms) {
+    	m_timerTasks.put(task, null);
+    	m_timer.schedule(task, delayms, periodms);
+    }
+
+    /**
+     * Schedules a TimerTask to occur repeatedly at an interval.  Execution is fixed-rate
+     * which means tasks can bunch up and execute in rapid succession if there is a delay.
+     * Use when timeliness is important.  TimerTask is part of <i>java.util</i> package.  The
+     * only method that a TimerTask must override is <i>public void run()</i>.
      * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
      * @param task TimerTask to be executed
      * @param delayms Length of time before execution, in milliseconds
@@ -134,42 +153,46 @@ public class BotAction
      */
     public void scheduleTaskAtFixedRate(TimerTask task, long delayms, long periodms)
     {
-        m_timerTasks.add(task);
+        m_timerTasks.put(task, null);
         m_timer.scheduleAtFixedRate(task, delayms, periodms);
     }
 
     /**
-     * Cancels a TimerTask cleanly.  You SHOULD NOT cancel an individual TimerTask by using
-     * task.cancel()!  Use this method instead to aid in garbage collection.
-     * @param task
+     * Cancels a TimerTask cleanly.  You may cancel an individual TimerTask by using
+     * task.cancel()!  BotAction's reference to the TimerTask is automatically freed
+     * when it is no longer referenced elsewhere in the application to prevent a memory leak.
+     * @param task The TimerTask to cancel
+     * @return true if this task is scheduled for one-time execution and has not yet run, or
+     * this task is scheduled for repeated execution. Returns false if the task was scheduled
+     * for one-time execution and has already run, or if the task was never scheduled, or if
+     * the task was already cancelled, or if task is null. (Loosely speaking, this method
+     * returns true if it prevents one or more scheduled executions from taking place.)
      */
-    public void cancelTask(TimerTask task) {
+    public boolean cancelTask(TimerTask task) {
         m_timerTasks.remove(task);
         if(task != null ) {
-            try {
-                task.cancel();
-            } catch ( Exception e ) {}
+	        return task.cancel();
         }
+        return false;
     }
 
     /**
-     * Cancels all pending TimerTasks.  You SHOULD NOT cancel an individual TimerTask by using
-     * task.cancel()!  Use cancelTask(TimerTask) instead.  Note that if you cancel a TimerTask
-     * and it has already been cancelled, an exception will be generated, which should be caught.
+     * Cancels all pending TimerTasks.  You could cancel an individual TimerTask by using
+     * task.cancel()!  Or Use cancelTask(TimerTask) instead.  Note that if you cancel a TimerTask
+     * and it has already been cancelled, nothing will happen.
      * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
      */
     public void cancelTasks()
     {
-        TimerTask temp;
-
-        while (m_timerTasks.size() > 0)
-        {
-            temp = m_timerTasks.removeFirst();
-            if (temp != null)
-            {
-                temp.cancel();
-            }
-        }
+    	synchronized(m_timerTasks) {
+	    	Iterator<TimerTask> iter = m_timerTasks.keySet().iterator();
+	    	while(iter.hasNext()) {
+	    		TimerTask task = iter.next();
+	    		if(task != null)
+	    			task.cancel();
+	    		iter.remove();
+	    	}
+    	}
     }
 
 
