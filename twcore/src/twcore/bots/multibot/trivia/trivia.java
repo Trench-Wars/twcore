@@ -62,7 +62,6 @@ public class trivia extends MultiModule {
     { "!start         -- Starts a game of trivia to 10",
       "!start <num>   -- Starts a game of trivia to <num> (1-25)",
       "!cancel        -- Cancels a game of trivia",
-      "!shutdown      -- Removes triviabot from the zone",
       "---------------------------------------------------------"
     };
 
@@ -101,6 +100,12 @@ public class trivia extends MultiModule {
     public boolean isUnloadable() {
     	return true;
     }
+    
+    public void cancel() {
+    	gameProgress = -1;
+    	playerMap.clear();
+        m_botAction.cancelTasks();
+    }
 
     /****************************************************************/
     /*** Registers the bot commands.                              ***/
@@ -111,7 +116,6 @@ public class trivia extends MultiModule {
         acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start",     acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!cancel",    acceptedMessages, this, "doCancelGame" );
-        m_commandInterpreter.registerCommand( "!shutdown",  acceptedMessages, this, "doShutDown" );
 
         acceptedMessages = Message.CHAT_MESSAGE | Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!repeat",    acceptedMessages, this, "doRepeat" );
@@ -153,21 +157,12 @@ public class trivia extends MultiModule {
         }
     }
 
-    public void doShutDown( String name, String message ) {
-        if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) ) {
-            m_botAction.sendSmartPrivateMessage( name, "Goodbye" );
-            try {
-                m_botAction.die(); //Added the try/catch as this results in an error on my version of the core.
-            } catch (Exception e ) {}
-        }
-    }
-
     /****************************************************************/
     /*** Cancels the game, stores results.                        ***/
     /****************************************************************/
 
     public void doCancelGame( String name, String message) {
-        if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) && gameProgress != -1 ){
+        if( (m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) ) && gameProgress != -1 ){
             gameProgress = -1;
             m_botAction.sendChatMessage( 1, m_prec + "This game of Trivia has been canceled." );
             m_botAction.sendArenaMessage( m_prec + "This game of Trivia has been canceled." );
