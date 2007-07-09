@@ -1,12 +1,11 @@
 package twcore.bots.multibot.rps;
 
 import java.util.StringTokenizer;
-import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.events.Message;
+import twcore.core.util.ModuleEventRequester;
 
 public class rps extends MultiModule
 {
@@ -26,8 +25,7 @@ public class rps extends MultiModule
     {
         "!Start player1:player2:rounds",
         "!Help",
-        "!Go ArenaName",
-        "!Die"
+        "!Go ArenaName"
     };
 
     m_botAction.smartPrivateMessageSpam(sender, message);
@@ -42,6 +40,14 @@ public class rps extends MultiModule
 
     public boolean isUnloadable() {
     	return true;
+    }
+    
+    /**
+     * This method is called when the module is unloaded
+     */
+    public void cancel() {
+    	rpsGame.doKillGame();
+    	m_botAction.cancelTasks();
     }
 
   public void doStart(String sender, String argString)
@@ -69,12 +75,6 @@ public class rps extends MultiModule
     }
   }
 
-  public void doDie(String sender)
-  {
-    m_botAction.sendSmartPrivateMessage(sender, "Bye!.");
-    m_botAction.scheduleTask(new DieTask(), 100);
-  }
-
   public void doGoCmd(String arena)
   {
     m_botAction.changeArena(arena);
@@ -93,8 +93,6 @@ public class rps extends MultiModule
         doStart(sender, message.substring(7));
       if(command.startsWith("!go "))
         doGoCmd(message.substring(4));
-      if(command.equals("!die"))
-        doDie(sender);
     }
   }
 
@@ -137,11 +135,4 @@ public class rps extends MultiModule
     }
   }
 
-  private class DieTask extends TimerTask
-  {
-    public void run()
-    {
-      m_botAction.die();
-    }
-  }
 }

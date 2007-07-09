@@ -92,6 +92,13 @@ public class spaceball extends MultiModule {
 	public boolean isUnloadable() {
 		return eventState == 0;
 	}
+	
+	/**
+	 * This method is called when the module is unloaded
+	 */
+	public void cancel() {
+		m_botAction.cancelTasks();
+	}
 
 	public String[] getModHelpMessage() {
 		String[] bleh = { "" };

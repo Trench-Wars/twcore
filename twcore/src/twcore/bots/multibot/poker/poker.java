@@ -49,6 +49,13 @@ public class poker extends MultiModule
 	{
 		return !isRunning;
 	}
+	
+	/**
+	 * This is called when the module is unloaded
+	 */
+	public void cancel() {
+		m_botAction.cancelTasks();
+	}
 
 	public String[] getModHelpMessage()
 	{
@@ -110,9 +117,7 @@ public class poker extends MultiModule
 	}
 
 	public void handleModCommand(String name, String message) {
-		if(message.toLowerCase().startsWith("!die"))
-			m_botAction.die();
-		else if(message.toLowerCase().startsWith("!stop") && isRunning) {
+		if(message.toLowerCase().startsWith("!stop") && isRunning) {
 			m_botAction.sendPrivateMessage(name, "Ok, stopping after this hand.");
 			isRunning = false;
 		} else if(message.toLowerCase().startsWith("!start") && !isRunning) {
@@ -157,7 +162,6 @@ public class poker extends MultiModule
 
 	public void handleHelp(String name) {
 		if(m_botAction.getOperatorList().isModerator(name)) {
-		m_botAction.sendPrivateMessage(name, "!die           -Kills bot.");
 		m_botAction.sendPrivateMessage(name, "!stop          -Stops bot.");
 		m_botAction.sendPrivateMessage(name, "!start         -Starts bot.");
 		}
@@ -482,13 +486,14 @@ public class poker extends MultiModule
 			}
 		}
 
-		int eachPlayer = pot / winners.size();
+		/*int eachPlayer = pot / winners.size();
 		it = winners.iterator();
 		while(it.hasNext()) {
 			String name = (String)it.next();
 			//PokerPlayer pPlayer = (P
-	}
+		
+		}*/
 
-}
+	}
 
 }

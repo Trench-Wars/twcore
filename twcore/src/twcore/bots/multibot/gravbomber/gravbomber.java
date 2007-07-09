@@ -8,10 +8,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
-import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -19,6 +17,7 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 public class gravbomber extends MultiModule {
@@ -305,6 +304,10 @@ public class gravbomber extends MultiModule {
 
     public boolean isUnloadable() {
     	return true;
+    }
+    
+    public void cancel() {
+    	stopGame();
     }
 
     /* Game Code */
