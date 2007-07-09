@@ -1013,6 +1013,7 @@ public class robohelp extends SubspaceBot {
     		} catch(Exception e) { Tools.printStackTrace( e ); }
     	} else {
     		m_botAction.sendSmartPrivateMessage(name, "Syntax error. Only the arguments 'ZH', 'ER' or 'mod' are allowed. For example: !mystats ER");
+    		return;
     	}
     	
     	
