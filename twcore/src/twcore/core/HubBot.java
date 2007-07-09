@@ -21,7 +21,7 @@ public class HubBot extends SubspaceBot {
     private ThreadGroup         m_kingGroup;            // Thread grouping the
                                                         // hub belongs to
     private CommandInterpreter  m_commandInterpreter;   // Handles commands
-    
+
     private long 				spawnutime;				// Stores the unix timestamp when the bot gets spawned for !uptime use
 
     /**
@@ -80,8 +80,8 @@ public class HubBot extends SubspaceBot {
     public void handleEvent( LoggedOn event ){
     	// Stores the unix timestamp for use with !uptime
     	spawnutime = new Date().getTime();
-    	
-        m_botAction.joinArena( "#robopark" );
+
+        m_botAction.joinArena( m_botAction.getGeneralSettings().getString("Arena") );
         m_botAction.sendUnfilteredPublicMessage( "*g*misc:alertcommand" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat name" ) );
         LoadAccessLists();
@@ -244,7 +244,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried !listbots " + message );
         }
     }
-    
+
     /**
      * Lists operators registered with this hub/bots
      * @param messager Name of the player who sent the command
@@ -253,17 +253,17 @@ public class HubBot extends SubspaceBot {
     public void handleListOperators( String messager, String message ){
 
     	int linelength = 63;
-    	
+
         if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
         	OperatorList list = m_botAction.getOperatorList();
-        	
+
         	// Owners
         	HashSet<String> owners = (list.getAllOfAccessLevel(OperatorList.OWNER_LEVEL));
         	if(owners.size() > 0) {
         		m_botAction.sendSmartPrivateMessage( messager, "Owners ("+owners.size()+"):");
-        		
+
         		String pm = "  ";
-        		
+
         		for(String owner:owners) {
         			if(pm.length() < linelength) {
         				pm += owner + ", ";
@@ -276,14 +276,14 @@ public class HubBot extends SubspaceBot {
         			m_botAction.sendSmartPrivateMessage(messager, pm);
         		}
         	}
-        	
+
         	// Sysops
         	HashSet<String> sysops = (list.getAllOfAccessLevel(OperatorList.SYSOP_LEVEL));
         	if(sysops.size() > 0) {
         		m_botAction.sendSmartPrivateMessage( messager, "Sysops ("+sysops.size()+"):");
-        		
+
         		String pm = "  ";
-        		
+
         		for(String sysop:sysops) {
         			if(pm.length() < linelength) {
         				pm += sysop + ", ";
@@ -296,14 +296,14 @@ public class HubBot extends SubspaceBot {
         			m_botAction.sendSmartPrivateMessage(messager, pm);
         		}
         	}
-        	
+
         	// Smods
         	HashSet<String> smods = (list.getAllOfAccessLevel(OperatorList.SMOD_LEVEL));
         	if(smods.size() > 0) {
         		m_botAction.sendSmartPrivateMessage( messager, "SMods ("+smods.size()+"):");
-        		
+
         		String pm = "  ";
-        		
+
         		for(String smod:smods) {
         			if(pm.length() < linelength) {
         				pm += smod + ", ";
@@ -316,14 +316,14 @@ public class HubBot extends SubspaceBot {
         			m_botAction.sendSmartPrivateMessage(messager, pm);
         		}
         	}
-        	
+
         	// Mods
         	HashSet<String> mods = (list.getAllOfAccessLevel(OperatorList.MODERATOR_LEVEL));
         	if(mods.size() > 0) {
         		m_botAction.sendSmartPrivateMessage( messager, "Mods ("+mods.size()+"):");
-        		
+
         		String pm = "  ";
-        		
+
         		for(String mod:mods) {
         			if(pm.length() < linelength) {
         				pm += mod + ", ";
@@ -336,14 +336,14 @@ public class HubBot extends SubspaceBot {
         			m_botAction.sendSmartPrivateMessage(messager, pm);
         		}
         	}
-        	
+
         	// ERs
         	HashSet<String> ers = (list.getAllOfAccessLevel(OperatorList.ER_LEVEL));
         	if(ers.size() > 0) {
         		m_botAction.sendSmartPrivateMessage( messager, "ERs ("+ers.size()+"):");
-        		
+
         		String pm = "  ";
-        		
+
         		for(String er:ers) {
         			if(pm.length() < linelength) {
         				pm += er + ", ";
@@ -356,14 +356,14 @@ public class HubBot extends SubspaceBot {
         			m_botAction.sendSmartPrivateMessage(messager, pm);
         		}
         	}
-        	
+
         	// ZHs
         	HashSet<String> zhs = (list.getAllOfAccessLevel(OperatorList.ZH_LEVEL));
         	if(zhs.size() > 0) {
         		m_botAction.sendSmartPrivateMessage( messager, "ZHs ("+zhs.size()+"):");
-        		
+
         		String pm = "  ";
-        		
+
         		for(String zh:zhs) {
         			if(pm.length() < linelength) {
         				pm += zh + ", ";
@@ -376,14 +376,14 @@ public class HubBot extends SubspaceBot {
         			m_botAction.sendSmartPrivateMessage(messager, pm);
         		}
         	}
-        	
+
         	// Outsiders
         	HashSet<String> outsiders = (list.getAllOfAccessLevel(OperatorList.OUTSIDER_LEVEL));
         	if(outsiders.size() > 0) {
         		m_botAction.sendSmartPrivateMessage( messager, "Outsiders ("+outsiders.size()+"):");
-        		
+
         		String pm = "  ";
-        		
+
         		for(String outsider:outsiders) {
         			if(pm.length() < linelength) {
         				pm += outsider + ", ";
@@ -396,12 +396,12 @@ public class HubBot extends SubspaceBot {
         			m_botAction.sendSmartPrivateMessage(messager, pm);
         		}
         	}
-        	
+
         } else {
             m_botAction.sendChatMessage( 1, messager + " isn't a Highmod, but tried !listoperators " + message );
         }
     }
-    
+
     /**
      * Returns the uptime of this bot
      * @param messager Name of the player who sent the command
@@ -409,7 +409,7 @@ public class HubBot extends SubspaceBot {
      */
     public void handleUptimeCommand( String messager, String message ){
     	// Calculate the uptime by using the spawnutime variable (ms)
-    	m_botAction.sendSmartPrivateMessage(messager, "Uptime: "+ Tools.getTimeDiffString(spawnutime, false) + ".");    	
+    	m_botAction.sendSmartPrivateMessage(messager, "Uptime: "+ Tools.getTimeDiffString(spawnutime, false) + ".");
     }
 
     /**
@@ -417,11 +417,11 @@ public class HubBot extends SubspaceBot {
      * @param messager Name of the player who sent the command
      * @param message is irrelevant
      */
-    public void handleShutdownCommand( String messager, String message ){    
+    public void handleShutdownCommand( String messager, String message ){
         if( m_botAction.getOperatorList().isSysop( messager ) || m_botAction.getOperatorList().isDeveloperExact( messager ) ) {
-            m_botAction.sendSmartPrivateMessage( messager, "Shutting down the core ..." + 
+            m_botAction.sendSmartPrivateMessage( messager, "Shutting down the core ..." +
                     (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take on average 30 seconds per bot ...":"" ) );
-            
+
             m_botAction.sendChatMessage( 1, "--- CORE SHUTDOWN initiated by " + messager + " ---" );
             System.out.println();
             System.out.println( "=== Shutdown initiated ===" );
@@ -439,7 +439,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to shut down the core.");
         }
     }
-    
+
     /**
      * Sends an appropriate help message based on access privileges.
      * @param messager Name of the player who sent the command
@@ -455,27 +455,27 @@ public class HubBot extends SubspaceBot {
 
         if( m_botAction.getOperatorList().isModerator( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!listbots [type]   - Returns the bottypes or lists the names and spawners of a bot [type]." );
-            m_botAction.sendSmartPrivateMessage( messager, "!uptime            - Returns the current uptime of this bot." );            
-            m_botAction.sendSmartPrivateMessage( messager, "!sqlstatus         - Shows status of SQL connections." );            
+            m_botAction.sendSmartPrivateMessage( messager, "!uptime            - Returns the current uptime of this bot." );
+            m_botAction.sendSmartPrivateMessage( messager, "!sqlstatus         - Shows status of SQL connections." );
         }
-        
+
         if( m_botAction.getOperatorList().isHighmod( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!remove <name>     - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)" );
             m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
         }
-        
+
         if( m_botAction.getOperatorList().isSmod( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
             m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
         }
-        
+
         if( m_botAction.getOperatorList().isSysop( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
-            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );            
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );
         }
-        
+
         if( m_botAction.getOperatorList().isDeveloperExact( messager ) ){
-            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );            
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );
         }
     }
 
@@ -515,9 +515,9 @@ public class HubBot extends SubspaceBot {
             }
         }
     }
-    
+
     /**
-     * Forces the spawn of a bot of a given type by manually supplying a login.   
+     * Forces the spawn of a bot of a given type by manually supplying a login.
      * @param messager Name of the player who sent the command
      * @param message Bot to spawn and relevant login info
      */
@@ -530,23 +530,23 @@ public class HubBot extends SubspaceBot {
                 String password = args[2];
                 m_botQueue.spawnBot( className, login, password, messager );
             } else {
-                m_botAction.sendSmartPrivateMessage( messager, "Usage: !forcespawn <bot type> <login> <password>" );                
+                m_botAction.sendSmartPrivateMessage( messager, "Usage: !forcespawn <bot type> <login> <password>" );
             }
         } else {
             m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !forcespawn." );
         }
     }
-    
+
     /**
-     * 
+     *
      * @param messager
      * @param message
      */
     public void handleSQLStatus( String messager, String message ) {
-        if( m_botAction.getOperatorList().isModerator( messager ) ){        
+        if( m_botAction.getOperatorList().isModerator( messager ) ){
             m_botAction.privateMessageSpam( messager, m_botAction.getCoreData().getSQLManager().getPoolStatus() );
         } else {
-            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !sqlstatus." );            
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !sqlstatus." );
         }
     }
 }
