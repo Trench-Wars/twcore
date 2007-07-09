@@ -288,7 +288,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 		int id = event.getPlayerID();
     	String name = m_botAction.getPlayerName(id);
     	String msg = event.getMessage().trim().toLowerCase();
-    	if(name == null || msg == null || msg.isEmpty())
+    	if(name == null || msg == null || msg.length() == 0)
     		return;
 
     	boolean hasAccess = m_botAction.getOperatorList().isSmod(name);
@@ -414,7 +414,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 	}
 
 	private void lagoutHelper(String name) {
-		if(name == null || name.isEmpty()) return;
+		if(name == null || name.length() == 0) return;
 		synchronized(m_state) {
 			if(m_state.isMidGame() || m_state.isMidGameFinal()) {
 				KimPlayer kimPlayer = getKimPlayer(name);
@@ -451,7 +451,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 	}
 	//helper for getting KimPlayer when freq is unknown
 	private KimPlayer getKimPlayer(String name) {
-		if(name == null || name.isEmpty()) {
+		if(name == null || name.length() == 0) {
 			return null;
 		}
 		KimPlayer result = null;
