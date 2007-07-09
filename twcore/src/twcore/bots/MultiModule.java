@@ -120,9 +120,7 @@ public abstract class MultiModule
    * This method should be overridden if any cleanup activites need to be
    * performed so that the module will terminate properly.
    */
-  public void cancel()
-  {
-  }
+  public abstract void cancel();
 
   /**
    * This method should be overridden to perform any functions that the
