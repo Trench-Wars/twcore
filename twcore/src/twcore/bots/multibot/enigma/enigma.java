@@ -64,6 +64,13 @@ public class enigma extends MultiModule {
         m_delay		= m_botSettings.getInt("MessageDelay");
         m_arena 	= m_botSettings.getString("Arena");
     }
+    
+    /**
+     * This method is called when the module is unloaded
+     */
+    public void cancel() {
+    	m_botAction.cancelTasks();
+    }
 
     public void requestEvents(ModuleEventRequester events)	{
         events.request( this, EventRequester.PLAYER_ENTERED );
@@ -78,7 +85,6 @@ public class enigma extends MultiModule {
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", 	acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!help",  	acceptedMessages, this, "doShowHelp" );
-        m_commandInterpreter.registerCommand( "!shutdown", 	acceptedMessages, this, "doShutDown" );
         m_commandInterpreter.registerCommand( "!cancel", 	acceptedMessages, this, "doCancelGame" );
         m_commandInterpreter.registerCommand( "!stop", 		acceptedMessages, this, "doStopGame" );
         m_commandInterpreter.registerCommand( "!reset", 	acceptedMessages, this, "doResetGame" );
@@ -272,7 +278,6 @@ public class enigma extends MultiModule {
             "|  !stop <name>    - Stops a game of enigma w/<name> as winner. |",
             "|  !cancel         - Cancels a game of enigma.                  |",
             "|  !reset          - Resets the arena in case of bot lagout/etc.|",
-            "|  !shutdown       - Turns off enigmabot.                       |",
             "|  !whatis         - Answers: what is Enigma?                   |",
             "|  !lagout         - Want in? Type this to me to play!!!        |",
             "|---------------------------------------------------------------|"
@@ -284,7 +289,6 @@ public class enigma extends MultiModule {
             "|  !stop <name>    - Stops a game of enigma w/<name> as winner. |",
             "|  !cancel         - Cancels a game of enigma.                  |",
             "|  !reset          - Resets the arena in case of bot lagout/etc.|",
-            "|  !shutdown       - Turns off enigmabot.                       |",
             "|  !come           - Moves the bot in case you'd need this ???  |",
             "|  !whatis         - Answers: what is Enigma?                   |",
             "|  !lagout         - Want in? Type this to me to play!!!        |",
@@ -316,7 +320,7 @@ public class enigma extends MultiModule {
     }
 
     public boolean isUnloadable() {
-    	return true;
+    	return !gameProgress;
     }
 
     /****************************************************************/
@@ -324,16 +328,6 @@ public class enigma extends MultiModule {
     /****************************************************************/
     public void doWhatIs( String name, String message) {
         m_botAction.sendUnfilteredPrivateMessage(name, "*objon 52");
-    }
-
-    /****************************************************************/
-    /*** Kills EnigmaBot                                          ***/
-    /****************************************************************/
-    public void doShutDown( String name, String message ) {
-        if( m_botAction.getOperatorList().isER( name ) ) {
-            m_botAction.sendPrivateMessage(name, "Goodbye " + name);
-            m_botAction.die();
-        }
     }
 
     /****************************************************************/
