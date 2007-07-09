@@ -871,6 +871,7 @@ public class robohelp extends SubspaceBot {
     public void handleClaim( String name, String message) {
         boolean record = false;
         Date now = new Date();
+        long callTime =0;
         
         // Clear the queue of expired calls, get the first non-expired call but leave other non-expired calls
         Iterator<EventData> iter = callList.iterator();
@@ -880,6 +881,7 @@ public class robohelp extends SubspaceBot {
         	if( record == false && now.getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
         		// This is a non-expired call and no call has been counted yet. 
         		record = true;
+        		callTime = e.getTime();
         		iter.remove();
         	} else if(now.getTime() >= e.getTime() + CALL_EXPIRATION_TIME) {
         		// This is an expired call
@@ -896,7 +898,23 @@ public class robohelp extends SubspaceBot {
         		updateStatRecordsGOTIT( name );
         	
             this.lastStafferClaimedCall = name;
-            m_botAction.sendRemotePrivateMessage(name, "Call registered.");
+            
+            // Find the playername of the call that was claimed
+            Iterator<HelpRequest> i = m_playerList.values().iterator();
+            String player = "";
+            while(i.hasNext()) {
+            	HelpRequest helprequest = i.next();
+            	if(helprequest.getTime() == callTime) {
+            		player = helprequest.getPlayername();
+            		break;
+            	}
+            }
+            
+            if(player.length()>0)
+            	m_botAction.sendRemotePrivateMessage(name, "Call claim of the player '"+player+"' recorded.");
+            else
+            	m_botAction.sendRemotePrivateMessage(name, "Call claim recorded.");
+            
         } else {
         	// A staffer did "on it" while there was no call to take (or all calls were expired).
         	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
@@ -1233,6 +1251,7 @@ public class robohelp extends SubspaceBot {
             m_nextResponse = 0;
             m_question = question;
             m_responses = responses;
+            m_time = System.currentTimeMillis();
         }
 
         public void setBeenWarned( boolean beenWarned ){
@@ -1325,6 +1344,14 @@ public class robohelp extends SubspaceBot {
             } else {
                 return true;
             }
+        }
+        
+        public String getPlayername() {
+        	return this.m_playerName;
+        }
+        
+        public long getTime() {
+        	return this.m_time;
         }
     }
 
