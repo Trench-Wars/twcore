@@ -237,21 +237,22 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	public boolean isUnloadable()
 	{
-		boolean ret = false;
-		if(state != ACTIVE)
-		{
-			timeMode.cancel();
-			m_tsm.removeTSChangeListener(this);
-			m_tsm.removeSetting("board");
-			m_tsm.removeSetting("teams");
-			m_tsm.removeSetting("cslock");
-			m_tsm.removeSetting("hour");
-			m_tsm.removeSetting("lives");
-			m_tsm.removeSetting("cslimit");
-			ret = true;
-		}
-
-		return ret;
+		return (state != ACTIVE);
+	}
+	
+	/**
+	 * This method is called when the module is unloaded
+	 */
+	public void cancel() 
+	{
+		timeMode.cancel();
+		m_tsm.removeTSChangeListener(this);
+		m_tsm.removeSetting("board");
+		m_tsm.removeSetting("teams");
+		m_tsm.removeSetting("cslock");
+		m_tsm.removeSetting("hour");
+		m_tsm.removeSetting("lives");
+		m_tsm.removeSetting("cslimit");
 	}
 
 	/**
