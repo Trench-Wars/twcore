@@ -48,6 +48,15 @@ public class bbj extends MultiModule
 
 		blocked = new HashSet<String>();
 	}
+	
+	/**
+	 * This method is called when the module is unloaded
+	 */
+	public void cancel() {
+		isRunning = false;
+		m_botAction.cancelTasks();
+		winners.clear();
+	}
 
 	public void requestEvents(ModuleEventRequester events)	{
 		events.request(this, EventRequester.PLAYER_ENTERED);
