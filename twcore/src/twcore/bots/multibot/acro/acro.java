@@ -8,10 +8,9 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.bots.MultiModule;
-import twcore.core.EventRequester;
-import twcore.core.util.ModuleEventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Spy;
 import twcore.core.util.Tools;
 
@@ -44,6 +43,14 @@ public class acro extends MultiModule{
 
     public boolean isUnloadable()   {
         return true;
+    }
+    
+    /**
+     * This method is called when this module is unloaded.
+     */
+    public void cancel(){
+    	m_botAction.cancelTasks();
+        gameState = 0;
     }
 
     public void registerCommands()  {
