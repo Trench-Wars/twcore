@@ -66,6 +66,7 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.EventRequester;
 
 public class utilspec extends MultiUtil
 {
@@ -79,8 +80,9 @@ public class utilspec extends MultiUtil
     public void init() {
         specTasks = new Vector<SpecTask>();
     }
-    
+
     public void requestEvents( ModuleEventRequester modEventReq ) {
+    	modEventReq.request(this, EventRequester.PLAYER_DEATH);
     }
 
     /**
@@ -170,9 +172,9 @@ public class utilspec extends MultiUtil
                         if( p != null && p.getShipType() != 0 ) {
                             specPlayer(p);
                         }
-                    }                
+                    }
                 }
-            } else 
+            } else
                 if( specTask.getDeaths() <= deaths )
                     specPlayer(player);
         }
@@ -429,7 +431,7 @@ public class utilspec extends MultiUtil
         else
             for(int index = 0; index < numTasks; index++)
             {
-                specTask = (SpecTask) specTasks.get(index);
+                specTask = specTasks.get(index);
                 m_botAction.sendSmartPrivateMessage(sender, "Task " + index + ") " + specTask);
             }
     }
@@ -449,7 +451,7 @@ public class utilspec extends MultiUtil
         try
         {
             int taskNumber = Integer.parseInt(argTokens.nextToken());
-            SpecTask specTask = (SpecTask) specTasks.get(taskNumber);
+            SpecTask specTask = specTasks.get(taskNumber);
 
             specTasks.remove(taskNumber);
             m_botAction.sendArenaMessage("Removing Task: " + specTask.toString() + " -" + sender);
@@ -490,7 +492,7 @@ public class utilspec extends MultiUtil
 
         for(int index = 0; index < specTasks.size(); index++)
         {
-            specTask = (SpecTask) specTasks.get(index);
+            specTask = specTasks.get(index);
             if(specTask.isSameType(freq, ship, playerID))
                 return specTask;
         }
@@ -723,7 +725,7 @@ public class utilspec extends MultiUtil
      * SPEC_ALL.  In each subcategory they are ordered in order of descending
      * deaths.
      */
-    private class SpecTaskComparator implements Comparator
+    private class SpecTaskComparator implements Comparator<SpecTask>
     {
 
         /**
@@ -735,10 +737,8 @@ public class utilspec extends MultiUtil
          * @return a numerical representation of the difference of the two spec
          * tasks.
          */
-        public int compare(Object obj1, Object obj2)
+        public int compare(SpecTask task1, SpecTask task2)
         {
-            SpecTask task1 = (SpecTask) obj1;
-            SpecTask task2 = (SpecTask) obj2;
             int value1 = task1.getSpecType() * SpecTask.MAX_FREQ + task1.specID;
             int value2 = task2.getSpecType() * SpecTask.MAX_FREQ + task2.specID;
 

@@ -74,7 +74,7 @@ public class multibot extends SubspaceBot {
      * This method handles a message event. If the bot is locked, then the event
      * is passed on to the module. The bot also checks to see if the command
      * should be handled.
-     * 
+     *
      * @param event
      *            is the event to handle.
      */
@@ -95,7 +95,7 @@ public class multibot extends SubspaceBot {
      * module). If the bot is unlocked then a go, follow, listgames, lock, home,
      * die and help will be supported. Otherwise unlock and help will be
      * supported.
-     * 
+     *
      */
     public void handleCommands(String sender, String message, int messageType) {
         String command = message.toLowerCase();
@@ -147,13 +147,13 @@ public class multibot extends SubspaceBot {
             }
         } catch (RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage() );
-            
+
         }
     }
 
     /**
      * This method sends the bot to another arena.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      * @param argString
@@ -173,7 +173,7 @@ public class multibot extends SubspaceBot {
     /**
      * This method performs the follow command. It makes the bot follow the
      * sender.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -184,7 +184,7 @@ public class multibot extends SubspaceBot {
     /**
      * This method performs the ListGames command. It displays all of the games
      * that are available in the current arena.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -218,7 +218,7 @@ public class multibot extends SubspaceBot {
     /**
      * This method performs the ListUtils command. It displays all of the
      * utility modules available (previously known as TWBot modules).
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -282,7 +282,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method locks the bot with the current game number.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -293,7 +293,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method unlocks the bot by unloading the currently loaded module.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -308,17 +308,18 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method sends the bot back to its home arena.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
     private void doHomeCmd(String sender) {
+        doUnloadAllCmd(sender);
         doGoCmd(sender, initialArena);
     }
 
     /**
      * Shuts down all modules and utilities, unlocks the bot, and sends it home.
-     * 
+     *
      * @param sender
      * `         Individual sending the command
      */
@@ -331,7 +332,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method logs the bot off.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -344,7 +345,7 @@ public class multibot extends SubspaceBot {
     /**
      * This method performs the module command. It messages the sender with the
      * name of the module that is loaded.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -356,13 +357,17 @@ public class multibot extends SubspaceBot {
      * Loads a specific utility in the /util directory off multibot. A util must
      * start with the "util" prefix, have a compiled .class extension, and not
      * have a $ in the name.
-     * 
+     *
      * @param name
      *            Individual trying to load
      * @param utilType
      *            Type (name) of utility, minus the util prefix
      */
     public void doLoadCmd(String name, String utilType) {
+    	if(utils.containsKey(utilType)) {
+    		m_botAction.sendPrivateMessage(name, utilType + " util already loaded.");
+    		return;
+    	}
         try {
             if (loader.shouldReload())
                 loader.reinstantiate();
@@ -380,7 +385,7 @@ public class multibot extends SubspaceBot {
     /**
      * Loads default modules -- standard, warp and spec.
      * @param name
-     *          Person trying to load 
+     *          Person trying to load
      */
     public void doLoadDefaultCmd(String name) {
         doLoadCmd(name, "standard");
@@ -390,7 +395,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * Unload a specific utility.
-     * 
+     *
      * @param name
      *            Name of requestor
      * @param key
@@ -420,7 +425,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * Lists all loaded utility modules.
-     * 
+     *
      * @param name
      *            Individual requesting info
      */
@@ -438,7 +443,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * Display help for a specific utility module.
-     * 
+     *
      * @param name
      *            Individual requesting help
      */
@@ -446,7 +451,7 @@ public class multibot extends SubspaceBot {
         key = key.toLowerCase();
         if (utils.containsKey(key)) {
             try {
-                String[] helps = ((MultiUtil) utils.get(key)).getHelpMessages();
+                String[] helps = (utils.get(key)).getHelpMessages();
                 m_botAction.privateMessageSpam(name, helps);
             } catch (Exception e) {
                 m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " utility.  Try reloading it.");
@@ -458,7 +463,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method tells the player wehre the bot is.
-     * 
+     *
      * @param sender
      *            is the sender of the command.
      */
@@ -473,58 +478,54 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method displays the help message of an unlocked bot to the sender.
-     * 
+     *
      * @param sender
      *            is the player that sent the help command.
      */
     private void doUnlockedHelpMessage(String sender) {
-        String[] message = {
-                "!Go <ArenaName>          -- Sends the bot to <ArenaName>.",
-                "!Follow                  -- Turns follow mode on.",
-                "!ListGames               -- Lists the games that are available in this arena.",
-                "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
-                "!Lock <Game>             -- Locks the bot and loads game <Game>.",
-                "!Load <Utility>          -- Loads utility <Utility>.",
-                "!Load                    -- Loads standard, warp and spec modules.",
-                "!Unload <Utility>        -- Unloads the loaded utility <Utility>.",
-                "!UnloadAll               -- Unloads all utilities.",
-                "!Loaded                  -- Shows currently loaded utilties.",
-                "!Help <Utility>          -- Shows help for utility <Utility>.",
-                "!Home                    -- Returns the bot to " + initialArena + ".",
-                "!GTFO                    -- Shuts down everything, unlocks, and sends the bot home.",
-                "!Die                     -- Logs the bot off." };
-
-        m_botAction.smartPrivateMessageSpam(sender, message);
+        m_botAction.smartPrivateMessageSpam(sender, help_unlocked);
     }
+	final static String[] help_unlocked = {
+	    "!Go <ArenaName>          -- Sends the bot to <ArenaName>.",
+	    "!Follow                  -- Turns follow mode on.",
+	    "!ListGames               -- Lists the games that are available in this arena.",
+	    "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
+	    "!Lock <Game>             -- Locks the bot and loads game <Game>.",
+	    "!Load/!Unload <Utility>  -- Loads or unloads utility <Utility>.",
+	    "!Load                    -- Loads standard, warp and spec modules.",
+	    "!UnloadAll               -- Unloads all utilities.",
+	    "!Loaded                  -- Shows currently loaded utilties.",
+	    "!Help <Utility>          -- Shows help for utility <Utility>.",
+	    "!Home                    -- Returns the bot to its home.",
+	    "!Die                     -- Logs the bot off."
+	};
 
     /**
      * This method displays the help message of a locked bot to the sender.
-     * 
+     *
      * @param sender
      *            is the player that sent the help command.
      */
     private void doLockedHelpMessage(String sender) {
-        String[] message = {
-                "MultiBot Help:  *** USE !MODHELP *** for help on the currently loaded module",
-                "!Module                  -- Displays the module and version that is currently loaded.",
-                "!Unlock                  -- Unlocks the bot, which unloads the presently-loaded module.",
-                "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
-                "!Load <Utility>          -- Loads utility <Utility>.",
-                "!Unload <Utility>        -- Unloads the loaded utility <Utility>.",
-                "!UnloadAll               -- Unloads all utilities.",
-                "!Loaded                  -- Shows currently loaded utilties.",
-                "!Help <Utility>          -- Shows help for utility <Utility>.",
-                "!GTFO                    -- Shuts down everything, unlocks, and sends the bot home.",
-                "!Die                     -- Logs the bot off.",
-                "!ModHelp                 -- Displays help message for currently-loaded module."
-                };
-
-        m_botAction.smartPrivateMessageSpam(sender, message);
+        m_botAction.smartPrivateMessageSpam(sender, help_locked);
     }
+    final static String[] help_locked = {
+	    "MultiBot Help:  *** USE !MODHELP *** for help on the currently loaded module",
+	    "!Module                  -- Displays the module and version that is currently loaded.",
+	    "!Unlock                  -- Unlocks the bot, which unloads the presently-loaded module.",
+	    "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
+	    "!Load/!Unload <Utility>  -- Loads/unloads utility <Utility>.",
+	    "!UnloadAll               -- Unloads all utilities.",
+	    "!Loaded                  -- Shows currently loaded utilties.",
+	    "!Help <Utility>          -- Shows help for utility <Utility>.",
+	    "!Die                     -- Logs the bot off.",
+	    "!ModHelp                 -- Displays help message for currently-loaded module."
+	};
+
 
     /**
      * This method checks to see if the bot is locked.
-     * 
+     *
      * @param true
      *            is returned if the bot is locked.
      */
@@ -535,7 +536,7 @@ public class multibot extends SubspaceBot {
     /**
      * This method returns the name of the player who sent a message, regardless
      * of the message type. If there is no sender then null is returned.
-     * 
+     *
      * @param event
      *            is the Message event to handle.
      */
@@ -555,7 +556,7 @@ public class multibot extends SubspaceBot {
     /**
      * This method handles all SubspaceEvents. If the bot is locked, then the
      * event is passed onto the module.
-     * 
+     *
      * @param event
      *            is the event to handle.
      */
@@ -600,7 +601,7 @@ public class multibot extends SubspaceBot {
      * directory is the current bot directory. 2) There must be a
      * modulename.class file present (All lower case). 3) There must be a
      * modulename.cfg file present (All lower case).
-     * 
+     *
      * @param moduleName
      *            is the name of the module to load.
      */
@@ -633,7 +634,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method gets the parent class of the multibot.
-     * 
+     *
      * @return the parent class of the multibot is returned.
      */
     private String getParentClass() {
@@ -646,7 +647,7 @@ public class multibot extends SubspaceBot {
     /**
      * This method searches through an array of Strings to see if there it
      * contains an element that matches target.
-     * 
+     *
      * @param String[]
      *            array is the array to search.
      * @param String
@@ -662,7 +663,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method checks to see if an arena is a public arena.
-     * 
+     *
      * @param arenaName
      *            is the arena name to check.
      * @return true is returned if the arena is a public arena.
@@ -678,7 +679,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method sets the bots chat.
-     * 
+     *
      * @param chatName
      *            is the bots chat.
      */

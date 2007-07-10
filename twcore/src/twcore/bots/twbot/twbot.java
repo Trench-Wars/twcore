@@ -82,6 +82,11 @@ public class twbot extends SubspaceBot
 
 		idleTime = m_botSettings.getInt("IdleReturnTime");
 		defaultArena = m_botSettings.getString("InitialArena");
+		if(defaultArena == null || defaultArena.equals("")) {
+			defaultArena = currentArena;
+		} else {
+			currentArena = defaultArena;
+		}
 
 		//Checks for an idle unlocked bot.
 		checkTime = new TimerTask()
