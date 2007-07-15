@@ -1240,7 +1240,7 @@ public class purepubbot extends SubspaceBot
                                     modbounty *= 2;
                                 }
                                 if( grabs != 0 ) {
-                                    modbounty += (int)(modbounty * (grabs / 10));  
+                                    modbounty += modbounty * (grabs / 10);
                                     m_botAction.sendPrivateMessage( playerName, "For your " + grabs + " flag grabs, you also receive an additional " + grabs + "0% bounty, for a total of " + modbounty );
                                 }
 
@@ -1331,7 +1331,7 @@ public class purepubbot extends SubspaceBot
                     m_botAction.sendArenaMessage( "Prize for MVPs: Personal Body-Guard!" );
                     break;
                 }
-                
+
                 MVplayers = (String)i.next();
                 int grabs = flagTimer.getFlagGrabs(MVplayers);
                 if( grabs > 0 )
@@ -1454,8 +1454,8 @@ public class purepubbot extends SubspaceBot
      * Ensures !warpers on freqs are warped all to 'their' side, but not predictably.
      */
     private void warpPlayers() {
-        Iterator i;        
-        
+        Iterator i;
+
         if( strictFlagTime )
             i = m_botAction.getPlayingPlayerIterator();
         else
@@ -1510,7 +1510,7 @@ public class purepubbot extends SubspaceBot
      * starting.  This gives a semi-official feeling to the game, and resets
      * all mines, etc.
      */
-    private void safeWarp() {        
+    private void safeWarp() {
         // Prevent pre-laid mines and portals in strict flag time by setting to WB and back again (slightly hacky)
         HashMap<String,Integer> players = new HashMap<String,Integer>();
         HashMap<String,Integer> bounties = new HashMap<String,Integer>();
@@ -1792,7 +1792,7 @@ public class purepubbot extends SubspaceBot
                             ties.add(dummyPlayer);
                         }
                     }
-                }                
+                }
                 leaderInfo[0] = leader;
                 leaderInfo[1] = highClaim.toString();
                 i = ties.iterator();
@@ -1806,7 +1806,7 @@ public class purepubbot extends SubspaceBot
             }
 
         }
-        
+
         /**
          * Returns number of flag grabs for given player.
          * @param name Name of player

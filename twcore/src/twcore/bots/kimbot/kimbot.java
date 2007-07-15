@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,6 +37,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 
     private BotSettings m_botSettings;
     private BotAction m_botAction;
+    private OperatorList m_operatorList;
 
 	private State m_state = new State(State.STOPPED);
 
@@ -43,33 +45,45 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
     private String m_startedBy = "";
     private int m_deathsToSpec = 10;
     private boolean m_ensureLock = false;
-    private List<Map<String, KimPlayer>> m_groups;
+    private List<Map<String, KimPlayer>> m_groups = new ArrayList<Map<String, KimPlayer>>(4);
     private int[] m_playerCount = { 0, 0, 0, 0 }; //for tracking how many players left in each group
     private KimPlayer[] m_survivors = { null, null, null, null };
     private LagoutMan<KimPlayer> m_lagoutMan = new LagoutMan<KimPlayer>(this);
     private List<String> m_startingLagouts = new LinkedList<String>();
     private List<KimPlayer> m_startingReturns = new LinkedList<KimPlayer>();
+    private Set<String> m_access = new HashSet<String>();
+    private IntQueue m_watchQueue = new IntQueue();
+    private KimPlayer[] m_kimTable = new KimPlayer[256]; //id -> KimPlayer
 
-    final static int MAX_NAMELENGTH = 18;
+	private final static int MAP_DONOTCROSSLINE_Y = 7472;
+    private final static int MAX_NAMELENGTH = 18;
+	private final static long OUTSIDE_TIME_LIMIT = 15000; //15 seconds
 
-    final static String[] help_player = {
+    private final static String[] help_player = {
     	"-- Help --------",
     	" !lagout  Return to game.",
     	" !spec    Leave game.",
     	" !status  Displays current status."
     };
 
-	final static String[] help_staff = {
+	private final static String[] help_staff = {
 		"-- Staff Help --",
 		" !start          Starts a game.",
 		" !stop           Cancels a game.",
 		" !die            Shuts down bot.",
 		" !startinfo      Tells who started a game.",
 		" !reset          Resets arena.",
-		" !remove <name>  Removes player from a game. Must be exact name."
+		" !remove <name>  Removes player from a game (must be exact name)."
 	};
 
-    final static int[] m_safeCoords = {
+	private final static String[] help_smod = {
+		"-- SMod Help ---",
+		" !addstaff <name>  Grant access to bot.",
+		" !delstaff <name>  Remove access to bot.",
+		" !accesslist       Display access list."
+	};
+
+    private final static int[] m_safeCoords = {
     	78 | (344 << 16),
 		806 | (344 << 16),
 		260 | (344 << 16),
@@ -136,7 +150,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 		694 | (450 << 16)
     };
 
-    final static int[] m_goCoords = {
+    private final static int[] m_goCoords = {
     	78 | (348 << 16),
 		806 | (348 << 16),
 		260 | (348 << 16),
@@ -203,18 +217,18 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 		694 | (446 << 16)
     };
 
-    final static int[] m_finalSafeCoords = {
-    	431 | (385 << 16),
-    	593 | (385 << 16),
-    	876 | (450 << 16),
-    	876 | (331 << 16)
+    private final static int[] m_finalSafeCoords = {
+    	441 | (452 << 16),
+    	442 | (344 << 16),
+    	582 | (344 << 16),
+    	582 | (452 << 16)
     };
 
-    final static int[] m_finalGoCoords = {
-    	435 | (385 << 16),
-    	589 | (385 << 16),
-    	876 | (446 << 16),
-    	876 | (335 << 16)
+    private final static int[] m_finalGoCoords = {
+    	441 | (448 << 16),
+    	442 | (348 << 16),
+    	582 | (348 << 16),
+    	582 | (448 << 16)
     };
 
 
@@ -226,18 +240,25 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 
         // m_botSettings contains the data specified in file <botname>.cfg
         m_botSettings = m_botAction.getBotSettings();
+        m_operatorList = m_botAction.getOperatorList();
 
-        m_groups = new ArrayList<Map<String, KimPlayer>>(4);
-        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
-        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
-        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
-        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
+        String str = m_botSettings.getString("AccessList");
+        if(str != null) {
+        	String[] names = str.split(":", 0);
+        	for(int i = 0; i < names.length; i++) {
+        		m_access.add(names[i].toLowerCase());
+        	}
+        }
 
+        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
+        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
+        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
+        m_groups.add(Collections.synchronizedMap(new HashMap<String, KimPlayer>(20, 1.0f)));
     }
 
 
     /** Request events that this bot requires to receive.  */
-    public void requestEvents() {
+    private void requestEvents() {
         EventRequester req = m_botAction.getEventRequester();
         req.request(EventRequester.MESSAGE);
         req.request(EventRequester.ARENA_JOINED);
@@ -265,11 +286,19 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
     }
 
     public void handleEvent(PlayerEntered event) {
-		if(event.getPlayerName().length() > MAX_NAMELENGTH) {
-			m_botAction.sendPrivateMessage(event.getPlayerID(), "NOTICE: Name too long. Shorten your name to 18 or less characters to be able to play.");
-			if(event.getShipTypeRaw() != 8) { //!spectator
-				m_botAction.specWithoutLock(event.getPlayerID());
+    	String name = event.getPlayerName();
+    	int id = event.getPlayerID();
+		if(name.length() > MAX_NAMELENGTH) {
+			m_botAction.sendPrivateMessage(id, "NOTICE: Your name is too long. Use a shorter name (18 or less characters) to be able to play.");
+			if(event.getShipTypeRaw() != 8) {
+				m_botAction.specWithoutLock(id);
 			}
+			return;
+    	}
+
+    	if(((m_state.isStarting() || m_state.isStartingFinal()) && m_startingLagouts.contains(name))
+   		|| ((m_state.isMidGame() || m_state.isMidGameFinal()) && m_lagoutMan.contains(getKimPlayer(name)))) {
+    		m_botAction.sendPrivateMessage(id, "PM me with !lagout to return to the game.");
     	}
     }
 
@@ -282,21 +311,28 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
     		return;
     	}
 
-    	if(event.getMessageType() != Message.PRIVATE_MESSAGE)
+    	if(event.getMessageType() != Message.PRIVATE_MESSAGE) {
     		return;
+    	}
 
 		int id = event.getPlayerID();
-    	String name = m_botAction.getPlayerName(id);
+    	String name = m_botAction.getPlayerName(id).toLowerCase();
     	String msg = event.getMessage().trim().toLowerCase();
-    	if(name == null || msg == null || msg.length() == 0)
+    	if(name == null || msg == null || msg.length() == 0) {
     		return;
+    	}
 
-    	boolean hasAccess = m_botAction.getOperatorList().isSmod(name);
+		boolean isSmod = m_operatorList.isSmod(name);
+    	boolean hasAccess = isSmod || m_access.contains(name);
 
     	if(msg.equals("!help")) {
     		m_botAction.privateMessageSpam(id, help_player);
-    		if(hasAccess)
+    		if(hasAccess) {
         		m_botAction.privateMessageSpam(id, help_staff);
+    		}
+    		if(isSmod) {
+    			m_botAction.privateMessageSpam(id, help_smod);
+    		}
 
         } else if(msg.equals("!status")) {
         	cmdStatus(id);
@@ -316,11 +352,15 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 			if(!kp.m_isOut) {
 				synchronized(m_state) {
 					if((m_state.isMidGame() || m_state.isMidGameFinal()) && m_lagoutMan.remove(kp) == true) {
+						kp.m_timeOutside = 0;
+						kp.m_timeLastPosUpdate = System.currentTimeMillis();
+
 						m_botAction.setShip(id, Tools.Ship.JAVELIN);
 						m_botAction.setFreq(id, kp.m_freq);
+						m_kimTable[id] = kp;
 					} else if((m_state.isStarting() || m_state.isStartingFinal()) && m_startingLagouts.remove(name)) {
 						m_startingReturns.add(kp);
-						m_botAction.sendPrivateMessage(id, "You will be placed in the game at the start.");
+						m_botAction.sendPrivateMessage(id, "You will be put in at the start of the game.");
 					}
 				}
 			} else {
@@ -355,79 +395,141 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
         		} else {
         			m_botAction.sendPrivateMessage(id, "A game is in progress. Use !stop first.");
         		}
+
         	} else if(msg.startsWith("!remove ")) {
-        		if(m_state.isStopped())
+        		if(m_state.isStopped()) {
         			m_botAction.sendPrivateMessage(id, "The game is not running.");
-        		else
+        		} else {
         			cmdRemove(id, msg.substring(8));
+        		}
+
+        	} else if(msg.startsWith("!test ")) {
+        		m_botAction.sendArenaMessage(msg.substring(6));
+
+        	} else if(isSmod) {
+				if(msg.startsWith("!addstaff ")) {
+					if(msg.indexOf(':') >= 0) {
+						m_botAction.sendPrivateMessage(id, "The name should not contain a colon.");
+					} else if(m_access.add(msg.substring(10))) {
+						updateAccessList(id);
+					} else {
+						m_botAction.sendPrivateMessage(id, "That name already has access.");
+					}
+
+        		} else if(msg.startsWith("!delstaff ")) {
+        			if(m_access.remove(msg.substring(10))) {
+        				updateAccessList(id);
+        			} else {
+        				m_botAction.sendPrivateMessage(id, "Name not found.");
+        			}
+
+        		} else if(msg.equals("!accesslist")) {
+        			for(String s : m_access) {
+	        			m_botAction.sendPrivateMessage(id, s);
+        			}
+        		}
         	}
         }
+    }
+
+    private void updateAccessList(int id) {
+		StringBuilder sb = new StringBuilder(100);
+		for(String s : m_access) {
+			sb.append(s).append(':');
+		}
+		m_botSettings.put("AccessList", sb.toString());
+		if(m_botSettings.save()) {
+			m_botAction.sendPrivateMessage(id, "Access list updated.");
+		} else {
+			m_botAction.sendPrivateMessage(id, "Couldn't save to file.");
+		}
     }
 
 
 	public void handleEvent(PlayerDeath event) {
 		if(m_state.isMidGame() || m_state.isMidGameFinal()) {
 			int victimID = event.getKilleeID();
-			int killerID = event.getKillerID();
-			Player victim = m_botAction.getPlayer(victimID);
-			Player killer = m_botAction.getPlayer(killerID);
-			int victimGroup, killerGroup;
+			KimPlayer killer = m_kimTable[event.getKillerID()];
+			KimPlayer victim = m_kimTable[victimID];
 			if(killer != null) {
-				String killerName = m_botAction.getPlayerName(killerID);
-				killerGroup = killer.getFrequency() % 4;
-				KimPlayer kimKiller = m_groups.get(killerGroup).get(killerName);
-				if(kimKiller != null)
-					kimKiller.m_kills++;
+				killer.m_kills++;
+			} else {
+				m_botAction.sendSmartPrivateMessage("flibb <er>", "killer was null");
 			}
 			if(victim != null) {
-				String victimName = m_botAction.getPlayerName(victimID);
-				victimGroup = victim.getFrequency() % 4;
-				KimPlayer kimVictim = m_groups.get(victimGroup).get(victimName);
-				if(kimVictim != null && ++kimVictim.m_deaths >= m_deathsToSpec) {
-					removePlayerAndCheck(kimVictim);
-					m_botAction.sendArenaMessage(victimName + " is out. "
-						+ kimVictim.m_kills + " wins, " + kimVictim.m_deaths + " losses.");
+				m_watchQueue.sendToBack(victimID);
+				victim.m_timeOutside = 0;
+				if(++victim.m_deaths >= m_deathsToSpec) {
+					removePlayerAndCheck(victim, null);
 				}
+			} else {
+				m_botAction.sendSmartPrivateMessage("flibb <er>", "victim was null");
 			}
 		}
 	}
 
 
 	public void handleEvent(PlayerPosition event) {
-		//event.
+		if(m_state.isMidGame() || m_state.isMidGameFinal()) {
+			long curTime = System.currentTimeMillis();
+			int id = event.getPlayerID();
+			KimPlayer kp = m_kimTable[id];
+			m_watchQueue.sendToBack(id);
+			if(event.getYLocation() > MAP_DONOTCROSSLINE_Y) {
+				kp.m_timeOutside += Math.max(3000, curTime - kp.m_timeLastPosUpdate);
+				if(kp.m_timeOutside > OUTSIDE_TIME_LIMIT) {
+					if(++kp.m_deaths >= m_deathsToSpec) {
+						removePlayerAndCheck(kp, "outside of base");
+					} else {
+						kp.m_timeOutside = 0;
+						m_botAction.sendPrivateMessage(id, "+1 death (time outside base exceeded limit)");
+					}
+				}
+			}
+			kp.m_timeLastPosUpdate = curTime;
+		}
 	}
 
 
 	//check for lagout
 	public void handleEvent(FrequencyShipChange event) {
-		if(event.getShipTypeRaw() != 8)
+		int id = event.getPlayerID();
+		if(event.getShipTypeRaw() != 8) {
+			if(m_botAction.getPlayerName(id).length() > MAX_NAMELENGTH) {
+				m_botAction.sendPrivateMessage(id, "NOTICE: Your name is too long. Use a shorter name (18 or less characters) to be able to play.");
+				m_botAction.specWithoutLock(id);
+			}
 			return;
-		lagoutHelper(m_botAction.getPlayerName(event.getPlayerID()));
+		}
+
+		//else changed to spec
+		lagoutHelper(event.getPlayerID());
 	}
 
 	//check for lagout
 	public void handleEvent(PlayerLeft event) {
-		Player player = m_botAction.getPlayer(event.getPlayerID());
-		if(player == null || player.getShipType() == Tools.Ship.SPECTATOR) //wasn't in the game
-			return;
-		lagoutHelper(player.getPlayerName());
+		lagoutHelper(event.getPlayerID());
 	}
 
-	private void lagoutHelper(String name) {
-		if(name == null || name.length() == 0) return;
+	private void lagoutHelper(int playerID) {
+		KimPlayer kp = m_kimTable[playerID];
+		if(kp == null) {
+			return;
+		}
 		synchronized(m_state) {
 			if(m_state.isMidGame() || m_state.isMidGameFinal()) {
-				KimPlayer kimPlayer = getKimPlayer(name);
-				if(kimPlayer != null && !kimPlayer.m_isOut) {
-					if(m_state.isMidGame() && m_survivors[kimPlayer.m_freq % 4] == kimPlayer) {
-						m_startingLagouts.add(kimPlayer.m_name);
+				if(!kp.m_isOut) {
+					if(m_state.isMidGame() && m_survivors[kp.m_freq % 4] == kp) {
+						m_startingLagouts.add(kp.m_name);
 					} else {
-						registerLagout(kimPlayer);
+						registerLagout(kp);
 					}
 				}
 			} else if(m_state.isStarting() || m_state.isStartingFinal()) {
-				m_startingLagouts.add(name);
+				m_startingLagouts.add(kp.m_name);
 			}
+			m_kimTable[playerID] = null;
+			m_watchQueue.remove(playerID);
 		}
 	}
 
@@ -438,22 +540,17 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 			m_lagoutMan.add(kimPlayer);
 			kimPlayer.m_lagoutsLeft--;
 		} else {
-			m_botAction.sendArenaMessage(kimPlayer.m_name + " is out (disqualified for too many lagouts). "
-				+ kimPlayer.m_kills + " wins, " + kimPlayer.m_deaths + " losses.");
-			removePlayerAndCheck(kimPlayer);
+			removePlayerAndCheck(kimPlayer, "too many lagouts");
 		}
 	}
 
 
-	//helper for getting KimPlayer when freq is unknown (time for space)
-	private KimPlayer getKimPlayer(int id) {
-		return getKimPlayer(m_botAction.getPlayerName(id));
-	}
-	//helper for getting KimPlayer when freq is unknown
+	//helper for getting KimPlayer by name
 	private KimPlayer getKimPlayer(String name) {
 		if(name == null || name.length() == 0) {
 			return null;
 		}
+		name = name.toLowerCase();
 		KimPlayer result = null;
 		for(int i = 0; i < 4; i++) {
 			if((result = m_groups.get(i).get(name)) != null)
@@ -464,10 +561,10 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 
 
 	public void handleExpiredLagout(KimPlayer kimPlayer) {
-		if(m_state.isStopped()) return;
-		m_botAction.sendArenaMessage(kimPlayer.m_name + " is out (failed to return from lagout). "
-			+ kimPlayer.m_kills + " wins, " + kimPlayer.m_deaths + " losses.");
-		removePlayerAndCheck(kimPlayer);
+		if(m_state.isStopped()) {
+			return;
+		}
+		removePlayerAndCheck(kimPlayer, "failed to return from lagout");
 	}
 
 	private void cmdStart(int id) {
@@ -531,7 +628,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 				Collections.shuffle(players);
 				int freq = 0;
 				for(Player player : players) {
-					String name = player.getPlayerName();
+					String name = player.getPlayerName().toLowerCase();
 					int id = player.getPlayerID();
 
 					if(freq >= 64) {
@@ -545,11 +642,22 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 						m_botAction.setFreq(id, freq);
 						int coord = m_safeCoords[freq];
 						m_botAction.warpTo(id, coord & 0xffff, coord >> 16);
-						m_groups.get(freq % 4).put(name, new KimPlayer(name, freq));
+						KimPlayer kp = new KimPlayer(name, freq);
+						m_groups.get(freq % 4).put(name, kp);
 						m_playerCount[freq % 4]++;
 						freq++;
+
+						m_kimTable[id] = kp;
+						m_watchQueue.add(id);
 					}
 				}
+
+				//start spectating task
+				m_botAction.scheduleTask(new TimerTask() {
+					public void run() {
+						m_botAction.spectatePlayer(m_watchQueue.getAndSendToBack());
+					}
+				}, 0, 2000);
 			}
 		}, 25000);
 
@@ -570,11 +678,19 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 					for(KimPlayer kp : group.values()) {
 						if(m_startingLagouts.remove(kp.m_name)) {
 							registerLagout(kp);
-							m_botAction.sendSmartPrivateMessage(kp.m_name, "You may return to the game with !lagout");
+							//m_botAction.sendSmartPrivateMessage(kp.m_name, "You may return to the game with !lagout");
 						} else {
 							if(m_startingReturns.remove(kp)) {
-								m_botAction.setShip(kp.m_name, Tools.Ship.JAVELIN);
-								m_botAction.setFreq(kp.m_name, kp.m_freq);
+								int retID = m_botAction.getPlayerID(kp.m_name);
+								if(retID >= 0) {
+									m_botAction.setShip(retID, Tools.Ship.JAVELIN);
+									m_botAction.setFreq(retID, kp.m_freq);
+									m_kimTable[retID] = kp;
+									m_watchQueue.add(retID);
+								} else {
+									registerLagout(kp);
+									continue;
+								}
 							}
 							int coord = m_goCoords[kp.m_freq];
 							m_botAction.warpTo(kp.m_name, coord & 0xffff, coord >> 16);
@@ -649,8 +765,8 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 	    	m_startingLagouts.remove(nameToRemove);
     		m_startingReturns.remove(kp);
     		m_lagoutMan.remove(kp);
-    		removePlayerAndCheck(kp);
-    		m_botAction.sendPrivateMessage(id, "Player removed.");
+    		removePlayerAndCheck(kp, "removed from game");
+    		//m_botAction.sendPrivateMessage(id, "Player removed.");
     	} else {
 	    	m_botAction.sendPrivateMessage(id, "Player not found.");
     	}
@@ -666,6 +782,11 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 		m_lagoutMan.clear();
 		m_startingLagouts.clear();
 		m_startingReturns.clear();
+		m_watchQueue.clear();
+
+		for(int i = 0; i < 256; i++) {
+			m_kimTable[i] = null;
+		}
 	}
 
 	private void resetArena() {
@@ -692,10 +813,17 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 	}
 
 
-	private void removePlayerAndCheck(KimPlayer kimPlayer) {
+	private void removePlayerAndCheck(KimPlayer kimPlayer, String reason) {
 		kimPlayer.m_isOut = true;
 		m_botAction.specWithoutLock(kimPlayer.m_name);
 		final int groupIndex = kimPlayer.m_freq % 4;
+
+		m_botAction.sendArenaMessage(kimPlayer.m_name + " is out"
+			+ (reason == null ? ". " : " (" + reason + "). ")
+			+ kimPlayer.m_kills + " wins, " + kimPlayer.m_deaths + " losses.");
+
+
+		//if this group is down to 1 player, add to survivors and announce
 		if(--m_playerCount[groupIndex] == 1) {
 			m_botAction.scheduleTask(new TimerTask() {
 				//a local copy of groupIndex is automatically provided here
@@ -706,7 +834,6 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 						for(KimPlayer kp : group.values()) {
 							if(!kp.m_isOut) {
 								survivor = kp;
-								//kp.remove
 								break;
 							}
 						}
@@ -773,7 +900,12 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 		}
 
 		//disable warping
-		m_botAction.scheduleTask(m_prizeTask = new PrizeNegativeFullCharge(), 0, 3000);
+		m_botAction.scheduleTask(new TimerTask() {
+			public void run() {
+				m_botAction.sendArenaMessage("The game begins in 30 seconds.", 1);
+				m_botAction.scheduleTask(m_prizeTask = new PrizeNegativeFullCharge(), 0, 3000);
+			}
+		}, 5000);
 
 		//warp to final safes and ?set spawns
 		m_botAction.scheduleTask(new TimerTask() {
@@ -781,11 +913,13 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 				for(int i = 0; i < 4; i++) {
 					KimPlayer kp = m_survivors[i];
 					if(kp != null) {
+						kp.m_timeOutside = 0;
 						if(m_startingReturns.remove(kp)) {
 							m_botAction.setShip(kp.m_name, Tools.Ship.JAVELIN);
 							m_botAction.setFreq(kp.m_name, kp.m_freq);
+							m_botAction.sendUnfilteredPrivateMessage(kp.m_name, "*prize #-" + Tools.Prize.FULLCHARGE);
 						}
-						m_botAction.warpTo(m_survivors[i].m_name, m_finalSafeCoords[i] & 0xffff, m_finalSafeCoords[i] >> 16);
+						m_botAction.warpTo(kp.m_name, m_finalSafeCoords[i] & 0xffff, m_finalSafeCoords[i] >> 16);
 					}
 				}
 
@@ -812,27 +946,40 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 			public void run() {
 				m_botAction.cancelTask(m_prizeTask);
 			}
-		}, 12000);
+		}, 22000);
 
 		//shipreset and warpto starting coords
 		m_botAction.scheduleTask(new TimerTask() {
 			public void run() {
-				m_state.setState(State.MIDGAME_FINAL);
-				m_botAction.sendArenaMessage("GO! GO! GO!", 104);
-				m_botAction.shipResetAll();
-				for(int i = 0; i < 4; i++) {
-					KimPlayer kp = m_survivors[i];
-					if(kp != null) {
-						if(m_startingLagouts.remove(kp)) {
-							registerLagout(kp);
-							continue;
+				synchronized(m_state) {
+					long curTime = System.currentTimeMillis();
+					m_botAction.sendArenaMessage("GO! GO! GO!", 104);
+					m_botAction.shipResetAll();
+					for(int i = 0; i < 4; i++) {
+						KimPlayer kp = m_survivors[i];
+						if(kp != null) {
+							if(m_startingLagouts.remove(kp)) {
+								registerLagout(kp);
+								continue;
+							}
+							if(m_startingReturns.remove(kp)) {
+								int retID = m_botAction.getPlayerID(kp.m_name);
+								if(retID >= 0) {
+									m_botAction.setShip(retID, Tools.Ship.JAVELIN);
+									m_botAction.setFreq(retID, kp.m_freq);
+									m_kimTable[retID] = kp;
+									m_watchQueue.add(retID);
+								} else {
+									registerLagout(kp);
+									continue;
+								}
+							}
+							kp.m_timeOutside = 0;
+							kp.m_timeLastPosUpdate = curTime;
+							m_botAction.warpTo(kp.m_name, m_finalGoCoords[i] & 0xffff, m_finalGoCoords[i] >> 16);
 						}
-						if(m_startingReturns.remove(kp)) {
-							m_botAction.setShip(kp.m_name, Tools.Ship.JAVELIN);
-							m_botAction.setFreq(kp.m_name, kp.m_freq);
-						}
-						m_botAction.warpTo(kp.m_name, m_finalGoCoords[i] & 0xffff, m_finalGoCoords[i] >> 16);
 					}
+					m_state.setState(State.MIDGAME_FINAL);
 				}
 			}
 		}, 25000);
@@ -855,8 +1002,10 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 		for(int i = 0; i < 4; i++) {
 			if(m_survivors[i] != null) {
 				m_groups.get(i).remove(m_survivors[i].m_name);
-				if(!m_survivors[i].m_isOut)
+				if(!m_survivors[i].m_isOut) {
 					winner = m_survivors[i];
+					m_botAction.warpTo(winner.m_name, 512, 286);
+				}
 			}
 		}
 
@@ -929,7 +1078,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 			padHelper(sb, kp.m_name, 19);
 			padHelper(sb, kp.m_kills, 4);
 			padHelper(sb, kp.m_deaths, 3);
-		} else sb.append("                          ");
+		}
 
 		m_botAction.sendArenaMessage(sb.toString());
 		sb.delete(0, sb.length());
@@ -938,7 +1087,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 			sb.append("Winner: ").append(winner.m_name).append("! ").append(winner.m_kills).append(" wins, ").append(winner.m_deaths).append(" losses.");
 			m_botAction.sendArenaMessage(sb.toString(), 5);
 		} else {
-			m_botAction.sendArenaMessage("No winner.");
+			m_botAction.sendArenaMessage("No winner.", 24);
 		}
 
 		resetArena();
@@ -989,13 +1138,13 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 			m_state = initialState;
 		}
 
-		public synchronized boolean isStopped() { return m_state == STOPPED; }
-		public synchronized boolean isPreGame() { return m_state == PREGAME; }
-		public synchronized boolean isStarting() { return m_state == STARTING; }
-		public synchronized boolean isMidGame() { return m_state == MIDGAME; }
-		public synchronized boolean isStartingFinal() { return m_state == STARTING_FINAL; }
-		public synchronized boolean isMidGameFinal() { return m_state == MIDGAME_FINAL; }
-		public synchronized boolean isEndingGame() { return m_state == ENDING_GAME; }
+		synchronized boolean isStopped() { return m_state == STOPPED; }
+		synchronized boolean isPreGame() { return m_state == PREGAME; }
+		synchronized boolean isStarting() { return m_state == STARTING; }
+		synchronized boolean isMidGame() { return m_state == MIDGAME; }
+		synchronized boolean isStartingFinal() { return m_state == STARTING_FINAL; }
+		synchronized boolean isMidGameFinal() { return m_state == MIDGAME_FINAL; }
+		synchronized boolean isEndingGame() { return m_state == ENDING_GAME; }
 
 		synchronized void setState(int newState) { m_state = newState; }
 		synchronized int getState() { return m_state; }
@@ -1008,8 +1157,9 @@ final class KimPlayer {
 	int m_kills = 0;
 	int m_deaths = 0;
 	int m_freq;
-	int m_timeOutside = 0;
 	int m_lagoutsLeft = 3;
+	long m_timeOutside = 0;
+	long m_timeLastPosUpdate = 0;
 	boolean m_isOut = false;
 
 	KimPlayer(String name, int freq) {
