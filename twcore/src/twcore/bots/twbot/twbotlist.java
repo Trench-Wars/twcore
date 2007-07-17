@@ -34,6 +34,7 @@ public class twbotlist extends TWBotExtension {
 				m_botAction.sendSmartPrivateMessage(commander, it.next());
 			}
 			m_botAction.sendSmartPrivateMessage(commander, "Arenas listed.");
+			arenaSet.clear();
 			commander = null;
 		}
 	}
