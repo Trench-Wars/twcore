@@ -1,7 +1,7 @@
 package twcore.bots.twbot;
 
 import java.util.Iterator;
-import java.util.SortedSet;
+import java.util.TreeSet;
 
 import twcore.bots.TWBotExtension;
 import twcore.core.events.ArenaList;
@@ -21,20 +21,21 @@ public class twbotlist extends TWBotExtension {
 
 	public void handleEvent(ArenaList event)
 	{
-		SortedSet<String> arenaSet = null;
+		TreeSet<String> arenaSet = new TreeSet<String>();
 		String[] arenas = event.getArenaNames();
 		for(int k = 0;k < arenas.length;k++) {
 			arenaSet.add(arenas[k]);
 		}
-		arenas = null;
-		
-		if(commander != null && arenaSet != null && arenaSet.isEmpty()==false) {
+				
+		if(commander != null && arenaSet.isEmpty()==false) {
 			Iterator<String> it = arenaSet.iterator();
 			while(it.hasNext()) {
 				m_botAction.sendSmartPrivateMessage(commander, it.next());
 			}
 			m_botAction.sendSmartPrivateMessage(commander, "Arenas listed.");
+			
 			arenaSet.clear();
+			arenas = null;
 			commander = null;
 		}
 	}
