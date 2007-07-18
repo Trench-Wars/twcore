@@ -7,8 +7,10 @@ import java.net.URLConnection;
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
@@ -52,12 +54,24 @@ public class utiletc extends MultiUtil {
     }
 
     public void handleEvent(ArenaList event) {
-        if( requester == null )
-            return;
-        String[] arenas = event.getArenaNames();
-        for(int k = 0;k < arenas.length;k++)
-            m_botAction.sendUnfilteredPrivateMessage(requester, arenas[k]);
-        m_botAction.sendUnfilteredPublicMessage("Arenas listed.");
+    	TreeSet<String> arenaSet = new TreeSet<String>();
+		String[] arenas = event.getArenaNames();
+		for(int k = 0;k < arenas.length;k++) {
+			arenaSet.add(arenas[k]);
+		}
+				
+		if(requester != null && arenaSet.isEmpty()==false) {
+			Iterator<String> it = arenaSet.iterator();
+			while(it.hasNext()) {
+				m_botAction.sendSmartPrivateMessage(requester, it.next());
+			}
+			m_botAction.sendSmartPrivateMessage(requester, "Arenas listed.");
+			
+			arenaSet.clear();
+			arenas = null;
+			requester = null;
+		}
+    	
     }
 
     public void handleEvent(PlayerPosition event) {
@@ -121,7 +135,7 @@ public class utiletc extends MultiUtil {
             try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
         }
 
-        if(message.toLowerCase().startsWith("!list")) {
+        if(message.toLowerCase().equalsIgnoreCase("!list")) {
             requester = name;
             m_botAction.requestArenaList();
         } else if(message.toLowerCase().startsWith("!draw ")) {
