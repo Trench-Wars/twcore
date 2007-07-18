@@ -5,7 +5,7 @@
  * @author
  * @version 1.00 2007/7/5
  */
-package twcore.bots.kimbot;
+package twcore.bots.javelim;
 
 import java.util.Map;
 import java.util.Collections;

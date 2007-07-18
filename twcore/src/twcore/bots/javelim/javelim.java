@@ -1,4 +1,4 @@
-package twcore.bots.kimbot;
+package twcore.bots.javelim;
 
 import java.util.Collections;
 import java.util.Collection;
@@ -33,7 +33,7 @@ import twcore.core.util.Tools;
  * Bot for hosting Kim's new Jav event (<a href=http://www.twcore.org/ticket/74>ticket #74</a>)
  * @author  flibb
  */
-public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagoutHandler<KimPlayer> {
+public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagoutHandler<KimPlayer> {
 
     private BotSettings m_botSettings;
     private BotAction m_botAction;
@@ -233,7 +233,7 @@ public final class kimbot extends SubspaceBot implements LagoutMan.ExpiredLagout
 
 
     /** Creates a new instance of kimbot */
-    public kimbot(BotAction botAction) {
+    public javelim(BotAction botAction) {
         super(botAction);
         m_botAction = botAction;
         requestEvents();

@@ -5,7 +5,7 @@
  * @author
  * @version 1.00 2007/7/10
  */
-package twcore.bots.kimbot;
+package twcore.bots.javelim;
 
 /**
  * doubly linked list with an index table so that any element
