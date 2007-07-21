@@ -353,7 +353,7 @@ public class purepubbot extends SubspaceBot
                 checkPlayer(playerID);
                 if(!privFreqs)
                     checkFreq(playerID, player.getFrequency(), false);
-                m_botAction.sendPrivateMessage(playerName, "Commands available: !help, !team, !listships, !time, !warp");
+                m_botAction.sendPrivateMessage(playerName, "Commands available: !help, !team, !restrictions, !time, !warp");
             }
             if(flagTimeStarted)
                 if( flagTimer != null)
@@ -423,8 +423,8 @@ public class purepubbot extends SubspaceBot
                 doHelpCmd(sender);
             else if(command.equals("!warp"))
                 doWarpCmd(sender);
-            else if(command.equals("!listships"))
-                doListShipsCmd(sender);
+            else if(command.equals("!restrictions"))
+                doRestrictionsCmd(sender);
             else if(command.equals("!team"))
                 doShowTeamCmd(sender);
 
@@ -692,9 +692,9 @@ public class purepubbot extends SubspaceBot
      *
      * @param sender is the person issuing the command.
      */
-    public void doListShipsCmd(String sender) {
+    public void doRestrictionsCmd(String sender) {
         int weight;
-        m_botAction.sendSmartPrivateMessage(sender, "Ship limitations/restrictions (if any):" );
+        m_botAction.sendSmartPrivateMessage(sender, "Ship limitations/restrictions (if any)" );
         for( int i = 1; i < 9; i++ ) {
             weight = shipWeights.get( i ).intValue();
             if( weight == 0 )
@@ -702,6 +702,7 @@ public class purepubbot extends SubspaceBot
             else if( weight > 1 )
                 m_botAction.sendSmartPrivateMessage(sender, Tools.shipName( i ) + "s limited to 1/" + weight + " of the size of a frequency (but 1 always allowed).");
         }
+        m_botAction.sendSmartPrivateMessage(sender, "Private frequencies are " + (privFreqs ? "enabled." : "disabled.") );
     }
 
 
@@ -801,7 +802,7 @@ public class purepubbot extends SubspaceBot
                 "                           with # consecutive min of flagtime).",
                 "!stoptime               -- Ends Flag Time mode.",
                 "!stricttime             -- Toggles strict mode (all players warped)",
-                "!listships              -- Lists all current ship restrictions.",
+                "!restrictions           -- Lists all current ship restrictions.",
                 "!set <ship> <#>         -- Sets <ship> to restriction <#>.",
                 "                           0=disabled; 1=any amount; other=weighted:",
                 "                           2 = 1/2 of freq can be this ship, 5 = 1/5, ...",
@@ -816,7 +817,7 @@ public class purepubbot extends SubspaceBot
                 "I restrict ships, manage private frequencies, and run Flag Time mode.",
                 "Commands:",
                 "!team                   -- Tells you which ships your team members are in.",
-                "!listships              -- Lists all current ship restrictions.",
+                "!restrictions           -- Lists all current ship restrictions.",
                 "!time                   -- Provides time remaining when Flag Time mode.",
                 "!warp                   -- Warps you into flagroom at start of next round (flag time)",
         };
