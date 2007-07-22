@@ -51,7 +51,9 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.bots.MultiUtil;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
+import twcore.core.events.TurretEvent;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
@@ -83,6 +85,11 @@ public class utilprizes extends MultiUtil
   public int MAX_PRIZE = 28;
   public int MAX_SHIP = 8;
   public int MIN_SHIP = 1;
+  
+  
+  public boolean[] turret;			//turret variables
+  public int atchpz = 13;			//attach prize
+  public int detchpz = 13;			//detach prize
 
   private Vector<TimerTask> timerTasks;
 
@@ -93,10 +100,42 @@ public class utilprizes extends MultiUtil
   public void init()
   {
     timerTasks = new Vector<TimerTask>();
+    turret = new boolean[3];
+    for (int i=0;i<3;i++)		//All turret values initialized as no
+  	  turret[i] = false;
   }
 
+  /**
+   * Requests turret event
+   */
+  
   public void requestEvents( ModuleEventRequester modEventReq ) {
+	  modEventReq.request(this, EventRequester.TURRET_EVENT );
   }
+  
+  /**
+   * handles turret events
+   */
+  
+  public void handleEvent(TurretEvent event)
+	{
+		if (turret[0] || turret[1]) // turret prizing on?
+		{
+			int tID = event.getAttacherID(); //turret ID
+			int aID = event.getAttacheeID(); //anchor ID
+
+			if(turret[0] && event.isAttaching())
+			{
+				if(turret[2])
+					prizePlayer(tID,atchpz);	//Prize attaching player
+				if (!turret[2])
+					prizePlayer(aID,atchpz);	//Prize attached player
+			}
+			if(turret[1] && !event.isAttaching())
+				prizePlayer(tID,detchpz);		//Prize detaching player
+		}
+			
+	}
     
   /**
    * Handles all message events sent to the bot.  Only private messages sent by
@@ -509,7 +548,70 @@ public class utilprizes extends MultiUtil
       m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
     }
   }
+  
+  /** prizes the turret or anchor on attach pending wither the
+   * second argument is >=1 <0 (turret) or 0 (anchor);
+   * @param sender is the user of the bot
+   * @param argString is the string containing the arguments of the command.
+   */
+  
+  public void doPrizeAttach(String sender, String argString)
+  {
+    StringTokenizer argTokens = new StringTokenizer(argString, ":");
+    String var;
 
+    try
+    {
+    	atchpz = getPrizeNumber(argTokens.nextToken(), m_opList.isHighmod(sender));
+      	var = argTokens.nextToken();
+    	if (var.equals("y"))
+    	{
+    		turret[2] = false;
+    		m_botAction.sendSmartPrivateMessage(sender,"Prizing attached players with prize: " + getPrizeName(atchpz));
+    	}
+    	else if (var.equals("x"))
+    	{	
+    		turret[2] = true;
+    		m_botAction.sendSmartPrivateMessage(sender,"Prizing attaching players with prize: " + getPrizeName(atchpz));
+    	}
+    	else 
+    		throw new IllegalArgumentException("Use X or Y only");
+      	turret[0] = true;
+    }
+    catch(NumberFormatException e)
+    {
+      m_botAction.sendSmartPrivateMessage(sender, "Please use the following syntax: !PrizeAtch <type>:<x or y>");
+    }
+    catch(Exception e)
+    {
+      m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+    }
+  }
+
+  /**
+   * Prizes a detaching player 
+   * @param sender is the user of the bot
+   * @param prizetype is a string containing the prize number.
+   */
+  
+  public void doPrizeDetach(String sender, String prizetype)
+  {
+    try
+    {
+      detchpz = getPrizeNumber(prizetype, m_opList.isHighmod(sender));
+      turret[1] = true;
+      m_botAction.sendSmartPrivateMessage(sender,"Prizing detaching players with prize: " + getPrizeName(detchpz));
+    }
+    catch(NumberFormatException e)
+    {
+      m_botAction.sendSmartPrivateMessage(sender, "Please use the following syntax: !PrizeDetch <type>");
+    }
+    catch(Exception e)
+    {
+      m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+    }
+  }
+  
   /**
    * Gets the index of the prize in the timerTask list.
    *
@@ -567,11 +669,13 @@ public class utilprizes extends MultiUtil
 
   public void doPrizesOff(String sender)
   {
-    if(timerTasks.size() == 0)
+	  if(timerTasks.size() == 0 && !(turret[0]==true || turret[1]==true)) //turret prizes on?
       m_botAction.sendSmartPrivateMessage(sender, "No prizes to clear.");
     else
     {
       cancel();
+      for (int i=0;i<3;i++) //Reset'em
+  		turret[i] = false;
       timerTasks.clear();
       m_botAction.sendSmartPrivateMessage(sender, "Prizes cleared.");
     }
@@ -669,6 +773,10 @@ public class utilprizes extends MultiUtil
       doPrizePlayer(sender, message.substring(13).trim());
     if(message.startsWith("!prizedel "))
       doPrizeDel(sender, message.substring(10).trim());
+    if(message.startsWith("!prizeatch "))
+      doPrizeAttach(sender, message.substring(11).trim());
+    if(message.startsWith("!prizedetch "))
+      doPrizeDetach(sender, message.substring(12).trim());
     if(message.equals("!prizesoff"))
       doPrizesOff(sender);
     if(message.equals("!prizelist"))
@@ -703,6 +811,8 @@ public class utilprizes extends MultiUtil
           "!Prize <type>:<interval>                  -- Grants a prize to everyone every <interval> seconds",
           "!PrizeAll <type>                          -- Grants an individual prize to everyone in the arena",
           "!PrizeAll <type>:<interval>               -- Grants a prize to everyone every <interval> seconds",
+          "!PrizeAtch <type>:<x/y>                   -- Grants a prize on all attaches to the turret(x) or anchor(y)",
+          "!PrizeDetch <type>                        -- Grants a prize on all detaches to the turret",
           "!PrizeFreq <type>:<freq>                  -- Grants a prize to freq <freq>",
           "!PrizeFreq <type>:<freq>:<interval>       -- Grants a prize to freq <freq> every <interval> seconds",
           "!PrizeShip <type>:<ship>                  -- Grants a prize to ship <ship>",
