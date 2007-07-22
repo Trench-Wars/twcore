@@ -25,6 +25,7 @@ import twcore.core.events.PlayerPosition;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.PlayerEntered;
+import twcore.core.events.ScoreUpdate;
 import twcore.core.OperatorList;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
@@ -270,6 +271,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         // req.request(EventRequester.FREQUENCY_CHANGE);
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(EventRequester.LOGGED_ON);
+        req.request(EventRequester.SCORE_UPDATE);
     }
 
 
@@ -354,8 +356,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
         } else if(msg.equals("!lagout")) {
 			KimPlayer kp = getKimPlayer(name);
-			if(kp == null)
+			if(kp == null) {
 				return;
+			}
 
 			if(!kp.m_isOut) {
 				synchronized(m_state) {
@@ -363,8 +366,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 						kp.m_timeOutside = 0;
 						kp.m_timeLastPosUpdate = System.currentTimeMillis();
 
-						m_botAction.setShip(id, Tools.Ship.JAVELIN);
+						m_botAction.setShip(id, Tools.Ship.SHARK);
 						m_botAction.setFreq(id, kp.m_freq);
+						m_botAction.setShip(id, Tools.Ship.JAVELIN);
 						m_kimTable[id] = kp;
 					} else if((m_state.isStarting() || m_state.isStartingFinal()) && m_startingLagouts.remove(name)) {
 						m_startingReturns.add(kp);
@@ -410,17 +414,6 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         		} else {
         			cmdRemove(id, msg.substring(8));
         		}
-
-        	} else if(msg.startsWith("!test ")) {
-        		String str = msg.substring(6);
-        		m_lvz.clear();
-
-        		for(int i = 0; i < str.length(); i++) {
-        			m_lvz.add(str.charAt(i) + i * 100);
-        		}
-
-        		m_lvz.buildStrings();
-        		m_lvz.turnOn();
 
         	} else if(isSmod) {
 				if(msg.startsWith("!addstaff ")) {
@@ -481,6 +474,19 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			} else {
 				m_botAction.sendSmartPrivateMessage("flibb <er>", "victim was null");
 			}
+		}
+	}
+
+
+	public void handleEvent(ScoreUpdate event) {
+		KimPlayer kp = m_kimTable[event.getPlayerID()];
+		if(kp == null) {
+			return;
+		}
+		kp.m_kills = event.getWins();
+		kp.m_deaths = event.getLosses();
+		if(kp.m_deaths >= m_deathsToSpec) {
+			removePlayerAndCheck(kp, null);
 		}
 	}
 
@@ -699,8 +705,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 							if(m_startingReturns.remove(kp)) {
 								int retID = m_botAction.getPlayerID(kp.m_name);
 								if(retID >= 0) {
-									m_botAction.setShip(retID, Tools.Ship.JAVELIN);
+									m_botAction.setShip(retID, Tools.Ship.SHARK);
 									m_botAction.setFreq(retID, kp.m_freq);
+									m_botAction.setShip(retID, Tools.Ship.JAVELIN);
 									m_kimTable[retID] = kp;
 									m_watchQueue.add(retID);
 								} else {
@@ -981,8 +988,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 							if(m_startingReturns.remove(kp)) {
 								int retID = m_botAction.getPlayerID(kp.m_name);
 								if(retID >= 0) {
-									m_botAction.setShip(retID, Tools.Ship.JAVELIN);
+									m_botAction.setShip(retID, Tools.Ship.SHARK);
 									m_botAction.setFreq(retID, kp.m_freq);
+									m_botAction.setShip(retID, Tools.Ship.JAVELIN);
 									m_kimTable[retID] = kp;
 									m_watchQueue.add(retID);
 								} else {
@@ -1130,6 +1138,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	}
 
 	private StringBuilder padHelper(StringBuilder sb, String str, int width) {
+		if(str.length() > width) {
+			return sb.append(str.substring(0, width));
+		}
 		int pad = width - str.length();
 		for(int i = 0; i < pad; i++) {
 			sb.append(' ');
@@ -1137,6 +1148,12 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		return sb.append(str);
 	}
 	private StringBuilder padHelper(StringBuilder sb, int num, int width) {
+		if(num >= (int)Math.pow(10, width)) {
+			for(int i = 0; i < width; i++) {
+				sb.append('0');
+			}
+			return sb;
+		}
 		int pad = width - 1;
 		for(int i = num / 10; i != 0; i /= 10) { pad--; }
 		for(int i = 0; i < pad; i++) {
@@ -1191,83 +1208,23 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	}
 
 	private void refreshScoreboard(KimPlayer mvp, KimPlayer winner) {
-		String name;
-		int pos = 0;
-		int ch;
-		int n;
-
 		m_lvz.clear();
+		StringBuilder sb = new StringBuilder(30);
 
-		//mvp name
-		name = mvp.m_name;
-		for(int i = 0; i < 10; i++) {
-			if(i < name.length()) {
-				ch = name.charAt(i) & 0xff;
-				if(ch != ' ') {
-					m_lvz.add(ch + pos);
-				}
+		padHelper(sb, mvp.m_name, 10);
+		padHelper(sb, mvp.m_kills, 2);
+		padHelper(sb, mvp.m_deaths, 2);
+		padHelper(sb, winner.m_name, 10);
+		padHelper(sb, winner.m_kills, 2);
+		padHelper(sb, winner.m_deaths, 2);
+
+		int ch;
+		for(int i = 0; i < sb.length(); i++) {
+			ch = (int)sb.charAt(i) & 0xff;
+			if(ch != 32) {
+				m_lvz.add(ch + i * 100);
 			}
-			pos += 100;
 		}
-
-		//mvp wins
-		n = mvp.m_kills;
-		if(n < 99) {
-			if(n > 9) {
-				m_lvz.add('0' + n / 10 + pos);
-			}
-			pos += 100;
-			m_lvz.add('0' + n % 10 + pos);
-		} else {
-			m_lvz.add('0' + pos);
-			pos += 100;
-			m_lvz.add('0' + pos);
-		}
-		pos += 100;
-
-		//mvp losses
-		n = mvp.m_deaths;
-		if(n > 9) {
-			m_lvz.add('0' + n / 10 + pos);
-		}
-		pos += 100;
-		m_lvz.add('0' + n % 10 + pos);
-		pos += 100;
-
-		//winner name
-		name = winner.m_name;
-		for(int i = 0; i < 10; i++) {
-			if(i < name.length()) {
-				ch = name.charAt(i) & 0xff;
-				if(ch != ' ') {
-					m_lvz.add(ch + pos);
-				}
-			}
-			pos += 100;
-		}
-
-		//winner wins
-		n = winner.m_kills;
-		if(n < 99) {
-			if(n > 9) {
-				m_lvz.add('0' + n / 10 + pos);
-			}
-			pos += 100;
-			m_lvz.add('0' + n % 10 + pos);
-		} else {
-			m_lvz.add('0' + pos);
-			pos += 100;
-			m_lvz.add('0' + pos);
-		}
-		pos += 100;
-
-		//winner losses
-		n = winner.m_deaths;
-		if(n > 9) {
-			m_lvz.add('0' + n / 10 + pos);
-		}
-		pos += 100;
-		m_lvz.add('0' + n % 10 + pos);
 
 		m_lvz.buildStrings();
 		m_lvz.turnOn();
