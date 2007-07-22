@@ -23,19 +23,20 @@ import java.util.StringTokenizer;
  * 
  * This is the 'simple' ship changing module I tasked myself to do.
  * As you can see, it's not so simple as I choose to do ship 'groups'
- * where after x amount of deaths, you were downgraded to another class
- * of ships. Players start off with ships of competitive firepower
+ * where after x amount of deaths, you were down-graded to another class
+ * of ships. Players start off with ships of competitive fire=power
  * but after x amount of deaths they are shunted over to their
  * reserve ships which after y deaths (or not if set to infinite) would
  * be spec'd. These are ship groups meaning the players can change ships
- * of their current class if they feel a change in play style.
+ * of their current class if they feel a change in play style while still
+ * playing in a pseudo-locked game.
  * 
  * This is a Util, and there for is highly customizable to add spice
  * to the library of TW events; provided the hosts have the intellect
  * and creativity to use it.
  * 
  * 
- * @author Ayan / Ice-demon
+ * @author Ayano / Ice-demon
  *
  */
 public class utilshipc extends MultiUtil
@@ -131,6 +132,7 @@ public class utilshipc extends MultiUtil
 			m_botAction.sendSmartPrivateMessage(sender,"Game in progress, !Stop then change definitions");
 			return;
 		}
+		
 		StringTokenizer argTokens = getArgTokens(argString);
 	    int numArgs = argTokens.countTokens();
 	    String mainstr = ("primary");
@@ -181,6 +183,7 @@ public class utilshipc extends MultiUtil
 			m_botAction.sendSmartPrivateMessage(sender,"Game in progress, !Stop then change definitions");
 			return;
 		}
+		
 		String mainstr = ("primary");
 	    if(!main)
 	    	mainstr = ("reserve");
@@ -217,21 +220,46 @@ public class utilshipc extends MultiUtil
 	 * @param message is the sent death message.
 	 */
 	
-	public void doDedMsg(String sender, String message)	{
-		deathmsg=message;
-		m_botAction.sendSmartPrivateMessage(sender, "The current spec message is now (player) " + message + " Kills (#) Deaths (#)");	
+	public void doDedMsg(String sender, String argString)	{
+		StringTokenizer argTokens = getArgTokens(argString);
+	    int numArgs = argTokens.countTokens();
+	    
+	    try	{
+	    	switch(numArgs){
+		    case 1:
+		    	deathmsg=argString;	
+				break;
+		    case 2:
+		    	deathmsg=argTokens.nextToken();
+		    	int sound = Integer.parseInt(argTokens.nextToken());
+		    	deathmsg+= "%" + sound;
+		    }
+		    m_botAction.sendSmartPrivateMessage(sender, "The current spec message is now: (player) " + argString + " (#)Kills (#)Deaths");
+	    }
+	    catch(NumberFormatException e)	{
+		      m_botAction.sendSmartPrivateMessage(sender, "Please use the following syntax: !Setdedmsg <message>:<sound>");
+		    }
+		catch(Exception e)	{
+		      m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+		}
 	}
 	
 	/**
 	 * Sets the desired number of frequencies where the incoming string
 	 * contains the desired number of frequencies which is a non-zero, 
-	 * non-negative value.
+	 * non-negative value.If a game is in progress it cannot be changed
+	 * unless !stop is issued.
 	 * 
 	 * @param sender is the user of the bot.
 	 * @param value is the number of frequencies to be used.
 	 */
 	
 	public void doSetFreqs(String sender, String value)	{
+		if(validstart)	{ 
+			m_botAction.sendSmartPrivateMessage(sender,"Game in progress, !Stop then change definitions");
+			return;
+		}
+		
 		try	{
 			int freqs = Integer.parseInt(value);
 			if(freqs <= 0)
@@ -323,6 +351,15 @@ public class utilshipc extends MultiUtil
 		latelives=1;		numfreqs=2;
 		deathmsg = ("is out with");	Late=true;
 		Exmpt.clear();		if(!playerMap.isEmpty()) playerMap.clear();
+		
+		Iterator i = m_botAction.getPlayerIterator();
+        if( i == null ) return;
+        while( i.hasNext() )	{
+            Player plyr = (Player)i.next();
+            if (!IsValidShip(plyr.getShipType()))
+            		m_botAction.spec(plyr.getPlayerID());
+        }
+		
 		m_botAction.sendSmartPrivateMessage(sender, "All settings returned to default");
 		m_botAction.sendArenaMessage("Game  Stopped, if you're still frozen in spec, PM me !unfrez -" + m_botAction.getBotName(), 1);
 	}
@@ -406,7 +443,7 @@ public class utilshipc extends MultiUtil
     
     /**
      * Maintains the separation between primary and reserve ships in this
-     * pseudo-locked game. In a player is spec'd, send them the lagout message.
+     * pseudo-locked game. In a player is spec'd, send them the lag-out message.
      */
 	
 	public void handleEvent( FrequencyShipChange event )	{
@@ -480,7 +517,7 @@ public class utilshipc extends MultiUtil
 	    	PlayerProfile plyrP;
 	        plyrP = playerMap.get( plyrName );
 	        int deaths = plyrP.getDeaths();
-	        m_botAction.sendPrivateMessage(plyrName, "You got killed and have " + (deaths+1) + " deaths");
+	        //Used for debug m_botAction.sendPrivateMessage(plyrName, "You got killed and have " + (deaths+1) + " deaths");
 	        if(deaths+1 == mainlives)	{
 	        	plyrP.addDeath();
 	        	m_botAction.sendPrivateMessage(plyrName, "You've been downgraded and may only now use the following ship(s): " + Bclass.toString());
@@ -494,7 +531,7 @@ public class utilshipc extends MultiUtil
 	        else	{
 	        	m_botAction.sendPrivateMessage(plyrName, "Out of lives!");
 	        	m_botAction.spec(plyrName);
-	        	m_botAction.sendArenaMessage( plyrName + " " + deathmsg + " Kills ("  + plyr.getWins() + ") Deaths (" + plyr.getLosses() + ")");
+	        	m_botAction.sendArenaMessage( plyrName + " " + deathmsg  + " (" + plyr.getWins()+ ") Kills ("  + plyr.getLosses() + ") Deaths");
 	        }
 		}
     	
@@ -591,21 +628,13 @@ public class utilshipc extends MultiUtil
 			for(int i=0;i<numfreqs-1;i++)
 			{
 				Iterator iterator = m_botAction.getFreqIDIterator(i);
-				while(iterator.hasNext())	{
-					count++; iterator.next();
-				}
-				if(count<least)
-					least=count;lowfreq=i;
+				while(iterator.hasNext()){count++; iterator.next();}
+				if(count<least){least=count;lowfreq=i;}
 				count=0;
 			}
 			return lowfreq;
 		}
-		catch(NumberFormatException e)	{
-	        return 0;
-	      }
-	     catch(Exception e)	{
-	        return 0;
-	      }
+	     catch(Exception e)	{return 0;}
 	}
     
     /**
@@ -690,7 +719,6 @@ public class utilshipc extends MultiUtil
 			}
             int newship = randomship(0);
             int freq = GetLowest();
-            m_botAction.sendPublicMessage("huh?");
             m_botAction.spec(name);
             m_botAction.setShip( name, newship );
             m_botAction.setFreq( name, freq );
@@ -708,6 +736,7 @@ public class utilshipc extends MultiUtil
             	m_botAction.setShip( name, randomship(1) );
             else if(deaths+1 >= reservelives + mainlives)	{
             	m_botAction.sendPrivateMessage(name, "Sorry, but you're already out");
+            	m_botAction.spec(name);
             	return;
             }
             else if(deaths+1 < mainlives )
@@ -718,6 +747,11 @@ public class utilshipc extends MultiUtil
             m_botAction.setFreq( name, tempP.getFreq() );
         }
 	}
+	
+	/**
+	 * PMs the player with *spec to attempt to get them unlocked.
+	 * @param name
+	 */
 	
 	public void doUnfrez(String name)	{
 		m_botAction.spec(name);
@@ -730,20 +764,20 @@ public class utilshipc extends MultiUtil
 	
 	public String[] getHelpMessages()	{
 	      String[] message = {
-	          "!SetMainShps <ship#1>:<Ship#2>..ect         -- List of main ships (up to 7)",
-	          "!SetReserShps <ship#1>:<Ship#2>..ect        -- List of reserve ships (up to 7)",
+	          "!SetMainShps <ship#1>:<Ship#2>..ect         -- List of main ships.",
+	          "!SetReserShps <ship#1>:<Ship#2>..ect        -- List of reserve ships.",
 	          "!SetMainDths <#ofDeaths>                    -- Number of deaths before shunted to reserve.",
-	          "!SetReserDths <#ofDeaths>                   -- Number of deaths on reserve before spec'd (0 = infinite)",
-	          "!SetDedMsg <message>                        -- Arena Message to be displayed when a player is out of lives",
-	          "                                               formatting is: (name)(your message)(kills)(deaths) no sound",
-	          "!SetFreqs <positive#>                       -- Set the number freqs",
+	          "!SetReserDths <#ofDeaths>                   -- Number of deaths on reserve before spec'd. (0 = infinite)",
+	          "!SetDedMsg <message>:<sound#>               -- Arena Message to be displayed when a player is out of lives;",
+	          "                                               formatting is: (name)(your message)(kills)(deaths)",
+	          "!SetFreqs <positive#>                       -- Set the number freqs.",
 	          "!SetExcepts <name1>:<name2>..ect            -- Set players to be exempt from ship changes but are still",
-	          "                                               freq locked upon start (case sensitive)",
-	          "!SetLate <Lives>                            -- Set the lives late comers get while lates are on",
-	          "!Late                                       -- Turns lates on/off (default is on)",
-	          "!Stop                                       -- Resets to default values and stops the game if in progess",
-	          "!Confirm                                    -- Lists the curret definitions",
-	          "!Start                                      -- Loads up definitions and starts",
+	          "                                               freq locked upon start.",
+	          "!SetLate <Lives>                            -- Set the lives late comers get while lates are on.",
+	          "!Late                                       -- Turns lates on/off. (default is on)",
+	          "!Stop                                       -- Resets to default values and stops the game if in progess.",
+	          "!Confirm                                    -- Lists the curret definitions.",
+	          "!Start                                      -- Loads up definitions and starts.",
 	      };
 	      return message;
 	  }
