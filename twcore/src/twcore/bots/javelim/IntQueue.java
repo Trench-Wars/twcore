@@ -1,5 +1,5 @@
 /**
- * @(#)WatchQueue.java
+ * @(#)IntQueue.java
  *
  *
  * @author
