@@ -85,152 +85,65 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		" !accesslist       Display access list."
 	};
 
-    private final static int[] m_safeCoords = {
-    	78 | (344 << 16),
-		806 | (344 << 16),
-		260 | (344 << 16),
-		624 | (344 << 16),
-		77 | (452 << 16),
-		805 | (452 << 16),
-		259 | (452 << 16),
-		623 | (452 << 16),
-		218 | (344 << 16),
-		946 | (344 << 16),
-		400 | (344 << 16),
-		764 | (344 << 16),
-		219 | (452 << 16),
-		947 | (452 << 16),
-		401 | (452 << 16),
-		765 | (452 << 16),
-		109 | (330 << 16),
-		837 | (330 << 16),
-		291 | (330 << 16),
-		655 | (330 << 16),
-		122 | (437 << 16),
-		850 | (437 << 16),
-		304 | (437 << 16),
-		668 | (437 << 16),
-		187 | (330 << 16),
-		915 | (330 << 16),
-		369 | (330 << 16),
-		733 | (330 << 16),
-		173 | (437 << 16),
-		901 | (437 << 16),
-		355 | (437 << 16),
-		719 | (437 << 16),
-		148 | (486 << 16),
-		876 | (486 << 16),
-		330 | (486 << 16),
-		694 | (486 << 16),
-		148 | (331 << 16),
-		876 | (331 << 16),
-		330 | (331 << 16),
-		694 | (331 << 16),
-		67 | (385 << 16),
-		795 | (385 << 16),
-		249 | (385 << 16),
-		613 | (385 << 16),
-		229 | (385 << 16),
-		957 | (385 << 16),
-		411 | (385 << 16),
-		775 | (385 << 16),
-		89 | (416 << 16),
-		817 | (416 << 16),
-		271 | (416 << 16),
-		635 | (416 << 16),
-		207 | (416 << 16),
-		935 | (416 << 16),
-		389 | (416 << 16),
-		753 | (416 << 16),
-		148 | (493 << 16),
-		876 | (493 << 16),
-		330 | (493 << 16),
-		694 | (493 << 16),
-		148 | (450 << 16),
-		876 | (450 << 16),
-		330 | (450 << 16),
-		694 | (450 << 16)
+	//formula for getting starting warp coords
+	//x = m_safeCoords[freq / 2] + m_addToX[freq % 4];
+	//y = m_safeCoords[freq / 2 + 1];
+	private final static short[] m_addToX = {
+		0, 182, 546, 728
+	};
+
+    private final static short[] m_safeCoords = {
+    	 78, 344, //1
+    	219, 452, //2
+    	218, 344, //3
+    	 77, 452, //4
+    	148, 331, //5
+    	148, 450, //6
+    	122, 437, //7
+    	173, 437, //8
+    	109, 330, //9
+    	187, 330, //10
+    	 67, 385, //11
+    	229, 385, //12
+    	 89, 416, //13
+    	207, 416, //14
+    	148, 486, //15
+    	148, 493  //16
     };
 
     private final static int[] m_goCoords = {
-    	78 | (348 << 16),
-		806 | (348 << 16),
-		260 | (348 << 16),
-		624 | (348 << 16),
-		77 | (448 << 16),
-		805 | (448 << 16),
-		259 | (448 << 16),
-		623 | (448 << 16),
-		218 | (348 << 16),
-		946 | (348 << 16),
-		400 | (348 << 16),
-		764 | (348 << 16),
-		219 | (448 << 16),
-		947 | (448 << 16),
-		401 | (448 << 16),
-		765 | (448 << 16),
-		109 | (334 << 16),
-		837 | (334 << 16),
-		291 | (334 << 16),
-		655 | (334 << 16),
-		122 | (433 << 16),
-		450 | (433 << 16),
-		304 | (433 << 16),
-		668 | (433 << 16),
-		187 | (334 << 16),
-		915 | (334 << 16),
-		369 | (334 << 16),
-		733 | (334 << 16),
-		173 | (433 << 16),
-		901 | (433 << 16),
-		355 | (433 << 16),
-		719 | (433 << 16),
-		148 | (482 << 16),
-		876 | (482 << 16),
-		330 | (482 << 16),
-		694 | (482 << 16),
-		148 | (335 << 16),
-		876 | (335 << 16),
-		330 | (335 << 16),
-		694 | (335 << 16),
-		71 | (385 << 16),
-		799 | (385 << 16),
-		253 | (385 << 16),
-		617 | (385 << 16),
-		225 | (385 << 16),
-		953 | (385 << 16),
-		407 | (385 << 16),
-		771 | (385 << 16),
-		93 | (416 << 16),
-		821 | (416 << 16),
-		275 | (416 << 16),
-		639 | (416 << 16),
-		203 | (416 << 16),
-		931 | (416 << 16),
-		385 | (416 << 16),
-		749 | (416 << 16),
-		148 | (497 << 16),
-		876 | (497 << 16),
-		330 | (497 << 16),
-		694 | (497 << 16),
-		148 | (446 << 16),
-		876 | (446 << 16),
-		330 | (446 << 16),
-		694 | (446 << 16)
+    	 78, 348, //1
+    	219, 448, //2
+    	218, 348, //3
+    	 77, 448, //4
+    	148, 335, //5
+    	148, 446, //6
+    	122, 433, //7
+    	173, 433, //8
+    	109, 334, //9
+    	187, 334, //10
+    	 71, 385, //11
+    	225, 385, //12
+    	 93, 416, //13
+    	203, 416, //14
+    	148, 482, //15
+    	148, 497  //16
     };
 
-    private final static int[] m_finalSafeCoords = {
-    	431 | (385 << 16),
-    	512 | (331 << 16),
-    	512 | (450 << 16),
-    	593 | (385 << 16)
+	//x = m_finalSafeCoords[freq % 4 * 2];
+	//y = m_finalSafeCoords[freq % 4 * 2 + 1];
+    private final static short[] m_finalSafeCoords = {
+    	431, 385,
+    	512, 331,
+    	512, 450,
+    	593, 385
     };
 
     private final static int[] m_finalGoCoords = {
-    	435 | (385 << 16),
-    	512 | (335 << 16),
-    	512 | (446 << 16),
-    	589 | (385 << 16)
+    	435, 385,
+    	512, 335,
+    	512, 446,
+    	589, 385
     };
 
 
@@ -352,7 +265,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 				m_botAction.specWithoutLock(id);
 
         } else if(msg.equals("!about")) {
-        	m_botAction.sendPrivateMessage(id, "KimBot! by flibb <ER>", 7);
+        	m_botAction.sendPrivateMessage(id, "KimBot! 0.3 by flibb <ER>", 7);
 
         } else if(msg.equals("!lagout")) {
 			KimPlayer kp = getKimPlayer(name);
@@ -370,6 +283,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 						m_botAction.setFreq(id, kp.m_freq);
 						m_botAction.setShip(id, Tools.Ship.JAVELIN);
 						m_kimTable[id] = kp;
+						m_watchQueue.add(id);
 					} else if((m_state.isStarting() || m_state.isStartingFinal()) && m_startingLagouts.remove(name)) {
 						m_startingReturns.add(kp);
 						m_botAction.sendPrivateMessage(id, "You will be put in at the start of the game.");
@@ -414,6 +328,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         		} else {
         			cmdRemove(id, msg.substring(8));
         		}
+
+        	} else if(msg.startsWith("!test ")) {
+        		m_botAction.sendArenaMessage(msg.substring(6));
 
         	} else if(isSmod) {
 				if(msg.startsWith("!addstaff ")) {
@@ -498,13 +415,14 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			KimPlayer kp = m_kimTable[id];
 			m_watchQueue.sendToBack(id);
 			if(event.getYLocation() > MAP_DONOTCROSSLINE_Y) {
-				kp.m_timeOutside += Math.max(3000, curTime - kp.m_timeLastPosUpdate);
+				kp.m_timeOutside += Math.min(3000, curTime - kp.m_timeLastPosUpdate);
 				if(kp.m_timeOutside > OUTSIDE_TIME_LIMIT) {
 					if(++kp.m_deaths >= m_deathsToSpec) {
-						removePlayerAndCheck(kp, "outside of base");
+						removePlayerAndCheck(kp, "too long outside base");
+						return;
 					} else {
 						kp.m_timeOutside = 0;
-						m_botAction.sendPrivateMessage(id, "+1 death (time outside base exceeded limit)");
+						m_botAction.sendPrivateMessage(id, "+1 death (too long outside base)");
 					}
 				}
 			}
@@ -662,8 +580,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 					} else {
 						m_botAction.setShip(id, Tools.Ship.JAVELIN);
 						m_botAction.setFreq(id, freq);
-						int coord = m_safeCoords[freq];
-						m_botAction.warpTo(id, coord & 0xffff, coord >> 16);
+						m_botAction.warpTo(id, m_safeCoords[freq >> 1] + m_addToX[freq % 4], m_safeCoords[(freq >> 1) + 1]);
 						KimPlayer kp = new KimPlayer(name, freq);
 						m_groups.get(freq % 4).put(name, kp);
 						m_playerCount[freq % 4]++;
@@ -679,7 +596,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 					public void run() {
 						m_botAction.spectatePlayer(m_watchQueue.getAndSendToBack());
 					}
-				}, 0, 2000);
+				}, 5000, 2000);
 			}
 		}, 25000);
 
@@ -715,8 +632,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 									continue;
 								}
 							}
-							int coord = m_goCoords[kp.m_freq];
-							m_botAction.warpTo(kp.m_name, coord & 0xffff, coord >> 16);
+							m_botAction.warpTo(kp.m_name, m_goCoords[kp.m_freq >> 1] + m_addToX[kp.m_freq % 4], m_goCoords[(kp.m_freq >> 1) + 1]);
 						}
 					}
 				}
@@ -903,7 +819,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			}
 		}
 		if(survivorCount == 0) {
-			m_botAction.sendArenaMessage("No survivors?! o_O", 24);
+			m_botAction.sendArenaMessage("No survivors?! \\( _o)/", 24);
 			endGame();
 			return;
 		} else if(survivorCount == 1) {
@@ -940,9 +856,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 						if(m_startingReturns.remove(kp)) {
 							m_botAction.setShip(kp.m_name, Tools.Ship.JAVELIN);
 							m_botAction.setFreq(kp.m_name, kp.m_freq);
-							m_botAction.sendUnfilteredPrivateMessage(kp.m_name, "*prize #-" + Tools.Prize.FULLCHARGE);
+							m_botAction.sendUnfilteredPrivateMessage(kp.m_name, "*prize #-13");
 						}
-						m_botAction.warpTo(kp.m_name, m_finalSafeCoords[i] & 0xffff, m_finalSafeCoords[i] >> 16);
+						m_botAction.warpTo(kp.m_name, m_finalSafeCoords[i << 1], m_finalSafeCoords[(i << 1) + 1]);
 					}
 				}
 
@@ -1000,7 +916,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 							}
 							kp.m_timeOutside = 0;
 							kp.m_timeLastPosUpdate = curTime;
-							m_botAction.warpTo(kp.m_name, m_finalGoCoords[i] & 0xffff, m_finalGoCoords[i] >> 16);
+							m_botAction.warpTo(kp.m_name, m_finalGoCoords[i << 1], m_finalGoCoords[(i << 1) + 1]);
 						}
 					}
 					m_state.setState(State.MIDGAME_FINAL);
@@ -1233,7 +1149,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 	private class PrizeNegativeFullCharge extends TimerTask {
 		public void run() {
-			m_botAction.prizeAll(-Tools.Prize.FULLCHARGE);
+			m_botAction.sendUnfilteredPublicMessage("*prize #-13");
 		}
 	}
 

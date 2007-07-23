@@ -34,6 +34,7 @@ final class IntQueue {
     	QItem leftItem = m_tail.left;
     	QItem newItem = new QItem(id, leftItem, m_tail);
     	leftItem.right = m_tail.left = newItem;
+    	m_table[id] = newItem;
     	m_size++;
     }
 
@@ -55,6 +56,9 @@ final class IntQueue {
 
     synchronized void sendToBack(int id) {
     	QItem item = m_table[id];
+    	if(item == null) {
+    		return;
+    	}
     	item.left.right = item.right;
     	item.right.left = item.left;
 
