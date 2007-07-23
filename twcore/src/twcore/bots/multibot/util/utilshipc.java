@@ -7,7 +7,6 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
-import twcore.core.events.PlayerLeft;
 import twcore.core.stats.PlayerProfile;
 import twcore.core.util.ModuleEventRequester;
 
