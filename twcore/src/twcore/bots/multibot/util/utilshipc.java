@@ -509,7 +509,6 @@ public class utilshipc extends MultiUtil
         		}
         	}
         	else	{
-        		m_botAction.sendPublicMessage("you're a B");
         		if(Bclass.contains(shipnumber))	{
         			if(reservelives == 0 || deaths < reservelives + mainlives)	// Infinite reserve is on or do you still have lives and are in the correct ship? ok
         				return;
