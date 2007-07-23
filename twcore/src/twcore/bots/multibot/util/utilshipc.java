@@ -7,6 +7,7 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
 import twcore.core.stats.PlayerProfile;
 import twcore.core.util.ModuleEventRequester;
 
@@ -35,6 +36,7 @@ import java.util.StringTokenizer;
  * to the library of TW events; provided the hosts have the intellect
  * and creativity to use it.
  * 
+ * Refrences: zombies, pubbot, prodem
  * 
  * @author Ayano / Ice-demon
  *
@@ -46,15 +48,18 @@ public class utilshipc extends MultiUtil
 	ArrayList Aclass;
 	ArrayList Bclass;
 	ArrayList Exmpt;
+	ArrayList Spec;
 	int mainlives=2;
 	int reservelives=2;
 	int latelives=1;
 	int numfreqs=2;
 	String deathmsg = "is out with";
+	String bclassmsg = null;
 	boolean validstart = false;
 	boolean Late = true;
 	Random rand = new Random();
 	private HashMap<String, PlayerProfile> playerMap;
+	TimerTask rdy;
 
 	/**
 	 * initialize variables
@@ -63,12 +68,10 @@ public class utilshipc extends MultiUtil
 	public void init()	{
 	Integer x = new Integer(1);
 	Integer y = new Integer(3);
-	ArrayList prim = new ArrayList();
-	ArrayList reser = new ArrayList();
-	ArrayList Exmpts = new ArrayList();
-	Aclass = prim;
-	Bclass = reser;
-	Exmpt = Exmpts;
+	ArrayList prim = new ArrayList();Aclass = prim;
+	ArrayList reser = new ArrayList();Bclass = reser;
+	ArrayList exmpts = new ArrayList();Exmpt = exmpts;
+	ArrayList specs = new ArrayList();Spec = specs;
 	Aclass.add(x);
 	Bclass.add(y);
 	playerMap = new HashMap<String, PlayerProfile>();
@@ -81,6 +84,7 @@ public class utilshipc extends MultiUtil
 	public void requestEvents(ModuleEventRequester events)	{
 		events.request(this, EventRequester.PLAYER_DEATH);
 		events.request(this, EventRequester.PLAYER_ENTERED);
+		events.request(this, EventRequester.PLAYER_LEFT );
 		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 		events.request(this, EventRequester.FREQUENCY_CHANGE );
 	}
@@ -107,9 +111,9 @@ public class utilshipc extends MultiUtil
 		String playerName = m_botAction.getPlayerName(event.getPlayerID());
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE)	{
 			if(m_opList.isER(playerName))
-		        handleCommand(playerName, event.getMessage().toLowerCase());
+		        handleCommand(playerName, event.getMessage());
 			else
-				handlePlayerCommand(playerName, event.getMessage());
+				handlePlayerCommand(playerName, event.getMessage().toLowerCase());
 		}
 	  }
 
@@ -214,34 +218,35 @@ public class utilshipc extends MultiUtil
 	}
 
 	/**
+	 * Creates the arena message for when a ship is shunted to reserve.
+	 * the message can be erased to not display at all if '`' is
+	 * sent.
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param message is the reserve message.
+	 */
+	
+	public void doBclassMsg(String sender, String message)	{    
+    	if(message.equals("~")) {
+    		bclassmsg = null;
+    		m_botAction.sendPrivateMessage(sender, "Reserve message removed");
+    	}
+    	else	{
+    		bclassmsg=message;	
+        	m_botAction.sendPrivateMessage(sender, "Your current reserve message is: (player) " + message);
+    	}
+    }
+	
+	/**
 	 * Assigns a death message.
 	 * 
 	 * @param sender is the user of the bot.
 	 * @param message is the sent death message.
 	 */
 	
-	public void doDedMsg(String sender, String argString)	{
-		StringTokenizer argTokens = getArgTokens(argString);
-	    int numArgs = argTokens.countTokens();
-	    
-	    try	{
-	    	switch(numArgs){
-		    case 1:
-		    	deathmsg=argString;	
-				break;
-		    case 2:
-		    	deathmsg=argTokens.nextToken();
-		    	int sound = Integer.parseInt(argTokens.nextToken());
-		    	deathmsg+= "%" + sound;
-		    }
-		    m_botAction.sendSmartPrivateMessage(sender, "The current spec message is now: (player) " + argString + " (#)Kills (#)Deaths");
-	    }
-	    catch(NumberFormatException e)	{
-		      m_botAction.sendSmartPrivateMessage(sender, "Please use the following syntax: !Setdedmsg <message>:<sound>");
-		    }
-		catch(Exception e)	{
-		      m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
-		}
+	public void doDedMsg(String sender, String message)	{    
+		    	deathmsg=message;	
+		    	m_botAction.sendPrivateMessage(sender, "Your current spec message is: (player) " + message + " Kills (#) Deaths (#)");
 	}
 	
 	/**
@@ -274,6 +279,14 @@ public class utilshipc extends MultiUtil
 	        m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
 	      }
 	}
+	
+	/**
+	 * Generates a list of players who are exempt from ship 
+	 * classification.
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param argString is the String containing the players to be exempt.
+	 */
 	
 	public void doSetExcepts(String sender, String argString)	{
 		StringTokenizer argTokens = getArgTokens(argString);
@@ -333,6 +346,17 @@ public class utilshipc extends MultiUtil
 			m_botAction.sendArenaMessage("Lates turned off -" + sender,25);
 	}
 	
+	public void doRemove(String sender,String name)	{
+		if(IsValidPlayer(name))	{
+			PlayerProfile plyrP = playerMap.get(name);
+			for(int i=0 ;i< mainlives + reservelives ; i++)
+				plyrP.addDeath();
+			m_botAction.sendSmartPrivateMessage(sender,name + " has been removed/shunted ");
+		}
+		else
+			m_botAction.sendSmartPrivateMessage(sender,name + " is not a valid name ");
+	}
+	
 	/**
 	 * Resets the definitions, clears the ArrayLists, and stops the game
 	 * if in progress.
@@ -340,7 +364,12 @@ public class utilshipc extends MultiUtil
 	 * @param sender is the user of the bot.
 	 */
 	
-	public void doReset(String sender)	{
+	public void doStop(String sender)	{
+		if(!validstart)	{ 
+			m_botAction.sendSmartPrivateMessage(sender,"No game in progress");
+			return;
+		}
+		
 		Integer x = new Integer(1);
 		Integer y = new Integer(3);
 		validstart=false;
@@ -349,19 +378,12 @@ public class utilshipc extends MultiUtil
 		Bclass.clear();		Bclass.add(y);
 		mainlives=2;		reservelives=2;
 		latelives=1;		numfreqs=2;
-		deathmsg = ("is out with");	Late=true;
+		Late=true;			Spec.clear();
 		Exmpt.clear();		if(!playerMap.isEmpty()) playerMap.clear();
-		
-		Iterator i = m_botAction.getPlayerIterator();
-        if( i == null ) return;
-        while( i.hasNext() )	{
-            Player plyr = (Player)i.next();
-            if (!IsValidShip(plyr.getShipType()))
-            		m_botAction.spec(plyr.getPlayerID());
-        }
+		deathmsg = "is out with";	bclassmsg = null;	
 		
 		m_botAction.sendSmartPrivateMessage(sender, "All settings returned to default");
-		m_botAction.sendArenaMessage("Game  Stopped, if you're still frozen in spec, PM me !unfrez -" + m_botAction.getBotName(), 1);
+		m_botAction.sendArenaMessage("Game stopped", 13);
 	}
 	
 	/**
@@ -378,7 +400,9 @@ public class utilshipc extends MultiUtil
 		strshp.append("> || Primary deaths: " + mainlives + " Reserve Deaths: " + reservelives + " Late lives: " + latelives + " Freqs: " + numfreqs + " ||");
 		m_botAction.sendSmartPrivateMessage(sender,strshp.toString());
 		m_botAction.sendSmartPrivateMessage(sender,"Players currently exempt are: " + Exmpt.toString());
-		m_botAction.sendSmartPrivateMessage(sender,"Your current spec message is: (player) " + deathmsg + " Kills (#) Deaths (#)");		
+		m_botAction.sendSmartPrivateMessage(sender,"Your current spec message is: (player) " + deathmsg + " Kills (#) Deaths (#)");
+		if(bclassmsg != null)
+			m_botAction.sendSmartPrivateMessage(sender,"Your current reserve message is: (player) " + bclassmsg);
 	}
 	
 	/**
@@ -396,9 +420,7 @@ public class utilshipc extends MultiUtil
 				m_botAction.sendSmartPrivateMessage(sender, "Game already in progress");
 				return;		
 			}
-			else if(Bclass.size() != 0 && Aclass.size() != 0)
-				validstart=true;
-			else	{
+			else if(Bclass.size() == 0 || Aclass.size() == 0)	{
 				m_botAction.sendSmartPrivateMessage(sender, "Double check your definitions, a parameter is empty");
 				return;	
 			}		
@@ -410,22 +432,35 @@ public class utilshipc extends MultiUtil
 			reservestr = reservelives + " backup lives";
 		
 		m_botAction.toggleLocked();
-        m_botAction.scoreResetAll();
-        m_botAction.createNumberOfTeams(numfreqs);
-		Iterator i = m_botAction.getPlayerIterator();
-        if( i == null ) return;
-        while( i.hasNext() )	{
-            Player plyr = (Player)i.next();
-            String name = plyr.getPlayerName();
-            if (IsValidShip(plyr.getShipType()))
-            	playerMap.put( name, new PlayerProfile( name, randomship(0), plyr.getFrequency() ) );
-            else
-            	m_botAction.spec(name);
-        }
-        m_botAction.toggleLocked();
-        m_botAction.sendSmartPrivateMessage(sender,"Game Started");
-        m_botAction.sendArenaMessage("Game set to " + mainlives + " main lives-(Ships: " + Aclass.toString()+ ") and " + reservestr + "-(Ships: " + Bclass.toString() + ")", 1);
-        m_botAction.sendTeamMessage("Late? PM me !lemmein to get in -" + m_botAction.getBotName(), 10);
+		m_botAction.createNumberOfTeams(numfreqs);
+        
+        rdy = new TimerTask() {
+            public void run() {
+            	m_botAction.sendArenaMessage("Game Started!",2);
+            	m_botAction.scoreResetAll();
+        		Iterator i = m_botAction.getPlayerIterator();
+                if( i == null ) return;
+                while( i.hasNext() )	{
+                    Player plyr = (Player)i.next();
+                    String name = plyr.getPlayerName();
+                    int ship = randomship(0);
+                    if (plyr.isPlaying())	{
+                    	playerMap.put( name, new PlayerProfile( name, ship , plyr.getFrequency() ) );
+                    	m_botAction.setShip(name, ship);
+                    }
+                    else
+                    	AddSpec(name);
+                }
+                m_botAction.sendPublicMacro("*prize #7");
+                m_botAction.toggleLocked();validstart=true;
+                m_botAction.sendTeamMessage("Late? PM me !lemmein to get in -" + m_botAction.getBotName(), 10);
+             }
+
+        };
+        
+        m_botAction.scheduleTask(rdy, 5000);
+        m_botAction.sendArenaMessage("Game set to " + mainlives + " main lives-(Ships: " + Aclass.toString()+ ") and " + reservestr + "-(Ships: " + Bclass.toString() + ")");
+        m_botAction.sendArenaMessage("Game starts in 5 seconds",1);
 	}
 	
     /**
@@ -436,11 +471,12 @@ public class utilshipc extends MultiUtil
 	public void handleEvent( PlayerEntered event ) {
         if(validstart)	{
         	String plyrName=event.getPlayerName();
-        	m_botAction.spec(plyrName);
+        	AddSpec(plyrName);
+        	m_botAction.specWithoutLock(plyrName);
         	m_botAction.sendSmartPrivateMessage(plyrName, "lagged out? or want in? PM me !lemmein -" + m_botAction.getBotName());
         }
     }
-    
+	
     /**
      * Maintains the separation between primary and reserve ships in this
      * pseudo-locked game. In a player is spec'd, send them the lag-out message.
@@ -449,16 +485,21 @@ public class utilshipc extends MultiUtil
 	public void handleEvent( FrequencyShipChange event )	{
         if(validstart)	{
         	String plyrName = m_botAction.getPlayerName(event.getPlayerID());
-        	if(IsExempt(plyrName.toLowerCase())) return;
+        	if(Spec.contains(plyrName)) {m_botAction.specWithoutLock(plyrName);return;}
+        	
         	Integer shipnumber = new Integer(event.getShipType());
-        	if(shipnumber.intValue() == 0)	{
-        		m_botAction.spec(plyrName);
+        	PlayerProfile plyrP;
+            plyrP = playerMap.get( plyrName );
+            if(plyrP == null) {m_botAction.specWithoutLock(plyrName);AddSpec(plyrName);return;} //if the most manually adds, spec, for they arn't on the hash
+            if(IsExempt(plyrName.toLowerCase())) return;
+            int deaths = plyrP.getDeaths();
+            
+            if(shipnumber.intValue() == 0)	{ //don't confuse lag-outs/specs with game outs.
+        		AddSpec(plyrName);
         		m_botAction.sendSmartPrivateMessage(plyrName, "lagged out? or want in? PM me !lemmein -" + m_botAction.getBotName());
         		return;
         	}
-        	PlayerProfile plyrP;
-            plyrP = playerMap.get( plyrName );
-            int deaths = plyrP.getDeaths();
+            
             if (deaths < mainlives)	{
         		if(Aclass.contains(shipnumber))
         			return;											//Still have primary lives and in correct ships? ok
@@ -468,20 +509,22 @@ public class utilshipc extends MultiUtil
         		}
         	}
         	else	{
-        		if(Bclass.contains(shipnumber))
+        		m_botAction.sendPublicMessage("you're a B");
+        		if(Bclass.contains(shipnumber))	{
         			if(reservelives == 0 || deaths < reservelives + mainlives)	// Infinite reserve is on or do you still have lives and are in the correct ship? ok
         				return;
-        		else	{
-        			if(deaths < reservelives + mainlives)	{
+        			else				//note: odd how it wouldn't lock reserve ships untill I added this else and bracketed in the Bclass.contains
+        				{m_botAction.specWithoutLock(plyrName);AddSpec(plyrName);}
+        		}
+        		else if(deaths < reservelives + mainlives)	{
         				m_botAction.setShip(plyrName, randomship(1));// If not in right ships, set them
         				m_botAction.sendPrivateMessage(plyrName, "You may only use ships: " + Bclass.toString());
-        			}
-        			else	{
-        				m_botAction.spec(plyrName);
-        				m_botAction.warnPlayer(plyrName, "What're you trying to pull?"); //Abnormality or host places in player who's past the death limits
-        			}
         		}
-        			
+        		else	{
+        				m_botAction.specWithoutLock(plyrName);
+        				AddSpec(plyrName);
+        				m_botAction.warnPlayer(plyrName, "Stay in spec u hobo"); //Abnormality or host places in player who's past the death limits
+        		}		
         	}
         }      
     }
@@ -516,9 +559,19 @@ public class utilshipc extends MultiUtil
 	    	String plyrName = plyr.getPlayerName();
 	    	PlayerProfile plyrP;
 	        plyrP = playerMap.get( plyrName );
+	        if(plyrP == null) {m_botAction.specWithoutLock(plyrName);AddSpec(plyrName);return;} //if the most manually adds, spec, for they arn't on the hash
 	        int deaths = plyrP.getDeaths();
 	        //Used for debug m_botAction.sendPrivateMessage(plyrName, "You got killed and have " + (deaths+1) + " deaths");
 	        if(deaths+1 == mainlives)	{
+	        	if(bclassmsg != null)	{
+	        		if(bclassmsg.contains("%"))	{
+	        			int soundPos = bclassmsg.indexOf('%');
+	        			m_botAction.sendArenaMessage( plyrName + " " + bclassmsg.substring(0,soundPos),GetSound(bclassmsg,soundPos) );
+	        		}
+	        		else
+	        			m_botAction.sendArenaMessage( plyrName + " " + bclassmsg );
+	        	}
+	        		
 	        	plyrP.addDeath();
 	        	m_botAction.sendPrivateMessage(plyrName, "You've been downgraded and may only now use the following ship(s): " + Bclass.toString());
 	        	m_botAction.setShip(plyrName, randomship(1));
@@ -529,9 +582,14 @@ public class utilshipc extends MultiUtil
 	        else if(reservelives == 0)
 	        		return;
 	        else	{
-	        	m_botAction.sendPrivateMessage(plyrName, "Out of lives!");
-	        	m_botAction.spec(plyrName);
-	        	m_botAction.sendArenaMessage( plyrName + " " + deathmsg  + " (" + plyr.getWins()+ ") Kills ("  + plyr.getLosses() + ") Deaths");
+	        	m_botAction.specWithoutLock(plyrName);
+	        	AddSpec(plyrName);
+	        	if(deathmsg.contains("%"))	{
+	        		int soundPos = deathmsg.indexOf('%');
+    	        	m_botAction.sendArenaMessage( plyrName + " " + deathmsg.substring(0,soundPos)  + " (" + plyr.getWins()+ ") Kills ("  + plyr.getLosses() + ") Deaths",GetSound(deathmsg,soundPos) );
+	        	}
+	        	else
+	        		m_botAction.sendArenaMessage( plyrName + " " + deathmsg  + " (" + plyr.getWins()+ ") Kills ("  + plyr.getLosses() + ") Deaths");
 	        }
 		}
     	
@@ -594,9 +652,20 @@ public class utilshipc extends MultiUtil
 	 */
 	
 	private boolean IsValidPlayer(String name)	{
-		if (m_botAction.getFuzzyPlayerName(name).equals(name))
+		if (m_botAction.getFuzzyPlayerName(name).equalsIgnoreCase(name))
 			return true;
 		return false;
+	}
+	
+	/**
+	 * Simple helper method that adds players to the spec list.
+	 * @param name is the player.
+	 */
+	
+	public void AddSpec(String name)	{
+		if (Spec.contains(name))
+			return;
+		Spec.add(name);
 	}
 	
 	/**
@@ -614,18 +683,20 @@ public class utilshipc extends MultiUtil
 	}
 	
 	/**
-	 * Helper method used to return the freq with the lowest players
-	 * to help with balance when adding new players.
+	 * Recursive helper method used to return the freq with the
+	 * lowest players to help with balance when adding new players. 
+	 * If there's less freqs than numfreqs, it recurses numfreqs-1. 
+	 * 
 	 * @return the int value of the freq with the lowest players or freq 0 is they're all
 	 * the same amount.
 	 */
 	
-	private int GetLowest()	{
-		int least = 900;
-		int count = 0;
-		int lowfreq = 0;
+	private int GetLowest(int freqs)	{
+		int least = 900,count = 0,lowfreq = 0;
+
+		if(freqs < 0)return 1;
 		try	{
-			for(int i=0;i<numfreqs-1;i++)
+			for(int i=0;i<freqs-1;i++)
 			{
 				Iterator iterator = m_botAction.getFreqIDIterator(i);
 				while(iterator.hasNext()){count++; iterator.next();}
@@ -634,7 +705,25 @@ public class utilshipc extends MultiUtil
 			}
 			return lowfreq;
 		}
-	     catch(Exception e)	{return 0;}
+	     catch(Exception e)	{return GetLowest(freqs-1);}
+	}
+	
+	/**
+	 * Helps with sounds..
+	 * 
+	 * @param message is the death or reserve message.
+	 * @param soundPos is the position of the '%'
+	 * @return the sound code;
+	 */
+	
+	private int GetSound(String message, int soundPos)	{
+		int soundCode;
+		try{
+            soundCode = Integer.parseInt(message.substring(soundPos + 1));
+        } catch( Exception e ){
+            soundCode = 1;
+        }
+        return soundCode;
 	}
     
     /**
@@ -672,6 +761,8 @@ public class utilshipc extends MultiUtil
             doDths(sender, command.substring(13).trim(),main);
         if(command.startsWith("!setreserdths "))
             doDths(sender, command.substring(14).trim(),!main);
+        if(command.startsWith("!setresermsg "))
+            doBclassMsg(sender, message.substring(12).trim());
         if(command.startsWith("!setdedmsg "))
             doDedMsg(sender, message.substring(11).trim());
         if(command.startsWith("!setfreqs "))
@@ -682,12 +773,16 @@ public class utilshipc extends MultiUtil
             doLates(sender, command.substring(9).trim());
         if(command.startsWith("!late"))
             doLateSwitch(sender);
+        if(command.startsWith("!remove "))
+            doRemove(sender, command.substring(7).trim());
         if(command.startsWith("!stop"))
-            doReset(sender);
+            doStop(sender);
         if(command.startsWith("!confirm"))
             doConfirm(sender);
         if(command.startsWith("!start"))
             doStart(sender);
+        if(message.startsWith("!lemmein") && validstart)
+    		doAddPlayer(sender);
       }
     
 	/**
@@ -700,10 +795,9 @@ public class utilshipc extends MultiUtil
 	public void handlePlayerCommand(String sender, String message)	{ //left so more commands could be added
     	if(message.startsWith("!lemmein") && validstart)
     		doAddPlayer(sender);
-    	if(message.startsWith("!unfrez") && !validstart)
-    		doUnfrez(sender);
+    	/*if(message.startsWith("!unfrez") && !validstart)
+    		doUnfrez(sender);*/
     }
-    
 	/**
 	 * Adds a new player to the hashset and chooses a random freq and ship
 	 * for the player. If the player is returning, it looks up the player
@@ -712,18 +806,23 @@ public class utilshipc extends MultiUtil
 	 */
 	
 	public void doAddPlayer(String name)	{
+		
+		if(IsValidShip(m_botAction.getPlayer(name).getShipType())) //already playing
+				return;
+		
 		if(!playerMap.containsKey( name )) {
 			if (!Late)	{
 				m_botAction.sendPrivateMessage(name, "Sorry but Lates have been disabled");
 				return;
 			}
             int newship = randomship(0);
-            int freq = GetLowest();
-            m_botAction.spec(name);
+            int freq = GetLowest(numfreqs);
+            Spec.remove(name);
             m_botAction.setShip( name, newship );
             m_botAction.setFreq( name, freq );
             PlayerProfile plyrP = new PlayerProfile( name, newship, freq );
             playerMap.put( name, plyrP );
+            m_botAction.sendPrivateMessage(name, "You've been added with only " + latelives + " lives for being late");
             for(int i=0;i<mainlives - latelives;i++)
             	plyrP.addDeath();          	
         }
@@ -731,12 +830,12 @@ public class utilshipc extends MultiUtil
             PlayerProfile tempP;
             tempP = playerMap.get( name );
             int deaths= tempP.getDeaths();
-            m_botAction.spec(name);
+            Spec.remove(name);
             if(reservelives == 0)
             	m_botAction.setShip( name, randomship(1) );
             else if(deaths+1 >= reservelives + mainlives)	{
             	m_botAction.sendPrivateMessage(name, "Sorry, but you're already out");
-            	m_botAction.spec(name);
+            	Spec.add(name);
             	return;
             }
             else if(deaths+1 < mainlives )
@@ -752,32 +851,41 @@ public class utilshipc extends MultiUtil
 	 * PMs the player with *spec to attempt to get them unlocked.
 	 * @param name
 	 */
-	
+	/*
 	public void doUnfrez(String name)	{
 		m_botAction.spec(name);
 		m_botAction.sendPrivateMessage(name, "Ok, attempting to unfrezze you. if you're still frozen pm me !unfrez again. -" + m_botAction.getBotName());
 	}
-    
+    */
 	/**
 	 * Returns this module's help listing.
 	 */
 	
 	public String[] getHelpMessages()	{
 	      String[] message = {
+	    	  "=SHIPC===================================================================================================SHIPC=",
 	          "!SetMainShps <ship#1>:<Ship#2>..ect         -- List of main ships.",
 	          "!SetReserShps <ship#1>:<Ship#2>..ect        -- List of reserve ships.",
 	          "!SetMainDths <#ofDeaths>                    -- Number of deaths before shunted to reserve.",
 	          "!SetReserDths <#ofDeaths>                   -- Number of deaths on reserve before spec'd. (0 = infinite)",
-	          "!SetDedMsg <message>:<sound#>               -- Arena Message to be displayed when a player is out of lives;",
-	          "                                               formatting is: (name)(your message)(kills)(deaths)",
+	          "!SetReserMsg <message>                      -- Arena Message to be displayed when a player is put on reserve;",
+	          "                                               format: (name)(your message) use %% for sounds, send '~' to remove.",
+	          "!SetDedMsg <message>                        -- Arena Message to be displayed when a player is out of lives.;",
+	          "                                               format: (name)(your message)(kills)(deaths) use %% for sounds.",
 	          "!SetFreqs <positive#>                       -- Set the number freqs.",
 	          "!SetExcepts <name1>:<name2>..ect            -- Set players to be exempt from ship changes but are still",
-	          "                                               freq locked upon start.",
+	          "                                               freq locked upon start. (exact name ignoring case))",
 	          "!SetLate <Lives>                            -- Set the lives late comers get while lates are on.",
 	          "!Late                                       -- Turns lates on/off. (default is on)",
-	          "!Stop                                       -- Resets to default values and stops the game if in progess.",
+	          "!Remove <name>                              -- Removes a player into spec (exact name) or if infinite is on;",
+	          "                                            -- shunts them into reserve",
+	          "!Stop                                       -- Resets to default values and stops the game",
 	          "!Confirm                                    -- Lists the curret definitions.",
 	          "!Start                                      -- Loads up definitions and starts.",
+	          "===============================================================================================================",
+	          "NOTE: Ensure that the arena has nobody *spec locked",
+	          "NOTE: If you wish to remove someone use the !remove, don't *spec",
+	          "NOTE: Don't *setfreq as when the player attemps to freq switch they'll snap back."
 	      };
 	      return message;
 	  }
