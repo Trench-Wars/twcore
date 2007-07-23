@@ -2776,6 +2776,34 @@ public class BotAction
     }
 
     /**
+     * @return The number of players currently playing (in-game).
+     */
+    public int getNumPlaying() {
+        return m_arenaTracker.getNumPlaying();
+    }
+    
+    /**
+     * @return The number of players currently spectating.
+     */
+    public int getNumSpectating() {
+        return m_arenaTracker.getNumSpectating();
+    }
+
+    /**
+     * @return The number of players currently on a frequency (in-game + spectating).
+     */
+    public int getFrequencySize( int freq ) {
+        return m_arenaTracker.getFreqSize(freq);
+    }
+    
+    /**
+     * @return The number of players currently playing on a frequency (only those in-game).
+     */
+    public int getPlayingFrequencySize( int freq ) {
+        return m_arenaTracker.getPlayingFreqSize(freq);
+    }
+
+    /**
      * @return The host name of the server the bot is connected to.
      */
     public String getServerName() {

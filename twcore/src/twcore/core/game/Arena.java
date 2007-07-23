@@ -296,6 +296,67 @@ public class Arena {
     public int size(){
         return m_playerList.size();
     }
+    
+    /**
+     * Gets the number of players currently in game.
+     * @return Number of players in game
+     */
+    public int getNumPlaying() {
+        LinkedList <Player>list = new LinkedList<Player>();
+        for( Iterator<Player> i = getPlayerIterator(); i.hasNext(); ){
+            Player player = i.next();
+            if( player.getShipType() != 0 )
+                list.add(player);
+        }
+        return list.size();
+    }
+
+    /**
+     * Gets the number of players currently spectating.
+     * @return Number of players spectating
+     */
+    public int getNumSpectating() {
+        LinkedList <Player>list = new LinkedList<Player>();
+        for( Iterator<Player> i = getPlayerIterator(); i.hasNext(); ){
+            Player player = i.next();
+            if( player.getShipType() == 0 )
+                list.add(player);
+        }
+        return list.size();
+    }
+
+    /**
+     * Gets the number of players on a particular frequency.
+     * @param freq Freq to request
+     * @return Number of players on freq
+     */
+    public int getFreqSize( int freq ) {
+        Map m = m_frequencyList.get((Integer)freq);
+        if (m != null)
+            return m.size();
+        else
+            return 0;
+    }
+
+    /**
+     * Gets the number of in-game players on a particular frequency.
+     * @param freq Freq to request
+     * @return Number of players in-game on freq
+     */
+    public int getPlayingFreqSize( int freq ) {
+        Map <Integer,Player>m = m_frequencyList.get((Integer)freq);
+        if( m == null )
+            return 0;
+        
+        LinkedList <Player>list = new LinkedList<Player>();
+        for( Iterator<Player> i = m.values().iterator(); i.hasNext(); ){
+            Player player = i.next();
+            if( player.getShipType() != 0 ){
+                list.add(player);
+            }
+        }
+        return list.size();
+    }
 
     /**
      * PlayerEntered event processing.  Fires every time a player enters,
