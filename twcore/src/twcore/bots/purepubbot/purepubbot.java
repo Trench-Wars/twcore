@@ -76,6 +76,10 @@ public class purepubbot extends SubspaceBot
     private static final int NUM_WARP_POINTS_PER_SIDE = 6; // Total number of warp points
                                                            // per side of FR
     private static final int MAX_FLAGTIME_ROUNDS = 5;   // Max # rounds (odd numbers only)
+    
+    private static final int MAX_FREQSIZE_DIFF = 4;     // Max # difference in size of freqs before
+                                                        //   bot requests players even frequencies.
+                                                        //   Value of -1 disables this feature.
 
     private OperatorList opList;                        // Admin rights info obj
     private HashSet <String>freq0List;                  // Players on freq 0
@@ -244,8 +248,10 @@ public class purepubbot extends SubspaceBot
 
         if(started) {
             checkPlayer(playerID);
-            if(!privFreqs)
+            if(!privFreqs) {
                 checkFreq(playerID, freq, true);
+                checkFreqSizes();
+            }
         }
 
         Player p = m_botAction.getPlayer( playerID );
@@ -266,7 +272,7 @@ public class purepubbot extends SubspaceBot
                 }
             }
         } catch (Exception e) {
-        }
+        }        
     }
 
 
@@ -299,8 +305,10 @@ public class purepubbot extends SubspaceBot
 
         if(started) {
             checkPlayer(playerID);
-            if(!privFreqs)
+            if(!privFreqs) {
                 checkFreq(playerID, freq, true);
+                checkFreqSizes();
+            }
         }
 
         Player p = m_botAction.getPlayer( playerID );
@@ -797,7 +805,7 @@ public class purepubbot extends SubspaceBot
                 "!go <ArenaName>         -- Moves the bot to <ArenaName>.",
                 "!start                  -- Starts pure pub settings.",
                 "!stop                   -- Stops pure pub settings.",
-                "!privfreqs              -- Toggles Private Frequencies.",
+                "!privfreqs              -- Toggles private frequencies & check for imbalances.",
                 "!starttime #            -- Starts Flag Time mode (a team wins",
                 "                           with # consecutive min of flagtime).",
                 "!stoptime               -- Ends Flag Time mode.",
@@ -1021,6 +1029,23 @@ public class purepubbot extends SubspaceBot
         }
     }
 
+    /**
+     * Checks for imbalance in frequencies, and requests the stacked freq to even it up
+     * if there's a significant gap.
+     */
+    private void checkFreqSizes() {
+        if( MAX_FREQSIZE_DIFF == -1 )
+            return;
+        int freq0 = m_botAction.getPlayingFrequencySize(0);
+        int freq1 = m_botAction.getPlayingFrequencySize(1);
+        int diff = java.lang.Math.abs( freq0 - freq1 ); 
+        if( diff >= MAX_FREQSIZE_DIFF ) {
+            if( freq0 > freq1 )
+                m_botAction.sendOpposingTeamMessageByFrequency(0, "Teams unbalanced: " + freq0 + "v" + freq1 + ".  Requesting volunteers to join freq 0.  Type =0 to switch." );
+            else
+                m_botAction.sendOpposingTeamMessageByFrequency(1, "Teams unbalanced: " + freq1 + "v" + freq0 + ".  Requesting volunteers to join freq 1.  Type =1 to switch." );
+        } 
+    }
 
     /**
      * Specs all ships in the arena that are over the weighted restriction limit.
@@ -1131,7 +1156,7 @@ public class purepubbot extends SubspaceBot
             roundTitle = "Round " + roundNum;
         }
 
-        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")" + (strictFlagTime?"":(" Type :" + m_botAction.getBotName() +":!warp to warp into FR.")) );
+        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")" + (strictFlagTime?"":("  Type :" + m_botAction.getBotName() +":!warp to warp into FR.")) );
 
         m_botAction.cancelTask(startTimer);
 
