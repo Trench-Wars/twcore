@@ -70,7 +70,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 	private final static String[] help_staff = {
 		"-- Staff Help --",
-		" !start          Starts a game.",
+		" !start          Starts a game with 10 deaths. Add a number to specify deaths (eg. !start 3).",
 		" !stop           Cancels a game.",
 		" !die            Shuts down bot.",
 		" !startinfo      Tells who started a game.",
@@ -86,8 +86,8 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	};
 
 	//formula for getting starting warp coords
-	//x = m_safeCoords[freq / 2] + m_addToX[freq % 4];
-	//y = m_safeCoords[freq / 2 + 1];
+	//x = m_safeCoords[freq >> 2 << 1] + m_addToX[freq % 4];
+	//y = m_safeCoords[freq >> 2 << 1 + 1];
 	private final static short[] m_addToX = {
 		0, 182, 546, 728
 	};
@@ -181,10 +181,10 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         req.request(EventRequester.PLAYER_POSITION);
         req.request(EventRequester.PLAYER_LEFT);
         req.request(EventRequester.PLAYER_DEATH);
-        // req.request(EventRequester.FREQUENCY_CHANGE);
+        //req.request(EventRequester.FREQUENCY_CHANGE);
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(EventRequester.LOGGED_ON);
-        req.request(EventRequester.SCORE_UPDATE);
+        //req.request(EventRequester.SCORE_UPDATE);
     }
 
 
@@ -248,6 +248,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		boolean isSmod = m_operatorList.isSmod(name);
     	boolean hasAccess = isSmod || m_access.contains(name);
 
+    	//!help
     	if(msg.equals("!help")) {
     		m_botAction.privateMessageSpam(id, help_player);
     		if(hasAccess) {
@@ -257,16 +258,21 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     			m_botAction.privateMessageSpam(id, help_smod);
     		}
 
+		//!status
         } else if(msg.equals("!status")) {
         	cmdStatus(id);
 
+		//!spec
         } else if(msg.equals("!spec")) {
-        	if(m_state.isStarting())
+        	if(m_state.isStarting() || m_state.isStartingFinal()) {
 				m_botAction.specWithoutLock(id);
+        	}
 
+		//!about
         } else if(msg.equals("!about")) {
-        	m_botAction.sendPrivateMessage(id, "KimBot! 0.3 by flibb <ER>", 7);
+        	m_botAction.sendPrivateMessage(id, "KimBot! (2007-07-23) by flibb <ER>", 7);
 
+        //!lagout
         } else if(msg.equals("!lagout")) {
 			KimPlayer kp = getKimPlayer(name);
 			if(kp == null) {
@@ -294,26 +300,38 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			}
 
         } else if(hasAccess) {
+        //!start
         	if(msg.equals("!start")) {
+       			m_deathsToSpec = 10;
         		cmdStart(id);
-
+        	} else if(msg.startsWith("!start ")) {
+        		try {
+	        		m_deathsToSpec = Integer.parseInt(msg.substring(7));
+        		} catch(NumberFormatException e) {
+        			m_deathsToSpec = 10;
+        			m_botAction.sendPrivateMessage(id, "Use \"!start 5\" for example to start a game with 5 deaths.");
+        			return;
+        		}
+        		m_deathsToSpec = Math.max(1, Math.min(99, m_deathsToSpec));
+        		cmdStart(id);
+		//!stop
         	} else if(msg.equals("!stop")) {
         		cmdStop(id);
-
+		//!die
         	} else if(msg.equals("!die")) {
         		if(m_state.isStopped()) {
 	            	m_botAction.die();
         		} else {
         			m_botAction.sendPrivateMessage(id, "A game is in progress. Use !stop first.");
 	        	}
-
+		//!startinfo
         	} else if(msg.equals("!startinfo")) {
         		if(m_state.isStopped() || m_startedBy == null) {
         			m_botAction.sendPrivateMessage(id, "No one started a game.");
         		} else {
         			m_botAction.sendPrivateMessage(id, "Game started by " + m_startedBy);
         		}
-
+		//!reset
         	} else if(msg.equals("!reset")) {
         		if(m_state.isStopped()) {
         			resetArena();
@@ -321,17 +339,17 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         		} else {
         			m_botAction.sendPrivateMessage(id, "A game is in progress. Use !stop first.");
         		}
-
+		//!remove
         	} else if(msg.startsWith("!remove ")) {
         		if(m_state.isStopped()) {
         			m_botAction.sendPrivateMessage(id, "The game is not running.");
         		} else {
         			cmdRemove(id, msg.substring(8));
         		}
-
+		//!test
         	} else if(msg.startsWith("!test ")) {
         		m_botAction.sendArenaMessage(msg.substring(6));
-
+		//!addstaff
         	} else if(isSmod) {
 				if(msg.startsWith("!addstaff ")) {
 					if(msg.indexOf(':') >= 0) {
@@ -341,14 +359,14 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 					} else {
 						m_botAction.sendPrivateMessage(id, "That name already has access.");
 					}
-
+		//!delstaff
         		} else if(msg.startsWith("!delstaff ")) {
         			if(m_access.remove(msg.substring(10))) {
         				updateAccessList(id);
         			} else {
         				m_botAction.sendPrivateMessage(id, "Name not found.");
         			}
-
+		//!accesslist
         		} else if(msg.equals("!accesslist")) {
         			for(String s : m_access) {
 	        			m_botAction.sendPrivateMessage(id, s);
@@ -395,6 +413,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	}
 
 
+/* need to keep track of +1 deaths from (too long outside base) to use this
 	public void handleEvent(ScoreUpdate event) {
 		KimPlayer kp = m_kimTable[event.getPlayerID()];
 		if(kp == null) {
@@ -406,6 +425,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			removePlayerAndCheck(kp, null);
 		}
 	}
+*/
 
 
 	public void handleEvent(PlayerPosition event) {
@@ -526,7 +546,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		m_botAction.scheduleTask(new TimerTask() {
 			public void run() {
 				m_state.setState(State.STARTING);
-				m_botAction.sendArenaMessage("The game will begin in 30 seconds.", 1);
+				m_botAction.sendArenaMessage("The game will begin in 30 seconds. Each player will have " + m_deathsToSpec + " deaths.", 1);
 				m_ensureLock = true;
 				m_botAction.toggleLocked();
 			}
@@ -544,7 +564,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 				List<Player> players = m_botAction.getPlayingPlayers();
 
 				if(players.size() < 8) {
-					m_botAction.sendArenaMessage("Not enough players.");
+					m_botAction.sendArenaMessage("Not enough players. 8 players minimum.");
 					cmdStop(-1);
 					return;
 				}
@@ -568,7 +588,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 				Collections.shuffle(players);
 				int freq = 0;
 				for(Player player : players) {
-					String name = player.getPlayerName().toLowerCase();
+					String name = player.getPlayerName();
 					int id = player.getPlayerID();
 
 					if(freq >= 64) {
@@ -580,9 +600,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 					} else {
 						m_botAction.setShip(id, Tools.Ship.JAVELIN);
 						m_botAction.setFreq(id, freq);
-						m_botAction.warpTo(id, m_safeCoords[freq >> 1] + m_addToX[freq % 4], m_safeCoords[(freq >> 1) + 1]);
+						m_botAction.warpTo(id, m_safeCoords[(freq >> 2) << 1] + m_addToX[freq % 4], m_safeCoords[((freq >> 2) << 1) + 1]);
 						KimPlayer kp = new KimPlayer(name, freq);
-						m_groups.get(freq % 4).put(name, kp);
+						m_groups.get(freq % 4).put(name.toLowerCase(), kp);
 						m_playerCount[freq % 4]++;
 						freq++;
 
@@ -615,7 +635,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 				m_botAction.shipResetAll();
 				for(Map<String, KimPlayer> group : m_groups) {
 					for(KimPlayer kp : group.values()) {
-						if(m_startingLagouts.remove(kp.m_name)) {
+						if(m_startingLagouts.remove(kp.m_lcname)) {
 							registerLagout(kp);
 							//m_botAction.sendSmartPrivateMessage(kp.m_name, "You may return to the game with !lagout");
 						} else {
@@ -632,7 +652,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 									continue;
 								}
 							}
-							m_botAction.warpTo(kp.m_name, m_goCoords[kp.m_freq >> 1] + m_addToX[kp.m_freq % 4], m_goCoords[(kp.m_freq >> 1) + 1]);
+							m_botAction.warpTo(kp.m_name, m_goCoords[(kp.m_freq >> 2) << 1] + m_addToX[kp.m_freq % 4], m_goCoords[((kp.m_freq >> 2) << 1) + 1]);
 						}
 					}
 				}
@@ -778,10 +798,12 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 						}
 					}
 					if(survivor != null) {
-						m_botAction.sendArenaMessage(survivor.m_name + " wins for base " + (groupIndex + 1) + ". "
+						m_lagoutMan.remove(survivor);
+						m_survivors[groupIndex] = survivor;
+						m_botAction.sendArenaMessage(survivor.m_name + " wins for Base " + (groupIndex + 1) + " with "
 							+ survivor.m_kills + " wins, " + survivor.m_deaths + " losses.");
 					} else {
-						m_botAction.sendArenaMessage("No one won for base " + (groupIndex + 1));
+						m_botAction.sendArenaMessage("No one won for Base " + (groupIndex + 1));
 					}
 					//check if we need to start final round
 					if(m_playerCount[0] <= 1 && m_playerCount[1] <= 1
@@ -813,7 +835,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		int survivorCount = 0;
 		for(KimPlayer kp : m_survivors) {
 			if(kp != null) {
-				if(survivorStr.length() > 0) survivorStr.append(", ");
+				if(survivorStr.length() > 0) {
+					 survivorStr.append(", ");
+				}
 				survivorStr.append(kp.m_name).append(" (").append(kp.m_kills).append('-').append(kp.m_deaths).append(')');
 				survivorCount++;
 			}
@@ -941,12 +965,15 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		KimPlayer winner = null;
 		for(int i = 0; i < 4; i++) {
 			if(m_survivors[i] != null) {
-				m_groups.get(i).remove(m_survivors[i].m_name);
+				m_groups.get(i).remove(m_survivors[i].m_lcname);
 				if(!m_survivors[i].m_isOut) {
 					winner = m_survivors[i];
 					m_botAction.warpTo(winner.m_name, 512, 286);
 				}
 			}
+		}
+		if(winner == null) {
+			winner = new KimPlayer("priitk", 0);
 		}
 
 		List<KimPlayer> lista = new ArrayList<KimPlayer>(m_groups.get(0).values());
@@ -1039,14 +1066,17 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			m_botAction.sendArenaMessage("No winner.", 24);
 		}
 
+		if(mvp == null) {
+			mvp = new KimPlayer("priitk", 0);
+		}
 		final KimPlayer theMVP = mvp;
 		m_botAction.scheduleTask(new TimerTask() {
 			public void run() {
-				m_botAction.sendArenaMessage("MVP: " + (theMVP != null ? theMVP.m_name : "priitk"), 7);
+				m_botAction.sendArenaMessage("MVP: " + theMVP.m_name, 7);
 			}
 		}, 5000);
 
-		refreshScoreboard(mvp, winner);
+		refreshScoreboard(theMVP, winner);
 
 		resetArena();
 		cleanUp();
@@ -1079,6 +1109,13 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	}
 
 	private KimPlayer mvpCompare(KimPlayer kp1, KimPlayer kp2) {
+        if(kp1 == null) {
+			return kp2;
+		}
+        if(kp2 == null) {
+			return kp1;
+		}
+
 		if(kp1.m_kills < kp2.m_kills) {
 			return kp2;
 		}
@@ -1120,7 +1157,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			return kp1;
 		}
 
-		return kp1;
+		return null;
 	}
 
 	private void refreshScoreboard(KimPlayer mvp, KimPlayer winner) {
@@ -1189,6 +1226,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 final class KimPlayer {
 	String m_name;
+	String m_lcname;
 	int m_kills = 0;
 	int m_deaths = 0;
 	int m_freq;
@@ -1199,6 +1237,7 @@ final class KimPlayer {
 
 	KimPlayer(String name, int freq) {
 		m_name = name;
+		m_lcname = name.toLowerCase();
 		m_freq = freq;
 	}
 }
