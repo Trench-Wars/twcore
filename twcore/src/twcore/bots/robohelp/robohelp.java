@@ -892,9 +892,9 @@ public class robohelp extends SubspaceBot {
         // if a non-expired call was found, record it to the database
         if(record) {
         	// Save
-        	if(message.startsWith("on it"))
+        	if(message.toLowerCase().startsWith("on it"))
         		updateStatRecordsONIT( name );
-        	else if(message.startsWith("got it"))
+        	else if(message.toLowerCase().startsWith("got it"))
         		updateStatRecordsGOTIT( name );
         	
             this.lastStafferClaimedCall = name;
