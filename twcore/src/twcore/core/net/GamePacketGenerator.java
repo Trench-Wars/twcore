@@ -274,16 +274,88 @@ public class GamePacketGenerator {
         bytearray.addByte( 0x04 ); // Connection type (UnknownNotRAS)
         bytearray.addByte( 0xE0 ); // Timezone bias (224; 240=EST) - 2 bytes
         bytearray.addByte( 0x01 );
-        bytearray.addByte( 0x57 ); // ? - 2bytes
+        bytearray.addByte( 0x57 ); // Unknown - 2bytes
         bytearray.addByte( 0xFC );
 
         bytearray.addLittleEndianShort( (short)134 ); // Client version (SS 1.34)
         bytearray.addLittleEndianInt( 444 );          // Memory checksum
         bytearray.addLittleEndianInt( 555 );          // Memory checksum
         bytearray.addLittleEndianInt( 0x92f88614 );   // Permission ID
-        bytearray.repeatAdd( 0x0, 12 );               // Last
+        bytearray.repeatAdd( 0x0, 12 );               // Last / Unknown
 
         sendReliableMessage( bytearray );
+    }
+    
+    public void sendRegistrationForm(String realname, String email, String state, String city, int age) {
+    	/*
+		Field	Length	Description
+			0		1		Type byte
+			1		32		Real name
+			33		64		Email
+			97		32		City
+			129		24		State
+			153		1		Sex('M'/'F')
+			154		1		Age
+		Connecting from...
+			155		1		Home
+			156		1		Work
+			157		1		School
+		System information
+			158		4		Processor type (586)
+			162		2		?
+			164		2		?
+		Windows registration information (SSC RegName ban)
+			166		40		Real name
+			206		40		Organization
+		Windows NT-based OS's do not send any hardware information (DreamSpec HardwareID ban)
+			246		40		System\CurrentControlSet\Services\Class\Display\0000
+			286		40		System\CurrentControlSet\Services\Class\Monitor\0000
+			326		40		System\CurrentControlSet\Services\Class\Modem\0000
+			366		40		System\CurrentControlSet\Services\Class\Modem\0001
+			406		40		System\CurrentControlSet\Services\Class\Mouse\0000
+			446		40		System\CurrentControlSet\Services\Class\Net\0000
+			486		40		System\CurrentControlSet\Services\Class\Net\0001
+			526		40		System\CurrentControlSet\Services\Class\Printer\0000
+			566		40		System\CurrentControlSet\Services\Class\MEDIA\0000
+			606		40		System\CurrentControlSet\Services\Class\MEDIA\0001
+			646		40		System\CurrentControlSet\Services\Class\MEDIA\0002
+			686		40		System\CurrentControlSet\Services\Class\MEDIA\0003
+			726		40		System\CurrentControlSet\Services\Class\MEDIA\0004
+		*/
+    	
+    	//ByteArray bytearray = new ByteArray(766);
+    	ByteArray bytearray = new ByteArray(246);
+    	
+    	bytearray.addByte( 0x17 );						// Type
+    	bytearray.addPaddedString(realname, 32); 		// Real name
+    	bytearray.addPaddedString(email, 64);			// E-mail
+    	bytearray.addPaddedString(city, 32);			// City
+    	bytearray.addPaddedString(state, 24);			// State
+    	bytearray.addByte(0);							// Sex/gender (Male)
+    	bytearray.addByte(age);							// Age
+    	bytearray.addByte(1);							// Connecting from Home
+    	bytearray.addByte(1);							//                 Work
+    	bytearray.addByte(1);							//                 School
+    	bytearray.addLittleEndianInt(586);				// System information: Processor type (586)
+    	bytearray.addLittleEndianShort((short)0xC000);	//                     ? Magic number 1
+    	bytearray.addLittleEndianShort((short)2036);	//                     ? Magic number 2
+    	bytearray.addPaddedString(realname, 40);		// Real name
+    	bytearray.addPaddedString("TWCore", 40);		// Organization
+    	bytearray.addPaddedString("TWCore", 40);		// Registry Sys. info.:	...\Display\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Monitor\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Modem\0000
+    	bytearray.addPaddedString("TWCore", 40);		//        	   			...\Modem\0001
+    	bytearray.addPaddedString("TWCore", 40);		//         			  	...\Mouse\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Net\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Net\0001
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Printer\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0001
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0002
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0003
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0004
+    	
+    	sendReliableMessage( bytearray );
     }
 
     /**

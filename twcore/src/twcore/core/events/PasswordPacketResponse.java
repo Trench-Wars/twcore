@@ -10,15 +10,18 @@ import twcore.core.util.ByteArray;
  * | 0       1       Type Byte                           |
  * | 1       1       Login Response                      |
  * | 2       4       Server Version                      |
- * | 6       4       ? Unknown                           |
+ * | 6       4       <unused>                            |
  * | 10      4       Subspace.exe Checksum               |
- * | 14      4       ? Unknown                           |
- * | 18      1       ? Unknown                           |
+ * | 14      4       <unused>                            |
+ * | 18      1       <unused>                            |
  * | 19      1       Registration Form Request (Boolean) |
- * | 20      4       ? Unknown                           |
- * | 24      4       News.txt Checksum                   |
- * | 28      8       ? Unknown                           |
+ * | 20      4       SSEXE cksum with seed of zero (1)   |
+ * | 24      4       News.txt checksum (0 = no news file)|
+ * | 28      8       <unused>                            |
+ * | 32      4       <unused>                            |
  * +-----------------------------------------------------+</code></pre>
+ *
+ * (1) if this and EXE checksum are -1, bestows supervisor privs to the client
  *
  * Server Version returns Major and Minor as single number (1.34.12a returns 134).
  * Checksums are to be compared with local files to determine if an update is required.
@@ -26,7 +29,12 @@ import twcore.core.util.ByteArray;
 public class PasswordPacketResponse {
 
     //Variable Declarations
-    private int m_response;
+    private int m_response;				// Login response
+    private int m_serverVersion;		// Server Version
+    private int m_ssChecksum;			// Subspace.exe Checksum
+    private boolean m_regFormRequest;	// Registration Form Request
+    private int m_ssChecksumSeed;		// Subspace.exe Checksum with seed of zero
+    private int m_newsChecksum;			// News.txt checksum (0 = no news file)
 
     /**
      * Creates a new instance of PasswordPacketResponse, this is called by
@@ -34,8 +42,12 @@ public class PasswordPacketResponse {
      * @param array the ByteArray containing the packet data
      */
     public PasswordPacketResponse( ByteArray array ) {
-
         m_response = (int)array.readByte( 1 );
+        m_serverVersion = array.readLittleEndianInt(2);
+        m_ssChecksum = array.readLittleEndianInt(10);
+        m_regFormRequest = array.readByte( 19 ) == 1;
+        m_ssChecksumSeed = array.readLittleEndianInt(20);
+        m_newsChecksum = array.readLittleEndianInt(24);
     }
 
     /**
@@ -80,8 +92,49 @@ public class PasswordPacketResponse {
      */
     public boolean isFatal() {
 
-        if( m_response == 0 || m_response == 6
-            || m_response == 12 || m_response == 14 ) return false;
-        else return true;
+        if(		m_response == 0 || 		// Login successful
+        		m_response == 6 || 		// Permission to spectate only
+        		m_response == 12 || 	// No active biller
+        		m_response == 14 ) 		// Restricted zone
+        	return false;
+        else 
+        	return true;
     }
+
+	/**
+	 * @return the news.txt checksum (0 = no news file)
+	 */
+	public int getNewsChecksum() {
+		return m_newsChecksum;
+	}
+
+	/**
+	 * @return the Registration Form Request
+	 */
+	public boolean getRegistrationFormRequest() {
+		return m_regFormRequest;
+	}
+
+	/**
+	 * @return the Server Version
+	 */
+	public int getServerVersion() {
+		return m_serverVersion;
+	}
+
+	/**
+	 * @return the Subspace.exe Checksum
+	 */
+	public int getSSChecksum() {
+		return m_ssChecksum;
+	}
+
+	/**
+	 * @return the Subspace.exe Checksum with seed of zero
+	 */
+	public int getSSChecksumSeed() {
+		return m_ssChecksumSeed;
+	}
+    
+    
 }

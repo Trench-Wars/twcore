@@ -1015,7 +1015,8 @@ public class GamePacketInterpreter {
     void handlePasswordPacketResponse( ByteArray message, boolean alreadyDecrypted ){;
          // Check for valid message
         if( message.size() < 36 ){
-            return;
+        	Tools.printLog( m_session.getBotName() + " has received a wrongfully sized password-packet response. (size:"+message.size()+")");
+        	return;
         }
 
         if( alreadyDecrypted == false ){
@@ -1023,11 +1024,35 @@ public class GamePacketInterpreter {
         }
 
         PasswordPacketResponse ppResponse = new PasswordPacketResponse( message );
-
+        
+        if(ppResponse.getRegistrationFormRequest() == true || ppResponse.getResponseValue() == 1) {
+        	String realname = m_session.getCoreData().getGeneralSettings().getString("Real Name");
+        	String email = m_session.getCoreData().getGeneralSettings().getString("E-mail");
+        	String state = m_session.getCoreData().getGeneralSettings().getString("State");
+        	String city = m_session.getCoreData().getGeneralSettings().getString("City");
+        	int age = m_session.getCoreData().getGeneralSettings().getInt("Age");
+        	// Send registration information
+        	// FIXME: I assume this gives an ArrayIndexOutOfBoundsException because we can't send packets split up over several chunks 
+        	//m_packetGenerator.sendRegistrationForm(realname, email, state, city, age);
+        }
+        
+        if (ppResponse.getSSChecksum() == -1 && ppResponse.getSSChecksumSeed() == -1) {
+    		Tools.printLog( m_session.getBotName() + ": Subspace.exe checksum and (random) server checksum were sent: I have VIP access in this zone!");
+    	} else if(ppResponse.getSSChecksum() == 0) {
+    		Tools.printLog( m_session.getBotName() + ": Problem found with server: Server doesn't have a copy of subspace.exe so it sent me a zero checksum.");
+    	}
+        
         if( ppResponse.getResponseValue() > 0 )
             Tools.printLog( m_session.getBotName() + " log in response: " + ppResponse.getResponseMessage() );
 
-        if( ppResponse.isFatal() ) m_session.disconnect();
+        if( ppResponse.getResponseValue() == 1) {
+        	// 1 = Unregistered player, registration is already sent - resend password
+        	//m_packetGenerator.sendPasswordPacket(m_playerName, m_playerPassword);
+        	// FIXME: See above, this doesn't work yet
+        	m_session.disconnect();
+        } else if( ppResponse.isFatal() ) {
+        	m_session.disconnect();
+        }
 
         /***** ASSS Compatible Login Sequence Fix (D1st0rt) *****/
         //Login ok, continue (Moved here from handle of packet 0x31)
