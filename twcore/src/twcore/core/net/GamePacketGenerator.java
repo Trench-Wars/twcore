@@ -252,17 +252,16 @@ public class GamePacketGenerator {
      * Sends a password packet (C2S 0x09), including all necessary login data,
      * after receiving the server encryption key for this session.
      *
-     * NOTE: User MUST exist before attempting to log in.  Core does not create
-     * user accounts.
+     * @param newUser boolean that determines if user needs to be registered (true) or if it's an existing user (false)
      * @param name Bot's pre-existing login name
      * @param password Bot's account password
      */
-    public void sendPasswordPacket( String name, String password ){
+    public void sendPasswordPacket( boolean newUser, String name, String password ){
 
         ByteArray      bytearray = new ByteArray( 101 );
 
         bytearray.addByte( 0x09 ); // Type byte
-        bytearray.addByte( 0x00 ); // 0 for returning user (1 for new)
+        bytearray.addByte( newUser ? 1 : 0 ); // 0 for returning user (1 for new)
         bytearray.addPaddedString( name, 32 );       //Name
         bytearray.addPaddedString( password, 32 );   //Password
 
@@ -286,6 +285,17 @@ public class GamePacketGenerator {
         sendReliableMessage( bytearray );
     }
     
+    /**
+     * Sends the registration data if the server asks for it. This information is mostly build up 
+     * from the properties of setup.cfg ([registration] tag). The registry variables are replaced by "TWCore"
+     * since we want to keep TWCore cross-platform.
+     * 
+     * @param realname Real name
+     * @param email E-mail address
+     * @param state State
+     * @param city City
+     * @param age Age
+     */
     public void sendRegistrationForm(String realname, String email, String state, String city, int age) {
     	/*
 		Field	Length	Description
@@ -323,8 +333,7 @@ public class GamePacketGenerator {
 			726		40		System\CurrentControlSet\Services\Class\MEDIA\0004
 		*/
     	
-    	//ByteArray bytearray = new ByteArray(766);
-    	ByteArray bytearray = new ByteArray(246);
+    	ByteArray bytearray = new ByteArray(766);
     	
     	bytearray.addByte( 0x17 );						// Type
     	bytearray.addPaddedString(realname, 32); 		// Real name
@@ -355,7 +364,7 @@ public class GamePacketGenerator {
     	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0003
     	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0004
     	
-    	sendReliableMessage( bytearray );
+    	this.sendMassiveChunkPacket( bytearray );
     }
 
     /**
