@@ -296,7 +296,7 @@ public class Arena {
     public int size(){
         return m_playerList.size();
     }
-    
+
     /**
      * Gets the number of players currently in game.
      * @return Number of players in game
@@ -347,7 +347,7 @@ public class Arena {
         Map <Integer,Player>m = m_frequencyList.get((Integer)freq);
         if( m == null )
             return 0;
-        
+
         LinkedList <Player>list = new LinkedList<Player>();
         for( Iterator<Player> i = m.values().iterator(); i.hasNext(); ){
             Player player = i.next();
@@ -706,15 +706,12 @@ public class Arena {
     }
 
     /**
-     * Used to maintain updated player positions.  Called at approximate intervals
-     * (every .1 sec) from Session.  Because the server only sends the bot position
-     * packets from players within radar range, in order to get information on
-     * the position of all players, the bot must change who it spectates regularly.
+     * Called by the bot regularly to spectate the next player in the tracker queue.
+     * Because the server only sends the bot position packets from players within
+     * radar range, in order to get information on the position of all players, the
+     * bot must change who it spectates regularly.
      */
-    public void checkPositionChange() {
-        if( m_updateTimer == 0 )
-            return;
-
+    public void watchNextPlayer() {
         Integer i = getNextPlayer();
         if( i.intValue() != lastPlayer ) {
         	lastPlayer = i.intValue();

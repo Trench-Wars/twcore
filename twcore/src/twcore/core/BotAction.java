@@ -68,6 +68,7 @@ public class BotAction
     private Objset              m_objectSet;        // For automation of LVZ object setting
     private int                 m_botNumber;        // Bot's internal ID number
     private TempSettingsManager m_tsm;              // Handles Temporary Settings
+    private TimerTask			m_positionTask;     // Task for player tracking
 
 
     /** Constructor for BotAction.  Don't worry about this, the object has already
@@ -85,6 +86,7 @@ public class BotAction
         m_packetGenerator = packetGenerator;
         m_botNumber = botNum;
         m_objectSet = new Objset();
+        m_positionTask = null;
     }
 
 
@@ -2274,7 +2276,23 @@ public class BotAction
      * >=200 : turns tracking on with specified rate
      */
     public void setPlayerPositionUpdating( int milliseconds ) {
-        m_arenaTracker.setPlayerPositionUpdateDelay( milliseconds );
+
+    	if(m_positionTask != null) {
+    		m_positionTask.cancel();
+    	}
+
+    	if(milliseconds == 0) {
+    		return;
+    	}
+
+    	long delay = Math.max(200, milliseconds);
+    	m_positionTask = new TimerTask() {
+    		public void run() {
+    			m_arenaTracker.watchNextPlayer();
+    		}
+    	};
+
+    	m_timer.schedule(m_positionTask, delay, delay);
     }
 
     /**
@@ -2287,7 +2305,7 @@ public class BotAction
      * Arena.java and hardcore a new value.
      */
     public void startReliablePositionUpdating() {
-        m_arenaTracker.setPlayerPositionUpdateDelay( 200 );
+        setPlayerPositionUpdating(200);
     }
 
     /**
@@ -2297,7 +2315,7 @@ public class BotAction
      * bot will not be receiving position packets.
      */
     public void stopReliablePositionUpdating() {
-        m_arenaTracker.setPlayerPositionUpdateDelay( 0 );
+        setPlayerPositionUpdating(0);
     }
 
     /**
@@ -2781,7 +2799,7 @@ public class BotAction
     public int getNumPlaying() {
         return m_arenaTracker.getNumPlaying();
     }
-    
+
     /**
      * @return The number of players currently spectating.
      */
@@ -2795,7 +2813,7 @@ public class BotAction
     public int getFrequencySize( int freq ) {
         return m_arenaTracker.getFreqSize(freq);
     }
-    
+
     /**
      * @return The number of players currently playing on a frequency (only those in-game).
      */
