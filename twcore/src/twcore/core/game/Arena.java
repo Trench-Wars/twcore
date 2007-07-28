@@ -48,9 +48,9 @@ public class Arena {
     Map <Integer,Flag>m_flagIDList;     // (Integer)FlagID -> Flag
 
     private List <Integer>m_tracker;    // Queue list for spectating (gathers position data)
-    private int  m_updateTimer;         // Time to spectate (setPlayerPositionUpdateDelay)
     private GamePacketGenerator m_gen;  // For generating spectate packets
     private int lastPlayer;				// ID of last player to have been spectated on
+    private boolean m_enableSpectating;
 
     /**
      * Creates a new instance of an Arena object.
@@ -66,12 +66,7 @@ public class Arena {
         m_gen = generator;
 
         lastPlayer = -9999;
-
-        Integer time = coredata.getGeneralSettings().getInteger( "DefaultSpectateTime" );
-        if( time != null )
-            m_updateTimer = time;
-        else
-            m_updateTimer = 5000;
+        m_enableSpectating = false;
     }
 
     /**
@@ -691,8 +686,10 @@ public class Arena {
      */
     public void addPlayerToTracker( Integer playerID ) {
 
-        m_tracker.remove( playerID );
-        m_tracker.add( playerID );
+		synchronized(m_tracker) {
+	        m_tracker.remove( playerID );
+	        m_tracker.add( playerID );
+		}
     }
 
     /**
@@ -726,42 +723,21 @@ public class Arena {
      */
     public Integer getNextPlayer() {
 
-        if( m_tracker.size() > 0 ) {
-            Integer i = m_tracker.remove( 0 );
-            m_tracker.add( i );
-            return i;
-        } else
-            return new Integer( -1 );
-
+        synchronized(m_tracker) {
+	        if( m_tracker.size() > 0 && m_enableSpectating) {
+	            Integer i = m_tracker.remove( 0 );
+	            m_tracker.add( i );
+	            return i;
+	        } else {
+	            return new Integer( -1 );
+	        }
+        }
     }
 
-    /**
-     * Turns on and off the position updating system with a specified timeframe
-     * for switching to the next player in the queue.  By default the system is
-     * on, and set to delay 5000 milliseconds before switching to the next player.
-     * This is a compromise between efficiency and reliability.  It's advised that
-     * if you don't use the PlayerPosition packet that you turn this system off.
-     * @param ms Time in ms between switching of currently spec'd player.
-     * 0 : off, < 200 : on w/200 delay, anything else is on w/ specified speed
-     */
-    public void setPlayerPositionUpdateDelay( int ms ) {
-
-        if( ms <= 0 )
-            m_updateTimer = 0;
-        else if( ms < 200 )
-            m_updateTimer = 200;
-        else
-            m_updateTimer = ms;
-
-        // Cease all spectation when turning off
-        if( ms == 0 )
-            m_gen.sendSpectatePacket( (short)-1 );
+    public void setEnableSpectating(boolean enable) {
+    	synchronized(m_tracker) {
+	    	m_enableSpectating = enable;
+    	}
     }
 
-    /**
-     * @return Interval, in ms, after which bot spectates on a new player; 0 = off
-     */
-    public int getUpdateTime() {
-        return m_updateTimer;
-    }
 }

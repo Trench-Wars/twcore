@@ -87,6 +87,8 @@ public class BotAction
         m_botNumber = botNum;
         m_objectSet = new Objset();
         m_positionTask = null;
+
+        setPlayerPositionUpdating(getCoreData().getGeneralSettings().getInt( "DefaultSpectateTime" ));
     }
 
 
@@ -1495,7 +1497,7 @@ public class BotAction
      */
     public void setTimer(int minutes)
     {
-        sendUnfilteredPublicMessage("*timer" + minutes);
+        sendUnfilteredPublicMessage("*timer " + minutes);
     }
 
     /**
@@ -2279,13 +2281,19 @@ public class BotAction
 
     	if(m_positionTask != null) {
     		m_positionTask.cancel();
+    		m_positionTask = null;
     	}
 
-    	if(milliseconds == 0) {
+    	int delay = Math.max(0, milliseconds);
+
+    	if(delay == 0) {
+			m_arenaTracker.setEnableSpectating(false);
+			m_packetGenerator.sendSpectatePacket((short)-1);
     		return;
     	}
 
-    	long delay = Math.max(200, milliseconds);
+    	delay = Math.max(200, delay);
+    	m_arenaTracker.setEnableSpectating(true);
     	m_positionTask = new TimerTask() {
     		public void run() {
     			m_arenaTracker.watchNextPlayer();
