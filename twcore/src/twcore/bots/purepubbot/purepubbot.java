@@ -34,7 +34,7 @@ import twcore.core.util.Tools;
 /**
  * "Pure" pub bot that can enforce ship restrictions, freq restrictions, and run
  * a timed pub game using a flag. (Note that for non-TW zones, the warp points for
- * flag time games be set up by hand.)
+ * flag time games must be set up before use.)
  *
  * Restrictions for any ship can be easily enforced using this bot.  Each restriction
  * should be marked in this format in the CFG: (BotName)Ship(#)=(Value), e.g., if
@@ -80,6 +80,10 @@ public class purepubbot extends SubspaceBot
     private static final int MAX_FREQSIZE_DIFF = 4;     // Max # difference in size of freqs before
                                                         //   bot requests players even frequencies.
                                                         //   Value of -1 disables this feature.
+    
+    private static final int TERR_QUOTA = 2;            // "Ideal" number of ships.  Used in order to
+    private static final int SHARK_QUOTA = 2;           // allow players to change to needed ships
+    private static final int SPIDER_QUOTA = 3;          // w/o losing MVP status.
 
     private OperatorList opList;                        // Admin rights info obj
     private HashSet <String>freq0List;                  // Players on freq 0
@@ -99,6 +103,8 @@ public class purepubbot extends SubspaceBot
     private String initialSpawn;                        // Arena initially spawned in
     private Vector <Integer>shipWeights;                // "Weight" restriction per ship
     private List <String>warpPlayers;                   // Players that wish to be warped
+    private List <String>authorizedChangePlayers;       // Players authorized to change ship & not lose MVP
+    private List <String>mineClearedPlayers;            // Players who have already cleared mines this round
     private Objset objs;                                // For keeping track of counter
 
     // X and Y coords for warp points.  Note that the first X and Y should be
@@ -134,6 +140,8 @@ public class purepubbot extends SubspaceBot
         flagTimeStarted = false;
         strictFlagTime = false;
         warpPlayers = Collections.synchronizedList( new LinkedList<String>() );
+        authorizedChangePlayers = Collections.synchronizedList( new LinkedList<String>() );
+        mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         shipWeights = new Vector<Integer>();
         objs = m_botAction.getObjectSet();
     }
@@ -259,7 +267,7 @@ public class purepubbot extends SubspaceBot
             return;
 
         try {
-            if( flagTimeStarted && flagTimer.isRunning() ) {
+            if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
                 // Remove player if spec'ing
                 if( p.getShipType() == 0 ) {
                     String pname = p.getPlayerName();
@@ -267,8 +275,11 @@ public class purepubbot extends SubspaceBot
                 // Reset player if shipchanging
                 } else {
                     String pname = p.getPlayerName();
-                	playerTimes.remove( pname );
-                    playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
+                    boolean authd = authorizedChangePlayers.remove( pname );
+                    if( !authd ) {
+                        playerTimes.remove( pname );
+                        playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
+                    }
                 }
             }
         } catch (Exception e) {
@@ -316,10 +327,13 @@ public class purepubbot extends SubspaceBot
             return;
 
         try {
-            if( flagTimeStarted && flagTimer.isRunning() ) {
+            if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
                 String pname = p.getPlayerName();
-                playerTimes.remove( pname );
-                playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
+                boolean authd = authorizedChangePlayers.remove( pname );
+                if( !authd ) {
+                    playerTimes.remove( pname );
+                    playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
+                }
             }
         } catch (Exception e) {
         }
@@ -361,7 +375,7 @@ public class purepubbot extends SubspaceBot
                 checkPlayer(playerID);
                 if(!privFreqs)
                     checkFreq(playerID, player.getFrequency(), false);
-                m_botAction.sendPrivateMessage(playerName, "Commands available: !help, !team, !restrictions, !time, !warp");
+                m_botAction.sendPrivateMessage(playerName, "Commands:  !team, !restrictions, !time, !warp, !ship <ship#>, !clearmines");
             }
             if(flagTimeStarted)
                 if( flagTimer != null)
@@ -435,6 +449,10 @@ public class purepubbot extends SubspaceBot
                 doRestrictionsCmd(sender);
             else if(command.equals("!team"))
                 doShowTeamCmd(sender);
+            else if(command.startsWith("!ship "))
+                doShipCmd(sender, message.substring(6));
+            else if(command.startsWith("!clearmines"))
+                doClearMinesCmd(sender);
 
             if ( !opList.isHighmod(sender) && !sender.equals(m_botAction.getBotName()) )
                 return;
@@ -760,21 +778,162 @@ public class purepubbot extends SubspaceBot
         if( p.getShipType() == 0 )
             throw new RuntimeException("You must be in a ship for this command to work.");
         ArrayList<Vector<String>>  team = getTeamData( p.getFrequency() );
-        for(int i = 0; i < 9; i++ ) {
-            if( team.get(i).size() > 0) {
-                String text = Tools.formatString(Tools.shipName(i) + "s", 11);
-                text += "(" + team.get(i).size() + "):  ";
-                for( int j = 0; j < team.get(i).size(); j++) {
-                   text += team.get(i).get(j) + "  ";
-                }
-                m_botAction.sendSmartPrivateMessage(sender, text);
+        int players = 0;
+        for(int i = 1; i < 9; i++ ) {
+            String text = Tools.formatString(Tools.shipName(i) + "s", 11);
+            text += " - " + team.get(i).size() + "   ";
+            for( int j = 0; j < team.get(i).size(); j++) {
+               text += (j+1) + ":" + team.get(i).get(j) + "  ";
+               players++;
             }
+            m_botAction.sendPrivateMessage(sender, text);
         }
+        
+        // Begin team analysis
+        m_botAction.sendPrivateMessage(sender, "Total " + players + " players.  Analyzing team needs ... ");
+        int terrsNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
+        int sharksNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
+        int spidersNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size();
+        boolean needs = false;
+        
+        // If team is small, only need to ensure we have at least 1 terr and 1 shark
+        if( players < 10 ) {
+            if( terrsNeeded != TERR_QUOTA )
+                terrsNeeded = 0;
+            if( sharksNeeded != SHARK_QUOTA )
+                sharksNeeded = 0;
+            spidersNeeded = 0;
+        }
+      
+        if( terrsNeeded == TERR_QUOTA ) {
+            m_botAction.sendPrivateMessage(sender, "*** NO TERRIER!   Terr needed ***");
+            needs = true;
+        } else if( terrsNeeded > 0 ) {
+            m_botAction.sendPrivateMessage(sender, terrsNeeded + " more terrier(s) needed.");
+            needs = true;
+        }
+        if( sharksNeeded == SHARK_QUOTA ) {
+            m_botAction.sendPrivateMessage(sender, "*** NO SHARK!    Shark needed ***");
+            needs = true;
+        } else if( sharksNeeded > 0 ) {
+            m_botAction.sendPrivateMessage(sender, sharksNeeded + " more shark(s) needed.");
+            needs = true;
+        }
+        if( spidersNeeded == SPIDER_QUOTA ) {
+            m_botAction.sendPrivateMessage(sender, "*** NO SPIDER!  Spider needed ***");
+            needs = true;
+        } else if( spidersNeeded > 0 ) {
+            m_botAction.sendPrivateMessage(sender, spidersNeeded + " spider(s) needed.");
+            needs = true;
+        }
+        if( !needs ) {
+            m_botAction.sendPrivateMessage(sender, "Team appears to be well-balanced.");
+            return;
+        }
+        m_botAction.sendPrivateMessage(sender, "Use !ship <ship#> to change ships & keep MVP.");
     }
 
 
     /**
-     * Collects names of players on a freq into a Vector array by ship.
+     * Places the player in a particular ship, if the ship is needed on the freq and
+     * the player is not already in a   
+     * @param sender Player sending
+     * @param argString Ship to change to
+     */
+    public void doShipCmd(String sender, String argString ) {
+        
+        String[] args = argString.split(" ");
+        if( args.length != 1 )
+            throw new RuntimeException("Usage: !ship <ship#>, where <ship#> is the number of the ship to change to.");
+
+        int ship = 0;
+        try {
+            ship = Integer.valueOf(args[0]);
+        } catch (Exception e) {
+            throw new RuntimeException("Usage: !ship <ship#>, where <ship#> is the number of the ship to change to.");
+        }
+        
+        Player p = m_botAction.getPlayer(sender);
+        if( p == null )
+            throw new RuntimeException("Can't find you.  Please report this to staff.");
+        if( p.getShipType() == 0 )
+            throw new RuntimeException("You must be in a ship for this command to work.");
+
+        // If the flag timer isn't currently active, just change them over
+        if( flagTimer != null )
+            if( !flagTimer.isRunning() )
+                m_botAction.setShip(p.getPlayerID(), ship);
+
+        if( ship != Tools.Ship.TERRIER && ship != Tools.Ship.SHARK && ship != Tools.Ship.SPIDER )
+            throw new RuntimeException("This command only works for changing to a ship necessary for the team (Spider:3, Terr:5, or Shark:8).  Use !team to see which ships are needed.");
+        if( ship == p.getShipType() )
+            throw new RuntimeException("You're already in that ship.");
+        
+        ArrayList<Vector<String>> team = getTeamData( p.getFrequency() );
+        int numOfShipNeeded;        
+        switch (p.getShipType()) {
+        case 5:
+            numOfShipNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
+            if( numOfShipNeeded >= 0 )
+                throw new RuntimeException("Sorry, you're still needed by the team as a terr.  Ask someone else on your team to switch.");
+            break;
+        case 8:
+            // Only restrict shark to spider movement in this instance
+            numOfShipNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
+            if( numOfShipNeeded >= 0 && ship == Tools.Ship.SPIDER )
+                throw new RuntimeException("Sorry, you're still needed by the team as a shark.  Ask someone else on your team to switch.");
+            break;
+        default:
+            // If you're a spider, you can still change to terr or shark
+            break;
+        }
+        
+        switch (ship) {
+        case 3: numOfShipNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size(); break;
+        case 5: numOfShipNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
+        default: numOfShipNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
+        }        
+        if( numOfShipNeeded <= 0 )
+            throw new RuntimeException("More "+ Tools.shipName(ship) + "s are not currently needed.  Use !team to see which ships are needed.");
+        
+        authorizedChangePlayers.add( p.getPlayerName() );
+        int bounty = p.getBounty();
+        m_botAction.setShip( p.getPlayerID(), ship );
+        m_botAction.giveBounty( p.getPlayerID(), bounty );
+    }
+
+
+    /**
+     * Clears all of player's mines, and restores any MVP status, but only once per round.
+     * @param sender Sender of command 
+     */
+    public void doClearMinesCmd(String sender ) {
+        if( flagTimer != null )
+            if( !flagTimer.isRunning() )
+                throw new RuntimeException("This command is not needed while the flag timer is not running.  Simply change ships to clear your mines.");        
+                        
+        Player p = m_botAction.getPlayer(sender);
+        if( p == null )
+            throw new RuntimeException("Can't find you.  Please report this to staff.");
+        if( mineClearedPlayers.contains(p.getPlayerName()))
+            throw new RuntimeException("You've already cleared your mines once, and can't do it again until next round (except, of course, manually).");
+        if( p.getShipType() != Tools.Ship.SHARK && p.getShipType() != Tools.Ship.LEVIATHAN )
+            throw new RuntimeException("You must be in a mine-laying ship in order for me to clear your mines.");
+
+        int bounty = p.getBounty();
+        int ship = p.getShipType();
+        authorizedChangePlayers.add( p.getPlayerName() );
+        m_botAction.setShip( sender, 1 );
+        authorizedChangePlayers.add( p.getPlayerName() );
+        m_botAction.setShip( sender, ship );
+        m_botAction.giveBounty( sender, bounty - 3 );
+        mineClearedPlayers.add(p.getPlayerName());
+        m_botAction.sendPrivateMessage( sender, "Your mines have been reset without changing MVP status.  You may only do this once per round." );
+    }
+    
+    
+    /**
+     * Collects names of players on a freq into a Vector ArrayList by ship.
      * @param freq Frequency to collect info on
      * @return Vector array containing player names on given freq
      */
@@ -827,7 +986,10 @@ public class purepubbot extends SubspaceBot
                 "!team                   -- Tells you which ships your team members are in.",
                 "!restrictions           -- Lists all current ship restrictions.",
                 "!time                   -- Provides time remaining when Flag Time mode.",
-                "!warp                   -- Warps you into flagroom at start of next round (flag time)",
+                "!warp                   -- Warps you into flagroom at start of next round (flagtime)",
+                "!ship <ship#>           -- Puts you in ship <ship#>, keeping MVP status.",
+                "!clearmines             -- Clears all mines you have laid, keeping MVP status."
+                
         };
 
         if( opList.isHighmod( sender ) )
@@ -1129,6 +1291,7 @@ public class purepubbot extends SubspaceBot
         } catch (Exception e ) {
         }
 
+        mineClearedPlayers.clear();
         flagTimer = new FlagCountTask();
         m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
     }
@@ -1266,7 +1429,7 @@ public class purepubbot extends SubspaceBot
                                     modbounty *= 2;
                                 }
                                 if( grabs != 0 ) {
-                                    modbounty += modbounty * (grabs / 10);
+                                    modbounty += (modbounty * ((float)grabs / 10.0));
                                     m_botAction.sendPrivateMessage( playerName, "For your " + grabs + " flag grabs, you also receive an additional " + grabs + "0% bounty, for a total of " + modbounty );
                                 }
 
