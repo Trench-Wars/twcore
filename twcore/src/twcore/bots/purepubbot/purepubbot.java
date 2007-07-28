@@ -300,6 +300,7 @@ public class purepubbot extends SubspaceBot
         removeFromLists(playerName);
         removeFromWarpList(playerName);
     	playerTimes.remove( playerName );
+        checkFreqSizes();
     }
 
 
@@ -373,8 +374,10 @@ public class purepubbot extends SubspaceBot
                     m_botAction.sendPrivateMessage(playerName, "Ship restrictions: " + restrictions );
 
                 checkPlayer(playerID);
-                if(!privFreqs)
+                if(!privFreqs) {
                     checkFreq(playerID, player.getFrequency(), false);
+                    checkFreqSizes();
+                }
                 m_botAction.sendPrivateMessage(playerName, "Commands:  !team, !restrictions, !time, !warp, !ship <ship#>, !clearmines");
             }
             if(flagTimeStarted)
@@ -781,7 +784,13 @@ public class purepubbot extends SubspaceBot
         int players = 0;
         for(int i = 1; i < 9; i++ ) {
             String text = Tools.formatString(Tools.shipName(i) + "s", 11);
-            text += " - " + team.get(i).size() + "   ";
+            int num = team.get(i).size();
+            if(     i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
+                    i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
+                    i == Tools.Ship.SHARK && num < SHARK_QUOTA )
+                text += " - " + team.get(i).size() + "*  ";
+            else
+                text += " - " + team.get(i).size() + "   ";
             for( int j = 0; j < team.get(i).size(); j++) {
                text += (j+1) + ":" + team.get(i).get(j) + "  ";
                players++;
@@ -790,7 +799,7 @@ public class purepubbot extends SubspaceBot
         }
         
         // Begin team analysis
-        m_botAction.sendPrivateMessage(sender, "Total " + players + " players.  Analyzing team needs ... ");
+        m_botAction.sendPrivateMessage(sender, "Total " + players + " players.  Team needs (* above indicates a deficiency):");
         int terrsNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
         int sharksNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
         int spidersNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size();
@@ -806,21 +815,21 @@ public class purepubbot extends SubspaceBot
         }
       
         if( terrsNeeded == TERR_QUOTA ) {
-            m_botAction.sendPrivateMessage(sender, "*** NO TERRIER!   Terr needed ***");
+            m_botAction.sendPrivateMessage(sender, "--- NO TERRIER!   Terr (ship 5) needed ASAP ---");
             needs = true;
         } else if( terrsNeeded > 0 ) {
             m_botAction.sendPrivateMessage(sender, terrsNeeded + " more terrier(s) needed.");
             needs = true;
         }
         if( sharksNeeded == SHARK_QUOTA ) {
-            m_botAction.sendPrivateMessage(sender, "*** NO SHARK!    Shark needed ***");
+            m_botAction.sendPrivateMessage(sender, "--- NO SHARK!    Shark (ship 8) needed ASAP ---");
             needs = true;
         } else if( sharksNeeded > 0 ) {
             m_botAction.sendPrivateMessage(sender, sharksNeeded + " more shark(s) needed.");
             needs = true;
         }
         if( spidersNeeded == SPIDER_QUOTA ) {
-            m_botAction.sendPrivateMessage(sender, "*** NO SPIDER!  Spider needed ***");
+            m_botAction.sendPrivateMessage(sender, "--- NO SPIDER!  Spider (ship 3) needed ASAP ---");
             needs = true;
         } else if( spidersNeeded > 0 ) {
             m_botAction.sendPrivateMessage(sender, spidersNeeded + " spider(s) needed.");
