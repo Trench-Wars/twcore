@@ -69,6 +69,8 @@ public class BotAction
     private int                 m_botNumber;        // Bot's internal ID number
     private TempSettingsManager m_tsm;              // Handles Temporary Settings
     private TimerTask			m_positionTask;     // Task for player tracking
+    
+    private int 				DefaultSpectateTime;// Default time between switching from player to play with player spectating
 
 
     /** Constructor for BotAction.  Don't worry about this, the object has already
@@ -87,12 +89,8 @@ public class BotAction
         m_botNumber = botNum;
         m_objectSet = new Objset();
         m_positionTask = null;
-
-        setPlayerPositionUpdating(getCoreData().getGeneralSettings().getInt( "DefaultSpectateTime" ));
+        DefaultSpectateTime = getCoreData().getGeneralSettings().getInt( "DefaultSpectateTime" );
     }
-
-
-
 
 
     // **********************************************************************************
@@ -2288,7 +2286,6 @@ public class BotAction
 
     	if(delay == 0) {
 			m_arenaTracker.setEnableSpectating(false);
-			m_packetGenerator.sendSpectatePacket((short)-1);
     		return;
     	}
 
@@ -2313,7 +2310,7 @@ public class BotAction
      * Arena.java and hardcore a new value.
      */
     public void startReliablePositionUpdating() {
-        setPlayerPositionUpdating(200);
+        setPlayerPositionUpdating(DefaultSpectateTime);
     }
 
     /**
