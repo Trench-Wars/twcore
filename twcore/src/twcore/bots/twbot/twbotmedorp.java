@@ -378,7 +378,7 @@ public class twbotmedorp extends TWBotExtension {
 
         case 8:
             m_botAction.sendArenaMessage(pName + " is out !");
-            m_botAction.spec(pID);
+            m_botAction.specWithoutLock(pID);
 
             break;
 
