@@ -938,143 +938,190 @@ public class robohelp extends SubspaceBot {
     		return;
     	
     	String date = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() );
-    	String query, title="", title2="";
+    	String query = null, rankQuery = null, title="", title2="";
     	HashMap<String, String> stats = new HashMap<String, String>();
     	ArrayList<String> rank = new ArrayList<String>();
+    	message = message.trim().toLowerCase();
+    	boolean showPersonalStats = true, showTopStats = true, showSingleStats = false;
+    	int topNumber = 5;
     	
-    	if((opList.isModerator(name) && message.trim().length() == 0) || message.equalsIgnoreCase("mod")) {
-    		// Call list for Moderators+
+    	
+    	if((opList.isModerator(name) && message.length() == 0) || message.startsWith("mod")) {
+    		// Staffer> !mystats
+        	// Staffer> !mystats mod
+    		
     		date = date + "-01";
-    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
+    		query 		= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
+    		rankQuery 	= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
     		title =  "Top 5 call count";
     		title2 = "Your call count";
+    		showTopStats = true;
+    		showPersonalStats = true;
+    		showSingleStats = false;
+			topNumber = 5;
     		
-    		// Order and create a list out of the results
-    		try {
-    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
-    			while(results != null && results.next()) {
-    				String staffer = results.getString("fcUserName");
-    				String count = results.getString("fnCount");
-    				
-    				if(stats.containsKey(staffer)) {
-    					// query sets the fnType=1 as second, so this is the "got it"s
-    					stats.put(staffer, stats.get(staffer)+" ("+count+")");
-    				} else {
-    					// query sets the fnType=0 as first, so this is the "on it"s
-    					stats.put(staffer, Tools.formatString(count,3));
-    				}
-    			}
-                m_botAction.SQLClose(results);
-    		} catch(Exception e) { Tools.printStackTrace( e ); }
+    		if(message.length() > 3) {
+    			// Staffer> !mystats mod #
+    			String number = message.substring(4);
+        		if(Tools.isAllDigits(number)) {
+        			topNumber = Integer.parseInt(number);
+        			title =  "Top "+topNumber+" call count";
+        		}
+        		showPersonalStats = false;
+    		}
     		
-    		// Determine the rank
-    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
-    		try {
-    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
-    			while(results != null && results.next()) {
-    				rank.add(results.getString("fcUserName"));
-    			}
-                m_botAction.SQLClose(results);
-    		} catch(Exception e) { Tools.printStackTrace( e ); }
-    		
-    	} else if((opList.isERExact(name) && message.trim().length() == 0) || message.equalsIgnoreCase("er")) {
-    		// Adverts list for ERs
-    		query = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
-    		
+    	} else if((opList.isERExact(name) && message.length() == 0) || message.startsWith("er")) { 	
+    		// Staffer> !mystats
+        	// Staffer> !mystats er
+    		query 	  = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
+    		rankQuery = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
     		title =  "Top 5 advert count";
     		title2 = "Your advert count";
+    		showPersonalStats = true;
+    		showTopStats = true;
+    		showSingleStats = false;
+    		topNumber = 5;
     		
-    		// Create a list out of the results
-    		try {
-    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
-    			while(results.next()) {
-   					stats.put(results.getString("fcUserName"), results.getString("count"));
-   					rank.add(results.getString("fcUserName"));
-    			}
-                m_botAction.SQLClose(results);
-    		} catch(Exception e) {
-    			Tools.printStackTrace( e ); 
+    		if(message.length() > 2) {
+        		// Staffer> !mystats er #
+    			String number = message.substring(3);
+    			if(Tools.isAllDigits(number)) {
+        			topNumber = Integer.parseInt(number);
+        			title =  "Top "+topNumber+" advert count";
+        		}
+    			showPersonalStats = false;
     		}
-    	} else if((opList.isZHExact(name) && message.trim().length() == 0) || message.equalsIgnoreCase("zh")) {
-    		// Call list for ZHs / Moderators+
+    		
+    	} else if((opList.isZHExact(name) && message.length() == 0) || message.startsWith("zh")) {
+    		// Staffer> !mystats
+        	// Staffer> !mystats zh
     		date = date + "-01";
-    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName LIKE '%<zh>%' ORDER BY fcUserName, fnType";
+    		query 		= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName LIKE '%<zh>%' ORDER BY fcUserName, fnType";
+    		rankQuery 	= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName LIKE '%<zh>%' ORDER BY fnCount DESC";
     		title =  "Top 5 call count";
     		title2 = "Your call count";
+    		showPersonalStats = true;
+    		showTopStats = true;
+    		showSingleStats = false;
+    		topNumber = 5;
     		
-    		// Order and create a list out of the results
-    		try {
-    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
-    			while(results != null && results.next()) {
-    				String staffer = results.getString("fcUserName");
-    				String count = results.getString("fnCount");
-    				
-    				if(stats.containsKey(staffer)) {
-    					// query sets the fnType=1 as second, so this is the "got it"s
-    					stats.put(staffer, stats.get(staffer)+" ("+count+")");
-    				} else {
-    					// query sets the fnType=0 as first, so this is the "on it"s
-    					stats.put(staffer, Tools.formatString(count,3));
-    				}
-    			}
-                m_botAction.SQLClose(results);
-    		} catch(Exception e) { Tools.printStackTrace( e ); }
-    		
-    		// Determine the rank
-    		query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName LIKE '%<zh>%' ORDER BY fnCount DESC";
-    		try {
-    			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
-    			while(results != null && results.next()) {
-    				rank.add(results.getString("fcUserName"));
-    			}
-                m_botAction.SQLClose(results);
-    		} catch(Exception e) { Tools.printStackTrace( e ); }
-    	} else {
-    		m_botAction.sendSmartPrivateMessage(name, "Syntax error. Only the arguments 'ZH', 'ER' or 'mod' are allowed. For example: !mystats ER");
-    		return;
-    	}
-    	
-    	
-    	
-    	// Return the top 5
-    	m_botAction.sendSmartPrivateMessage(name, title);
-    	m_botAction.sendSmartPrivateMessage(name, "------------------");
-    	for(int i = 0 ; i < 5 ; i++) {
-    		if(i < rank.size())
-    			m_botAction.sendSmartPrivateMessage(name, " "+
-    					Tools.formatString((i+1)+")", 5)+
-    					Tools.formatString(rank.get(i),20)+" "+
-    					stats.get(rank.get(i)));
-    		else
-    			m_botAction.sendSmartPrivateMessage(name, " "+(i+1)+") ");
-    	}
-    	
-    	// Return your position, one previous and one next
-    	int yourPosition = -1;
-    	
-    	// Determine your position in the rank
-    	for(int i = 0 ; i < rank.size(); i++) {
-    		if(rank.get(i).equalsIgnoreCase(name)) {
-    			yourPosition = i;
-    			break;
+    		if(message.length() > 2) {
+    			// Staffer> !mystats zh #
+    			String number = message.substring(3);
+    			if(Tools.isAllDigits(number)) {
+        			topNumber = Integer.parseInt(number);
+        			title =  "Top "+topNumber+" advert count";
+        		}
+    			showPersonalStats = false;
     		}
-    	}
-    
-    	// Response
-    	m_botAction.sendSmartPrivateMessage(name, "`    "); // spacer
-    	m_botAction.sendSmartPrivateMessage(name, title2);
-    	m_botAction.sendSmartPrivateMessage(name, "-----------------");
-    	if(yourPosition == -1) {
-    		m_botAction.sendSmartPrivateMessage(name, " There is no statistic from your name found.");
-    	} else {
-	    	for( int i = yourPosition-1; i < yourPosition+2; i++) {
-	    		if(i > -1 && i < rank.size())
+    		
+		} else {
+			// Staffer> !mystats <name>
+			String playername = message;
+			
+			if(opList.isZH(playername)) {
+				if(opList.isERExact(playername)) {
+					query 	  = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' AND fcUserName LIKE '"+playername+"' GROUP BY fcUserName";
+		    		rankQuery = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' AND fcUserName LIKE '"+playername+"' GROUP BY fcUserName";
+				} else {
+					date = date + "-01";
+					query 		= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName LIKE '"+playername+"' ORDER BY fnType";
+		    		rankQuery 	= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName LIKE '"+playername+"' ORDER BY fnCount DESC";
+				}
+			} else {
+				m_botAction.sendSmartPrivateMessage(name, "No staff member with the name '"+playername+"' found.");
+			}
+			
+			showPersonalStats = false;
+    		showTopStats = false;
+    		showSingleStats = true;
+		}
+    		
+		// Order and create a list out of the results
+    	if(query == null || rankQuery == null)
+    		return;
+    	
+		try {
+			ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
+			while(results != null && results.next()) {
+				String staffer = results.getString(1);
+				String count = results.getString(2);
+				
+				if(stats.containsKey(staffer)) {
+					// query sets the fnType=1 as second, so this is the "got it"s
+					stats.put(staffer, stats.get(staffer)+" ("+count+")");
+				} else {
+					// query sets the fnType=0 as first, so this is the "on it"s
+					stats.put(staffer, Tools.formatString(count,3));
+				}
+			}
+            m_botAction.SQLClose(results);
+		} catch(Exception e) { Tools.printStackTrace( e ); }
+		
+		// Determine the rank
+		try {
+			ResultSet results = m_botAction.SQLQuery(mySQLHost, rankQuery);
+			while(results != null && results.next()) {
+				rank.add(results.getString(1));
+			}
+            m_botAction.SQLClose(results);
+		} catch(Exception e) { Tools.printStackTrace( e ); }
+    	    	
+
+		// Return the top 5
+		if(showTopStats) {
+	    	m_botAction.sendSmartPrivateMessage(name, title);
+	    	m_botAction.sendSmartPrivateMessage(name, "------------------");
+	    	for(int i = 0 ; i < topNumber ; i++) {
+	    		if(i < rank.size())
 	    			m_botAction.sendSmartPrivateMessage(name, " "+
 	    					Tools.formatString((i+1)+")", 5)+
 	    					Tools.formatString(rank.get(i),20)+" "+
 	    					stats.get(rank.get(i)));
+	    		else
+	    			m_botAction.sendSmartPrivateMessage(name, " "+(i+1)+") ");
 	    	}
-    	}
+		}
+
+		// Return your position, one previous and one next
+		if(showPersonalStats) {
+	    	int yourPosition = -1;
+	    	
+	    	// Determine your position in the rank
+	    	for(int i = 0 ; i < rank.size(); i++) {
+	    		if(rank.get(i).equalsIgnoreCase(name)) {
+	    			yourPosition = i;
+	    			break;
+	    		}
+	    	}
+	    
+	    	// Response
+	    	m_botAction.sendSmartPrivateMessage(name, "`    "); // spacer
+	    	m_botAction.sendSmartPrivateMessage(name, title2);
+	    	m_botAction.sendSmartPrivateMessage(name, "-----------------");
+	    	if(yourPosition == -1) {
+	    		m_botAction.sendSmartPrivateMessage(name, " There is no statistic from your name found.");
+	    	} else {
+		    	for( int i = yourPosition-1; i < yourPosition+2; i++) {
+		    		if(i > -1 && i < rank.size())
+		    			m_botAction.sendSmartPrivateMessage(name, " "+
+		    					Tools.formatString((i+1)+")", 5)+
+		    					Tools.formatString(rank.get(i),20)+" "+
+		    					stats.get(rank.get(i)));
+		    	}
+	    	}
+		}
+		
+		if(showSingleStats) {
+			if(stats.size()>0) {
+				m_botAction.sendSmartPrivateMessage(name, " "+
+		    		Tools.formatString(rank.get(0),20)+" "+
+		    		stats.get(rank.get(0)));
+			} else {
+				m_botAction.sendSmartPrivateMessage(name,"No statistic of "+message+" found.");
+			}
+		}
+    	
     }
 
     public void updateStatRecordsONIT( String name ) {
@@ -1126,14 +1173,17 @@ public class robohelp extends SubspaceBot {
             " !dictionary word - Returns a link for a definition of the word.",
             " !thesaurus word - Returns a link for a thesaurus entry for the word.",
             " !javadocs term - Returns a link for a javadocs lookup of the term.",
-            " !mystats - Returns the top 5 and your call statistics",
-            " !mystats ER/ZH/Mod - Returns the top 5 from the ER/ZH or moderator call statistics",
+            " !mystats - Returns the top 5 call count and your call statistics",
+            " !mystats mod/er/zh [#] - Returns the top # of moderators / ERs / ZHs. If # not specified, shows top 5.",
+            " !mystats <name> - Returns the call count of <name>",
             "`     ",
             "PM commands:",
             " !lookup <keyword> - Tells you the response when the specified key word is given",
             " !last <optional name> - Tells you what the response to the specified player was.  If no name is specified, the last response is given.",
             " !hosted <hours> - Displays the hosted events in the last specified <hours>, <hours> can be ommitted.",
-            " !mystats - Returns the top 5 and your call statistics",
+            " !mystats - Returns the top 5 call count and your call statistics",
+            " !mystats mod/er/zh [#] - Returns the top # of moderators / ERs / ZHs. If # not specified, shows top 5.",
+            " !mystats <name> - Returns the call count of <name>"
         };
         if( m_botAction.getOperatorList().isZH( playerName ) ){
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
