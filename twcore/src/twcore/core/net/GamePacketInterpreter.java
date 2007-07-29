@@ -227,6 +227,7 @@ public class GamePacketInterpreter {
                 break;
             // 0x17 - Unknown Packet: Unhandled
             // 0x18 - Synchronization Request: Unhandled (This is why bot must be a sysop)
+            //        On Sync request, send 0x1A - Security checksum
             case 0x19:
                 handleFileRequest( array, alreadyDecrypted );
                 break;
