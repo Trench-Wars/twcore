@@ -258,7 +258,6 @@ public class purepubbot extends SubspaceBot
             checkPlayer(playerID);
             if(!privFreqs) {
                 checkFreq(playerID, freq, true);
-                checkFreqSizes();
             }
         }
 
