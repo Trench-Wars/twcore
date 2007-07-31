@@ -938,6 +938,7 @@ public class robohelp extends SubspaceBot {
     		return;
     	
     	String date = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() );
+    	String displayDate = new SimpleDateFormat("dd MMM yyyy HH:mm zzz").format( Calendar.getInstance().getTime() );
     	String query = null, rankQuery = null, title="", title2="";
     	HashMap<String, String> stats = new HashMap<String, String>();
     	ArrayList<String> rank = new ArrayList<String>();
@@ -953,7 +954,7 @@ public class robohelp extends SubspaceBot {
     		date = date + "-01";
     		query 		= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
     		rankQuery 	= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
-    		title =  "Top 5 call count";
+    		title =  "Top 5 call count | "+displayDate;
     		title2 = "Your call count";
     		showTopStats = true;
     		showPersonalStats = true;
@@ -965,7 +966,7 @@ public class robohelp extends SubspaceBot {
     			String number = message.substring(4);
         		if(Tools.isAllDigits(number)) {
         			topNumber = Integer.parseInt(number);
-        			title =  "Top "+topNumber+" call count";
+        			title =  "Top "+topNumber+" call count | "+displayDate;
         		}
         		showPersonalStats = false;
     		}
@@ -975,7 +976,7 @@ public class robohelp extends SubspaceBot {
         	// Staffer> !mystats er
     		query 	  = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
     		rankQuery = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
-    		title =  "Top 5 advert count";
+    		title =  "Top 5 advert count | "+displayDate;
     		title2 = "Your advert count";
     		showPersonalStats = true;
     		showTopStats = true;
@@ -987,7 +988,7 @@ public class robohelp extends SubspaceBot {
     			String number = message.substring(3);
     			if(Tools.isAllDigits(number)) {
         			topNumber = Integer.parseInt(number);
-        			title =  "Top "+topNumber+" advert count";
+        			title =  "Top "+topNumber+" advert count | "+displayDate;
         		}
     			showPersonalStats = false;
     		}
@@ -998,7 +999,7 @@ public class robohelp extends SubspaceBot {
     		date = date + "-01";
     		query 		= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fcUserName LIKE '%<zh>%' ORDER BY fcUserName, fnType";
     		rankQuery 	= "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=0 AND fcUserName LIKE '%<zh>%' ORDER BY fnCount DESC";
-    		title =  "Top 5 call count";
+    		title =  "Top 5 call count | "+displayDate;
     		title2 = "Your call count";
     		showPersonalStats = true;
     		showTopStats = true;
@@ -1010,7 +1011,7 @@ public class robohelp extends SubspaceBot {
     			String number = message.substring(3);
     			if(Tools.isAllDigits(number)) {
         			topNumber = Integer.parseInt(number);
-        			title =  "Top "+topNumber+" advert count";
+        			title =  "Top "+topNumber+" call count | "+displayDate;
         		}
     			showPersonalStats = false;
     		}
