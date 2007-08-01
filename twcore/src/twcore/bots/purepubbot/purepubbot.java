@@ -77,9 +77,12 @@ public class purepubbot extends SubspaceBot
                                                            // per side of FR
     private static final int MAX_FLAGTIME_ROUNDS = 5;   // Max # rounds (odd numbers only)
     
-    private static final int MAX_FREQSIZE_DIFF = 4;     // Max # difference in size of freqs before
+    private static final int KEEP_MVP_FREQSIZE_DIFF = 2;// Max # difference in size of freqs required
+                                                        //   for a player to keep MVP when switching.
+    private static final int MSG_AT_FREQSIZE_DIFF = 4;  // Max # difference in size of freqs before
                                                         //   bot requests players even frequencies.
                                                         //   Value of -1 disables this feature.
+    private static final int NICEGUY_BOUNTY_AWARD = 25; // Bounty given to those that even freqs.
     
     private static final int TERR_QUOTA = 2;            // "Ideal" number of ships.  Used in order to
     private static final int SHARK_QUOTA = 2;           // allow players to change to needed ships
@@ -93,6 +96,8 @@ public class purepubbot extends SubspaceBot
     private boolean privFreqs;                          // True if priv freqs are allowed
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean strictFlagTime;                     // True for autowarp in flag time
+    private boolean teamsUneven;                        // True if teams are uneven as given in MAX_FREQSIZE_DIFF
+    private int[] freqSizeInfo = {0, 0};                // Index 0: size difference; 1: # of smaller freq
     private FlagCountTask flagTimer;                    // Flag time main class
     private StartRoundTask startTimer;                  // TimerTask to start round
     private IntermissionTask intermissionTimer;         // TimerTask for round intermission
@@ -139,6 +144,7 @@ public class purepubbot extends SubspaceBot
         privFreqs = true;
         flagTimeStarted = false;
         strictFlagTime = false;
+        teamsUneven = false;
         warpPlayers = Collections.synchronizedList( new LinkedList<String>() );
         authorizedChangePlayers = Collections.synchronizedList( new LinkedList<String>() );
         mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
@@ -254,13 +260,6 @@ public class purepubbot extends SubspaceBot
         int playerID = event.getPlayerID();
         int freq = event.getFrequency();
 
-        if(started) {
-            checkPlayer(playerID);
-            if(!privFreqs) {
-                checkFreq(playerID, freq, true);
-            }
-        }
-
         Player p = m_botAction.getPlayer( playerID );
         if( p == null )
             return;
@@ -275,6 +274,12 @@ public class purepubbot extends SubspaceBot
                 } else {
                     String pname = p.getPlayerName();
                     boolean authd = authorizedChangePlayers.remove( pname );
+                    // If player is switching to the smaller team, they maintain any MVP status 
+                    if( teamsUneven && freq == freqSizeInfo[1] ) {
+                        authd = true;
+                        m_botAction.sendPrivateMessage(pname, "For evening the teams, you keep any MVP status you had on your prior freq and earn " + NICEGUY_BOUNTY_AWARD + " bounty." );
+                        m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
+                    }
                     if( !authd ) {
                         playerTimes.remove( pname );
                         playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
@@ -282,24 +287,14 @@ public class purepubbot extends SubspaceBot
                 }
             }
         } catch (Exception e) {
-        }        
-    }
-
-
-    /**
-     * Removes a player from all tracking lists when they leave the arena.
-     *
-     * @param event is the event to handle.
-     */
-    public void handleEvent(PlayerLeft event)
-    {
-        int playerID = event.getPlayerID();
-        String playerName = m_botAction.getPlayerName(playerID);
-
-        removeFromLists(playerName);
-        removeFromWarpList(playerName);
-    	playerTimes.remove( playerName );
-        checkFreqSizes();
+        }
+        
+        if(started) {
+            checkPlayer(playerID);
+            if(!privFreqs) {
+                checkFreq(playerID, freq, true);
+            }
+        }
     }
 
 
@@ -314,14 +309,6 @@ public class purepubbot extends SubspaceBot
         int playerID = event.getPlayerID();
         int freq = event.getFrequency();
 
-        if(started) {
-            checkPlayer(playerID);
-            if(!privFreqs) {
-                checkFreq(playerID, freq, true);
-                checkFreqSizes();
-            }
-        }
-
         Player p = m_botAction.getPlayer( playerID );
         if( p == null )
             return;
@@ -330,12 +317,25 @@ public class purepubbot extends SubspaceBot
             if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
                 String pname = p.getPlayerName();
                 boolean authd = authorizedChangePlayers.remove( pname );
+                if( teamsUneven && freq == freqSizeInfo[1] ) {
+                    authd = true;
+                    m_botAction.sendPrivateMessage(pname, "For evening the teams, you keep any MVP status you had on your prior freq and earn " + NICEGUY_BOUNTY_AWARD + " bounty." );
+                    m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
+                }
                 if( !authd ) {
                     playerTimes.remove( pname );
                     playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
                 }
             }
         } catch (Exception e) {
+        }
+        
+        if(started) {
+            checkPlayer(playerID);
+            if(!privFreqs) {
+                checkFreq(playerID, freq, true);
+                checkFreqSizes();
+            }
         }
     }
 
@@ -388,6 +388,23 @@ public class purepubbot extends SubspaceBot
     }
 
 
+    /**
+     * Removes a player from all tracking lists when they leave the arena.
+     *
+     * @param event is the event to handle.
+     */
+    public void handleEvent(PlayerLeft event)
+    {
+        int playerID = event.getPlayerID();
+        String playerName = m_botAction.getPlayerName(playerID);
+
+        removeFromLists(playerName);
+        removeFromWarpList(playerName);
+        playerTimes.remove( playerName );
+        checkFreqSizes();
+    }
+
+    
     /**
      * If flag time mode is running, register with the flag time game that the
      * flag has been claimed.
@@ -1204,17 +1221,27 @@ public class purepubbot extends SubspaceBot
      * if there's a significant gap.
      */
     private void checkFreqSizes() {
-        if( MAX_FREQSIZE_DIFF == -1 )
+        if( MSG_AT_FREQSIZE_DIFF == -1 )
             return;
         int freq0 = m_botAction.getPlayingFrequencySize(0);
         int freq1 = m_botAction.getPlayingFrequencySize(1);
-        int diff = java.lang.Math.abs( freq0 - freq1 ); 
-        if( diff >= MAX_FREQSIZE_DIFF ) {
-            if( freq0 > freq1 )
-                m_botAction.sendOpposingTeamMessageByFrequency(0, "Teams unbalanced: " + freq0 + "v" + freq1 + ".  Requesting volunteers to join freq 0.  Type =0 to switch." );
-            else
-                m_botAction.sendOpposingTeamMessageByFrequency(1, "Teams unbalanced: " + freq1 + "v" + freq0 + ".  Requesting volunteers to join freq 1.  Type =1 to switch." );
-        } 
+        int diff = java.lang.Math.abs( freq0 - freq1 );
+        if( diff == freqSizeInfo[0] )
+            return;
+        freqSizeInfo[0] = diff;  
+        if( freqSizeInfo[0] >= MSG_AT_FREQSIZE_DIFF ) {
+            if( freq0 > freq1 ) {
+                m_botAction.sendOpposingTeamMessageByFrequency(0, "Teams unbalanced: " + freq0 + "v" + freq1 + ".  Please type =1 to switch to freq 1.  (You will keep MVP status + earn " + NICEGUY_BOUNTY_AWARD + " bounty.)" );
+                freqSizeInfo[1] = 1;
+            } else {
+                m_botAction.sendOpposingTeamMessageByFrequency(1, "Teams unbalanced: " + freq1 + "v" + freq0 + ".  Please type =0 to switch to freq 0.  (You will keep MVP status + earn " + NICEGUY_BOUNTY_AWARD + " bounty.)" );
+                freqSizeInfo[1] = 0;
+            }
+        }
+        if( freqSizeInfo[0] >= KEEP_MVP_FREQSIZE_DIFF )
+            teamsUneven = true;
+        else
+            teamsUneven = false;
     }
 
     /**
