@@ -2,7 +2,7 @@
  * @(#)LagoutMan.java
  *
  *
- * @author
+ * @author flibb
  * @version 1.00 2007/7/5
  */
 package twcore.bots.javelim;
@@ -16,12 +16,12 @@ import java.util.Set;
 
 import twcore.core.BotAction;
 
-public class LagoutMan<K> {
-	public interface ExpiredLagoutHandler<K> {
+final class LagoutMan<K> {
+	interface ExpiredLagoutHandler<K> {
 		void handleExpiredLagout(K name);
 	}
 
-	private long m_expireTimems = 60000;
+	private long m_expireTimems = 30000;
 	private BotAction m_botAction;
 	private Map<K, TimerTask> m_lagoutMap = Collections.synchronizedMap(new HashMap<K, TimerTask>());
 	private ExpiredLagoutHandler<K> m_bot;

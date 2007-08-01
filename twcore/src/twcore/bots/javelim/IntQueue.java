@@ -51,7 +51,9 @@ final class IntQueue {
     		return item.id;
     	} else if(m_size == 1) {
     		return item.id;
-    	} else return -1;
+    	} else {
+    		return -1;
+    	}
     }
 
     synchronized void sendToBack(int id) {
@@ -83,7 +85,7 @@ final class IntQueue {
     	m_tail.left = m_head;
 
     	for(int i = 0; i < 256; i++) {
-    			m_table[i] = null;
+    		m_table[i] = null;
     	}
 
     	m_size = 0;
