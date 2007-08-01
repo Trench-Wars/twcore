@@ -586,7 +586,7 @@ public class BotAction
      */
     public void sendOpposingTeamMessageByFrequency(int frequency, String message)
     {
-        sendOpposingTeamMessage(frequency, message, (byte) 0);
+        sendOpposingTeamMessageByFrequency(frequency, message, (byte) 0);
     }
 
     /**
