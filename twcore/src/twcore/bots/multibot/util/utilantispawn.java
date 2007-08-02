@@ -20,7 +20,6 @@ public class utilantispawn extends MultiUtil
 
   public void init()
   {
-    m_botAction.setPlayerPositionUpdating(200);
     safeTime = SAFE_TIME_DEFAULT;
     spawnDelay = SPAWN_DELAY;
     antiSpawnEnabled = false;
@@ -137,7 +136,6 @@ public class utilantispawn extends MultiUtil
 
   public void cancel()
   {
-      m_botAction.setPlayerPositionUpdating(0);
   }
 
   private class ResetTask extends TimerTask
