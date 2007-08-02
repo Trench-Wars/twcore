@@ -158,7 +158,8 @@ public void handleEvent( Message event ) {
     public void botPlayerIn( String name, String message) {
         if(gameProgress == 1) {
             if(!playerMap.containsKey( name ) ) {
-                int freq = playerMap.size();
+                java.util.Random r = new java.util.Random();
+                int freq = (int)((r.nextDouble() * 9000) + 100);
                 m_botAction.setShip( name, 8 );
                 m_botAction.setFreq( name, freq );
                 playerMap.put( name, new PlayerProfile( name, 8, freq ) );
