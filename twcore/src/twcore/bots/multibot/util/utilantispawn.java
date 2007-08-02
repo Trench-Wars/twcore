@@ -24,6 +24,7 @@ public class utilantispawn extends MultiUtil
 
   public void init()
   {
+    m_botAction.setPlayerPositionUpdating(200);
     antiSpawnTasks = new HashSet<String>();
     safeTime = SAFE_TIME_DEFAULT;
     antiSpawnEnabled = false;
@@ -40,6 +41,7 @@ public class utilantispawn extends MultiUtil
   {
     String[] message =
     {
+      "AntiSpawn -- This module has KNOWN BUGS and may not work as expected.  You've been warned!",
       "!AntiSpawn On                             -- Activates the antispawn module",
       "!AntiSpawn Off                            -- Deactivates the antispawn module",
       "!SpawnTime <Time>                         -- Sets the amount of time "
@@ -125,6 +127,7 @@ public class utilantispawn extends MultiUtil
   public void cancel()
   {
       m_botAction.cancelTask(shieldTask);
+      m_botAction.setPlayerPositionUpdating(0);
   }
 
   private class ShieldTask extends TimerTask
