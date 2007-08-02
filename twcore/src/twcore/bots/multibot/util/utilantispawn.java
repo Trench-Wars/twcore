@@ -1,32 +1,28 @@
 package twcore.bots.multibot.util;
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
-import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
 public class utilantispawn extends MultiUtil
 {
   public static final double SAFE_TIME_DEFAULT = 5;
   public static final int SHIELD_DELAY = 100;
-  public static final int DEATH_DELAY = 1000;
+  public static final double SPAWN_DELAY = 4;
 
-  private HashSet<String> antiSpawnTasks;
-  private ShieldTask shieldTask;
   private double safeTime;
+  private double spawnDelay;
   private boolean antiSpawnEnabled;
 
   public void init()
   {
     m_botAction.setPlayerPositionUpdating(200);
-    antiSpawnTasks = new HashSet<String>();
     safeTime = SAFE_TIME_DEFAULT;
+    spawnDelay = SPAWN_DELAY;
     antiSpawnEnabled = false;
   }
   
@@ -41,10 +37,11 @@ public class utilantispawn extends MultiUtil
   {
     String[] message =
     {
-      "AntiSpawn -- This module has KNOWN BUGS and may not work as expected.  You've been warned!",
-      "!AntiSpawn On                             -- Activates the antispawn module",
-      "!AntiSpawn Off                            -- Deactivates the antispawn module",
-      "!SpawnTime <Time>                         -- Sets the amount of time "
+      "AntiSpawn(tm)   Use !SpawnDelay to set spawn time!  And make sure shields can be used.",
+      "!SpawnDelay <Seconds>     -- Sets seconds between spawns.  MUST be correctly set.  Default 4.0",
+      "!SafeTime <Seconds>       -- Sets milliseconds player is safe for after spawning.  Default 5.0",
+      "!AntiSpawn On             -- Activates the antispawn module.",
+      "!AntiSpawn Off            -- Deactivates the antispawn module.",
     };
 
     return message;
@@ -55,8 +52,6 @@ public class utilantispawn extends MultiUtil
     if(antiSpawnEnabled)
       throw new IllegalArgumentException("AntiSpawn module is already enabled.");
     antiSpawnEnabled = true;
-    shieldTask = new ShieldTask();
-    m_botAction.scheduleTaskAtFixedRate(shieldTask, 0, SHIELD_DELAY);
     m_botAction.sendArenaMessage("Antispawn module enabled.  Safe time set at " + safeTime + " seconds.", 2);
   }
 
@@ -65,7 +60,6 @@ public class utilantispawn extends MultiUtil
     if(!antiSpawnEnabled)
       throw new IllegalArgumentException("AntiSpawn module is already disabled.");
     antiSpawnEnabled = false;
-    m_botAction.cancelTask(shieldTask);
     m_botAction.sendArenaMessage("Antispawn module disabled.");
   }
 
@@ -76,11 +70,26 @@ public class utilantispawn extends MultiUtil
       safeTime = Double.parseDouble(argString);
       if(safeTime < 0.1)
         throw new IllegalArgumentException("Invalid safe time.");
-      m_botAction.sendArenaMessage("Safe time set at " + safeTime + " seconds.", 2);
+      m_botAction.sendPrivateMessage(sender, "Safe time set at " + safeTime + " seconds.");
     }
     catch(NumberFormatException e)
     {
-      throw new NumberFormatException("Please use the following format: !SafeTime <Time>.");
+      throw new NumberFormatException("Please use the following format: !SafeTime <Seconds>.");
+    }
+  }
+
+  public void doSpawnDelayCmd(String sender, String argString)
+  {
+    try
+    {
+      spawnDelay = Double.parseDouble(argString);
+      if(spawnDelay < 0.1)
+        throw new IllegalArgumentException("Invalid spawn delay.");
+      m_botAction.sendPrivateMessage(sender, "Spawn delay set at " + spawnDelay + " seconds.");
+    }
+    catch(NumberFormatException e)
+    {
+      throw new NumberFormatException("Please use the following format: !SpawnDelay <Seconds>.");
     }
   }
 
@@ -96,6 +105,8 @@ public class utilantispawn extends MultiUtil
         doAntiSpawnOffCmd(sender);
       if(command.startsWith("!safetime "))
         doSafeTimeCmd(sender, message.substring(10));
+      if(command.startsWith("!spawndelay "))
+        doSpawnDelayCmd(sender, message.substring(12));
     }
     catch(Exception e)
     {
@@ -120,44 +131,13 @@ public class utilantispawn extends MultiUtil
     {
       int playerID = event.getKilleeID();
       String playerName = m_botAction.getPlayerName(playerID);
-      m_botAction.scheduleTask(new DeathDelayTask(playerName), DEATH_DELAY);
+      m_botAction.scheduleTask(new DeathDelayTask(playerName), (long)(SPAWN_DELAY * 1000));
     }
   }
 
   public void cancel()
   {
-      m_botAction.cancelTask(shieldTask);
       m_botAction.setPlayerPositionUpdating(0);
-  }
-
-  private class ShieldTask extends TimerTask
-  {
-    public void run()
-    {
-      Iterator iterator = antiSpawnTasks.iterator();
-      Player player;
-      String playerName;
-
-      while(iterator.hasNext())
-      {
-        playerName = (String) iterator.next();
-        player = m_botAction.getPlayer(playerName);
-        if(player.hasShields())
-        {
-          antiSpawnTasks.remove(playerName);
-          m_botAction.sendArenaMessage("Removing " + playerName + " from the HashSet.");
-          m_botAction.scheduleTask(new ResetTask(playerName), (int) (safeTime * 1000));
-        }
-        else
-        {
-          m_botAction.sendArenaMessage("Giving shields to " + playerName + ".");
-          m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #18");
-          m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
-          m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
-          m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
-        }
-      }
-    }
   }
 
   private class ResetTask extends TimerTask
@@ -171,7 +151,6 @@ public class utilantispawn extends MultiUtil
 
     public void run()
     {
-      m_botAction.sendArenaMessage(playerName + " is vulnerable again.");
       m_botAction.sendUnfilteredPrivateMessage(playerName, "*shipreset");
     }
   }
@@ -187,8 +166,11 @@ public class utilantispawn extends MultiUtil
 
     public void run()
     {
-      m_botAction.sendArenaMessage("Adding " + playerName + " to HashSet.");
-      antiSpawnTasks.add(playerName);
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #18");
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");        
+        m_botAction.scheduleTask(new ResetTask(playerName), (long)(safeTime * 1000));
     }
   }
 }
