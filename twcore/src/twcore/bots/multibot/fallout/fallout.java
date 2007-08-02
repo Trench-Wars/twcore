@@ -117,7 +117,7 @@ public class fallout extends MultiModule {
 
 	    		TimerTask prizeEm = new TimerTask() {
 	    			public void run() {
-	    				m_botAction.sendUnfilteredPublicMessage( "*prize 100" );
+	    				m_botAction.sendUnfilteredPublicMessage( "*prize 20" );
 	    			}
 	    		};
 	    		m_botAction.scheduleTaskAtFixedRate( prizeEm, 11000, 3000 );
@@ -134,7 +134,7 @@ public class fallout extends MultiModule {
 			m_botAction.hideObject( arenaCur * 10 );
 			arenaCur = 0;
 			teamSize = 1;
-			fallOut = false;
+			fallOut = false;            
 			m_botAction.cancelTasks();
 			players.clear();
 		} else m_botAction.sendPrivateMessage( name, "Fallout is not in progress." );
@@ -175,22 +175,30 @@ public class fallout extends MultiModule {
 	}
 
 	public void doHandleWin() {
-		String winner = "Me (The best bot around town)";
+		String winner = "I (the best bot around town)";
 		Iterator it = m_botAction.getPlayingPlayerIterator();
 		int i = 0;
 	    if( it != null ) {
-	   		winner = "";
-	   		while( it.hasNext() ) {
-	   			Player player = (Player)it.next();
-	   			winner += player.getPlayerName() + " and ";
-	   			i++;
-	   		}
+            if( it.hasNext() ) {
+                winner = "";
+                while( it.hasNext() ) {
+	   			    Player player = (Player)it.next();
+	   			    winner += player.getPlayerName() + " and ";
+	   			    i++;
+	   		    }
+                try {
+                    winner = winner.substring( 0, winner.length() - 5 );  // Remove the tailing " and "
+                } catch (Exception e) {
+                    winner = "I (the best bot around town)";
+                }
+            }
 	   	}
 		m_botAction.showObject( 3 );
 		if( i == 1 )
-			m_botAction.sendArenaMessage( winner.substring( 0, winner.length() - 5 ) + " has won this round of Fallout!", 5 );
+		    m_botAction.sendArenaMessage( winner + " has won this round of Fallout!", 5 );
 		else
-			m_botAction.sendArenaMessage( winner.substring( 0, winner.length() - 5 ) + " have won this round of Fallout!", 5 );
+		    m_botAction.sendArenaMessage( winner + " have won this round of Fallout!", 5 );
+
 		m_botAction.cancelTasks();
 		m_botAction.shipResetAll();
 		m_botAction.toggleLocked();
