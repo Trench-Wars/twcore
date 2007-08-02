@@ -11,7 +11,7 @@ import twcore.core.util.ModuleEventRequester;
 
 public class utilspawnpmer extends MultiUtil
 {
-    public static final int SAFE_TIME_DEFAULT = 200;
+    public static final int SAFE_TIME_DEFAULT = 5000;
 
     private String controller;
     private HashMap<Player, Long> times;
