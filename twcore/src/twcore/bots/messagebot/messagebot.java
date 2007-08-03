@@ -854,7 +854,6 @@ public class messagebot extends SubspaceBot
 			try{
 				messageNumber = Integer.parseInt(message);
 			} catch(Exception e) {
-				e.printStackTrace();
 				m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
 				return;
 			}
