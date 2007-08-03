@@ -44,10 +44,10 @@ public class utilshipc extends MultiUtil
 {
 
 
-	ArrayList Aclass;
-	ArrayList Bclass;
-	ArrayList Exmpt;
-	ArrayList Spec;
+	ArrayList <Integer>Aclass;
+	ArrayList <Integer>Bclass;
+	ArrayList <String>Exmpt;
+	ArrayList <String>Spec;
 	int mainlives=2;
 	int reservelives=2;
 	int latelives=1;
@@ -67,10 +67,10 @@ public class utilshipc extends MultiUtil
 	public void init()	{
 	Integer x = new Integer(1);
 	Integer y = new Integer(3);
-	ArrayList prim = new ArrayList();Aclass = prim;
-	ArrayList reser = new ArrayList();Bclass = reser;
-	ArrayList exmpts = new ArrayList();Exmpt = exmpts;
-	ArrayList specs = new ArrayList();Spec = specs;
+	Aclass = new ArrayList<Integer>();
+	Bclass = new ArrayList<Integer>();
+	Exmpt = new ArrayList<String>();
+	Spec = new ArrayList<String>();
 	Aclass.add(x);
 	Bclass.add(y);
 	playerMap = new HashMap<String, PlayerProfile>();
@@ -733,7 +733,7 @@ public class utilshipc extends MultiUtil
      * @return the fixed array.
      */
 	
-	private ArrayList FixConflicts(Integer shipnum, ArrayList array)
+	private ArrayList<Integer> FixConflicts(Integer shipnum, ArrayList <Integer>array)
     {
     		for (int i = 0;i<array.size();i++)
     			if (((Integer)array.get(i)).equals(shipnum))
