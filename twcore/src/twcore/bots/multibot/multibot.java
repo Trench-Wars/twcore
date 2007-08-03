@@ -377,8 +377,7 @@ public class multibot extends SubspaceBot {
             utils.put(utilType, util);
             m_botAction.sendPrivateMessage(name, "Successfully loaded utility " + utilType);
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage(name, "Failed to load " + utilType);
-            Tools.printStackTrace(e);
+            m_botAction.sendPrivateMessage(name, "Failed to load " + utilType + ".  Use !listutils to see a list of available utilities.");
         }
     }
 
@@ -510,7 +509,7 @@ public class multibot extends SubspaceBot {
         m_botAction.smartPrivateMessageSpam(sender, help_locked);
     }
     final static String[] help_locked = {
-	    "MultiBot Help:  *** USE !MODHELP *** for help on the currently loaded module",
+	    "MultiBot Help:              USE !MODHELP for help on the currently loaded module",
 	    "!Module                  -- Displays the module and version that is currently loaded.",
 	    "!Unlock                  -- Unlocks the bot, which unloads the presently-loaded module.",
 	    "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
