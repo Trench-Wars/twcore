@@ -35,7 +35,7 @@ import java.util.StringTokenizer;
  * to the library of TW events; provided the hosts have the intellect
  * and creativity to use it.
  * 
- * Refrences: zombies, pubbot, prodem
+ * References: zombies, pubbot, prodem
  * 
  * @author Ayano / Ice-demon
  *
@@ -218,7 +218,7 @@ public class utilshipc extends MultiUtil
 
 	/**
 	 * Creates the arena message for when a ship is shunted to reserve.
-	 * the message can be erased to not display at all if '`' is
+	 * the message can be erased to not display at all if '~' is
 	 * sent.
 	 * 
 	 * @param sender is the user of the bot.
@@ -348,8 +348,10 @@ public class utilshipc extends MultiUtil
 	public void doRemove(String sender,String name)	{
 		if(IsValidPlayer(name))	{
 			PlayerProfile plyrP = playerMap.get(name);
+		if (plyrP == null)  throw new IllegalArgumentException(name + " is not playing");
 			for(int i=0 ;i< mainlives + reservelives ; i++)
 				plyrP.addDeath();
+			m_botAction.specWithoutLock(plyrP.getName()); //case sensitive I assume, inserted precaution
 			m_botAction.sendSmartPrivateMessage(sender,name + " has been removed/shunted ");
 		}
 		else
@@ -511,7 +513,7 @@ public class utilshipc extends MultiUtil
         		if(Bclass.contains(shipnumber))	{
         			if(reservelives == 0 || deaths < reservelives + mainlives)	// Infinite reserve is on or do you still have lives and are in the correct ship? ok
         				return;
-        			else				//note: odd how it wouldn't lock reserve ships untill I added this else and bracketed in the Bclass.contains
+        			else				//note: odd how it wouldn't lock reserve ships until I added this else and bracketed in the Bclass.contains
         				{m_botAction.specWithoutLock(plyrName);AddSpec(plyrName);}
         		}
         		else if(deaths < reservelives + mainlives)	{
@@ -660,7 +662,7 @@ public class utilshipc extends MultiUtil
 	 * @param name is the player.
 	 */
 	
-	public void AddSpec(String name)	{
+	private void AddSpec(String name)	{
 		if (Spec.contains(name))
 			return;
 		Spec.add(name);
@@ -685,7 +687,7 @@ public class utilshipc extends MultiUtil
 	 * lowest players to help with balance when adding new players. 
 	 * If there's less freqs than numfreqs, it recurses numfreqs-1. 
 	 * 
-	 * @return the int value of the freq with the lowest players or freq 0 is they're all
+	 * @return the int value of the freq with the lowest players or freq 0 if they're all
 	 * the same amount.
 	 */
 	
