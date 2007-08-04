@@ -198,16 +198,19 @@ public class estatsbot extends SubspaceBot {
 		try {
             m_botAction.SQLQueryAndClose("local", lastGame.getQuery());
 			ResultSet results = m_botAction.SQLQuery("local", "SELECT fnGameID FROM tblElimRound ORDER BY fnGameID DESC");
-			results.next();
+            if( !results.next() )
+                return;
 			int gID = results.getInt("fnGameID");
 			int isElim = 0;
 			if(!lastGame.isElim) isElim = 1;
 			Iterator it = lastPlayers.values().iterator();
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
-                m_botAction.SQLQueryAndClose("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+                if( ep != null ) {
+                    m_botAction.SQLQueryAndClose("local", ep.getQuery(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
 			//	m_botAction.sendPrivateMessage("ikrit", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
-                m_botAction.SQLQueryAndClose("local", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+                    m_botAction.SQLQueryAndClose("local", ep.getQuery2(gID, ep.name.equalsIgnoreCase(lastGame.winner), isElim));
+                }
 			}
             m_botAction.SQLClose( results );
 		} catch(Exception e) { Tools.printStackTrace(e); }
