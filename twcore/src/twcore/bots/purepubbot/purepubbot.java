@@ -98,6 +98,7 @@ public class purepubbot extends SubspaceBot
     private boolean strictFlagTime;                     // True for autowarp in flag time
     private boolean teamsUneven;                        // True if teams are uneven as given in MAX_FREQSIZE_DIFF
     private boolean allEntered;                         // True after bot has completed entering arena
+    private boolean autoWarp;                           // Whether to add players to !warp by default
     private int[] freqSizeInfo = {0, 0};                // Index 0: size difference; 1: # of smaller freq
     private FlagCountTask flagTimer;                    // Flag time main class
     private StartRoundTask startTimer;                  // TimerTask to start round
@@ -105,7 +106,7 @@ public class purepubbot extends SubspaceBot
     private TimerTask entranceWaitTask;
     private int flagMinutesRequired;                    // Flag minutes required to win
     private int freq0Score, freq1Score;                 // # rounds won
-    boolean initLogin = true;                           // True if first arena login
+    private boolean initLogin = true;                   // True if first arena login
     private int initialPub;                             // Order of pub arena to defaultjoin
     private String initialSpawn;                        // Arena initially spawned in
     private Vector <Integer>shipWeights;                // "Weight" restriction per ship
@@ -147,7 +148,8 @@ public class purepubbot extends SubspaceBot
         flagTimeStarted = false;
         strictFlagTime = false;
         teamsUneven = false;
-        allEntered = false;        
+        allEntered = false;
+        autoWarp = true;
         warpPlayers = Collections.synchronizedList( new LinkedList<String>() );
         authorizedChangePlayers = Collections.synchronizedList( new LinkedList<String>() );
         mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
@@ -368,9 +370,7 @@ public class purepubbot extends SubspaceBot
             Player player = m_botAction.getPlayer(playerID);
             String playerName = m_botAction.getPlayerName(playerID);
 
-            if(started)
-            {
-
+            if(started) {
                 m_botAction.sendPrivateMessage(playerName, "Pure Pub enabled.  Private Freqs: [" + (privFreqs ? "OK" : "NO") + "]" + "  Timed pub: [" + (flagTimeStarted ? "ON" : "OFF") + "]" );
 
                 String restrictions = "";
@@ -395,8 +395,12 @@ public class purepubbot extends SubspaceBot
                 m_botAction.sendPrivateMessage(playerName, "Commands:  !team, !restrictions, !time, !warp, !ship <ship#>, !clearmines");
             }
             if(flagTimeStarted)
-                if( flagTimer != null)
+                if( flagTimer != null) {
                     m_botAction.sendPrivateMessage(playerName, flagTimer.getTimeInfo() );
+                    if( autoWarp )      // Autowarp is "opt out" warping rather than "opt in"
+                        if( player.getShipType() != Tools.Ship.SPECTATOR )
+                            doWarpCmd(playerName);
+                }
         } catch (Exception e) {
         }
 
@@ -507,6 +511,8 @@ public class purepubbot extends SubspaceBot
                 doStopTimeCmd(sender);
             else if(command.startsWith("!set "))
                 doSetCmd(sender, message.substring(5));
+            else if(command.startsWith("!autowarp"))
+                doAutowarpCmd(sender);
             else if(command.equals("!die"))
                 doDieCmd(sender);
         }
@@ -801,6 +807,22 @@ public class purepubbot extends SubspaceBot
 
 
     /**
+     * Turns on or off "autowarp" mode, where players opt out of warping into base,
+     * rather than opting in.
+     *
+     * @param sender is the person issuing the command.
+     */
+    public void doAutowarpCmd(String sender) {
+        if( autoWarp ) {
+            m_botAction.sendPrivateMessage(sender, "Players will no longer automatically be added to the !warp list when they enter the arena.");
+            autoWarp = false;
+        } else {
+            m_botAction.sendPrivateMessage(sender, "Players will no longer automatically be added to the !warp list when they enter the arena.");
+            autoWarp = true;
+        }
+    }
+
+    /**
      * Shows who on the team is in which ship.
      *
      * @param sender is the person issuing the command.
@@ -1013,9 +1035,14 @@ public class purepubbot extends SubspaceBot
                 "!set <ship> <#>         -- Sets <ship> to restriction <#>.",
                 "                           0=disabled; 1=any amount; other=weighted:",
                 "                           2 = 1/2 of freq can be this ship, 5 = 1/5, ...",
-                "!time                   -- Provides time remaining in Flag Time mode.",
-                "!team                   -- Shows which ships team members are in.",
+                "!autowarp               -- Enables and disables 'opt out' warping style",
                 "!die                    -- Logs the bot off of the server.",
+                "!team                   -- Tells you which ships your team members are in.",
+                "!restrictions           -- Lists all current ship restrictions.",
+                "!time                   -- Provides time remaining when Flag Time mode.",
+                "!warp                   -- Warps you into flagroom at start of next round (flagtime)",
+                "!ship <ship#>           -- Puts you in ship <ship#>, keeping MVP status.",
+                "!clearmines             -- Clears all mines you have laid, keeping MVP status."
         };
 
         String[] playerHelpMessage =
