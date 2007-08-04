@@ -298,6 +298,10 @@ public class purepubbot extends SubspaceBot
                         playerTimes.remove( pname );
                         playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
                     }
+                    if( autoWarp )
+                        if( !freq0List.contains(pname) && !freq1List.contains(pname) && !warpPlayers.contains(pname) )
+                            if( p.getShipType() != Tools.Ship.SPECTATOR )
+                                doWarpCmd(pname);
                 }
             }
         } catch (Exception e) {
@@ -343,9 +347,13 @@ public class purepubbot extends SubspaceBot
                     playerTimes.remove( pname );
                     playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
                 }
+                if( autoWarp )
+                    if( !freq0List.contains(pname) && !freq1List.contains(pname) && !warpPlayers.contains(pname) )
+                        if( p.getShipType() != Tools.Ship.SPECTATOR )
+                            doWarpCmd(pname);
             }
         } catch (Exception e) {
-        }
+        }        
         
         if(started) {
             checkPlayer(playerID);
@@ -394,13 +402,13 @@ public class purepubbot extends SubspaceBot
                 }
                 m_botAction.sendPrivateMessage(playerName, "Commands:  !team, !restrictions, !time, !warp, !ship <ship#>, !clearmines");
             }
-            if(flagTimeStarted)
-                if( flagTimer != null) {
+            if(flagTimeStarted) {
+                if( flagTimer != null)
                     m_botAction.sendPrivateMessage(playerName, flagTimer.getTimeInfo() );
-                    if( autoWarp )      // Autowarp is "opt out" warping rather than "opt in"
-                        if( player.getShipType() != Tools.Ship.SPECTATOR )
-                            doWarpCmd(playerName);
-                }
+                if( autoWarp )      // Autowarp is "opt out" warping rather than "opt in"
+                    if( player.getShipType() != Tools.Ship.SPECTATOR )
+                        doWarpCmd(playerName);
+            }
         } catch (Exception e) {
         }
 
@@ -642,6 +650,9 @@ public class purepubbot extends SubspaceBot
         flagTimeStarted = true;
         freq0Score = 0;
         freq1Score = 0;
+        if( autoWarp )
+            
+        
         m_botAction.scheduleTask( new StartRoundTask(), 60000 );
     }
 
@@ -730,7 +741,7 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendSmartPrivateMessage( sender, "You will NOT be warped inside FR at every round start.  !warp again to turn back on." );
         } else {
             warpPlayers.add( sender );
-            m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  !warp again to turn off." );
+            m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  Use :" + m_botAction.getBotName() + ":!warp to turn off." );
         }
     }
 
