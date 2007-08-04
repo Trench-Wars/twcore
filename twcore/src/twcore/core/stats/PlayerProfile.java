@@ -43,6 +43,9 @@ public class PlayerProfile
     	deaths++;
     	lastDeath = (int)(System.currentTimeMillis() / 1000);
     }
+    public void removeDeath()	{
+    	deaths--;	//Adds SpecTask functionality (death-wise) for non-spec purposes.
+    }
     public int timeFromLastDeath() {
     	return (int)(System.currentTimeMillis() / 1000) - lastDeath;
     }
