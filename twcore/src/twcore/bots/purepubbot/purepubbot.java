@@ -103,6 +103,11 @@ public class purepubbot extends SubspaceBot
     private FlagCountTask flagTimer;                    // Flag time main class
     private StartRoundTask startTimer;                  // TimerTask to start round
     private IntermissionTask intermissionTimer;         // TimerTask for round intermission
+    
+    private AuxLvzTask scoreDisplay;					//Displays score lvz
+    private AuxLvzTask scoreRemove;						//Removes score lvz
+    private AuxLvzConflict delaySetObj;					//Schedules a task after an amount of time
+   
     private TimerTask entranceWaitTask;
     private int flagMinutesRequired;                    // Flag minutes required to win
     private int freq0Score, freq1Score;                 // # rounds won
@@ -1381,6 +1386,8 @@ public class purepubbot extends SubspaceBot
 
         mineClearedPlayers.clear();
         flagTimer = new FlagCountTask();
+        m_botAction.showObject(2300); //Turns on coutdown lvz
+        m_botAction.hideObject(1000); //Turns off intermission lvz
         m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
     }
 
@@ -1684,7 +1691,8 @@ public class purepubbot extends SubspaceBot
             m_botAction.cancelTask(intermissionTimer);
         } catch (Exception e ) {
         }
-
+        
+        doScores(intermissionTime);
         intermissionTimer = new IntermissionTask();
         m_botAction.scheduleTask( intermissionTimer, intermissionTime );
     }
@@ -1864,6 +1872,25 @@ public class purepubbot extends SubspaceBot
     {
         return yCoord + (int) Math.round(randRadius * Math.cos(randRadians));
     }
+    
+    /**
+     * Shows and hides scores
+     * format: -ints MUST match booleans in number-
+     * (new int[]{int,int,int...},new boolean{boolean,boolean,boolean...,objset variable)
+     */
+    
+    private void doScores(int time)
+    {
+    	scoreDisplay = new AuxLvzTask(new int[]{2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)},new boolean[]{true,true,true});
+    	scoreRemove = new AuxLvzTask(new int[]{2200,2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)},new boolean[]{true,false,false,false});
+    	delaySetObj = new AuxLvzConflict(scoreRemove);
+    	scoreDisplay.init(); 								// Initialize score display
+    	m_botAction.scheduleTask(scoreDisplay, 1000);		// Do score display
+    	m_botAction.scheduleTask(delaySetObj, 2000);		// Initialize score removal
+    	m_botAction.scheduleTask(scoreRemove, time-1000);	// Do score removal
+    	m_botAction.showObject(2100);
+    	
+    }
 
 
     /* **********************************  TIMERTASK CLASSES  ************************************ */
@@ -1911,9 +1938,55 @@ public class purepubbot extends SubspaceBot
          */
         public void run() {
             doIntermission();
+            m_botAction.showObject(1000); //Shows intermission lvz
         }
     }
+    
+    /**
+     * turns on/off auxiliary LVZ objects when appropriate, requires an
+     * int[] of object numbers and boolean[] to be sent to it.
+     * The flexibility is useful when adding new lvz effects to the
+     * timer if needed
+     */
+    
+    private class AuxLvzTask extends TimerTask {
+    	public int[] objx;
+    	public boolean[] on;
+    	
+    	public AuxLvzTask(int[] cmds,boolean[] var)	{
+    		objx = cmds;
+    		on = var;
+    	}
+    	
+    	public void init()	{
+    		int size = objx.length;	
+    		for(int i=0 ; i< size ; i++)	{
+    			if(on[i]) 	objs.showObject(objx[i]);
+    			else		objs.hideObject(objx[i]);
+    		}
+    	}
 
+    	public void run() {
+    			m_botAction.setObjects();
+        }
+    }
+    
+    /**
+     * Schedules an initialization, redundant but necessary for
+     * Lvz conflictions and the sole available objset slot.
+     */
+    
+    private class AuxLvzConflict extends TimerTask	{
+    	public AuxLvzTask myTask;
+    	public AuxLvzConflict(AuxLvzTask task)	{
+    		myTask = task;
+    	}
+    	
+    	public void run()	{
+    		myTask.init();
+    	}
+    	
+    }
 
     /**
      * This private class counts the consecutive flag time an individual team racks up.
@@ -1966,6 +2039,7 @@ public class purepubbot extends SubspaceBot
                     flagClaimingFreq = freq;
                     isBeingClaimed = true;
                     claimSecs = 0;
+                    m_botAction.showObject(2400); // Shows flag claimed lvz
                 }
             }
         }
@@ -1987,9 +2061,9 @@ public class purepubbot extends SubspaceBot
 
                 if( remain < 60 ) {
                     if( remain < 4 )
-                        m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 7 );
+                        {m_botAction.sendArenaMessage( "INCONCIEVABLE!!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with just " + remain + " second" + (remain == 1 ? "" : "s") + " left!", 65 );m_botAction.showObject(2500);m_botAction.showObject(2600);} //'Hot Freaking Daym!!' lvz
                     else if( remain < 11 )
-                        m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with just " + remain + " sec. left!" );
+                        {m_botAction.sendArenaMessage( "AMAZING!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with just " + remain + " sec. left!" );m_botAction.showObject(2600);} // 'Daym!' lvz
                     else if( remain < 25 )
                         m_botAction.sendArenaMessage( "SAVE!: " + p.getPlayerName() + " claims flag for " + (flagHoldingFreq < 100 ? "Freq " + flagHoldingFreq : "priv. freq" ) + " with " + remain + " sec. left!" );
                     else
@@ -2197,6 +2271,7 @@ public class purepubbot extends SubspaceBot
             objs.hideAllObjects();
             int minutes = secsNeeded / 60;
             int seconds = secsNeeded % 60;
+            if( minutes < 1 ) objs.showObject( 1100 );
             if( minutes > 10 )
                 objs.showObject( 10 + ((minutes - minutes % 10)/10) );
             objs.showObject( 20 + (minutes % 10) );

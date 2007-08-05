@@ -622,7 +622,7 @@ public class utilshipc extends MultiUtil
      * @param array is the array checked for duplicates of shipnum.
      */
 	
-	private void IsValidShip(Integer shipnum, ArrayList array)	{
+	private void IsValidShip(Integer shipnum, ArrayList<Integer> array)	{
     	if (shipnum.intValue()<1 || shipnum.intValue()>=9)
     		throw new IllegalArgumentException("Invalid ship number listed");
     	for (int i = 0;i<array.size();i++)
