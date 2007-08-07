@@ -5,27 +5,50 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.bots.MultiUtil;
+import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
+/**
+ *Modified the hotspots module with a better UI and fixed
+ *the timer task errors. Should be working properly.
+ */
+
 public class utilhotspots extends MultiUtil {
 
     Vector <HotSpot>hotSpots;
     HotSpot watch;
+    TimerTask changeTask;
+    boolean watching;
+    
 
     private int switchTime = 500;
 
+    /**
+     * initializes.
+     */
+    
     public void init() {
         hotSpots = new Vector<HotSpot>();
         // Turn off updating -- we will do it ourselves
         m_botAction.setPlayerPositionUpdating(0);
+        watching = false;
     }
     
+    /**
+     * requests events.
+     */
+    
     public void requestEvents( ModuleEventRequester modEventReq ) {
+    	modEventReq.request(this, EventRequester.PLAYER_POSITION );
     }
 
+    /**
+     * Handles messages
+     */
+    
     public void handleEvent( Message event ){
 
         String message = event.getMessage();
@@ -33,54 +56,98 @@ public class utilhotspots extends MultiUtil {
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
             if( m_opList.isER( name ))
-                handleCommand( name, message );
+                handleCommand( name, message.toLowerCase() );
         }
     }
 
-    public void handleCommand( String name, String message ) {
+    /**
+     * handles commands
+     * @param sender is the user of the bot.
+     * @param message is the command.
+     */
+    
+    public void handleCommand( String sender, String message ) {
 
-        if( message.toLowerCase().startsWith( "!addspot " ) ) {
-            do_addHotSpot( name, message.substring( 9, message.length() ) );
-        } else if( message.toLowerCase().startsWith( "!prizespot " ) ) {
-            do_addPrizeHotSpot( name, message.substring( 11, message.length() ) );
-        } else if( message.toLowerCase().startsWith( "!clearspots" ) ) {
-            do_clearHotSpots( name );
-        } else if( message.toLowerCase().startsWith( "!switchtime " ) ) {
-            do_switchTime( name, message.substring( 12, message.length() ) );
-        } else if( message.toLowerCase().startsWith( "!watch" ) ) {
-            TimerTask change = new TimerTask() {
-                public void run() {
-                    try {
-                        watch = hotSpots.elementAt(0);
-                        hotSpots.removeElementAt(0);
-                        hotSpots.addElement( watch );
-                    } catch (Exception e) {}
-                    m_botAction.moveToTile(watch.getX(), watch.getY());
-                }
-            };
-            m_botAction.scheduleTaskAtFixedRate( change, 2000, switchTime );
-        }
+        if( message.startsWith( "!addspot " ) ) 
+        	do_addHotSpot( sender, message.substring( 9, message.length() ) ); 
+        if( message.startsWith( "!prizespot " ) )
+            do_addPrizeHotSpot( sender, message.substring( 11, message.length() ) );
+        if( message.startsWith( "!switchtime " ) )
+            do_switchTime( sender, message.substring( 12, message.length() ) );
+        if (message.startsWith( "!listspots"))
+        	do_ListSpot(sender);
+        if( message.startsWith( "!clearspots" ) )
+            do_clearHotSpots( sender );
+        if( message.toLowerCase().startsWith( "!watch" ) ) {
+        	if (!watching)	{
+        		watch();
+        		m_botAction.sendPrivateMessage(sender, "watching on");
+            }
+        	else
+        		m_botAction.sendPrivateMessage(sender, "Already watching spots!");
+        }	
     }
 
+    /**
+     * Handles player positions
+     */
+    
     public void handleEvent( PlayerPosition event ) {
 
         Player p = m_botAction.getPlayer( event.getPlayerID() );
         String name = m_botAction.getPlayerName( event.getPlayerID() );
 
-        Iterator it = hotSpots.iterator();
-        while( it.hasNext() ) {
-            HotSpot spot = (HotSpot)it.next();
-            if( spot != null )
+            if( watch != null )
                 if( p != null )
-                    if( spot.inside( p.getXLocation(), p.getYLocation() ) ) {
-                        m_botAction.warpTo( name, spot.getX(), spot.getY() );
-                        if( spot.getPrize() != -1 )
-                            m_botAction.specificPrize( name, spot.getPrize() );
+                    if( watch.inside( p.getXLocation(), p.getYLocation() ) ) {
+                        m_botAction.warpTo( name, watch.getX2(), watch.getY2() );
+                        if( watch.getPrize() != -1 )
+                            m_botAction.specificPrize( name, watch.getPrize() );
                     }
-        }
     }
 
-    public void do_addHotSpot( String name, String message ) {
+    /**
+     * initializes timer task.
+     */
+    
+    public void watch()	{
+    	changeTask = new TimerTask() {
+            public void run() {
+                try {
+                    watch = hotSpots.elementAt(0);
+                    hotSpots.removeElementAt(0);
+                    hotSpots.addElement( watch );
+                } catch (Exception e) {
+                	m_botAction.sendPublicMessage("Concurrent Error!");
+                }
+                m_botAction.moveToTile(watch.getX(), watch.getY());
+            }
+        };
+        m_botAction.scheduleTaskAtFixedRate( changeTask, 2000, switchTime );
+        watching = true;
+    }
+    
+    /**
+     * Lists spots.
+     * @param sender is the user of the bot
+     */
+    
+    public void do_ListSpot(String sender)	{
+    	Iterator<HotSpot> it = hotSpots.iterator();
+    	if(!it.hasNext()) {m_botAction.sendPrivateMessage(sender,"No spots loaded!");return;}
+    	while(it.hasNext())	{
+    		m_botAction.sendPrivateMessage(sender, (it.next()).toString());
+    	}
+    		
+    }
+    
+    /**
+     * Adds a spot
+     * @param sender is the user of the bot.
+     * @param message is the hotspot.
+     */
+    
+    public void do_addHotSpot( String sender, String message ) {
 
         String pieces[] = message.split( " " );
         if( pieces.length != 5 ) return;
@@ -90,15 +157,21 @@ public class utilhotspots extends MultiUtil {
             for( int i = 0; i < 5; i++ )
                 values[i] = Integer.parseInt( pieces[i] );
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage( name, "Input error.  Check and try again." );
+            m_botAction.sendPrivateMessage( sender, "Input error.  Check and try again." );
             return;
         }
 
         hotSpots.add( new HotSpot( values ) );
-        m_botAction.sendPrivateMessage( name, "Hotspot added." );
+        m_botAction.sendPrivateMessage( sender, "Hotspot added." );
     }
 
-    public void do_addPrizeHotSpot( String name, String message ) {
+    /**
+     * Adds a prized hotspot
+     * @param sender is the user of the bot.
+     * @param message is the hotspot.
+     */
+    
+    public void do_addPrizeHotSpot( String sender, String message ) {
 
         String pieces[] = message.split( " " );
         if( pieces.length != 6 ) return;
@@ -108,12 +181,12 @@ public class utilhotspots extends MultiUtil {
             for( int i = 0; i < 6; i++ )
                 values[i] = Integer.parseInt( pieces[i] );
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage( name, "Input error.  Check and try again." );
+            m_botAction.sendPrivateMessage( sender, "Input error.  Check and try again." );
             return;
         }
 
         hotSpots.add( new HotSpot( values ) );
-        m_botAction.sendPrivateMessage( name, "Prize hotspot added." );
+        m_botAction.sendPrivateMessage( sender, "Prize hotspot added." );
     }
 
     /**
@@ -122,38 +195,55 @@ public class utilhotspots extends MultiUtil {
      */
     public void do_clearHotSpots( String name ) {
         hotSpots.clear();
+        changeTask.cancel();
+        watching = false;
         m_botAction.sendPrivateMessage( name, "All hotspots cleared." );
     }
 
-    public void do_switchTime( String name, String message ) {
+    /**
+     * Switches time and resets timer task to that interval.
+     * @param sender is the user of the bot
+     * @param message is the command
+     */
+    
+    public void do_switchTime( String sender, String message ) {
         int time = switchTime;
         try {
             time = Integer.parseInt( message );
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage( name, "Input error.  Need a number!" );
+            m_botAction.sendPrivateMessage( sender, "Input error.  Need a number!" );
             return;
         }
         if( time < 200 ) {
-            m_botAction.sendPrivateMessage( name, "Time can not be less than 200ms." );
+            m_botAction.sendPrivateMessage( sender, "Time can not be less than 200ms." );
             return;
         }
         
         switchTime = time;
-        m_botAction.sendPrivateMessage( name, "Switch time set to " + time );
+        if(watching)	{
+        	changeTask.cancel();
+            watch();
+        }
+        m_botAction.sendPrivateMessage( sender, "Switch time set to " + time );
     }
 
+    /**
+     * Returns help message
+     */
+    
     public String[] getHelpMessages() {
         String help[] = {
-                "HotSpot Module - 'Enter one coordinate, warp to another; maybe get a prize.'",
-                "!addspot <warpx> <warpy> <radius> <destx> <desty>     - Adds a new hotspot.",
-                "            Players will warp to the coord <destx>,<desty>",
-                "            when they enter within <radius> of <warpx>,<warpy>.",
-                "!prizespot <warpx> <warpy> <radius> <destx> <desty> <prize>" +
-                "            - Same as !addspot, but players are given <prize> after warping.",
-                "!switchtime <ms> - How long to watch each spot before moving to the next",
-                "!watch      - Begin watching all hotspots.",
-                "!clearspots - Remove all hotspots.",
-                "(Use !warp module's !where command to locate your hotspots!)"
+                "HotSpot Module          - Enter one coordinate, warp to another; maybe get a prize.'",
+                "!addspot                - Adds a new hotspot.<warpx> <warpy> <radius> <destx> <desty>",
+                "                        - Players will warp to the coord <destx>,<desty>",
+                "                        - when they enter within <radius> of <warpx>,<warpy>.",
+                "!prizespot              - Same as !addspot, but players are given <prize> after warping.",
+                "                        - <warpx> <warpy> <radius> <destx> <desty> <prize>",
+                "                        - Same as !addspot, but players are given <prize> after warping.",
+                "!switchtime <ms>        - How long to watch each spot before moving to the next",
+                "!watch                  - Begin watching all hotspots.",
+                "!clearspots             - Remove all hotspots.",
+                "!listspots              - Lists your hotspots"
         };
         return help;
     }
@@ -162,6 +252,10 @@ public class utilhotspots extends MultiUtil {
         m_botAction.setPlayerPositionUpdating(5000);
     }
 }
+
+/**
+ *Hot spot class that holds all related values
+ */
 
 class HotSpot {
 
@@ -196,8 +290,17 @@ class HotSpot {
         if( dist < r*16 ) return true;
         else return false;
     }
+    
+    public String toString()	{
+    	if(prize == -1)
+    		return ("X:" + x + " Y:" + y + " Radius:" + r + " destX:" + x2 + " desty:" + y2);
+    	else
+    		return ("X:" + x + " Y:" + y + " Radius:" + r + " destX:" + x2 + " desty:" + y2 + " Prize Number:" + prize);
+    }
 
-    public int getX() { return x2; }
-    public int getY() { return y2; }
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getX2() { return x2; }
+    public int getY2() { return y2; }
     public int getPrize() { return prize; }
 }
