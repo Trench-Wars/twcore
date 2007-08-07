@@ -239,7 +239,6 @@ public class utilhotspots extends MultiUtil {
                 "                        - when they enter within <radius> of <warpx>,<warpy>.",
                 "!prizespot              - Same as !addspot, but players are given <prize> after warping.",
                 "                        - <warpx> <warpy> <radius> <destx> <desty> <prize>",
-                "                        - Same as !addspot, but players are given <prize> after warping.",
                 "!switchtime <ms>        - How long to watch each spot before moving to the next",
                 "!watch                  - Begin watching all hotspots.",
                 "!clearspots             - Remove all hotspots.",
