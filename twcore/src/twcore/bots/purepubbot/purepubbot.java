@@ -833,7 +833,7 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendPrivateMessage(sender, "Players will no longer automatically be added to the !warp list when they enter the arena.");
             autoWarp = false;
         } else {
-            m_botAction.sendPrivateMessage(sender, "Players will no longer automatically be added to the !warp list when they enter the arena.");
+            m_botAction.sendPrivateMessage(sender, "Players will be automatically added to the !warp list when they enter the arena.");
             autoWarp = true;
         }
     }
