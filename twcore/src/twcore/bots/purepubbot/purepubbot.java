@@ -1874,15 +1874,16 @@ public class purepubbot extends SubspaceBot
     }
     
     /**
-     * Shows and hides scores
-     * format: -ints MUST match booleans in number-
-     * (new int[]{int,int,int...},new boolean{boolean,boolean,boolean...,objset variable)
-     */
-    
-    private void doScores(int time)
-    {
-    	scoreDisplay = new AuxLvzTask(new int[]{2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)},new boolean[]{true,true,true});
-    	scoreRemove = new AuxLvzTask(new int[]{2200,2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)},new boolean[]{true,false,false,false});
+     * Shows and hides scores (used at intermission only).
+     * @param time Time after which the score should be removed
+     */    
+    private void doScores(int time) {
+        int[] objs1 = {2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)};
+        boolean[] objs1Display = {true,true,true};
+    	scoreDisplay = new AuxLvzTask(objs1, objs1Display);
+        int[] objs2 = {2200,2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)};
+        boolean[] objs2Display = {true,false,false,false};
+    	scoreRemove = new AuxLvzTask(objs2, objs2Display);
     	delaySetObj = new AuxLvzConflict(scoreRemove);
     	scoreDisplay.init(); 								// Initialize score display
     	m_botAction.scheduleTask(scoreDisplay, 1000);		// Do score display
@@ -1943,49 +1944,65 @@ public class purepubbot extends SubspaceBot
     }
     
     /**
-     * turns on/off auxiliary LVZ objects when appropriate, requires an
-     * int[] of object numbers and boolean[] to be sent to it.
-     * The flexibility is useful when adding new lvz effects to the
-     * timer if needed
-     */
-    
+     * Used to turn on/off a set of LVZ objects at a particular time.
+     */    
     private class AuxLvzTask extends TimerTask {
-    	public int[] objx;
-    	public boolean[] on;
-    	
-    	public AuxLvzTask(int[] cmds,boolean[] var)	{
-    		objx = cmds;
-    		on = var;
-    	}
-    	
-    	public void init()	{
-    		int size = objx.length;	
-    		for(int i=0 ; i< size ; i++)	{
-    			if(on[i]) 	objs.showObject(objx[i]);
-    			else		objs.hideObject(objx[i]);
-    		}
-    	}
+        public int[] objNums;
+        public boolean[] showObj;
 
-    	public void run() {
-    			m_botAction.setObjects();
+        /**
+         * Creates a new AuxLvzTask, given obj numbers defined in the LVZ and whether
+         * or not to turn them on or off.  Cardinality of the two arrays must be the same.
+         * @param objNums Numbers of objs defined in the LVZ to turn on or off
+         * @param showObj For each index, true to show the obj; false to hide it
+         */
+        public AuxLvzTask(int[] objNums, boolean[] showObj)	{
+            if( objNums.length != showObj.length )
+                throw new RuntimeException("AuxLvzTask constructor error: Arrays must have same cardinality.");
+            this.objNums = objNums;
+            this.showObj = showObj;
+        }
+
+        /**
+         * Initializes the task by setting up each object to show or hide
+         * using the core Objset class.
+         */
+        public void init()	{
+            for(int i=0 ; i<objNums.length ; i++)	{
+                if(showObj[i])
+                    objs.showObject(objNums[i]);
+                else
+                    objs.hideObject(objNums[i]);
+            }
+        }
+
+        /**
+         * Shows and hides set objects.
+         */
+        public void run() {
+            m_botAction.setObjects();
         }
     }
-    
+
     /**
-     * Schedules an initialization, redundant but necessary for
-     * Lvz conflictions and the sole available objset slot.
+     * Schedules an initialization, generally for removing an LVZ set by
+     * AuxLvzTask; used to resolve LVZ conflicts occuring from using a single
+     * Objset class.
      */
-    
     private class AuxLvzConflict extends TimerTask	{
-    	public AuxLvzTask myTask;
-    	public AuxLvzConflict(AuxLvzTask task)	{
-    		myTask = task;
-    	}
-    	
-    	public void run()	{
-    		myTask.init();
-    	}
-    	
+        public AuxLvzTask myTask;
+        
+        /**
+         * @param task AuxLvzTask to init on run
+         */
+        public AuxLvzConflict(AuxLvzTask task)	{
+            myTask = task;
+        }
+
+        public void run()	{
+            myTask.init();
+        }
+
     }
 
     /**
