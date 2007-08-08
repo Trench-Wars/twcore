@@ -76,7 +76,7 @@ public class utilautopilot extends MultiUtil
      */
     public void handleEvent(PlayerEntered event) {
         if( isEnabled )
-            m_botAction.sendPrivateMessage(event.getPlayerName(), "Autopilot is engaged.  PM !list to me to see how *YOU* can control me." );        
+            m_botAction.sendPrivateMessage(event.getPlayerName(), "Autopilot is engaged.  PM !info to me to see how *YOU* can control me.  (Type :" + m_botAction.getBotName() + ":!info)" );
     }
 
     
