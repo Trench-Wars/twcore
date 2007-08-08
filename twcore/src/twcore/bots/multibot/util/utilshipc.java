@@ -294,15 +294,16 @@ public class utilshipc extends MultiUtil
 	    	StringBuilder strmsg = new StringBuilder("The following players are now exempt : ");
 	    	for (int i=0;i<numArgs;i++)	{
 	    		String name = argTokens.nextToken();
-	    		if (IsValidPlayer(name));	{
-	    			Exmpt.add(name);
-	    			strmsg.append(name + ", ");
-	    		}
-	    		m_botAction.sendSmartPrivateMessage(sender, strmsg.toString());
+	    		if (IsValidPlayer(name))
+	    			if (!IsExempt(name))	{
+	    				Exmpt.add(name);
+	    				strmsg.append(name + ", ");
+	    			}
 	    	}
+	    	m_botAction.sendSmartPrivateMessage(sender, strmsg.toString());
 	    }
 	    catch(Exception e)	{
-	        m_botAction.sendSmartPrivateMessage(sender, "Please use the following syntax: !setExcepts <name1>:<name2>..ect");
+	        m_botAction.sendSmartPrivateMessage(sender, "Please use vaild player names in the following syntax: !setExcepts <name1>:<name2>..ect");
 	      }
 	    }
 	
@@ -439,7 +440,7 @@ public class utilshipc extends MultiUtil
             public void run() {
             	m_botAction.sendArenaMessage("Game Started!",2);
             	m_botAction.scoreResetAll();
-        		Iterator i = m_botAction.getPlayerIterator();
+        		Iterator<Player> i = m_botAction.getPlayerIterator();
                 if( i == null ) return;
                 while( i.hasNext() )	{
                     Player plyr = (Player)i.next();
@@ -698,7 +699,7 @@ public class utilshipc extends MultiUtil
 		try	{
 			for(int i=0;i<freqs-1;i++)
 			{
-				Iterator iterator = m_botAction.getFreqIDIterator(i);
+				Iterator<Integer> iterator = m_botAction.getFreqIDIterator(i);
 				while(iterator.hasNext()){count++; iterator.next();}
 				if(count<least){least=count;lowfreq=i;}
 				count=0;

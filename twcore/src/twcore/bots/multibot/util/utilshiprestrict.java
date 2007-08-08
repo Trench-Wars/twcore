@@ -32,6 +32,7 @@ public class utilshiprestrict extends MultiUtil {
 	HashMap<Integer, FreqRestriction> restrictions;
 	ArrayList<FreqRestriction> list;
 	ArrayList<Integer> universalRestrict;
+	ArrayList <String> Exmpt;
 	boolean universal;
 	Random rand = new Random();
 	
@@ -43,6 +44,7 @@ public class utilshiprestrict extends MultiUtil {
 		restrictions = new HashMap<Integer, FreqRestriction>();
 		list = new ArrayList<FreqRestriction>();
 		universalRestrict = new ArrayList<Integer>();
+		Exmpt = new ArrayList<String>();
 		universal = false;
 		}
 	
@@ -174,6 +176,51 @@ public class utilshiprestrict extends MultiUtil {
 		      m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
 		}
 	}
+	
+	/**
+	 * Generates a list of players who are exempt from ship 
+	 * restrictions.
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param argString is the String containing the players to be exempt.
+	 */
+	
+	public void doSetExcepts(String sender, String argString)	{
+		StringTokenizer argTokens = getArgTokens(argString,",");
+	    int numArgs = argTokens.countTokens();
+	    try	{
+	    	StringBuilder strmsg = new StringBuilder("The following players are now exempt : ");
+	    	for (int i=0;i<numArgs;i++)	{
+	    		String name = argTokens.nextToken();
+	    		if (IsValidPlayer(name))
+	    			if (!IsExempt(name))	{
+	    				Exmpt.add(name);
+	    				strmsg.append(name + ", ");
+	    			}
+	    	}
+	    	m_botAction.sendSmartPrivateMessage(sender, strmsg.toString());
+	    }
+	    catch(Exception e)	{
+	        m_botAction.sendSmartPrivateMessage(sender, "Please use vaild player names in the following syntax: !setExcepts <name1>,<name2>..ect");
+	      }
+	    }
+	
+	/**
+	 * Removes a player from the exempt list.
+	 * @param sender is the user of the bot.
+	 * @param playerName is the player to be removed.
+	 */
+	
+	public void doRemoveExcept(String sender, String playerName)	{
+		if (IsValidPlayer(playerName))
+			if(IsExempt(playerName))	{
+				Exmpt.remove(playerName);
+				m_botAction.sendSmartPrivateMessage(sender, playerName + " was removed from the exempt list");
+				UpdateArena();
+				return;
+				}
+		m_botAction.sendSmartPrivateMessage(sender, playerName + " is not present in the arena or is not Exempt!");
+	}
 
 	/**
 	 * Spams the list of restrictions to the sender.
@@ -200,6 +247,17 @@ public class utilshiprestrict extends MultiUtil {
 	}
 	
 	/**
+	 * Lists exempt players.
+	 * @param sender is the user of the bot.
+	 */
+	
+	public void doListExempt(String sender)	{
+		if (Exmpt.isEmpty())
+			{m_botAction.sendPrivateMessage(sender, "Nobody is Exempt!");return;}
+		m_botAction.sendPrivateMessage(sender,"The following players are exempt from restrictions " + Exmpt.toString());
+	}
+	
+	/**
 	 * Clears a specific freq's restrictions
 	 * 
 	 * @param sender is the user of the bot.
@@ -214,6 +272,8 @@ public class utilshiprestrict extends MultiUtil {
 		
 		try {
 			Integer freq = new Integer (Integer.parseInt(argString));
+			if (!restrictions.containsKey(freq))
+				{m_botAction.sendSmartPrivateMessage(sender, "Requested freq is not restricted");return;}
 			restrictions.remove(freq);
 			m_botAction.sendPrivateMessage(sender, "Freq " + freq + "'s restrictions have been lifted"); 
 		}
@@ -236,6 +296,20 @@ public class utilshiprestrict extends MultiUtil {
 			restrictions.clear();list.clear();universalRestrict.clear();universal=false;
 			m_botAction.sendPrivateMessage(sender, "All restrictions cleared");
 		}
+	}
+	
+	/**
+	 * Clears the list of exempt players.
+	 * 
+	 * @param sender is the user of the bot.
+	 */
+	
+	public void doClearExcepts(String sender)	{
+		if (Exmpt.isEmpty())
+			{m_botAction.sendPrivateMessage(sender, "Nobody is Exempt!");return;}
+		Exmpt.clear();
+		UpdateArena();
+		m_botAction.sendPrivateMessage(sender, "All exempt players normalized");
 	}
 	
 	/**
@@ -265,7 +339,7 @@ public class utilshiprestrict extends MultiUtil {
 	 * @param shipnum is the ship number
 	 */
 	
-	public void ValidCheck(Integer shipnum,ArrayList<Integer> errand)	{
+	private void ValidCheck(Integer shipnum,ArrayList<Integer> errand)	{
 		if (shipnum > 0 && shipnum < 9)
 			if (!errand.contains(shipnum))
 				return;
@@ -273,10 +347,38 @@ public class utilshiprestrict extends MultiUtil {
 	}
 	
 	/**
+	 * Helper method to check if the player is in the arena.
+	 * -might be some discrepancies with similar named players.
+	 * 
+	 * @param name is the player.
+	 * @return true if the player is present.
+	 */
+	
+	private boolean IsValidPlayer(String name)	{
+		if (m_botAction.getFuzzyPlayerName(name).equalsIgnoreCase(name))
+			return true;
+		return false;
+	}
+	
+	/**
+	 * Helper method to check if players are on the exempt list.
+	 * 
+	 * @param name is the name of the player.
+	 * @return true if on the list.
+	 */
+	
+	private boolean IsExempt(String name)	{
+		if(Exmpt.size() == 0) return false;
+		if (Exmpt.contains(name.toLowerCase()))
+			return true;
+		return false;
+	}
+	
+	/**
 	 * Updates the arena with the new restrictions
 	 */
 	
-	public void UpdateArena()	{
+	private void UpdateArena()	{
 		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 		while (it.hasNext())	{
 			CheckPlayer((Player)it.next());
@@ -289,9 +391,10 @@ public class utilshiprestrict extends MultiUtil {
 	 * @param player is the player being checked
 	 */
 	
-	public void CheckPlayer(Player player)	{
+	private void CheckPlayer(Player player)	{
 		if (player == null) return;
 		String playerName = player.getPlayerName();
+		if (IsExempt(playerName)) return;
 		Integer freq = new Integer (player.getFrequency());
 		Integer shipnum = new Integer (player.getShipType());
 		
@@ -315,7 +418,7 @@ public class utilshiprestrict extends MultiUtil {
 	 * @param invaildships is a vector containing invalid ships.
 	 */
 	
-	public void SwitchShip(String playerName, ArrayList<Integer> invaildships)	{
+	private void SwitchShip(String playerName, ArrayList<Integer> invaildships)	{
 		ArrayList<Integer> goodships = new ArrayList<Integer>();
 		for( Integer i = new Integer(1) ; i<9 ; i++ )
 			if (!invaildships.contains(i))	
@@ -341,12 +444,20 @@ public class utilshiprestrict extends MultiUtil {
         	doRestricts(sender, command.substring(14).trim());
     	if(command.startsWith("!setrestrictsuni "))
             doRestrictAll(sender, command.substring(17).trim());
-        if(command.startsWith("!listrestricts"))
+    	if(command.startsWith("!setexcepts "))
+            doSetExcepts(sender, command.substring(12).trim());
+    	if(command.startsWith("!removeexcept "))
+            doRemoveExcept(sender, command.substring(14).trim());
+    	if(command.startsWith("!listrestricts"))
             doList(sender);
+        if(command.startsWith("!listexcepts"))
+            doListExempt(sender);
         if(command.startsWith("!clearrestricts "))
             doClear(sender, command.substring(16).trim());
         if(command.startsWith("!clearallrestricts"))
             doClearAll(sender);
+        if(command.startsWith("!clearexcepts"))
+            doClearExcepts(sender);
 	}
 	
 	/**
@@ -379,9 +490,14 @@ public class utilshiprestrict extends MultiUtil {
 	          "                                                -- Example format: :bot:!setrestricts 1,2,3:0",
 	          "!SetRestrictsUni <ship1>,<ship2>,ect..          -- List of restrictions for all freqs",
 	          "                                                -- Example format: :bot:!setrestrictsuni 1,2,3",
+	          "!SetExcepts <name>,<name>,ect...                -- Specifies specific players to be exempt from", 
+	          "                                                -- Restrictions",
+	          "!RemoveExcept <name>                            -- Removes player from Exempt status",
 	          "!ListRestricts                                  -- Lists all restrictions fors freqs or universal",
+	          "!ListExcepts                                    -- Lists all Exempt players",
 	          "!ClearRestricts <freq>                          -- Clears restrictions for <freq>",
 	          "!ClearAllRestricts                              -- Clears all restrictions for <freq>",
+	          "!ClearExcepts                                   -- Deprives all Exempt players their priviligaes",
 	          "================================================================================================="
 	      };
 	      return message;
