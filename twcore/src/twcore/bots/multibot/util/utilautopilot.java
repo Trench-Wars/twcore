@@ -314,9 +314,9 @@ public class utilautopilot extends MultiUtil
         }
         
         public void removeVote( String name ) {
-            voters.remove(name);
-            if( votes > 0 )
-                votes--;
+            if( voters.remove(name) )
+                if( votes > 0 )
+                    votes--;
         }
         
         public String getCommand() {
