@@ -40,7 +40,7 @@ public class utilstandard extends MultiUtil {
     }
 
     public void handleEvent( Message event ){
-        if(event.getMessageType() == Message.ALERT_MESSAGE && doLock != 0 ) {
+        if(event.getMessageType() == Message.ARENA_MESSAGE && doLock != 0 ) {
             if(event.getMessage().startsWith("Arena UNLOCKED")) {
                 if(doLock == 1) {
                     doLock = 0;
