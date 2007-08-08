@@ -347,16 +347,22 @@ public class utilshipc extends MultiUtil
 	}
 	
 	public void doRemove(String sender,String name)	{
-		if(IsValidPlayer(name))	{
-			PlayerProfile plyrP = playerMap.get(name);
-		if (plyrP == null)  throw new IllegalArgumentException(name + " is not playing");
-			for(int i=0 ;i< mainlives + reservelives ; i++)
-				plyrP.addDeath();
-			m_botAction.specWithoutLock(plyrP.getName()); //case sensitive I assume, inserted precaution
-			m_botAction.sendSmartPrivateMessage(sender,name + " has been removed/shunted ");
+		try	{
+			if(IsValidPlayer(name))	{
+				PlayerProfile plyrP = playerMap.get(m_botAction.getFuzzyPlayerName(name));
+			if (plyrP == null)  throw new IllegalArgumentException(name + " is not playing");
+				for(int i=0 ;i< mainlives + reservelives ; i++)
+					plyrP.addDeath();
+				m_botAction.specWithoutLock(plyrP.getName()); //case sensitive I assume, inserted precaution
+				m_botAction.sendSmartPrivateMessage(plyrP.getName(),"You have been removed by the host!");
+				m_botAction.sendSmartPrivateMessage(sender,name + " has been removed/shunted ");
+			}
+			else
+				m_botAction.sendSmartPrivateMessage(sender,name + " is not a valid name ");
 		}
-		else
-			m_botAction.sendSmartPrivateMessage(sender,name + " is not a valid name ");
+		catch(Exception e)	{
+	        m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+	      }
 	}
 	
 	/**
@@ -878,8 +884,8 @@ public class utilshipc extends MultiUtil
 	          "                                               freq locked upon start. (exact name ignoring case))",
 	          "!SetLate <Lives>                            -- Set the lives late comers get while lates are on.",
 	          "!Late                                       -- Turns lates on/off. (default is on)",
-	          "!Remove <name>                              -- Removes a player into spec (exact name) or if infinite is on;",
-	          "                                            -- shunts them into reserve",
+	          "!Remove <name>                              -- Removes a player into spec (exact name ignoring case)",
+	          "                                            -- if Infinte lives is on they will be shunted", 
 	          "!Stop                                       -- Resets to default values and stops the game",
 	          "!Confirm                                    -- Lists the curret definitions.",
 	          "!Start                                      -- Loads up definitions and starts.",

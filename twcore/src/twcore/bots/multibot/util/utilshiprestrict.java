@@ -108,13 +108,13 @@ public class utilshiprestrict extends MultiUtil {
 	 */
 	
 	public void doRestricts(String sender, String argString)	{
+		if (universal)
+			{m_botAction.sendSmartPrivateMessage(sender, "Universal settings in effect, clear then then try again");return;}
 		try	{
 			StringTokenizer argTokens = getArgTokens(argString,":");
 			StringTokenizer shipTokens = getArgTokens(argTokens.nextToken(),",");
 			int numArgs = argTokens.countTokens(),numShips = shipTokens.countTokens();
 			Integer freq = new Integer(Integer.parseInt(argTokens.nextToken()));
-			
-			m_botAction.sendPublicMessage("Tokens good, args: " + numArgs + " ships " + numShips);
 			
 	    	if (numArgs != 1 || numShips < 1)
 		    	throw new IllegalArgumentException("Please use the following syntax: !SetRestricts <ship1>,<ship2>,ect..:<freq>");
@@ -154,8 +154,6 @@ public class utilshiprestrict extends MultiUtil {
 		StringTokenizer shipTokens = getArgTokens(argString,",");
 		int numShips = shipTokens.countTokens();
 		try	{
-			if (numShips < 2)
-		    	throw new IllegalArgumentException("Please use the following syntax: !SetRestrictsUni <ship1>,<ship2>,ect..");
 			if(!restrictions.isEmpty())
 				throw new IllegalArgumentException("Freq specific restrictions are present, clear them then try again");
 			ArrayList<Integer> temp = new ArrayList<Integer>();
@@ -274,7 +272,9 @@ public class utilshiprestrict extends MultiUtil {
 			Integer freq = new Integer (Integer.parseInt(argString));
 			if (!restrictions.containsKey(freq))
 				{m_botAction.sendSmartPrivateMessage(sender, "Requested freq is not restricted");return;}
+			FreqRestriction temp = restrictions.get(freq);
 			restrictions.remove(freq);
+			list.remove(temp);
 			m_botAction.sendPrivateMessage(sender, "Freq " + freq + "'s restrictions have been lifted"); 
 		}
 		catch(Exception e)	{
