@@ -10,6 +10,7 @@ package twcore.bots.javelim;
 
 import twcore.core.BotAction;
 import java.util.HashMap;
+import java.util.Map;
 
 class Poll {
 
@@ -57,16 +58,29 @@ class Poll {
         m_votes.put(name, new Integer(vote));
     }
 
-    public void endPoll() {
+    public StringBuilder[] endPoll() {
         m_botAction.sendArenaMessage("The poll has ended! Question: " + m_poll[0]);
 
         int[] counters = new int[m_lastIndex + 1];
-        for(Integer i : m_votes.values()) {
-        	counters[i.intValue()]++;
+        StringBuilder[] names = new StringBuilder[m_lastIndex + 1];
+
+        for(int i = 1; i <= m_lastIndex; i++) {
+        	names[i] = new StringBuilder();
         }
+
+        for(Map.Entry<String,Integer> ent : m_votes.entrySet()) {
+        	int i = ent.getValue().intValue();
+        	counters[i]++;
+        	if(names[i].length() > 0) {
+        		names[i].append(',');
+        	}
+       		names[i].append(ent.getKey());
+        }
+
         for(int i = 1; i <= m_lastIndex; i++) {
             m_botAction.sendArenaMessage(i + ". " + m_poll[i] + ": " + counters[i]);
         }
+        return names;
     }
 
 }

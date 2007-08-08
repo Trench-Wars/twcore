@@ -95,7 +95,7 @@ public final class LvzObjects {
     	for(int i = 0; i < m_size; i++) {
     		if(onsb.length() > MSG_LENGTH_THRESHOLD) {
     			m_onStrings[m_onSize++] = onsb.toString();
-    			onsb.delete(8, onsb.length());
+    			onsb.setLength(8);
     			if(m_onSize == m_onStrings.length) {
     				m_onStrings = growStringArray(m_onStrings);
     			}
@@ -103,7 +103,7 @@ public final class LvzObjects {
 
     		if(offsb.length() > MSG_LENGTH_THRESHOLD) {
     			m_offStrings[m_offSize++] = offsb.toString();
-    			offsb.delete(8, offsb.length());
+    			offsb.setLength(8);
     			if(m_offSize == m_offStrings.length) {
     				m_offStrings = growStringArray(m_offStrings);
     			}

@@ -31,6 +31,7 @@ final class IntQueue {
     }
 
     synchronized void add(int id) {
+    	remove(id);
     	QItem leftItem = m_tail.left;
     	QItem newItem = new QItem(id, leftItem, m_tail);
     	leftItem.right = m_tail.left = newItem;
