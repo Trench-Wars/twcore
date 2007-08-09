@@ -55,12 +55,12 @@ public class utilautopilot extends MultiUtil
                 cmdOn( name );
             } else if( msg.startsWith("!autooff") ) {
                 cmdOff( name );
-            } else if( msg.startsWith("!list") ) {
+            } else if( msg.startsWith("!listtasks") ) {
                 cmdList( name );
-            } else if( msg.startsWith("!add ") ) {
-                cmdAdd( name, msg.substring(5) );
-            } else if( msg.startsWith("!remove ") ) {
-                cmdRemove( name, msg.substring(8) );
+            } else if( msg.startsWith("!addtask ") ) {
+                cmdAdd( name, msg.substring(9) );
+            } else if( msg.startsWith("!removetask ") ) {
+                cmdRemove( name, msg.substring(12) );
             }
         }
         if( msg.startsWith("!info") ) {
@@ -211,8 +211,25 @@ public class utilautopilot extends MultiUtil
             if( execute != null ) {
                 if( execute.contains(",") ) {
                     String cmds[] = execute.split(",");
-                    for( int i = 0; i<cmds.length; i++ )
-                        m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!" + cmds[i]);
+                    for( int i = 0; i<cmds.length; i++ ) {
+                        if( cmds[i].startsWith("-arena")) {
+                            String[] args = cmds[i].split(" ", 2);
+                            if( args.length == 2 )
+                                m_botAction.sendArenaMessage( args[1] + " -" + m_botAction.getBotName() );                                
+                        } else if( cmds[i].startsWith("-wait") ) {
+                            String[] args = cmds[i].split(" ", 2);
+                            if( args.length == 2 ) {
+                                try {
+                                    Integer wait = Integer.getInteger(args[1]);
+                                    if( wait <= 60 )
+                                        this.wait( wait * 1000 );
+                                } catch (Exception e) {
+                                }
+                            }
+                        } else {
+                            m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!" + cmds[i]);
+                        }
+                    }
                 } else {
                     m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!" + execute);
                 }
@@ -257,9 +274,10 @@ public class utilautopilot extends MultiUtil
                 "will execute (separated by commas) WITHOUT the !, number of votes required to",
                 "run the task, and the description players will see when they use !info.",
                 "Sample usage:   !add dolock,setship 2,spec 10;8;Starts a game of twisted.",
-                "!add <cmd1,cmd2,cmd3,etc>;<#VotesRequired>;<Description>     - See above.",
-                "!remove <Task#>       - Removes task <Task#> as found in !list.",
-                "!list                 - Lists all tasks currently set up.",
+                "(Use cmds -arena <msg> and -wait <seconds> to send arena msgs/have the bot wait).",
+                "!addtask <cmd1,cmd2,cmd3,etc>;<#VotesRequired>;<Description>     - See above.",
+                "!removetask <Task#>   - Removes task <Task#> as found in !list.",
+                "!listtasks            - Lists all tasks currently set up.",
                 "!info                 - (For players) Shows tasks & number of votes needed to run.",
                 "!autoon               - Starts player vote monitoring and task execution.",
                 "!autooff              - Stops player vote monitoring and task execution."
