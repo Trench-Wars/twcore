@@ -155,7 +155,7 @@ public class utilspec extends MultiUtil
 
         if(specTask != null) {
             if( specTask.getSpecType() == SpecTask.SPEC_SHARED ) {
-                Iterator i = m_botAction.getFreqPlayerIterator( freq );
+                Iterator<Player> i = m_botAction.getFreqPlayerIterator( freq );
                 int combineddeaths = 0;
                 int combinedkills = 0;
                 while( i.hasNext() ) {
@@ -217,7 +217,7 @@ public class utilspec extends MultiUtil
      * any players that are currently over the loss limit.
      */
     private void updateSpec() {
-        Iterator iterator = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
         int playerID;
         int freq;

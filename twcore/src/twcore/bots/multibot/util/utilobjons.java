@@ -134,7 +134,7 @@ public class utilobjons extends MultiUtil
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
@@ -144,7 +144,7 @@ public class utilobjons extends MultiUtil
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
@@ -156,7 +156,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -174,7 +174,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -188,7 +188,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -211,7 +211,7 @@ public class utilobjons extends MultiUtil
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
@@ -221,7 +221,7 @@ public class utilobjons extends MultiUtil
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
@@ -233,7 +233,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -251,7 +251,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -265,7 +265,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -371,7 +371,7 @@ public class utilobjons extends MultiUtil
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
@@ -381,7 +381,7 @@ public class utilobjons extends MultiUtil
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
@@ -393,7 +393,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -411,7 +411,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -425,7 +425,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -448,7 +448,7 @@ public class utilobjons extends MultiUtil
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
@@ -458,7 +458,7 @@ public class utilobjons extends MultiUtil
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
@@ -470,7 +470,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -488,7 +488,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
@@ -502,7 +502,7 @@ public class utilobjons extends MultiUtil
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{

@@ -162,7 +162,7 @@ public class utilspec2 extends MultiUtil
      */
     private void updateSpec(SpecTask task)
     {
-        Iterator iterator = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
         int playerID;
         int freq;
