@@ -36,7 +36,7 @@ import twcore.core.util.Tools;
  * with the TSM to get the settingChanged callback.
  *
  * @author D1st0rt
- * @version 06.06.01
+ * @version 07.08.08
  */
 public class TempSettingsManager
 {
@@ -88,7 +88,7 @@ public class TempSettingsManager
 		m_settings = new HashMap<String, TempSetting>();
 		m_locked = false;
 		customHelp = null;
-		pattern = Pattern.compile("(\\w+)=((\\w+)|\"([^\"]+)\")");
+		pattern = Pattern.compile("(\\w+)=((\\w+)|(\\-\\d+)|\"([^\"]+)\")");
 	}
 
 	/**
