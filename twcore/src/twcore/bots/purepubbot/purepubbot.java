@@ -78,15 +78,19 @@ public class purepubbot extends SubspaceBot
     private static final int MAX_FLAGTIME_ROUNDS = 5;   // Max # rounds (odd numbers only)
     
     private static final int KEEP_MVP_FREQSIZE_DIFF = 2;// Max # difference in size of freqs required
-                                                        //   for a player to keep MVP when switching.
+                                                        //   for a player to keep MVP/get bonus on switching.
     private static final int MSG_AT_FREQSIZE_DIFF = 4;  // Max # difference in size of freqs before
                                                         //   bot requests players even frequencies.
                                                         //   Value of -1 disables this feature.
-    private static final int NICEGUY_BOUNTY_AWARD = 25; // Bounty given to those that even freqs.
+    private static final int NICEGUY_BOUNTY_AWARD = 25; // Bounty given to those that even freqs/ships
     
     private static final int TERR_QUOTA = 2;            // "Ideal" number of ships.  Used in order to
     private static final int SHARK_QUOTA = 2;           // allow players to change to needed ships
     private static final int SPIDER_QUOTA = 3;          // w/o losing MVP status.
+    private static final int JAV_TOOMANY = 3;           // Point at which !team complains that there 
+    private static final int WB_TOOMANY = 4;            // are too many of a given ship.  Used to
+    private static final int WEASEL_TOOMANY = 3;        // better evaluate the ideal team.
+    private static final int TERR_TOOMANY = 4;
 
     private OperatorList opList;                        // Admin rights info obj
     private HashSet <String>freq0List;                  // Players on freq 0
@@ -292,11 +296,15 @@ public class purepubbot extends SubspaceBot
                     boolean authd = authorizedChangePlayers.remove( pname );
                     // If player is switching to the smaller team, they maintain any MVP status 
                     if( teamsUneven && freq == freqSizeInfo[1] ) {
-                        if( (freq == 0 && !freq0List.contains(pname)) ||
-                            (freq == 1 && !freq1List.contains(pname))) {
-                            authd = true;
-                            m_botAction.sendPrivateMessage(pname, "For evening the teams, you keep any MVP status you had on your prior freq and earn " + NICEGUY_BOUNTY_AWARD + " bounty." );
-                            m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
+                        boolean freq0cont = freq0List.contains(pname);
+                        boolean freq1cont = freq1List.contains(pname);
+                        if( (freq0cont || freq1cont ) ) {   // Only for those who were on the other freq before!
+                            if( (freq == 0 && !freq0List.contains(pname)) ||
+                                (freq == 1 && !freq1List.contains(pname))) {
+                                authd = true;
+                                m_botAction.sendPrivateMessage(pname, "For evening the teams, you keep any MVP status you had on your prior freq and earn " + NICEGUY_BOUNTY_AWARD + " bounty." );
+                                m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
+                            }
                         }
                     }
                     if( !authd ) {
@@ -340,12 +348,17 @@ public class purepubbot extends SubspaceBot
             if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
                 String pname = p.getPlayerName();
                 boolean authd = authorizedChangePlayers.remove( pname );
+                // If player is switching to the smaller team, they maintain any MVP status 
                 if( teamsUneven && freq == freqSizeInfo[1] ) {
-                    if( (freq == 0 && !freq0List.contains(pname)) ||
-                            (freq == 1 && !freq1List.contains(pname))) {
-                        authd = true;
-                        m_botAction.sendPrivateMessage(pname, "For evening the teams, you keep any MVP status you had on your prior freq and earn " + NICEGUY_BOUNTY_AWARD + " bounty." );
-                        m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
+                    boolean freq0cont = freq0List.contains(pname);
+                    boolean freq1cont = freq1List.contains(pname);
+                    if( (freq0cont || freq1cont ) ) {   // Only for those who were on the other freq before!
+                        if( (freq == 0 && !freq0cont) ||
+                            (freq == 1 && !freq1cont)) {
+                            authd = true;
+                            m_botAction.sendPrivateMessage(pname, "For evening the teams, you keep any MVP status you had on your prior freq and earn " + NICEGUY_BOUNTY_AWARD + " bounty." );
+                            m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
+                        }
                     }
                 }
                 if( !authd ) {
@@ -854,12 +867,15 @@ public class purepubbot extends SubspaceBot
         for(int i = 1; i < 9; i++ ) {
             String text = Tools.formatString(Tools.shipName(i) + "s", 11);
             int num = team.get(i).size();
-            if(     i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
-                    i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
-                    i == Tools.Ship.SHARK && num < SHARK_QUOTA )
-                text += " - " + team.get(i).size() + "*  ";
-            else
-                text += " - " + team.get(i).size() + "   ";
+            if(         i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
+                        i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
+                        i == Tools.Ship.SHARK && num < SHARK_QUOTA )
+                text += " - " + team.get(i).size() + "+  ";
+            else if(    i == Tools.Ship.WARBIRD && num >= WB_TOOMANY ||
+                        i == Tools.Ship.JAVELIN && num >= JAV_TOOMANY ||
+                        i == Tools.Ship.WEASEL && num >= WEASEL_TOOMANY ||
+                        i == Tools.Ship.TERRIER && num >= TERR_TOOMANY )
+                text += " - " + team.get(i).size() + "-  ";
             for( int j = 0; j < team.get(i).size(); j++) {
                text += (j+1) + ":" + team.get(i).get(j) + "  ";
                players++;
@@ -868,7 +884,7 @@ public class purepubbot extends SubspaceBot
         }
         
         // Begin team analysis
-        m_botAction.sendPrivateMessage(sender, "Total " + players + " players.  Team needs (* above indicates a deficiency):");
+        m_botAction.sendPrivateMessage(sender, "Total " + players + " players.  Team needs (+ above shows a need; - shows excess):");
         int terrsNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
         int sharksNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
         int spidersNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size();
@@ -904,8 +920,24 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendPrivateMessage(sender, spidersNeeded + " spider(s) needed.");
             needs = true;
         }
+        if( team.get(Tools.Ship.WARBIRD).size() >= WB_TOOMANY ) {
+            m_botAction.sendPrivateMessage(sender, "Team has too many Warbirds.");
+            needs = true;
+        }
+        if( team.get(Tools.Ship.JAVELIN).size() >= JAV_TOOMANY ) {
+            m_botAction.sendPrivateMessage(sender, "Team has too many Javelins.");
+            needs = true;
+        }
+        if( team.get(Tools.Ship.WARBIRD).size() >= WEASEL_TOOMANY ) {
+            m_botAction.sendPrivateMessage(sender, "Team has too many Weasels.");
+            needs = true;
+        }
+        if( team.get(Tools.Ship.WARBIRD).size() >= TERR_TOOMANY ) {
+            m_botAction.sendPrivateMessage(sender, "Team has too many Terriers.");
+            needs = true;
+        }
         if( !needs ) {
-            m_botAction.sendPrivateMessage(sender, "Team appears to be well-balanced.");
+            m_botAction.sendPrivateMessage(sender, "Your team appears to be well-balanced!");
             return;
         }
         m_botAction.sendPrivateMessage(sender, "Use !ship <ship#> to change ships & keep MVP.");
@@ -977,7 +1009,8 @@ public class purepubbot extends SubspaceBot
         authorizedChangePlayers.add( p.getPlayerName() );
         int bounty = p.getBounty();
         m_botAction.setShip( p.getPlayerID(), ship );
-        m_botAction.giveBounty( p.getPlayerID(), bounty );
+        m_botAction.giveBounty( p.getPlayerID(), bounty + NICEGUY_BOUNTY_AWARD );
+        m_botAction.sendPrivateMessage( p.getPlayerID(), "For changing to a ship needed by your team, you keep any MVP status and gain 25 bounty in addition to your old bounty of " + bounty + "." );
     }
 
 
@@ -2253,8 +2286,6 @@ public class purepubbot extends SubspaceBot
                 m_botAction.sendArenaMessage( getTimeInfo() );
             }
 
-            do_updateTimer();
-
             if( isBeingClaimed ) {
                 claimSecs++;
                 if( claimSecs >= FLAG_CLAIM_SECS ) {
@@ -2269,6 +2300,8 @@ public class purepubbot extends SubspaceBot
 
             secondsHeld++;
 
+            do_updateTimer();
+            
             int flagSecsReq = flagMinutesRequired * 60;
             if( secondsHeld >= flagSecsReq ) {
                 endGame();
