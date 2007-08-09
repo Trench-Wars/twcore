@@ -60,6 +60,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.TimerTask;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
@@ -366,6 +367,20 @@ public class utilspec extends MultiUtil
     		if (temp != null && !temp.isInSafe())
     				m_botAction.specWithoutLock(temp.getPlayerName());
     	}
+    		
+    	//Figured out I couldn't copy timer tasks and recursive ends in a loop, all well.
+    	
+    	TimerTask recheck = new TimerTask()	{
+    		public void run()	{
+    			Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
+    	    	while(players.hasNext())	{
+    	    		Player temp = (Player)players.next();
+    	    		if (temp != null && !temp.isInSafe())
+    	    				m_botAction.specWithoutLock(temp.getPlayerName());
+    	    	}
+    		}
+    	};
+    	m_botAction.scheduleTask(recheck, 500);
     	m_botAction.sendPrivateMessage(sender, "All players not in safe have been speced.");
     }
 
