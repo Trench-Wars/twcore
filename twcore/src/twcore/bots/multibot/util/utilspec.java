@@ -118,6 +118,8 @@ public class utilspec extends MultiUtil
                 doSpecShipCmd(sender, command.substring(10).trim());
             if(command.startsWith("!specplayer "))
                 doSpecPlayerCmd(sender, command.substring(12).trim());
+            if(command.startsWith("!specnotsafe"))
+            	doSpecNotSafe(sender);
             if(command.startsWith("!specshared "))
                 doSpecSharedCmd(sender, command.substring(12).trim());
             if(command.startsWith("!adddeath "))
@@ -356,6 +358,16 @@ public class utilspec extends MultiUtil
             throw new NumberFormatException("Please use the following format: !SpecPlayer <Player>:<Deaths>.");
         }
     }
+    
+    public void doSpecNotSafe (String sender)	{
+    	Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
+    	while(players.hasNext())	{
+    		Player temp = (Player)players.next();
+    		if (temp != null && !temp.isInSafe())
+    				m_botAction.specWithoutLock(temp.getPlayerName());
+    	}
+    	m_botAction.sendPrivateMessage(sender, "All players not in safe have been speced.");
+    }
 
     /**
      * This method specs a freq when a certain number of COMBINED deaths is reached.
@@ -543,6 +555,7 @@ public class utilspec extends MultiUtil
                 "!SpecFreq <Freq>:<Deaths>          -- Specs freq <Freq> at <Deaths> deaths.",
                 "!SpecShip <Ship>:<Deaths>          -- Specs ship <Ship> at <Deaths> deaths.",
                 "!SpecPlayer <Player>:<Deaths>      -- Specs player <Player> at <Deaths> deaths.",
+                "!SpecNotSafe                       -- Specs all players not in safe.",
                 "!SpecShared <Deaths>               -- Specs everyone on a freq at COMBINED <Deaths>.",
                 "!AddDeath <Player>                 -- Specs player <Player> at one more death.",
                 "!SpecList                          -- Shows list of all spec tasks you've entered.",
