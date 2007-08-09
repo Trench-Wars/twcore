@@ -20,8 +20,8 @@ import twcore.core.command.CommandInterpreter;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-import twcore.core.util.IPCMessage;
 import twcore.core.util.Tools;
+import twcore.core.util.ipc.IPCMessage;
 
 /** Bot to host "channels" that allow a player to ?message or pm
  *  everyone on the channel so that information can be spread easily.

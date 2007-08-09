@@ -20,10 +20,10 @@ import twcore.core.game.Player;
 import twcore.core.game.Ship;
 import twcore.core.lvz.Objset;
 import twcore.core.net.GamePacketGenerator;
-import twcore.core.util.IPCMessage;
 import twcore.core.util.InterProcessCommunicator;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
+import twcore.core.util.ipc.IPCMessage;
 
 /**
  * The main bot utility class, your bot's best and easiest method of performing

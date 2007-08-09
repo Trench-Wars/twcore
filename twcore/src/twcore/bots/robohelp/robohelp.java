@@ -27,9 +27,9 @@ import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SQLResultEvent;
-import twcore.core.util.IPCMessage;
 import twcore.core.util.SearchableStructure;
 import twcore.core.util.Tools;
+import twcore.core.util.ipc.IPCMessage;
 
 public class robohelp extends SubspaceBot {
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;

@@ -1,4 +1,4 @@
-package twcore.core.util;
+package twcore.core.util.ipc;
 
 
 public class IPCChatMessage {

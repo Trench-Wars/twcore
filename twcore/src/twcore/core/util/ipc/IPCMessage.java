@@ -1,4 +1,4 @@
-package twcore.core.util;
+package twcore.core.util.ipc;
 
 /**
  * Used as a transmitter of messages between bots, using the IPC protocol.

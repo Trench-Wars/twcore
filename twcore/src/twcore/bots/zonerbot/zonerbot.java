@@ -11,7 +11,7 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-import twcore.core.util.IPCMessage;
+import twcore.core.util.ipc.IPCMessage;
 
 /**
  * <p>Title: </p>Zonerbot
