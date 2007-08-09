@@ -1,9 +1,23 @@
 //medorP bot, written by Lain
 //
-/*NOTES*/
+/*NOTES
 //The last bug I can identify.....
 //Fix the !start x_deaths thing, so it announces to the host if the
 //paramater is invalid instead of starting anyway with default 2 deaths.
+/*		08-08-07
+ * Arena locking issue tackled. Because of the toggle, if the game is killed before
+ * the lock, it will still issue another lock 
+ * (instead of the proper unlock like it would if it were killed mid-game).
+ *
+ * Changed streak texts to read from an array (easier to change them)
+ * 
+ * Ship change function is now sleeker and more efficient (no more CASE:, its a quick IF)
+ *
+ * Streak function is now a FOR loop instead of lots of IF's.
+ * Same function (and excecution speed), its just condensed for easy reading (and debugging...
+ * because it was crashing the bot)
+ */
+
 package twcore.bots.twbot;
 
 import java.util.Iterator;
@@ -22,7 +36,7 @@ import twcore.core.util.Tools;
 /**
  *
  * @author Lain
- * @version 1.0
+ * @version 1.1
  */
 public class twbotmedorp extends TWBotExtension {
 
@@ -38,11 +52,14 @@ public class twbotmedorp extends TWBotExtension {
 
     /**
      * Should bot announce when someone ship changes?
+     * Controversial ! Prodem has this on by default, should this event?
+     * (mad spam with low death limit possibly, but prodem limit is 1!!
+     * and this game is default 2, so less spam (slower))
      */
-    private boolean verbose = false ;
+    private boolean verbose = true ;
 
     /**
-     * Number of deaths players get _per ship_(8 ships total)
+     * Number of deaths players get _per ship_(8 ships total, 5 deaths max)
      */
     private int maxDeaths = 2;
 
@@ -64,43 +81,58 @@ public class twbotmedorp extends TWBotExtension {
     /**
      * How many kills does the MVP have?
      */
-    private int MVPkills = -1;
+    private int MVPkills = 0;
 
     /**
      * Which ship did the MVP score the record with
      */
     private int MVPship = 0;
 
-    //The streak values for each of the ships.
-    //[streak value][ship_no] (should be the other way around but BLEH!)
-
+    /**
+     * Is the arena locked? Lets assume its not
+     * (as it should be by default)
+     */
+    private boolean arenaLocked = false ;
+    
     /**
      * The streak values for each of the ships.
      * [streak value][ship_no] (should be the other way around but BLEH!)
      */
     private int[][] shipStreaks = {
-            { 3, 5, 7, 10, 15 },
-            { 3, 5, 7, 10, 15 },
-            { 3, 5, 7, 10, 15 },
-            { 4, 6, 8, 10, 15 },
-            { 4, 7, 10, 15, 20 },
-            { 4, 7, 10, 15, 20 },
-            { 5, 8, 15, 20, 25 },
-            { 7, 15, 20, 25, 30 }
+            { 0, 3, 5, 7, 10, 15 },	//[0] unused set, easier than subtracting 1 from everything
+            { 0, 3, 5, 7, 10, 15 },
+            { 0, 3, 5, 7, 10, 15 },
+            { 0, 3, 5, 7, 10, 15 },
+            { 0, 4, 6, 8, 10, 15 },
+            { 0, 4, 7, 10, 15, 20 },
+            { 0, 4, 7, 10, 15, 20 },
+            { 0, 5, 8, 15, 20, 25 },
+            { 0, 7, 15, 20, 25, 30 }
         };
 
     /**
      * These are the multipliers applied to the streak values
      * based on how many deaths the game will be played to.
+     *	TESTING (default, (1,)1,1,1,2,2,3)
      */
-    private int[] killMultiplier = { 1, 1, 2, 2, 3 };
+    private int[] killMultiplier = { 1, 1, 1, 1, 2, 2 };
 
+    /**
+     * The streak texts
+     */
+    private String[] streakText = {"is killing stuff",	//This should never be output
+    							   "is causing a commotion",
+    							   "is on a spree!",
+    							   "is on a rampage!",
+    							   "is UNSTOPPABLE",
+    							   "must be hacking!"} ;
+    
     /**
      * String representations of the ship types
      */
     private String[] shipTypes = {
-            "warbird", "javelin", "spider", "leviathan", "terrier", "weasel",
-            "lancaster", "shark"
+            "single ship", "warbird", "javelin", "spider", "leviathan", 
+            "terrier", "weasel", "lancaster", "shark"
         };
 
     /**
@@ -166,12 +198,15 @@ public class twbotmedorp extends TWBotExtension {
                 m_botAction.sendPrivateMessage(name, "medorP aborted");
                 m_botAction.sendArenaMessage("medorP mercilessly killed by " +
                     name);
-                m_botAction.toggleLocked();
-
+                if(arenaLocked != false)
+                {
+	                m_botAction.toggleLocked();
+	                m_botAction.sendArenaMessage("Arena UNLOCKED") ;
+	                arenaLocked = false ;
+                }
                 //Stop medorP
                 m_botAction.cancelTasks();
 
-                //getPlayers.cancel() ;
             }
         } else if (message.startsWith("!verbose")) {
             if (m_opList.isER(name)) {
@@ -197,11 +232,14 @@ public class twbotmedorp extends TWBotExtension {
         if ((m_opList.isER(name)) && (enabled != true)) {
             started = true;
             MVPkills = 0;
-            MVPname = "";
+            MVPname = "No-one";
             MVPship = 0;
 
             m_botAction.sendPrivateMessage(name,
-                "medorP to " + maxDeaths + " death(s) started");
+                    "medorP to " + maxDeaths + " death(s) started");
+            //This is a cheat, it asks the host to handle unlocking.
+            m_botAction.sendPrivateMessage(name,
+        			"Please ensure the arena is UNLOCKED (if players are entering, it is)") ;
             displayRules();
 
             final TimerTask getReady = new TimerTask() {
@@ -215,8 +253,12 @@ public class twbotmedorp extends TWBotExtension {
                             enabled = false;
                             m_botAction.sendArenaMessage(
                                 "medorP aborted. Not enough players.");
-                            m_botAction.toggleLocked();
-
+                            if(arenaLocked != false)
+                            {
+                            	m_botAction.toggleLocked();
+                            	m_botAction.sendArenaMessage("Arena UNLOCKED") ;
+                            	arenaLocked = false ;
+                            }
                             //Stop medorP
                             m_botAction.cancelTasks();
                         }
@@ -225,9 +267,13 @@ public class twbotmedorp extends TWBotExtension {
 
             final TimerTask arenaSetup = new TimerTask() {
                     public void run() {
-                        //Lock the arena (Why a toggle? crazy)
-                        m_botAction.toggleLocked();
-
+                    	if(arenaLocked != true)
+                    	{
+	                        //Lock the arena (Why a toggle? crazy)
+	                        m_botAction.toggleLocked();
+	                        m_botAction.sendArenaMessage("Arena LOCKED") ;
+	                        arenaLocked = true ;
+                    	}
                         //Set everyone to ship 1
                         m_botAction.changeAllShips(1);
 
@@ -309,82 +355,22 @@ public class twbotmedorp extends TWBotExtension {
         final int pID = ID.getPlayerID();
         final String pName = ID.getPlayerName();
         int shipType = ID.getShipType();
-
-        switch (shipType) {
-        case 1:
-            changeShip(pID, shipType + 1);
-
-            if (verbose) {
-                m_botAction.sendArenaMessage(pName + " has changed to Javelin");
-            }
-
-            break;
-
-        case 2:
-            changeShip(pID, shipType + 1);
-
-            if (verbose) {
-                m_botAction.sendArenaMessage(pName + " has changed to Spider");
-            }
-
-            break;
-
-        case 3:
-            changeShip(pID, shipType + 1);
-
-            if (verbose) {
-                m_botAction.sendArenaMessage(pName +
-                    " has changed to Leviathan");
-            }
-
-            break;
-
-        case 4:
-            changeShip(pID, shipType + 1);
-
-            if (verbose) {
-                m_botAction.sendArenaMessage(pName + " has changed to Terrier");
-            }
-
-            break;
-
-        case 5:
-            changeShip(pID, shipType + 1);
-
-            if (verbose) {
-                m_botAction.sendArenaMessage(pName + " has changed to Weasel");
-            }
-
-            break;
-
-        case 6:
-            changeShip(pID, shipType + 1);
-
-            if (verbose) {
-                m_botAction.sendArenaMessage(pName +
-                    " has changed to Lancaster");
-            }
-
-            break;
-
-        case 7:
-            changeShip(pID, shipType + 1);
-
-            if (verbose) {
-                m_botAction.sendArenaMessage(pName + " has changed to Shark");
-            }
-
-            break;
-
-        case 8:
-            m_botAction.sendArenaMessage(pName + " is out !");
-            m_botAction.specWithoutLock(pID);
-
-            break;
-
-        default:
-            break;
+        
+        if(shipType < 8)
+        {
+        	changeShip(pID, shipType+1) ;
+        	if(verbose)
+        	{
+        		m_botAction.sendArenaMessage(pName + " has changed ship to " + shipTypes[shipType+1]) ;        		
+        	}
         }
+        
+        else if(shipType == 8)
+        {
+            m_botAction.specWithoutLock(pID);
+            m_botAction.sendArenaMessage(pName + " is out !");
+        }
+    
     }
 
     /**
@@ -398,7 +384,7 @@ public class twbotmedorp extends TWBotExtension {
         m_botAction.sendArenaMessage(
             "*> This continues through the ships, and when you die as shark, you're out.");
         m_botAction.sendArenaMessage(
-            "*> Each ship is more powerful than the last. (Ter+ gain bombs");
+            "*> Each ship is more powerful than the last. (Terr+ gain bombs)");
         m_botAction.sendArenaMessage("Unspec to play, game starting soon...", 2);
     }
 
@@ -440,9 +426,14 @@ public class twbotmedorp extends TWBotExtension {
                     public void run() {
                         m_botAction.sendArenaMessage("MVP : " + MVPname +
                             ", with " + MVPkills + " kills in a " +
-                            shipTypes[MVPship - 1], 7);
+                            shipTypes[MVPship], 7);
 
-                        m_botAction.toggleLocked();
+                        if(arenaLocked != false)
+                        {
+                        	m_botAction.toggleLocked();
+                        	m_botAction.sendArenaMessage("Arena UNLOCKED") ;
+                        	arenaLocked = false ;
+                        }
                         m_botAction.cancelTasks();
                     }
                 };
@@ -450,7 +441,6 @@ public class twbotmedorp extends TWBotExtension {
             m_botAction.scheduleTask(sendMVP, 5000);
         }
 
-        //  }
     }
 
     /**
@@ -499,8 +489,11 @@ public class twbotmedorp extends TWBotExtension {
      */
     public String[] getHelpMessages() {
         String[] medorPHelp = {
+        		"After the event is !started, medorP bot will lock the arena,",
+        		"put all players on seperate freqs and set ship to warbird.",
+        		"All you have to do is sit on your hands and watch.",
                 "!start     - Starts default medorP, 2 deaths per ship",
-                "!start x   - Starts medorP,  x deaths per ship",
+                "!start x   - Starts medorP,  x deaths per ship (1-5)",
                 "!verbose   - Toggles verbose mode (x has changed to <shipname>)",
                 "!stop 	    - Ends medorP abnormally",
                 "!help 	    - Displays this",
@@ -511,46 +504,28 @@ public class twbotmedorp extends TWBotExtension {
 
     /**
      * If a player has hit a streak pre-requisite then announce it
+     *	*TODO* this is possibly crashing the bot.
+     *	Think the method over then give it a neat rewrite.
      *
      * @param playerID Player ID to check
      */
     private void getAnnounceStreak(int playerID) {
         //find streaking players, and announce them
         Player player = m_botAction.getPlayer(playerID);
-        int shipType = player.getShipType() - 1;
+        int shipType = player.getShipType();
         int numKills = player.getWins();
-
-        if (numKills == (shipStreaks[shipType][0] * killMultiplier[maxDeaths -
-                1])) {
-            //they've reached the first streak target
-            m_botAction.sendArenaMessage(m_botAction.getPlayerName(playerID) +
-                " is causing a commotion with " + numKills + " kills in a " +
-                shipTypes[shipType]);
-        } else if (numKills == (shipStreaks[shipType][1] * killMultiplier[maxDeaths -
-                1])) {
-            //they've reached the second streak target
-            m_botAction.sendArenaMessage(m_botAction.getPlayerName(playerID) +
-                " is on a spree! with " + numKills + " kills in a " +
-                shipTypes[shipType]);
-        } else if (numKills == (shipStreaks[shipType][2] * killMultiplier[maxDeaths -
-                1])) {
-            //they've reached the third streak target
-            m_botAction.sendArenaMessage(m_botAction.getPlayerName(playerID) +
-                " is on a rampage! with " + numKills + " kills in a " +
-                shipTypes[shipType]);
-        } else if (numKills == (shipStreaks[shipType][3] * killMultiplier[maxDeaths -
-                1])) {
-            //they've reached the fourth streak target
-            m_botAction.sendArenaMessage(m_botAction.getPlayerName(playerID) +
-                " is UNSTOPPABLE with " + numKills + " kills in a " +
-                shipTypes[shipType]);
-        } else if (numKills == (shipStreaks[shipType][4] * killMultiplier[maxDeaths -
-                1])) {
-            //they've reached the fifth streak target
-            m_botAction.sendArenaMessage(m_botAction.getPlayerName(playerID) +
-                " must be hacking! with " + numKills + " kills in a " +
-                shipTypes[shipType]);
+        
+        for(int i = 1 ; i <= 5 ; i++)
+        {
+        	if(numKills == (shipStreaks[shipType][i] * killMultiplier[maxDeaths]))
+        	{
+        		//Some streak target has been reached here
+        		m_botAction.sendArenaMessage(m_botAction.getPlayerName(playerID) +
+        			" " + streakText[i] + " with " + numKills + " kills in a " +
+        			shipTypes[shipType]) ;
+        	}
         }
+        
     }
 
     /**
@@ -559,14 +534,11 @@ public class twbotmedorp extends TWBotExtension {
      * @param name Player ID
      */
     public void updateMVP(int name) {
-        //Uses the formula Kills-(ShipType-1)
+        //Uses the formula Kills-(ShipType-1) [or it did before things were changed]
         Player player = m_botAction.getPlayer(name);
         int player_kills = player.getWins();
 
         if ((player_kills - player.getShipType()) > (MVPkills - (MVPship))) {
-            //m_botAction.sendArenaMessage("Player Kills: " + player_kills) ;
-            //m_botAction.sendArenaMessage("Player Name: " + player.getPlayerName()) ;
-            //m_botAction.sendArenaMessage("Player Ship: " + player.getShipType()) ;
             MVPkills = player_kills;
             MVPname = player.getPlayerName();
             MVPship = player.getShipType();
