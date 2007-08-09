@@ -870,12 +870,14 @@ public class purepubbot extends SubspaceBot
             if(         i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
                         i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
                         i == Tools.Ship.SHARK && num < SHARK_QUOTA )
-                text += " - " + team.get(i).size() + "+  ";
+                text += "... " + team.get(i).size() + "+  ";
             else if(    i == Tools.Ship.WARBIRD && num >= WB_TOOMANY ||
                         i == Tools.Ship.JAVELIN && num >= JAV_TOOMANY ||
                         i == Tools.Ship.WEASEL && num >= WEASEL_TOOMANY ||
                         i == Tools.Ship.TERRIER && num >= TERR_TOOMANY )
-                text += " - " + team.get(i).size() + "-  ";
+                text += "... " + team.get(i).size() + "-  ";
+            else
+                text += "... " + team.get(i).size() + "   ";
             for( int j = 0; j < team.get(i).size(); j++) {
                text += (j+1) + ":" + team.get(i).get(j) + "  ";
                players++;
