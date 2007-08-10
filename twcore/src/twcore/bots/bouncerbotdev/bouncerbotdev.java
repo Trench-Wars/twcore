@@ -28,12 +28,13 @@ import twcore.core.game.Player;
  * without being invited It-- a personal bouncer.
  * 
  * Modifications include the ability to kick all but those on the owners.cfg, 
- * including it's own core and siblings if you're not careful. This bot is
- * intended for dev use. It also has a log checker to ensure nobody's touching
- * files they arn't supposed to, especially the files of the arena the bot
- * is in; unless you're the owner of the bot.
+ * including it's own core and siblings if you're not careful or haven't added.
+ * them to the owners.cfg . This bot is intended for dev use. It also has a
+ * log checker to ensure nobody's touching files they arn't supposed to, 
+ * especially the files of the arena the bot is in; unless you're the 
+ * owner of the bot.
  *
- * @author  harvey - modifications Ice-demon / Ayano
+ * @author  harvey - major modifications Ice-demon / Ayano
  */
 public class bouncerbotdev extends SubspaceBot {
     OperatorList m_opList;
@@ -58,7 +59,7 @@ public class bouncerbotdev extends SubspaceBot {
     public bouncerbotdev( BotAction botAction ){
         super( botAction );
         invitedPlayers = new HashSet<String>();
-        bouncemessage = "Entering a private arena without being invited is against the rules.  Goodbye!";
+        bouncemessage = "Entering a private arena without being invited is against the rules.  Your insolence has been logged!";
         log = new ArrayList<String>();
         fileNames = new ArrayList<String>();
         ignorelog = new ArrayList<String>();
@@ -116,31 +117,6 @@ public class bouncerbotdev extends SubspaceBot {
         }catch(Exception e){
             Tools.printStackTrace( e );
         }
-    }
-    
-    /**
-     * Handles all entries and determines if they are legal.
-     */
-    
-    public void handleEvent( PlayerEntered event ){
-        if( m_opList.isOwner(event.getPlayerName())) return;
-        if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
-        m_botAction.sendPrivateMessage( event.getPlayerName(), bouncemessage );
-        m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
-        m_botAction.sendPublicMessage( "Whoops, " + event.getPlayerName() + " entered without permission." );
-        m_botAction.sendChatMessage( event.getPlayerName() + " went into a private arena without asking permission, and was mysteriously disconnected from the server." );
-        logEvent( event.getPlayerName() + " entered the arena illegally!" );
-    }
-
-    /**
-     * The bot's morning ass rub
-     */
-    
-    public void handleEvent( LoggedOn event ){
-        m_botAction.joinArena( "#noseeum" );
-        m_botAction.sendUnfilteredPublicMessage("?chat=L0gch4t");
-        m_opList = m_botAction.getOperatorList();
-        logEvent( "Logged in!" );
     }
     
     /**
@@ -225,7 +201,7 @@ public class bouncerbotdev extends SubspaceBot {
 	    }
 	    String files = fileNames.toString();
 	    m_botAction.sendPrivateMessage(sender, "Restricted files are now: " + files);
-	    logEvent ( "Restrictions changed: " + files );
+	    logEvent ( sender + "- Restrictions changed: " + files );
     }
     
     /**
@@ -249,7 +225,7 @@ public class bouncerbotdev extends SubspaceBot {
     public void doClearFiles(String sender)	{
     	fileNames.clear();
     	m_botAction.sendPrivateMessage(sender, "Restricted file list cleared");
-    	logEvent ( "Restrictions changed: " + fileNames.toString() );
+    	logEvent ( sender + "- Restrictions changed: " + fileNames.toString() );
     }
     
     /**
@@ -286,6 +262,12 @@ public class bouncerbotdev extends SubspaceBot {
         	};
         	getLog = new TimerTask()	{
         		public void run()	{
+        			try	{
+        				subLog = m_botAction.getDataFile("subgame.log");
+            			if (subLog.exists())
+            				subLog.delete();
+        			}
+        			catch (Exception e)	{}
         			m_botAction.sendUnfilteredPublicMessage("*getfile subgame.log");
         		}
         		
@@ -308,6 +290,8 @@ public class bouncerbotdev extends SubspaceBot {
         	m_botAction.scheduleTask(getLog, 2000, 3600000);
         	m_botAction.scheduleTask(archiveLog, 300000, 3600000);
         	m_botAction.sendPrivateMessage(sender, "Starting to check log");
+        	m_botAction.sendChatMessage(1,"Log monitoring activated - " + getTimeStamp());
+        	logEvent ( "Logging started by " + sender );
         	logging = true;
     }
     
@@ -326,6 +310,8 @@ public class bouncerbotdev extends SubspaceBot {
     	getLog.cancel();
     	archiveLog.cancel();
     	m_botAction.sendPrivateMessage(sender, "Logging stopped!");
+    	m_botAction.sendChatMessage(1,"Log monitoring deactivated - " + getTimeStamp());
+    	logEvent ( "Logging stopped by " + sender );
     	logging = false;
     }
     
@@ -371,7 +357,7 @@ public class bouncerbotdev extends SubspaceBot {
             while( (line = in.readLine()) != null )	{
                 out.println(line);
             }
-            m_botAction.sendChatMessage(1,"Log archive updated. -" + getTimeStamp());
+            m_botAction.sendChatMessage(1,"Log archive updated. -" + logFile.getName());
             in.close();out.close();
     	}
     	catch(Exception e){
@@ -436,6 +422,27 @@ public class bouncerbotdev extends SubspaceBot {
     }
     
     /**
+     * Tell the bot to *CUT*
+     * 
+     * @param sender
+     */
+    
+    public void doDie(String sender)	{
+    	
+    	TimerTask dieTask = new TimerTask()	{
+    		public void run()	{
+    		m_botAction.die();	
+    		}
+    	};
+    	
+    	if(logging)
+    		doStopLog(sender);
+    	m_botAction.sendChatMessage(1,sender + " has told me to commit suicide -" + getTimeStamp());
+    	logEvent( sender + " Has given me a a very sharp razor.");
+    	m_botAction.scheduleTask(dieTask, 1000);
+    }
+    
+    /**
      * handles all of your commands.
      */
     
@@ -456,13 +463,39 @@ public class bouncerbotdev extends SubspaceBot {
     }
     
     /**
+     * Handles all entries and determines if they are legal.
+     */
+    
+    public void handleEvent( PlayerEntered event )	{
+        if( m_opList.isOwner(event.getPlayerName())) return;
+        if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
+        
+        m_botAction.sendPrivateMessage( event.getPlayerName(), bouncemessage );
+        m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
+        m_botAction.sendPublicMessage( event.getPlayerName() + " entered without permission." );
+        m_botAction.sendChatMessage( event.getPlayerName() + " went into my guarded arena without asking permission, and was mysteriously disconnected from the server." );
+        logEvent( event.getPlayerName() + " entered "+ m_botAction.getArenaName() +" illegally!" );
+    }
+
+    /**
+     * The bot's morning ass rub
+     */
+    
+    public void handleEvent( LoggedOn event )	{
+        m_botAction.joinArena( "#noseeum" );
+        m_botAction.sendUnfilteredPublicMessage("?chat=L0gch4t");
+        m_opList = m_botAction.getOperatorList();
+        logEvent( "Logged in!" );
+    }
+    
+    /**
      * Handles commands.
      * 
      * @param name is the user of the bot.
      * @param message is the command.
      */
     
-    public void handleCommand( String sender, String message ){
+    public void handleCommand( String sender, String message )	{
         if( message.startsWith( "!invite " ))
             doInvite(sender,message.substring(8));
         else if( message.startsWith( "!message " ))
@@ -483,6 +516,8 @@ public class bouncerbotdev extends SubspaceBot {
         	doClearFiles(sender);
         else if( message.startsWith( "!realtime" ))	
         	doRealTime(sender);
+        else if( message.startsWith( "!die" ))	
+        	doDie(sender);
 
     }
     
