@@ -930,11 +930,11 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendPrivateMessage(sender, "Team has too many Javelins.");
             needs = true;
         }
-        if( team.get(Tools.Ship.WARBIRD).size() >= WEASEL_TOOMANY ) {
+        if( team.get(Tools.Ship.WEASEL).size() >= WEASEL_TOOMANY ) {
             m_botAction.sendPrivateMessage(sender, "Team has too many Weasels.");
             needs = true;
         }
-        if( team.get(Tools.Ship.WARBIRD).size() >= TERR_TOOMANY ) {
+        if( team.get(Tools.Ship.TERRIER).size() >= TERR_TOOMANY ) {
             m_botAction.sendPrivateMessage(sender, "Team has too many Terriers.");
             needs = true;
         }
@@ -1002,7 +1002,7 @@ public class purepubbot extends SubspaceBot
         
         switch (ship) {
         case 3: numOfShipNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size(); break;
-        case 5: numOfShipNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
+        case 5: numOfShipNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size(); break;
         default: numOfShipNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
         }        
         if( numOfShipNeeded <= 0 )
