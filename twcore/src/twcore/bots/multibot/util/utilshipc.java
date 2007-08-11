@@ -666,6 +666,7 @@ public class utilshipc extends MultiUtil
 	
 	/**
 	 * Simple helper method that adds players to the spec list.
+	 * 
 	 * @param name is the player.
 	 */
 	
@@ -694,7 +695,7 @@ public class utilshipc extends MultiUtil
 	 * lowest players to help with balance when adding new players. 
 	 * If there's less freqs than numfreqs, it recurses numfreqs-1. 
 	 * 
-	 * @return the int value of the freq with the lowest players or freq 0 if they're all
+	 * @return the int value of the freq with the lowest players or freq 1 if they're all
 	 * the same amount.
 	 */
 	
@@ -703,12 +704,10 @@ public class utilshipc extends MultiUtil
 
 		if(freqs < 0)return 1;
 		try	{
-			for(int i=0;i<freqs-1;i++)
+			for(int i=freqs-1 ; i>=0 ; i--)
 			{
-				Iterator<Integer> iterator = m_botAction.getFreqIDIterator(i);
-				while(iterator.hasNext()){count++; iterator.next();}
+				count = m_botAction.getFrequencySize(i);
 				if(count<least){least=count;lowfreq=i;}
-				count=0;
 			}
 			return lowfreq;
 		}
