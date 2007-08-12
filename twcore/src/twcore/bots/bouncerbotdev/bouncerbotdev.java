@@ -1,5 +1,9 @@
 package twcore.bots.bouncerbotdev;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
@@ -17,6 +22,7 @@ import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
+import twcore.core.events.FileArrived;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
@@ -39,14 +45,16 @@ import twcore.core.game.Player;
 public class bouncerbotdev extends SubspaceBot {
     OperatorList m_opList;
     HashSet<String> invitedPlayers;
+    HashMap<String, File> incoming;
+    HashMap<String, Watched_Arena> guarded;
     ArrayList<String> log;
     ArrayList<String> ignorelog;
     ArrayList<String> fileNames;
     String bouncemessage;
     TimerTask logCheck;
     TimerTask getLog;
-    TimerTask archiveLog;
     File subLog;
+    File data;
     boolean logging;
     boolean realTimeLogging;
     
@@ -59,15 +67,20 @@ public class bouncerbotdev extends SubspaceBot {
     public bouncerbotdev( BotAction botAction ){
         super( botAction );
         invitedPlayers = new HashSet<String>();
+        incoming = new HashMap<String, File>();
+        guarded = new HashMap<String, Watched_Arena>();
         bouncemessage = "Entering a private arena without being invited is against the rules.  Your insolence has been logged!";
         log = new ArrayList<String>();
         fileNames = new ArrayList<String>();
         ignorelog = new ArrayList<String>();
+        data = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "Data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "definitions.dat");
+        data.getParentFile().mkdirs();
         logging = false;
         realTimeLogging = false;
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_ENTERED );
+        events.request( EventRequester.FILE_ARRIVED );
         invitedPlayers.add( m_botAction.getBotName().toLowerCase() );
     }
 
@@ -84,6 +97,75 @@ public class bouncerbotdev extends SubspaceBot {
 	      return new StringTokenizer(string, ",");
 	    return new StringTokenizer(string);
 	  }
+    
+    public boolean isRestrictedLvz(String violator, String stamp, String lvzName)	{
+    	Iterator<Watched_Arena> arenas = guarded.values().iterator();
+    	while (arenas.hasNext())	{
+    		Watched_Arena temp = arenas.next();
+    		Iterator<String> current = temp.myLvz.iterator();
+    		while (current.hasNext())	{
+    			if (current.next().equals(lvzName))	{
+    				m_botAction.sendChatMessage(1,violator + " getfile'd " + temp.myArena + "'s file! ( actual owner: " + temp.myOwner + " ) -" + stamp + " >>> " + lvzName);
+    				return true;
+    			}
+    		}
+    	}
+    	return false;
+    	
+    }
+    
+    public boolean isArenaFile(String fileName)	{
+    	if (fileName.endsWith(".cfg"))
+    		return true;
+    	else if (fileName.endsWith(".lvl"))
+    		return true;
+    	else return false;
+    }
+    
+    public boolean isArenaOwner(String playerName, String arenaName){
+    	if (guarded.get(arenaName).myOwner.equalsIgnoreCase(playerName))
+    		return true;
+    	return false;
+    }
+    
+    public boolean isArenaFileOwner(String playerName, File arena)	{
+    	try	{
+        	if (getString("Name",arena).equalsIgnoreCase(playerName))
+        		return true;
+        	return false;
+    	}
+    	catch (Exception e)	{
+    		return false;
+    	}
+    }
+    
+    public String getString(String target,File arena)	{
+    	try	{
+        	String line;
+        	BufferedReader  in = new BufferedReader( new FileReader( arena ));
+            while( (line = in.readLine()) != null )	{	
+                if (line.startsWith(target + "="))
+                	return line.substring(line.indexOf("=")+1);
+        	}
+            m_botAction.sendPublicMessage("file is null!!");
+            return null;
+    	}
+    	catch (Exception e) {
+    		m_botAction.sendChatMessage(1, arena.getPath() + " is non-existant");
+    		return null;
+    	}
+    	
+    }
+    
+    public ArrayList<String> getLvzNames(File arena)	{
+    	String argString = getString("LevelFiles",arena);
+    	
+    	StringTokenizer argTokens = getArgTokens(argString);
+    	ArrayList<String> lvzFiles = new ArrayList<String>();
+    	while ( argTokens.hasMoreTokens())
+    		lvzFiles.add(argTokens.nextToken());
+    	return lvzFiles;
+    }
     
     /**
      * Returns a time stamp.
@@ -212,7 +294,7 @@ public class bouncerbotdev extends SubspaceBot {
     
     public void doListFiles(String sender)	{
     	if (fileNames.isEmpty())
-    		m_botAction.sendPrivateMessage(sender,"There are no restricted files.");
+    		{m_botAction.sendPrivateMessage(sender,"There are no restricted files.");return;}
     	m_botAction.sendPrivateMessage(sender,"The following files are restricted: " + fileNames.toString());
     }
     
@@ -223,9 +305,54 @@ public class bouncerbotdev extends SubspaceBot {
      */
     
     public void doClearFiles(String sender)	{
+    	if (fileNames.isEmpty())
+    		{m_botAction.sendPrivateMessage(sender,"There are no restricted files.");return;}
     	fileNames.clear();
     	m_botAction.sendPrivateMessage(sender, "Restricted file list cleared");
     	logEvent ( sender + "- Restrictions changed: " + fileNames.toString() );
+    }
+    
+    public void doAddArena (String sender, String arena)	{
+    	
+	    File arenacfg = new File(data.getParent() + File.separatorChar + arena + ".cfg");
+	    if (guarded.containsKey(arena))
+	    	m_botAction.sendPrivateMessage(sender, " is already monitored.");
+	    else	{
+	    	String arenaFileName = arenacfg.getName();
+		    incoming.put(arenaFileName, arenacfg);
+		    m_botAction.sendUnfilteredPublicMessage("*getfile " + arenaFileName);
+		    guarded.put(arena, new Watched_Arena(arena,sender));
+		    m_botAction.sendPrivateMessage(sender, arena + " is now monitored");
+		    
+		    logEvent ( sender + "- Arena monitoring changed: " + arena );
+	    }
+    }
+    
+public void doDelArena (String sender, String arena)	{
+    	
+	    File arenacfg = new File(data.getParent() + File.separatorChar + arena + ".cfg");
+	    if (!guarded.containsKey(arena))	{
+	    	m_botAction.sendPrivateMessage(sender, arena + " is not watched.");
+	    }
+	    else	{
+	    	if (!isArenaOwner(sender,arena))	{
+	    		m_botAction.sendChatMessage(1,"Attempted to remove " + guarded.get(arena).myOwner + "'s arena " + arena + " from the monitored list!");
+	    		return;
+	    	}
+	    	arenacfg.delete();
+	    	guarded.remove(arena);
+		    m_botAction.sendPrivateMessage(sender, arena + " is no longer monitored");
+		    
+		    logEvent ( sender + "- Arena monitoring changed: " + arena );
+	    }
+    }
+    
+    public void doListArenas(String sender)	{
+    	if (!guarded.isEmpty())
+    		m_botAction.sendPrivateMessage(sender,"The currently watched arenas are: " + guarded.keySet().toString());
+    	else
+    		m_botAction.sendPrivateMessage(sender,"No arenas are currently under watch.");
+    	
     }
     
     /**
@@ -272,23 +399,8 @@ public class bouncerbotdev extends SubspaceBot {
         		}
         		
         	};
-        	archiveLog = new TimerTask()	{
-        		public void run()	{
-        			try	{
-        			subLog = m_botAction.getDataFile("subgame.log");
-        			String logName = getLogName();
-        			WriteSubLog(logName);
-        			ReadLog(logName);
-        			}
-        			catch (Exception e)	{
-        				m_botAction.sendChatMessage(1,"Failed to write log! (sublog not present?)");
-        			}
-        		}
-        		
-        	};
         	if(realTimeLogging) m_botAction.scheduleTask(logCheck, 2000, 30000);
         	m_botAction.scheduleTask(getLog, 2000, 3600000);
-        	m_botAction.scheduleTask(archiveLog, 300000, 3600000);
         	m_botAction.sendPrivateMessage(sender, "Starting to check log");
         	m_botAction.sendChatMessage(1,"Log monitoring activated - " + getTimeStamp());
         	logEvent ( "Logging started by " + sender );
@@ -308,7 +420,6 @@ public class bouncerbotdev extends SubspaceBot {
     	}
     	logCheck.cancel();
     	getLog.cancel();
-    	archiveLog.cancel();
     	m_botAction.sendPrivateMessage(sender, "Logging stopped!");
     	m_botAction.sendChatMessage(1,"Log monitoring deactivated - " + getTimeStamp());
     	logEvent ( "Logging stopped by " + sender );
@@ -348,6 +459,7 @@ public class bouncerbotdev extends SubspaceBot {
     public void WriteSubLog(String logName) {
     	try	{
     		File logFile = new File ( logName );
+    		String date = logFile.getName().substring( 0, logFile.getName().indexOf(".") );
     		logFile.getParentFile().mkdirs();
     		String          line;
             BufferedReader  in = new BufferedReader( new FileReader( subLog ));
@@ -355,7 +467,8 @@ public class bouncerbotdev extends SubspaceBot {
             	
 
             while( (line = in.readLine()) != null )	{
-                out.println(line);
+            	if (line.startsWith(date))
+            		out.println(line);
             }
             m_botAction.sendChatMessage(1,"Log archive updated. -" + logFile.getName());
             in.close();out.close();
@@ -374,6 +487,7 @@ public class bouncerbotdev extends SubspaceBot {
     public void ReadLog(String logName)	{
     	try	{
     		String line;
+    		
             BufferedReader  in = new BufferedReader( new FileReader( logName ));
 
             m_botAction.sendChatMessage(1,"Checking updated log file for violations...");
@@ -387,35 +501,82 @@ public class bouncerbotdev extends SubspaceBot {
         }
     }
     
+    public void WriteDefinitions()	{	
+    	try	{
+    		 if (data.exists())
+    			 data.delete();
+    	     DataOutputStream out = new DataOutputStream( new FileOutputStream( data ) );
+    	     
+    	     Iterator<Watched_Arena> arenas = guarded.values().iterator();
+    	    	while (arenas.hasNext())	{
+    	    		Watched_Arena temp = arenas.next();
+    	    		String line = "#" + temp.myArena + "~" + temp.myOwner + "~" + temp.myLvz.toString() + "#";
+    	    		m_botAction.sendPublicMessage(line + " was read in");
+    	    		out.writeChars(line);
+    	    	}
+    	     
+    	     out.close(); //TODO
+    	   }
+    	   catch ( Exception e )	{
+    		   m_botAction.sendChatMessage(1,"Could not save definitions " + data.getPath() );
+    	   }
+    	
+    }
+    
+    public boolean ReadDefinitions()	{
+    	return false; //TODO
+    }
+    
     /**
      * Handles the log messages and occasionally the arena message
-     * that passes through it's filters.
+     * that passes through it's filters if real time logging is on.
      * 
-     * @param logmessage is the log message to be checked.
+     * @param logMessage is the log message to be checked.
      */
     
-    public void handleLog( String logmessage )	{ 	
+    public void handleLog( String logMessage )	{ 	
     	if (!logging) return;
-    	if (ignorelog.contains(logmessage)) return;
+    	if (ignorelog.contains(logMessage)) return;
     	
     	try	{
-    		String command = logmessage.substring(logmessage.indexOf("*getfile"));
-        	String violator = logmessage.substring(logmessage.indexOf("Ext:")+5, logmessage.indexOf("(")-1);
+    		String fileName = logMessage.substring(logMessage.indexOf("*getfile")+10);
+        	String violator = logMessage.substring(logMessage.indexOf("Ext:")+5, logMessage.indexOf("(")-1);
         	if (m_opList.isOwner(violator))
         			return;
         	else if (m_opList.isSysop(violator))	{
-        		if ( command.startsWith("*getfile " + m_botAction.getArenaName()))	{
-        			logEvent( logmessage );
-        			m_botAction.sendChatMessage(1,violator + " getfile'd " + m_botAction.getArenaName() + "'s files! -" + getTimeStamp() + " >>> " + command);
-        			ignorelog.add(logmessage);
+        		String stamp = (realTimeLogging? getTimeStamp() : logMessage.substring(0, logMessage.indexOf(": ")));
+        		if ( fileName.toLowerCase().startsWith( m_botAction.getArenaName() ))	{
+        			logEvent( logMessage );
+        			m_botAction.sendChatMessage(1,violator + " getfile'd " + m_botAction.getArenaName() + "'s files! -" + stamp + " >>> " + fileName);
+        			ignorelog.add(logMessage);
+        			return;
         		}
         		
         		for ( int i= 0; i<fileNames.size(); i++ )
-        		if ( command.equalsIgnoreCase("*getfile " + (String)fileNames.get(i)))	{
-        			logEvent( logmessage );
-        			m_botAction.sendChatMessage(1,violator + " getfile'd a restricted file! -" + getTimeStamp() + " >>> " + command);
-        			ignorelog.add(logmessage);
+        		if ( fileName.equalsIgnoreCase( (String)fileNames.get(i) ))	{
+        			logEvent( logMessage );
+        			m_botAction.sendChatMessage(1,violator + " getfile'd a restricted file! -" + stamp + " >>> " + fileName);
+        			ignorelog.add(logMessage);
+        			return;
         		}
+        		if (isArenaFile(fileName))	{
+        			String arenaName = logMessage.substring( logMessage.indexOf("(")+1, logMessage.indexOf(")") );
+        			if (guarded.containsKey(arenaName))	{
+        				if (isArenaOwner(violator,arenaName)) 
+        					return;
+        				logEvent( logMessage );
+            			m_botAction.sendChatMessage(1,violator + " getfile'd " + arenaName +"'s file! ( actual owner: " + guarded.get(arenaName).myOwner + " ) -" + stamp + " >>> " + fileName);
+            			ignorelog.add(logMessage);
+            			return;
+        			}	
+        		}
+        		 if (fileName.endsWith(".lvz"))
+        			if (isRestrictedLvz(violator,stamp,fileName))	{
+        				logEvent( logMessage );
+        				ignorelog.add(logMessage);
+        			}
+        				
+        			
         	}
     	}
     	catch (Exception e)	{}
@@ -457,7 +618,7 @@ public class bouncerbotdev extends SubspaceBot {
         else if (type == Message.PRIVATE_MESSAGE)
         	name = m_botAction.getPlayerName(event.getPlayerID());
         
-        if( m_opList.isOwner( name )) handleCommand( name, message );
+        if( m_opList.isOwner( name )) handleCommand( name, message.toLowerCase() );
         if( type == Message.ARENA_MESSAGE && realTimeLogging)
         	handleLog(message);
     }
@@ -473,7 +634,7 @@ public class bouncerbotdev extends SubspaceBot {
         m_botAction.sendPrivateMessage( event.getPlayerName(), bouncemessage );
         m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
         m_botAction.sendPublicMessage( event.getPlayerName() + " entered without permission." );
-        m_botAction.sendChatMessage( event.getPlayerName() + " went into my guarded arena without asking permission, and was mysteriously disconnected from the server." );
+        m_botAction.sendChatMessage(1, event.getPlayerName() + " went into my guarded arena without asking permission, and was mysteriously disconnected from the server." );
         logEvent( event.getPlayerName() + " entered "+ m_botAction.getArenaName() +" illegally!" );
     }
 
@@ -488,6 +649,53 @@ public class bouncerbotdev extends SubspaceBot {
         logEvent( "Logged in!" );
     }
     
+    public void handleEvent( FileArrived event )	{
+    	String fileName = event.getFileName();
+    	String arenaName = fileName.substring(0, fileName.length()-4);
+    	m_botAction.sendPublicMessage( fileName + " arrived");
+    	
+    	if(fileName.endsWith(".log"))	{
+    		try	{
+    			subLog = m_botAction.getDataFile("subgame.log");
+    			String logName = getLogName();
+    			WriteSubLog(logName);
+    			ReadLog(logName);
+    			WriteDefinitions();
+    			}
+    			catch (Exception e)	{
+    				m_botAction.sendChatMessage(1,"Failed to write log! (sublog not present?)");
+    			}
+    	}
+    	
+    	if(incoming.containsKey(fileName))
+    		try	{
+    			File file = m_botAction.getDataFile(fileName);
+    			m_botAction.sendPublicMessage("Tring to process " + fileName);
+    			File temp = (File)incoming.get(fileName);
+    			temp.getParentFile().mkdirs();
+    			file.renameTo(temp);
+    			if (guarded.containsKey(arenaName))	{
+    					Watched_Arena arena = guarded.get(arenaName);
+    					String playerName = arena.myOwner;
+    					if (isArenaFileOwner(playerName,temp))
+    						arena = new Watched_Arena(arena.myArena,playerName,getLvzNames(temp));
+    					else	{
+    						m_botAction.sendChatMessage(1, playerName + " tried to request for " + arena.myArena + "to be monitored when he/she is not the owner or the arena DNE.");
+    						if (temp.delete()) //TODO
+    							m_botAction.sendPublicMessage( fileName + " was deleted");
+    						else	{
+    							m_botAction.sendPublicMessage( temp.getPath() + " could not deleted: attempting force delete.." );
+    						}
+    						guarded.remove(arenaName);
+    					}
+    			}
+    			incoming.remove(fileName);
+    		}
+    		catch (Exception e)	{
+    			m_botAction.sendChatMessage(1,"Fatal Error: could not receive and process" + fileName);
+    		}
+    }
+    
     /**
      * Handles commands.
      * 
@@ -498,6 +706,8 @@ public class bouncerbotdev extends SubspaceBot {
     public void handleCommand( String sender, String message )	{
         if( message.startsWith( "!invite " ))
             doInvite(sender,message.substring(8));
+        else if( message.startsWith( "!clearinvites" ))	
+        	doClearInvites(sender);
         else if( message.startsWith( "!message " ))
         	doBounceMessage(sender,message.substring(9));
         else if( message.startsWith( "!go " ))
@@ -508,6 +718,12 @@ public class bouncerbotdev extends SubspaceBot {
         	doStartLog(sender);
         else if( message.startsWith( "!stoplog" ))	
         	doStopLog(sender);
+        else if( message.startsWith( "!addarena " ))	
+        	doAddArena(sender, message.substring(10));
+        else if( message.startsWith( "!delarena " ))	
+        	doDelArena(sender, message.substring(10));
+        else if( message.startsWith( "!listarenas" ))	
+        	doListArenas(sender);
         else if( message.startsWith( "!setfiles " ))	
         	doSetFiles(sender,message.substring(10));
         else if( message.startsWith( "!listfiles" ))	
@@ -533,15 +749,43 @@ public class bouncerbotdev extends SubspaceBot {
           "!Invite <name>                            -- Invites <name> to " + m_botAction.getArenaName() + " .",
           "!Message <message>                        -- Sets the bounce message interlopers recieve.",
           "!Go <arena>                               -- Sends the bot to <arena>.",
+          "!AddArena                                 -- Monitors an arena and all related files.",
+          "!DelArena                                 -- Stops monitoring an arena and all related files.",
+          "!ListArenas                               -- Lists all monitored arenas.",
           "!SetFiles <file1>,<file2>,ect...          -- Sets restricted files.",
           "!ListFiles                                -- Lists curretly restricted files",
           "!ClearInvites                             -- Clears all guests.",
-          "!ClearFiles                               -- Clears all restricted files",
+          "!ClearFiles                               -- Clears all restricted files.",
           "!RealTime                                 -- Sets real time logging to be on or off.",
           "!StartLog                                 -- Starts the logging functionality.",
           "!StopLog                                  -- Stops the logging functionality.",
           "!help                                     -- Displays this."
       };
       return message;
+    }
+    
+    private class Watched_Arena	{
+    	String myArena;
+    	String myOwner;
+    	ArrayList<String> myLvz;
+    	
+    	public Watched_Arena(String arenaName, String Owner){
+    		myArena = arenaName;
+    		myOwner = Owner;
+    	}
+    	public Watched_Arena(String arenaName,String arenaOwner,ArrayList<String> arenaLvz){
+    		myArena = arenaName;
+    		myOwner = arenaOwner;
+    		myLvz = arenaLvz;   		
+    	}
+    	
+    	/*public String getName()
+    	{return myArena;}
+    	public String getOwner()
+    	{return myOwner;}
+    	public ArrayList<String> getLvz()
+    	{return myLvz;}
+    	public boolean containsLvz(String lvzName)	
+    	{return myLvz.contains(lvzName);}*/
     }
 }
