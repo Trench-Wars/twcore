@@ -418,7 +418,7 @@ public class purepubbot extends SubspaceBot
                     checkFreq(playerID, player.getFrequency(), false);
                     checkFreqSizes();
                 }
-                m_botAction.sendPrivateMessage(playerName, "Commands:  !team, !restrictions, !time, !warp, !ship <ship#>, !clearmines");
+                m_botAction.sendPrivateMessage(playerName, "Commands:  !team, !restrictions, !time, !warp, !ship <ship#>, !clearmines, !help");
             }
             if(flagTimeStarted) {
                 if( flagTimer != null)
@@ -674,7 +674,10 @@ public class purepubbot extends SubspaceBot
         if( strictFlagTime )
             m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  All players will be warped at round start." );
         else
-            m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
+            if( autoWarp )
+                m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  You will be warped into flagroom at round start (type !warp to change). -" + m_botAction.getBotName() );
+            else 
+                m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
 
         flagTimeStarted = true;
         freq0Score = 0;
@@ -770,7 +773,7 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendSmartPrivateMessage( sender, "You will NOT be warped inside FR at every round start.  !warp again to turn back on." );
         } else {
             warpPlayers.add( sender );
-            m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  Use :" + m_botAction.getBotName() + ":!warp to turn off." );
+            m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  Type !warp to turn off." );
         }
     }
 
@@ -1457,7 +1460,7 @@ public class purepubbot extends SubspaceBot
             roundTitle = "Round " + roundNum;
         }
 
-        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")" + (strictFlagTime?"":("  Type :" + m_botAction.getBotName() +":!warp to warp into FR.")) );
+        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  (Score: " + freq0Score + " - " + freq1Score + ")" + (strictFlagTime?"":("  Type !warp to set warp status, or send !help")) );
 
         m_botAction.cancelTask(startTimer);
 
@@ -2097,7 +2100,6 @@ public class purepubbot extends SubspaceBot
                     flagClaimingFreq = freq;
                     isBeingClaimed = true;
                     claimSecs = 0;
-                    m_botAction.showObject(2400); // Shows flag claimed lvz
                 }
             }
         }
@@ -2129,6 +2131,7 @@ public class purepubbot extends SubspaceBot
                 }
             }
 
+            m_botAction.showObject(2400); // Shows flag claimed lvz
             isBeingClaimed = false;
             flagClaimingFreq = -1;
             secondsHeld = 0;
