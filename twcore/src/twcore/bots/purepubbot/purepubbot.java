@@ -483,27 +483,30 @@ public class purepubbot extends SubspaceBot
         String sender = getSender(event);
         int messageType = event.getMessageType();
         String message = event.getMessage().trim();
-
-        if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )
-            handleCommand(sender, message);
+        
+        if( message == null || !message.startsWith("!") )
+            return;
+        
+        message = message.toLowerCase();
+        if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.PUBLIC_MESSAGE ) )
+            handlePublicCommand(sender, message);        
+        if ( opList.isHighmod(sender) || sender.equals(m_botAction.getBotName()) )        
+            if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )
+                handleModCommand(sender, message);
     }
 
 
     /* **********************************  COMMANDS  ************************************ */
 
     /**
-     * Handles commands sent to the bot.
+     * Handles public commands sent to the bot, either in PM or pub chat.
      *
      * @param sender is the person issuing the command.
-     * @param message is the command that is being sent.
+     * @param command is the command that is being sent.
      */
-    public void handleCommand(String sender, String message)
-    {
-        String command = message.toLowerCase();
-
-        try
-        {
-            if(message.equals("!time"))
+    public void handlePublicCommand(String sender, String command) {
+        try {
+            if(command.equals("!time"))
                 doTimeCmd(sender);
             else if(command.equals("!help"))
                 doHelpCmd(sender);
@@ -514,15 +517,25 @@ public class purepubbot extends SubspaceBot
             else if(command.equals("!team"))
                 doShowTeamCmd(sender);
             else if(command.startsWith("!ship "))
-                doShipCmd(sender, message.substring(6));
-            else if(command.startsWith("!clearmines"))
-                doClearMinesCmd(sender);
+                doShipCmd(sender, command.substring(6));
+            else if(command.equals("!clearmines"))
+                doClearMinesCmd(sender);            
+        } catch(RuntimeException e) {
+            m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+        }
+    }
 
-            if ( !opList.isHighmod(sender) && !sender.equals(m_botAction.getBotName()) )
-                return;
 
+    /**
+     * Handles mod-only commands sent to the bot.
+     *
+     * @param sender is the person issuing the command.
+     * @param command is the command that is being sent.
+     */
+    public void handleModCommand(String sender, String command) {
+        try {
             if(command.startsWith("!go "))
-                doGoCmd(sender, message.substring(4));
+                doGoCmd(sender, command.substring(4));
             else if(command.equals("!start"))
                 doStartCmd(sender);
             else if(command.equals("!stop"))
@@ -530,25 +543,23 @@ public class purepubbot extends SubspaceBot
             else if(command.equals("!privfreqs"))
                 doPrivFreqsCmd(sender);
             else if(command.startsWith("!starttime "))
-                doStartTimeCmd(sender, message.substring(11));
-            else if(command.startsWith("!stricttime"))
+                doStartTimeCmd(sender, command.substring(11));
+            else if(command.equals("!stricttime"))
                 doStrictTimeCmd(sender);
             else if(command.equals("!stoptime"))
                 doStopTimeCmd(sender);
             else if(command.startsWith("!set "))
-                doSetCmd(sender, message.substring(5));
-            else if(command.startsWith("!autowarp"))
+                doSetCmd(sender, command.substring(5));
+            else if(command.equals("!autowarp"))
                 doAutowarpCmd(sender);
             else if(command.equals("!die"))
                 doDieCmd(sender);
-        }
-        catch(RuntimeException e)
-        {
+        } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
     }
 
-
+    
     /**
      * Moves the bot from one arena to another.  The bot must not be
      * started for it to move.
@@ -772,13 +783,10 @@ public class purepubbot extends SubspaceBot
      */
     public void doDieCmd(String sender)
     {
-        String currentArena = m_botAction.getArenaName();
-
-        if(started)
-            throw new RuntimeException("Bot is currently running pure pub settings in " + currentArena + ".  Please !Stop before trying to die.");
-
         m_botAction.sendSmartPrivateMessage(sender, "Bot logging off.");
-        m_botAction.scheduleTask(new DieTask(), 100);
+        objs.hideAllObjects();
+        m_botAction.setObjects();
+        m_botAction.scheduleTask(new DieTask(), 300);
     }
 
 
@@ -1400,7 +1408,7 @@ public class purepubbot extends SubspaceBot
     {
     	String commands[] = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Setup").split(",");
     	for(int k = 0; k < commands.length; k++) {
-    		handleCommand(m_botAction.getBotName(), commands[k]);
+    		handleModCommand(m_botAction.getBotName(), commands[k]);
 		}
     }
 
@@ -1943,8 +1951,6 @@ public class purepubbot extends SubspaceBot
          */
         public void run()
         {
-            objs.hideAllObjects();
-            m_botAction.setObjects();
             m_botAction.die();
         }
     }
