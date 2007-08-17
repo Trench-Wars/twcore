@@ -3,7 +3,7 @@ package twcore.bots.elimbot;
 import java.util.HashMap;
 import java.util.TimerTask;
 
-import twcore.bots.elimbot.configuration.configuration;
+import twcore.bots.elimbot.config.configuration;
 import twcore.bots.elimbot.tasks.PrepareGame;
 import twcore.bots.elimbot.tasks.StartGame;
 import twcore.bots.elimbot.tasks.deathlimitVote;
