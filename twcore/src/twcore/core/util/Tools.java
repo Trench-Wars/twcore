@@ -363,12 +363,18 @@ public class Tools {
      * <code>  2 days, 1 hour, 31 minutes and 45 seconds.</code><p>
      * If abbrev is set to true, then the String is much less verbose:<p>
      *  <code>  3d:14h:30m:21s</code>
-     * @param dateInMillis A date given in milliseconds.
+     * @param dateInMillis A date given in milliseconds, can be either in future or past
      * @param abbrev Whether or not to abbreviate the time string.
      * @return
      */
     public static String getTimeDiffString( long dateInMillis, boolean abbrev ) {
-        long diffTime = Math.round((new Date().getTime() - dateInMillis )/1000);
+    	long diffTime = 0;
+    	
+    	if(dateInMillis <= new Date().getTime())	// timestamp is in past
+    		diffTime = Math.round((new Date().getTime() - dateInMillis )/1000);
+    	else	// timestamp is in future
+    		diffTime = Math.round((dateInMillis - new Date().getTime())/1000);
+        
         String response = new String();
         if(diffTime > (24*60*60)) {   // Days
             int days = Math.round(diffTime / (24*60*60));
