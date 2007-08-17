@@ -1,15 +1,11 @@
 package twcore.core.util.ipc;
 
 
-public class IPCChatMessage {
-	private String arena;		// Arena
+public class IPCChatMessage extends IPCChat {
 	private int messageType;	// Message type
 	private String sender;      // Sender of the message
 	private String message;     // Message being sent
 	
-	private String ipcSender;	   // Sender of the IPC message
-	private String ipcRecipient;   // Intended recipient of the message
-	  
 	/**
 	 * Constructor
 	 */
@@ -21,34 +17,11 @@ public class IPCChatMessage {
 			String ipcSender, 
 			String ipcRecipient)
 	{
-		this.arena = arena;
+		super(arena, ipcSender, ipcRecipient);
+		
 		this.messageType = messageType;
 		this.sender = sender;
 		this.message = message;
-		
-		this.ipcSender = ipcSender;
-		this.ipcRecipient = ipcRecipient;
-	}
-
-	/**
-	 * @return the arena
-	 */
-	public String getArena() {
-		return arena;
-	}
-
-	/**
-	 * @return the ipcRecipient
-	 */
-	public String getIpcRecipient() {
-		return ipcRecipient;
-	}
-
-	/**
-	 * @return the ipcSender
-	 */
-	public String getIpcSender() {
-		return ipcSender;
 	}
 
 	/**
