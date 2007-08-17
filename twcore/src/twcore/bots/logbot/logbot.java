@@ -105,9 +105,9 @@ public class logbot extends SubspaceBot {
      * @return a tokenizer separating the arguments is returned.
      */
     
-    public StringTokenizer getArgTokens(String string)	{
-	    if(string.indexOf((int) ',') != -1)
-	      return new StringTokenizer(string, ",");
+    public StringTokenizer getArgTokens(String string, String token)	{
+	    if(string.indexOf(token) != -1)
+	      return new StringTokenizer(string, token);
 	    return new StringTokenizer(string);
 	  }
     
@@ -120,7 +120,6 @@ public class logbot extends SubspaceBot {
     
     public String TrimList (String list)	{
     	try	{
-    		logEvent (list.substring(list.indexOf("[")+1,list.indexOf("]")) + " was changed");
     		return list.substring(list.indexOf("[")+1,list.indexOf("]"));
     	}
     	catch (Exception e)	{return null;}
@@ -289,7 +288,7 @@ public class logbot extends SubspaceBot {
     
     public ArrayList<String> ParseString (String argString)	{
     	try	{
-    		StringTokenizer argTokens = getArgTokens(argString);
+    		StringTokenizer argTokens = getArgTokens(argString,",");
         	ArrayList<String> lvzFiles = new ArrayList<String>();
         	while ( argTokens.hasMoreTokens())
         		lvzFiles.add(argTokens.nextToken().trim().toLowerCase());
@@ -332,70 +331,7 @@ public class logbot extends SubspaceBot {
         }catch(Exception e){
             Tools.printStackTrace( e );
         }
-    }
-    
-    /**
-     * Sends  the bot to kill a violator.
-     * 
-     * @param argString
-     */
-    
-    public void conductKill(String argString)	{
-    	StringTokenizer argTokens = getArgTokens(argString);
-    	String arena = argTokens.nextToken();
-    	String violator = argTokens.nextToken();
-    	
-    	try	{
-    		m_botAction.changeArena(arena);
-        	Iterator<Player> it = m_botAction.getPlayerIterator();
-        	while (it.hasNext())	{
-        		if (((Player)it.next()).getPlayerName().equals(violator))
-        			m_botAction.sendUnfilteredPrivateMessage(violator,"*kill");
-        	}
-    	}
-    	catch (Exception e)	{
-    		logEvent ( "Could not kill violator: " + violator );
-    	}
-    	m_botAction.changeArena(home);
-    	m_botAction.sendSmartPrivateMessage( entity, "Back");
-    	
-    }
-    
-    /**
-     * Sends the bot to bounce intruders from a monitored arena.
-     * 
-     * @param argString
-     */
-    
-    public void conductBounce( String argString )	{
-    	try	{
-    		ArrayList<String> allowed = new ArrayList<String>();
-    		StringTokenizer argTokens = getArgTokens(argString);
-        	
-        	while (argTokens.hasMoreTokens())	{
-        		String arena = argTokens.nextToken();
-            	String owner = argTokens.nextToken();
-            	String list;
-            	if ( (list = TrimList(argTokens.nextToken())) != null )
-            		allowed = ParseString(list);
-            	allowed.add(owner);
-            	m_botAction.changeArena(arena);
-            	Iterator<Player> it = m_botAction.getPlayerIterator();
-            	while (it.hasNext())	{
-            		String playerName = it.next().getPlayerName();
-            		if (!allowed.contains(playerName.toLowerCase()))	{
-            			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena!");
-            			m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
-            		}
-            	}
-        	}
-    	}
-    	catch (Exception e)	{
-    		logEvent( "Could not conduct bounce. (bad command) :" + argString );
-    	}
-    	m_botAction.changeArena(home);
-    	m_botAction.sendSmartPrivateMessage( entity, "Back");
-    }
+    } 
     
     /**
      * Invites a player
@@ -465,7 +401,7 @@ public class logbot extends SubspaceBot {
      */
     
     public void doSetFiles(String sender, String argString)	{
-    	StringTokenizer argTokens = getArgTokens(argString);
+    	StringTokenizer argTokens = getArgTokens(argString,",");
 	    
 	    while (argTokens.hasMoreTokens())	{
 	    	String fileName = argTokens.nextToken();
@@ -569,7 +505,7 @@ public class logbot extends SubspaceBot {
      */
     
     public void doArenaInvite (String sender, String argString)	{
-    	StringTokenizer argTokens = getArgTokens(argString);
+    	StringTokenizer argTokens = getArgTokens(argString,",");
     	int numArgs = argTokens.countTokens();
     	if (numArgs !=2)	{
     		m_botAction.sendSmartPrivateMessage(sender,"Improper syntax, use <arena>,<name>");
@@ -835,7 +771,7 @@ public class logbot extends SubspaceBot {
     	     Iterator<Watched_Arena> arenas = guarded.values().iterator();
     	    	while (arenas.hasNext())	{
     	    		Watched_Arena temp = arenas.next();
-    	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString());
+    	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
     	    		out.writeUTF(line);
     	    	}
     	     out.close();
@@ -855,6 +791,7 @@ public class logbot extends SubspaceBot {
     	String name;
     	String owner;
     	ArrayList<String> lvz;
+    	ArrayList<String> guests;
     	try {
     		DataInputStream in = new DataInputStream( new FileInputStream( data ) );
         	while (in.available() != 0)	{
@@ -862,7 +799,8 @@ public class logbot extends SubspaceBot {
         		name = line.substring(0, line.indexOf("~"));
         		owner = line.substring(name.length()+1, line.indexOf("["));
         		lvz = getLvzNames(TrimList(line));
-        		Watched_Arena temp = new Watched_Arena(name,owner,lvz);
+        		guests = ParseString( TrimList(line.substring(line.indexOf("]"))) );
+        		Watched_Arena temp = new Watched_Arena(name,owner,lvz,guests);
         		guarded.put(name, temp);
         	}
         	in.close();
@@ -1179,7 +1117,11 @@ public class logbot extends SubspaceBot {
     					Watched_Arena arena = guarded.get(arenaName);
     					String playerName = arena.myOwner;
     					if (isArenaFileOwner(playerName,temp))	{
-    						Watched_Arena arenax = new Watched_Arena(arena.myArena,playerName,getLvzNames(temp));
+    						Watched_Arena arenax;
+    						if (arena.myGuests.isEmpty())
+    							arenax = new Watched_Arena(arena.myArena,playerName,getLvzNames(temp));
+    						else
+    							arenax = new Watched_Arena(arena.myArena,playerName,getLvzNames(temp),arena.myGuests);
     						guarded.put(arenaName, arenax);
     					}
     					else	{
@@ -1372,7 +1314,7 @@ public class logbot extends SubspaceBot {
     	
     	public void run()	{
     		try	{
-    		StringTokenizer argTokens = getArgTokens(myArgs.substring(myArgs.length()-1));
+    		StringTokenizer argTokens = getArgTokens(myArgs.substring(myArgs.length()-1),",");
         	
         	if (argTokens.hasMoreTokens())	{
         		final String arena = argTokens.nextToken();
@@ -1428,17 +1370,18 @@ public class logbot extends SubspaceBot {
     	try	{
     		ArrayList<String> allowed = new ArrayList<String>();
     		String newArg = myArgs.substring(0,myArgs.length()-1);
-    		StringTokenizer argTokens = getArgTokens(newArg);
+    		StringTokenizer argTokens = getArgTokens(newArg,":");
         	
         	if (argTokens.hasMoreTokens())	{
         		final String arena = argTokens.nextToken();
             	final String owner = argTokens.nextToken();
             	String list;
-            	if ( !(list = argTokens.nextToken()).equals("[]") )
+            	list = argTokens.nextToken();
+            	if ( !list.equals("[]") )
             		allowed = ParseString(TrimList(list));
             	allowed.add(owner.toLowerCase());
             	allowed.add(m_botAction.getBotName().toLowerCase());
-            	final ArrayList<String >subAllowed = allowed;
+            	final ArrayList<String> subAllowed = allowed;
             	m_botAction.changeArena(arena);
             	
             	TimerTask microManage = new TimerTask()	{
@@ -1450,7 +1393,7 @@ public class logbot extends SubspaceBot {
                     			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena!");
                     			m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
                     			logEvent ( "Intruder " + playerName + " was kicked." );
-                    			m_botAction.sendChatMessage(1, playerName + " encroached " + owner + "'s arena and disappeared!" );
+                    			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena and disappeared!" );
                     		}
                     	}
             		}
@@ -1499,11 +1442,17 @@ public class logbot extends SubspaceBot {
     		myLvz = arenaLvz;
     		myGuests = new ArrayList<String>();		//concurrent safety measure
     	}
+    	public Watched_Arena(String arenaName,String arenaOwner,ArrayList<String> arenaLvz,ArrayList<String> guestlist){
+    		myArena = arenaName;
+    		myOwner = arenaOwner;
+    		myLvz = arenaLvz;
+    		myGuests = guestlist;
+    	}
     	public void addGuest(String invitee)	{
     		myGuests.add(invitee);
     	}
     	public String toCheckable()	{
-    		return myArena + "," + myOwner + "," + myGuests + ",";
+    		return myArena + ":" + myOwner + ":" + myGuests + ":";
     	}
     	
     	/*public String getName()
