@@ -505,10 +505,8 @@ public class logbot extends SubspaceBot {
      */
     
     public void doArenaInvite (String sender, String argString)	{
-    	logEvent ( "current arg: " + argString );
     	StringTokenizer argTokens = getArgTokens(argString,",");
     	int numArgs = argTokens.countTokens();
-    	logEvent ( "current arg: " + argString + " numargs " + numArgs);
     	if (numArgs !=2)	{
     		m_botAction.sendSmartPrivateMessage(sender,"Improper syntax, use <arena>,<name>");
     		return;
@@ -526,12 +524,10 @@ public class logbot extends SubspaceBot {
     	    		return;
     	    	}
     	    }
-    		logEvent ( "guests : " + guarded.get(arena).myGuests.toString());
     		if (guarded.get(arena).myGuests.contains(invitee))	{
     			m_botAction.sendSmartPrivateMessage(sender, invitee + " is already invited.");
 	    		return;
     		}
-    		logEvent ( "sucessful invite of " + invitee + " to " + arena );
     		guarded.get(arena).addGuest(invitee);
     		m_botAction.sendSmartPrivateMessage(sender, invitee + " is now invited to " + arena);
     	}
@@ -777,7 +773,6 @@ public class logbot extends SubspaceBot {
     	    	while (arenas.hasNext())	{
     	    		Watched_Arena temp = arenas.next();
     	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
-    	    		logEvent (line);
     	    		out.writeUTF(line);
     	    	}
     	     out.close();
@@ -806,7 +801,6 @@ public class logbot extends SubspaceBot {
         		owner = line.substring(name.length()+1, line.indexOf("["));
         		lvz = getLvzNames(TrimList(line));
         		guests = ParseString( TrimList(line.substring(line.indexOf("]~")+2)) );
-        		logEvent ("lvz : " + lvz + " guests: " + guests);
         		Watched_Arena temp = new Watched_Arena(name,owner,lvz,guests);
         		guarded.put(name, temp);
         	}
@@ -991,7 +985,7 @@ public class logbot extends SubspaceBot {
         	name = event.getMessager();
         else if (type == Message.PRIVATE_MESSAGE)
         	name = m_botAction.getPlayerName(event.getPlayerID());
-        else if ( type == Message.SERVER_ERROR)
+        else if ( type == Message.SERVER_ERROR && !enslaved && entity != null)
         	handleWarnings(message);
         else if ( type == Message.ARENA_MESSAGE && realTimeLogging)
         	handleLog(message);
@@ -1096,7 +1090,6 @@ public class logbot extends SubspaceBot {
     public void handleEvent( FileArrived event )	{
     	String fileName = event.getFileName();
     	String arenaName = fileName.substring(0, fileName.length()-4);
-    	logEvent ( fileName + " arrived" );
     	
     	if(fileName.endsWith(".log"))	{
     		try	{
@@ -1114,7 +1107,6 @@ public class logbot extends SubspaceBot {
     	if(incoming.containsKey(fileName))
     		try	{
     			File file = m_botAction.getDataFile(fileName);
-    			logEvent ( "Trying to process " + fileName );
     			File temp = (File)incoming.get(fileName);
     			temp.getParentFile().mkdirs();
     			if (temp.exists())
