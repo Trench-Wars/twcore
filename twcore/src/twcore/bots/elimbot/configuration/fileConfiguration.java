@@ -1,4 +1,4 @@
-package twcore.bots.elimbot;
+package twcore.bots.elimbot.configuration;
 
 import twcore.core.util.Tools;
 

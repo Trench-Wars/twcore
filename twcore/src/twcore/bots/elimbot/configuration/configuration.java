@@ -1,4 +1,4 @@
-package twcore.bots.elimbot;
+package twcore.bots.elimbot.configuration;
 
 import java.util.HashMap;
 
@@ -8,24 +8,27 @@ import twcore.core.BotSettings;
 public class configuration {
 	
 	private BotAction m_botAction;
+	private BotSettings config;
+	
 	private HashMap<String, fileConfiguration> configurations = new HashMap<String, fileConfiguration>();
 	private String arena;
 	
 	private int currentConfig = 1;
 	private int playerMin = 3;
+	private boolean allowLagouts = true;
 	
 	private boolean rulesShown = false;
 	
-	public configuration(BotAction m_botAction) {
+	public configuration(BotAction m_botAction, BotSettings config) {
 		this.m_botAction = m_botAction;
+		this.config = config;
 		this.initialize();
 	}
 	
 	private void initialize() {
-		BotSettings config = m_botAction.getBotSettings();
-		
 		arena = config.getString("arena");
 		playerMin = config.getInt("playermin");
+		allowLagouts = (config.getInt("lagouts") == 1);
 		
 		// Load the elim configurations
 		int i = 1;
@@ -99,4 +102,13 @@ public class configuration {
 	public void setRulesShown(boolean rulesShown) {
 		this.rulesShown = rulesShown;
 	}
+
+	/**
+	 * @return the allowLagouts
+	 */
+	public boolean isAllowLagouts() {
+		return allowLagouts;
+	}
+	
+	
 }

@@ -1,9 +1,13 @@
 package twcore.bots.elimbot;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.TimerTask;
 
+import twcore.bots.elimbot.configuration.configuration;
+import twcore.bots.elimbot.tasks.PrepareGame;
+import twcore.bots.elimbot.tasks.StartGame;
+import twcore.bots.elimbot.tasks.deathlimitVote;
+import twcore.bots.elimbot.tasks.shipVote;
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
@@ -24,23 +28,23 @@ import twcore.core.util.Tools;
 public class elimbot extends SubspaceBot {
 
 	private configuration config;
-	protected ElimState state = ElimState.SPAWNING;
+	public ElimState state = ElimState.SPAWNING;
 	
 	// Temporary/Gameplay variables
 	private boolean arenaLock;
-	protected HashMap<Integer,Integer> votes = new HashMap<Integer,Integer>();
+	public HashMap<Integer,Integer> votes = new HashMap<Integer,Integer>();
 	// This HashMap contains the votes mapped per playername
 	// key = playerID
 	// value = vote (always numeric)
-	protected int ship = 0;
-	protected int deathLimit;
+	public int ship = 0;
+	public int deathLimit;
 	
 	private shipVote shipVote;
 	private deathlimitVote deathlimitVote;
 	private PrepareGame prepareGame;
 	private StartGame startGame;
 	
-	protected HashMap<Integer, Integer> players = new HashMap<Integer, Integer>();
+	public HashMap<Integer, Integer> players = new HashMap<Integer, Integer>();
 	// This HashMap registers the players by playerid and ship nr for use with !lagout command
 	// key = playerid
 	// value = ship nr.
@@ -52,7 +56,7 @@ public class elimbot extends SubspaceBot {
 		super(botAction);
 		
 		// Instantiate and initiliaze the configuration
-		config = new configuration(m_botAction);
+		config = new configuration(m_botAction, m_botAction.getBotSettings());
 		
 		EventRequester events = m_botAction.getEventRequester();
 		events.request(EventRequester.LOGGED_ON);
@@ -86,7 +90,7 @@ public class elimbot extends SubspaceBot {
 		TimerTask start = new TimerTask() {
 			public void run() {
 				state = ElimState.IDLE;
-				if(isStartable()) start();
+				if(isEnoughPlayers()) step();
 			}
 		};
 
@@ -145,37 +149,41 @@ public class elimbot extends SubspaceBot {
 			}
 		}
 		
+		// Handle !commands
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE) {
+			// TODO: Check if it's staff
+			// TODO: Make a !help
 			if(event.getMessage().equalsIgnoreCase("!die")) {
 				// Kill the timertasks
 				this.removeTimerTasks();
 				m_botAction.die();
 			}
-			if(event.getMessage().equalsIgnoreCase("!stop")) {
+			else if(event.getMessage().equalsIgnoreCase("!stop")) {
 				if(this.state != ElimState.STOPPED) {
 					m_botAction.sendArenaMessage("Game aborted by "+event.getMessager()+".");
-					this.state = ElimState.STOPPED;
-					this.removeTimerTasks();
-					votes.clear();
-					this.unlockArena();
-					this.ship = 0;
-					this.deathLimit = 0;
-					config.setRulesShown(false);
-					players.clear();
+					stop();
 				} else {
 					m_botAction.sendPrivateMessage(event.getPlayerID(), "The bot is already stopped.");
 				}
 			}
-			if(event.getMessage().equalsIgnoreCase("!start")) {
+			else if(event.getMessage().equalsIgnoreCase("!start")) {
 				if(this.state == ElimState.STOPPED) {
 					m_botAction.sendPrivateMessage(event.getPlayerID(), "Starting the bot...");
 					this.state = ElimState.IDLE;
-					if(isStartable()) start();
+					
+					if(isEnoughPlayers()) 
+						step();
+					else
+						m_botAction.sendPrivateMessage(event.getPlayerID(), "Not enough players to start.");
 				} else {
 					m_botAction.sendPrivateMessage(event.getPlayerID(), "The bot isn't stopped. Stop it first by using !stop.");
 				}
 			}
-			
+			else if(event.getMessage().equalsIgnoreCase("!lagout" )) {
+				//if(config.isAllowLagouts() && player = spectator) {
+					// TODO: put back in
+				//}
+			}
 		}
 	}
 
@@ -200,7 +208,7 @@ public class elimbot extends SubspaceBot {
 	@Override
 	public void handleEvent(PlayerEntered event) {
 		if(state == ElimState.IDLE) {
-			if(isStartable()) start();
+			if(isEnoughPlayers()) step();
 		}
 	}
 
@@ -211,33 +219,26 @@ public class elimbot extends SubspaceBot {
 	
 	@Override
 	public void handleEvent(FrequencyShipChange event) {
-		if(state == ElimState.IDLE) {
-			if(isStartable()) start();
-		}
-	}
-	
-	/**
-	 * Checks if enough players are in to start the game
-	 */
-	private boolean isStartable() {
-		int playing = 0;
-		Iterator i = m_botAction.getPlayingPlayerIterator();
-		while( i.hasNext() ){
-			playing++;
-			i.next();
-		 }
+		int ship = event.getShipType();
+		int player = event.getPlayerID();
 		
-		if(playing >= config.getPlayerMin()) {
-			return true;
-		} else {
-			return false;
+		if(state == ElimState.IDLE) {
+			if(isEnoughPlayers()) step();
+		}
+		
+		if(	state == ElimState.RUNNING && 			// If Elim is running
+			ship == Tools.Ship.SPECTATOR && 		// and a player changed to spectator
+			players.containsKey(player) &&			// and the player is still in the game
+			config.isAllowLagouts() 				// and lagouts are enabled
+			) {
+			m_botAction.sendPrivateMessage(player, "Type ::!lagout to get back in.");
 		}
 	}
 	
 	/**
 	 * Starts a vote or the elim game
 	 */
-	protected void start() {
+	public void step() {
 		//zoneElim(); // Zone that elim game is starting
 
 		if(this.state == ElimState.IDLE && config.getCurrentConfig().isShipsVote()) {
@@ -245,6 +246,13 @@ public class elimbot extends SubspaceBot {
 			this.state = ElimState.SHIPVOTE;
 			
 			this.showRules();
+			
+			// Check if there are still enough players in
+			if(!isEnoughPlayers()) {
+				m_botAction.sendArenaMessage("Elim aborted: not enough players");
+				stop();
+				return;
+			}
 			
 			// Arena's the vote options
 			m_botAction.sendArenaMessage("Vote on the ship: ");
@@ -273,6 +281,13 @@ public class elimbot extends SubspaceBot {
 			
 			this.showRules();
 			
+			// Check if there are still enough players in
+			if(!isEnoughPlayers()) {
+				m_botAction.sendArenaMessage("Elim aborted: not enough players");
+				stop();
+				return;
+			}
+			
 			String deathVoteArena = "Vote on the death limit: ";
 			deathVoteArena += config.getCurrentConfig().getDeathLimit()[0];
 			deathVoteArena += "-";
@@ -288,6 +303,13 @@ public class elimbot extends SubspaceBot {
 				  (this.state == ElimState.SHIPVOTE && config.getCurrentConfig().isDeathLimitVote()==false) ||
 				  this.state == ElimState.DEATHLIMITVOTE) {
 			this.state = ElimState.STARTING;
+			
+			// Check if there are still enough players in
+			if(!isEnoughPlayers()) {
+				m_botAction.sendArenaMessage("Elim aborted: not enough players");
+				stop();
+				return;
+			}
 			
 			String ships = "";
 			if(this.ship > 0) {
@@ -313,13 +335,34 @@ public class elimbot extends SubspaceBot {
 			
 		} else if(this.state == ElimState.STARTING) {
 			// Preperations has been done, start in 3 seconds
+			
+			// Check if there are still enough players in
+			if(!isEnoughPlayers()) {
+				m_botAction.sendArenaMessage("Elim aborted: not enough players");
+				stop();
+				return;
+			}
+			
 			startGame = new StartGame(this);
 			m_botAction.scheduleTask(startGame, 3 * 1000);
 		}
 		
 	}
 	
-	protected configuration getConfiguration() {
+	/**
+	 * Checks if enough players are in to start the game
+	 */
+	private boolean isEnoughPlayers() {
+		int playing = m_botAction.getPlayingPlayers().size();
+		
+		if(playing >= config.getPlayerMin()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public configuration getConfiguration() {
 		return this.config;
 	}
 	
@@ -338,91 +381,28 @@ public class elimbot extends SubspaceBot {
 		}
 	}
 	
-	protected void lockArena() {
+	public void lockArena() {
 		this.arenaLock = true;
 		m_botAction.toggleLocked();
 	}
 	
-	protected void unlockArena() {
+	public void unlockArena() {
 		this.arenaLock = true;
 		m_botAction.toggleLocked();
 	}
-}
-
-enum ElimState {
-	SPAWNING, IDLE, DEATHLIMITVOTE, SHIPVOTE, STARTING, RUNNING, STOPPED
-}
-
-class PrepareGame extends TimerTask {
 	
-	private elimbot elimbot;
-
-	public PrepareGame(elimbot elimbot) {
-		this.elimbot = elimbot;
+	/** 
+	 * Aborts the current going elim
+	 */
+	public void stop() {
+		this.state = ElimState.STOPPED;
+		this.removeTimerTasks();
+		votes.clear();
+		this.unlockArena();
+		this.ship = 0;
+		this.deathLimit = 0;
+		config.setRulesShown(false);
+		players.clear();
 	}
 	
-	public void run() {
-		// Lock the arena
-		elimbot.lockArena();		
-		
-		// Set everybody to the right ship
-		if(elimbot.ship != 0) {	// after a vote, only one ship is allowed
-			Iterator playerIterator = elimbot.m_botAction.getPlayingPlayerIterator();
-			
-			while( playerIterator.hasNext()) {
-				Player p = (Player)playerIterator.next();
-				if(p.getShipType() != elimbot.ship) {
-					elimbot.m_botAction.setShip(p.getPlayerID(), elimbot.ship);
-				}
-			}
-			
-		} else {				// Without a vote, several ships are allowed
-			Iterator playerIterator = elimbot.m_botAction.getPlayingPlayerIterator();
-			int[] allowedShips = elimbot.getConfiguration().getCurrentConfig().getShips();
-			int allowedShip = 1;
-			
-			for(int i = 0 ; i < allowedShips.length ; i++) {
-				if(allowedShips[i] == 1) {
-					allowedShip = i;
-				}
-			}
-			
-			while( playerIterator.hasNext() ){
-				Player p = (Player)playerIterator.next();
-				
-				if(allowedShips[p.getShipType()] == 0) {
-					elimbot.m_botAction.setShip(p.getPlayerID(),allowedShip);
-				}
-			 }
-		}
-		
-		// Registers the players for !lagout feature
-		Iterator playerIt = elimbot.m_botAction.getPlayingPlayerIterator();
-		
-		while(playerIt.hasNext()) {
-			Player p = (Player)playerIt.next();
-			elimbot.players.put(Integer.valueOf(p.getPlayerID()), Integer.valueOf(p.getShipType()));
-		}
-
-		// Get ready arena message
-		elimbot.m_botAction.sendArenaMessage("Get ready!");
-		
-		elimbot.start();
-	}
-}
-
-class StartGame extends TimerTask {
-	
-	private elimbot elimbot;
-
-	public StartGame(elimbot elimbot) {
-		this.elimbot = elimbot;
-	}
-	
-	public void run() {
-		elimbot.state = ElimState.RUNNING;
-		elimbot.m_botAction.scoreResetAll();
-		elimbot.m_botAction.shipResetAll();
-		elimbot.m_botAction.sendArenaMessage("Go Go Go!",104);
-	}
 }

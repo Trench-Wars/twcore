@@ -1,40 +1,39 @@
-package twcore.bots.elimbot;
+package twcore.bots.elimbot.tasks;
 
 import java.util.Iterator;
 import java.util.TimerTask;
 
-import twcore.core.util.Tools;
+import twcore.bots.elimbot.ElimState;
+import twcore.bots.elimbot.elimbot;
 
-public class shipVote extends TimerTask {
+public class deathlimitVote extends TimerTask {
 
 	private elimbot bot;
 	
-	public shipVote(elimbot bot) {
+	public deathlimitVote(elimbot bot) {
 		this.bot = bot;
 	}
 	
 	public void run()
 	{
-		if(bot.state != ElimState.SHIPVOTE) {
+		if(bot.state != ElimState.DEATHLIMITVOTE) {
 			return;		// "Cancel" this task if the bot isn't in the expected status anymore
 		}
 		
 		int voters = bot.votes.size();				// Number of total players who voted
 		int voteWin = countVotes();					// Vote option that won
 		int voteWinners = countVotes(voteWin);		// Number of players that voted for the winning option
-		
 		if(voters > 0)	{
 			float voteWinnersPerc = (100 * voteWinners)/voters;
-			bot.m_botAction.sendArenaMessage("VOTE RESULT: "+Math.round(voteWinnersPerc)+"% of "+voters+" players voted for ship #"+voteWin+" - "+Tools.shipName(voteWin).toUpperCase()+".");
+			bot.m_botAction.sendArenaMessage("VOTE RESULT: "+Math.round(voteWinnersPerc)+"% of "+voters+" players voted for a death limit of "+voteWin+".");
 		} else {
-			voteWin = bot.getConfiguration().getCurrentConfig().getShipsDefault();
-			String shipName = Tools.shipName(voteWin);
-			bot.m_botAction.sendArenaMessage("VOTE RESULT: 0 votes. Defaulted to "+shipName+".");
+			voteWin = bot.getConfiguration().getCurrentConfig().getDeathLimitDefault();
+			bot.m_botAction.sendArenaMessage("VOTE RESULT: 0 votes. Defaulted to "+voteWin+" deaths.");
 		}
 		
-		bot.ship = voteWin;
-		bot.state = ElimState.SHIPVOTE;
-		bot.start();
+		bot.deathLimit = voteWin;
+		bot.state = ElimState.DEATHLIMITVOTE;
+		bot.step();
 	}
 	
 	/**
@@ -43,8 +42,8 @@ public class shipVote extends TimerTask {
 	 */
 	private int countVotes() {
 		Iterator<Integer> voteValues = bot.votes.values().iterator();
-		int[] voteResult = new int[9];
-		int voteWin = 2;
+		int[] voteResult = new int[bot.getConfiguration().getCurrentConfig().getDeathLimit()[1]+1];
+		int voteWin = 3;
 		
 		while(voteValues.hasNext()) {
 			int vote = voteValues.next().intValue();
