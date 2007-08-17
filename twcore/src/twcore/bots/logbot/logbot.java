@@ -120,6 +120,7 @@ public class logbot extends SubspaceBot {
     
     public String TrimList (String list)	{
     	try	{
+    		logEvent (list.substring(list.indexOf("[")+1,list.indexOf("]")) + " was changed");
     		return list.substring(list.indexOf("[")+1,list.indexOf("]"));
     	}
     	catch (Exception e)	{return null;}
@@ -1262,7 +1263,7 @@ public class logbot extends SubspaceBot {
         	doArenaInvite(sender, message.substring(13));
         else if( message.startsWith( "!cleararenainvites " ))	
         	doClearArenaInvites(sender, message.substring(19));
-        else if( m_opList.isOwner( sender ) || op.contains( sender ) ) 
+        else if( m_opList.isOwner( sender.toLowerCase() ) || op.contains( sender.toLowerCase() ) ) 
         	handleCommand( sender, message.toLowerCase() );
     }
     
@@ -1288,7 +1289,7 @@ public class logbot extends SubspaceBot {
         	doClearFiles(sender);
         else if( message.startsWith( "!realtime" ))	
         	doRealTime(sender);
-        else if (m_opList.isOwner( sender ))
+        else if (m_opList.isOwner( sender.toLowerCase() ))
         	handleSecretCommand(sender, message);
 
     }
@@ -1319,7 +1320,7 @@ public class logbot extends SubspaceBot {
     
     public void getHelpMessages(String sender)
     {
-    	if (entity == null && m_opList.isOwner(sender))	{	
+    	if (entity == null && m_opList.isOwner(sender.toLowerCase()))	{	
     		m_botAction.sendSmartPrivateMessage(sender, "!Invite <name>                            -- Invites <name> to " + m_botAction.getArenaName() + " .");
         	m_botAction.sendSmartPrivateMessage(sender, "!Message <message>                        -- Sets the bounce message interlopers recieve.");
         	m_botAction.sendSmartPrivateMessage(sender, "!Go <arena>                               -- Sends the bot to <arena>.");
