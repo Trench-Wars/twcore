@@ -127,7 +127,7 @@ public class messagebot extends SubspaceBot
 				int read = results.getInt("fnRead");
 				if(read == 0)
 				{
-					m_botAction.sendSmartPrivateMessage(name, "You have new messages. PM me with !messages to receive them.");
+					m_botAction.sendSmartPrivateMessage(name, "You have new messages.  PM me with !read to read them, or !messages for a list.");
 					found = true;
 				}
 			}
@@ -163,6 +163,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!public",	 acceptedMessages, this, "makePublic");
         m_CI.registerCommand( "!unread",	 acceptedMessages, this, "setAsNew");
         m_CI.registerCommand( "!read",		 acceptedMessages, this, "readMessage");
+        m_CI.registerCommand( "!readnew",    acceptedMessages, this, "readNewMessages");
         m_CI.registerCommand( "!delete",	 acceptedMessages, this, "deleteMessage");
         m_CI.registerCommand( "!messages",	 acceptedMessages, this, "myMessages");
         m_CI.registerCommand( "!go",		 acceptedMessages, this, "handleGo");
@@ -632,10 +633,18 @@ public class messagebot extends SubspaceBot
     {
     	if(message.toLowerCase().startsWith("message")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Messaging system commands:");
-	        m_botAction.sendSmartPrivateMessage(name, "    !unread <num>                  -Sets message <num> as unread.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                    -PM's you message <num>.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>. !delete all works too.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !messages                      -PM's you all your message numbers.");
+            m_botAction.sendSmartPrivateMessage(name, "    !messages                      -PM's you all your message numbers.");
+            m_botAction.sendSmartPrivateMessage(name, "    !read                          -Reads all unread messages.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                    -Reads you message <num>.");
+            m_botAction.sendSmartPrivateMessage(name, "    !read r                        -Reads all old/read messages.");
+            m_botAction.sendSmartPrivateMessage(name, "    !read a                        -Reads all unread & unread messages.");
+            m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>               -Reads all unread messages on <channel>.");
+            m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>:r             -Reads all old/read messages on <channel>.");
+            m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>:a             -Reads all messages on <channel>.");            
+            m_botAction.sendSmartPrivateMessage(name, "    !unread <num>                  -Sets message <num> as unread.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>.");
+            m_botAction.sendSmartPrivateMessage(name, "    !delete read                   -Deletes messages already read.");
+            m_botAction.sendSmartPrivateMessage(name, "    !delete all                    -Deletes all messages.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !lmessage <name>:<message>     -Leaves <message> for <name>.");
 	    } else if(message.toLowerCase().startsWith("channel")) {
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                            -Tells you what channels you have joined.");
@@ -753,21 +762,45 @@ public class messagebot extends SubspaceBot
 	 *  @param Name of player reading the message.
 	 *  @param Message number being read.
 	 */
-	public void readMessage(String name, String message)
-	{
+	public void readMessage(String name, String message) {
+        if( message == "" ) {
+            try {
+                HashSet <Integer>messageIDs = new HashSet<Integer>();
+                ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcName = '" +
+                    Tools.addSlashesToString(name) + "' AND fnRead = 0" );
+                while(results.next())
+                    messageIDs.add(results.getInt("fnID"));
+                Iterator it = messageIDs.iterator();
+                while(it.hasNext())
+                    readMessage(name, "" + (Integer)it.next());
+                m_botAction.SQLClose(results);            
+            } catch(SQLException e) {}
+            return;
+        }
 		if(!isAllDigits(message)) {
 			try {
-				HashSet <Integer>messageIDs = new HashSet<Integer>();
+				HashSet <Integer>messageIDs = new HashSet<Integer>();                
 				String addAnd = " AND fnRead = 0";
-				String pieces[] = message.split(":", 2);
-				if(pieces.length == 2) {
-					message = pieces[0];
-					if(pieces[1].toLowerCase().startsWith("a")) addAnd = "";
-					else if(pieces[1].toLowerCase().startsWith("r")) addAnd = " AND fnRead = 1";
-					else if(pieces[1].toLowerCase().startsWith("u")) addAnd = " AND fnRead = 0";
-				}
-				ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
-					+ Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'"+addAnd);
+                ResultSet results;
+                if( message.startsWith("#") && message.length() > 1 ) {
+                    String pieces[] = message.split(":", 2);
+                    if(pieces.length == 2) {
+                        message = pieces[0].substring(1);
+                        if(pieces[1].toLowerCase().startsWith("a"))
+                            addAnd = "";
+                        else if(pieces[1].toLowerCase().startsWith("r"))
+                            addAnd = " AND fnRead = 1";
+                    }
+                    results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
+                            + Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'"+addAnd);
+                } else {
+                    if( message.toLowerCase().startsWith("a"))
+                        addAnd = "";
+                    else if( message.toLowerCase().startsWith("r"))
+                        addAnd = " AND fnRead = 1";
+                    results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcName = '" + 
+                            Tools.addSlashesToString(name) + "'"+addAnd);
+                }
 				while(results.next()) {
 					messageIDs.add(results.getInt("fnID"));
 				}
@@ -776,7 +809,7 @@ public class messagebot extends SubspaceBot
 					int id = (Integer)it.next();
 					readMessage(name, ""+id);
 				}
-                                m_botAction.SQLClose(results);
+                m_botAction.SQLClose(results);
 			} catch(Exception e) {}
 			return;
 		}
@@ -809,7 +842,7 @@ public class messagebot extends SubspaceBot
 			{
 				m_botAction.sendSmartPrivateMessage(name, "Could not find that message.");
 			}
-                        m_botAction.SQLClose(results);
+            m_botAction.SQLClose(results);
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 
@@ -850,7 +883,9 @@ public class messagebot extends SubspaceBot
 		String query;
 		if(message.equalsIgnoreCase("all")) {
 			query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
-		} else {
+        } else if(message.equalsIgnoreCase("read")) {
+            query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnRead = 1";            
+        } else {
 			try{
 				messageNumber = Integer.parseInt(message);
 			} catch(Exception e) {
@@ -897,7 +932,7 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "Error while reading message database.");
 			Tools.printStackTrace( e );
 		}
-		m_botAction.sendSmartPrivateMessage(name, "PM me with !read <num> to read a message.");
+		m_botAction.sendSmartPrivateMessage(name, "PM me with !read to read all unread messages, or use !read <num>.");
 	}
 
 	/** Checks the database to make sure a player owns the
