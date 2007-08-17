@@ -505,8 +505,10 @@ public class logbot extends SubspaceBot {
      */
     
     public void doArenaInvite (String sender, String argString)	{
+    	logEvent ( "current arg: " + argString );
     	StringTokenizer argTokens = getArgTokens(argString,",");
     	int numArgs = argTokens.countTokens();
+    	logEvent ( "current arg: " + argString + " numargs " + numArgs);
     	if (numArgs !=2)	{
     		m_botAction.sendSmartPrivateMessage(sender,"Improper syntax, use <arena>,<name>");
     		return;
@@ -524,15 +526,18 @@ public class logbot extends SubspaceBot {
     	    		return;
     	    	}
     	    }
+    		logEvent ( "guests : " + guarded.get(arena).myGuests.toString());
     		if (guarded.get(arena).myGuests.contains(invitee))	{
     			m_botAction.sendSmartPrivateMessage(sender, invitee + " is already invited.");
 	    		return;
     		}
+    		logEvent ( "sucessful invite of " + invitee + " to " + arena );
     		guarded.get(arena).addGuest(invitee);
     		m_botAction.sendSmartPrivateMessage(sender, invitee + " is now invited to " + arena);
     	}
     	catch (Exception e)	{
     		m_botAction.sendSmartPrivateMessage(sender,"Improper syntax, use <arena>,<name>");
+    		logEvent (e.getMessage());
     	}
     }
     
@@ -772,6 +777,7 @@ public class logbot extends SubspaceBot {
     	    	while (arenas.hasNext())	{
     	    		Watched_Arena temp = arenas.next();
     	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
+    	    		logEvent (line);
     	    		out.writeUTF(line);
     	    	}
     	     out.close();
@@ -799,7 +805,8 @@ public class logbot extends SubspaceBot {
         		name = line.substring(0, line.indexOf("~"));
         		owner = line.substring(name.length()+1, line.indexOf("["));
         		lvz = getLvzNames(TrimList(line));
-        		guests = ParseString( TrimList(line.substring(line.indexOf("]"))) );
+        		guests = ParseString( TrimList(line.substring(line.indexOf("]~")+2)) );
+        		logEvent ("lvz : " + lvz + " guests: " + guests);
         		Watched_Arena temp = new Watched_Arena(name,owner,lvz,guests);
         		guarded.put(name, temp);
         	}
