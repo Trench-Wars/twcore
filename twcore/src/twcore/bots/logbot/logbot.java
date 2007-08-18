@@ -849,7 +849,7 @@ public class logbot extends SubspaceBot {
     			return;
     		String violator = logMessage.substring(logMessage.indexOf("Ext:")+5, logMessage.indexOf("(")-1);
     		
-        	if (m_opList.isOwner(violator) || op.contains(violator))
+        	if (m_opList.isOwner(violator.toLowerCase()) || op.contains(violator.toLowerCase()))
         			return;
         	
         	else if (m_opList.isSysop(violator))	{
@@ -871,7 +871,7 @@ public class logbot extends SubspaceBot {
         			}	
         		}
         		
-        		if ( fileNames.contains(fileName))	{
+        		if ( fileNames.contains(fileName.toLowerCase()))	{
         			m_botAction.sendChatMessage(1,violator + " altered a restricted file! -" + stamp + " >>> " + fileName);
         			violation = true;
         		}
