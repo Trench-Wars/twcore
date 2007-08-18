@@ -23,7 +23,7 @@
       
     <target name="bots" description="Builds the TWCore bots">
     	<echo>Compiling Bots (this may take a moment)</echo>
-    	<javac classpath="../bin/twcore.jar" srcdir="twcore/bots" destdir="../bin"/>
+    	
     </target> 
 
     <target name="clean" description="Deletes the jar and all class files">
@@ -37,5 +37,10 @@
 		    </fileset>
     	</delete>
     </target>
+	
+	<target name="botdir" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)">
+		<mkdir dir="../bin/${botdir}"/>
+		<javac classpath="../bin/twcore.jar" srcdir="twcore/bots/${botdir}" destdir="../bin/${botdir}"/>
+	</target>
     
 </project>
