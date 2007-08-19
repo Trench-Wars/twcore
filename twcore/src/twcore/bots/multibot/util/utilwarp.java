@@ -69,6 +69,8 @@ public class utilwarp extends MultiUtil
   public static final int MAX_COORD = 1022;
 
   public static final String COLON = ":";
+  
+  private static final String database = "local";
 
   public void init()
   {
@@ -168,7 +170,7 @@ public class utilwarp extends MultiUtil
 
     try
     {
-      ResultSet resultSet = m_botAction.SQLQuery("website",
+      ResultSet resultSet = m_botAction.SQLQuery(database,
       "SELECT SW.* "+
       "FROM tblArena A, tblSetupWarp SW "+
       "WHERE A.fnArenaID = SW.fnArenaID " +
@@ -206,7 +208,7 @@ public class utilwarp extends MultiUtil
 
     try
     {
-      ResultSet resultSet = m_botAction.SQLQuery("website",
+      ResultSet resultSet = m_botAction.SQLQuery(database,
       "SELECT WP.* " +
       "FROM tblArena A, tblSetupWarp SW, tblWarpPoint WP " +
       "WHERE WP.fnSetupWarpID = SW.fnSetupWarpID " +
