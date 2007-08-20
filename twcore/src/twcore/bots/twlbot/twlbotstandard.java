@@ -1564,7 +1564,7 @@ public class twlbotstandard extends TWLBotExtension
 
         //Store the stats.
         m_match.getPlayer(killedName).reportStatistic(Statistics.DEATHS);
-        m_match.getPlayer(killerName).reportStatistic(Statistics.SCORE, event.getScore());
+        m_match.getPlayer(killerName).reportStatistic(Statistics.SCORE, event.getKilledPlayerBounty());
 
         if (killedFrequency == killerFrequency)
         {

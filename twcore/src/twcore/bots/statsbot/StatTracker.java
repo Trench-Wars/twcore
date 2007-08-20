@@ -197,8 +197,8 @@ public class StatTracker {
 		} else {
 
 			//normal kill
-			killerStats.processKill( _event.getScore() );
-			killedStats.processDeath( _event.getScore() );
+			killerStats.processKill( _event.getKilledPlayerBounty() );
+			killedStats.processDeath( _event.getKilledPlayerBounty() );
 		}
 
 	}
