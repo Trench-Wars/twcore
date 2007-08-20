@@ -524,9 +524,10 @@ public class utilflagwarppt extends MultiUtil {
 		
 		if (exploring && playerID == explorer)	{
 			harvested.add(flagID);
-			m_botAction.sendPrivateMessage(explorer, "Flag " + flagID + 
-					" has been harvested.");
-			m_botAction.sendPublicMessage(harvested.toString());
+			m_botAction.sendPrivateMessage(explorer,
+					"Flag " + flagID + " has been harvested.");
+			m_botAction.sendPrivateMessage(explorer, 
+					"Current group list: " + harvested.toString());
 		}
 		else {
 			if ( points.isEmpty() )
