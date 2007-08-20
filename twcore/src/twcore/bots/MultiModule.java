@@ -4,33 +4,7 @@ import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
-import twcore.core.events.ArenaJoined;
-import twcore.core.events.ArenaList;
-import twcore.core.events.BallPosition;
-import twcore.core.events.FileArrived;
-import twcore.core.events.FlagClaimed;
-import twcore.core.events.FlagDropped;
-import twcore.core.events.FlagPosition;
-import twcore.core.events.FlagReward;
-import twcore.core.events.FlagVictory;
-import twcore.core.events.FrequencyChange;
-import twcore.core.events.FrequencyShipChange;
-import twcore.core.events.InterProcessEvent;
-import twcore.core.events.LoggedOn;
-import twcore.core.events.Message;
-import twcore.core.events.PlayerDeath;
-import twcore.core.events.PlayerEntered;
-import twcore.core.events.PlayerLeft;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.Prize;
-import twcore.core.events.SQLResultEvent;
-import twcore.core.events.ScoreReset;
-import twcore.core.events.ScoreUpdate;
-import twcore.core.events.SoccerGoal;
-import twcore.core.events.SubspaceEvent;
-import twcore.core.events.TurretEvent;
-import twcore.core.events.WatchDamage;
-import twcore.core.events.WeaponFired;
+import twcore.core.events.*;
 
 public abstract class MultiModule
 {
@@ -216,6 +190,8 @@ public abstract class MultiModule
         handleEvent((TurretEvent) event);
       else if(event instanceof SQLResultEvent)
       	handleEvent((SQLResultEvent) event);
+      else if(event instanceof PlayerBanner)
+        handleEvent((SQLResultEvent) event);
     }
     catch(Exception e)
     {
@@ -232,7 +208,7 @@ public abstract class MultiModule
   }
 
   /*
-   * All of these stub functions handle the various events.
+   * All of these stub methods handle the various events (default being doing nothing).
    */
 
   public void handleEvent(Message event){}
@@ -286,4 +262,7 @@ public abstract class MultiModule
   public void handleEvent(TurretEvent event){}
 
   public void handleEvent(SQLResultEvent event){}
+  
+  public void handleEvent(PlayerBanner event){}
+
 }

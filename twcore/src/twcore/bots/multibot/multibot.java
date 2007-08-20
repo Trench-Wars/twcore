@@ -788,6 +788,10 @@ public class multibot extends SubspaceBot {
         handleEvent((SubspaceEvent) event);
     }
 
+    public void handleEvent(PlayerBanner event) {
+        handleEvent((SubspaceEvent) event);
+    }
+
     private class DieTask extends TimerTask {
         public void run() {
             m_botAction.die();
