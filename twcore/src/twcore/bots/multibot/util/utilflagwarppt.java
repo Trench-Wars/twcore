@@ -13,6 +13,15 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
+/**
+ * An advanced utility that creates warp points from 
+ * groups of flags. Use of this utility is intended for
+ * specialist events or trained/seasoned ERs. 
+ * 
+ * @author Ayano
+ *
+ */
+
 public class utilflagwarppt extends MultiUtil {
 	ArrayList<Integer> harvested;
 	Integer gdex;
@@ -27,6 +36,10 @@ public class utilflagwarppt extends MultiUtil {
 		
 	}
 	
+	/**
+	 * Initializes variables.
+	 */
+	
 	public void init()	{
 		harvested = new ArrayList<Integer>();
 		groups = new HashMap<Integer,ArrayList<Integer>>();
@@ -35,15 +48,35 @@ public class utilflagwarppt extends MultiUtil {
 		gdex = 1;
 	}
 	
+	/**
+	 * Requests events.
+	 */
+	
 	public void requestEvents( ModuleEventRequester modEventReq ) {
 		modEventReq.request(this, EventRequester.FLAG_CLAIMED );
     }
+	
+	/**
+     * Gets the argument tokens from a string.  If there are no colons in the
+     * string then the delimeter will default to space.
+     *
+     * @param string is the string to tokenize.
+     * @param token is the token to use.
+     * @return a tokenizer separating the arguments is returned.
+     */
 	
 	public StringTokenizer getArgTokens(String string, String token)	{
 	    if(string.indexOf(token) != -1)
 	      return new StringTokenizer(string, token);
 	    return new StringTokenizer(string);
 	  }
+	
+	/**
+	 * Helper method that returns true if a flag exists in the arena.
+	 * 
+	 * @param flag is the flag id.
+	 * @return true if the flag exists.
+	 */
 	
 	public boolean isValidFlag (int flag)	{
 		Iterator<Integer> flags = m_botAction.getFlagIDIterator();
@@ -55,6 +88,12 @@ public class utilflagwarppt extends MultiUtil {
 		}
 		return false;
 	}
+	
+	/**
+	 * Turns on/off exploring for flags which enables harvesting.
+	 * 
+	 * @param sender is the user of the bot.
+	 */
 	
 	public void doExplore(String sender)	{
 		exploring=!exploring;
@@ -74,6 +113,12 @@ public class utilflagwarppt extends MultiUtil {
 		}
 	}
 	
+	/**
+	 * Creates a group out of the harvested flags.
+	 * 
+	 * @param sender is the user of the bot.
+	 */
+	
 	public void doSetGroup(String sender)	{
 		if (harvested.isEmpty())	{
 			m_botAction.sendPrivateMessage(sender, 
@@ -89,6 +134,14 @@ public class utilflagwarppt extends MultiUtil {
 		gdex++;
 	}
 	
+	
+	
+	/**
+	 * Lists all harvested groups
+	 * 
+	 * @param sender
+	 */
+	
 	public void doListGroups (String sender)	{
 		if (groups.isEmpty())
 			m_botAction.sendPrivateMessage(sender,"No groups are left, " +
@@ -99,6 +152,12 @@ public class utilflagwarppt extends MultiUtil {
 		}
 	}
 	
+	/**
+	 * Clears all harvested groups
+	 * 
+	 * @param sender
+	 */
+	
 	public void doClearGroups (String sender)	{
 		if (groups.isEmpty())
 			m_botAction.sendPrivateMessage(sender,"No groups to, clear.");
@@ -107,6 +166,16 @@ public class utilflagwarppt extends MultiUtil {
 			groups.clear();
 		}
 	}
+	
+	/**
+	 * Adds a point using a group number for the source of IDs.
+	 * This group is erased from the list of groups after a 
+	 * successful point  is added.
+	 * 
+	 * @param sender is the user of th bot.
+	 * @param argString is the argument string to be tokenized and
+	 * translated.
+	 */
 	
 	public void doAddGroupPoint(String sender, String argString)	{
 		if (exploring)	{
@@ -148,6 +217,14 @@ public class utilflagwarppt extends MultiUtil {
 		}
 		
 	}
+	
+	/**
+	 * Manually adds a point for known flag IDs
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param argString is the argument string to be tokenized
+	 * and translated
+	 */
 	
 	public void doAddPoint(String sender, String argString)	{
 		if (exploring)	{
@@ -191,6 +268,12 @@ public class utilflagwarppt extends MultiUtil {
 		
 	}
 	
+	/**
+	 * Lists all points.
+	 * 
+	 * @param sender is the user of the bot.
+	 */
+	
 	public void doListPoints (String sender)	{
 		if (!points.isEmpty())	{
 		m_botAction.sendPrivateMessage(sender, "Current points:");
@@ -212,6 +295,13 @@ public class utilflagwarppt extends MultiUtil {
 		}
 	}
 	
+	/**
+	 * Removes a point.
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param pointName is the name of the point to be removed.
+	 */
+	
 	public void doRemovePoint (String sender, String pointName)	{
 		if (points.isEmpty())
 			m_botAction.sendPrivateMessage(sender,"No points to remove.");
@@ -230,6 +320,14 @@ public class utilflagwarppt extends MultiUtil {
 		}
 	}
 	
+	/**
+	 * Displays the frequencies that hold the set points if any exist.
+	 * There may be discrepancies as the held status will not change
+	 * until the point is completely owned by a frequency.
+	 * 
+	 * @param sender is the user of the bot.
+	 */
+	
 	public void doHeld(String sender)	{
 		if (points.isEmpty())
 			m_botAction.sendPrivateMessage(sender, "There are no points to be held.");
@@ -242,6 +340,12 @@ public class utilflagwarppt extends MultiUtil {
 			}
 		}
 	}
+	
+	/**
+	 * Releases all flags from ownership.
+	 * 
+	 * @param sender is the user of the bot.
+	 */
 	
 	public void doReleaseFlags (String sender)	{
 		Iterator<Integer> flags = m_botAction.getFlagIDIterator();
@@ -262,6 +366,13 @@ public class utilflagwarppt extends MultiUtil {
 		m_botAction.sendPrivateMessage(sender, "Flags released from all ownership.");
 	}
 	
+	/**
+	 * Sorts a hash map into a readable format to the user.
+	 * 
+	 * @param list is the hash map.
+	 * @param sender is the user of the bot.
+	 */
+	
 	private void ListSort(HashMap list, String sender)	{
 		Iterator key = list.keySet().iterator();
 		Iterator value = list.values().iterator();
@@ -270,6 +381,14 @@ public class utilflagwarppt extends MultiUtil {
 			m_botAction.sendPrivateMessage(sender,key.next().toString() + " -[|   " + value.next().toString() + "   |]");
 		}
 	}
+	
+	/**
+	 * Checks the flags and transfers them internally determining
+	 * wither or not they constitute for a warp point if any.
+	 * 
+	 * @param flag is the flag id that was gained.
+	 * @param gainingfreq is the freq that picked up the flag.
+	 */
 	
 	private void CheckFlag(Integer flag, int gainingfreq)	{
 		Iterator<Holding_Freq> freqList = freqs.values().iterator();
@@ -304,6 +423,14 @@ public class utilflagwarppt extends MultiUtil {
 		}
 	}
 	
+	/**
+	 * Helper method that sorts out warp point gains and
+	 * losses.
+	 * 
+	 * @param wppt is the warp point in question.
+	 * @param freq is the freq holding the flag.
+	 */
+	
 	private void CheckWppt(Warp_Point wppt, Holding_Freq freq)	{
 			if (wppt.hasFlags(freq.m_Flags) 
 					&& !freq.containsWrpp(wppt.m_Name))	{
@@ -317,6 +444,16 @@ public class utilflagwarppt extends MultiUtil {
 				notifyFreq(freq.m_Freq, wppt.m_Name,false);
 			}
 	}
+	
+	/**
+	 * Notifies the gaining and losing freq wither or not they have
+	 * a contested point.
+	 * 
+	 * @param freq is the freq to be notified.
+	 * @param wppt is the warp point gained/lost.
+	 * @param obtained determines wither the the notification is
+	 * a loss or a gain,
+	 */
 	
 	private void notifyFreq (Integer freq, String wppt, boolean obtained)	{
 		Iterator<Player> freqPlayers = m_botAction.getFreqPlayerIterator(freq.intValue());
@@ -376,6 +513,10 @@ public class utilflagwarppt extends MultiUtil {
         return yCoord + (int) Math.round(randRadius * Math.cos(randRadians));
     }
     
+    /**
+     * Handles all flag captures.
+     */
+    
     public void handleEvent(FlagClaimed event)	{
 		Integer flagID = new Integer ( event.getFlagID() );
 		int playerID = event.getPlayerID();
@@ -398,6 +539,10 @@ public class utilflagwarppt extends MultiUtil {
 		}
     }
     
+    /**
+     * handles all messages.
+     */
+    
     public void handleEvent( Message event ) {
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
@@ -409,6 +554,13 @@ public class utilflagwarppt extends MultiUtil {
             	handlePlayerCommand( name, message.toLowerCase() );
         }
     }
+    
+    /**
+     * Handles all ER+ commands.
+     * 
+     * @param sender is the user of the bot.
+     * @param message is the command.
+     */
     
     public void handleCommand( String sender, String message ) {
 		if( message.startsWith( "!explore" )) 
@@ -437,6 +589,13 @@ public class utilflagwarppt extends MultiUtil {
         	handlePlayerCommand(sender, message);
     }
     
+    /**
+     * Handles player level commands.
+     * 
+     * @param sender
+     * @param message
+     */
+    
     public void handlePlayerCommand( String sender, String message )	{
 		try 	{
 		Player player = m_botAction.getPlayer(sender);
@@ -452,7 +611,11 @@ public class utilflagwarppt extends MultiUtil {
 		catch (Exception e) {m_botAction.sendPublicMessage("bad!");}
     }
 	
-	public String[] getHelpMessages() {
+	/**
+	 * Returns messages.
+	 */
+    
+    public String[] getHelpMessages() {
 		String help[] = {
             "=FLAGWARPPT=======================================================================FLAGWPPT=",
 			"!Explore            - Turns on/off 'explorer' mode where you can manually set flag",
@@ -478,6 +641,11 @@ public class utilflagwarppt extends MultiUtil {
 		};
 		return help;
 	}
+    
+    /**
+     * Holds freq specific data.
+     * @author Ayano
+     */
 	
 	private class Holding_Freq	{
 		Integer m_Freq;
@@ -514,6 +682,11 @@ public class utilflagwarppt extends MultiUtil {
 		public boolean containsWrpp (String wrpp)
 		{return m_Wrpp.contains(wrpp);}
 	}
+	
+	/**
+	 * Handles all warp point specific data
+	 * @author Ayano
+	 */
 	
 	private class Warp_Point {
 		Integer m_Holder = -1;
