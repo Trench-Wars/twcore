@@ -727,8 +727,11 @@ public class logbot extends SubspaceBot {
             	
 
             while( (line = in.readLine()) != null )	{
+            	try	{
             	if (line.startsWith(date) && !line.substring(line.indexOf("Ext:")+5).startsWith(myName))
             		out.println(line);
+            	}
+            	catch (Exception e)	{}
             }
             m_botAction.sendChatMessage(1,"Log archive updated. -" + logFile.getName());
             in.close();out.close();
