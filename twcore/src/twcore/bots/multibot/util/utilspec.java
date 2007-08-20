@@ -362,7 +362,12 @@ public class utilspec extends MultiUtil
     }
     
     public void doSpecNotSafe (String sender)	{
-    	
+    	m_botAction.scheduleTask(StartSafeTask(), 100);
+    	m_botAction.scheduleTask(StartSafeTask(), 1000);
+    	m_botAction.sendPrivateMessage(sender, "All players not in safe have been speced.");
+    }
+    
+    public TimerTask StartSafeTask()	{
     	TimerTask check = new TimerTask()	{
     		public void run()	{
     			Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
@@ -373,9 +378,7 @@ public class utilspec extends MultiUtil
     	    	}
     		}
     	};
-    	m_botAction.scheduleTask(check, 100);
-    	m_botAction.scheduleTask(check, 1000);
-    	m_botAction.sendPrivateMessage(sender, "All players not in safe have been speced.");
+    	return check;
     }
 
     /**
