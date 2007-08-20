@@ -239,7 +239,9 @@ public class Arena {
     }
 
     /**
-     * Gets a Player based on player name provided.
+     * Gets a Player based on player name provided.  The name must match exactly
+     * in order for this method to work properly -- or in the case of 20+ character
+     * names, the first 19 characters must match.
      *
      * NOTE: It's important to check the returned Player object for a null value
      * before using it, or at least catch the possible NullPointerException.
@@ -249,7 +251,7 @@ public class Arena {
      */
     public Player getPlayer( String searchName ){
         Player p = m_playerList.get( m_playerIDList.get( searchName.toLowerCase() ) );
-        if( p == null ){
+        if( p == null && searchName.length() == 19 ){
             //hack to support really long names
             Iterator<Player> i = getPlayerIterator();
             while( i.hasNext() ){
