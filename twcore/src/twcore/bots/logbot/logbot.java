@@ -520,7 +520,7 @@ public class logbot extends SubspaceBot {
     	    }
     	    else	{
     	    	if (!isArenaOwner(sender,arena))	{
-    	    		m_botAction.sendChatMessage(1,sender + " attempted to invite " + invitee + " to" + arena + " ( " + guarded.get(arena).myOwner + "'s arena. )");
+    	    		m_botAction.sendChatMessage(1,sender + " attempted to invite " + invitee + " to " + arena + " ( " + guarded.get(arena).myOwner + "'s arena. )");
     	    		return;
     	    	}
     	    }
@@ -721,12 +721,13 @@ public class logbot extends SubspaceBot {
     		String date = logFile.getName().substring( 0, logFile.getName().indexOf(".") );
     		logFile.getParentFile().mkdirs();
     		String          line;
+    		String			myName = m_botAction.getBotName();
             BufferedReader  in = new BufferedReader( new FileReader( subLog ));
             PrintWriter     out = new PrintWriter( new BufferedWriter ( new FileWriter(logName)));
             	
 
             while( (line = in.readLine()) != null )	{
-            	if (line.startsWith(date))
+            	if (line.startsWith(date) && !line.substring(line.indexOf("Ext:")+5).startsWith(myName))
             		out.println(line);
             }
             m_botAction.sendChatMessage(1,"Log archive updated. -" + logFile.getName());
@@ -1391,7 +1392,7 @@ public class logbot extends SubspaceBot {
                     		if (!subAllowed.contains(playerName.toLowerCase()))	{
                     			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena!");
                     			m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
-                    			logEvent ( "Intruder " + playerName + " was kicked." );
+                    			logEvent ( "Intruder " + playerName + " was kicked from " + arena );
                     			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena and disappeared!" );
                     		}
                     	}
