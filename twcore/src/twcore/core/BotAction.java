@@ -90,7 +90,6 @@ public class BotAction
         m_objectSet = new Objset();
         m_positionTask = null;
         DefaultSpectateTime = getCoreData().getGeneralSettings().getInt( "DefaultSpectateTime" );
-        setPlayerPositionUpdating(DefaultSpectateTime);
     }
 
 

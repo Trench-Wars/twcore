@@ -257,6 +257,7 @@ public class Session extends Thread {
         m_state = RUNNING;
         long time = System.currentTimeMillis() - m_initialTime;
         Tools.printLog( m_name + " logged in: " + time + " ms." );
+        m_botAction.startReliablePositionUpdating();
     }
 
     public void run(){
