@@ -80,6 +80,7 @@ public class utilspec extends MultiUtil
      */
     public void init() {
         specTasks = new Vector<SpecTask>();
+        m_botAction.startReliablePositionUpdating();
     }
 
     public void requestEvents( ModuleEventRequester modEventReq ) {
@@ -361,16 +362,8 @@ public class utilspec extends MultiUtil
     }
     
     public void doSpecNotSafe (String sender)	{
-    	Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
-    	while(players.hasNext())	{
-    		Player temp = (Player)players.next();
-    		if (temp != null && !temp.isInSafe())
-    				m_botAction.specWithoutLock(temp.getPlayerName());
-    	}
-    		
-    	//Figured out I couldn't copy timer tasks and recursive ends in a loop, all well.
     	
-    	TimerTask recheck = new TimerTask()	{
+    	TimerTask check = new TimerTask()	{
     		public void run()	{
     			Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
     	    	while(players.hasNext())	{
@@ -380,7 +373,8 @@ public class utilspec extends MultiUtil
     	    	}
     		}
     	};
-    	m_botAction.scheduleTask(recheck, 500);
+    	m_botAction.scheduleTask(check, 100);
+    	m_botAction.scheduleTask(check, 1000);
     	m_botAction.sendPrivateMessage(sender, "All players not in safe have been speced.");
     }
 
@@ -586,6 +580,7 @@ public class utilspec extends MultiUtil
     public void cancel()
     {
         specTasks.clear();
+        m_botAction.stopReliablePositionUpdating();
     }
 
     /**
