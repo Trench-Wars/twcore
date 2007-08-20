@@ -90,6 +90,7 @@ public class BotAction
         m_objectSet = new Objset();
         m_positionTask = null;
         DefaultSpectateTime = getCoreData().getGeneralSettings().getInt( "DefaultSpectateTime" );
+        setPlayerPositionUpdating(DefaultSpectateTime);
     }
 
 
@@ -2258,18 +2259,22 @@ public class BotAction
 
     /**
      * Turns automatic player position updating on and off.  By default it is ON,
-     * and set to change between the players it spectates for packets every 5000ms.
-     * The lower the number, the more reliable any position information stored in
+     * and set to change between the players it spectates for packets at the rate
+     * specified in setup.cfg under the DefaultSpectateTime field (in ms).  Clearly
+     * the lower the number, the more reliable any position information stored in
      * Player will be, and the more frequently and reliably will the bot receive
-     * PlayerPosition events.  It is strongly advised that if you do not use
-     * position packets that you set the time to 0 (completely off).
+     * PlayerPosition events.  The network load is almost inconsequential,
+     * particularly with DefaultSpectateTime at values >1000 -- it requires only 3
+     * bytes sent each specified tick -- but it is recommended to turn this feature
+     * off by using a 0 value if you will not need reliable information in Player
+     * classes.  (Name, playerID, ship type, wins and losses do not rely on this.)  
      * <p>Note that because TWCore is a client emulator (does not operate on the
      * server side but logs in as a bot) it only receives position packets from
      * the server about players within radar range.  This is why it must switch
-     * who is being spectated in order to get as many packets as possible.  This
-     * process may be CPU-intensive when done rapidly.
+     * who is being spectated in order to get as many packets as possible.  Fortunately
+     * this process requires only minimal load.
      * <p>If the arena the bot operates in is small, you may want to manually
-     * adjust its position using the move() methods for efficiency.
+     * adjust its position using the move() methods to most effectively receive packets.
      * @param milliseconds - specified time to update player positions at
      * 0     : turns tracking off and has the bot spectate its current area (change with move())
      * <200  : turns tracking on with 200 ms change rate
@@ -2301,13 +2306,11 @@ public class BotAction
     }
 
     /**
-     * Starts the automatic player position updating system with the most reliable
-     * positioning TWCore offers (switching between players every 200ms).  This
-     * will cause the bot to switch which players it is spectating once every 5
-     * seconds.  On slower systems and older network connections this may be
-     * quite taxing.
-     * <p>If you wish to switch faster than every 200ms, you must manually edit
-     * Arena.java and hardcore a new value.
+     * Starts the automatic player position updating system at the default
+     * rate in setup.cfg.  The load on the network is a fairly trivial 3 bytes sent
+     * at each change of player that the bot is spectating.
+     * <p>Note that 200ms is the default floor value.  If you wish to switch faster
+     * than every 200ms, you must edit the setPlayerPositionUpdating method manually.
      */
     public void startReliablePositionUpdating() {
         setPlayerPositionUpdating(DefaultSpectateTime);
@@ -2317,7 +2320,7 @@ public class BotAction
      * Stops the automatic player position updating system, causing the bot to
      * stop spectating the player it is currently spectating on, and cease
      * switching between players to update position packets.  Use this if your
-     * bot will not be receiving position packets.
+     * bot will not be receiving any position packets.
      */
     public void stopReliablePositionUpdating() {
         setPlayerPositionUpdating(0);

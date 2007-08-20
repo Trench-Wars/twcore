@@ -35,11 +35,19 @@ import twcore.core.net.GamePacketGenerator;
  * <u>NOTE ABOUT PLAYER IDS:</u><br>
  * "Player ID" refers to the internal packet ID used by the SS protocol rather than
  * the player's UserID found in ?userid.  IDs are assigned sequentially arena-wide
- * rather than zone-wide.  In almost all cases, an ID is sent as 2 bytes; however,
- * short position packets, used to update frequent info on a player, send ID as 1 byte.
- * This doesn't become a problem until we have >255 people in an arena, after which a
- * client with a movement prediction algorithm has no real trouble distinguishing between
- * two players with the same 1-byte ID, but a bot core does.  Fair warning!  -qan
+ * rather than zone-wide.  Large position packets send 2 bytes for ID, and small
+ * position packets send only 1; on the offchance that more than 256 players are in
+ * the arena at the same time, the server will begin sending only large position
+ * packets to alleviate potential problems with the same lower byte in two IDs.<br>
+ * However, if a player leaves the arena, their ID is freed up to be used by another
+ * player.  This can cause confusion in bots attempting to remember players primarily
+ * by their ID -- and for the reason that only 19 of a possible 23 characters of a
+ * player's name is accessible (aside from using *info) name is also not reliable.
+ * A combination of the two may be used, or just fairly meticulous planning.<br>
+ * A last word: using Arena's getPlayer(ID) method is more reliable than getPlayer(name),
+ * for the reasons described above.  If you need to get a Player object, try to do
+ * so by player ID rather than name.  For utmost security also compare the name in
+ * the Player object with the expected one.  
  */
 public class Arena {
     Map <Integer,Player>m_playerList;   // (Integer)PlayerID -> Player
@@ -352,6 +360,8 @@ public class Arena {
         }
         return list.size();
     }
+    
+    // *** EVENT PROCESSING ***
 
     /**
      * PlayerEntered event processing.  Fires every time a player enters,
@@ -677,6 +687,8 @@ public class Arena {
         }
     }
 
+    // *** PLAYER OBJECT UPDATING ***
+    
     /**
      * Adds a playing player into the tracker queue to be spectated by the bot
      * and receive position packets from.  Can be used to force the player to
@@ -734,6 +746,11 @@ public class Arena {
         }
     }
 
+    /**
+     * Turns on or off the system of changing the bot's spectating target.  Each time a
+     * change is made in who is being spectated, 3 bytes are sent -- plan accordingly.
+     * @param enable
+     */
     public void setEnableSpectating(boolean enable) {
     	synchronized(m_tracker) {
 	    	m_enableSpectating = enable;

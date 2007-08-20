@@ -72,11 +72,11 @@ public class PlayerDeath extends SubspaceEvent {
     }
 
     /**
-     * Gets the score resulting from the kill. NOTE: this currently
-     * just returns the bounty and not the entire score.
-     * @return the points gotten from the kill
+     * Gets the bounty of the player who was killed.  This is not the amount of bounty
+     * added to the player who made the kill, or the amount of points to add.
+     * @return Bounty of the player who was killed.
      */
-    public short getScore(){
+    public short getKilledPlayerBounty(){
         return m_score;
     }
 

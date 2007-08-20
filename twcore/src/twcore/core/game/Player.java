@@ -17,9 +17,17 @@ import twcore.core.events.ScoreUpdate;
  * information gathered from various events/packets, with all that is considered
  * relevant or useful being stored here.
  * <p>
- * A VERY IMPORTANT consideration is that a player's X & Y location, X & Y velocities & rotation
- * amount may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
- * this information more reliable.
+ * A <b>VERY IMPORTANT<b> consideration is that a player's X & Y location, X & Y velocities, rotation
+ * amount, weapons and accessories data (XRadar, shields, etc) may not be accurate / updated.
+ * Use BotAction's setPlayerPositionUpdating() to make this information more reliable.
+ * <p>
+ * Also note that <b>using the player's name is not a reliable method of identification</b>.
+ * Only 19 of a possible 23 characters are stored; two players whose first 19 characters
+ * of the name are identical can not be separated by the bot except by their player ID.
+ * This brings the <i>additional<i> problem of player ID being represented in a single byte,
+ * or 256 possible values, with ID re-use being possible -- this means that ID is also not
+ * a reliable method of identification; it is useless if the player is not in the arena, and
+ * it is not static in any sense.    
  */
 public class Player {
 
@@ -51,6 +59,11 @@ public class Player {
     private short   m_identTurretee;    // Player ID of player this player is attached to
     private LinkedList<Integer> m_turrets;       // List of player IDs (Integer) that are attached
 
+
+    // The following data is generally considered so unreliably tracked as to be almost meaningless --
+    // even moreso than standard position data found in a short position packet.  It is supplied for the
+    // sake of completeness only, and it's not recommended anyone attempt to use it.  Coder beware.
+    
     private boolean m_stealthOn;        // Status of Stealth
     private boolean m_cloakOn;          // Status of Cloaking
     private boolean m_xradarOn;         // Status of X-Radar
@@ -203,9 +216,14 @@ public class Player {
 
         if( message.getKillerID() == m_playerID ){
             m_wins++;
-            m_score += message.getScore();
+            // This particular operation (adding bounty of the killed to score) is questionable;
+            // we should be using settings to properly adjust the score.  We should also update
+            // bounty as appropriate.
+            // TODO: When arena settings storage class is implemented, use to properly update score & bounty.
+            m_score += message.getKilledPlayerBounty();
         } else if( message.getKilleeID() == m_playerID ){
             m_losses++;
+            m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
         }
     }
 
@@ -259,6 +277,7 @@ public class Player {
     public void updatePlayer( FrequencyChange message ){
 
         m_frequency = message.getFrequency();
+        m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
     }
 
     /**
@@ -269,6 +288,7 @@ public class Player {
 
         m_frequency = message.getFrequency();
         m_shipType = message.getShipType();
+        m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
     }
 
     /**
@@ -401,7 +421,11 @@ public class Player {
     }
 
     /**
-     * @return Name of the player
+     * Gets a String of the first 19 out of a possible 23 characters of this player's name.
+     * Note that <b>using the player's name is not a reliable method of identification</b>.
+     * Only 19 of a possible 23 characters are stored; two players whose first 19 characters
+     * of the name are identical can not be separated by the bot except by their player ID.
+     * @return First 19 out of 23 possible characters of the name of the player
      */
     public String getPlayerName(){
 
@@ -573,7 +597,7 @@ public class Player {
     }
 
     /**
-     * @return Player's last recorded amount of energy left
+     * @return Player's last recorded amount of energy left.  Not reliable
      */
     public short getEnergy(){
 
@@ -644,6 +668,8 @@ public class Player {
     }
 
     /**
+     * Returns the score as tracked by TWCore.  TWCore does <b>NOT</b> currently track
+     * score properly -- this is provided as a working approximation only. 
      * @return Overall point score of the player
      */
     public int getScore(){
@@ -652,42 +678,42 @@ public class Player {
     }
 
     /**
-     * @return True if player has shields
+     * @return True if player has shields (UNRELIABLE; DO NOT USE)
      */
     public boolean hasShields(){
         return m_shields;
     }
 
     /**
-     * @return True if player has super
+     * @return True if player has super (UNRELIABLE; DO NOT USE)
      */
     public boolean hasSuper(){
         return m_super;
     }
 
     /**
-     * @return Total number of bursts player currently possesses
+     * @return Total number of bursts player currently possesses (UNRELIABLE; DO NOT USE)
      */
     public int getBurstCount(){
         return m_burst;
     }
 
     /**
-     * @return Total number of bursts player currently possesses
+     * @return Total number of bursts player currently possesses (UNRELIABLE; DO NOT USE)
      */
     public int getRepelCount(){
         return m_repel;
     }
 
     /**
-     * @return Total number of bursts player currently possesses
+     * @return Total number of bursts player currently possesses (UNRELIABLE; DO NOT USE)
      */
     public int getThorCount(){
         return m_thor;
     }
 
     /**
-     * @return Total number of bricks player currently possesses
+     * @return Total number of bricks player currently possesses (UNRELIABLE; DO NOT USE)
      * @deprecated "Walls" is not a clear term.  Made this a wrapper for getBrickCount
      */
 	@Deprecated
@@ -696,77 +722,77 @@ public class Player {
     }
 
     /**
-     * @return Total number of bricks player currently posesses
+     * @return Total number of bricks player currently posesses (UNRELIABLE; DO NOT USE)
      */
     public int getBrickCount(){
         return m_brick;
     }
 
     /**
-     * @return Total number of decoys player currently possesses
+     * @return Total number of decoys player currently possesses (UNRELIABLE; DO NOT USE)
      */
     public int getDecoyCount(){
         return m_decoy;
     }
 
     /**
-     * @return Total number of rockets player currently possesses
+     * @return Total number of rockets player currently possesses (UNRELIABLE; DO NOT USE)
      */
     public int getRocketCount(){
         return m_rocket;
     }
 
     /**
-     * @return Total number of portals player currently possesses
+     * @return Total number of portals player currently possesses (UNRELIABLE; DO NOT USE)
      */
     public int getPortalCount(){
         return m_portal;
     }
 
     /**
-     * @return True if ship has Stealth on
+     * @return True if ship has Stealth on (UNRELIABLE; DO NOT USE)
      */
     public boolean isStealthed(){
         return m_stealthOn;
     }
 
     /**
-     * @return True if ship has Cloaking on
+     * @return True if ship has Cloaking on (UNRELIABLE; DO NOT USE)
      */
     public boolean isCloaked(){
         return m_cloakOn;
     }
 
     /**
-     * @return True if ship has X-Radar on
+     * @return True if ship has X-Radar on (UNRELIABLE; DO NOT USE)
      */
     public boolean hasXRadarOn(){
         return m_xradarOn;
     }
 
     /**
-     * @return True if ship has Antiwarp on
+     * @return True if ship has Antiwarp on (UNRELIABLE; DO NOT USE)
      */
     public boolean hasAntiwarpOn(){
         return m_antiOn;
     }
 
     /**
-     * @return True if ship is warping in/cloaking/uncloaking (display flash on client)
+     * @return True if ship is warping in/cloaking/uncloaking (display flash on client) (UNRELIABLE; DO NOT USE)
      */
     public boolean isWarpingIn(){
         return m_warpedIn;
     }
 
     /**
-     * @return True if ship is currently in safe
+     * @return True if ship is currently in safe (UNRELIABLE; DO NOT USE)
      */
     public boolean isInSafe(){
         return m_inSafe;
     }
 
     /**
-     * @return True if ship has UFO on
+     * @return True if ship has UFO on (UNRELIABLE; DO NOT USE)
      */
     public boolean isUFO(){
         return m_ufoOn;
@@ -787,7 +813,10 @@ public class Player {
     }
 
 	/**
-	 * Gets a String representation (name) of this player
+	 * Gets a String of the first 19 out of a possible 23 characters of this player's name.
+     * Note that <b>using the player's name is not a reliable method of identification</b>.
+     * Only 19 of a possible 23 characters are stored; two players whose first 19 characters
+     * of the name are identical can not be separated by the bot except by their player ID.
 	 * @return the player's name
 	 */
     public String toString()
