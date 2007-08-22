@@ -191,7 +191,7 @@ public abstract class MultiModule
       else if(event instanceof SQLResultEvent)
       	handleEvent((SQLResultEvent) event);
       else if(event instanceof PlayerBanner)
-        handleEvent((SQLResultEvent) event);
+        handleEvent((PlayerBanner) event);
     }
     catch(Exception e)
     {
@@ -262,7 +262,7 @@ public abstract class MultiModule
   public void handleEvent(TurretEvent event){}
 
   public void handleEvent(SQLResultEvent event){}
-  
+
   public void handleEvent(PlayerBanner event){}
 
 }
