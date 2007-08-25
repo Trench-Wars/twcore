@@ -535,7 +535,7 @@ public class purepubbot extends SubspaceBot
             else if(command.equals("!terr"))
                 doTerrCmd(sender);
             else if(command.startsWith("!whereis "))
-                doWhereIsCmd(sender, command.substring(10), opList.isZH(sender));
+                doWhereIsCmd(sender, command.substring(9), opList.isZH(sender));
             else if(command.startsWith("!ship "))
                 doShipCmd(sender, command.substring(6));
             else if(command.equals("!clearmines"))
@@ -897,7 +897,7 @@ public class purepubbot extends SubspaceBot
         int players = 0;
         for(int i = 1; i < 9; i++ ) {
             int num = team.get(i).size();
-            String text = num + Tools.formatString( (Tools.shipNameSlang(i) + (num>1 ? "s":"")), 8 );
+            String text = num + Tools.formatString( (Tools.shipNameSlang(i) + " " + (num>1 ? "s":"")), 8 );
             
             if(         i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
                         i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
@@ -1099,7 +1099,7 @@ public class purepubbot extends SubspaceBot
         while( i.hasNext() ) {
             Player terr = (Player)i.next();
             if( terr.getShipType() == Tools.Ship.TERRIER )
-                m_botAction.sendPrivateMessage( sender, Tools.formatString(terr.getPlayerName(), 25) + getPlayerLocation(p) );
+                m_botAction.sendPrivateMessage( sender, Tools.formatString(terr.getPlayerName(), 25) + getPlayerLocation(p, false) );
         }
     }
     
@@ -1121,7 +1121,7 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException("I can't find the player '" + argString + "'.  Tough shit, bucko.");
         if( p.getFrequency() != p2.getFrequency() && !isStaff )
             throw new RuntimeException(p2.getPlayerName() + " is not on your team!");
-        m_botAction.sendPrivateMessage( sender, p2.getPlayerName() + " last seen: " + getPlayerLocation( p2 ) );
+        m_botAction.sendPrivateMessage( sender, p2.getPlayerName() + " last seen: " + getPlayerLocation( p2, isStaff ));
     }    
     
     
@@ -1129,22 +1129,25 @@ public class purepubbot extends SubspaceBot
      * Based on provided coords, returns location of player as a String.
      * @return Last location recorded of player, as a String  
      */
-    public String getPlayerLocation( Player p ) {
-        int x = p.getXLocation();
-        int y = p.getYLocation();
+    public String getPlayerLocation( Player p, boolean isStaff ) {
+        int x = p.getXLocation() / 16;
+        int y = p.getYLocation() / 16;
+        String exact = "";
+        if( isStaff )
+            exact = "  (" + x + "," + y + ")";  
         if( x==0 && y==0 )
-            return "Not yet spotted";
+            return "Not yet spotted" + exact;
         if( y >= TOP_FR  &&  y <= BOTTOM_FR  &&  x >= LEFT_FR  &&  x <= RIGHT_FR )
-            return "in Flagroom";
+            return "in Flagroom" + exact;
         if( y >= TOP_MID  &&  y <= BOTTOM_MID  &&  x >= LEFT_MID  &&  x <= RIGHT_MID )
-            return "in Mid Base";
+            return "in Mid Base" + exact;
         if( y >= TOP_LOWER  &&  y <= BOTTOM_LOWER  &&  x >= LEFT_LOWER  &&  x <= RIGHT_LOWER )
-            return "in Lower Base";
+            return "in Lower Base" + exact;
         if( y <= BOTTOM_ROOF )
-            return "Roofing ...";
+            return "Roofing ..." + exact;
         if( y >= TOP_SPAWN_AREA )
-            return "in spawn";
-        return "Outside base";
+            return "in spawn" + exact;
+        return "Outside base" + exact;
     }
 
     
