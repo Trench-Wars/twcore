@@ -205,7 +205,7 @@ public class Tools {
     }
 
     /**
-     * Returns ship name based on number provided, as found in-game (and not the packet).
+     * Returns ship name based on number provided as found in-game (and not the packet).
      * 1-8 are in-game ships, 0 is spec, and 9+ is unknown.
      * @param shipNumber Number of ship to identify
      * @return String containing name of ship
@@ -228,6 +228,39 @@ public class Tools {
                 return "Weasel";
             case Tools.Ship.LANCASTER:
                 return "Lancaster";
+            case Tools.Ship.SHARK:
+                return "Shark";
+            default:
+                return "UFO";
+        }
+    }
+
+    /**
+     * Returns short ship name based on number provided as found in-game (and not the packet).
+     * 1-8 are in-game ships, 0 is spec, and 9+ is unknown.  The names returned are the "slang"
+     * terms used in TW, and not the official names of the ships.  In particular ship 6 ("X")
+     * doesn't make sense except in TW.
+     * @param shipNumber Number of ship to identify
+     * @return String containing name of ship
+     */
+    public static String shipNameSlang( int shipNumber ){
+        switch( shipNumber ){
+            case Tools.Ship.SPECTATOR:
+                return "Spec";
+            case Tools.Ship.WARBIRD:
+                return "WB";
+            case Tools.Ship.JAVELIN:
+                return "Jav";
+            case Tools.Ship.SPIDER:
+                return "Spid";
+            case Tools.Ship.LEVIATHAN:
+                return "Levi";
+            case Tools.Ship.TERRIER:
+                return "Terr";
+            case Tools.Ship.WEASEL:
+                return "X";
+            case Tools.Ship.LANCASTER:
+                return "Lanc";
             case Tools.Ship.SHARK:
                 return "Shark";
             default:

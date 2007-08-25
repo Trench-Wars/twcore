@@ -91,6 +91,21 @@ public class purepubbot extends SubspaceBot
     private static final int WB_TOOMANY = 4;            // are too many of a given ship.  Used to
     private static final int WEASEL_TOOMANY = 3;        // better evaluate the ideal team.
     private static final int TERR_TOOMANY = 4;
+    
+    private static final int TOP_FR = 248;              // Coords forming boxes in which players 
+    private static final int BOTTOM_FR = 292;           // may be located: FR, mid and lower.  Spawn
+    private static final int LEFT_FR = 478;             // and roof are defined by single Y coords
+    private static final int RIGHT_FR = 546;            // and are checked after other boxes to determine
+    private static final int TOP_MID = 287;             // a player's location.  Boxes can overlap.
+    private static final int BOTTOM_MID = 334;
+    private static final int LEFT_MID = 463;
+    private static final int RIGHT_MID = 561;
+    private static final int TOP_LOWER = 335;
+    private static final int BOTTOM_LOWER = 395;
+    private static final int LEFT_LOWER = 424;
+    private static final int RIGHT_LOWER = 600;
+    private static final int TOP_SPAWN_AREA = 396;
+    private static final int BOTTOM_ROOF = 271;
 
     private OperatorList opList;                        // Admin rights info obj
     private HashSet <String>freq0List;                  // Players on freq 0
@@ -207,6 +222,7 @@ public class purepubbot extends SubspaceBot
         shipWeights.add( new Integer(1) );		// Allow unlimited number of spec players
         for( int i = 1; i < 9; i++ )
             shipWeights.add( new Integer( botSettings.getInt(m_botAction.getBotName() + "Ship" + i) ) );
+        m_botAction.setPlayerPositionUpdating(500);
     }
 
 
@@ -418,7 +434,7 @@ public class purepubbot extends SubspaceBot
                     checkFreq(playerID, player.getFrequency(), false);
                     checkFreqSizes();
                 }
-                m_botAction.sendPrivateMessage(playerName, "Commands:  !team, !restrictions, !time, !warp, !ship <ship#>, !clearmines, !help");
+                m_botAction.sendPrivateMessage(playerName, "Commands:  !warp, !terr, !team, !ship <#>, !clearmines, !whereis <name>, !restrictions");
             }
             if(flagTimeStarted) {
                 if( flagTimer != null)
@@ -516,6 +532,10 @@ public class purepubbot extends SubspaceBot
                 doRestrictionsCmd(sender);
             else if(command.equals("!team"))
                 doShowTeamCmd(sender);
+            else if(command.equals("!terr"))
+                doTerrCmd(sender);
+            else if(command.startsWith("!whereis "))
+                doWhereIsCmd(sender, command.substring(10), opList.isZH(sender));
             else if(command.startsWith("!ship "))
                 doShipCmd(sender, command.substring(6));
             else if(command.equals("!clearmines"))
@@ -876,21 +896,22 @@ public class purepubbot extends SubspaceBot
         ArrayList<Vector<String>>  team = getTeamData( p.getFrequency() );
         int players = 0;
         for(int i = 1; i < 9; i++ ) {
-            String text = Tools.formatString(Tools.shipName(i) + "s", 11);
             int num = team.get(i).size();
+            String text = num + Tools.formatString( (Tools.shipNameSlang(i) + (num>1 ? "s":"")), 8 );
+            
             if(         i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
                         i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
                         i == Tools.Ship.SHARK && num < SHARK_QUOTA )
-                text += "... " + team.get(i).size() + "+  ";
+                text += "+  ";
             else if(    i == Tools.Ship.WARBIRD && num >= WB_TOOMANY ||
                         i == Tools.Ship.JAVELIN && num >= JAV_TOOMANY ||
                         i == Tools.Ship.WEASEL && num >= WEASEL_TOOMANY ||
                         i == Tools.Ship.TERRIER && num >= TERR_TOOMANY )
-                text += "... " + team.get(i).size() + "-  ";
+                text += "-  ";
             else
-                text += "... " + team.get(i).size() + "   ";
+                text += "   ";
             for( int j = 0; j < team.get(i).size(); j++) {
-               text += (j+1) + ":" + team.get(i).get(j) + "  ";
+               text += (j+1) + ") " + team.get(i).get(j) + "  ";
                players++;
             }
             m_botAction.sendPrivateMessage(sender, text);
@@ -913,50 +934,53 @@ public class purepubbot extends SubspaceBot
         }
       
         if( terrsNeeded == TERR_QUOTA ) {
-            m_botAction.sendPrivateMessage(sender, "--- NO TERRIER!   Terr (ship 5) needed ASAP ---");
+            m_botAction.sendPrivateMessage(sender, "NO TERRIER!  A terr (ship 5) is needed ASAP.");
             needs = true;
         } else if( terrsNeeded > 0 ) {
-            m_botAction.sendPrivateMessage(sender, terrsNeeded + " more terrier(s) needed.");
+            m_botAction.sendPrivateMessage(sender, terrsNeeded + " terrier" + (terrsNeeded>1 ? "s":"") + " needed.");
             needs = true;
         }
         if( sharksNeeded == SHARK_QUOTA ) {
-            m_botAction.sendPrivateMessage(sender, "--- NO SHARK!    Shark (ship 8) needed ASAP ---");
+            m_botAction.sendPrivateMessage(sender, "NO SHARK.  A shark is needed ASAP.");
             needs = true;
         } else if( sharksNeeded > 0 ) {
-            m_botAction.sendPrivateMessage(sender, sharksNeeded + " more shark(s) needed.");
+            m_botAction.sendPrivateMessage(sender, sharksNeeded + " shark" + (sharksNeeded>1 ? "s":"") + " needed.");
             needs = true;
         }
         if( spidersNeeded == SPIDER_QUOTA ) {
-            m_botAction.sendPrivateMessage(sender, "--- NO SPIDER!  Spider (ship 3) needed ASAP ---");
+            m_botAction.sendPrivateMessage(sender, "NO SPIDERS.  A spider is needed ASAP.");
             needs = true;
         } else if( spidersNeeded > 0 ) {
-            m_botAction.sendPrivateMessage(sender, spidersNeeded + " spider(s) needed.");
+            m_botAction.sendPrivateMessage(sender, spidersNeeded + " spider" + (spidersNeeded>1 ? "s":"") + " needed.");
             needs = true;
         }
+        String tooMany = "";
         if( team.get(Tools.Ship.WARBIRD).size() >= WB_TOOMANY ) {
-            m_botAction.sendPrivateMessage(sender, "Team has too many Warbirds.");
+            tooMany += "WBs  ";
             needs = true;
         }
         if( team.get(Tools.Ship.JAVELIN).size() >= JAV_TOOMANY ) {
-            m_botAction.sendPrivateMessage(sender, "Team has too many Javelins.");
+            tooMany += "Javs  ";
             needs = true;
         }
         if( team.get(Tools.Ship.WEASEL).size() >= WEASEL_TOOMANY ) {
-            m_botAction.sendPrivateMessage(sender, "Team has too many Weasels.");
+            tooMany += "Weasels  ";
             needs = true;
         }
         if( team.get(Tools.Ship.TERRIER).size() >= TERR_TOOMANY ) {
-            m_botAction.sendPrivateMessage(sender, "Team has too many Terriers.");
+            tooMany += "Terrs  ";
             needs = true;
         }
-        if( !needs ) {
+        if( tooMany != "" ) {
+            m_botAction.sendPrivateMessage(sender, "Team has too many of the following:   " + tooMany );            
+        } else if( !needs ) {
             m_botAction.sendPrivateMessage(sender, "Your team appears to be well-balanced!");
             return;
         }
-        m_botAction.sendPrivateMessage(sender, "Use !ship <ship#> to change ships & keep MVP.");
+        m_botAction.sendPrivateMessage(sender, "->  Use !ship <ship#> to change ships & keep MVP.  <-");
     }
 
-
+    
     /**
      * Places the player in a particular ship, if the ship is needed on the freq and
      * the player is not already in a   
@@ -1022,7 +1046,7 @@ public class purepubbot extends SubspaceBot
         authorizedChangePlayers.add( p.getPlayerName() );
         int bounty = p.getBounty();
         m_botAction.setShip( p.getPlayerID(), ship );
-        m_botAction.giveBounty( p.getPlayerID(), bounty + NICEGUY_BOUNTY_AWARD );
+        m_botAction.giveBounty( p.getPlayerID(), bounty + NICEGUY_BOUNTY_AWARD - 3 );  // -3 to compensate for new ship bty
         m_botAction.sendPrivateMessage( p.getPlayerID(), "For changing to a ship needed by your team, you keep any MVP status and gain 25 bounty in addition to your old bounty of " + bounty + "." );
     }
 
@@ -1031,11 +1055,7 @@ public class purepubbot extends SubspaceBot
      * Clears all of player's mines, and restores any MVP status, but only once per round.
      * @param sender Sender of command 
      */
-    public void doClearMinesCmd(String sender ) {
-        if( flagTimer != null )
-            if( !flagTimer.isRunning() )
-                throw new RuntimeException("This command is not needed while the flag timer is not running.  Simply change ships to clear your mines.");        
-                        
+    public void doClearMinesCmd(String sender ) {                        
         Player p = m_botAction.getPlayer(sender);
         if( p == null )
             throw new RuntimeException("Can't find you.  Please report this to staff.");
@@ -1043,18 +1063,90 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException("You've already cleared your mines once, and can't do it again until next round (except, of course, manually).");
         if( p.getShipType() != Tools.Ship.SHARK && p.getShipType() != Tools.Ship.LEVIATHAN )
             throw new RuntimeException("You must be in a mine-laying ship in order for me to clear your mines.");
+        boolean easyClear = false;
+        if( flagTimer == null || !flagTimer.isRunning() )
+            easyClear = true;
 
         int bounty = p.getBounty();
         int ship = p.getShipType();
-        authorizedChangePlayers.add( p.getPlayerName() );
+        if( !easyClear)
+            authorizedChangePlayers.add( p.getPlayerName() );
         m_botAction.setShip( sender, 1 );
-        authorizedChangePlayers.add( p.getPlayerName() );
+        if( !easyClear)
+            authorizedChangePlayers.add( p.getPlayerName() );
         m_botAction.setShip( sender, ship );
         m_botAction.giveBounty( sender, bounty - 3 );
-        mineClearedPlayers.add(p.getPlayerName());
-        m_botAction.sendPrivateMessage( sender, "Your mines have been reset without changing MVP status.  You may only do this once per round." );
+        if( !easyClear) {
+            mineClearedPlayers.add(p.getPlayerName());
+            m_botAction.sendPrivateMessage( sender, "Your mines have been reset without changing MVP status.  You may only do this once per round." );
+        }
     }
     
+    
+    /**
+     * Shows terriers on the team and their last observed locations.
+     */
+    public void doTerrCmd( String sender ) {
+        Player p = m_botAction.getPlayer(sender);
+        if( p == null )
+            throw new RuntimeException("Can't find you.  Please report this to staff.");
+        if( p.getShipType() == 0 )
+            throw new RuntimeException("You must be in a ship for this command to work.");
+        Iterator i = m_botAction.getFreqPlayerIterator(p.getFrequency());
+        if( !i.hasNext() )
+            throw new RuntimeException("Your team has no terriers!  (Consider becoming one.)");
+        m_botAction.sendPrivateMessage(sender, "Terr                     Last seen");
+        while( i.hasNext() ) {
+            Player terr = (Player)i.next();
+            if( terr.getShipType() == Tools.Ship.TERRIER )
+                m_botAction.sendPrivateMessage( sender, Tools.formatString(terr.getPlayerName(), 25) + getPlayerLocation(p) );
+        }
+    }
+    
+    
+    /**
+     * Shows last seen location of a given individual.
+     */
+    public void doWhereIsCmd( String sender, String argString, boolean isStaff ) {
+        Player p = m_botAction.getPlayer(sender);
+        if( p == null )
+            throw new RuntimeException("Can't find you.  Please report this to staff.");
+        if( p.getShipType() == 0 && !isStaff )
+            throw new RuntimeException("You must be in a ship for this command to work.");        
+        Player p2;
+        p2 = m_botAction.getPlayer( argString );
+        if( p2 == null )
+            p2 = m_botAction.getFuzzyPlayer( argString );
+        if( p2 == null )
+            throw new RuntimeException("I can't find the player '" + argString + "'.  Tough shit, bucko.");
+        if( p.getFrequency() != p2.getFrequency() && !isStaff )
+            throw new RuntimeException(p2.getPlayerName() + " is not on your team!");
+        m_botAction.sendPrivateMessage( sender, p2.getPlayerName() + " last seen: " + getPlayerLocation( p2 ) );
+    }    
+    
+    
+    /**
+     * Based on provided coords, returns location of player as a String.
+     * @return Last location recorded of player, as a String  
+     */
+    public String getPlayerLocation( Player p ) {
+        int x = p.getXLocation();
+        int y = p.getYLocation();
+        if( x==0 && y==0 )
+            return "Not yet spotted";
+        if( y >= TOP_FR  &&  y <= BOTTOM_FR  &&  x >= LEFT_FR  &&  x <= RIGHT_FR )
+            return "in Flagroom";
+        if( y >= TOP_MID  &&  y <= BOTTOM_MID  &&  x >= LEFT_MID  &&  x <= RIGHT_MID )
+            return "in Mid Base";
+        if( y >= TOP_LOWER  &&  y <= BOTTOM_LOWER  &&  x >= LEFT_LOWER  &&  x <= RIGHT_LOWER )
+            return "in Lower Base";
+        if( y <= BOTTOM_ROOF )
+            return "Roofing ...";
+        if( y >= TOP_SPAWN_AREA )
+            return "in spawn";
+        return "Outside base";
+    }
+
     
     /**
      * Collects names of players on a freq into a Vector ArrayList by ship.
@@ -1085,26 +1177,27 @@ public class purepubbot extends SubspaceBot
     {
         String[] helpMessage =
         {
-                "!go <ArenaName>         -- Moves the bot to <ArenaName>.",
-                "!start                  -- Starts pure pub settings.",
-                "!stop                   -- Stops pure pub settings.",
-                "!privfreqs              -- Toggles private frequencies & check for imbalances.",
-                "!starttime #            -- Starts Flag Time mode (a team wins",
-                "                           with # consecutive min of flagtime).",
-                "!stoptime               -- Ends Flag Time mode.",
-                "!stricttime             -- Toggles strict mode (all players warped)",
-                "!restrictions           -- Lists all current ship restrictions.",
-                "!set <ship> <#>         -- Sets <ship> to restriction <#>.",
-                "                           0=disabled; 1=any amount; other=weighted:",
-                "                           2 = 1/2 of freq can be this ship, 5 = 1/5, ...",
-                "!autowarp               -- Enables and disables 'opt out' warping style",
-                "!die                    -- Logs the bot off of the server.",
-                "!team                   -- Tells you which ships your team members are in.",
-                "!restrictions           -- Lists all current ship restrictions.",
-                "!time                   -- Provides time remaining when Flag Time mode.",
-                "!warp                   -- Warps you into flagroom at start of next round (flagtime)",
-                "!ship <ship#>           -- Puts you in ship <ship#>, keeping MVP status.",
-                "!clearmines             -- Clears all mines you have laid, keeping MVP status."
+                "!go <ArenaName>   -- Moves the bot to <ArenaName>.",
+                "!start            -- Starts pure pub settings.",
+                "!stop             -- Stops pure pub settings.",
+                "!privfreqs        -- Toggles private frequencies & check for imbalances.",
+                "!starttime <#>    -- Starts Flag Time game to <#> minutes",
+                "!stoptime         -- Ends Flag Time mode.",
+                "!stricttime       -- Toggles strict mode (all players warped)",
+                "!autowarp         -- Enables and disables 'opt out' warping style",
+                "!restrictions     -- Lists all current ship restrictions.",
+                "!set <ship> <#>   -- Sets <ship> to restriction <#>.",
+                "                     0=disabled; 1=any amount; other=weighted:",
+                "                     2 = 1/2 of freq can be this ship, 5 = 1/5, ...",
+                "!die              -- Logs the bot off of the server.",
+                "!team             -- Tells you which ships your team members are in.",
+                "!restrictions     -- Lists all current ship restrictions.",
+                "!time             -- Provides time remaining when Flag Time mode.",
+                "!warp             -- Warps you into flagroom at start of next round (flagtime)",
+                "!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
+                "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
+                "!terr             -- Shows terriers on the team & their last seen locations",
+                "!whereis <name>   -- Shows last seen location of <name>",
         };
 
         String[] playerHelpMessage =
@@ -1112,12 +1205,15 @@ public class purepubbot extends SubspaceBot
                 "Hi.  I'm a bot designed to enforce pure pub rules.",
                 "I restrict ships, manage private frequencies, and run Flag Time mode.",
                 "Commands:",
-                "!team                   -- Tells you which ships your team members are in.",
-                "!restrictions           -- Lists all current ship restrictions.",
                 "!time                   -- Provides time remaining when Flag Time mode.",
                 "!warp                   -- Warps you into flagroom at start of next round (flagtime)",
+                "!terr                   -- Shows terriers on the team & their last seen locations",
+                "!whereis <name>         -- Shows last seen location of <name> (if on your team)",
+                "!team                   -- Tells you which ships your team members are in.",
                 "!ship <ship#>           -- Puts you in ship <ship#>, keeping MVP status.",
-                "!clearmines             -- Clears all mines you have laid, keeping MVP status."
+                "!clearmines             -- Clears all mines you have laid, keeping MVP status.",
+                "!restrictions           -- Lists all current ship restrictions."
+
                 
         };
 
