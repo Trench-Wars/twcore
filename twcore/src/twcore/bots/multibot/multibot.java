@@ -69,6 +69,7 @@ public class multibot extends SubspaceBot {
         handleEvent((SubspaceEvent) event);
         modEventReq = new ModuleEventRequester(m_botAction.getEventRequester());
         m_botAction.getEventRequester().requestAll();
+        m_botAction.setPlayerPositionUpdating( 500 );
     }
 
     /**
