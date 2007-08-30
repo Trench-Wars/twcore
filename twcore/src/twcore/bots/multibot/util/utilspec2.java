@@ -144,7 +144,7 @@ public class utilspec2 extends MultiUtil
     public void requestEvents( ModuleEventRequester modEventReq ) {
         modEventReq.request(this, EventRequester.PLAYER_DEATH );
     }
-    
+
     /**
      * Gets the help message for this module
      * @return A string array containing the help information
@@ -535,11 +535,13 @@ public class utilspec2 extends MultiUtil
 
         SpecTask specTask = getBestSpecTask(freq, ship, playerID);
 
-        if(specTask != null && specTask.deaths <= deaths)
-            specPlayer(player, data);
-        else
-            if( notifyLives )
+        if(specTask != null) {
+        	if(specTask.deaths <= deaths) {
+            	specPlayer(player, data);
+        	} else if( notifyLives ) {
                 c_Rec(player.getPlayerID());
+        	}
+        }
     }
 
     /**
