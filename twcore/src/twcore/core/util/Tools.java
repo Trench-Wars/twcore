@@ -450,7 +450,7 @@ public class Tools {
         return response;
     }
     
-    
+        
     // *** ENUMS ***
     
     // Prizes
@@ -532,5 +532,16 @@ public class Tools {
         public static final int WEASEL = 6;
         public static final int LANCASTER = 7;
         public static final int SHARK = 8;
-    }    
+    }
+    
+    // Time defines for conversion to milliseconds.  If this is to be found somewhere else
+    // more handy, that can be used instead -- merely saw a static reference to the number
+    // representing "one day" in StaffBot and thought it was a little sloppy.
+    public class TimeInMillis {
+        public static final int SECOND = 1000;
+        public static final int MINUTE = 60000;
+        public static final int HOUR   = 3600000; 
+        public static final int DAY    = 86400000;
+        public static final int WEEK   = 604800000;
+    }
 }
