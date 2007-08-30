@@ -58,11 +58,6 @@ public class Player {
     private short   m_timeStamp;        // Timestamp of the last position packet
     private short   m_identTurretee;    // Player ID of player this player is attached to
     private LinkedList<Integer> m_turrets;       // List of player IDs (Integer) that are attached
-
-
-    // The following data is generally considered so unreliably tracked as to be almost meaningless --
-    // even moreso than standard position data found in a short position packet.  It is supplied for the
-    // sake of completeness only, and it's not recommended anyone attempt to use it.  Coder beware.
     
     private boolean m_stealthOn;        // Status of Stealth
     private boolean m_cloakOn;          // Status of Cloaking
@@ -71,6 +66,9 @@ public class Player {
     private boolean m_warpedIn;         // True if player is warping/cloaking/uncloaking
     private boolean m_inSafe;           // True if player is in safe
     private boolean m_ufoOn;            // Status of UFO mode
+
+    // The following data is generally considered unreliably tracked.  Only if the arena settings
+    // have ExtraPositionData set will this information be sent. 
 
     private boolean m_shields;          // True if player has shields
     private boolean m_super;            // True if player has super
@@ -449,29 +447,52 @@ public class Player {
     }
 
     /**
-     * Gets the player's <b>most recently updated</b> X location.
+     * Gets the player's <b>most recently updated</b> X location, in pixels (0...16384)
      * <p>
      * A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
      * may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
      * this information more reliable.
-     * @return X coordinate of player's location
+     * @return X coordinate of player's location in pixels (0...16384)
      */
     public short getXLocation(){
-
         return m_xLocation;
     }
 
     /**
-     * Gets the player's <b>most recently updated</b> Y location.
+     * Gets the player's <b>most recently updated</b> X location, in tiles (0...1024)
      * <p>
      * A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
      * may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
      * this information more reliable.
-     * @return Y coordinate of player's location
+     * @return X coordinate of player's location in tiles (0...1024)
+     */
+    public short getXTileLocation(){
+        return (short)(m_xLocation / 16);
+    }
+
+    /**
+     * Gets the player's <b>most recently updated</b> Y location, in pixels (0...16384)
+     * <p>
+     * A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+     * may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
+     * this information more reliable.
+     * @return Y coordinate of player's location in pixels (0...16384)
      */
     public short getYLocation(){
 
         return m_yLocation;
+    }
+
+    /**
+     * Gets the player's <b>most recently updated</b> Y location, in tiles (0...1024)
+     * <p>
+     * A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+     * may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
+     * this information more reliable.
+     * @return Y coordinate of player's location in tiles (0...1024)
+     */
+    public short getYTileLocation(){
+        return (short)(m_yLocation / 16);
     }
 
     /**
