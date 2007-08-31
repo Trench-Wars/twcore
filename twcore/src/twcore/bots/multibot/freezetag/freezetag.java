@@ -46,6 +46,7 @@ public class freezetag extends MultiModule {
      private static final int TEAM2_FREQ  = 1;    //jav starting freq
      private static final int SECS_IN_MIN = 60;   //num seconds in minute
      private static final int MS_IN_SEC   = 1000; //num milliseconds in second
+     private static final int MIN_TIME_LIMIT = 5; //min time limit in minutes
 
     /*
      * Here are the class-wide variables.
@@ -68,7 +69,7 @@ public class freezetag extends MultiModule {
             freq1JavSet      = new HashSet<String>();
             freq1SpidSet     = new HashSet<String>();
             timeLimit        = 0; //default if game is not timed
-        isRunning        = false;
+        	isRunning        = false;
     }
 
     /**
@@ -122,6 +123,7 @@ public class freezetag extends MultiModule {
         if( message.toLowerCase().equals( "!rules" ) ) {
             doRules();
         } else if( message.toLowerCase().equals( "!start" ) ) {
+        	timeLimit = 0;
             startGame( name );
         } else if( message.toLowerCase().startsWith( "!start " ) ) {
             m_botAction.sendPrivateMessage( name, message.substring( 7 ) );
@@ -132,11 +134,11 @@ public class freezetag extends MultiModule {
                            + "insanely long game! :P" );
             } else {
                 timeLimit = Integer.parseInt( message.substring( 7 ) );
-                if( timeLimit > 14 ) {
+                if( timeLimit > MIN_TIME_LIMIT ) {
                     startGame( name );
                 } else {
                     m_botAction.sendPrivateMessage( name, "You must specify a "
-                    + "time limit of at least 15 minutes." );
+                    + "time limit of at least " + MIN_TIME_LIMIT + " minutes." );
                 }
             }
         } else if( message.toLowerCase().equals( "!stop" ) ) {
