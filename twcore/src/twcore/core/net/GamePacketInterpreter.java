@@ -249,7 +249,7 @@ public class GamePacketInterpreter {
             // 0x32 - Change bot's ship coords: Unhandled
             // 0x33 - Custom login failure message: Unhandled
             // 0x34 - Continuum version packet: Unhandled
-            // 0x35 - Unknown: Unhandled
+            // 0x35 - Object toggling: Unhandled
             // 0x36 - Unknown: Unhandled
             // 0x37 - Unknown: Unhandled
             case 0x38:
