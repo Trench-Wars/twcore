@@ -22,25 +22,24 @@ public class utilhotspots extends MultiUtil {
     HotSpot watch;
     TimerTask changeTask;
     boolean watching;
-    
 
     private int switchTime = 500;
 
     /**
      * initializes.
      */
-    
+
     public void init() {
         hotSpots = new Vector<HotSpot>();
         // Turn off updating -- we will do it ourselves
         m_botAction.setPlayerPositionUpdating(0);
         watching = false;
     }
-    
+
     /**
      * requests events.
      */
-    
+
     public void requestEvents( ModuleEventRequester modEventReq ) {
     	modEventReq.request(this, EventRequester.PLAYER_POSITION );
     }
@@ -48,7 +47,7 @@ public class utilhotspots extends MultiUtil {
     /**
      * Handles messages
      */
-    
+
     public void handleEvent( Message event ){
 
         String message = event.getMessage();
@@ -65,11 +64,11 @@ public class utilhotspots extends MultiUtil {
      * @param sender is the user of the bot.
      * @param message is the command.
      */
-    
+
     public void handleCommand( String sender, String message ) {
 
-        if( message.startsWith( "!addspot " ) ) 
-        	do_addHotSpot( sender, message.substring( 9, message.length() ) ); 
+        if( message.startsWith( "!addspot " ) )
+        	do_addHotSpot( sender, message.substring( 9, message.length() ) );
         if( message.startsWith( "!prizespot " ) )
             do_addPrizeHotSpot( sender, message.substring( 11, message.length() ) );
         if( message.startsWith( "!switchtime " ) )
@@ -85,13 +84,13 @@ public class utilhotspots extends MultiUtil {
             }
         	else
         		m_botAction.sendPrivateMessage(sender, "Already watching spots!");
-        }	
+        }
     }
 
     /**
      * Handles player positions
      */
-    
+
     public void handleEvent( PlayerPosition event ) {
 
         Player p = m_botAction.getPlayer( event.getPlayerID() );
@@ -109,7 +108,7 @@ public class utilhotspots extends MultiUtil {
     /**
      * initializes timer task.
      */
-    
+
     public void watch()	{
     	changeTask = new TimerTask() {
             public void run() {
@@ -126,27 +125,27 @@ public class utilhotspots extends MultiUtil {
         m_botAction.scheduleTaskAtFixedRate( changeTask, 2000, switchTime );
         watching = true;
     }
-    
+
     /**
      * Lists spots.
      * @param sender is the user of the bot
      */
-    
+
     public void do_ListSpot(String sender)	{
     	Iterator<HotSpot> it = hotSpots.iterator();
     	if(!it.hasNext()) {m_botAction.sendPrivateMessage(sender,"No spots loaded!");return;}
     	while(it.hasNext())	{
     		m_botAction.sendPrivateMessage(sender, (it.next()).toString());
     	}
-    		
+
     }
-    
+
     /**
      * Adds a spot
      * @param sender is the user of the bot.
      * @param message is the hotspot.
      */
-    
+
     public void do_addHotSpot( String sender, String message ) {
 
         String pieces[] = message.split( " " );
@@ -161,7 +160,11 @@ public class utilhotspots extends MultiUtil {
             return;
         }
 
-        hotSpots.add( new HotSpot( values ) );
+		HotSpot newSpot = new HotSpot(values);
+		if(watch == null) {
+			watch = newSpot;
+		}
+        hotSpots.add(newSpot);
         m_botAction.sendPrivateMessage( sender, "Hotspot added." );
     }
 
@@ -170,7 +173,7 @@ public class utilhotspots extends MultiUtil {
      * @param sender is the user of the bot.
      * @param message is the hotspot.
      */
-    
+
     public void do_addPrizeHotSpot( String sender, String message ) {
 
         String pieces[] = message.split( " " );
@@ -195,9 +198,14 @@ public class utilhotspots extends MultiUtil {
      */
     public void do_clearHotSpots( String name ) {
         hotSpots.clear();
-        changeTask.cancel();
+        if(changeTask != null) {
+	        changeTask.cancel();
+        }
         watching = false;
-        m_botAction.sendPrivateMessage( name, "All hotspots cleared." );
+        watch = null;
+        if(name != null) {
+	        m_botAction.sendPrivateMessage( name, "All hotspots cleared." );
+        }
     }
 
     /**
@@ -205,7 +213,7 @@ public class utilhotspots extends MultiUtil {
      * @param sender is the user of the bot
      * @param message is the command
      */
-    
+
     public void do_switchTime( String sender, String message ) {
         int time = switchTime;
         try {
@@ -218,7 +226,7 @@ public class utilhotspots extends MultiUtil {
             m_botAction.sendPrivateMessage( sender, "Time can not be less than 200ms." );
             return;
         }
-        
+
         switchTime = time;
         if(watching)	{
         	changeTask.cancel();
@@ -230,7 +238,7 @@ public class utilhotspots extends MultiUtil {
     /**
      * Returns help message
      */
-    
+
     public String[] getHelpMessages() {
         String help[] = {
                 "HotSpot Module          - Enter one coordinate, warp to another; maybe get a prize.'",
@@ -248,7 +256,7 @@ public class utilhotspots extends MultiUtil {
     }
 
     public void cancel() {
-        m_botAction.setPlayerPositionUpdating(5000);
+        do_clearHotSpots(null);
     }
 }
 
@@ -289,7 +297,7 @@ class HotSpot {
         if( dist < r*16 ) return true;
         else return false;
     }
-    
+
     public String toString()	{
     	if(prize == -1)
     		return ("X:" + x + " Y:" + y + " Radius:" + r + " destX:" + x2 + " desty:" + y2);
