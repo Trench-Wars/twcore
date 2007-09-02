@@ -28,7 +28,7 @@ public class DBPlayerData {
 
     String m_fcIP = "";
     int m_fnMID = 0;
-    int m_fnStatus = 0;
+    int m_fnStatus = 0;         // 0 - unregistered; 1 - enabled for play; 2 - disabled 
 
     long m_lastQuery = 0;
 
@@ -38,7 +38,7 @@ public class DBPlayerData {
     public DBPlayerData(BotAction conn, String connName) {
         m_connection = conn;
         m_connName = connName;
-    };
+    }
 
     /**
      * Creates a new instance of DBPlayerData<br/>
@@ -89,7 +89,7 @@ public class DBPlayerData {
             System.out.println("Database error! - " + e.getMessage());
             return false;
         }
-    };
+    }
 
 
     public boolean getPlayerData() {
@@ -118,7 +118,7 @@ public class DBPlayerData {
             System.out.println("Database error! - " + e.getMessage());
             return false;
         }
-    };
+    }
 
     /**
      * Checks if the player exists in the database<br/>
@@ -147,7 +147,7 @@ public class DBPlayerData {
             System.out.println("Database error! - " + e.getMessage());
             return false;
         }
-    };
+    }
 
 
     public boolean getPlayerAliasData() {
@@ -178,12 +178,12 @@ public class DBPlayerData {
         	   String query = "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())";
                m_connection.SQLQueryAndClose(m_connName, query );
                m_lastQuery = System.currentTimeMillis();
-               if (getPlayerData()) return true; else return false;
+               return getPlayerData();
            } catch (SQLException e) {
                System.out.println("Couldn't create user");
                return false;
            }
-    };
+    }
 
 
 
@@ -202,7 +202,7 @@ public class DBPlayerData {
                 return false;
             }
         } else return false;
-    };
+    }
 
 
     public boolean updatePlayerAccountData(String fcPassword) {
@@ -220,7 +220,7 @@ public class DBPlayerData {
                 return false;
             }
         } else return false;
-    };
+    }
 
     public boolean getPlayerAccountData() {
         if (m_fnUserID != 0) {
@@ -239,7 +239,7 @@ public class DBPlayerData {
             };
         };
         return false;
-    };
+    }
 
 
     public boolean hasRank(int rankNr) {
@@ -255,7 +255,7 @@ public class DBPlayerData {
             };
         };
         return false;
-    };
+    }
 
 
 
@@ -271,9 +271,9 @@ public class DBPlayerData {
             } catch (Exception e) {
                 return false;
             }
-        };
+        }
         return false;
-    };
+    }
 
     public boolean removeRank( int userRankId ) {
         if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
@@ -354,6 +354,8 @@ public class DBPlayerData {
     public boolean resetRegistration() {
 
         try {
+            if( m_fnStatus == 2 )
+                return false;
             m_connection.SQLQueryAndClose( m_aliasConnName, "DELETE FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
             return true;
         } catch (Exception e) {
@@ -388,6 +390,11 @@ public class DBPlayerData {
 
     public boolean isEnabled() {
         if( m_fnStatus == 1 ) return true;
+        else return false;
+    }
+    
+    public boolean hasBeenDisabled() {
+        if( m_fnStatus == 2 ) return true;
         else return false;
     }
 
