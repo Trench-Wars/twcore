@@ -947,6 +947,24 @@ public class robohelp extends SubspaceBot {
     	int topNumber = 5;
     	
     	
+    	// !mystats <month>-<year> in format of m-yyyy or mm-yyyy
+    	String[] parameters = message.trim().split(" ");
+    	if(parameters[0] != null && parameters[0].contains("-")) {
+    		String[] dateParameters = parameters[0].split("-");
+    		if(Tools.isAllDigits(dateParameters[0]) && Tools.isAllDigits(dateParameters[1])) {
+        		int month = Integer.parseInt(dateParameters[0]);
+        		int year = Integer.parseInt(dateParameters[1]);
+        		
+        		Calendar tmp = Calendar.getInstance();
+        		tmp.set(year, month-1, 31, 23, 59, 59 );
+        		
+        		date = new SimpleDateFormat("yyyy-MM").format( tmp.getTime() );
+        		displayDate = new SimpleDateFormat("MMMM yyyy").format( tmp.getTime() );
+        		message = message.substring(parameters[0].length()).trim();
+    		}
+    	}
+    	
+    	
     	if((opList.isModerator(name) && message.length() == 0) || message.startsWith("mod")) {
     		// Staffer> !mystats
         	// Staffer> !mystats mod
@@ -1165,49 +1183,64 @@ public class robohelp extends SubspaceBot {
     public void mainHelpScreen( String playerName, String message ){
         final String[] helpText = {
             "Chat commands:",
-            " !repeat <optional name> - Repeats the response to the specified name.  If no name is specified, the last response is repeated.",
-            " !tell <name>:<keyword> - Private messages the specified name with the response to the keyword given.",
-            " !warn <optional name> - Warns the specified player.  If no name is given, warns the last person.",
-            " !ban <optional name> - Bans the specified player.  If no name is given, bans the last person.",
-            " !status - Gives back status from systems.",
+            " !repeat <optional name>                   - Repeats the response to the specified name.  If no",
+            "                                             name is specified, the last response is repeated.",
+            " !tell <name>:<keyword>                    - Private messages the specified name with the",
+            "                                             response to the keyword given.",
+            " !warn <optional name>                     - Warns the specified player.  If no name is given,",
+            "                                             warns the last person.",
+            " !ban <optional name>                      - Bans the specified player.  If no name is given,",
+            "                                             bans the last person.",
+            " !status                                   - Gives back status from systems.",
 //            " !google search - Returns first page found by Googling the search term.",
-            " !dictionary word - Returns a link for a definition of the word.",
-            " !thesaurus word - Returns a link for a thesaurus entry for the word.",
-            " !javadocs term - Returns a link for a javadocs lookup of the term.",
-            " !mystats - Returns the top 5 call count and your call statistics",
-            " !mystats mod/er/zh [#] - Returns the top # of moderators / ERs / ZHs. If # not specified, shows top 5.",
-            " !mystats <name> - Returns the call count of <name>",
+            " !dictionary word                          - Returns a link for a definition of the word.",
+            " !thesaurus word                           - Returns a link for a thesaurus entry for the word.",
+            " !javadocs term                            - Returns a link for a javadocs lookup of the term.",
+            " !mystats                                  - Returns the top 5 call count and your call stats",
+            " !mystats mod/er/zh [#]                    - Returns the top # of moderators / ERs / ZHs.",
+            "                                             If # not specified, shows top 5.",
+            " !mystats <name>                           - Returns the call count of <name>",
+            " !mystats <month>-<year> [above arguments] - Returns the top/call count from specified",
+            "                                             month-year. F.ex: !mystats 08-2007 mod 50",
             "`     ",
             "PM commands:",
-            " !lookup <keyword> - Tells you the response when the specified key word is given",
-            " !last <optional name> - Tells you what the response to the specified player was.  If no name is specified, the last response is given.",
-            " !hosted <hours> - Displays the hosted events in the last specified <hours>, <hours> can be ommitted.",
-            " !mystats - Returns the top 5 call count and your call statistics",
-            " !mystats mod/er/zh [#] - Returns the top # of moderators / ERs / ZHs. If # not specified, shows top 5.",
-            " !mystats <name> - Returns the call count of <name>"
+            " !lookup <keyword>                         - Tells you the response when the specified key word",
+            "                                             is given",
+            " !last <optional name>                     - Tells you what the response to the specified",
+            "                                             player was. If no name is specified, the last",
+            "                                             response is given.",
+            " !hosted <hours>                           - Displays the hosted events in the last specified",
+            "                                             <hours>, <hours> can be ommitted.",
+            " !mystats                                  - Returns the top 5 call count and your call stats",
+            " !mystats mod/er/zh [#]                    - Returns the top # of moderators / ERs / ZHs.",
+            "                                             If # is not specified, shows top 5.",
+            " !mystats <name>                           - Returns the call count of <name>",
+            " !mystats <month>-<year> [above arguments] - Returns the top/call count from specified",
+            "                                             month-year. F.ex: !mystats 08-2007 mod 50"
         };
         if( m_botAction.getOperatorList().isZH( playerName ) ){
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
         }
         
         String[] ERHelpText = {
-            " !adv - Sets the text for the advertisement system",
-            " !time - Returns the time left before the next zone"
+            " !adv                                      - Sets the text for the advertisement system",
+            " !time                                     - Returns the time left before the next zone"
         };
         if( m_botAction.getOperatorList().isER( playerName )) {
         	m_botAction.remotePrivateMessageSpam( playerName, ERHelpText );
         }
         
         String[] SmodHelpText = {
-            " !backupadv - Starts/stops the advertisement system (periodically zones a preset message)"
+            " !backupadv                                - Starts/stops the advertisement system",
+            "                                             (periodically zones a preset message)"
         };
         if( m_botAction.getOperatorList().isSmod( playerName )) {
         	m_botAction.remotePrivateMessageSpam( playerName, SmodHelpText );
         }
         
         String [] OwnerHelpText = {
-            " !reload - Reloads the HelpResponses database from file",
-            " !saychat <messages> - Makes the bot say the <message> in the staff chat"
+            " !reload                                   - Reloads the HelpResponses database from file",
+            " !saychat <messages>                       - Makes the bot say the <message> in the staff chat"
         };
         if( m_botAction.getOperatorList().isOwner( playerName )) {
         	m_botAction.remotePrivateMessageSpam( playerName, OwnerHelpText );
