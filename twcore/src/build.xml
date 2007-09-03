@@ -10,8 +10,8 @@
     	<mkdir dir="temp"></mkdir>
     	<echo>Compiling Core (this may take a moment)</echo>
     	<javac srcdir="twcore/core" destdir="temp"/>    	    
-    	<javac classpath="temp" srcdir="twcore/bots" destdir="temp">
-    		<include name="**.java"/>    			
+    	<javac classpath="temp" srcdir="twcore/bots" destdir="temp" debug="on" debuglevel="lines,vars,source">
+    		<include name="**.java" />
     	</javac>
     	<echo>Creating Jar File</echo>
     	<jar destfile="../bin/twcore.jar">
@@ -23,7 +23,7 @@
       
     <target name="bots" description="Builds the TWCore bots">
     	<echo>Compiling Bots (this may take a moment)</echo>
-    	<javac classpath="../bin/twcore.jar" srcdir="twcore/bots" destdir="../bin"/> 
+    	<javac classpath="../bin/twcore.jar" srcdir="twcore/bots" destdir="../bin" debug="on" debuglevel="lines,vars,source" /> 
     </target> 
 
     <target name="clean" description="Deletes the jar and all class files">
@@ -40,7 +40,7 @@
 	
 	<target name="botdir" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)">
 		<echo>Compiling bot directory ${botdir}</echo>
-		<javac classpath="../bin/twcore.jar" srcdir="twcore/bots/${botdir}" destdir="../bin"/>
+		<javac classpath="../bin/twcore.jar" srcdir="twcore/bots/${botdir}" destdir="../bin" debug="on" debuglevel="lines,vars,source" />
 	</target>
     
 </project>
