@@ -36,6 +36,8 @@ import twcore.core.util.Tools;
  * Add:
  * - flag time for two flags
  * - last few ships
+ * - warping players out of safe who warp into it
+ * - reset all flags when nobody's in game
  * 
  * Add after game is running:
  * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
@@ -57,6 +59,9 @@ import twcore.core.util.Tools;
  * @author dugwyler
  */
 public class distensionbot extends SubspaceBot {
+    
+    private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
+                                                           // normally be annoying in a public release.
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int UPGRADE_DELAY = 500;                 // Delay between fully prizing players, in ms  
@@ -140,6 +145,7 @@ public class distensionbot extends SubspaceBot {
      */
     private void registerCommands() {
         int acceptedMessages = Message.PRIVATE_MESSAGE;
+        int additionalAcceptedMessages = Message.PRIVATE_MESSAGE | Message.CHAT_MESSAGE;
 
         m_commandInterpreter.registerCommand( "!enlist", acceptedMessages, this, "cmdEnlist" );
         m_commandInterpreter.registerCommand( "!return", acceptedMessages, this, "cmdReturn" );
@@ -149,7 +155,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!hangar", acceptedMessages, this, "cmdHangar" );
         m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!progress", acceptedMessages, this, "cmdProgress" );
-        m_commandInterpreter.registerCommand( ".", acceptedMessages, this, "cmdProgress" );
+        m_commandInterpreter.registerCommand( ".", additionalAcceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory" );
         m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade" );
         m_commandInterpreter.registerCommand( "!intro", acceptedMessages, this, "cmdIntro" );
@@ -162,6 +168,13 @@ public class distensionbot extends SubspaceBot {
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
+        m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleArenaMessage" );
+    }
+    
+    
+    public void handleArenaMessage( String name, String message ) {
+         if( message.equals( "Arena UNLOCKED" ) )
+            m_botAction.toggleLocked();
     }
 
 
@@ -380,7 +393,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( player.getPlayerFromDB() == true ) {
-            m_botAction.sendPrivateMessage( name, "Returning to the hangars of " + player.getArmyName() + " ..." );
+            m_botAction.sendPrivateMessage( name, "Returning to the hangars of " + player.getArmyName().toUpperCase() + " ..." );
             m_botAction.sendPrivateMessage( name, "Welcome back." );
             player.setShipNum( 0 );
         } else {
@@ -565,7 +578,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "I don't know who you are yet.  Please !return to your army, or !enlist if you have none." );
             return;
         } else if( shipNum == 0 ){
-            m_botAction.sendPrivateMessage( name, name.toUpperCase() + ":  DOCKED.  [Your data is saved; safe to leave arena.]" );
+            m_botAction.sendPrivateMessage( name, name.toUpperCase() + ": DOCKED.  [Your data is saved; safe to leave arena.]" );
             return;
         }
         m_botAction.sendPrivateMessage( name, name.toUpperCase() + " of " + player.getArmyName().toUpperCase() + ":  " + Tools.shipName( shipNum ).toUpperCase() +
@@ -824,6 +837,8 @@ public class distensionbot extends SubspaceBot {
     public void handleEvent(ArenaJoined event) {
         m_botAction.setReliableKills(1);
         m_botAction.setPlayerPositionUpdating(500);
+        m_botAction.specAll();
+        m_botAction.toggleLocked();
     }
 
 
@@ -840,8 +855,8 @@ public class distensionbot extends SubspaceBot {
         m_players.remove( name );
         m_players.put( name, new DistensionPlayer( name ) );
         m_botAction.sendPrivateMessage( name, "Welcome to Distension BETA - the TW RPG.  You are welcome to play, but player data will not carry over to the public release, & bugs WILL be present.  This is a work in progress." );
-        m_botAction.sendPrivateMessage( name, "Send !help for a command list, use !enlist to start in one of the !armies, or !return if you are a returning player.  Thank you for helping test." );
         m_botAction.sendPrivateMessage( name, "NOTE: At public release, bug reporters (?message dugwyler) will receive bonus points, as will the 3 players w/ highest combined rank in all ships." );
+        m_botAction.sendPrivateMessage( name, "--- HOW TO START ---   1: Type !armies to see available armies.  2: !enlist id# to enlist in a specific army.  3: !pilot 1 to pilot your first ship, the WB.  Use !return to come back later on.");
     }
 
 
@@ -961,8 +976,8 @@ public class distensionbot extends SubspaceBot {
                     return;
 
                 if( killerarmy.getNumFlagsOwned() == 0 ) {
-                    if( killer.getPlayerName().equals("dugwyler"))
-                        m_botAction.sendPrivateMessage( "dugwyler", "DEBUG: 0 flags owned; 1 point given." );
+                    if( DEBUG )
+                        m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: 1rp for kill.  (0 flags owned)" );
                     victor.addRankPoints( 1 );
                     // Loser does not lose any points for dying if controlling both flags
                     return;
@@ -984,13 +999,14 @@ public class distensionbot extends SubspaceBot {
                     
                 // Loser is between 14 levels below and 9 levels above victor:
                 //   Victor earns the level of the loser in points, and loser loses
-                //   a point, unless the loser is still level 0. 
+                //   a point if over level 5.  Level 0 players are worth 1 point. 
                 } else {
                     if( loser.getUpgradeLevel() == 0 )
                         points = 1;
                     else {
                         points = loser.getUpgradeLevel();
-                        loss = 1;
+                        if( loser.getUpgradeLevel() > 5 )
+                            loss = 1;
                     }
                 }
                 
@@ -1008,10 +1024,11 @@ public class distensionbot extends SubspaceBot {
                 // Track successive kills for weasel unlock
                 //victor.addSuccessiveKill();
                 //loser.clearSuccessiveKills();
-                if( killer.getPlayerName().equals("dugwyler"))
-                    m_botAction.sendPrivateMessage( "dugwyler", "DEBUG: points=" + points + "; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
-                if( killed.getPlayerName().equals("dugwyler"))
-                    m_botAction.sendPrivateMessage( "dugwyler", "DEBUG: pointslost=" + loss + "; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
+                if( DEBUG ) {
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + "rp earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
+                    if( loss > 0 )
+                        m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: " + loss + "rp lost; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
+                }
             }
         }
     }
@@ -1149,6 +1166,7 @@ public class distensionbot extends SubspaceBot {
          * Prizes upgrades to player based on what has been purchased.
          */
         public void prizeUpgrades() {
+            m_botAction.shipReset(name);
             Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1).getAllUpgrades();
             int prize = -1;
             for( int i = 0; i < NUM_UPGRADES; i++ ) {
@@ -1342,6 +1360,8 @@ public class distensionbot extends SubspaceBot {
          * @return true if successful
          */
         public boolean getCurrentShipFromDB() {
+            if( shipNum < 1 || shipNum > 8 )
+                return false;
             try {
                 String query = "SELECT * FROM tblDistensionShip ship, tblDistensionPlayer player " +
                                "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
@@ -1936,7 +1956,7 @@ public class distensionbot extends SubspaceBot {
          */
 
         // WARBIRD -- starting ship
-        // Med upg speed; rotation starts +1, energy has smaller spread & smaller max
+        // Med upg speed; rotation starts +1, energy has smaller spread, smaller max, & starts v. low
         // 4:  L2 Guns
         // 17: Multi
         // 21: Decoy
@@ -1954,7 +1974,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Regeneration Drives", Tools.Prize.RECHARGE, 1, 0, 10 );     // 400 x10
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Microfiber Armor", Tools.Prize.ENERGY, 1, 0, 8 );           // 150 x8
+        upg = new ShipUpgrade( "Microfiber Armor", Tools.Prize.ENERGY, 1, 0, 10 );          // 150 x10
         ship.addUpgrade( upg );
         int p1a1[] = { 1, 1 };
         int p1a2[] = { 4, 27 };
