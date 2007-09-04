@@ -42,6 +42,7 @@ import twcore.core.util.Tools;
  * - !armies showing current strengths instead of bonuses for players in game.
  * - !grant to grant point amounts
  * - getting flag bug (debug output)
+ * - fix enlistment bonus
  * 
  * Add after game is running:
  * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
@@ -290,8 +291,10 @@ public class distensionbot extends SubspaceBot {
      * @param name
      * @param msg
      */
-    public void cmdDie( String name, String msg ) {        
-        try { Thread.sleep(50); } catch (Exception e) {};
+    public void cmdDie( String name, String msg ) {
+        m_botAction.specAll();
+        m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
+        try { Thread.sleep(500); } catch (Exception e) {};
         m_botAction.die();
     }
 
@@ -350,22 +353,19 @@ public class distensionbot extends SubspaceBot {
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionArmy WHERE fnArmyID = '"+ armyNum +"'" );
             if( r.next() ) {
-                int bonus = 0;
+                //int bonus = 0;
                 if( r.getString( "fcPrivateArmy" ).equals("y") ) {
                     if ( r.getString( "fnPassword" ) != pwd ) {
                         m_botAction.sendPrivateMessage( name, "That's a private army there.  And the password doesn't seem to match up.  Best watch yourself now, or you won't get in ANYWHERE." );
                         return;
                     }
                 } else {
-                    if( r.getString( "fcDefaultArmy" ).equals("y") )
-                        bonus = calcEnlistmentBonus( armyNum, getDefaultArmyCounts() );
+                    //if( r.getString( "fcDefaultArmy" ).equals("y") )
+                        //bonus = calcEnlistmentBonus( armyNum, getDefaultArmyCounts() );
                 }
-                m_botAction.sendPrivateMessage( name, "Ah, joining " + r.getString( "fcArmyName" ) + "?  Excellent.  You'll be pilot #" + (r.getString( "fnNumPilots" ) + 1) + "." );
-                if( bonus > 0 )
-                    m_botAction.sendPrivateMessage( name, "Your enlistment bonus also entitles you to " + bonus + " free upgrade" + (bonus==1?"":"s")+ ".  Congratulations." );
+                m_botAction.sendPrivateMessage( name, "Ah, joining " + r.getString( "fcArmyName" ) + "?  Excellent.  You'll be pilot #" + (r.getInt( "fnNumPilots" ) + 1) + "." );
                 m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + (r.getInt( "fnNumPilots" ) + 1) + "' WHERE fnArmyID='" + armyNum + "'" );
 
-                p.addRankPoints( bonus );
                 p.setArmy( armyNum );
                 p.addPlayerToDB();
                 p.setShipNum( 0 );
@@ -373,6 +373,12 @@ public class distensionbot extends SubspaceBot {
                 p.addShipToDB( 1 );
                 m_botAction.sendPrivateMessage( name, "Welcome aboard." );
                 m_botAction.sendPrivateMessage( name, "If you need an !intro to how things work, I'd be glad to !help out.  Or if you just want to get some action, jump in your new Warbird.  (!pilot 1)" );
+                /* ENLISTMENT BONUS -- FIX
+                if( bonus > 0 ) {
+                    m_botAction.sendPrivateMessage( name, "Your enlistment bonus also entitles you to " + bonus + " free upgrade" + (bonus==1?"":"s")+ ".  Congratulations." );
+                    m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionShip SET fnRankPoints='" + bonus + "' WHERE fnPlayerID='" + p.get + "'" );                    
+                }
+                */
             } else {
                 m_botAction.sendPrivateMessage( name, "You making stuff up now?  Maybe you should join one of those !armies that ain't just make believe..." );
             }
@@ -1507,6 +1513,8 @@ public class distensionbot extends SubspaceBot {
          * @param points Amt to add
          */
         public void addRankPoints( int points ) {
+            if( shipNum < 1 )
+                return;
             rankPoints += points;
             if( rankPoints >= nextRank )
                 doAdvanceRank();
