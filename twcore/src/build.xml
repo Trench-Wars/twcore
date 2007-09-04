@@ -5,7 +5,7 @@
     <target name="all" depends="core,bots" description="Builds the entire TWCore distribution">    	
     </target>
     
-    <target name="core" description="Builds the TWCore core">
+    <target name="core" description="Builds the TWCore core" depends="configCopy">
     	<echo>Creating Temporary Directory</echo>
     	<mkdir dir="temp"></mkdir>
     	<echo>Compiling Core (this may take a moment)</echo>
@@ -21,7 +21,7 @@
     	<delete dir="temp"/>
     </target>    
       
-    <target name="bots" description="Builds the TWCore bots">
+    <target name="bots" description="Builds the TWCore bots" depends="configCopy">
     	<echo>Compiling Bots (this may take a moment)</echo>
     	<javac classpath="../bin/twcore.jar" srcdir="twcore/bots" destdir="../bin" debug="on" debuglevel="lines,vars,source" /> 
     </target> 
@@ -38,9 +38,18 @@
     	</delete>
     </target>
 	
-	<target name="botdir" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)">
+	<target name="botdir" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)" depends="configCopy">
 		<echo>Compiling bot directory ${botdir}</echo>
 		<javac classpath="../bin/twcore.jar" srcdir="twcore/bots/${botdir}" destdir="../bin" debug="on" debuglevel="lines,vars,source" />
 	</target>
+	
+	<target name="configCopy" description="Copies all the .cfg files from the src directory to the bin directory if file doesn't exist">
+		<echo>Copying Bot configuration files</echo>
+    	<copy todir="../bin" overwrite="no">
+    		<fileset dir=".">
+		        <include name="**/**.cfg"/>
+		    </fileset>
+    	</copy>
+	</target>	
     
 </project>
