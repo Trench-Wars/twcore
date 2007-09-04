@@ -500,7 +500,7 @@ public class purepubbot extends SubspaceBot
         int messageType = event.getMessageType();
         String message = event.getMessage().trim();
         
-        if( message == null || !message.startsWith("!") )
+        if( message == null || !message.startsWith("!") || sender == null )
             return;
         
         message = message.toLowerCase();
