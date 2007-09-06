@@ -38,6 +38,7 @@ import twcore.core.util.Tools;
  * - last few ships
  * - reset all flags when nobody's in game
  * - fix enlistment bonus
+ * - fix weight
  * 
  * Lower priority (in order):
  * - !scrap #         - Scrap (sell) a given upgrade as defined on !status screen (lose back to start of level)
@@ -350,6 +351,10 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer player = m_players.get( name );
         if( player == null )
             return;
+        DistensionArmy army = m_armies.get( player.getArmyID() );
+        army.adjustStrength( -player.getUpgradeLevel() );
+        army.adjustPilotsInGame( -1 );
+        
         player.saveCurrentShipToDBNow();
 
         m_players.remove( name );
@@ -493,13 +498,12 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 int points;
-                int loss = 0;
                 
                 // Loser is 10 or more levels above victor:
                 //   Victor earns his level + 10, and loser loses half of that amount from due shame
                 if( loser.getUpgradeLevel() - victor.getUpgradeLevel() >= 10 ) {
                     points = victor.getUpgradeLevel() + 10;
-                    loss = points / 2; 
+                    loser.addRankPoints( -(points / 2) ); 
                     
                 // Loser is 15 or more levels below victor:
                 //   Victor only gets 1 point, and loser loses nothing
@@ -515,7 +519,7 @@ public class distensionbot extends SubspaceBot {
                     else {
                         points = loser.getUpgradeLevel();
                         if( loser.getUpgradeLevel() > 5 )
-                            loss = 1;
+                            loser.addRankPoints( -1 );
                     }
                 }
                 
@@ -527,16 +531,16 @@ public class distensionbot extends SubspaceBot {
                     armySizeWeight = 1;
 
                 points = (int)((points * killerarmy.getNumFlagsOwned()) * armySizeWeight);
+                if( points < 1 )
+                    points = 1;
 
                 victor.addRankPoints( points );
-                loser.addRankPoints( -loss );
                 // Track successive kills for weasel unlock
                 victor.addSuccessiveKill();
                 loser.clearSuccessiveKills();
                 if( DEBUG ) {
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + " RP earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
-                    if( loss > 0 )
-                        m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: " + loss + " RP lost; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
+                    //m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: " + loss + " RP lost; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
                 }
             }
         }
@@ -1675,6 +1679,7 @@ public class distensionbot extends SubspaceBot {
                 if( rank > 1 )
                     award = rank * 3;
                 m_botAction.sendPrivateMessage(name, "Streak!  (" + award + " RP bonus.)", 19 );                
+                addRankPoints(award);
             }
             
             if( successiveKills == 10 ) {
@@ -1682,6 +1687,7 @@ public class distensionbot extends SubspaceBot {
                 if( rank > 1 )
                     award = rank * 5;
                 m_botAction.sendPrivateMessage(name, "ON FIRE!  (" + award + " RP bonus.)", 20 );
+                addRankPoints(award);
             }
             
             if( successiveKills == 15 ) {
@@ -1689,8 +1695,8 @@ public class distensionbot extends SubspaceBot {
                 if( rank > 1 )
                     award = rank * 7;
                 m_botAction.sendPrivateMessage(name, "UNSTOPPABLE!  (" + award + " RP bonus.)", 21 );
+                addRankPoints(award);
             }
-            
             
             /*
             if( successiveKills >= SUCCESSIVE_KILLS_TO_UNLOCK_WEASEL ) {
