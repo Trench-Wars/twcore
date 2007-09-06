@@ -446,10 +446,12 @@ public class distensionbot extends SubspaceBot {
         // Prize back to life the player who was killed
         DistensionPlayer loser = m_players.get( killed.getPlayerName() );
         if( loser != null ) {
-            if( loser.hasFastRespawn() )
-                m_prizeQueue.addHighPriorityPlayer( loser );
-            else
+            loser.doSafeWarp();
+            if( loser.hasFastRespawn() ) {
+                m_prizeQueue.addHighPriorityPlayer( loser );                
+            } else {
                 m_prizeQueue.addPlayer( loser );
+            }            
         } else
             return;
 
@@ -1487,7 +1489,6 @@ public class distensionbot extends SubspaceBot {
          * Prizes upgrades to player based on what has been purchased.
          */
         public void prizeUpgrades() {
-            m_botAction.shipReset(name);
             Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1).getAllUpgrades();
             int prize = -1;
             for( int i = 0; i < NUM_UPGRADES; i++ ) {
@@ -1497,8 +1498,8 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.specificPrize( name, prize );
             }
             doWarp();
-        }
-        
+        }        
+            
         /**
          * Warps player to the appropriate spawning location (near a specific base).
          * Used after prizing. 
@@ -1513,6 +1514,18 @@ public class distensionbot extends SubspaceBot {
             else
                 y = SPAWN_BASE_1_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
             m_botAction.warpTo(name, x, y);
+        }
+        
+        /**
+         * Warps player to the safe after death.
+         */
+        public void doSafeWarp() {
+            int base = armyID % 2;
+            if( base == 0 )
+                m_botAction.warpTo(name, 512, 249);
+            else
+                m_botAction.warpTo(name, 512, 773);
+            m_botAction.shipReset(name);
         }
         
         /**
