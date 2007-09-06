@@ -24,10 +24,31 @@ public class utilstandard extends MultiUtil {
     // Lock toggle, for internal use.  0=ignore lock msgs; 1=lock arena; 2=unlock arena
     int doLock = 0;
 
+    private final static String[] help = {
+            "!random <sizeOfFreqs>   - Randomizes players to freqs of a given size.",
+            "!teams <numberTeams>    - Makes the requested number of teams.",
+            "!door <-2 to 255>       - Changes door mode.  -2 and -1 are random/on-off modes.",
+            "!restart                - Restarts the ball game. (*restart)",
+            "!dolock                 - Locks the arena (will guarantee lock; is NOT a toggle)",
+            "!dounlock               - Unlocks the arena (will guarantee unlock; is NOT a toggle)",
+            "!where                  - Robo will tell you his location. Remote PM only.",
+            "!setship <ship>         - Changes everyone to <ship>",
+            "!setship <freq> <ship>  - Changes everyone on <freq> to <ship>",
+            "!setfreq <freq>         - Changes everyone to <freq>",
+            "!setfreq <ship> <freq>  - Changes everyone in <ship> to <freq> (-<ship> for 'other than')",
+            "!merge <freq1> <freq2>  - Changes everyone on <freq1> to <freq2>",
+            "!teamsspec <numTeams>   - Makes requested # of teams, specs all, & keeps freqs.   *",
+            "!specfreq <freq>        - Specs everyone on <freq>, but keeps them on their freq. *",
+            "!specallkeepfreqs       - Specs everyone, but keeps them on their freq.           *",
+            "!restore                - Setship/setfreq to prior state anyone spec'd by these.  ^",
+            "!clearinfo              - Clear all information stored about player freqs & ships."
+    };
+
+
     /**
      * Init method, called on load.
      */
-    public void init() {        
+    public void init() {
     }
 
     /**
@@ -211,7 +232,7 @@ public class utilstandard extends MultiUtil {
      * Stores ship and freq info on a freq specified (or -1 for all players
      * currently in the game).  The information can later be used to !restore
      * the previous status of the stored players.
-     * @param freq Frequency to store; -1 for all players 
+     * @param freq Frequency to store; -1 for all players
      */
     private void storePlayerInfo( int freq ) {
         Iterator i;
@@ -230,7 +251,7 @@ public class utilstandard extends MultiUtil {
 
     /**
      * Restores players to prior ship & freq before they were spec'd with one
-     * of the memory-enabled commands. 
+     * of the memory-enabled commands.
      */
     private void restorePlayers() {
         Iterator i = storedPlayers.keySet().iterator();
@@ -280,25 +301,6 @@ public class utilstandard extends MultiUtil {
      * Returns String array of help for this module.
      */
     public String[] getHelpMessages() {
-        String[] help = {
-                "!random <sizeOfFreqs>   - Randomizes players to freqs of a given size.",
-                "!teams <numberTeams>    - Makes the requested number of teams.",
-                "!door <-2 to 255>       - Changes door mode.  -2 and -1 are random/on-off modes.",
-                "!restart                - Restarts the ball game. (*restart)",
-                "!dolock                 - Locks the arena (will guarantee lock; is NOT a toggle)",
-                "!dounlock               - Unlocks the arena (will guarantee unlock; is NOT a toggle)",
-                "!where                  - Robo will tell you his location. Remote PM only.",
-                "!setship <ship>         - Changes everyone to <ship>",
-                "!setship <freq> <ship>  - Changes everyone on <freq> to <ship>",
-                "!setfreq <freq>         - Changes everyone to <freq>",
-                "!setfreq <ship> <freq>  - Changes everyone in <ship> to <freq>",
-                "!merge <freq1> <freq2>  - Changes everyone on <freq1> to <freq2>.",
-                "!teamsspec <numTeams>   - Makes requested # of teams, specs all, & keeps freqs.   *",
-                "!specfreq <freq>        - Specs everyone on <freq>, but keeps them on their freq. *",
-                "!specallkeepfreqs       - Specs everyone, but keeps them on their freq.           *",
-                "!restore                - Setship/setfreq to prior state anyone spec'd by these.  ^",
-                "!clearinfo              - Clear all information stored about player freqs & ships."
-        };
         return help;
     }
 
@@ -315,6 +317,6 @@ public class utilstandard extends MultiUtil {
         public StoredPlayer( int ship, int freq ) {
             this.ship = ship;
             this.freq = freq;
-        }        
+        }
     }
 }
