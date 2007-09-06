@@ -58,6 +58,7 @@ public class freezetag extends MultiModule {
     HashSet<String> freq1SpidSet;        //set to keep track of freq 1 spids
     int timeLimit;               //defaults to 0 if game is not timed
     boolean isRunning;           //whether or not the game is currently running
+    TimerTask m_runOutTheClock;
 
     /**
      * Initialize the module.
@@ -426,12 +427,12 @@ public class freezetag extends MultiModule {
                 m_botAction.shipResetAll();
                 if( timeLimit > 0 ) {
                     m_botAction.setTimer( timeLimit );
-                    TimerTask runOutTheClock = new TimerTask() {
+                    m_runOutTheClock = new TimerTask() {
                         public void run() {
                             determineWinner();
                         }
                     };
-                    m_botAction.scheduleTask( runOutTheClock,
+                    m_botAction.scheduleTask( m_runOutTheClock,
                                 timeLimit * SECS_IN_MIN * MS_IN_SEC );
                 }
                 isRunning = true;
@@ -448,6 +449,7 @@ public class freezetag extends MultiModule {
      */
 
     public void determineWinner() {
+    	m_botAction.cancelTask(m_runOutTheClock);
         if( freq1JavSet.size() < freq0WarbirdSet.size() ) {
             isRunning = false;
             m_botAction.sendArenaMessage(
