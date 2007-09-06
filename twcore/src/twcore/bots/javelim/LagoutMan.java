@@ -18,7 +18,7 @@ import twcore.core.BotAction;
 
 final class LagoutMan<K> {
 	interface ExpiredLagoutHandler<K> {
-		void handleExpiredLagout(K name);
+		void handleExpiredLagout(K o);
 	}
 
 	private long m_expireTimems = 30000;
@@ -82,16 +82,17 @@ final class LagoutMan<K> {
 
     /**
      * Checks if an item is in the the list
+     * @param o the item to check against (ie. name)
      * @return true if it is (ie. player is lagged out). false otherwise
      */
     public boolean contains(K o) {
     	return m_lagoutMap.containsKey(o);
     }
 
-	private class LagoutTask extends TimerTask {
+	private final class LagoutTask extends TimerTask {
 		K m_o;
 
-		public LagoutTask(K o) {
+		LagoutTask(K o) {
 			m_o = o;
 		}
 

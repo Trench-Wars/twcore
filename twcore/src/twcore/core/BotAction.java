@@ -69,7 +69,7 @@ public class BotAction
     private int                 m_botNumber;        // Bot's internal ID number
     private TempSettingsManager m_tsm;              // Handles Temporary Settings
     private TimerTask			m_positionTask;     // Task for player tracking
-    
+
     private int 				DefaultSpectateTime;// Default time between switching from player to play with player spectating
 
 
@@ -1775,22 +1775,36 @@ public class BotAction
     }
 
     /**
-     * Changes all players in a particular ship to a particular freq.
-     * @param shipType The ship type you wish to set to a freq
+     * Changes all players in a particular ship to a particular freq. If shipType
+     * is negative, then every other ship is affected instead. Spectators are not
+     * affected by this method.
+     * @param shipType The ship type to set to a freq, can be negative for 'not'
      * @param freq The frequency to switch the players to
      */
-    public void changeAllInShipToFreq(int shipType, int freq)
-    {
-        if (!(shipType >= 1 && shipType <= 8))
+    public void changeAllInShipToFreq(int shipType, int freq) {
+    	boolean neg;
+    	if(neg = shipType < 0) {
+    		shipType = -shipType;
+    	}
+        if(shipType < 1 || shipType > 8) {
             return;
+        }
         Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
-        if (i == null)
+        if(i == null) {
             return;
-        while (i.hasNext())
-        {
+        }
+        while(i.hasNext()) {
         	Player p = i.next();
-        	if(p.getShipType() == shipType)
-            	setFreq(p.getPlayerID(), freq);
+        	int pShip = p.getShipType();
+        	if(neg) {
+        		if(pShip != shipType && pShip != Tools.Ship.SPECTATOR) {
+        			setFreq(p.getPlayerID(), freq);
+        		}
+        	} else {
+	        	if(pShip == shipType) {
+    	        	setFreq(p.getPlayerID(), freq);
+	        	}
+        	}
         }
     }
 
@@ -2266,7 +2280,7 @@ public class BotAction
      * particularly with DefaultSpectateTime at values >1000 -- it requires only 3
      * bytes sent each specified tick -- but it is recommended to turn this feature
      * off by using a 0 value if you will not need reliable information in Player
-     * classes.  (Name, playerID, ship type, wins and losses do not rely on this.)  
+     * classes.  (Name, playerID, ship type, wins and losses do not rely on this.)
      * <p>Note that because TWCore is a client emulator (does not operate on the
      * server side but logs in as a bot) it only receives position packets from
      * the server about players within radar range.  This is why it must switch
