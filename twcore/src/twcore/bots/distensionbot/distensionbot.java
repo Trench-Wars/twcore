@@ -36,22 +36,17 @@ import twcore.core.util.Tools;
  * Add:
  * - flag time for two flags
  * - last few ships
- * - warping players out of safe who warp into it
  * - reset all flags when nobody's in game
- * - !info command for staff to check on status of a player
- * - !armies showing current strengths instead of bonuses for players in game.
- * - !grant to grant point amounts
- * - getting flag bug (debug output)
  * - fix enlistment bonus
  * 
- * Add after game is running:
- * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
+ * Lower priority (in order):
  * - !scrap #         - Scrap (sell) a given upgrade as defined on !status screen (lose back to start of level)
  * - !defect #(:password) - Defect to another army
- * - !myfreq  - to their freq when in spec
  * - !intro, !intro2, !intro3, etc.
- * - F1 Help, eventually?
+ * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
  * - !emp for terr "targetted EMP" ability, and appropriate player data
+ * - !myfreq  - to their freq when in spec
+ * - F1 Help
  *
  *
  * Adding up points:
@@ -79,10 +74,10 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_REQ_SHIP7 = 10;
     private final int RANK_REQ_SHIP8 = 2;
     
-    private final int SPAWN_BASE_0_Y_COORD = 486;               // Y coord around which base 0 owners (top) spawn
-    private final int SPAWN_BASE_1_Y_COORD = 536;               // Y coord around which base 1 owners (bottom) spawn
-    private final int SPAWN_Y_SPREAD = 40;                      // # tiles * 2 from above coords to spawn players
-    private final int SPAWN_X_SPREAD = 200;                     // # tiles * 2 from x coord 512 to spawn players  
+    private final int SPAWN_BASE_0_Y_COORD = 466;               // Y coord around which base 0 owners (top) spawn
+    private final int SPAWN_BASE_1_Y_COORD = 556;               // Y coord around which base 1 owners (bottom) spawn
+    private final int SPAWN_Y_SPREAD = 75;                      // # tiles * 2 from above coords to spawn players
+    private final int SPAWN_X_SPREAD = 150;                     // # tiles * 2 from x coord 512 to spawn players  
     
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
                                                             // Msg displayed for DB error
@@ -93,10 +88,13 @@ public class distensionbot extends SubspaceBot {
     private PrizeQueue m_prizeQueue;
 
     private Vector <ShipProfile>m_shipGeneralData;          // Generic (nonspecific) purchasing data for ships
-    private HashMap <String,DistensionPlayer>m_players;    // In-game data on players (Name -> Player)
+    private HashMap <String,DistensionPlayer>m_players;     // In-game data on players (Name -> Player)
     private HashMap <Integer,DistensionArmy>m_armies;       // In-game data on armies  (ID -> Army)
-    private HashMap <Integer,Integer>m_flags;               // In-game data on flags   (FlagID -> ArmyID that owns)
+    //private HashMap <Integer,Integer>m_flags;               // In-game data on flags   (FlagID -> ArmyID that owns)
 
+    private TimerTask entranceWaitTask;
+    private boolean readyForPlay = false;
+    private int[] flagOwner = {-1, -1};
 
 
     /**
@@ -117,10 +115,18 @@ public class distensionbot extends SubspaceBot {
         m_shipGeneralData = new Vector<ShipProfile>();
         m_players = new HashMap<String,DistensionPlayer>();
         m_armies = new HashMap<Integer,DistensionArmy>();
-        m_flags = new HashMap<Integer,Integer>();
-        m_prizeQueue = new PrizeQueue();
-        m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, 1000, UPGRADE_DELAY);
-        setupPrices();        
+        //m_flags = new HashMap<Integer,Integer>();
+        setupPrices();
+        try {
+            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
+            while( r.next() ) {
+                Integer id = r.getInt( "fnArmyID");
+                m_armies.put(id, new DistensionArmy(id));                
+            }
+            m_botAction.SQLClose(r);
+        } catch (SQLException e) {
+            Tools.printLog("Error retrieving army data on startup.");
+        }
     }
 
 
@@ -140,9 +146,27 @@ public class distensionbot extends SubspaceBot {
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
     }
 
+    
+    /**
+     * Performs startup tasks once the bot has entered the arena.
+     */
+    public void init() {
+        m_botAction.setMessageLimit( 10 );
+        m_botAction.setReliableKills(1);
+        m_botAction.setPlayerPositionUpdating(500);
+        m_botAction.specAll();
+        m_botAction.toggleLocked();
+        m_botAction.resetFlagGame();
+        m_prizeQueue = new PrizeQueue();
+        m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, 1000, UPGRADE_DELAY);
+        entranceWaitTask = new TimerTask() {
+            public void run() {
+                readyForPlay = true;
+            }
+        };
+        m_botAction.scheduleTask( entranceWaitTask, 3000 );
+    }
 
-
-    // ****** COMMAND PROCESSING ******
 
     /**
      * Registers all commands necessary.
@@ -177,92 +201,348 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleArenaMessage" );
     }
-    
-    
+
+
+    /**
+     * Catches unlocking of arena and re-locks.
+     * @param name
+     * @param message
+     */
     public void handleArenaMessage( String name, String message ) {
-         if( message.equals( "Arena UNLOCKED" ) )
-            m_botAction.toggleLocked();
+        if( message.equals( "Arena UNLOCKED" ) )
+           m_botAction.toggleLocked();
+    }
+
+
+   /**
+    * Display appropriate message for invalid commands.
+    * @param name
+    * @param msg
+    */
+   public void handleInvalidMessage( String name, String msg ) {
+       m_botAction.sendPrivateMessage( name, "I don't get what you mean... maybe I can !help you with something?"  );
+   }
+
+
+   /**
+    * Display non-acceptance message for remote msgs.
+    * @param name
+    * @param msg
+    */
+   public void handleRemoteMessage( String name, String msg ) {
+       m_botAction.sendSmartPrivateMessage( name, "Can't quite hear ya.  C'mere, and maybe I'll !help you."  );
+   }
+
+
+   /**
+    * Display help based on access level.
+    * @param name
+    * @param msg
+    */
+   public void cmdHelp( String name, String msg ) {
+       DistensionPlayer p = m_players.get( name );
+       if( p == null )
+           p = m_players.put( name, new DistensionPlayer(name) );
+
+       if( p.getShipNum() == -1 ) {
+           String[] helps = {
+                   "!return               - Return to your current position in the war",
+                   "!enlist <army#>       - Enlist in <army#>",
+                   "!armies               - View all public armies and their IDs",
+                   "!intro                - Gives an introduction to Distension"                    
+           };
+           m_botAction.privateMessageSpam(name, helps);
+       } else if( p.getShipNum() == 0 ) {
+           String[] helps = {
+                   "!pilot <ship>         - Pilot <ship> if available in your hangar",
+                   "!hangar               - View your ships & those available for purchase",
+                   "!progress (or .)      - See your progress toward next advancement",
+                   "!status               - View current ship's level and upgrades",
+                   "!upgrade <upg>        - Upgrade your ship with <upg> from the armory",
+                   "!armory               - View ship upgrades available in the armory",
+                   "!defect <army>        - (not yet implemented) Defect to <army>",
+                   "!scrap <upg>          - (not yet implemented) Sell <upg>"
+           };
+           m_botAction.privateMessageSpam(name, helps);
+       } else {
+           String[] helps = {
+                   "!progress (or .)      - See your progress toward next advancement",
+                   "!status               - View current ship's level and upgrades",
+                   "!upgrade <upg>        - Upgrade your ship with <upg> from the armory",
+                   "!armory               - View ship upgrades available in the armory",
+                   "!pilot <ship>         - Change into <ship> if available in your hangar",
+                   "!hangar               - View your ships & those available for purchase",
+                   "!dock                 - Dock your ship, recording status to headquarters",
+                   "!defect <army>        - (not yet implemented) Defect to <army>",
+                   "!scrap <upg>          - (not yet implemented) Sell <upg>"
+           };
+           m_botAction.privateMessageSpam(name, helps);
+       }
+           
+       
+       if( m_botAction.getOperatorList().isHighmod(name) ) {
+           String[] helps = {
+                   "!info <name>          - Gets info on <name> from their !status screen",
+                   "!ban <name>           - Bans a player from playing Distension",
+                   "!unban <name>         - Unbans banned player",
+                   "!savedata             - Saves all player data to database",
+                   "!die                  - Kills DistensionBot -- use !savedata first"
+           };
+           m_botAction.privateMessageSpam(name, helps);
+       }
+   }
+
+
+    
+    // ***** EVENT PROCESSING *****
+
+    /**
+     * Send all commands to CI.
+     * @param event Event to handle.
+     */
+    public void handleEvent(Message event) {
+        m_commandInterpreter.handleEvent( event );
     }
 
 
     /**
-     * Display appropriate message for invalid commands.
-     * @param name
-     * @param msg
+     * Join the proper arena, and set up spam protection.
+     * @param event Event to handle.
      */
-    public void handleInvalidMessage( String name, String msg ) {
-        m_botAction.sendPrivateMessage( name, "I don't get what you mean... maybe I can !help you with something?"  );
+    public void handleEvent(LoggedOn event) {
+        m_botAction.joinArena(m_botSettings.getString("Arena"));
     }
 
 
     /**
-     * Display non-acceptance message for remote msgs.
-     * @param name
-     * @param msg
+     * Enable reliable tracking of kills on joining of arena.
+     * @param event Event to handle.
      */
-    public void handleRemoteMessage( String name, String msg ) {
-        m_botAction.sendSmartPrivateMessage( name, "Can't quite hear ya.  C'mere, and maybe I'll !help you."  );
+    public void handleEvent(ArenaJoined event) {
+        init();
     }
 
 
     /**
-     * Display help based on access level.
-     * @param name
-     * @param msg
+     * Track players as they enter, and provide basic help on playing Distension.
+     * @param event Event to handle.
      */
-    public void cmdHelp( String name, String msg ) {
-        DistensionPlayer p = m_players.get( name );
+    public void handleEvent(PlayerEntered event) {
+        String name = event.getPlayerName();
+        if( name == null || name == "Mr. Arrogant 2" || name == m_botAction.getBotName() )
+            return;
+        m_players.remove( name );
+        m_players.put( name, new DistensionPlayer( name ) );
+        m_botAction.sendPrivateMessage( name, "Welcome to Distension BETA - the TW RPG.  You are welcome to play, but player data will not carry over to the public release, & bugs WILL be present.  This is a work in progress." );
+        m_botAction.sendPrivateMessage( name, "NOTE: At public release, bug reporters (?message dugwyler) will receive bonus points, as will the 3 players w/ highest combined rank in all ships." );
+        m_botAction.sendPrivateMessage( name, "--- HOW TO START ---   1: Type !armies to see available armies.  2: !enlist id# to enlist in a specific army.  3: !pilot 1 to pilot your first ship, the WB.  Use !return to come back later on.");
+    }
+
+
+    /**
+     * Save player data if unexpectedly leaving Distension.
+     * @param event Event to handle.
+     */
+    public void handleEvent(PlayerLeft event) {
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        if( name == null )
+            return;
+        DistensionPlayer player = m_players.get( name );
+        if( player == null )
+            return;
+        player.saveCurrentShipToDBNow();
+
+        m_players.remove( name );
+    }
+
+
+    /**
+     * Save player data if unexpectedly leaving Distension.
+     * @param event Event to handle.
+     */
+    public void handleEvent(FlagClaimed event) {
+        int flagID = event.getFlagID();
+        Player p = m_botAction.getPlayer( event.getPlayerID() );
         if( p == null )
-            p = m_players.put( name, new DistensionPlayer(name) );
-
-        if( p.getShipNum() == -1 ) {
-            String[] helps = {
-                    "!return               - Return to your current position in the war",
-                    "!enlist <army#>       - Enlist in <army#>",
-                    "!armies               - View all public armies and their IDs",
-                    "!intro                - Gives an introduction to Distension"                    
-            };
-            m_botAction.privateMessageSpam(name, helps);
-        } else if( p.getShipNum() == 0 ) {
-            String[] helps = {
-                    "!pilot <ship>         - Pilot <ship> if available in your hangar",
-                    "!hangar               - View your ships & those available for purchase",
-                    "!progress (or .)      - See your progress toward next advancement",
-                    "!status               - View current ship's level and upgrades",
-                    "!upgrade <upg>        - Upgrade your ship with <upg> from the armory",
-                    "!armory               - View ship upgrades available in the armory",
-                    "!defect <army>        - (not yet implemented) Defect to <army>",
-                    "!scrap <upg>          - (not yet implemented) Sell <upg>"
-            };
-            m_botAction.privateMessageSpam(name, helps);
-        } else {
-            String[] helps = {
-                    "!progress (or .)      - See your progress toward next advancement",
-                    "!status               - View current ship's level and upgrades",
-                    "!upgrade <upg>        - Upgrade your ship with <upg> from the armory",
-                    "!armory               - View ship upgrades available in the armory",
-                    "!pilot <ship>         - Change into <ship> if available in your hangar",
-                    "!hangar               - View your ships & those available for purchase",
-                    "!dock                 - Dock your ship, recording status to headquarters",
-                    "!defect <army>        - (not yet implemented) Defect to <army>",
-                    "!scrap <upg>          - (not yet implemented) Sell <upg>"
-            };
-            m_botAction.privateMessageSpam(name, helps);
-        }
-            
+            return;
         
-        if( m_botAction.getOperatorList().isHighmod(name) ) {
-            String[] helps = {
-                    "!info <name>          - Gets info on <name> from their !status screen",
-                    "!ban <name>           - Bans a player from playing Distension",
-                    "!unban <name>         - Unbans banned player",
-                    "!savedata             - Saves all player data to database",
-                    "!die                  - Kills DistensionBot -- use !savedata first"
-            };
-            m_botAction.privateMessageSpam(name, helps);
+        // If flag is already claimed, take it away from old freq
+        if( flagOwner[flagID] != -1 ) { 
+            DistensionArmy army = m_armies.get( new Integer( flagOwner[flagID] ) );
+            if( army != null ) {
+                army.adjustFlags( -1 );
+                if( DEBUG )
+                    m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " taken from army #" + flagOwner[flagID] );
+            }            
+        }
+        DistensionArmy army = m_armies.get( new Integer( p.getFrequency() ) );
+        if( army != null ) {
+            army.adjustFlags( 1 );
+            if( DEBUG )
+                m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " added to your army; " + army.getNumFlagsOwned() + " flags now owned");
+        }
+        
+        flagOwner[flagID] = p.getFrequency();
+                
+        /*
+        // Subtract from old holders; increment for new holders
+        Integer ownerID = m_flags.get( new Integer(flagID) );
+        if( ownerID != null ) {
+            DistensionArmy army = m_armies.get( ownerID );
+            if( army != null ) {
+                army.adjustFlags( -1 );
+                if( DEBUG )
+                    m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " taken from army #" + ownerID );
+            }
+        }
+        DistensionArmy army = m_armies.get( new Integer( p.getFrequency() ) );
+        if( army != null ) {
+            army.adjustFlags( 1 );
+            if( DEBUG )
+                m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " added to your army; " + army.getNumFlagsOwned() + " flags now owned");
+        }
+
+        // Replace old army with the new
+        m_flags.put( new Integer(flagID), new Integer(p.getFrequency()) );
+        */
+    }
+
+
+    /**
+     * Dock player if they spec.
+     * @param event Event to handle.
+     */
+    public void handleEvent(FrequencyShipChange event) {
+        if( !readyForPlay )         // If bot has not fully started up,
+            return;                 // don't operate normally when speccing players.
+        if( event.getShipType() == 0 ) {
+            DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
+            doDock( p );
         }
     }
 
+        
+    /**
+     * DEATH HANDLING
+     *
+     * Upon death, assign points based on level to the victor, and prize the
+     * loser back into existence.
+
+     * Adding up points:
+     *   Flag multiplier:  No flags=all rewards are 1; 1 flag=regular; 2 flags=x2
+     *
+     *   15 levels lower or more           = 1 pt
+     *   14 levels below to 9 levels above = level of ship
+     *   10 levels above or more           = killer's level + 10
+     *
+     * @param event Event to handle.
+     */
+    public void handleEvent(PlayerDeath event) {
+        Player killer = m_botAction.getPlayer( event.getKillerID() );
+        Player killed = m_botAction.getPlayer( event.getKilleeID() );
+        if( killed == null )
+            return;
+
+        // Prize back to life the player who was killed
+        DistensionPlayer loser = m_players.get( killed.getPlayerName() );
+        if( loser != null ) {
+            if( loser.hasFastRespawn() )
+                m_prizeQueue.addHighPriorityPlayer( loser );
+            else
+                m_prizeQueue.addPlayer( loser );
+        } else
+            return;
+
+        if( killer != null ) {
+           DistensionPlayer victor = m_players.get( killer.getPlayerName() );
+            if( victor == null )
+                return;
+
+            // IF TK: TKer loses points equal to half their level, and they are notified
+            // of it if they have not yet been notified this match.  Successive kills are
+            // also cleared.
+            if( killed.getFrequency() == killer.getFrequency() ) {
+                int div;
+                // Sharks get off a little easier for TKs.  But not that easy.
+                if( killer.getShipType() == Tools.Ship.SHARK )
+                    div = 5;
+                else
+                    div = 2;
+                int loss = -(victor.getUpgradeLevel() / div);
+                victor.addRankPoints( loss );
+                victor.clearSuccessiveKills();
+                if( !victor.wasWarnedForTK() ) {
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "Lost " + loss + " rank points for TKing " + killed.getPlayerName() + ".  (You will not be notified for subsequent TKs)" );
+                    victor.setWarnedForTK();
+                }
+            // Otherwise: Add points via level scheme
+            } else {
+                DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
+                DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
+                if( killerarmy == null || killedarmy == null )
+                    return;
+
+                if( killerarmy.getNumFlagsOwned() == 0 ) {
+                    if( DEBUG )
+                        m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: 1 RP for kill.  (0 flags owned)" );
+                    victor.addRankPoints( 1 );
+                    // Loser does not lose any points for dying if controlling both flags
+                    return;
+                }
+
+                int points;
+                int loss = 0;
+                
+                // Loser is 10 or more levels above victor:
+                //   Victor earns his level + 10, and loser loses half of that amount from due shame
+                if( loser.getUpgradeLevel() - victor.getUpgradeLevel() >= 10 ) {
+                    points = victor.getUpgradeLevel() + 10;
+                    loss = points / 2; 
+                    
+                // Loser is 15 or more levels below victor:
+                //   Victor only gets 1 point, and loser loses nothing
+                } else if( loser.getUpgradeLevel() - victor.getUpgradeLevel() <= -15 ) {
+                    points = 1;
+                    
+                // Loser is between 14 levels below and 9 levels above victor:
+                //   Victor earns the level of the loser in points, and loser loses
+                //   a point if over level 5.  Level 0 players are worth 1 point. 
+                } else {
+                    if( loser.getUpgradeLevel() == 0 )
+                        points = 1;
+                    else {
+                        points = loser.getUpgradeLevel();
+                        if( loser.getUpgradeLevel() > 5 )
+                            loss = 1;
+                    }
+                }
+                
+                // Points adjusted based on size of victor's army v. loser's 
+                double armySizeWeight = (killedarmy.getTotalStrength() - killerarmy.getTotalStrength());
+                if( armySizeWeight != 0 )
+                    armySizeWeight /= 2.0;
+                else
+                    armySizeWeight = 1;
+
+                points = (int)((points * killerarmy.getNumFlagsOwned()) * armySizeWeight);
+
+                victor.addRankPoints( points );
+                loser.addRankPoints( -loss );
+                // Track successive kills for weasel unlock
+                victor.addSuccessiveKill();
+                loser.clearSuccessiveKills();
+                if( DEBUG ) {
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + " RP earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
+                    if( loss > 0 )
+                        m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: " + loss + " RP lost; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
+                }
+            }
+        }
+    }
+
+
+    // ***** COMMAND PROCESSING *****
+        
 
     /**
      * Save all player data.  Sends arena msgs.
@@ -332,7 +612,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( name, "Enlist?  You're already signed up!  I know you: you can !return any time.  After that, maybe you'd like to !defect to an army more worthy of your skills?");
                 return;
             }
-        } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+        } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); return; }
 
         Integer armyNum;
         String pwd = "";
@@ -350,39 +630,39 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        try {
-            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionArmy WHERE fnArmyID = '"+ armyNum +"'" );
-            if( r.next() ) {
-                //int bonus = 0;
-                if( r.getString( "fcPrivateArmy" ).equals("y") ) {
-                    if ( r.getString( "fnPassword" ) != pwd ) {
-                        m_botAction.sendPrivateMessage( name, "That's a private army there.  And the password doesn't seem to match up.  Best watch yourself now, or you won't get in ANYWHERE." );
-                        return;
-                    }
-                } else {
-                    //if( r.getString( "fcDefaultArmy" ).equals("y") )
-                        //bonus = calcEnlistmentBonus( armyNum, getDefaultArmyCounts() );
-                }
-                m_botAction.sendPrivateMessage( name, "Ah, joining " + r.getString( "fcArmyName" ) + "?  Excellent.  You'll be pilot #" + (r.getInt( "fnNumPilots" ) + 1) + "." );
-                m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + (r.getInt( "fnNumPilots" ) + 1) + "' WHERE fnArmyID='" + armyNum + "'" );
+        DistensionArmy army = m_armies.get(armyNum);
+        if( army == null ) {
+            m_botAction.sendPrivateMessage( name, "You making stuff up now?  Maybe you should join one of those !armies that ain't just make believe..." );
+            return;
+        }
 
-                p.setArmy( armyNum );
-                p.addPlayerToDB();
-                p.setShipNum( 0 );
-                
-                p.addShipToDB( 1 );
-                m_botAction.sendPrivateMessage( name, "Welcome aboard." );
-                m_botAction.sendPrivateMessage( name, "If you need an !intro to how things work, I'd be glad to !help out.  Or if you just want to get some action, jump in your new Warbird.  (!pilot 1)" );
-                /* ENLISTMENT BONUS -- FIX
+        // int bonus = 0;
+        if( army.isPrivate() ) {
+            if( pwd != null && !pwd.equals(army.getPassword()) ) {
+                m_botAction.sendPrivateMessage( name, "That's a private army there.  And the password doesn't seem to match up.  Duff off." );
+                return;
+            }
+        } else {
+            //if( r.getString( "fcDefaultArmy" ).equals("y") )
+            //bonus = calcEnlistmentBonus( armyNum, getDefaultArmyCounts() );
+        }
+
+        m_botAction.sendPrivateMessage( name, "Ah, joining " + army.getName().toUpperCase() + "?  Excellent.  You are pilot #" + army.getPilotsTotal() + "." );
+        army.adjustPilotsTotal(1);
+
+        p.setArmy( armyNum );
+        p.addPlayerToDB();
+        p.setShipNum( 0 );
+
+        p.addShipToDB( 1 );
+        m_botAction.sendPrivateMessage( name, "Welcome aboard." );
+        m_botAction.sendPrivateMessage( name, "If you need an !intro to how things work, I'd be glad to !help out.  Or if you just want to get some action, jump in your new Warbird.  (!pilot 1)" );
+        /* ENLISTMENT BONUS -- FIX
                 if( bonus > 0 ) {
                     m_botAction.sendPrivateMessage( name, "Your enlistment bonus also entitles you to " + bonus + " free upgrade" + (bonus==1?"":"s")+ ".  Congratulations." );
                     m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionShip SET fnRankPoints='" + bonus + "' WHERE fnPlayerID='" + p.get + "'" );                    
                 }
-                */
-            } else {
-                m_botAction.sendPrivateMessage( name, "You making stuff up now?  Maybe you should join one of those !armies that ain't just make believe..." );
-            }
-        } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+         */
     }
 
 
@@ -440,6 +720,11 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "Exactly which ship do you mean there?  Give me a number.  Maybe check the !hangar first." );
             return;
         }
+        
+        if( player.getShipNum() == shipNum ) {
+            m_botAction.sendPrivateMessage( name, "Exactly which ship do you mean there?  Give me a number.  Maybe check the !hangar first." );
+            return;            
+        }
 
         if( player.shipIsAvailable( shipNum ) ) {
             DistensionArmy army = m_armies.get( new Integer(player.getArmyID()) );
@@ -447,8 +732,9 @@ public class distensionbot extends SubspaceBot {
                 player.saveCurrentShipToDBNow();
                 if( army != null ) { 
                     army.adjustStrength( -player.getUpgradeLevel() );
+                    army.adjustPilotsInGame( -1 );
                     if( DEBUG )
-                        m_botAction.sendPrivateMessage( player.getName(), "DEBUG: Shipchange found army; adjusting strength" );            
+                        m_botAction.sendPrivateMessage( player.getName(), "DEBUG: Shipchange found army; adjusting strength and # pilots in game" );            
                 }
             }
 
@@ -461,8 +747,10 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage( player.getName(), "DEBUG: Army not found; creating new record" );            
                 }
                 army.adjustStrength( player.getUpgradeLevel() );
+                army.adjustPilotsInGame( 1 );
+                player.putInCurrentShip();
                 player.prizeUpgrades();
-                m_botAction.sendPrivateMessage( name, Tools.shipName( player.getShipNum() ).toUpperCase() + ", rank " + player.getRank() + ".  " + player.getPointsToNextRank() + "rp to next rank ( " + player.getRankPoints() + " / " + player.getNextRankPoints() + " )");
+                m_botAction.sendPrivateMessage( name, Tools.shipName( player.getShipNum() ).toUpperCase() + ", rank " + player.getRank() + ".  " + player.getPointsToNextRank() + "RP to next rank ( " + player.getRankPoints() + " / " + player.getNextRankPoints() + " )");
                 
             } else {
                 m_botAction.sendPrivateMessage( name, "Having trouble getting that ship for you.  Please contact a mod." );
@@ -476,31 +764,26 @@ public class distensionbot extends SubspaceBot {
 
     /**
      * Docks player (that is, sends them to spectator mode -- not the sex act, or the TW sysop).
-     * This also saves ship data to the DB.
+     * This also saves ship data to the DB.  The command !dock is the same as just going to
+     * spectator mode the manual way.
      * @param name
      * @param msg
      */
     public void cmdDock( String name, String msg ) {
-        DistensionPlayer player = m_players.get( name );
-        if( player == null )
-            return;
-
-        if( player.getShipNum() < 1) {
-            m_botAction.sendPrivateMessage( name, "Hmm.  Pretty sure you're already docked there.  Want a look at the !hangar while you're here?" );
-            return;
-        }
-        
-        doDock( player );
+        m_botAction.specWithoutLock( name );
     }
     
     /**
-     * Workhorse of docking.  Also used by the FrequencyShipChange message.
+     * Workhorse of docking, used by the FrequencyShipChange message.
      * @param player Player to dock
      */
     public void doDock( DistensionPlayer player ) {
+        if( player == null )
+            return;
         DistensionArmy army = m_armies.get( new Integer(player.getArmyID()) );
         if( army != null ) {
             army.adjustStrength( -player.getUpgradeLevel() );
+            army.adjustPilotsInGame( -1 );
             if( DEBUG )
                 m_botAction.sendPrivateMessage( player.getName(), "DEBUG: Docking reduced army strength by " + player.getUpgradeLevel() );            
         }
@@ -519,38 +802,40 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdArmies( String name, String msg ) {
-        try {
-            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID, fcArmyName, fnNumPilots, fcDefaultArmy FROM tblDistensionArmy WHERE fcPrivateArmy = 'n' ORDER BY fnArmyID ASC" );
-            HashMap<Integer,Integer> allcount     = new HashMap<Integer,Integer>();
-            HashMap<Integer,Integer> defaultcount = new HashMap<Integer,Integer>();
-            HashMap<Integer,String>  names        = new HashMap<Integer,String>();
-            while( r.next() ) {
-                allcount.put( new Integer( r.getInt( "fnArmyID" )), new Integer( r.getInt( "fnNumPilots" )) );
-                names.put( new Integer( r.getInt( "fnArmyID" )), new String( r.getString( "fcArmyName" )) );
-                if( r.getString("fcDefaultArmy").equals("y") ) {
-                    defaultcount.put( new Integer( r.getInt( "fnArmyID" )), new Integer( r.getInt( "fnNumPilots" )) );
-                }
+        DistensionPlayer player = m_players.get( name );
+        if( player == null )
+            return;
+        boolean inGame = !(player.getShipNum() == -1);
+
+        if( inGame )
+            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Playing    Total    Strength    Flags" );
+        else
+            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Playing    Total    Bonus" );
+               //                                                                                     #234567890#23456789#23456789012#
+        
+        if( inGame ) {
+            for( DistensionArmy a : m_armies.values() ) {
+                m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
+                                                      Tools.formatString( a.getName(), 38 ) +
+                                                      Tools.formatString( ""+a.getPilotsInGame(), 10 ) +
+                                                      Tools.formatString( ""+a.getPilotsTotal(), 9 ) +
+                                                      Tools.formatString( ""+a.getTotalStrength(), 12 ) +
+                                                      a.getNumFlagsOwned() );
             }
-
-            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 40 ) + "Pilots" + "   Enlistment Bonus" );
-
-            Iterator i = allcount.keySet().iterator();
-            Integer armyNum, armyCount;
-            int bonus;
-            String armyName;
-            while( i.hasNext() ) {
-                armyNum = (Integer)i.next();
-                armyCount = allcount.get( armyNum );
-                armyName = names.get( armyNum );
-                if( defaultcount.containsKey(armyNum) )
-                    bonus = calcEnlistmentBonus( armyNum, defaultcount );
-                else
-                    bonus = 0;
-                m_botAction.sendPrivateMessage( name, Tools.formatString( armyNum.toString(), 4 )   + Tools.formatString( armyName, 43 ) +
-                                                      Tools.formatString( armyCount.toString(), 6 ) + bonus + " upgrade" + (bonus == 1?"":"s") );
+        } else {
+            for( DistensionArmy a : m_armies.values() ) {
+                int bonus = 0;
+                //if( a.isDefault() )
+                //    bonus = calcEnlistmentBonus( a.getID(), defaultcount );  // defaultcount = hashmap of all armies (id->totalpilots) 
+                //else
+                //    bonus = 0;
+                m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
+                        Tools.formatString( a.getName(), 43 ) +
+                        Tools.formatString( ""+a.getPilotsInGame(), 10 ) +
+                        Tools.formatString( ""+a.getPilotsTotal(), 9 ) +
+                        bonus + " upgrade" + (bonus == 1?"":"s") ); 
             }
-        } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
-
+        }
     }
 
 
@@ -623,28 +908,29 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         m_botAction.sendPrivateMessage( theName, player.getName().toUpperCase() + " of " + player.getArmyName().toUpperCase() + ":  " + Tools.shipName( shipNum ).toUpperCase() +
-                                              " - LEVEL " + player.getUpgradeLevel() );
+                                              " - RANK " + player.getRank() + " (" + player.getUpgradeLevel() + " upgrades)" );
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1 ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = player.getPurchasedUpgrades();
         String printmsg;
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
             currentUpgrade = upgrades.get( i );
-            printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 30) + "- ";
-            if( currentUpgrade.getMaxLevel() == 0 )
-                printmsg += "N/A";
-            else if( currentUpgrade.getMaxLevel() == 1 )
-                if( purchasedUpgrades[i] == 1 )
-                    printmsg += "(INSTALLED)";
-                else
-                    printmsg += "(NOT INSTALLED)";
-            else {
-                printmsg += "LVL " + purchasedUpgrades[i];
-                if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i])
-                    printmsg += "(MAX)";
-            }
-            if( currentUpgrade.getMaxLevel() != -1 )
+            if( currentUpgrade.getMaxLevel() != -1 ) {
+                printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 30) + "- ";
+                if( currentUpgrade.getMaxLevel() == 0 )
+                    printmsg += "N/A";
+                else if( currentUpgrade.getMaxLevel() == 1 )
+                    if( purchasedUpgrades[i] == 1 )
+                        printmsg += "(INSTALLED)";
+                    else
+                        printmsg += "(NOT INSTALLED)";
+                else {
+                    printmsg += "LVL " + purchasedUpgrades[i];
+                    if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i])
+                        printmsg += "(MAX)";
+                }
                 m_botAction.sendPrivateMessage( theName, printmsg );
+            }
         }
         if( mod == null )
             cmdProgress( name, msg, null );
@@ -682,7 +968,7 @@ public class distensionbot extends SubspaceBot {
             return;            
         }
                 
-        m_botAction.sendPrivateMessage( name, "You are a rank " + player.getRank() + " " + Tools.shipName(shipNum) + " pilot." );
+        m_botAction.sendPrivateMessage( name, "You are a rank " + player.getRank() + " " + Tools.shipName(shipNum) + " pilot.  " + player.getUpgradeLevel() + " upgrades installed." );
         m_botAction.sendPrivateMessage( name, "Rank points:  " + player.getRankPoints() + " / " + player.getNextRankPoints() + "  (" + player.getPointsToNextRank() + " needed for rank advancement)" );
     }
 
@@ -705,7 +991,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         m_botAction.sendPrivateMessage( name, Tools.shipName( shipNum ).toUpperCase() + " ARMORY    " + player.getUpgradePoints() + " upgrade points available");
-        m_botAction.sendPrivateMessage( name, " #  Name                                  Curr /  Max      Points     Rank Req." );
+        m_botAction.sendPrivateMessage( name, " #  Name                                  Curr /  Max     Points    Rank Req." );
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1 ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = player.getPurchasedUpgrades();
@@ -714,32 +1000,34 @@ public class distensionbot extends SubspaceBot {
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
             printCost = true;
             currentUpgrade = upgrades.get( i );
-            printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 38);
-            if( currentUpgrade.getMaxLevel() == 0 ) {
-                printmsg += "N/A";
-                printCost = false;
-            } else if( currentUpgrade.getMaxLevel() == 1 ) {
-                if( purchasedUpgrades[i] == 1 ) {
-                    printmsg += "(INSTALLED)";
+            if( currentUpgrade.getMaxLevel() != -1 ) {
+                printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 38);
+                if( currentUpgrade.getMaxLevel() == 0 ) {
+                    printmsg += "N/A";
                     printCost = false;
+                } else if( currentUpgrade.getMaxLevel() == 1 ) {
+                    if( purchasedUpgrades[i] == 1 ) {
+                        printmsg += "(INSTALLED)";
+                        printCost = false;
+                    } else {
+                        printmsg += "(NOT INSTALLED)    ";
+                    }
                 } else {
-                    printmsg += "(NOT INSTALLED)   ";
+                    if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i]) {
+                        printmsg += "( MAX )";
+                        printCost = false;
+                    } else {
+                        printmsg += Tools.formatString("( " + (purchasedUpgrades[i] < 10 ? " " : "") + purchasedUpgrades[i] + " / " +
+                                (currentUpgrade.getMaxLevel() < 10 ? " " : "") + currentUpgrade.getMaxLevel() + " )", 18);
+                    }
                 }
-            } else {
-                if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i]) {
-                    printmsg += "( MAX )";
-                    printCost = false;
-                } else {
-                    printmsg += Tools.formatString("( " + (purchasedUpgrades[i] < 10 ? " " : "") + purchasedUpgrades[i] + " / " +
-                                 currentUpgrade.getMaxLevel() + (currentUpgrade.getMaxLevel() < 10 ? " " : "") + " )", 19);
+                if( printCost ) {
+                    printmsg += Tools.formatString( "" + currentUpgrade.getCostDefine( purchasedUpgrades[i] ), 11 );
+                    int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
+                    printmsg += (req < 10 ? " " : "") + req;
                 }
-            }
-            if( printCost ) {
-                printmsg += Tools.formatString( "" + currentUpgrade.getCostDefine( purchasedUpgrades[i] ), 11 );
-                printmsg += currentUpgrade.getRankRequired( purchasedUpgrades[i] );
-            }
-            if( currentUpgrade.getMaxLevel() != -1 )
                 m_botAction.sendPrivateMessage( name, printmsg );
+            }
         }
     }
 
@@ -902,244 +1190,14 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         
+        m_botAction.sendPrivateMessage( name, "Granted " + points + "RP to " + args[0] + ".", 1 );
+        m_botAction.sendPrivateMessage( args[0], "You have been granted " + points + "RP by " + name + ".", 1 );
         player.addRankPoints( points );
-        m_botAction.sendPrivateMessage( args[0], "You have been granted " + points + "rp by " + name + "!", 1 );
     }
 
     
-    // ****************** EVENT PROCESSING ******************
 
-    /**
-     * Send all commands to CI.
-     * @param event Event to handle.
-     */
-    public void handleEvent(Message event) {
-        m_commandInterpreter.handleEvent( event );
-    }
-
-
-    /**
-     * Join the proper arena, and set up spam protection.
-     * @param event Event to handle.
-     */
-    public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena(m_botSettings.getString("Arena"));
-        m_botAction.setMessageLimit( 10 );
-    }
-
-
-    /**
-     * Enable reliable tracking of kills on joining of arena.
-     * @param event Event to handle.
-     */
-    public void handleEvent(ArenaJoined event) {
-        m_botAction.setReliableKills(1);
-        m_botAction.setPlayerPositionUpdating(500);
-        m_botAction.specAll();
-        m_botAction.toggleLocked();
-    }
-
-
-    /**
-     * Track players as they enter, and provide basic help on playing Distension.
-     * @param event Event to handle.
-     */
-    public void handleEvent(PlayerEntered event) {
-        String name = event.getPlayerName();
-        if( name == null )
-            return;
-        if( name == "Mr. Arrogant 2")
-            return;
-        m_players.remove( name );
-        m_players.put( name, new DistensionPlayer( name ) );
-        m_botAction.sendPrivateMessage( name, "Welcome to Distension BETA - the TW RPG.  You are welcome to play, but player data will not carry over to the public release, & bugs WILL be present.  This is a work in progress." );
-        m_botAction.sendPrivateMessage( name, "NOTE: At public release, bug reporters (?message dugwyler) will receive bonus points, as will the 3 players w/ highest combined rank in all ships." );
-        m_botAction.sendPrivateMessage( name, "--- HOW TO START ---   1: Type !armies to see available armies.  2: !enlist id# to enlist in a specific army.  3: !pilot 1 to pilot your first ship, the WB.  Use !return to come back later on.");
-    }
-
-
-    /**
-     * Save player data if unexpectedly leaving Distension.
-     * @param event Event to handle.
-     */
-    public void handleEvent(PlayerLeft event) {
-        String name = m_botAction.getPlayerName(event.getPlayerID());
-        if( name == null )
-            return;
-        DistensionPlayer player = m_players.get( name );
-        if( player == null )
-            return;
-        player.saveCurrentShipToDBNow();
-
-        m_players.remove( name );
-    }
-
-
-    /**
-     * Save player data if unexpectedly leaving Distension.
-     * @param event Event to handle.
-     */
-    public void handleEvent(FlagClaimed event) {
-        int flagID = event.getFlagID();
-        Player p = m_botAction.getPlayer( event.getPlayerID() );
-        if( p == null )
-            return;
-
-        // Subtract from old holders; increment for new holders
-        Integer ownerID = m_flags.get( new Integer(flagID) );
-        if( ownerID != null ) {
-            DistensionArmy army = m_armies.get( ownerID );
-            if( army != null ) {
-                army.adjustFlags( -1 );
-                if( DEBUG )
-                    m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " taken from army #" + ownerID );
-            }
-        }
-        DistensionArmy army = m_armies.get( new Integer( p.getFrequency() ) );
-        if( army != null ) {
-            army.adjustFlags( 1 );
-            if( DEBUG )
-                m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " added to your army" );
-        }
-
-        // Replace old army with the new
-        m_flags.put( new Integer(flagID), new Integer(p.getFrequency()) );
-    }
-
-
-    /**
-     * Dock player if they spec.
-     * @param event Event to handle.
-     */
-    public void handleEvent(FrequencyShipChange event) {
-        if( event.getShipType() == 0 ) {
-            DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
-            doDock( p );
-        }
-    }
-
-        
-    /**
-     * DEATH HANDLING
-     *
-     * Upon death, assign points based on level to the victor, and prize the
-     * loser back into existence.
-
-     * Adding up points:
-     *   Flag multiplier:  No flags=all rewards are 1; 1 flag=regular; 2 flags=x2
-     *
-     *   15 levels lower or more           = 1 pt
-     *   14 levels below to 9 levels above = level of ship
-     *   10 levels above or more           = killer's level + 10
-     *
-     * @param event Event to handle.
-     */
-    public void handleEvent(PlayerDeath event) {
-        Player killer = m_botAction.getPlayer( event.getKillerID() );
-        Player killed = m_botAction.getPlayer( event.getKilleeID() );
-        if( killed == null )
-            return;
-
-        // Prize back to life the player who was killed
-        DistensionPlayer loser = m_players.get( killed.getPlayerName() );
-        if( loser != null ) {
-            if( loser.hasFastRespawn() )
-                m_prizeQueue.addHighPriorityPlayer( loser );
-            else
-                m_prizeQueue.addPlayer( loser );
-        } else
-            return;
-
-        if( killer != null ) {
-           DistensionPlayer victor = m_players.get( killer.getPlayerName() );
-            if( victor == null )
-                return;
-
-            // IF TK: TKer loses points equal to half their level, and they are notified
-            // of it if they have not yet been notified this match.  Successive kills are
-            // also cleared.
-            if( killed.getFrequency() == killer.getFrequency() ) {
-                int div;
-                // Sharks get off a little easier for TKs.  But not that easy.
-                if( killer.getShipType() == Tools.Ship.SHARK )
-                    div = 5;
-                else
-                    div = 2;
-                int loss = -(victor.getUpgradeLevel() / div);
-                victor.addRankPoints( loss );
-                victor.clearSuccessiveKills();
-                if( !victor.wasWarnedForTK() ) {
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "Lost " + loss + " rank points for TKing " + killed.getPlayerName() + ".  (You will not be notified for subsequent TKs)" );
-                    victor.setWarnedForTK();
-                }
-            // Otherwise: Add points via level scheme
-            } else {
-                DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
-                DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
-                if( killerarmy == null || killedarmy == null )
-                    return;
-
-                if( killerarmy.getNumFlagsOwned() == 0 ) {
-                    if( DEBUG )
-                        m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: 1rp for kill.  (0 flags owned)" );
-                    victor.addRankPoints( 1 );
-                    // Loser does not lose any points for dying if controlling both flags
-                    return;
-                }
-
-                int points;
-                int loss = 0;
-                
-                // Loser is 10 or more levels above victor:
-                //   Victor earns his level + 10, and loser loses half of that amount from due shame
-                if( loser.getUpgradeLevel() - victor.getUpgradeLevel() >= 10 ) {
-                    points = victor.getUpgradeLevel() + 10;
-                    loss = points / 2; 
-                    
-                // Loser is 15 or more levels below victor:
-                //   Victor only gets 1 point, and loser loses nothing
-                } else if( loser.getUpgradeLevel() - victor.getUpgradeLevel() <= -15 ) {
-                    points = 1;
-                    
-                // Loser is between 14 levels below and 9 levels above victor:
-                //   Victor earns the level of the loser in points, and loser loses
-                //   a point if over level 5.  Level 0 players are worth 1 point. 
-                } else {
-                    if( loser.getUpgradeLevel() == 0 )
-                        points = 1;
-                    else {
-                        points = loser.getUpgradeLevel();
-                        if( loser.getUpgradeLevel() > 5 )
-                            loss = 1;
-                    }
-                }
-                
-                // Points adjusted based on size of victor's army v. loser's 
-                double armySizeWeight = (killedarmy.getTotalStrength() - killerarmy.getTotalStrength());
-                if( armySizeWeight != 0 )
-                    armySizeWeight /= 2.0;
-                else
-                    armySizeWeight = 1;
-
-                points = (int)((points * killerarmy.getNumFlagsOwned()) * armySizeWeight);
-
-                victor.addRankPoints( points );
-                loser.addRankPoints( -loss );
-                // Track successive kills for weasel unlock
-                victor.addSuccessiveKill();
-                loser.clearSuccessiveKills();
-                if( DEBUG ) {
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + "rp earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
-                    if( loss > 0 )
-                        m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: " + loss + "rp lost; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
-                }
-            }
-        }
-    }
-
-
-
-    // ****** ASSISTANCE METHODS ******
+    // COMMAND ASSISTANCE METHODS
 
     /**
      * @return HashMap containing army# -> num players on army of all default armies.
@@ -1189,7 +1247,8 @@ public class distensionbot extends SubspaceBot {
 
 
 
-    // ****** INTERNAL CLASSES ******
+    // ***** INTERNAL CLASSES *****
+    // Players, armies, prizing queue
 
     /**
      * Used to keep track of player data retreived from the DB, and update data
@@ -1265,6 +1324,164 @@ public class distensionbot extends SubspaceBot {
                 return 1;
         }
         */
+        
+        // DB METHODS
+        
+        /**
+         * Creates a player record in the database.
+         */
+        public void addPlayerToDB() {
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionPlayer ( fcName , fnArmyID ) " +
+                                                  "VALUES ('" + Tools.addSlashesToString( name ) + "', '" + armyID + "')" );
+            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+        }
+
+        /**
+         * Reads in data about the player from the database.
+         * @return True if data is retrieved; false if it wasn't.
+         */
+        public boolean getPlayerFromDB() {
+            try {
+                boolean success = false;
+                ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                if( r.next() ) {
+                    banned = r.getString( "fcBanned" ).equals( "y" );
+                    if( banned == true )
+                        return false;
+
+                    armyID = r.getInt( "fnArmyID" );
+                    for( int i = 0; i < 8; i++ )
+                        shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ).equals( "y" ) ? true : false );
+                    success = true;
+                }
+                m_botAction.SQLClose(r);
+                return success;
+            } catch (SQLException e ) {
+                Tools.printStackTrace("Problem fetching returning player: " + name, e);
+                return false;
+            }
+        }
+
+        /**
+         * Adds a ship as available on a player's record, sending to the database
+         * as a background query.
+         * @param shipNum Ship # to make available
+         */
+        public void addShipToDB( int shipNumToAdd ) {
+            if( shipNumToAdd < 1 || shipNumToAdd > 8 )
+                return;
+            shipsAvail[ shipNumToAdd - 1 ] = true;
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), " + shipNumToAdd + ")" );
+            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+        }
+
+
+        /**
+         * Saves current ship to DB immediately.  This will block the program thread
+         * while the operation completes (usually very fast).
+         */
+        public boolean saveCurrentShipToDBNow() {
+            return saveCurrentShipToDB( true );
+        }
+
+        
+        /**
+         * Saves current ship to DB via background query.
+         */
+        public void saveCurrentShipToDB() {
+            saveCurrentShipToDB( false );
+        }
+        
+        
+        /**
+         * Saves the current ship to the DB.  Only runs if the data has not already been saved.
+         * 
+         * @param saveNow True if the query should be foreground; false for background
+         * @return True if data was saved successfully (background query always returns true)
+         */
+        public boolean saveCurrentShipToDB( boolean saveNow ) {
+            if( shipNum < 1 || shipNum > 8 || shipDataSaved )
+                return true;
+
+            String query = "UPDATE tblDistensionShip ship, tblDistensionPlayer player SET ";
+            
+            query +=       "ship.fnRank=" + rank + "," +
+                           "ship.fnRankPoints=" + rankPoints + "," +
+                           "ship.fnUpgradePoints=" + upgPoints + "," +
+                           "ship.fnStat1=" + purchasedUpgrades[0];
+            
+            for( int i = 1; i < NUM_UPGRADES; i++ )
+                query +=   ", ship.fnStat" + (i + 1) + "=" + purchasedUpgrades[i];
+
+            query +=       " WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
+                           "ship.fnPlayerID = player.fnID AND " +
+                           "ship.fnShipNum = " + shipNum;
+            shipDataSaved = true;
+            if( saveNow ) {
+                try {
+                    m_botAction.SQLQueryAndClose( m_database, query );
+                } catch (SQLException e) {
+                    shipDataSaved = false;
+                    Tools.printLog("DistensionBot unable to save " + name + " to DB.");
+                }
+            } else {
+                m_botAction.SQLBackgroundQuery( m_database, null, query );
+            }
+            return shipDataSaved;
+        }
+
+        /**
+         * Retrieves the ship from DB.  Does not auto-set the player into the ship.
+         * @return true if successful
+         */
+        public boolean getCurrentShipFromDB() {
+            if( shipNum < 1 || shipNum > 8 )
+                return false;
+            try {
+                String query = "SELECT * FROM tblDistensionShip ship, tblDistensionPlayer player " +
+                               "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
+                               "ship.fnPlayerID = player.fnID AND " +
+                               "ship.fnShipNum = '" + shipNum + "'";
+
+                ResultSet r = m_botAction.SQLQuery( m_database, query );
+                if( r == null )
+                    return false;
+                if( r.next() ) {
+                    // Init rank level, rank points and upgrade points
+                    rank = r.getInt( "fnRank" );
+                    rankPoints = r.getInt( "fnRankPoints" );
+                    upgPoints = r.getInt( "fnUpgradePoints" );
+                    nextRank = m_shipGeneralData.get( shipNum ).getNextRankCost(rank); 
+                    
+                    // Init all upgrades
+                    upgLevel = 0;
+                    for( int i = 0; i < NUM_UPGRADES; i++ ) {
+                        purchasedUpgrades[i] = r.getInt( "fnStat" + (i + 1) );
+                        upgLevel += purchasedUpgrades[i];
+                    }
+                    shipDataSaved = true;
+                } else {
+                    shipDataSaved = false;
+                }
+
+                // Setup special (aka unusual) abilities
+                Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1).getAllUpgrades();
+                for( int i = 0; i < NUM_UPGRADES; i++ )
+                    if( upgrades.get( i ).getPrizeNum() == -1 && purchasedUpgrades[i] > 0 );
+                        fastRespawn = true;
+
+                m_botAction.SQLClose(r);
+                return shipDataSaved;
+            } catch (SQLException e ) {
+                return false;
+            }
+        }
+
+        
+        // COMPLEX ACTIONS
         
         /**
          * Prizes upgrades to player based on what has been purchased.
@@ -1352,159 +1569,6 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        // DB METHODS
-        
-        /**
-         * Creates a player record in the database.
-         */
-        public void addPlayerToDB() {
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionPlayer ( fcName , fnArmyID ) " +
-                                                  "VALUES ('" + Tools.addSlashesToString( name ) + "', '" + armyID + "')" );
-            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
-        }
-
-        /**
-         * Reads in data about the player from the database.
-         * @return True if data is retrieved; false if it wasn't.
-         */
-        public boolean getPlayerFromDB() {
-            try {
-                boolean success = false;
-                ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-                if( r.next() ) {
-                    banned = r.getString( "fcBanned" ).equals( "y" );
-                    if( banned == true )
-                        return false;
-
-                    armyID = r.getInt( "fnArmyID" );
-                    for( int i = 0; i < 8; i++ )
-                        shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ).equals( "y" ) ? true : false );
-                    success = true;
-                }
-                m_botAction.SQLClose(r);
-                return success;
-            } catch (SQLException e ) {
-                Tools.printStackTrace("Problem fetching returning player: " + name, e);
-                return false;
-            }
-        }
-
-        /**
-         * Adds a ship as available on a player's record, sending to the database
-         * as a background query.
-         * @param shipNum Ship # to make available
-         */
-        public void addShipToDB( int shipNumToAdd ) {
-            if( shipNumToAdd < 1 || shipNumToAdd > 8 )
-                return;
-            shipsAvail[ shipNumToAdd - 1 ] = true;
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-                m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), '" + shipNumToAdd + "')" );
-            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
-        }
-
-
-        /**
-         * Saves current ship to DB immediately.  This will block the program thread
-         * while the operation completes (usually very fast).
-         */
-        public boolean saveCurrentShipToDBNow() {
-            return saveCurrentShipToDB( true );
-        }
-
-        
-        /**
-         * Saves current ship to DB via background query.
-         */
-        public void saveCurrentShipToDB() {
-            saveCurrentShipToDB( false );
-        }
-        
-        
-        /**
-         * Saves the current ship to the DB.  Only runs if the data has not already been saved.
-         * @param saveNow True if the query should be foreground; false for background
-         * @return True if data was saved successfully (background query always returns true)
-         */
-        public boolean saveCurrentShipToDB( boolean saveNow ) {
-            if( shipNum < 1 || shipNum > 8 || shipDataSaved )
-                return true;
-
-            String query = "UPDATE tblDistensionShip ship, tblDistensionPlayer player SET ";
-            
-            query +=       "ship.fnRank='" + rank + "'," +
-                           "ship.fnRankPoints='" + rankPoints + "'," +
-                           "ship.fnUpgradePoints='" + upgPoints + "'," +
-                           "ship.fnStat1='" + purchasedUpgrades[0];
-            
-            for( int i = 1; i < NUM_UPGRADES; i++ )
-                query +=   ", ship.fnStat" + (i + 1) + "='" + purchasedUpgrades[i] + "'";
-
-            query +=       " WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
-                           "ship.fnPlayerID = player.fnID AND " +
-                           "ship.fnShipNum = '" + shipNum + "'";
-            shipDataSaved = true;
-            // Background it, but don't worry about results for obvious reasons
-            if( saveNow ) {
-                try {
-                    m_botAction.SQLQueryAndClose( m_database, query );
-                } catch (SQLException e) {
-                    shipDataSaved = false;
-                    Tools.printLog("DistensionBot unable to save " + name + " to DB.");
-                }
-            } else {
-                m_botAction.SQLBackgroundQuery( m_database, null, query );
-            }
-            return shipDataSaved;
-        }
-
-        /**
-         * Retrieves the ship from DB.  Does not auto-set the player into the ship.
-         * @return true if successful
-         */
-        public boolean getCurrentShipFromDB() {
-            if( shipNum < 1 || shipNum > 8 )
-                return false;
-            try {
-                String query = "SELECT * FROM tblDistensionShip ship, tblDistensionPlayer player " +
-                               "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
-                               "ship.fnPlayerID = player.fnID AND " +
-                               "ship.fnShipNum = '" + shipNum + "'";
-
-                ResultSet r = m_botAction.SQLQuery( m_database, query );
-                if( r == null )
-                    return false;
-                if( r.next() ) {
-                    // Init rank level, rank points and upgrade points
-                    rank = r.getInt( "fnRank" );
-                    rankPoints = r.getInt( "fnRankPoints" );
-                    upgPoints = r.getInt( "fnUpgradePoints" );
-                    
-                    // Init all upgrades
-                    upgLevel = 0;
-                    for( int i = 0; i < NUM_UPGRADES; i++ ) {
-                        purchasedUpgrades[i] = r.getInt( "fnStat" + (i + 1) );
-                        upgLevel += purchasedUpgrades[i];
-                    }
-                    shipDataSaved = true;
-                } else {
-                    shipDataSaved = false;
-                }
-
-                // Setup special (aka unusual) abilities
-                Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum - 1).getAllUpgrades();
-                for( int i = 0; i < NUM_UPGRADES; i++ )
-                    if( upgrades.get( i ).getPrizeNum() == -1 && purchasedUpgrades[i] > 0 );
-                        fastRespawn = true;
-
-                m_botAction.SQLClose(r);
-                return shipDataSaved;
-            } catch (SQLException e ) {
-                return false;
-            }
-        }
         
         // SETTERS
 
@@ -1518,6 +1582,7 @@ public class distensionbot extends SubspaceBot {
             rankPoints += points;
             if( rankPoints >= nextRank )
                 doAdvanceRank();
+            shipDataSaved = false;
         }
 
         /**
@@ -1526,6 +1591,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void addUpgPoints( int points ) {
             upgPoints += points;
+            shipDataSaved = false;
         }
 
         /**
@@ -1537,6 +1603,8 @@ public class distensionbot extends SubspaceBot {
             if( purchasedUpgrades[upgrade] + amt < 0 )
                 return;
             purchasedUpgrades[upgrade] += amt;
+            m_armies.get(armyID).adjustStrength( amt );
+            shipDataSaved = false;
         }
 
         /**
@@ -1552,12 +1620,13 @@ public class distensionbot extends SubspaceBot {
                 upgPoints = -1;
                 if( this.shipNum > 0 )
                     m_botAction.specWithoutLock( name );
-            } else {
-                m_botAction.setShip( name, shipNum );
-                m_botAction.setFreq( name, getArmyID() );
-                nextRank = m_shipGeneralData.get( shipNum ).getNextRankCost(rank); 
             }
             this.shipNum = shipNum;            
+        }
+        
+        public void putInCurrentShip() {
+            m_botAction.setShip( name, shipNum );
+            m_botAction.setFreq( name, getArmyID() );            
         }
 
         /**
@@ -1654,6 +1723,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
             banned = false;
         }
+
         
         // GETTERS
 
@@ -1700,7 +1770,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return Returns points needed to the next rank; -1 if not in a ship
+         * @return Returns points needed to the next rank
          */
         public int getPointsToNextRank() {
             return nextRank - rankPoints;
@@ -1781,14 +1851,22 @@ public class distensionbot extends SubspaceBot {
     }
 
 
+    
+    
     /**
-     * Used to keep track of number of players on a given army.
+     * Used to keep track of players on a given army, and info retrieved from the DB
+     * about the army.
      */
     private class DistensionArmy {
-        int armyID;
+        int armyID;                     // ID, same as frequency
+        String armyName;                // Name of army
+        String password;
         int totalStrength;              // Combined levels of all pilots of the army
         int flagsOwned;                 // # flags currently owned
-        String armyName;                // Name of army
+        int pilotsInGame;               // # pilots playing right now
+        int pilotsTotal;                // # pilots in entire army
+        boolean isDefault;              // True if army is available by default (not user-created)
+        boolean isPrivate;              // True if army can't be seen on !armies screen
 
         /**
          * Creates record for an army, given an ID.
@@ -1799,11 +1877,31 @@ public class distensionbot extends SubspaceBot {
             totalStrength = 0;
             flagsOwned = 0;
             try {
-                ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fcArmyName FROM tblDistensionArmy WHERE fnArmyID = '"+ armyID + "'" );
-                if( r.next() )
+                ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fcArmyName, fcDefaultArmy, fcPrivateArmy, fnNumPilots FROM tblDistensionArmy WHERE fnArmyID = '"+ armyID + "'" );
+                if( r.next() ) {
                     armyName = r.getString( "fcArmyName" );
+                    pilotsTotal = r.getInt( "fnNumPilots" ); 
+                    isDefault = r.getString( "fcDefaultArmy" ).equals("y");
+                    isPrivate = r.getString( "fcPrivateArmy" ).equals("y");
+                    password = r.getString( "fcPassword" );
+                }
             } catch( Exception e ) {
             }
+        }
+        
+        // SETTERS
+
+        public void adjustPilotsTotal( int value ) {
+            pilotsTotal += value;
+            if( pilotsTotal < 0 )
+                pilotsTotal = 0;
+            m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots=" + pilotsTotal + " WHERE fnArmyID=" + armyID );
+        }
+
+        public void adjustPilotsInGame( int value ) {
+            pilotsInGame += value;
+            if( pilotsInGame < 0 )
+                pilotsInGame = 0;
         }
 
         public void adjustStrength( int value ) {
@@ -1818,6 +1916,8 @@ public class distensionbot extends SubspaceBot {
                 flagsOwned = 0;
         }
 
+        // GETTERS
+        
         public String getName() {
             return armyName;
         }
@@ -1833,10 +1933,36 @@ public class distensionbot extends SubspaceBot {
         public int getNumFlagsOwned() {
             return flagsOwned;
         }
+        
+        public int getPilotsInGame() {
+            return pilotsInGame;
+        }
+
+        public int getPilotsTotal() {
+            return pilotsTotal;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+        
+        /**
+         * @return True if army is available by default, and gives enlistment bonuses
+         */
+        public boolean isDefault() {
+            return isDefault;
+        }
+
+        /**
+         * @return True if army is not publicly-known (shown on lists)
+         */
+        public boolean isPrivate() {
+            return isPrivate;
+        }
     }
 
 
-    // GENERIC INTERNAL DATA CLASSES (for static info defined in price setup)
+    // ***** GENERIC INTERNAL DATA CLASSES (for static info defined in price setup) *****
 
     /**
      * Generic (not player specific) class used for holding basic info on a ship --
@@ -1971,7 +2097,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return Returns max level of the upgrade; 1=one time upgrade; 0=not available
+         * @return Returns max level of the upgrade; 1=one time upgrade; -1=not available
          */
         public int getMaxLevel() {
             return numUpgrades;
