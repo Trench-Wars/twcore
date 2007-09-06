@@ -1146,6 +1146,22 @@ public class BotAction
     {
         sendUnfilteredPrivateMessage(playerName, "*warpto " + xTiles + " " + yTiles);
     }
+    
+    /**
+     * Warps player to a random location as defined in the CFG.
+     * @param playerID PlayerID of the player to be warped.
+     */
+    public void warpRandomly( int playerID ) {
+        specificPrize(playerID, Tools.Prize.WARP);
+    }
+
+    /**
+     * Warps player to a random location as defined in the CFG.
+     * @param playerName The name of the player.
+     */
+    public void warpRandomly( String playerName ) {
+        specificPrize(playerName, Tools.Prize.WARP);
+    }
 
     /**
      * Issues a /*spec command to the given player, sending them immediately to
@@ -1706,7 +1722,7 @@ public class BotAction
      */
     public void warpAllRandomly()
     {
-        prizeAll(7);
+        prizeAll(Tools.Prize.WARP);
     }
 
     /**
