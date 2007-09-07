@@ -444,7 +444,6 @@ HappyBirthday|The staff at SSCU Trench Wars wish you a very HAPPY BIRTHDAY!!! :)
 MerryChristmas|The staff at SSCU Trench Wars wish you a very MERRY CHRISTMAS!!! :)
 UseIgnore|If someone is harassing you please use the ?ignore command by typing ?ignore Name, where <Name> is the name of the person you would like to ignore.  Example: ?ignore PriitK.
 NotTWRelated|Your question is not Trench Wars related and therefore Staff can't help you. Sorry!
-bangbangbang|I don't want to know your name, I just want.. Bang bang bang!
 &What &Meaning &Of &Life|The meaning of life is to play TrenchWars and die.
 &His &Nice &Ass|You have a nice ass!!
 &Her &Nice &Ass|Whoa mama!!!  You have a nice posterior!!
