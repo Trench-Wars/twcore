@@ -13,6 +13,7 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.ArenaJoined;
 import twcore.core.game.Player;
 
 /**
@@ -147,6 +148,7 @@ public class f1bot extends SubspaceBot {
 
 	events.request( EventRequester.MESSAGE );                               // This is the syntax for requesting messages.  Almost all bots
 	events.request( EventRequester.PLAYER_POSITION );                       // must have at least this much to start.  Look below, there is a method
+	events.request(EventRequester.ARENA_JOINED);
 	// for handling "Message" objects when they arrive.
 	f1bot.static_f1bot = this;
         initialize();
@@ -165,8 +167,13 @@ public class f1bot extends SubspaceBot {
         /* Get the initial arena from the .cfg file */
         String initialArena = config.getString( "InitialArena" );
 
+		m_botAction.stopReliablePositionUpdating();
         /* Join the arena */
         m_botAction.joinArena( initialArena );
+    }
+
+    public void handleEvent(ArenaJoined event) {
+    	m_botAction.moveToTile(585, 469);
     }
 
 

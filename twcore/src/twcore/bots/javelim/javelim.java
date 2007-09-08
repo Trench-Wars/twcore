@@ -59,7 +59,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     private int					m_maxTeamSize = 1;
     private boolean				m_isTeams;
     private KimTeam[]			m_teams = new KimTeam[64];
-    private int[]				m_teamCount = { 0, 0, 0, 0 }; //for tracking how many teams left in each group
+    private int[]				m_groupCount = { 0, 0, 0, 0 }; //for tracking how many teams left in each group
     private int 				m_numTeams;
     private KimTeam				m_winner = null;
     private KimPlayer			m_mvp = null;
@@ -227,6 +227,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 
     public void handleEvent(LoggedOn event) {
+    	m_botAction.stopReliablePositionUpdating();
     	m_botAction.setMessageLimit(10);
         m_botAction.sendUnfilteredPublicMessage("?chat=" + m_botSettings.getString("chat"));
         m_botAction.joinArena(m_botSettings.getString("arena"));
@@ -733,7 +734,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 						}
 						team.setFreq(freq);
 						m_teams[freq] = team;
-						m_teamCount[freq % 4]++;
+						m_groupCount[freq % 4]++;
 						freq++;
 					} else {
 						needsTeam.addAll(team.getPlayers());
@@ -747,7 +748,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 					}
 					tempTeam.setFreq(freq);
 					m_teams[freq] = tempTeam;
-					m_teamCount[freq % 4]++;
+					m_groupCount[freq % 4]++;
 					freq++;
 				}
 
@@ -808,7 +809,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 					}
 
 					for(int i = 0; i < 4; i++) {
-						if(m_teamCount[i] == 1) {
+						if(m_groupCount[i] == 1) {
 							setSurvivingTeam(m_teams[i]);
 						}
 					}
@@ -868,6 +869,12 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	    				m_botAction.sendPrivateMessage(id, team.toString());
     				}
     			}
+       			m_botAction.sendPrivateMessage(id, "End of list. Current lagouts:");
+       			for(String name : m_lagoutMan.getLaggers(new String[m_lagoutMan.size()])) {
+       				if(name != null) {
+       					m_botAction.sendPrivateMessage(id, name);
+       				}
+       			}
        			m_botAction.sendPrivateMessage(id, "End of list.");
     			break;
     		case State.ENDING_GAME:
@@ -896,7 +903,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 		Arrays.fill(m_survivingTeams, null);
 		Arrays.fill(m_kimTable, null);
-		Arrays.fill(m_teamCount, 0);
+		Arrays.fill(m_groupCount, 0);
 		Arrays.fill(m_teams, null);
 
 		m_survivorCount = 0;
@@ -976,6 +983,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 	private void removePlayerAndCheck(KimPlayer kp, String reason) {
 		kp.m_isOut = true;
+		m_lagoutMan.remove(kp.m_lcname);
+		m_startingLagouts.remove(kp.m_lcname);
+		m_startingReturns.remove(kp);
 		m_botAction.specWithoutLock(kp.m_name);
 		int freq = kp.m_freq;
 		final int group = freq % 4;
@@ -984,16 +994,13 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		m_botAction.sendArenaMessage(kp.m_name + " is out"
 			+ (reason == null ? ". " : " (" + reason + "). ")
 			+ kp.m_kills + " wins, " + kp.m_deaths + " losses.");
-		m_lagoutMan.remove(kp.m_lcname);
-		m_startingLagouts.remove(kp.m_lcname);
-		m_startingReturns.remove(kp);
 
 		if(team.isOut()) {
-			m_teamCount[group]--;
+			m_groupCount[group]--;
 		}
 
 		//if this group is down to 1 team, add to survivors and announce
-		if(m_state.isMidGame() && m_teamCount[group] == 1) {
+		if(m_state.isMidGame() && m_groupCount[group] == 1) {
 			m_botAction.scheduleTask(new TimerTask() {
 				//a local copy of group is automatically provided here
 				public void run() {
@@ -1008,7 +1015,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			}, 4000);
 
 			//check if we need to start final round
-			if(m_teamCount[0] <= 1 && m_teamCount[1] <= 1 && m_teamCount[2] <= 1 && m_teamCount[3] <= 1) {
+			if(m_groupCount[0] <= 1 && m_groupCount[1] <= 1 && m_groupCount[2] <= 1 && m_groupCount[3] <= 1) {
 				m_botAction.scheduleTask(new TimerTask() {
 					public void run() {
 						startFinalRound();
@@ -1018,7 +1025,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 		} else if(m_state.isMidGameFinal()) {
 			//check if exactly 1 team left
-			if(m_teamCount[0] + m_teamCount[1] + m_teamCount[2] + m_teamCount[3] == 1) {
+			if(m_groupCount[0] + m_groupCount[1] + m_groupCount[2] + m_groupCount[3] == 1) {
 				m_botAction.scheduleTask(new TimerTask() {
 					public void run() {
 						endGame();

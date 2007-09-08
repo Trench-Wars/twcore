@@ -69,7 +69,7 @@ public class multibot extends SubspaceBot {
         handleEvent((SubspaceEvent) event);
         modEventReq = new ModuleEventRequester(m_botAction.getEventRequester());
         m_botAction.getEventRequester().requestAll();
-        m_botAction.setPlayerPositionUpdating( 500 );
+        m_botAction.stopReliablePositionUpdating();
     }
 
     /**
@@ -404,7 +404,7 @@ public class multibot extends SubspaceBot {
      */
     public void doUnloadCmd(String name, String util) {
         if (utils.containsKey(util)) {
-            MultiUtil removedutil = utils.remove(util);            
+            MultiUtil removedutil = utils.remove(util);
             //modEventReq.releaseAll(removedutil);
             removedutil.cancel();
             m_botAction.sendPrivateMessage(name, util + " successfully unloaded.");
@@ -689,6 +689,7 @@ public class multibot extends SubspaceBot {
     }
 
     public void handleEvent(ArenaJoined event) {
+    	m_botAction.moveToTile(512, 512);
         m_botAction.setReliableKills(1);
         handleEvent((SubspaceEvent) event);
     }
