@@ -1146,7 +1146,7 @@ public class BotAction
     {
         sendUnfilteredPrivateMessage(playerName, "*warpto " + xTiles + " " + yTiles);
     }
-    
+
     /**
      * Warps player to a random location as defined in the CFG.
      * @param playerID PlayerID of the player to be warped.
@@ -1812,12 +1812,13 @@ public class BotAction
         while(i.hasNext()) {
         	Player p = i.next();
         	int pShip = p.getShipType();
+        	int pFreq = p.getFrequency();
         	if(neg) {
-        		if(pShip != shipType && pShip != Tools.Ship.SPECTATOR) {
+        		if(pShip != shipType && pShip != Tools.Ship.SPECTATOR && pFreq != freq) {
         			setFreq(p.getPlayerID(), freq);
         		}
         	} else {
-	        	if(pShip == shipType) {
+	        	if(pShip == shipType && pFreq != freq) {
     	        	setFreq(p.getPlayerID(), freq);
 	        	}
         	}
