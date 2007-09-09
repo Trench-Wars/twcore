@@ -123,9 +123,9 @@ public class purepubbot extends SubspaceBot
     private StartRoundTask startTimer;                  // TimerTask to start round
     private IntermissionTask intermissionTimer;         // TimerTask for round intermission
     
-    private AuxLvzTask scoreDisplay;					//Displays score lvz
-    private AuxLvzTask scoreRemove;						//Removes score lvz
-    private AuxLvzConflict delaySetObj;					//Schedules a task after an amount of time
+    private AuxLvzTask scoreDisplay;					// Displays score lvz
+    private AuxLvzTask scoreRemove;						// Removes score lvz
+    private AuxLvzConflict delaySetObj;					// Schedules a task after an amount of time
    
     private TimerTask entranceWaitTask;
     private int flagMinutesRequired;                    // Flag minutes required to win
@@ -702,8 +702,6 @@ public class purepubbot extends SubspaceBot
         flagTimeStarted = true;
         freq0Score = 0;
         freq1Score = 0;
-        if( autoWarp )
-            
         
         m_botAction.scheduleTask( new StartRoundTask(), 60000 );
     }
