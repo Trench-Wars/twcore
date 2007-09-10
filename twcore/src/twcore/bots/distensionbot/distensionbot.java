@@ -144,6 +144,7 @@ public class distensionbot extends SubspaceBot {
         m_players = new HashMap<String,DistensionPlayer>();
         m_armies = new HashMap<Integer,DistensionArmy>();
         playerTimes = new HashMap<String,Integer>();
+        objs = m_botAction.getObjectSet();
         setupPrices();
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
@@ -599,7 +600,7 @@ public class distensionbot extends SubspaceBot {
         }
         long timeDiff = System.currentTimeMillis() - starttime;
         if( autosave )
-            m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.");
+            m_botAction.sendArenaMessage( "AUTOSAVE: All players saved to DB in " + timeDiff + "ms.");
         else {
             if( playersunsaved == 0 )
                 m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  -" + name, 1 );
@@ -691,7 +692,7 @@ public class distensionbot extends SubspaceBot {
             //bonus = calcEnlistmentBonus( armyNum, getDefaultArmyCounts() );
         }
 
-        m_botAction.sendPrivateMessage( name, "Ah, joining " + army.getName().toUpperCase() + "?  Excellent.  You are pilot #" + army.getPilotsTotal() + "." );
+        m_botAction.sendPrivateMessage( name, "Ah, joining " + army.getName().toUpperCase() + "?  Excellent.  You are pilot #" + (army.getPilotsTotal() + 1) + "." );
 
         p.setArmy( armyNum );
         p.addPlayerToDB();
@@ -1154,7 +1155,7 @@ public class distensionbot extends SubspaceBot {
                         printmsg += "(INSTALLED)";
                         printCost = false;
                     } else {
-                        printmsg += "(NOT INSTALLED)    ";
+                        printmsg += "(NOT INSTALLED)   ";
                     }
                 } else {
                     if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i]) {
@@ -1416,13 +1417,13 @@ public class distensionbot extends SubspaceBot {
                     foundOne = true;
                 else {
                     // Two armies now have players; start game
-                    m_botAction.sendArenaMessage( "Let the war begin!" );
+                    m_botAction.sendArenaMessage( "A war is brewing ... " );
                     m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + "  Winning " + ( MAX_FLAGTIME_ROUNDS + 1) / 2 + " battles will win the sector conflict." );
                     m_botAction.scheduleTask( new StartRoundTask(), 60000 );
+                    stopFlagTime = false;
                     flagTimeStarted = true;
                     return;
-                }
-                    
+                }                    
             }
         }
     }
@@ -3054,11 +3055,15 @@ public class distensionbot extends SubspaceBot {
                 return;
                         
             // Failed sector claim break; give it back to sector-securing army
-            if( armyID == sectorHoldingArmyID && claimBeingBroken ) {
-                claimBeingBroken = false;
-                breakingArmyID = -1;
-                breakSeconds = 0;
-                return;
+            if( armyID == sectorHoldingArmyID ) {
+                if( claimBeingBroken ) {
+                    claimBeingBroken = false;
+                    breakingArmyID = -1;
+                    breakSeconds = 0;
+                    return;
+                } else
+                    return; // If this army already holds, and no claim is being broken,
+                            // then this is a false notify; ignore.
             }
 
             // Sector secure
@@ -3072,8 +3077,10 @@ public class distensionbot extends SubspaceBot {
                 return;
             addSectorHold( p.getName() );
             m_botAction.sendArenaMessage( "SECTOR HOLD:  " + p.getName() + " of " + p.getArmyName() + " has secured a hold over the sector.", 2 );
-            p.addRankPoints(10);
-            m_botAction.sendPrivateMessage( p.getName(), "10 RP awarded for Sector Hold." );
+            
+            int bonus = Math.max( 1, p.getRank() ) * 2;
+            p.addRankPoints( bonus );
+            m_botAction.sendPrivateMessage( p.getName(), bonus + " RP awarded for Sector Hold." );
         }
         
         /**
@@ -3110,7 +3117,8 @@ public class distensionbot extends SubspaceBot {
             secondsHeld = 0;
             addSectorBreak( p.getName() );
             // TEMP: Add 5 points for sector break
-            p.addRankPoints(5);
+            int bonus = Math.max( 1, p.getRank() );
+            p.addRankPoints( bonus );
             m_botAction.sendPrivateMessage( p.getName(), "5 RP awarded for Sector Break." );
             do_updateTimer();
         }
