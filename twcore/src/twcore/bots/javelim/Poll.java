@@ -18,7 +18,7 @@ final class Poll {
     private int m_lastIndex;
     private HashMap<String, Integer> m_votes;
     private BotAction m_botAction;
-    private boolean m_isOpen = false;
+    private boolean m_isClosed;
     private TimerTask m_closePollTask;
     private final static int DELAY_CLOSE_POLL = 60000;
 
@@ -43,20 +43,23 @@ final class Poll {
         m_lastIndex = i;
         m_botAction.sendTeamMessage("Poll: " + m_question);
         for(i = 0; i < m_teams.length; i++) {
-	            m_botAction.sendTeamMessage((i + 1) + ": " + m_teams[i].toString());
+	            m_botAction.sendTeamMessage((i + 1) + ": " + m_teams[i].toString(false));
         }
         m_botAction.sendTeamMessage("Private message your answers to me.", 21);
-        m_isOpen = true;
+        m_isClosed = false;
 
         m_botAction.scheduleTask(m_closePollTask = new TimerTask() {
         	public void run() {
-	        	m_isOpen = false;
+	        	m_isClosed = true;
 	        	m_botAction.sendTeamMessage("The poll is now closed! Results will be shown when the game ends.");
         	}
         }, DELAY_CLOSE_POLL);
     }
 
     public void handlePollCount(int id, String name, String message) {
+    	if(m_isClosed) {
+    		return;
+    	}
         int vote;
         try {
             vote = Integer.parseInt(message);
@@ -98,7 +101,7 @@ final class Poll {
         }
 
         for(int i = 0; i < m_teams.length; i++) {
-            m_botAction.sendArenaMessage((i + 1) + ". " + m_teams[i].toString() + " : " + counters[i]);
+            m_botAction.sendArenaMessage((i + 1) + ". " + m_teams[i].toString(false) + " : " + counters[i]);
         }
 
         if(names.length() > 2) {
@@ -108,7 +111,7 @@ final class Poll {
     }
 
     public boolean isOpen() {
-    	return m_isOpen;
+    	return !m_isClosed;
     }
 
 }

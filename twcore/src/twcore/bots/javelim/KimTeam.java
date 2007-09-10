@@ -44,20 +44,28 @@ final class KimTeam implements Iterable<KimPlayer> {
     	return m_players.size();
     }
 
-    public String toString() {
+	public String toString() {
+		return toString(false);
+	}
+
+    public String toString(boolean showRec) {
     	if(m_players.isEmpty()) {
     		return "";
     	}
     	StringBuilder sb = new StringBuilder(Math.min(256, 32 * size()));
+    	boolean many = m_players.size() > 1;
     	Iterator<KimPlayer> iter = m_players.iterator();
     	//sb.append("Grp").append(m_freq % 4).append(":Frq").append(m_freq).append(':');
     	while(iter.hasNext()) {
     		KimPlayer kp = iter.next();
-			if(!iter.hasNext()) {
+			if(many && !iter.hasNext()) {
 				sb.append("and ");
 			}
-    		sb.append(kp.m_name).append(" (").append(kp.m_kills).append('-').append(kp.m_deaths);
-   			sb.append(kp.m_isOut ? " out)" : ')');
+    		sb.append(kp.m_name);
+    		if(showRec) {
+    			sb.append(" (").append(kp.m_kills).append('-').append(kp.m_deaths);
+   				sb.append(kp.m_isOut ? " out)" : ')');
+    		}
    			if(iter.hasNext()) {
 	   			sb.append(", ");
    			}
