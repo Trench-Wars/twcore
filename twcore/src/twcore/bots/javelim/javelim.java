@@ -90,7 +90,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	private final static int 	DELAY_COUNTDOWN = 36000;
 	private final static int 	DELAY_GOGOGO = 40000;
 	private final static int 	DELAY_SPECTATE = 40500;
-	private final static int 	DELAY_EXTEND = 0; //60000; //added to delays if team game to allow arranging teams
+	private final static int 	DELAY_EXTEND = 60000; //added to delays if team game to allow arranging teams
 
 	private final static int	DELAY_FINAL_PRIZE = 10000;
 	private final static int	DELAY_FINAL_SETUP = 15000;
@@ -219,7 +219,6 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         //req.request(EventRequester.FREQUENCY_CHANGE);
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(EventRequester.LOGGED_ON);
-        //req.request(EventRequester.SCORE_UPDATE);
     }
 
 
@@ -425,6 +424,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         		}
 		//!test
         	} else if(msg.startsWith("!test")) {
+        		/*
         		m_isTeams = true;
         		java.util.Random rand = new java.util.Random();
 
@@ -446,6 +446,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         		printFormattedTeams(m_teams, numTeams);
 				m_botAction.sendArenaMessage("-------------------------------------------------------------------------------------------------------");
         		Arrays.fill(m_teams, null);
+        		*/
 
         	} else if(isSmod) {
 		//!addstaff
@@ -1205,6 +1206,12 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 		if(m_winner != null) {
 			m_botAction.sendArenaMessage("Winner: " + m_winner.toString(), 5);
+			for(KimPlayer kp : m_winner) {
+				Player p = m_botAction.getPlayer(kp.m_name);
+				if(p != null && p.isPlaying()) {
+					m_botAction.warpTo(p.getPlayerID(), 512, 277);
+				}
+			}
 		} else {
 			m_botAction.sendArenaMessage("No winner.");
 		}
