@@ -147,6 +147,20 @@ public class logbot extends SubspaceBot {
     }
     
     /**
+     * Checks wither the slave is still present.
+     */
+    
+    public void CheckSlave()	{
+    	m_botAction.sendSmartPrivateMessage( entity, "here?");
+    	waitReply = new TimerTask()	{
+	  		public void run()	
+	  		{RespawnSlave();}
+	      };
+	     waiting = true;
+	     m_botAction.scheduleTask(waitReply, 2000);
+    }
+    
+    /**
      * Returns true is the lvz in question is monitored
      * 
      * @param violator
@@ -866,7 +880,7 @@ public class logbot extends SubspaceBot {
         		}
         		
         		if (isArenaFile(fileName))	{
-        			String arenaName = fileName.substring(0, fileName.indexOf("."));
+        			String arenaName = fileName.substring(0, fileName.indexOf(".")).toLowerCase();
         			if (guarded.containsKey(arenaName))	{
         				if (isArenaOwner(violator,arenaName)) 
         					return;
@@ -1102,6 +1116,7 @@ public class logbot extends SubspaceBot {
     			ReadLog(logName);
     			WriteDefinitions();
     			UpdateArenas();
+    			CheckSlave();
     			}
     			catch (Exception e)	{
     				logEvent ("Failed to write log! (sublog not present?)");
@@ -1156,6 +1171,8 @@ public class logbot extends SubspaceBot {
     		m_botAction.scheduleTask(new bounceTask(message.substring(7)), 100);
     	else if( message.startsWith( "back" ))
     		waitReply.cancel();
+    	else if( message.startsWith("here?"))
+    		m_botAction.sendSmartPrivateMessage(entity, "back");
     	else if ( message.startsWith( "slave" ))	{
     		m_botAction.sendSmartPrivateMessage(entity, "master");
     		waitReply.cancel();
@@ -1186,7 +1203,7 @@ public class logbot extends SubspaceBot {
             	doGo(sender, message.substring(4));
     	}
     	if( message.startsWith( "!help" ))	
-        	getHelpMessages(sender);
+        	getHelpMessages(sender.toLowerCase());
         else if ( entity != null )
         	handleLesserCommand( sender, message );
     }
@@ -1265,8 +1282,9 @@ public class logbot extends SubspaceBot {
     
     public void getHelpMessages(String sender)
     {
-    	if (entity == null && m_opList.isOwner(sender.toLowerCase()))	{	
+    	if (entity == null && m_opList.isOwner(sender))	{	
     		m_botAction.sendSmartPrivateMessage(sender, "!Invite <name>                            -- Invites <name> to " + m_botAction.getArenaName() + " .");
+        	m_botAction.sendSmartPrivateMessage(sender, "!ClearInvites                             -- Clears all guests.");
         	m_botAction.sendSmartPrivateMessage(sender, "!Message <message>                        -- Sets the bounce message interlopers recieve.");
         	m_botAction.sendSmartPrivateMessage(sender, "!Go <arena>                               -- Sends the bot to <arena>.");
     	}
@@ -1279,7 +1297,6 @@ public class logbot extends SubspaceBot {
         		m_botAction.sendSmartPrivateMessage(sender, "!ListArenas                               -- Lists all monitored arenas.");
             	m_botAction.sendSmartPrivateMessage(sender, "!SetFiles <file1>,<file2>,ect...          -- Sets restricted files.");
             	m_botAction.sendSmartPrivateMessage(sender, "!ListFiles                                -- Lists curretly restricted files");
-            	m_botAction.sendSmartPrivateMessage(sender, "!ClearInvites                             -- Clears all guests.");
             	m_botAction.sendSmartPrivateMessage(sender, "!ClearFiles                               -- Clears all restricted files.");
             	m_botAction.sendSmartPrivateMessage(sender, "!RealTime                                 -- Sets real time logging to be on or off.");
             	m_botAction.sendSmartPrivateMessage(sender, "!StartLog                                 -- Starts the logging functionality.");
