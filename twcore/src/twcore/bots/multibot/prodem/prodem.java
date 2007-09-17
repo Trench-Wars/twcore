@@ -13,13 +13,14 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.stats.PlayerProfile;
+import twcore.core.util.Tools;
 
 /**
  * Prodem: promotion-demotion.
- * 
+ *
  * @author 2dragons 11.05.02
  */
-public class prodem extends MultiModule {
+public final class prodem extends MultiModule {
 
     TimerTask		timerUpdate;
     TimerTask		startGame;
@@ -43,6 +44,8 @@ public class prodem extends MultiModule {
     //3 - highest score
     //4 - lowest score
     int[] records = { 0, 0, 0, 0, 10000, 0, 0 };
+    private int m_lateFreq;
+    private final static int INITIAL_LATE_FREQ = 500;
 
 
     ///*** Constructor ///***
@@ -98,6 +101,7 @@ public void handleEvent( Message event ) {
         }
         gameProgress = 0;
         lastMessage = 30;
+        m_lateFreq = INITIAL_LATE_FREQ;
 
         //Locks and setships.
         m_botAction.toggleLocked();
@@ -156,19 +160,25 @@ public void handleEvent( Message event ) {
     }
 
     public void botPlayerIn( String name, String message) {
-        if(gameProgress == 1) {
+    	int id = m_botAction.getPlayerID(name);
+        if(gameProgress == 1 && id >= 0) {
             if(!playerMap.containsKey( name ) ) {
-                java.util.Random r = new java.util.Random();
-                int freq = (int)((r.nextDouble() * 9000) + 100);
-                m_botAction.setShip( name, 8 );
-                m_botAction.setFreq( name, freq );
-                playerMap.put( name, new PlayerProfile( name, 8, freq ) );
+                m_botAction.setShip( id, 8 );
+                m_botAction.setFreq( id, m_lateFreq );
+                playerMap.put( name, new PlayerProfile( name, 8, m_lateFreq ) );
+                m_lateFreq++;
             }
             else {
-                PlayerProfile tempP;
-                tempP = playerMap.get( name );
-                m_botAction.setShip( name, tempP.getShip() );
-                m_botAction.setFreq( name, tempP.getFreq() );
+            	Player player = m_botAction.getPlayer(id);
+            	if(player != null && player.getShipType() == Tools.Ship.SPECTATOR) {
+	                PlayerProfile tempP;
+	                tempP = playerMap.get( name );
+	                if(tempP.getShip() < Tools.Ship.SHARK) {
+	                	tempP.setShip(tempP.getShip() + 1);
+	                }
+	                m_botAction.setShip( id, tempP.getShip() );
+	                m_botAction.setFreq( id, tempP.getFreq() );
+            	}
             }
         }
     }
