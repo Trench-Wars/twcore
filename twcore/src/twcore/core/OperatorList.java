@@ -429,7 +429,11 @@ public class OperatorList {
             while( (inBuffer = lineReader.readLine()) != null ){
                 if( inBuffer.trim().length() > 0 ){
                     firstCharacter = inBuffer.charAt( 0 );
-                    if( firstCharacter != ' ' && firstCharacter != '-' && firstCharacter != '+' && firstCharacter != '/' ){
+                    if(		firstCharacter != ' ' && 
+                    		firstCharacter != '-' && 
+                    		firstCharacter != '+' && 
+                    		firstCharacter != '/' &&
+                    		firstCharacter != '*'){
                         name = inBuffer.trim().toLowerCase();
                         oldAccessLevel = m_accessList.get( name );
                         if( oldAccessLevel != null ){
