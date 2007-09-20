@@ -277,7 +277,9 @@ public class hunt extends MultiModule {
                 m_botAction.spec( event.getKilleeID() );
 
                 tempPlayer = data.get( killedName.toLowerCase() );
-                m_botAction.sendArenaMessage( killedName + " is out with " + tempPlayer.getPoints() + " points, " + pKilled.getLosses() + " losses." );
+                if(tempPlayer != null) {
+	                m_botAction.sendArenaMessage( killedName + " is out with " + tempPlayer.getPoints() + " points, " + pKilled.getLosses() + " losses." );
+                }
             }
         }
     }
