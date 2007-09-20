@@ -69,7 +69,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
     private Set<String>			m_access = new HashSet<String>();
     private IntQueue			m_watchQueue = new IntQueue();
-    private KimPlayer[]			m_kimTable = new KimPlayer[256]; //id -> KimPlayer
+    //private KimPlayer[]			m_kimTable = new KimPlayer[256]; //id -> KimPlayer
+    private HashMap<Integer, KimPlayer>
+    							m_kimMap = new HashMap<Integer, KimPlayer>(64);
     private LvzObjects			m_lvz = new LvzObjects(30);
 
     private Poll				m_poll = null;
@@ -239,10 +241,6 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     	String name = event.getPlayerName();
     	int id = event.getPlayerID();
 
-    	if(id > 255) {
-    		throw new RuntimeException("a playerId was greater than 255");
-    	}
-
     	m_lvz.turnOn(id);
 
 		if(name.length() > MAX_NAMELENGTH) {
@@ -274,7 +272,8 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			m_botAction.sendUnfilteredPrivateMessage(id, "*prize #-13");
 		}
 
-		m_kimTable[id] = kp;
+		//m_kimTable[id] = kp;
+		m_kimMap.put(new Integer(id), kp);
 		m_watchQueue.add(id);
 
 		m_startingLagouts.remove(kp.m_lcname);
@@ -497,8 +496,11 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 	public void handleEvent(PlayerDeath event) {
 		if(m_state.isMidGame() || m_state.isMidGameFinal()) {
 			int victimID = event.getKilleeID();
-			KimPlayer killer = m_kimTable[event.getKillerID()];
-			KimPlayer victim = m_kimTable[victimID];
+
+			//KimPlayer killer = m_kimTable[event.getKillerID()];
+			//KimPlayer victim = m_kimTable[victimID];
+			KimPlayer killer = m_kimMap.get(new Integer(event.getKillerID()));
+			KimPlayer victim = m_kimMap.get(new Integer(victimID));
 
 			if(killer != null) {
 				if(victim != null && victim.m_freq != killer.m_freq) {
@@ -522,8 +524,10 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 			if(m_state.isMidGame() || m_state.isMidGameFinal()) {
 				long curTime = System.currentTimeMillis();
 				int id = event.getPlayerID();
-				KimPlayer kp = m_kimTable[id];
-				m_watchQueue.sendToBack(id);
+				//KimPlayer kp = m_kimTable[id];
+				Integer integerId = new Integer(id);
+				KimPlayer kp = m_kimMap.get(integerId);
+				m_watchQueue.sendToBack(integerId);
 				if(kp == null || (m_state.isMidGame() && isSurvivor(kp))) {
 					return;
 				}
@@ -574,7 +578,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
 	@SuppressWarnings("fallthrough")
 	private void lagoutHelper(int playerID) {
-		KimPlayer kp = m_kimTable[playerID];
+		//KimPlayer kp = m_kimTable[playerID];
+		Integer integerId = new Integer(playerID);
+		KimPlayer kp = m_kimMap.remove(integerId);
 		if(kp == null || kp.m_isOut) {
 			return;
 		}
@@ -594,8 +600,8 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 				break;
 		}
 
-		m_kimTable[playerID] = null;
-		m_watchQueue.remove(playerID);
+		//m_kimTable[playerID] = null;
+		m_watchQueue.remove(integerId);
 	}
 
 
@@ -711,8 +717,10 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 						needsTeam.add(kp);
 					}
 
-					m_kimTable[id] = kp;
-					m_watchQueue.add(id);
+					//m_kimTable[id] = kp;
+					Integer integerId = new Integer(id);
+					m_kimMap.put(integerId, kp);
+					m_watchQueue.add(integerId);
 				}
 
 				Iterator<KimTeam> iter = teams.values().iterator();
@@ -899,9 +907,10 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 		m_startingLagouts.clear();
 		m_startingReturns.clear();
 		m_watchQueue.clear();
+		m_kimMap.clear();
 
 		Arrays.fill(m_survivingTeams, null);
-		Arrays.fill(m_kimTable, null);
+		//Arrays.fill(m_kimTable, null);
 		Arrays.fill(m_groupCount, 0);
 		Arrays.fill(m_teams, null);
 

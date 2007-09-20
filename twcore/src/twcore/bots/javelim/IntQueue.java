@@ -7,6 +7,8 @@
  */
 package twcore.bots.javelim;
 
+import java.util.HashMap;
+
 /**
  * doubly linked list with an index table so that any element
  * can be quickly moved to the back of the queue
@@ -21,7 +23,8 @@ final class IntQueue {
 	private int m_size = 0;
 
 	//(assuming no player ID goes above 255)
-	private QItem[] m_table = new QItem[256];
+	//private QItem[] m_table = new QItem[256];
+	private HashMap<Integer, QItem> m_itemMap = new HashMap<Integer, QItem>(64);
 
     IntQueue() {
     	m_head = new QItem();
@@ -30,13 +33,19 @@ final class IntQueue {
     	m_tail.left = m_head;
     }
 
-    synchronized void add(int id) {
+
+	synchronized void add(Integer id) {
     	remove(id);
     	QItem leftItem = m_tail.left;
     	QItem newItem = new QItem(id, leftItem, m_tail);
     	leftItem.right = m_tail.left = newItem;
-    	m_table[id] = newItem;
+    	//m_table[id] = newItem;
+    	m_itemMap.put(id, newItem);
     	m_size++;
+	}
+
+    synchronized void add(int id) {
+    	add(new Integer(id));
     }
 
     synchronized int getAndSendToBack() {
@@ -57,8 +66,10 @@ final class IntQueue {
     	}
     }
 
-    synchronized void sendToBack(int id) {
-    	QItem item = m_table[id];
+
+    synchronized void sendToBack(Integer id) {
+    	//QItem item = m_table[id];
+    	QItem item = m_itemMap.get(id);
     	if(item == null) {
     		return;
     	}
@@ -71,23 +82,31 @@ final class IntQueue {
     	m_tail.left = item;
     }
 
-    synchronized void remove(int id) {
-    	QItem item = m_table[id];
+    synchronized void sendToBack(int id) {
+    	sendToBack(new Integer(id));
+    }
+
+
+	synchronized void remove(Integer id) {
+    	//QItem item = m_table[id];
+    	QItem item = m_itemMap.remove(id);
     	if(item != null) {
-	    	m_table[id] = null;
+	    	//m_table[id] = null;
 	    	item.left.right = item.right;
 	    	item.right.left = item.left;
 	    	m_size--;
     	}
+	}
+
+    synchronized void remove(int id) {
+    	remove(new Integer(id));
     }
 
     synchronized void clear() {
     	m_head.right = m_tail;
     	m_tail.left = m_head;
 
-    	for(int i = 0; i < 256; i++) {
-    		m_table[i] = null;
-    	}
+   		//Arrays.fill(m_table[i], null);
 
     	m_size = 0;
     }
@@ -107,8 +126,6 @@ final class IntQueue {
     	}
 
     	QItem(int id, QItem left, QItem right) {
-    		if(id < 0 || id > 255)
-    			throw new RuntimeException("id != [0..255]");
     		this.id = id;
     		this.left = left;
     		this.right = right;
