@@ -36,8 +36,8 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		"+------------------Extended Safes Module---------------------+",
 		"|  Release 1.7 [06/01/06] - http://d1st0rt.sscentral.com     |",
 		"+------------------------------------------------------------+",
-		"! !activate - Toggles the module doing anything when a       |",
-		"|             player flies over a safety tile                |",
+		"! !safeson  - Turn on safe watching                          |",
+		"| !safesoff - Turn off safe watching                         |",
 		"|                                                            |",
 		"| !set SpecPlayer= on/off, Whether to spec player            |",
 		"| !set SpeccedMsg= \"text\", Arena message when player spec'd|",
@@ -78,7 +78,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
     public void requestEvents( ModuleEventRequester modEventReq ) {
         modEventReq.request(this, EventRequester.PLAYER_POSITION );
     }
-    
+
     /**
 	 * Gets the help message for this module
 	 * @return A string array containing the help information
@@ -123,9 +123,13 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.handleEvent(event);
 
 		String name = m_botAction.getPlayerName(event.getPlayerID());
-		if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name))
-			if(event.getMessage().equalsIgnoreCase("!activate"))
-				c_Activate(name);
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name)) {
+			if(event.getMessage().equalsIgnoreCase("!safeson")) {
+				c_Activate(name, true);
+			} else if(event.getMessage().equalsIgnoreCase("!safesoff")) {
+				c_Activate(name, false);
+			}
+		}
 	}
 
 	/**
@@ -168,12 +172,12 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	 * Command: !activate
 	 * Toggles the module doing anything when a player flies over a safety tile
 	 */
-	private void c_Activate(String name)
-	{
-		if(m_active = !m_active)
+	private void c_Activate(String name, boolean activate) {
+		if(m_active = activate) {
 			m_botAction.sendSmartPrivateMessage(name, "Reacting to players who fly over safety tiles.");
-		else
+		} else {
 			m_botAction.sendSmartPrivateMessage(name, "NOT Reacting to players who fly over safety tiles.");
+		}
 	}
 
 	/**
