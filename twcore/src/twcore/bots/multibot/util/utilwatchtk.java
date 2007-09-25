@@ -17,30 +17,37 @@ import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
 /**
- * 
+ *
  * twbotwatchtk.java - Watch Teamkill module
  * Created 7/15/2004 - Last modified 7/22/2004.
  * JavaDoc by Rodge_Rabbit
- * 
+ *
  *  This module lets the bot monitor the teamkills, and
  *  take action of spec for a x amount of minutes
  *  if, depending on the variables, a certain amount of
  *  teamkills are made.
- *  
+ *
  *  @author Ikrit
  */
 
-public class utilwatchtk extends MultiUtil
-{
+public final class utilwatchtk extends MultiUtil {
+
 	private Map<String, Integer> players;
 	private Set<String> cantPlay;
-	int banTime = 5;       //Ban time default in minutes
-	int allowedTKs = 3;    //How many tk's are  allowed by default
-    int decayTime = 5;     //The time it default takes to make decay one teamkill in minutes
-	boolean tkwatching = false;   // If true, monitors and take action on teamkills
+	private int banTime = 5;       //Ban time default in minutes
+	private int allowedTKs = 3;    //How many tk's are  allowed by default
+    private int decayTime = 5;     //The time it default takes to make decay one teamkill in minutes
+	private boolean tkwatching = false;   // If true, monitors and take action on teamkills
 
-	public void init()
-	{
+	private final static String[] TKHelp = {
+		"!watchtk <tklimit> <bantime> <decaytime> -starts watching tk's with specified stuff.",
+		"!watchtk <tklimit> <bantime> -starts watching tk's with specified stuff with decay time of 5 minutes.",
+		"!watchtk <tklimit> -starts watching tk's with specified limit, decay time of 5 minutes, and bantime of 5 minutes.",
+		"!watchtk -starts watching tk's with 3 tk limit, decay time of 5 minutes, and bantime of 5 minutes.",
+		"!stoptkwatch -stops watching tk's."
+    };
+
+	public void init() {
 		players = Collections.synchronizedMap(new HashMap<String, Integer>());
         cantPlay = Collections.synchronizedSet(new HashSet<String>());
 	}
@@ -48,25 +55,24 @@ public class utilwatchtk extends MultiUtil
     /**
      * Requests events.
      */
-    public void requestEvents( ModuleEventRequester modEventReq ) {
-        modEventReq.request(this, EventRequester.FREQUENCY_SHIP_CHANGE );
-        modEventReq.request(this, EventRequester.PLAYER_DEATH );
-        modEventReq.request(this, EventRequester.PLAYER_ENTERED );
-    }    
+    public void requestEvents(ModuleEventRequester modEventReq) {
+        modEventReq.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+        modEventReq.request(this, EventRequester.PLAYER_DEATH);
+        modEventReq.request(this, EventRequester.PLAYER_ENTERED);
+    }
 
 	/**
 	 * Handles event received message, and if from an ER or above,
      * tries to parse it as a command.
      * @param event Passed event.
      */
-	public void handleEvent(Message event)
-	{
+	public void handleEvent(Message event) {
 		String message = event.getMessage();
-        if(event.getMessageType() == Message.PRIVATE_MESSAGE)
-        {
+        if(event.getMessageType() == Message.PRIVATE_MESSAGE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
-            if(m_opList.isER(name))
-            	handleCommand(name, message);
+            if(m_opList.isER(name)) {
+            	handleCommand(name, message.toLowerCase());
+            }
         }
     }
 
@@ -75,21 +81,20 @@ public class utilwatchtk extends MultiUtil
      * @param name Name of ER or above who sent the command.
      * @param message Message sent
      */
-    public void handleCommand(String name, String message)
-    {
-    	if(message.toLowerCase().startsWith("!watchtk"))
-    	{
+    public void handleCommand(String name, String message) {
+
+    	if(message.startsWith("!watchtk")) {
     		String pieces[] = message.split(" ");
     		int aT = 3;   //Allowed Teamkills integer set to standard
     		int bT = 5;   //Ban time integer set to standard
     		int dT = 5;   //Decay time integer set to standard/
-    		try{
+    		try {
     			aT = Integer.parseInt(pieces[1]);
     		} catch(Exception e) {}
-    		try{
+    		try {
     			bT = Integer.parseInt(pieces[2]);
     		} catch(Exception e) {}
-    		try{
+    		try {
     			dT = Integer.parseInt(pieces[3]);
     		} catch(Exception e) {}
 
@@ -102,9 +107,8 @@ public class utilwatchtk extends MultiUtil
     		m_botAction.sendArenaMessage(name + " has activated TK watcher. You will be spec'd for " + banTime + " minute(s) after " + allowedTKs + " TKs.");
     		m_botAction.sendArenaMessage("Each TK will decay after " + decayTime + " minute(s).");
     		tkwatching = true;   //enables watch for teamkills and undertakes action.
-    	}
-    	else if(message.toLowerCase().startsWith("!stoptkwatch"))
-    	{
+
+    	} else if(tkwatching && message.startsWith("!stoptkwatch")) {
     		//Resets all variables to default
     		allowedTKs = 3;
     		banTime = 5;
@@ -121,14 +125,11 @@ public class utilwatchtk extends MultiUtil
      * Handles all actions when a player enters the arena.
      * @param name Name of player who entered the arena.
      */
-    public void handleEvent(PlayerEntered event)
-    {
-    	if(tkwatching)
-    	{
-	    	String name = event.getPlayerName();
-    		m_botAction.sendPrivateMessage(name, "TK watcher is activated. You will be spec'd for " + banTime + " minute(s) after " + allowedTKs + " TKs. TKs decay after " + decayTime + " minute(s).");
-    		m_botAction.spec(name);
-    		m_botAction.spec(name);   //double spec to free the person for moving, and dont let him enter if he comes from another arena.
+    public void handleEvent(PlayerEntered event) {
+    	if(tkwatching) {
+	    	int id = event.getPlayerID();
+    		m_botAction.sendPrivateMessage(id, "TK watcher is activated. You will be spec'd for " + banTime + " minute(s) after " + allowedTKs + " TKs. TKs decay after " + decayTime + " minute(s).");
+    		m_botAction.specWithoutLock(id);
     	}
     }
 
@@ -137,26 +138,21 @@ public class utilwatchtk extends MultiUtil
      * @param killer Person who did the killing.
      * @param killee Person who got killed.
      */
-    public void handleEvent(PlayerDeath event)
-	{
-		if(tkwatching)
-		{
+    public void handleEvent(PlayerDeath event) {
+		if(tkwatching) {
 			Player killer = m_botAction.getPlayer(event.getKillerID());
 			Player killee = m_botAction.getPlayer(event.getKilleeID());
 
-			if( killer == null || killee == null )
+			if(killer == null || killee == null) {
 			    return;
+			}
 
 			String killerName = killer.getPlayerName();
 
-			if(killer.getFrequency() == killee.getFrequency())
-			{
-				if(players.containsKey(killerName))
-				{
+			if(killer.getFrequency() == killee.getFrequency()) {
+				if(players.containsKey(killerName)) {
 					int i = players.get(killerName).intValue() + 1;
-					//m_botAction.scheduleTask(new decay(killerName), decayTime * 60 * 1000);
-					if(i > allowedTKs)
-					{
+					if(i > allowedTKs) {
 						m_botAction.spec(killerName);
 						m_botAction.spec(killerName);   //double spec to free the person for moving
 						m_botAction.sendPrivateMessage(killerName, "You have been specced for excessive teamkilling, you can reenter in " + banTime + " minute(s).");
@@ -164,14 +160,10 @@ public class utilwatchtk extends MultiUtil
 						cantPlay.add(killerName);   //adds killer to the spec list
 						players.remove(killerName);
 						m_botAction.scheduleTask(new EndItTask(killerName), banTime * 60 * 1000); //Starts the task that prevents the player to enter
-					}
-					else
-					{
+					} else {
 						players.put(killerName, new Integer(i));
 					}
-				}
-				else
-				{
+				} else {
 					players.put(killerName, new Integer(1));
 					long decayTimems = decayTime * 60 * 1000;
 					m_botAction.scheduleTaskAtFixedRate(new DecayTask(killerName), decayTimems, decayTimems); //Starts task for decay time, converted for minutes
@@ -186,31 +178,22 @@ public class utilwatchtk extends MultiUtil
      * @param getPlayerID Id of Person who tries to enter.
      * @param getPlayerName Name of person who tries to enter.
      */
-    public void handleEvent(FrequencyShipChange event)
-	{
-		if(event.getShipType() == 0) return;
-		if(cantPlay.contains(m_botAction.getPlayerName(event.getPlayerID())))
-		{
-			m_botAction.spec(event.getPlayerID());
-			m_botAction.spec(event.getPlayerID());  //double spec to free the person for moving
-			m_botAction.sendPrivateMessage( event.getPlayerID(), "You cannot enter, you were banned for " + banTime + " minute(s) for teamkilling." );
+    public void handleEvent(FrequencyShipChange event) {
+		if(event.getShipType() == 0) {
+			return;
+		}
+		int id = event.getPlayerID();
+		if(cantPlay.contains(m_botAction.getPlayerName(id))) {
+			m_botAction.specWithoutLock(id);
+			m_botAction.sendPrivateMessage(id, "You cannot enter, you were banned for " + banTime + " minute(s) for teamkilling.");
 		}
 	}
 
-	public String[] getHelpMessages()
-	{
-    	String[] TKHelp = {
-			"!watchtk <tklimit> <bantime> <decaytime> -starts watching tk's with specified stuff.",
-			"!watchtk <tklimit> <bantime> -starts watching tk's with specified stuff with decay time of 5 minutes.",
-			"!watchtk <tklimit> -starts watching tk's with specified limit, decay time of 5 minutes, and bantime of 5 minutes.",
-			"!watchtk -starts watching tk's with 3 tk limit, decay time of 5 minutes, and bantime of 5 minutes.",
-			"!stoptkwatch -stops watching tk's."
-        };
+	public String[] getHelpMessages() {
         return TKHelp;
     }
 
-    public void cancel()
-    {
+    public void cancel() {
     }
 
     /**
@@ -218,19 +201,16 @@ public class utilwatchtk extends MultiUtil
      * @param player Persons name whos spec is lifted.
      * @param name Persons name whos spec is lifted.
      */
-	class EndItTask extends TimerTask
-	{
+	class EndItTask extends TimerTask {
 		String player;
 
-		public EndItTask(String name)
-		{
+		public EndItTask(String name) {
 			player = name;
 		}
 
-		public void run()
-		{
-			m_botAction.sendSmartPrivateMessage(player, "You may now play in ?go " + m_botAction.getArenaName());
+		public void run() {
 			cantPlay.remove(player);
+			m_botAction.sendSmartPrivateMessage(player, "You may now play in ?go " + m_botAction.getArenaName());
 		}
 	}
 
@@ -239,24 +219,19 @@ public class utilwatchtk extends MultiUtil
      * @param player Persons name whos teamkill needs to be decayed.
      * @param name Persons name whos teamkill needs to be decayed.
      */
-	class DecayTask extends TimerTask
-	{
+	class DecayTask extends TimerTask {
 		String player;
 
-		public DecayTask(String name)
-		{
+		public DecayTask(String name) {
 			player = name;
 		}
 
-		public void run()
-		{
-			if(players.containsKey(player))
-			{
+		public void run() {
+			if(players.containsKey(player)) {
 				int i = players.get(player).intValue();
 				if(i > 0) {
 					i--;
 					players.put(player, new Integer(i));
-					//m_botAction.sendSmartPrivateMessage(player, "1 TK decayed.");
 				} else {
 					players.remove(player);
 					m_botAction.cancelTask(this);
