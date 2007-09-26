@@ -37,19 +37,21 @@ import twcore.core.util.Tools;
  * 
  * Add:
  * - last few ships
- * - fix enlistment bonus
- * - MAP: fix A1; add LVZ displaying rules; safes  
+ * - MAP: fix A1; add LVZ displaying rules; safes
+ * - special prize for conflict win
+ * - if player earns ship 6, it removes the ship from player who they earned it off  
  * 
  * Lower priority (in order):
  * - !intro, !intro2, !intro3, etc.
  * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
- * - !emp for terr "targetted EMP" ability, and appropriate player data
+ *   Consider what can be negative-prized in order to combat rising bty problem.
+ * - !emp for terr "targetted EMP" ability, and appropriate player data.
+ *   This involves negative full charge, and later prizing FC back if this decrements bty.
  * - F1 Help
  *
  *
  * Adding up points:
  *   Flag multiplier - No flags=all rewards are 1; 1 flag=regular; 2 flags=x2
- *
  *   15 levels lower or more           = 1 pt
  *   14 levels below to 9 levels above = level of ship
  *   10 levels above or more           = killer's level + 10
@@ -555,9 +557,9 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 // Points adjusted based on size of victor's army v. loser's
-                double armySizeWeight;
+                float armySizeWeight;
                 try {
-                    armySizeWeight = (killedarmy.getTotalStrength() / killerarmy.getTotalStrength());
+                    armySizeWeight = ((float)killedarmy.getTotalStrength() / (float)killerarmy.getTotalStrength());
                 } catch (Exception e ) {
                     armySizeWeight = 1;
                 }
@@ -568,8 +570,8 @@ public class distensionbot extends SubspaceBot {
                 points *= killerarmy.getNumFlagsOwned();
 
                 victor.addRankPoints( points );
-                // Track successive kills for weasel unlock
-                victor.addSuccessiveKill();
+                // Track successive kills for weasel unlock & streaks
+                boolean earnedWeasel = victor.addSuccessiveKill();
                 loser.clearSuccessiveKills();
                 if( DEBUG ) {
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + " RP earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
@@ -690,15 +692,14 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        // int bonus = 0;
+        int bonus = 0;
         if( army.isPrivate() ) {
             if( pwd != null && !pwd.equals(army.getPassword()) ) {
                 m_botAction.sendPrivateMessage( name, "That's a private army there.  And the password doesn't seem to match up.  Duff off." );
                 return;
             }
         } else {
-            //if( r.getString( "fcDefaultArmy" ).equals("y") )
-            //bonus = calcEnlistmentBonus( armyNum, getDefaultArmyCounts() );
+            bonus = calcEnlistmentBonus( armyNum );
         }
 
         m_botAction.sendPrivateMessage( name, "Ah, joining " + army.getName().toUpperCase() + "?  Excellent.  You are pilot #" + (army.getPilotsTotal() + 1) + "." );
@@ -706,16 +707,15 @@ public class distensionbot extends SubspaceBot {
         p.setArmy( armyNum );
         p.addPlayerToDB();
         p.setShipNum( 0 );
-        p.addShipToDB( 1 );
         army.adjustPilotsTotal(1);
         m_botAction.sendPrivateMessage( name, "Welcome aboard." );
         m_botAction.sendPrivateMessage( name, "If you need an !intro to how things work, I'd be glad to !help out.  Or if you just want to get some action, jump in your new Warbird.  (!pilot 1)" );
-        /* ENLISTMENT BONUS -- FIX
-                if( bonus > 0 ) {
-                    m_botAction.sendPrivateMessage( name, "Your enlistment bonus also entitles you to " + bonus + " free upgrade" + (bonus==1?"":"s")+ ".  Congratulations." );
-                    m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionShip SET fnRankPoints='" + bonus + "' WHERE fnPlayerID='" + p.get + "'" );                    
-                }
-         */
+        if( bonus > 0 ) {
+            m_botAction.sendPrivateMessage( name, "Your enlistment bonus also entitles you to " + bonus + " free upgrade" + (bonus==1?"":"s")+ ".  Congratulations." );
+            p.addShipToDB( 1, bonus );
+        } else {
+            p.addShipToDB( 1 );
+        }
     }
 
 
@@ -1313,12 +1313,17 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
-     * Provides a brief introduction to the game for a player.  (Maybe do an F1 help?)
+     * Provides a brief introduction to the game for a player.  This should support
+     * the A1 LVZ help, and the F1 help.
      * @param name
      * @param msg
      */
     public void cmdIntro( String name, String msg ) {
-
+        String[] intro1 = {
+                "DISTENSION - The Trench Wars RPG - G. Dugwyler",
+                ""
+        };
+        m_botAction.privateMessageSpam( name, intro1 );
     }
 
 
@@ -1467,7 +1472,7 @@ public class distensionbot extends SubspaceBot {
             resetAllFlagData();
         }
     }
-    
+        
     /**
      * Resets all internal flag data, and issues a flag reset.
      */
@@ -1477,38 +1482,28 @@ public class distensionbot extends SubspaceBot {
             army.removeAllFlags();
     }
 
-    /**
-     * @return HashMap containing army# -> num players on army of all default armies.
-     */
-    public HashMap<Integer,Integer> getDefaultArmyCounts() {
-        try {
-            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID, fnNumPilots, fcDefaultArmy FROM tblDistensionArmy WHERE fcDefaultArmy = 'y' ORDER BY fnArmyID ASC" );
-            HashMap<Integer,Integer> count = new HashMap<Integer,Integer>();
-            while( r.next() ) {
-                count.put( new Integer( r.getInt( "fnArmyID" )), new Integer( r.getInt( "fnNumPilots" )) );
-            }
-            return count;
-        } catch (SQLException e ) { return null; }
-    }
-
 
     /**
      * @return Enlistment bonus for a given default army, based on the size of other default armies.
      */
-    public int calcEnlistmentBonus( int armyID, HashMap<Integer,Integer> counts ) {
-        if( counts.get( new Integer(armyID)) == null )
-            return 0;   // No bonus if this for some reason is not a default army
-
-        int ourcount = counts.remove( new Integer(armyID) ).intValue();
-
-        Iterator<Integer> i = counts.values().iterator();
+    public int calcEnlistmentBonus( int armyID ) {
         int pilots = 0;
-        while( i.hasNext() )
-            pilots += i.next().intValue();
-        if( pilots == 0 || counts.size() == 0 )
+        int numOtherArmies = 0;
+        DistensionArmy army = m_armies.get( armyID );
+        if( army == null || !army.isDefault() )
             return 0;
-        pilots = pilots / counts.size();
-        pilots = pilots - ourcount;
+        int ourcount = army.getPilotsTotal();
+
+        for( DistensionArmy a : m_armies.values() ) {
+            if( a.getID() != armyID && a.isDefault() )
+                pilots += a.getPilotsTotal();
+            numOtherArmies++;
+        }
+        
+        if( pilots == 0 )
+            return 0;
+        pilots /= numOtherArmies;     // Figure average size of other armies
+        pilots = pilots - ourcount;   // Figure how much under, if any, ours is
 
         // If avg # pilots is close enough, no bonus
         if( pilots < 3 )
@@ -1608,19 +1603,30 @@ public class distensionbot extends SubspaceBot {
                 return false;
             }
         }
-
+        
         /**
-         * Adds a ship as available on a player's record, sending to the database
-         * as a background query.
+         * Adds a ship as available on a player's record.  Wrapper for addShipToDB(int,int).
          * @param shipNum Ship # to make available
          */
         public void addShipToDB( int shipNumToAdd ) {
+            addShipToDB(shipNumToAdd, 0);
+        }
+
+        /**
+         * Adds a ship as available on a player's record, optionally giving them upgrade
+         * points to begin with.
+         * @param shipNum Ship # to make available
+         */
+        public void addShipToDB( int shipNumToAdd, int startingUpgradePoints ) {
             if( shipNumToAdd < 1 || shipNumToAdd > 8 )
                 return;
             shipsAvail[ shipNumToAdd - 1 ] = true;
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-                m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), " + shipNumToAdd + ")" );
+                if( startingUpgradePoints == 0 )
+                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), " + shipNumToAdd + ")" );
+                else
+                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnUpgradePoints ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), " + shipNumToAdd + ", " + startingUpgradePoints + ")" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
 
@@ -1923,7 +1929,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * Increments successive kills.
          */
-        public void addSuccessiveKill() {
+        public boolean addSuccessiveKill() {
             successiveKills++;            
 
             if( successiveKills == 5 ) {
@@ -1945,10 +1951,24 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage(name, "UNSTOPPABLE!  (" + award + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
                 addRankPoints(award);
             } else if( successiveKills == 20 ) {
-                if( false ) { //shipsAvail[5] == false ) {
-                    //m_botAction.sendPrivateMessage(name, "DESC");
-                    //m_botAction.sendPrivateMessage(name, "WEASEL: DESC.");
-                    //addShipToDB(6);                    
+                if( false ) { // shipsAvail[5] == false ) {                                        
+                    String query = "SELECT * FROM tblDistensionShip ship, tblDistensionPlayer player " +
+                    "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND " +
+                    "ship.fnPlayerID = player.fnID AND " +
+                    "ship.fnShipNum = '6'";
+                    boolean weaselPreviouslyStolen = false;
+                    
+                    try {
+                        ResultSet r = m_botAction.SQLQuery( m_database, query );
+                        if( r.next() ) {
+                            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                        } else {
+                            m_botAction.sendPrivateMessage(name, "DESC");
+                            m_botAction.sendPrivateMessage(name, "WEASEL: DESC.");
+                            addShipToDB(6);                            
+                        }
+                        return true;
+                    } catch (SQLException e ) { return false; }                    
                 } else {
                     int award = 10;
                     if( rank > 1 )
@@ -1967,6 +1987,7 @@ public class distensionbot extends SubspaceBot {
                     award = rank * 20;
                 m_botAction.sendPrivateMessage(name, "99 KILLS --  ORGASMIC !!  (" + award + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );                
             }
+            return false;
         }
 
         /**
@@ -2593,7 +2614,7 @@ public class distensionbot extends SubspaceBot {
         int minsToWin        = flagTimer.getTotalSecs() / 60;
         int opposingStrengthAvg = 1;
         int friendlyStrengthAvg = 1;
-        double armyDiffWeight;
+        float armyDiffWeight;
         HashMap <Integer,Integer>armyStrengths = flagTimer.getArmyStrengthSnapshots();
 
         if( winningArmyID == 0 || winningArmyID == 1 ) {
@@ -2624,10 +2645,10 @@ public class distensionbot extends SubspaceBot {
             friendlyStrengthAvg = 1;
         if( opposingStrengthAvg == 0 )
             opposingStrengthAvg = 1;
-        armyDiffWeight = opposingStrengthAvg / friendlyStrengthAvg;
+        armyDiffWeight = ((float)opposingStrengthAvg / (float)friendlyStrengthAvg);
         
         // Points to be divided up by army
-        double totalPoints = minsToWin * opposingStrengthAvg * armyDiffWeight;
+        int totalPoints = (int)(minsToWin * opposingStrengthAvg * armyDiffWeight);
         if( DEBUG )
             m_botAction.sendArenaMessage( "DEBUG: " + minsToWin + "min battle * " + opposingStrengthAvg + " avg total enemy strength * " + armyDiffWeight + " strength diff weight = " + totalPoints + "RP to be divided among winners" );
 
@@ -2641,7 +2662,7 @@ public class distensionbot extends SubspaceBot {
                 upgLevel = p.getUpgradeLevel();
                 if( upgLevel == 0 ) 
                     upgLevel = 1;
-                points = (int)totalPoints * (upgLevel / friendlyStrengthAvg);
+                points = (int)(totalPoints * ((float)upgLevel / (float)friendlyStrengthAvg));
                 Integer time = playerTimes.get( p.getName() );
                 if( time != null ) {
                     int secs = flagTimer.getTotalSecs();
@@ -2714,6 +2735,7 @@ public class distensionbot extends SubspaceBot {
         int intermissionTime = 10000;
 
         if( gameOver ) {
+            // Need special reward for conflict win
             intermissionTime = 20000;
             m_botAction.sendArenaMessage( "THE CONFLICT IS OVER!  " + m_armies.get(winningArmyID).getName() + " has laid total claim to the sector, after " + (freq0Score + freq1Score) + " total battles.", 2 );
             freq0Score = 0;
