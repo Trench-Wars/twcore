@@ -560,9 +560,12 @@ public class distensionbot extends SubspaceBot {
                 float armySizeWeight;
                 float killedArmyStr = killedarmy.getTotalStrength();
                 float killerArmyStr = killerarmy.getTotalStrength();
-                try {
-                    armySizeWeight = killedArmyStr / killerArmyStr;
-                } catch (Exception e ) {
+                if( killedArmyStr <= 0 ) killedArmyStr = 1;
+                if( killerArmyStr <= 0 ) killerArmyStr = 1;
+                armySizeWeight = killedArmyStr / killerArmyStr;
+                if( armySizeWeight == Float.POSITIVE_INFINITY || armySizeWeight == Float.NEGATIVE_INFINITY ) {
+                    if( DEBUG )
+                        m_botAction.sendArenaMessage( "DEBUG: Infinity/neg infinity found.  Army " + killedarmy.getID() + " str: " + killedarmy.getTotalStrength() + " / Army " + killerarmy.getID() + " str: " + killerarmy.getTotalStrength() );
                     armySizeWeight = 1;
                 }
 
