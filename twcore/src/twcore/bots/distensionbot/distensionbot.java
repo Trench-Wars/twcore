@@ -61,7 +61,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
-    // normally be annoying in a public release.
+                                                           // normally be annoying in a public release.
 
     private final int AUTOSAVE_DELAY = 15;                 // How frequently autosave occurs, in minutes 
     private final int UPGRADE_DELAY = 500;                 // Delay between fully prizing players, in ms  
@@ -558,13 +558,15 @@ public class distensionbot extends SubspaceBot {
 
                 // Points adjusted based on size of victor's army v. loser's
                 float armySizeWeight;
+                float killedArmyStr = killedarmy.getTotalStrength();
+                float killerArmyStr = killerarmy.getTotalStrength();
                 try {
-                    armySizeWeight = ((float)killedarmy.getTotalStrength() / (float)killerarmy.getTotalStrength());
+                    armySizeWeight = killedArmyStr / killerArmyStr;
                 } catch (Exception e ) {
                     armySizeWeight = 1;
                 }
 
-                points = (int)(points * armySizeWeight);
+                points = Math.round(((float)points * armySizeWeight));
                 if( points < 1 )
                     points = 1;
                 points *= killerarmy.getNumFlagsOwned();
@@ -2648,7 +2650,7 @@ public class distensionbot extends SubspaceBot {
         armyDiffWeight = ((float)opposingStrengthAvg / (float)friendlyStrengthAvg);
         
         // Points to be divided up by army
-        int totalPoints = (int)(minsToWin * opposingStrengthAvg * armyDiffWeight);
+        int totalPoints = Math.round((float)minsToWin * (float)opposingStrengthAvg * armyDiffWeight);
         if( DEBUG )
             m_botAction.sendArenaMessage( "DEBUG: " + minsToWin + "min battle * " + opposingStrengthAvg + " avg total enemy strength * " + armyDiffWeight + " strength diff weight = " + totalPoints + "RP to be divided among winners" );
 
@@ -3432,11 +3434,11 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p2b1[] = { 1,  2,  3 };
         int p2b2[] = { 9, 23, 60 };
-        upg = new ShipUpgrade( "Rear Defense System", Tools.Prize.GUNS, p2b1, p2b2, 4 );
+        upg = new ShipUpgrade( "Rear Defense System", Tools.Prize.GUNS, p2b1, p2b2, 3 );
         ship.addUpgrade( upg );
         int p2c1[] = {  3,  8 };
         int p2c2[] = { 15, 80 };
-        upg = new ShipUpgrade( "Mortar Explosive Enhancement", Tools.Prize.BOMBS, p2c1, p2c2, 3 );
+        upg = new ShipUpgrade( "Mortar Explosive Enhancement", Tools.Prize.BOMBS, p2c1, p2c2, 2 );
         ship.addUpgrade( upg );        
         upg = new ShipUpgrade( "Modified Defense Cannon", Tools.Prize.MULTIFIRE, 2, 18, 1 );
         ship.addUpgrade( upg );
@@ -3492,7 +3494,7 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 2, 42, 1 );
         ship.addUpgrade( upg );
         int p3d1[] = { 15, 30, 45 };
-        upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, 1, p3d1, 1 );
+        upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, 1, p3d1, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "60-second Refeuler", -3, 1, 31, 1 );
         ship.addUpgrade( upg );
