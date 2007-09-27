@@ -349,6 +349,8 @@ public class Tools {
      * @return Padded string
      */
     public static String formatString( String fragment, int length, String padding ) {
+        if( fragment == null )
+            fragment = "";
         if(fragment.length() > length)
             fragment = fragment.substring(0,length);
         else {
@@ -378,6 +380,8 @@ public class Tools {
      * @return Centered string
      */
     public static String centerString (String fragment, int length, char padding) {
+        if( fragment == null )
+            fragment = "";
         int curLength = fragment.length(),
             startPos = (length / 2) - (curLength/2);
         String result = "";
