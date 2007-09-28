@@ -28,14 +28,9 @@ import twcore.core.events.ScoreUpdate;
 import twcore.core.events.SoccerGoal;
 import twcore.core.events.SubspaceEvent;
 import twcore.core.events.TurretEvent;
+import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
-
-/*
- * PortabotExtension.java
- *
- * Created on March 21, 2002, 2:46 PM
- */
 
 /**
  *
@@ -112,6 +107,8 @@ public abstract class TWBotExtension {
         	handleEvent( (PlayerBanner)event );
         else if( event instanceof ArenaList )
         	handleEvent( (ArenaList)event);
+        else if( event instanceof TurfFlagUpdate )
+            handleEvent( (TurfFlagUpdate)event);
     }
     public void handleEvent( ScoreReset event ){}
     public void handleEvent( PlayerEntered event ){}
@@ -139,4 +136,5 @@ public abstract class TWBotExtension {
     public void handleEvent( TurretEvent event ){}
     public void handleEvent( PlayerBanner event ){}
     public void handleEvent( ArenaList event ){}
+    public void handleEvent( TurfFlagUpdate event ){}
 }

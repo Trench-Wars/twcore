@@ -45,6 +45,7 @@ import twcore.core.events.ScoreUpdate;
 import twcore.core.events.SoccerGoal;
 import twcore.core.events.SubspaceEvent;
 import twcore.core.events.TurretEvent;
+import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 import twcore.core.util.Tools;
@@ -655,6 +656,10 @@ public class zhbot extends SubspaceBot
 	{
 		distributeEvent( (SubspaceEvent)event);
 	}
+    public void handleEvent(TurfFlagUpdate event)
+    {
+        distributeEvent( (SubspaceEvent)event);
+    }
 
 	public void log(String logThis) {
 		try{
