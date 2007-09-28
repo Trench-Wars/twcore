@@ -568,6 +568,10 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendArenaMessage( "DEBUG: Infinity/neg infinity found.  Army " + killedarmy.getID() + " str: " + killedarmy.getTotalStrength() + " / Army " + killerarmy.getID() + " str: " + killerarmy.getTotalStrength() );
                     armySizeWeight = 1;
                 }
+                if( armySizeWeight > 1.2f )
+                    armySizeWeight = 1.2f;
+                else if( armySizeWeight < 0.8f )
+                    armySizeWeight = 0.8f;
 
                 points = Math.round(((float)points * armySizeWeight));
                 if( points < 1 )
@@ -900,7 +904,7 @@ public class distensionbot extends SubspaceBot {
                 player.prizeUpgrades();
                 if( flagTimer != null && flagTimer.isRunning() )
                     playerTimes.put( player.getName(), new Integer( flagTimer.getTotalSecs() ) );
-                if( !flagTimeStarted ) {
+                if( !flagTimeStarted || stopFlagTime ) {
                     checkFlagTimeStart();
                 }                    
                 cmdProgress( name, null );                
@@ -1256,6 +1260,8 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " has been installed on the " + Tools.shipName( shipNum ) + "." );
         else
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " on the " + Tools.shipName( shipNum ) + " upgraded to level " + (currentUpgradeLevel + 1) + "." );
+        if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS )
+            m_botAction.sendPrivateMessage( name, "IMPORTANT NOTE: If you find you can not fire after this upgrade, your ship may not yet have enough energy!  In this case you will need to !scrap " + (upgradeNum + 1) + " to return weapons capability.");
     }
 
 
@@ -1431,8 +1437,6 @@ public class distensionbot extends SubspaceBot {
      * Checks if flag time should be started.
      */
     public void checkFlagTimeStart() {
-        if( flagTimeStarted )
-            return;
         Iterator <DistensionArmy>i = m_armies.values().iterator();
         boolean foundOne = false;
         while( i.hasNext() ) {
@@ -1441,12 +1445,14 @@ public class distensionbot extends SubspaceBot {
                 if( !foundOne )
                     foundOne = true;
                 else {
-                    // Two armies now have players; start game
-                    m_botAction.sendArenaMessage( "A war is brewing ... " );
-                    m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + ".  Winning " + ( MAX_FLAGTIME_ROUNDS + 1) / 2 + " battles will win the sector conflict." );
-                    m_botAction.scheduleTask( new StartRoundTask(), 60000 );
-                    stopFlagTime = false;
-                    flagTimeStarted = true;
+                    // Two armies now have players; start game, or continue if already started
+                    if( !flagTimeStarted ) {
+                        m_botAction.sendArenaMessage( "A war is brewing ... " );
+                        m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + ".  Winning " + ( MAX_FLAGTIME_ROUNDS + 1) / 2 + " battles will win the sector conflict." );
+                        m_botAction.scheduleTask( new StartRoundTask(), 60000 );
+                        flagTimeStarted = true;
+                    }
+                    stopFlagTime = false;       // Cancel stopping; new opposing player entered
                     return;
                 }                    
             }
@@ -1469,7 +1475,7 @@ public class distensionbot extends SubspaceBot {
                 else {
                     // Two armies have players; do not stop game
                     return;
-                }                    
+                }
             }
         }
         stopFlagTime = true;
@@ -1485,6 +1491,8 @@ public class distensionbot extends SubspaceBot {
         m_botAction.resetFlagGame();
         for( DistensionArmy army : m_armies.values() )
             army.removeAllFlags();
+        flagOwner[0] = -1;
+        flagOwner[1] = -1;
     }
 
 
@@ -2505,7 +2513,7 @@ public class distensionbot extends SubspaceBot {
          */
         public int getCostDefine( int currentLevel ) {
             if( cost == -1 )
-                return costDefines[ currentLevel + 1 ];
+                return costDefines[ currentLevel ];
             else
                 return cost;
         }
@@ -2651,31 +2659,35 @@ public class distensionbot extends SubspaceBot {
         if( opposingStrengthAvg == 0 )
             opposingStrengthAvg = 1;
         armyDiffWeight = ((float)opposingStrengthAvg / (float)friendlyStrengthAvg);
+        if( armyDiffWeight > 1.2f )
+            armyDiffWeight = 1.2f;
+        else if( armyDiffWeight < 0.8f )
+            armyDiffWeight = 0.8f;
         
         // Points to be divided up by army
-        int totalPoints = Math.round((float)minsToWin * (float)opposingStrengthAvg * armyDiffWeight);
+        int totalPoints = Math.round((float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight);
         if( DEBUG )
-            m_botAction.sendArenaMessage( "DEBUG: " + minsToWin + "min battle * " + opposingStrengthAvg + " avg total enemy strength * " + armyDiffWeight + " strength diff weight = " + totalPoints + "RP to be divided among winners" );
+            m_botAction.sendArenaMessage( "DEBUG: (" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " avg total enemy strength * " + armyDiffWeight + " strength diff weight = " + totalPoints + "RP to be divided among winners" );
 
-        // Point formula: (min played * avg opposing strength * avg opposing strength / avg team strength) * your upgrade level / avg team strength        
+        // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
         Iterator <DistensionPlayer>i = m_players.values().iterator();
         int upgLevel = 0;
-        int points = 0;
+        float points = 0;
         while( i.hasNext() ) {
             DistensionPlayer p = i.next();
             if( p.getArmyID() == winningArmyID ) {
                 upgLevel = p.getUpgradeLevel();
-                if( upgLevel == 0 ) 
+                if( upgLevel == 0 )
                     upgLevel = 1;
-                points = (int)(totalPoints * ((float)upgLevel / (float)friendlyStrengthAvg));
+                points = (float)totalPoints * ((float)upgLevel / (float)friendlyStrengthAvg);
                 Integer time = playerTimes.get( p.getName() );
                 if( time != null ) {
                     int secs = flagTimer.getTotalSecs();
-                    int percentOnFreq = (int)( ( (float)(secs - time) / (float)secs ) * 100 );
-                    int modPoints = (int)(points * ((float)percentOnFreq / 100));
+                    float percentOnFreq = (float)(secs - time) / (float)secs;
+                    int modPoints = Math.round(points * percentOnFreq);
 
                     if( DEBUG )
-                        m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = lvl:" + (upgLevel) + " / avg team str:" + friendlyStrengthAvg + "(or " + upgLevel / friendlyStrengthAvg + ") * total points:" + totalPoints + " * " + percentOnFreq + "% participation");
+                        m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + (upgLevel) + " / avg team rank " + friendlyStrengthAvg + " (" + upgLevel / friendlyStrengthAvg + ")) * total points:" + totalPoints + " * " + percentOnFreq + "% participation");
                     else
                         m_botAction.sendPrivateMessage(p.getName(), "You receive " + modPoints + " RP for your role in the victory." );
                     int holds = flagTimer.getSectorHolds( p.getName() );
@@ -3528,7 +3540,7 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP4, 17 );
         upg = new ShipUpgrade( "Gravitational Modifier", Tools.Prize.ROTATION, 1, 0, 25 );      // 10 x25
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Force Thrusters", Tools.Prize.THRUST, 2, 0, 5 );                // -4 x5
+        upg = new ShipUpgrade( "Force Thrusters", Tools.Prize.THRUST, 2, 0, 5 );                // 4 x5
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Collection Drive", Tools.Prize.TOPSPEED, 1, 0, 7 );             // 1000 x7
         ship.addUpgrade( upg );
