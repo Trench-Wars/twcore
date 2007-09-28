@@ -581,6 +581,10 @@ public class distensionbot extends SubspaceBot {
                 victor.addRankPoints( points );
                 // Track successive kills for weasel unlock & streaks
                 boolean earnedWeasel = victor.addSuccessiveKill();
+                if( earnedWeasel ) {
+                    // If player earned weasel off this kill, check if loser/killed player has weasel ... 
+                    // and remove it if they do!
+                }
                 loser.clearSuccessiveKills();
                 if( DEBUG ) {
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + " RP earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
@@ -842,7 +846,7 @@ public class distensionbot extends SubspaceBot {
             player.setShipNum( 0 );
         } else {
             if( player.isBanned() )
-                m_botAction.sendPrivateMessage( name, "Sorry ... I don't think I can let you back in.  You've caused enough trouble around here.  If you think I'm wrong, you might want to ask someone for ?help ..." );
+                m_botAction.sendPrivateMessage( name, "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
             else                
                 m_botAction.sendPrivateMessage( name, player.getName().toUpperCase() + " not authorized as pilot of any army.  You must first !enlist." );
         }
@@ -877,45 +881,46 @@ public class distensionbot extends SubspaceBot {
             return;            
         }
 
-        if( player.shipIsAvailable( shipNum ) ) {
-            DistensionArmy army = m_armies.get( new Integer(player.getArmyID()) );
-            if( player.getShipNum() > 0 ) {
-                player.saveCurrentShipToDBNow();
-                playerTimes.remove( player.getName() );
-                if( army != null ) {
-                    army.adjustStrength( -player.getUpgradeLevel() );
-                    army.adjustPilotsInGame( -1 );
-                    if( DEBUG )
-                        m_botAction.sendPrivateMessage( player.getName(), "DEBUG: Shipchange found army; adjusting strength and # pilots in game" );            
-                }
-            }
-
-            player.setShipNum( shipNum );
-            if( player.getCurrentShipFromDB() ) {
-                if( army == null ) {
-                    army = new DistensionArmy( player.getArmyID() );
-                    m_armies.put( new Integer(player.getArmyID()), army );
-                    if( DEBUG )
-                        m_botAction.sendPrivateMessage( player.getName(), "DEBUG: Army not found; creating new record" );            
-                }
-                army.adjustStrength( player.getUpgradeLevel() );
-                army.adjustPilotsInGame( 1 );
-                player.putInCurrentShip();
-                player.prizeUpgrades();
-                if( flagTimer != null && flagTimer.isRunning() )
-                    playerTimes.put( player.getName(), new Integer( flagTimer.getTotalSecs() ) );
-                if( !flagTimeStarted || stopFlagTime ) {
-                    checkFlagTimeStart();
-                }                    
-                cmdProgress( name, null );                
-            } else {
-                m_botAction.sendPrivateMessage( name, "Having trouble getting that ship for you.  Please contact a mod." );
-                army.adjustPilotsInGame( -1 );
-                player.setShipNum( 0 );
-            }
-        } else {
+        if( !player.shipIsAvailable( shipNum ) ) {
             m_botAction.sendPrivateMessage( name, "You don't own that ship.  Check your !hangar before you try flying something you don't have." );
+            return;
         }
+
+        DistensionArmy army = player.getArmy();
+        if( player.getShipNum() > 0 ) {
+            player.saveCurrentShipToDBNow();
+            playerTimes.remove( player.getName() );
+            if( army != null ) {
+                army.adjustStrength( -player.getUpgradeLevel() );
+                army.adjustPilotsInGame( -1 );
+            } else {
+                if( DEBUG )
+                    m_botAction.sendArenaMessage( "DEBUG: Shipchange COULD NOT find army for " + player.getName() + "; strength and pilot #s not reduced" );            
+            }
+        }
+
+        player.setShipNum( shipNum );
+        if( !player.getCurrentShipFromDB() ) {
+            m_botAction.sendPrivateMessage( name, "Having trouble getting that ship for you.  Please contact a mod." );
+            player.setShipNum( 0 );
+            return;
+        }
+        if( army == null ) {
+            army = new DistensionArmy( player.getArmyID() );
+            m_armies.put( new Integer(player.getArmyID()), army );
+            if( DEBUG )
+                m_botAction.sendArenaMessage( "DEBUG: Shipchange COULD NOT find army for " + player.getName() + "; had to create new army!" );            
+        }
+        army.adjustStrength( player.getUpgradeLevel() );
+        army.adjustPilotsInGame( 1 );
+        player.putInCurrentShip();
+        player.prizeUpgrades();
+        if( flagTimer != null && flagTimer.isRunning() )
+            playerTimes.put( player.getName(), new Integer( flagTimer.getTotalSecs() ) );
+        if( !flagTimeStarted || stopFlagTime ) {
+            checkFlagTimeStart();
+        }                    
+        cmdProgress( name, null );                
     }
 
 
@@ -986,10 +991,8 @@ public class distensionbot extends SubspaceBot {
         } else {
             for( DistensionArmy a : m_armies.values() ) {
                 int bonus = 0;
-                //if( a.isDefault() )
-                //    bonus = calcEnlistmentBonus( a.getID(), defaultcount );  // defaultcount = hashmap of all armies (id->totalpilots) 
-                //else
-                //    bonus = 0;
+                if( a.isDefault() )
+                    bonus = calcEnlistmentBonus( a.getID() ); 
                 m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
                         Tools.formatString( ""+a.getPilotsInGame(), 10 ) +
@@ -2020,8 +2023,10 @@ public class distensionbot extends SubspaceBot {
             } catch (SQLException e ) { 
                 Tools.printLog( "Error banning player " + name );
             }
-            m_botAction.sendSmartPrivateMessage(name, "You have been indefinitely banned from playing Distension." );
+            saveCurrentShipToDB();
+            m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer fly in this arena." );
             setShipNum( -1 );
+            m_botAction.specWithoutLock( name );
         }
 
         /**
@@ -2130,6 +2135,13 @@ public class distensionbot extends SubspaceBot {
          */
         public int getArmyID() {
             return armyID;
+        }
+
+        /**
+         * @return Returns DistensionArmy the player to which the player is joined.
+         */
+        public DistensionArmy getArmy() {
+            return m_armies.get( new Integer( armyID ) );
         }
 
         /**
@@ -3374,8 +3386,9 @@ public class distensionbot extends SubspaceBot {
 
         // Ship 0 -- dummy (for ease of access)
         ShipProfile ship = new ShipProfile( -1, -1 );
-        ShipUpgrade upg;
         m_shipGeneralData.add( ship );
+
+        ShipUpgrade upg;
 
         // WARBIRD -- starting ship
         // Med upg speed; rotation starts +1, energy has smaller spread, smaller max, & starts v. low
