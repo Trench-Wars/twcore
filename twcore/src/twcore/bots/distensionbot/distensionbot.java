@@ -79,6 +79,18 @@ public class distensionbot extends SubspaceBot {
     private final int SPAWN_X_SPREAD = 275;                     // # tiles * 2 from x coord 512 to spawn players  
     private final int SAFE_TOP_Y = 249;                         // Y coords of safes, for warping in
     private final int SAFE_BOTTOM_Y = 773;
+    
+    // These coords are used for !terr and !whereis
+    private final int TOP_SAFE = 260;
+    private final int TOP_ROOF = 273;
+    private final int TOP_FR =   305;
+    private final int TOP_MID =  375;
+    private final int TOP_LOW =  433;
+    private final int BOT_LOW =  589;
+    private final int BOT_MID =  646;
+    private final int BOT_FR =   717;
+    private final int BOT_ROOF = 749;
+    private final int BOT_SAFE = 763;
 
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     // Msg displayed for DB error
@@ -201,6 +213,10 @@ public class distensionbot extends SubspaceBot {
             };
             m_botAction.scheduleTask( autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
         }
+        if( DEBUG ) {
+            m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
+            m_botAction.sendChatMessage("Distension BETA initialized.");
+        }
     }
 
 
@@ -228,9 +244,11 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!scrap", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!intro", acceptedMessages, this, "cmdIntro" );
         m_commandInterpreter.registerCommand( "!wait", acceptedMessages, this, "cmdWait" );
-        m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );
-        m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!terr", acceptedMessages, this, "cmdTerr" );
+        m_commandInterpreter.registerCommand( "!whereis", acceptedMessages, this, "cmdWhereIs" );
+        m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
+        m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
+        m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
         m_commandInterpreter.registerCommand( "!info", acceptedMessages, this, "cmdInfo", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "cmdBan", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "cmdUnban", OperatorList.HIGHMOD_LEVEL );
@@ -317,6 +335,8 @@ public class distensionbot extends SubspaceBot {
                     "| !defect <army>      |  Defect to <army>.  Restarts all ships at current rank",
                     "| !scrap <upg>        |  Trade in <upg>.  Restarts that ship at current rank",
                     "| !wait               |  Toggles waiting in spawn vs. being autowarped out",
+                    "| !whereis <name>     |  Shows approximate location of pilot <name>",
+                    "| !terr               |  Shows approximate location of all army terriers"                    
             };
             m_botAction.privateMessageSpam(name, helps);
         } else {
@@ -334,6 +354,8 @@ public class distensionbot extends SubspaceBot {
                     "| !defect <army>      |  Defect to <army>.  Restarts all ships at current rank",
                     "| !scrap <upg>        |  Trade in <upg>.  Restarts that ship at current rank",
                     "| !wait               |  Toggles waiting in spawn vs. being autowarped out",
+                    "| !whereis <name>     |  Shows approximate location of pilot <name>",
+                    "| !terr               |  Shows approximate location of all army terriers"                    
             };
             m_botAction.privateMessageSpam(name, helps);
         }
@@ -656,64 +678,17 @@ public class distensionbot extends SubspaceBot {
                 ".",
                 "RECENT UPDATES  -  10/1/07",
                 " - Weasel added (but can't be unlocked by rank)",
-                " - !wait command added",
+                " - !wait command added (wait in resupply area rather than being warped)",
                 " - Spawn protection and double-kill protection added",
                 " - Bot-controlled spawns widened and tightened toward bases",
-                " - !betamsg cmd for mods -- msgs all testers that a test is starting"                
+                " - !msgbeta cmd for mods -- msgs all testers that a test is starting",
+                " - !terr and !whereis commands as seen in purepub",
+                " - Logon msg to beta chat"
         };
         m_botAction.privateMessageSpam( name, beta );
     }
 
     
-    /**
-     * Save all player data.  Sends arena msgs.
-     * @param name
-     * @param msg
-     */
-    public void cmdSaveData( String name, String msg ) {
-        boolean autosave = ":autosave:".equals(name);
-        if( !autosave )
-            m_botAction.sendArenaMessage( "Saving player data ..." ,1 );
-        int players = 0;
-        int playersunsaved = 0;
-        long starttime = System.currentTimeMillis();
-        for( DistensionPlayer p : m_players.values() ) {
-            if( autosave ) {
-                p.saveCurrentShipToDB();
-            } else {
-                if( p.saveCurrentShipToDBNow() == false ) {
-                    m_botAction.sendPrivateMessage( p.getName(), "Your data could not be saved.  Please use !dock to save your data.  Contact a mod with ?help if this does not work." );
-                    playersunsaved++;
-                } else {
-                    players++;
-                }
-            }
-        }
-        long timeDiff = System.currentTimeMillis() - starttime;
-        if( autosave )
-            m_botAction.sendArenaMessage( "AUTOSAVE: All players saved to DB in " + timeDiff + "ms.");
-        else {
-            if( playersunsaved == 0 )
-                m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  -" + name, 1 );
-            else
-                m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  " + playersunsaved + " players could not be saved.", 2 );
-        }
-    }
-
-
-    /**
-     * Kills the bot.
-     * @param name
-     * @param msg
-     */
-    public void cmdDie( String name, String msg ) {
-        m_botAction.specAll();
-        m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
-        try { Thread.sleep(500); } catch (Exception e) {};
-        m_botAction.die();
-    }
-
-
     /**
      * Enlists in the supplied public army (or private army w/ pwd).  Those choosing default
      * armies may receive an enistment bonus.
@@ -1397,6 +1372,142 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
+     * Toggles between the player waiting in the safe spawn area and respawning in the center
+     * after prizes are awarded.
+     * @param name
+     * @param msg
+     */
+    public void cmdWait( String name, String msg ) {
+        DistensionPlayer player = m_players.get( name );
+        if( player == null )
+            return;
+        if( player.waitInSpawn() )
+            m_botAction.sendPrivateMessage( name, "You will not be warped out of the resupply area after being armed, and will need to attach to a Terrier or warp out manually." );
+        else
+            m_botAction.sendPrivateMessage( name, "You will be warped out of the resupply area after being armed." );
+    }
+    
+    
+    /**
+     * Shows terriers on an army, and their last observed locations.
+     * @param name
+     * @param msg
+     */
+    public void cmdTerr( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() == -1 ) {
+            m_botAction.sendPrivateMessage( name, "Please !return to your army or !enlist first." );
+            return;
+        }
+        Iterator i = m_botAction.getFreqPlayerIterator(p.getArmyID());
+        if( !i.hasNext() ) {
+            m_botAction.sendPrivateMessage( name, "No pilots detected in your army!" );
+            return;
+        }
+        m_botAction.sendPrivateMessage(name, "Name of Terrier          Approx. location");
+        while( i.hasNext() ) {
+            Player terr = (Player)i.next();
+            if( terr.getShipType() == Tools.Ship.TERRIER )
+                m_botAction.sendPrivateMessage( name, Tools.formatString(terr.getPlayerName(), 25) + getPlayerLocation(terr, false) );
+        }
+    }
+    
+    
+    /**
+     * Shows last seen location of a given individual.  Wrapper.
+     * @param name
+     * @param msg
+     */
+    public void cmdWhereIs( String name, String msg ) {
+        cmdWhereIs( name, msg, m_botAction.getOperatorList().isHighmod(name) );
+    }
+
+    
+    /**
+     * Shows last seen location of a given individual.
+     * @param name
+     * @param msg
+     * @param isStaff True if player is staff/can !whereis anyone
+     */
+    public void cmdWhereIs( String name, String msg, boolean isStaff ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() == -1 && !isStaff ) {
+            m_botAction.sendPrivateMessage( name, "You must !return or !enlist in an army first." );
+            return;
+        }
+        Player p2;
+        p2 = m_botAction.getPlayer( msg );
+        if( p2 == null )
+            p2 = m_botAction.getFuzzyPlayer( msg );
+        if( p2 == null ) {
+            m_botAction.sendPrivateMessage( name, "Player '" + msg + "' can not be located." );
+            return;
+        }
+        if( p.getArmyID() != p2.getFrequency() && !isStaff ) {
+            m_botAction.sendPrivateMessage( name, p2.getPlayerName() + " is not a member of your army!" );
+            return;
+        }
+        m_botAction.sendPrivateMessage( name, p2.getPlayerName() + " last seen: " + getPlayerLocation( p2, isStaff ));
+    }    
+
+
+    
+    // HIGHMOD+ COMMANDS
+    
+    /**
+     * Save all player data.  Sends arena msgs.
+     * @param name
+     * @param msg
+     */
+    public void cmdSaveData( String name, String msg ) {
+        boolean autosave = ":autosave:".equals(name);
+        if( !autosave )
+            m_botAction.sendArenaMessage( "Saving player data ..." ,1 );
+        int players = 0;
+        int playersunsaved = 0;
+        long starttime = System.currentTimeMillis();
+        for( DistensionPlayer p : m_players.values() ) {
+            if( autosave ) {
+                p.saveCurrentShipToDB();
+            } else {
+                if( p.saveCurrentShipToDBNow() == false ) {
+                    m_botAction.sendPrivateMessage( p.getName(), "Your data could not be saved.  Please use !dock to save your data.  Contact a mod with ?help if this does not work." );
+                    playersunsaved++;
+                } else {
+                    players++;
+                }
+            }
+        }
+        long timeDiff = System.currentTimeMillis() - starttime;
+        if( autosave )
+            m_botAction.sendArenaMessage( "AUTOSAVE: All players saved to DB in " + timeDiff + "ms.");
+        else {
+            if( playersunsaved == 0 )
+                m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  -" + name, 1 );
+            else
+                m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  " + playersunsaved + " players could not be saved.", 2 );
+        }
+    }
+
+
+    /**
+     * Kills the bot.
+     * @param name
+     * @param msg
+     */
+    public void cmdDie( String name, String msg ) {
+        m_botAction.specAll();
+        m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
+        try { Thread.sleep(500); } catch (Exception e) {};
+        m_botAction.die();
+    }
+
+
+    /**
      * Bans a player from playing Distension.
      * @param name 
      * @param msg
@@ -1448,23 +1559,6 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdInfo( String name, String msg ) {
         cmdStatus( msg, null, name );
-    }
-
-
-    /**
-     * Toggles between the player waiting in the safe spawn area and respawning in the center
-     * after prizes are awarded.
-     * @param name
-     * @param msg
-     */
-    public void cmdWait( String name, String msg ) {
-        DistensionPlayer player = m_players.get( name );
-        if( player == null )
-            return;
-        if( player.waitInSpawn() )
-            m_botAction.sendPrivateMessage( name, "You will not be warped out of the resupply area after being armed, and will need to attach to a Terrier or warp out manually." );
-        else
-            m_botAction.sendPrivateMessage( name, "You will be warped out of the resupply area after being armed." );
     }
 
     
@@ -1530,6 +1624,39 @@ public class distensionbot extends SubspaceBot {
 
 
     // COMMAND ASSISTANCE METHODS
+
+    /**
+     * Based on provided coords, returns location of player as a String.
+     * @return Last location recorded of player, as a String  
+     */
+    public String getPlayerLocation( Player p, boolean isStaff ) {
+        int x = p.getXLocation() / 16;
+        int y = p.getYLocation() / 16;
+        String exact = "";
+        if( isStaff )
+            exact = "  (" + x + "," + y + ")";  
+        if( x==0 && y==0 )
+            return "Not yet spotted" + exact;
+        if( y <= TOP_SAFE || y >= BOT_SAFE )
+            return "Resupplying" + exact;
+        if( y <= TOP_ROOF )
+            return "Roofing Top ..." + exact;
+        if( y <= TOP_FR )
+            return "Top FR" + exact;
+        if( y <= TOP_MID )
+            return "Top Mid" + exact;
+        if( y <= TOP_LOW )
+            return "Top Lower" + exact;
+        if( y >= BOT_LOW )
+            return "Bottom Lower" + exact;
+        if( y >= BOT_MID )
+            return "Bottom Mid" + exact;
+        if( y >= BOT_FR )
+            return "Bottom FR" + exact;
+        if( y >= BOT_ROOF )
+            return "Roofing Bottom ..." + exact;        
+        return "Neutral zone" + exact;
+    }
 
     /**
      * Checks if flag time should be started.
