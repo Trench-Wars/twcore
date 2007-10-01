@@ -240,6 +240,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!progress", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( ".", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory" );
+        m_commandInterpreter.registerCommand( "!armoury", acceptedMessages, this, "cmdArmory" );  // For britfags
         m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade" );
         m_commandInterpreter.registerCommand( "!scrap", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!intro", acceptedMessages, this, "cmdIntro" );
@@ -557,12 +558,7 @@ public class distensionbot extends SubspaceBot {
                 DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
                 if( killerarmy == null || killedarmy == null )
                     return;
-                
-                if( victor.wasRepeatKill( event.getKilleeID() ) && killedarmy.getPilotsInGame() != 1 ) {
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: Repeat kill; 0 RP earned." );
-                    return;
-                }
-                
+                                
                 if( loser.justRespawned() ) {
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: Victim just spawned; 0 RP earned." );
                     return;                    
@@ -623,6 +619,20 @@ public class distensionbot extends SubspaceBot {
                 if( points < 1 )
                     points = 1;
                 points *= killerarmy.getNumFlagsOwned();
+                
+                if( killedarmy.getPilotsInGame() != 1 ) {                    
+                    switch( victor.getRepeatKillAmount( event.getKilleeID() ) ) {
+                        case 2:
+                            points /= 2;
+                            m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only half the normal amount of RP." );
+                            break;
+                        case 3:
+                            points = 1;
+                            m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
+                            break;
+                    }
+                    return;
+                }
 
                 victor.addRankPoints( points );
                 // Track successive kills for weasel unlock & streaks
@@ -1035,7 +1045,7 @@ public class distensionbot extends SubspaceBot {
             }
         } else {
             for( DistensionArmy a : m_armies.values() ) {
-                int bonus = 0;
+                int bonus = -1; // As a test for weight
                 if( a.isDefault() )
                     bonus = calcEnlistmentBonus( a.getID() ); 
                 m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
@@ -1782,8 +1792,8 @@ public class distensionbot extends SubspaceBot {
         private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
         private boolean[] shipsAvail;           // Marks which ships are available
         private boolean   isRespawning;         // True if player is currently in respawn process
-        private boolean   waitInSpawn;         // True if player would like to warp out manually at respawn
-        private int       lastIDKilled;         // ID of last player killed (feeding protection)
+        private boolean   waitInSpawn;          // True if player would like to warp out manually at respawn
+        private int[]     lastIDsKilled = { -1, -1, -1 };  // ID of last player killed (feeding protection)
         private long      respawnedAt;          // Time last respawned (spawn protection) 
 
         public DistensionPlayer( String name ) {
@@ -1805,7 +1815,6 @@ public class distensionbot extends SubspaceBot {
             successiveKills = 0;
             isRespawning = false;
             waitInSpawn = false;
-            lastIDKilled = -1;
             respawnedAt = -1;
         }
 
@@ -2452,11 +2461,18 @@ public class distensionbot extends SubspaceBot {
         /**
          * Checks if the kill made was a repeat kill.
          */
-        public boolean wasRepeatKill( int killedPlayerID ) {
-            if( killedPlayerID == lastIDKilled )                
-                return true;
-            lastIDKilled = killedPlayerID;
-            return false;
+        public int getRepeatKillAmount( int killedPlayerID ) {
+            int repeats = 0;
+            for( int i = 0; i<3; i++ ) {
+                if( killedPlayerID == lastIDsKilled[i] )
+                    repeats++;                
+            }
+            // Cycle through
+            lastIDsKilled[3] = lastIDsKilled[2]; 
+            lastIDsKilled[2] = lastIDsKilled[1]; 
+            lastIDsKilled[1] = lastIDsKilled[0]; 
+            lastIDsKilled[0] = killedPlayerID; 
+            return repeats;
         }
 
         /**
@@ -2498,7 +2514,7 @@ public class distensionbot extends SubspaceBot {
             totalStrength = 0;
             flagsOwned = 0;
             try {
-                ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fcArmyName, fcDefaultArmy, fcPrivateArmy, fnNumPilots FROM tblDistensionArmy WHERE fnArmyID = '"+ armyID + "'" );
+                ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fcArmyName, fnNumPilots, fcDefaultArmy, fcPrivateArmy, fcPassword FROM tblDistensionArmy WHERE fnArmyID = '"+ armyID + "'" );
                 if( r.next() ) {
                     armyName = r.getString( "fcArmyName" );
                     pilotsTotal = r.getInt( "fnNumPilots" ); 
@@ -2506,7 +2522,8 @@ public class distensionbot extends SubspaceBot {
                     isPrivate = r.getString( "fcPrivateArmy" ).equals("y");
                     password = r.getString( "fcPassword" );
                 }
-            } catch( Exception e ) {
+            } catch( SQLException e ) {
+                m_botAction.sendArenaMessage("Problem loading Army " + armyID );
             }
         }
 
@@ -2866,7 +2883,7 @@ public class distensionbot extends SubspaceBot {
         switch( roundNum ) {
             case 1:
                 m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + "  Winning " + ( MAX_FLAGTIME_ROUNDS + 1) / 2 + " battles will win the sector conflict." );
-                roundTitle = "A new conflict ";
+                roundTitle = "A new conflict";
                 break;
             case MAX_FLAGTIME_ROUNDS:
                 roundTitle = "Final Battle";
