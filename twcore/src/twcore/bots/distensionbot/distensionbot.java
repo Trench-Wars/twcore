@@ -2465,9 +2465,9 @@ public class distensionbot extends SubspaceBot {
         public boolean justRespawned() {
             // 2 second spawn protection
             if( System.currentTimeMillis() - respawnedAt > 2000 )
-                return true;
-            else
                 return false;
+            else
+                return true;
         }
     }
 
