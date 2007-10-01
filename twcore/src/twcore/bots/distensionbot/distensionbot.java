@@ -75,8 +75,8 @@ public class distensionbot extends SubspaceBot {
 
     private final int SPAWN_BASE_0_Y_COORD = 456;               // Y coord around which base 0 owners (top) spawn
     private final int SPAWN_BASE_1_Y_COORD = 566;               // Y coord around which base 1 owners (bottom) spawn
-    private final int SPAWN_Y_SPREAD = 350;                     // # tiles * 2 from above coords to spawn players
-    private final int SPAWN_X_SPREAD = 160;                     // # tiles * 2 from x coord 512 to spawn players  
+    private final int SPAWN_Y_SPREAD = 90;                      // # tiles * 2 from above coords to spawn players
+    private final int SPAWN_X_SPREAD = 275;                     // # tiles * 2 from x coord 512 to spawn players  
     private final int SAFE_TOP_Y = 249;                         // Y coords of safes, for warping in
     private final int SAFE_BOTTOM_Y = 773;
 
@@ -260,12 +260,13 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void handleInvalidMessage( String name, String msg ) {
+        if( name.equals( m_botAction.getBotName() ) )
+            return;
         try {
             Integer i = Integer.parseInt(msg);
             if( i >= 1 && i <= 8 )      // For lazy pilots
                 cmdPilot( name, msg );
         } catch (NumberFormatException e) {
-            cmdHelp( name, msg );       // For stupid pilots
         }
     }
 
@@ -3777,10 +3778,6 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( -1, 0 );
-        m_shipGeneralData.add( ship );
-        ship = new ShipProfile( -1, 1 );
-        m_shipGeneralData.add( ship );
         //ship = new ShipProfile( -1, 2 );
         //m_shipGeneralData.add( ship );
 
@@ -3833,6 +3830,11 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Movement Inhibitor", Tools.Prize.BRICK, 2, 50, 1 );
         ship.addUpgrade( upg );
+        m_shipGeneralData.add( ship );
+
+        ship = new ShipProfile( -1, 0 );
+        m_shipGeneralData.add( ship );
+        ship = new ShipProfile( -1, 1 );
         m_shipGeneralData.add( ship );
 
         /*
