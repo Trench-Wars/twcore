@@ -956,7 +956,7 @@ public class robohelp extends SubspaceBot {
         		int year = Integer.parseInt(dateParameters[1]);
         		
         		Calendar tmp = Calendar.getInstance();
-        		tmp.set(year, month-1, 31, 23, 59, 59 );
+        		tmp.set(year, month-1, 25, 23, 59, 59 );
         		
         		date = new SimpleDateFormat("yyyy-MM").format( tmp.getTime() );
         		displayDate = new SimpleDateFormat("MMMM yyyy").format( tmp.getTime() );
