@@ -764,7 +764,7 @@ public class distensionbot extends SubspaceBot {
                 return;
             }
         } else {
-            bonus = calcEnlistmentBonus( armyNum );
+            bonus = calcEnlistmentBonus( army );
         }
 
         m_botAction.sendPrivateMessage( name, "Ah, joining " + army.getName().toUpperCase() + "?  Excellent.  You are pilot #" + (army.getPilotsTotal() + 1) + "." );
@@ -1047,7 +1047,7 @@ public class distensionbot extends SubspaceBot {
             for( DistensionArmy a : m_armies.values() ) {
                 int bonus = -1; // As a test for weight
                 if( a.isDefault() )
-                    bonus = calcEnlistmentBonus( a.getID() ); 
+                    bonus = calcEnlistmentBonus( a ); 
                 m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
                         Tools.formatString( ""+a.getPilotsInGame(), 10 ) +
@@ -1734,18 +1734,18 @@ public class distensionbot extends SubspaceBot {
     /**
      * @return Enlistment bonus for a given default army, based on the size of other default armies.
      */
-    public int calcEnlistmentBonus( int armyID ) {
+    public int calcEnlistmentBonus( DistensionArmy army ) {
         int pilots = 0;
         int numOtherArmies = 0;
-        DistensionArmy army = m_armies.get( armyID );
         if( army == null || !army.isDefault() )
             return 0;
         int ourcount = army.getPilotsTotal();
 
         for( DistensionArmy a : m_armies.values() ) {
-            if( a.getID() != armyID && a.isDefault() )
+            if( a.getID() != army.getID() && a.isDefault() ) {
                 pilots += a.getPilotsTotal();
-            numOtherArmies++;
+                numOtherArmies++;
+            }
         }
         
         if( pilots == 0 )
@@ -1758,9 +1758,9 @@ public class distensionbot extends SubspaceBot {
             return 0;
         // Starting at a difference of 3, we give a 1 point bonus 
         pilots -= 2;
-        // Points to give greater than 5?  Stick to 5
-        if( pilots > 5 )
-            pilots = 5;
+        // Points to give greater than 3?  Stick to 3
+        if( pilots > 3 )
+            pilots = 3;
         return pilots;
     }
 
@@ -2468,7 +2468,6 @@ public class distensionbot extends SubspaceBot {
                     repeats++;                
             }
             // Cycle through
-            lastIDsKilled[3] = lastIDsKilled[2]; 
             lastIDsKilled[2] = lastIDsKilled[1]; 
             lastIDsKilled[1] = lastIDsKilled[0]; 
             lastIDsKilled[0] = killedPlayerID; 
