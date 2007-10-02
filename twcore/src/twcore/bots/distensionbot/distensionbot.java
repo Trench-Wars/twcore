@@ -1995,6 +1995,10 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSpawnTick() {
             spawnTicks--;
+            if( spawnTicks == 3 ) { // 3 ticks (1.5 seconds) before end, warp to safe and shipreset
+                doSafeWarp();
+                m_botAction.shipReset(name);
+            }
         }
         
         /**
@@ -2004,7 +2008,6 @@ public class distensionbot extends SubspaceBot {
             if( spawnTicks > 0 )
                 return false;
             doWarp();
-            m_botAction.shipReset(name);
             prizeUpgrades();
             return true;
         }
@@ -2013,6 +2016,8 @@ public class distensionbot extends SubspaceBot {
          * Prizes upgrades to player based on what has been purchased.
          */
         public void prizeUpgrades() {
+            if( shipNum < 1 )
+                return;
             Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
             int prize = -1;
             for( int i = 0; i < NUM_UPGRADES; i++ ) {
@@ -2048,8 +2053,6 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSetupRespawn() {
             isRespawning = true;
-            if( waitInSpawn )
-                doSafeWarp();
             if( hasFastRespawn() ) {
                 m_prizeQueue.addHighPriorityPlayer( this );                
             } else {
