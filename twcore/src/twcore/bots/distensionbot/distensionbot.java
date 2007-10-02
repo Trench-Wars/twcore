@@ -61,7 +61,8 @@ public class distensionbot extends SubspaceBot {
                                                            // normally be annoying in a public release.
 
     private final int AUTOSAVE_DELAY = 15;                 // How frequently autosave occurs, in minutes 
-    private final int UPGRADE_DELAY = 500;                 // Delay between fully prizing players, in ms  
+    private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms  
+    private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
@@ -631,7 +632,6 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
                             break;
                     }
-                    return;
                 }
 
                 victor.addRankPoints( points );
@@ -776,7 +776,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage( name, "Welcome aboard." );
         m_botAction.sendPrivateMessage( name, "If you need an !intro to how things work, I'd be glad to !help out.  Or if you just want to get some action, jump in your new Warbird.  (!pilot 1)" );
         if( bonus > 0 ) {
-            m_botAction.sendPrivateMessage( name, "Your enlistment bonus also entitles you to " + bonus + " free upgrade" + (bonus==1?"":"s")+ ".  Congratulations." );
+            m_botAction.sendPrivateMessage( name, "Your contract also entitles you to a " + bonus + " RP signing bonus!  Congratulations." );
             p.addShipToDB( 1, bonus );
         } else {
             p.addShipToDB( 1 );
@@ -1045,14 +1045,14 @@ public class distensionbot extends SubspaceBot {
             }
         } else {
             for( DistensionArmy a : m_armies.values() ) {
-                int bonus = -1; // As a test for weight
+                int bonus = 0;
                 if( a.isDefault() )
                     bonus = calcEnlistmentBonus( a ); 
                 m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
                         Tools.formatString( ""+a.getPilotsInGame(), 10 ) +
                         Tools.formatString( ""+a.getPilotsTotal(), 9 ) +
-                        bonus + " upgrade" + (bonus == 1?"":"s") ); 
+                        bonus + " RP" ); 
             }
         }
     }
@@ -1756,11 +1756,12 @@ public class distensionbot extends SubspaceBot {
         // If avg # pilots is close enough, no bonus
         if( pilots < 3 )
             return 0;
-        // Starting at a difference of 3, we give a 1 point bonus 
+        // Starting at a difference of 3, we give a 5 point bonus
+        // So diff 3 = 5 bonus, 4 = 10, 5 = 15, 6 = 20, 7 = 25, up to a diff of 12 and a bonus of 50
         pilots -= 2;
-        // Points to give greater than 3?  Stick to 3
-        if( pilots > 3 )
-            pilots = 3;
+        if( pilots > 10 )
+            pilots = 10;
+        pilots *= 5;
         return pilots;
     }
 
@@ -1795,6 +1796,7 @@ public class distensionbot extends SubspaceBot {
         private boolean   waitInSpawn;          // True if player would like to warp out manually at respawn
         private int[]     lastIDsKilled = { -1, -1, -1 };  // ID of last player killed (feeding protection)
         private long      respawnedAt;          // Time last respawned (spawn protection) 
+        private int       spawnTicks;           // # queue "ticks" until spawn 
 
         public DistensionPlayer( String name ) {
             this.name = name;
@@ -1816,6 +1818,7 @@ public class distensionbot extends SubspaceBot {
             isRespawning = false;
             waitInSpawn = false;
             respawnedAt = -1;
+            spawnTicks = 0;
         }
 
 
@@ -1870,16 +1873,16 @@ public class distensionbot extends SubspaceBot {
          * points to begin with.
          * @param shipNum Ship # to make available
          */
-        public void addShipToDB( int shipNumToAdd, int startingUpgradePoints ) {
+        public void addShipToDB( int shipNumToAdd, int startingRankPoints ) {
             if( shipNumToAdd < 1 || shipNumToAdd > 8 )
                 return;
             shipsAvail[ shipNumToAdd - 1 ] = true;
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-                if( startingUpgradePoints == 0 )
+                if( startingRankPoints == 0 )
                     m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), " + shipNumToAdd + ")" );
                 else
-                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnUpgradePoints ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), " + shipNumToAdd + ", " + startingUpgradePoints + ")" );
+                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnRankPoints ) VALUES ((SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'), " + shipNumToAdd + ", " + startingRankPoints + ")" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
 
@@ -1982,6 +1985,29 @@ public class distensionbot extends SubspaceBot {
 
 
         // COMPLEX ACTIONS
+        
+        /**
+         * Decrements spawn ticker, which must be decremented to 0 before player is
+         * allowed back in.  During this time the player will see the familiar countdown.
+         * This ensures weapons will continue firing after death, won't clear mines,
+         * and provides a decent pause to break up the action. 
+         * @return True if the player is ready to respawn 
+         */
+        public void doSpawnTick() {
+            spawnTicks--;
+        }
+        
+        /**
+         * Performs necessary actions to spawn the player, if ready.
+         */
+        public boolean doSpawn() {
+            if( spawnTicks > 0 )
+                return false;
+            doWarp();
+            m_botAction.shipReset(name);
+            prizeUpgrades();
+            return true;
+        }
 
         /**
          * Prizes upgrades to player based on what has been purchased.
@@ -1995,7 +2021,6 @@ public class distensionbot extends SubspaceBot {
                     for( int j = 0; j < purchasedUpgrades[i]; j++ )
                         m_botAction.specificPrize( name, prize );
             }
-            doWarp();
         }        
 
         /**
@@ -2023,13 +2048,14 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSetupRespawn() {
             isRespawning = true;
-            doSafeWarp();
-            m_botAction.shipReset(name);
+            if( waitInSpawn )
+                doSafeWarp();
             if( hasFastRespawn() ) {
                 m_prizeQueue.addHighPriorityPlayer( this );                
             } else {
                 m_prizeQueue.addPlayer( this );
-            }            
+            }
+            spawnTicks = TICKS_BEFORE_SPAWN;
         }
 
         /**
@@ -2812,8 +2838,6 @@ public class distensionbot extends SubspaceBot {
      * Prize queuer, for preventing bot lockups.
      */
     private class PrizeQueue extends TimerTask {
-        DistensionPlayer currentPlayer;
-
         LinkedList <DistensionPlayer>players = new LinkedList<DistensionPlayer>();
 
         /**
@@ -2836,9 +2860,11 @@ public class distensionbot extends SubspaceBot {
         public void run() {
             if( players.isEmpty() )
                 return;
-            currentPlayer = players.remove();
-            if( currentPlayer != null )
-                currentPlayer.prizeUpgrades();
+            for( DistensionPlayer p : players )
+                p.doSpawnTick();
+            DistensionPlayer currentPlayer = players.peek();
+            if( currentPlayer.doSpawn() )
+                players.remove();
         }
     }
 
