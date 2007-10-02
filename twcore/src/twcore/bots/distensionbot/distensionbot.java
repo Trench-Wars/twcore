@@ -44,7 +44,7 @@ import twcore.core.util.Tools;
  * - !intro, !intro2, !intro3, etc.
  * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
  * - !emp for terr "targetted EMP" ability, and appropriate player data.  This involves negative full charge.
- * - F1 Help
+ * - F1 Help -- item descriptions?  At least say which slot is which, if not providing info on the specials
  *
  *
  * Adding up points:
@@ -67,12 +67,12 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
     private final double NORMAL_RANK_FACTOR = 1.15;        // Factor for rank increases (lvl 11+)
-    private final int RANK_REQ_SHIP2 = 3;    // 15
-    private final int RANK_REQ_SHIP3 = 1;    //  4
-    private final int RANK_REQ_SHIP4 = 4;    // 20
-    private final int RANK_REQ_SHIP5 = 2;    //  7
-    private final int RANK_REQ_SHIP7 = 778;  // 10
-    private final int RANK_REQ_SHIP8 = 779;  //  2
+    private final int RANK_REQ_SHIP2 = 5;    // 15
+    private final int RANK_REQ_SHIP3 = 2;    //  4
+    private final int RANK_REQ_SHIP4 = 6;    // 20
+    private final int RANK_REQ_SHIP5 = 3;    //  7
+    private final int RANK_REQ_SHIP7 = 778;  // 10  (beta: 4)
+    private final int RANK_REQ_SHIP8 = 1;    //  2
 
     private final int SPAWN_BASE_0_Y_COORD = 456;               // Y coord around which base 0 owners (top) spawn
     private final int SPAWN_BASE_1_Y_COORD = 566;               // Y coord around which base 1 owners (bottom) spawn
@@ -245,7 +245,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade" );
         m_commandInterpreter.registerCommand( "!scrap", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!intro", acceptedMessages, this, "cmdIntro" );
-        m_commandInterpreter.registerCommand( "!wait", acceptedMessages, this, "cmdWait" );
+        m_commandInterpreter.registerCommand( "!warp", acceptedMessages, this, "cmdWarp" );
         m_commandInterpreter.registerCommand( "!terr", acceptedMessages, this, "cmdTerr" );
         m_commandInterpreter.registerCommand( "!whereis", acceptedMessages, this, "cmdWhereIs" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
@@ -594,8 +594,11 @@ public class distensionbot extends SubspaceBot {
                         points = 1;
                     else {
                         points = loser.getUpgradeLevel();
-                        if( loser.getUpgradeLevel() > 5 )
+                        if( loser.getUpgradeLevel() >= 10 ) {
                             loser.addRankPoints( -1 );
+                            if( DEBUG )
+                                m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: -1RP for death" );
+                        }
                     }
                 }
 
@@ -611,10 +614,10 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendArenaMessage( "DEBUG: Infinity/neg infinity found.  Army " + killedarmy.getID() + " str: " + killedarmy.getTotalStrength() + " / Army " + killerarmy.getID() + " str: " + killerarmy.getTotalStrength() );
                     armySizeWeight = 1;
                 }
-                if( armySizeWeight > 1.2f )
-                    armySizeWeight = 1.2f;
+                if( armySizeWeight > 1.25f )
+                    armySizeWeight = 1.25f;
                 else if( armySizeWeight < 0.8f )
-                    armySizeWeight = 0.8f;
+                    armySizeWeight = 0.75f;
 
                 points = Math.round(((float)points * armySizeWeight));
                 if( points < 1 )
@@ -642,10 +645,8 @@ public class distensionbot extends SubspaceBot {
                     // and remove it if they do!
                 }
                 loser.clearSuccessiveKills();
-                if( DEBUG ) {
+                if( DEBUG )
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + " RP earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
-                    //m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: " + loss + " RP lost; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
-                }
             }
         }
     }
@@ -686,14 +687,16 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  10/1/07",
+                "RECENT UPDATES  -  10/2/07",
+                " - Shark added",
+                " - New spawning method keeps you in safe after prizing to make attaching easy",
+                "   (use !warp if you wish to have the bot warp you out after each death)",
+                " - !warp command replaced !wait command -- by default, warping is off",
+                " - Weights widened, particularly for round end bonuses",
                 " - Weasel added (but can't be unlocked by rank)",
-                " - !wait command added (wait in resupply area rather than being warped)",
-                " - Spawn protection and double-kill protection added",
+                " - Spawn protection and repeat-kill protection added",
                 " - Bot-controlled spawns widened and tightened toward bases",
-                " - !msgbeta cmd for mods -- msgs all testers that a test is starting",
                 " - !terr and !whereis commands as seen in purepub",
-                " - Logon msg to beta chat"
         };
         m_botAction.privateMessageSpam( name, beta );
     }
@@ -711,8 +714,9 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        // Easy fix: Disallow names >19 chars to avoid name hacking 
-        if( name.length() > 19 ) {
+        // Easy fix: Disallow names >18 chars to avoid name hacking.
+        // (Extra char padding ensures no-one can imitate, in case "name" String only shows 19 total)
+        if( name.length() > 18 ) {
             m_botAction.sendPrivateMessage( name, "Whoa there, is that a name you have, or a novel?  You need something short and snappy.  Hell, I'd reckon that anything 20 letters or more just won't cut it.  Come back when you have a better name.");
             return;            
         }
@@ -1251,7 +1255,10 @@ public class distensionbot extends SubspaceBot {
                 if( printCost ) {
                     printmsg += Tools.formatString( "" + currentUpgrade.getCostDefine( purchasedUpgrades[i] ), 11 );
                     int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
-                    printmsg += (req < 10 ? " " : "") + req;
+                    if( req <= player.getRank() )
+                        printmsg += "AVAIL!";
+                    else
+                        printmsg += (req < 10 ? " " : "") + req;
                 }
                 m_botAction.sendPrivateMessage( name, printmsg );
             }
@@ -1387,7 +1394,7 @@ public class distensionbot extends SubspaceBot {
      * @param name
      * @param msg
      */
-    public void cmdWait( String name, String msg ) {
+    public void cmdWarp( String name, String msg ) {
         DistensionPlayer player = m_players.get( name );
         if( player == null )
             return;
@@ -1816,7 +1823,7 @@ public class distensionbot extends SubspaceBot {
                 shipsAvail[i] = false;
             successiveKills = 0;
             isRespawning = false;
-            waitInSpawn = false;
+            waitInSpawn = true;
             respawnedAt = -1;
             spawnTicks = 0;
         }
@@ -1973,8 +1980,8 @@ public class distensionbot extends SubspaceBot {
                 // Setup special (aka unusual) abilities
                 Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
                 for( int i = 0; i < NUM_UPGRADES; i++ )
-                    if( upgrades.get( i ).getPrizeNum() == -1 && purchasedUpgrades[i] > 0 );
-                fastRespawn = true;
+                    if( upgrades.get( i ).getPrizeNum() == -1 && purchasedUpgrades[i] > 0 )
+                        fastRespawn = true;
 
                 m_botAction.SQLClose(r);
                 return shipDataSaved;
@@ -2848,7 +2855,7 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to add 
          */
         public void addPlayer( DistensionPlayer p ) {
-            players.add(p);
+            players.addLast(p);
         }
 
         /**
@@ -2867,7 +2874,7 @@ public class distensionbot extends SubspaceBot {
                 p.doSpawnTick();
             DistensionPlayer currentPlayer = players.peek();
             if( currentPlayer.doSpawn() )
-                players.remove();
+                players.removeFirst();
         }
     }
 
@@ -2976,10 +2983,10 @@ public class distensionbot extends SubspaceBot {
         if( opposingStrengthAvg == 0 )
             opposingStrengthAvg = 1;
         armyDiffWeight = ((float)opposingStrengthAvg / (float)friendlyStrengthAvg);
-        if( armyDiffWeight > 1.2f )
-            armyDiffWeight = 1.2f;
-        else if( armyDiffWeight < 0.8f )
-            armyDiffWeight = 0.8f;
+        if( armyDiffWeight > 3.0f )
+            armyDiffWeight = 3.0f;
+        else if( armyDiffWeight < 0.3f )
+            armyDiffWeight = 0.3f;
         
         // Points to be divided up by army
         int totalPoints = Math.round((float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight);
@@ -3944,7 +3951,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "60-second Regeneration", -2, 3, 40, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Priority Respawning", -1, 1, 10, 1 );
+        upg = new ShipUpgrade( "Priority Rearmament", -1, 1, 10, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Targetted EMP", -4, 5, 50, 1 );
         ship.addUpgrade( upg );
@@ -4006,8 +4013,6 @@ public class distensionbot extends SubspaceBot {
 
         ship = new ShipProfile( -1, 0 );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( -1, 1 );
-        m_shipGeneralData.add( ship );
 
         /*
         // LANCASTER -- rank 10
@@ -4041,39 +4046,67 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "S4", 0, 0, 0 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
+        */
         
         // SHARK -- rank 2
+        // Very fast upg speed; rotation has small spread (+2start) and few upgrades; thrust starts 1 down
+        //                      but has high max; energy has 14 levels and starts 1 down.
+        //  1: Repel 1
+        //  7: Repel 2
+        // 11: Priority Rearmament
+        // 15: Repel 3
+        // 17: XRadar
+        // 20: Guns
+        // 22: Shrap 1
+        // 26: Repel 4
+        // 29: Multifire
+        // 34: Repel 5
+        // 38: Cloak
+        // 40: Repel 6
+        // 41: Shrap 2
+        // 45: L2 Bombs
+        // 50: Repel 7
+        // 55: Repel 8
+        // 60: Shrap 3
+        // 70: Repel 9
+        // 80: Repel 10
         ship = new ShipProfile( RANK_REQ_SHIP8, 11 );
-        upg = new ShipUpgrade( "Runningside Correctors", Tools.Prize.ROTATION, 0, 10 );
+        int p8a1[] = { 1, 1, 1, 1, 1, 2 };
+        int p8a2[] = { 10, 11, 12, 13, 14, 15 };
+        upg = new ShipUpgrade( "Runningside Correctors", Tools.Prize.ROTATION, p8a1, p8a2, 6 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Spitfire Thrusters", Tools.Prize.THRUST, 0, 10 );
+        upg = new ShipUpgrade( "Spitfire Thrusters", Tools.Prize.THRUST, 1, 0, 13 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Space-Force Emulsifier", Tools.Prize.TOPSPEED, 0, 10 );
+        upg = new ShipUpgrade( "Space-Force Emulsifier", Tools.Prize.TOPSPEED, 1, 0, 10 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Light Charging Mechanism", Tools.Prize.RECHARGE, 0, 10 );
+        upg = new ShipUpgrade( "Light Charging Mechanism", Tools.Prize.RECHARGE, 1, 1, 10 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Projectile Slip Plates", Tools.Prize.ENERGY, 0, 10 );
+        int p8b1[] = { 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 };
+        int p8b2[] = { 1, 4, 7, 11, 14, 19, 25, 30, 35, 40, 50, 60, 70, 80 };
+        upg = new ShipUpgrade( "Projectile Slip Plates", Tools.Prize.ENERGY, p8b1, p8b2, 14 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 0, 1 );
+        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 1, 20, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Plasma Drop Upgrade", Tools.Prize.BOMBS, 0, 1 );
+        upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, 4, 45, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Spreadshot", Tools.Prize.MULTIFIRE, 0, 0 );
+        upg = new ShipUpgrade( "Spreadshot", Tools.Prize.MULTIFIRE, 1, 29, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 0, 1 );
+        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 1, 17, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Shark Reiterator", Tools.Prize.DECOY, 0, 1 );
+        upg = new ShipUpgrade( "(Decoy disabled)", Tools.Prize.DECOY, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, 0, 5 );    // DEFINE
+        int p8c1[] = { 1, 1,  1,  1,  1,  1,  1,  1,  1,  1 };
+        int p8c2[] = { 1, 7, 15, 26, 34, 40, 50, 55, 70, 80 };        
+        upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2, 10 );    // DEFINE
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Splintering Unit", Tools.Prize.SHRAPNEL, 0, 3 );
+        int p8d2[] = { 22, 41, 60 };
+        upg = new ShipUpgrade( "Splintering Unit", Tools.Prize.SHRAPNEL, 1, p8d2, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Nonexistence Device", Tools.Prize.CLOAK, 20700, 1 );
+        upg = new ShipUpgrade( "Nonexistence Device", Tools.Prize.CLOAK, 3, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Fast Respawn", -1, 1200, 1 );   // DEFINE
+        upg = new ShipUpgrade( "Priority Rearmament", -1, 1, 11, 1 );   // DEFINE
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );        
-*/
     }
 
 }
