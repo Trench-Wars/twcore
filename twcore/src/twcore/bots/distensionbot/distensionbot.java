@@ -45,6 +45,7 @@ import twcore.core.util.Tools;
  * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
  * - !emp for terr "targetted EMP" ability, and appropriate player data.  This involves negative full charge.
  * - F1 Help -- item descriptions?  At least say which slot is which, if not providing info on the specials
+ * - LVZ stuff: replacement sounds; point counter; display showing flags owned
  *
  *
  * Adding up points:
@@ -541,18 +542,18 @@ public class distensionbot extends SubspaceBot {
             // also cleared.
             if( killed.getFrequency() == killer.getFrequency() ) {
                 float div;
-                // Sharks get off a little easier for TKs.  But not that easy.
+                // Sharks get off a little easier for TKs
                 if( killer.getShipType() == Tools.Ship.SHARK )
-                    div = 5;
+                    div = 10;
                 else
                     div = 2;
                 int loss = Math.round((float)victor.getUpgradeLevel() / div);
                 victor.addRankPoints( -loss );
                 victor.clearSuccessiveKills();
-                if( !victor.wasWarnedForTK() ) {
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "Lost " + loss + " rank points for TKing " + killed.getPlayerName() + ".  (You will not be notified for subsequent TKs)" );
-                    victor.setWarnedForTK();
-                }
+                //if( !victor.wasWarnedForTK() ) {
+                m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
+                //    victor.setWarnedForTK();
+                //}
                 // Otherwise: Add points via level scheme
             } else {
                 DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
@@ -576,19 +577,20 @@ public class distensionbot extends SubspaceBot {
                 int points;
 
                 // Loser is 10 or more levels above victor:
-                //   Victor earns his level + 10, and loser loses half of that amount from due shame
+                //   Victor earns loser's level in RP, and loser loses half of that amount from due shame
                 if( loser.getUpgradeLevel() - victor.getUpgradeLevel() >= 10 ) {
-                    points = victor.getUpgradeLevel() + 10;
-                    loser.addRankPoints( -(points / 2) ); 
+                    points = loser.getUpgradeLevel();
+                    loser.addRankPoints( -(points / 2) );
+                    m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() );
 
-                    // Loser is 15 or more levels below victor:
+                    // Loser is 10 or more levels below victor:
                     //   Victor only gets 1 point, and loser loses nothing
-                } else if( loser.getUpgradeLevel() - victor.getUpgradeLevel() <= -15 ) {
+                } else if( victor.getUpgradeLevel() - loser.getUpgradeLevel() >= 10 ) {
                     points = 1;
 
-                    // Loser is between 14 levels below and 9 levels above victor:
+                    // Normal kill:
                     //   Victor earns the level of the loser in points, and loser loses
-                    //   a point if over level 5.  Level 0 players are worth 1 point. 
+                    //   a point if over level 10.  Level 0 players are worth 1 point. 
                 } else {
                     if( loser.getUpgradeLevel() == 0 )
                         points = 1;
@@ -614,14 +616,13 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendArenaMessage( "DEBUG: Infinity/neg infinity found.  Army " + killedarmy.getID() + " str: " + killedarmy.getTotalStrength() + " / Army " + killerarmy.getID() + " str: " + killerarmy.getTotalStrength() );
                     armySizeWeight = 1;
                 }
-                if( armySizeWeight > 1.25f )
-                    armySizeWeight = 1.25f;
-                else if( armySizeWeight < 0.8f )
-                    armySizeWeight = 0.75f;
+                if( armySizeWeight > 1.5f )
+                    armySizeWeight = 1.5f;
+                else if( armySizeWeight < 0.5f )
+                    armySizeWeight = 0.5f;
 
+                int preWeight = points; 
                 points = Math.round(((float)points * armySizeWeight));
-                if( points < 1 )
-                    points = 1;
                 points *= killerarmy.getNumFlagsOwned();
                 
                 if( killedarmy.getPilotsInGame() != 1 ) {                    
@@ -636,6 +637,8 @@ public class distensionbot extends SubspaceBot {
                             break;
                     }
                 }
+                if( points < 1 )
+                    points = 1;
 
                 victor.addRankPoints( points );
                 // Track successive kills for weasel unlock & streaks
@@ -646,7 +649,8 @@ public class distensionbot extends SubspaceBot {
                 }
                 loser.clearSuccessiveKills();
                 if( DEBUG )
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + points + " RP earned; weight=" + armySizeWeight + "; flags=" + killerarmy.getNumFlagsOwned() );
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "+" + points + " RP (" + preWeight + " * " +
+                            armySizeWeight + " army weight" + ((killerarmy.getNumFlagsOwned() == 2) ? " * 2 flags)" : ")" ) );
             }
         }
     }
@@ -1032,18 +1036,24 @@ public class distensionbot extends SubspaceBot {
         else
             inGame = !(player.getShipNum() == -1);
 
-        if( inGame )
-            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Playing    Total    Strength    Flags" );
-        else
-            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Playing    Total    Bonus" );
+        if( inGame ) 
+            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Total     Playing   Strength    Flags" );
+        else {
+            m_botAction.sendPrivateMessage( name, "ARMY ENLISTMENT TIPS" );
+            m_botAction.sendPrivateMessage( name, "--------------------" );
+            m_botAction.sendPrivateMessage( name, " - The army you choose is permanent.  You lose points when you !defect to another." );
+            m_botAction.sendPrivateMessage( name, " - Choose the army with the biggest enlistment bonus -- free points to get you started!" );
+            m_botAction.sendPrivateMessage( name, " - Don't worry about the number of players currently playing.  I'll adjust for it." );
+            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Total     Playing   Bonus" );
+        }
         //                                                                                     #234567890#23456789#23456789012#
 
         if( inGame ) {
             for( DistensionArmy a : m_armies.values() ) {
                 m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
-                        Tools.formatString( ""+a.getPilotsInGame(), 10 ) +
-                        Tools.formatString( ""+a.getPilotsTotal(), 9 ) +
+                        Tools.formatString( ""+a.getPilotsTotal(), 10 ) +
+                        Tools.formatString( ""+a.getPilotsInGame(), 9 ) +
                         Tools.formatString( ""+a.getTotalStrength(), 12 ) +
                         a.getNumFlagsOwned() );
             }
@@ -1054,8 +1064,8 @@ public class distensionbot extends SubspaceBot {
                     bonus = calcEnlistmentBonus( a ); 
                 m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
-                        Tools.formatString( ""+a.getPilotsInGame(), 10 ) +
-                        Tools.formatString( ""+a.getPilotsTotal(), 9 ) +
+                        Tools.formatString( ""+a.getPilotsTotal(), 10 ) +
+                        Tools.formatString( ""+a.getPilotsInGame(), 9 ) +
                         bonus + " RP" ); 
             }
         }
@@ -1159,7 +1169,7 @@ public class distensionbot extends SubspaceBot {
             cmdProgress( name, msg, null );
         else
             cmdProgress( name, msg, mod );
-        m_botAction.sendPrivateMessage( name, player.getUpgradePoints() + " Upgrade Points available." );
+        m_botAction.sendPrivateMessage( theName, player.getUpgradePoints() + " Upgrade Points available." );
     }
 
 
@@ -2014,7 +2024,11 @@ public class distensionbot extends SubspaceBot {
         public boolean doSpawn() {
             if( spawnTicks > 0 )
                 return false;
-            doWarp();
+            if( !isRespawning ) // For safety
+                return true;
+            doWarp(false);
+            isRespawning = false;
+            respawnedAt = System.currentTimeMillis();
             prizeUpgrades();
             return true;
         }
@@ -2038,9 +2052,10 @@ public class distensionbot extends SubspaceBot {
         /**
          * Warps player to the appropriate spawning location (near a specific base).
          * Used after prizing. 
+         * @param roundStart True if the rounnd is starting (ignore settings)
          */
-        public void doWarp() {
-            if( waitInSpawn )
+        public void doWarp( boolean roundStart ) {
+            if( waitInSpawn && !roundStart )
                 return;
             int base = armyID % 2;
             Random r = new Random();
@@ -2051,8 +2066,6 @@ public class distensionbot extends SubspaceBot {
             else
                 y = SPAWN_BASE_1_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
             m_botAction.warpTo(name, x, y);
-            isRespawning = false;
-            respawnedAt = System.currentTimeMillis();
         }
 
         /**
@@ -2090,49 +2103,42 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "Congratulations, you have advanced to rank " + rank + " in the " + Tools.shipName(shipNum) + ".  You will reach the next rank in " + ( nextRank - rankPoints )+ " rank points (total " + nextRank + ").");
             m_botAction.sendPrivateMessage(name, "You have earned 1 upgrade point to spend in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " total available).") : "") );
 
-            switch (rank) {
-                case RANK_REQ_SHIP2:
-                    if( shipsAvail[1] == false ) {
-                        m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Javelin.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                        m_botAction.sendPrivateMessage(name, "JAVELIN: The Javelin is a difficult ship to pilot, but one of the most potentially dangerous.  Users of the original Javelin model will feel right at home.  Our Javelins are extremely upgradeable, devastating other craft in high ranks.");
-                        addShipToDB(2);
-                    }
-                    break;
-                case RANK_REQ_SHIP3:
-                    if( shipsAvail[2] == false ) {
-                        m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Spider.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                        m_botAction.sendPrivateMessage(name, "SPIDER: The Spider is the mainstay support gunner of every army and the most critical element of base defense.  Upgraded spiders receive regular refuelings, wormhole plugging capabilities, and 10-second post-rearmament energy streams.");
-                        addShipToDB(3);
-                    }
-                    break;
-                case RANK_REQ_SHIP4:
-                    if( shipsAvail[3] == false ) {
-                        m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the experimental Leviathan.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                        m_botAction.sendPrivateMessage(name, "LEVIATHAN: The Leviathan is an experimental craft, as yet untested.  It is unmaneuvarable but capable of great speeds -- in reverse.  Its guns are formidable, its bombs can cripple an entire base, but it is a difficult ship to master.");
-                        addShipToDB(4);
-                    }
-                    break;
-                case RANK_REQ_SHIP5:
-                    if( shipsAvail[4] == false ) {
-                        m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Terrier.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                        m_botAction.sendPrivateMessage(name, "TERRIER: The Terrier is our most important ship, providing a point of support into the fray.  Also the most rapidly-advancing craft, advanced Terriers enjoy rearmament preference and resupply of weapons and wormhole kits.");
-                        addShipToDB(5);
-                    }
-                    break;
-                case RANK_REQ_SHIP7:
-                    if( shipsAvail[6] == false ) {
-                        m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Lancaster.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                        m_botAction.sendPrivateMessage(name, "LANCASTER: The Lancaster is an unusual ship with a host of surprises onboard.  Pilots can upgrade its most basic components rapidly.  The Firebloom and the Lanc's evasive-bombing capability make this a fantastic choice for advanced pilots.");
-                        addShipToDB(7);
-                    }
-                    break;
-                case RANK_REQ_SHIP8:
-                    if( shipsAvail[7] == false ) {
-                        m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Shark.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                        m_botAction.sendPrivateMessage(name, "SHARK: The Shark is piloted by our most clever and resourceful pilots.  Unsung heroes of the army, Sharks are both our main line of defense and leaders of every assault.  Advanced Sharks enjoy light gun capabilities and a cloaking device.");
-                        addShipToDB(8);
-                    }
-                    break;
+            if( rank >= RANK_REQ_SHIP2 ) {
+                if( shipsAvail[1] == false ) {
+                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Javelin.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(name, "JAVELIN: The Javelin is a difficult ship to pilot, but one of the most potentially dangerous.  Users of the original Javelin model will feel right at home.  Our Javelins are extremely upgradeable, devastating other craft in high ranks.");
+                    addShipToDB(2);
+                }
+            } else if ( rank >= RANK_REQ_SHIP3 ) {
+                if( shipsAvail[2] == false ) {
+                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Spider.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(name, "SPIDER: The Spider is the mainstay support gunner of every army and the most critical element of base defense.  Upgraded spiders receive regular refuelings, wormhole plugging capabilities, and 10-second post-rearmament energy streams.");
+                    addShipToDB(3);
+                }
+            } else if ( rank >= RANK_REQ_SHIP4 ) {
+                if( shipsAvail[3] == false ) {
+                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the experimental Leviathan.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(name, "LEVIATHAN: The Leviathan is an experimental craft, as yet untested.  It is unmaneuvarable but capable of great speeds -- in reverse.  Its guns are formidable, its bombs can cripple an entire base, but it is a difficult ship to master.");
+                    addShipToDB(4);
+                }
+            } else if ( rank >= RANK_REQ_SHIP5 ) {
+                if( shipsAvail[4] == false ) {
+                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Terrier.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(name, "TERRIER: The Terrier is our most important ship, providing a point of support into the fray.  Also the most rapidly-advancing craft, advanced Terriers enjoy rearmament preference and resupply of weapons and wormhole kits.");
+                    addShipToDB(5);
+                }
+            } else if ( rank >= RANK_REQ_SHIP7 ) {
+                if( shipsAvail[6] == false ) {
+                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Lancaster.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(name, "LANCASTER: The Lancaster is an unusual ship with a host of surprises onboard.  Pilots can upgrade its most basic components rapidly.  The Firebloom and the Lanc's evasive-bombing capability make this a fantastic choice for advanced pilots.");
+                    addShipToDB(7);
+                }
+            } else if ( rank >= RANK_REQ_SHIP8 ) {
+                if( shipsAvail[7] == false ) {
+                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Shark.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(name, "SHARK: The Shark is piloted by our most clever and resourceful pilots.  Unsung heroes of the army, Sharks are both our main line of defense and leaders of every assault.  Advanced Sharks enjoy light gun capabilities and a cloaking device.");
+                    addShipToDB(8);
+                }
             }
         }
 
@@ -2193,7 +2199,9 @@ public class distensionbot extends SubspaceBot {
 
         public void putInCurrentShip() {
             m_botAction.setShip( name, shipNum );
-            m_botAction.setFreq( name, getArmyID() );            
+            m_botAction.setFreq( name, getArmyID() );
+            isRespawning = false;
+            respawnedAt = System.currentTimeMillis();
         }
 
         /**
@@ -2324,7 +2332,7 @@ public class distensionbot extends SubspaceBot {
         public boolean waitInSpawn() {
             waitInSpawn = !waitInSpawn; 
             return waitInSpawn;
-        }
+        }        
 
 
         // GETTERS
@@ -2495,7 +2503,15 @@ public class distensionbot extends SubspaceBot {
         }
         
         /**
-         * Checks if the kill made was a repeat kill.
+         * @return True if player is a support ship (5 or 8)
+         */
+        public boolean isSupportShip() {
+            return (shipNum == 5 || shipNum == 8 );
+        }
+        
+        /**
+         * Returns # of kills recently made of a player, and cycles IDs of players
+         * killed appropriately.
          */
         public int getRepeatKillAmount( int killedPlayerID ) {
             int repeats = 0;
@@ -2509,7 +2525,7 @@ public class distensionbot extends SubspaceBot {
             lastIDsKilled[0] = killedPlayerID; 
             return repeats;
         }
-
+        
         /**
          * Checks if player spawned in last 2 seconds.
          */
@@ -2948,6 +2964,7 @@ public class distensionbot extends SubspaceBot {
         boolean gameOver     = false;
         int winningArmyID    = flagTimer.getHoldingFreq();
         int maxScore         = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
+        int secs             = flagTimer.getTotalSecs();
         int minsToWin        = flagTimer.getTotalSecs() / 60;
         int opposingStrengthAvg = 1;
         int friendlyStrengthAvg = 1;
@@ -2989,12 +3006,31 @@ public class distensionbot extends SubspaceBot {
             armyDiffWeight = 0.3f;
         
         // Points to be divided up by army
-        int totalPoints = Math.round((float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight);
+        float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
+        // Terrs and sharks receive 60% of point reward to divide up
+        int supportPoints = Math.round( totalPoints * 0.6f );
+        // Attackers (all others) receive 40%
+        int attackPoints = Math.round( totalPoints * 0.4f );
+        int totalLvlSupport = 0;
+        int totalLvlAttack = 0;
+        Iterator <DistensionPlayer>i = m_players.values().iterator();
+        while( i.hasNext() ) {
+            DistensionPlayer p = i.next();
+            Integer time = playerTimes.get( p.getName() );
+            float percentOnFreq = 0;
+            if( time != null )
+                percentOnFreq = (float)(secs - time) / (float)secs;             
+            if( p.isSupportShip() )
+                totalLvlSupport += Math.round( (float)p.getRank() * percentOnFreq );
+            else
+                totalLvlAttack += Math.round( (float)p.getRank() * percentOnFreq );            
+        }
+        
         if( DEBUG )
-            m_botAction.sendArenaMessage( "DEBUG: (" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " avg total enemy strength * " + armyDiffWeight + " strength diff weight = " + totalPoints + "RP to be divided among winners" );
+            m_botAction.sendArenaMessage( "DEBUG: (" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
-        Iterator <DistensionPlayer>i = m_players.values().iterator();
+        i = m_players.values().iterator();
         int upgLevel = 0;
         float points = 0;
         while( i.hasNext() ) {
@@ -3002,32 +3038,33 @@ public class distensionbot extends SubspaceBot {
             if( p.getArmyID() == winningArmyID ) {
                 upgLevel = p.getUpgradeLevel();
                 if( upgLevel == 0 )
-                    upgLevel = 1;
-                points = (float)totalPoints * ((float)upgLevel / (float)friendlyStrengthAvg);
+                    upgLevel = 1;                
+                if( p.isSupportShip() )
+                    points = (float)supportPoints * ((float)upgLevel / (float)totalLvlSupport);
+                else
+                    points = (float)attackPoints * ((float)upgLevel / (float)totalLvlAttack);
                 Integer time = playerTimes.get( p.getName() );
                 if( time != null ) {
-                    int secs = flagTimer.getTotalSecs();
                     float percentOnFreq = (float)(secs - time) / (float)secs;
-                    int modPoints = Math.round(points * percentOnFreq);
-
-                    if( p.getShipNum() == 5 || p.getShipNum() == 8 )
-                        modPoints *= 2;
-                    
+                    int modPoints = Math.max(1, Math.round(points * percentOnFreq) );                    
                     if( DEBUG )
-                        m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + (upgLevel) + " / avg team rank " + friendlyStrengthAvg + " (" + upgLevel / friendlyStrengthAvg + ")) * total points:" + totalPoints + " * " + percentOnFreq * 100 + "% participation");
+                        if( p.isSupportShip() )
+                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + upgLevel + " / total support strentgh " + totalLvlSupport + " (" + upgLevel / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation");
+                        else
+                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + upgLevel + " / total attack strentgh " + totalLvlAttack + " (" + upgLevel / totalLvlAttack + ")) * attack points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation");
                     else
                         m_botAction.sendPrivateMessage(p.getName(), "You receive " + modPoints + " RP for your role in the victory." );
                     int holds = flagTimer.getSectorHolds( p.getName() );
                     int breaks = flagTimer.getSectorBreaks( p.getName() );                    
                     int bonus = 0;
                     if( holds != 0 && breaks != 0 ) {
-                        bonus = (int)( modPoints * (((float)holds / 10.0) + ((float)breaks / 20.0)) );
+                        bonus = Math.max(1, (int)( modPoints * (((float)holds / 10.0) + ((float)breaks / 20.0)) ));
                         m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds and " + breaks +" sector breaks, you also receive an additional " + bonus + " RP." );
                     } else if( holds != 0 ) {
-                        bonus = (int)( modPoints * ((float)holds / 10.0) );                        
+                        bonus = Math.max(1, (int)( modPoints * ((float)holds / 10.0) ));
                         m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds, you also receive an additional " + bonus + " RP." );
                     } else if( breaks != 0 ) {
-                        bonus = (int)( modPoints * ((float)breaks / 20.0) );                        
+                        bonus = Math.max(1, (int)( modPoints * ((float)breaks / 20.0) ));
                         m_botAction.sendPrivateMessage( p.getName(), "For " + breaks + " sector breaks, you also receive an additional " + bonus + " RP." );                        
                     }
                     modPoints += bonus;
@@ -3081,7 +3118,7 @@ public class distensionbot extends SubspaceBot {
         if( gameOver ) {
             // Need special reward for conflict win
             intermissionTime = 20000;
-            m_botAction.sendArenaMessage( "THE CONFLICT IS OVER!  " + m_armies.get(winningArmyID).getName() + " has laid total claim to the sector, after " + (freq0Score + freq1Score) + " total battles.", 2 );
+            m_botAction.sendArenaMessage( "THE CONFLICT IS OVER!  " + m_armies.get(winningArmyID).getName() + " has laid total claim to the sector, after " + (freq0Score + freq1Score) + " total battles.", Tools.Sound.HALLELUJAH );
             freq0Score = 0;
             freq1Score = 0;
         }
@@ -3151,7 +3188,7 @@ public class distensionbot extends SubspaceBot {
         while( i.hasNext() ) {
             p = i.next();
             if( p != null && p.getShipNum() > 0 && !p.isRespawning() ) {
-                p.doWarp();
+                p.doWarp( true );
             }
         }
     }
@@ -4050,7 +4087,9 @@ public class distensionbot extends SubspaceBot {
         
         // SHARK -- rank 2
         // Very fast upg speed; rotation has small spread (+2start) and few upgrades; thrust starts 1 down
-        //                      but has high max; energy has 14 levels and starts 1 down.
+        //                      but has high max; energy starts high, has low level req initially, but
+        //                      has high req later on (designed to give bomb capability early)
+        // (Starts with 1 repel, so that repel 1 is actually second)
         //  1: Repel 1
         //  7: Repel 2
         // 11: Priority Rearmament
@@ -4081,9 +4120,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Light Charging Mechanism", Tools.Prize.RECHARGE, 1, 1, 10 );
         ship.addUpgrade( upg );
-        int p8b1[] = { 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 };
-        int p8b2[] = { 1, 4, 7, 11, 14, 19, 25, 30, 35, 40, 50, 60, 70, 80 };
-        upg = new ShipUpgrade( "Projectile Slip Plates", Tools.Prize.ENERGY, p8b1, p8b2, 14 );
+        int p8b1[] = { 1, 1,  1,  1,  1,  1,  2,  3 };
+        int p8b2[] = { 1, 2, 10, 20, 30, 40, 50, 75 };
+        upg = new ShipUpgrade( "Projectile Slip Plates", Tools.Prize.ENERGY, p8b1, p8b2, 8 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 1, 20, 1 );
         ship.addUpgrade( upg );
