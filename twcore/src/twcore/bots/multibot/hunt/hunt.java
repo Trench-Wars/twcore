@@ -48,6 +48,7 @@ public class hunt extends MultiModule {
 	}
 
     public void startHunt ( String hostName ){
+        m_botAction.scoreResetAll(); //in case host forgot
     	Player p;
         String addPlayerName;
         mvpScore = 0; //reset from previous game
@@ -99,7 +100,6 @@ public class hunt extends MultiModule {
 
           m_botAction.createRandomTeams( 1 ); //in case host forgot
         */
-        m_botAction.sendUnfilteredPublicMessage( "*scorereset" ); //in case host forgot
         tellArenaPreyName();
     }
 
