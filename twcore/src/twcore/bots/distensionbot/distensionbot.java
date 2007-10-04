@@ -331,11 +331,10 @@ public class distensionbot extends SubspaceBot {
                     "| !pilot <ship>       |  Pilot <ship> if available in hangar",
                     "| <shipnum>           |  Shortcut for !pilot <shipnum>",
                     "| !hangar             |  View your ships & those available for purchase",
-                    "| !progress (or .)    |  See your progress toward next advancement",
-                    "| !status             |  View current ship's level and upgrades",
-                    "| !upgrade <upg>      |  Upgrade your ship with <upg> from the armory",
-                    "| !armory             |  View ship upgrades available in the armory",
+                    "| !assist <army>      |  Temporarily assists <army> at no penalty to you",
                     "| !defect <army>      |  Defect to <army>.  Restarts all ships at current rank",
+                    "| !armory             |  View ship upgrades available in the armory",
+                    "| !upgrade <upg>      |  Upgrade your ship with <upg> from the armory",
                     "| !scrap <upg>        |  Trade in <upg>.  Restarts that ship at current rank",
                     "| !wait               |  Toggles waiting in spawn vs. being autowarped out",
                     "| !whereis <name>     |  Shows approximate location of pilot <name>",
@@ -348,14 +347,13 @@ public class distensionbot extends SubspaceBot {
                     ".---------------------",
                     "| !progress (or .)    |  See your progress toward next advancement",
                     "| !status             |  View current ship's level and upgrades",
-                    "| !upgrade <upg>      |  Upgrade your ship with <upg> from the armory",
                     "| !armory             |  View ship upgrades available in the armory",
+                    "| !upgrade <upg>      |  Upgrade your ship with <upg> from the armory",
+                    "| !scrap <upg>        |  Trade in <upg>.  Restarts that ship at current rank",
                     "| !hangar             |  View your ships & those available for purchase",
                     "| !dock               |  Dock your ship, recording status to headquarters",
                     "| !pilot <ship>       |  Change to <ship> if available in hangar",
                     "| <shipnum>           |  Shortcut for !pilot <shipnum>",
-                    "| !defect <army>      |  Defect to <army>.  Restarts all ships at current rank",
-                    "| !scrap <upg>        |  Trade in <upg>.  Restarts that ship at current rank",
                     "| !wait               |  Toggles waiting in spawn vs. being autowarped out",
                     "| !whereis <name>     |  Shows approximate location of pilot <name>",
                     "| !terr               |  Shows approximate location of all army terriers"                    
@@ -1500,7 +1498,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "You must !return or !enlist in an army first." );
             return;
         }
-        if( p.getShipNum() == 0 ) {
+        if( p.getShipNum() != 0 ) {
             m_botAction.sendPrivateMessage( name, "You must !dock before you can assist another army." );
             return;            
         }
@@ -1516,8 +1514,12 @@ public class distensionbot extends SubspaceBot {
             }
         }
         if( p.getNaturalArmyID() == armyToAssist ) {
-            p.setAssist( -1 );
-            m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() );
+            if( p.getNaturalArmyID() == p.getArmyID() ) {
+                m_botAction.sendPrivateMessage( name, "You aren't assisting any army presently.  Use !assist armyID# to assist an army in need." );
+            } else {
+                p.setAssist( -1 );
+                m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ".");
+            }
             return;
         }
         
@@ -1535,7 +1537,7 @@ public class distensionbot extends SubspaceBot {
 
         if( armySizeWeight < 0.9f ) {
             p.setAssist( armyToAssist );            
-            m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army." );
+            m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
         } else {
             m_botAction.sendPrivateMessage( name, "The armies aren't so imbalanced that they need your help!" );
             if( DEBUG )
