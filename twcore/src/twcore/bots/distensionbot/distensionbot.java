@@ -332,7 +332,8 @@ public class distensionbot extends SubspaceBot {
                     "| <shipnum>           |  Shortcut for !pilot <shipnum>",
                     "| !hangar             |  View your ships & those available for purchase",
                     "| !assist <army>      |  Temporarily assists <army> at no penalty to you",
-                    "| !defect <army>      |  Defect to <army>.  Restarts all ships at current rank",
+                    "| !defect <army>      |  Change to <army>.  All ships return to start of rank,",
+                    "|                     |     unless the new army has 4 or more fewer pilots.",
                     "| !armory             |  View ship upgrades available in the armory",
                     "| !upgrade <upg>      |  Upgrade your ship with <upg> from the armory",
                     "| !scrap <upg>        |  Trade in <upg>.  Restarts that ship at current rank",
@@ -696,6 +697,7 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  10/4/07",
+                " - !defect is now free if you change to a team with far fewer players",
                 " - !assist command for helping out the other team when they're down",
                 " - Shark added",
                 " - New spawning method keeps you in safe after prizing to make attaching easy",
@@ -851,11 +853,11 @@ public class distensionbot extends SubspaceBot {
         if( oldarmy != null ) {
             if( oldarmy.getID() == army.getID() ) {                
                 m_botAction.sendPrivateMessage( name, "Now that's just goddamn stupid.  You're already in that army!" );
-                return;            
+                return;
             }
         } else {
             m_botAction.sendPrivateMessage( name, "Whoa, and what the hell army are you in now?  You're confusing me... might want to tell someone important that I told you this." );
-            return;            
+            return;
         }
 
         m_botAction.sendPrivateMessage( name, "So you're defecting to " + army.getName().toUpperCase() + "?  I can't blame you, to be honest.  You'll be pilot #" + ( army.getPilotsTotal() + 1) + "." );
@@ -863,22 +865,28 @@ public class distensionbot extends SubspaceBot {
         p.setArmy( armyNum );
         oldarmy.adjustPilotsTotal(-1);
         army.adjustPilotsTotal(1);
+        
+        // Free !defect if army has less pilots
+        boolean weak = (oldarmy.getPilotsTotal() > army.getPilotsTotal() + 3 ); 
 
-        try {
-            String query = "SELECT ship.fnPlayerID, ship.fnShipNum, ship.fnRank, ship.fnRankPoints FROM tblDistensionShip ship, tblDistensionPlayer player " +
-            "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND ship.fnPlayerID = player.fnID";
-            ResultSet r = m_botAction.SQLQuery( m_database, query );
-            while( r.next() ) {
-                int ship = r.getInt("fnShipNum");
-                m_botAction.SQLQueryAndClose(m_database, "UPDATE tblDistensionShip SET fnRankPoints=" + m_shipGeneralData.get(ship).getNextRankCost(r.getInt("fnRank") - 1) + 
-                        " WHERE fnShipNum=" + ship + " AND fnPlayerID=" + r.getInt("fnPlayerID") );
+        if( weak ) {
+            m_botAction.sendPrivateMessage( name, "The ship controls are mostly the same... but since you're defecting to a weaker army, hell -- I'll train you back to exactly where you were before!  OK, should be all set.  Good luck." );
+        } else {
+            try {
+                String query = "SELECT ship.fnPlayerID, ship.fnShipNum, ship.fnRank, ship.fnRankPoints FROM tblDistensionShip ship, tblDistensionPlayer player " +
+                "WHERE player.fcName = '" + Tools.addSlashesToString( name ) + "' AND ship.fnPlayerID = player.fnID";
+                ResultSet r = m_botAction.SQLQuery( m_database, query );
+                while( r.next() ) {
+                    int ship = r.getInt("fnShipNum");
+                    m_botAction.SQLQueryAndClose(m_database, "UPDATE tblDistensionShip SET fnRankPoints=" + m_shipGeneralData.get(ship).getNextRankCost(r.getInt("fnRank") - 1) + 
+                            " WHERE fnShipNum=" + ship + " AND fnPlayerID=" + r.getInt("fnPlayerID") );
+                }
+            } catch (SQLException e ) {
+                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                return;
             }
-        } catch (SQLException e ) {
-            m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
-            return;
+            m_botAction.sendPrivateMessage( name, "The ship controls are mostly the same, but you might have to relearn a little bit...  OK, should be all set.  Good luck." );
         }
-
-        m_botAction.sendPrivateMessage( name, "The ship controls are mostly the same, but you might have to relearn a little bit...  OK, should be all set.  Good luck." );
     }
 
 
@@ -1052,7 +1060,9 @@ public class distensionbot extends SubspaceBot {
         //                                                                                     #234567890#23456789#23456789012#
 
         if( inGame ) {
-            for( DistensionArmy a : m_armies.values() ) {
+            //for( DistensionArmy a : m_armies.values() ) {
+            for( int i = 0; i < 2; i++ ) {
+                DistensionArmy a = m_armies.get(i);
                 m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
                         Tools.formatString( ""+a.getPilotsTotal(), 10 ) +
@@ -1061,7 +1071,9 @@ public class distensionbot extends SubspaceBot {
                         a.getNumFlagsOwned() );
             }
         } else {
-            for( DistensionArmy a : m_armies.values() ) {
+            //for( DistensionArmy a : m_armies.values() ) {
+            for( int i = 0; i < 2; i++ ) {
+                DistensionArmy a = m_armies.get(i);
                 int bonus = 0;
                 if( a.isDefault() )
                     bonus = calcEnlistmentBonus( a ); 
