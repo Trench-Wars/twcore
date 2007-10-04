@@ -64,7 +64,8 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 15;                 // How frequently autosave occurs, in minutes 
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms  
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
-
+    private final int RESPAWN_SAFETY_TIME = 2500;          // #ms while a player is spawn protected  
+    private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
     private final double NORMAL_RANK_FACTOR = 1.15;        // Factor for rank increases (lvl 11+)
@@ -79,8 +80,8 @@ public class distensionbot extends SubspaceBot {
     private final int SPAWN_BASE_1_Y_COORD = 566;               // Y coord around which base 1 owners (bottom) spawn
     private final int SPAWN_Y_SPREAD = 90;                      // # tiles * 2 from above coords to spawn players
     private final int SPAWN_X_SPREAD = 275;                     // # tiles * 2 from x coord 512 to spawn players  
-    private final int SAFE_TOP_Y = 249;                         // Y coords of safes, for warping in
-    private final int SAFE_BOTTOM_Y = 773;
+    private final int SAFE_TOP_Y = 149; //249;                  // Y coords of safes, for warping in
+    private final int SAFE_BOTTOM_Y = 873; //773;
     
     // These coords are used for !terr and !whereis
     private final int TOP_SAFE = 260;
@@ -94,8 +95,6 @@ public class distensionbot extends SubspaceBot {
     private final int BOT_ROOF = 749;
     private final int BOT_SAFE = 763;
 
-    private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
-    // Msg displayed for DB error
     private String m_database;                              // DB to connect to
 
     private BotSettings m_botSettings;
@@ -242,13 +241,14 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!progress", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( ".", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory" );
-        m_commandInterpreter.registerCommand( "!armoury", acceptedMessages, this, "cmdArmory" );  // For britfags
+        m_commandInterpreter.registerCommand( "!armoury", acceptedMessages, this, "cmdArmory" ); // For those that can't spell
         m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade" );
         m_commandInterpreter.registerCommand( "!scrap", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!intro", acceptedMessages, this, "cmdIntro" );
         m_commandInterpreter.registerCommand( "!warp", acceptedMessages, this, "cmdWarp" );
         m_commandInterpreter.registerCommand( "!terr", acceptedMessages, this, "cmdTerr" );
         m_commandInterpreter.registerCommand( "!whereis", acceptedMessages, this, "cmdWhereIs" );
+        m_commandInterpreter.registerCommand( "!assist", acceptedMessages, this, "cmdAssist" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
         m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
@@ -551,7 +551,8 @@ public class distensionbot extends SubspaceBot {
                 victor.addRankPoints( -loss );
                 victor.clearSuccessiveKills();
                 //if( !victor.wasWarnedForTK() ) {
-                m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
+                if( loss > 0 )
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
                 //    victor.setWarnedForTK();
                 //}
                 // Otherwise: Add points via level scheme
@@ -563,7 +564,12 @@ public class distensionbot extends SubspaceBot {
                                 
                 if( loser.justRespawned() ) {
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: Victim just spawned; 0 RP earned." );
-                    return;                    
+                    return;
+                }
+
+                if( victor.justRespawned() ) {
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: You are spawn-protected; 0 RP earned." );
+                    return;
                 }
 
                 if( killerarmy.getNumFlagsOwned() == 0 ) {
@@ -581,7 +587,7 @@ public class distensionbot extends SubspaceBot {
                 if( loser.getUpgradeLevel() - victor.getUpgradeLevel() >= 10 ) {
                     points = loser.getUpgradeLevel();
                     loser.addRankPoints( -(points / 2) );
-                    m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() );
+                    m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
 
                     // Loser is 10 or more levels below victor:
                     //   Victor only gets 1 point, and loser loses nothing
@@ -649,8 +655,8 @@ public class distensionbot extends SubspaceBot {
                 }
                 loser.clearSuccessiveKills();
                 if( DEBUG )
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "+" + points + " RP (" + preWeight + " * " +
-                            armySizeWeight + " army weight" + ((killerarmy.getNumFlagsOwned() == 2) ? " * 2 flags)" : ")" ) );
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "KILL:  " + points + " RP for " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [" + preWeight + " * " +
+                            armySizeWeight + " army weight" + ((killerarmy.getNumFlagsOwned() == 2) ? " * 2 flags)" : "]" ) );
             }
         }
     }
@@ -691,15 +697,14 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  10/2/07",
+                "RECENT UPDATES  -  10/4/07",
+                " - !assist command for helping out the other team when they're down",
                 " - Shark added",
                 " - New spawning method keeps you in safe after prizing to make attaching easy",
                 "   (use !warp if you wish to have the bot warp you out after each death)",
                 " - !warp command replaced !wait command -- by default, warping is off",
-                " - Weights widened, particularly for round end bonuses",
                 " - Weasel added (but can't be unlocked by rank)",
                 " - Spawn protection and repeat-kill protection added",
-                " - Bot-controlled spawns widened and tightened toward bases",
                 " - !terr and !whereis commands as seen in purepub",
         };
         m_botAction.privateMessageSpam( name, beta );
@@ -1482,6 +1487,62 @@ public class distensionbot extends SubspaceBot {
     }    
 
 
+    /**
+     * Assists an army other than your own, if help is needed.
+     * @param name
+     * @param msg
+     */
+    public void cmdAssist( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() == -1 ) {
+            m_botAction.sendPrivateMessage( name, "You must !return or !enlist in an army first." );
+            return;
+        }
+        if( p.getShipNum() == 0 ) {
+            m_botAction.sendPrivateMessage( name, "You must !dock before you can assist another army." );
+            return;            
+        }
+        int armyToAssist = -1;
+        if( msg.equals("") ) {
+            armyToAssist = p.getNaturalArmyID();
+        } else {
+            try {
+                armyToAssist = Integer.parseInt( msg );
+            } catch (NumberFormatException e) {
+                m_botAction.sendPrivateMessage( name, "Which of the !armies would you like to assist?" );
+                return;
+            }
+        }
+        if( p.getNaturalArmyID() == armyToAssist ) {
+            p.setAssist( -1 );
+            m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() );
+            return;
+        }
+        
+        DistensionArmy assistArmy = m_armies.get( new Integer( armyToAssist ) );
+        if( assistArmy == null ) {
+            m_botAction.sendPrivateMessage( name, "Exactly which of them !armies you trying to help out there?" );
+            return;
+        }
+        float armySizeWeight;
+        float assistArmyStr = assistArmy.getTotalStrength();
+        float currentArmyStr = p.getArmy().getTotalStrength();
+        if( assistArmyStr <= 0 ) assistArmyStr = 1;
+        if( currentArmyStr <= 0 ) currentArmyStr = 1;
+        armySizeWeight = assistArmyStr / currentArmyStr;
+
+        if( armySizeWeight < 0.9f ) {
+            p.setAssist( armyToAssist );            
+            m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army." );
+        } else {
+            m_botAction.sendPrivateMessage( name, "The armies aren't so imbalanced that they need your help!" );
+            if( DEBUG )
+                m_botAction.sendPrivateMessage( name, "(" + armySizeWeight + " weight, need .9 or less)" );
+        }
+    }
+
     
     // HIGHMOD+ COMMANDS
     
@@ -1706,7 +1767,7 @@ public class distensionbot extends SubspaceBot {
                     }
                     stopFlagTime = false;       // Cancel stopping; new opposing player entered
                     return;
-                }                    
+                }
             }
         }
     }
@@ -1803,17 +1864,19 @@ public class distensionbot extends SubspaceBot {
         private int upgPoints;  // Current upgrade points available for ship; -1 if docked/not logged in
         private int armyID;     // 0-9998;                                    -1 if not logged in
         private int successiveKills;            // # successive kills (for unlocking weasel)
+        private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
+        private boolean[] shipsAvail;           // Marks which ships are available
+        private int[]     lastIDsKilled = { -1, -1, -1 };  // ID of last player killed (feeding protection)
+        private long      respawnedAt;          // Time last respawned (spawn protection) 
+        private int       spawnTicks;           // # queue "ticks" until spawn 
+        private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
         private boolean   shipDataSaved;        // True if ship data on record equals ship data in DB
         private boolean   fastRespawn;          // True if player respawns at the head of the queue
-        private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
-        private boolean[] shipsAvail;           // Marks which ships are available
         private boolean   isRespawning;         // True if player is currently in respawn process
         private boolean   waitInSpawn;          // True if player would like to warp out manually at respawn
-        private int[]     lastIDsKilled = { -1, -1, -1 };  // ID of last player killed (feeding protection)
-        private long      respawnedAt;          // Time last respawned (spawn protection) 
-        private int       spawnTicks;           // # queue "ticks" until spawn 
+        private boolean   specialRespawn;       // True if in spawn queue w/o actually spawning 
 
         public DistensionPlayer( String name ) {
             this.name = name;
@@ -1823,19 +1886,21 @@ public class distensionbot extends SubspaceBot {
             nextRank = -1;
             upgPoints = -1;
             armyID = -1;
-            warnedForTK = false;
-            banned = false;
-            shipDataSaved = false;
-            fastRespawn = false;
+            successiveKills = 0;
+            respawnedAt = -1;
+            spawnTicks = 0;
+            assistArmyID = -1;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[8];
             for( int i = 0; i < 8; i++ )
                 shipsAvail[i] = false;
-            successiveKills = 0;
+            warnedForTK = false;
+            banned = false;
+            shipDataSaved = false;
+            fastRespawn = false;
             isRespawning = false;
             waitInSpawn = true;
-            respawnedAt = -1;
-            spawnTicks = 0;
+            specialRespawn = false;
         }
 
 
@@ -2001,7 +2066,7 @@ public class distensionbot extends SubspaceBot {
         }
 
 
-        // COMPLEX ACTIONS
+        // COMPLEX ACTIONS / SETTERS
         
         /**
          * Decrements spawn ticker, which must be decremented to 0 before player is
@@ -2020,15 +2085,21 @@ public class distensionbot extends SubspaceBot {
         
         /**
          * Performs necessary actions to spawn the player, if ready.
+         * @param specialRespawn True if this is a special (not real) spawn
          */
         public boolean doSpawn() {
+            if( specialRespawn ) {
+                specialRespawn = false;
+                prizeUpgrades();
+                return true;
+            }                
             if( spawnTicks > 0 )
                 return false;
-            if( !isRespawning ) // For safety
+            if( !isRespawning )
                 return true;
             doWarp(false);
-            isRespawning = false;
             respawnedAt = System.currentTimeMillis();
+            isRespawning = false;
             prizeUpgrades();
             return true;
         }
@@ -2047,7 +2118,7 @@ public class distensionbot extends SubspaceBot {
                     for( int j = 0; j < purchasedUpgrades[i]; j++ )
                         m_botAction.specificPrize( name, prize );
             }
-        }        
+        }
 
         /**
          * Warps player to the appropriate spawning location (near a specific base).
@@ -2057,7 +2128,11 @@ public class distensionbot extends SubspaceBot {
         public void doWarp( boolean roundStart ) {
             if( waitInSpawn && !roundStart )
                 return;
-            int base = armyID % 2;
+            int base;
+            if( assistArmyID == -1 )
+                base = armyID % 2;
+            else
+                base = assistArmyID % 2;
             Random r = new Random();
             int x = 512 + (r.nextInt(SPAWN_X_SPREAD) - (SPAWN_X_SPREAD / 2));
             int y;
@@ -2082,10 +2157,22 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * Sets up player for respawning.
+         */
+        public void doSetupSpecialRespawn() {
+            specialRespawn = true;
+            m_prizeQueue.addPlayer( this );
+        }
+
+        /**
          * Warps player to the safe, no strings attached.
          */
         public void doSafeWarp() {
-            int base = armyID % 2;
+            int base;
+            if( assistArmyID == -1 )
+                base = armyID % 2;
+            else
+                base = assistArmyID % 2;
             if( base == 0 )
                 m_botAction.warpTo(name, 512, SAFE_TOP_Y);
             else
@@ -2142,9 +2229,6 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-
-        // SETTERS
-
         /**
          * Adds # rank points to total rank point amt.
          * @param points Amt to add
@@ -2176,7 +2260,10 @@ public class distensionbot extends SubspaceBot {
             if( purchasedUpgrades[upgrade] + amt < 0 )
                 return;
             purchasedUpgrades[upgrade] += amt;
-            m_armies.get(armyID).adjustStrength(amt);
+            if( assistArmyID == -1 )
+                m_armies.get(armyID).adjustStrength(amt);
+            else
+                m_armies.get(assistArmyID).adjustStrength(amt);
             shipDataSaved = false;
         }
 
@@ -2205,27 +2292,34 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Sets the army of the player.
-         * @param armyID ID of the army
+         * Bans the player from playing Distension.
          */
-        public void setArmy( int armyID ) {
-            this.armyID = armyID;
+        public void ban() {
+            banned = true;
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+            } catch (SQLException e ) { 
+                Tools.printLog( "Error banning player " + name );
+            }
+            saveCurrentShipToDB();
+            m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer fly in this arena." );
+            setShipNum( -1 );
+            m_botAction.specWithoutLock( name );
         }
 
         /**
-         * Sets player as having been warned for TK.
+         * Unbans the player.
          */
-        public void setWarnedForTK() {
-            warnedForTK = true;
+        public void unban() {
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+            } catch (SQLException e ) { 
+                Tools.printLog( "Error banning player " + name );
+            }
+            m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
+            banned = false;
         }
 
-        /**
-         * Sets whether or not player respawns at the head of the prize queue.
-         */
-        public void setFastRespawn( boolean value ) {
-            fastRespawn = value;
-        }
-        
         /**
          * Increments successive kills.
          */
@@ -2290,40 +2384,36 @@ public class distensionbot extends SubspaceBot {
             return false;
         }
 
+        
+        // BASIC SETTERS
+
+        /**
+         * Sets the army of the player.
+         * @param armyID ID of the army
+         */
+        public void setArmy( int armyID ) {
+            this.armyID = armyID;
+        }
+
+        /**
+         * Sets player as having been warned for TK.
+         */
+        public void setWarnedForTK() {
+            warnedForTK = true;
+        }
+
+        /**
+         * Sets whether or not player respawns at the head of the prize queue.
+         */
+        public void setFastRespawn( boolean value ) {
+            fastRespawn = value;
+        }
+        
         /**
          * Sets successive kills to 0.
          */
         public void clearSuccessiveKills() {
             successiveKills = 0;
-        }
-
-        /**
-         * Bans the player from playing Distension.
-         */
-        public void ban() {
-            banned = true;
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-            } catch (SQLException e ) { 
-                Tools.printLog( "Error banning player " + name );
-            }
-            saveCurrentShipToDB();
-            m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer fly in this arena." );
-            setShipNum( -1 );
-            m_botAction.specWithoutLock( name );
-        }
-
-        /**
-         * Unbans the player.
-         */
-        public void unban() {
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-            } catch (SQLException e ) { 
-                Tools.printLog( "Error banning player " + name );
-            }
-            m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
-            banned = false;
         }
         
         /**
@@ -2332,7 +2422,15 @@ public class distensionbot extends SubspaceBot {
         public boolean waitInSpawn() {
             waitInSpawn = !waitInSpawn; 
             return waitInSpawn;
-        }        
+        }
+
+        /**
+         * Sets the player as assisting the army ID provided.  -1 to disable.
+         * @param newArmyID ID of army player is assisting; -1 to disable assisting
+         */
+        public void setAssist( int newArmyID ) {
+            assistArmyID = newArmyID;
+        }
 
 
         // GETTERS
@@ -2426,6 +2524,16 @@ public class distensionbot extends SubspaceBot {
          * @return Returns army ID (same as frequency).
          */
         public int getArmyID() {
+            if( assistArmyID == -1 )
+                return armyID;
+            else
+                return assistArmyID;
+        }
+
+        /**
+         * @return Returns natural army ID -- the player's true army regardless of assists.
+         */
+        public int getNaturalArmyID() {
             return armyID;
         }
 
@@ -2433,17 +2541,25 @@ public class distensionbot extends SubspaceBot {
          * @return Returns DistensionArmy the player to which the player is joined.
          */
         public DistensionArmy getArmy() {
-            return m_armies.get( new Integer( armyID ) );
+            if( assistArmyID == -1 )
+                return m_armies.get( new Integer( armyID ) );
+            else
+                return m_armies.get( new Integer( assistArmyID ) );
         }
 
         /**
          * @return Returns army name.
          */
         public String getArmyName() {
-            DistensionArmy army = m_armies.get( new Integer( armyID ) );
+            int id;
+            if( assistArmyID == -1 )
+                id = armyID;
+            else
+                id = assistArmyID;
+            DistensionArmy army = m_armies.get( new Integer( id ) );
             if( army == null ) {
-                army = new DistensionArmy( new Integer( armyID ) );
-                m_armies.put( new Integer( armyID ), army );
+                army = new DistensionArmy( new Integer( id ) );
+                m_armies.put( new Integer( id ), army );
             }
             return army.getName();
         }
@@ -2510,6 +2626,13 @@ public class distensionbot extends SubspaceBot {
         }
         
         /**
+         * @return True if player is currently assisting an army and is not on their original one.
+         */
+        public boolean isAssisting() {
+            return assistArmyID != -1;
+        }
+        
+        /**
          * Returns # of kills recently made of a player, and cycles IDs of players
          * killed appropriately.
          */
@@ -2530,8 +2653,8 @@ public class distensionbot extends SubspaceBot {
          * Checks if player spawned in last 2 seconds.
          */
         public boolean justRespawned() {
-            // 2 second spawn protection
-            if( System.currentTimeMillis() - respawnedAt > 2000 )
+            // 3 second spawn protection
+            if( System.currentTimeMillis() - respawnedAt > RESPAWN_SAFETY_TIME )
                 return false;
             else
                 return true;
@@ -3210,6 +3333,22 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
+     * Refreshes all support ships with their items.
+     */
+    private void refreshSupportShips() {
+        Iterator <DistensionPlayer>i = m_players.values().iterator();
+        DistensionPlayer p;
+        while( i.hasNext() ) {
+            p = i.next();
+            if( p.isSupportShip() && !p.isRespawning() ) {
+                m_botAction.shipReset(p.getName());
+                p.doSetupSpecialRespawn();
+            }
+        }
+    }
+        
+    
+    /**
      * Shows and hides scores (used at intermission only).
      * @param time Time after which the score should be removed
      */    
@@ -3243,9 +3382,9 @@ public class distensionbot extends SubspaceBot {
         public void run() {
             if( stopFlagTime ) {
                 try {
+                    flagTimeStarted = false;
                     flagTimer.endBattle();
                     m_botAction.cancelTask(flagTimer);
-                    flagTimeStarted = false;
                 } catch (Exception e ) {
                 }
                 m_botAction.hideObject(1000); // Turns off intermission lvz
@@ -3616,8 +3755,9 @@ public class distensionbot extends SubspaceBot {
             if( isStarted == false ) {
                 int roundNum = freq0Score + freq1Score + 1;
                 if( preTimeCount == 0 ) {
-                    m_botAction.sendArenaMessage( "The next battle is just beginning . . ." );
+                    m_botAction.sendArenaMessage( "The next battle is just beginning . . ." );                    
                     safeWarp();
+                    refreshSupportShips();
                 }
                 preTimeCount++;
 
