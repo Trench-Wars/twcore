@@ -73,6 +73,7 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_REQ_SHIP3 = 2;    //  4
     private final int RANK_REQ_SHIP4 = 6;    // 20
     private final int RANK_REQ_SHIP5 = 3;    //  7
+    private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
     private final int RANK_REQ_SHIP7 = 778;  // 10  (beta: 4)
     private final int RANK_REQ_SHIP8 = 1;    //  2
 
@@ -112,7 +113,7 @@ public class distensionbot extends SubspaceBot {
 
     // DATA FOR FLAG TIMER
     private static final int MAX_FLAGTIME_ROUNDS = 7;   // Max # rounds (odd numbers only)
-    private static final int FLAG_CLAIM_SECS = 3;       // Seconds it takes to fully claim a flag
+    private static final int SECTOR_BREAK_SECONDS = 3;  // Seconds it takes to break sector
     private static final int INTERMISSION_SECS = 90;    // Seconds between end of round & start of next
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
@@ -562,7 +563,7 @@ public class distensionbot extends SubspaceBot {
                     return;
                                 
                 if( loser.justRespawned() ) {
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: Victim just spawned; 0 RP earned." );
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + loser.getName() + " just spawned; 0 RP earned." );
                     return;
                 }
 
@@ -580,17 +581,18 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 int points;
-
+                int levelDiff = loser.getUpgradeLevel() - victor.getUpgradeLevel(); 
+                
                 // Loser is 10 or more levels above victor:
                 //   Victor earns loser's level in RP, and loser loses half of that amount from due shame
-                if( loser.getUpgradeLevel() - victor.getUpgradeLevel() >= 10 ) {
+                if( levelDiff >= 10 ) {
                     points = loser.getUpgradeLevel();
                     loser.addRankPoints( -(points / 2) );
                     m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
 
                     // Loser is 10 or more levels below victor:
                     //   Victor only gets 1 point, and loser loses nothing
-                } else if( victor.getUpgradeLevel() - loser.getUpgradeLevel() >= 10 ) {
+                } else if( levelDiff <= -10 ) {
                     points = 1;
 
                     // Normal kill:
@@ -647,11 +649,11 @@ public class distensionbot extends SubspaceBot {
 
                 victor.addRankPoints( points );
                 // Track successive kills for weasel unlock & streaks
-                boolean earnedWeasel = victor.addSuccessiveKill();
-                if( earnedWeasel ) {
-                    // If player earned weasel off this kill, check if loser/killed player has weasel ... 
-                    // and remove it if they do!
-                }
+                if( levelDiff > -5 )   // Streaks only count players close to your lvl 
+                    if( victor.addSuccessiveKill() ) {
+                        // If player earned weasel off this kill, check if loser/killed player has weasel ... 
+                        // and remove it if they do!
+                    }
                 loser.clearSuccessiveKills();
                 if( DEBUG )
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "KILL:  " + points + " RP for " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [" + preWeight + " * " +
@@ -696,14 +698,14 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  10/4/07",
+                "RECENT UPDATES  -  10/5/07",
+                " - Weasel can now be unlocked by rank",
                 " - !defect is now free if you change to a team with far fewer players",
                 " - !assist command for helping out the other team when they're down",
                 " - Shark added",
                 " - New spawning method keeps you in safe after prizing to make attaching easy",
                 "   (use !warp if you wish to have the bot warp you out after each death)",
                 " - !warp command replaced !wait command -- by default, warping is off",
-                " - Weasel added (but can't be unlocked by rank)",
                 " - Spawn protection and repeat-kill protection added",
                 " - !terr and !whereis commands as seen in purepub",
         };
@@ -2228,6 +2230,12 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage(name, "TERRIER: The Terrier is our most important ship, providing a point of support into the fray.  Also the most rapidly-advancing craft, advanced Terriers enjoy rearmament preference and resupply of weapons and wormhole kits.");
                     addShipToDB(5);
                 }
+            // BETA ONLY
+            } else if ( rank >= RANK_REQ_SHIP6 ) {
+                if( shipsAvail[5] == false ) {
+                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Weasel.  One has been requisitioned for your use, and is now waiting in your !hangar.  (UNLOCKED BY RANK IN BETA ONLY)");
+                    addShipToDB(6);
+                }
             } else if ( rank >= RANK_REQ_SHIP7 ) {
                 if( shipsAvail[6] == false ) {
                     m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Lancaster.  One has been requisitioned for your use, and is now waiting in your !hangar.");
@@ -3168,27 +3176,27 @@ public class distensionbot extends SubspaceBot {
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
         i = m_players.values().iterator();
-        int upgLevel = 0;
+        int playerRank = 0;
         float points = 0;
         while( i.hasNext() ) {
             DistensionPlayer p = i.next();
             if( p.getArmyID() == winningArmyID ) {
-                upgLevel = p.getUpgradeLevel();
-                if( upgLevel == 0 )
-                    upgLevel = 1;                
+                playerRank = p.getRank();
+                if( playerRank == 0 )
+                    playerRank = 1;                
                 if( p.isSupportShip() )
-                    points = (float)supportPoints * ((float)upgLevel / (float)totalLvlSupport);
+                    points = (float)supportPoints * ((float)playerRank / (float)totalLvlSupport);
                 else
-                    points = (float)attackPoints * ((float)upgLevel / (float)totalLvlAttack);
+                    points = (float)attackPoints * ((float)playerRank / (float)totalLvlAttack);
                 Integer time = playerTimes.get( p.getName() );
                 if( time != null ) {
                     float percentOnFreq = (float)(secs - time) / (float)secs;
                     int modPoints = Math.max(1, Math.round(points * percentOnFreq) );                    
                     if( DEBUG )
                         if( p.isSupportShip() )
-                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + upgLevel + " / total support strentgh " + totalLvlSupport + " (" + upgLevel / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation");
+                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total support strentgh " + totalLvlSupport + " (" + playerRank / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation");
                         else
-                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + upgLevel + " / total attack strentgh " + totalLvlAttack + " (" + upgLevel / totalLvlAttack + ")) * attack points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation");
+                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strentgh " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * attack points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation");
                     else
                         m_botAction.sendPrivateMessage(p.getName(), "You receive " + modPoints + " RP for your role in the victory." );
                     int holds = flagTimer.getSectorHolds( p.getName() );
@@ -3803,7 +3811,7 @@ public class distensionbot extends SubspaceBot {
 
             if( claimBeingBroken ) {
                 breakSeconds++;
-                if( breakSeconds >= FLAG_CLAIM_SECS ) {
+                if( breakSeconds >= SECTOR_BREAK_SECONDS ) {
                     breakSeconds = 0;
                     doSectorBreak();
                 }
@@ -3869,7 +3877,7 @@ public class distensionbot extends SubspaceBot {
      * Spider - 14  (unlock @ 4)
      * WB     - 15  (start)
      * Weasel - 16  (unlock by successive kills)
-     * Levi   - 17  (unlock @ 20)
+     * Levi   - 17  (unlock @ 20)  (switch levi and jav?)
      * Jav    - 18  (unlock @ 15)
      * 
      * Prize format: Name, Prize#, Cost([]), Rank([]), # upgrades 
@@ -4165,7 +4173,7 @@ public class distensionbot extends SubspaceBot {
         // 46: Rocket 2
         // 50: Brick
         // 60: Rocket 3
-        ship = new ShipProfile( -1, 16 );
+        ship = new ShipProfile( RANK_REQ_SHIP6, 16 );
         int p6a1[] = { 2, 1, 1, 1,  1,  1,  1,  1 };
         int p6a2[] = { 5, 8, 10, 15, 20, 30, 40, 50 };
         upg = new ShipUpgrade( "Orbital Force Unit", Tools.Prize.ROTATION, p6a1, p6a2, 8 );
