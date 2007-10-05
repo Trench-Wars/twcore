@@ -81,8 +81,8 @@ public class distensionbot extends SubspaceBot {
     private final int SPAWN_BASE_1_Y_COORD = 566;               // Y coord around which base 1 owners (bottom) spawn
     private final int SPAWN_Y_SPREAD = 90;                      // # tiles * 2 from above coords to spawn players
     private final int SPAWN_X_SPREAD = 275;                     // # tiles * 2 from x coord 512 to spawn players  
-    private final int SAFE_TOP_Y = 149; //249;                  // Y coords of safes, for warping in
-    private final int SAFE_BOTTOM_Y = 873; //773;
+    private final int SAFE_TOP_Y = 199;                         // Y coords of safes, for warping in
+    private final int SAFE_BOTTOM_Y = 824;
     
     // These coords are used for !terr and !whereis
     private final int TOP_SAFE = 260;
@@ -110,6 +110,12 @@ public class distensionbot extends SubspaceBot {
     private TimerTask autoSaveTask;
     private boolean readyForPlay = false;
     private int[] flagOwner = {-1, -1};
+
+    // ASSIST SYSTEM
+    private final float ASSIST_WEIGHT_IMBALANCE = 0.9f;     // At what point an army is considered imbalanced
+    private final int ASSIST_REWARD_TIME = 1000 * 60 * 5;   // Time between adverting and rewarding assists (5 min)
+    private long lastAssistReward = 0;                      // Last time assister was given points
+    private long lastAssistAdvert = 0;                      // Last time an advert was sent for assistance
 
     // DATA FOR FLAG TIMER
     private static final int MAX_FLAGTIME_ROUNDS = 7;   // Max # rounds (odd numbers only)
@@ -340,7 +346,7 @@ public class distensionbot extends SubspaceBot {
                     "| !scrap <upg>        |  Trade in <upg>.  Restarts that ship at current rank",
                     "| !wait               |  Toggles waiting in spawn vs. being autowarped out",
                     "| !whereis <name>     |  Shows approximate location of pilot <name>",
-                    "| !terr               |  Shows approximate location of all army terriers"                    
+                    "| !terr               |  Shows approximate location of all army terriers"
             };
             m_botAction.privateMessageSpam(name, helps);
         } else {
@@ -358,7 +364,8 @@ public class distensionbot extends SubspaceBot {
                     "| <shipnum>           |  Shortcut for !pilot <shipnum>",
                     "| !wait               |  Toggles waiting in spawn vs. being autowarped out",
                     "| !whereis <name>     |  Shows approximate location of pilot <name>",
-                    "| !terr               |  Shows approximate location of all army terriers"                    
+                    "| !terr               |  Shows approximate location of all army terriers",
+                    "| !assist <army>      |  Temporarily assists <army> at no penalty to you",
             };
             m_botAction.privateMessageSpam(name, helps);
         }
@@ -497,9 +504,37 @@ public class distensionbot extends SubspaceBot {
     public void handleEvent(FrequencyShipChange event) {
         if( !readyForPlay )         // If bot has not fully started up,
             return;                 // don't operate normally when speccing players.
+        DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
         if( event.getShipType() == 0 ) {
-            DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
             doDock( p );
+        }
+        if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME ) {
+            DistensionArmy otherArmy;
+            if( p.getArmyID() == 0 )
+                otherArmy = m_armies.get(1);
+            else
+                otherArmy = m_armies.get(0);
+            
+            float otherArmyStr = otherArmy.getTotalStrength();
+            float playerArmyStr = p.getArmy().getTotalStrength();
+            if( otherArmyStr <= 0 ) otherArmyStr = 1;
+            if( playerArmyStr <= 0 ) otherArmyStr = 1;
+            float playerArmyWeight = playerArmyStr / otherArmyStr;
+            float otherArmyWeight = otherArmyStr / playerArmyStr;
+
+            int helpOutArmy = -1;
+            int msgArmy = -1;
+            if( otherArmyWeight < ASSIST_WEIGHT_IMBALANCE ) {
+                helpOutArmy = otherArmy.getID();
+                msgArmy = p.getArmyID();
+            } else if( playerArmyWeight < ASSIST_WEIGHT_IMBALANCE ) {
+                helpOutArmy = p.getArmyID();
+                msgArmy = otherArmy.getID();
+            }
+            if( helpOutArmy != -1 ) {
+                m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE DETECTED: Please !assist " + helpOutArmy + " to even the battle; first person receives a small reward." );
+                lastAssistAdvert = System.currentTimeMillis();
+            }
         }
     }
 
@@ -699,9 +734,9 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  10/5/07",
+                " - !assist now gives bonus points to those assisting",
                 " - Weasel can now be unlocked by rank",
                 " - !defect is now free if you change to a team with far fewer players",
-                " - !assist command for helping out the other team when they're down",
                 " - Shark added",
                 " - New spawning method keeps you in safe after prizing to make attaching easy",
                 "   (use !warp if you wish to have the bot warp you out after each death)",
@@ -1512,10 +1547,6 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "You must !return or !enlist in an army first." );
             return;
         }
-        if( p.getShipNum() != 0 ) {
-            m_botAction.sendPrivateMessage( name, "You must !dock before you can assist another army." );
-            return;            
-        }
         int armyToAssist = -1;
         if( msg.equals("") ) {
             armyToAssist = p.getNaturalArmyID();
@@ -1531,6 +1562,10 @@ public class distensionbot extends SubspaceBot {
             if( p.getNaturalArmyID() == p.getArmyID() ) {
                 m_botAction.sendPrivateMessage( name, "You aren't assisting any army presently.  Use !assist armyID# to assist an army in need." );
             } else {
+                if( p.getShipNum() != 0 ) {
+                    m_botAction.specWithoutLock(name);
+                    doDock(p);
+                }
                 p.setAssist( -1 );
                 m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ".");
             }
@@ -1549,9 +1584,27 @@ public class distensionbot extends SubspaceBot {
         if( currentArmyStr <= 0 ) currentArmyStr = 1;
         armySizeWeight = assistArmyStr / currentArmyStr;
 
-        if( armySizeWeight < 0.9f ) {
+        if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE ) {
+            if( p.getShipNum() != 0 ) {
+                m_botAction.specWithoutLock(name);
+                doDock(p);
+            }
             p.setAssist( armyToAssist );            
             m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
+            if( System.currentTimeMillis() > lastAssistReward + ASSIST_REWARD_TIME ) {
+                lastAssistReward = System.currentTimeMillis();
+                int reward = p.getRank();
+                if( armySizeWeight < .5 )
+                    reward = p.getRank() * 5;
+                else if( armySizeWeight < .6 )
+                    reward = p.getRank() * 4;
+                else if( armySizeWeight < .7 )
+                    reward = p.getRank() * 3;
+                else if( armySizeWeight < .8 )
+                    reward = p.getRank() * 2;
+                m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + reward + " RP bonus.", 1 );
+                p.addRankPoints(reward);
+            }
         } else {
             m_botAction.sendPrivateMessage( name, "The armies aren't so imbalanced that they need your help!" );
             if( DEBUG )
