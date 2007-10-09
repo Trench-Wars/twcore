@@ -113,6 +113,7 @@ public class distensionbot extends SubspaceBot {
     private int[] flagOwner = {-1, -1};
 
     // ASSIST SYSTEM
+    private final float ADVERT_WEIGHT_IMBALANCE = 0.8f;     // At what point to advert an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.9f;     // At what point an army is considered imbalanced
     private final int ASSIST_REWARD_TIME = 1000 * 60 * 5;   // Time between adverting and rewarding assists (5 min def.)
     private long lastAssistReward;                          // Last time assister was given points
@@ -241,20 +242,21 @@ public class distensionbot extends SubspaceBot {
                 float armyWeight1 = armyStr1 / armyStr0;
                 int helpOutArmy = -1;
                 int msgArmy = -1;
-                if( armyWeight1 < ASSIST_WEIGHT_IMBALANCE ) {
+                if( armyWeight1 < ADVERT_WEIGHT_IMBALANCE ) {
                     helpOutArmy = 1;
                     msgArmy = 0;
-                } else if( armyWeight0 < ASSIST_WEIGHT_IMBALANCE ) {
+                } else if( armyWeight0 < ADVERT_WEIGHT_IMBALANCE ) {
                     helpOutArmy = 0;
                     msgArmy = 1;
                 }
                 if( helpOutArmy != -1 ) {
-                    m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "ARMIES IMBALANCED: !pilot lower rank ships, or !assist " + helpOutArmy + " to even the battle (reward for first !assist).  [ STRENGTH: " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                    m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "ARMIES IMBALANCED: !pilot lower rank ships, or !assist " + helpOutArmy + " to even the battle (reward for first !assist).  [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                     lastAssistAdvert = System.currentTimeMillis();
                 }
+                checkForAssistAdvert = false;
             }
         };
-        m_botAction.scheduleTask( assistAdvertTask, 10000, 10000 );
+        m_botAction.scheduleTask( assistAdvertTask, 20000, 20000 );
         
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
@@ -473,6 +475,7 @@ public class distensionbot extends SubspaceBot {
         if( name == null )
             return;
         m_players.remove( name );
+        m_botAction.sendUnfilteredPublicMessage("?set Misc:GreetMessage=Welcome to Distension BETA.  Report bugs and make suggestions for RP in the public release: http://forums.trenchwars.org/showthread.php?t=31676");
         m_botAction.sendPrivateMessage( name, "Thanks for joining the beta.  If you choose to play here, your help is welcome, but you are considered a beta tester.  Type !beta to see what this means, and see recent updates." );
         m_botAction.sendPrivateMessage( name, "--- HOW TO START ---   1: Type !armies to see available armies.  2: !enlist id# to enlist in a specific army.  3: !pilot 1 to pilot your first ship, the WB.  Use !return to come back later on.");
         if( DEBUG && DEBUG_MULTIPLIER != 1 )
@@ -716,7 +719,7 @@ public class distensionbot extends SubspaceBot {
                     }
                 loser.clearSuccessiveKills();
                 if( DEBUG )
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "KILL:  " + points + " RP for " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [" + preWeight + " * " +
+                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "KILL: " + points + " RP for " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [" + preWeight + " * " +
                             armySizeWeight + " army weight" + ((killerarmy.getNumFlagsOwned() == 2) ? " * 2 flags)" : "]" ) );
             }
         }
@@ -1589,7 +1592,6 @@ public class distensionbot extends SubspaceBot {
             } else {
                 if( p.getShipNum() != 0 ) {
                     m_botAction.specWithoutLock(name);
-                    doDock(p);
                 }
                 p.setAssist( -1 );
                 m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ".");
@@ -1610,26 +1612,25 @@ public class distensionbot extends SubspaceBot {
         armySizeWeight = assistArmyStr / currentArmyStr;
 
         if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE ) {
+            m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
             if( p.getShipNum() != 0 ) {
+                if( System.currentTimeMillis() > lastAssistReward + ASSIST_REWARD_TIME ) {
+                    lastAssistReward = System.currentTimeMillis();
+                    int reward = p.getRank();
+                    if( armySizeWeight < .5 )
+                        reward = p.getRank() * 5;
+                    else if( armySizeWeight < .6 )
+                        reward = p.getRank() * 4;
+                    else if( armySizeWeight < .7 )
+                        reward = p.getRank() * 3;
+                    else if( armySizeWeight < .8 )
+                        reward = p.getRank() * 2;
+                    m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + reward + " RP bonus.", 1 );
+                    p.addRankPoints(reward);
+                }
                 m_botAction.specWithoutLock(name);
-                doDock(p);
             }
             p.setAssist( armyToAssist );            
-            m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
-            if( System.currentTimeMillis() > lastAssistReward + ASSIST_REWARD_TIME ) {
-                lastAssistReward = System.currentTimeMillis();
-                int reward = p.getRank();
-                if( armySizeWeight < .5 )
-                    reward = p.getRank() * 5;
-                else if( armySizeWeight < .6 )
-                    reward = p.getRank() * 4;
-                else if( armySizeWeight < .7 )
-                    reward = p.getRank() * 3;
-                else if( armySizeWeight < .8 )
-                    reward = p.getRank() * 2;
-                m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + reward + " RP bonus.", 1 );
-                p.addRankPoints(reward);
-            }
         } else {
             m_botAction.sendPrivateMessage( name, "The armies aren't so imbalanced that they need your help!" );
             if( DEBUG )
@@ -2383,7 +2384,8 @@ public class distensionbot extends SubspaceBot {
                 if( this.shipNum > 0 )
                     m_botAction.specWithoutLock( name );
             }
-            this.shipNum = shipNum;            
+            this.shipNum = shipNum;
+            successiveKills = 0;
         }
 
         public void putInCurrentShip() {
