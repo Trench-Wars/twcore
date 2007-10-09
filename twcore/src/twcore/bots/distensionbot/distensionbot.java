@@ -60,6 +60,7 @@ public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
                                                            // normally be annoying in a public release.
+    private final float DEBUG_MULTIPLIER = 1.5f;           // Amount of RP to give extra in debug mode
 
     private final int AUTOSAVE_DELAY = 15;                 // How frequently autosave occurs, in minutes 
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms  
@@ -113,9 +114,11 @@ public class distensionbot extends SubspaceBot {
 
     // ASSIST SYSTEM
     private final float ASSIST_WEIGHT_IMBALANCE = 0.9f;     // At what point an army is considered imbalanced
-    private final int ASSIST_REWARD_TIME = 1000 * 60 * 5;   // Time between adverting and rewarding assists (5 min)
-    private long lastAssistReward = 0;                      // Last time assister was given points
-    private long lastAssistAdvert = 0;                      // Last time an advert was sent for assistance
+    private final int ASSIST_REWARD_TIME = 1000 * 60 * 5;   // Time between adverting and rewarding assists (5 min def.)
+    private long lastAssistReward;                          // Last time assister was given points
+    private long lastAssistAdvert;                          // Last time an advert was sent for assistance
+    private boolean checkForAssistAdvert = false;           // True if armies may be unbalanced, requiring !assist advert
+    private TimerTask assistAdvertTask;
 
     // DATA FOR FLAG TIMER
     private static final int MAX_FLAGTIME_ROUNDS = 7;   // Max # rounds (odd numbers only)
@@ -221,8 +224,41 @@ public class distensionbot extends SubspaceBot {
             };
             m_botAction.scheduleTask( autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
         }
+        // Do not advert/reward for rectifying imbalance in the first 5 min of a game 
+        lastAssistReward = System.currentTimeMillis();
+        lastAssistAdvert = System.currentTimeMillis();
+        assistAdvertTask = new TimerTask() {
+            public void run() {
+                if( !checkForAssistAdvert )
+                    return;
+                DistensionArmy army0 = m_armies.get(0);
+                DistensionArmy army1 = m_armies.get(1);             
+                float armyStr0 = army0.getTotalStrength();
+                float armyStr1 = army1.getTotalStrength();
+                if( armyStr1 == 0 ) armyStr1 = 1;
+                if( armyStr0 == 0 ) armyStr1 = 1;
+                float armyWeight0 = armyStr0 / armyStr1;
+                float armyWeight1 = armyStr1 / armyStr0;
+                int helpOutArmy = -1;
+                int msgArmy = -1;
+                if( armyWeight1 < ASSIST_WEIGHT_IMBALANCE ) {
+                    helpOutArmy = 1;
+                    msgArmy = 0;
+                } else if( armyWeight0 < ASSIST_WEIGHT_IMBALANCE ) {
+                    helpOutArmy = 0;
+                    msgArmy = 1;
+                }
+                if( helpOutArmy != -1 ) {
+                    m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "ARMIES IMBALANCED: !pilot lower rank ships, or !assist " + helpOutArmy + " to even the battle (reward for first !assist).  [ STRENGTH: " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                    lastAssistAdvert = System.currentTimeMillis();
+                }
+            }
+        };
+        m_botAction.scheduleTask( assistAdvertTask, 10000, 10000 );
+        
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
+            m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             m_botAction.sendChatMessage("Distension BETA initialized.");
         }
     }
@@ -279,6 +315,16 @@ public class distensionbot extends SubspaceBot {
     public void handleArenaMessage( String name, String message ) {
         if( message.equals( "Arena UNLOCKED" ) )
             m_botAction.toggleLocked();
+        
+        // Beta should not be loaded w/o me; ?find dugwyler done at start to ensure this.
+        if( DEBUG )
+            if( message.startsWith("Not online, last seen") ) {
+                m_botAction.sendUnfilteredPublicMessage("?message dugwyler:Unauthorized load of Distension BETA." );
+                Tools.printLog("Unauthorized load of Distension BETA.");
+                m_botAction.sendArenaMessage("Unauthorized load of Distension BETA; shutting down.");
+                m_botAction.sendChatMessage("Unauthorized load of Distension BETA; shutting down.");
+                cmdDie(name, message);
+            }
     }
 
 
@@ -427,8 +473,10 @@ public class distensionbot extends SubspaceBot {
         if( name == null )
             return;
         m_players.remove( name );
-        m_botAction.sendPrivateMessage( name, "Welcome to Distension BETA.  If you choose to play here, your help is welcome, but you are considered a beta tester.  Type !beta to see what this means, and see recent updates." );
+        m_botAction.sendPrivateMessage( name, "Thanks for joining the beta.  If you choose to play here, your help is welcome, but you are considered a beta tester.  Type !beta to see what this means, and see recent updates." );
         m_botAction.sendPrivateMessage( name, "--- HOW TO START ---   1: Type !armies to see available armies.  2: !enlist id# to enlist in a specific army.  3: !pilot 1 to pilot your first ship, the WB.  Use !return to come back later on.");
+        if( DEBUG && DEBUG_MULTIPLIER != 1 )
+            m_botAction.sendPrivateMessage(name, "BETA RP Bonus: x" + DEBUG_MULTIPLIER );
     }
 
 
@@ -449,6 +497,8 @@ public class distensionbot extends SubspaceBot {
                 checkFlagTimeStop();            
                 army.adjustPilotsInGame( -1 );
                 army.adjustStrength( -player.getUpgradeLevel() );
+                if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
+                    checkForAssistAdvert = true;
             }
         }
         player.saveCurrentShipToDBNow();
@@ -508,34 +558,9 @@ public class distensionbot extends SubspaceBot {
         if( event.getShipType() == 0 ) {
             doDock( p );
         }
-        if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME ) {
-            DistensionArmy otherArmy;
-            if( p.getArmyID() == 0 )
-                otherArmy = m_armies.get(1);
-            else
-                otherArmy = m_armies.get(0);
-            
-            float otherArmyStr = otherArmy.getTotalStrength();
-            float playerArmyStr = p.getArmy().getTotalStrength();
-            if( otherArmyStr <= 0 ) otherArmyStr = 1;
-            if( playerArmyStr <= 0 ) otherArmyStr = 1;
-            float playerArmyWeight = playerArmyStr / otherArmyStr;
-            float otherArmyWeight = otherArmyStr / playerArmyStr;
-
-            int helpOutArmy = -1;
-            int msgArmy = -1;
-            if( otherArmyWeight < ASSIST_WEIGHT_IMBALANCE ) {
-                helpOutArmy = otherArmy.getID();
-                msgArmy = p.getArmyID();
-            } else if( playerArmyWeight < ASSIST_WEIGHT_IMBALANCE ) {
-                helpOutArmy = p.getArmyID();
-                msgArmy = otherArmy.getID();
-            }
-            if( helpOutArmy != -1 ) {
-                m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE DETECTED: Please !assist " + helpOutArmy + " to even the battle; first person receives a small reward." );
-                lastAssistAdvert = System.currentTimeMillis();
-            }
-        }
+        
+        if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
+            checkForAssistAdvert = true;
     }
 
 
@@ -1772,7 +1797,7 @@ public class distensionbot extends SubspaceBot {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fcName FROM tblDistensionPlayer WHERE 1" );
             int players = 0;
             while( r.next() ) {
-                m_botAction.sendSmartPrivateMessage( r.getString("fcName"), "DISTENSION BETA TEST is beginning shortly.  Please ?go #distension if you are willing to participate." );
+                m_botAction.sendRemotePrivateMessage( r.getString("fcName"), "DISTENSION BETA TEST beginning shortly.  Please ?go #distension if you are willing to participate." );
                 players++;
             }
             m_botAction.sendPrivateMessage( name, players + " players notified." );
@@ -2311,6 +2336,8 @@ public class distensionbot extends SubspaceBot {
         public void addRankPoints( int points ) {
             if( shipNum < 1 )
                 return;
+            if( DEBUG )
+                points = (int)((float)points * DEBUG_MULTIPLIER); 
             rankPoints += points;
             if( rankPoints >= nextRank )
                 doAdvanceRank();
