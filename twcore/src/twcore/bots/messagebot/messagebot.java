@@ -771,6 +771,10 @@ public class messagebot extends SubspaceBot
                 while(results.next())
                     messageIDs.add(results.getInt("fnID"));
                 Iterator it = messageIDs.iterator();
+                if( !it.hasNext() ) {
+                    m_botAction.sendSmartPrivateMessage(name, "You have no new messages.");
+                    return;
+                }
                 while(it.hasNext())
                     readMessage(name, "" + (Integer)it.next());
                 m_botAction.SQLClose(results);            
