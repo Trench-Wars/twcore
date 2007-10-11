@@ -1112,10 +1112,13 @@ public class distensionbot extends SubspaceBot {
             // Simple fix to cause sharks and terrs to not lose MVP 
             if( shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) {
                 if( flagTimer != null && flagTimer.isRunning() )
-                    if( flagTimer.getHoldingFreq() == player.getArmyID() && flagTimer.getSecondsHeld() > 0 )
+                    if( flagTimer.getHoldingFreq() == player.getArmyID() && flagTimer.getSecondsHeld() > 0 ) {
                         // If player is changing to a support ship while their freq is securing a hold,
                         // they're probably just doing it to steal the points; don't keep MVP
                         playerTimes.remove( name );
+                    } else {
+                        m_botAction.sendPrivateMessage( name, "For switching to a needed support ship, your participation counter has not been reset." );                        
+                    }
             } else                
                 playerTimes.remove( name );
         }
@@ -1756,7 +1759,7 @@ public class distensionbot extends SubspaceBot {
         for(int i = 1; i < 9; i++ ) {
             int shipStrength = 0;
             int num = team.get(i).size();
-            String text = "    ";
+            String text = "   ";
             for( int j = 0; j < team.get(i).size(); j++) {
                 DistensionPlayer p2 = m_players.get( team.get(i).get(j) ); 
                 text += p2.getName() + "(" + p2.getUpgradeLevel() + ")  ";
@@ -1764,8 +1767,7 @@ public class distensionbot extends SubspaceBot {
                 shipStrength += p2.getUpgradeLevel() + RANK_0_STRENGTH;
             }
             m_botAction.sendPrivateMessage(name, num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
-                                                 + " ... " + shipStrength + " STR");
-            m_botAction.sendPrivateMessage(name, text);
+                                                 + "  " + shipStrength + " STR" + text );
             totalStrength += shipStrength;
         }
         
@@ -2999,7 +3001,10 @@ public class distensionbot extends SubspaceBot {
         public void adjustStrength( int value ) {
             // Every ship has a default strength of 10; rank 1 = 11, rank 2 = 12, etc.
             // This will potentially make team-evening more fair.
-            totalStrength += value + RANK_0_STRENGTH;
+            if( value > 0 )
+                totalStrength += value + RANK_0_STRENGTH;
+            else
+                totalStrength += value - RANK_0_STRENGTH;                
             if( totalStrength < 0 )
                 totalStrength = 0;
         }
@@ -3409,9 +3414,9 @@ public class distensionbot extends SubspaceBot {
             armyDiffWeight = 3.0f;
         else if( armyDiffWeight < 0.3f )
             armyDiffWeight = 0.3f;
-        
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
+        totalPoints /= 5; 
         // Terrs and sharks receive 60% of point reward to divide up
         int supportPoints = Math.round( totalPoints * 0.6f );
         // Attackers (all others) receive 40%
@@ -3432,7 +3437,7 @@ public class distensionbot extends SubspaceBot {
         }
         
         if( DEBUG )
-            m_botAction.sendArenaMessage( "DEBUG: (" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
+            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) / 5 = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
         i = m_players.values().iterator();
