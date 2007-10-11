@@ -1169,15 +1169,9 @@ public class distensionbot extends SubspaceBot {
     public void doDock( DistensionPlayer player ) {
         if( player == null )
             return;
-        DistensionArmy army = player.getArmy();
-        if( army != null ) {
-            player.subtractPlayerStrengthFromArmy();
-            playerTimes.remove( player.getName() );
-            checkFlagTimeStop();
-        } else {
-            if( DEBUG )
-                m_botAction.sendArenaMessage( "DEBUG: Null army found on " + player.getName() );            
-        }
+        player.subtractPlayerStrengthFromArmy();
+        playerTimes.remove( player.getName() );
+        checkFlagTimeStop();
         if( player.saveCurrentShipToDBNow() ) {
             m_botAction.sendPrivateMessage( player.getName(), "Ship status confirmed and logged to our records.  You are now docked.");
             player.setShipNum( 0 );
@@ -2524,9 +2518,9 @@ public class distensionbot extends SubspaceBot {
                 return;
             purchasedUpgrades[upgrade] += amt;
             if( assistArmyID == -1 )
-                m_armies.get(armyID).adjustStrength(amt);
+                m_armies.get(armyID).adjustStrengthRaw(amt);
             else
-                m_armies.get(assistArmyID).adjustStrength(amt);
+                m_armies.get(assistArmyID).adjustStrengthRaw(amt);
             shipDataSaved = false;
         }
 
@@ -2997,6 +2991,16 @@ public class distensionbot extends SubspaceBot {
             if( pilotsInGame < 0 )
                 pilotsInGame = 0;
         }
+        
+        /**
+         * Adjusts strength without applying the strength modifier for rank 0.
+         * @param value
+         */
+        public void adjustStrengthRaw( int value ) {
+            totalStrength += value;
+            if( totalStrength < 0 )
+                totalStrength = 0;
+        }
 
         public void adjustStrength( int value ) {
             // Every ship has a default strength of 10; rank 1 = 11, rank 2 = 12, etc.
@@ -3004,7 +3008,7 @@ public class distensionbot extends SubspaceBot {
             if( value >= 0 )
                 totalStrength += value + RANK_0_STRENGTH;
             else
-                totalStrength += value - RANK_0_STRENGTH;                
+                totalStrength += value - RANK_0_STRENGTH;
             if( totalStrength < 0 )
                 totalStrength = 0;
         }
@@ -3416,11 +3420,12 @@ public class distensionbot extends SubspaceBot {
             armyDiffWeight = 0.3f;
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
-        totalPoints /= 2; 
-        // Terrs and sharks receive 60% of point reward to divide up
-        int supportPoints = Math.round( totalPoints * 0.6f );
-        // Attackers (all others) receive 40%
-        int attackPoints = Math.round( totalPoints * 0.4f );
+        // Adjustment for new rank 0 = 5str factor
+        totalPoints /= 1.5f; 
+        // Terrs and sharks receive 70% of point reward to divide up
+        int supportPoints = Math.round( totalPoints * 0.7f );
+        // Attackers (all others) receive 30%
+        int attackPoints = Math.round( totalPoints * 0.3f );
         int totalLvlSupport = 0;
         int totalLvlAttack = 0;
         Iterator <DistensionPlayer>i = m_players.values().iterator();
@@ -3437,7 +3442,7 @@ public class distensionbot extends SubspaceBot {
         }
         
         if( DEBUG )
-            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) / 2 = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
+            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) / 1.5 = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
         i = m_players.values().iterator();
