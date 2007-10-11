@@ -3001,7 +3001,7 @@ public class distensionbot extends SubspaceBot {
         public void adjustStrength( int value ) {
             // Every ship has a default strength of 10; rank 1 = 11, rank 2 = 12, etc.
             // This will potentially make team-evening more fair.
-            if( value > 0 )
+            if( value >= 0 )
                 totalStrength += value + RANK_0_STRENGTH;
             else
                 totalStrength += value - RANK_0_STRENGTH;                
@@ -3416,7 +3416,7 @@ public class distensionbot extends SubspaceBot {
             armyDiffWeight = 0.3f;
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
-        totalPoints /= 5; 
+        totalPoints /= 2; 
         // Terrs and sharks receive 60% of point reward to divide up
         int supportPoints = Math.round( totalPoints * 0.6f );
         // Attackers (all others) receive 40%
@@ -3437,7 +3437,7 @@ public class distensionbot extends SubspaceBot {
         }
         
         if( DEBUG )
-            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) / 5 = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
+            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) / 2 = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
         i = m_players.values().iterator();
