@@ -1171,7 +1171,12 @@ public class distensionbot extends SubspaceBot {
                 a.recalculateFigures();
             return;
         }
-        player.getArmy().recalculateFigures();
+        DistensionArmy army = player.getArmy();
+        if( army != null )
+            army.recalculateFigures();
+        else
+            for( DistensionArmy a : m_armies.values() )
+                a.recalculateFigures();            
         playerTimes.remove( player.getName() );
         checkFlagTimeStop();
         if( player.saveCurrentShipToDBNow() ) {
@@ -1680,6 +1685,7 @@ public class distensionbot extends SubspaceBot {
                 } else {
                     p.setAssist( -1 );
                     m_botAction.setFreq(name, armyToAssist );
+                    p.prizeUpgrades();
                     for( DistensionArmy a : m_armies.values() )
                         a.recalculateFigures();
                 }
@@ -1763,7 +1769,7 @@ public class distensionbot extends SubspaceBot {
                 shipStrength += p2.getUpgradeLevel() + RANK_0_STRENGTH;
             }
             m_botAction.sendPrivateMessage(name, num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
-                                                 + "  " + shipStrength + " STR" + text );
+                                                 + (shipStrength > 0 ? ("  " + shipStrength + " STR" + text) : "") );
             totalStrength += shipStrength;
         }
         
