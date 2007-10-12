@@ -2978,7 +2978,7 @@ public class distensionbot extends SubspaceBot {
             int pilots = 0;
             int strength = 0;
             for( DistensionPlayer p : m_players.values() ) {
-                if( p.getArmyID() == armyID ) {
+                if( p.getArmyID() == armyID && p.getShipNum() > 0 ) {
                     pilots++;
                     strength += p.getUpgradeLevel() + RANK_0_STRENGTH;
                 }
