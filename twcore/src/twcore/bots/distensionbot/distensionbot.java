@@ -270,7 +270,7 @@ public class distensionbot extends SubspaceBot {
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
-            m_botAction.sendChatMessage("Distension BETA initialized.");
+            m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
         }
     }
 
@@ -501,19 +501,22 @@ public class distensionbot extends SubspaceBot {
      */
     public void handleEvent(PlayerLeft event) {
         String name = m_botAction.getPlayerName(event.getPlayerID());
-        if( name == null )
+        if( name == null ) {
+            for( DistensionArmy a : m_armies.values() )
+                a.recalculateFigures();
             return;
+        }
         DistensionPlayer player = m_players.get( name );
-        if( player == null )
+        if( player == null ) {
+            for( DistensionArmy a : m_armies.values() )
+                a.recalculateFigures();
             return;
-        DistensionArmy army = player.getArmy();
-        if( army != null ) {
-            if( player.getShipNum() > 0 ) {
-                checkFlagTimeStop();
-                player.subtractPlayerStrengthFromArmy();
-                if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
-                    checkForAssistAdvert = true;
-            }
+        }
+        if( player.getShipNum() > 0 ) {
+            checkFlagTimeStop();
+            player.getArmy().recalculateFigures();
+            if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
+                checkForAssistAdvert = true;
         }
         player.saveCurrentShipToDBNow();
         playerTimes.remove( name );
@@ -1108,7 +1111,6 @@ public class distensionbot extends SubspaceBot {
 
         if( player.getShipNum() > 0 ) {
             player.saveCurrentShipToDBNow();            
-            player.subtractPlayerStrengthFromArmy();
             // Simple fix to cause sharks and terrs to not lose MVP 
             if( shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) {
                 if( flagTimer != null && flagTimer.isRunning() )
@@ -1130,14 +1132,8 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         
-        DistensionArmy army = player.getArmy();
-        if( army == null ) {
-            army = new DistensionArmy( player.getArmyID() );
-            m_armies.put( new Integer(player.getArmyID()), army );
-            if( DEBUG )
-                m_botAction.sendArenaMessage( "DEBUG: Shipchange COULD NOT find army for " + name + "; had to create new army!" );            
-        }
-        player.addPlayerStrengthToArmy();
+        for( DistensionArmy a : m_armies.values() )
+            a.recalculateFigures();
         player.putInCurrentShip();
         player.prizeUpgrades();
         if( flagTimer != null && flagTimer.isRunning() ) {
@@ -1167,9 +1163,13 @@ public class distensionbot extends SubspaceBot {
      * @param player Player to dock
      */
     public void doDock( DistensionPlayer player ) {
-        if( player == null )
+        if( player == null ) {
+            m_botAction.sendArenaMessage( "Dock did not find player!  Status not saved." );
+            for( DistensionArmy a : m_armies.values() )
+                a.recalculateFigures();
             return;
-        player.subtractPlayerStrengthFromArmy();
+        }
+        player.getArmy().recalculateFigures();
         playerTimes.remove( player.getName() );
         checkFlagTimeStop();
         if( player.saveCurrentShipToDBNow() ) {
@@ -1676,10 +1676,10 @@ public class distensionbot extends SubspaceBot {
                 if( p.getShipNum() == 0 ) {
                     p.setAssist( -1 );
                 } else {
-                    p.subtractPlayerStrengthFromArmy();
                     p.setAssist( -1 );
                     m_botAction.setFreq(name, armyToAssist );
-                    p.addPlayerStrengthToArmy();
+                    for( DistensionArmy a : m_armies.values() )
+                        a.recalculateFigures();
                 }
                 
                 m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ".");
@@ -1716,11 +1716,11 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + reward + " RP bonus.", 1 );
                     p.addRankPoints(reward);
                 }
-                p.subtractPlayerStrengthFromArmy();
                 p.setAssist( armyToAssist );
                 m_botAction.setFreq(name, armyToAssist );
-                p.addPlayerStrengthToArmy();
                 p.prizeUpgrades();
+                for( DistensionArmy a : m_armies.values() )
+                    a.recalculateFigures();
             } else {
                 p.setAssist( armyToAssist );
             }
@@ -2518,9 +2518,9 @@ public class distensionbot extends SubspaceBot {
                 return;
             purchasedUpgrades[upgrade] += amt;
             if( assistArmyID == -1 )
-                m_armies.get(armyID).adjustStrengthRaw(amt);
+                m_armies.get(armyID).recalculateFigures();
             else
-                m_armies.get(assistArmyID).adjustStrengthRaw(amt);
+                m_armies.get(assistArmyID).recalculateFigures();
             shipDataSaved = false;
         }
 
@@ -2643,23 +2643,7 @@ public class distensionbot extends SubspaceBot {
             }
             return false;
         }
-
-        /**
-         * Adds player's upgrade level to the army, and increments the army's pilot count. 
-         */
-        public void addPlayerStrengthToArmy() {
-            getArmy().adjustPilotsInGame(1);
-            getArmy().adjustStrength(getUpgradeLevel());
-        }
         
-        /**
-         * Subtracts player's upgrade level from the army, and decrements the army's pilot count. 
-         */
-        public void subtractPlayerStrengthFromArmy() {
-            getArmy().adjustPilotsInGame(-1);
-            getArmy().adjustStrength(-getUpgradeLevel());
-        }
-
         
         // BASIC SETTERS
 
@@ -2985,32 +2969,22 @@ public class distensionbot extends SubspaceBot {
                 pilotsTotal = 0;
             m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots=" + pilotsTotal + " WHERE fnArmyID=" + armyID );
         }
-
-        public void adjustPilotsInGame( int value ) {
-            pilotsInGame += value;
-            if( pilotsInGame < 0 )
-                pilotsInGame = 0;
-        }
         
         /**
-         * Adjusts strength without applying the strength modifier for rank 0.
-         * @param value
+         * Called when a player has left, been added, or changed ships to recalculate
+         * pilots in game and army strength.
          */
-        public void adjustStrengthRaw( int value ) {
-            totalStrength += value;
-            if( totalStrength < 0 )
-                totalStrength = 0;
-        }
-
-        public void adjustStrength( int value ) {
-            // Every ship has a default strength of 10; rank 1 = 11, rank 2 = 12, etc.
-            // This will potentially make team-evening more fair.
-            if( value >= 0 )
-                totalStrength += value + RANK_0_STRENGTH;
-            else
-                totalStrength += value - RANK_0_STRENGTH;
-            if( totalStrength < 0 )
-                totalStrength = 0;
+        public void recalculateFigures() {
+            int pilots = 0;
+            int strength = 0;
+            for( DistensionPlayer p : m_players.values() ) {
+                if( p.getArmyID() == armyID ) {
+                    pilots++;
+                    strength += p.getUpgradeLevel() + RANK_0_STRENGTH;
+                }
+            }
+            pilotsInGame = pilots;
+            totalStrength = strength;
         }
 
         public void adjustFlags( int value ) {
