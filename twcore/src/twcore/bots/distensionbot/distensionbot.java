@@ -733,6 +733,7 @@ public class distensionbot extends SubspaceBot {
                     }
                 loser.clearSuccessiveKills();
                 if( DEBUG ) {
+                    points *= DEBUG_MULTIPLIER;
                     String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [" + preWeight + " * "
                                           + armySizeWeight + " weight" + ((killerarmy.getNumFlagsOwned() == 2) ? " * 2 flags" : "" );
                     if( DEBUG_MULTIPLIER > 1.0f )
@@ -807,16 +808,16 @@ public class distensionbot extends SubspaceBot {
                 desc = "Gunning systems";
                 break;
             case 7:
-                desc = "Bombing systems";
+                desc = "Bombing systems (on Terrier: Multifire)";
                 break;
             case 8:
-                desc = "Multifire";
+                desc = "Multifire (on Terrier: X-Radar)";
                 break;
             case 9:
-                desc = "X-Radar";
+                desc = "X-Radar (on Terrier: Decoy)";
                 break;
             case 10:
-                desc = "Decoy";
+                desc = "Decoy (on Terrier: Portal)";
                 break;            
         }
         m_botAction.sendPrivateMessage( name, "Upgrade #" + upgNum + ": " + desc );
@@ -843,6 +844,7 @@ public class distensionbot extends SubspaceBot {
                 "RECENT UPDATES  -  10/11/07",
                 " - Time-on-freq saved for legitimate changes to shark & terr",
                 " - !team command displays team breakdown, with upg.lvl and strengths",
+                " - !upginfo added; shows which prize gives which upgrades",
                 " - When entering arena, you now automatically !return",
                 " - During beta, testers receive extra RP!  Bonus displayed @ arena enter",
                 " - !upginfo <upg> shows information on a specific upgrade",
@@ -3354,6 +3356,8 @@ public class distensionbot extends SubspaceBot {
         int maxScore         = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
         int secs             = flagTimer.getTotalSecs();
         int minsToWin        = flagTimer.getTotalSecs() / 60;
+        if( minsToWin > 30 )
+            minsToWin = 30;
         int opposingStrengthAvg = 1;
         int friendlyStrengthAvg = 1;
         float armyDiffWeight;
@@ -4291,7 +4295,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "60-second Refeuler", -3, 1, 31, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Infinite Energy Stream", Tools.Prize.SUPER, 5, 0, -1 );
+        upg = new ShipUpgrade( "Infinite Energy Stream", Tools.Prize.SUPER, 5, 0, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Field Stabilizer", Tools.Prize.ANTIWARP, 1, 38, 1 );
         ship.addUpgrade( upg );
