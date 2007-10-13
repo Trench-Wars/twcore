@@ -47,7 +47,7 @@ import twcore.core.net.GamePacketGenerator;
  * A last word: using Arena's getPlayer(ID) method is more reliable than getPlayer(name),
  * for the reasons described above.  If you need to get a Player object, try to do
  * so by player ID rather than name.  For utmost security also compare the name in
- * the Player object with the expected one.  
+ * the Player object with the expected one.
  */
 public class Arena {
     Map <Integer,Player>m_playerList;   // (Integer)PlayerID -> Player
@@ -56,14 +56,11 @@ public class Arena {
     Map <Integer,Flag>m_flagIDList;     // (Integer)FlagID -> Flag
 
     private List <Integer>m_tracker;    // Queue list for spectating (gathers position data)
-    private GamePacketGenerator m_gen;  // For generating spectate packets
-    private int lastPlayer;				// ID of last player to have been spectated on
-    private boolean m_enableSpectating;
 
     /**
      * Creates a new instance of an Arena object.
      */
-    public Arena( GamePacketGenerator generator, CoreData coredata ) {
+    public Arena(CoreData coredata) {
 
         m_playerList = Collections.synchronizedMap( new HashMap<Integer,Player>() );
         m_playerIDList = Collections.synchronizedMap( new HashMap<String,Integer>() );
@@ -71,10 +68,7 @@ public class Arena {
         m_flagIDList = Collections.synchronizedMap( new HashMap<Integer,Flag>() );
 
         m_tracker = Collections.synchronizedList( new LinkedList<Integer>() );
-        m_gen = generator;
 
-        lastPlayer = -9999;
-        m_enableSpectating = false;
     }
 
     /**
@@ -362,7 +356,7 @@ public class Arena {
         }
         return list.size();
     }
-    
+
     // *** EVENT PROCESSING ***
 
     /**
@@ -690,7 +684,7 @@ public class Arena {
     }
 
     // *** PLAYER OBJECT UPDATING ***
-    
+
     /**
      * Adds a playing player into the tracker queue to be spectated by the bot
      * and receive position packets from.  Can be used to force the player to
@@ -717,46 +711,20 @@ public class Arena {
     }
 
     /**
-     * Called by the bot regularly to spectate the next player in the tracker queue.
-     * Because the server only sends the bot position packets from players within
-     * radar range, in order to get information on the position of all players, the
-     * bot must change who it spectates regularly.
-     */
-    public void watchNextPlayer() {
-        Integer i = getNextPlayer();
-        if( i.intValue() != lastPlayer ) {
-        	lastPlayer = i.intValue();
-            m_gen.sendSpectatePacket( i.shortValue() );
-        }
-    }
-
-    /**
      * Looks at the head of the queue of players to be spectated, adds the
      * next player's ID to the tail of the queue, and returns their ID.
      * @return The ID of the next player in the queue to be spectated on
      */
-    public Integer getNextPlayer() {
-
+    public int getNextPlayerToWatch() {
         synchronized(m_tracker) {
-	        if( m_tracker.size() > 0 && m_enableSpectating) {
-	            Integer i = m_tracker.remove( 0 );
-	            m_tracker.add( i );
-	            return i;
+	        if(!m_tracker.isEmpty()) {
+	            Integer i = m_tracker.remove(0);
+	            m_tracker.add(i);
+	            return i.intValue();
 	        } else {
-	            return new Integer( -1 );
+	            return -1;
 	        }
         }
-    }
-
-    /**
-     * Turns on or off the system of changing the bot's spectating target.  Each time a
-     * change is made in who is being spectated, 3 bytes are sent -- plan accordingly.
-     * @param enable
-     */
-    public void setEnableSpectating(boolean enable) {
-    	synchronized(m_tracker) {
-	    	m_enableSpectating = enable;
-    	}
     }
 
 }

@@ -257,6 +257,7 @@ public class utilhotspots extends MultiUtil {
 
     public void cancel() {
         do_clearHotSpots(null);
+        m_botAction.resetReliablePositionUpdating();
     }
 }
 

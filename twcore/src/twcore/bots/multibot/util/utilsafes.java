@@ -213,6 +213,6 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.removeSetting("FreqChgMsg");
 		m_tsm.removeSetting("TargetShip");
 		m_tsm.removeSetting("TargetFreq");
-        m_botAction.setPlayerPositionUpdating(5000);
+        m_botAction.resetReliablePositionUpdating();
 	}
 }

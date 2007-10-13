@@ -68,8 +68,6 @@ public class BotAction
     private Objset              m_objectSet;        // For automation of LVZ object setting
     private int                 m_botNumber;        // Bot's internal ID number
     private TempSettingsManager m_tsm;              // Handles Temporary Settings
-    private TimerTask			m_positionTask;     // Task for player tracking
-
     private int 				DefaultSpectateTime;// Default time between switching from player to play with player spectating
 
 
@@ -88,7 +86,6 @@ public class BotAction
         m_packetGenerator = packetGenerator;
         m_botNumber = botNum;
         m_objectSet = new Objset();
-        m_positionTask = null;
         DefaultSpectateTime = getCoreData().getGeneralSettings().getInt( "DefaultSpectateTime" );
     }
 
@@ -2312,37 +2309,26 @@ public class BotAction
      */
     public void setPlayerPositionUpdating( int milliseconds ) {
 
-    	if(m_positionTask != null) {
-    		m_positionTask.cancel();
-    		m_positionTask = null;
-    	}
-
     	int delay = Math.max(0, milliseconds);
+    	Ship ship = getShip();
 
     	if(delay == 0) {
-			m_arenaTracker.setEnableSpectating(false);
+			ship.setSpectatorUpdateTime(0);
     		return;
     	}
 
     	delay = Math.max(200, delay);
-    	m_arenaTracker.setEnableSpectating(true);
-    	m_positionTask = new TimerTask() {
-    		public void run() {
-    			m_arenaTracker.watchNextPlayer();
-    		}
-    	};
-
-    	m_timer.schedule(m_positionTask, delay, delay);
+    	ship.setSpectatorUpdateTime(delay);
     }
 
     /**
-     * Starts the automatic player position updating system at the default
-     * rate in setup.cfg.  The load on the network is a fairly trivial 3 bytes sent
-     * at each change of player that the bot is spectating.
+     * Resets the automatic player position updating system to the default rate in setup.cfg.
+     * It will stop if this value is 0 or start otherwise.  The load on the network is a fairly trivial
+     * 3 bytes sent at each change of player that the bot is spectating.
      * <p>Note that 200ms is the default floor value.  If you wish to switch faster
      * than every 200ms, you must edit the setPlayerPositionUpdating method manually.
      */
-    public void startReliablePositionUpdating() {
+    public void resetReliablePositionUpdating() {
         setPlayerPositionUpdating(DefaultSpectateTime);
     }
 

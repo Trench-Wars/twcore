@@ -102,7 +102,7 @@ public class Session extends Thread {
 
         m_ssEncryption = new SSEncryption();
         m_packetGenerator = new GamePacketGenerator( m_outboundQueue, m_ssEncryption, m_timer );
-        m_arenaTracker = new Arena( m_packetGenerator, m_coreData );
+        m_arenaTracker = new Arena( m_coreData );
         String login = m_password;
         if(m_sysopPassword.trim().length() > 0)
         	login += "*" + m_sysopPassword;
@@ -139,7 +139,7 @@ public class Session extends Thread {
             Class[] parameterTypes = { m_botAction.getClass() };
             Object[] args = { m_botAction };
             m_subspaceBot = m_roboClass.getConstructor( parameterTypes ).newInstance( args );
-            m_ship = new Ship( m_group, m_packetGenerator );
+            m_ship = new Ship( m_group, m_packetGenerator, m_arenaTracker );
             m_ship.start();
         } catch( Exception e ){
             Tools.printStackTrace( e );
@@ -257,7 +257,7 @@ public class Session extends Thread {
         m_state = RUNNING;
         long time = System.currentTimeMillis() - m_initialTime;
         Tools.printLog( m_name + " logged in: " + time + " ms." );
-        m_botAction.startReliablePositionUpdating();
+        m_botAction.resetReliablePositionUpdating(); //starts position updating
     }
 
     public void run(){

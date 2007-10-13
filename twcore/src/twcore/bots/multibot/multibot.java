@@ -69,7 +69,6 @@ public class multibot extends SubspaceBot {
         handleEvent((SubspaceEvent) event);
         modEventReq = new ModuleEventRequester(m_botAction.getEventRequester());
         m_botAction.getEventRequester().requestAll();
-        m_botAction.stopReliablePositionUpdating();
     }
 
     /**
@@ -168,7 +167,7 @@ public class multibot extends SubspaceBot {
             throw new IllegalArgumentException("Bot is already in that arena.");
         if (isPublicArena(argString))
             throw new IllegalArgumentException("Bot can not go into public arenas.");
-        m_botAction.changeArena(argString);
+       	m_botAction.changeArena(argString);
         m_botAction.sendSmartPrivateMessage(sender, "Going to " + argString + ".");
     }
 

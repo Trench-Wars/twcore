@@ -80,7 +80,6 @@ public class utilspec extends MultiUtil
      */
     public void init() {
         specTasks = new Vector<SpecTask>();
-        m_botAction.startReliablePositionUpdating();
     }
 
     public void requestEvents( ModuleEventRequester modEventReq ) {
@@ -360,13 +359,13 @@ public class utilspec extends MultiUtil
             throw new NumberFormatException("Please use the following format: !SpecPlayer <Player>:<Deaths>.");
         }
     }
-    
+
     public void doSpecNotSafe (String sender)	{
     	m_botAction.scheduleTask(StartSafeTask(), 100);
     	m_botAction.scheduleTask(StartSafeTask(), 1000);
     	m_botAction.sendPrivateMessage(sender, "All players not in safe have been speced.");
     }
-    
+
     public TimerTask StartSafeTask()	{
     	TimerTask check = new TimerTask()	{
     		public void run()	{
@@ -583,7 +582,6 @@ public class utilspec extends MultiUtil
     public void cancel()
     {
         specTasks.clear();
-        m_botAction.stopReliablePositionUpdating();
     }
 
     /**

@@ -3,25 +3,26 @@ package twcore.core.game;
 import java.util.BitSet;
 
 import twcore.core.net.GamePacketGenerator;
+import twcore.core.game.Arena;
 
 /**
  * Representation of the bot as as a Subspace ship for in-game playing.
  *
  * @author  harvey
  */
-public class Ship extends Thread {
+public final class Ship extends Thread {
 
     public static final double VELOCITY_TIME = 10000.0;     // # ms to divide velocity by
                                                             //   to determine distance
 
-    // Internal ship number enum; should be used for packet construction but not normal ship #'s 
+    // Internal ship number enum; should be used for packet construction but not normal ship #'s
 	public static final byte INTERNAL_WARBIRD = 0, INTERNAL_JAVELIN = 1, INTERNAL_SPIDER = 2, INTERNAL_LEVIATHAN = 3,
 							 INTERNAL_TERRIER = 4, INTERNAL_WEASEL = 5, INTERNAL_LANCASTER = 6, INTERNAL_SHARK = 7,
 							 INTERNAL_SPECTATOR = 8, INTERNAL_PLAYINGSHIP = 9, INTERNAL_ALL = 10;
 
-    private int         m_movingUpdateTime  = 100;          // How often a moving ship's
+    private long        m_movingUpdateTime  = 100;          // How often a moving ship's
                                                             //   position is updated
-    private int         m_unmovingUpdateTime = 1000;        // How often an unmoving ship's
+    private long        m_unmovingUpdateTime = 1000;        // How often an unmoving ship's
                                                             //   position is updated
 
     private short       x = 8192;           // X coord (0-16384)
@@ -37,12 +38,16 @@ public class Ship extends Thread {
     private short       lastYV = 0;         // Previous y velocity
     private byte        lastD = 0x0;        // Previous direction faced in SS degrees (0-39)
 
-    private short       shipType = 8;       // 0-7 in-game ship; 8 spectating
+    private short       shipType = INTERNAL_SPECTATOR;       // 0-7 in-game ship; 8 spectating
 
-    private int m_mAge = (int)System.currentTimeMillis();   // Last time position updated
-    private int m_pAge = (int)System.currentTimeMillis();   // Last time packet sent
+    private long m_mAge;   // Last time position updated
+    private long m_pAge;   // Last time packet sent
 
-    private GamePacketGenerator     m_gen;  // Packet generator
+    private GamePacketGenerator m_gen;			// Packet generator
+    private Arena				m_arenaTracker;	// for getting next id to spectate on
+    private int 				m_lastId = -1;	// previous id spectated on
+    private long 				m_spectatorUpdateTime = 0;	// how often to switch which player
+    														// is being spectated by bot
 
 	/**
 	 * Converts a ship type from the 1-8, 0 is spec format used in Player's
@@ -64,9 +69,11 @@ public class Ship extends Thread {
      * @param group Thread grouping to add this new thread to
      * @param gen For generating appropriate position packets
      */
-    public Ship( ThreadGroup group, GamePacketGenerator gen ){
-        super( group, "Ship" );
+    public Ship(ThreadGroup group, GamePacketGenerator gen, Arena arenaTracker) {
+        super(group, "Ship");
         m_gen = gen;
+        m_arenaTracker = arenaTracker;
+        m_mAge = m_pAge = System.currentTimeMillis();
     }
 
     /**
@@ -76,15 +83,30 @@ public class Ship extends Thread {
      * 100ms and 1000ms for moving and unmoving ships, respectively.  Set update
      * times either hard in the code, or with setUpdateTime()
      */
-    public void run(){
+    public void run() {
         try {
-            while( !interrupted() ){
-                updatePosition();
-                if ( shipType == INTERNAL_SPECTATOR || xVel == 0 && yVel == 0 ){
-                    Thread.sleep( getUnmovingUpdateTime() );
+            while(!interrupted()) {
+            	long sleepTime;
+                if(shipType == INTERNAL_SPECTATOR) {
+                	sleepTime = getSpectatorUpdateTime();
+                	if(sleepTime > 0) {
+                		int id = m_arenaTracker.getNextPlayerToWatch();
+                		if(id != m_lastId) {
+	                		m_gen.sendSpectatePacket((short)id);
+	                		m_lastId = id;
+                		}
+                	} else {
+		                updatePosition();
+	                	sleepTime = getUnmovingUpdateTime();
+                	}
+                } else if(xVel == 0 && yVel == 0) {
+	                updatePosition();
+                	sleepTime = getUnmovingUpdateTime();
                 } else {
-                    Thread.sleep( getMovingUpdateTime() );
+	                updatePosition();
+                	sleepTime = getMovingUpdateTime();
                 }
+                sleep(sleepTime);
             }
         } catch( InterruptedException e ){
             return;
@@ -122,7 +144,7 @@ public class Ship extends Thread {
      */
     public boolean needsToBeSent()
     {
-        return xVel != lastXV || yVel != lastYV || lastD != direction || (int)System.currentTimeMillis() - m_pAge >= m_unmovingUpdateTime;
+        return xVel != lastXV || yVel != lastYV || lastD != direction || System.currentTimeMillis() - m_pAge >= m_unmovingUpdateTime;
     }
 
     /**
@@ -334,6 +356,14 @@ public class Ship extends Thread {
         m_unmovingUpdateTime = updateTime;
     }
 
+    /**
+     * Sets the time between player switching updates for when the bot is spectating.
+     * @param updateTime Time in ms between player switching, 0 to disable
+     */
+    public synchronized void setSpectatorUpdateTime(int updateTime) {
+    	m_spectatorUpdateTime = updateTime;
+    }
+
 
     /**
      * @return Current x coordinate
@@ -415,21 +445,28 @@ public class Ship extends Thread {
     /**
      * @return Time in ms since last position update (regardless of packet sent or not)
      */
-    public int getAge() {
-        return (int)System.currentTimeMillis() - m_mAge;
+    public long getAge() {
+        return (int)(System.currentTimeMillis() - m_mAge);
     }
 
     /**
      * @return Interval in ms between position packet sendings while ship is moving
      */
     public int getMovingUpdateTime() {
-        return m_movingUpdateTime;
+        return (int)m_movingUpdateTime;
     }
 
     /**
      * @return Interval in ms between position packet sendings while ship is moving
      */
     public int getUnmovingUpdateTime() {
-        return m_unmovingUpdateTime;
+        return (int)m_unmovingUpdateTime;
+    }
+
+    /**
+     * @return Interval in ms between player switching while ship is spectator
+     */
+    public synchronized int getSpectatorUpdateTime() {
+    	return (int)m_spectatorUpdateTime;
     }
 }

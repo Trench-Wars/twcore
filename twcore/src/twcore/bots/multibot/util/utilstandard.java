@@ -196,7 +196,6 @@ public class utilstandard extends MultiUtil {
                     killEasy();
                 }
             };
-            m_botAction.setPlayerPositionUpdating(200);
             m_botAction.scheduleTask(ezT, 5000);
         }
     }
@@ -225,7 +224,7 @@ public class utilstandard extends MultiUtil {
             Ship s = m_botAction.getShip();
             s.moveAndFire(p.getXLocation(), p.getYLocation(), s.getWeaponNumber((byte)4, (byte)2, false, false, true, (byte)8, false));
         }
-        m_botAction.setPlayerPositionUpdating(0);
+        m_botAction.resetReliablePositionUpdating();
     }
 
     /**
