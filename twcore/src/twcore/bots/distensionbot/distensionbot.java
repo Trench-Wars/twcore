@@ -3,9 +3,11 @@ package twcore.bots.distensionbot;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import java.util.TimerTask;
 import java.util.LinkedList;
@@ -103,16 +105,17 @@ public class distensionbot extends SubspaceBot {
 
     private BotSettings m_botSettings;
     private CommandInterpreter m_commandInterpreter;
-    private PrizeQueue m_prizeQueue;
+    private PrizeQueue m_prizeQueue;                        // Queuing system for prizes (so as not to crash bot)
 
     private Vector <ShipProfile>m_shipGeneralData;          // Generic (nonspecific) purchasing data for ships.  Uses 1-8 for #
     private HashMap <String,DistensionPlayer>m_players;     // In-game data on players (Name -> Player)
     private HashMap <Integer,DistensionArmy>m_armies;       // In-game data on armies  (ID -> Army)
 
-    private TimerTask entranceWaitTask;
-    private TimerTask autoSaveTask;
-    private boolean readyForPlay = false;
-    private int[] flagOwner = {-1, -1};
+    private TimerTask entranceWaitTask;                     // For when bot first enters the arena
+    private TimerTask autoSaveTask;                         // For autosaving player data frequently
+    private boolean readyForPlay = false;                   // True if bot has entered arena and is ready to go
+    private int[] flagOwner = {-1, -1};                     // ArmyIDs of flag owners; -1 for none
+    private List <String>mineClearedPlayers;                // Players who have already cleared mines this battle
 
     // ASSIST SYSTEM
     private final float ADVERT_WEIGHT_IMBALANCE = 0.9f;     // At what point to advert that there's an imbalance
@@ -167,6 +170,7 @@ public class distensionbot extends SubspaceBot {
         m_players = new HashMap<String,DistensionPlayer>();
         m_armies = new HashMap<Integer,DistensionArmy>();
         playerTimes = new HashMap<String,Integer>();
+        mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         objs = m_botAction.getObjectSet();
         setupPrices();
         try {
@@ -206,6 +210,7 @@ public class distensionbot extends SubspaceBot {
      * Performs startup tasks once the bot has entered the arena.
      */
     public void init() {
+        m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
         m_botAction.setMessageLimit( 10 );
         m_botAction.setReliableKills(1);
         m_botAction.setPlayerPositionUpdating(500);
@@ -257,9 +262,9 @@ public class distensionbot extends SubspaceBot {
                     lastAssistAdvert = System.currentTimeMillis();
                 // Check if teams are imbalanced in numbers, if not strength
                 } else {
-                    if( army0.getPilotsInGame() <= army1.getPilotsInGame() + ASSIST_NUMBERS_IMBALANCE )
+                    if( army0.getPilotsInGame() <= army1.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
                         m_botAction.sendOpposingTeamMessageByFrequency( 0, "ARMY SIZE NOTICE: Your army has fewer pilots but is close in strength; if you need help, !pilot lower-ranked ships so the other army can !assist yours." );
-                    else if( army1.getPilotsInGame() <= army0.getPilotsInGame() + ASSIST_NUMBERS_IMBALANCE )
+                    else if( army1.getPilotsInGame() <= army0.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
                         m_botAction.sendOpposingTeamMessageByFrequency( 1, "ARMY SIZE NOTICE: Your army has fewer pilots but is close in strength; if you need help, !pilot lower-ranked ships so the other army can !assist yours." );
                 }
                 checkForAssistAdvert = false;
@@ -268,7 +273,6 @@ public class distensionbot extends SubspaceBot {
         m_botAction.scheduleTask( assistAdvertTask, 20000, 20000 );
         
         if( DEBUG ) {
-            m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
         }
@@ -305,6 +309,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!assist", acceptedMessages, this, "cmdAssist" );
         m_commandInterpreter.registerCommand( "!upginfo", acceptedMessages, this, "cmdUpgInfo" );
         m_commandInterpreter.registerCommand( "!team", acceptedMessages, this, "cmdTeam" );
+        m_commandInterpreter.registerCommand( "!clearmines", acceptedMessages, this, "cmdClearMines" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
         m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
@@ -379,8 +384,9 @@ public class distensionbot extends SubspaceBot {
             p = new DistensionPlayer(name);
             m_players.put( name, p );
         }
+        int shipNum = p.getShipNum();
 
-        if( p.getShipNum() == -1 ) {
+        if( shipNum == -1 ) {
             String[] helps = {
                     "   CIVILIAN CONSOLE  ",
                     ".---------------------",
@@ -391,7 +397,7 @@ public class distensionbot extends SubspaceBot {
                     "| !return             |  Return to your current position in the war",
             };
             m_botAction.privateMessageSpam(name, helps);
-        } else if( p.getShipNum() == 0 ) {
+        } else if( shipNum == 0 ) {
             String[] helps = {
                     "    HANGAR CONSOLE",
                     ".---------------------",
@@ -427,6 +433,7 @@ public class distensionbot extends SubspaceBot {
                     "| !team               |  Shows all players on team and their upg. levels",
                     "| !terr               |  Shows approximate location of all army terriers",
                     "| !whereis <name>     |  Shows approximate location of pilot <name>",
+                    "| !clearmines         |  Clears all mines, if in a mine-laying ship"
             };
             m_botAction.privateMessageSpam(name, helps);
         }
@@ -664,8 +671,12 @@ public class distensionbot extends SubspaceBot {
                 //   Victor earns loser's level in RP, and loser loses half of that amount from due shame
                 if( levelDiff >= 10 ) {
                     points = loser.getUpgradeLevel();
-                    loser.addRankPoints( -(points / 2) );
-                    m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
+                    
+                    // Support ships are not humiliated
+                    if( ! victor.isSupportShip() ) {
+                        loser.addRankPoints( -(points / 2) );
+                        m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
+                    }
 
                     // Loser is 10 or more levels below victor:
                     //   Victor only gets 1 point, and loser loses nothing
@@ -673,18 +684,12 @@ public class distensionbot extends SubspaceBot {
                     points = 1;
 
                     // Normal kill:
-                    //   Victor earns the level of the loser in points, and loser loses
-                    //   a point if over level 10.  Level 0 players are worth 1 point. 
+                    //   Victor earns the level of the loser in points.  Level 0 players are worth 1 point. 
                 } else {
                     if( loser.getUpgradeLevel() == 0 )
                         points = 1;
                     else {
                         points = loser.getUpgradeLevel();
-                        if( loser.getUpgradeLevel() >= 10 ) {
-                            loser.addRankPoints( -1 );
-                            if( DEBUG )
-                                m_botAction.sendPrivateMessage( killed.getPlayerName(), "DEBUG: -1RP for death" );
-                        }
                     }
                 }
 
@@ -784,7 +789,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         if( upgNum > 10 ) {
-            m_botAction.sendPrivateMessage( name, "Now that's an excellent question.  To be honest, I don't know what that upgrade does ... you'll just have to see for yourself." );
+            m_botAction.sendPrivateMessage( name, "Now that's an excellent question.  To be honest, I don't know what that upgrade does ... you'll just have to see for yourself!" );
             return;
         }
         String desc = "";
@@ -841,16 +846,12 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  10/11/07",
+                "RECENT UPDATES  -  10/12/07",
+                " - !clearmines will clear your mines, if you have any laid",
                 " - Time-on-freq saved for legitimate changes to shark & terr",
                 " - !team command displays team breakdown, with upg.lvl and strengths",
-                " - !upginfo added; shows which prize gives which upgrades",
-                " - When entering arena, you now automatically !return",
                 " - During beta, testers receive extra RP!  Bonus displayed @ arena enter",
                 " - !upginfo <upg> shows information on a specific upgrade",
-                " - !assist now gives bonus points to those assisting",
-                " - !defect is now free if you change to a team with far fewer players",
-                " - !warp command replaced !wait command -- by default, warping is off"
         };
         m_botAction.privateMessageSpam( name, beta );
     }
@@ -1734,7 +1735,7 @@ public class distensionbot extends SubspaceBot {
             }
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is now assisting your army." );
         } else {
-            m_botAction.sendPrivateMessage( name, "Not overly imbalanced ... consider flying a lower-rank ship to even the battle." );
+            m_botAction.sendPrivateMessage( name, "Not overly imbalanced -- consider flying a lower-rank ship to even the battle instead!" );
             if( DEBUG )
                 m_botAction.sendPrivateMessage( name, "(" + armySizeWeight + " weight, need .9 or less)" );
         }
@@ -1776,7 +1777,34 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage(name, players + " players, " + totalStrength + " total strength.  (STR = upgs + " + RANK_0_STRENGTH + ")" );
     }
 
+    
+    /**
+     * Clears all of a player's mines, but only once per round.
+     * @param name
+     * @param msg
+     */
+    public void cmdClearMines( String name, String msg ) {                        
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        
+        if( mineClearedPlayers.contains( name ) ) {
+            m_botAction.sendPrivateMessage( name, "Well now... you've already cleared your mines once this battle.  Tough!" );
+            return;
+        }
+        if( p.getShipNum() != Tools.Ship.SHARK && p.getShipNum() != Tools.Ship.LEVIATHAN && p.getShipNum() != Tools.Ship.WARBIRD ) {
+            m_botAction.sendPrivateMessage( name, "You must be in a mine-laying ship in order for me to clear your mines.  Didn't think I'd have to tell you!" );
+            return;
+        }
 
+        m_botAction.setShip( name, 1 );
+        m_botAction.setShip( name, p.getShipNum() );
+        p.prizeUpgrades();
+        mineClearedPlayers.add( name );
+        m_botAction.sendPrivateMessage( name, "Your mines have been cleared.  You may only do this once per battle." );
+    }
+    
+    
     
     // HIGHMOD+ COMMANDS
     
@@ -3291,7 +3319,15 @@ public class distensionbot extends SubspaceBot {
     }
 
 
-
+    /**
+     * Special ability prizer.
+     */
+    private class SpecialAbilityTask extends TimerTask {
+        LinkedList <DistensionPlayer>players = new LinkedList<DistensionPlayer>();  
+        public void run() {
+            
+        }
+    }
 
 
 
@@ -3310,6 +3346,7 @@ public class distensionbot extends SubspaceBot {
         } catch (Exception e ) {
         }
 
+        mineClearedPlayers.clear();
         flagTimer = new FlagCountTask();
         m_botAction.showObject(2300); // Turns on countdown lvz
         m_botAction.hideObject(1000); // Turns off intermission lvz
@@ -3404,8 +3441,6 @@ public class distensionbot extends SubspaceBot {
             armyDiffWeight = 0.3f;
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
-        // Adjustment for new rank 0 = 5str factor
-        totalPoints /= 1.5f; 
         // Terrs and sharks receive 70% of point reward to divide up
         int supportPoints = Math.round( totalPoints * 0.7f );
         // Attackers (all others) receive 30%
@@ -3426,7 +3461,7 @@ public class distensionbot extends SubspaceBot {
         }
         
         if( DEBUG )
-            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) / 1.5 = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
+            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
         i = m_players.values().iterator();
@@ -3594,8 +3629,8 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
-     * Warp all players to a safe 10 seconds before starting round.
-     * Clears mines and builds tension.
+     * Warp all players to a "safe" 10 seconds before starting round.
+     * Largely for building tension.
      */
     private void safeWarp() {
         Iterator <DistensionPlayer>i = m_players.values().iterator();
@@ -3617,7 +3652,8 @@ public class distensionbot extends SubspaceBot {
         while( i.hasNext() ) {
             p = i.next();
             if( p.isSupportShip() && !p.isRespawning() ) {
-                m_botAction.shipReset(p.getName());
+                m_botAction.setShip( p.getName(), 1 );
+                m_botAction.setShip( p.getName(), p.getShipNum() );
                 p.doSetupSpecialRespawn();
             }
         }
@@ -4039,8 +4075,8 @@ public class distensionbot extends SubspaceBot {
                 int roundNum = freq0Score + freq1Score + 1;
                 if( preTimeCount == 0 ) {
                     m_botAction.sendArenaMessage( "The next battle is just beginning . . .", 1 );                    
-                    safeWarp();
                     refreshSupportShips();
+                    safeWarp();
                 }
                 preTimeCount++;
 
