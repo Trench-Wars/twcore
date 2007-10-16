@@ -187,6 +187,8 @@ public class distensionbot extends SubspaceBot {
         }
         flagTimeStarted = false;
         stopFlagTime = false;
+        m_specialAbilityPrizer = new SpecialAbilityTask();
+        m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 30000, 30000 );
     }
 
 
@@ -220,8 +222,6 @@ public class distensionbot extends SubspaceBot {
         m_botAction.resetFlagGame();
         m_prizeQueue = new PrizeQueue();
         m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, 1000, UPGRADE_DELAY);
-        m_specialAbilityPrizer = new SpecialAbilityTask();
-        m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 30000, 30000 );
         entranceWaitTask = new TimerTask() {
             public void run() {
                 readyForPlay = true;
