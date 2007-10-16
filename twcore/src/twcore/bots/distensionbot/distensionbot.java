@@ -68,7 +68,7 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 15;                 // How frequently autosave occurs, in minutes 
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms  
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
-    private final int RESPAWN_SAFETY_TIME = 2500;          // #ms while a player is spawn protected  
+    private final int RESPAWN_SAFETY_TIME = 1500;          // #ms while a player is spawn protected  
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
@@ -106,6 +106,7 @@ public class distensionbot extends SubspaceBot {
     private BotSettings m_botSettings;
     private CommandInterpreter m_commandInterpreter;
     private PrizeQueue m_prizeQueue;                        // Queuing system for prizes (so as not to crash bot)
+    private SpecialAbilityTask m_specialAbilityPrizer;      // Prizer for special abilities (run once every 30s)
 
     private Vector <ShipProfile>m_shipGeneralData;          // Generic (nonspecific) purchasing data for ships.  Uses 1-8 for #
     private HashMap <String,DistensionPlayer>m_players;     // In-game data on players (Name -> Player)
@@ -219,6 +220,8 @@ public class distensionbot extends SubspaceBot {
         m_botAction.resetFlagGame();
         m_prizeQueue = new PrizeQueue();
         m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, 1000, UPGRADE_DELAY);
+        m_specialAbilityPrizer = new SpecialAbilityTask();
+        m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 30000, 30000 );
         entranceWaitTask = new TimerTask() {
             public void run() {
                 readyForPlay = true;
@@ -232,7 +235,7 @@ public class distensionbot extends SubspaceBot {
                 }
             };
             m_botAction.scheduleTask( autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
-        }
+        }        
         // Do not advert/reward for rectifying imbalance in the first 5 min of a game 
         lastAssistReward = System.currentTimeMillis();
         lastAssistAdvert = System.currentTimeMillis();
@@ -525,8 +528,9 @@ public class distensionbot extends SubspaceBot {
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
                 checkForAssistAdvert = true;
         }
-        player.saveCurrentShipToDBNow();
+        player.saveCurrentShipToDBNow();        
         playerTimes.remove( name );
+        m_specialAbilityPrizer.removePlayer( player );
         m_players.remove( name );
     }
 
@@ -2398,6 +2402,38 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.specificPrize( name, prize );
             }
         }
+        
+        /**
+         * Prizes any special abilities that are reprized every 30 seconds.
+         * 
+         * Special prize #s that are prized with this method:
+         * -2:  Prizing burst + warp for terriers
+         * -3:  Full charge for spiders
+         * -4:  Targetted EMP against all enemies -- recharged every 10 min or so, and not lost on death
+         */
+        public void prizeSpecialAbilities() {
+            if( shipNum == 5 ) {
+                // +10% Regeneration ability; each level worth an additional 10%
+                if( purchasedUpgrades[11] > 0 ) {
+                    long portChance = Math.round(Math.random() * 10.0);
+                    long burstChance = Math.round(Math.random() * 10.0);
+                    if( purchasedUpgrades[11] >= portChance )
+                        m_botAction.specificPrize( name, Tools.Prize.PORTAL );
+                    if( purchasedUpgrades[11] >= burstChance )
+                        m_botAction.specificPrize( name, Tools.Prize.BURST );                    
+                }
+                // EMP ability; re-enable every 20 ticks
+                //if( purchasedUpgrades[13] > 0 )
+            }
+            if( shipNum == 3) {
+                // +33% Refueling ability; each level worth an additional 33%
+                if( purchasedUpgrades[11] > 0 ) {
+                    long fcChance = Math.round( Math.random() * 3.0 );
+                    if( purchasedUpgrades[11] >= fcChance )
+                        m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
+                }
+            }
+        }
 
         /**
          * Warps player to the appropriate spawning location (near a specific base).
@@ -2576,6 +2612,10 @@ public class distensionbot extends SubspaceBot {
             }
             this.shipNum = shipNum;
             successiveKills = 0;
+            if( shipNum == 3 || shipNum == 5 )
+                m_specialAbilityPrizer.addPlayer(this);
+            else
+                m_specialAbilityPrizer.removePlayer(this);
         }
 
         /**
@@ -3324,8 +3364,25 @@ public class distensionbot extends SubspaceBot {
      */
     private class SpecialAbilityTask extends TimerTask {
         LinkedList <DistensionPlayer>players = new LinkedList<DistensionPlayer>();  
+
+        /**
+         * Adds a player to be checked for random special prizing every 30 seconds. 
+         * @param p Player to add
+         */
+        public void addPlayer( DistensionPlayer p ) {
+            players.add(p);
+        }
+        
+        public void removePlayer( DistensionPlayer p ) {
+            players.remove(p);
+        }
+        
+        /**
+         * Checks all players added for special prizing.
+         */
         public void run() {
-            
+            for( DistensionPlayer p : players )
+                p.prizeSpecialAbilities();            
         }
     }
 
@@ -3399,6 +3456,8 @@ public class distensionbot extends SubspaceBot {
         int maxScore         = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
         int secs             = flagTimer.getTotalSecs();
         int minsToWin        = flagTimer.getTotalSecs() / 60;
+        if( minsToWin < 8 )
+            minsToWin = 8;
         if( minsToWin > 30 )
             minsToWin = 30;
         int opposingStrengthAvg = 1;
@@ -4300,14 +4359,16 @@ public class distensionbot extends SubspaceBot {
         // SPIDER -- rank 4
         // Med upg speed; lvl req for thurst & speed; thrust perm+1; speed has wide spread; recharge has 20 lvls
         // 0:  Super (but costs 5)
+        // 10: Refueler 1
         // 15: Decoy
         // 26: Multi (rear)
         // 30: Decoy
-        // 31: Refueler
+        // 35: Refueler 2
         // 38: Anti
         // 40: L2 Guns
         // 42: XRadar
         // 45: Decoy
+        // 50: Refueler 3
         ship = new ShipProfile( RANK_REQ_SHIP3, 14 );
         upg = new ShipUpgrade( "Central Realigner", Tools.Prize.ROTATION, 1, 0, 10 );       // 20 x10
         ship.addUpgrade( upg );
@@ -4335,7 +4396,8 @@ public class distensionbot extends SubspaceBot {
         int p3d1[] = { 15, 30, 45 };
         upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, 1, p3d1, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "60-second Refeuler", -3, 1, 31, 1 );
+        int p3e1[] = { 10, 35, 50 };
+        upg = new ShipUpgrade( "+33% Refeuler", -3, 1, p3e1, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Infinite Energy Stream", Tools.Prize.SUPER, 5, 0, 1 );
         ship.addUpgrade( upg );
@@ -4399,16 +4461,16 @@ public class distensionbot extends SubspaceBot {
         // TERRIER -- rank 7
         // Very fast upg speed; rotation, thrust and energy have only 9 lvls; recharge max is normal terr max
         // 2:  Burst 1
+        // 5: +10% Regeneration (and 1 level available every 5 levels)
         // 7:  Portal 1
-        // 10: Priority respawn
+        // 9:  Priority respawn
         // 13: XRadar
         // 16: Multi (regular)
         // 21: Burst 2 
-        // 25: Decoy
+        // 27: Decoy
         // 29: Portal 2
         // 30: (Can attach to other terrs)
         // 36: Guns
-        // 40: Regeneration 
         // 44: Burst 3
         // 48: Portal 3
         // 50: Targetted EMP (negative full charge to all of the other team)
@@ -4435,7 +4497,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 1, 13, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Terrier Reiterator", Tools.Prize.DECOY, 1, 25, 1 );
+        upg = new ShipUpgrade( "Terrier Reiterator", Tools.Prize.DECOY, 1, 27, 1 );
         ship.addUpgrade( upg );
         int p5a1[] = { 1,  1,  2,  3,  5 };
         int p5a2[] = { 7, 29, 48, 60, 70 };
@@ -4445,9 +4507,10 @@ public class distensionbot extends SubspaceBot {
         int p5b2[] = { 2, 21, 44, 55, 65, 80 };
         upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2, 6 );       // DEFINE
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "60-second Regeneration", -2, 3, 40, 1 );
+        int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
+        upg = new ShipUpgrade( "+10% Regeneration", -2, 1, p5c1, 10 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Priority Rearmament", -1, 1, 10, 1 );
+        upg = new ShipUpgrade( "Priority Rearmament", -1, 1, 9, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Targetted EMP", -4, 5, 50, 1 );
         ship.addUpgrade( upg );
