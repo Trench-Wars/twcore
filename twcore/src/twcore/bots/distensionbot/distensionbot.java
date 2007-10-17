@@ -1503,8 +1503,10 @@ public class distensionbot extends SubspaceBot {
         player.modifyUpgrade( upgradeNum, 1 );
         if( upgrade.getPrizeNum() == -1 )
             player.setFastRespawn(true);
-        else
-            m_botAction.specificPrize( name, upgrade.getPrizeNum() );
+        else {
+            if( ! player.isRespawning() )
+                m_botAction.specificPrize( name, upgrade.getPrizeNum() );
+        }
         if( upgrade.getMaxLevel() == 1 )
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " has been installed on the " + Tools.shipName( shipNum ) + "." );
         else
@@ -2413,7 +2415,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void prizeSpecialAbilities() {
             if( shipNum == 5 ) {
-                // +10% Regeneration ability; each level worth an additional 10%
+                // Regeneration ability; each level worth an additional 10%
                 if( purchasedUpgrades[11] > 0 ) {
                     long portChance = Math.round(Math.random() * 10.0);
                     long burstChance = Math.round(Math.random() * 10.0);
@@ -2426,11 +2428,18 @@ public class distensionbot extends SubspaceBot {
                 //if( purchasedUpgrades[13] > 0 )
             }
             if( shipNum == 3) {
-                // +33% Refueling ability; each level worth an additional 33%
+                // Refueling ability; each level worth an additional 50%
                 if( purchasedUpgrades[11] > 0 ) {
-                    long fcChance = Math.round( Math.random() * 3.0 );
+                    long fcChance = Math.round( Math.random() * 2.0 );
                     if( purchasedUpgrades[11] >= fcChance )
-                        m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
+                        m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );                    
+                }
+                // Energy stream ability; each level worth an additional 5%
+                if( purchasedUpgrades[12] > 0 ) {
+                    long superChance = Math.round( Math.random() * 20.0 );
+                    if( purchasedUpgrades[12] >= superChance )
+                        m_botAction.specificPrize( name, Tools.Prize.SUPER );
+                    
                 }
             }
         }
@@ -3500,10 +3509,10 @@ public class distensionbot extends SubspaceBot {
             armyDiffWeight = 0.3f;
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
-        // Terrs and sharks receive 70% of point reward to divide up
-        int supportPoints = Math.round( totalPoints * 0.7f );
-        // Attackers (all others) receive 30%
-        int attackPoints = Math.round( totalPoints * 0.3f );
+        // Terrs and sharks receive 65% of point reward to divide up
+        int supportPoints = Math.round( totalPoints * 0.65f );
+        // Attackers (all others) receive 35%
+        int attackPoints = Math.round( totalPoints * 0.35f );
         int totalLvlSupport = 0;
         int totalLvlAttack = 0;
         Iterator <DistensionPlayer>i = m_players.values().iterator();
@@ -3544,7 +3553,7 @@ public class distensionbot extends SubspaceBot {
                         if( p.isSupportShip() )
                             m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total support strentgh " + totalLvlSupport + " (" + playerRank / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation" );
                         else
-                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strentgh " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * attack points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation" );
+                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strentgh " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * assault points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation" );
                     else
                         m_botAction.sendPrivateMessage(p.getName(), "You receive " + modPoints + " RP for your role in the victory." );
                     int holds = flagTimer.getSectorHolds( p.getName() );
@@ -4222,18 +4231,19 @@ public class distensionbot extends SubspaceBot {
      * Special prizes:
      * -1:  Fast respawn (puts you at the head of the respawning queue when you die)
      * -2:  Prizing burst + warp every 60 seconds, for terriers
-     * -3:  Full charge every 60 seconds, for spiders
+     * -3:  Full charge chance every 30 seconds, for spiders
      * -4:  Targetted EMP against all enemies (uses !emp command)
+     * -5:  Super chance every 30 seconds, for spiders
      * 
      * 
      * Order of speed of rank upgrades (high speed to low speed, lower # being faster ranks):
      * Terr   - 10  (unlock @ 7)
      * Shark  - 11  (unlock @ 2)
      * Lanc   - 12  (unlock @ 10)
-     * Spider - 14  (unlock @ 4)
      * WB     - 15  (start)
-     * Weasel - 16  (unlock by successive kills)
-     * Levi   - 17  (unlock @ 20)  (switch levi and jav?)
+     * Weasel - 15  (unlock by successive kills)
+     * Spider - 16  (unlock @ 4)
+     * Levi   - 17  (unlock @ 20)
      * Jav    - 18  (unlock @ 15)
      * 
      * Prize format: Name, Prize#, Cost([]), Rank([]), # upgrades 
@@ -4295,7 +4305,8 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, 1, 36, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Matter-to-Antimatter Emulsifier", Tools.Prize.THOR, 1, 42, 1 );
+        //                                                    | <--- this mark and beyond is not seen
+        upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 1, 42, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "S3", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -4358,18 +4369,21 @@ public class distensionbot extends SubspaceBot {
 
         // SPIDER -- rank 4
         // Med upg speed; lvl req for thurst & speed; thrust perm+1; speed has wide spread; recharge has 20 lvls
-        // 0:  Super (but costs 5)
-        // 10: Refueler 1
-        // 15: Decoy
+        //  9: +50% Refueler 1
+        // 15: +5% Super 1
+        // 18: Decoy 1
+        // 25: +5% Super 2
         // 26: Multi (rear)
-        // 30: Decoy
-        // 35: Refueler 2
+        // 29: Decoy 2
+        // 33: +50% Refueler 2
+        // 35: +5% Super 3
         // 38: Anti
         // 40: L2 Guns
         // 42: XRadar
-        // 45: Decoy
-        // 50: Refueler 3
-        ship = new ShipProfile( RANK_REQ_SHIP3, 14 );
+        // 45: +5% Super 4
+        // 47: Decoy 3
+        // 55: +5% Super 5
+        ship = new ShipProfile( RANK_REQ_SHIP3, 16 );
         upg = new ShipUpgrade( "Central Realigner", Tools.Prize.ROTATION, 1, 0, 10 );       // 20 x10
         ship.addUpgrade( upg );
         int p3a1[] = { 0, 0, 0, 0, 0, 20, 24, 28, 32, 36 };
@@ -4393,15 +4407,16 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 2, 42, 1 );
         ship.addUpgrade( upg );
-        int p3d1[] = { 15, 30, 45 };
+        int p3d1[] = { 18, 29, 47 };
         upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, 1, p3d1, 3 );
         ship.addUpgrade( upg );
-        int p3e1[] = { 10, 35, 50 };
-        upg = new ShipUpgrade( "+33% Refeuler", -3, 1, p3e1, 3 );
+        int p3e1[] = { 9, 33 };
+        upg = new ShipUpgrade( "+50% Refeuler", -3, 1, p3e1, 2 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Infinite Energy Stream", Tools.Prize.SUPER, 5, 0, 1 );
+        int p3f1[] = { 15, 25, 35, 45, 55 };
+        upg = new ShipUpgrade( "+5% Infinite Stream", -5, 1, p3f1, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Field Stabilizer", Tools.Prize.ANTIWARP, 1, 38, 1 );
+        upg = new ShipUpgrade( "Warp Field Stabilizer", Tools.Prize.ANTIWARP, 1, 38, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "S4", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -4533,7 +4548,7 @@ public class distensionbot extends SubspaceBot {
         // 46: Rocket 2
         // 50: Brick
         // 60: Rocket 3
-        ship = new ShipProfile( RANK_REQ_SHIP6, 16 );
+        ship = new ShipProfile( RANK_REQ_SHIP6, 15 );
         int p6a1[] = { 2, 1, 1, 1,  1,  1,  1,  1 };
         int p6a2[] = { 5, 8, 10, 15, 20, 30, 40, 50 };
         upg = new ShipUpgrade( "Orbital Force Unit", Tools.Prize.ROTATION, p6a1, p6a2, 8 );
@@ -4614,10 +4629,10 @@ public class distensionbot extends SubspaceBot {
         // (Starts with 1 repel, so that repel 1 is actually second)
         //  1: Repel 1
         //  7: Repel 2
-        // 11: Priority Rearmament
+        // 12: Guns
         // 15: Repel 3
         // 17: XRadar
-        // 20: Guns
+        // 20: Priority Rearmament
         // 22: Shrap 1
         // 26: Repel 4
         // 29: Multifire
@@ -4646,7 +4661,7 @@ public class distensionbot extends SubspaceBot {
         int p8b2[] = { 1, 2, 10, 20, 30, 40, 50, 75 };
         upg = new ShipUpgrade( "Projectile Slip Plates", Tools.Prize.ENERGY, p8b1, p8b2, 8 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 1, 20, 1 );
+        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 1, 12, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, 4, 45, 1 );
         ship.addUpgrade( upg );
@@ -4665,7 +4680,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Nonexistence Device", Tools.Prize.CLOAK, 3, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Priority Rearmament", -1, 1, 11, 1 );   // DEFINE
+        upg = new ShipUpgrade( "Priority Rearmament", -1, 1, 20, 1 );   // DEFINE
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );        
     }
