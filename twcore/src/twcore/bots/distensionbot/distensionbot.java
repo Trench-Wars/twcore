@@ -90,16 +90,16 @@ public class distensionbot extends SubspaceBot {
     private final int SAFE_BOTTOM_Y = 824;
     
     // These coords are used for !terr and !whereis
-    private final int TOP_SAFE = 260;
-    private final int TOP_ROOF = 273;
-    private final int TOP_FR =   305;
-    private final int TOP_MID =  375;
-    private final int TOP_LOW =  433;
-    private final int BOT_LOW =  589;
-    private final int BOT_MID =  646;
-    private final int BOT_FR =   717;
-    private final int BOT_ROOF = 749;
-    private final int BOT_SAFE = 763;
+    private final int TOP_SAFE = 242;
+    private final int TOP_ROOF = 270;
+    private final int TOP_FR =   315;
+    private final int TOP_MID =  380;
+    private final int TOP_LOW =  437;
+    private final int BOT_LOW =  586;
+    private final int BOT_MID =  643;
+    private final int BOT_FR =   708;
+    private final int BOT_ROOF = 753;
+    private final int BOT_SAFE = 781;
 
     private String m_database;                              // DB to connect to
 
@@ -122,7 +122,7 @@ public class distensionbot extends SubspaceBot {
     private final float ADVERT_WEIGHT_IMBALANCE = 0.9f;     // At what point to advert that there's an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.9f;     // At what point an army is considered imbalanced
     private final int ASSIST_NUMBERS_IMBALANCE = 4;         // # of pilot difference before considered imbalanced
-    private final int ASSIST_REWARD_TIME = 1000 * 60 * 2;   // Time between adverting and rewarding assists (2 min def.)
+    private final int ASSIST_REWARD_TIME = 1000 * 60 * 1;   // Time between adverting and rewarding assists (1 min def.)
     private long lastAssistReward;                          // Last time assister was given points
     private long lastAssistAdvert;                          // Last time an advert was sent for assistance
     private boolean checkForAssistAdvert = false;           // True if armies may be unbalanced, requiring !assist advert
@@ -649,6 +649,7 @@ public class distensionbot extends SubspaceBot {
                 DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
                 if( killerarmy == null || killedarmy == null )
                     return;
+                loser.clearSuccessiveKills();
                                 
                 if( loser.justRespawned() ) {
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: " + loser.getName() + " just spawned; 0 RP earned." );
@@ -657,14 +658,6 @@ public class distensionbot extends SubspaceBot {
 
                 if( victor.justRespawned() ) {
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: You are spawn-protected; 0 RP earned." );
-                    return;
-                }
-
-                if( killerarmy.getNumFlagsOwned() == 0 ) {
-                    if( DEBUG )
-                        m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: 1 RP for kill.  (0 flags owned)" );
-                    victor.addRankPoints( 1 );
-                    // Loser does not lose any points for dying if killer's army controls no flags
                     return;
                 }
 
@@ -709,11 +702,21 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendArenaMessage( "DEBUG: Infinity/neg infinity found.  Army " + killedarmy.getID() + " str: " + killedarmy.getTotalStrength() + " / Army " + killerarmy.getID() + " str: " + killerarmy.getTotalStrength() );
                     armySizeWeight = 1;
                 }
-                if( armySizeWeight > 1.5f )
-                    armySizeWeight = 1.5f;
-                else if( armySizeWeight < 0.5f )
-                    armySizeWeight = 0.5f;
+                if( armySizeWeight > 3.0f )
+                    armySizeWeight = 3.0f;
+                else if( armySizeWeight < 0.2f )
+                    armySizeWeight = 0.2f;
 
+                if( killerarmy.getNumFlagsOwned() == 0 ) {
+                    // 1 RP for 0 flag rule only applies if armies are imbalanced.
+                    if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
+                        if( DEBUG )
+                            m_botAction.sendPrivateMessage( killer.getPlayerName(), "DEBUG: 1 RP for kill.  (0 flags owned)" );
+                        victor.addRankPoints( 1 );
+                        return;
+                    }
+                }
+                
                 int preWeight = points; 
                 points = Math.round(((float)points * armySizeWeight));
                 points *= killerarmy.getNumFlagsOwned();
@@ -740,7 +743,6 @@ public class distensionbot extends SubspaceBot {
                         // If player earned weasel off this kill, check if loser/killed player has weasel ... 
                         // and remove it if they do!
                     }
-                loser.clearSuccessiveKills();
                 if( DEBUG ) {
                     points *= DEBUG_MULTIPLIER;
                     String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [" + preWeight + " * "
@@ -1504,8 +1506,9 @@ public class distensionbot extends SubspaceBot {
         if( upgrade.getPrizeNum() == -1 )
             player.setFastRespawn(true);
         else {
-            if( ! player.isRespawning() )
-                m_botAction.specificPrize( name, upgrade.getPrizeNum() );
+            if( !player.isRespawning() )
+                if( upgrade.getPrizeNum() > 0 )
+                    m_botAction.specificPrize( name, upgrade.getPrizeNum() );
         }
         if( upgrade.getMaxLevel() == 1 )
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " has been installed on the " + Tools.shipName( shipNum ) + "." );
@@ -1586,8 +1589,14 @@ public class distensionbot extends SubspaceBot {
             return;
         if( player.waitInSpawn() )
             m_botAction.sendPrivateMessage( name, "You will not be warped out of the resupply area after being armed, and will need to attach to a Terrier or warp out manually." );
-        else
+        else {
             m_botAction.sendPrivateMessage( name, "You will be warped out of the resupply area after being armed." );
+            Player p = m_botAction.getPlayer(name);
+            if( p != null ) {
+                if( p.getYLocation() <= TOP_SAFE || p.getYLocation() >= BOT_SAFE )
+                    player.doWarp(true);
+            }
+        }
     }
     
     
@@ -1692,7 +1701,8 @@ public class distensionbot extends SubspaceBot {
                 } else {
                     p.setAssist( -1 );
                     m_botAction.setFreq(name, armyToAssist );
-                    p.prizeUpgrades();
+                    if( !p.isRespawning() )
+                        p.prizeUpgrades();
                     for( DistensionArmy a : m_armies.values() )
                         a.recalculateFigures();
                 }
@@ -2363,6 +2373,8 @@ public class distensionbot extends SubspaceBot {
         public void doSpawnTick() {
             spawnTicks--;
             if( spawnTicks == 3 ) { // 3 ticks (1.5 seconds) before end, warp to safe and shipreset
+                objs.showObject(m_botAction.getPlayerID(name), 1 );
+                m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), 1);
                 doSafeWarp();
                 m_botAction.shipReset(name);
             }
@@ -2377,7 +2389,7 @@ public class distensionbot extends SubspaceBot {
                 specialRespawn = false;
                 prizeUpgrades();
                 return true;
-            }                
+            }
             if( spawnTicks > 0 )
                 return false;
             if( !isRespawning )
@@ -2386,6 +2398,7 @@ public class distensionbot extends SubspaceBot {
             respawnedAt = System.currentTimeMillis();
             isRespawning = false;
             prizeUpgrades();
+            m_botAction.hideObjectForPlayer(m_botAction.getPlayerID(name), 1);
             return true;
         }
 
@@ -2415,10 +2428,11 @@ public class distensionbot extends SubspaceBot {
          */
         public void prizeSpecialAbilities() {
             if( shipNum == 5 ) {
-                // Regeneration ability; each level worth an additional 10%
+                // Regeneration ability; each level worth an additional 10% of prizing either port or burst
+                //                       (+5% for each, up to a total of 50%)
                 if( purchasedUpgrades[11] > 0 ) {
-                    long portChance = Math.round(Math.random() * 10.0);
-                    long burstChance = Math.round(Math.random() * 10.0);
+                    long portChance = Math.round(Math.random() * 20.0);
+                    long burstChance = Math.round(Math.random() * 20.0);
                     if( purchasedUpgrades[11] >= portChance )
                         m_botAction.specificPrize( name, Tools.Prize.PORTAL );
                     if( purchasedUpgrades[11] >= burstChance )
@@ -2620,6 +2634,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specWithoutLock( name );
             }
             this.shipNum = shipNum;
+            isRespawning = false;
             successiveKills = 0;
             if( shipNum == 3 || shipNum == 5 )
                 m_specialAbilityPrizer.addPlayer(this);
@@ -3465,10 +3480,7 @@ public class distensionbot extends SubspaceBot {
         int maxScore         = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
         int secs             = flagTimer.getTotalSecs();
         int minsToWin        = flagTimer.getTotalSecs() / 60;
-        if( minsToWin < 8 )
-            minsToWin = 8;
-        if( minsToWin > 30 )
-            minsToWin = 30;
+        
         int opposingStrengthAvg = 1;
         int friendlyStrengthAvg = 1;
         float armyDiffWeight;
@@ -3489,7 +3501,27 @@ public class distensionbot extends SubspaceBot {
             }
         } else {
             m_botAction.sendArenaMessage( "END BATTLE: " + m_armies.get(winningArmyID).getName() + " gains control of the sector after " + getTimeString( flagTimer.getTotalSecs() ), Tools.Sound.VICTORY_BELL );
-        }        
+        }
+        
+        // Special case: if teams are imbalanced at end, and people do not !assist so they
+        //               will win the round, NO points are earned!
+        float winnerStrCurrent;
+        float loserStrCurrent;
+        if( winningArmyID == 0 ) {
+            winnerStrCurrent = m_armies.get(0).getTotalStrength();
+            loserStrCurrent = m_armies.get(1).getTotalStrength();
+        } else {
+            winnerStrCurrent = m_armies.get(1).getTotalStrength();
+            loserStrCurrent = m_armies.get(0).getTotalStrength();            
+        }
+        if( winnerStrCurrent <= 0 ) winnerStrCurrent = 1;
+        if( loserStrCurrent <= 0 ) loserStrCurrent = 1;
+
+        if( loserStrCurrent / winnerStrCurrent < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
+            m_botAction.sendArenaMessage( "AVARICE DETECTED.  Armies too imbalanced; NO POINTS AWARDED!", 1 );
+            return;
+        }
+
 
         for( Integer i : armyStrengths.keySet() ) {
             if( i == winningArmyID )
@@ -3503,10 +3535,12 @@ public class distensionbot extends SubspaceBot {
         if( opposingStrengthAvg == 0 )
             opposingStrengthAvg = 1;
         armyDiffWeight = ((float)opposingStrengthAvg / (float)friendlyStrengthAvg);
-        if( armyDiffWeight > 3.0f )
+        if( armyDiffWeight > 3.0f ) {
             armyDiffWeight = 3.0f;
-        else if( armyDiffWeight < 0.3f )
-            armyDiffWeight = 0.3f;
+        } else if( armyDiffWeight < 0.3f ) {
+            armyDiffWeight = 0.3f;            
+        }
+        
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
         // Terrs and sharks receive 65% of point reward to divide up
@@ -4414,7 +4448,7 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "+50% Refeuler", -3, 1, p3e1, 2 );
         ship.addUpgrade( upg );
         int p3f1[] = { 15, 25, 35, 45, 55 };
-        upg = new ShipUpgrade( "+5% Infinite Stream", -5, 1, p3f1, 1 );
+        upg = new ShipUpgrade( "+5% Infinite Stream", -5, 1, p3f1, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warp Field Stabilizer", Tools.Prize.ANTIWARP, 1, 38, 1 );
         ship.addUpgrade( upg );
@@ -4441,7 +4475,8 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP4, 17 );
         upg = new ShipUpgrade( "Gravitational Modifier", Tools.Prize.ROTATION, 1, 0, 25 );      // 10 x25
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Force Thrusters", Tools.Prize.THRUST, 2, 0, 5 );                // 4 x5
+        int p4a1[] = { 3, 9, 30, 40, 50 };
+        upg = new ShipUpgrade( "Force Thrusters", Tools.Prize.THRUST, 2, p4a1, 5 );                // 4 x5
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Collection Drive", Tools.Prize.TOPSPEED, 1, 0, 7 );             // 1000 x7
         ship.addUpgrade( upg );
@@ -4449,13 +4484,13 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Carbon-Forced Armor", Tools.Prize.ENERGY, 1, 0, 20 );           // 100 x20
         ship.addUpgrade( upg );
-        int p4a1[] = { 1,  4 };
-        int p4a2[] = { 8, 35 };
-        upg = new ShipUpgrade( "Spill Guns", Tools.Prize.GUNS, p4a1, p4a2, 2 );         // DEFINE
+        int p4b1[] = { 1,  4 };
+        int p4b2[] = { 8, 35 };
+        upg = new ShipUpgrade( "Spill Guns", Tools.Prize.GUNS, p4b1, p4b2, 2 );         // DEFINE
         ship.addUpgrade( upg );
-        int p4b1[] = { 1,  1,  3 };
-        int p4b2[] = { 4, 15, 48 };
-        upg = new ShipUpgrade( "Chronos(TM) Disruptor", Tools.Prize.BOMBS, p4b1, p4b2, 3 );        // DEFINE
+        int p4c1[] = { 1,  1,  3 };
+        int p4c2[] = { 4, 15, 48 };
+        upg = new ShipUpgrade( "Chronos(TM) Disruptor", Tools.Prize.BOMBS, p4c1, p4c2, 3 );        // DEFINE
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Sidekick Cannons", Tools.Prize.MULTIFIRE, 1, 30, 1 );
         ship.addUpgrade( upg );
