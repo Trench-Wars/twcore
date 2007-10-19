@@ -66,7 +66,7 @@ public class distensionbot extends SubspaceBot {
     private final float DEBUG_MULTIPLIER = 1.5f;           // Amount of RP to give extra in debug mode
 
     private final int AUTOSAVE_DELAY = 15;                 // How frequently autosave occurs, in minutes 
-    private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms  
+    private final int UPGRADE_DELAY = 300;                 // Delay for prizing players, in ms  
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
     private final int RESPAWN_SAFETY_TIME = 1500;          // #ms while a player is spawn protected  
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
@@ -145,8 +145,22 @@ public class distensionbot extends SubspaceBot {
     private AuxLvzTask scoreDisplay;                    // Displays score lvz
     private AuxLvzTask scoreRemove;                     // Removes score lvz
     private AuxLvzConflict delaySetObj;                 // Schedules a task after an amount of time
+    private Objset flagTimerObjs;                       // For keeping track of flagtimer objs
+    private Objset flagObjs;                            // For keeping track of flag-related objs
 
-    private Objset objs;                                // For keeping track of counter
+    
+    // LVZ OBJ# DEFINES ( < 100 reserved for flag timer counter )
+    private final int LVZ_REARMING = 200;               // Rearming / attach at own risk
+    private final int LVZ_TOPBASE_EMPTY = 251;          // Flag display
+    private final int LVZ_TOPBASE_ARMY0 = 252;
+    private final int LVZ_TOPBASE_ARMY1 = 253;
+    private final int LVZ_BOTBASE_EMPTY = 254;
+    private final int LVZ_BOTBASE_ARMY0 = 255;
+    private final int LVZ_BOTBASE_ARMY1 = 256;
+    private final int LVZ_SECTOR_HOLD = 257;            // Sector hold, above flag display
+    private final int LVZ_INTERMISSION = 1000;          // Green intermission "highlight around" gfx
+    private final int LVZ_ROUND_COUNTDOWN = 2300;       // Countdown before round start
+    private final int LVZ_FLAG_CLAIMED = 2400;          // Flag claimed "brightening"
 
 
 
@@ -172,7 +186,8 @@ public class distensionbot extends SubspaceBot {
         m_armies = new HashMap<Integer,DistensionArmy>();
         playerTimes = new HashMap<String,Integer>();
         mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
-        objs = m_botAction.getObjectSet();
+        flagTimerObjs = m_botAction.getObjectSet();
+        flagObjs = new Objset();
         setupPrices();
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
@@ -546,32 +561,69 @@ public class distensionbot extends SubspaceBot {
             return;
         boolean holdBreaking = false;
         boolean holdSecured = false;
-
-        // If flag is already claimed, take it away from old freq
-        if( flagOwner[flagID] != -1 ) { 
-            DistensionArmy army = m_armies.get( new Integer( flagOwner[flagID] ) );
+        int oldOwner = flagOwner[flagID];
+        flagOwner[flagID] = p.getFrequency();
+        if( oldOwner == p.getFrequency() ) {
+            // To save bot from two people "flag sitting"
+            return;
+        }
+        
+        // If flag is already claimed, try to take it away from old freq
+        if( oldOwner != -1 ) { 
+            DistensionArmy army = m_armies.get( new Integer( oldOwner ) );
             if( army != null ) {
                 if( army.getNumFlagsOwned() == 2 && flagTimer != null && flagTimer.isRunning())
                     holdBreaking = true;
                 army.adjustFlags( -1 );
-
+                if( flagTimer != null && flagTimer.isRunning() ) {
+                    if( flagID == 0 )
+                        if( army.getID() == 0 )
+                            flagObjs.hideObject(LVZ_TOPBASE_ARMY0);
+                        else
+                            flagObjs.hideObject(LVZ_TOPBASE_ARMY1);
+                    else
+                        if( army.getID() == 0 )
+                            flagObjs.hideObject(LVZ_BOTBASE_ARMY0);
+                        else
+                            flagObjs.hideObject(LVZ_BOTBASE_ARMY1);
+                }
                 if( DEBUG )
-                    m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " taken from army #" + flagOwner[flagID] );
+                    m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " taken from army #" + oldOwner );
             }            
+        } else {
+            if( flagTimer != null && flagTimer.isRunning() ) {
+                if( flagID == 0 )
+                    flagObjs.hideObject(LVZ_TOPBASE_EMPTY);
+                else
+                    flagObjs.hideObject(LVZ_BOTBASE_EMPTY);
+            }
         }
         DistensionArmy army = m_armies.get( new Integer( p.getFrequency() ) );
         if( army != null ) {
             army.adjustFlags( 1 );
+            if( flagTimer != null && flagTimer.isRunning() ) {
+                if( flagID == 0 )
+                    if( army.getID() == 0 )
+                        flagObjs.showObject(LVZ_TOPBASE_ARMY0);
+                    else
+                        flagObjs.showObject(LVZ_TOPBASE_ARMY1);
+                else
+                    if( army.getID() == 0 )
+                        flagObjs.showObject(LVZ_BOTBASE_ARMY0);
+                    else
+                        flagObjs.showObject(LVZ_BOTBASE_ARMY1);
+            }
             if( army.getNumFlagsOwned() == 2 && flagTimer != null && flagTimer.isRunning())
                 holdSecured = true;
             if( DEBUG )
                 m_botAction.sendPrivateMessage( p.getPlayerName(), "Flag #" + flagID + " added to your army; " + army.getNumFlagsOwned() + " flags now owned");
         }
+        if( flagTimer != null && flagTimer.isRunning() )
+            m_botAction.manuallySetObjects( flagObjs.getObjects() );
         if( holdBreaking )
             flagTimer.holdBreaking( army.getID(), p.getPlayerName() );
         if( holdSecured )
             flagTimer.sectorClaimed( army.getID(), p.getPlayerName() );
-        flagOwner[flagID] = p.getFrequency();                
     }
 
 
@@ -852,7 +904,8 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  10/12/07",
+                "RECENT UPDATES  -  10/19/07",
+                " - LVZ for flags and rearming added",
                 " - !clearmines will clear your mines, if you have any laid",
                 " - Time-on-freq saved for legitimate changes to shark & terr",
                 " - !team command displays team breakdown, with upg.lvl and strengths",
@@ -978,6 +1031,11 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() != 0 ) {
             m_botAction.sendPrivateMessage( name, "Please !dock before trying to hop over to another army." );
             return;
+        }
+        
+        if( p.getArmyID() != p.getNaturalArmyID() ) {
+            m_botAction.sendPrivateMessage( name, "If you're going to !defect, do you really need to !assist all that much?...  Go back to your normal army first!" );
+            return;            
         }
 
         Integer armyNum;
@@ -1867,6 +1925,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdDie( String name, String msg ) {
         m_botAction.specAll();
+        flagObjs.hideAllObjects();
+        flagTimerObjs.hideAllObjects();
+        m_botAction.setObjects();
+        m_botAction.manuallySetObjects(flagObjs.getObjects());
         m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
         try { Thread.sleep(500); } catch (Exception e) {};
         m_botAction.die();
@@ -2084,6 +2146,9 @@ public class distensionbot extends SubspaceBot {
             army.removeAllFlags();
         flagOwner[0] = -1;
         flagOwner[1] = -1;
+        flagObjs.showObject(LVZ_TOPBASE_EMPTY);
+        flagObjs.showObject(LVZ_BOTBASE_EMPTY);
+        m_botAction.manuallySetObjects( flagObjs.getObjects() );
     }
 
     /**
@@ -2373,8 +2438,7 @@ public class distensionbot extends SubspaceBot {
         public void doSpawnTick() {
             spawnTicks--;
             if( spawnTicks == 3 ) { // 3 ticks (1.5 seconds) before end, warp to safe and shipreset
-                objs.showObject(m_botAction.getPlayerID(name), 1 );
-                m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), 1);
+                m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), LVZ_REARMING);
                 doSafeWarp();
                 m_botAction.shipReset(name);
             }
@@ -2398,7 +2462,7 @@ public class distensionbot extends SubspaceBot {
             respawnedAt = System.currentTimeMillis();
             isRespawning = false;
             prizeUpgrades();
-            m_botAction.hideObjectForPlayer(m_botAction.getPlayerID(name), 1);
+            m_botAction.hideObjectForPlayer(m_botAction.getPlayerID(name), LVZ_REARMING);
             return true;
         }
 
@@ -2526,7 +2590,12 @@ public class distensionbot extends SubspaceBot {
             rankStart = nextRank;
             nextRank = m_shipGeneralData.get( shipNum ).getNextRankCost(rank);
             m_botAction.sendPrivateMessage(name, "-=(  RANK UP!  )=-  You have advanced to RANK " + rank + " in the " + Tools.shipName(shipNum) + ".", Tools.Sound.VICTORY_BELL );
-            m_botAction.sendPrivateMessage(name, "You will reach the next rank in " + ( nextRank - rankPoints )+ " rank points (total " + nextRank + "), and have earned 1 upgrade point to spend in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " avail).") : "") );
+            if( nextRank - rankPoints > 0 ) {
+                m_botAction.sendPrivateMessage(name, "You will reach the next rank in " + ( nextRank - rankPoints )+ " rank points (total " + nextRank + "), and have earned 1 upgrade point to spend in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " avail).") : "") );            
+            }else {
+                // Advanced more than one rank; refire the method
+                doAdvanceRank();
+            }
 
             if( rank >= RANK_REQ_SHIP2 ) {
                 if( shipsAvail[1] == false ) {
@@ -3429,8 +3498,8 @@ public class distensionbot extends SubspaceBot {
 
         mineClearedPlayers.clear();
         flagTimer = new FlagCountTask();
-        m_botAction.showObject(2300); // Turns on countdown lvz
-        m_botAction.hideObject(1000); // Turns off intermission lvz
+        m_botAction.showObject(LVZ_ROUND_COUNTDOWN); // Turns on countdown lvz
+        m_botAction.hideObject(LVZ_INTERMISSION);    // Turns off intermission lvz
         m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
     }
 
@@ -3574,7 +3643,9 @@ public class distensionbot extends SubspaceBot {
             if( p.getArmyID() == winningArmyID ) {
                 playerRank = p.getRank();
                 if( playerRank == 0 )
-                    playerRank = 1;                
+                    playerRank = 1;
+                if( totalLvlSupport == 0) totalLvlSupport = 1;
+                if( totalLvlAttack == 0) totalLvlAttack = 1;
                 if( p.isSupportShip() )
                     points = (float)supportPoints * ((float)playerRank / (float)totalLvlSupport);
                 else
@@ -3801,7 +3872,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.cancelTask(flagTimer);
                 } catch (Exception e ) {
                 }
-                m_botAction.hideObject(1000); // Turns off intermission lvz
+                m_botAction.hideObject(LVZ_INTERMISSION); // Turns off intermission lvz
             } else {
                 doStartRound();
             }
@@ -3819,7 +3890,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void run() {
             doIntermission();
-            m_botAction.showObject(1000); //Shows intermission lvz
+            m_botAction.showObject(LVZ_INTERMISSION); //Shows intermission lvz
         }
     }
 
@@ -3850,9 +3921,9 @@ public class distensionbot extends SubspaceBot {
         public void init()  {
             for(int i=0 ; i<objNums.length ; i++)   {
                 if(showObj[i])
-                    objs.showObject(objNums[i]);
+                    flagTimerObjs.showObject(objNums[i]);
                 else
-                    objs.hideObject(objNums[i]);
+                    flagTimerObjs.hideObject(objNums[i]);
             }
         }
 
@@ -3939,7 +4010,7 @@ public class distensionbot extends SubspaceBot {
 
             // Sector secure
             sectorHoldingArmyID = armyID;
-            m_botAction.showObject(2400); // Shows flag claimed lvz
+            m_botAction.showObject(LVZ_FLAG_CLAIMED); // Shows flag claimed lvz
             claimBeingBroken = false;
             breakingArmyID = -1;
             secondsHeld = 0;            
@@ -3947,6 +4018,8 @@ public class distensionbot extends SubspaceBot {
             if( p == null )
                 return;
             addSectorHold( p.getName() );
+            flagObjs.showObject(LVZ_SECTOR_HOLD);
+            m_botAction.manuallySetObjects( flagObjs.getObjects() );
             m_botAction.sendArenaMessage( "SECTOR HOLD:  " + p.getName() + " of " + p.getArmyName() + " has secured a hold over the sector.", 2 );
         }
 
@@ -3983,6 +4056,8 @@ public class distensionbot extends SubspaceBot {
             sectorHoldingArmyID = -1;
             secondsHeld = 0;
             addSectorBreak( p.getName() );
+            flagObjs.hideObject(LVZ_SECTOR_HOLD);
+            m_botAction.manuallySetObjects( flagObjs.getObjects() );
             do_updateTimer();
         }
 
@@ -4015,11 +4090,14 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Ends the battle for the timer's internal purposes.
+         * Ends the battle for the timer's internal purposes; clears flag timer
+         * and flag-owning visual info.
          */
         public void endBattle() {
-            objs.hideAllObjects();
+            flagTimerObjs.hideAllObjects();
+            flagObjs.hideAllObjects();
             m_botAction.setObjects();
+            m_botAction.manuallySetObjects( flagObjs.getObjects() );
             isRunning = false;
         }
 
@@ -4240,15 +4318,15 @@ public class distensionbot extends SubspaceBot {
          */
         private void do_updateTimer() {
             int secsNeeded = flagMinutesRequired * 60 - secondsHeld;
-            objs.hideAllObjects();
+            flagTimerObjs.hideAllObjects();
             int minutes = secsNeeded / 60;
             int seconds = secsNeeded % 60;
-            if( minutes < 1 ) objs.showObject( 1100 );
+            if( minutes < 1 ) flagTimerObjs.showObject( 1100 );
             if( minutes > 10 )
-                objs.showObject( 10 + ((minutes - minutes % 10)/10) );
-            objs.showObject( 20 + (minutes % 10) );
-            objs.showObject( 30 + ((seconds - seconds % 10)/10) );
-            objs.showObject( 40 + (seconds % 10) );
+                flagTimerObjs.showObject( 10 + ((minutes - minutes % 10)/10) );
+            flagTimerObjs.showObject( 20 + (minutes % 10) );
+            flagTimerObjs.showObject( 30 + ((seconds - seconds % 10)/10) );
+            flagTimerObjs.showObject( 40 + (seconds % 10) );
             m_botAction.setObjects();
         }
     }
@@ -4475,7 +4553,7 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP4, 17 );
         upg = new ShipUpgrade( "Gravitational Modifier", Tools.Prize.ROTATION, 1, 0, 25 );      // 10 x25
         ship.addUpgrade( upg );
-        int p4a1[] = { 3, 9, 30, 40, 50 };
+        int p4a1[] = { 8, 20, 40, 50, 60 };
         upg = new ShipUpgrade( "Force Thrusters", Tools.Prize.THRUST, 2, p4a1, 5 );                // 4 x5
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Collection Drive", Tools.Prize.TOPSPEED, 1, 0, 7 );             // 1000 x7
