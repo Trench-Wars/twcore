@@ -3588,98 +3588,96 @@ public class distensionbot extends SubspaceBot {
 
         if( loserStrCurrent / winnerStrCurrent < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
             m_botAction.sendArenaMessage( "AVARICE DETECTED.  Armies too imbalanced; NO POINTS AWARDED!", 1 );
-            return;
-        }
-
-
-        for( Integer i : armyStrengths.keySet() ) {
-            if( i == winningArmyID )
-                friendlyStrengthAvg = armyStrengths.get( i ) / minsToWin;
-            else
-                opposingStrengthAvg += armyStrengths.get( i ) / minsToWin;
-        }
-
-        if( friendlyStrengthAvg == 0 )
-            friendlyStrengthAvg = 1;
-        if( opposingStrengthAvg == 0 )
-            opposingStrengthAvg = 1;
-        armyDiffWeight = ((float)opposingStrengthAvg / (float)friendlyStrengthAvg);
-        if( armyDiffWeight > 3.0f ) {
-            armyDiffWeight = 3.0f;
-        } else if( armyDiffWeight < 0.3f ) {
-            armyDiffWeight = 0.3f;            
-        }
-        
-        // Points to be divided up by army
-        float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
-        // Terrs and sharks receive 65% of point reward to divide up
-        int supportPoints = Math.round( totalPoints * 0.65f );
-        // Attackers (all others) receive 35%
-        int attackPoints = Math.round( totalPoints * 0.35f );
-        int totalLvlSupport = 0;
-        int totalLvlAttack = 0;
-        Iterator <DistensionPlayer>i = m_players.values().iterator();
-        while( i.hasNext() ) {
-            DistensionPlayer p = i.next();
-            Integer time = playerTimes.get( p.getName() );
-            float percentOnFreq = 0;
-            if( time != null )
-                percentOnFreq = (float)(secs - time) / (float)secs;             
-            if( p.isSupportShip() )
-                totalLvlSupport += Math.round( (float)p.getRank() * percentOnFreq );
-            else
-                totalLvlAttack += Math.round( (float)p.getRank() * percentOnFreq );            
-        }
-        
-        if( DEBUG )
-            m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
-
-        // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
-        i = m_players.values().iterator();
-        int playerRank = 0;
-        float points = 0;
-        while( i.hasNext() ) {
-            DistensionPlayer p = i.next();
-            if( p.getArmyID() == winningArmyID ) {
-                playerRank = p.getRank();
-                if( playerRank == 0 )
-                    playerRank = 1;
-                if( totalLvlSupport == 0) totalLvlSupport = 1;
-                if( totalLvlAttack == 0) totalLvlAttack = 1;
-                if( p.isSupportShip() )
-                    points = (float)supportPoints * ((float)playerRank / (float)totalLvlSupport);
+        } else {            
+            // Points awarded
+            for( Integer i : armyStrengths.keySet() ) {
+                if( i == winningArmyID )
+                    friendlyStrengthAvg = armyStrengths.get( i ) / minsToWin;
                 else
-                    points = (float)attackPoints * ((float)playerRank / (float)totalLvlAttack);
+                    opposingStrengthAvg += armyStrengths.get( i ) / minsToWin;
+            }
+
+            if( friendlyStrengthAvg == 0 )
+                friendlyStrengthAvg = 1;
+            if( opposingStrengthAvg == 0 )
+                opposingStrengthAvg = 1;
+            armyDiffWeight = ((float)opposingStrengthAvg / (float)friendlyStrengthAvg);
+            if( armyDiffWeight > 3.0f ) {
+                armyDiffWeight = 3.0f;
+            } else if( armyDiffWeight < 0.3f ) {
+                armyDiffWeight = 0.3f;
+            }
+
+            // Points to be divided up by army
+            float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
+            // Terrs and sharks receive 65% of point reward to divide up
+            int supportPoints = Math.round( totalPoints * 0.65f );
+            // Attackers (all others) receive 35%
+            int attackPoints = Math.round( totalPoints * 0.35f );
+            int totalLvlSupport = 0;
+            int totalLvlAttack = 0;
+            Iterator <DistensionPlayer>i = m_players.values().iterator();
+            while( i.hasNext() ) {
+                DistensionPlayer p = i.next();
                 Integer time = playerTimes.get( p.getName() );
-                if( time != null ) {
-                    float percentOnFreq = (float)(secs - time) / (float)secs;
-                    int modPoints = Math.max(1, Math.round(points * percentOnFreq) );                    
-                    if( DEBUG )
-                        if( p.isSupportShip() )
-                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total support strentgh " + totalLvlSupport + " (" + playerRank / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation" );
-                        else
-                            m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strentgh " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * assault points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation" );
+                float percentOnFreq = 0;
+                if( time != null )
+                    percentOnFreq = (float)(secs - time) / (float)secs;             
+                if( p.isSupportShip() )
+                    totalLvlSupport += Math.round( (float)p.getRank() * percentOnFreq );
+                else
+                    totalLvlAttack += Math.round( (float)p.getRank() * percentOnFreq );            
+            }
+
+            if( DEBUG )
+                m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
+
+            // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength        
+            i = m_players.values().iterator();
+            int playerRank = 0;
+            float points = 0;
+            while( i.hasNext() ) {
+                DistensionPlayer p = i.next();
+                if( p.getArmyID() == winningArmyID ) {
+                    playerRank = p.getRank();
+                    if( playerRank == 0 )
+                        playerRank = 1;
+                    if( totalLvlSupport == 0) totalLvlSupport = 1;
+                    if( totalLvlAttack == 0) totalLvlAttack = 1;
+                    if( p.isSupportShip() )
+                        points = (float)supportPoints * ((float)playerRank / (float)totalLvlSupport);
                     else
-                        m_botAction.sendPrivateMessage(p.getName(), "You receive " + modPoints + " RP for your role in the victory." );
-                    int holds = flagTimer.getSectorHolds( p.getName() );
-                    int breaks = flagTimer.getSectorBreaks( p.getName() );                    
-                    int bonus = 0;
-                    if( holds != 0 && breaks != 0 ) {
-                        bonus = Math.max(1, (int)( modPoints * (((float)holds / 10.0) + ((float)breaks / 20.0)) ));
-                        m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds and " + breaks +" sector breaks, you also receive an additional " + bonus + " RP." );
-                    } else if( holds != 0 ) {
-                        bonus = Math.max(1, (int)( modPoints * ((float)holds / 10.0) ));
-                        m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds, you also receive an additional " + bonus + " RP." );
-                    } else if( breaks != 0 ) {
-                        bonus = Math.max(1, (int)( modPoints * ((float)breaks / 20.0) ));
-                        m_botAction.sendPrivateMessage( p.getName(), "For " + breaks + " sector breaks, you also receive an additional " + bonus + " RP." );                        
+                        points = (float)attackPoints * ((float)playerRank / (float)totalLvlAttack);
+                    Integer time = playerTimes.get( p.getName() );
+                    if( time != null ) {
+                        float percentOnFreq = (float)(secs - time) / (float)secs;
+                        int modPoints = Math.max(1, Math.round(points * percentOnFreq) );                    
+                        if( DEBUG )
+                            if( p.isSupportShip() )
+                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total support strentgh " + totalLvlSupport + " (" + playerRank / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation" );
+                            else
+                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strentgh " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * assault points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation" );
+                        else
+                            m_botAction.sendPrivateMessage(p.getName(), "You receive " + modPoints + " RP for your role in the victory." );
+                        int holds = flagTimer.getSectorHolds( p.getName() );
+                        int breaks = flagTimer.getSectorBreaks( p.getName() );                    
+                        int bonus = 0;
+                        if( holds != 0 && breaks != 0 ) {
+                            bonus = Math.max(1, (int)( modPoints * (((float)holds / 10.0) + ((float)breaks / 20.0)) ));
+                            m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds and " + breaks +" sector breaks, you also receive an additional " + bonus + " RP." );
+                        } else if( holds != 0 ) {
+                            bonus = Math.max(1, (int)( modPoints * ((float)holds / 10.0) ));
+                            m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds, you also receive an additional " + bonus + " RP." );
+                        } else if( breaks != 0 ) {
+                            bonus = Math.max(1, (int)( modPoints * ((float)breaks / 20.0) ));
+                            m_botAction.sendPrivateMessage( p.getName(), "For " + breaks + " sector breaks, you also receive an additional " + bonus + " RP." );                        
+                        }
+                        modPoints += bonus;
+                        p.addRankPoints(modPoints);
                     }
-                    modPoints += bonus;
-                    p.addRankPoints(modPoints);
                 }
             }
         }
-
         /*
        try {
             String[] leaderInfo = flagTimer.getTeamLeader( MVPs );
