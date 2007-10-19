@@ -1,5 +1,6 @@
 package twcore.bots.eventbot;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -25,7 +26,7 @@ public class eventbot extends SubspaceBot {
     private CommandInterpreter commandInterpreter;
     
     //This vector stores all the requests
-    private Vector<EventRequest> requests = new Vector<EventRequest>(64);
+    private HashMap<String,EventRequest> requests = new HashMap<String,EventRequest>(64);
 
 
     public eventbot(BotAction botAction) {
@@ -66,6 +67,7 @@ public class eventbot extends SubspaceBot {
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("arena"));
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ));
+        
     }
     
     public void handleAlert(String name, String message) {
@@ -95,8 +97,8 @@ public class eventbot extends SubspaceBot {
     	{
     		"!requests [#]               - Display the top 10 or top [#] event requests",
     		"!requests [event]           - Display details of the requests for [event]",
-    		"[CHAT] !removerequest <name>- Remove request of player<name>"
-    		
+    		"[CHAT] !removerequest <name>- Remove request of player<name>",
+    		"[CHAT] !fillrequest <name>  - Let <name> know that you are hosting his event"
     	};
     	if(m_opList.isER(name))
     		m_botAction.smartPrivateMessageSpam(name, erCommands);
@@ -111,6 +113,9 @@ public class eventbot extends SubspaceBot {
     
     public void cmdRequest(String name, String message) {
     	message = message.trim();
+    	
+    	// Cleanup expired requests
+    	this.removeExpiredRequests();
     	
     	// Validate all parameters
     	if(message.length() == 0) {
@@ -132,15 +137,47 @@ public class eventbot extends SubspaceBot {
     	}
     	
     	if(eventRequest != null) {
-    		requests.add(eventRequest);			// Add to request list
+    		// Check if player's previous request was done more then 1 minute ago to prevent abuse.
+    		if(requests.containsKey(name.toLowerCase())) {
+    			EventRequest eventReq = requests.get(name.toLowerCase());
+    			
+    			if((new Date().getTime() - eventReq.getDate().getTime()) <= (1000*60)) {
+    				// Player made the request less then one minute ago, tell him he needs to wait before doing another request
+    				m_botAction.sendSmartPrivateMessage(name, "You have to wait one minute before changing your previous request. Please try again later.");
+    				return;
+    			}
+    		}
     		
-    		// Let staff know there is a new request
-    		if(comments.length() > 0)	comments = "('"+comments+"') ";
-    		m_botAction.sendChatMessage("New event request: "+name+" requested "+event+" "+comments+"(rank:"+getEventRank(event)+")");
+    		   		
+    		// If event is base/javduel/spidduel/wbduel-type then make the request directly without saving it.
+    		if(	event.toLowerCase().startsWith("base") || 
+    				event.toLowerCase().startsWith("javduel") ||
+    				event.toLowerCase().startsWith("spidduel") ||
+    				event.toLowerCase().startsWith("wbduel")) {
+    			
+    			// Inform staff
+    			m_botAction.sendChatMessage("> Staff, please start a new game in "+event+". (Requested by "+name+")");
+
+    			// Notify requester about his request
+    			m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" has been forwarded to staff. It will be dealt with as soon as possible.");
+    		} else {
+    			
+    			// Replace previous request
+        		if(requests.containsKey(name.toLowerCase())) {
+        			requests.remove(name.toLowerCase());
+        		}
+        		// Add to request list
+        		requests.put(name.toLowerCase(), eventRequest);
+    			
+        		// Inform staff
+        		if(comments.length() > 0)	comments = "('"+comments+"') ";
+    			m_botAction.sendChatMessage("New event request: "+name+" requested "+event+" "+comments+"(rank:"+getEventRank(event)+")");
+    			
+    			// Notify requester about his request
+        		m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" "+comments+"has been registered and forwarded to staff.");
+        		m_botAction.sendSmartPrivateMessage(name, "If you want to change your request or make a new request once this request expires (after 60 mins), please use !request again.");
+    		}
     		
-    		// Notify requester about his request
-    		m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" "+comments+"has been registered and forwarded to staff.");
-    		m_botAction.sendSmartPrivateMessage(name, "If you want to change your request or make a new request once this request expires (after 60 mins), please use !request again.");
     	} else {
     		throw new NullPointerException("EventRequest is null in EventBot, method cmdRequest()");
     	}
@@ -150,8 +187,11 @@ public class eventbot extends SubspaceBot {
     	HashMap<String, Integer> rank = new HashMap<String, Integer>();
     	Vector<String> rankPosition = new Vector<String>();
     	
+    	// Cleanup expired requests
+    	this.removeExpiredRequests();
+    	
     	// Create the event with count mapping
-    	for(EventRequest request:requests) {
+    	for(EventRequest request:requests.values()) {
     		if(rank.containsKey(request.getEvent())) {
     			rank.put(request.getEvent(), rank.get(request.getEvent())+1);
     		} else {
@@ -216,7 +256,7 @@ public class eventbot extends SubspaceBot {
     	Vector<String> rankPosition = new Vector<String>();
     	
     	// Create the event with count mapping
-    	for(EventRequest request:requests) {
+    	for(EventRequest request:requests.values()) {
     		if(rank.containsKey(request.getEvent())) {
     			rank.put(request.getEvent(), rank.get(request.getEvent())+1);
     		} else {
@@ -245,6 +285,21 @@ public class eventbot extends SubspaceBot {
     	return rankPosition.indexOf(event)+1;
     }
     
+    /**
+     * Removes any expired requests from the HashMap by comparing the date the request was made.
+     */
+    private void removeExpiredRequests() {
+    	
+    	for(String playername:requests.keySet()) {
+    		EventRequest eventReq = requests.get(playername);
+    		long now = new Date().getTime();
+    		long hour = 1000*60*60;
+    		
+    		if((now - eventReq.getDate().getTime()) > hour) {
+    			requests.remove(playername);
+    		}
+    	}
+    	
+    }
+    
 }
-
-

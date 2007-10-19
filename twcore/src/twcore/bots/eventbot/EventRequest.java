@@ -1,7 +1,6 @@
 package twcore.bots.eventbot;
 
 import java.util.Date;
-import java.util.HashSet;
 
 /**
  * POJO class for eventbot.
@@ -10,44 +9,23 @@ import java.util.HashSet;
  * @author Maverick
  */
 public class EventRequest {
-	private HashSet<String> requesters = new HashSet<String>();
+	private String requester;
 	private String event;
-	private HashSet<String> comments = new HashSet<String>();
+	private String comments;
 	private Date lastrequest;
 	
 	public EventRequest(String requester, String event) {
-		this.requesters.add(requester);
+		this.requester = requester;
 		this.event = event;
 		this.comments = null;
 		this.lastrequest = new Date();
 	}
 	
 	public EventRequest(String requester, String event, String comments) {
-		this.requesters.add(requester);
+		this.requester = requester;
 		this.event = event;
-		this.comments.add(comments);
-		this.lastrequest = new Date();
-	}
-
-	/**
-	 * @return the comments
-	 */
-	public HashSet<String> getComments() {
-		return comments;
-	}
-
-	/**
-	 * @param comments the comments to set
-	 */
-	public void setComments(HashSet<String> comments) {
 		this.comments = comments;
-	}
-	
-	/**
-	 * @param comments the comments to add
-	 */
-	public void addComments(String comments){
-		this.comments.add(comments);
+		this.lastrequest = new Date();
 	}
 
 	/**
@@ -81,26 +59,44 @@ public class EventRequest {
 	/**
 	 * @return the requester
 	 */
-	public HashSet<String> getRequesters() {
-		return requesters;
+	public String getRequester() {
+		return requester;
 	}
 
 	/**
 	 * @param requester the requester to set
 	 */
-	public void setRequesters(HashSet<String> requesters) {
-		this.requesters = requesters;
+	public void setRequester(String requester) {
+		this.requester = requester;
+	}
+
+	/**
+	 * @return the comments
+	 */
+	public String getComments() {
+		return comments;
+	}
+
+	/**
+	 * @param comments the comments to set
+	 */
+	public void setComments(String comments) {
+		this.comments = comments;
+	}
+
+	/**
+	 * @return the lastrequest
+	 */
+	public Date getLastrequest() {
+		return lastrequest;
+	}
+
+	/**
+	 * @param lastrequest the lastrequest to set
+	 */
+	public void setLastrequest(Date lastrequest) {
+		this.lastrequest = lastrequest;
 	}
 	
-	public void addRequester(String requester) {
-		this.requesters.add(requester);
-	}
 	
-	public int numberRequesters() {
-		return this.requesters.size();
-	}
-	
-	public int numberComments() {
-		return this.comments.size();
-	}
 }
