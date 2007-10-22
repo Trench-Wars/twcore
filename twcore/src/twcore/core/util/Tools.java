@@ -87,7 +87,7 @@ public class Tools {
      * @param delimiter Character to split around
      * @return String array containing pieces
      */
-    public static LinkedList linkedStringChopper( String input, char deliniator ){
+    public static LinkedList<String> linkedStringChopper( String input, char deliniator ){
         LinkedList <String>list = new LinkedList<String>();
 
         int nextSpace = 0;
@@ -391,6 +391,37 @@ public class Tools {
         for (int j=result.length(); j < length; j++) result = result + padding;
 
         return result;
+    }
+    
+    /**
+     * Aligns a String to the right over a given length and which characters to fill with.
+     * 
+     * @param fragment
+     * @param length
+     * @param padding
+     * @return
+     */
+    public static String rightString (String fragment, int length, char padding) {
+    	if( fragment == null )
+            fragment = "";
+        if(fragment.length() > length)
+            fragment = fragment.substring(length,-length);
+        else {
+            for(int i=fragment.length();i<length;i++)
+                fragment = padding + fragment;
+        }
+        return fragment;
+    }
+    
+    /**
+     * Aligns a String to the right over a given number of characters, padded on the right with spaces.
+     * 
+     * @param fragment
+     * @param length
+     * @return
+     */
+    public static String rightString (String fragment, int length) {
+    	return rightString(fragment, length, ' ');
     }
     
     
