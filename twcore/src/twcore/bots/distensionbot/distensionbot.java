@@ -65,9 +65,9 @@ public class distensionbot extends SubspaceBot {
                                                            // normally be annoying in a public release.
     private final float DEBUG_MULTIPLIER = 1.5f;           // Amount of RP to give extra in debug mode
 
-    private final int AUTOSAVE_DELAY = 15;                 // How frequently autosave occurs, in minutes
-    private final int UPGRADE_DELAY = 300;                 // Delay for prizing players, in ms
-    private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
+    private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
+    private final int UPGRADE_DELAY = 250;                 // Delay for prizing players, in ms
+    private final int TICKS_BEFORE_SPAWN = 20;             // # of UPGRADE_DELAYs player must wait before respawn
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
@@ -150,10 +150,12 @@ public class distensionbot extends SubspaceBot {
     private AuxLvzConflict delaySetObj;                 // Schedules a task after an amount of time
     private Objset flagTimerObjs;                       // For keeping track of flagtimer objs
     private Objset flagObjs;                            // For keeping track of flag-related objs
+    private Objset playerObjs;                          // For keeping track of player-specific objs
 
 
     // LVZ OBJ# DEFINES ( < 100 reserved for flag timer counter )
     private final int LVZ_REARMING = 200;               // Rearming / attach at own risk
+    private final int LVZ_RANKUP = 201;                 // RANK UP: Congratulations
     private final int LVZ_TOPBASE_EMPTY = 251;          // Flag display
     private final int LVZ_TOPBASE_ARMY0 = 252;
     private final int LVZ_TOPBASE_ARMY1 = 253;
@@ -161,6 +163,7 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_BOTBASE_ARMY0 = 255;
     private final int LVZ_BOTBASE_ARMY1 = 256;
     private final int LVZ_SECTOR_HOLD = 257;            // Sector hold, above flag display
+    private final int LVZ_PROGRESS_BAR = 260;           // Progress bar; 261-269 are progress pieces
     private final int LVZ_INTERMISSION = 1000;          // Green intermission "highlight around" gfx
     private final int LVZ_ROUND_COUNTDOWN = 2300;       // Countdown before round start
     private final int LVZ_FLAG_CLAIMED = 2400;          // Flag claimed "brightening"
@@ -192,6 +195,7 @@ public class distensionbot extends SubspaceBot {
         m_defectors = new HashMap<String,Integer>();
         flagTimerObjs = m_botAction.getObjectSet();
         flagObjs = new Objset();
+        playerObjs = new Objset();
         setupPrices();
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
@@ -901,6 +905,7 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  10/20/07",
+                " - Progress bar!",
                 " - !hangar now shows ranks of ships that are not in use",
                 " - Players now warp into home base at round start; !basewarp to toggle",
                 " - Spawn protection removed, as attaching is much more likely",
@@ -1130,6 +1135,7 @@ public class distensionbot extends SubspaceBot {
     public void cmdReturn( String name, String msg ) {
         DistensionPlayer player = m_players.get( name );
         if( player == null ) {
+
             player = new DistensionPlayer(name);
             m_players.put( name, player );
         }
@@ -1682,7 +1688,7 @@ public class distensionbot extends SubspaceBot {
             Player p = m_botAction.getPlayer(name);
             if( p != null ) {
                 if( p.getYLocation() <= TOP_SAFE || p.getYLocation() >= BOT_SAFE )
-                    player.doWarp(true);
+                    player.doWarp(false);
             }
         }
     }
@@ -2274,6 +2280,7 @@ public class distensionbot extends SubspaceBot {
      */
     private class DistensionPlayer {
         private String name;    // Playername
+        private int arenaPlayerID;    // ID as understood by Arena
         private int playerID;   // PlayerID as found in DB (not as in Arena); -1 if not logged in
         private int shipNum;    // Current ship: 1-8, 0 if docked/spectating; -1 if not logged in
         private int rank;       // Current rank (# upgrade points awarded);   -1 if docked/not logged in
@@ -2282,6 +2289,7 @@ public class distensionbot extends SubspaceBot {
         private int rankStart;  // Amount of points at which rank started;    -1 if docked/not logged in
         private int upgPoints;  // Current upgrade points available for ship; -1 if docked/not logged in
         private int armyID;     // 0-9998;                                    -1 if not logged in
+        private int progress;   // Progress to next rank, 0 to 9, for bar;    -1 if not logged in
         private int successiveKills;            // # successive kills (for unlocking weasel)
         private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
         private boolean[] shipsAvail;           // Marks which ships are available
@@ -2299,6 +2307,7 @@ public class distensionbot extends SubspaceBot {
 
         public DistensionPlayer( String name ) {
             this.name = name;
+            arenaPlayerID = m_botAction.getPlayerID(name);
             playerID = -1;
             shipNum = -1;
             rank = -1;
@@ -2306,6 +2315,7 @@ public class distensionbot extends SubspaceBot {
             nextRank = -1;
             upgPoints = -1;
             armyID = -1;
+            progress = -1;
             successiveKills = 0;
             spawnTicks = 0;
             assistArmyID = -1;
@@ -2496,7 +2506,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSpawnTick() {
             spawnTicks--;
-            if( spawnTicks == 3 ) { // 3 ticks (1.5 seconds) before end, warp to safe and shipreset
+            if( spawnTicks == 3 ) { // 3 ticks (.75 seconds) before spawn end, warp to safe and shipreset
                 m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), LVZ_REARMING);
                 doSafeWarp();
                 m_botAction.shipReset(name);
@@ -2653,12 +2663,15 @@ public class distensionbot extends SubspaceBot {
             rankStart = nextRank;
             nextRank = m_shipGeneralData.get( shipNum ).getNextRankCost(rank);
             m_botAction.sendPrivateMessage(name, "-=(  RANK UP!  )=-  You have advanced to RANK " + rank + " in the " + Tools.shipName(shipNum) + ".", Tools.Sound.VICTORY_BELL );
+            m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), LVZ_RANKUP);
             if( nextRank - rankPoints > 0 ) {
                 m_botAction.sendPrivateMessage(name, "You will reach the next rank in " + ( nextRank - rankPoints )+ " rank points (total " + nextRank + "), and have earned 1 upgrade point to spend in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " avail).") : "") );
             }else {
                 // Advanced more than one rank; refire the method
                 doAdvanceRank();
             }
+            resetProgressBar();
+            initProgressBar();
 
             if( rank >= RANK_REQ_SHIP2 ) {
                 if( shipsAvail[1] == false ) {
@@ -2721,6 +2734,7 @@ public class distensionbot extends SubspaceBot {
             if( DEBUG )
                 points = (int)((float)points * DEBUG_MULTIPLIER);
             rankPoints += points;
+            checkProgress();
             if( rankPoints >= nextRank )
                 doAdvanceRank();
             shipDataSaved = false;
@@ -2761,6 +2775,14 @@ public class distensionbot extends SubspaceBot {
                 upgPoints = -1;
                 if( this.shipNum > 0 )
                     m_botAction.specWithoutLock( name );
+                turnOffProgressBar();
+            }
+            if( this.shipNum == 0 ) {
+                turnOnProgressBar();
+                initProgressBar();
+            } else {
+                resetProgressBar();
+                initProgressBar();
             }
             this.shipNum = shipNum;
             isRespawning = false;
@@ -3174,6 +3196,73 @@ public class distensionbot extends SubspaceBot {
             lastIDsKilled[0] = killedPlayerID;
             return repeats;
         }
+
+        // PROGRESS BAR
+        public void checkProgress() {
+            float pointsSince = getPointsSinceLastRank();
+            int prog = 0;
+            if( pointsSince != 0 )
+                prog = (int)((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
+            if( prog > progress )
+                updateProgressBar( prog );
+            if( prog < progress ) {
+                resetProgressBar();
+                initProgressBar();
+            }
+        }
+
+        public void turnOnProgressBar() {
+            playerObjs.showObject(arenaPlayerID, LVZ_PROGRESS_BAR );
+            setPlayerObjects();
+            initProgressBar();
+        }
+
+        public void turnOffProgressBar() {
+            playerObjs.hideObject(arenaPlayerID, LVZ_PROGRESS_BAR );
+            for( int i = 1; i < 10; i++ )
+                playerObjs.hideObject(arenaPlayerID, LVZ_PROGRESS_BAR + i );
+            setPlayerObjects();
+        }
+
+        /**
+         * Initialize bars inside progress bar.
+         */
+        public void initProgressBar() {
+            float pointsSince = getPointsSinceLastRank();
+            progress = 0;
+            int prog = 0;
+            if( pointsSince != 0 )
+                prog = (int)((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
+            updateProgressBar( prog );
+        }
+
+        /**
+         * Wipe progress in bar clean.
+         */
+        public void resetProgressBar() {
+            for( int i = 1; i < 10; i++ )
+                playerObjs.hideObject(arenaPlayerID, LVZ_PROGRESS_BAR + i );
+            setPlayerObjects();
+            progress = 0;
+        }
+
+        /**
+         * Update with given amount of progress.
+         * @param prog Progress to update bar by
+         */
+        public void updateProgressBar( int prog ) {
+            if( prog == 0 || progress + prog > 9 )
+                return;
+            // Do 'prog' # additions to bar
+            for( int i = progress + 1; i < progress + prog + 1; i++ )
+                playerObjs.showObject(arenaPlayerID, LVZ_PROGRESS_BAR + i );
+            progress += prog;
+            setPlayerObjects();
+        }
+
+        public void setPlayerObjects() {
+            m_botAction.manuallySetObjects(playerObjs.getObjects(arenaPlayerID), arenaPlayerID);
+        }
     }
 
 
@@ -3296,6 +3385,7 @@ public class distensionbot extends SubspaceBot {
         public boolean isPrivate() {
             return isPrivate;
         }
+
     }
 
 
