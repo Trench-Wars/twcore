@@ -1703,7 +1703,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "You will be warped out of the resupply area after being armed." );
             Player p = m_botAction.getPlayer(name);
             if( p != null ) {
-                if( p.getYLocation() <= TOP_SAFE || p.getYLocation() >= BOT_SAFE )
+                if( p.getYTileLocation() != 0 && (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE) )
                     player.doWarp(false);
             }
         }
@@ -2140,8 +2140,8 @@ public class distensionbot extends SubspaceBot {
      * @return Last location recorded of player, as a String
      */
     public String getPlayerLocation( Player p, boolean isStaff ) {
-        int x = p.getXLocation() / 16;
-        int y = p.getYLocation() / 16;
+        int x = p.getXTileLocation();
+        int y = p.getYTileLocation();
         String exact = "";
         if( isStaff )
             exact = "  (" + x + "," + y + ")";
@@ -2930,7 +2930,7 @@ public class distensionbot extends SubspaceBot {
         public void checkIdleStatus() {
             Player p = m_botAction.getPlayer(arenaPlayerID);
             if( p == null ) return;
-            if( p.getYLocation() <= TOP_SAFE || p.getYLocation() >= BOT_SAFE ) {
+            if( p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE ) {
                 idleTicks++;
                 if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle; you will be automatically docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of the rearmament area.");
