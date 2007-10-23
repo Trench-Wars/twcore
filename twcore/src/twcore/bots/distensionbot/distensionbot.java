@@ -60,6 +60,8 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 250;                 // Delay for prizing players, in ms
     private final int TICKS_BEFORE_SPAWN = 20;             // # of UPGRADE_DELAYs player must wait before respawn
+    private final int IDLE_FREQUENCY_CHECK = 20;           // In seconds, how frequently to check for idlers
+    private final int IDLE_TICKS_BEFORE_DOCK = 5;          // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
@@ -108,6 +110,7 @@ public class distensionbot extends SubspaceBot {
 
     private TimerTask entranceWaitTask;                     // For when bot first enters the arena
     private TimerTask autoSaveTask;                         // For autosaving player data frequently
+    private TimerTask idleSpecTask;                         // For docking idlers
     private boolean readyForPlay = false;                   // True if bot has entered arena and is ready to go
     private int[] flagOwner = {-1, -1};                     // ArmyIDs of flag owners; -1 for none
     private List <String>m_mineClearedPlayers;                // Players who have already cleared mines this battle
@@ -250,6 +253,15 @@ public class distensionbot extends SubspaceBot {
                 }
             };
             m_botAction.scheduleTask( autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
+        }
+        if( IDLE_FREQUENCY_CHECK != 0 ) {
+            idleSpecTask = new TimerTask() {
+                public void run() {
+                    for( DistensionPlayer p : m_players.values() )
+                        p.checkIdleStatus();
+                }
+            };
+            m_botAction.scheduleTask( idleSpecTask, IDLE_FREQUENCY_CHECK * 1000, IDLE_FREQUENCY_CHECK * 1000);
         }
         // Do not advert/reward for rectifying imbalance in the first 5 min of a game
         lastAssistReward = System.currentTimeMillis();
@@ -688,8 +700,12 @@ public class distensionbot extends SubspaceBot {
                 // Sharks get off a little easier for TKs
                 if( killer.getShipType() == Tools.Ship.SHARK )
                     div = 10;
-                else
-                    div = 2;
+                else {
+                    if( loser.isSupportShip() )
+                        div = 0.5f;
+                    else
+                        div = 1;
+                }
                 int loss = Math.round((float)victor.getUpgradeLevel() / div);
                 victor.addRankPoints( -loss );
                 victor.clearSuccessiveKills();
@@ -897,16 +913,15 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  10/20/07",
+                " - Anti-idle now docks those who are idle in rearmament area",
                 " - Progress bar!",
                 " - !hangar now shows ranks of ships that are not in use",
                 " - Players now warp into home base at round start; !basewarp to toggle",
                 " - Spawn protection removed, as attaching is much more likely",
                 " - !defect now costs a full level in every ship.",
                 " - Can no longer return to your army with !assist if it would uneven teams",
-                " - LVZ for flags and rearming added",
                 " - !clearmines will clear your mines, if you have any laid",
                 " - !team command displays team breakdown, with upg.lvl and strengths",
-                " - During beta, testers receive extra RP!  Bonus displayed @ arena enter",
         };
         m_botAction.privateMessageSpam( name, beta );
     }
@@ -1190,6 +1205,11 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
+        if( player.isRespawning() ) {
+            m_botAction.sendPrivateMessage( name, "Please wait until your current ship is rearmed before attempting to pilot a new one." );
+            return;
+        }
+
         if( player.getShipNum() > 0 ) {
             player.saveCurrentShipToDBNow();
             // Simple fix to cause sharks and terrs to not lose MVP
@@ -1341,9 +1361,11 @@ public class distensionbot extends SubspaceBot {
         try {
             String query = "SELECT fnShipNum, fnRank FROM tblDistensionShip WHERE fnPlayerID='" + player.getID() + "'";
             ResultSet r = m_botAction.SQLQuery( m_database, query );
-            while( r.next() )
-                shipRanks.put( r.getInt("fnShipNum"), r.getInt("fnRank") );
-            m_botAction.SQLClose(r);
+            if( r != null ) {
+                while( r.next() )
+                    shipRanks.put( r.getInt("fnShipNum"), r.getInt("fnRank") );
+                m_botAction.SQLClose(r);
+            }
         } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
 
 
@@ -1823,8 +1845,10 @@ public class distensionbot extends SubspaceBot {
                 } else {
                     p.setAssist( -1 );
                     m_botAction.setFreq(name, armyToAssist );
-                    if( !p.isRespawning() )
+                    if( !p.isRespawning() ) {
+                        m_botAction.shipReset(name);
                         p.prizeUpgrades();
+                    }
                     for( DistensionArmy a : m_armies.values() )
                         a.recalculateFigures();
                 }
@@ -2289,6 +2313,7 @@ public class distensionbot extends SubspaceBot {
         private boolean[] shipsAvail;           // Marks which ships are available
         private int[]     lastIDsKilled = { -1, -1, -1 };  // ID of last player killed (feeding protection)
         private int       spawnTicks;           // # queue "ticks" until spawn
+        private int       idleTicks;            // # ticks player has been idle
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
@@ -2312,6 +2337,7 @@ public class distensionbot extends SubspaceBot {
             progress = -1;
             successiveKills = 0;
             spawnTicks = 0;
+            idleTicks = 0;
             assistArmyID = -1;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[8];
@@ -2896,6 +2922,22 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
             m_botAction.sendOpposingTeamMessageByFrequency(oldarmy.getID(), "TRAITOR!  Villainous dog!  " + name.toUpperCase() + " has betrayed us all for " + getArmyName().toUpperCase() + " !!  Spare not this worm a gruesome death ...");
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Glory be to " + getArmyName().toUpperCase() + "!  " + name.toUpperCase() + " has joined our ranks!  Welcome this brave new pilot.");
+        }
+
+        /**
+         * Checks player for idling, and docks them if they are idle too long.
+         */
+        public void checkIdleStatus() {
+            Player p = m_botAction.getPlayer(arenaPlayerID);
+            if( p == null ) return;
+            if( p.getYLocation() <= TOP_SAFE || p.getYLocation() >= BOT_SAFE ) {
+                idleTicks++;
+                if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle; you will be automatically docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of the rearmament area.");
+                else if( idleTicks >= IDLE_TICKS_BEFORE_DOCK )
+                    cmdDock(name, "");
+            } else
+                idleTicks = 0;
         }
 
 
@@ -4840,8 +4882,8 @@ public class distensionbot extends SubspaceBot {
         //                        and all have level requirements; special upgrades come somewhat early
         //  5: XRadar
         //  9: Stealth
-        // 14: L2 Guns
-        // 19: Multifire
+        // 13: L2 Guns
+        // 18: Multifire
         // 23: Cloak
         // 27: Rocket 1
         // 35: L3 Guns
@@ -4863,12 +4905,12 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Cerebral Shielding", Tools.Prize.ENERGY, p6a1, p6a2, 8 );           // 100 x8
         ship.addUpgrade( upg );
         int p6b1[] = { 1, 2 };
-        int p6b2[] = { 14, 35 };
+        int p6b2[] = { 13, 35 };
         upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, p6b1, p6b2, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Bombing ability disabled)", Tools.Prize.BOMBS, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Cannon Distributor", Tools.Prize.MULTIFIRE, 1, 19, 1 );
+        upg = new ShipUpgrade( "Cannon Distributor", Tools.Prize.MULTIFIRE, 1, 18, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 1, 5, 1 );
         ship.addUpgrade( upg );
