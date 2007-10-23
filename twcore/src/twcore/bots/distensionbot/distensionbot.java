@@ -40,22 +40,14 @@ import twcore.core.util.Tools;
  *
  * Add:
  * - last few ships
- * - MAP: fix A1; add LVZ displaying rules; safes
+ * - MAP: fix A1; add LVZ displaying rules
  * - special prize for conflict win
  *
  * Lower priority (in order):
  * - !intro, !intro2, !intro3, etc.
- * - 60-second timer that does full charge for spiders, burst/warp for terrs, restores !emp every 20th run, etc.
  * - !emp for terr "targetted EMP" ability, and appropriate player data.  This involves negative full charge.
  * - F1 Help -- item descriptions?  At least say which slot is which, if not providing info on the specials
- * - LVZ stuff: replacement sounds; point counter; display showing flags owned
- *
- *
- * Adding up points:
- *   Flag multiplier - No flags=all rewards are 1; 1 flag=regular; 2 flags=x2
- *   15 levels lower or more           = 1 pt
- *   14 levels below to 9 levels above = level of ship
- *   10 levels above or more           = killer's level + 10
+ * - LVZ stuff: replacement sounds; point counter
  *
  * @author dugwyler
  */
@@ -72,7 +64,7 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
     private final double NORMAL_RANK_FACTOR = 1.15;        // Factor for rank increases (lvl 11+)
-    private final double RANK_0_STRENGTH = 5;              // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final double RANK_0_STRENGTH = 3;              // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
     private final int RANK_REQ_SHIP2 = 5;    // 15
     private final int RANK_REQ_SHIP3 = 2;    //  4
     private final int RANK_REQ_SHIP4 = 6;    // 20
@@ -1044,12 +1036,14 @@ public class distensionbot extends SubspaceBot {
                 return;
             }
             try {
-                String query = "SELECT fnPlayerID, fnShipNum, fnRank FROM tblDistensionShip ship WHERE fnPlayerID='" + p.getID() + "'";
+                String query = "SELECT fnPlayerID, fnShipNum, fnRank FROM tblDistensionShip WHERE fnPlayerID='" + p.getID() + "'";
                 ResultSet r = m_botAction.SQLQuery( m_database, query );
-                while( r.next() ) {
-                    int ship = r.getInt("fnShipNum");
-                    m_botAction.SQLQueryAndClose(m_database, "UPDATE tblDistensionShip SET fnRankPoints='" + m_shipGeneralData.get(ship).getNextRankCost(r.getInt("fnRank") - 2) + "'"+
-                            " WHERE fnShipNum='" + ship + "' AND fnPlayerID='" + p.getID() + "'");
+                if( r != null ) {
+                    while( r.next() ) {
+                        int ship = r.getInt("fnShipNum");
+                        m_botAction.SQLQueryAndClose(m_database, "UPDATE tblDistensionShip SET fnRankPoints='" + m_shipGeneralData.get(ship).getNextRankCost(r.getInt("fnRank") - 2) + "'"+
+                                " WHERE fnShipNum='" + ship + "' AND fnPlayerID='" + p.getID() + "'");
+                    }
                 }
                 m_botAction.SQLClose(r);
             } catch (SQLException e ) {
@@ -2341,10 +2335,10 @@ public class distensionbot extends SubspaceBot {
          */
         public void addPlayerToDB() {
             try {
-                m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionPlayer ( fcName , fnArmyID ) " +
+                ResultSet r = m_botAction.SQLQuery( m_database, "INSERT INTO tblDistensionPlayer ( fcName , fnArmyID ) " +
                         "VALUES ('" + Tools.addSlashesToString( name ) + "', '" + armyID + "')" );
-                ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnID FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
-                playerID = r.getInt("fnID");
+                if( r != null && r.next() )
+                    playerID = r.getInt(1);
                 m_botAction.SQLClose(r);
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
@@ -2777,13 +2771,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specWithoutLock( name );
                 turnOffProgressBar();
             }
-            if( this.shipNum == 0 ) {
+            if( this.shipNum == 0 )
                 turnOnProgressBar();
-                initProgressBar();
-            } else {
-                resetProgressBar();
-                initProgressBar();
-            }
             this.shipNum = shipNum;
             isRespawning = false;
             successiveKills = 0;
@@ -2800,6 +2789,8 @@ public class distensionbot extends SubspaceBot {
             m_botAction.setShip( name, shipNum );
             m_botAction.setFreq( name, getArmyID() );
             isRespawning = false;
+            resetProgressBar();
+            initProgressBar();
         }
 
         /**
