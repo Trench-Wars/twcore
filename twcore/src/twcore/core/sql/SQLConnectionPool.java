@@ -80,7 +80,12 @@ public class SQLConnectionPool implements Runnable {
             Statement stmt = conn.createStatement();
             stmt.execute( query );
             free( conn );
-            return stmt.getResultSet();
+            ResultSet set = stmt.getResultSet();
+            // If ResultSet is null (INSERT statement), get auto-generated ID if available
+            if( set != null )
+                return stmt.getResultSet();
+            else
+                return stmt.getGeneratedKeys();
         }catch( SQLException e ){
             free( conn );
 
