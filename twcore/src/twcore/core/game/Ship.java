@@ -20,9 +20,9 @@ public final class Ship extends Thread {
 							 INTERNAL_TERRIER = 4, INTERNAL_WEASEL = 5, INTERNAL_LANCASTER = 6, INTERNAL_SHARK = 7,
 							 INTERNAL_SPECTATOR = 8, INTERNAL_PLAYINGSHIP = 9, INTERNAL_ALL = 10;
 
-    private long        m_movingUpdateTime  = 100;          // How often a moving ship's
+    private volatile long	m_movingUpdateTime  = 100;          // How often a moving ship's
                                                             //   position is updated
-    private long        m_unmovingUpdateTime = 1000;        // How often an unmoving ship's
+    private volatile long	m_unmovingUpdateTime = 1000;        // How often an unmoving ship's
                                                             //   position is updated
 
     private short       x = 8192;           // X coord (0-16384)
@@ -46,7 +46,7 @@ public final class Ship extends Thread {
     private GamePacketGenerator m_gen;			// Packet generator
     private Arena				m_arenaTracker;	// for getting next id to spectate on
     private int 				m_lastId = -1;	// previous id spectated on
-    private long 				m_spectatorUpdateTime = 0;	// how often to switch which player
+    private volatile long		m_spectatorUpdateTime = 0;	// how often to switch which player
     														// is being spectated by bot
 
 	/**
@@ -92,6 +92,7 @@ public final class Ship extends Thread {
                 	if(sleepTime > 0) {
                 		int id = m_arenaTracker.getNextPlayerToWatch();
                 		if(id != m_lastId) {
+                			//System.out.println("Spectating: " + id);
 	                		m_gen.sendSpectatePacket((short)id);
 	                		m_lastId = id;
                 		}
@@ -230,7 +231,7 @@ public final class Ship extends Thread {
         this.lastYV = this.yVel;
         this.xVel = 0;
         this.yVel = 0;
-        if( shipType != INTERNAL_SPECTATOR )
+        //if( shipType != INTERNAL_SPECTATOR )
             sendPositionPacket();
     }
 
@@ -360,7 +361,7 @@ public final class Ship extends Thread {
      * Sets the time between player switching updates for when the bot is spectating.
      * @param updateTime Time in ms between player switching, 0 to disable
      */
-    public synchronized void setSpectatorUpdateTime(int updateTime) {
+    public void setSpectatorUpdateTime(int updateTime) {
     	m_spectatorUpdateTime = updateTime;
     }
 

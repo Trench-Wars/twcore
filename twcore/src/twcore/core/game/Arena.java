@@ -717,12 +717,12 @@ public class Arena {
      */
     public int getNextPlayerToWatch() {
         synchronized(m_tracker) {
-	        if(!m_tracker.isEmpty()) {
+	        if(m_tracker.isEmpty()) {
+	            return -1;
+	        } else {
 	            Integer i = m_tracker.remove(0);
 	            m_tracker.add(i);
 	            return i.intValue();
-	        } else {
-	            return -1;
 	        }
         }
     }

@@ -1000,26 +1000,26 @@ public class GamePacketInterpreter {
 
         PasswordPacketResponse ppResponse = new PasswordPacketResponse( message );
         Tools.printLog( m_session.getBotName() + ": " + ppResponse.getResponseMessage() );
-        
+
         if(ppResponse.getRegistrationFormRequest() == true) {
         	String realname = m_session.getCoreData().getGeneralSettings().getString("Real Name");
         	String email = m_session.getCoreData().getGeneralSettings().getString("E-mail");
         	String state = m_session.getCoreData().getGeneralSettings().getString("State");
         	String city = m_session.getCoreData().getGeneralSettings().getString("City");
         	int age = m_session.getCoreData().getGeneralSettings().getInt("Age");
-        	
+
         	// Reset to default values if there is something wrong
-        	realname = (realname == null || realname.length() == 0) ? "Maverick":realname; 
+        	realname = (realname == null || realname.length() == 0) ? "Maverick":realname;
         	email = (email == null || email.length() == 0) ? "bots@twcore.org":email;
         	state = (state == null || state.length() == 0) ? "The Netherlands":state;
         	city = (city == null || city.length() == 0) ? "Amsterdam":city;
         	age = (age <= 0 ) ? 22 : age;
-        	        	
+
         	// Send registration information
         	Tools.printLog( m_session.getBotName() + ": Sending registration form");
         	m_packetGenerator.sendRegistrationForm(realname, email, state, city, age);
         }
-        
+
         if (ppResponse.getSSChecksum() == -1 && ppResponse.getSSChecksumSeed() == -1) {
     		Tools.printLog( m_session.getBotName() + ": Subspace.exe checksum and (random) server checksum were sent (VIP access)");
     	} else if(ppResponse.getSSChecksum() == 0) {
@@ -1090,8 +1090,10 @@ public class GamePacketInterpreter {
      * @param alreadyDecrypted True if packet has already been decrypted
      */
     void handleArenaJoined( ByteArray message, boolean alreadyDecrypted ){
+    	//send position packet to begin recieving position packets, temporary fix
+    	m_packetGenerator.sendPositionPacket((byte)0, (short)0, (short)8192, (byte)0, (short)8192, (short)0, (short)0, (short)0, (short)0);
         if( m_requester.check( EventRequester.ARENA_JOINED ) ){
-            m_subspaceBot.handleEvent( new ArenaJoined( null ) );
+            m_subspaceBot.handleEvent(new ArenaJoined(null));
         }
     }
 
