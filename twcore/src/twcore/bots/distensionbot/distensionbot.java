@@ -291,8 +291,10 @@ public class distensionbot extends SubspaceBot {
                     // Return any assister who is needed back on freq; if none, advert army imbalance
                     boolean helped = false;
                     for( DistensionPlayer p : m_players.values() )
-                        if( !helped && p.isAssisting() && p.getNaturalArmyID() == helpOutArmy )
+                        if( !helped && p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
                             cmdAssist( p.getName(), ":auto:" );
+                            helped = true;
+                        }
                     if( !helped )
                         m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "ARMIES IMBALANCED: !pilot lower rank ships, or !assist " + helpOutArmy + " to even the battle (rewarded).  [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                     lastAssistAdvert = System.currentTimeMillis();
@@ -2946,7 +2948,7 @@ public class distensionbot extends SubspaceBot {
         public void checkIdleStatus() {
             Player p = m_botAction.getPlayer(arenaPlayerID);
             if( p == null ) return;
-            if( p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE ) {
+            if( shipNum > 1 && (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE) ) {
                 idleTicks++;
                 if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle; you will be automatically docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of the rearmament area.");
