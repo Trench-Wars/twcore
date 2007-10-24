@@ -113,11 +113,11 @@ public class distensionbot extends SubspaceBot {
     private TimerTask idleSpecTask;                         // For docking idlers
     private boolean readyForPlay = false;                   // True if bot has entered arena and is ready to go
     private int[] flagOwner = {-1, -1};                     // ArmyIDs of flag owners; -1 for none
-    private List <String>m_mineClearedPlayers;                // Players who have already cleared mines this battle
-    private HashMap <String,Integer>m_defectors;                         // Players wishing to defect who need to confirm defection
+    private List <String>m_mineClearedPlayers;              // Players who have already cleared mines this battle
+    private HashMap <String,Integer>m_defectors;            // Players wishing to defect who need to confirm defection
 
     // ASSIST SYSTEM
-    private final float ADVERT_WEIGHT_IMBALANCE = 0.9f;     // At what point to advert that there's an imbalance
+    private final float ADVERT_WEIGHT_IMBALANCE = 0.85f;    // At what point to advert that there's an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.9f;     // At what point an army is considered imbalanced
     private final int ASSIST_NUMBERS_IMBALANCE = 4;         // # of pilot difference before considered imbalanced
     private final int ASSIST_REWARD_TIME = 1000 * 60 * 1;   // Time between adverting and rewarding assists (1 min def.)
@@ -288,7 +288,13 @@ public class distensionbot extends SubspaceBot {
                     msgArmy = 1;
                 }
                 if( helpOutArmy != -1 ) {
-                    m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "ARMIES IMBALANCED: !pilot lower rank ships, or !assist " + helpOutArmy + " to even the battle (rewarded).  [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                    // Return any assister who is needed back on freq; if none, advert army imbalance
+                    boolean helped = false;
+                    for( DistensionPlayer p : m_players.values() )
+                        if( !helped && p.isAssisting() && p.getNaturalArmyID() == helpOutArmy )
+                            cmdAssist( p.getName(), ":auto:" );
+                    if( !helped )
+                        m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "ARMIES IMBALANCED: !pilot lower rank ships, or !assist " + helpOutArmy + " to even the battle (rewarded).  [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                     lastAssistAdvert = System.currentTimeMillis();
                 // Check if teams are imbalanced in numbers, if not strength
                 } else {
@@ -730,7 +736,7 @@ public class distensionbot extends SubspaceBot {
                     points = loser.getUpgradeLevel();
 
                     // Support ships are not humiliated; assault are
-                    if( ! victor.isSupportShip() ) {
+                    if( ! loser.isSupportShip() ) {
                         loser.addRankPoints( -(points / 2) );
                         m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
                     }
@@ -748,6 +754,11 @@ public class distensionbot extends SubspaceBot {
                     else {
                         points = loser.getUpgradeLevel();
                     }
+                }
+                if( loser.getShipNum() == Tools.Ship.TERRIER ) {
+                    if( DEBUG )
+                        m_botAction.sendPrivateMessage(loser.getName(), "Terr down!  x1.5 point bonus.");
+                    points *= 1.5;
                 }
 
                 // Points adjusted based on size of victor's army v. loser's
@@ -888,7 +899,7 @@ public class distensionbot extends SubspaceBot {
                 desc = "X-Radar (on Terrier: Decoy)";
                 break;
             case 10:
-                desc = "Decoy (on Terrier: Portal)";
+                desc = "Decoy (on Terrier and Weasel: ???)";
                 break;
         }
         m_botAction.sendPrivateMessage( name, "Upgrade #" + upgNum + ": " + desc );
@@ -1807,7 +1818,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         int armyToAssist = -1;
-        if( msg.equals("") ) {
+        if( msg.equals("") || msg.equals(":auto:") ) {
             armyToAssist = p.getNaturalArmyID();
         } else {
             try {
@@ -1852,11 +1863,15 @@ public class distensionbot extends SubspaceBot {
                     for( DistensionArmy a : m_armies.values() )
                         a.recalculateFigures();
                 }
-                m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ".");
-                if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                    // Kill participation if assist was not all that needed
-                    m_playerTimes.remove( name );
-                    m_playerTimes.put( name, new Integer( flagTimer.getTotalSecs() ) );
+                if( msg.equals(":auto:") )
+                    m_botAction.sendPrivateMessage( name, "To maintain balance, you have been returned to " + p.getArmyName() + ".");
+                else {
+                    m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ".");
+                    if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
+                        // Kill participation if return assist was not all that needed
+                        m_playerTimes.remove( name );
+                        m_playerTimes.put( name, new Integer( flagTimer.getTotalSecs() ) );
+                    }
                 }
             }
             return;
@@ -2006,6 +2021,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdDie( String name, String msg ) {
         m_botAction.specAll();
+        m_botAction.toggleLocked();
         flagObjs.hideAllObjects();
         flagTimerObjs.hideAllObjects();
         m_botAction.setObjects();
@@ -3823,11 +3839,11 @@ public class distensionbot extends SubspaceBot {
             }
 
             // Points to be divided up by army
-            float totalPoints = (float)(minsToWin / 2.0f) * (float)opposingStrengthAvg * armyDiffWeight;
-            // Terrs and sharks receive 65% of point reward to divide up
-            int supportPoints = Math.round( totalPoints * 0.65f );
-            // Attackers (all others) receive 35%
-            int attackPoints = Math.round( totalPoints * 0.35f );
+            float totalPoints = (float)(minsToWin * 0.55f) * (float)opposingStrengthAvg * armyDiffWeight;
+            // Terrs and sharks receive 60% of point reward to divide up
+            int supportPoints = Math.round( totalPoints * 0.60f );
+            // Attackers (all others) receive 40%
+            int attackPoints = Math.round( totalPoints * 0.40f );
             int totalLvlSupport = 0;
             int totalLvlAttack = 0;
             Iterator <DistensionPlayer>i = m_players.values().iterator();
@@ -3844,7 +3860,7 @@ public class distensionbot extends SubspaceBot {
             }
 
             if( DEBUG )
-                m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle / 2) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
+                m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle * 0.55) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
             // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength
             i = m_players.values().iterator();
@@ -4647,7 +4663,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, 1, 36, 1 );
         ship.addUpgrade( upg );
-        //                                                    | <--- this mark and beyond is not seen
+        //                                                    | <--- this mark and beyond is not seen for upg names
         upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 1, 42, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "S3", 0, 0, 0, -1 );
@@ -4881,11 +4897,12 @@ public class distensionbot extends SubspaceBot {
         // Slow-medium upg speed; all upg start 2 levels higher than normal calcs, but 1st level (3rd) costs 2pts
         //                        and all have level requirements; special upgrades come somewhat early
         //  5: XRadar
+        //  7: Rocket
         //  9: Stealth
         // 13: L2 Guns
         // 18: Multifire
         // 23: Cloak
-        // 27: Rocket 1
+        // 29: Portal
         // 35: L3 Guns
         // 42: Decoy
         // 46: Rocket 2
@@ -4914,14 +4931,14 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 1, 5, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Weasel Reiterator", Tools.Prize.DECOY, 3, 42, 1 );
+        upg = new ShipUpgrade( "Escape Tunnel", Tools.Prize.PORTAL, 2, 29, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Scrambler", Tools.Prize.STEALTH, 1, 9, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Light-Bending Unit", Tools.Prize.CLOAK, 2, 23, 1 );
         ship.addUpgrade( upg );
         int p6c1[] = { 1, 2, 5 };
-        int p6c2[] = { 27, 46, 60 };
+        int p6c2[] = { 7, 46, 60 };
         upg = new ShipUpgrade( "Assault Boosters", Tools.Prize.ROCKET, p6c1, p6c2, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Movement Inhibitor", Tools.Prize.BRICK, 2, 50, 1 );
