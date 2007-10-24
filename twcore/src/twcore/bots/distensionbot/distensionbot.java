@@ -55,7 +55,7 @@ public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
                                                            // normally be annoying in a public release.
-    private final float DEBUG_MULTIPLIER = 1.5f;           // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 1.6f;           // Amount of RP to give extra in debug mode
 
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 250;                 // Delay for prizing players, in ms
@@ -66,7 +66,7 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-10)
     private final double NORMAL_RANK_FACTOR = 1.15;        // Factor for rank increases (lvl 11+)
-    private final double RANK_0_STRENGTH = 3;              // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
     private final int RANK_REQ_SHIP2 = 5;    // 15
     private final int RANK_REQ_SHIP3 = 2;    //  4
     private final int RANK_REQ_SHIP4 = 6;    // 20
@@ -118,8 +118,8 @@ public class distensionbot extends SubspaceBot {
 
     // ASSIST SYSTEM
     private final float ADVERT_WEIGHT_IMBALANCE = 0.85f;    // At what point to advert that there's an imbalance
-    private final float ASSIST_WEIGHT_IMBALANCE = 0.9f;     // At what point an army is considered imbalanced
-    private final int ASSIST_NUMBERS_IMBALANCE = 4;         // # of pilot difference before considered imbalanced
+    private final float ASSIST_WEIGHT_IMBALANCE = 0.85f;    // At what point an army is considered imbalanced
+    private final int ASSIST_NUMBERS_IMBALANCE = 3;         // # of pilot difference before considered imbalanced
     private final int ASSIST_REWARD_TIME = 1000 * 60 * 1;   // Time between adverting and rewarding assists (1 min def.)
     private long lastAssistReward;                          // Last time assister was given points
     private long lastAssistAdvert;                          // Last time an advert was sent for assistance
@@ -288,15 +288,20 @@ public class distensionbot extends SubspaceBot {
                     msgArmy = 1;
                 }
                 if( helpOutArmy != -1 ) {
-                    // Return any assister who is needed back on freq; if none, advert army imbalance
+                    // Attempt to return an assister who is needed back on freq;
+                    // if none, advert an army imbalance.
                     boolean helped = false;
+                    int maxStrToAssist = (int)Math.abs(armyStr0 - armyStr1) - 1;
                     for( DistensionPlayer p : m_players.values() )
                         if( !helped && p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
-                            cmdAssist( p.getName(), ":auto:" );
-                            helped = true;
+                            if( p.getStrength() <= maxStrToAssist ) {
+                                cmdAssist( p.getName(), ":auto:" );
+                                helped = true;
+                            }
                         }
-                    if( !helped )
-                        m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "ARMIES IMBALANCED: !pilot lower rank ships, or !assist " + helpOutArmy + " to even the battle (rewarded).  [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                    if( !helped ) {
+                        m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: !pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                    }
                     lastAssistAdvert = System.currentTimeMillis();
                 // Check if teams are imbalanced in numbers, if not strength
                 } else {
@@ -759,8 +764,8 @@ public class distensionbot extends SubspaceBot {
                 }
                 if( loser.getShipNum() == Tools.Ship.TERRIER ) {
                     if( DEBUG )
-                        m_botAction.sendPrivateMessage(loser.getName(), "Terr down!  x1.5 point bonus.");
-                    points *= 1.5;
+                        m_botAction.sendPrivateMessage(victor.getName(), "Terr down!  x1.25 point bonus.");
+                    points *= 1.25;
                 }
 
                 // Points adjusted based on size of victor's army v. loser's
@@ -1820,7 +1825,8 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         int armyToAssist = -1;
-        if( msg.equals("") || msg.equals(":auto:") ) {
+        boolean autoReturn = msg.equals(":auto:");
+        if( msg.equals("") || autoReturn ) {
             armyToAssist = p.getNaturalArmyID();
         } else {
             try {
@@ -1836,19 +1842,21 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "Exactly which of them !armies you trying to help out there?" );
             return;
         }
-        float armySizeWeight;
+        float armySizeWeight, assistArmyWeightAfterChange;
         float assistArmyStr = assistArmy.getTotalStrength();
         float currentArmyStr = p.getArmy().getTotalStrength();
         if( assistArmyStr <= 0 ) assistArmyStr = 1;
         if( currentArmyStr <= 0 ) currentArmyStr = 1;
         armySizeWeight = assistArmyStr / currentArmyStr;
+        assistArmyWeightAfterChange = (currentArmyStr - p.getStrength()) / (assistArmyStr + p.getStrength());
 
         if( p.getNaturalArmyID() == armyToAssist ) {
             if( p.getNaturalArmyID() == p.getArmyID() ) {
                 m_botAction.sendPrivateMessage( name, "You aren't assisting any army presently.  Use !assist armyID# to assist an army in need." );
             } else {
-                if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE + 0.05f ) {
-                    m_botAction.sendPrivateMessage( name, "Returning to your army now would make things too imbalanced!  Sorry, no can do." );
+                if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE ) {
+                    if( !autoReturn )
+                        m_botAction.sendPrivateMessage( name, "Returning to your army now would make things too imbalanced!  Sorry, no can do." );
                     return;
                 }
                 m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " has finished assistance and is returning to their army." );
@@ -1880,6 +1888,11 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE ) {
+            if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE ) {
+                m_botAction.sendPrivateMessage( name, "Assisting with your current ship will only continue the imbalance!  First !pilot a lower-ranked ship if you want to !assist." );
+                return;
+            }
+
             m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
             if( p.getShipNum() != 0 ) {
                 if( System.currentTimeMillis() > lastAssistReward + ASSIST_REWARD_TIME ) {
@@ -1898,7 +1911,10 @@ public class distensionbot extends SubspaceBot {
                 }
                 p.setAssist( armyToAssist );
                 m_botAction.setFreq(name, armyToAssist );
-                p.prizeUpgrades();
+                if( !p.isRespawning() ) {
+                    m_botAction.shipReset(name);
+                    p.prizeUpgrades();
+                }
                 for( DistensionArmy a : m_armies.values() )
                     a.recalculateFigures();
             } else {
@@ -1939,7 +1955,7 @@ public class distensionbot extends SubspaceBot {
                 DistensionPlayer p2 = m_players.get( team.get(i).get(j) );
                 text += p2.getName() + "(" + p2.getUpgradeLevel() + ")  ";
                 players++;
-                shipStrength += p2.getUpgradeLevel() + RANK_0_STRENGTH;
+                shipStrength += p2.getStrength();
             }
             m_botAction.sendPrivateMessage(name, num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
                                                  + (shipStrength > 0 ? ("  " + shipStrength + " STR" + text) : "") );
@@ -3032,6 +3048,13 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * @return Returns the ID as found in the DB (not as found in Arena).
+         */
+        public int getArenaPlayerID() {
+            return arenaPlayerID;
+        }
+
+        /**
          * @return Returns the ship number this player is currently playing, 1-8.  0 for spec, -1 for not logged in.
          */
         public int getShipNum() {
@@ -3053,6 +3076,13 @@ public class distensionbot extends SubspaceBot {
             for( int i = 0; i < NUM_UPGRADES; i++ )
                 upgLevel += purchasedUpgrades[i];
             return upgLevel;
+        }
+
+        /**
+         * @return Returns strength of ship (upgrade level + default player strength).
+         */
+        public int getStrength() {
+            return getUpgradeLevel() + RANK_0_STRENGTH;
         }
 
         /**
@@ -3376,7 +3406,7 @@ public class distensionbot extends SubspaceBot {
             for( DistensionPlayer p : m_players.values() ) {
                 if( p.getArmyID() == armyID && p.getShipNum() > 0 ) {
                     pilots++;
-                    strength += p.getUpgradeLevel() + RANK_0_STRENGTH;
+                    strength += p.getStrength();
                 }
             }
             pilotsInGame = pilots;
@@ -3841,7 +3871,7 @@ public class distensionbot extends SubspaceBot {
             }
 
             // Points to be divided up by army
-            float totalPoints = (float)(minsToWin * 0.55f) * (float)opposingStrengthAvg * armyDiffWeight;
+            float totalPoints = (float)(minsToWin * 0.5f) * (float)opposingStrengthAvg * armyDiffWeight;
             // Terrs and sharks receive 60% of point reward to divide up
             int supportPoints = Math.round( totalPoints * 0.60f );
             // Attackers (all others) receive 40%
@@ -3862,7 +3892,7 @@ public class distensionbot extends SubspaceBot {
             }
 
             if( DEBUG )
-                m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle * 0.55) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
+                m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle * 0.5) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
             // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength
             i = m_players.values().iterator();
@@ -3886,9 +3916,9 @@ public class distensionbot extends SubspaceBot {
                         int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                         if( DEBUG )
                             if( p.isSupportShip() )
-                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total support strentgh " + totalLvlSupport + " (" + playerRank / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation" );
+                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total support strength " + totalLvlSupport + " (" + playerRank / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation" );
                             else
-                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strentgh " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * assault points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation" );
+                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strength " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * assault points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation" );
                         else
                             m_botAction.sendPrivateMessage(p.getName(), "You receive " + modPoints + " RP for your role in the victory." );
                         int holds = flagTimer.getSectorHolds( p.getName() );
@@ -4884,7 +4914,7 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2, 6 );       // DEFINE
         ship.addUpgrade( upg );
         int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
-        upg = new ShipUpgrade( "+10% Regeneration", -2, 1, p5c1, 10 );
+        upg = new ShipUpgrade( "+5% Regeneration", -2, 1, p5c1, 10 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Priority Rearmament", -1, 1, 9, 1 );
         ship.addUpgrade( upg );
@@ -4939,7 +4969,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Light-Bending Unit", Tools.Prize.CLOAK, 2, 23, 1 );
         ship.addUpgrade( upg );
-        int p6c1[] = { 1, 2, 5 };
+        int p6c1[] = { 1, 1, 3 };
         int p6c2[] = { 7, 46, 60 };
         upg = new ShipUpgrade( "Assault Boosters", Tools.Prize.ROCKET, p6c1, p6c2, 3 );
         ship.addUpgrade( upg );
