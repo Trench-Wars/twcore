@@ -35,7 +35,7 @@ public class PasswordPacketResponse {
     private boolean m_regFormRequest;	// Registration Form Request
     private int m_ssChecksumSeed;		// Subspace.exe Checksum with seed of zero
     private int m_newsChecksum;			// News.txt checksum (0 = no news file)
-    
+
     // Response messages
     public static final int response_Continue = 0;			// 0   - Move along.
     public static final int response_NewUser = 1;			// 1   - Unknown player, continue as new user?
@@ -58,7 +58,7 @@ public class PasswordPacketResponse {
     public static final int response_ClosedToDemos = 18;	// 18  - This arena is closed to Demo players.
     public static final int response_UnknownResponse = 19;	// ... - Unknown response type, please go to Web site for more information and to obtain latest version of the program.
     public static final int response_NeedModerator = 255;	// 255 - Moderator access required for this zone (MGB addition)
-    
+
 
     /**
      * Creates a new instance of PasswordPacketResponse, this is called by
@@ -87,7 +87,7 @@ public class PasswordPacketResponse {
     public String getResponseMessage() {
 
         switch( m_response ) {
-            case response_Continue:			return "Login successful";
+            case response_Continue:			return "Successful password packet response";
             case response_NewUser:			return "Unregistered player"; //Registration required, not sent
             case response_InvalidPassword:	return "Bad password";
             case response_FullArena:		return "Arena is full";
@@ -122,7 +122,7 @@ public class PasswordPacketResponse {
         		m_response == response_BillerDown || 		// No active biller
         		m_response == response_ExperiencedOnly ) 	// Restricted zone
         	return false;
-        else 
+        else
         	return true;
     }
 
@@ -160,6 +160,6 @@ public class PasswordPacketResponse {
 	public int getSSChecksumSeed() {
 		return m_ssChecksumSeed;
 	}
-    
-    
+
+
 }

@@ -256,7 +256,7 @@ public class Session extends Thread {
     public void loggedOn(){
         m_state = RUNNING;
         long time = System.currentTimeMillis() - m_initialTime;
-        Tools.printLog( m_name + " logged in: " + time + " ms." );
+        Tools.printLog( m_name + " (" + m_subspaceBot.getClass().getSimpleName() + ") logged in: " + time + " ms." );
         m_botAction.resetReliablePositionUpdating(); //starts position updating
     }
 

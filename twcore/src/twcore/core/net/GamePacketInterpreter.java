@@ -37,6 +37,7 @@ public class GamePacketInterpreter {
     private ReliablePacketHandler   m_reliablePacketHandler;// Reliable receives
     private EventRequester          m_requester;            // Checks if event req.
     private MessageLimiter          m_limiter = null;       // Limits msgs sent
+    private int                     m_verboseLogin;         // 1: send verbose login msg
 
     /**
      * Creates a new instance of GamePacketInterpreter.
@@ -60,6 +61,7 @@ public class GamePacketInterpreter {
         m_arenaTracker = arenaTracker;
         m_ssEncryption = ssEncryption;
         m_packetGenerator = packetGenerator;
+        m_verboseLogin = session.getCoreData().getGeneralSettings().getInt("VerboseLogin");
     }
 
     /**
@@ -279,7 +281,7 @@ public class GamePacketInterpreter {
             case 0x02:
                 m_ssEncryption.setServerKey( array.readLittleEndianInt( 2 ) );
                 m_packetGenerator.sendPasswordPacket( false, m_playerName, m_playerPassword );
-                Tools.printLog( m_session.getBotName() + " (" + m_subspaceBot.getClass().getSimpleName() + ") is logging in." );
+                Tools.printLog( m_session.getBotName() + " (" + m_subspaceBot.getClass().getSimpleName() + ") is logging in ..." );
                 break;
             case 0x03:
                 m_reliablePacketHandler.handleReliableMessage( array );
@@ -999,7 +1001,13 @@ public class GamePacketInterpreter {
         }
 
         PasswordPacketResponse ppResponse = new PasswordPacketResponse( message );
-        Tools.printLog( m_session.getBotName() + ": " + ppResponse.getResponseMessage() );
+        if( m_verboseLogin == 0 ) {
+            if( ppResponse.getResponseValue() != PasswordPacketResponse.response_Continue ) {
+                Tools.printLog( m_session.getBotName() + ": " + ppResponse.getResponseMessage() );
+            }
+        } else {
+            Tools.printLog( m_session.getBotName() + ": " + ppResponse.getResponseMessage() );
+        }
 
         if(ppResponse.getRegistrationFormRequest() == true) {
         	String realname = m_session.getCoreData().getGeneralSettings().getString("Real Name");
@@ -1020,7 +1028,7 @@ public class GamePacketInterpreter {
         	m_packetGenerator.sendRegistrationForm(realname, email, state, city, age);
         }
 
-        if (ppResponse.getSSChecksum() == -1 && ppResponse.getSSChecksumSeed() == -1) {
+        if (ppResponse.getSSChecksum() == -1 && ppResponse.getSSChecksumSeed() == -1 && m_verboseLogin == 1) {
     		Tools.printLog( m_session.getBotName() + ": Subspace.exe checksum and (random) server checksum were sent (VIP access)");
     	} else if(ppResponse.getSSChecksum() == 0) {
     		Tools.printLog( m_session.getBotName() + ": Problem found with server: Server doesn't have a copy of subspace.exe so it sent me a zero checksum.");
