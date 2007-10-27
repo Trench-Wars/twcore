@@ -11,6 +11,7 @@ import twcore.core.EventRequester;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
@@ -55,6 +56,7 @@ public class utilshiprestrict extends MultiUtil {
 	public void requestEvents(ModuleEventRequester events)	{
 		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 		events.request(this, EventRequester.FREQUENCY_CHANGE );
+		events.request(this, EventRequester.PLAYER_ENTERED);
 	}
 	
 	/**
@@ -318,6 +320,15 @@ public class utilshiprestrict extends MultiUtil {
 	 */
 	
 	public void handleEvent( FrequencyShipChange event )	{
+		Player player = m_botAction.getPlayer(event.getPlayerID());
+		CheckPlayer(player);
+	}
+	
+	/**
+	 * Handles freq change events in accordance with set freq 
+	 * ship restrictions.
+	 */
+	public void handleEvent( PlayerEntered event ) {
 		Player player = m_botAction.getPlayer(event.getPlayerID());
 		CheckPlayer(player);
 	}
