@@ -109,6 +109,8 @@ public class distensionbot extends SubspaceBot {
 
     private TimerTask entranceWaitTask;                     // For when bot first enters the arena
     private TimerTask autoSaveTask;                         // For autosaving player data frequently
+    private TimerTask delayedShutdownTask;                  // For initiating a delayed shutdown
+    private boolean beginDelayedShutdown;                   // True if, at round end, a shutdown should be initiated
     private TimerTask idleSpecTask;                         // For docking idlers
     private boolean readyForPlay = false;                   // True if bot has entered arena and is ready to go
     private int[] flagOwner = {-1, -1};                     // ArmyIDs of flag owners; -1 for none
@@ -204,6 +206,7 @@ public class distensionbot extends SubspaceBot {
         }
         flagTimeStarted = false;
         stopFlagTime = false;
+        beginDelayedShutdown = false;
         m_specialAbilityPrizer = new SpecialAbilityTask();
         m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 30000, 30000 );
     }
@@ -314,6 +317,12 @@ public class distensionbot extends SubspaceBot {
         };
         m_botAction.scheduleTask( assistAdvertTask, 20000, 20000 );
 
+        delayedShutdownTask = new TimerTask() {
+            public void run() {
+                beginDelayedShutdown = true;
+            }
+        };
+
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
@@ -361,6 +370,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "cmdUnban", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!savedata", acceptedMessages, this, "cmdSaveData", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "cmdDie", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown", OperatorList.HIGHMOD_LEVEL );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
@@ -776,7 +786,7 @@ public class distensionbot extends SubspaceBot {
                 if( flagMulti == 0 ) {
                     // 1 RP for 0 flag rule only applies if armies are imbalanced.
                     if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                        m_botAction.sendPrivateMessage( killer.getPlayerName(), "1 RP for kill.  (You hold no flags.)" );
+                        m_botAction.sendPrivateMessage( killer.getPlayerName(), "KILL: 1 RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [1RP MAX - You hold no flags]" );
                         victor.addRankPoints( 1 );
                         return;
                     } else {
@@ -815,15 +825,7 @@ public class distensionbot extends SubspaceBot {
                     points *= DEBUG_MULTIPLIER;
                 String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")";
                 if( flagMulti == 2 )
-                    msg += "  [x2 RP FOR SECTOR HOLD]";
-                /*
-                String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [" + preWeight + " * "
-                                          + armySizeWeight + " weight" + ((killerarmy.getNumFlagsOwned() == 2) ? " * 2 flags" : "" );
-                if( DEBUG_MULTIPLIER > 1.0f )
-                     msg += " * " + DEBUG_MULTIPLIER + " beta bonus]";
-                else
-                    msg += "]";
-                */
+                    msg += " [x2 RP FOR SECTOR HOLD]";
                 m_botAction.sendPrivateMessage( killer.getPlayerName(), msg );
             }
         }
@@ -1835,7 +1837,7 @@ public class distensionbot extends SubspaceBot {
 
         DistensionArmy assistArmy = m_armies.get( new Integer( armyToAssist ) );
         if( assistArmy == null ) {
-            m_botAction.sendPrivateMessage( name, "Exactly which of them !armies you trying to help out there?" );
+            m_botAction.sendPrivateMessage( name, "Exactly which of those !armies you trying to help out there?" );
             return;
         }
         float armySizeWeight, assistArmyWeightAfterChange;
@@ -1847,7 +1849,7 @@ public class distensionbot extends SubspaceBot {
         assistArmyWeightAfterChange = (currentArmyStr - p.getStrength()) / (assistArmyStr + p.getStrength());
 
         if( p.getNaturalArmyID() == armyToAssist ) {
-            if( p.getNaturalArmyID() == p.getArmyID() ) {
+            if( !p.isAssisting() ) {
                 m_botAction.sendPrivateMessage( name, "You aren't assisting any army presently.  Use !assist armyID# to assist an army in need." );
             } else {
                 if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE ) {
@@ -1883,7 +1885,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE ) {
+        if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE && !autoReturn ) {
             if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE ) {
                 m_botAction.sendPrivateMessage( name, "Assisting with your current ship will only continue the imbalance!  First !pilot a lower-ranked ship if you want to !assist." );
                 return;
@@ -1959,6 +1961,8 @@ public class distensionbot extends SubspaceBot {
         }
 
         m_botAction.sendPrivateMessage(name, players + " players, " + totalStrength + " total strength.  (STR = upgs + " + RANK_0_STRENGTH + ")" );
+        if( totalStrength == 0 && DEBUG )
+            m_botAction.sendArenaMessage("0 strength found for Army " + p.getArmyID() + ".  Assisting: " + (p.isAssisting() ? "Yes" : "No") + "   Natural ID: " + p.getNaturalArmyID() );
     }
 
 
@@ -2025,6 +2029,9 @@ public class distensionbot extends SubspaceBot {
             else
                 m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  " + playersunsaved + " players could not be saved.", 2 );
         }
+        if( beginDelayedShutdown ) {
+            m_botAction.sendPrivateMessage( name, "IMPORTANT NOTE TO MODERATOR: Bot will automatically save and shut down at end of this round." );
+        }
     }
 
 
@@ -2038,12 +2045,44 @@ public class distensionbot extends SubspaceBot {
         m_botAction.toggleLocked();
         flagObjs.hideAllObjects();
         flagTimerObjs.hideAllObjects();
-        playerObjs.hideAllObjects();
+        Integer id;
+        Iterator <Integer>i = m_botAction.getPlayerIDIterator();
+        while( i.hasNext() ) {
+            id = i.next();
+            playerObjs.hideAllObjects( id );
+        }
         m_botAction.setObjects();
         m_botAction.manuallySetObjects(flagObjs.getObjects());
         m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
         try { Thread.sleep(500); } catch (Exception e) {};
         m_botAction.die();
+    }
+
+
+    /**
+     * Starts a task to kill the bot at the end of the next round following a certain time limit.
+     * @param name
+     * @param msg
+     */
+    public void cmdShutdown( String name, String msg ) {
+        if( beginDelayedShutdown ) {
+            m_botAction.sendPrivateMessage( name, "Shutdown cancelled." );
+            beginDelayedShutdown = false;
+            return;
+        }
+        Integer minToShutdown = 0;
+        try {
+            minToShutdown = Integer.parseInt( msg );
+        } catch (NumberFormatException e) {
+            m_botAction.sendPrivateMessage( name, "Improper format.  !shutdown <minutes>" );
+            return;
+        }
+        m_botAction.sendPrivateMessage( name, "Shutting down at the next end of round occuring after " + minToShutdown + " minutes." );
+        try {
+            m_botAction.cancelTask(delayedShutdownTask);
+        } catch (Exception e) {
+        }
+        m_botAction.scheduleTask(delayedShutdownTask, minToShutdown * 1000 * 60 );
     }
 
 
@@ -2697,11 +2736,7 @@ public class distensionbot extends SubspaceBot {
          * Warps player to the safe, no strings attached.
          */
         public void doSafeWarp() {
-            int base;
-            if( assistArmyID == -1 )
-                base = armyID % 2;
-            else
-                base = assistArmyID % 2;
+            int base = getArmyID() % 2;
             if( base == 0 )
                 m_botAction.warpTo(name, 512, SAFE_TOP_Y);
             else
@@ -2722,7 +2757,7 @@ public class distensionbot extends SubspaceBot {
             upgPoints++;
             rankStart = nextRank;
             nextRank = m_shipGeneralData.get( shipNum ).getNextRankCost(rank);
-            m_botAction.sendPrivateMessage(name, "-=(  RANK UP!  )=-  You are now a RANK " + rank + Tools.shipName(shipNum) + " pilot.", Tools.Sound.VICTORY_BELL );
+            m_botAction.sendPrivateMessage(name, "-=(  RANK UP!  )=-  You are now a RANK " + rank + " " + Tools.shipName(shipNum) + " pilot.", Tools.Sound.VICTORY_BELL );
             m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), LVZ_RANKUP);
             if( nextRank - rankPoints > 0 ) {
                 m_botAction.sendPrivateMessage(name, "Next rank in " + ( nextRank - rankPoints )+ " RP.  Earned 1 !upgrade point for the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
@@ -2791,7 +2826,7 @@ public class distensionbot extends SubspaceBot {
         public void addRankPoints( int points ) {
             if( shipNum < 1 )
                 return;
-            if( DEBUG )
+            if( DEBUG && points > 0 )
                 points = (int)((float)points * DEBUG_MULTIPLIER);
             rankPoints += points;
             checkProgress();
@@ -3289,7 +3324,7 @@ public class distensionbot extends SubspaceBot {
                 prog = (int)((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
             if( prog > progress )
                 updateProgressBar( prog );
-            if( prog < progress ) {
+            else if( prog < progress ) {
                 resetProgressBar();
                 initProgressBar();
             }
@@ -3332,13 +3367,13 @@ public class distensionbot extends SubspaceBot {
 
         /**
          * Update with given amount of progress.
-         * @param prog Progress to update bar by
+         * @param prog Current progress as opposed to bar-displayed progress
          */
         public void updateProgressBar( int prog ) {
-            if( prog == 0 || progress + prog > 9 )
+            if( prog == 0 || prog > 9 )
                 return;
-            // Do 'prog' # additions to bar
-            for( int i = progress + 1; i < progress + prog + 1; i++ )
+            // Make additions to bar between progress (old display) and prog (new amt/display)
+            for( int i = progress + 1; i < prog + 1; i++ )
                 playerObjs.showObject(arenaPlayerID, LVZ_PROGRESS_BAR + i );
             progress += prog;
             setPlayerObjects();
@@ -4015,11 +4050,23 @@ public class distensionbot extends SubspaceBot {
             freq0Score = 0;
             freq1Score = 0;
             flagTimeStarted = false;
-        } else {
-            doScores(intermissionTime);
-            intermissionTimer = new IntermissionTask();
-            m_botAction.scheduleTask( intermissionTimer, intermissionTime );
+            return;
         }
+        if( beginDelayedShutdown ) {
+            m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  Thank you for testing!" );
+            cmdSaveData("", "");
+            try {
+                this.wait(2000);
+            } catch (Exception e) {}
+            cmdDie("", "");
+            return;
+        }
+        for( DistensionPlayer p : m_players.values() )
+            m_botAction.sendPrivateMessage(p.getName(), "END BATTLE PROGRESS:  " + p.getPointsToNextRank() + " RP to next rank." );
+
+        doScores(intermissionTime);
+        intermissionTimer = new IntermissionTask();
+        m_botAction.scheduleTask( intermissionTimer, intermissionTime );
     }
 
 
@@ -5029,7 +5076,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Lancaster Special!", Tools.Prize.BOMBS, 3, 26, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 5, 0, 1 );
+        upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 5, 55, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Shrapnel", Tools.Prize.SHRAPNEL, 2, 69, 10 );
         ship.addUpgrade( upg );
