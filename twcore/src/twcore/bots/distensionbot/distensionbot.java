@@ -109,7 +109,6 @@ public class distensionbot extends SubspaceBot {
 
     private TimerTask entranceWaitTask;                     // For when bot first enters the arena
     private TimerTask autoSaveTask;                         // For autosaving player data frequently
-    private TimerTask delayedShutdownTask;                  // For initiating a delayed shutdown
     private boolean beginDelayedShutdown;                   // True if, at round end, a shutdown should be initiated
     private TimerTask idleSpecTask;                         // For docking idlers
     private boolean readyForPlay = false;                   // True if bot has entered arena and is ready to go
@@ -316,12 +315,6 @@ public class distensionbot extends SubspaceBot {
             }
         };
         m_botAction.scheduleTask( assistAdvertTask, 20000, 20000 );
-
-        delayedShutdownTask = new TimerTask() {
-            public void run() {
-                beginDelayedShutdown = true;
-            }
-        };
 
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
@@ -2078,11 +2071,21 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         m_botAction.sendPrivateMessage( name, "Shutting down at the next end of round occuring after " + minToShutdown + " minutes." );
+        TimerTask delayedShutdownTask = new TimerTask() {
+            public void run() {
+                beginDelayedShutdown = true;
+            }
+        };
         try {
-            m_botAction.cancelTask(delayedShutdownTask);
+            m_botAction.scheduleTask(delayedShutdownTask, minToShutdown * 1000 * 60 );
         } catch (Exception e) {
+            try {
+                m_botAction.cancelTask(delayedShutdownTask);
+                m_botAction.sendPrivateMessage( name, "Prior shutdown cancelled.  Please try !shutdown again momentarily..." );
+            } catch (Exception e2) {
+                m_botAction.sendPrivateMessage( name, "Shutdown already scheduled!  You may try again momentarily..." );
+            }
         }
-        m_botAction.scheduleTask(delayedShutdownTask, minToShutdown * 1000 * 60 );
     }
 
 
