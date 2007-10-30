@@ -301,7 +301,8 @@ public class distensionbot extends SubspaceBot {
                             }
                         }
                     if( !helped ) {
-                        m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: !pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                        if( maxStrToAssist > RANK_0_STRENGTH )
+                                m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: !pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                     }
                     lastAssistAdvert = System.currentTimeMillis();
                 // Check if teams are imbalanced in numbers, if not strength
@@ -2047,8 +2048,18 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setObjects();
         m_botAction.manuallySetObjects(flagObjs.getObjects());
         m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
+        Thread.yield();
         try { Thread.sleep(500); } catch (Exception e) {};
-        m_botAction.die();
+        if( msg.equals("shutdown") ) {
+            TimerTask dieTask = new TimerTask() {
+                public void run() {
+                    m_botAction.die();
+                }
+            };
+            m_botAction.scheduleTask(dieTask, 1000);
+        } else {
+            m_botAction.die();
+        }
     }
 
 
@@ -3812,6 +3823,11 @@ public class distensionbot extends SubspaceBot {
         if(!flagTimeStarted || stopFlagTime )
             return;
 
+        if( beginDelayedShutdown ) {
+            cmdDie("", "shutdown");
+            return;
+        }
+
         int roundNum = freq0Score + freq1Score + 1;
 
         String roundTitle = "";
@@ -4055,17 +4071,13 @@ public class distensionbot extends SubspaceBot {
             flagTimeStarted = false;
             return;
         }
-        if( beginDelayedShutdown ) {
-            m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  Thank you for testing!" );
-            cmdSaveData("", "");
-            try {
-                this.wait(2000);
-            } catch (Exception e) {}
-            cmdDie("", "");
-            return;
-        }
         for( DistensionPlayer p : m_players.values() )
             m_botAction.sendPrivateMessage(p.getName(), "END BATTLE PROGRESS:  " + p.getPointsToNextRank() + " RP to next rank." );
+
+        if( beginDelayedShutdown ) {
+            m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  Thank you for testing!" );
+            cmdSaveData(m_botAction.getBotName(), "");
+        }
 
         doScores(intermissionTime);
         intermissionTimer = new IntermissionTask();
