@@ -118,7 +118,7 @@ public class distensionbot extends SubspaceBot {
 
     // ASSIST SYSTEM
     private final float ADVERT_WEIGHT_IMBALANCE = 0.85f;    // At what point to advert that there's an imbalance
-    private final float ASSIST_WEIGHT_IMBALANCE = 0.85f;    // At what point an army is considered imbalanced
+    private final float ASSIST_WEIGHT_IMBALANCE = 0.89f;    // At what point an army is considered imbalanced
     private final int ASSIST_NUMBERS_IMBALANCE = 3;         // # of pilot difference before considered imbalanced
     private final int ASSIST_REWARD_TIME = 1000 * 60 * 1;   // Time between adverting and rewarding assists (1 min def.)
     private long lastAssistReward;                          // Last time assister was given points
@@ -301,8 +301,8 @@ public class distensionbot extends SubspaceBot {
                             }
                         }
                     if( !helped ) {
-                        if( maxStrToAssist > RANK_0_STRENGTH )
-                                m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: !pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                        if( maxStrToAssist > RANK_0_STRENGTH )	// Only display if assisting is possible
+                            m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: !pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                     }
                     lastAssistAdvert = System.currentTimeMillis();
                 // Check if teams are imbalanced in numbers, if not strength
@@ -547,6 +547,35 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage( name, "Thanks for beta-testing.  Your help is welcome, but bugs are present.  Join ?chat=distension to keep up on tests.  PM DistensionBot with !beta for the latest updates and testing agreement." );
         if( DEBUG && DEBUG_MULTIPLIER != 1 )
             m_botAction.sendPrivateMessage(name, "BETA RP Bonus: x" + DEBUG_MULTIPLIER );
+        // If mid-round in a flag game, show appropriate flag info
+        if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
+        	String flagString = ""; 
+        	switch( flagOwner[0] ) {
+        	case -1:
+        		flagString += "+" + LVZ_TOPBASE_EMPTY + ",";
+        		break;
+        	case 0:
+        		flagString += "+" + LVZ_TOPBASE_ARMY0 + ",";
+        		break;
+        	case 1:
+        		flagString += "+" + LVZ_TOPBASE_ARMY1 + ",";
+        		break;
+        	}
+        	switch( flagOwner[1] ) {
+        	case -1:
+        		flagString += "+" + LVZ_BOTBASE_EMPTY;
+        		break;
+        	case 0:
+        		flagString += "+" + LVZ_BOTBASE_ARMY0;
+        		break;
+        	case 1:
+        		flagString += "+" + LVZ_BOTBASE_ARMY1;
+        		break;
+        	}
+        	if( flagTimer.getSecondsHeld() > 0 )
+        		flagString += ",+" + LVZ_SECTOR_HOLD;
+        	m_botAction.manuallySetObjects(flagString, event.getPlayerID());
+        }
         cmdReturn( name, "" );
     }
 
@@ -1749,7 +1778,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "Please !return to your army or !enlist first." );
             return;
         }
-        Iterator i = m_botAction.getFreqPlayerIterator(p.getArmyID());
+        Iterator <Player>i = m_botAction.getFreqPlayerIterator(p.getArmyID());
         if( !i.hasNext() ) {
             m_botAction.sendPrivateMessage( name, "No pilots detected in your army!" );
             return;
@@ -2035,6 +2064,7 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDie( String name, String msg ) {
+    	readyForPlay = false;	// To prevent spec-docking / unnecessary DB accesses
         m_botAction.specAll();
         m_botAction.toggleLocked();
         flagObjs.hideAllObjects();
@@ -2362,7 +2392,7 @@ public class distensionbot extends SubspaceBot {
         for( int i = 0; i < 9; i++ ) {
             team.add( new Vector<String>() );
         }
-        Iterator i = m_botAction.getFreqPlayerIterator(army);
+        Iterator <Player>i = m_botAction.getFreqPlayerIterator(army);
         while( i.hasNext() ) {
             Player p = (Player)i.next();
             team.get(p.getShipType()).add(p.getPlayerName());
@@ -3277,6 +3307,14 @@ public class distensionbot extends SubspaceBot {
         public boolean wasWarnedForTK() {
             return warnedForTK;
         }
+        
+        /**
+         * @return True if player is currently playing / in ship.
+         */
+        public boolean isInShip() {
+            return shipNum > 0;
+        }
+        
 
         /**
          * @return True if player has been banned from playing Distension.
@@ -4071,8 +4109,10 @@ public class distensionbot extends SubspaceBot {
             flagTimeStarted = false;
             return;
         }
-        for( DistensionPlayer p : m_players.values() )
-            m_botAction.sendPrivateMessage(p.getName(), "END BATTLE PROGRESS:  " + p.getPointsToNextRank() + " RP to next rank." );
+        for( DistensionPlayer p : m_players.values() ) {
+        	if( p.isInShip() )
+        		m_botAction.sendPrivateMessage(p.getName(), "END BATTLE PROGRESS:  " + p.getPointsToNextRank() + " RP to next rank." );
+        }
 
         if( beginDelayedShutdown ) {
             m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  Thank you for testing!" );
@@ -4092,7 +4132,7 @@ public class distensionbot extends SubspaceBot {
     public void setupPlayerTimes() {
         m_playerTimes.clear();
 
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator <Player>i = m_botAction.getPlayingPlayerIterator();
         Player player;
 
         try {
