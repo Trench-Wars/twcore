@@ -27,10 +27,13 @@ public class bouncerbot extends SubspaceBot {
     HashSet<String> invitedPlayers;
     ArrayList<String> log;
     String bouncemessage;
+    boolean sendToChat = false;
+    boolean sentInfoOnce = false;
+
     public bouncerbot( BotAction botAction ){
         super( botAction );
         invitedPlayers = new HashSet<String>();
-        bouncemessage = "Entering a private arena without being invited is against the rules.  Goodbye!";
+        bouncemessage = "Sorry, access to this private arena is currently restricted.  Goodbye!";
         log = new ArrayList<String>();
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
@@ -55,14 +58,20 @@ public class bouncerbot extends SubspaceBot {
     }
 
     public void handleEvent( PlayerEntered event ){
-        if( m_opList.isSmod( event.getPlayerName() )) return;
-        if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
         if( m_opList.isModerator( event.getPlayerName() )) return;
+        if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
         m_botAction.sendPrivateMessage( event.getPlayerName(), bouncemessage );
         m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
-        m_botAction.sendPublicMessage( "Whoops, " + event.getPlayerName() + " entered without permission." );
-        m_botAction.sendChatMessage( event.getPlayerName() + " went into a private arena without asking permission, and was mysteriously disconnected from the server." );
-        logEvent( event.getPlayerName() + " entered the arena illegally!" );
+        m_botAction.sendPublicMessage( event.getPlayerName() + " entered w/o permission; DC'd." );
+        if( sendToChat ) {
+            if( sentInfoOnce )
+                m_botAction.sendChatMessage( event.getPlayerName() + " entered protected arena; DC'd." );
+            else {
+                m_botAction.sendChatMessage( event.getPlayerName() + " entered protected arena; DC'd.  (PM me with !chat to turn off this msg)" );
+                sentInfoOnce = true;
+            }
+        }
+        logEvent( event.getPlayerName() + " entered a protected arena and was DC'd." );
     }
 
     public void handleEvent( LoggedOn event ){
@@ -78,14 +87,29 @@ public class bouncerbot extends SubspaceBot {
                 String invitee = message.substring(8);
                 invitedPlayers.add( invitee.toLowerCase() );
                 m_botAction.sendRemotePrivateMessage( invitee, "You have been invited to " + m_botAction.getArenaName() + "!" );
-                m_botAction.sendPublicMessage( invitee + " has been invited" );
-                logEvent( invitee + " has been invited" );
+                m_botAction.sendPublicMessage( invitee + " has been invited." );
+                logEvent( invitee + " has been invited." );
             }
         } else if( message.startsWith( "!message " )){
             bouncemessage = message.substring( 9 );
-            m_botAction.sendPrivateMessage( name, "Message set to: " + bouncemessage );
+            m_botAction.sendPrivateMessage( name, "Pre-kill message set to: " + bouncemessage );
         } else if( message.startsWith( "!go " )){
             m_botAction.changeArena( message.substring( 4 ));
+        } else if( message.startsWith( "!chat" )){
+            sendToChat = !sendToChat;
+            m_botAction.sendPrivateMessage( name, "Sending msgs to SMod chat: " + (sendToChat?"ON":"OFF") );
+        } else if( message.startsWith( "!help" )) {
+            String[] help = {
+                    "BouncerBot .... 'Removes unwanted visitors.'(tm)",
+                    "!go <arena>     - Send bot to <arena>",
+                    "!invite <name>  - Adds <name> to the authorized list",
+                    "!message <msg>  - Set message sent to unauthorized players to <msg>",
+                    "!chat           - Toggle sending kill msgs to SMod chat (default off)",
+                    "!die            - Kills me"
+            };
+            m_botAction.privateMessageSpam(name, help);
+        } else if( message.startsWith( "!die" )) {
+            m_botAction.die();
         }
 
     }
