@@ -4057,8 +4057,8 @@ public class distensionbot extends SubspaceBot {
                 freq1Score++;
 
             if( freq0Score >= maxScore || freq1Score >= maxScore ) {
-                m_botAction.sendArenaMessage( "THE CONFLICT IS OVER!  " + m_armies.get(winningArmyID).getName() + " has laid total claim to the sector, after " + (freq0Score + freq1Score) + " total battles.", Tools.Sound.HALLELUJAH );
-                m_botAction.sendArenaMessage( "Double points awarded to the victorious army!" );
+                m_botAction.sendArenaMessage( "THE CONFLICT IS OVER!!  " + m_armies.get(winningArmyID).getName() + " has laid total claim to the sector after " + (freq0Score + freq1Score) + " battles.", Tools.Sound.HALLELUJAH );
+                m_botAction.sendArenaMessage( "---(   Double points awarded for winning the war!   )---" );
                 gameOver = true;
             } else {
                 int roundNum = freq0Score + freq1Score;
@@ -4153,31 +4153,20 @@ public class distensionbot extends SubspaceBot {
                     if( time != null ) {
                         float percentOnFreq = (float)(secs - time) / (float)secs;
                         int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
-                        /*
-                        if( DEBUG )
-                            if( p.isSupportShip() )
-                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total support strength " + totalLvlSupport + " (" + playerRank / totalLvlSupport + ")) * support points:" + supportPoints + " * " + percentOnFreq * 100 + "% participation" );
-                            else
-                                m_botAction.sendPrivateMessage(p.getName(), "DEBUG: " + modPoints + " RP for victory = (rank " + playerRank + " / total attack strength " + totalLvlAttack + " (" + playerRank / totalLvlAttack + ")) * assault points:" + attackPoints + " * " + percentOnFreq * 100 + "% participation" );
-                        else
-                        */
                         if( gameOver ) {
                             modPoints *= 2;
-                            m_botAction.sendPrivateMessage(p.getName(), "You receive " + (DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + " RP (double) for your role in the final victory (" + percentOnFreq * 100 + "% participation)." );
+                            m_botAction.sendPrivateMessage(p.getName(), "You receive " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + " RP (double) for your role in the final victory (" + percentOnFreq * 100 + "% participation)." );
                         } else {
-                            m_botAction.sendPrivateMessage(p.getName(), "You receive " + (DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + " RP for your role in the victory (" + percentOnFreq * 100 + "% participation)." );
+                            m_botAction.sendPrivateMessage(p.getName(), "You receive " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + " RP for your role in the victory (" + percentOnFreq * 100 + "% participation)." );
                         }
                         int holds = flagTimer.getSectorHolds( p.getName() );
                         int breaks = flagTimer.getSectorBreaks( p.getName() );
-                        int bonus = 0;
+                        int bonus = holds * 10 + breaks * 5;
                         if( holds != 0 && breaks != 0 ) {
-                            bonus = Math.max(1, (int)( modPoints * (((float)holds / 5.0) + ((float)breaks / 10.0)) ));
                             m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds and " + breaks +" sector breaks, you also receive an additional " + (DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + " RP." );
                         } else if( holds != 0 ) {
-                            bonus = Math.max(1, (int)( modPoints * ((float)holds / 5.0) ));
                             m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds, you also receive an additional " + (DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + " RP." );
                         } else if( breaks != 0 ) {
-                            bonus = Math.max(1, (int)( modPoints * ((float)breaks / 10.0) ));
                             m_botAction.sendPrivateMessage( p.getName(), "For " + breaks + " sector breaks, you also receive an additional " + (DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + " RP." );
                         }
                         modPoints += bonus;
@@ -4186,50 +4175,10 @@ public class distensionbot extends SubspaceBot {
                 }
             }
         }
-        /*
-       try {
-            String[] leaderInfo = flagTimer.getTeamLeader( MVPs );
-            if( leaderInfo.length != 3 )
-                return;
-            String name, MVplayers = "";
-            MVPs.remove( leaderInfo[0] );
-            if( !leaderInfo[2].equals("") ) {
-                String otherleaders[] = leaderInfo[2].split(", ");
-                for( int j = 0; j<otherleaders.length; j++ )
-                    MVPs.remove( otherleaders[j] );
-            }
-                MVplayers = (String)i.next();
-                int grabs = flagTimer.getSectorHolds(MVplayers);
-                if( grabs > 0 )
-                    MVplayers += "(" + grabs + ")";
-            }
-            int grabs = 0;
-            while( i.hasNext() ) {
-                name = (String)i.next();
-                grabs = flagTimer.getSectorHolds(name);
-                if( grabs > 0 )
-                    MVplayers = MVplayers + ", " + name + "(" + grabs + ")";
-                else
-                    MVplayers = MVplayers + ", " + name;
-            }
-
-            if( leaderInfo[0] != "" ) {
-                if( leaderInfo[2] == "" )
-                    m_botAction.sendArenaMessage( "Team Leader was " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
-                else
-                    m_botAction.sendArenaMessage( "Team Leaders were " + leaderInfo[2] + "and " + leaderInfo[0] + "!  (" + leaderInfo[1] + " flag claim(s) + MVP)" );
-            }
-            if( MVplayers != "" )
-                m_botAction.sendArenaMessage( "MVPs (+ claims): " + MVplayers );
-        } catch(Exception e) {
-            Tools.printStackTrace( e );
-        }
-             */
 
         int intermissionTime = 10000;
 
         if( gameOver ) {
-            // Need special reward for conflict win
             intermissionTime = 20000;
             freq0Score = 0;
             freq1Score = 0;
@@ -4935,7 +4884,7 @@ public class distensionbot extends SubspaceBot {
         int costs1[] = { 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 5 };
         upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, 0, 12 );              // 400 x12
         ship.addUpgrade( upg );
-        int energyLevels1[] = { 0, 3, 5, 10, 15, 20, 25, 30, 35, 40 };
+        int energyLevels1[] = { 0, 3, 5, 10, 15,  20, 25, 30, 35, 40,  45, 50 };
         upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, costs1, energyLevels1, 12 );    // 150 x12
         ship.addUpgrade( upg );
         int p1a1[] = { 1, 3 };
@@ -4984,7 +4933,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int costs2a[] = { 1, 1, 1, 1, 1, 3, 1, 1, 1, 2, 3, 10, 15 };
         int costs2b[] = { 1, 1, 1, 1, 1, 3, 1, 1, 1, 2, 3, 10 };
-        int p2a2[] = { 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 55, 70 };
+        int p2a2[] = { 0, 0, 0, 0, 0,  15, 0, 0, 0, 0,  55, 70, 80 };
         upg = new ShipUpgrade( "Tactical Engineering     [CHG]", Tools.Prize.RECHARGE, costs2a, p2a2, 13 ); // 150 x13
         ship.addUpgrade( upg );
         int energyLevels2[] = { 2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 55, 70 };
@@ -5206,8 +5155,8 @@ public class distensionbot extends SubspaceBot {
         int p6a2a[] = { 5, 8, 10, 15, 20, 30 };
         upg = new ShipUpgrade( "Orbital Force Unit       [ROT]", Tools.Prize.ROTATION, p6a1a, p6a2a, 6 );       // 40 x6
         ship.addUpgrade( upg );
-        int p6a1b[] = { 2, 1, 1, 1,  1 };
-        int p6a2b[] = { 5, 8, 10, 15, 20 };
+        int p6a1b[] = { 2, 1, 1, 1 };
+        int p6a2b[] = { 5, 8, 10, 20 };
         upg = new ShipUpgrade( "Gravity Shifter          [THR]", Tools.Prize.THRUST, p6a1b, p6a2b, 4 );         // 2 x4
         ship.addUpgrade( upg );
         int p6a1c[] = { 2, 1, 1, 1,  1 };
