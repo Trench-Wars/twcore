@@ -32,7 +32,7 @@ public class acro2 extends MultiModule{
     HashMap<String, String> playerScores = new HashMap<String, String>();
     HashMap<String, String> playerOrder = new HashMap<String, String>();
     StringBag           playerNames = new StringBag();
-    Vector              phrases;
+    Vector<String>      phrases;
     int                 votes[];
     Spy                 racismSpy = new Spy( m_botAction );
 
@@ -161,7 +161,7 @@ public class acro2 extends MultiModule{
 
         TimerTask end = new TimerTask() {
             public void run() {
-                phrases = new Vector();
+                phrases = new Vector<String>();
                 gameState = 2;
                 m_botAction.sendArenaMessage("ACROMANIA Entries: ");
                 int i = 0;
@@ -196,13 +196,13 @@ public class acro2 extends MultiModule{
                 }
 
                 // Determine the fastest ACRO that received at least one vote
-                Set orderSet = playerOrder.keySet();
-                Iterator it = orderSet.iterator();
+                Set<String> orderSet = playerOrder.keySet();
+                Iterator<String> it = orderSet.iterator();
                 i = 0;
                 while (it.hasNext()) {
                     if (i >= numVotes) {break;}
-                    String curPlayer = (String)it.next();
-                    curOrder = Integer.parseInt((String)playerOrder.get(curPlayer));
+                    String curPlayer = it.next();
+                    curOrder = Integer.parseInt(playerOrder.get(curPlayer));
                     if (curOrder < fastOrder && votes[i] > 0) {
                         fastOrder = curOrder;
                         strFastPlayer = curPlayer;
@@ -217,7 +217,7 @@ public class acro2 extends MultiModule{
                 for (i = 0; i < phrases.size(); i++) {
                     String playerVotedWinner = "-";
                     String playerNotes = "";
-                    String piece[] = Tools.stringChopper(((String)phrases.elementAt(i)),'%');
+                    String piece[] = Tools.stringChopper((phrases.elementAt(i)),'%');
 
                     // Calculate bonus points
                     intPlayerBonus = 0;
@@ -230,7 +230,7 @@ public class acro2 extends MultiModule{
 
                     // +1 pt for voting for round winner
                     if (playerVotes.containsKey(piece[0])) {
-                        VotedForVotes = votes[Integer.parseInt((String)playerVotes.get(piece[0]))-1];
+                        VotedForVotes = votes[Integer.parseInt(playerVotes.get(piece[0]))-1];
                         if (VotedForVotes == intMostVotes) {
                             intPlayerBonus += 1;
                             playerVotedWinner = "*";
@@ -248,7 +248,7 @@ public class acro2 extends MultiModule{
                         if (!playerScores.containsKey(piece[0])) {
                             intPlayerScore = 0;
                         } else {
-                            intPlayerScore = Integer.parseInt((String)playerScores.get(piece[0]));
+                            intPlayerScore = Integer.parseInt(playerScores.get(piece[0]));
                         }
                         // Score for round = bonus + number of votes their acro received
                         intPlayerScore += intPlayerBonus + votes[i];
@@ -287,10 +287,10 @@ public class acro2 extends MultiModule{
         TimerTask game = new TimerTask() {
             public void run() {
                 m_botAction.sendArenaMessage("GAME OVER! FINAL SCORES: ",5);
-                Set set = playerScores.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerScores.keySet();
+                Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
-                    String curAnswer = (String) it.next();
+                    String curAnswer = it.next();
                     m_botAction.sendArenaMessage("--- " + Tools.formatString(curAnswer,14) + ": " + playerScores.get(curAnswer));
                 }
                 playerScores.clear();
@@ -340,14 +340,14 @@ public class acro2 extends MultiModule{
             try {vote = Integer.parseInt( message );} catch (Exception e) {}
             if (vote > 0 && vote <= phrases.size()) {
                 try {
-                    String cur     = (String)phrases.elementAt(vote - 1);
+                    String cur     = phrases.elementAt(vote - 1);
                     String parts[] = Tools.stringChopper( cur, '%' );
 
                     if (playerIdeas.containsKey(name)) {
                         if(!parts[0].equals(name)) {
                             votes[vote-1]++;
                             if (playerVotes.containsKey(name)) {
-                                int lastVote = Integer.parseInt((String)playerVotes.get(name));
+                                int lastVote = Integer.parseInt(playerVotes.get(name));
                                 votes[lastVote-1]--;
                                 playerVotes.remove(name);
                                 m_botAction.sendPrivateMessage(name,"Your vote has been changed.");
