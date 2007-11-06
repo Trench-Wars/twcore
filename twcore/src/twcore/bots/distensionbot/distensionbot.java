@@ -63,7 +63,7 @@ public class distensionbot extends SubspaceBot {
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-9)
-    private final double LOW_RANK_FACTOR = 1.18;           // Factor for rank increases (lvl 10+)
+    private final double LOW_RANK_FACTOR = 1.15;           // Factor for rank increases (lvl 10+)
     private final double NORMAL_RANK_FACTOR = 1.35;        // Factor for rank increases (lvl 25+)
     private final double HIGH_RANK_FACTOR = 1.6;           // Factor for rank increases (lvl 50+)
     private final double STUPIDLY_HIGH_RANK_FACTOR = 2.5;  // Factor for rank increases (lvl 70+)
@@ -4898,10 +4898,11 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Drag Balancer            [SPD]", Tools.Prize.TOPSPEED, 1, 0, 7 );           // 400 x7
         ship.addUpgrade( upg );
         int costs1[] = { 1, 1, 1, 1, 1,  1, 2, 4, 6, 8 };
-        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, 0, 12 );     // 300 x10
+        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, 0, 10 );     // 300 x10
         ship.addUpgrade( upg );
+        int costs1b[] = { 1, 1, 1, 1, 1,  1, 2, 4, 6, 7,  8, 10  };
         int energyLevels1[] = { 0, 3, 5, 10, 15,  20, 25, 30, 35, 40,  45, 50 };
-        upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, costs1, energyLevels1, 12 );    // 150 x12
+        upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, costs1b, energyLevels1, 12 );    // 150 x12
         ship.addUpgrade( upg );
         int p1a1[] = { 1, 3 };
         int p1a2[] = { 4, 27 };
