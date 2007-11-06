@@ -3066,12 +3066,6 @@ public class distensionbot extends SubspaceBot {
             this.shipNum = shipNum;
             isRespawning = false;
             successiveKills = 0;
-            if( (shipNum == 3 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[12] > 0)) ||
-                (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
-                (shipNum == 8 && (purchasedUpgrades[10] > 0) ) )
-                m_specialAbilityPrizer.addPlayer(this);
-            else
-                m_specialAbilityPrizer.removePlayer(this);
         }
 
         /**
@@ -3083,6 +3077,12 @@ public class distensionbot extends SubspaceBot {
             isRespawning = false;
             resetProgressBar();
             initProgressBar();
+            if( (shipNum == 3 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[12] > 0)) ||
+                    (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
+                    (shipNum == 8 && (purchasedUpgrades[10] > 0) ) )
+                    m_specialAbilityPrizer.addPlayer(this);
+                else
+                    m_specialAbilityPrizer.removePlayer(this);
         }
 
         /**
