@@ -552,9 +552,7 @@ public class distensionbot extends SubspaceBot {
         if( name == null )
             return;
         m_players.remove( name );
-        m_botAction.sendPrivateMessage( name, "Thanks for beta-testing.  Your help is welcome, but bugs are present.  Join ?chat=distension to keep up on tests.  PM DistensionBot with !beta for the latest updates and testing agreement." );
-        if( DEBUG && DEBUG_MULTIPLIER != 1 )
-            m_botAction.sendPrivateMessage(name, "BETA RP Bonus: x" + DEBUG_MULTIPLIER );
+        m_botAction.sendPrivateMessage( name, "Welcome to the beta.  NOTE: Bugs are present.  Join ?chat=distension to keep up on tests.  Use !beta for the latest updates." );
         // If mid-round in a flag game, show appropriate flag info
         if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
         	String flagString = "";
@@ -584,7 +582,6 @@ public class distensionbot extends SubspaceBot {
         		flagString += ",+" + LVZ_SECTOR_HOLD;
         	m_botAction.manuallySetObjects(flagString, event.getPlayerID());
         }
-        cmdReturn( name, "" );
     }
 
 
@@ -962,6 +959,7 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  11/5/07",
+                " - Due to serious issues, you'll now need to !return again",
                 " - !defect fixed",
                 " - !upginfo now works on any upgrade (personal decision)",
                 " - Addition of new special abilities",
@@ -1206,7 +1204,6 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        m_botAction.sendPrivateMessage( name, "Authorizing ... " );
         if( player.getPlayerFromDB() == true ) {
             m_botAction.sendPrivateMessage( name, player.getName().toUpperCase() + " authorized as a pilot of " + player.getArmyName().toUpperCase() + ".  Returning you to HQ." );
             player.setShipNum( 0 );
@@ -1326,6 +1323,7 @@ public class distensionbot extends SubspaceBot {
                 a.recalculateFigures();
         m_playerTimes.remove( player.getName() );
         checkFlagTimeStop();
+        player.setAssist(-1);
         if( player.saveCurrentShipToDBNow() ) {
             m_botAction.sendPrivateMessage( player.getName(), "Ship status confirmed and logged to our records.  You are now docked.");
             player.setShipNum( 0 );
@@ -3972,6 +3970,7 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to add
          */
         public void addPlayer( DistensionPlayer p ) {
+            players.remove(p);
             players.add(p);
         }
 
@@ -4527,9 +4526,9 @@ public class distensionbot extends SubspaceBot {
             DistensionPlayer p = m_players.get(breakerName);
             if( p != null ) {
                 if( remain < 4 )
-                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN!!  " + p.getArmyName() + " ("  + p.getName() + ")  at 0:0" + remain + "!!" );
+                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN!!  " + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!!" );
                 else if( remain < 10 )
-                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ")  at 0:0" + remain + "!" );
+                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!" );
                 else
                     m_botAction.sendArenaMessage( "Sector hold broken: "   + p.getArmyName() + " ("  + p.getName() + ")");
             }
@@ -4717,7 +4716,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return ID of army that currently holds the flag
+         * @return ID of army that currently holds the sector (if any)
          */
         public int getHoldingFreq() {
             return sectorHoldingArmyID;
