@@ -108,6 +108,13 @@ public class BasicRestrictor implements ShipRestrictor
 		return allowed;
 	}
 
+	public boolean canSwap(Player p1, Player p2, Team team)
+	{
+		boolean allowed = true;
+
+		return allowed;
+	}
+
 	/**
 	 * Sets the fallback ship for when a player fails a canSwitch check
 	 * @param ship the new ship type to set players to

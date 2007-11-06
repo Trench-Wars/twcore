@@ -54,7 +54,13 @@ public class Team
      */
 	public Team(short freq)
 	{
-		this.freq = freq;
+		if(freq < 0)
+			this.freq = 0;
+		else if(freq > 9999)
+			this.freq = 999;
+		else
+			this.freq = freq;
+
 		players = new ArrayList<Player>();
 		changed = true;
 		ships = new Player[8][0];
@@ -65,6 +71,11 @@ public class Team
 		restrict = new ShipRestrictor()
 		{
 			public boolean canSwitch(Player p, byte ship, Team t)
+			{
+				return true;
+			}
+
+			public boolean canSwap(Player p1, Player p2, Team t)
 			{
 				return true;
 			}
@@ -86,6 +97,11 @@ public class Team
 		changed = true;
 		plist = null;
 		ships = new Player[8][0];
+	}
+
+	public short getFrequency()
+	{
+		return freq;
 	}
 
 	/**
@@ -113,7 +129,7 @@ public class Team
 		}
 		else if(ship == INTERNAL_ALL)
 		{
-			return plist;
+			return getPlayers();
 		}
 
 		return null;
@@ -225,6 +241,11 @@ public class Team
 			restrict = new ShipRestrictor()
 			{
 				public boolean canSwitch(Player p, byte ship, Team t)
+				{
+					return true;
+				}
+
+				public boolean canSwap(Player p1, Player p2, Team t)
 				{
 					return true;
 				}

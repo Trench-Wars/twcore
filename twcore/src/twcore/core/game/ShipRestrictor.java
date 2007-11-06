@@ -22,6 +22,8 @@ public interface ShipRestrictor
 	 */
 	public boolean canSwitch(Player p, byte ship, Team team);
 
+	public boolean canSwap(Player p1, Player p2, Team team);
+
 	/**
 	 * Gets the ship to set the player in when they are not allowed to switch
 	 * @return a ship value from 0-7, or 8 for spectator
