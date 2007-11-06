@@ -63,8 +63,8 @@ public class distensionbot extends SubspaceBot {
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-9)
-    private final double LOW_RANK_FACTOR = 1.15;           // Factor for rank increases (lvl 10+)
-    private final double NORMAL_RANK_FACTOR = 1.3;         // Factor for rank increases (lvl 25+)
+    private final double LOW_RANK_FACTOR = 1.18;           // Factor for rank increases (lvl 10+)
+    private final double NORMAL_RANK_FACTOR = 1.35;        // Factor for rank increases (lvl 25+)
     private final double HIGH_RANK_FACTOR = 1.6;           // Factor for rank increases (lvl 50+)
     private final double STUPIDLY_HIGH_RANK_FACTOR = 2.5;  // Factor for rank increases (lvl 70+)
     private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
@@ -737,6 +737,7 @@ public class distensionbot extends SubspaceBot {
             if( victor == null )
                 return;
             boolean isTeK = (loser.getShipNum() == Tools.Ship.TERRIER);
+            boolean isSharkK = (loser.getShipNum() == Tools.Ship.SHARK);
             boolean isMaxReward = false;
             boolean isMinReward = false;
             boolean isRepeatKillLight = false;
@@ -851,6 +852,8 @@ public class distensionbot extends SubspaceBot {
 
                 if( isTeK )
                     points = Math.round((float)points * 1.15f);
+                else if( isSharkK )
+                    points -= Math.round((float)points * 0.25f);
 
                 // Track successive kills for weasel unlock & streaks
                 if( levelDiff > -5 ) {   // Streaks only count players close to your lvl
@@ -859,8 +862,10 @@ public class distensionbot extends SubspaceBot {
                         // and remove it if they do!
                     }
                 }
-                if( DEBUG )
-                    points *= DEBUG_MULTIPLIER;
+
+                victor.addRankPoints( points );
+                if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
+                    points = Math.round((float)points * DEBUG_MULTIPLIER);
                 String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")";
                 if( isMinReward )
                     msg += " [1 RP for low rank kill]";
@@ -872,9 +877,10 @@ public class distensionbot extends SubspaceBot {
                     msg += " [1 RP for repeat kill]";
                 if( isTeK )
                     msg += " [+15% for Terr Kill]";
+                else if( isSharkK )
+                    msg += " [-25% for Shark]";
                 if( flagMulti == 2 )
                     msg += " [x2 RP FOR SECTOR HOLD]";
-                victor.addRankPoints( points );
                 m_botAction.sendPrivateMessage(victor.getName(), msg);
             }
         }
@@ -929,10 +935,6 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "What the hell upgrade is that?  You check the !armory -- find out that you're making this crap up ..." );
             return;
         }
-        if( upgNum > 10 ) {
-            m_botAction.sendPrivateMessage( name, "Now that's an excellent question.  To be honest, I don't know what that upgrade does ... you'll just have to see for yourself!" );
-            return;
-        }
 
         String desc = getUpgradeText(m_shipGeneralData.get(ship).getUpgrade(upgNum - 1).getPrizeNum());
         if( desc == "" )
@@ -959,16 +961,15 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  10/20/07",
-                " - Anti-idle now docks those who are idle in rearmament area",
-                " - Progress bar!",
+                "RECENT UPDATES  -  11/5/07",
+                " - !defect fixed",
+                " - !upginfo now works on any upgrade (personal decision)",
+                " - Addition of new special abilities",
+                " - Serious tweaking of upgrades to encourage speed-based ships",
+                " - Anti-idle",
                 " - !hangar now shows ranks of ships that are not in use",
-                " - Players now warp into home base at round start; !basewarp to toggle",
-                " - Spawn protection removed, as attaching is much more likely",
                 " - !defect now costs a full level in every ship.",
                 " - Can no longer return to your army with !assist if it would uneven teams",
-                " - !clearmines will clear your mines, if you have any laid",
-                " - !team command displays team breakdown, with upg.lvl and strengths",
         };
         m_botAction.privateMessageSpam( name, beta );
     }
@@ -2503,6 +2504,7 @@ public class distensionbot extends SubspaceBot {
              * -3:  Full charge chance every 30 seconds, for spiders
              * -4:  Targetted EMP against all enemies (uses !emp command)
              * -5:  Super chance every 30 seconds, for spiders
+             * -6:  Repel chance every 30 seconds, for sharks
              */
             case -1:
                 desc = "Always first in line to rearm";
@@ -2518,6 +2520,9 @@ public class distensionbot extends SubspaceBot {
                 break;
             case -5:
                 desc = "+5% chance of super every 30 seconds";
+                break;
+            case -6:
+                desc = "+10% chance of repel every 30 seconds";
                 break;
         }
         return desc;
@@ -2812,42 +2817,43 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Prizes any special abilities that are reprized every 30 seconds.
+         * Prizes any special abilities that are reprized every 30 seconds.  This should only
+         * be called if a player actually has one of these special abilities.
          *
          * Special prize #s that are prized with this method:
          * -2:  Prizing burst + warp for terriers
          * -3:  Full charge for spiders
          * -4:  Targetted EMP against all enemies -- recharged every 10 min or so, and not lost on death
+         * -5:  Super for spiders
+         * -6:  Repels for sharks
          */
         public void prizeSpecialAbilities() {
             if( shipNum == 5 ) {
                 // Regeneration ability; each level worth an additional 10% of prizing either port or burst
                 //                       (+5% for each, up to a total of 50%)
-                if( purchasedUpgrades[11] > 0 ) {
-                    long portChance = Math.round(Math.random() * 20.0);
-                    long burstChance = Math.round(Math.random() * 20.0);
-                    if( purchasedUpgrades[11] >= portChance )
-                        m_botAction.specificPrize( name, Tools.Prize.PORTAL );
-                    if( purchasedUpgrades[11] >= burstChance )
-                        m_botAction.specificPrize( name, Tools.Prize.BURST );
-                }
+                long portChance = Math.round(Math.random() * 20.0);
+                long burstChance = Math.round(Math.random() * 20.0);
+                if( purchasedUpgrades[11] >= portChance )
+                    m_botAction.specificPrize( name, Tools.Prize.PORTAL );
+                if( purchasedUpgrades[11] >= burstChance )
+                    m_botAction.specificPrize( name, Tools.Prize.BURST );
                 // EMP ability; re-enable every 20 ticks
                 //if( purchasedUpgrades[13] > 0 )
             }
-            if( shipNum == 3) {
+            else if( shipNum == 3) {
                 // Refueling ability; each level worth an additional 50%
-                if( purchasedUpgrades[11] > 0 ) {
-                    long fcChance = Math.round( Math.random() * 2.0 );
-                    if( purchasedUpgrades[11] >= fcChance )
-                        m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
-                }
+                long fcChance = Math.round( Math.random() * 2.0 );
+                if( purchasedUpgrades[11] >= fcChance )
+                    m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
                 // Energy stream ability; each level worth an additional 5%
-                if( purchasedUpgrades[12] > 0 ) {
-                    long superChance = Math.round( Math.random() * 20.0 );
-                    if( purchasedUpgrades[12] >= superChance )
-                        m_botAction.specificPrize( name, Tools.Prize.SUPER );
-
-                }
+                long superChance = Math.round( Math.random() * 20.0 );
+                if( purchasedUpgrades[12] >= superChance )
+                    m_botAction.specificPrize( name, Tools.Prize.SUPER );
+            } else if( shipNum == 8) {
+                // Repel regen ability; each level worth an additional 10%
+                long repChance = Math.round( Math.random() * 10.0 );
+                if( purchasedUpgrades[10] >= repChance )
+                    m_botAction.specificPrize( name, Tools.Prize.REPEL );
             }
         }
 
@@ -3031,6 +3037,12 @@ public class distensionbot extends SubspaceBot {
                 return;
             purchasedUpgrades[upgrade] += amt;
             getArmy().recalculateFigures();
+            if( (shipNum == 3 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[12] > 0)) ||
+                (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
+                (shipNum == 8 && (purchasedUpgrades[10] > 0) ) )
+                m_specialAbilityPrizer.addPlayer(this);
+            else
+                m_specialAbilityPrizer.removePlayer(this);
             shipDataSaved = false;
         }
 
@@ -3054,7 +3066,9 @@ public class distensionbot extends SubspaceBot {
             this.shipNum = shipNum;
             isRespawning = false;
             successiveKills = 0;
-            if( shipNum == 3 || shipNum == 5 )
+            if( (shipNum == 3 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[12] > 0)) ||
+                (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
+                (shipNum == 8 && (purchasedUpgrades[10] > 0) ) )
                 m_specialAbilityPrizer.addPlayer(this);
             else
                 m_specialAbilityPrizer.removePlayer(this);
@@ -3171,6 +3185,11 @@ public class distensionbot extends SubspaceBot {
             oldarmy.adjustPilotsTotal(-1);
             setArmy( armyID );
             getArmy().adjustPilotsTotal(1);
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcArmy=" + armyID + " WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+            } catch (SQLException e) {
+                m_botAction.sendPrivateMessage( name, "ERROR CHANGING ARMY!  Report to a mod immediately!" );
+            }
             m_botAction.sendPrivateMessage( name, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
             m_botAction.sendOpposingTeamMessageByFrequency(oldarmy.getID(), "TRAITOR!  Villainous dog!  " + name.toUpperCase() + " has betrayed us all for " + getArmyName().toUpperCase() + " !!  Spare not this worm a gruesome death ...");
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Glory be to " + getArmyName().toUpperCase() + "!  " + name.toUpperCase() + " has joined our ranks!  Welcome this brave new pilot.");
@@ -3506,7 +3525,7 @@ public class distensionbot extends SubspaceBot {
             float pointsSince = getPointsSinceLastRank();
             int prog = 0;
             if( pointsSince > 0 )
-                prog = (int)((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
+                prog = Math.round((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
             if( prog > progress )
                 updateProgressBar( prog );
             else if( prog < progress ) {
@@ -3536,7 +3555,7 @@ public class distensionbot extends SubspaceBot {
             progress = 0;
             int prog = 0;
             if( pointsSince > 0 )
-                prog = (int)((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
+                prog = Math.round((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
             updateProgressBar( prog );
         }
 
@@ -4038,7 +4057,6 @@ public class distensionbot extends SubspaceBot {
         if( !flagTimeStarted || flagTimer == null )
             return;
 
-        //HashSet <String>MVPs = new HashSet<String>();
         boolean gameOver     = false;
         int winningArmyID    = flagTimer.getHoldingFreq();
         int maxScore         = (MAX_FLAGTIME_ROUNDS + 1) / 2;  // Score needed to win
@@ -4129,9 +4147,6 @@ public class distensionbot extends SubspaceBot {
                 else
                     totalLvlAttack += Math.round( (float)p.getRank() * percentOnFreq );
             }
-
-            //if( DEBUG )
-            //    m_botAction.sendArenaMessage( "DEBUG: ((" + minsToWin + "min battle * 0.5) * " + opposingStrengthAvg + " enemy strength * " + armyDiffWeight + " weight) = " + totalPoints + "RP won (" + supportPoints + " for support, " + attackPoints + " for attack)" );
 
             // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength
             i = m_players.values().iterator();
@@ -4828,6 +4843,7 @@ public class distensionbot extends SubspaceBot {
      * -3:  Full charge chance every 30 seconds, for spiders
      * -4:  Targetted EMP against all enemies (uses !emp command)
      * -5:  Super chance every 30 seconds, for spiders
+     * -6:  Repel chance every 30 seconds, for sharks
      *
      *
      * Order of speed of rank upgrades (high speed to low speed, lower # being faster ranks):
@@ -4881,8 +4897,8 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Drag Balancer            [SPD]", Tools.Prize.TOPSPEED, 1, 0, 7 );           // 400 x7
         ship.addUpgrade( upg );
-        int costs1[] = { 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 5 };
-        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, 0, 12 );              // 400 x12
+        int costs1[] = { 1, 1, 1, 1, 1,  1, 2, 4, 6, 8 };
+        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, 0, 12 );     // 300 x10
         ship.addUpgrade( upg );
         int energyLevels1[] = { 0, 3, 5, 10, 15,  20, 25, 30, 35, 40,  45, 50 };
         upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, costs1, energyLevels1, 12 );    // 150 x12
@@ -5244,25 +5260,28 @@ public class distensionbot extends SubspaceBot {
         //                      but has high max; energy starts high, has low level req initially, but
         //                      has high req later on (designed to give bomb capability early)
         // (Starts with 1 repel, so that repel 1 is actually second)
-        //  1: Repel 1
-        //  7: Repel 2
+        //  4: Repel 1
         // 12: Guns
-        // 15: Repel 3
+        // 15: Repel 2
         // 17: XRadar
         // 20: Priority Rearmament
         // 22: Shrap 1
-        // 26: Repel 4
-        // 29: Multifire
-        // 34: Repel 5
+        // 25: Repel 3
+        // 28: Multifire
+        // 30: +10% Repel Regen 1
         // 38: Cloak
-        // 40: Repel 6
+        // 40: Repel 4
         // 41: Shrap 2
         // 45: L2 Bombs
-        // 50: Repel 7
-        // 55: Repel 8
-        // 60: Shrap 3
-        // 70: Repel 9
-        // 80: Repel 10
+        // 48: +10% Repel Regen 2
+        // 50: Repel 5
+        // 55: +10% Repel Regen 3
+        // 60: Repel 6
+        // 65: Shrap 3
+        // 70: Repel 7
+        // 80: Repel 8
+        // 90: Repel 9
+        //100: Repel 10
         ship = new ShipProfile( RANK_REQ_SHIP8, 11 );
         int p8a1[] = { 1, 2, 3, 5 };
         int p8a2[] = { 10, 11, 12, 13 };
@@ -5283,17 +5302,19 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, 4, 45, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Spreadshot", Tools.Prize.MULTIFIRE, 3, 29, 1 );
+        upg = new ShipUpgrade( "Spreadshot", Tools.Prize.MULTIFIRE, 3, 28, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 2, 17, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Decoy disabled)", Tools.Prize.DECOY, 0, 0, -1 );
+        int p8ca1[] = {1,2,5};
+        int p8ca2[] = {30,48,55};
+        upg = new ShipUpgrade( "+10% Repulsor Regeneration", -6, p8ca1, p8ca2, 3 );
         ship.addUpgrade( upg );
-        int p8c1[] = { 1, 1,  1,  1,  1,  2,  2,  3,  5,  10 };
-        int p8c2[] = { 1, 7, 15, 26, 34, 40, 50, 55, 70, 80 };
+        int p8c1[] = { 1, 1,  1,  2,  3,  4,  5,  6,  8,  10 };
+        int p8c2[] = { 4, 15, 25, 40, 50, 60, 70, 80, 90, 100 };
         upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2, 10 );    // DEFINE
         ship.addUpgrade( upg );
-        int p8d2[] = { 22, 41, 60 };
+        int p8d2[] = { 22, 41, 65 };
         upg = new ShipUpgrade( "Splintering Unit", Tools.Prize.SHRAPNEL, 1, p8d2, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Nonexistence Device", Tools.Prize.CLOAK, 5, 38, 1 );
