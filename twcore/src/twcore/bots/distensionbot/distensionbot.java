@@ -155,13 +155,17 @@ public class distensionbot extends SubspaceBot {
     // LVZ OBJ# DEFINES ( < 100 reserved for flag timer counter )
     private final int LVZ_REARMING = 200;               // Rearming / attach at own risk
     private final int LVZ_RANKUP = 201;                 // RANK UP: Congratulations
+    private final int LVZ_STREAK = 202;                 // Streak!
+    private final int LVZ_TK = 203;                     // TK!
+    private final int LVZ_TKD = 204;                    // TKd!
+    private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
     private final int LVZ_TOPBASE_EMPTY = 251;          // Flag display
     private final int LVZ_TOPBASE_ARMY0 = 252;
     private final int LVZ_TOPBASE_ARMY1 = 253;
     private final int LVZ_BOTBASE_EMPTY = 254;
     private final int LVZ_BOTBASE_ARMY0 = 255;
     private final int LVZ_BOTBASE_ARMY1 = 256;
-    private final int LVZ_SECTOR_HOLD = 257;            // Sector hold, above flag display
+    private final int LVZ_SECTOR_HOLD = 257;            // Sector hold "glow" around flag display
     private final int LVZ_PROGRESS_BAR = 260;           // Progress bar; 261-269 are progress pieces
     private final int LVZ_INTERMISSION = 1000;          // Green intermission "highlight around" gfx
     private final int LVZ_ROUND_COUNTDOWN = 2300;       // Countdown before round start
@@ -784,7 +788,8 @@ public class distensionbot extends SubspaceBot {
                 victor.clearSuccessiveKills();
                 if( loss > 0 )
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
-
+                m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
+                m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
             } else {
                 // Otherwise: Add points via level scheme
                 DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
@@ -902,6 +907,8 @@ public class distensionbot extends SubspaceBot {
                     msg += " [-25% for Shark]";
                 if( flagMulti == 2 )
                     msg += " [x2 RP FOR SECTOR HOLD]";
+                if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
+                    msg += " [x" + DEBUG_MULTIPLIER + " beta]";
                 m_botAction.sendPrivateMessage(victor.getName(), msg);
             }
         }
@@ -1990,7 +1997,7 @@ public class distensionbot extends SubspaceBot {
         } else {
             m_botAction.sendPrivateMessage( name, "Not overly imbalanced -- consider flying a lower-rank ship to even the battle instead!" );
             if( DEBUG )
-                m_botAction.sendPrivateMessage( name, "(" + armySizeWeight + " weight, need .9 or less)" );
+                m_botAction.sendPrivateMessage( name, "(" + armySizeWeight + " weight, need " + ASSIST_WEIGHT_IMBALANCE + " or less)" );
         }
     }
 
@@ -2183,8 +2190,11 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer player = m_players.get( msg );
         if( player == null ) {
             m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in arena ... retrieving from DB." );
-            player = new DistensionPlayer(name);
-            player.getPlayerFromDB();
+            player = new DistensionPlayer(msg);
+            if( !player.getPlayerFromDB() ) {
+                m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in DB.  Check spelling." );
+                return;
+            }
         }
 
         if( ! player.isBanned() ) {
@@ -2205,8 +2215,11 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer player = m_players.get( msg );
         if( player == null ) {
             m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in arena ... retrieving from DB." );
-            player = new DistensionPlayer(name);
-            player.getPlayerFromDB();
+            player = new DistensionPlayer(msg);
+            if( !player.getPlayerFromDB() ) {
+                m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in DB.  Check spelling." );
+                return;
+            }
         }
 
         if( player.isBanned() ) {
@@ -2802,7 +2815,7 @@ public class distensionbot extends SubspaceBot {
         public void doSpawnTick() {
             spawnTicks--;
             if( spawnTicks == 2 ) { // 2 ticks (.66 seconds) before spawn end, warp to safe and shipreset
-                m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), LVZ_REARMING);
+                m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_REARMING);
                 doSafeWarp();
                 m_botAction.shipReset(name);
             }
@@ -2826,7 +2839,7 @@ public class distensionbot extends SubspaceBot {
             doWarp(false);
             isRespawning = false;
             prizeUpgrades();
-            m_botAction.hideObjectForPlayer(m_botAction.getPlayerID(name), LVZ_REARMING);
+            m_botAction.hideObjectForPlayer(arenaPlayerID, LVZ_REARMING);
             return true;
         }
 
@@ -2846,6 +2859,7 @@ public class distensionbot extends SubspaceBot {
             }
             if( fastRespawn )
                 m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
+            m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_PRIZEDUP);
         }
 
         /**
@@ -2860,33 +2874,46 @@ public class distensionbot extends SubspaceBot {
          * -6:  Repels for sharks
          */
         public void prizeSpecialAbilities() {
+            boolean prized = false;
             if( shipNum == 5 ) {
                 // Regeneration ability; each level worth an additional 10% of prizing either port or burst
                 //                       (+5% for each, up to a total of 50%)
                 long portChance = Math.round(Math.random() * 20.0);
                 long burstChance = Math.round(Math.random() * 20.0);
-                if( purchasedUpgrades[11] >= portChance )
+                if( purchasedUpgrades[11] >= portChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.PORTAL );
-                if( purchasedUpgrades[11] >= burstChance )
+                    prized = true;
+                }
+                if( purchasedUpgrades[11] >= burstChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.BURST );
+                    prized = true;
+                }
                 // EMP ability; re-enable every 20 ticks
                 //if( purchasedUpgrades[13] > 0 )
             }
             else if( shipNum == 3) {
                 // Refueling ability; each level worth an additional 50%
                 long fcChance = Math.round( Math.random() * 2.0 );
-                if( purchasedUpgrades[11] >= fcChance )
+                if( purchasedUpgrades[10] >= fcChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
+                    prized = true;
+                }
                 // Energy stream ability; each level worth an additional 5%
                 long superChance = Math.round( Math.random() * 20.0 );
-                if( purchasedUpgrades[12] >= superChance )
+                if( purchasedUpgrades[11] >= superChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.SUPER );
+                    prized = true;
+                }
             } else if( shipNum == 8) {
                 // Repel regen ability; each level worth an additional 10%
                 long repChance = Math.round( Math.random() * 10.0 );
-                if( purchasedUpgrades[10] >= repChance )
+                if( purchasedUpgrades[9] >= repChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.REPEL );
+                    prized = true;
+                }
             }
+            if( prized )
+                m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_PRIZEDUP);
         }
 
         /**
@@ -2964,7 +2991,7 @@ public class distensionbot extends SubspaceBot {
         public void doAdvanceRank() {
             if( rank >= 80 ) {
                 m_botAction.sendPrivateMessage(name, "YOU ARE NOW A MASTER " + Tools.shipName(shipNum).toUpperCase() + ".  ALL WILL FOREVER REMEMBER THE NAME OF " + name.toUpperCase() + " ... CONGRATULATIONS!!!", Tools.Sound.VICTORY_BELL );
-                m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), LVZ_RANKUP);
+                m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
                 nextRank = 999999999;
                 return;
             }
@@ -2973,7 +3000,7 @@ public class distensionbot extends SubspaceBot {
             rankStart = nextRank;
             nextRank = m_shipGeneralData.get( shipNum ).getNextRankCost(rank);
             m_botAction.sendPrivateMessage(name, "-=(  RANK UP!  )=-  You are now a RANK " + rank + " " + Tools.shipName(shipNum) + " pilot.", Tools.Sound.VICTORY_BELL );
-            m_botAction.showObjectForPlayer(m_botAction.getPlayerID(name), LVZ_RANKUP);
+            m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
             if( nextRank - rankPoints > 0 ) {
                 m_botAction.sendPrivateMessage(name, "Next rank in " + ( nextRank - rankPoints )+ " RP.  Earned 1 !upgrade point for the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
             }else {
@@ -3153,24 +3180,22 @@ public class distensionbot extends SubspaceBot {
         public boolean addSuccessiveKill( ) {
             successiveKills++;
 
+            int award = 0;
             if( successiveKills == 5 ) {
-                int award = 3;
+                award = 3;
                 if( rank > 1 )
                     award = rank * 3;
                 m_botAction.sendPrivateMessage(name, "Streak!  (" + award + " RP bonus.)", 19 );
-                addRankPoints(award);
             } else if( successiveKills == 10 ) {
-                int award = 5;
+                award = 5;
                 if( rank > 1 )
                     award = rank * 5;
                 m_botAction.sendPrivateMessage(name, "ON FIRE!  (" + award + " RP bonus.)", 20 );
-                addRankPoints(award);
             } else if( successiveKills == 15 ) {
-                int award = 7;
+                award = 7;
                 if( rank > 1 )
                     award = rank * 7;
                 m_botAction.sendPrivateMessage(name, "UNSTOPPABLE!  (" + award + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
-                addRankPoints(award);
             } else if( successiveKills == 20 ) {
                 if( shipsAvail[5] == false ) {
                     String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + playerID + "' AND ship.fnShipNum='6'";
@@ -3189,22 +3214,25 @@ public class distensionbot extends SubspaceBot {
                         return true;
                     } catch (SQLException e ) { return false; }
                 } else {
-                    int award = 10;
+                    award = 10;
                     if( rank > 1 )
                         award = rank * 7;
                     m_botAction.sendPrivateMessage(name, "INCONCEIVABLE!  (" + award + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
-                    addRankPoints(award);
                 }
             } else if( successiveKills == 50 ) {
-                int award = 15;
+                award = 15;
                 if( rank > 1 )
                     award = rank * 15;
                 m_botAction.sendPrivateMessage(name, "YOU'RE PROBABLY CHEATING!  (" + award + " RP bonus.)", Tools.Sound.SCREAM );
             } else if( successiveKills == 99 ) {
-                int award = 20;
+                award = 20;
                 if( rank > 1 )
                     award = rank * 30;
                 m_botAction.sendPrivateMessage(name, "99 KILLS -- ... ORGASMIC !!  (" + award + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );
+            }
+            if( award > 0 ) {
+                m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_STREAK);
+                addRankPoints(award);
             }
             return false;
         }
