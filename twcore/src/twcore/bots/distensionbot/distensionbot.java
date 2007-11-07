@@ -826,18 +826,17 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
 
-                //int preWeight = points;
                 points = Math.round(((float)points * armySizeWeight));
                 points *= flagMulti;
 
                 if( killedarmy.getPilotsInGame() != 1 ) {
                     switch( victor.getRepeatKillAmount( event.getKilleeID() ) ) {
-                        case 2:
+                        case 3:
                             points /= 2;
                             isRepeatKillLight = true;
                             m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only half the normal amount of RP." );
                             break;
-                        case 3:
+                        case 4:
                             points = 1;
                             isRepeatKillHard = true;
                             m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
@@ -853,7 +852,7 @@ public class distensionbot extends SubspaceBot {
                     points -= Math.round((float)points * 0.25f);
 
                 // Track successive kills for weasel unlock & streaks
-                if( levelDiff > -5 ) {   // Streaks only count players close to your lvl
+                if( levelDiff > -8 ) {   // Streaks only count players close to your lvl
                     if( victor.addSuccessiveKill() ) {
                         // If player earned weasel off this kill, check if loser/killed player has weasel ...
                         // and remove it if they do!
@@ -1564,7 +1563,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         m_botAction.sendPrivateMessage( name, Tools.shipName( shipNum ).toUpperCase() + " ARMORY    " + player.getUpgradePoints() + " upgrade points available");
-        m_botAction.sendPrivateMessage( name, " #  Name                                  Curr /  Max     Points    Rank Req." );
+        m_botAction.sendPrivateMessage( name, " #  Name                                  Curr /  Max     Points    Requirements" );
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = player.getPurchasedUpgrades();
@@ -1595,12 +1594,17 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
                 if( printCost ) {
-                    printmsg += Tools.formatString( "" + currentUpgrade.getCostDefine( purchasedUpgrades[i] ), 11 );
+                    int cost = currentUpgrade.getCostDefine( purchasedUpgrades[i] );
+                    int diff = cost - player.getUpgradePoints();
+                    printmsg += Tools.formatString( "" + cost, 11 );
                     int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
-                    if( req <= player.getRank() )
-                        printmsg += "AVAIL!";
-                    else
-                        printmsg += (req < 10 ? " " : "") + req;
+                    if( req <= player.getRank() ) {
+                        if( diff > 0 )
+                            printmsg += "AVAIL!";
+                        else
+                            printmsg += diff + " more pt" + (diff == 1 ? "" : "s");
+                    } else
+                        printmsg += "Rank " + (req < 10 ? " " : "") + req;
                 }
                 m_botAction.sendPrivateMessage( name, printmsg );
             }
@@ -2550,7 +2554,7 @@ public class distensionbot extends SubspaceBot {
         private int successiveKills;            // # successive kills (for unlocking weasel)
         private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
         private boolean[] shipsAvail;           // Marks which ships are available
-        private int[]     lastIDsKilled = { -1, -1, -1 };  // ID of last player killed (feeding protection)
+        private int[]     lastIDsKilled = { -1, -1, -1, -1 };  // ID of last player killed (feeding protection)
         private int       spawnTicks;           // # queue "ticks" until spawn
         private int       idleTicks;            // # ticks player has been idle
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
@@ -3507,11 +3511,12 @@ public class distensionbot extends SubspaceBot {
          */
         public int getRepeatKillAmount( int killedPlayerID ) {
             int repeats = 0;
-            for( int i = 0; i<3; i++ ) {
+            for( int i = 0; i<4; i++ ) {
                 if( killedPlayerID == lastIDsKilled[i] )
                     repeats++;
             }
             // Cycle through
+            lastIDsKilled[3] = lastIDsKilled[2];
             lastIDsKilled[2] = lastIDsKilled[1];
             lastIDsKilled[1] = lastIDsKilled[0];
             lastIDsKilled[0] = killedPlayerID;
