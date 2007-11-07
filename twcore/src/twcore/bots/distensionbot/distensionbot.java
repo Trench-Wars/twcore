@@ -338,6 +338,31 @@ public class distensionbot extends SubspaceBot {
     private void registerCommands() {
         int acceptedMessages = Message.PRIVATE_MESSAGE;
 
+        // Shortcuts
+        m_commandInterpreter.registerCommand( "!", acceptedMessages, this, "cmdHelp" );
+        m_commandInterpreter.registerCommand( "?", acceptedMessages, this, "cmdHelp" );
+        m_commandInterpreter.registerCommand( "~", acceptedMessages, this, "cmdReturn" );
+        m_commandInterpreter.registerCommand( "!a", acceptedMessages, this, "cmdArmory" );
+        m_commandInterpreter.registerCommand( "!ar", acceptedMessages, this, "cmdArmies" );
+        m_commandInterpreter.registerCommand( "!as", acceptedMessages, this, "cmdAssist" );
+        m_commandInterpreter.registerCommand( "!b", acceptedMessages, this, "cmdBeta" );  // BETA CMD
+        m_commandInterpreter.registerCommand( "!bw", acceptedMessages, this, "cmdBaseWarp" );
+        m_commandInterpreter.registerCommand( "!cm", acceptedMessages, this, "cmdClearMines" );
+        m_commandInterpreter.registerCommand( "!d", acceptedMessages, this, "cmdDock" );
+        m_commandInterpreter.registerCommand( "!de", acceptedMessages, this, "cmdDefect" );
+        m_commandInterpreter.registerCommand( "!e", acceptedMessages, this, "cmdEnlist" );
+        m_commandInterpreter.registerCommand( "!h", acceptedMessages, this, "cmdHangar" );
+        m_commandInterpreter.registerCommand( "!p", acceptedMessages, this, "cmdPilot" );
+        m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
+        m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
+        m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
+        m_commandInterpreter.registerCommand( "!t", acceptedMessages, this, "cmdTerr" );
+        m_commandInterpreter.registerCommand( "!tm", acceptedMessages, this, "cmdTeam" );
+        m_commandInterpreter.registerCommand( "!u", acceptedMessages, this, "cmdUpgrade" );
+        m_commandInterpreter.registerCommand( "!ui", acceptedMessages, this, "cmdUpgInfo" );
+        m_commandInterpreter.registerCommand( "!w", acceptedMessages, this, "cmdWarp" );
+        m_commandInterpreter.registerCommand( "!wh", acceptedMessages, this, "cmdWhereIs" );
+        // Normal versions
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "cmdHelp" );
         m_commandInterpreter.registerCommand( "!enlist", acceptedMessages, this, "cmdEnlist" );
         m_commandInterpreter.registerCommand( "!defect", acceptedMessages, this, "cmdDefect" );
@@ -442,66 +467,65 @@ public class distensionbot extends SubspaceBot {
 
         if( shipNum == -1 ) {
             String[] helps = {
-                    "   CIVILIAN CONSOLE  ",
-                    ".---------------------",
-                    "| !enlist             |  Enlist in the army that needs your services most",
-                    "| !armies             |  View all public armies and their IDs",
-                    "| !enlist <army#>     |  Enlist specifically in <army#>",
-                    "| !intro              |  Gives an introduction to Distension",
-                    "| !return             |  Return to your current position in the war",
+                    "    CIVILIAN CONSOLE  ",
+                    ".-----------------------",
+                    "| !enlist           !e  |  Enlist in the army that needs your services most",
+                    "| !armies           !as |  View all public armies and their IDs",
+                    "| !enlist <army#>   !e  |  Enlist specifically in <army#>",
+                    "| !intro                |  Gives an introduction to Distension",
+                    "| !return           ~   |  Return to your current position in the war",
             };
             m_botAction.privateMessageSpam(name, helps);
         } else if( shipNum == 0 ) {
             String[] helps = {
-                    "    HANGAR CONSOLE",
-                    ".---------------------",
-                    "| !pilot <ship>       |  Pilot <ship> if available in hangar",
-                    "| <shipnum>           |  Shortcut for !pilot <shipnum>",
-                    "| !hangar             |  View your ships & those available for purchase",
-                    "| !assist <army>      |  Temporarily assists <army> at no penalty to you",
-                    "| !defect <army>      |  Change to <army>.  All ships LOSE A FULL RANK,",
-                    "|                     |     unless the new army has 4+ fewer pilots.",
-                    "| !upginfo <upg>      |  Shows any available information about <upg>",
-                    "| !warp               |  Toggles waiting in spawn vs. being autowarped out",
-                    "| !basewarp           |  Toggles warping into base vs. spawn at round start",
-                    "| !team               |  Shows all players on team and their upg. levels",
-                    "| !terr               |  Shows approximate location of all army terriers",
-                    "| !whereis <name>     |  Shows approximate location of pilot <name>",
+                    "     HANGAR CONSOLE",
+                    ".-----------------------",
+                    "| !pilot <ship>     !p  |  Pilot <ship> if available in hangar",
+                    "| <shipnum>             |  Shortcut for !pilot <shipnum>",
+                    "| !hangar           !h  |  View your ships & those available for purchase",
+                    "| !assist <army>    !as |  Temporarily assists <army> at no penalty to you",
+                    "| !defect <army>    !d  |  Change to <army>.  All ships LOSE A FULL RANK,",
+                    "|                       |     unless the new army has 4+ fewer pilots.",
+                    "| !warp             !w  |  Toggles waiting in spawn vs. being autowarped out",
+                    "| !basewarp         !bw |  Toggles warping into base vs. spawn at round start",
+                    "| !team             !tm |  Shows all players on team and their upg. levels",
+                    "| !terr             !t  |  Shows approximate location of all army terriers",
+                    "| !whereis <name>   !wh |  Shows approximate location of pilot <name>",
             };
             m_botAction.privateMessageSpam(name, helps);
         } else {
             String[] helps = {
-                    "    PILOT CONSOLE  ",
-                    ".---------------------",
-                    "| !progress (or .)    |  See your progress toward next advancement",
-                    "| !status             |  View current ship's level and upgrades",
-                    "| !armory             |  View ship upgrades available in the armory",
-                    "| !upgrade <upg>      |  Upgrade your ship with <upg> from the armory",
-                    "| !upginfo <upg>      |  Shows any available information about <upg>",
-                    "| !scrap <upg>        |  Trade in <upg>.  *** Restarts ship at current rank!",
-                    "| !hangar             |  View your ships & those available for purchase",
-                    "| !dock               |  Dock your ship, recording status to headquarters",
-                    "| !pilot <ship>       |  Change to <ship> if available in hangar",
-                    "| <shipnum>           |  Shortcut for !pilot <shipnum>",
-                    "| !assist <army>      |  Temporarily assists <army> at no penalty to you",
-                    "| !warp               |  Toggles waiting in spawn vs. being autowarped out",
-                    "| !basewarp           |  Toggles warping into base vs. spawn at round start",
-                    "| !team               |  Shows all players on team and their upg. levels",
-                    "| !terr               |  Shows approximate location of all army terriers",
-                    "| !whereis <name>     |  Shows approximate location of pilot <name>",
-                    "| !clearmines         |  Clears all mines, if in a mine-laying ship"
+                    "      PILOT CONSOLE  ",
+                    ".-----------------------",
+                    "| !progress         .   |  See your progress toward next advancement",
+                    "| !status           !s  |  View current ship's level and upgrades",
+                    "| !armory           !a  |  View ship upgrades available in the armory",
+                    "| !upgrade <upg>    !u  |  Upgrade your ship with <upg> from the armory",
+                    "| !upginfo <upg>    !ui |  Shows any available information about <upg>",
+                    "| !scrap <upg>      !sc |  Trade in <upg>.  *** Restarts ship at current rank!",
+                    "| !hangar           !h  |  View your ships & those available for purchase",
+                    "| !dock             !d  |  Dock your ship, recording status to headquarters",
+                    "| !pilot <ship>     !p  |  Change to <ship> if available in hangar",
+                    "| <shipnum>             |  Shortcut for !pilot <shipnum>",
+                    "| !assist <army>    !as |  Temporarily assists <army> at no penalty to you",
+                    "| !warp             !w  |  Toggles waiting in spawn vs. being autowarped out",
+                    "| !basewarp         !bw |  Toggles warping into base vs. spawn at round start",
+                    "| !team             !tm |  Shows all players on team and their upg. levels",
+                    "| !terr             !t  |  Shows approximate location of all army terriers",
+                    "| !whereis <name>   !wh |  Shows approximate location of pilot <name>",
+                    "| !clearmines       !cm |  Clears all mines, if in a mine-laying ship"
             };
             m_botAction.privateMessageSpam(name, helps);
         }
 
         if( m_botAction.getOperatorList().isHighmod(name) ) {
             String[] helps = {
-                    "| !info <name>        |  Gets info on <name> from their !status screen",
-                    "| !ban <name>         |  Bans a player from playing Distension",
-                    "| !unban <name>       |  Unbans banned player",
-                    "| !savedata           |  Saves all player data to database",
-                    "| !die                |  Kills DistensionBot -- use !savedata first!",
-                    "|____________________/"
+                    "| !info <name>          |  Gets info on <name> from their !status screen",
+                    "| !ban <name>           |  Bans a player from playing Distension",
+                    "| !unban <name>         |  Unbans banned player",
+                    "| !savedata             |  Saves all player data to database",
+                    "| !die                  |  Kills DistensionBot -- use !savedata first!",
+                    "|______________________/"
             };
             m_botAction.privateMessageSpam(name, helps);
         } else {
@@ -552,7 +576,7 @@ public class distensionbot extends SubspaceBot {
         if( name == null )
             return;
         m_players.remove( name );
-        m_botAction.sendPrivateMessage( name, "Welcome to the beta.  NOTE: Bugs are present.  Join ?chat=distension to keep up on tests.  Use !beta for the latest updates." );
+        m_botAction.sendPrivateMessage( name, "Welcome to the beta.  NOTE: Bugs are present.  Join ?chat=distension to keep up on tests.  Use !beta for the latest updates.  --- You must now use !return to return to your army! --" );
         // If mid-round in a flag game, show appropriate flag info
         if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
         	String flagString = "";
@@ -582,6 +606,7 @@ public class distensionbot extends SubspaceBot {
         		flagString += ",+" + LVZ_SECTOR_HOLD;
         	m_botAction.manuallySetObjects(flagString, event.getPlayerID());
         }
+        m_players.put( name, new DistensionPlayer(name) );
     }
 
 
@@ -912,18 +937,18 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "Sorry, I don't recognize you.  If you !return to your army, maybe I can help." );
             return;
         }
+        int ship = p.getShipNum();
+
+        if( ship < 1 ) {
+            m_botAction.sendPrivateMessage( name, "Sorry.  You'll need to be in a ship or I can't tell you a damn thing." );
+            return;
+        }
+
         Integer upgNum = 0;
         try {
             upgNum = Integer.parseInt(msg);
         } catch (NumberFormatException e) {
             m_botAction.sendPrivateMessage( name, "What upgrade do you want info on?  Do I look like a mind-reader?  Check the !armory before you start asking ..." );
-            return;
-        }
-
-        int ship = p.getShipNum();
-
-        if( ship < 1 ) {
-            m_botAction.sendPrivateMessage( name, "Sorry.  You'll need to be in a ship or I can't tell you a damn thing." );
             return;
         }
 
@@ -958,6 +983,7 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  11/5/07",
+                " - Shortcuts for all commands added",
                 " - Due to serious issues, you'll now need to !return again",
                 " - !defect fixed",
                 " - !upginfo now works on any upgrade (personal decision)",
@@ -1189,7 +1215,6 @@ public class distensionbot extends SubspaceBot {
     public void cmdReturn( String name, String msg ) {
         DistensionPlayer player = m_players.get( name );
         if( player == null ) {
-
             player = new DistensionPlayer(name);
             m_players.put( name, player );
         }
@@ -1255,6 +1280,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( player.getShipNum() > 0 ) {
+            m_botAction.sendPrivateMessage( player.getName(), "Total earned in " + Tools.shipName(player.getShipNum()) + ": " + player.getRecentlyEarnedRP() + " RP" );
             player.saveCurrentShipToDBNow();
             // Simple fix to cause sharks and terrs to not lose MVP
             if( shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) {
@@ -1323,6 +1349,7 @@ public class distensionbot extends SubspaceBot {
         m_playerTimes.remove( player.getName() );
         checkFlagTimeStop();
         player.setAssist(-1);
+        m_botAction.sendPrivateMessage( player.getName(), "Total earned in " + Tools.shipName(player.getShipNum()) + ": " + player.getRecentlyEarnedRP() + " RP" );
         if( player.saveCurrentShipToDBNow() ) {
             m_botAction.sendPrivateMessage( player.getName(), "Ship status confirmed and logged to our records.  You are now docked.");
             player.setShipNum( 0 );
@@ -1599,7 +1626,7 @@ public class distensionbot extends SubspaceBot {
                     printmsg += Tools.formatString( "" + cost, 11 );
                     int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
                     if( req <= player.getRank() ) {
-                        if( diff > 0 )
+                        if( diff >= 0 )
                             printmsg += "AVAIL!";
                         else
                             printmsg += diff + " more pt" + (diff == 1 ? "" : "s");
@@ -2558,13 +2585,14 @@ public class distensionbot extends SubspaceBot {
         private int       spawnTicks;           // # queue "ticks" until spawn
         private int       idleTicks;            // # ticks player has been idle
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
+        private int       recentlyEarnedRP;     // RP earned since changing to this ship
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
         private boolean   shipDataSaved;        // True if ship data on record equals ship data in DB
         private boolean   fastRespawn;          // True if player respawns at the head of the queue
         private boolean   isRespawning;         // True if player is currently in respawn process
         private boolean   waitInSpawn;          // True if player would like to warp out manually at respawn
-        private boolean   warpInBase;             // True if warping player to FR rather than spawn @ round start
+        private boolean   warpInBase;           // True if warping player to FR rather than spawn @ round start
         private boolean   specialRespawn;       // True if in spawn queue w/o actually spawning
 
         public DistensionPlayer( String name ) {
@@ -2582,6 +2610,7 @@ public class distensionbot extends SubspaceBot {
             spawnTicks = 0;
             idleTicks = 0;
             assistArmyID = -1;
+            recentlyEarnedRP = 0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[8];
             for( int i = 0; i < 8; i++ )
@@ -2786,6 +2815,7 @@ public class distensionbot extends SubspaceBot {
         public boolean doSpawn() {
             if( specialRespawn ) {
                 specialRespawn = false;
+                isRespawning = false;
                 prizeUpgrades();
                 return true;
             }
@@ -3014,6 +3044,7 @@ public class distensionbot extends SubspaceBot {
             if( DEBUG && points > 0 )
                 points = (int)((float)points * DEBUG_MULTIPLIER);
             rankPoints += points;
+            recentlyEarnedRP += points;
             checkProgress();
             if( rankPoints >= nextRank )
                 doAdvanceRank();
@@ -3068,6 +3099,7 @@ public class distensionbot extends SubspaceBot {
             this.shipNum = shipNum;
             isRespawning = false;
             successiveKills = 0;
+            recentlyEarnedRP = 0;
         }
 
         /**
@@ -3119,7 +3151,6 @@ public class distensionbot extends SubspaceBot {
          * Increments successive kills.
          */
         public boolean addSuccessiveKill( ) {
-
             successiveKills++;
 
             if( successiveKills == 5 ) {
@@ -3521,6 +3552,13 @@ public class distensionbot extends SubspaceBot {
             lastIDsKilled[1] = lastIDsKilled[0];
             lastIDsKilled[0] = killedPlayerID;
             return repeats;
+        }
+
+        /**
+         * @return RP earned since round start with current ship.
+         */
+        public int getRecentlyEarnedRP() {
+            return recentlyEarnedRP;
         }
 
         // PROGRESS BAR
@@ -3940,7 +3978,8 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to add
          */
         public void addPlayer( DistensionPlayer p ) {
-            players.addLast(p);
+            if( !players.contains(p) )
+                players.addLast(p);
         }
 
         /**
@@ -4219,7 +4258,7 @@ public class distensionbot extends SubspaceBot {
         }
         for( DistensionPlayer p : m_players.values() ) {
         	if( p.isInShip() )
-        		m_botAction.sendPrivateMessage(p.getName(), "END BATTLE PROGRESS:  " + p.getPointsToNextRank() + " RP to next rank." );
+        		m_botAction.sendPrivateMessage(p.getName(), "END BATTLE PROGRESS:  " + p.getPointsToNextRank() + " RP to next rank; total " + p.getRecentlyEarnedRP() + " RP earned this session in " + Tools.shipName(p.getShipNum()) + "." );
         }
 
         if( beginDelayedShutdown ) {
@@ -4307,7 +4346,7 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p;
         while( i.hasNext() ) {
             p = i.next();
-            if( p.isSupportShip() && !p.isRespawning() ) {
+            if( p.isSupportShip() ) {
                 m_botAction.setShip( p.getName(), 1 );
                 m_botAction.setShip( p.getName(), p.getShipNum() );
                 p.doSetupSpecialRespawn();
