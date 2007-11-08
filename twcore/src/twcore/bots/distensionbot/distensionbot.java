@@ -67,6 +67,11 @@ public class distensionbot extends SubspaceBot {
     private final double NORMAL_RANK_FACTOR = 1.35;        // Factor for rank increases (lvl 25+)
     private final double HIGH_RANK_FACTOR = 1.6;           // Factor for rank increases (lvl 50+)
     private final double STUPIDLY_HIGH_RANK_FACTOR = 2.5;  // Factor for rank increases (lvl 70+)
+    private final int RANK_DIFF_LOW = 10;                  // Rank difference calculations
+    private final int RANK_DIFF_MED = 15;                  // for humiliation and low-rank RP caps
+    private final int RANK_DIFF_HIGH = 20;
+    private final int RANK_DIFF_VHIGH = 30;
+    private final int RANK_DIFF_HIGHEST = 50;
     private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
     private final int RANK_REQ_SHIP2 = 5;    // 15
     private final int RANK_REQ_SHIP3 = 2;    //  4
@@ -275,7 +280,7 @@ public class distensionbot extends SubspaceBot {
             };
             m_botAction.scheduleTask( idleSpecTask, IDLE_FREQUENCY_CHECK * 1000, IDLE_FREQUENCY_CHECK * 1000);
         }
-        // Do not advert/reward for rectifying imbalance in the first 5 min of a game
+        // Do not advert/reward for rectifying imbalance in the first 1 min of a game
         lastAssistReward = System.currentTimeMillis();
         lastAssistAdvert = System.currentTimeMillis();
         assistAdvertTask = new TimerTask() {
@@ -798,38 +803,51 @@ public class distensionbot extends SubspaceBot {
                     return;
                 loser.clearSuccessiveKills();
                 int points;
-                int levelDiff = loser.getUpgradeLevel() - victor.getUpgradeLevel();
+                int loserUpgLevel = Math.max( 1, loser.getUpgradeLevel() );
+                int victorUpgLevel = Math.max( 1, victor.getUpgradeLevel() );
+                int levelDiff = loserUpgLevel - victorUpgLevel;
 
                 // Loser is 10 or more levels above victor:
                 //   Victor earns loser's level in RP, and loser loses half of that amount from due shame
-                if( levelDiff >= 10 ) {
-                    if( levelDiff >= 15 ) {
-                        points = victor.getUpgradeLevel() + 15;
-                        isMaxReward = true;
-                    } else {
-                        points = loser.getUpgradeLevel();
-                    }
+                if( levelDiff >= RANK_DIFF_LOW ) {
+                    points = victorUpgLevel + RANK_DIFF_LOW;
+                    isMaxReward = true;
 
                     // Support ships are not humiliated; assault are
                     if( ! loser.isSupportShip() ) {
-                        loser.addRankPoints( -(points / 2) );
-                        m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (points / 2) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
+                        int loss;
+                        if( levelDiff >= RANK_DIFF_HIGHEST )
+                            loss = loserUpgLevel * 5;
+                        else if( levelDiff >= RANK_DIFF_VHIGH )
+                            loss = loserUpgLevel * 2;
+                        else if( levelDiff >= RANK_DIFF_HIGH )
+                            loss = loserUpgLevel;
+                        else if( levelDiff >= RANK_DIFF_MED )
+                            loss = points;
+                        else
+                            loss = (points / 3);    // Default
+                        loser.addRankPoints( -loss );
+                        m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (DEBUG ? loss * DEBUG_MULTIPLIER : loss ) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
                     }
 
-                    // Loser is 10 or more levels below victor:
-                    //   Victor only gets 1 point, and loser loses nothing
-                } else if( levelDiff <= -10 ) {
-                    points = 1;
+                    // Loser is 10 or more levels below victor: victor gets fewer points
+                } else if( levelDiff <= -RANK_DIFF_LOW ) {
                     isMinReward = true;
+                    if( levelDiff <= -RANK_DIFF_HIGHEST )
+                        points = 1;
+                    else if( levelDiff <= -RANK_DIFF_VHIGH )
+                        points = loserUpgLevel / 5;
+                    else if( levelDiff <= -RANK_DIFF_HIGH )
+                        points = loserUpgLevel / 4;
+                    else if( levelDiff <= -RANK_DIFF_MED )
+                        points = loserUpgLevel / 3;
+                    else
+                        points = loserUpgLevel / 2;
 
                     // Normal kill:
                     //   Victor earns the level of the loser in points.  Level 0 players are worth 1 point.
                 } else {
-                    if( loser.getUpgradeLevel() == 0 )
-                        points = 1;
-                    else {
-                        points = loser.getUpgradeLevel();
-                    }
+                    points = loser.getUpgradeLevel();
                 }
 
                 // Points adjusted based on size of victor's army v. loser's
@@ -892,9 +910,9 @@ public class distensionbot extends SubspaceBot {
                     points = Math.round((float)points * DEBUG_MULTIPLIER);
                 String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")";
                 if( isMinReward )
-                    msg += " [1 RP for low rank kill]";
+                    msg += " [Capped for low rank kill]";
                 else if( isMaxReward )
-                    msg += " [RP capped for high rank kill]";
+                    msg += " [Capped for high rank kill]";
                 if( isRepeatKillLight )
                     msg += " [-50% for repeat kill]";
                 else if( isRepeatKillHard )
@@ -1978,7 +1996,7 @@ public class distensionbot extends SubspaceBot {
                         reward = p.getRank() * 3;
                     else if( armySizeWeight < .8 )
                         reward = p.getRank() * 2;
-                    m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + reward + " RP bonus.", 1 );
+                    m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + (DEBUG ? reward * DEBUG_MULTIPLIER : reward ) + " RP bonus.", 1 );
                     p.addRankPoints(reward);
                 }
                 p.setAssist( armyToAssist );
@@ -4247,7 +4265,7 @@ public class distensionbot extends SubspaceBot {
                         }
                         int holds = flagTimer.getSectorHolds( p.getName() );
                         int breaks = flagTimer.getSectorBreaks( p.getName() );
-                        int bonus = holds * 10 + breaks * 5;
+                        int bonus = Math.max( 1, (holds * playerRank + breaks * (playerRank / 2)) );
                         if( holds != 0 && breaks != 0 ) {
                             m_botAction.sendPrivateMessage( p.getName(), "For " + holds + " sector holds and " + breaks +" sector breaks, you also receive an additional " + (DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + " RP." );
                         } else if( holds != 0 ) {
@@ -5172,12 +5190,12 @@ public class distensionbot extends SubspaceBot {
         // 7:  Portal 1
         // 9:  Priority respawn
         // 13: XRadar
-        // 15: (Can attach to other terrs)
-        // 16: Multi (regular)
+        // 16: Multi (slightly more forward than regular)
         // 21: Burst 2
         // 27: Decoy
         // 29: Portal 2
         // 36: L2 Guns
+        // 40: (Can attach to other terrs)
         // 44: Burst 3
         // 48: Portal 3
         // 50: Targetted EMP (negative full charge to all of the other team)
@@ -5299,7 +5317,7 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( 10, 14 );       // Level 10 unlock: beta only
         upg = new ShipUpgrade( "Directive Realigner      [ROT]", Tools.Prize.ROTATION, 1, 0, 5 );        //  30 x5
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "InitiaTek Burst Engine   [ROT]", Tools.Prize.THRUST, 1, 0, 5 );          //   2 x5
+        upg = new ShipUpgrade( "InitiaTek Burst Engine   [THR]", Tools.Prize.THRUST, 1, 0, 5 );          //   2 x5
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Streamlining Unit        [SPD]", Tools.Prize.TOPSPEED, 1, 0, 5 );        // 210 x5
         ship.addUpgrade( upg );
