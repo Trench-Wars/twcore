@@ -844,13 +844,11 @@ public class distensionbot extends SubspaceBot {
                 else if( armySizeWeight < 0.2f )
                     armySizeWeight = 0.2f;
 
-                int flagMulti = killerarmy.getNumFlagsOwned();
-                if( flagMulti == 0 ) {
+                float flagMulti = killerarmy.getNumFlagsOwned();
+                if( flagMulti == 0f ) {
                     // 1 RP for 0 flag rule only applies if armies are imbalanced.
                     if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                        m_botAction.sendPrivateMessage( killer.getPlayerName(), "KILL: 1 RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")  [1RP MAX - You hold no flags]" );
-                        victor.addRankPoints( 1 );
-                        return;
+                        flagMulti = 0.5f;
                     } else {
                         flagMulti = 1;
                     }
@@ -907,6 +905,8 @@ public class distensionbot extends SubspaceBot {
                     msg += " [-25% for Shark]";
                 if( flagMulti == 2 )
                     msg += " [x2 RP FOR SECTOR HOLD]";
+                if( flagMulti == 0.5f )
+                    msg += " [-50% for no flags]";
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     msg += " [x" + DEBUG_MULTIPLIER + " beta]";
                 m_botAction.sendPrivateMessage(victor.getName(), msg);
@@ -1633,7 +1633,7 @@ public class distensionbot extends SubspaceBot {
                     printmsg += Tools.formatString( "" + cost, 11 );
                     int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
                     if( req <= player.getRank() ) {
-                        if( diff >= 0 )
+                        if( diff <= 0 )
                             printmsg += "AVAIL!";
                         else
                             printmsg += diff + " more pt" + (diff == 1 ? "" : "s");
@@ -4603,13 +4603,15 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!" );
                 else
                     m_botAction.sendArenaMessage( "Sector hold broken: "   + p.getArmyName() + " ("  + p.getName() + ")");
+                addSectorBreak( p.getName() );
+            } else {
+                m_botAction.sendArenaMessage( "Sector hold broken: "   + p.getArmyName() );
             }
             claimBeingBroken = false;
             breakSeconds = 0;
             breakingArmyID = -1;
             sectorHoldingArmyID = -1;
             secondsHeld = 0;
-            addSectorBreak( p.getName() );
             flagObjs.hideObject(LVZ_SECTOR_HOLD);
             m_botAction.manuallySetObjects( flagObjs.getObjects() );
             do_updateTimer();
