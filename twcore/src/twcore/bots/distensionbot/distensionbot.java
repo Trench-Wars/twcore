@@ -827,7 +827,7 @@ public class distensionbot extends SubspaceBot {
                         else
                             loss = (points / 3);    // Default
                         loser.addRankPoints( -loss );
-                        m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + (DEBUG ? loss * DEBUG_MULTIPLIER : loss ) + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
+                        m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
                     }
 
                     // Loser is 10 or more levels below victor: victor gets fewer points
@@ -1374,6 +1374,7 @@ public class distensionbot extends SubspaceBot {
         m_playerTimes.remove( player.getName() );
         checkFlagTimeStop();
         player.setAssist(-1);
+        m_botAction.hideObjectForPlayer(player.getArenaPlayerID(), LVZ_REARMING);
         m_botAction.sendPrivateMessage( player.getName(), "Total earned in " + Tools.shipName(player.getShipNum()) + ": " + player.getRecentlyEarnedRP() + " RP" );
         if( player.saveCurrentShipToDBNow() ) {
             m_botAction.sendPrivateMessage( player.getName(), "Ship status confirmed and logged to our records.  You are now docked.");
@@ -1778,7 +1779,7 @@ public class distensionbot extends SubspaceBot {
         player.modifyUpgrade( upgradeNum, -1 );
         if( upgrade.getPrizeNum() == -1 )
             player.setFastRespawn(false);
-        else
+        else if( upgrade.getPrizeNum() > 0 )
             m_botAction.specificPrize( name, -upgrade.getPrizeNum() );
         if( upgrade.getMaxLevel() == 1 ) {
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] has been removed from the " + Tools.shipName( shipNum ) + "." );
@@ -3115,9 +3116,9 @@ public class distensionbot extends SubspaceBot {
                 return;
             purchasedUpgrades[upgrade] += amt;
             getArmy().recalculateFigures();
-            if( (shipNum == 3 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[12] > 0)) ||
+            if( (shipNum == 3 && (purchasedUpgrades[10] > 0 || purchasedUpgrades[11] > 0)) ||
                 (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
-                (shipNum == 8 && (purchasedUpgrades[10] > 0) ) )
+                (shipNum == 8 && (purchasedUpgrades[9] > 0) ) )
                 m_specialAbilityPrizer.addPlayer(this);
             else
                 m_specialAbilityPrizer.removePlayer(this);
@@ -3156,9 +3157,9 @@ public class distensionbot extends SubspaceBot {
             isRespawning = false;
             resetProgressBar();
             initProgressBar();
-            if( (shipNum == 3 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[12] > 0)) ||
+            if( (shipNum == 3 && (purchasedUpgrades[10] > 0 || purchasedUpgrades[11] > 0)) ||
                     (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
-                    (shipNum == 8 && (purchasedUpgrades[10] > 0) ) )
+                    (shipNum == 8 && (purchasedUpgrades[9] > 0) ) )
                     m_specialAbilityPrizer.addPlayer(this);
                 else
                     m_specialAbilityPrizer.removePlayer(this);
@@ -3658,15 +3659,15 @@ public class distensionbot extends SubspaceBot {
 
         /**
          * Update with given amount of progress.
-         * @param prog Current progress as opposed to bar-displayed progress
+         * @param progSteps Steps of progress to advance
          */
-        public void updateProgressBar( int prog ) {
-            if( prog == 0 || prog > 9 )
+        public void updateProgressBar( int progSteps ) {
+            if( progSteps == 0 || progress + progSteps > 9 )
                 return;
             // Make additions to bar between progress (old display) and prog (new amt/display)
-            for( int i = progress + 1; i < prog + 1; i++ )
+            for( int i = progress + 1; i < progSteps + 1; i++ )
                 playerObjs.showObject(arenaPlayerID, LVZ_PROGRESS_BAR + i );
-            progress += prog;
+            progress += progSteps;
             setPlayerObjects();
         }
 
