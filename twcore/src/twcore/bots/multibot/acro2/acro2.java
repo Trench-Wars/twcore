@@ -258,7 +258,7 @@ public class acro2 extends MultiModule{
                     // +5 pts for receiving the most votes (round winner)
                     if (intPlayerVotes == intMostVotes) {
                         intPlayerBonus += 5;
-                        if (!strWinners.isEmpty()) {strWinners += ", ";}
+                        if (strWinners.length() > 0) {strWinners += ", ";}
                     	strWinners += strCurPlayer;
                     }
 
