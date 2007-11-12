@@ -303,10 +303,10 @@ public class logbot extends SubspaceBot {
     public ArrayList<String> ParseString (String argString)	{
     	try	{
     		StringTokenizer argTokens = getArgTokens(argString,",");
-        	ArrayList<String> lvzFiles = new ArrayList<String>();
+        	ArrayList<String> parts = new ArrayList<String>();
         	while ( argTokens.hasMoreTokens())
-        		lvzFiles.add(argTokens.nextToken().trim().toLowerCase());
-        	return lvzFiles;
+        		parts.add(argTokens.nextToken().trim().toLowerCase());
+        	return parts;
     	}
     	catch (Exception e){
     		return null;
@@ -785,12 +785,16 @@ public class logbot extends SubspaceBot {
     
     public void WriteDefinitions()	{	
     	try	{
-    	     DataOutputStream out = new DataOutputStream( new FileOutputStream( data ) );
+    	     DataOutputStream out = new DataOutputStream( new FileOutputStream( data ) );  
+    	     if (!fileNames.isEmpty())
+    	    	 out.writeUTF("#" + fileNames.toString());
+    	     if (!op.isEmpty())
+    	    	 out.writeUTF("@" + op.toString());
     	     
     	     Iterator<Watched_Arena> arenas = guarded.values().iterator();
     	    	while (arenas.hasNext())	{
     	    		Watched_Arena temp = arenas.next();
-    	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
+    	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString() + "~" + op.toString() + "~" + fileNames.toString());
     	    		out.writeUTF(line);
     	    	}
     	     out.close();
@@ -811,13 +815,20 @@ public class logbot extends SubspaceBot {
     	String owner;
     	ArrayList<String> lvz;
     	ArrayList<String> guests;
+    	ArrayList<String> ops;
+    	ArrayList<String> files;
     	try {
     		DataInputStream in = new DataInputStream( new FileInputStream( data ) );
+    		if ((line = in.readUTF()).startsWith("#"))
+    			{files = ParseString(TrimList(line));fileNames = files;}
+    		if ((line = in.readUTF()).startsWith("@"))
+    			{ops = ParseString(TrimList(line));op = ops;}
+    		
         	while (in.available() != 0)	{
         		line = in.readUTF();
-        		name = line.substring(0, line.indexOf("~"));
-        		owner = line.substring(name.length()+1, line.indexOf("["));
-        		lvz = getLvzNames(TrimList(line));
+        		name = line.substring(0, line.indexOf('~'));
+        		owner = line.substring(name.length()+1, line.indexOf('['));
+        		lvz = getLvzNames( TrimList(line.substring(line.indexOf(owner),line.indexOf(owner) + owner.length()-1)) );
         		guests = ParseString( TrimList(line.substring(line.indexOf("]~")+2)) );
         		Watched_Arena temp = new Watched_Arena(name,owner,lvz,guests);
         		guarded.put(name, temp);
@@ -872,7 +883,7 @@ public class logbot extends SubspaceBot {
         	
         	else if (m_opList.isSysop(violator))	{
         		boolean violation = false;
-        		String stamp = (realTimeLogging? getTimeStamp() : logMessage.substring(0, logMessage.indexOf(": ")));
+        		String stamp = (logMessage.substring(0, logMessage.indexOf(": ")));
         		
         		if ( fileName.toLowerCase().startsWith( m_botAction.getArenaName() ))	{
         			m_botAction.sendChatMessage(1,violator + " altered " + m_botAction.getArenaName() + "'s files! -" + stamp + " >>> " + fileName);
@@ -889,7 +900,7 @@ public class logbot extends SubspaceBot {
         			}	
         		}
         		
-        		if ( fileNames.contains(fileName.toLowerCase()))	{
+        		if (fileNames.contains(fileName.toLowerCase()))	{
         			m_botAction.sendChatMessage(1,violator + " altered a restricted file! -" + stamp + " >>> " + fileName);
         			violation = true;
         		}
@@ -985,6 +996,7 @@ public class logbot extends SubspaceBot {
     		doStopLog(sender);
     	if(entity != null)
     		m_botAction.sendSmartPrivateMessage(entity, "!die");
+    	WriteDefinitions();
     	m_botAction.sendChatMessage(1,sender + " has told me to commit suicide -" + getTimeStamp());
     	logEvent( sender + " Has given me a a very sharp razor.");
     	m_botAction.scheduleTask(dieTask, 1000);
@@ -1012,7 +1024,7 @@ public class logbot extends SubspaceBot {
         	return;
         if (name.equalsIgnoreCase(hubBot))
         	handleHubBotCmd(message);
-        else if (entity != null && entity.equals(name))
+        else if (entity != null && entity.equalsIgnoreCase(name))
         	handleEntityCommand(message);
         else if (enslaved || waiting) 
         	return;      
@@ -1282,17 +1294,19 @@ public class logbot extends SubspaceBot {
     
     public void getHelpMessages(String sender)
     {
-    	if (entity == null && m_opList.isOwner(sender))	{	
+    	if (entity == null && m_opList.isOwner(sender))	{
     		m_botAction.sendSmartPrivateMessage(sender, "!Invite <name>                            -- Invites <name> to " + m_botAction.getArenaName() + " .");
-        	m_botAction.sendSmartPrivateMessage(sender, "!ClearInvites                             -- Clears all guests.");
-        	m_botAction.sendSmartPrivateMessage(sender, "!Message <message>                        -- Sets the bounce message interlopers recieve.");
-        	m_botAction.sendSmartPrivateMessage(sender, "!Go <arena>                               -- Sends the bot to <arena>.");
+            m_botAction.sendSmartPrivateMessage(sender, "!ClearInvites                             -- Clears all guests.");
+            m_botAction.sendSmartPrivateMessage(sender, "!Message <message>                        -- Sets the bounce message interlopers recieve.");
+            m_botAction.sendSmartPrivateMessage(sender, "!Go <arena>                               -- Sends the bot to <arena>.");
     	}
-    	else if (!enslaved)	{
-    		m_botAction.sendSmartPrivateMessage(sender, "!AddArena <arena>                         -- Monitors an arena and all related files.");
-        	m_botAction.sendSmartPrivateMessage(sender, "!DelArena <arena>                         -- Stops monitoring an arena and all related files.");
-        	m_botAction.sendSmartPrivateMessage(sender, "!ArenaInvite <arena>,<name>               -- Invites a a player to a monitored arena.");
-        	m_botAction.sendSmartPrivateMessage(sender, "!ClearArenaInvites <arena>                -- Clears all Invites to a monitored arena.");
+    	if (entity != null)	{
+    		if (!enslaved)	{
+        		m_botAction.sendSmartPrivateMessage(sender, "!AddArena <arena>                         -- Monitors an arena and all related files.");
+            	m_botAction.sendSmartPrivateMessage(sender, "!DelArena <arena>                         -- Stops monitoring an arena and all related files.");
+            	m_botAction.sendSmartPrivateMessage(sender, "!ArenaInvite <arena>,<name>               -- Invites a a player to a monitored arena.");
+            	m_botAction.sendSmartPrivateMessage(sender, "!ClearArenaInvites <arena>                -- Clears all Invites to a monitored arena.");
+        	}
         	if (m_opList.isOwner(sender) || op.contains(sender))	{
         		m_botAction.sendSmartPrivateMessage(sender, "!ListArenas                               -- Lists all monitored arenas.");
             	m_botAction.sendSmartPrivateMessage(sender, "!SetFiles <file1>,<file2>,ect...          -- Sets restricted files.");
