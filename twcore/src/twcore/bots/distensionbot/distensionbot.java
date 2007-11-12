@@ -1643,7 +1643,7 @@ public class distensionbot extends SubspaceBot {
             progChars = (int)(( pointsSince / pointsNext ) * 20);
         String progString = Tools.formatString("", progChars, "=" );
         progString = Tools.formatString(progString, 20 );
-        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext + "     [" + progString + "]     " + player.getPointsToNextRank() + " RP to Rank " + player.getRank() + 1 );
+        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext + "     [" + progString + "]     " + player.getPointsToNextRank() + " RP to Rank " + (player.getRank() + 1) );
     }
 
 
@@ -3068,7 +3068,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSetupRespawn() {
             isRespawning = true;
-            if( hasFastRespawn() ) {
+            if( fastRespawn ) {
                 if( getArmyID() == 0 )
                     m_prizeQueue_army0.addHighPriorityPlayer( this );
                 else
@@ -3671,13 +3671,6 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return True if player should go to head of respawn queue
-         */
-        public boolean hasFastRespawn() {
-            return fastRespawn;
-        }
-
-        /**
          * @return True if player is a support ship (5 or 8)
          */
         public boolean isSupportShip() {
@@ -4143,7 +4136,8 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to add
          */
         public void addHighPriorityPlayer( DistensionPlayer p ) {
-            players.addFirst(p);
+            if( !players.contains(p) )
+                players.addFirst(p);
         }
 
         public void run() {
@@ -4306,9 +4300,12 @@ public class distensionbot extends SubspaceBot {
         //               fewer points are earned.
         if( loserStrCurrent / winnerStrCurrent < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
             // Abuse prevention: only fire avarice if losing team was also hurting in last snapshot
-            if( (float)flagTimer.getLastStrength(losingArmyID) / winnerStrCurrent < ASSIST_WEIGHT_IMBALANCE) {
-                m_botAction.sendArenaMessage( "AVARICE DETECTED: Armies imbalanced.  -75% end round award!", 1 );
-                avarice = true;
+            float lastMajorStrengthSnapshot = flagTimer.getLastMajorStrength(losingArmyID);
+            if( lastMajorStrengthSnapshot != -1 ) {      // If -1, no major snapshot is recorded and avarice can not be determined
+                if( lastMajorStrengthSnapshot / winnerStrCurrent < ASSIST_WEIGHT_IMBALANCE) {
+                    m_botAction.sendArenaMessage( "AVARICE DETECTED: Armies imbalanced.  -75% end round award!", 1 );
+                    avarice = true;
+                }
             }
         }
 
@@ -4378,19 +4375,20 @@ public class distensionbot extends SubspaceBot {
                     String victoryMsg;
                     if( gameOver ) {
                         modPoints *= 2;
-                        victoryMsg = (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP award (double) for the final victory (" + percentOnFreq * 100 + "% participation)" + ( avarice ? " [-75% for avarice]" : "" ) ;
+                        victoryMsg = (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (double) for the final victory (" + percentOnFreq * 100 + "% participation)" + ( avarice ? " [-75% for avarice]" : "" ) ;
                     } else {
-                        victoryMsg = (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP award for the victory (" + percentOnFreq * 100 + "% participation)" + ( avarice ? " [-75% for avarice]" : "" );
+                        victoryMsg = (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP for the victory (" + percentOnFreq * 100 + "% participation)" + ( avarice ? " [-75% for avarice]" : "" );
                     }
                     int holds = flagTimer.getSectorHolds( p.getName() );
                     int breaks = flagTimer.getSectorBreaks( p.getName() );
                     int bonus = Math.max( 1, (holds * playerRank + breaks * (playerRank / 2)) );
+                    int totalDisplay = (int)(DEBUG ? bonus + modPoints * DEBUG_MULTIPLIER : bonus + modPoints );
                     if( holds != 0 && breaks != 0 ) {
-                        victoryMsg += ", + " + (DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds and " + breaks +" sector breaks!";
+                        victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds and " + breaks +" sector breaks = " + totalDisplay + " RP!" ;
                     } else if( holds != 0 ) {
-                        victoryMsg += ", + " + (DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds!";
+                        victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds = " + totalDisplay + "RP!";
                     } else if( breaks != 0 ) {
-                        victoryMsg += ", + " + (DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + breaks +" sector breaks!";
+                        victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + breaks +" sector breaks = " + totalDisplay + "RP!";
                     } else {
                         victoryMsg += "!";
                     }
@@ -4677,6 +4675,7 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
+    
     /**
      * This private class counts the consecutive flag time an individual team racks up.
      * Upon reaching the time needed to win, it fires the end of the round.
@@ -4707,8 +4706,8 @@ public class distensionbot extends SubspaceBot {
             sectorHolds = new HashMap<String,Integer>();
             sectorBreaks = new HashMap<String,Integer>();
             armyStrengths = new HashMap<Integer,Integer>();
-            lastArmyStrength0 = 1;
-            lastArmyStrength1 = 1;
+            lastArmyStrength0 = -1;
+            lastArmyStrength1 = -1;
         }
 
         /**
@@ -4849,6 +4848,13 @@ public class distensionbot extends SubspaceBot {
                 else
                     armyStrengths.put(army.getID(), str + army.getTotalStrength() );
             }
+        }
+        
+        /**
+         * Records a "major" strength snapshot, which erases the last major, acting
+         * as a ruler for general army strength within the last 5 minutes.
+         */
+        public void recordMajorStrengthSnapshot() {
             lastArmyStrength0 = m_armies.get(0).getTotalStrength();
             lastArmyStrength1 = m_armies.get(1).getTotalStrength();
         }
@@ -4976,13 +4982,13 @@ public class distensionbot extends SubspaceBot {
 
         /**
          * @param Army to get last strength info on
-         * @return Last army strength of a particular army
+         * @return Last army strength of a particular army; -1 if no major snapshot taken yet.
          */
-        public int getLastStrength( int army ) {
+        public int getLastMajorStrength( int army ) {
             if( army == 0 )
-                return Math.max(1, lastArmyStrength0 );
+                return lastArmyStrength0;
             else
-                return Math.max(1, lastArmyStrength1 );
+                return lastArmyStrength1;
         }
 
 
@@ -5025,6 +5031,7 @@ public class distensionbot extends SubspaceBot {
             // Display info at 5 min increments, unless we are in the last 30 seconds of a battle
             if( (totalSecs % (5 * 60)) == 0 && ( (flagMinutesRequired * 60) - secondsHeld > 30) ) {
                 m_botAction.sendArenaMessage( getTimeInfo() );
+                recordMajorStrengthSnapshot();
             }
 
             if( claimBeingBroken ) {
