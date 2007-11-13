@@ -53,7 +53,7 @@ public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
                                                            // normally be annoying in a public release.
-    private final float DEBUG_MULTIPLIER = 2.6f;           // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 2.75f;          // Amount of RP to give extra in debug mode
 
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms
@@ -129,8 +129,6 @@ public class distensionbot extends SubspaceBot {
 
     // LIMITING SYSTEM
     private final int MAX_PLAYERS = 50;                     // Max # players allowed in game
-    //private final int MAX_TIME = 180;                       // Max # minutes a player may accumulate
-    //private final int RESTORE_RATE = 5;                     // # minutes restored to a player per hour
 
     // ASSIST SYSTEM
     private final float ADVERT_WEIGHT_IMBALANCE = 0.85f;    // At what point to advert that there's an imbalance
@@ -140,7 +138,8 @@ public class distensionbot extends SubspaceBot {
     private long lastAssistReward;                          // Last time assister was given points
     private long lastAssistAdvert;                          // Last time an advert was sent for assistance
     private boolean checkForAssistAdvert = false;           // True if armies may be unbalanced, requiring !assist advert
-    private TimerTask assistAdvertTask;
+    private TimerTask assistAdvertTask;                     // Task used to advert for assisting the other army
+    private TimerTask timeIncrementTask;                    // Task firing every minute that increments time playing
 
     // DATA FOR FLAG TIMER
     private static final int MAX_FLAGTIME_ROUNDS = 7;   // Max # rounds (odd numbers only)
@@ -292,6 +291,14 @@ public class distensionbot extends SubspaceBot {
         // Do not advert/reward for rectifying imbalance in the first 1 min of a game
         lastAssistReward = System.currentTimeMillis();
         lastAssistAdvert = System.currentTimeMillis();
+        //m_botAction.scheduleTask( timeDecrementTask, 60000, 60000 );
+        timeIncrementTask = new TimerTask() {
+            public void run() {
+                for( DistensionPlayer p : m_players.values() )
+                    p.incrementTime();
+            }
+        };
+        //m_botAction.scheduleTask( timeIncrementTask, 60 * 60000, 60 * 60000 );
         assistAdvertTask = new TimerTask() {
             public void run() {
                 if( !checkForAssistAdvert )
@@ -2688,7 +2695,7 @@ public class distensionbot extends SubspaceBot {
         private String name;    // Playername
         private int arenaPlayerID;    // ID as understood by Arena
         private int playerID;   // PlayerID as found in DB (not as in Arena); -1 if not logged in
-        private int timeLeft;   // Time, in minutes, remaining to play;       -999 if not logged in
+        private int timePlayed; // Time, in minutes, played today;            -1 if not logged in
         private int shipNum;    // Current ship: 1-8, 0 if docked/spectating; -1 if not logged in
         private int lastShipNum;// Last ship used (for lagouts);              -1 if not logged in
         private int rank;       // Current rank (# upgrade points awarded);   -1 if docked/not logged in
@@ -2719,7 +2726,7 @@ public class distensionbot extends SubspaceBot {
             this.name = name;
             arenaPlayerID = m_botAction.getPlayerID(name);
             playerID = -1;
-            timeLeft = -999;
+            timePlayed = -1;
             shipNum = -1;
             lastShipNum = -1;
             rank = -1;
@@ -2777,7 +2784,7 @@ public class distensionbot extends SubspaceBot {
                         return false;
                     playerID = r.getInt("fnID");
                     armyID = r.getInt( "fnArmyID" );
-                    timeLeft = r.getInt( "fnTime" );
+                    timePlayed = r.getInt( "fnTime" );
                     for( int i = 0; i < 8; i++ )
                         shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ).equals( "y" ) ? true : false );
                     success = true;
@@ -2795,7 +2802,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void savePlayerTimeToDB() {
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='" + timeLeft +"' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='" + timePlayed +"' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
 
@@ -3393,6 +3400,7 @@ public class distensionbot extends SubspaceBot {
         }
 
 
+
         // BASIC SETTERS
 
         /**
@@ -3448,6 +3456,12 @@ public class distensionbot extends SubspaceBot {
             assistArmyID = newArmyID;
         }
 
+        /**
+         * Increments time played by one minute.
+         */
+        public void incrementTime() {
+            timePlayed++;
+        }
 
         // GETTERS
 
@@ -3708,6 +3722,14 @@ public class distensionbot extends SubspaceBot {
         public int getRecentlyEarnedRP() {
             return recentlyEarnedRP;
         }
+
+        /**
+         * @return True if player is out of time.
+         */
+        public boolean isOutOfTime() {
+            return timePlayed <= 0;
+        }
+
 
         // PROGRESS BAR
         public void checkProgress() {
@@ -4675,7 +4697,7 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
-    
+
     /**
      * This private class counts the consecutive flag time an individual team racks up.
      * Upon reaching the time needed to win, it fires the end of the round.
@@ -4849,7 +4871,7 @@ public class distensionbot extends SubspaceBot {
                     armyStrengths.put(army.getID(), str + army.getTotalStrength() );
             }
         }
-        
+
         /**
          * Records a "major" strength snapshot, which erases the last major, acting
          * as a ruler for general army strength within the last 5 minutes.
@@ -5365,10 +5387,10 @@ public class distensionbot extends SubspaceBot {
         // TERRIER -- rank 7
         // Very fast upg speed; rotation, energy has only 9 lvls; thrust starts -1 but has HIGH max
         // 2:  Burst 1
+        // 3: XRadar
         // 5: +10% Regeneration (and 1 level available every 5 levels)
         // 7:  Portal 1
         // 9:  Priority respawn
-        // 13: XRadar
         // 16: Multi (slightly more forward than regular)
         // 21: Burst 2
         // 27: Decoy
@@ -5401,7 +5423,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Multiple Cannons", Tools.Prize.MULTIFIRE, 2, 16, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 1, 13, 1 );
+        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 1, 0, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Terrier Reiterator", Tools.Prize.DECOY, 2, 27, 1 );
         ship.addUpgrade( upg );
@@ -5426,13 +5448,13 @@ public class distensionbot extends SubspaceBot {
         // Slow-medium upg speed; all upg start 2 levels higher than normal calcs, but 1st level (3rd) costs 2pts
         //                        and all have level requirements; special upgrades come somewhat early
         //  5: XRadar
-        //  7: Rocket
-        //  9: Stealth
+        //  7: Rocket 1
         // 13: L2 Guns
         // 18: Multifire
         // 23: Cloak
         // 29: Portal
         // 35: L3 Guns
+        // 40: Stealth
         // 42: Decoy
         // 46: Rocket 2
         // 50: Brick
@@ -5454,9 +5476,9 @@ public class distensionbot extends SubspaceBot {
         int p6a2d[] = { 5, 8, 10, 15, 20, 30, 40, 50, 60, 70 };
         upg = new ShipUpgrade( "Influx Recapitulator     [CHG]", Tools.Prize.RECHARGE, p6a1d, p6a2d, 10 );      // 150 x10
         ship.addUpgrade( upg );
-        int p6a1e[] = { 2, 1, 1, 1, 1, 5, 2, 2, 2, 2, 5, 7, 10 };
-        int p6a2e[] = { 5, 8, 10, 15, 20, 30, 40, 50, 55, 60, 65, 70, 75 };
-        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, p6a1e, p6a2e, 13 );        // 100 x13
+        int p6a1e[] = { 1, 1, 2, 1,  1,  1,  1,  5,  2,  2,  2,  2,  5,  7, 10 };
+        int p6a2e[] = { 1, 3, 5, 8, 10, 15, 20, 30, 40, 50, 55, 60, 65, 70, 75 };
+        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, p6a1e, p6a2e, 15 );        // 100 x15
         ship.addUpgrade( upg );
         int p6b1[] = { 1, 4 };
         int p6b2[] = { 13, 35 };
@@ -5470,12 +5492,12 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Escape Tunnel", Tools.Prize.PORTAL, 3, 29, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Scrambler", Tools.Prize.STEALTH, 1, 9, 1 );
+        upg = new ShipUpgrade( "Radar Scrambler", Tools.Prize.STEALTH, 4, 40, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Light-Bending Unit", Tools.Prize.CLOAK, 3, 23, 1 );
         ship.addUpgrade( upg );
         int p6c1[] = { 1, 1, 3 };
-        int p6c2[] = { 7, 46, 60 };
+        int p6c2[] = { 9, 46, 60 };
         upg = new ShipUpgrade( "Assault Boosters", Tools.Prize.ROCKET, p6c1, p6c2, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Movement Inhibitor", Tools.Prize.BRICK, 5, 50, 1 );
