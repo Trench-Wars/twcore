@@ -354,6 +354,11 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
             m_botAction.sendArenaMessage("Distension BETA loaded.  Use !return (~) to return to your current ship or !enlist if you're new.  Please see the beta thread on the forums for bug reports & suggestions.");
+            // Reset all times at each load
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
+            } catch (SQLException e ) {  }
+            m_botAction.scoreResetAll();
         }
     }
 
@@ -523,7 +528,7 @@ public class distensionbot extends SubspaceBot {
                     "|                       |     unless the new army has 4+ fewer pilots.",
                     "| !warp             !w  |  Toggles waiting in spawn vs. being autowarped out",
                     "| !basewarp         !bw |  Toggles warping into base vs. spawn at round start",
-                    "| !killmsg          !k  |  Toggles kill messages on and off",
+                    "| !killmsg          !k  |  Toggles kill messages on and off (+1% RP for off)",
                     "| !team             !tm |  Shows all players on team and their upg. levels",
                     "| !terr             !t  |  Shows approximate location of all army terriers",
                     "| !whereis <name>   !wh |  Shows approximate location of pilot <name>",
@@ -547,7 +552,7 @@ public class distensionbot extends SubspaceBot {
                     "| !assist <army>    !as |  Temporarily assists <army> at no penalty to you",
                     "| !warp             !w  |  Toggles waiting in spawn vs. being autowarped out",
                     "| !basewarp         !bw |  Toggles warping into base vs. spawn at round start",
-                    "| !killmsg          !k  |  Toggles kill messages on and off",
+                    "| !killmsg          !k  |  Toggles kill messages on and off (+1% RP for off)",
                     "| !team             !tm |  Shows all players on team and their upg. levels",
                     "| !terr             !t  |  Shows approximate location of all army terriers",
                     "| !whereis <name>   !wh |  Shows approximate location of pilot <name>",
@@ -838,9 +843,9 @@ public class distensionbot extends SubspaceBot {
                     div = 10;
                 else {
                     if( loser.isSupportShip() )
-                        div = 0.5f;
+                        div = 1.0f;
                     else
-                        div = 1;
+                        div = 2;
                 }
                 int loss = Math.round((float)victor.getUpgradeLevel() / div);
                 victor.addRankPoints( -loss );
@@ -992,7 +997,7 @@ public class distensionbot extends SubspaceBot {
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     msg += " [x" + DEBUG_MULTIPLIER + " beta]";
                 if( isFirstKill )
-                    msg += " (PM !killmsg to turn off kill notifications)";
+                    msg += " (!killmsg turns off this msg & gives +1% kill bonus)";
                 m_botAction.sendPrivateMessage(victor.getName(), msg);
             }
         }
@@ -1075,7 +1080,7 @@ public class distensionbot extends SubspaceBot {
                 ".",
                 "RECENT UPDATES  -  11/14/07",
                 " - Player limit and queuing for slot system implemented",
-                " - !killmsg to toggle on/off kill messages",
+                " - !killmsg to toggle on/off kill messages (off gives +1% bonus)",
                 " - !lagout for those that lag or are DC'd, to maintain participation",
                 " - Shortcuts for all commands added",
                 " - Addition of new special abilities",
@@ -1947,9 +1952,9 @@ public class distensionbot extends SubspaceBot {
         if( player == null )
             return;
         if( player.sendKillMessages() )
-            m_botAction.sendPrivateMessage( name, "You will receive RP award messages when you destroy another ship." );
+            m_botAction.sendPrivateMessage( name, "You will receive kill messages when you destroy another ship, and receive no bonus." );
         else
-            m_botAction.sendPrivateMessage( name, "You will no longer receive RP award messages when you destroy another ship." );
+            m_botAction.sendPrivateMessage( name, "You will no longer receive kill messages, and will receive a +1% bonus for every kill." );
     }
 
 
@@ -2260,6 +2265,7 @@ public class distensionbot extends SubspaceBot {
             if( autosave ) {
                 p.saveCurrentShipToDB();
             } else {
+                p.savePlayerTimeToDB();
                 if( p.saveCurrentShipToDBNow() == false ) {
                     m_botAction.sendPrivateMessage( p.getName(), "Your data could not be saved.  Please use !dock to save your data.  Contact a mod with ?help if this does not work." );
                     playersunsaved++;
@@ -2273,7 +2279,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendArenaMessage( "AUTOSAVE: All players saved to DB in " + timeDiff + "ms.");
         else {
             if( playersunsaved == 0 )
-                m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  -" + name, 1 );
+                m_botAction.sendArenaMessage( "Saved all " + players + " players in " + timeDiff + "ms.  -" + name, 1 );
             else
                 m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  " + playersunsaved + " players could not be saved.", 2 );
         }
@@ -2303,6 +2309,7 @@ public class distensionbot extends SubspaceBot {
         }
         m_botAction.setObjects();
         m_botAction.manuallySetObjects(flagObjs.getObjects());
+        m_botAction.scoreResetAll();
         m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
         Thread.yield();
         try { Thread.sleep(500); } catch (Exception e) {};
@@ -2794,6 +2801,7 @@ public class distensionbot extends SubspaceBot {
         private int       idleTicks;            // # ticks player has been idle
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
         private int       recentlyEarnedRP;     // RP earned since changing to this ship
+        private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
         private boolean   shipDataSaved;        // True if ship data on record equals ship data in DB
@@ -2823,6 +2831,7 @@ public class distensionbot extends SubspaceBot {
             idleTicks = 0;
             assistArmyID = -1;
             recentlyEarnedRP = 0;
+            bonusBuildup = 0.0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[8];
             for( int i = 0; i < 8; i++ )
@@ -3279,8 +3288,17 @@ public class distensionbot extends SubspaceBot {
         public void addRankPoints( int points ) {
             if( shipNum < 1 )
                 return;
-            if( DEBUG && points > 0 )
-                points = (int)((float)points * DEBUG_MULTIPLIER);
+            if( points > 0 ) {
+                if( DEBUG )
+                    points = (int)((float)points * DEBUG_MULTIPLIER);
+                if( !sendKillMessages ) {
+                    bonusBuildup += points / 100;
+                    while( bonusBuildup > 1.0 ) {
+                        points++;
+                        bonusBuildup--;
+                    }
+                }
+            }
             rankPoints += points;
             recentlyEarnedRP += points;
             checkProgress();
@@ -3853,7 +3871,7 @@ public class distensionbot extends SubspaceBot {
             float pointsSince = getPointsSinceLastRank();
             int prog = 0;
             if( pointsSince > 0 )
-                prog = Math.round((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
+                prog = (int)((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
             if( prog > progress )
                 updateProgressBar( prog );
             else if( prog < progress ) {
@@ -3883,7 +3901,7 @@ public class distensionbot extends SubspaceBot {
             progress = 0;
             int prog = 0;
             if( pointsSince > 0 )
-                prog = Math.round((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
+                prog = (int)((pointsSince / (float)getNextRankPointsProgressive()) * 10.0f);
             updateProgressBar( prog );
         }
 
@@ -4511,7 +4529,7 @@ public class distensionbot extends SubspaceBot {
         float points = 0;
         while( i.hasNext() ) {
             DistensionPlayer p = i.next();
-            if( p.getArmyID() == winningArmyID ) {
+            if( p.getArmyID() == winningArmyID && p.getShipNum() > 0 ) {
                 playerRank = p.getRank();
                 if( playerRank == 0 )
                     playerRank = 1;
@@ -5636,7 +5654,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p6a1e[] = { 2, 2, 1,  1,  1,  1,  5,  2,  2,  2,  2,  5,  7, 10 };
         int p6a2e[] = { 3, 5, 8, 10, 15, 20, 30, 40, 50, 55, 60, 65, 70, 75 };
-        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, p6a1e, p6a2e, 15 );        // 100 x15
+        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, p6a1e, p6a2e, 14 );        // 100 x14
         ship.addUpgrade( upg );
         int p6b1[] = { 1, 4 };
         int p6b2[] = { 13, 35 };
