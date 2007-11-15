@@ -58,8 +58,8 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
-    private final int IDLE_FREQUENCY_CHECK = 20;           // In seconds, how frequently to check for idlers
-    private final int IDLE_TICKS_BEFORE_DOCK = 5;          // # IDLE_FREQUENCY_CHECKS in idle before player is docked
+    private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
+    private final int IDLE_TICKS_BEFORE_DOCK = 10;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int LAGOUT_VALID_SECONDS = 60;           // # seconds since lagout in which you can use !lagout
     private final int LAGOUT_WAIT_SECONDS = 30;            // # seconds a player must wait to be placed back in the game
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
@@ -320,6 +320,13 @@ public class distensionbot extends SubspaceBot {
                 } else if( armyWeight0 < ADVERT_WEIGHT_IMBALANCE ) {
                     helpOutArmy = 0;
                     msgArmy = 1;
+                }
+                if( flagOwner[0] == helpOutArmy && flagOwner[1] == helpOutArmy ) {
+                    // If they're holding both flags, they don't need help.
+                    // However, don't reset assist advert time so that we check again in 20sec
+                    // if someone leaves or switches ships.
+                    checkForAssistAdvert = false;
+                    return;
                 }
                 if( helpOutArmy != -1 ) {
                     // Attempt to return an assister who is needed back on freq;
@@ -850,7 +857,7 @@ public class distensionbot extends SubspaceBot {
                 int loss = Math.round((float)victor.getUpgradeLevel() / div);
                 victor.addRankPoints( -loss );
                 victor.clearSuccessiveKills();
-                if( loss > 0 )
+                if( loss > 0 && victor.wantsKillMsg() )
                     m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
                 m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
                 m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
@@ -891,7 +898,8 @@ public class distensionbot extends SubspaceBot {
                             loss = (points / 3);    // Default
                         if( points > 0 ) {
                             loser.addRankPoints( -loss );
-                            m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
+                            if( victor.wantsKillMsg() )
+                                m_botAction.sendPrivateMessage(loser.getName(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
                         }
                     }
 
@@ -945,12 +953,14 @@ public class distensionbot extends SubspaceBot {
                         case 3:
                             points /= 2;
                             isRepeatKillLight = true;
-                            m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only half the normal amount of RP." );
+                            if( victor.wantsKillMsg() )
+                                m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only half the normal amount of RP." );
                             break;
                         case 4:
                             points = 1;
                             isRepeatKillHard = true;
-                            m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
+                            if( victor.wantsKillMsg() )
+                                m_botAction.sendPrivateMessage( killer.getPlayerName(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
                             break;
                     }
                 }
@@ -1329,7 +1339,6 @@ public class distensionbot extends SubspaceBot {
         if( !player.getPlayerFromDB() ) {
             if( player.isBanned() ) {
                 m_botAction.sendPrivateMessage( name, "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
-                m_botAction.sendUnfilteredPrivateMessage(name, "*kill 1" );
             } else {
                 m_botAction.sendPrivateMessage( name, "PM me with !enlist if you need to enlist in an army.  Or use !armies to see your army choices, and !enlist # to enlist in a specific army. -" + m_botAction.getBotName() );
             }
@@ -2073,8 +2082,13 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage( name, "Returning to your army now would make things too imbalanced!  Sorry, no can do." );
                     return;
                 }
-                m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " has finished assistance and is returning to their army." );
-                m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has returned to the army." );
+                if( autoReturn ) {
+                    m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is automatically returning to their army to provide needed support." );
+                    m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has automatically returned to the army." );
+                } else {
+                    m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " has finished assistance and is returning to their army." );
+                    m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has returned to the army." );
+                }
                 if( p.getShipNum() == 0 ) {
                     p.setAssist( -1 );
                 } else {
@@ -2106,6 +2120,10 @@ public class distensionbot extends SubspaceBot {
         if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE && !autoReturn ) {
             if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE ) {
                 m_botAction.sendPrivateMessage( name, "Assisting with your current ship will only continue the imbalance!  First !pilot a lower-ranked ship if you want to !assist." );
+                return;
+            }
+            if( flagOwner[0] == armyToAssist && flagOwner[1] == armyToAssist ) {
+                m_botAction.sendPrivateMessage( name, "While army strengths are imbalanced, that army seems to be doing fine!  Try again later." );
                 return;
             }
 
@@ -3492,7 +3510,7 @@ public class distensionbot extends SubspaceBot {
         public void checkIdleStatus() {
             Player p = m_botAction.getPlayer(arenaPlayerID);
             if( p == null ) return;
-            if( shipNum > 1 && (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE) ) {
+            if( shipNum > 0 && (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE) ) {
                 idleTicks++;
                 if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle; you will be automatically docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of the rearmament area.");
@@ -4973,7 +4991,11 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendArenaMessage( "Sector hold broken: "   + p.getArmyName() + " ("  + p.getName() + ")");
                 addSectorBreak( p.getName() );
             } else {
-                m_botAction.sendArenaMessage( "Sector hold broken: "   + p.getArmyName() );
+                DistensionArmy a = m_armies.get( breakingArmyID );
+                if( a != null )
+                    m_botAction.sendArenaMessage( "Sector hold broken: " + a.getName() + "" );
+                else
+                    m_botAction.sendArenaMessage( "Sector hold broken" );
             }
             claimBeingBroken = false;
             breakSeconds = 0;
