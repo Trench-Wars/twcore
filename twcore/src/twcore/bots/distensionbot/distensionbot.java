@@ -53,7 +53,7 @@ public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
                                                            // normally be annoying in a public release.
-    private final float DEBUG_MULTIPLIER = 2.75f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 2.8f;           // Amount of RP to give extra in debug mode
 
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms
@@ -284,8 +284,10 @@ public class distensionbot extends SubspaceBot {
         if( IDLE_FREQUENCY_CHECK != 0 ) {
             idleSpecTask = new TimerTask() {
                 public void run() {
-                    for( DistensionPlayer p : m_players.values() )
-                        p.checkIdleStatus();
+                    // Check for idlers, but only while round is going.
+                    if( flagTimer != null && flagTimer.isRunning() )
+                        for( DistensionPlayer p : m_players.values() )
+                            p.checkIdleStatus();
                 }
             };
             m_botAction.scheduleTask( idleSpecTask, IDLE_FREQUENCY_CHECK * 1000, IDLE_FREQUENCY_CHECK * 1000);
@@ -398,6 +400,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
+        m_commandInterpreter.registerCommand( "!sca", acceptedMessages, this, "cmdScrapAll" );
         m_commandInterpreter.registerCommand( "!t", acceptedMessages, this, "cmdTerr" );
         m_commandInterpreter.registerCommand( "!tm", acceptedMessages, this, "cmdTeam" );
         m_commandInterpreter.registerCommand( "!u", acceptedMessages, this, "cmdUpgrade" );
@@ -422,6 +425,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!armoury", acceptedMessages, this, "cmdArmory" ); // For those that can't spell
         m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade" );
         m_commandInterpreter.registerCommand( "!scrap", acceptedMessages, this, "cmdScrap" );
+        m_commandInterpreter.registerCommand( "!scrapall", acceptedMessages, this, "cmdScrapAll" );
         m_commandInterpreter.registerCommand( "!intro", acceptedMessages, this, "cmdIntro" );
         m_commandInterpreter.registerCommand( "!warp", acceptedMessages, this, "cmdWarp" );
         m_commandInterpreter.registerCommand( "!basewarp", acceptedMessages, this, "cmdBaseWarp" );
@@ -551,19 +555,21 @@ public class distensionbot extends SubspaceBot {
                     "| !upgrade <upg>    !u  |  Upgrade your ship with <upg> from the armory",
                     "| !upginfo <upg>    !ui |  Shows any available information about <upg>",
                     "| !scrap <upg>      !sc |  Trade in <upg>.  *** Restarts ship at current rank!",
+                    "| !scrapall <#/S/M/E/*> |  Scrap all of ...   *: ALL upg        #: Given upg",
+                    "|                   !sca|    S: Special upgs  M: Maneuver upgs  E: En/chg upgs",
                     "| !hangar           !h  |  View your ships & those available for purchase",
                     "| !dock             !d  |  Dock your ship, recording status to headquarters",
                     "| !leave            !l  |  Leaves the battle, opening your position",
                     "| !pilot <ship>     !p  |  Change to <ship> if available in hangar",
                     "| <shipnum>             |  Shortcut for !pilot <shipnum>",
                     "| !assist <army>    !as |  Temporarily assists <army> at no penalty to you",
+                    "| !clearmines       !cm |  Clears all mines, if in a mine-laying ship",
                     "| !warp             !w  |  Toggles waiting in spawn vs. being autowarped out",
                     "| !basewarp         !bw |  Toggles warping into base vs. spawn at round start",
                     "| !killmsg          !k  |  Toggles kill messages on and off (+1% RP for off)",
                     "| !team             !tm |  Shows all players on team and their upg. levels",
                     "| !terr             !t  |  Shows approximate location of all army terriers",
                     "| !whereis <name>   !wh |  Shows approximate location of pilot <name>",
-                    "| !clearmines       !cm |  Clears all mines, if in a mine-laying ship"
             };
             m_botAction.privateMessageSpam(name, helps);
         }
@@ -847,7 +853,7 @@ public class distensionbot extends SubspaceBot {
                 float div;
                 // Sharks get off a little easier for TKs
                 if( killer.getShipType() == Tools.Ship.SHARK )
-                    div = 10;
+                    div = 8;
                 else {
                     if( loser.isSupportShip() )
                         div = 1.0f;
@@ -1089,6 +1095,7 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  11/14/07",
+                " - !scrapall to scrap all of a specific upgrade, all upgrades, etc.",
                 " - Player limit and queuing for slot system implemented",
                 " - !killmsg to toggle on/off kill messages (off gives +1% bonus)",
                 " - !lagout for those that lag or are DC'd, to maintain participation",
@@ -1517,9 +1524,8 @@ public class distensionbot extends SubspaceBot {
                 a.recalculateFigures();
         checkFlagTimeStop();
         player.setAssist(-1);
-        m_botAction.sendPrivateMessage( player.getName(), "Total earned in " + Tools.shipName(player.getShipNum()) + ": " + player.getRecentlyEarnedRP() + " RP" );
         if( player.saveCurrentShipToDBNow() ) {
-            m_botAction.sendPrivateMessage( player.getName(), "Ship status confirmed and logged to our records.  You are now docked.");
+            m_botAction.sendPrivateMessage( player.getName(), "Ship status logged to our records.  Total earned in " + Tools.shipName(player.getShipNum()) + ": " + player.getRecentlyEarnedRP() + " RP.  You are now docked.");
             player.setShipNum( 0 );
         } else {
             m_botAction.sendPrivateMessage( player.getName(), "Ship status was NOT logged.  Please notify a member of staff immediately!");
@@ -1708,11 +1714,14 @@ public class distensionbot extends SubspaceBot {
         double pointsSince = player.getPointsSinceLastRank();
         double pointsNext = player.getNextRankPointsProgressive();
         int progChars = 0;
-        if( pointsSince > 0 )
+        int percent = 0;
+        if( pointsSince > 0 ) {
             progChars = (int)(( pointsSince / pointsNext ) * 20);
+            percent = (int)(( pointsSince / pointsNext ) * 100 );
+        }
         String progString = Tools.formatString("", progChars, "=" );
         progString = Tools.formatString(progString, 20 );
-        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext + "     [" + progString + "]     " + player.getPointsToNextRank() + " RP to Rank " + (player.getRank() + 1) );
+        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext + "  (" + player.getPointsToNextRank() + " to Rank " + (player.getRank() + 1) + "    [" + progString + "]  " + percent + "%" );
     }
 
 
@@ -1870,11 +1879,18 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "If you want to remove upgrades on a ship, you'll need to !pilot one first." );
             return;
         }
+        if( msg.equals("all") ) {
+            // Wrapper for !scrapall *
+            cmdScrapAll( name, "*" );
+            return;
+        }
+
         int upgradeNum = 0;
         try {
             upgradeNum = Integer.parseInt( msg );
         } catch ( Exception e ) {
             m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Give me a number.  Maybe check the !armory first." );
+            return;
         }
         upgradeNum--;  // Fix number to correspond with internal numbering scheme
         if( upgradeNum < 0 || upgradeNum > NUM_UPGRADES ) {
@@ -1909,6 +1925,98 @@ public class distensionbot extends SubspaceBot {
             points = 0;
         player.addRankPoints( -points );
         m_botAction.sendPrivateMessage( name, "Ship returned to the start of rank; -" + points + "RP." );
+    }
+
+
+    /**
+     * Mass-scraps previously-installed upgrades.  Options are all of one slot (#),
+     * all maneuver upgrades (m), all special upgrades (s), and every upgrade on the ship (*).
+     * @param name
+     * @param msg
+     */
+    public void cmdScrapAll( String name, String msg ) {
+        DistensionPlayer player = m_players.get( name );
+        if( player == null )
+            return;
+        int shipNum = player.getShipNum();
+        if( shipNum == -1 ) {
+            m_botAction.sendPrivateMessage( name, "You'll need to !return to your army before you scrap any upgrades." );
+            return;
+        } else if( shipNum == 0 ){
+            m_botAction.sendPrivateMessage( name, "If you want to remove upgrades on a ship, you'll need to !pilot one first." );
+            return;
+        }
+
+        msg = msg.toLowerCase();
+        int pointsReturned = 0;
+        if( msg.equals("m") )
+            pointsReturned = massScrap(player, 0, 2);
+        else if( msg.equals("e") )
+            pointsReturned = massScrap(player, 3, 4);
+        else if( msg.equals("s") )
+            pointsReturned = massScrap(player, 5, NUM_UPGRADES - 1 );
+        else if( msg.equals("*") )
+            pointsReturned = massScrap(player, 0, NUM_UPGRADES - 1 );
+        else {
+            int upgradeNum = 0;
+            try {
+                upgradeNum = Integer.parseInt( msg );
+            } catch ( Exception e ) {
+                m_botAction.sendPrivateMessage( name, "Try !scrapall with * to scrap all upgrades, # for all of a specific upg, S for all special upgs, M for all maneuver upgs, and E for all energy/recharge upgs." );
+                return;
+            }
+            upgradeNum--;  // Fix number to correspond with internal numbering scheme
+            if( upgradeNum < 0 || upgradeNum > NUM_UPGRADES ) {
+                m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Maybe check the !armory first.  #" + upgradeNum + " doesn't work for me." );
+                return;
+            }
+            ShipUpgrade upgrade = m_shipGeneralData.get( shipNum ).getUpgrade( upgradeNum );
+                int currentUpgradeLevel = player.getPurchasedUpgrade( upgradeNum );
+            if( upgrade == null || currentUpgradeLevel == -1 ) {
+                m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Maybe check the !armory first.  #" + upgradeNum + " doesn't work for me." );
+                return;
+            }
+            if( currentUpgradeLevel <= 0 ) {
+                m_botAction.sendPrivateMessage( name, "You haven't exactly upgraded that, now have you?" );
+                return;
+            }
+            pointsReturned = massScrap( player, upgradeNum, upgradeNum );
+        }
+
+        if( pointsReturned > 0 ) {
+            int points = player.getPointsSinceLastRank();
+            if( points < 0 )
+                points = 0;
+            player.addRankPoints( -points );
+            player.addUpgPoints( pointsReturned );
+            m_botAction.sendPrivateMessage( name, "Mass scrap successful.  Ship returned to the start of rank; -" + points + "RP.  +" + pointsReturned + "UP returned.  You now have " + player.getUpgradePoints() + "UP." );
+        } else {
+            m_botAction.sendPrivateMessage( name, "Mass scrap failed: nothing to scrap!" );
+        }
+    }
+
+
+    /**
+     * Scraps all upgrades on a player between a starting and ending upgrade number.
+     * @param p Player to scrap on
+     * @param startingUpg Starting upgrade
+     * @param endingUpg Ending upgrade
+     * @return Total point value of all upgrades scrapped (add these back to the player)
+     */
+    public int massScrap( DistensionPlayer player, int startingUpg, int endingUpg ) {
+        int pointsReturned = 0;
+        for( int i = startingUpg; i < endingUpg + 1; i++ ) {
+            ShipUpgrade upgrade = m_shipGeneralData.get( player.getShipNum() ).getUpgrade( i );
+            while( player.getPurchasedUpgrade( i ) > 0 ) {
+                pointsReturned += upgrade.getCostDefine( player.getPurchasedUpgrade( i ) - 1);
+                player.modifyUpgrade( i, -1 );
+                if( upgrade.getPrizeNum() == -1 )
+                    player.setFastRespawn(false);
+                else if( upgrade.getPrizeNum() > 0 )
+                    m_botAction.specificPrize( player.getName(), -upgrade.getPrizeNum() );
+            }
+        }
+        return pointsReturned;
     }
 
 
@@ -2218,6 +2326,10 @@ public class distensionbot extends SubspaceBot {
         }
         if( p.getShipNum() != Tools.Ship.SHARK && p.getShipNum() != Tools.Ship.LEVIATHAN && p.getShipNum() != Tools.Ship.WARBIRD ) {
             m_botAction.sendPrivateMessage( name, "You must be in a mine-laying ship in order for me to clear your mines.  Didn't think I'd have to tell you!" );
+            return;
+        }
+        if( p.isRespawning() ) {
+            m_botAction.sendPrivateMessage( name, "You can't reset your mines while rearming." );
             return;
         }
 
@@ -2698,7 +2810,7 @@ public class distensionbot extends SubspaceBot {
                 desc = "Rotation and turning speed";
                 break;
             case Tools.Prize.THRUST:
-                desc = "Thrust and acceleration";
+                desc = "Thrust and acceleration (NOT afterburner)";
                 break;
             case Tools.Prize.TOPSPEED:
                 desc = "Top speed";
@@ -3433,17 +3545,18 @@ public class distensionbot extends SubspaceBot {
                 award = 3;
                 if( rank > 1 )
                     award = rank * 3;
-                m_botAction.sendPrivateMessage(name, "Streak!  (" + award + " RP bonus.)", 19 );
+
+                m_botAction.sendPrivateMessage(name, "Streak!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 19 );
             } else if( successiveKills == 10 ) {
                 award = 5;
                 if( rank > 1 )
                     award = rank * 5;
-                m_botAction.sendPrivateMessage(name, "ON FIRE!  (" + award + " RP bonus.)", 20 );
+                m_botAction.sendPrivateMessage(name, "ON FIRE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 20 );
             } else if( successiveKills == 15 ) {
                 award = 7;
                 if( rank > 1 )
                     award = rank * 7;
-                m_botAction.sendPrivateMessage(name, "UNSTOPPABLE!  (" + award + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
+                m_botAction.sendPrivateMessage(name, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
             } else if( successiveKills == 20 ) {
                 if( shipsAvail[5] == false ) {
                     String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + playerID + "' AND ship.fnShipNum='6'";
@@ -3465,18 +3578,18 @@ public class distensionbot extends SubspaceBot {
                     award = 10;
                     if( rank > 1 )
                         award = rank * 7;
-                    m_botAction.sendPrivateMessage(name, "INCONCEIVABLE!  (" + award + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
+                    m_botAction.sendPrivateMessage(name, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
                 }
             } else if( successiveKills == 50 ) {
                 award = 15;
                 if( rank > 1 )
                     award = rank * 15;
-                m_botAction.sendPrivateMessage(name, "YOU'RE PROBABLY CHEATING!  (" + award + " RP bonus.)", Tools.Sound.SCREAM );
+                m_botAction.sendPrivateMessage(name, "YOU'RE PROBABLY CHEATING!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.SCREAM );
             } else if( successiveKills == 99 ) {
                 award = 20;
                 if( rank > 1 )
                     award = rank * 30;
-                m_botAction.sendPrivateMessage(name, "99 KILLS -- ... ORGASMIC !!  (" + award + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );
+                m_botAction.sendPrivateMessage(name, "99 KILLS -- ... ORGASMIC !!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );
             }
             if( award > 0 ) {
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_STREAK);
@@ -4460,10 +4573,10 @@ public class distensionbot extends SubspaceBot {
             } else {
                 int roundNum = freq0Score + freq1Score;
                 m_botAction.sendArenaMessage( "BATTLE " + roundNum + " ENDED: " + m_armies.get(winningArmyID).getName() + " gains control of the sector after " + getTimeString( flagTimer.getTotalSecs() ) +
-                        ".  Battles won: " + freq0Score + " to " + freq1Score, Tools.Sound.VICTORY_BELL );
+                        ".  Battles won: " + freq0Score + " to " + freq1Score, Tools.Sound.HALLELUJAH );
             }
         } else {
-            m_botAction.sendArenaMessage( "END BATTLE: " + m_armies.get(winningArmyID).getName() + " gains control of the sector after " + getTimeString( flagTimer.getTotalSecs() ), Tools.Sound.VICTORY_BELL );
+            m_botAction.sendArenaMessage( "END BATTLE: " + m_armies.get(winningArmyID).getName() + " gains control of the sector after " + getTimeString( flagTimer.getTotalSecs() ), Tools.Sound.HALLELUJAH );
         }
 
         float winnerStrCurrent;
