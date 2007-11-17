@@ -637,7 +637,7 @@ public class messagebot extends SubspaceBot
             m_botAction.sendSmartPrivateMessage(name, "    !read                          -Reads all unread messages.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                    -Reads you message <num>.");
             m_botAction.sendSmartPrivateMessage(name, "    !read r                        -Reads all old/read messages.");
-            m_botAction.sendSmartPrivateMessage(name, "    !read a                        -Reads all unread & unread messages.");
+            m_botAction.sendSmartPrivateMessage(name, "    !read a                        -Reads all read & unread messages.");
             m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>               -Reads all unread messages on <channel>.");
             m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>:r             -Reads all old/read messages on <channel>.");
             m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>:a             -Reads all messages on <channel>.");            
@@ -645,7 +645,7 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>.");
             m_botAction.sendSmartPrivateMessage(name, "    !delete read                   -Deletes messages already read.");
             m_botAction.sendSmartPrivateMessage(name, "    !delete all                    -Deletes all messages.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !lmessage <name>:<message>     -Leaves <message> for <name>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !message <name>:<message>     -Leaves <message> for <name>.");
 	    } else if(message.toLowerCase().startsWith("channel")) {
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                            -Tells you what channels you have joined.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !join <channel>                -Puts in request to join <channel>.");
