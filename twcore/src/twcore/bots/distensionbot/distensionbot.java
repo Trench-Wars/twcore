@@ -61,9 +61,9 @@ public class distensionbot extends SubspaceBot {
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 10;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
-    private final int LAGOUT_VALID_SECONDS = 60;           // # seconds since lagout in which you can use !lagout
+    private final int LAGOUT_VALID_SECONDS = 90;           // # seconds since lagout in which you can use !lagout
     private final int LAGOUT_WAIT_SECONDS = 30;            // # seconds a player must wait to be placed back in the game
-    private final int PROFIT_SHARING_FREQUENCY = 60;       // # seconds between adding up profit sharing for terrs
+    private final int PROFIT_SHARING_FREQUENCY = 3 * 60;   // # seconds between adding up profit sharing for terrs
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-9)
@@ -1064,7 +1064,7 @@ public class distensionbot extends SubspaceBot {
                 if( flagMulti == 0.5f )
                     msg += " [-50% for no flags]";
                 if( endedStreak )
-                    msg += " [+50% for ending their streak!]";
+                    msg += " [+50% for ending victim's streak!]";
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     msg += " [x" + DEBUG_MULTIPLIER + " beta]";
                 if( isFirstKill )
@@ -1150,7 +1150,7 @@ public class distensionbot extends SubspaceBot {
                 " - Everything is subject to change while testing!",
                 ".",
                 "RECENT UPDATES  -  11/18/07",
-                " - New profit-sharing ability for terrs",
+                " - New profit-sharing ability for support ships of rank 5+.  Terrs can upgrade it.",
                 " - Dynamic end-round point adjustment based on # support vs. # attack",
                 " - !modhelp and !savedie for HighMod+",
                 " - !scrapall to scrap all of a specific upgrade, all upgrades, etc.",
@@ -2959,6 +2959,7 @@ public class distensionbot extends SubspaceBot {
              * -4:  Targetted EMP against all enemies (uses !emp command)
              * -5:  Super chance every 30 seconds, for spiders
              * -6:  Repel chance every 30 seconds, for sharks
+             * -7:  Profit sharing
              */
             case -1:
                 desc = "Always first in line to rearm";
@@ -2979,7 +2980,7 @@ public class distensionbot extends SubspaceBot {
                 desc = "+10% chance of repel every 30 seconds";
                 break;
             case -7:
-                desc = "+1RP per level per teammate's kill made";
+                desc = "+1% of team's kill RP earned per level";
                 break;
         }
         return desc;
@@ -3226,12 +3227,10 @@ public class distensionbot extends SubspaceBot {
 
                 // Setup special (aka unusual) abilities
                 Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
-                getArmy().removeProfitSharingTerr(this);
+                getArmy().removeProfitSharer(this);
                 for( int i = 0; i < NUM_UPGRADES; i++ )
                     if( upgrades.get( i ).getPrizeNum() == -1 && purchasedUpgrades[i] > 0 )
                         fastRespawn = true;
-                    else if( upgrades.get( i ).getPrizeNum() == -7 && purchasedUpgrades[i] > 0 )
-                        getArmy().addProfitSharingTerr(this);
 
                 m_botAction.SQLClose(r);
                 return shipDataSaved;
@@ -3550,10 +3549,6 @@ public class distensionbot extends SubspaceBot {
                 m_specialAbilityPrizer.addPlayer(this);
             else
                 m_specialAbilityPrizer.removePlayer(this);
-            if( shipNum == 5 && purchasedUpgrades[8] > 0 )
-                getArmy().addProfitSharingTerr(this);
-            else
-                getArmy().removeProfitSharingTerr(this);
             shipDataSaved = false;
         }
 
@@ -3576,6 +3571,10 @@ public class distensionbot extends SubspaceBot {
             if( this.shipNum == 0 )
                 turnOnProgressBar();
             this.shipNum = shipNum;
+            if( isSupportShip() )
+                getArmy().addProfitSharer(this);
+            else
+                getArmy().removeProfitSharer(this);
             isRespawning = false;
             successiveKills = 0;
             recentlyEarnedRP = 0;
@@ -3731,10 +3730,14 @@ public class distensionbot extends SubspaceBot {
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
-            if( shipNum == 5 && purchasedUpgrades[8] > 0 ) {
-                int shared = (int)((float)profits * ((float)purchasedUpgrades[8] / 100.0f ));
+            if( isSupportShip() && rank >= 5 ) {
+                float sharingPercent = 1.0f;
+                if( shipNum == 5 )
+                    sharingPercent += purchasedUpgrades[8];
+                int shared = Math.round((float)profits * (sharingPercent / 100.0f ));
                 if( shared > 0 ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "Profit-sharing: " + shared + "RP earned." );
+                    if( sendKillMessages )
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "Profit-sharing: +" + (DEBUG ? (int)(DEBUG_MULTIPLIER * shared) : shared ) + "RP" );
                     addRankPoints(shared);
                 }
             }
@@ -4192,7 +4195,7 @@ public class distensionbot extends SubspaceBot {
         boolean isDefault;              // True if army is available by default (not user-created)
         boolean isPrivate;              // True if army can't be seen on !armies screen
         int profitShareRP;              // Amount of RP made from profit shares
-        List <DistensionPlayer>profitSharingTerrs;   // Terriers with profit-sharing on freq
+        List <DistensionPlayer>profitSharers;   // Ships with profit-sharing on freq
 
         /**
          * Creates record for an army, given an ID.
@@ -4216,7 +4219,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendArenaMessage("Problem loading Army " + armyID );
             }
             profitShareRP = 0;
-            profitSharingTerrs = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
+            profitSharers = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
         }
 
         // SETTERS
@@ -4259,16 +4262,16 @@ public class distensionbot extends SubspaceBot {
             profitShareRP += shared;
         }
 
-        public void addProfitSharingTerr(DistensionPlayer p) {
-            profitSharingTerrs.add(p);
+        public void addProfitSharer(DistensionPlayer p) {
+            profitSharers.add(p);
         }
 
-        public void removeProfitSharingTerr(DistensionPlayer p) {
-            profitSharingTerrs.remove(p);
+        public void removeProfitSharer(DistensionPlayer p) {
+            profitSharers.remove(p);
         }
 
         public void shareProfits() {
-            for( DistensionPlayer p : profitSharingTerrs )
+            for( DistensionPlayer p : profitSharers )
                 p.shareProfits(profitShareRP);
             profitShareRP = 0;
         }
@@ -4763,28 +4766,29 @@ public class distensionbot extends SubspaceBot {
 
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin * 0.5f) * (float)opposingStrengthAvg * armyDiffWeight;
-        int totalLvlSupport = 0;
-        int totalLvlAttack = 0;
-        int numSupport = 0;
-        int numAttack = 0;
+        float totalLvlSupport = 0;
+        float totalLvlAttack = 0;
+        float numSupport = 0;
+        float numAttack = 0;
         Iterator <DistensionPlayer>i = m_players.values().iterator();
         while( i.hasNext() ) {
             DistensionPlayer p = i.next();
-            Integer time = m_playerTimes.get( p.getName() );
-            float percentOnFreq = 0;
-            if( time != null )
-                percentOnFreq = (float)(secs - time) / (float)secs;
-            if( p.isSupportShip() ) {
-                totalLvlSupport += Math.round( (float)p.getRank() * percentOnFreq );
-                numSupport++;
-            } else {
-                totalLvlAttack += Math.round( (float)p.getRank() * percentOnFreq );
-                numAttack++;
+            if( p.getArmyID() == winningArmyID ) {
+                Integer time = m_playerTimes.get( p.getName() );
+                float percentOnFreq = 0;
+                if( time != null )
+                    percentOnFreq = (float)(secs - time) / (float)secs;
+                if( p.isSupportShip() ) {
+                    totalLvlSupport += ((float)p.getRank() * percentOnFreq );
+                    numSupport++;
+                } else {
+                    totalLvlAttack += ((float)p.getRank() * percentOnFreq );
+                    numAttack++;
+                }
             }
         }
-        if( totalLvlSupport == 0) totalLvlSupport = 1;
-        if( totalLvlAttack == 0) totalLvlAttack = 1;
-
+        if( totalLvlSupport < 1.0f) totalLvlSupport = 1.0f;
+        if( totalLvlAttack < 1.0f) totalLvlAttack = 1.0f;
         float percentSupport = numSupport / ( numSupport + numAttack );
         float percentAttack;
         // If support makes up 40% or less of the team, support cut is percentage * 2
@@ -4804,17 +4808,23 @@ public class distensionbot extends SubspaceBot {
         }
 
         // For display purposes only
-        int attack, support, combo;
+        float attack, support, combo;
         if( avarice ) {
-            attack = totalLvlAttack / 4;
-            support = totalLvlSupport / 4;
-            combo = totalLvlAttack / 4 + totalLvlSupport / 4;
+            attack = totalLvlAttack / 4.0f;
+            support = totalLvlSupport / 4.0f;
+            combo = totalLvlAttack / 4.0f + totalLvlSupport / 4.0f;
         } else {
             attack = totalLvlAttack;
             support = totalLvlSupport;
             combo = totalLvlAttack + totalLvlSupport;
         }
-        m_botAction.sendArenaMessage( "Total Victory Award:  " + combo + "RP  ...  Avg [" + (int)(support / numSupport) + "]RP for " + numSupport + " on support (" + (int)(percentSupport * 100.0f) +
+        if( DEBUG ) {
+            attack *= DEBUG_MULTIPLIER;
+            support *= DEBUG_MULTIPLIER;
+            combo *= DEBUG_MULTIPLIER;
+        }
+
+        m_botAction.sendArenaMessage( "Total Victory Award:  " + (int)combo + "RP  ...  Avg " + (int)(support / numSupport) + "RP for " + numSupport + " on support (" + (int)(percentSupport * 100.0f) +
                                       "%); avg [" + attack + "]RP for " + numAttack + " on attack (" + (int)(percentSupport * 100.0f) + "%)" + (DEBUG ? "  [Beta bonus not figured]" : "") );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength
@@ -4830,9 +4840,9 @@ public class distensionbot extends SubspaceBot {
                 if( playerRank == 0 )
                     playerRank = 1;
                 if( p.isSupportShip() )
-                    points = (float)supportPoints * ((float)playerRank / (float)totalLvlSupport);
+                    points = (float)supportPoints * ((float)playerRank / totalLvlSupport);
                 else
-                    points = (float)attackPoints * ((float)playerRank / (float)totalLvlAttack);
+                    points = (float)attackPoints * ((float)playerRank / totalLvlAttack);
                 if( avarice )
                     points /= 4;
                 Integer time = m_playerTimes.get( p.getName() );
@@ -5927,7 +5937,7 @@ public class distensionbot extends SubspaceBot {
         //upg = new ShipUpgrade( "Terrier Reiterator", Tools.Prize.DECOY, 2, 27, 1 );
         int p5d1[] = {  1,  2,  3,  4,  5 };
         int p5d2[] = { 13, 23, 33, 43, 53 };
-        upg = new ShipUpgrade( "+1% Profit Sharing", -7, p5d1, p5d2, 1 );
+        upg = new ShipUpgrade( "+1% Profit Sharing", -7, p5d1, p5d2, 5 );
         ship.addUpgrade( upg );
         int p5a1[] = { 1,  3,  4,  5,  6 };
         int p5a2[] = { 7, 29, 48, 60, 70 };
