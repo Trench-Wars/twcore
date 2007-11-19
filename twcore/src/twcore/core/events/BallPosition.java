@@ -3,7 +3,8 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
- * (S2C 0x2E) Event fired when a player picks up a ball.<code><pre>
+ * (S2C 0x2E) Event fired when a player picks up a ball and periodically as
+ * the ball moves/changes position.<code><pre>
  *
  * +-------------------------+
  * |Offset Length Description|
@@ -25,7 +26,7 @@ public class BallPosition extends SubspaceEvent {
     private short m_yLocation; // Y location of the ball
     private short m_xVelocity; // X velocity of the ball
     private short m_yVelocity; // Y velocity of the ball
-    private short m_playerID;  // ID of the player who picked up the ball
+    private short m_playerID;  // ID of the player who picked up/has the ball
     private int m_timeStamp;   // Time stamp of the ball
 
     /**
@@ -44,7 +45,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the ID of the ball that was picked up.
+     * Gets the ID of the ball.
      * @return BallID
      */
     public byte getBallID() {
@@ -52,7 +53,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the X location of the ball that was picked up.
+     * Gets the X location of the ball.
      * @return Xlocation
      */
     public short getXLocation() {
@@ -60,7 +61,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the Y location of the ball that was picked up.
+     * Gets the Y location of the ball.
      * @return Ylocation
      */
     public short getYLocation() {
@@ -68,7 +69,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the X velocity of the ball that was picked up.
+     * Gets the X velocity of the ball.
      * @return Xvelocity
      */
     public short getXVelocity() {
@@ -76,7 +77,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the Y velocity of the ball that was picked up.
+     * Gets the Y velocity of the ball.
      * @return Yvelocity
      */
     public short getYVelocity() {
@@ -84,7 +85,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the ID of the player who picked up the ball.
+     * Gets the ID of the player who picked up the ball, if a player currently has the ball.
      * @return PlayerID
      */
     public short getPlayerID() {
@@ -92,7 +93,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the Time Stamp of the ball that was picked up.
+     * Gets the Time Stamp of the ball.
      * @return TimeStamp
      */
     public int getTimeStamp() {
