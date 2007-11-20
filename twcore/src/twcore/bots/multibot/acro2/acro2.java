@@ -306,7 +306,7 @@ public class acro2 extends MultiModule{
                 acroDisplay.clear();
                 
                 round++;
-                if(round > 2) {
+                if(round > 10) {
                     gameOver();
                 } else {
                 	if (intCustom == 1) {
