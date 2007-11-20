@@ -56,16 +56,18 @@ public class distensionbot extends SubspaceBot {
                                                            // normally be annoying in a public release.
     private final float DEBUG_MULTIPLIER = 3.0f;           // Amount of RP to give extra in debug mode
 
+    private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 10;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
-    private final int LAGOUT_VALID_SECONDS = 90;           // # seconds since lagout in which you can use !lagout
+    private final int LAGOUT_VALID_SECONDS = 120;          // # seconds since lagout in which you can use !lagout
     private final int LAGOUT_WAIT_SECONDS = 30;            // # seconds a player must wait to be placed back in the game
     private final int PROFIT_SHARING_FREQUENCY = 3 * 60;   // # seconds between adding up profit sharing for terrs
+    private final int STREAK_RANK_PROXIMITY = 10;          // Max rank difference for a kill to count toward a streak
+    private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
-    private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final double EARLY_RANK_FACTOR = 1.6;          // Factor for rank increases (lvl 1-9)
     private final double LOW_RANK_FACTOR = 1.15;           // Factor for rank increases (lvl 10+)
     private final double NORMAL_RANK_FACTOR = 1.35;        // Factor for rank increases (lvl 25+)
@@ -157,6 +159,7 @@ public class distensionbot extends SubspaceBot {
     private int flagMinutesRequired = 1;                // Flag minutes required to win
     private HashMap <String,Integer>m_playerTimes;      // Roundtime of player on freq
     private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
+    private HashMap <String,Integer>m_lagShips;         // Ships of players who were DC'd, for !lagout use
 
     private FlagCountTask flagTimer;                    // Flag time main class
     private StartRoundTask startTimer;                  // TimerTask to start round
@@ -212,6 +215,7 @@ public class distensionbot extends SubspaceBot {
         m_armies = new HashMap<Integer,DistensionArmy>();
         m_playerTimes = new HashMap<String,Integer>();
         m_lagouts = new HashMap<String,Integer>();
+        m_lagShips = new HashMap<String,Integer>();
         m_mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         m_msgBetaPlayers = new LinkedList<String>();
         m_defectors = new HashMap<String,Integer>();
@@ -703,6 +707,10 @@ public class distensionbot extends SubspaceBot {
         }
         DistensionPlayer p = new DistensionPlayer(name);
         m_players.put( name, p );
+        // Properly set up last ship player was in, if that info is available
+        if( m_lagShips.containsKey( name ) ) {
+            p.lastShipNum = m_lagShips.remove( name );
+        }
         if( flagTimer != null && flagTimer.isRunning() ) {
             Integer lagTime = m_lagouts.get( name );
             if( lagTime != null && p.canUseLagout() ) {
@@ -736,11 +744,13 @@ public class distensionbot extends SubspaceBot {
             player.getArmy().recalculateFigures();
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
                 checkForAssistAdvert = true;
+            if( flagTimer != null && flagTimer.isRunning() && player.canUseLagout() ) {
+                m_lagouts.put( name, new Integer(flagTimer.getTotalSecs()) );
+                m_lagShips.put( name, player.getShipNum() );
+            }
         }
         player.saveCurrentShipToDBNow();
         player.savePlayerTimeToDB();
-        if( flagTimer != null && flagTimer.isRunning() && player.canUseLagout() )
-            m_lagouts.put( name, new Integer(flagTimer.getTotalSecs()) );
         m_specialAbilityPrizer.removePlayer( player );
         m_waitingToEnter.remove( player );
         doSwapOut( player, false );
@@ -908,7 +918,7 @@ public class distensionbot extends SubspaceBot {
                     else
                         div = 2;
                 }
-                int loss = Math.round((float)victor.getUpgradeLevel() / div);
+                int loss = Math.round((float)victor.getRank() / div);
                 victor.addRankPoints( -loss );
                 victor.clearSuccessiveKills();
                 if( loss > 0 && victor.wantsKillMsg() )
@@ -923,30 +933,30 @@ public class distensionbot extends SubspaceBot {
                     return;
                 endedStreak = loser.clearSuccessiveKills();
                 int points;
-                int loserUpgLevel = Math.max( 1, loser.getUpgradeLevel() );
-                int victorUpgLevel = Math.max( 1, victor.getUpgradeLevel() );
-                int levelDiff = loserUpgLevel - victorUpgLevel;
+                int loserRank = Math.max( 1, loser.getRank() );
+                int victorRank = Math.max( 1, victor.getRank() );
+                int rankDiff = loserRank - victorRank;
 
                 // Loser is 10 or more levels above victor:
                 //   Victor may have a cap, but loser is humiliated with some point loss
-                if( levelDiff >= RANK_DIFF_LOW ) {
+                if( rankDiff >= RANK_DIFF_LOW ) {
 
-                    if( levelDiff >= RANK_DIFF_HIGH ) {
-                        points = victorUpgLevel + RANK_DIFF_HIGH;
+                    if( rankDiff >= RANK_DIFF_HIGH ) {
+                        points = victorRank + RANK_DIFF_HIGH;
                         isMaxReward = true;
                     } else
-                        points = loserUpgLevel;
+                        points = loserRank;
 
                     // Support ships are not humiliated; assault are
                     if( ! loser.isSupportShip() ) {
                         int loss;
-                        if( levelDiff >= RANK_DIFF_HIGHEST )
-                            loss = loserUpgLevel * 2;
-                        else if( levelDiff >= RANK_DIFF_VHIGH )
-                            loss = loserUpgLevel;
-                        else if( levelDiff >= RANK_DIFF_HIGH )
+                        if( rankDiff >= RANK_DIFF_HIGHEST )
+                            loss = loserRank * 2;
+                        else if( rankDiff >= RANK_DIFF_VHIGH )
+                            loss = loserRank;
+                        else if( rankDiff >= RANK_DIFF_HIGH )
                             loss = points;
-                        else if( levelDiff >= RANK_DIFF_MED )
+                        else if( rankDiff >= RANK_DIFF_MED )
                             loss = (points / 2);
                         else
                             loss = (points / 3);    // Default
@@ -958,23 +968,23 @@ public class distensionbot extends SubspaceBot {
                     }
 
                     // Loser is 10 or more levels below victor: victor gets fewer points
-                } else if( levelDiff <= -RANK_DIFF_LOW ) {
+                } else if( rankDiff <= -RANK_DIFF_LOW ) {
                     isMinReward = true;
-                    if( levelDiff <= -RANK_DIFF_HIGHEST )
+                    if( rankDiff <= -RANK_DIFF_HIGHEST )
                         points = 1;
-                    else if( levelDiff <= -RANK_DIFF_VHIGH )
-                        points = loserUpgLevel / 4;
-                    else if( levelDiff <= -RANK_DIFF_HIGH )
-                        points = loserUpgLevel / 3;
-                    else if( levelDiff <= -RANK_DIFF_MED )
-                        points = loserUpgLevel / 2;
+                    else if( rankDiff <= -RANK_DIFF_VHIGH )
+                        points = loserRank / 4;
+                    else if( rankDiff <= -RANK_DIFF_HIGH )
+                        points = loserRank / 3;
+                    else if( rankDiff <= -RANK_DIFF_MED )
+                        points = loserRank / 2;
                     else
-                        points = (int)(loserUpgLevel / 1.5f);
+                        points = (int)(loserRank / 1.5f);
 
                     // Normal kill:
-                    //   Victor earns the level of the loser in points.  Level 0 players are worth 1 point.
+                    //   Victor earns the rank of the loser in points.  Level 0 players are worth 1 point.
                 } else {
-                    points = loser.getUpgradeLevel();
+                    points = loser.getRank();
                 }
 
                 // Points adjusted based on size of victor's army v. loser's
@@ -1025,10 +1035,10 @@ public class distensionbot extends SubspaceBot {
                     else
                         points = Math.round((float)points * 1.10f);
                 } else if( isSharkK )
-                    points -= Math.round((float)points * 0.25f);
+                    points -= Math.round((float)points * 0.20f);
 
                 // Track successive kills for weasel unlock & streaks
-                if( levelDiff > -8 ) {   // Streaks only count players close to your lvl
+                if( rankDiff > -8 ) {   // Streaks only count players close to your lvl
                     if( victor.addSuccessiveKill() ) {
                         // If player earned weasel off this kill, check if loser/killed player has weasel ...
                         // and remove it if they do!
@@ -1048,28 +1058,28 @@ public class distensionbot extends SubspaceBot {
 
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     points = Math.round((float)points * DEBUG_MULTIPLIER);
-                String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getUpgradeLevel() + ")";
+                String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getRank() + ")";
                 if( isMinReward )
-                    msg += " [Capped for low rank kill]";
+                    msg += " [Low rank kill: CAP]";
                 else if( isMaxReward )
-                    msg += " [Capped for high rank kill]";
+                    msg += " [High rank kill: CAP]";
                 if( isRepeatKillLight )
-                    msg += " [-50% for repeat kill]";
+                    msg += " [Repeat kill: -50%]";
                 else if( isRepeatKillHard )
-                    msg += " [1 RP for repeat kill]";
+                    msg += " [Repeat kill: 1 RP]";
                 if( isTeK )
                     if( isBTeK )
-                        msg += " [+50% for Base Terr Kill]";
+                        msg += " [Base Terr: +50%]";
                     else
-                        msg += " [+10% for Terr Kill]";
+                        msg += " [Terr: +10%]";
                 else if( isSharkK )
-                    msg += " [-25% for Shark]";
+                    msg += " [Shark: -20%]";
                 if( flagMulti == 2 )
-                    msg += " [x2 RP FOR SECTOR HOLD]";
+                    msg += " [SECTOR HOLD: x2 RP]";
                 if( flagMulti == 0.5f )
-                    msg += " [-50% for no flags]";
+                    msg += " [No flags: -50%]";
                 if( endedStreak )
-                    msg += " [+50% for ending victim's streak!]";
+                    msg += " [Ended a streak: +50%]";
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     msg += " [x" + DEBUG_MULTIPLIER + " beta]";
                 if( isFirstKill )
@@ -1541,6 +1551,7 @@ public class distensionbot extends SubspaceBot {
         player.putInCurrentShip();
         player.prizeUpgrades();
         m_lagouts.remove( name );
+        m_lagShips.remove( name );
         player.setLagoutAllowed(true);
         if( flagTimer != null && flagTimer.isRunning() ) {
             if( m_playerTimes.get( name ) == null )
@@ -2307,7 +2318,12 @@ public class distensionbot extends SubspaceBot {
                         reward = p.getRank() * 3;
                     else if( armySizeWeight < .8 )
                         reward = p.getRank() * 2;
-                    m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
+                    if( flagOwner[0] == p.getArmyID() && flagOwner[1] == p.getArmyID() ) {
+                        reward *= 2;
+                        m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, you also receive a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
+                    } else {
+                        m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
+                    }
                     p.addRankPoints(reward);
                 }
                 p.setAssist( armyToAssist );
@@ -3814,7 +3830,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void shareProfits( int profits ) {
             if( isSupportShip() && rank >= 5 ) {
-                float sharingPercent = 1.0f;
+                float sharingPercent = 2.0f;
                 if( shipNum == 5 )
                     sharingPercent += purchasedUpgrades[8];
                 int shared = Math.round((float)profits * (sharingPercent / 100.0f ));
@@ -4874,21 +4890,18 @@ public class distensionbot extends SubspaceBot {
         if( totalLvlAttack < 1.0f) totalLvlAttack = 1.0f;
         float percentSupport = numSupport / ( numSupport + numAttack );
         float percentAttack;
-        // If support makes up 40% or less of the team, support cut is percentage * 2
+        // If support makes up 40% or less of the team, support cut is percentage * support rate
         int supportPoints;
         int attackPoints;
-        if( percentSupport <= 0.4f ) {
-            supportPoints = Math.round( totalPoints * (percentSupport * 2.0f) );
-            percentAttack = 1.0f - (percentSupport * 2.0f);
-            // Remainder for attackers
-            attackPoints = Math.round( totalPoints * percentAttack );
+        if( percentSupport < 0.4f ) {
+            percentSupport = percentSupport * SUPPORT_RATE;
         } else {
-            // >40% support means support gets capped max of 80% of round win points.
-            percentSupport = 0.8f;
-            supportPoints = Math.round( totalPoints * 0.8f );
-            percentAttack = 0.2f;
-            attackPoints = Math.round( totalPoints * 0.2f );
+            // >=40% support means support gets capped max of 40% * support rate
+            percentSupport = 0.4f * SUPPORT_RATE;
         }
+        supportPoints = Math.round( totalPoints * percentSupport );
+        percentAttack = 1.0f - percentSupport;
+        attackPoints = Math.round( totalPoints * percentAttack );
 
         // For display purposes only
         float attack, support, combo;
@@ -4907,7 +4920,7 @@ public class distensionbot extends SubspaceBot {
             combo *= DEBUG_MULTIPLIER;
         }
 
-        m_botAction.sendArenaMessage( "Total Victory Award:  " + (int)combo + "RP  ...  Avg " + (int)(support / numSupport) + "RP for " + (int)numSupport + " on support (" + (int)(percentSupport * 100.0f) +
+        m_botAction.sendArenaMessage( "Total Victory Award: " + (int)combo + "RP  ...  Avg " + (int)(support / numSupport) + "RP for " + (int)numSupport + " on support (" + (int)(percentSupport * 100.0f) +
                                       "%); avg " + (int)(attack / numAttack) + "RP for " + (int)numAttack + " on attack (" + (int)(percentAttack * 100.0f) + "%)" );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength
@@ -4954,7 +4967,7 @@ public class distensionbot extends SubspaceBot {
                         topBreaker = p.getName();
                     }
 
-                    int bonus = Math.max( 1, (holds * playerRank + breaks * (playerRank / 2)) );
+                    int bonus = Math.max( 1, (holds * ( playerRank / 2 ) + breaks * (playerRank / 3)) );
                     int totalDisplay = (int)(DEBUG ? (bonus + modPoints) * DEBUG_MULTIPLIER : bonus + modPoints );
                     if( holds != 0 && breaks != 0 ) {
                         victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds and " + breaks +" sector breaks = " + totalDisplay + " RP!" ;
