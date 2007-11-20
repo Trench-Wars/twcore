@@ -88,7 +88,7 @@ public class utilwarp extends MultiUtil
           "!WarpShip <Ship>:<X>:<Y>:<Radius>         -- Warps ship <Ship> to <X>, <Y> within a distance of <Radius>.",
           "!SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>.",
           "!SetupWarpList                            -- Displays the setup warp information.",
-          "!Where                                    -- Shows your current coords."
+          "!Whereami                                 -- Shows your current coords."
           };
     return message;
   }
@@ -316,7 +316,7 @@ public class utilwarp extends MultiUtil
         doSetupWarpCmd(sender, message.substring(11));
       if(command.equalsIgnoreCase("!setupwarplist"))
         doSetupWarpListCmd(sender);
-      if(command.equalsIgnoreCase("!where"))
+      if(command.equalsIgnoreCase("!whereami"))
         doWhereCmd(sender);
     }
     catch(RuntimeException e)
