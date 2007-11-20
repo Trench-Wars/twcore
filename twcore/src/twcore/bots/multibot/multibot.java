@@ -106,8 +106,6 @@ public class multibot extends SubspaceBot {
                 doListUtilsCmd(sender);
             else if (command.startsWith("!load "))
                 doLoadCmd(sender, message.substring(6).trim());
-            else if (command.equalsIgnoreCase("!load"))
-                doLoadDefaultCmd(sender);
             else if (command.startsWith("!unload "))
                 doUnloadCmd(sender, message.substring(8).trim());
             else if (command.equalsIgnoreCase("!unloadall"))
@@ -124,8 +122,10 @@ public class multibot extends SubspaceBot {
             if (!isLocked()) {
                 if (command.startsWith("!go "))
                     doGoCmd(sender, message.substring(4).trim());
-                else if (command.startsWith("!lock "))
+                else if (command.startsWith("!lock ")) {
                     doLockCmd(sender, message.substring(6).trim());
+                    doLoadDefaultCmd(sender);
+                }
                 else if (command.equalsIgnoreCase("!help"))
                     doUnlockedHelpMessage(sender);
                 else if (command.equalsIgnoreCase("!listgames"))
@@ -289,7 +289,7 @@ public class multibot extends SubspaceBot {
      */
     private void doLockCmd(String sender, String argString) {
         loadModule(argString);
-        m_botAction.sendSmartPrivateMessage(sender, "Module successfully loaded.");
+        m_botAction.sendSmartPrivateMessage(sender, "Successfully loaded module and default utilities(standard, warp, and spec).");
     }
 
     /**
@@ -376,7 +376,9 @@ public class multibot extends SubspaceBot {
             MultiUtil util = (MultiUtil) loader.loadClass("twcore.bots.multibot.util.util" + utilType).newInstance();
             util.initialize(m_botAction, modEventReq);
             utils.put(utilType, util);
-            m_botAction.sendPrivateMessage(name, "Successfully loaded utility " + utilType);
+            if ( utilType != "standard" && utilType !="warp" && utilType !="spec"){
+                m_botAction.sendPrivateMessage(name, "Successfully loaded utility " + utilType);          	
+            }
         } catch (Exception e) {
             m_botAction.sendPrivateMessage(name, "Failed to load " + utilType + ".  Use !listutils to see a list of available utilities.");
         }
@@ -490,9 +492,8 @@ public class multibot extends SubspaceBot {
 	    "!Follow                  -- Turns follow mode on.",
 	    "!ListGames               -- Lists the games that are available in this arena.",
 	    "!ListUtils               -- Lists utility modules (formerly TWBot modules)",
-	    "!Lock <Game>             -- Locks the bot and loads game <Game>.",
+	    "!Lock <Game>             -- Locks the bot and loads game <Game> and default utilities.",
 	    "!Load/!Unload <Utility>  -- Loads or unloads utility <Utility>.",
-	    "!Load                    -- Loads standard, warp and spec modules.",
 	    "!UnloadAll               -- Unloads all utilities.",
 	    "!Loaded                  -- Shows currently loaded utilties.",
 	    "!Help <Utility>          -- Shows help for utility <Utility>.",
