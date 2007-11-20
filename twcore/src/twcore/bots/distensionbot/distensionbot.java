@@ -54,7 +54,7 @@ public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
                                                            // normally be annoying in a public release.
-    private final float DEBUG_MULTIPLIER = 2.9f;           // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 3.0f;           // Amount of RP to give extra in debug mode
 
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms
@@ -462,6 +462,8 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "cmdDie", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!savedie", acceptedMessages, this, "cmdSaveDie", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
@@ -624,7 +626,10 @@ public class distensionbot extends SubspaceBot {
                 "| !savedata             |  Saves all player data to database",
                 "| !die                  |  Kills DistensionBot -- use !savedata first!",
                 "| !savedie              |  Saves all player data and runs a delayed !die",
-                "|______________________/"
+                "|______________________/",
+                "    DB COMMANDS",
+                "  !db-namechange <oldname>:<newname>   - Changes name from oldname to newname.",
+                "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record."
         };
         m_botAction.privateMessageSpam(name, helps);
     }
@@ -947,7 +952,7 @@ public class distensionbot extends SubspaceBot {
                             loss = (points / 3);    // Default
                         if( points > 0 ) {
                             loser.addRankPoints( -loss );
-                            if( victor.wantsKillMsg() )
+                            if( loser.wantsKillMsg() )
                                 m_botAction.sendPrivateMessage(loser.getArenaPlayerID(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getUpgradeLevel() + ")");
                         }
                     }
@@ -1149,10 +1154,10 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  11/18/07",
+                "RECENT UPDATES  -  11/20/07",
+                " - !modhelp, !savedie, !db-changename and !db-wipeship for HighMod+",
                 " - New profit-sharing ability for support ships of rank 5+.  Terrs can upgrade it.",
                 " - Dynamic end-round point adjustment based on # support vs. # attack",
-                " - !modhelp and !savedie for HighMod+",
                 " - !scrapall to scrap all of a specific upgrade, all upgrades, etc.",
                 " - Player limit and queuing for slot system implemented",
                 " - !killmsg to toggle on/off kill messages (off gives +1% bonus)",
@@ -1873,13 +1878,13 @@ public class distensionbot extends SubspaceBot {
         }
         upgradeNum--;  // Fix number to correspond with internal numbering scheme
         if( upgradeNum < 0 || upgradeNum > NUM_UPGRADES ) {
-            m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Maybe check the !armory first.  #" + upgradeNum + " doesn't work for me." );
+            m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Maybe check the !armory first.  #" + (upgradeNum + 1) + " doesn't work for me." );
             return;
         }
         ShipUpgrade upgrade = m_shipGeneralData.get( shipNum ).getUpgrade( upgradeNum );
         int currentUpgradeLevel = player.getPurchasedUpgrade( upgradeNum );
         if( upgrade == null || currentUpgradeLevel == -1 ) {
-            m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Maybe check the !armory first.  #" + upgradeNum + " doesn't work for me." );
+            m_botAction.sendPrivateMessage( name, "Exactly which do you mean there?  Maybe check the !armory first.  #" + (upgradeNum + 1) + " doesn't work for me." );
             return;
         }
         if( currentUpgradeLevel >= upgrade.getMaxLevel() ) {
@@ -2636,6 +2641,70 @@ public class distensionbot extends SubspaceBot {
     }
 
 
+    /**
+     * Changes player's name in the database.
+     * @param name
+     * @param msg
+     */
+    public void cmdDBChangeName( String name, String msg ) {
+        String[] args = msg.split(":");
+        if( args.length != 2 || args[0].equals("") || args[1].equals("") ) {
+            m_botAction.sendPrivateMessage( name, "Syntax: !db-changename <currentname>:<newname>" );
+            return;
+        }
+        DistensionPlayer player = m_players.get( args[0] );
+        if( player != null ) {
+            m_botAction.sendPrivateMessage( name, args[0] + " found in arena.  Player must leave arena in order to use this command." );
+            return;
+        }
+
+        try {
+            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcName='" + args[1] + "' WHERE fcName='" + Tools.addSlashesToString( args[0] ) + "'" );
+        } catch (SQLException e ) {
+            m_botAction.sendPrivateMessage( name, "DB command not successful." );
+            return;
+        }
+        m_botAction.sendPrivateMessage( name, "Name '" + args[0] + "' changed to '" + args[1] + "' in database." );
+    }
+
+
+    /**
+     * Changes player's name in the database.
+     * @param name
+     * @param msg
+     */
+    public void cmdDBWipeShip( String name, String msg ) {
+        String[] args = msg.split(":");
+        if( args.length != 2 || args[0].equals("") || args[1].equals("") ) {
+            m_botAction.sendPrivateMessage( name, "Syntax: !db-wipeship <name>:<ship#>" );
+            return;
+        }
+        DistensionPlayer player = m_players.get( args[0] );
+        if( player == null ) {
+            m_botAction.sendPrivateMessage( name, args[0] + " not found in arena.  Player must be in arena in order to use this command." );
+            return;
+        }
+        int shipNumToWipe = 0;
+        try {
+            shipNumToWipe = Integer.parseInt( args[1] );
+        } catch (NumberFormatException e) {
+            m_botAction.sendPrivateMessage( name, "Invalid ship #.  Syntax: !db-wipeship <name>:<ship#>" );
+            return;
+        }
+        if( shipNumToWipe < 1 || shipNumToWipe > 8 ) {
+            m_botAction.sendPrivateMessage( name, "Invalid ship #.  Syntax: !db-wipeship <name>:<ship#>" );
+            return;
+        }
+        if( shipNumToWipe == player.getShipNum() ) {
+            m_botAction.sendPrivateMessage( name, "Player is currently in that ship.  They must be in a different ship in order for the procedure to work." );
+            return;
+        }
+
+        player.removeShipFromDB( shipNumToWipe );
+        m_botAction.sendPrivateMessage( name, Tools.shipName(shipNumToWipe) + " has been removed from " + player.getName() + "'s hangar." );
+    }
+
+
     // BETA-ONLY COMMANDS
 
     /**
@@ -3061,7 +3130,7 @@ public class distensionbot extends SubspaceBot {
             warpInBase = true;
             specialRespawn = false;
             sendKillMessages = true;
-            allowLagout = false;
+            allowLagout = true;
         }
 
 
@@ -3139,6 +3208,21 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES (" + playerID + ", " + shipNumToAdd + ")" );
                 else
                     m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnRankPoints ) VALUES (" + playerID + ",  " + shipNumToAdd + ", " + startingRankPoints + ")" );
+            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+        }
+
+        /**
+         * Adds a ship as available on a player's record, optionally giving them upgrade
+         * points to begin with.
+         * @param shipNum Ship # to make available
+         */
+        public void removeShipFromDB( int shipNumToRemove ) {
+            if( shipNumToRemove < 1 || shipNumToRemove > 8 )
+                return;
+            shipsAvail[ shipNumToRemove - 1 ] = false;
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToRemove + "='n' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionShip WHERE fnPlayerID='" + playerID + "' AND fnShipNum='" + shipNumToRemove + "'" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
 
@@ -3227,7 +3311,6 @@ public class distensionbot extends SubspaceBot {
 
                 // Setup special (aka unusual) abilities
                 Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
-                getArmy().removeProfitSharer(this);
                 for( int i = 0; i < NUM_UPGRADES; i++ )
                     if( upgrades.get( i ).getPrizeNum() == -1 && purchasedUpgrades[i] > 0 )
                         fastRespawn = true;
@@ -3604,12 +3687,12 @@ public class distensionbot extends SubspaceBot {
             banned = true;
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                saveCurrentShipToDB();
+                m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer play Distension." );
+                m_botAction.sendUnfilteredPrivateMessage( name, "*kill" );
             } catch (SQLException e ) {
                 Tools.printLog( "Error banning player " + name );
             }
-            saveCurrentShipToDB();
-            m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer play Distension." );
-            m_botAction.sendUnfilteredPrivateMessage( name, "*kill 1" );
         }
 
         /**
@@ -3618,11 +3701,11 @@ public class distensionbot extends SubspaceBot {
         public void unban() {
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
+                banned = false;
             } catch (SQLException e ) {
                 Tools.printLog( "Error banning player " + name );
             }
-            m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
-            banned = false;
         }
 
         /**
@@ -4810,13 +4893,13 @@ public class distensionbot extends SubspaceBot {
         // For display purposes only
         float attack, support, combo;
         if( avarice ) {
-            attack = totalLvlAttack / 4.0f;
-            support = totalLvlSupport / 4.0f;
-            combo = totalLvlAttack / 4.0f + totalLvlSupport / 4.0f;
+            attack = attackPoints / 4.0f;
+            support = supportPoints / 4.0f;
+            combo = attackPoints / 4.0f + supportPoints / 4.0f;
         } else {
-            attack = totalLvlAttack;
-            support = totalLvlSupport;
-            combo = totalLvlAttack + totalLvlSupport;
+            attack = attackPoints;
+            support = supportPoints;
+            combo = attackPoints + supportPoints;
         }
         if( DEBUG ) {
             attack *= DEBUG_MULTIPLIER;
@@ -4824,8 +4907,8 @@ public class distensionbot extends SubspaceBot {
             combo *= DEBUG_MULTIPLIER;
         }
 
-        m_botAction.sendArenaMessage( "Total Victory Award:  " + (int)combo + "RP  ...  Avg " + (int)(support / numSupport) + "RP for " + numSupport + " on support (" + (int)(percentSupport * 100.0f) +
-                                      "%); avg [" + attack + "]RP for " + numAttack + " on attack (" + (int)(percentSupport * 100.0f) + "%)" + (DEBUG ? "  [Beta bonus not figured]" : "") );
+        m_botAction.sendArenaMessage( "Total Victory Award:  " + (int)combo + "RP  ...  Avg " + (int)(support / numSupport) + "RP for " + (int)numSupport + " on support (" + (int)(percentSupport * 100.0f) +
+                                      "%); avg " + (int)(attack / numAttack) + "RP for " + (int)numAttack + " on attack (" + (int)(percentAttack * 100.0f) + "%)" );
 
         // Point formula: (min played/2 * avg opposing strength * weight) * your upgrade level / avg team strength
         i = m_players.values().iterator();
