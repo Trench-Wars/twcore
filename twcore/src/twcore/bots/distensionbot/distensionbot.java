@@ -937,9 +937,9 @@ public class distensionbot extends SubspaceBot {
                 int victorRank = Math.max( 1, victor.getRank() );
                 int rankDiff = loserRank - victorRank;
 
-                // Loser is 10 or more levels above victor:
+                // Loser is many levels above victor:
                 //   Victor may have a cap, but loser is humiliated with some point loss
-                if( rankDiff >= RANK_DIFF_LOW ) {
+                if( rankDiff >= RANK_DIFF_MED ) {
 
                     if( rankDiff >= RANK_DIFF_HIGH ) {
                         points = victorRank + RANK_DIFF_HIGH;
@@ -949,14 +949,12 @@ public class distensionbot extends SubspaceBot {
 
                     // Support ships are not humiliated; assault are
                     if( ! loser.isSupportShip() ) {
-                        int loss;
+                        int loss = 0;
                         if( rankDiff >= RANK_DIFF_HIGHEST )
-                            loss = loserRank * 2;
-                        else if( rankDiff >= RANK_DIFF_VHIGH )
                             loss = loserRank;
-                        else if( rankDiff >= RANK_DIFF_HIGH )
+                        else if( rankDiff >= RANK_DIFF_VHIGH )
                             loss = points;
-                        else if( rankDiff >= RANK_DIFF_MED )
+                        else if( rankDiff >= RANK_DIFF_HIGH )
                             loss = (points / 2);
                         else
                             loss = (points / 3);    // Default
@@ -1038,7 +1036,7 @@ public class distensionbot extends SubspaceBot {
                     points -= Math.round((float)points * 0.20f);
 
                 // Track successive kills for weasel unlock & streaks
-                if( rankDiff > -8 ) {   // Streaks only count players close to your lvl
+                if( rankDiff > -STREAK_RANK_PROXIMITY ) {   // Streaks only count players close to your lvl
                     if( victor.addSuccessiveKill() ) {
                         // If player earned weasel off this kill, check if loser/killed player has weasel ...
                         // and remove it if they do!
@@ -1529,6 +1527,7 @@ public class distensionbot extends SubspaceBot {
                     if( flagTimer.getHoldingFreq() == player.getArmyID() && flagTimer.getSecondsHeld() > 0 ) {
                         // If player is changing to a support ship while their freq is securing a hold,
                         // they're probably just doing it to steal the points; don't keep MVP
+                        m_botAction.sendPrivateMessage( name, "You changed to a support ship, but your participation has still been reset, as you presently have a sector hold." );
                         m_playerTimes.remove( name );
                     } else {
                         m_botAction.sendPrivateMessage( name, "For switching to a needed support ship, your participation counter has not been reset." );
@@ -3539,7 +3538,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
             if( nextRank - rankPoints > 0 ) {
                 m_botAction.sendPrivateMessage(name, "Next rank in " + ( nextRank - rankPoints )+ " RP.  Earned 1 !upgrade point for the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
-            }else {
+            } else {
                 // Advanced more than one rank; refire the method
                 doAdvanceRank();
             }
@@ -3829,8 +3828,14 @@ public class distensionbot extends SubspaceBot {
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
-            if( isSupportShip() && rank >= 5 ) {
-                float sharingPercent = 2.0f;
+            if( isSupportShip() ) {
+                float sharingPercent;
+                if( rank >= 10 )
+                    sharingPercent = 2.0f;
+                else if( rank >= 5 )
+                    sharingPercent = 1.0f;
+                else
+                    sharingPercent = 0.5f;
                 if( shipNum == 5 )
                     sharingPercent += purchasedUpgrades[8];
                 int shared = Math.round((float)profits * (sharingPercent / 100.0f ));
