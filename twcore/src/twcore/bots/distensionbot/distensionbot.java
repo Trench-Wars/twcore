@@ -28,6 +28,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.TurretEvent;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Tools;
@@ -257,6 +258,7 @@ public class distensionbot extends SubspaceBot {
         req.request(EventRequester.LOGGED_ON);
         req.request(EventRequester.FLAG_CLAIMED);
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        req.request(EventRequester.TURRET_EVENT);
     }
 
 
@@ -468,6 +470,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-randomarmies YES", acceptedMessages, this, "cmdDBRandomArmies", OperatorList.HIGHMOD_LEVEL );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
@@ -633,7 +636,8 @@ public class distensionbot extends SubspaceBot {
                 "|______________________/",
                 "    DB COMMANDS",
                 "  !db-namechange <oldname>:<newname>   - Changes name from oldname to newname.",
-                "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record."
+                "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
+                "  !db-randomarmies YES                 - Randomizes all armies."
         };
         m_botAction.privateMessageSpam(name, helps);
     }
@@ -855,6 +859,17 @@ public class distensionbot extends SubspaceBot {
         if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
             checkForAssistAdvert = true;
     }
+
+    /**
+     * Deprize Lanc bombs when attached, and reprize when detaching.
+     * @param event Event to handle.
+     */
+    public void handleEvent(TurretEvent event) {
+        DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getAttacherID() ) );
+        if( p != null )
+            p.checkLancAttachEvent( event.isAttaching() );
+    }
+
 
 
     /**
@@ -1162,9 +1177,11 @@ public class distensionbot extends SubspaceBot {
                 " - You may be sent PMs by the bot when a new test is starting",
                 " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  11/20/07",
+                "RECENT UPDATES  -  11/23/07",
+                " - Armies randomized in an effort to promote better play",
+                " - !status now shows participation percentage",
                 " - !modhelp, !savedie, !db-changename and !db-wipeship for HighMod+",
-                " - New profit-sharing ability for support ships of rank 5+.  Terrs can upgrade it.",
+                " - New profit-sharing ability for all support ships.  Terrs can upgrade it.",
                 " - Dynamic end-round point adjustment based on # support vs. # attack",
                 " - !scrapall to scrap all of a specific upgrade, all upgrades, etc.",
                 " - Player limit and queuing for slot system implemented",
@@ -1745,6 +1762,15 @@ public class distensionbot extends SubspaceBot {
                 " - RANK " + player.getRank() );
         m_botAction.sendPrivateMessage( theName, "Total " + player.getRankPoints() + " RP earned; " + player.getRecentlyEarnedRP() + " RP earned this session." );
         m_botAction.sendPrivateMessage( theName,  player.getUpgradeLevel() + " upgrades installed.  " + player.getUpgradePoints() + " UP available for further upgrades." );
+        if( flagTimer != null && flagTimer.isRunning() ) {
+            float secs = flagTimer.getTotalSecs();
+            Integer inttime = m_playerTimes.get( player.getName() );
+            if( inttime != null ) {
+                float time = inttime;
+                float percentOnFreq = secs - time / secs;
+                m_botAction.sendPrivateMessage( theName,  "Current total participation this round: " + (int)(percentOnFreq * 100) + "%" );
+            }
+       }
         if( mod == null )
             cmdProgress( name, msg, null );
         else
@@ -2719,6 +2745,50 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage( name, Tools.shipName(shipNumToWipe) + " has been removed from " + player.getName() + "'s hangar." );
     }
 
+    /**
+     * Randomizes army for all players.
+     * @param name
+     * @param msg
+     */
+    public void cmdDBRandomArmies( String name, String msg ) {
+        int army0Count = 0;
+        int army1Count = 0;
+        int totalCount = 0;
+        LinkedList <Integer>newArmy0 = new LinkedList<Integer>();
+        LinkedList <Integer>newArmy1 = new LinkedList<Integer>();
+        try {
+            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnID, fnArmyID FROM tblDistensionPlayer ORDER BY fnArmyID" );
+            if( r == null ) {
+                m_botAction.sendPrivateMessage( name, "DB command not successful." );
+                return;
+            }
+            while( r.next() ) {
+                if( totalCount % 2 == 0 ) {
+                    if( r.getInt("fnArmyID") == 1 )         // Only change army if needed
+                        newArmy0.add( r.getInt("fnID") );
+                    army0Count++;
+                } else {
+                    if( r.getInt("fnArmyID") == 0 )         // Only change army if needed
+                        newArmy1.add( r.getInt("fnID") );
+                    army1Count++;
+                }
+                totalCount++;
+            }
+            m_botAction.specAll();
+            for( int pid : newArmy0 )
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='0' WHERE fnID='" + pid + "'" );
+            for( int pid : newArmy1 )
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='1' WHERE fnID='" + pid + "'" );
+            m_armies.get(0).manuallySetPilotsTotal( army0Count );
+            m_armies.get(1).manuallySetPilotsTotal( army1Count );
+            m_botAction.sendPrivateMessage( name, "Army reconfiguration complete; all " + totalCount + " players reassigned.  Army 0: " + army0Count + " pilots; Army 1: " + army1Count + " pilots." );
+            cmdSaveDie(name,"");
+        } catch (SQLException e ) {
+            m_botAction.sendPrivateMessage( name, "DB command not successful." );
+            return;
+        }
+    }
+
 
     // BETA-ONLY COMMANDS
 
@@ -3463,11 +3533,14 @@ public class distensionbot extends SubspaceBot {
             int base;
             base = getArmyID() % 2;
             if( roundStart && warpInBase ) {
-                x = 512;
+                int xmod = (int)(Math.random() * 4) - 2;
+                int ymod = (int)(Math.random() * 4) - 2;
+                x = 512 + xmod;
                 if( base == 0 )
                     y = BASE_CENTER_0_Y_COORD;
                 else
                     y = BASE_CENTER_1_Y_COORD;
+                y += ymod;
             } else {
                 Random r = new Random();
                 x = 512 + (r.nextInt(SPAWN_X_SPREAD) - (SPAWN_X_SPREAD / 2));
@@ -3514,10 +3587,12 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSafeWarp() {
             int base = getArmyID() % 2;
+            int xmod = (int)(Math.random() * 4) - 2;
+            int ymod = (int)(Math.random() * 4) - 2;
             if( base == 0 )
-                m_botAction.warpTo(name, 512, SAFE_TOP_Y);
+                m_botAction.warpTo(name, 512 + xmod, SAFE_TOP_Y + ymod);
             else
-                m_botAction.warpTo(name, 512, SAFE_BOTTOM_Y);
+                m_botAction.warpTo(name, 512 + xmod, SAFE_BOTTOM_Y + ymod);
         }
 
         /**
@@ -3661,9 +3736,10 @@ public class distensionbot extends SubspaceBot {
                 rankStart = -1;
                 nextRank = -1;
                 upgPoints = -1;
-                if( this.shipNum > 0 )
+                if( this.shipNum > 0 ) {
                     m_botAction.specWithoutLock( name );
-                lastShipNum = this.shipNum;     // Record for lagout
+                    lastShipNum = this.shipNum;     // Record for lagout
+                }
                 turnOffProgressBar();
             }
             if( this.shipNum == 0 )
@@ -3847,6 +3923,20 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
+        /**
+         * Checks for attaching in a Lanc, disabling the bomb ability when they
+         * attach and re-enabling it when they detach.
+         * @param attaching True if ship is attaching; false if detaching
+         */
+        public void checkLancAttachEvent( boolean attaching ) {
+            // Ignore non-Lancs and lancs without the bomb upgrade
+            if( shipNum != 7 || purchasedUpgrades[11] < 1 )
+                return;
+            if( attaching )
+                m_botAction.specificPrize( arenaPlayerID, -Tools.Prize.BOMBS );
+            else
+                m_botAction.specificPrize( arenaPlayerID, Tools.Prize.BOMBS );
+        }
 
 
         // BASIC SETTERS
@@ -4328,10 +4418,23 @@ public class distensionbot extends SubspaceBot {
 
         // SETTERS
 
+        /**
+         * Adjusts number of pilots total on army, both for internal purposes, and in DB.
+         * @param value Pilot amount by which to adjust
+         */
         public void adjustPilotsTotal( int value ) {
             pilotsTotal += value;
             if( pilotsTotal < 0 )
                 pilotsTotal = 0;
+            m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + pilotsTotal + "' WHERE fnArmyID='" + armyID + "'");
+        }
+
+        /**
+         * Forcibly sets number of pilots total on army, both for internal purposes, and in DB.
+         * @param value Pilot amount to be set
+         */
+        public void manuallySetPilotsTotal( int value ) {
+            pilotsTotal = value;
             m_botAction.SQLBackgroundQuery( m_database, null, "UPDATE tblDistensionArmy SET fnNumPilots='" + pilotsTotal + "' WHERE fnArmyID='" + armyID + "'");
         }
 
@@ -4869,7 +4972,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Points to be divided up by army
-        float totalPoints = (float)(minsToWin * 0.5f) * (float)opposingStrengthAvg * armyDiffWeight;
+        float totalPoints = (float)(minsToWin * 0.3f) * (float)opposingStrengthAvg * armyDiffWeight;
         float totalLvlSupport = 0;
         float totalLvlAttack = 0;
         float numSupport = 0;
