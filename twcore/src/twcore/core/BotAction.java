@@ -2419,9 +2419,10 @@ public class BotAction
     /**
      * Manually sets multiple objects to either be shown or hidden using the
      * syntax of the *objset command.  objString should contain comma-separated
-     * object IDs marked either with a + or - for show or hide.  For example:
-     * <p>  "+2,+5,-7,+12,-14,+15"
-     * @param objString Comma-separated list of object IDs marked with + for show or - for hide.
+     * object IDs marked either with a + or - for show or hide.  Also the string
+     * MUST terminate with a comma!  For example:
+     * <p>  "+2,+5,-7,+12,-14,+15,"
+     * @param objString Comma-separated list of object IDs marked with + for show or - for hide, ending with a comma.
      */
     public void manuallySetObjects( String objString ) {
         sendUnfilteredPublicMessage("*objset " + objString );
@@ -2431,10 +2432,10 @@ public class BotAction
      * Manually sets multiple objects to either be shown or hidden using the
      * syntax of the *objset command for a single player.  objString should
      * contain comma-separated object IDs marked either with a + or - for show
-     * or hide.  For example:
-     * <p>  "+2,+5,-7,+12,-14,+15"
+     * or hide.  Also the string MUST terminate with a comma!  For example:
+     * <p>  "+2,+5,-7,+12,-14,+15,"
      * @param playerID ID of the player to send to.
-     * @param objString Comma-separated list of object IDs marked with + for show or - for hide.
+     * @param objString Comma-separated list of object IDs marked with + for show or - for hide, ending with a comma.
      */
     public void manuallySetObjects( String objString, int playerID ) {
         sendUnfilteredPrivateMessage( playerID, "*objset " + objString );
