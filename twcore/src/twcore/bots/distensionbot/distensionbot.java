@@ -470,7 +470,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!db-randomarmies YES", acceptedMessages, this, "cmdDBRandomArmies", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies", OperatorList.HIGHMOD_LEVEL );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
@@ -637,7 +637,7 @@ public class distensionbot extends SubspaceBot {
                 "    DB COMMANDS",
                 "  !db-namechange <oldname>:<newname>   - Changes name from oldname to newname.",
                 "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
-                "  !db-randomarmies YES                 - Randomizes all armies."
+                "  !db-randomarmies                     - Randomizes all armies."
         };
         m_botAction.privateMessageSpam(name, helps);
     }
@@ -696,17 +696,17 @@ public class distensionbot extends SubspaceBot {
         	}
         	switch( flagOwner[1] ) {
         	case -1:
-        		flagString += "+" + LVZ_BOTBASE_EMPTY;
+        		flagString += "+" + LVZ_BOTBASE_EMPTY + ",";
         		break;
         	case 0:
-        		flagString += "+" + LVZ_BOTBASE_ARMY0;
+        		flagString += "+" + LVZ_BOTBASE_ARMY0 + ",";
         		break;
         	case 1:
-        		flagString += "+" + LVZ_BOTBASE_ARMY1;
+        		flagString += "+" + LVZ_BOTBASE_ARMY1 + ",";
         		break;
         	}
         	if( flagTimer.getSecondsHeld() > 0 )
-        		flagString += ",+" + LVZ_SECTOR_HOLD;
+        		flagString += "+" + LVZ_SECTOR_HOLD + ",";
         	m_botAction.manuallySetObjects(flagString, event.getPlayerID());
         }
         DistensionPlayer p = new DistensionPlayer(name);
@@ -752,6 +752,9 @@ public class distensionbot extends SubspaceBot {
                 m_lagouts.put( name, new Integer(flagTimer.getTotalSecs()) );
                 m_lagShips.put( name, player.getShipNum() );
             }
+        } else {
+            m_lagouts.remove(name);
+            m_lagShips.remove(name);
         }
         player.saveCurrentShipToDBNow();
         player.savePlayerTimeToDB();
@@ -1767,7 +1770,7 @@ public class distensionbot extends SubspaceBot {
             Integer inttime = m_playerTimes.get( player.getName() );
             if( inttime != null ) {
                 float time = inttime;
-                float percentOnFreq = secs - time / secs;
+                float percentOnFreq = (secs - time) / secs;
                 m_botAction.sendPrivateMessage( theName,  "Current total participation this round: " + (int)(percentOnFreq * 100) + "%" );
             }
        }
@@ -4001,7 +4004,9 @@ public class distensionbot extends SubspaceBot {
          * @param newArmyID ID of army player is assisting; -1 to disable assisting
          */
         public void setAssist( int newArmyID ) {
+            getArmy().removeProfitSharer(this);
             assistArmyID = newArmyID;
+            getArmy().addProfitSharer(this);
         }
 
         /**
