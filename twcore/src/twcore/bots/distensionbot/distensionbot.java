@@ -60,6 +60,8 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
     private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms
+    private final int MESSAGE_SPAM_DELAY = 50;             // Delay in ms between a long list of spammed messages
+    private final int PRIZE_SPAM_DELAY = 10;               // Delay in ms between prizes for individual players
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 10;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
@@ -550,7 +552,7 @@ public class distensionbot extends SubspaceBot {
                     "| !return           ~   |  Return to your current position in the war",
                     "| !battleinfo       !bi |  Display current battle status",
             };
-            m_botAction.privateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         } else if( shipNum == 0 ) {
             String[] helps = {
                     "     HANGAR CONSOLE",
@@ -571,7 +573,7 @@ public class distensionbot extends SubspaceBot {
                     "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
                     "| !battleinfo       !bi |  Display current battle status",
             };
-            m_botAction.privateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         } else {
             String[] helps = {
                     "      PILOT CONSOLE  ",
@@ -599,7 +601,7 @@ public class distensionbot extends SubspaceBot {
                     "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
                     "| !battleinfo       !bi |  Display current battle status",
             };
-            m_botAction.privateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         }
 
         if( m_botAction.getOperatorList().isHighmod(name) ) {
@@ -608,7 +610,7 @@ public class distensionbot extends SubspaceBot {
                     "| !modhelp          !mh |  Lists available HighMod+ operator commands",
                     "|______________________/",
             };
-            m_botAction.privateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         } else {
             m_botAction.sendPrivateMessage(name,
                     "|______________________/" );
@@ -622,6 +624,10 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdModHelp( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null ) {
+            return;
+        }
         String[] helps = {
                 "    OPERATOR CONSOLE  ",
                 ".-----------------------",
@@ -639,7 +645,7 @@ public class distensionbot extends SubspaceBot {
                 "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
                 "  !db-randomarmies                     - Randomizes all armies."
         };
-        m_botAction.privateMessageSpam(name, helps);
+        spamWithDelay(p.getArenaPlayerID(), helps);
     }
 
     // ***** EVENT PROCESSING
@@ -1116,11 +1122,15 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdIntro( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null ) {
+            return;
+        }
         String[] intro1 = {
                 "DISTENSION - The Trench Wars RPG - G. Dugwyler",
                 "Presently in beta.  Intro to come soon.  Type !beta for info on recent updates."
         };
-        m_botAction.privateMessageSpam( name, intro1 );
+        spamWithDelay(p.getArenaPlayerID(), intro1);
     }
 
 
@@ -1131,7 +1141,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdUpgInfo( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null ) {
+        if( p == null || p.getShipNum() == -1 ) {
             m_botAction.sendPrivateMessage( name, "Sorry, I don't recognize you.  If you !return to your army, maybe I can help." );
             return;
         }
@@ -1170,6 +1180,10 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdBeta( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null ) {
+            return;
+        }
         String[] beta = {
                 "BETA INFO - BASIC",
                 "-----------------",
@@ -1192,7 +1206,7 @@ public class distensionbot extends SubspaceBot {
                 " - !lagout for those that lag or are DC'd, to maintain participation",
                 " - Serious tweaking of upgrades to encourage speed-based ships",
         };
-        m_botAction.privateMessageSpam( name, beta );
+        spamWithDelay( p.getArenaPlayerID(), beta );
     }
 
 
@@ -1840,12 +1854,14 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "If you want to see the armory's selection for a ship, you'll need to !pilot one first." );
             return;
         }
+
         m_botAction.sendPrivateMessage( name, " #  Name                                  Curr /  Max       UP      Requirements" );
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = player.getPurchasedUpgrades();
         String printmsg;
         boolean printCost;
+        String[] display = new String[NUM_UPGRADES + 1];
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
             printCost = true;
             currentUpgrade = upgrades.get( i );
@@ -1883,11 +1899,12 @@ public class distensionbot extends SubspaceBot {
                     } else
                         printmsg += "Rank " + (req < 10 ? " " : "") + req;
                 }
-                m_botAction.sendPrivateMessage( name, printmsg );
+                display[i] = printmsg;
             }
         }
-        m_botAction.sendPrivateMessage( name, "RANK: " + player.getRank() + "  UPGRADES: " + player.getUpgradeLevel() + "  UP: " + player.getUpgradePoints()
-                                            + (player.getUpgradePoints() == 0?"  (Rank up for +1UP)":"") );
+        display[NUM_UPGRADES] = "RANK: " + player.getRank() + "  UPGRADES: " + player.getUpgradeLevel() + "  UP: " + player.getUpgradePoints()
+                                            + (player.getUpgradePoints() == 0?"  (Rank up for +1UP)":"");
+        spamWithDelay(player.getArenaPlayerID(), display);
     }
 
 
@@ -3143,6 +3160,78 @@ public class distensionbot extends SubspaceBot {
         return desc;
     }
 
+    /**
+     * Spams a player with a String array based on a default delay.
+     * @param arenaID ID of person to spam
+     * @param msgs Array of Strings to spam
+     */
+    public void spamWithDelay( int arenaID, String[] msgs ) {
+        SpamTask spamTask = new SpamTask();
+        spamTask.setMsgs( arenaID, msgs );
+        m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+    }
+
+    /**
+     * Spams a player with a String array based on a given delay.
+     * @param arenaID ID of person to spam
+     * @param msgs Array of Strings to spam
+     * @param delay Delay, in ms, to wait in between messages
+     */
+    public void spamWithDelay( int arenaID, String[] msgs, int delay ) {
+        SpamTask spamTask = new SpamTask();
+        spamTask.setMsgs( arenaID, msgs );
+        m_botAction.scheduleTask(spamTask, delay, delay );
+    }
+
+    /**
+     * Spams a player with a String array based on a given delay,
+     * and hides an LVZ object from them at the end.
+     * @param arenaID ID of person to spam
+     * @param msgs Array of Strings to spam
+     * @param delay Delay, in ms, to wait in between messages
+     * @param objNum # of object to hide at the end
+     */
+    public void spamWithDelay( int arenaID, LinkedList <String>msgs, int delay, int objNum ) {
+        SpamTask spamTask = new SpamTask();
+        spamTask.setMsgs( arenaID, msgs );
+        m_botAction.scheduleTask(spamTask, delay, delay );
+    }
+
+    /**
+     * Task used to send a spam of messages at a slower rate than normal.
+     */
+    private class SpamTask extends TimerTask {
+        LinkedList <String>remainingMsgs = new LinkedList<String>();
+        int arenaIDToSpam = -1;
+        int lvzObj = -1;
+
+        public void setMsgs( int id, String[] list ) {
+            arenaIDToSpam = id;
+            for( int i = 0; i < list.length; i++ )
+                remainingMsgs.add( list[i] );
+        }
+
+        public void setMsgs( int id, LinkedList <String>list ) {
+            arenaIDToSpam = id;
+            remainingMsgs = list;
+        }
+
+        public void setLVZ( int objNum ) {
+            lvzObj = objNum;
+        }
+
+        public void run() {
+            if( remainingMsgs.isEmpty() ) {
+                if( lvzObj != -1 )
+                    m_botAction.hideObjectForPlayer( arenaIDToSpam, lvzObj );
+                this.cancel();
+            } else {
+                m_botAction.sendUnfilteredPrivateMessage( arenaIDToSpam, remainingMsgs.remove() );
+            }
+        }
+    }
+
+
 
 
     // ***** INTERNAL CLASSES
@@ -3447,7 +3536,6 @@ public class distensionbot extends SubspaceBot {
             doWarp(false);
             isRespawning = false;
             prizeUpgrades();
-            m_botAction.hideObjectForPlayer(arenaPlayerID, LVZ_REARMING);
             return true;
         }
 
@@ -3457,17 +3545,18 @@ public class distensionbot extends SubspaceBot {
         public void prizeUpgrades() {
             if( shipNum < 1 )
                 return;
+            LinkedList <String>prizing = new LinkedList<String>();
             Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
             int prize = -1;
             for( int i = 0; i < NUM_UPGRADES; i++ ) {
                 prize = upgrades.get( i ).getPrizeNum();
                 if( prize > 0 )
                     for( int j = 0; j < purchasedUpgrades[i]; j++ )
-                        m_botAction.specificPrize( name, prize );
+                        prizing.add( "*prize #" + prize );
             }
             if( fastRespawn )
-                m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
-            m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_PRIZEDUP);
+                prizing.add( "*prize #" + Tools.Prize.FULLCHARGE );
+            spamWithDelay(arenaPlayerID, prizing, PRIZE_SPAM_DELAY, LVZ_REARMING);
         }
 
         /**
