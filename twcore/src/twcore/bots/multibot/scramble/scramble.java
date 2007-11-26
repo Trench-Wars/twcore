@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimerTask;
-import java.util.Timer;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -46,23 +45,24 @@ public class scramble extends MultiModule {
 
     double          giveTime;
     String          m_prec = "--|-- ";
-    String          t_definition, t_word, s_word, theanswer;
+    String          t_definition, t_word, s_word;
     boolean			difficulty = true;
     String[]        helpmsg =
     { "Commands:",
       "!help          -- displays this.",
       "!score         -- displays the current scores.",
       "!repeat        -- will repeat the last question given.",
+      "!pm            -- the bot will pm you for remote play.",
       "!stats         -- will display your statistics.",
       "!stats <name>  -- displays <name>'s statistics.",
       "!topten        -- displays top ten player stats."
     };
     String[]        opmsg =
-    { "!start         -- Starts a game of scramble to 10",
-      "!start <num>   -- Starts a game of scramble to <num> (1-25)",
-      "!cancel        -- Cancels a game of scramble",
+    { "!start         -- Starts a game of scramble to 10.",
+      "!start <num>   -- Starts a game of scramble to <num> (1-25).",
+      "!cancel        -- Cancels a game of scramble.",
       "!difficulty    -- Toggles difficulty level between normal/nerd mode.",
-      "!showanswer    -- Shows you the answer",
+      "!showanswer    -- Shows you the answer.",
       "---------------------------------------------------------"
     };
 
@@ -125,6 +125,7 @@ public class scramble extends MultiModule {
         m_commandInterpreter.registerCommand( "!topten",    acceptedMessages, this, "doTopTen" );
         m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
         m_commandInterpreter.registerCommand( "!score",     acceptedMessages, this, "doScore" );
+        m_commandInterpreter.registerCommand( "!pm",        acceptedMessages, this, "doPm" );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
@@ -161,12 +162,12 @@ public class scramble extends MultiModule {
             if (difficulty) {
             m_botAction.sendArenaMessage(m_prec + "A game of Scramble is starting | Win by getting " + toWin + " pts!", 22);
             m_botAction.sendArenaMessage(m_prec + "Difficulty set to normal mode.");
-            m_botAction.sendArenaMessage(m_prec + "  - Use !help sent privately for a list of commands...");
+            m_botAction.sendArenaMessage(m_prec + "  - PM !help to " + m_botAction.getBotName() + " for a list of commands...");
             }
             else {
             m_botAction.sendArenaMessage(m_prec + "A game of Scramble is starting | Win by getting " + toWin + " pts!", 22);
             m_botAction.sendArenaMessage(m_prec + "Difficulty set to nerd mode.");
-            m_botAction.sendArenaMessage(m_prec + "  - Use !help sent privately for a list of commands...");            	
+            m_botAction.sendArenaMessage(m_prec + "  - PM !help to " + m_botAction.getBotName() + " for a list of commands...");            	
             }
             startGame = new TimerTask() {
                 public void run() {
@@ -174,7 +175,7 @@ public class scramble extends MultiModule {
                     displayWord();
                 }
             };
-            m_botAction.scheduleTask(startGame, 15000);
+            m_botAction.scheduleTask(startGame, 10000);
             doTimedArena();
         }
     }
@@ -189,6 +190,7 @@ public class scramble extends MultiModule {
             m_botAction.sendArenaMessage( m_prec + "This game of Scramble has been canceled." );
             playerMap.clear();
             m_botAction.cancelTasks();
+            difficulty = true;
         }
     }
     /****************************************************************/
@@ -240,8 +242,7 @@ public class scramble extends MultiModule {
     /****************************************************************/
     public void doShowAnswer( String name, String message ) {
     	if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) ){
-    		theanswer = "The un-scrambled word is " + t_word + ".";
-    		m_botAction.sendSmartPrivateMessage( name, theanswer );
+    		m_botAction.sendSmartPrivateMessage( name, "The un-scrambled word is " + t_word + "." );
     		m_botAction.sendArenaMessage(name + " looked at the answer!");
     	}
     }
@@ -254,9 +255,7 @@ public class scramble extends MultiModule {
             public void run() {
                 if( gameProgress == 2 ) {
                     gameProgress = 3;
-                    String hint = "";
-                    hint = t_definition;
-                    m_botAction.sendArenaMessage(m_prec + "Hint: " + hint);
+                    m_botAction.sendArenaMessage(m_prec + "Hint: " + t_definition);
                     displayAnswer();
                 }
             }
@@ -321,6 +320,7 @@ public class scramble extends MultiModule {
         getTopTen();
         m_botAction.cancelTasks();
         toWin = 10;
+        difficulty = true;
     }
 
     public void doRepeat( String name, String message ){
@@ -339,6 +339,10 @@ public class scramble extends MultiModule {
         m_botAction.remotePrivateMessageSpam( name, helpmsg );
     }
 
+    public void doPm( String name, String message ){
+        m_botAction.sendSmartPrivateMessage( name, "Now you can use :: to submit your answers." );
+    }
+    
     public void doTopTen( String name, String message ){
         m_botAction.sendSmartPrivateMessage( name, "Note: You must have at least 100 possible points to be ranked in the top ten.");
         if( topTen.size() == 0 ){
@@ -442,9 +446,6 @@ public class scramble extends MultiModule {
     public void doCheckScores() {
         if(Math.round(scrambleNumber / 5.0) == (scrambleNumber / 5.0)) {
             int numberShown = 0, curPoints = curLeader;
-            m_botAction.sendChatMessage(1, "--|-------------------------------|");
-            m_botAction.sendChatMessage(1, "--|-- " + doTrimString("     Current Scores",28) + "|");
-            m_botAction.sendChatMessage(1, "--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while( numberShown < 8 && curPoints != 0) {
                 Set set = playerMap.keySet();
                 Iterator it = set.iterator();
@@ -460,9 +461,6 @@ public class scramble extends MultiModule {
                 curPoints--;
             }
             if(curPoints != 0)
-                m_botAction.sendChatMessage(1, "--|-- Low scores not shown.       |");
-            m_botAction.sendChatMessage(1, "--|-------------------------------|");
-            //Public Chat
             numberShown = 0;
             curPoints = curLeader;
             m_botAction.sendArenaMessage("--|-------------------------------|");
@@ -513,7 +511,7 @@ public class scramble extends MultiModule {
         timedMessages = new TimerTask() {
             public void run() {
                 if(gameProgress != -1) {
-                    m_botAction.sendArenaMessage("Please PM your answers to RoboBot.");
+                    m_botAction.sendArenaMessage("Please PM your answers to " + m_botAction.getBotName() + ".");
                     doTimedArena();
                 }
             }
@@ -529,7 +527,7 @@ public class scramble extends MultiModule {
         if (difficulty) {
         	try {
         		ResultSet qryWordData;
-                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word FROM tblNorm WHERE TimesUsed=9 ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
+                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word FROM tblScramble_Norm WHERE TimesUsed=9 ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
                 	if ( qryWordData.next() ) {
                 		t_word = qryWordData.getString("Word");
                 		while (t_word.length() < 4){
@@ -537,7 +535,7 @@ public class scramble extends MultiModule {
                 		}
                 		t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
                 		int ID = qryWordData.getInt("WordID");
-                		m_botAction.SQLQuery( mySQLHost, "UPDATE tblNorm SET TimesUsed = TimesUsed + 1 WHERE WordID = "+ ID);
+                		m_botAction.SQLQuery( mySQLHost, "UPDATE tblScramble_Norm SET TimesUsed = TimesUsed + 1 WHERE WordID = "+ ID);
                 	}
                 	m_botAction.SQLClose( qryWordData );
         	} catch (Exception e) {
@@ -547,12 +545,12 @@ public class scramble extends MultiModule {
         else {
         	try {
         		ResultSet qryWordData;
-                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word, WordDef FROM tblNerd WHERE TimesUsed=9 ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
+                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word, WordDef FROM tblScramble_Nerd WHERE TimesUsed=9 ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
                 	if ( qryWordData.next() ) {
                 		t_definition = "'" + qryWordData.getString("WordDef") + "'";
                 		t_word = qryWordData.getString("Word");
                 		int ID = qryWordData.getInt("WordID");
-                		m_botAction.SQLQuery( mySQLHost, "UPDATE tblNerd SET TimesUsed = TimesUsed + 1 WHERE WordID = "+ ID);
+                		m_botAction.SQLQuery( mySQLHost, "UPDATE tblScramble_Nerd SET TimesUsed = TimesUsed + 1 WHERE WordID = "+ ID);
                 	}
                 	m_botAction.SQLClose( qryWordData );
         	} catch (Exception e) {
@@ -567,7 +565,7 @@ public class scramble extends MultiModule {
     /****************************************************************/
     public void getMinTimesUsed() {
         try {
-            ResultSet qryMinTimesUsed = m_botAction.SQLQuery( mySQLHost, "SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblNerd");
+            ResultSet qryMinTimesUsed = m_botAction.SQLQuery( mySQLHost, "SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblScramble_Nerd");
             if ( qryMinTimesUsed.next() ) {
             int minUsed = qryMinTimesUsed.getInt("MinTimesUsed");
             m_mintimesused = minUsed;
@@ -581,12 +579,12 @@ public class scramble extends MultiModule {
     }
 
     /****************************************************************/
-    /*** Gets the current Topten.                                 ***/
+    /*** Gets the current Top ten.                                 ***/
     /****************************************************************/
     public void getTopTen() {
         topTen = new Vector<String>();
         try {
-            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tbluserscramblestats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
+            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tblScramble_UserStats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
             while(result != null && result.next())
                 topTen.add(doTrimString(result.getString("fcUsername"), 17 ) + "Games Won ("+ doTrimString(""+result.getInt("fnWon") +":" + result.getInt("fnPlayed") +")",9) + "Pts Scored (" +doTrimString(""+ result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")", 10) + "Rating: " + result.getInt("fnRating"));
             m_botAction.SQLClose( result );
@@ -603,17 +601,17 @@ public class scramble extends MultiModule {
             int wonAdd = 0;
             if (won) wonAdd = 1;
 
-            ResultSet qryHasScrambleRecord = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible FROM tbluserscramblestats WHERE fcUserName = \"" + username+"\"");
+            ResultSet qryHasScrambleRecord = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible FROM tblScramble_UserStats WHERE fcUserName = \"" + username+"\"");
             if (!qryHasScrambleRecord.next()) {
                 double rating = ( (points+.0) / toWin * 750.0 ) * ( 1.0 + (wonAdd / 3.0) );
-                m_botAction.SQLQueryAndClose( mySQLHost, "INSERT INTO tbluserscramblestats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""+username+"\",1,"+wonAdd+","+points+","+toWin+","+rating+")");
+                m_botAction.SQLQueryAndClose( mySQLHost, "INSERT INTO tblScramble_UserStats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""+username+"\",1,"+wonAdd+","+points+","+toWin+","+rating+")");
             } else {
                 double played = qryHasScrambleRecord.getInt("fnPlayed") + 1.0;
                 double wins   = qryHasScrambleRecord.getInt("fnWon") + wonAdd;
                 double pts    = qryHasScrambleRecord.getInt("fnPoints") + points;
                 double pos    = qryHasScrambleRecord.getInt("fnPossible") + toWin;
                 double rating = ( pts / pos * 750.0) * ( 1.0 + (wins / played / 3.0) );
-                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tbluserscramblestats SET fnPlayed = fnPlayed+1, fnWon = fnWon + "+wonAdd+", fnPoints = fnPoints + "+ points+", fnPossible = fnPossible + "+ toWin +", fnRating = "+rating+" WHERE fcUserName = \"" + username+"\"");
+                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblScramble_UserStats SET fnPlayed = fnPlayed+1, fnWon = fnWon + "+wonAdd+", fnPoints = fnPoints + "+ points+", fnPossible = fnPossible + "+ toWin +", fnRating = "+rating+" WHERE fcUserName = \"" + username+"\"");
             }
             m_botAction.SQLClose( qryHasScrambleRecord );
         } catch (Exception e) {
@@ -627,7 +625,7 @@ public class scramble extends MultiModule {
     public String getPlayerStats(String username) {
         try{
 
-            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnPoints, fnWon, fnPlayed, fnPossible, fnRating FROM tbluserscramblestats WHERE fcUserName = \"" + username+"\"");
+            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnPoints, fnWon, fnPlayed, fnPossible, fnRating FROM tblScramble_UserStats WHERE fcUserName = \"" + username+"\"");
             String info = "There is no record of player " + username;
             if(result.next())
                 info = username + "- Games Won: ("+ result.getInt("fnWon") + ":" + result.getInt("fnPlayed") + ")  Pts Scored: (" +result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")  Rating: " + result.getInt("fnRating");
