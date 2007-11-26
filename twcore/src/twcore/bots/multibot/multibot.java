@@ -378,9 +378,9 @@ public class multibot extends SubspaceBot {
             MultiUtil util = (MultiUtil) loader.loadClass("twcore.bots.multibot.util.util" + utilType).newInstance();
             util.initialize(m_botAction, modEventReq);
             utils.put(utilType, util);
-            if (utilType == "standard");
-            else if (utilType == "warp");
-            else if (utilType == "spec");
+            if ((utilType.equalsIgnoreCase("standard")) ||
+                (utilType.equalsIgnoreCase("warp"))     ||
+                (utilType.equalsIgnoreCase("spec")));
             else {
             	m_botAction.sendPrivateMessage(name, "Successfully loaded utility " + utilType);	
             }                   	           
