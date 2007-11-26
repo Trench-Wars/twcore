@@ -59,10 +59,11 @@ public class distensionbot extends SubspaceBot {
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
-    private final int UPGRADE_DELAY = 500;                 // Delay for prizing players, in ms
     private final int MESSAGE_SPAM_DELAY = 50;             // Delay in ms between a long list of spammed messages
     private final int PRIZE_SPAM_DELAY = 10;               // Delay in ms between prizes for individual players
-    private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs player must wait before respawn
+    private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
+    private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
+    private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 10;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int LAGOUT_VALID_SECONDS = 120;          // # seconds since lagout in which you can use !lagout
@@ -551,6 +552,7 @@ public class distensionbot extends SubspaceBot {
                     "| !intro                |  An introduction to Distension",
                     "| !return           ~   |  Return to your current position in the war",
                     "| !battleinfo       !bi |  Display current battle status",
+                    "|______________________/"
             };
             spamWithDelay(p.getArenaPlayerID(), helps);
         } else if( shipNum == 0 ) {
@@ -572,6 +574,7 @@ public class distensionbot extends SubspaceBot {
                     "| !terr             !t  |  Show approximate location of all army terriers",
                     "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
                     "| !battleinfo       !bi |  Display current battle status",
+                    "|______________________/"
             };
             spamWithDelay(p.getArenaPlayerID(), helps);
         } else {
@@ -600,21 +603,13 @@ public class distensionbot extends SubspaceBot {
                     "| !terr             !t  |  Show approximate location of all army terriers",
                     "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
                     "| !battleinfo       !bi |  Display current battle status",
+                    "|______________________/"
             };
             spamWithDelay(p.getArenaPlayerID(), helps);
         }
 
-        if( m_botAction.getOperatorList().isHighmod(name) ) {
-            String[] helps = {
-                    "|-----------------------|",
-                    "| !modhelp          !mh |  Lists available HighMod+ operator commands",
-                    "|______________________/",
-            };
-            spamWithDelay(p.getArenaPlayerID(), helps);
-        } else {
-            m_botAction.sendPrivateMessage(name,
-                    "|______________________/" );
-        }
+        if( m_botAction.getOperatorList().isHighmod(name) )
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "!modhelp - HighMod+ operator commands." );
 
     }
 
@@ -1023,16 +1018,18 @@ public class distensionbot extends SubspaceBot {
 
                 float flagMulti = killerarmy.getNumFlagsOwned();
                 if( flagMulti == 0f ) {
-                    // 1 RP for 0 flag rule only applies if armies are imbalanced.
                     if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
                         flagMulti = 0.5f;
                     } else {
+                        // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
                         flagMulti = 1;
                     }
+                } else if( flagMulti == 2f ) {
+                    flagMulti = 1.5f;
                 }
 
                 points = Math.round(((float)points * armySizeWeight));
-                points *= flagMulti;
+                points = (int)((float)points * flagMulti);
 
                 if( killedarmy.getPilotsInGame() != 1 ) {
                     switch( victor.getRepeatKillAmount( event.getKilleeID() ) ) {
@@ -1096,8 +1093,8 @@ public class distensionbot extends SubspaceBot {
                         msg += " [Terr: +10%]";
                 else if( isSharkK )
                     msg += " [Shark: -20%]";
-                if( flagMulti == 2 )
-                    msg += " [SECTOR HOLD: x2 RP]";
+                if( flagMulti == 1.5f )
+                    msg += " [SECTOR HOLD: +50% RP]";
                 if( flagMulti == 0.5f )
                     msg += " [No flags: -50%]";
                 if( endedStreak )
@@ -3184,17 +3181,16 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
-     * Spams a player with a String array based on a given delay,
-     * and hides an LVZ object from them at the end.
-     * @param arenaID ID of person to spam
+     * Prizes a player up using a delay, turns off an LVZ (the rearm), and
+     * notifies the PrizeQueue when done that it's OK to prize again.
+     * @param arenaID ID of person to prize
      * @param msgs Array of Strings to spam
      * @param delay Delay, in ms, to wait in between messages
-     * @param objNum # of object to hide at the end
      */
-    public void spamWithDelay( int arenaID, LinkedList <String>msgs, int delay, int objNum ) {
-        SpamTask spamTask = new SpamTask();
-        spamTask.setMsgs( arenaID, msgs );
-        m_botAction.scheduleTask(spamTask, delay, delay );
+    public void prizeSpam( int arenaID, LinkedList <Integer>prizes, int armyID ) {
+        PrizeSpamTask prizeSpamTask = new PrizeSpamTask();
+        prizeSpamTask.setup( arenaID, prizes, armyID );
+        m_botAction.scheduleTask( prizeSpamTask, PRIZE_SPAM_DELAY, PRIZE_SPAM_DELAY );
     }
 
     /**
@@ -3203,7 +3199,6 @@ public class distensionbot extends SubspaceBot {
     private class SpamTask extends TimerTask {
         LinkedList <String>remainingMsgs = new LinkedList<String>();
         int arenaIDToSpam = -1;
-        int lvzObj = -1;
 
         public void setMsgs( int id, String[] list ) {
             arenaIDToSpam = id;
@@ -3211,22 +3206,44 @@ public class distensionbot extends SubspaceBot {
                 remainingMsgs.add( list[i] );
         }
 
-        public void setMsgs( int id, LinkedList <String>list ) {
-            arenaIDToSpam = id;
-            remainingMsgs = list;
+        public void run() {
+            if( remainingMsgs == null || remainingMsgs.isEmpty() ) {
+                this.cancel();
+            } else {
+                String msg = remainingMsgs.remove();
+                if( msg != null )
+                    m_botAction.sendUnfilteredPrivateMessage( arenaIDToSpam, msg );
+            }
         }
+    }
 
-        public void setLVZ( int objNum ) {
-            lvzObj = objNum;
+    /**
+     * Task used to prize a player at a slower-than-instant rate, and notify the appropriate
+     * prize queue when it's clear to prize another player.
+     */
+    private class PrizeSpamTask extends TimerTask {
+        LinkedList <Integer>remainingPrizes = new LinkedList<Integer>();
+        int arenaIDToSpam = -1;
+        int armyID = -1;
+
+        public void setup( int id, LinkedList <Integer>list, int army ) {
+            arenaIDToSpam = id;
+            remainingPrizes = list;
+            armyID = army;
         }
 
         public void run() {
-            if( remainingMsgs.isEmpty() ) {
-                if( lvzObj != -1 )
-                    m_botAction.hideObjectForPlayer( arenaIDToSpam, lvzObj );
+            if( remainingPrizes == null || remainingPrizes.isEmpty() ) {
+                m_botAction.hideObjectForPlayer( arenaIDToSpam, LVZ_REARMING );
+                if( armyID == 0 )
+                    m_prizeQueue_army0.resumeSpawning();
+                else
+                    m_prizeQueue_army1.resumeSpawning();
                 this.cancel();
             } else {
-                m_botAction.sendUnfilteredPrivateMessage( arenaIDToSpam, remainingMsgs.remove() );
+                Integer prize = remainingPrizes.remove();
+                if( prize != null )
+                    m_botAction.sendUnfilteredPrivateMessage( arenaIDToSpam, "*prize #" + prize );
             }
         }
     }
@@ -3511,7 +3528,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSpawnTick() {
             spawnTicks--;
-            if( spawnTicks == 2 ) { // 2 ticks (1 second) before spawn end, warp to safe and shipreset
+            if( spawnTicks == 2 ) { // 2 ticks (1 sec) before spawn end, warp to safe and shipreset
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_REARMING);
                 doSafeWarp();
                 m_botAction.shipReset(name);
@@ -3545,18 +3562,18 @@ public class distensionbot extends SubspaceBot {
         public void prizeUpgrades() {
             if( shipNum < 1 )
                 return;
-            LinkedList <String>prizing = new LinkedList<String>();
+            LinkedList <Integer>prizing = new LinkedList<Integer>();
             Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
             int prize = -1;
             for( int i = 0; i < NUM_UPGRADES; i++ ) {
                 prize = upgrades.get( i ).getPrizeNum();
                 if( prize > 0 )
                     for( int j = 0; j < purchasedUpgrades[i]; j++ )
-                        prizing.add( "*prize #" + prize );
+                        prizing.add( prize );
             }
             if( fastRespawn )
-                prizing.add( "*prize #" + Tools.Prize.FULLCHARGE );
-            spamWithDelay(arenaPlayerID, prizing, PRIZE_SPAM_DELAY, LVZ_REARMING);
+                prizing.add( Tools.Prize.FULLCHARGE );
+            prizeSpam( arenaPlayerID, prizing, armyID );
         }
 
         /**
@@ -3837,10 +3854,13 @@ public class distensionbot extends SubspaceBot {
             if( this.shipNum == 0 )
                 turnOnProgressBar();
             this.shipNum = shipNum;
-            if( isSupportShip() )
-                getArmy().addProfitSharer(this);
-            else
-                getArmy().removeProfitSharer(this);
+            if( isSupportShip() ) {
+                getArmy().addProfitSharer(name);
+                getOpposingArmy().removeProfitSharer(name);
+            } else {
+                getArmy().removeProfitSharer(name);
+                getOpposingArmy().removeProfitSharer(name);
+            }
             isRespawning = false;
             successiveKills = 0;
             recentlyEarnedRP = 0;
@@ -4093,9 +4113,10 @@ public class distensionbot extends SubspaceBot {
          * @param newArmyID ID of army player is assisting; -1 to disable assisting
          */
         public void setAssist( int newArmyID ) {
-            getArmy().removeProfitSharer(this);
+            getArmy().removeProfitSharer(name);
+            getOpposingArmy().removeProfitSharer(name);
             assistArmyID = newArmyID;
-            getArmy().addProfitSharer(this);
+            getArmy().addProfitSharer(name);
         }
 
         /**
@@ -4483,7 +4504,7 @@ public class distensionbot extends SubspaceBot {
         boolean isDefault;              // True if army is available by default (not user-created)
         boolean isPrivate;              // True if army can't be seen on !armies screen
         int profitShareRP;              // Amount of RP made from profit shares
-        List <DistensionPlayer>profitSharers;   // Ships with profit-sharing on freq
+        List <String>profitSharers;     // Players with profit-sharing on freq
 
         /**
          * Creates record for an army, given an ID.
@@ -4507,7 +4528,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendArenaMessage("Problem loading Army " + armyID );
             }
             profitShareRP = 0;
-            profitSharers = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
+            profitSharers = Collections.synchronizedList( new LinkedList<String>() );
         }
 
         // SETTERS
@@ -4563,17 +4584,20 @@ public class distensionbot extends SubspaceBot {
             profitShareRP += shared;
         }
 
-        public void addProfitSharer(DistensionPlayer p) {
-            profitSharers.add(p);
+        public void addProfitSharer(String pname) {
+            profitSharers.add(pname);
         }
 
-        public void removeProfitSharer(DistensionPlayer p) {
-            profitSharers.remove(p);
+        public void removeProfitSharer(String pname) {
+            profitSharers.remove(pname);
         }
 
         public void shareProfits() {
-            for( DistensionPlayer p : profitSharers )
-                p.shareProfits(profitShareRP);
+            for( String pname : profitSharers ) {
+                DistensionPlayer p = m_players.get( pname );
+                if( p.getArmyID() == armyID)
+                    p.shareProfits(profitShareRP);
+            }
             profitShareRP = 0;
         }
 
@@ -4844,6 +4868,8 @@ public class distensionbot extends SubspaceBot {
     private class PrizeQueue extends TimerTask {
         LinkedList <DistensionPlayer>priorityPlayers = new LinkedList<DistensionPlayer>();
         LinkedList <DistensionPlayer>players = new LinkedList<DistensionPlayer>();
+        int runs = 0;       // # times queue has run since last spawn tick
+        boolean maySpawn = true;
 
         /**
          * Adds a player to the end of the prizing queue.
@@ -4864,25 +4890,48 @@ public class distensionbot extends SubspaceBot {
                 priorityPlayers.addLast(p);
         }
 
+        /**
+         * Tells the queue that the last player has finished respawning, and that
+         * spawning should resume.
+         */
+        public void resumeSpawning() {
+            maySpawn = true;
+        }
+
         public void run() {
             boolean spawned = false;
+            boolean doTick = false;
+            runs++;
+            if( runs % DELAYS_BEFORE_TICK == 0 ) {
+                doTick = true;
+                runs = 0;
+            }
             if( !priorityPlayers.isEmpty() ) {
-                for( DistensionPlayer p : priorityPlayers )
-                    p.doSpawnTick();
-                DistensionPlayer currentPlayer = priorityPlayers.peek();
-                spawned = currentPlayer.doSpawn();
-                if( spawned )
-                    priorityPlayers.removeFirst();
+                if( doTick )
+                    for( DistensionPlayer p : priorityPlayers )
+                        p.doSpawnTick();
+                // If another player is not in the process of being prized, attempt to spawn
+                if( maySpawn ) {
+                    DistensionPlayer currentPlayer = priorityPlayers.peek();
+                    spawned = currentPlayer.doSpawn();
+                    if( spawned )
+                        priorityPlayers.removeFirst();
+                    maySpawn = false;
+                }
             }
             if( players.isEmpty() )
                 return;
-            for( DistensionPlayer p : players )
-                p.doSpawnTick();
+            if( doTick )
+                for( DistensionPlayer p : players )
+                    p.doSpawnTick();
             if( spawned )   // If high priority player was spawned, do not try to spawn normal player
                 return;
-            DistensionPlayer currentPlayer = players.peek();
-            if( currentPlayer.doSpawn() )
-                players.removeFirst();
+            if( maySpawn ) {
+                DistensionPlayer currentPlayer = players.peek();
+                if( currentPlayer.doSpawn() )
+                    players.removeFirst();
+                maySpawn = false;
+            }
         }
     }
 
