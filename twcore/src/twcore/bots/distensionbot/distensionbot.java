@@ -1579,7 +1579,7 @@ public class distensionbot extends SubspaceBot {
         for( DistensionArmy a : m_armies.values() )
             a.recalculateFigures();
         player.putInCurrentShip();
-        player.prizeUpgrades();
+        player.prizeUpgradesNow();
         m_lagouts.remove( name );
         m_lagShips.remove( name );
         player.setLagoutAllowed(true);
@@ -2316,7 +2316,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.setFreq(name, armyToAssist );
                     if( !p.isRespawning() ) {
                         m_botAction.shipReset(name);
-                        p.prizeUpgrades();
+                        p.prizeUpgradesNow();
                     }
                     for( DistensionArmy a : m_armies.values() )
                         a.recalculateFigures();
@@ -2372,7 +2372,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.setFreq(name, armyToAssist );
                 if( !p.isRespawning() ) {
                     m_botAction.shipReset(name);
-                    p.prizeUpgrades();
+                    p.prizeUpgradesNow();
                 }
                 for( DistensionArmy a : m_armies.values() )
                     a.recalculateFigures();
@@ -2452,7 +2452,7 @@ public class distensionbot extends SubspaceBot {
 
         m_botAction.setShip( name, 1 );
         m_botAction.setShip( name, p.getShipNum() );
-        p.prizeUpgrades();
+        p.prizeUpgradesNow();
         m_mineClearedPlayers.add( name );
         m_botAction.sendPrivateMessage( name, "Mines cleared.  You may do this once per battle.  Use safety areas in rearmament zone to clear mines manually." );
     }
@@ -3182,14 +3182,14 @@ public class distensionbot extends SubspaceBot {
 
     /**
      * Prizes a player up using a delay, turns off an LVZ (the rearm), and
-     * notifies the PrizeQueue when done that it's OK to prize again.
+     * warps the player when done prizing.
      * @param arenaID ID of person to prize
      * @param msgs Array of Strings to spam
      * @param delay Delay, in ms, to wait in between messages
      */
-    public void prizeSpam( int arenaID, LinkedList <Integer>prizes, int armyID ) {
+    public void prizeSpam( int arenaID, LinkedList <Integer>prizes ) {
         PrizeSpamTask prizeSpamTask = new PrizeSpamTask();
-        prizeSpamTask.setup( arenaID, prizes, armyID );
+        prizeSpamTask.setup( arenaID, prizes );
         m_botAction.scheduleTask( prizeSpamTask, PRIZE_SPAM_DELAY, PRIZE_SPAM_DELAY );
     }
 
@@ -3218,27 +3218,25 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
-     * Task used to prize a player at a slower-than-instant rate, and notify the appropriate
-     * prize queue when it's clear to prize another player.
+     * Task used to prize a player at a slower-than-instant rate, and warp player
+     * at end/remove rearm LVZ.
      */
     private class PrizeSpamTask extends TimerTask {
         LinkedList <Integer>remainingPrizes = new LinkedList<Integer>();
         int arenaIDToSpam = -1;
-        int armyID = -1;
 
-        public void setup( int id, LinkedList <Integer>list, int army ) {
+        public void setup( int id, LinkedList <Integer>list ) {
             arenaIDToSpam = id;
             remainingPrizes = list;
-            armyID = army;
         }
 
         public void run() {
             if( remainingPrizes == null || remainingPrizes.isEmpty() ) {
                 m_botAction.hideObjectForPlayer( arenaIDToSpam, LVZ_REARMING );
-                if( armyID == 0 )
-                    m_prizeQueue_army0.resumeSpawning();
-                else
-                    m_prizeQueue_army1.resumeSpawning();
+                Player p = m_botAction.getPlayer( arenaIDToSpam );
+                try {
+                    m_players.get( p.getPlayerName() ).doWarp(false);
+                } catch (Exception e) {}
                 this.cancel();
             } else {
                 Integer prize = remainingPrizes.remove();
@@ -3543,25 +3541,46 @@ public class distensionbot extends SubspaceBot {
             if( specialRespawn ) {
                 specialRespawn = false;
                 isRespawning = false;
-                prizeUpgrades();
+                prizeUpgradesNow();
                 return true;
             }
             if( spawnTicks > 0 )
                 return false;
             if( !isRespawning )
                 return true;
-            doWarp(false);
             isRespawning = false;
-            prizeUpgrades();
+            if( getArmyID() == 0 )
+                m_prizeQueue_army0.resumeSpawningAfterDelay( prizeUpgrades() );
+            else
+                m_prizeQueue_army1.resumeSpawningAfterDelay( prizeUpgrades() );
             return true;
         }
 
         /**
-         * Prizes upgrades to player based on what has been purchased.
+         * Prizes upgrades to player based on what has been purchased, with delay.
          */
-        public void prizeUpgrades() {
+        public void prizeUpgradesNow() {
             if( shipNum < 1 )
                 return;
+            Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
+            int prize = -1;
+            for( int i = 0; i < NUM_UPGRADES; i++ ) {
+                prize = upgrades.get( i ).getPrizeNum();
+                if( prize > 0 )
+                    for( int j = 0; j < purchasedUpgrades[i]; j++ )
+                        m_botAction.specificPrize(arenaPlayerID, prize);
+            }
+            if( fastRespawn )
+                m_botAction.specificPrize(arenaPlayerID, Tools.Prize.FULLCHARGE );
+        }
+
+        /**
+         * Prizes upgrades to player based on what has been purchased, with delay.
+         * @return Time, in ms, to delay until next spawn is allowed
+         */
+        public int prizeUpgrades() {
+            if( shipNum < 1 )
+                return 0;
             LinkedList <Integer>prizing = new LinkedList<Integer>();
             Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
             int prize = -1;
@@ -3573,7 +3592,8 @@ public class distensionbot extends SubspaceBot {
             }
             if( fastRespawn )
                 prizing.add( Tools.Prize.FULLCHARGE );
-            prizeSpam( arenaPlayerID, prizing, armyID );
+            prizeSpam( arenaPlayerID, prizing );
+            return prizing.size() * PRIZE_SPAM_DELAY;
         }
 
         /**
@@ -4869,7 +4889,7 @@ public class distensionbot extends SubspaceBot {
         LinkedList <DistensionPlayer>priorityPlayers = new LinkedList<DistensionPlayer>();
         LinkedList <DistensionPlayer>players = new LinkedList<DistensionPlayer>();
         int runs = 0;       // # times queue has run since last spawn tick
-        boolean maySpawn = true;
+        int delayTillNextSpawn = 0;
 
         /**
          * Adds a player to the end of the prizing queue.
@@ -4891,16 +4911,17 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Tells the queue that the last player has finished respawning, and that
-         * spawning should resume.
+         * Sets the time in ms until the next spawn is allowed.
+         * @param delay Time in ms until next spawn is allowed
          */
-        public void resumeSpawning() {
-            maySpawn = true;
+        public void resumeSpawningAfterDelay( int delay ) {
+            delayTillNextSpawn = delay;
         }
 
         public void run() {
             boolean spawned = false;
             boolean doTick = false;
+            delayTillNextSpawn -= UPGRADE_DELAY;
             runs++;
             if( runs % DELAYS_BEFORE_TICK == 0 ) {
                 doTick = true;
@@ -4911,12 +4932,11 @@ public class distensionbot extends SubspaceBot {
                     for( DistensionPlayer p : priorityPlayers )
                         p.doSpawnTick();
                 // If another player is not in the process of being prized, attempt to spawn
-                if( maySpawn ) {
+                if( delayTillNextSpawn <= 0 ) {
                     DistensionPlayer currentPlayer = priorityPlayers.peek();
                     spawned = currentPlayer.doSpawn();
                     if( spawned )
                         priorityPlayers.removeFirst();
-                    maySpawn = false;
                 }
             }
             if( players.isEmpty() )
@@ -4926,11 +4946,10 @@ public class distensionbot extends SubspaceBot {
                     p.doSpawnTick();
             if( spawned )   // If high priority player was spawned, do not try to spawn normal player
                 return;
-            if( maySpawn ) {
+            if( delayTillNextSpawn <= 0 ) {
                 DistensionPlayer currentPlayer = players.peek();
                 if( currentPlayer.doSpawn() )
                     players.removeFirst();
-                maySpawn = false;
             }
         }
     }
