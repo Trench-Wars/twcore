@@ -1617,13 +1617,15 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         DistensionArmy army = player.getArmy();
-        if( army != null )
+        if( army != null ) {
             army.recalculateFigures();
-        else
+            player.setAssist(-1);
+        } else {
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
+            player.assistArmyID = -1;
+        }
         checkFlagTimeStop();
-        player.setAssist(-1);
         if( player.saveCurrentShipToDBNow() ) {
             m_botAction.sendPrivateMessage( player.getArenaPlayerID(), "Ship status logged to our records.  Total earned in " + Tools.shipName(player.getShipNum()) + ": " + player.getRecentlyEarnedRP() + " RP.  You are now docked.");
             player.setShipNum( 0 );
@@ -2616,7 +2618,7 @@ public class distensionbot extends SubspaceBot {
         try {
             minToShutdown = Integer.parseInt( msg );
         } catch (NumberFormatException e) {
-            m_botAction.sendPrivateMessage( name, "Improper format.  !shutdown <minutes>" );
+            m_botAction.sendPrivateMessage( name, "Improper format.  !shutdown <minutes>.  Or use !shutdown 0 and then !shutdown to cancel." );
             return;
         }
         m_botAction.sendPrivateMessage( name, "Shutting down at the next end of round occuring after " + minToShutdown + " minutes." );
@@ -3187,9 +3189,9 @@ public class distensionbot extends SubspaceBot {
      * @param msgs Array of Strings to spam
      * @param delay Delay, in ms, to wait in between messages
      */
-    public void prizeSpam( int arenaID, LinkedList <Integer>prizes ) {
+    public void prizeSpam( int arenaID, LinkedList <Integer>prizes, boolean warp ) {
         PrizeSpamTask prizeSpamTask = new PrizeSpamTask();
-        prizeSpamTask.setup( arenaID, prizes );
+        prizeSpamTask.setup( arenaID, prizes, warp );
         m_botAction.scheduleTask( prizeSpamTask, PRIZE_SPAM_DELAY, PRIZE_SPAM_DELAY );
     }
 
@@ -3224,10 +3226,12 @@ public class distensionbot extends SubspaceBot {
     private class PrizeSpamTask extends TimerTask {
         LinkedList <Integer>remainingPrizes = new LinkedList<Integer>();
         int arenaIDToSpam = -1;
+        boolean doWarp = false;
 
-        public void setup( int id, LinkedList <Integer>list ) {
+        public void setup( int id, LinkedList <Integer>list, boolean warp ) {
             arenaIDToSpam = id;
             remainingPrizes = list;
+            doWarp = warp;
         }
 
         public void run() {
@@ -3550,35 +3554,26 @@ public class distensionbot extends SubspaceBot {
                 return true;
             isRespawning = false;
             if( getArmyID() == 0 )
-                m_prizeQueue_army0.resumeSpawningAfterDelay( prizeUpgrades() );
+                m_prizeQueue_army0.resumeSpawningAfterDelay( prizeUpgrades( true ) );
             else
-                m_prizeQueue_army1.resumeSpawningAfterDelay( prizeUpgrades() );
+                m_prizeQueue_army1.resumeSpawningAfterDelay( prizeUpgrades( true ) );
             return true;
         }
 
         /**
-         * Prizes upgrades to player based on what has been purchased, with delay.
+         * Prizes upgrades to player based on what has been purchased, with delay,
+         * but without holding up the prizing queue.
          */
         public void prizeUpgradesNow() {
-            if( shipNum < 1 )
-                return;
-            Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
-            int prize = -1;
-            for( int i = 0; i < NUM_UPGRADES; i++ ) {
-                prize = upgrades.get( i ).getPrizeNum();
-                if( prize > 0 )
-                    for( int j = 0; j < purchasedUpgrades[i]; j++ )
-                        m_botAction.specificPrize(arenaPlayerID, prize);
-            }
-            if( fastRespawn )
-                m_botAction.specificPrize(arenaPlayerID, Tools.Prize.FULLCHARGE );
+            prizeUpgrades( false );
         }
 
         /**
          * Prizes upgrades to player based on what has been purchased, with delay.
+         * @param Whether or not to warp player
          * @return Time, in ms, to delay until next spawn is allowed
          */
-        public int prizeUpgrades() {
+        public int prizeUpgrades( boolean warp ) {
             if( shipNum < 1 )
                 return 0;
             LinkedList <Integer>prizing = new LinkedList<Integer>();
@@ -3587,12 +3582,21 @@ public class distensionbot extends SubspaceBot {
             for( int i = 0; i < NUM_UPGRADES; i++ ) {
                 prize = upgrades.get( i ).getPrizeNum();
                 if( prize > 0 )
-                    for( int j = 0; j < purchasedUpgrades[i]; j++ )
-                        prizing.add( prize );
+                    for( int j = 0; j < purchasedUpgrades[i]; j++ ) {
+                        // Special case: on Lanc, only prize bombs if not attached
+                        if( shipNum == 7 && i == 11 && purchasedUpgrades[11] > 0 ) {
+                            Player p = m_botAction.getPlayer(arenaPlayerID);
+                            if( p != null )
+                                if( !p.isAttached() )
+                                    prizing.add( prize );
+                        }
+                        else
+                            prizing.add( prize );
+                    }
             }
             if( fastRespawn )
                 prizing.add( Tools.Prize.FULLCHARGE );
-            prizeSpam( arenaPlayerID, prizing );
+            prizeSpam( arenaPlayerID, prizing, warp );
             return prizing.size() * PRIZE_SPAM_DELAY;
         }
 
@@ -4613,11 +4617,14 @@ public class distensionbot extends SubspaceBot {
         }
 
         public void shareProfits() {
+            LinkedList <String>dead = new LinkedList<String>();
             for( String pname : profitSharers ) {
                 DistensionPlayer p = m_players.get( pname );
-                if( p.getArmyID() == armyID)
+                if( p != null && p.getArmyID() == armyID)
                     p.shareProfits(profitShareRP);
             }
+            for( String pname : dead )
+                profitSharers.remove( pname );
             profitShareRP = 0;
         }
 
@@ -5548,7 +5555,7 @@ public class distensionbot extends SubspaceBot {
                 for( DistensionArmy a : m_armies.values() )
                     a.recalculateFigures();
                 player.putInCurrentShip();
-                player.prizeUpgrades();
+                player.prizeUpgradesNow();
                 m_lagouts.remove( name );
                 if( !flagTimeStarted || stopFlagTime ) {
                     checkFlagTimeStart();
@@ -6466,7 +6473,7 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Light Charging Mechanism [CHG]", Tools.Prize.RECHARGE, costs8, 1, 11 );          // 150 x11
         ship.addUpgrade( upg );
         int p8b1[] = { 1, 1,  1,  1,  1,  2,  3,  10 };
-        int p8b2[] = { 1, 2, 10, 20, 30, 40, 50, 75 };
+        int p8b2[] = { 3, 5, 10, 20, 30, 40, 50, 75 };
         upg = new ShipUpgrade( "Projectile Slip PlateS   [NRG]", Tools.Prize.ENERGY, p8b1, p8b2, 8 );       // 150 x8
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 1, 12, 1 );
@@ -6477,12 +6484,12 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 2, 17, 1 );
         ship.addUpgrade( upg );
-        int p8ca1[] = {1,2,5};
-        int p8ca2[] = {30,48,55};
+        int p8ca1[] = {  1,  2,  5 };
+        int p8ca2[] = { 25, 48, 55 };
         upg = new ShipUpgrade( "+10% Repulsor Regeneration", -6, p8ca1, p8ca2, 3 );
         ship.addUpgrade( upg );
-        int p8c1[] = { 1, 1,  1,  2,  3,  4,  5,  6,  8,  10 };
-        int p8c2[] = { 4, 15, 25, 40, 50, 60, 70, 80, 90, 100 };
+        int p8c1[] = { 1,  1,  1,  2,  3,  4,  5,  6,  8,  10 };
+        int p8c2[] = { 4, 18, 30, 40, 50, 60, 70, 80, 90, 100 };
         upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2, 10 );    // DEFINE
         ship.addUpgrade( upg );
         int p8d2[] = { 22, 41, 65 };
