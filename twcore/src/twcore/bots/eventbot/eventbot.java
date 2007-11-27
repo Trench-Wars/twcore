@@ -17,6 +17,16 @@ import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
 /**
+ * TODO:
+ *  - Allow players to cancel their own request
+ *  - !removeban
+ *  - !listban # (default 10)
+ *  - Make sure you can't !ban yourself or staff
+ *  - Configurable chats (chat for requests, chat for wbduel/base requests)
+ *  - Alias for !fillrequest: !fr
+ *  
+ *  
+ *  
  * @author Maverick
  */
 public class eventbot extends SubspaceBot {
