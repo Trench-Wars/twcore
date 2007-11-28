@@ -29,12 +29,14 @@ public class fallout extends MultiModule {
 	public boolean isUnloadable() {
 		return !fallOut;
 	}
-
+	String[] opmsg = {
+    		"!start                         - starts a game of fallout with speed of 30 and teams of 1",
+    		"!start <speed>                 - starts a game of fallout with <speed> and teams of 1",
+    		"!start <speed> <teamsize>      - starts a game of fallout with <speed> and teams of size <teamsize>",
+    		"!stop                          - stop/resets a game of fallout in case of error"
+    	};
 	public String[] getModHelpMessage() {
-		String[] message = {
-			""
-		};
-		return message;
+		return opmsg;
 	}
 
 	public void requestEvents(ModuleEventRequester eventRequester) {
