@@ -90,11 +90,7 @@ public class trivia extends MultiModule {
 	}
 
 	public  String[] getModHelpMessage() {
-    	String[] message =
-    	{
-	        ""
-	    };
-        return message;
+    	return opmsg;
     }
 
     public boolean isUnloadable() {
