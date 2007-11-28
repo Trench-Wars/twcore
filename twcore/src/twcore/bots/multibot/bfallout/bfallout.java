@@ -35,6 +35,18 @@ public class bfallout extends MultiModule {
 	int m_shipType = 1;
 	boolean m_repsEnabled = false;
 	boolean m_decoysEnabled = false;
+	String[] opmsg =
+	{
+			"+------------------------------------------------------------+",
+			"| Host Commands:                                             |",
+			"|   !start                     - Starts the event            |",
+			"|     Params: <#>              - Forces shiptype #           |",
+			"|             rep              - Enables reps (wb only)      |",
+			"|             decoy            - Enables decoys              |",
+			"|   !stop                      - Stops the event             |",
+			"|   !spamrules                 - *arena messages the rules   |",
+			"+------------------------------------------------------------+"	
+	};
 
 	BFPlayer bestGreener;
 
@@ -53,10 +65,7 @@ public class bfallout extends MultiModule {
 	}
 
 	public String[] getModHelpMessage() {
-		String[] message = {
-			""
-		};
-		return message;
+		return opmsg;
 	}
 
 	public void requestEvents(ModuleEventRequester eventRequester) {
