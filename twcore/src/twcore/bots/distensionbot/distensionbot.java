@@ -1069,7 +1069,12 @@ public class distensionbot extends SubspaceBot {
 
                 if( points < 1 )
                     points = 1;
-                victor.addRankPoints( points );
+                // Check if player ranked up from the kill
+                if( victor.addRankPoints( points ) ) {
+                    // ... and taunt loser if he/she did
+                    if( loser.wantsKillMsg() )
+                        m_botAction.sendPrivateMessage( loser.getArenaPlayerID(), "INSULT TO INJURY: " + victor.getName() + " just ranked up from your kill!", Tools.Sound.CRYING );
+                }
                 victor.getArmy().addSharedProfit( points );
 
                 if( ! victor.wantsKillMsg() )
@@ -3807,10 +3812,12 @@ public class distensionbot extends SubspaceBot {
         /**
          * Adds # rank points to total rank point amt.
          * @param points Amt to add
+         * @return True if player ranked up by adding these points
          */
-        public void addRankPoints( int points ) {
+        public boolean addRankPoints( int points ) {
             if( shipNum < 1 )
-                return;
+                return false;
+            boolean rankedUp = false;
             if( points > 0 ) {
                 if( DEBUG )
                     points = (int)((float)points * DEBUG_MULTIPLIER);
@@ -3825,9 +3832,12 @@ public class distensionbot extends SubspaceBot {
             rankPoints += points;
             recentlyEarnedRP += points;
             checkProgress();
-            if( rankPoints >= nextRank )
+            if( rankPoints >= nextRank ) {
                 doAdvanceRank();
+                rankedUp = true;
+            }
             shipDataSaved = false;
+            return rankedUp;
         }
 
         /**
@@ -4609,7 +4619,8 @@ public class distensionbot extends SubspaceBot {
         }
 
         public void addProfitSharer(String pname) {
-            profitSharers.add(pname);
+            if( !profitSharers.contains( pname ) )
+                profitSharers.add(pname);
         }
 
         public void removeProfitSharer(String pname) {
@@ -4620,8 +4631,11 @@ public class distensionbot extends SubspaceBot {
             LinkedList <String>dead = new LinkedList<String>();
             for( String pname : profitSharers ) {
                 DistensionPlayer p = m_players.get( pname );
-                if( p != null && p.getArmyID() == armyID)
+                if( p != null && p.getArmyID() == armyID) {
                     p.shareProfits(profitShareRP);
+                } else {
+                    dead.add( pname );
+                }
             }
             for( String pname : dead )
                 profitSharers.remove( pname );
