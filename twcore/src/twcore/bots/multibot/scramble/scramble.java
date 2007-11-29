@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.Vector;
+import java.util.ArrayList;
 
 import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
@@ -20,8 +21,8 @@ import twcore.core.util.Tools;
 /**
  * Scramble.
  *
- * @author 2dragons - 
- * revised by: milosh 11.16.07
+ * @author 2dragons and milosh - 
+ * 11.07
  */
 public class scramble extends MultiModule {
 
@@ -31,39 +32,59 @@ public class scramble extends MultiModule {
     String          mySQLHost = "local";
     StringBuilder   builder;
     TimerTask       startGame, timerQuestion, timerHint, timerAnswer, timerNext;
-    TimerTask       timedMessages, timedMessages2;
+     
     TreeMap<String, PlayerProfile> playerMap = new TreeMap<String, PlayerProfile>();
     //HashMap         playerID = new HashMap();
     HashMap<String, String> accessList = new HashMap<String, String>();
     Vector<String>  topTen;
-
+    ArrayList<String> cantPlay = new ArrayList<String>();
     int             gameProgress = -1, toWin = 10, scrambleNumber = 1, curLeader = 0;
     int             m_mintimesused = -1;
 
-    int             m_timeQuestion = 0, m_timeHint = 0, m_timeAnswer = 0, m_timeNext = 0;
-    int             m_timePer1 = 0, m_timePer2 = 0;
-
-    double          giveTime;
+    int             m_timeQuestion = 2000, m_timeHint = 15000, m_timeAnswer = 15000, m_timeNext = 1000;
+    
+    double          giveTime, answerSpeed;
     String          m_prec = "--|-- ";
     String          t_definition, t_word, s_word;
     boolean			difficulty = true;
     String[]        helpmsg =
-    { "Commands:",
+    { "---------------------------------------------------------",
+      "Commands:",
       "!help          -- displays this.",
       "!score         -- displays the current scores.",
       "!repeat        -- will repeat the last question given.",
-      "!pm            -- the bot will pm you for remote play.",
+      "!pm            -- the bot will pm you for easier play.",
       "!stats         -- will display your statistics.",
       "!stats <name>  -- displays <name>'s statistics.",
       "!topten        -- displays top ten player stats."
     };
     String[]        opmsg =
-    { "!start         -- Starts a game of scramble to 10.",
-      "!start <num>   -- Starts a game of scramble to <num> (1-25).",
+    { "Moderator Commands:",
+      "!start         -- Starts a game of scramble to 10.",
+      "!start <num>   -- Starts a game to <num> (1-25).",
       "!cancel        -- Cancels a game of scramble.",
-      "!difficulty    -- Toggles difficulty level between normal/nerd mode.",
-      "!showanswer    -- Shows you the answer.",
-      "---------------------------------------------------------"
+      "!difficulty    -- Toggles difficulty level between",
+      "                  normal/nerd mode.",
+      "!showanswer    -- Shows you the answer."
+    };
+    String[]        regrules =
+    {
+    	"Rules:",
+    	"-A word with scrambled letters will appear. The first person to PM the word",
+    	"to the bot before the time is up gains a point. The first player to reach",
+    	"the needed points for that round wins. After each round player stats are stored.",
+    	"-Note: You must have at least 100 possible points to gain Top Ten status.",
+    	"-Questions? Comments? Suggestions? Bugs?: miloshtw@gmail.com"
+    };
+    String[]        oprules =
+    {
+    	"Moderator Rules:",
+    	"-Only start games to (1-25).",
+    	"-!showanswer will prohibit you from answering that round.",
+    	"-Do not abuse !showanswer by giving other players or moderators the answer.",
+    	"-Although it is possible to change difficulties mid-game please do not do so",
+    	" for the sake of competitive players.",
+    	"------------------------------------------------------------------------"
     };
 
     public void init() {
@@ -72,15 +93,6 @@ public class scramble extends MultiModule {
         registerCommands();
         m_rnd = new Random();
         BotSettings m_botSettings = moduleSettings;
-
-        //Gets variables from .cfg
-        m_timeQuestion =  m_botSettings.getInt("QuestionTime");
-        m_timeHint        =  m_botSettings.getInt("HintTime");
-        m_timeAnswer   =  m_botSettings.getInt("AnswerTime"); //cumulative w/hint
-        m_timeNext       =  m_botSettings.getInt("NextTime");   //Till next question
-        m_timePer1     =  m_botSettings.getInt("Periodic1");
-        m_timePer2     =  m_botSettings.getInt("Periodic2");
-        toWin           =  m_botSettings.getInt("ToWin");
         String access[] =  m_botSettings.getString("SpecialAccess").split( ":" );
         for( int i = 0; i < access.length; i++ )
             accessList.put( access[i], access[i] );
@@ -89,13 +101,9 @@ public class scramble extends MultiModule {
     public void requestEvents(ModuleEventRequester events) {
 	}
 
-	public  String[] getModHelpMessage() {
-    	String[] message =
-    	{
-	        ""
-	    };
-        return message;
-    }
+	public  String[] getModHelpMessage(){
+        return opmsg;
+	}
 
     public boolean isUnloadable() {
     	return true;
@@ -126,13 +134,33 @@ public class scramble extends MultiModule {
         m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
         m_commandInterpreter.registerCommand( "!score",     acceptedMessages, this, "doScore" );
         m_commandInterpreter.registerCommand( "!pm",        acceptedMessages, this, "doPm" );
+        m_commandInterpreter.registerCommand( "!rules",     acceptedMessages, this, "doRules" );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
+   
     /****************************************************************/
-    /*** Toggles difficulty level.                                  ***/
+    /*** Displays the rules.                                      ***/
+    /****************************************************************/
+    
+    public void doRules( String name, String message) {
+        if( m_botAction.getOperatorList().isModerator( name ) ){
+            m_botAction.smartPrivateMessageSpam( name, oprules );
+        }
+
+        m_botAction.smartPrivateMessageSpam( name, regrules );
+    }
+    
+    /****************************************************************/
+    /*** Toggles difficulty level.                                ***/
     /****************************************************************/
     public void doDifficulty( String name, String message) {
+    	if (gameProgress != -1){
+    		if(difficulty)
+    		m_botAction.sendArenaMessage("The difficulty has been changed to nerd mode.");
+    		else
+    		m_botAction.sendArenaMessage("The difficulty has been changed to normal mode.");
+    	}
     	if (difficulty){
     		difficulty = false;
     		m_botAction.sendSmartPrivateMessage(name, "Difficulty set to nerd mode.");
@@ -141,6 +169,7 @@ public class scramble extends MultiModule {
     		difficulty = true;
     		m_botAction.sendSmartPrivateMessage(name, "Difficulty set to normal mode.");
     	}
+
     }
    
     /****************************************************************/
@@ -159,24 +188,19 @@ public class scramble extends MultiModule {
             }
             catch (Exception e) {}
             gameProgress = 0;
-            if (difficulty) {
             m_botAction.sendArenaMessage(m_prec + "A game of Scramble is starting | Win by getting " + toWin + " pts!", 22);
-            m_botAction.sendArenaMessage(m_prec + "Difficulty set to normal mode.");
+            if (difficulty)
+            	m_botAction.sendArenaMessage(m_prec + "Difficulty set to normal mode.");
+            else
+            	m_botAction.sendArenaMessage(m_prec + "Difficulty set to nerd mode.");     	
             m_botAction.sendArenaMessage(m_prec + "  - PM !help to " + m_botAction.getBotName() + " for a list of commands...");
-            }
-            else {
-            m_botAction.sendArenaMessage(m_prec + "A game of Scramble is starting | Win by getting " + toWin + " pts!", 22);
-            m_botAction.sendArenaMessage(m_prec + "Difficulty set to nerd mode.");
-            m_botAction.sendArenaMessage(m_prec + "  - PM !help to " + m_botAction.getBotName() + " for a list of commands...");            	
-            }
             startGame = new TimerTask() {
                 public void run() {
                     grabWord();
                     displayWord();
                 }
             };
-            m_botAction.scheduleTask(startGame, 10000);
-            doTimedArena();
+            m_botAction.scheduleTask(startGame, 10000);            
         }
     }
 
@@ -190,7 +214,6 @@ public class scramble extends MultiModule {
             m_botAction.sendArenaMessage( m_prec + "This game of Scramble has been canceled." );
             playerMap.clear();
             m_botAction.cancelTasks();
-            difficulty = true;
         }
     }
     /****************************************************************/
@@ -217,8 +240,8 @@ public class scramble extends MultiModule {
     /****************************************************************/
     public void displayWord() {
         gameProgress = 1;
-        m_botAction.sendArenaMessage( m_prec + "Scramble #" + scrambleNumber + ":" );
-
+        m_botAction.sendArenaMessage(m_prec + "Please PM your answers to " + m_botAction.getBotName() + "."); 
+        m_botAction.sendArenaMessage( m_prec + "Scramble #" + scrambleNumber + ":");      
         timerQuestion = new TimerTask() {
             public void run() {
                 if( gameProgress == 1 ){
@@ -226,14 +249,15 @@ public class scramble extends MultiModule {
                     //Date d = new Date();
                     giveTime = new java.util.Date().getTime();
                     s_word = t_word;
-                    while (s_word == t_word) {
+                    do {
                     	s_word = scrambleWord(t_word);
-                    }
+                    } while (s_word.equals(t_word) && s_word.substring(0,1).equals(t_word.substring(0,1)));
                     m_botAction.sendArenaMessage( m_prec + "Un-Scramble: " + s_word );
                     displayHint();
                 }
             }
         };
+        
         m_botAction.scheduleTask( timerQuestion, m_timeQuestion );
     }
     
@@ -243,7 +267,7 @@ public class scramble extends MultiModule {
     public void doShowAnswer( String name, String message ) {
     	if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) ){
     		m_botAction.sendSmartPrivateMessage( name, "The un-scrambled word is " + t_word + "." );
-    		m_botAction.sendArenaMessage(name + " looked at the answer!");
+    		cantPlay.add(name);
     	}
     }
 
@@ -256,10 +280,12 @@ public class scramble extends MultiModule {
                 if( gameProgress == 2 ) {
                     gameProgress = 3;
                     m_botAction.sendArenaMessage(m_prec + "Hint: " + t_definition);
+                	
                     displayAnswer();
                 }
             }
         };
+        
         m_botAction.scheduleTask( timerHint, m_timeHint );
     }
 
@@ -272,11 +298,13 @@ public class scramble extends MultiModule {
                 if( gameProgress == 3 ) {
                     gameProgress = 4;
                     m_botAction.sendArenaMessage( m_prec + "No one has given the correct answer of '" + t_word + "'", 103);
+                   
                     doCheckScores();
                     startNextRound();
                 }
             }
         };
+        
         m_botAction.scheduleTask( timerAnswer, m_timeAnswer );
     }
 
@@ -288,11 +316,13 @@ public class scramble extends MultiModule {
             public void run() {
                 if( gameProgress == 4 ) {
                     scrambleNumber++;
+                    cantPlay.clear();
                     grabWord();
                     displayWord();
                 }
             }
         };
+        
         m_botAction.scheduleTask( timerNext, m_timeNext );
     }
 
@@ -303,9 +333,9 @@ public class scramble extends MultiModule {
         gameProgress = -1;
         curLeader = 0;
         scrambleNumber = 1;
-        m_botAction.sendArenaMessage( m_prec + name + " got the correct answer, '" + t_word + "'" );
+        m_botAction.sendArenaMessage( m_prec + "Answer: '" + t_word + "'" );
         m_botAction.sendArenaMessage( m_prec + "Player: " + name + " has won this round of scramble!", 5 );
-        //Save stats
+        //Save statistics
         Set set = playerMap.keySet();
         Iterator it = set.iterator();
         while (it.hasNext()) {
@@ -320,7 +350,6 @@ public class scramble extends MultiModule {
         getTopTen();
         m_botAction.cancelTasks();
         toWin = 10;
-        difficulty = true;
     }
 
     public void doRepeat( String name, String message ){
@@ -333,10 +362,10 @@ public class scramble extends MultiModule {
 
     public void doHelp( String name, String message ){
         if( m_botAction.getOperatorList().isModerator( name ) ){
-            m_botAction.remotePrivateMessageSpam( name, opmsg );
+            m_botAction.smartPrivateMessageSpam( name, opmsg );
         }
 
-        m_botAction.remotePrivateMessageSpam( name, helpmsg );
+        m_botAction.smartPrivateMessageSpam( name, helpmsg );
     }
 
     public void doPm( String name, String message ){
@@ -344,7 +373,6 @@ public class scramble extends MultiModule {
     }
     
     public void doTopTen( String name, String message ){
-        m_botAction.sendSmartPrivateMessage( name, "Note: You must have at least 100 possible points to be ranked in the top ten.");
         if( topTen.size() == 0 ){
             m_botAction.sendSmartPrivateMessage( name, "No one has qualified yet!");
         } else {
@@ -357,7 +385,6 @@ public class scramble extends MultiModule {
     public void doStats( String name, String message ){
         if( gameProgress == -1 ){
             m_botAction.sendSmartPrivateMessage( name, "Displaying stats, please hold.");
-            m_botAction.sendSmartPrivateMessage( name, "Note: You must have at least 100 possible points to be ranked in the top ten.");
             if( message.trim().length() > 0 ){
                 m_botAction.sendSmartPrivateMessage( name, getPlayerStats( message ) );
             } else {
@@ -371,9 +398,10 @@ public class scramble extends MultiModule {
     public void doScore( String name, String message ){
 
         if( gameProgress != -1 ){
-            m_botAction.sendRemotePrivateMessage( name, "This game is to " + toWin + " points." );
-            m_botAction.sendRemotePrivateMessage( name, m_prec + doTrimString( "Current Scores", 28 ) + "|" );
-            m_botAction.sendRemotePrivateMessage( name, m_prec + doTrimString( "Player Name", 18 ) + doTrimString( "Points", 10 ) + "|" );
+            m_botAction.sendSmartPrivateMessage( name, "This game is to " + toWin + " points." );
+            m_botAction.sendSmartPrivateMessage( name, m_prec + "----------------------------");
+            m_botAction.sendSmartPrivateMessage( name, m_prec + doTrimString( "Current Scores", 28 ) + "|" );
+            m_botAction.sendSmartPrivateMessage( name, m_prec + doTrimString( "Player Name", 18 ) + doTrimString( "Points", 10 ) + "|" );
             int curPoints = curLeader;
             while( curPoints != 0 ){
                 Set set = playerMap.keySet();
@@ -383,7 +411,7 @@ public class scramble extends MultiModule {
                     twcore.core.stats.PlayerProfile tempPlayer;
                     tempPlayer = playerMap.get( curPlayer );
                     if( tempPlayer.getData( 0 ) == curPoints ){
-                        m_botAction.sendRemotePrivateMessage( name, "--|-- " + doTrimString( curPlayer, 18 ) + doTrimString( "" + tempPlayer.getData( 0 ), 10 ) + "|" );
+                        m_botAction.sendSmartPrivateMessage( name, "--|-- " + doTrimString( curPlayer, 18 ) + doTrimString( "" + tempPlayer.getData( 0 ), 10 ) + "|" );
                     }
                 }
                 curPoints--;
@@ -399,28 +427,46 @@ public class scramble extends MultiModule {
         if((gameProgress == 2) || (gameProgress == 3)) {
                 String curAns = t_word;
                 if((message.toLowerCase().equals(curAns.toLowerCase()))) {
-                    if( playerMap.containsKey( name ) ) {
-                        twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
-                        //data 0 stores the score.
-                        tempP.incData( 0 );
-                        if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
-                    }
-                    else {
-                        playerMap.put( name, new twcore.core.stats.PlayerProfile( name ) );
-                        twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
-                        tempP.setData( 0, 1 );
-                        if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
-                    }
-                    twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
-                    if( gameProgress == 2 || gameProgress == 3 ) {
-                        String trail = getRank( tempP.getData(0) );
-                        m_botAction.sendArenaMessage(m_prec + name + " got the correct answer, '"+ t_word + "', " + trail, 103 );
-                    }
-                    if( gameProgress != -1 ) {
-                        gameProgress = 4;
-                        doCheckScores();
-                        startNextRound();
-                    }
+                	if(!cantPlay.contains(name))
+                	{
+                    	answerSpeed = (new java.util.Date().getTime() - giveTime) / 1000.0;
+                		if( playerMap.containsKey( name ) ) {
+                			twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
+                			//data 0 stores the score.
+                			tempP.incData( 0 );
+                			if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
+                		}
+                		else {
+                			playerMap.put( name, new twcore.core.stats.PlayerProfile( name ) );
+                			twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
+                			tempP.setData( 0, 1 );
+                			if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
+                		}
+                		twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
+                		if( gameProgress == 2 || gameProgress == 3 ) {
+                			if(answerSpeed < 2){
+                				String trail = getRank( tempP.getData(0) );
+                				m_botAction.sendArenaMessage(m_prec + "Inconceivable! " + name + " got the correct answer, '"+ t_word + "' in only " + trail, 7 );                    	
+                			}
+                			else if(answerSpeed < 5 && answerSpeed > 2){
+                				String trail = getRank( tempP.getData(0) );
+                				m_botAction.sendArenaMessage(m_prec + "Jeez! " + name + " got the correct answer, '"+ t_word + "' in only " + trail, 20 );                  		
+                			}
+                			else {
+                				String trail = getRank( tempP.getData(0) );
+                				m_botAction.sendArenaMessage(m_prec + name + " got the correct answer, '"+ t_word + "', " + trail, 103 );
+                			}
+                		}
+                		if( gameProgress != -1 ) {
+                			gameProgress = 4;
+                			m_botAction.cancelTasks();
+                			doCheckScores();
+                			startNextRound();
+                		}
+                	}
+                	else {
+                		m_botAction.sendSmartPrivateMessage(name, "You've seen the answer!");
+                	}
                 }
             }
         }
@@ -429,14 +475,17 @@ public class scramble extends MultiModule {
     /*** Returns the correct string for pts and lead.             ***/
     /****************************************************************/
     public String getRank( int score ) {
-        String speed = "in " + (new java.util.Date().getTime() - giveTime) / 1000.0 + " sec. ";
-        String pts = " pts.";
-        if( score == 1 ) pts = " pt.";
+    	String secs = " seconds ";
+    	if (answerSpeed ==1)
+    		secs = " second ";
+    	String speed = answerSpeed + secs;	
+        String pts = " points.";
+        if( score == 1 ) pts = " point.";
         if( score > curLeader ) {
             curLeader = score;
             return speed + "and is in the lead with " + score + pts;
         }
-        else if( score == curLeader) return speed + "and is tied for the lead with " + score + pts;
+        else if( score == curLeader) return speed + "and is tied for the lead with " + score + pts + "!";
         else return speed + "and has " + score + pts;
     }
 
@@ -444,29 +493,13 @@ public class scramble extends MultiModule {
     /*** Shows scores.                                            ***/
     /****************************************************************/
     public void doCheckScores() {
-        if(Math.round(scrambleNumber / 5.0) == (scrambleNumber / 5.0)) {
-            int numberShown = 0, curPoints = curLeader;
-            while( numberShown < 8 && curPoints != 0) {
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
-                while (it.hasNext()) {
-                    String curPlayer = (String) it.next();
-                    twcore.core.stats.PlayerProfile tempPlayer;
-                    tempPlayer = playerMap.get(curPlayer);
-                    if(tempPlayer.getData(0) == curPoints) {
-                        numberShown++;
-                        m_botAction.sendChatMessage(1, "--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
-                    }
-                }
-                curPoints--;
-            }
-            if(curPoints != 0)
-            numberShown = 0;
-            curPoints = curLeader;
+    	if((scrambleNumber % 5 == 0) && (curLeader != 0)) {
+    		int numberShown = 0, curPoints = curLeader;    		
             m_botAction.sendArenaMessage("--|-------------------------------|");
-            m_botAction.sendArenaMessage("--|-- " + doTrimString("     Current Scores",28) + "|");
-            m_botAction.sendArenaMessage("--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
-            while( numberShown < 8 && curPoints != 0) {
+            m_botAction.sendArenaMessage("--|-- " + doTrimString("Top Scores",28) + "|");
+            m_botAction.sendArenaMessage("--|-------------------------------|");
+            m_botAction.sendArenaMessage(m_prec + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
+            while (numberShown < 5 && curPoints != 0){
                 Set set = playerMap.keySet();
                 Iterator it = set.iterator();
                 while (it.hasNext()) {
@@ -480,12 +513,55 @@ public class scramble extends MultiModule {
                 }
                 curPoints--;
             }
-            if(curPoints != 0)
-                m_botAction.sendArenaMessage("--|-- Low scores not shown.       |");
             m_botAction.sendArenaMessage("--|-------------------------------|");
-        }
+    	}
     }
-
+    
+    
+/*
+   <TEST> 
+    public void doCheckScores() {
+        if(Math.round(scrambleNumber / 5.0) == (scrambleNumber / 5.0)) {
+            int numberShown = 0, curPoints = curLeader;
+            while( numberShown < 8 && curPoints != 0) {
+                Set set = playerMap.keySet();
+                Iterator it = set.iterator();
+                while (it.hasNext()) {
+                    String curPlayer = (String) it.next();
+                    twcore.core.stats.PlayerProfile tempPlayer;
+                    tempPlayer = playerMap.get(curPlayer);
+                    if(tempPlayer.getData(0) == curPoints) {
+                        numberShown++;
+                    }
+            }
+            curPoints--;
+       }
+       if(curPoints != 0)
+            numberShown = 0;
+            curPoints = curLeader;
+            m_botAction.sendArenaMessage("--|-------------------------------|");
+            m_botAction.sendArenaMessage("--|-- " + "     Current Scores" + "|");
+            m_botAction.sendArenaMessage("--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
+            while( numberShown < 8 && curPoints != 0) {
+                Set set = playerMap.keySet();
+                Iterator it = set.iterator();
+                while (it.hasNext()) {
+                    String curPlayer = (String) it.next();
+                    twcore.core.stats.PlayerProfile tempPlayer;
+                    tempPlayer = playerMap.get(curPlayer);
+                    if(tempPlayer.getData(0) == curPoints) {                
+                        m_botAction.sendArenaMessage("--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
+                        numberShown++;
+                    }
+                }
+                curPoints--;
+       }
+       if(curPoints != 0)
+                m_botAction.sendArenaMessage("--|-- Low scores not shown.       |");
+            	m_botAction.sendArenaMessage("--|-------------------------------|");
+       }
+    }
+**/
     /****************************************************************/
     /*** Just adds blank space for alignment.                     ***/
     /****************************************************************/
@@ -504,22 +580,6 @@ public class scramble extends MultiModule {
     }
 
     /****************************************************************/
-    /*** For periodic messages...                                 ***/
-    /****************************************************************/
-
-    public void doTimedArena() {
-        timedMessages = new TimerTask() {
-            public void run() {
-                if(gameProgress != -1) {
-                    m_botAction.sendArenaMessage("Please PM your answers to " + m_botAction.getBotName() + ".");
-                    doTimedArena();
-                }
-            }
-        };
-        m_botAction.scheduleTask( timedMessages, m_timePer1 );
-    }
-
-    /****************************************************************/
     /*** Gets a word from the database.                           ***/
     /****************************************************************/
     public void grabWord(){
@@ -530,7 +590,7 @@ public class scramble extends MultiModule {
                 	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word FROM tblScramble_Norm WHERE TimesUsed=9 ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
                 	if ( qryWordData.next() ) {
                 		t_word = qryWordData.getString("Word");
-                		while (t_word.length() < 4){
+                		if (t_word.length() < 4){
                 			grabWord();
                 		}
                 		t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
