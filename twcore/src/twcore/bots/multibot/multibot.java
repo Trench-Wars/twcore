@@ -38,6 +38,7 @@ public class multibot extends SubspaceBot {
     private String utilPath;
     private String botChat;
     private HashMap<String, MultiUtil> utils;
+    private boolean isDefaultUtil = false;
     AdaptiveClassLoader loader;
     ModuleEventRequester modEventReq;
 
@@ -378,12 +379,10 @@ public class multibot extends SubspaceBot {
             MultiUtil util = (MultiUtil) loader.loadClass("twcore.bots.multibot.util.util" + utilType).newInstance();
             util.initialize(m_botAction, modEventReq);
             utils.put(utilType, util);
-            if ((utilType.equalsIgnoreCase("standard")) ||
-                (utilType.equalsIgnoreCase("warp"))     ||
-                (utilType.equalsIgnoreCase("spec")));
-            else {
-            	m_botAction.sendPrivateMessage(name, "Successfully loaded utility " + utilType);	
-            }                   	           
+            if(isDefaultUtil){} else {
+            m_botAction.sendPrivateMessage(name, "Successfully loaded utility " + utilType);
+            }
+                   	           
         } catch (Exception e) {
             m_botAction.sendPrivateMessage(name, "Failed to load " + utilType + ".  Use !listutils to see a list of available utilities.");
         }
@@ -395,10 +394,40 @@ public class multibot extends SubspaceBot {
      *          Person trying to load
      */
     public void doLoadDefaultCmd(String name) {
-        doLoadCmd(name, "standard");
-        doLoadCmd(name, "warp");
-        doLoadCmd(name, "spec");
-        m_botAction.sendPrivateMessage(name, "Successfully loaded default utilities(standard, warp, and spec).");
+    	boolean bstan = false;
+    	boolean bwarp = false;
+    	boolean bspec = false;
+    	if(utils.containsKey("standard")){
+    		bstan = true;
+    	}
+    	else {
+    		isDefaultUtil = true;
+    		doLoadCmd(name, "standard");
+    		isDefaultUtil = false;
+    	}
+    	if (utils.containsKey("warp")) {
+    		bwarp = true;
+    	}
+    	else {
+    		isDefaultUtil = true;
+    		doLoadCmd(name, "warp");
+    		isDefaultUtil = false;
+    	}
+    	if (utils.containsKey("spec")){
+    		bspec = true;
+    	}
+    	else {
+    		isDefaultUtil = true;
+    		doLoadCmd(name, "spec");
+    		isDefaultUtil = false;
+    	}
+    	if (!bstan || !bwarp || !bspec){
+    		m_botAction.sendSmartPrivateMessage(name, "Successfully loaded default utilities(standard,warp,and spec)." );
+    	}
+    	else {
+    		m_botAction.sendSmartPrivateMessage(name, "The default utilities are already loaded.");
+    	}
+    	
     }
 
     /**
@@ -414,9 +443,9 @@ public class multibot extends SubspaceBot {
             MultiUtil removedutil = utils.remove(util);
             //modEventReq.releaseAll(removedutil);
             removedutil.cancel();
-            m_botAction.sendPrivateMessage(name, util + " successfully unloaded.");
+            m_botAction.sendPrivateMessage(name, "Successfully unloaded " + util + ".");
         } else {
-            m_botAction.sendPrivateMessage( name, util + " is not loaded, so it cannot be removed.  (NOTE: names are case-sensitive.)");
+            m_botAction.sendPrivateMessage( name, "The " + util + " utility is not loaded, so it cannot be removed.  (NOTE: names are case-sensitive.)");
         }
     }
 
