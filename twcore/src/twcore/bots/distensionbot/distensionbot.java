@@ -96,8 +96,10 @@ public class distensionbot extends SubspaceBot {
     private final int SPAWN_BASE_1_Y_COORD = 566;               // Y coord around which base 1 owners (bottom) spawn
     private final int SPAWN_Y_SPREAD = 90;                      // # tiles * 2 from above coords to spawn players
     private final int SPAWN_X_SPREAD = 275;                     // # tiles * 2 from x coord 512 to spawn players
-    private final int SAFE_TOP_Y = 199;                         // Y coords of safes, for warping in
-    private final int SAFE_BOTTOM_Y = 824;
+    private final int REARM_AREA_TOP_Y = 199;                   // Y coords of center of rearm areas
+    private final int REARM_AREA_BOTTOM_Y = 824;
+    private final int REARM_SAFE_TOP_Y = 192;                   // Y coords of safe parts of rearm areas
+    private final int REARM_SAFE_BOTTOM_Y = 832;
     private final int BASE_CENTER_0_Y_COORD = 335;
     private final int BASE_CENTER_1_Y_COORD = 688;
 
@@ -3537,7 +3539,7 @@ public class distensionbot extends SubspaceBot {
             spawnTicks--;
             if( spawnTicks == 2 ) { // 2 ticks (1 sec) before spawn end, warp to safe and shipreset
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_REARMING);
-                doSafeWarp();
+                doRearmAreaWarp();
                 m_botAction.shipReset(name);
             }
         }
@@ -3550,7 +3552,10 @@ public class distensionbot extends SubspaceBot {
             if( specialRespawn ) {
                 specialRespawn = false;
                 isRespawning = false;
-                prizeUpgradesNow();
+                if( getArmyID() == 0 )
+                    m_prizeQueue_army0.resumeSpawningAfterDelay( prizeUpgrades( false ) );
+                else
+                    m_prizeQueue_army1.resumeSpawningAfterDelay( prizeUpgrades( false ) );
                 return true;
             }
             if( spawnTicks > 0 )
@@ -3710,27 +3715,47 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Sets up player for respawning.
+         * Sets up player for "respawning" at round start in order to wipe ports
+         * and mines.  Does not use spawn ticks, so is considerably faster, prizing
+         * players essentially at the normal spawn rate.
          */
         public void doSetupSpecialRespawn() {
             specialRespawn = true;
-            if( getArmyID() == 0 )
-                m_prizeQueue_army0.addPlayer( this );
-            else
-                m_prizeQueue_army1.addPlayer( this );
+            if( fastRespawn ) {
+                if( getArmyID() == 0 )
+                    m_prizeQueue_army0.addHighPriorityPlayer( this );
+                else
+                    m_prizeQueue_army1.addHighPriorityPlayer( this );
+            } else {
+                if( getArmyID() == 0 )
+                    m_prizeQueue_army0.addPlayer( this );
+                else
+                    m_prizeQueue_army1.addPlayer( this );
+            }
         }
 
         /**
-         * Warps player to the safe, no strings attached.
+         * Warps player to the rearm area, no strings attached.
          */
-        public void doSafeWarp() {
+        public void doRearmAreaWarp() {
             int base = getArmyID() % 2;
             int xmod = (int)(Math.random() * 4) - 2;
             int ymod = (int)(Math.random() * 4) - 2;
             if( base == 0 )
-                m_botAction.warpTo(name, 512 + xmod, SAFE_TOP_Y + ymod);
+                m_botAction.warpTo(name, 512 + xmod, REARM_AREA_TOP_Y + ymod);
             else
-                m_botAction.warpTo(name, 512 + xmod, SAFE_BOTTOM_Y + ymod);
+                m_botAction.warpTo(name, 512 + xmod, REARM_AREA_BOTTOM_Y + ymod);
+        }
+
+        /**
+         * Warps player to the safety part of the rearm area, to reset various
+         */
+        public void doRearmSafeWarp() {
+            int base = getArmyID() % 2;
+            if( base == 0 )
+                m_botAction.warpTo(name, 512, REARM_SAFE_TOP_Y );
+            else
+                m_botAction.warpTo(name, 512, REARM_SAFE_BOTTOM_Y );
         }
 
         /**
@@ -5393,8 +5418,10 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
-     * Warp all players to a "safe" 10 seconds before starting round.
-     * Largely for building tension.
+     * Warp all players to the safety inside the rearm area 10 seconds before
+     * starting a round.  Builds tension and removes mines from ships that may
+     * only occasionally carry them (and so need not be respawned with the
+     * special respawn).
      */
     private void safeWarp() {
         Iterator <DistensionPlayer>i = m_players.values().iterator();
@@ -5402,20 +5429,21 @@ public class distensionbot extends SubspaceBot {
         while( i.hasNext() ) {
             p = i.next();
             if( p != null && p.getShipNum() > 0 && !p.isRespawning() )
-                p.doSafeWarp();
+                p.doRearmSafeWarp();
         }
     }
 
 
     /**
-     * Refreshes all support ships with their items.
+     * Refreshes all support ships with their items, and removes portals where any
+     * are in play before round starts.
      */
     private void refreshSupportShips() {
         Iterator <DistensionPlayer>i = m_players.values().iterator();
         DistensionPlayer p;
         while( i.hasNext() ) {
             p = i.next();
-            if( p.isSupportShip() ) {
+            if( p.isSupportShip() || p.getShipNum() == 4 || p.getShipNum() == 6 ) {
                 m_botAction.setShip( p.getArenaPlayerID(), 1 );
                 m_botAction.setShip( p.getArenaPlayerID(), p.getShipNum() );
                 if( !p.isRespawning() )
