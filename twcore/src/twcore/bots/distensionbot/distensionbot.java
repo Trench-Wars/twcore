@@ -634,8 +634,8 @@ public class distensionbot extends SubspaceBot {
                 "| !unban <name>         |  Unbans banned player",
                 "| !shutdown <time>      |  Shuts down bot after <time>, extended to round end",
                 "| !savedata             |  Saves all player data to database",
-                "| !die                  |  Kills DistensionBot -- use !savedata first!",
                 "| !savedie              |  Saves all player data and runs a delayed !die",
+                "| !die                  |  Kills DistensionBot -- use !savedie instead!",
                 "|______________________/",
                 "    DB COMMANDS",
                 "  !db-namechange <oldname>:<newname>   - Changes name from oldname to newname.",
@@ -3512,6 +3512,7 @@ public class distensionbot extends SubspaceBot {
                     shipDataSaved = false;
                 }
 
+                fastRespawn = false;
                 // Setup special (aka unusual) abilities
                 Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
                 for( int i = 0; i < NUM_UPGRADES; i++ )
@@ -3626,8 +3627,8 @@ public class distensionbot extends SubspaceBot {
             if( shipNum == 5 ) {
                 // Regeneration ability; each level worth an additional 10% of prizing either port or burst
                 //                       (+5% for each, up to a total of 50%)
-                long portChance = Math.round(Math.random() * 20.0);
-                long burstChance = Math.round(Math.random() * 20.0);
+                double portChance = Math.random() * 20.0;
+                double burstChance = Math.random() * 20.0;
                 if( purchasedUpgrades[11] >= portChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.PORTAL );
                     prized = true;
@@ -3641,20 +3642,20 @@ public class distensionbot extends SubspaceBot {
             }
             else if( shipNum == 3) {
                 // Refueling ability; each level worth an additional 50%
-                long fcChance = Math.round( Math.random() * 2.0 );
+                double fcChance = Math.random() * 2.0;
                 if( purchasedUpgrades[10] >= fcChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
                     prized = true;
                 }
                 // Energy stream ability; each level worth an additional 5%
-                long superChance = Math.round( Math.random() * 20.0 );
+                double superChance = Math.random() * 20.0;
                 if( purchasedUpgrades[11] >= superChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.SUPER );
                     prized = true;
                 }
             } else if( shipNum == 8) {
                 // Repel regen ability; each level worth an additional 10%
-                long repChance = Math.round( Math.random() * 10.0 );
+                double repChance = Math.random() * 10.0;
                 if( purchasedUpgrades[9] >= repChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.REPEL );
                     prized = true;
@@ -3914,11 +3915,15 @@ public class distensionbot extends SubspaceBot {
                 turnOnProgressBar();
             this.shipNum = shipNum;
             if( isSupportShip() ) {
-                getArmy().addProfitSharer(name);
-                getOpposingArmy().removeProfitSharer(name);
+                if( getArmy() != null ) {
+                    getArmy().addProfitSharer(name);
+                    getOpposingArmy().removeProfitSharer(name);
+                }
             } else {
-                getArmy().removeProfitSharer(name);
-                getOpposingArmy().removeProfitSharer(name);
+                if( getArmy() != null ) {
+                    getArmy().removeProfitSharer(name);
+                    getOpposingArmy().removeProfitSharer(name);
+                }
             }
             isRespawning = false;
             successiveKills = 0;
@@ -6112,7 +6117,7 @@ public class distensionbot extends SubspaceBot {
         int costs1[] = { 1, 1, 1, 1, 1,  1, 2, 4, 6, 8 };
         upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, 0, 10 );     // 300 x10
         ship.addUpgrade( upg );
-        int costs1b[] = { 1, 1, 1, 1, 1,  1, 2, 4, 6, 7,  8, 10  };
+        int costs1b[] =       { 1, 1, 1,  1,  1,   1,  2,  4,  6,  7,   8, 10 };
         int energyLevels1[] = { 0, 3, 5, 10, 15,  20, 25, 30, 35, 40,  45, 50 };
         upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, costs1b, energyLevels1, 12 );    // 150 x12
         ship.addUpgrade( upg );
