@@ -41,15 +41,14 @@ public class scramble extends MultiModule {
     int             gameProgress = -1, toWin = 10, scrambleNumber = 1, curLeader = 0;
     int             m_mintimesused = -1;
 
-    int             m_timeQuestion = 2000, m_timeHint = 15000, m_timeAnswer = 15000, m_timeNext = 1000;
+    int             m_timeQuestion = 2000, m_timeHint = 15000, m_timeAnswer = 15000, m_timeNext = 5000;
     
     double          giveTime, answerSpeed;
     String          m_prec = "--|-- ";
     String          t_definition, t_word, s_word;
     boolean			difficulty = true;
     String[]        helpmsg =
-    { "---------------------------------------------------------",
-      "Commands:",
+    { "Commands:",
       "!help          -- displays this.",
       "!score         -- displays the current scores.",
       "!repeat        -- will repeat the last question given.",
@@ -361,10 +360,6 @@ public class scramble extends MultiModule {
     }
 
     public void doHelp( String name, String message ){
-        if( m_botAction.getOperatorList().isModerator( name ) ){
-            m_botAction.smartPrivateMessageSpam( name, opmsg );
-        }
-
         m_botAction.smartPrivateMessageSpam( name, helpmsg );
     }
 
@@ -502,7 +497,7 @@ public class scramble extends MultiModule {
             while (numberShown < 5 && curPoints != 0){
                 Set set = playerMap.keySet();
                 Iterator it = set.iterator();
-                while (it.hasNext()) {
+                while (it.hasNext() && numberShown < 5) {
                     String curPlayer = (String) it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
                     tempPlayer = playerMap.get(curPlayer);
