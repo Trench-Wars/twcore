@@ -71,6 +71,8 @@ public class bouncerbot extends SubspaceBot {
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+            if( name == null )
+                name = event.getMessager();
             if( m_opList.isSmod( name ))
                 handleCommand( name, message );
         }
