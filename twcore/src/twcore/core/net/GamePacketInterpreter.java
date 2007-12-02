@@ -257,6 +257,7 @@ public class GamePacketInterpreter {
             case 0x38:
                 handleWatchDamage( array, alreadyDecrypted );
                 break;
+            // 0x3B - *sendto packet: See http://forums.minegoboom.com/viewtopic.php?p=75317#75317
         }
     }
 
