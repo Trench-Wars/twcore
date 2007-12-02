@@ -20,7 +20,7 @@ import twcore.core.util.Tools;
  * A bot designed to handle players who enter into a particular arena
  * without being invited -- a personal bouncer.
  *
- * @author  harvey
+ * @author  harvey / modified by dugwyler
  */
 public class bouncerbot extends SubspaceBot {
     OperatorList m_opList;                    // List of valid operators
@@ -96,24 +96,25 @@ public class bouncerbot extends SubspaceBot {
             return;
 
         // Not?  Bounce.
-        m_botAction.sendPrivateMessage( event.getPlayerName(), m_bounceMessage );
+        if( !m_bounceMessage.equals("none") )
+            m_botAction.sendPrivateMessage( event.getPlayerName(), m_bounceMessage );
         if( m_bounceDestination.equals(":kill:") ) {
             m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
-            m_botAction.sendPublicMessage( event.getPlayerName() + " entered w/o permission; DC'd." );
+            m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (DC'd)" );
         } else {
             m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*sendto " + m_bounceDestination );
-            m_botAction.sendPublicMessage( event.getPlayerName() + " entered w/o permission; relocated." );
+            m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (relocated)" );
         }
 
         if( m_sendToChat ) {
             if( m_sentInfoOnce )
-                m_botAction.sendChatMessage( event.getPlayerName() + " entered protected arena." );
+                m_botAction.sendChatMessage( event.getPlayerName() + " bounced." );
             else {
-                m_botAction.sendChatMessage( event.getPlayerName() + " entered protected arena.  (PM me with !chat to turn off this msg)" );
+                m_botAction.sendChatMessage( event.getPlayerName() + " bounced.  (PM me with !chat to turn off this msg)" );
                 m_sentInfoOnce = true;
             }
         }
-        logEvent( event.getPlayerName() + " entered a protected arena and was DC'd." );
+        logEvent( event.getPlayerName() + " bounced." );
     }
 
 
@@ -161,7 +162,10 @@ public class bouncerbot extends SubspaceBot {
             m_botAction.die();
         } else if( message.startsWith( "!message " )){
             m_bounceMessage = message.substring( 9 );
-            m_botAction.sendSmartPrivateMessage( name, "Pre-kill message set to: " + m_bounceMessage );
+            if( m_bounceMessage.equals("none") )
+                m_botAction.sendSmartPrivateMessage( name, "No message will be sent before a player is bounced." );
+            else
+                m_botAction.sendSmartPrivateMessage( name, "Bounce message set to: " + m_bounceMessage );
         } else if( message.startsWith( "!action move " )){
             if( message.length() > 13 ) {
                 String dest = message.substring( 13 );
@@ -213,6 +217,7 @@ public class bouncerbot extends SubspaceBot {
                     "!go <arena>       Sends bot to <arena>",
                     "!invite <name>    Adds <name> to the authorized entry list",
                     "!message <msg>    Sets message sent to unauthorized players to <msg>",
+                    "!message none     Sets bot to not send a message before bouncing players",
                     "!die              Kills bot"
             };
             m_botAction.smartPrivateMessageSpam(name, help);
