@@ -21,8 +21,7 @@ import twcore.core.util.StringBag;
  *
  * @author  Stultus
  */
-public class rabbit extends MultiModule
-	{
+public class rabbit extends MultiModule{
 	private static final int ANY_SHIP = 0;
 	private static final String[] SHIP_LIST =
 		{
@@ -38,7 +37,7 @@ public class rabbit extends MultiModule
 		};
 
 	private boolean	inProgress = false;
-	private int timeLimit = 15;
+	private int timeLimit = 15, Killsound, FCsound;;
 	private int shipType = ANY_SHIP;
 	private ArrayList<String> rabbitList = new ArrayList<String>(4);
 	private StringBag fcMsgs = new StringBag();
@@ -72,7 +71,18 @@ public class rabbit extends MultiModule
 			rabbitList.add(p);
 			if (!fcMsgs.isEmpty())
 				{
-				m_botAction.sendArenaMessage(p + fcMsgs.grab());
+				String x = fcMsgs.grab();
+				int i = x.indexOf("%");
+				if (i != -1){
+					String y = x.substring(i);
+					x = x.replaceAll(y,"");
+					y = y.replaceAll("%", "");
+					int y2 = Integer.parseInt(y);
+					m_botAction.sendArenaMessage(p + x, y2);
+				}
+				else{
+					m_botAction.sendArenaMessage(p + x);
+				}
 				}
 			}
 		}
@@ -89,12 +99,35 @@ public class rabbit extends MultiModule
 				rabbitList.add(pKiller);
 				if (!fcMsgs.isEmpty())
 					{
-					m_botAction.sendArenaMessage(pKiller + fcMsgs.grab());
+					String x = fcMsgs.grab();
+					int i = x.indexOf("%");
+					if (i != -1){
+						String y = x.substring(i);
+						x = x.replaceAll(y,"");
+						y = y.replaceAll("%", "");
+						int y2 = Integer.parseInt(y);
+						m_botAction.sendArenaMessage(pKiller + x, y2);
+					}
+					else{
+						m_botAction.sendArenaMessage(pKiller + x);
+					}
+					
 					}
 				}
 			if (rabbitList.contains(pKiller) && !killMsgs.isEmpty())
 				{
-				m_botAction.sendArenaMessage(pKiller + killMsgs.grab());
+				String x = killMsgs.grab();
+				int i = x.indexOf("%");
+				if (i != -1){
+					String y = x.substring(i);
+					x = x.replaceAll(y,"");
+					y = y.replaceAll("%", "");
+					int y2 = Integer.parseInt(y);
+					m_botAction.sendArenaMessage(pKilled + x, y2);
+				}
+				else{
+					m_botAction.sendArenaMessage(pKilled + x);
+				}
 				}
 			}
 		}
@@ -240,20 +273,20 @@ public class rabbit extends MultiModule
 			try
 				{
 				String[] args = message.substring(8).split(":");
-				int sound = Integer.parseInt(args[1]);
-				if (sound < 0 || sound > 104)
-					{
-					sound = 0;
-					m_botAction.sendPrivateMessage(name, "Sound not within "
-					+ "valid range (1-104). Defaulting to none.");
-					}
-				killMsgs.add(args[0] + "%" + args[1]);
-				m_botAction.sendPrivateMessage(name, "Flag kill message added.");
+				Killsound = Integer.parseInt(args[1]);
+				if ((Killsound > 26 && Killsound < 100) || Killsound == 0 || Killsound > 104){
+					killMsgs.add(args[0]);
+					m_botAction.sendPrivateMessage(name, "Flag kill message added. Sound type not recognized.");
 				}
+				else {
+					killMsgs.add(args[0] + "%" + args[1]);
+					m_botAction.sendPrivateMessage(name, "Flag kill message added.");
+				}
+				
+			}
 			catch (Exception e)
 				{
-				m_botAction.sendPrivateMessage(name, "That is not properly "
-				+ "formatted.");
+				m_botAction.sendPrivateMessage(name, "Proper usage: !killmsg <message>:<sound#>");
 				}
 			}
 		else
@@ -273,23 +306,21 @@ public class rabbit extends MultiModule
 		{
 		if (message.length() > 6)
 			{
-			try
-				{
+			try{
 				String[] args = message.substring(6).split(":");
-				int sound = Integer.parseInt(args[1]);
-				if (sound < 0 || sound > 104)
-					{
-					sound = 0;
-					m_botAction.sendPrivateMessage(name, "Sound not within "
-					+ "valid range (1-104). Defaulting to none.");
-					}
-				fcMsgs.add(args[0] + "%" + args[1]);
-				m_botAction.sendPrivateMessage(name, "Flag claim message added.");
+				FCsound = Integer.parseInt(args[1]);
+				if ((FCsound > 26 && FCsound < 100) || FCsound == 0 || FCsound > 104){
+					fcMsgs.add(args[0]);
+					m_botAction.sendPrivateMessage(name, "Flag claim message added. Sound type not recognized.");
 				}
+				else {
+					fcMsgs.add(args[0] + "%" + args[1]);
+					m_botAction.sendPrivateMessage(name, "Flag claim message added.");
+				}
+			}
 			catch (Exception e)
 				{
-				m_botAction.sendPrivateMessage(name, "That is not properly "
-				+ "formatted.");
+				m_botAction.sendPrivateMessage(name, "Proper Usage: !fcmsg <message>:<sound#>");
 				}
 			}
 		else
@@ -336,9 +367,9 @@ public class rabbit extends MultiModule
 			"!startrabbit <time>             - Starts a game of Rabbit (default = 15 minutes).",
 			"!stoprabbit                     - Kills a game in progress.",
 			"!setshiptype <ship #>           - Restricts players to this ship. (0 = any)",
-			"!killmsg <message>:<sound>      - Adds a rabbit kill message and sound (1-104; 0 = none);",
+			"!killmsg <message>:<num>        - Adds a rabbit kill message and sound. (No percent signs).",
 			"                                  With no arguments, lists current messages.",
-			"!fcmsg <message>:<sound>        - Adds a flag claim message and sound.",
+			"!fcmsg <message>:<num>          - Adds a flag claim message and sound. (No percent signs).",
 			"!remkill                        - Clears list of kill messages.",
 			"!remfc                          - Clears list of flag claim messages.",
 			"!rabbitsettings                 - Shows current time limit and ship type limit."
