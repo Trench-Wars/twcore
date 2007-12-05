@@ -55,11 +55,11 @@ public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.  Displays various info that would
                                                            // normally be annoying in a public release.
-    private final float DEBUG_MULTIPLIER = 3.0f;           // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 3.25f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 10;                 // How frequently autosave occurs, in minutes
-    private final int MESSAGE_SPAM_DELAY = 50;             // Delay in ms between a long list of spammed messages
+    private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between a long list of spammed messages
     private final int PRIZE_SPAM_DELAY = 10;               // Delay in ms between prizes for individual players
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
@@ -68,7 +68,7 @@ public class distensionbot extends SubspaceBot {
     private final int IDLE_TICKS_BEFORE_DOCK = 10;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int LAGOUT_VALID_SECONDS = 120;          // # seconds since lagout in which you can use !lagout
     private final int LAGOUT_WAIT_SECONDS = 30;            // # seconds a player must wait to be placed back in the game
-    private final int PROFIT_SHARING_FREQUENCY = 3 * 60;   // # seconds between adding up profit sharing for terrs
+    private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int STREAK_RANK_PROXIMITY = 10;          // Max rank difference for a kill to count toward a streak
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
@@ -124,8 +124,9 @@ public class distensionbot extends SubspaceBot {
     private Map <String,DistensionPlayer>m_players;         // In-game data on players (Name -> Player)
     private HashMap <Integer,DistensionArmy>m_armies;       // In-game data on armies  (ID -> Army)
 
-    private PrizeQueue m_prizeQueue_army0;                  // Queuing system for prizes (so as not to crash bot)
-    private PrizeQueue m_prizeQueue_army1;                  // Queuing system for prizes (so as not to crash bot)
+    private PrizeQueue m_prizeQueue;                        // Queuing system for prizes (so as not to crash bot)
+    //private PrizeQueue m_prizeQueue_army0;                  // Queuing system for prizes (so as not to crash bot)
+    //private PrizeQueue m_prizeQueue_army1;                  // Queuing system for prizes (so as not to crash bot)
     private SpecialAbilityTask m_specialAbilityPrizer;      // Prizer for special abilities (run once every 30s)
     private TimerTask entranceWaitTask;                     // For when bot first enters the arena
     private TimerTask autoSaveTask;                         // For autosaving player data frequently
@@ -272,16 +273,18 @@ public class distensionbot extends SubspaceBot {
      */
     public void init() {
         m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
-        m_botAction.setMessageLimit( 6 );
+        m_botAction.setMessageLimit( 8 );
         m_botAction.setReliableKills(1);
-        m_botAction.setPlayerPositionUpdating(500);
+        m_botAction.setPlayerPositionUpdating(400);
         m_botAction.specAll();
         m_botAction.toggleLocked();
         m_botAction.resetFlagGame();
-        m_prizeQueue_army0 = new PrizeQueue();
-        m_prizeQueue_army1 = new PrizeQueue();
-        m_botAction.scheduleTaskAtFixedRate(m_prizeQueue_army0, (UPGRADE_DELAY / 2), UPGRADE_DELAY);
-        m_botAction.scheduleTaskAtFixedRate(m_prizeQueue_army1, UPGRADE_DELAY, UPGRADE_DELAY);
+        m_prizeQueue = new PrizeQueue();
+        //m_prizeQueue_army0 = new PrizeQueue();
+        //m_prizeQueue_army1 = new PrizeQueue();
+        m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, UPGRADE_DELAY, UPGRADE_DELAY);
+        //m_botAction.scheduleTaskAtFixedRate(m_prizeQueue_army0, (UPGRADE_DELAY / 2), UPGRADE_DELAY);
+        //m_botAction.scheduleTaskAtFixedRate(m_prizeQueue_army1, UPGRADE_DELAY, UPGRADE_DELAY);
         entranceWaitTask = new TimerTask() {
             public void run() {
                 readyForPlay = true;
@@ -549,7 +552,7 @@ public class distensionbot extends SubspaceBot {
                     "    CIVILIAN CONSOLE  ",
                     ".-----------------------",
                     "| !enlist           !e  |  Enlist in the army that needs your services most",
-                    "| !armies           !as |  View all public armies and their IDs",
+                    "| !armies           !ar |  View all public armies and their IDs",
                     "| !enlist <army#>   !e  |  Enlist specifically in <army#>",
                     "| !intro                |  An introduction to Distension",
                     "| !return           ~   |  Return to your current position in the war",
@@ -575,6 +578,7 @@ public class distensionbot extends SubspaceBot {
                     "| !team             !tm |  Show all players on team and their upg. levels",
                     "| !terr             !t  |  Show approximate location of all army terriers",
                     "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
+                    "| !armies           !ar |  View size and strength of armies",
                     "| !battleinfo       !bi |  Display current battle status",
                     "|______________________/"
             };
@@ -604,6 +608,7 @@ public class distensionbot extends SubspaceBot {
                     "| !team             !tm |  Show all players on team and their upg. levels",
                     "| !terr             !t  |  Show approximate location of all army terriers",
                     "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
+                    "| !armies           !ar |  View size and strength of armies",
                     "| !battleinfo       !bi |  Display current battle status",
                     "|______________________/"
             };
@@ -3553,10 +3558,13 @@ public class distensionbot extends SubspaceBot {
             if( specialRespawn ) {
                 specialRespawn = false;
                 isRespawning = false;
+                m_prizeQueue.resumeSpawningAfterDelay( prizeUpgrades( false ) );
+                /*
                 if( getArmyID() == 0 )
                     m_prizeQueue_army0.resumeSpawningAfterDelay( prizeUpgrades( false ) );
                 else
                     m_prizeQueue_army1.resumeSpawningAfterDelay( prizeUpgrades( false ) );
+                */
                 return true;
             }
             if( spawnTicks > 0 )
@@ -3564,10 +3572,13 @@ public class distensionbot extends SubspaceBot {
             if( !isRespawning )
                 return true;
             isRespawning = false;
+            m_prizeQueue.resumeSpawningAfterDelay( prizeUpgrades( true ) );
+            /*
             if( getArmyID() == 0 )
                 m_prizeQueue_army0.resumeSpawningAfterDelay( prizeUpgrades( true ) );
             else
                 m_prizeQueue_army1.resumeSpawningAfterDelay( prizeUpgrades( true ) );
+            */
             return true;
         }
 
@@ -3702,15 +3713,21 @@ public class distensionbot extends SubspaceBot {
         public void doSetupRespawn() {
             isRespawning = true;
             if( fastRespawn ) {
+                m_prizeQueue.addHighPriorityPlayer( this );
+                /*
                 if( getArmyID() == 0 )
                     m_prizeQueue_army0.addHighPriorityPlayer( this );
                 else
                     m_prizeQueue_army1.addHighPriorityPlayer( this );
+                */
             } else {
+                m_prizeQueue.addPlayer( this );
+                /*
                 if( getArmyID() == 0 )
                     m_prizeQueue_army0.addPlayer( this );
                 else
                     m_prizeQueue_army1.addPlayer( this );
+                */
             }
             spawnTicks = TICKS_BEFORE_SPAWN;
         }
@@ -3723,15 +3740,21 @@ public class distensionbot extends SubspaceBot {
         public void doSetupSpecialRespawn() {
             specialRespawn = true;
             if( fastRespawn ) {
+                m_prizeQueue.addHighPriorityPlayer( this );
+                /*
                 if( getArmyID() == 0 )
                     m_prizeQueue_army0.addHighPriorityPlayer( this );
                 else
                     m_prizeQueue_army1.addHighPriorityPlayer( this );
+                */
             } else {
+                m_prizeQueue.addPlayer( this );
+                /*
                 if( getArmyID() == 0 )
                     m_prizeQueue_army0.addPlayer( this );
                 else
                     m_prizeQueue_army1.addPlayer( this );
+                */
             }
         }
 
@@ -6505,8 +6528,6 @@ public class distensionbot extends SubspaceBot {
         // 65: Shrap 3
         // 70: Repel 7
         // 80: Repel 8
-        // 90: Repel 9
-        //100: Repel 10
         ship = new ShipProfile( RANK_REQ_SHIP8, 11 );
         int p8a1[] = { 1, 2, 3, 5 };
         int p8a2[] = { 10, 11, 12, 13 };
@@ -6535,8 +6556,8 @@ public class distensionbot extends SubspaceBot {
         int p8ca2[] = { 25, 48, 55 };
         upg = new ShipUpgrade( "+10% Repulsor Regeneration", -6, p8ca1, p8ca2, 3 );
         ship.addUpgrade( upg );
-        int p8c1[] = { 1,  1,  1,  2,  3,  4,  5,  6,  8,  10 };
-        int p8c2[] = { 4, 18, 30, 40, 50, 60, 70, 80, 90, 100 };
+        int p8c1[] = { 1,  1,  1,  2,  3,  4,  5,  6 };
+        int p8c2[] = { 4, 18, 30, 40, 50, 60, 70, 80 };
         upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2, 10 );    // DEFINE
         ship.addUpgrade( upg );
         int p8d2[] = { 22, 41, 65 };
