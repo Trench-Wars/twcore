@@ -892,9 +892,9 @@ public class robohelp extends SubspaceBot {
         // if a non-expired call was found, record it to the database
         if(record) {
         	// Save
-        	if(message.toLowerCase().startsWith("on it"))
+        	if(message.startsWith("on it"))
         		updateStatRecordsONIT( name );
-        	else if(message.toLowerCase().startsWith("got it"))
+        	else if(message.startsWith("got it"))
         		updateStatRecordsGOTIT( name );
         	
             this.lastStafferClaimedCall = name;
@@ -1303,7 +1303,7 @@ public class robohelp extends SubspaceBot {
         else if (event.getMessageType() == Message.CHAT_MESSAGE) {
         	String message = event.getMessage().toLowerCase().trim();
         	if (message.startsWith("on it") || message.startsWith("got it"))
-        		handleClaim(event.getMessager(), event.getMessage());
+        		handleClaim(event.getMessager(), message);
         }
     }
 
