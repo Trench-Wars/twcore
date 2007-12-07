@@ -165,7 +165,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
             m_botAction.sendPrivateMessage( messager, "attempting to remove " + message + "...  " +
             (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take 30 seconds or more.":"" ) );
-            boolean success = m_botQueue.removeBot( message );
+            boolean success = m_botQueue.removeBot( message, "force-disconnected by " + messager );
             if( success ) {
                 m_botAction.sendPrivateMessage( messager, "Removed." );
                 m_botAction.sendChatMessage( 1, messager + " force-disconnected " + message );
@@ -190,7 +190,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendPrivateMessage( messager, "Removing all bots of type " + message + "." +
                     (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take on average 30 seconds per bot ...":"" ) );
             m_botAction.sendChatMessage( 1, messager + " is force-disconnecting all bots of type " + message );
-            m_botQueue.hardRemoveAllBotsOfType( message );
+            m_botQueue.hardRemoveAllBotsOfType( message, messager );
             m_botAction.sendPrivateMessage( messager, "Removed all bots of type " + message + " (if possible).  Count reset to 0." );
             System.gc();
         } else {

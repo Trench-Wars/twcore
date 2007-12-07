@@ -2228,6 +2228,15 @@ public class BotAction
     }
 
     /**
+     * Tells the bot to go parachuting (without the parachute), and sends a message giving
+     * the reason for its death.
+     */
+    public void die( String msg )
+    {
+        m_botSession.disconnect( msg );
+    }
+
+    /**
      * Sets the minimum bounty needed for a player's kills/deaths to be sent
      * reliably to the bot.  If it's essential that you receive all player death
      * events / packets, it's advisable to set this to 1, or to use the more

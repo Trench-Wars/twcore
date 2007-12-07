@@ -279,37 +279,37 @@ public class GamePacketInterpreter {
 
         switch( index ){
             // 0x01 - Encryption request: Unhandled (sent to server in GamePacketGenerator)
-            case 0x02:
+            case 0x02:              // Encryption response
                 m_ssEncryption.setServerKey( array.readLittleEndianInt( 2 ) );
                 m_packetGenerator.sendPasswordPacket( false, m_playerName, m_playerPassword );
                 Tools.printLog( m_session.getBotName() + " (" + m_subspaceBot.getClass().getSimpleName() + ") is logging in ..." );
                 break;
-            case 0x03:
+            case 0x03:              // Reliable packet message
                 m_reliablePacketHandler.handleReliableMessage( array );
                 break;
-            case 0x04:
+            case 0x04:              // Reliable ACK
                 m_reliablePacketHandler.handleAckMessage( array );
                 break;
-            case 0x05:
+            case 0x05:              // Sync request
                 m_packetGenerator.sendSyncResponse( array.readLittleEndianInt( 2 ) );
                 break;
-            case 0x06:
+            case 0x06:              // Sync response
                 m_packetGenerator.setServerTimeDifference( array.readLittleEndianInt( 6 ) - array.readLittleEndianInt( 2 ) );
                 break;
-            case 0x07:
-                m_session.disconnect();
+            case 0x07:              // Order to disconnect
+                m_session.disconnect( "received bi-directional packet 0x07 from server (ordered to DC)" );
                 break;
-            case 0x08:
+            case 0x08:              // Small chunk body (store data in buffer until tail is received)
                 handleChunk( array );
                 break;
-            case 0x09:
+            case 0x09:              // Small chunk tail (end of data received; process chunk in buffer)
                 handleChunkTail( array );
                 break;
-            case 0x0A:
+            case 0x0A:              // Massive chunk (store data in buffer until total length received)
                 handleMassiveChunkMessage( array );
                 break;
             // 0x0B-0x0D - Unknown (unused in protocol?)
-            case 0x0E:
+            case 0x0E:              // Packet cluster (packet lengths and packet data repeated till end)
                 int         i=2;
                 int         size;
                 ByteArray   subMessage;
@@ -1040,7 +1040,7 @@ public class GamePacketInterpreter {
         		m_packetGenerator.sendPasswordPacket(true, m_playerName, m_playerPassword);
         		return;
         } else if( ppResponse.isFatal() ) {
-        	m_session.disconnect();
+        	m_session.disconnect( "unsuccessful login" );
         }
 
         /***** ASSS Compatible Login Sequence Fix (D1st0rt) *****/

@@ -198,7 +198,18 @@ public class Session extends Thread {
     	return m_chatLog;
     }
 
-    public void disconnect(){
+    /**
+     * Standard disconnect (without message).
+     */
+    public void disconnect() {
+        disconnect("");
+    }
+
+    /**
+     * Disconnect and provide a message telling the reason for the DC.
+     * @param dcMsg Reason for DC
+     */
+    public void disconnect( String dcMsg ){
         if( m_state == NOT_RUNNING ){
             return;
         }
@@ -212,7 +223,10 @@ public class Session extends Thread {
 
         m_state = NOT_RUNNING;
         String classname = m_subspaceBot.getClass().getSimpleName();
-        Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
+        if( dcMsg.equals("") )
+            Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
+        else
+            Tools.printLog( m_name + " (" + classname + ") is disconnecting: " + dcMsg );
         m_subspaceBot.handleDisconnect();
 
 		if(m_chatLog != null)
@@ -287,7 +301,7 @@ public class Session extends Thread {
 
                 if( currentTime - m_initialTime > 5000 ){
                     Tools.printLog( m_name + " failed to log in.  Login timed out." );
-                    disconnect();
+                    disconnect( "login timed out" );
                     return;
                 }
 
@@ -301,7 +315,7 @@ public class Session extends Thread {
                     m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
                 } else {
 	                if(!m_socket.isConnected()){
-	                    disconnect();
+	                    disconnect( "network socket connection broken" );
 	                    return;
 	                }
 	                Thread.sleep(5); //sleep if no packets waiting
@@ -312,7 +326,7 @@ public class Session extends Thread {
                 currentTime = System.currentTimeMillis();
 
                 if( currentTime - lastPacketTime > TIMEOUT_DELAY ){
-                    disconnect();
+                    disconnect( "connection timed out" );
                     return;
                 }
 
@@ -331,7 +345,7 @@ public class Session extends Thread {
                     m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
                 } else {
 	                if(!m_socket.isConnected()){
-	                    disconnect();
+                        disconnect( "network socket connection broken" );
 	                    return;
 	                }
 	                Thread.sleep(5); //sleep if no packets waiting
@@ -345,7 +359,7 @@ public class Session extends Thread {
             // Tools.printLog( "Session destroyed, all threads recovered for " + m_name );
             return;
         } catch( Exception e ){
-            disconnect();
+            disconnect( "unhandled exception" );
             Tools.printStackTrace( e );
         }
     }

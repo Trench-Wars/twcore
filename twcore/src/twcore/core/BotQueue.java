@@ -206,17 +206,26 @@ public class BotQueue extends Thread {
     }
 
     /**
+     * Removes a bot with no information provided.
+     * @param name Login name of bot to remove
+     * @return True if removal succeeded
+     */
+    boolean removeBot( String name ) {
+        return removeBot( name, "" );
+    }
+
+    /**
      * Given the login name of a bot, removes it from the system.
      * @param name Login name of bot to remove
      * @return True if removal succeeded
      */
-    boolean removeBot( String name ){
+    boolean removeBot( String name, String msg ){
         ChildBot deadBot = m_botStable.remove( name );
         if( deadBot != null ){
             Session deadSesh = deadBot.getBot();
             if( deadSesh != null ) {
                 deadSesh.getBotAction().cancelTasks();
-                deadSesh.disconnect();
+                deadSesh.disconnect( msg );
             }
             // Decrement count for this type of bot
             addToBotCount( deadBot.getClassName(), (-1) );
@@ -230,7 +239,7 @@ public class BotQueue extends Thread {
      * Removes all bots of a given type.  For debug purposes, or the impatient.
      * @param className Class of bots to remove
      */
-    void hardRemoveAllBotsOfType( String className ) {
+    void hardRemoveAllBotsOfType( String className, String initiator ) {
         String       rawClassName = className.toLowerCase();
         ChildBot c;
         LinkedList<String> names = new LinkedList<String>();
@@ -245,7 +254,7 @@ public class BotQueue extends Thread {
         i = names.iterator();
         while( i.hasNext() ) {
             String name = (String)i.next();
-            removeBot( name );
+            removeBot( name, "!hardremove by " + initiator );
             m_botAction.sendChatMessage( 1, name + " logged off." );
         }
         Integer numBots = m_botTypes.get( rawClassName );
@@ -271,7 +280,7 @@ public class BotQueue extends Thread {
         i = names.iterator();
         while( i.hasNext() ) {
             String name = (String)i.next();
-            removeBot( name );
+            removeBot( name, "core shutdown" );
             m_botAction.sendChatMessage( 1, name + " logged off." );
         }
         m_botTypes.clear();
@@ -420,7 +429,7 @@ public class BotQueue extends Thread {
                         }
 
                         if( bot.getBotState() == Session.NOT_RUNNING ){
-                            removeBot( bot.getBotName() );
+                            removeBot( bot.getBotName(), "log in failure; possible bad login/password" );
                             m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Bot failed to log in.  Verify login and password are correct." );
                             m_botAction.sendChatMessage( 1, "Bot of type " + childBot.getClassName() + " failed to log in.  Verify login and password are correct."  );
                         } else {
