@@ -100,10 +100,12 @@ public class bouncerbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( event.getPlayerName(), m_bounceMessage );
         if( m_bounceDestination.equals(":kill:") ) {
             m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
-            m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (DC'd)" );
+            if( m_logInfo )
+                m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (DC'd)" );
         } else {
             m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*sendto " + m_bounceDestination );
-            m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (relocated)" );
+            if( m_logInfo )
+                m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (relocated)" );
         }
 
         if( m_sendToChat ) {
@@ -159,7 +161,7 @@ public class bouncerbot extends SubspaceBot {
         } else if( message.startsWith( "!go " )){
             m_botAction.changeArena( message.substring( 4 ));
         } else if( message.startsWith( "!die" )) {
-            m_botAction.die();
+            m_botAction.die( "!die ordered by " + name );
         } else if( message.startsWith( "!message " )){
             m_bounceMessage = message.substring( 9 );
             if( m_bounceMessage.equals("none") )
