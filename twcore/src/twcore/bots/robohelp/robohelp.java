@@ -89,6 +89,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!last", acceptedMessages, this, "handleLast" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen" );
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload" );
+        m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
 
         m_commandInterpreter.registerCommand( "!backupadv", acceptedMessages, this, "handleEnableBackup" );
         m_commandInterpreter.registerCommand( "!adv", acceptedMessages, this, "handleAdv" );
@@ -111,10 +112,6 @@ public class robohelp extends SubspaceBot {
 		if (!m_strictOnIts)
             m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );
 		
-        acceptedMessages = Message.CHAT_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
-        
-        m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
-
         acceptedMessages = Message.ARENA_MESSAGE;
 
         m_commandInterpreter.registerCommand( "Ban", acceptedMessages, this, "handleBanNumber" );
