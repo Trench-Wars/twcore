@@ -1089,6 +1089,8 @@ public class logbot extends SubspaceBot {
         waiting = true;
         m_opList = m_botAction.getOperatorList();
         logEvent( "Logged in as " + (enslaved? "Slave" : "Master") );
+        //edited by milosh. request of riistar.
+        doStartLog(m_botAction.getBotName());
     }
     
     /**
