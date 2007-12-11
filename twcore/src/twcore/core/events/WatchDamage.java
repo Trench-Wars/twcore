@@ -2,25 +2,31 @@ package twcore.core.events;
 
 import twcore.core.util.ByteArray;
 
-/*
-56 - Watch damage
-Field    Length    Description
-0        1        Type byte
-1        1        Victim
-2        5        ?
-7        1        Attacker
-8        1        ?
-9         2          Weapons Info
-11       2        Old energy
-13       2        Energy lost
-15       1        ?
-*/
-
-/** This class represents watchdamage packets.  Remember that you must
- * *watchdamage players that enter and also *watchdamage players upon exit.
+/**
+ * (S2C 0x38) Event called when a ship is damaged and has *watchdamage on.<code><pre>
+ * +--------------------------------+
+ * | Offset  Length  Description    |
+ * +--------------------------------+
+ * |  0      1       Type Byte      |
+ * |  1      1       Victim ID      |
+ * |  2      5       ?              |
+ * |  7      1       Attacker ID    |
+ * |  8      1       ?              |
+ * |  9      2       Weapons info   |
+ * | 11      2       Old energy     |
+ * | 13      2       Energy lost    |
+ * | 15      1       ?              |
+ * +--------------------------------+</code></pre>
+ *
+ * To fire this event, send *watchdamage to players on which you wish to watch damage.
+ * Preferably this should be done when PlayerEntered is fired.  Remember that you must
+ * also *watchdamage players upon exit.
+ *
+ * TODO: A way to have *watchdamage automatically sent when players enter and leave,
+ * based on either requesting this event, or requesting this event and setting a flag.
  */
 public class WatchDamage extends SubspaceEvent {
-    
+
     public static int WEAPON_BULLET = 1;
     public static int WEAPON_BULLET_BOUNCING = 2;
     public static int WEAPON_BOMB = 3;
