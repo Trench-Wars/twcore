@@ -72,7 +72,7 @@ public class elimbot extends SubspaceBot {
 	 */
 	@Override
 	public void handleDisconnect() {
-		this.removeTimerTasks();
+		this.die();
 	}
 	
 	private void removeTimerTasks() {
@@ -80,11 +80,17 @@ public class elimbot extends SubspaceBot {
         m_botAction.cancelTask(this.deathlimitVote);
         m_botAction.cancelTask(this.prepareGame);
         m_botAction.cancelTask(this.startGame);
+        m_botAction.stopReliablePositionUpdating();
 	}
 
 	@Override
 	public void handleEvent(LoggedOn event) {
 		m_botAction.changeArena(config.getArena());
+		
+		// Enter chat
+		// 1 = elimbot.cfg configured chat name
+		// 2 = "Chat Name" from setup.cfg - botdev chat
+		m_botAction.sendUnfilteredPublicMessage("?chat="+config.getChat()+","+ m_botAction.getGeneralSettings().getString( "Chat Name" ));
 		
 		// start in 3 seconds
 		TimerTask start = new TimerTask() {
@@ -95,6 +101,9 @@ public class elimbot extends SubspaceBot {
 		};
 
 		m_botAction.scheduleTask(start, 3 * 1000);
+		
+		m_botAction.receiveAllPlayerDeaths();
+		m_botAction.setPlayerPositionUpdating(300);
 	}
 
 	@Override
@@ -154,9 +163,8 @@ public class elimbot extends SubspaceBot {
 			// TODO: Check if it's staff
 			// TODO: Make a !help
 			if(event.getMessage().equalsIgnoreCase("!die")) {
-				// Kill the timertasks
-				this.removeTimerTasks();
-				m_botAction.die();
+				m_botAction.sendChatMessage(2, "ElimBot being removed by "+event.getMessager());
+				this.die();
 			}
 			else if(event.getMessage().equalsIgnoreCase("!stop")) {
 				if(this.state != ElimState.STOPPED) {
@@ -207,14 +215,40 @@ public class elimbot extends SubspaceBot {
 
 	@Override
 	public void handleEvent(PlayerEntered event) {
+		String playername = event.getPlayerName();
+		
+		// Welcome message & check if elim can be started if state == IDLE
+		if(state == ElimState.DEATHLIMITVOTE) {
+			m_botAction.sendPrivateMessage(playername, "Welcome, we are voting on the death limit of this elimination. Enter to play!");
+		} else
 		if(state == ElimState.IDLE) {
+			m_botAction.sendPrivateMessage(playername, "Welcome, we are waiting until enough players enter to start.");
 			if(isEnoughPlayers()) step();
+		} else 
+		if(state == ElimState.RUNNING) {
+			m_botAction.sendPrivateMessage(playername, "Welcome, we are playing "+config.getCurrentConfig().getFullname()+" to "+this.deathLimit+".");
+			m_botAction.sendPrivateMessage(playername, "There are "+this.players.size()+" players remaining.");
+		} else
+		if(state == ElimState.SHIPVOTE) {
+			m_botAction.sendPrivateMessage(playername, "Welcome, we are voting which ships can be played with. Enter to play!");
+		} else
+		if(state == ElimState.SPAWNING) {
+			// Bot will go to state IDLE in 3 seconds, no message necessary
+		} else
+		if(state == ElimState.STARTING) {
+			m_botAction.sendPrivateMessage(playername, "Welcome, we are playing "+config.getCurrentConfig().getFullname()+" to "+this.deathLimit+".");
+			m_botAction.sendPrivateMessage(playername, "There are "+this.players.size()+" players remaining.");
+		} else
+		if(state == ElimState.STOPPED) {
+			// Bot has been !stop'ped, no message
 		}
+		
 	}
 
 	@Override
 	public void handleEvent(PlayerLeft event) {
-
+		// TODO: Start timertask of one minute to remove the player if he doesn't get back in before that time
+		// TODO: Keep track on number of lagouts that the player has used
 	}
 	
 	@Override
@@ -231,6 +265,10 @@ public class elimbot extends SubspaceBot {
 			players.containsKey(player) &&			// and the player is still in the game
 			config.isAllowLagouts() 				// and lagouts are enabled
 			) {
+
+			// TODO: Start timertask of one minute to remove the player if he doesn't get back in before that time
+			// TODO: Keep track on number of lagouts that the player has used
+			
 			m_botAction.sendPrivateMessage(player, "Type ::!lagout to get back in.");
 		}
 	}
@@ -251,6 +289,8 @@ public class elimbot extends SubspaceBot {
 			if(!isEnoughPlayers()) {
 				m_botAction.sendArenaMessage("Elim aborted: not enough players");
 				stop();
+				// Set state to IDLE so it restarts automatically
+				this.state = ElimState.IDLE;
 				return;
 			}
 			
@@ -285,6 +325,8 @@ public class elimbot extends SubspaceBot {
 			if(!isEnoughPlayers()) {
 				m_botAction.sendArenaMessage("Elim aborted: not enough players");
 				stop();
+				// Set state to IDLE so it restarts automatically
+				this.state = ElimState.IDLE;
 				return;
 			}
 			
@@ -308,6 +350,8 @@ public class elimbot extends SubspaceBot {
 			if(!isEnoughPlayers()) {
 				m_botAction.sendArenaMessage("Elim aborted: not enough players");
 				stop();
+				// Set state to IDLE so it restarts automatically
+				this.state = ElimState.IDLE;
 				return;
 			}
 			
@@ -334,12 +378,14 @@ public class elimbot extends SubspaceBot {
 			m_botAction.scheduleTask(prepareGame, 7 * 1000);
 			
 		} else if(this.state == ElimState.STARTING) {
-			// Preperations has been done, start in 3 seconds
+			// Preparations has been done, start in 3 seconds
 			
 			// Check if there are still enough players in
 			if(!isEnoughPlayers()) {
 				m_botAction.sendArenaMessage("Elim aborted: not enough players");
 				stop();
+				// Set state to IDLE so it restarts automatically
+				this.state = ElimState.IDLE; 
 				return;
 			}
 			
@@ -405,4 +451,14 @@ public class elimbot extends SubspaceBot {
 		players.clear();
 	}
 	
+	/**
+	 * This method is called on !die and in case the bot gets disconnected (handleDisconnect() )
+	 */
+	private void die() {
+		this.state = ElimState.STOPPED;
+		this.unlockArena();
+		// Remove any running timertasks
+		this.removeTimerTasks();
+		m_botAction.die();
+	}
 }

@@ -5,9 +5,10 @@ import twcore.core.util.Tools;
 public class fileConfiguration {
 	private int id;
 	private String name;
+	private String fullname;
 	
 	private boolean shipsVote;
-	private int[] ships = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	private int[] ships = { -1, 0, 0, 0, 0, 0, 0, 0, 0 };
 	private int shipsDefault;
 	// Let's not use the 1st digit (position 0)
 	// 0 = ship disabled
@@ -116,6 +117,20 @@ public class fileConfiguration {
 	 */
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	/**
+	 * @return the full name
+	 */
+	public String getFullname() {
+		return fullname;
+	}
+	
+	/**
+	 * @param fullname the full name
+	 */
+	public void setFullname(String fullname) {
+		this.fullname = fullname;
 	}
 
 	/**

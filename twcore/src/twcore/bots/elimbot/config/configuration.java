@@ -12,6 +12,7 @@ public class configuration {
 	
 	private HashMap<String, fileConfiguration> configurations = new HashMap<String, fileConfiguration>();
 	private String arena;
+	private String chat;
 	
 	private int currentConfig = 1;
 	private int playerMin = 3;
@@ -27,6 +28,7 @@ public class configuration {
 	
 	private void initialize() {
 		arena = config.getString("arena");
+		chat = config.getString("chat");
 		playerMin = config.getInt("playermin");
 		allowLagouts = (config.getInt("lagouts") == 1);
 		
@@ -41,6 +43,7 @@ public class configuration {
 			elimConf.setShipsDefault(config.getInt(name+"-ships-default"));
 			elimConf.setDeathLimit(config.getString(name+"-deathlimit"));
 			elimConf.setDeathLimitDefault(config.getInt(name+"-deathlimit-default"));
+			elimConf.setFullname(config.getString(name+"-fullname"));
 			if(config.getString(name+"-spawn") != null) {
 				elimConf.setSpawn(config.getString(name+"-spawn"));
 			}
@@ -53,6 +56,10 @@ public class configuration {
 	
 	public String getArena() {
 		return this.arena;
+	}
+	
+	public String getChat() {
+		return this.chat;
 	}
 	
 	public int getPlayerMin() {
