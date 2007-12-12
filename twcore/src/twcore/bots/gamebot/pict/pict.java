@@ -43,7 +43,7 @@ public class pict extends MultiModule {
     int             gameProgress = -1, toWin = 10, pictNumber = 1, curLeader = 0;
     int             m_mintimesused = -1, vote;
     int				minPlayers = 4; //the minimum amount of players needed to start a game
-    int				XSpot = 575, YSpot = 447; //The X and Y coords where the drawer is warped to.
+    int				XSpot = 500, YSpot = 500; //The X and Y coords where the drawer is warped to.
 
     int             m_timeQuestion = 2000, m_timeHint = 60000, m_timeAnswer = 240000;
     
