@@ -369,7 +369,7 @@ public class pict extends MultiModule {
             Player p;
             String addPlayerName;
             StringBag randomPlayerBag = new StringBag();
-            if (m_botAction.getFrequencySize(100) > 2)
+            if (m_botAction.getFrequencySize(1) > 2)
             {
             	Iterator i = m_botAction.getFreqPlayerIterator(100);
             	if( i == null ) return;
