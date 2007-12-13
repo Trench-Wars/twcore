@@ -36,7 +36,7 @@ public class acro extends MultiModule{
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         generator = new Random();
-        doStartGame(m_botAction.getBotName(), "");
+        if(autoStart)doStartGame(m_botAction.getBotName(), "");
     }
 
     public void requestEvents(ModuleEventRequester events)    {
@@ -84,8 +84,8 @@ public class acro extends MultiModule{
         if(m_botAction.getOperatorList().isER( name )) {
             m_botAction.cancelTasks();
             gameState = 0;
-            m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
-            m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!unlock");
+            m_botAction.sendArenaMessage("This game has been brutally killed by " + name);
+            if (autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!unlock");
         }
     }
 
@@ -187,7 +187,7 @@ public class acro extends MultiModule{
                 playerScores.clear();
                 gameState = 0;
                 round = 1;
-                m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
+                if (autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
             }
         };
         m_botAction.scheduleTask( game, 10000 );
@@ -291,13 +291,19 @@ public class acro extends MultiModule{
     }
 
     public String[] getModHelpMessage() {
+
         String[] help = {
                 "!start       - Starts a game of Acromania.",
                 "!stop        - Stops a game currently in progress.",
                 "!showanswers - Shows who has entered which answer.",
                 "NOTE: This event should only be hosted by Mod+!"
         };
-        return help;
+    	String[] autohelp = {
+                    "!stop        - Stops a game currently in progress.",
+                    "!showanswers - Shows who has entered which answer."
+            };
+        if(!autoStart)return help;
+        else return autohelp;
     }
 
     public String[] getPlayerHelpMessage() {

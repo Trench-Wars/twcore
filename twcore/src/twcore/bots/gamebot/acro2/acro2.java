@@ -41,7 +41,7 @@ public class acro2 extends MultiModule{
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         generator = new Random();
-        doStartGame(m_botAction.getBotName(),"");
+        if (autoStart)doStartGame(m_botAction.getBotName(),"");
     }
 
     public void requestEvents(ModuleEventRequester events)    {
@@ -131,8 +131,8 @@ public class acro2 extends MultiModule{
         if(m_botAction.getOperatorList().isER( name )) {
         	gamereset();
             m_botAction.cancelTasks();
-            m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
-            m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
+            m_botAction.sendArenaMessage("This game has been brutally killed by " + name);
+            if (autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
         }
     }
 
@@ -338,11 +338,12 @@ public class acro2 extends MultiModule{
                     String curAnswer = it.next();
                     m_botAction.sendArenaMessage("--- " + Tools.formatString(curAnswer,14) + ": " + playerScores.get(curAnswer));
                 }
+                if (autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
                 gamereset();
             }
         };
         m_botAction.scheduleTask(game,10000);
-        m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
+        
     }
 
     public void doCheckPrivate( String name, String message ) {
@@ -458,7 +459,15 @@ public class acro2 extends MultiModule{
                 "!showanswers - Shows who has entered which answer.",
                 "NOTE: This event should only be hosted by Mod+!"
         };
-        return help;
+        String[] autohelp = {
+                "ACROMANIA v2.0 BOT COMMANDS",
+                "!stop        - Stops a game currently in progress.",
+                "!rules   - Displays game rules.",
+                "!changes - Display changes since v1.0.",
+                "!showanswers - Shows who has entered which answer."
+        };
+        if(!autoStart)return help;
+        else return autohelp;
     }
 
     public String[] getPlayerHelpMessage() {

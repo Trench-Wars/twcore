@@ -58,11 +58,25 @@ public class trivia extends MultiModule {
       "To ?chat=trivia only:",
       "!pm            -- bot will pm you for remote play."
     };
+    String[]		automsg =
+    { "To ?chat=trivia or privately:",
+    	      "!help          -- displays this.",
+    	      "!score         -- displays the current scores.",
+    	      "!repeat        -- will repeat the last question given.",/*
+    	      "!stats         -- will display your statistics.",
+    	      "!stats <name>  -- displays <name>'s statistics.",
+    	      "!topten        -- displays top ten player stats.",*/
+    	      "To ?chat=trivia only:",
+    	      "!pm            -- bot will pm you for remote play."
+    };	
     String[]        opmsg =
     { "!start         -- Starts a game of trivia to 10",
       "!start <num>   -- Starts a game of trivia to <num> (1-25)",
-      "!cancel        -- Cancels a game of trivia",
-      "---------------------------------------------------------"
+      "!cancel        -- Cancels a game of trivia"
+    };
+    String[]		autoopmsg =
+    {
+    		"!cancel        -- Cancels a game of trivia"	
     };
 
     public void init() {
@@ -84,14 +98,15 @@ public class trivia extends MultiModule {
         String access[] =  m_botSettings.getString("SpecialAccess").split( ":" );
         for( int i = 0; i < access.length; i++ )
             accessList.put( access[i], access[i] );
-        doStartGame(m_botAction.getBotName(),"");
+        if(autoStart)doStartGame(m_botAction.getBotName(),"");
     }
 
     public void requestEvents(ModuleEventRequester events) {
 	}
 
 	public  String[] getModHelpMessage() {
-    	return opmsg;
+    	if(!autoStart)return opmsg;
+    	else return autoopmsg;
     }
 
     public boolean isUnloadable() {
@@ -117,8 +132,8 @@ public class trivia extends MultiModule {
         acceptedMessages = Message.CHAT_MESSAGE | Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!repeat",    acceptedMessages, this, "doRepeat" );
         m_commandInterpreter.registerCommand( "!help",      acceptedMessages, this, "doHelp" );
-        m_commandInterpreter.registerCommand( "!topten",    acceptedMessages, this, "doTopTen" );
-        m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
+        if(!autoStart)m_commandInterpreter.registerCommand( "!topten",    acceptedMessages, this, "doTopTen" );
+        if(!autoStart)m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
         m_commandInterpreter.registerCommand( "!pm",        acceptedMessages, this, "doPm" );
         m_commandInterpreter.registerCommand( "!score",     acceptedMessages, this, "doScore" );
 
@@ -165,7 +180,7 @@ public class trivia extends MultiModule {
             m_botAction.sendArenaMessage( m_prec + "This game of Trivia has been canceled." );
             playerMap.clear();
             m_botAction.cancelTasks();
-            m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
+            if(autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
         }
     }
 
@@ -279,7 +294,7 @@ public class trivia extends MultiModule {
         getTopTen();
         m_botAction.cancelTasks();
         toWin = 10;
-        m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
+        if(autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
     }
 
     public void doRepeat( String name, String message ){
@@ -291,11 +306,8 @@ public class trivia extends MultiModule {
     }
 
     public void doHelp( String name, String message ){
-        if( m_botAction.getOperatorList().isModerator( name ) ){
-            m_botAction.remotePrivateMessageSpam( name, opmsg );
-        }
-
-        m_botAction.remotePrivateMessageSpam( name, helpmsg );
+    	if(!autoStart)m_botAction.remotePrivateMessageSpam( name, helpmsg );
+    	else m_botAction.remotePrivateMessageSpam( name, automsg );
     }
 
     public void doTopTen( String name, String message ){

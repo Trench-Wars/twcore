@@ -56,10 +56,21 @@ public class scramble extends MultiModule {
       "!help          -- displays this.",
       "!score         -- displays the current scores.",
       "!repeat        -- will repeat the last question given.",
+      "!pm            -- the bot will pm you for easier play.",
+      "!stats         -- will display your statistics.",
+      "!stats <name>  -- displays <name>'s statistics.",
+      "!topten        -- displays top ten player stats."
+    };
+    String[]		automsg =
+    { "Commands:",
+      "!help          -- displays this.",
+      "!score         -- displays the current scores.",
+      "!repeat        -- will repeat the last question given.",
       "!pm            -- the bot will pm you for easier play."/*,
       "!stats         -- will display your statistics.",
       "!stats <name>  -- displays <name>'s statistics.",
       "!topten        -- displays top ten player stats."*/
+    		
     };
     String[]        opmsg =
     { "Moderator Commands:",
@@ -69,6 +80,14 @@ public class scramble extends MultiModule {
       "!difficulty    -- Toggles difficulty level between",
       "                  normal/nerd mode.",
       "!showanswer    -- Shows you the answer."
+    };
+    String[]		autoopmsg =
+    { "Moderator Commands:",
+    		"!cancel        -- Cancels a game of scramble.",
+    	      "!difficulty    -- Toggles difficulty level between",
+    	      "                  normal/nerd mode.",
+    	      "!showanswer    -- Shows you the answer."
+
     };
     String[]        regrules =
     {
@@ -89,6 +108,15 @@ public class scramble extends MultiModule {
     	" for the sake of competitive players.",
     	"------------------------------------------------------------------------"
     };
+    String[]		autooprules =
+    {
+    	"Moderator Rules:",
+    	"-!showanswer will prohibit you from answering that round.",
+    	"-Do not abuse !showanswer by giving other players or moderators the answer.",
+    	"-Although it is possible to change difficulties mid-game please do not do so",
+    	" for the sake of competitive players.",
+    	"------------------------------------------------------------------------"
+    };
 
     public void init() {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
@@ -99,7 +127,7 @@ public class scramble extends MultiModule {
         String access[] =  m_botSettings.getString("SpecialAccess").split( ":" );
         for( int i = 0; i < access.length; i++ )
             accessList.put( access[i], access[i] );
-        doVote();
+        if(autoStart)doVote();
         
     }
 
@@ -166,7 +194,8 @@ public class scramble extends MultiModule {
 	}
 
 	public  String[] getModHelpMessage(){
-        return opmsg;
+        if(!autoStart)return opmsg;
+        else return autoopmsg;
 	}
 
     public boolean isUnloadable() {
@@ -194,8 +223,8 @@ public class scramble extends MultiModule {
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!repeat",    acceptedMessages, this, "doRepeat" );
         m_commandInterpreter.registerCommand( "!help",      acceptedMessages, this, "doHelp" );
-        //m_commandInterpreter.registerCommand( "!topten",    acceptedMessages, this, "doTopTen" );
-        //m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
+        if(!autoStart)m_commandInterpreter.registerCommand( "!topten",    acceptedMessages, this, "doTopTen" );
+        if(!autoStart)m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
         m_commandInterpreter.registerCommand( "!score",     acceptedMessages, this, "doScore" );
         m_commandInterpreter.registerCommand( "!pm",        acceptedMessages, this, "doPm" );
         m_commandInterpreter.registerCommand( "!rules",     acceptedMessages, this, "doRules" );
@@ -210,7 +239,8 @@ public class scramble extends MultiModule {
     
     public void doRules( String name, String message) {
         if( m_botAction.getOperatorList().isModerator( name ) ){
-            m_botAction.smartPrivateMessageSpam( name, oprules );
+            if(!autoStart)m_botAction.smartPrivateMessageSpam( name, oprules );
+            else m_botAction.smartPrivateMessageSpam( name, autooprules );
         }
 
         m_botAction.smartPrivateMessageSpam( name, regrules );
@@ -279,7 +309,7 @@ public class scramble extends MultiModule {
             m_botAction.sendArenaMessage( m_prec + "This game of Scramble has been canceled." );
             playerMap.clear();
             m_botAction.cancelTasks();
-            m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!unlock");
+            if(autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!unlock");
             
         }
     }
@@ -417,7 +447,7 @@ public class scramble extends MultiModule {
         getTopTen();
         m_botAction.cancelTasks();
         toWin = 10;
-        m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
+        if(autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(),"!unlock");
     }
 
     public void doRepeat( String name, String message ){
@@ -429,7 +459,8 @@ public class scramble extends MultiModule {
     }
 
     public void doHelp( String name, String message ){
-        m_botAction.smartPrivateMessageSpam( name, helpmsg );
+        if(!autoStart)m_botAction.smartPrivateMessageSpam( name, helpmsg );
+        else m_botAction.smartPrivateMessageSpam( name, automsg );
     }
 
     public void doPm( String name, String message ){

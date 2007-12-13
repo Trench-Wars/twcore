@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.Vector;
 import java.util.ArrayList;
+import java.util.Random;
 
 import twcore.bots.MultiModule;
 import twcore.core.AdaptiveClassLoader;
@@ -22,28 +23,30 @@ import twcore.core.util.ModuleEventRequester;
 /**
  * Bot designed for non-combat games. (e.g. trivia, acro, pictionary)
  * Rules towards creating a game module:
- * Module must start itself on load and unload itself on cancel/end.
+ * Module must start itself on load and unload itself on cancel/end
+ * with the condition of autoStart.
  * If there are game type options let players vote for them in team chat.
  * see example: scramble.java
- * TODO:Create a GameModule class for future modules.
  * @author milosh
  */
 public class gamebot extends SubspaceBot {
     private static final String CLASS_EXTENSION = ".class";
     private static final String CONFIG_EXTENSION = ".cfg";
     private static final long DIE_DELAY = 500;
-    private boolean isLast;
+    private boolean isLast = false, hasGame = false;
     private OperatorList opList;
     private MultiModule multiModule;
     private String initialArena;
     private String modulePath;
     private String botChat;
-    private String killerName;
-    int gameProgress = -1, vote;
+    private int gameProgress = -1, vote, games, r;
     private ArrayList<String> hasVoted;
     private HashMap<String, Integer> votes;
-    AdaptiveClassLoader loader;
-    ModuleEventRequester modEventReq;
+    private AdaptiveClassLoader loader;
+    private ModuleEventRequester modEventReq;
+    private File directory;
+    private File[] files;
+    
 
     public gamebot(BotAction botAction) {
         super(botAction);
@@ -73,6 +76,12 @@ public class gamebot extends SubspaceBot {
         handleEvent((SubspaceEvent) event);
         modEventReq = new ModuleEventRequester(m_botAction.getEventRequester());
         m_botAction.getEventRequester().requestAll();
+        directory = new File(modulePath);
+        files = directory.listFiles(moduleFilter);
+        Arrays.sort(files);
+        games = files.length;
+        
+        
     }
 
     /**
@@ -121,7 +130,7 @@ public class gamebot extends SubspaceBot {
                 if (command.startsWith("!go "))
                     doGoCmd(sender, message.substring(4).trim());
                 else if (command.equalsIgnoreCase("!game")) 
-                    doGameCmd(sender, message);                
+                    doGameCmd(sender);                
                 else if (command.equalsIgnoreCase("!killgame"))
                 	doKillGame(sender);
                 else if (command.equalsIgnoreCase("!help"))
@@ -181,35 +190,41 @@ public class gamebot extends SubspaceBot {
      *            is the sender of the command.
      */
     private void doLockCmd(String sender, String argString) {
-        loadModule(argString);
+        loadModule(argString, false);
+        isLast = true;
         m_botAction.sendSmartPrivateMessage(sender, "Successfully loaded module.");
     }
     
     /**
      * 
      */
-    private void doGameCmd(String name, String message) {
+    private void doGameCmd(String name) {
     	if(gameProgress == -1){
+    		hasGame = true;
     		gameProgress = 1;
     		votes.clear();
     		hasVoted.clear();
-    		m_botAction.sendArenaMessage("Vote: 1 - Trivia, 2 - Acro, 3 - Acro2, 4 - Scramble, 5 - Pictionary");
+    		String gameTypes = "";
+    		for (int i = 0; i < games; i++) {
+                String typeName = files[i] + "";
+                typeName = typeName.substring(modulePath.length() + 1);
+                gameTypes +=  typeName + " - " + (i+1) + " ";               
+            }
+    		m_botAction.sendArenaMessage("Vote: " + gameTypes);
     		TimerTask endVote = new TimerTask(){
     			public void run(){
     				gameProgress = 2;
-    				vote = countVote(5);
+    				vote = countVote(games);
     				String game = findGame(vote);
-    				String gameName = findGameName(game);
-    		    	if(game.equals("")){
-    		    		gameProgress = -1;
-    		    		m_botAction.sendArenaMessage("Place your votes in public chat(1-5).");
-    					doGameCmd(m_botAction.getBotName(), "");
-    					//may add random pick later.
+    		    	if(game == null){
+    		    		gameProgress = -1;    		    		
+    		    		r = new Random().nextInt(games);    		    		
+    		    		game = findGame(r + 1);
+    		    		m_botAction.sendArenaMessage("Random Pick: " + game, 23);
     		    	}
-    		    	else {
-    				m_botAction.sendArenaMessage(gameName + " has won the vote.", 23);
-    				doModule(game);
-    		    	}
+    		    	else
+    		    		m_botAction.sendArenaMessage(game + " has won the vote.", 2);
+    				try{loadModule(game,true);}catch(Exception e){}
     			}
     		};
     		m_botAction.scheduleTask(endVote, 15000);
@@ -221,7 +236,7 @@ public class gamebot extends SubspaceBot {
      */
 	public int countVote(int range) {
 		int winner = 0;
-		int[] counters = new int[range+1];
+		int[] counters = new int[range + 1];
 		Iterator<Integer> i = votes.values().iterator();
 
 		while (i.hasNext()) {
@@ -236,40 +251,12 @@ public class gamebot extends SubspaceBot {
 		}
 		return winner;
 	}
-    
-	private void doModule(String game){
-		try {
-		loadModule(game);
-		} catch(Exception e){}
-	}
 	public String findGame(int gameNum){
-		String game = "";
-		if (gameNum == 1)
-			game = "trivia";
-		else if (gameNum == 2)
-			game = "acro";
-		else if (gameNum == 3)
-			game = "acro2";
-		else if (gameNum == 4)
-			game = "scramble";
-		else if (gameNum == 5)
-			game = "pict";
-		return game;
+		if (gameNum == 0) return null;
+		String game = files[gameNum - 1] + "";
+		return game.substring(modulePath.length() + 1);
 	}
-	public String findGameName(String s){
-		String name = "";
-		if (s.equals("trivia"))
-			name = "Trivia";
-		else if(s.equals("acro"))
-			name = "Acromania";
-		else if(s.equals("acro2"))
-			name = "Acromania-V2.0";
-		else if(s.equals("scramble"))
-			name = "Scramble";
-		else if(s.equals("pict"))
-			name = "Pictionary";
-		return name;
-	}
+	
     /**
      * This method sends the bot to another arena.
      *
@@ -297,19 +284,14 @@ public class gamebot extends SubspaceBot {
      * @param sender
      *            is the sender of the command.
      */
-    private void doListGamesCmd(String sender) {
-        File directory = new File(modulePath);
-        File[] files = directory.listFiles(moduleFilter);
-
-        Arrays.sort(files);
-
+    private void doListGamesCmd(String sender) {      
         m_botAction.sendPrivateMessage(sender, "TW MultiBot Game Library");
         m_botAction.sendPrivateMessage(sender, "------------------------");
 
         String moduleNames = "";
         int namesinline = 0;
 
-        for (int i = 0; i < files.length; i++) {
+        for (int i = 0; i < games; i++) {
             String name = files[i] + "";
             name = name.substring(modulePath.length() + 1);
             moduleNames += Tools.formatString(name, 20);
@@ -361,11 +343,10 @@ public class gamebot extends SubspaceBot {
         unloadModule();
         if(!isLast){
         	gameProgress = -1;
-        	doGameCmd(m_botAction.getBotName(),"");
+        	doGameCmd(m_botAction.getBotName());
         }
-        else{
-        	m_botAction.sendArenaMessage("The game has been brutally killed by " + killerName);
-        }
+        else
+        	isLast = false;
     }
     
     /**
@@ -380,7 +361,6 @@ public class gamebot extends SubspaceBot {
     	else {
     		isLast = true;
     		m_botAction.sendSmartPrivateMessage(name, "This game will be the last.");
-    		killerName = name;
     	}
 
     }
@@ -390,12 +370,14 @@ public class gamebot extends SubspaceBot {
      * @param name
      */
     private void doKillGame(String name){
-    	killerName = name;
-        gameProgress = -1;
-        m_botAction.sendArenaMessage("The game has been brutally killed by " + killerName);
+        gameProgress = -1;        
         m_botAction.cancelTasks();
         if (isLocked()){
         	unloadModule();
+        }
+        if(hasGame){
+        	m_botAction.sendArenaMessage("The game has been brutally killed by " + name);
+        	hasGame = false;
         }
     }
 
@@ -462,7 +444,7 @@ public class gamebot extends SubspaceBot {
     }
 	final static String[] help_unlocked = {
 	    "!Go <ArenaName>          -- Sends the bot to <ArenaName>.",
-	    "!Game					  -- Begins a player voted game loop.",
+	    "!Game                    -- Begins a player voted game loop.",
 	    "!Last                    -- Allows one more game, then kills the game loop.",
 	    "!Killgame                -- Kills the current game.",
 	    "!Home                    -- Returns the bot to its home.",
@@ -566,7 +548,7 @@ public class gamebot extends SubspaceBot {
      * @param moduleName
      *            is the name of the module to load.
      */
-    private void loadModule(String moduleName) {
+    private void loadModule(String moduleName, boolean auto) {
         Vector<File> repository = new Vector<File>();
         BotSettings moduleSettings;
         String lowerName = moduleName.toLowerCase();
@@ -587,6 +569,7 @@ public class gamebot extends SubspaceBot {
             if (loader.shouldReload())
                 loader.reinstantiate();
             multiModule = (MultiModule) loader.loadClass(getParentClass() + "." + lowerName + "." + lowerName).newInstance();
+            if (auto) multiModule.autoStart(true);
             multiModule.initialize(m_botAction, moduleSettings, modEventReq);
         } catch (Exception e) {
             throw new RuntimeException("Error loading " + moduleName + ".");
