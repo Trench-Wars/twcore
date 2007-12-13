@@ -14,6 +14,7 @@ public abstract class MultiModule
   public BotAction m_botAction;
   public OperatorList opList;
   public BotSettings moduleSettings;
+  public boolean autoStart = false;
 
   /**
    * This method initializes the bot module.  This must be called before the
@@ -116,6 +117,16 @@ public abstract class MultiModule
    * returned.
    */
   public abstract String[] getModHelpMessage();
+  
+  /**
+   * This method lets the module know whether to automatically start or wait for 
+   * more commands. It defaults as false.
+   * @param custom
+   * 	true - automatically start, false - await commands
+   */
+  public void autoStart(boolean auto){
+	  autoStart = auto;
+  }
 
   /**
    * This method returns if the module can be unloaded.
