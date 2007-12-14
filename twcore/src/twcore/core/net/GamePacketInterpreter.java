@@ -1018,7 +1018,7 @@ public class GamePacketInterpreter {
         	int age = m_session.getCoreData().getGeneralSettings().getInt("Age");
 
         	// Reset to default values if there is something wrong
-        	realname = (realname == null || realname.length() == 0) ? "Maverick":realname;
+        	realname = (realname == null || realname.length() == 0) ? "Trench Wars":realname;
         	email = (email == null || email.length() == 0) ? "bots@twcore.org":email;
         	state = (state == null || state.length() == 0) ? "The Netherlands":state;
         	city = (city == null || city.length() == 0) ? "Amsterdam":city;
