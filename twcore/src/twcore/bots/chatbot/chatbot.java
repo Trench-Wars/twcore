@@ -10,7 +10,9 @@ import twcore.core.events.Message;
 import twcore.core.util.ipc.IPCMessage;
 
 public class chatbot extends SubspaceBot {
-    
+
+	private static final String CHAT_COMMAND = "!active";
+	private String requester;    
     private BotSettings m_botSettings;
     
     /** Creates a new instance of ultrabot */
@@ -30,11 +32,11 @@ public class chatbot extends SubspaceBot {
     
     
     public void handleEvent(Message event) {
-    	if(event.getMessageType() == Message.CHAT_MESSAGE) {
-    		String message = event.getMessage();
+    	String message = event.getMessage();
+    	if(event.getMessageType() == Message.CHAT_MESSAGE) {    		
     		String sender = event.getMessager();
     		int chatNumber = event.getChatNumber();
-    		String sendMessage = sender + "> " + message;
+    		String sendMessage = sender + ":" + message;
     		if(chatNumber == 2) {
     			if(m_botAction.getOperatorList().isZH(sender)) {
     				IPCMessage sendIPCMessage = new IPCMessage(sendMessage, "staff", m_botAction.getBotName());
@@ -45,7 +47,18 @@ public class chatbot extends SubspaceBot {
     			m_botAction.ipcTransmit("crosszones", sendIPCMessage);
     		}
     	}
-        
+    	else if(event.getMessageType() == Message.ARENA_MESSAGE){
+    		if(message.startsWith("(local) twdev: ")){
+    			String msg = message.substring(15);
+    			m_botAction.sendSmartPrivateMessage( requester, msg);
+    		}    		
+    	}
+    	else if(event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE){
+    		if(message.equalsIgnoreCase(CHAT_COMMAND)){
+    			requester = event.getMessager();
+    			m_botAction.sendUnfilteredPublicMessage("?chat");
+    		}
+    	}
     }
     
     public void handleEvent(LoggedOn event) {
@@ -59,6 +72,17 @@ public class chatbot extends SubspaceBot {
     	IPCMessage message = (IPCMessage)event.getObject();
     	if(message.getSender().equals(m_botAction.getBotName())) return;
     	if(message.getRecipient().equals("staff")) m_botAction.sendChatMessage(2, message.getMessage());
-    	else if(message.getRecipient().equals("twdev")) m_botAction.sendChatMessage(1, message.getMessage());
+    	else if(message.getRecipient().equals("twdev")) {
+    		String temp = message.getMessage();
+    		int index = temp.indexOf(":");    		
+    		String msg = temp.substring(index+1);
+    		if(msg.equalsIgnoreCase(CHAT_COMMAND)){
+    			requester = temp.substring(0,index);
+    			m_botAction.sendUnfilteredPublicMessage("?chat");
+    		}    			
+    		else {
+    			m_botAction.sendChatMessage(1, temp.substring(0,index) + "> " + msg);
+    		}
+    	}
     }
 }
