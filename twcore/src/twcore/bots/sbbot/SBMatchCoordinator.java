@@ -302,6 +302,7 @@ public class SBMatchCoordinator {
     }
 
     private class ListCommandHandler extends BotCommandListener {
+	@SuppressWarnings("fallthrough")
 	public void notify(BotCommandType type, BotCommandEvent event) {
 	    switch(gameState) {
 	    case NONE:
