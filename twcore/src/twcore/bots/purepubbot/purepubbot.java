@@ -895,7 +895,7 @@ public class purepubbot extends SubspaceBot
         int players = 0;
         for(int i = 1; i < 9; i++ ) {
             int num = team.get(i).size();
-            String text = num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num>1 ? "s":"")), 8 );
+            String text = num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 );
             
             if(         i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
                         i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
@@ -1092,7 +1092,7 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException("You must be in a ship for this command to work.");
         Iterator i = m_botAction.getFreqPlayerIterator(p.getFrequency());
         if( !i.hasNext() )
-            throw new RuntimeException("Your team has no terriers!  (Consider becoming one.)");
+            throw new RuntimeException("ERROR: No players detected on your frequency!");
         m_botAction.sendPrivateMessage(sender, "Name of Terrier          Last seen");
         while( i.hasNext() ) {
             Player terr = (Player)i.next();
