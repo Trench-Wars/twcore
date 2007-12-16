@@ -24,7 +24,6 @@ import twcore.core.events.ScoreReset;
 import twcore.core.events.ScoreUpdate;
 import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.TurretEvent;
-import twcore.core.net.GamePacketGenerator;
 
 /**
  * Arena is used to keep track of player information in the Arena a bot is in.
