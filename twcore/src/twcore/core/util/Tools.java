@@ -18,7 +18,11 @@ import java.util.LinkedList;
 public class Tools {
     public static boolean debugging = true;
     public static String exceptionLogFilePath = null;
-    
+
+    private Tools() {
+    	/* private default constructor to prevent accidentally instantiating this class */
+    }
+
     /**
      * Chops a string into pieces around a given character.  Very similar to
      * String's split method, only slower and less powerful.  Nearly useless.
@@ -111,7 +115,7 @@ public class Tools {
 
         return list;
     }
-    
+
     /**
      * Prints to the log (console) a message with a preformatted timestamp.
      * For this to work one should redirect output to a file.
@@ -287,7 +291,7 @@ public class Tools {
     }
 
     /**
-     * Add slashes to a String as is required for a database query.
+     * Add slashes to a String as is required for a database query. (buggy)
      * @param t String to format
      * @return String formatted with slashes
      */
@@ -305,12 +309,35 @@ public class Tools {
         return n;
     }
 
-    //returns null if not found, a file if found
+    /**
+     * Adds backslashes to a String as is required for a database query.
+     * A backslash is inserted before these chars: ' " \
+     * @param str String to process
+     * @return String with backslashes inserted
+     */
+    public static String addSlashes(String str) {
+    	int len = str.length();
+    	StringBuilder sb = new StringBuilder(len * 2);
+
+    	for(int i = 0; i < len; i++) {
+    		char c = str.charAt(i);
+    		switch(c) {
+    			case '\'': sb.append("\\\'"); break;
+    			case '\"': sb.append("\\\""); break;
+    			case '\\': sb.append("\\\\"); break;
+    			default: sb.append(c);
+    		}
+    	}
+    	return sb.toString();
+    }
+
+
 
     /**
      * Recursively searches for a file in directory.  Null if the file can't be found.
      * @param directory Directory to begin recursive search
      * @param fileName Name of file to search for
+	 * @return a file if found, null if not found
      */
     public static File getRecursiveFileInDirectory( File directory, String fileName ){
         File[] files = directory.listFiles();
@@ -392,10 +419,10 @@ public class Tools {
 
         return result;
     }
-    
+
     /**
      * Aligns a String to the right over a given length and which characters to fill with.
-     * 
+     *
      * @param fragment
      * @param length
      * @param padding
@@ -412,10 +439,10 @@ public class Tools {
         }
         return fragment;
     }
-    
+
     /**
      * Aligns a String to the right over a given number of characters, padded on the right with spaces.
-     * 
+     *
      * @param fragment
      * @param length
      * @return
@@ -423,8 +450,8 @@ public class Tools {
     public static String rightString (String fragment, int length) {
     	return rightString(fragment, length, ' ');
     }
-    
-    
+
+
     /**
      * Based on a date given in milliseconds, return a String describing the
      * difference between that time and the present time, such as:<p>
@@ -437,12 +464,12 @@ public class Tools {
      */
     public static String getTimeDiffString( long dateInMillis, boolean abbrev ) {
     	long diffTime = 0;
-    	
+
     	if(dateInMillis <= new Date().getTime())	// timestamp is in past
     		diffTime = Math.round((new Date().getTime() - dateInMillis )/1000);
     	else	// timestamp is in future
     		diffTime = Math.round((dateInMillis - new Date().getTime())/1000);
-        
+
         String response = new String();
         if(diffTime > (24*60*60)) {   // Days
             int days = Math.round(diffTime / (24*60*60));
@@ -470,7 +497,7 @@ public class Tools {
         }
         if( abbrev ) {
             response += diffTime + "s";
-        } else {                 
+        } else {
             if( diffTime != 0 ) {
                 if( !response.equals("") )
                     response += " and ";
@@ -484,10 +511,10 @@ public class Tools {
         }
         return response;
     }
-    
-        
+
+
     // *** ENUMS ***
-    
+
     // Prizes
     public class Prize {
         public static final int RECHARGE = 1;
@@ -517,9 +544,9 @@ public class Tools {
         public static final int MULTIPRIZE = 25;
         public static final int BRICK = 26;
         public static final int ROCKET = 27;
-        public static final int PORTAL = 28;        
+        public static final int PORTAL = 28;
     }
-    
+
     // Sounds
     public class Sound {
         public static final int BEEP1 = 1;
@@ -555,7 +582,7 @@ public class Tools {
         public static final int GOAL = 104;
         public static final int GOGOGO = 104; // Just in case :P
     }
-    
+
     // Ships (not to be confused with numbering system used in Ship, which is for internal/packet use only)
     public class Ship {
         public static final int SPECTATOR = 0;
@@ -568,14 +595,14 @@ public class Tools {
         public static final int LANCASTER = 7;
         public static final int SHARK = 8;
     }
-    
+
     // Time defines for conversion to milliseconds.  If this is to be found somewhere else
     // more handy, that can be used instead -- merely saw a static reference to the number
     // representing "one day" in StaffBot and thought it was a little sloppy.
     public class TimeInMillis {
         public static final int SECOND = 1000;
         public static final int MINUTE = 60000;
-        public static final int HOUR   = 3600000; 
+        public static final int HOUR   = 3600000;
         public static final int DAY    = 86400000;
         public static final int WEEK   = 604800000;
     }

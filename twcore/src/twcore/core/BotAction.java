@@ -1027,6 +1027,18 @@ public class BotAction
         }
     }
 
+    /**
+     * Sends multiline arena messages.
+     * @param spam Array of Strings to arena
+     */
+    public void arenaMessageSpam(final String[] spam) {
+        if(spam != null) {
+            for(int i = 0; i < spam.length; i++) {
+                sendArenaMessage(spam[i]);
+            }
+        }
+    }
+
 
 
 
