@@ -201,7 +201,7 @@ public class GamePacketInterpreter {
             case 0x16:
                 handleFlagDropped( array, alreadyDecrypted );
                 break;
-            // 0x17 - Unknown Packet: Unhandled
+            // 0x17 - Unknown (probably NOP): Unhandled
             // 0x18 - Synchronization Request: Unhandled (This is why bot must be a sysop)
             //        On Sync request, send 0x1A - Security checksum
             case 0x19:
@@ -229,7 +229,7 @@ public class GamePacketInterpreter {
                 break;
             // 0x24 - Speed game over: Unhandled
             // 0x25 - Bot's UFO flag toggled: Unhandled
-            // 0x26 - Unknown: Unhandled
+            // 0x26 - Unknown (probably NOP): Unhandled
             // 0x27 - "Keep-Alive": Unhandled
             case 0x28:
                 handlePlayerPosition( array, alreadyDecrypted );
@@ -238,7 +238,7 @@ public class GamePacketInterpreter {
             // 0x2A - Compressed map file: Unhandled
             // 0x2B - Set bot's KotH timer: Unhandled
             // 0x2C - KotH Game Reset: Unhandled
-            // 0x2D - Unknown: Unhandled
+            // 0x2D - Add KotH time: Unhandled
             case 0x2E:
                 handleBallPosition( array, alreadyDecrypted );
                 break;
@@ -252,8 +252,8 @@ public class GamePacketInterpreter {
             // 0x33 - Custom login failure message: Unhandled
             // 0x34 - Continuum version packet: Unhandled
             // 0x35 - Object toggling: Unhandled
-            // 0x36 - Unknown: Unhandled
-            // 0x37 - Unknown: Unhandled
+            // 0x36 - Received object (further info unknown): Unhandled
+            // 0x37 - Toggle whether to send damage info: Unhandled
             case 0x38:
                 handleWatchDamage( array, alreadyDecrypted );
                 break;
