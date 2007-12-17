@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.TimerTask;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.LinkedList;
 import java.util.Set;
@@ -67,8 +68,8 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     private KimPlayer           m_mvp = null;
     private KimPlayer           m_prevMvp = null;
     private KimPlayer           m_survivor = null;
-    private TreeMap<Integer, KimPlayer>
-                                m_deathMap = new TreeMap<Integer, KimPlayer>();
+    private SortedMap<Integer, KimPlayer>
+                                m_deathMap = Collections.synchronizedSortedMap(new TreeMap<Integer, KimPlayer>());
 
     private LagoutMan<String>
                                 m_lagoutMan = new LagoutMan<String>(this);
@@ -450,7 +451,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
                 }
         //!test
             } else if(msg.startsWith("!test")) {
-
+                m_botAction.sendArenaMessage(Tools.addSlashes("test'test\"test\\test"));
 
             } else if(isSmod) {
         //!addstaff
