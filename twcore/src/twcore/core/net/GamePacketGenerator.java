@@ -15,15 +15,17 @@ import twcore.core.util.ByteArray;
  */
 public class GamePacketGenerator {
 
-    private Timer                 m_timer;          // Schedules clustered packets
-    private TimerTask             m_timerTask;      // Clustered packet send task
-    private List<ByteArray>       m_messageList;    // Msgs waiting for clustered send
-    private SSEncryption          m_ssEncryption;   // Encryption class
-    private Sender                m_outboundQueue;  // Outgoing packet queue
-    private int                   m_serverTimeDifference;   // Diff (*tinfo)
-    private ReliablePacketHandler m_reliablePacketHandler;  // Handles reliable sends
+    private Timer                  m_timer;          // Schedules clustered packets
+    private TimerTask              m_timerTask;      // Clustered packet send task
+    private DelayedPacketList<ByteArray> m_messageList;  // Packets waiting to be sent in clusters
+    private SSEncryption           m_ssEncryption;   // Encryption class
+    private Sender                 m_outboundQueue;  // Outgoing packet queue
+    private int                    m_serverTimeDifference;   // Diff (*tinfo)
+    private ReliablePacketHandler  m_reliablePacketHandler;  // Handles reliable sends
 
-    private long                  m_sendDelay = 75; // Delay between cluster sends
+    private long                   m_sendDelay = 75;         // Delay between packet sends
+    private final static int       DEFAULT_PACKET_CAP = 100; // Default # low-priority packets
+                                                             // allowed per clustered send
 
     /**
      * Creates a new instance of GamePacketGenerator.
@@ -36,16 +38,16 @@ public class GamePacketGenerator {
         m_serverTimeDifference = 0;
         m_ssEncryption = ssEncryption;
         m_outboundQueue = outboundQueue;
-        m_messageList = Collections.synchronizedList(new LinkedList<ByteArray>());
+        m_messageList = new DelayedPacketList<ByteArray>( DEFAULT_PACKET_CAP );
 
         m_timerTask = new TimerTask(){
+            int size;
             public void run(){
-                int         size;
 
                 synchronized (m_messageList) {
                     size = m_messageList.size();
                     if( size == 1 ){
-                        sendReliableMessage( m_messageList.remove(0) );
+                        sendReliableMessage( m_messageList.getNextPacket() );
                     } else if( size > 1 ){
                         sendClusteredPacket();
                     }
@@ -74,12 +76,21 @@ public class GamePacketGenerator {
     }
 
     /**
+     * Sets the max number of lower-priority (aka chat) packets that can
+     * be sent per clustered send.
+     * @param cap Max # lower-priority packets allowed to be sent per clustered send
+     */
+    public void setPacketCap( int cap ){
+        m_messageList.setPacketCap( cap );
+    }
+
+    /**
      * Adds a packet to the standard outgoing queue.
      * @param array Packet to add
      */
     public void composePacket( int[] array ){
 
-        m_messageList.add( new ByteArray( array ) );
+        m_messageList.addNormalPacket( new ByteArray( array ) );
     }
 
     /**
@@ -88,7 +99,7 @@ public class GamePacketGenerator {
      */
     public void composePacket( byte[] array ){
 
-        m_messageList.add( new ByteArray( array ) );
+        m_messageList.addNormalPacket( new ByteArray( array ) );
     }
 
     /**
@@ -97,12 +108,49 @@ public class GamePacketGenerator {
      */
     public void composePacket( ByteArray bytearray ){
 
-        m_messageList.add( bytearray );
+        m_messageList.addNormalPacket( bytearray );
+    }
+
+    /**
+     * Adds a packet to the outgoing queue with low priority.  The number of
+     * such packets allowed to be transmitted out per clustered send is capped,
+     * and can be set with setPacketCap(int).
+     * @param bytearray Packet to add
+     * @see #setPacketCap(int)
+     */
+    public void composeLowPriorityPacket( ByteArray bytearray ){
+
+        m_messageList.addCappedPacket( bytearray );
+    }
+
+    /**
+     * Adds a packet to the outgoing queue with low priority.  The number of
+     * such packets allowed to be transmitted out per clustered send is capped,
+     * and can be set with setPacketCap(int).
+     * @param array Packet to add
+     * @see #setPacketCap(int)
+     */
+    public void composeLowPriorityPacket( int[] array ){
+
+        m_messageList.addCappedPacket( new ByteArray( array ) );
+    }
+
+    /**
+     * Adds a packet to the outgoing queue with low priority.  The number of
+     * such packets allowed to be transmitted out per clustered send is capped,
+     * and can be set with setPacketCap(int).
+     * @param array Packet to add
+     * @see #setPacketCap(int)
+     */
+    public void composeLowPriorityPacket( byte[] array ){
+
+        m_messageList.addCappedPacket( new ByteArray( array ) );
     }
 
     /**
      * Adds a packet to the immediate outgoing queue, ignoring any other packets
      * in the standard queue it could be clustered with.  Fast but not as efficient.
+     * Packets sent in this manner are not sent reliably.
      * @param array Packet to add
      */
     public void composeImmediatePacket( int[] array, int size ){
@@ -113,6 +161,7 @@ public class GamePacketGenerator {
     /**
      * Adds a packet to the immediate outgoing queue, ignoring any other packets
      * in the standard queue it could be clustered with.  Fast but not as efficient.
+     * Packets sent in this manner are not sent reliably.
      * @param array Packet to add
      */
     public void composeImmediatePacket( byte[] array, int size ){
@@ -123,6 +172,7 @@ public class GamePacketGenerator {
     /**
      * Adds a packet to the immediate outgoing queue, ignoring any other packets
      * in the standard queue it could be clustered with.  Fast but not as efficient.
+     * Packets sent in this manner are not sent reliably.
      * @param bytearray Packet to add
      * @param size Size of packet
      */
@@ -134,7 +184,8 @@ public class GamePacketGenerator {
     /**
      * Adds a packet to the immediate high-priority outgoing queue, ignoring any
      * other packets in the standard queue it could be clustered with and placing
-     * it at the head of the immediate queue.
+     * it at the head of the immediate queue.  Packets sent in this manner are not
+     * sent reliably.
      * @param array Packet to add
      */
     public void composeHighPriorityPacket( int[] array, int size ){
@@ -145,7 +196,8 @@ public class GamePacketGenerator {
     /**
      * Adds a packet to the immediate high-priority outgoing queue, ignoring any
      * other packets in the standard queue it could be clustered with and placing
-     * it at the head of the immediate queue.
+     * it at the head of the immediate queue.  Packets sent in this manner are not
+     * sent reliably.
      * @param array Packet to add
      */
     public void composeHighPriorityPacket( byte[] array, int size ){
@@ -156,7 +208,8 @@ public class GamePacketGenerator {
     /**
      * Adds a packet to the immediate high-priority outgoing queue, ignoring any
      * other packets in the standard queue it could be clustered with and placing
-     * it at the head of the immediate queue.
+     * it at the head of the immediate queue.  Packets sent in this manner are not
+     * sent reliably.
      * @param bytearray Packet to add
      * @param size Size of packet
      */
@@ -284,12 +337,12 @@ public class GamePacketGenerator {
 
         sendReliableMessage( bytearray );
     }
-    
+
     /**
-     * Sends the registration data if the server asks for it. This information is mostly build up 
+     * Sends the registration data if the server asks for it. This information is mostly build up
      * from the properties of setup.cfg ([registration] tag). The registry variables are replaced by "TWCore"
      * since we want to keep TWCore cross-platform.
-     * 
+     *
      * @param realname Real name
      * @param email E-mail address
      * @param state State
@@ -332,9 +385,9 @@ public class GamePacketGenerator {
 			686		40		System\CurrentControlSet\Services\Class\MEDIA\0003
 			726		40		System\CurrentControlSet\Services\Class\MEDIA\0004
 		*/
-    	
+
     	ByteArray bytearray = new ByteArray(766);
-    	
+
     	bytearray.addByte( 0x17 );						// Type
     	bytearray.addPaddedString(realname, 32); 		// Real name
     	bytearray.addPaddedString(email, 64);			// E-mail
@@ -363,7 +416,7 @@ public class GamePacketGenerator {
     	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0002
     	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0003
     	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0004
-    	
+
     	this.sendMassiveChunkPacket( bytearray );
     }
 
@@ -472,7 +525,7 @@ public class GamePacketGenerator {
         bytearray.addString( message );
         bytearray.addByte( 0x00 );          // Terminator
 
-        composePacket( bytearray );
+        composeLowPriorityPacket( bytearray );
     }
 
     /**
@@ -494,11 +547,13 @@ public class GamePacketGenerator {
         synchronized (m_messageList) {
             // We might need to send more than one packet if the total of all messages
             // is longer than 500 bytes.
+            m_messageList.resetCap();
+
             while( done == false ){
 
                 // We now need to add as many as we can before we fill up the 500 bytes.
-                if( m_messageList.size() > 0 ){
-                    tempMessage = m_messageList.remove(0);
+                if( m_messageList.cappedSize() > 0 ){
+                    tempMessage = m_messageList.getNextPacket();
                     nextSize = tempMessage.size();
                 } else {
                     done = true;
@@ -510,8 +565,8 @@ public class GamePacketGenerator {
                     bytearray.addByte( nextSize );
                     bytearray.addByteArray( tempMessage );
 
-                    if( m_messageList.size() > 0 ){
-                        tempMessage = m_messageList.remove(0);
+                    if( m_messageList.cappedSize() > 0 ){
+                        tempMessage = m_messageList.getNextPacket();
                         sizeLeft -= nextSize + 1;
                         nextSize = tempMessage.size();
                     } else {
@@ -716,4 +771,57 @@ public class GamePacketGenerator {
         composePacket( data );
     }
 
+    /**
+     * Implementation to send out most packets as normal, while placing a cap
+     * on the number of less-important packets (generally messages) that are
+     * sent out per run of the cluster packet composition timer.
+     * @author dugwyler
+     * @param <E>
+     */
+    private class DelayedPacketList<E> {
+        private List<E> m_normalPacketList;
+        private List<E> m_cappedPacketList;
+        private int m_packetCap;
+        private int m_remainingCap;
+
+        public DelayedPacketList( int packetCap ) {
+            m_normalPacketList = Collections.synchronizedList(new LinkedList<E>());
+            m_cappedPacketList = Collections.synchronizedList(new LinkedList<E>());
+            m_packetCap = packetCap;
+            m_remainingCap = packetCap;
+        }
+
+        public void setPacketCap( int packetCap ) {
+            m_packetCap = packetCap;
+        }
+
+        public void resetCap() {
+            m_remainingCap = m_packetCap;
+        }
+
+        public void addNormalPacket( E packet ) {
+            m_normalPacketList.add( packet );
+        }
+
+        public void addCappedPacket( E packet ) {
+            m_cappedPacketList.add( packet );
+        }
+
+        public E getNextPacket( ) {
+            if( m_normalPacketList.isEmpty() == false )
+                return m_normalPacketList.remove( 0 );
+            else {
+                m_remainingCap--;
+                return m_cappedPacketList.remove( 0 );
+            }
+        }
+
+        public int size() {
+            return m_normalPacketList.size() + m_cappedPacketList.size();
+        }
+
+        public int cappedSize() {
+            return m_normalPacketList.size() + Math.min( m_cappedPacketList.size(), m_packetCap );
+        }
+    }
 }
