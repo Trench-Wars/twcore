@@ -2297,12 +2297,29 @@ public class BotAction
      * the possibility you'll overflow the 2500 packet/minute limit.  The default
      * setting is 75 ms.  If your bot doesn't require a quick response, set it higher.
      * If your bot requires a near-real time response, set it lower.  The lower you set
-     * it the more packets will be sent from the bot.
+     * it the more packets will be sent from the bot.<p>
+     * A way to safely reduce the delay is to use this method in conjunction with
+     * setLowPriorityPacketCap(int).  This will allow faster packet sending for
+     * important packets, while preventing chat messages from being sent too rapidly.
      * @param milliseconds Number of milliseconds between each packet.
+     * @see #setLowPriorityPacketCap(int)
      */
     public void setPacketSendDelay(int milliseconds)
     {
         m_botSession.getGamePacketGenerator().setSendDelay(milliseconds);
+    }
+
+    /**
+     * Adjusts the packet cap for low-priority (chat) packets.  The cap decides how many
+     * low-priority packets can go out per clustered packet send (packet send delay is
+     * adjusted with setPacketSendDelay(int)).  Generally you will not need to adjust this
+     * unless your bot sends out a lot of chat packets.
+     * @param cap Number of chat packets allowed per clustered send.
+     * @see #setPacketSendDelay(int)
+     */
+    public void setLowPriorityPacketCap(int cap)
+    {
+        m_botSession.getGamePacketGenerator().setPacketCap( cap );
     }
 
     /**
