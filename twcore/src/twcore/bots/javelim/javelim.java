@@ -872,7 +872,10 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         //scoreboard checking task
         m_botAction.scheduleTask(new TimerTask() {
             public void run() {
-                KimPlayer kp = m_deathMap.get(m_deathMap.firstKey());
+                KimPlayer kp;
+                synchronized(m_deathMap) {
+                    kp = m_deathMap.get(m_deathMap.firstKey());
+                }
                 if(m_mvp != m_prevMvp || m_survivor != kp) {
                     m_prevMvp = m_mvp;
                     refreshScoreboard();
