@@ -276,6 +276,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setMessageLimit( 8 );
         m_botAction.setReliableKills(1);
         m_botAction.setPlayerPositionUpdating(400);
+        m_botAction.setLowPriorityPacketCap(20);
         m_botAction.specAll();
         m_botAction.toggleLocked();
         m_botAction.resetFlagGame();
@@ -4809,7 +4810,7 @@ public class distensionbot extends SubspaceBot {
             if( currentRank < 0 )
                 return 0;
             if( currentRank == 0 )
-                return Math.round(baseRankCost);
+                return (int)(baseRankCost);
 
             float amt = baseRankCost;
             for(int i = 0; i < currentRank; i++ ) {
@@ -4827,7 +4828,7 @@ public class distensionbot extends SubspaceBot {
                             else
                                 amt *= STUPIDLY_HIGH_RANK_FACTOR;
             }
-            return Math.round( getNextRankCost( currentRank - 1 ) + amt );
+            return (int)( getNextRankCost( currentRank - 1 ) + amt );
         }
     }
 
@@ -5703,7 +5704,7 @@ public class distensionbot extends SubspaceBot {
             addSectorHold( p.getName() );
             flagObjs.showObject(LVZ_SECTOR_HOLD);
             m_botAction.manuallySetObjects( flagObjs.getObjects() );
-            m_botAction.sendArenaMessage( "SECTOR HOLD:  " + p.getArmyName() + " ("  + p.getName() + ") has secured the sector." );
+            m_botAction.sendPrivateMessage( p.getName(), "SECTOR HOLD: You have secured the sector." );
         }
 
         /**
@@ -5727,16 +5728,16 @@ public class distensionbot extends SubspaceBot {
             DistensionPlayer p = m_players.get(breakerName);
             if( p != null ) {
                 if( remain < 4 )
-                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN!!  " + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!!" );
+                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN!!  " + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!!", Tools.Sound.INCONCEIVABLE );
                 else if( remain < 10 )
-                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!" );
+                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!", Tools.Sound.CROWD_OOO );
                 else
-                    m_botAction.sendArenaMessage( "Sector hold broken: "   + p.getArmyName() + " ("  + p.getName() + ")");
+                    m_botAction.sendPrivateMessage( p.getName(), "HOLD BROKEN: You have broken the sector hold.");
                 addSectorBreak( p.getName() );
             } else {
                 DistensionArmy a = m_armies.get( breakingArmyID );
                 if( a != null )
-                    m_botAction.sendArenaMessage( "Sector hold broken: " + a.getName() + "" );
+                    m_botAction.sendArenaMessage( "Sector hold broken: " + a.getName());
                 else
                     m_botAction.sendArenaMessage( "Sector hold broken" );
             }
