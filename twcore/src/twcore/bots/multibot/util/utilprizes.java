@@ -69,7 +69,7 @@ public class utilprizes extends MultiUtil
       "Repel", "Burst", "Decoy", "Thor",
       "Multiprize", "Brick", "Rocket", "Portal"
   };
-  
+
   private static final int[] RESTRICTED_PRIZES = { Tools.Prize.RECHARGE,
                                                    Tools.Prize.ENERGY,
                                                    Tools.Prize.ROTATION,
@@ -85,8 +85,8 @@ public class utilprizes extends MultiUtil
   public int MAX_PRIZE = 28;
   public int MAX_SHIP = 8;
   public int MIN_SHIP = 1;
-  
-  
+
+
   public boolean[] turret;			//turret variables
   public int atchpz = 13;			//attach prize
   public int detchpz = 13;			//detach prize
@@ -108,15 +108,15 @@ public class utilprizes extends MultiUtil
   /**
    * Requests turret event
    */
-  
+
   public void requestEvents( ModuleEventRequester modEventReq ) {
 	  modEventReq.request(this, EventRequester.TURRET_EVENT );
   }
-  
+
   /**
    * handles turret events
    */
-  
+
   public void handleEvent(TurretEvent event)
 	{
 		if (turret[0] || turret[1]) // turret prizing on?
@@ -134,9 +134,9 @@ public class utilprizes extends MultiUtil
 			if(turret[1] && !event.isAttaching())
 				prizePlayer(tID,detchpz);		//Prize detaching player
 		}
-			
+
 	}
-    
+
   /**
    * Handles all message events sent to the bot.  Only private messages sent by
    * <ER>s or higher will be processed.
@@ -219,7 +219,7 @@ public class utilprizes extends MultiUtil
       return new StringTokenizer(string, ":");
     return new StringTokenizer(string);
   }
-  
+
   /**
    * Gets the prize number from a string.
    *
@@ -237,17 +237,17 @@ public class utilprizes extends MultiUtil
     }
 
     int prizeNumber = fuzzyStringArraySearch(PRIZE_NAMES, prizeString) + 1;
-    
-    if(prizeNumber != 0) {
-      if(isRestricted(prizeNumber))
+
+    if( prizeNumber != 0 ) {
+      if( !override && isRestricted(prizeNumber) )
         throw new IllegalArgumentException("Sorry, that prize is restricted (known to cause disconnections), and can't be used.");
       return prizeNumber * negativePrizing;
     }
-    
+
     prizeNumber = Integer.parseInt(prizeString);
-    if(Math.abs(prizeNumber) > MAX_PRIZE || Math.abs(prizeNumber) < MIN_PRIZE)
+    if( Math.abs(prizeNumber) > MAX_PRIZE || Math.abs(prizeNumber) < MIN_PRIZE )
       throw new IllegalArgumentException("That prize does not exist.");
-    if(isRestricted(prizeNumber))
+    if( !override && isRestricted(prizeNumber) )
       throw new IllegalArgumentException("Sorry, that prize is restricted (known to cause disconnections), and can't be used.");
     return prizeNumber * negativePrizing;
   }
@@ -548,13 +548,13 @@ public class utilprizes extends MultiUtil
       m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
     }
   }
-  
+
   /** prizes the turret or anchor on attach pending wither the
    * second argument is >=1 <0 (turret) or 0 (anchor);
    * @param sender is the user of the bot
    * @param argString is the string containing the arguments of the command.
    */
-  
+
   public void doPrizeAttach(String sender, String argString)
   {
     StringTokenizer argTokens = new StringTokenizer(argString, ":");
@@ -570,11 +570,11 @@ public class utilprizes extends MultiUtil
     		m_botAction.sendSmartPrivateMessage(sender,"Prizing attached players with prize: " + getPrizeName(atchpz));
     	}
     	else if (var.equals("x"))
-    	{	
+    	{
     		turret[2] = true;
     		m_botAction.sendSmartPrivateMessage(sender,"Prizing attaching players with prize: " + getPrizeName(atchpz));
     	}
-    	else 
+    	else
     		throw new IllegalArgumentException("Use X or Y only");
       	turret[0] = true;
     }
@@ -589,11 +589,11 @@ public class utilprizes extends MultiUtil
   }
 
   /**
-   * Prizes a detaching player 
+   * Prizes a detaching player
    * @param sender is the user of the bot
    * @param prizetype is a string containing the prize number.
    */
-  
+
   public void doPrizeDetach(String sender, String prizetype)
   {
     try
@@ -611,7 +611,7 @@ public class utilprizes extends MultiUtil
       m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
     }
   }
-  
+
   /**
    * Gets the index of the prize in the timerTask list.
    *
