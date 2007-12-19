@@ -2,6 +2,9 @@
  * twbothunt.java
  *
  * Created on March 9, 2002, 8:36 PM
+ * <revision date='December 19, 2007, 12:46 PM' by='Pio'> 
+ * - Added reliable locking per ticket #156.
+ * </revision>
  */
 
 /**
@@ -20,6 +23,7 @@ import java.util.List;
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -36,17 +40,33 @@ public class hunt extends MultiModule {
     private int huntReward = 5; //default unless changed by host
     private int huntPenalty = 2; //default unless changed by host
     private int preyReward = 1; //default unless changed by host
-
-
-	public void init()    {
+   
+    private enum lockStates {
+    	UNKNOWN, LOCKED, UNLOCKED }
+    private lockStates lockState = lockStates.UNKNOWN;
+    
+	public void init()    {		
 	}
 
 	public void requestEvents(ModuleEventRequester events)	{
 		events.request(this, EventRequester.PLAYER_DEATH);
 		events.request(this, EventRequester.PLAYER_LEFT);
 		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+		events.request(this, EventRequester.ARENA_JOINED);
 	}
 
+	// Added per ticket #156 for reliable locking - Pio
+	public void arenaLock(boolean unlock) 
+	{
+		if (unlock) {
+			lockState = lockStates.UNLOCKED;
+			m_botAction.toggleLocked();
+		} else {
+			lockState = lockStates.LOCKED;
+			m_botAction.toggleLocked();
+		}
+	}
+	
     public void startHunt ( String hostName ){
         m_botAction.scoreResetAll(); //in case host forgot
     	Player p;
@@ -90,11 +110,11 @@ public class hunt extends MultiModule {
             m_botAction.sendPrivateMessage( hostName, "Cannot start game with less then 2 people in play." );
             return;
         }
-
         m_botAction.sendArenaMessage( "Hunt mode activated by " + hostName + ". Type :" + m_botAction.getBotName() + ":!prey if you forget who you are hunting." );
         m_botAction.sendArenaMessage( "Removing players with " + specPlayers + " non-hunted deaths." );
         gameStarted = true;
-
+        // Added per ticket #156 -Pio
+        arenaLock(false);
         /*causes problem, warps everyone then starts the game right away
           either have the host do it manually or insert a timer.
 
@@ -110,6 +130,8 @@ public class hunt extends MultiModule {
     	winner = data.get( winnerName.toLowerCase() );
 
         gameStarted = false;
+        // Added per ticket #156 -Pio
+        arenaLock(true);
         m_botAction.sendArenaMessage ("GAME OVER!", 5);
         m_botAction.sendArenaMessage ("Survivor is: " + winner.getName() + " (" + winner.getPoints() + " points)");
         m_botAction.sendArenaMessage ("MVP is: " + mvpName + " (" + mvpScore + " points)");
@@ -165,6 +187,7 @@ public class hunt extends MultiModule {
     	return null;
     }
 
+    
     public void tellPreyName( String playerName ){
     	String preyName;
 
@@ -216,9 +239,35 @@ public class hunt extends MultiModule {
             }
         }
     }
-
+    
+    public void handleEvent (ArenaJoined joined) {
+    	m_botAction.toggleLocked();
+    }
     public void handleEvent( Message event ){
         String message = event.getMessage();
+        /* <revision> Added per ticket #156 for reliable locking - Pio */
+        if (event.getMessageType() == Message.ARENA_MESSAGE) {
+        	if (message.equals("Arena LOCKED")) {
+        			if (lockState == lockStates.UNKNOWN) {
+        				lockState = lockStates.LOCKED;
+        				return;
+        			}
+        			if (lockState == lockStates.UNLOCKED) {
+        				m_botAction.toggleLocked();
+        			}
+        		 }
+        		else if (message.equals("Arena UNLOCKED")) {
+        			if (lockState == lockStates.UNKNOWN) {
+        				lockState = lockStates.UNLOCKED;
+        				return;
+        			}
+        			if (lockState == lockStates.LOCKED){
+        				m_botAction.toggleLocked();
+        			}
+        		}
+        	}
+        /* </revision> */
+    
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
             String name = m_botAction.getPlayerName( event.getPlayerID() );
             if( opList.isER( name ) ) {
@@ -309,7 +358,19 @@ public class hunt extends MultiModule {
     }
 
     public void handleCommand( String name, String message ){
-        if( message.toLowerCase().startsWith( "!huntspec " )){
+    	message = message.toLowerCase();
+    	/* Added per ticket #156 -Pio */
+    	if ( message.equals("!lock")) {
+    		arenaLock(false);
+			m_botAction.sendArenaMessage("Arena is now Locked.");
+    		return;
+    	} else if (message.equals("!ulock")) {
+    		arenaLock(true);
+			m_botAction.sendArenaMessage("Arena is now Unlocked. Free to enter.");
+    		return;
+    	}
+    	
+        if( message.startsWith( "!huntspec " )){
             if(gameStarted){
             	m_botAction.sendPrivateMessage( name, "Cannot change !huntspec while a game is in progress" );
             } else {
@@ -320,28 +381,29 @@ public class hunt extends MultiModule {
                     m_botAction.sendPrivateMessage( name, "Non-hunted death limit set to: " + specPlayers );
                 }
             }
-        } else if( message.toLowerCase().startsWith( "!starthunt" )){
+        } else if( message.startsWith( "!starthunt" )){
             startHunt( name );
-        } else if( message.toLowerCase().equals( "!stophunt" )){
+        } else if( message.equals( "!stophunt" )){
             if(gameStarted){
                 gameStarted = false;
+                arenaLock(true);
                 m_botAction.sendArenaMessage( "Hunt mode deactivated by " + name );
             }
-        } else if( message.toLowerCase().startsWith( "!huntreward" ) ){
+        } else if( message.startsWith( "!huntreward" ) ){
             if(gameStarted){
                 m_botAction.sendPrivateMessage( name, "Cannot change !huntreward while a game is in progress" );
             } else {
                 huntReward = getInteger( message.substring( 12 ));
                 m_botAction.sendPrivateMessage( name, "Hunt kill reward set to: " + huntReward );
             }
-        } else if( message.toLowerCase().startsWith( "!huntpenalty" ) ){
+        } else if( message.startsWith( "!huntpenalty" ) ){
             if(gameStarted){
                 m_botAction.sendPrivateMessage( name, "Cannot change !huntpenalty while a game is in progress" );
             } else {
                 huntPenalty = getInteger( message.substring( 13 ));
                 m_botAction.sendPrivateMessage( name, "Non-hunt kill penalty set to: " + huntPenalty );
             }
-        } else if( message.toLowerCase().startsWith( "!preyreward" ) ){
+        } else if( message.startsWith( "!preyreward" ) ){
             if(gameStarted){
                 m_botAction.sendPrivateMessage( name, "Cannot change !preyreward while a game is in progress" );
             } else {
@@ -354,9 +416,9 @@ public class hunt extends MultiModule {
     }
 
     public void handlePublicCommand( String name, String message){
-        if( message.toLowerCase().startsWith( "!prey" ) ){
+        if( message.startsWith( "!prey" ) ){
             if(gameStarted){tellPreyName( name );}
-        } else if( message.toLowerCase().equals( "!scoreleader" ) ){
+        } else if( message.equals( "!scoreleader" ) ){
             if(gameStarted){
             	if( mvpName != null ){
                     m_botAction.sendPrivateMessage( name, "Current score leader is: " + mvpName + " with: " + mvpScore + " points" );
@@ -364,9 +426,9 @@ public class hunt extends MultiModule {
                     m_botAction.sendPrivateMessage( name, "There currently is no leader" );
                 }
             };
-        } else if( message.toLowerCase().equals( "!score" ) ){
+        } else if( message.equals( "!score" ) ){
             if(gameStarted){tellScore( name );}
-        } else if( message.toLowerCase().startsWith( "!score " ) ){
+        } else if( message.startsWith( "!score " ) ){
             if(gameStarted){
             	tellScore( name, message.substring(7).trim() );
             }
@@ -382,10 +444,13 @@ public class hunt extends MultiModule {
             "!preyreward  <points>  - Set how many points rewarded to the prey for killing their hunter. (Default 1)",
             "!starthunt             - Starts the hunt. Make sure everyone who wishes to play is already in a ship.",
             "                         Do not let people in the game late and do not let lagouts in. It won't work.",
-            "!stophunt              - Stops the hunt.",
+            "                         The arena is locked when the game starts (!lock) and unlocked when it ends (!ulock)",
+            "!stophunt              - Stops the hunt and unlocks the arena (!ulock).",
             "!prey                  - (Public Command) Tells who you should be hunting if you forget.",
             "!score <name>          - (Public Command) Checks your score or score of another if specified.",
-            "!scoreleader           - (Public Command) Tells who currently has highest score."
+            "!scoreleader           - (Public Command) Tells who currently has highest score.",
+            "!lock                  - Locks the arena (Reliably)",
+            "!ulock                 - Unlocks the arena (Reliably)",
         };
         return help;
     }
