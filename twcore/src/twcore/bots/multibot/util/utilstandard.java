@@ -15,7 +15,9 @@ import twcore.core.util.Tools;
 /**
  * twbotstandard.java - a general utility module for event refs, haphazardly-arranged.
  * Contains some unlisted commands for controlling bot in-game (with some problems).
- *
+ * <revision date='December 19, 2007 2:25 PM' by='Pio'>
+ * - Added a few confirmation messages for commands (e.g. !dolock, !dounlock)
+ * </revision>
  * @author  harvey
  */
 public class utilstandard extends MultiUtil {
@@ -85,16 +87,21 @@ public class utilstandard extends MultiUtil {
     public void handleCommand( String name, String message ){
         if( message.startsWith( "!random " )){
             m_botAction.createRandomTeams( getInteger( message.substring(8) ));
+            m_botAction.sendSmartPrivateMessage(name, "Teams were created successfully.");
         } else if( message.startsWith( "!teams " )){
             createNumberofTeams( getInteger( message.substring(7) ));
+            m_botAction.sendSmartPrivateMessage(name, "Teams were created successfully.");
         } else if( message.startsWith( "!door " )){
             m_botAction.setDoors( getInteger( message.substring( 6 )));
+            m_botAction.sendSmartPrivateMessage(name, "Door time was set to " + message.substring(6));            
         } else if( message.startsWith( "!dolock" )){
             doLock = 1;
             m_botAction.toggleLocked();
+            m_botAction.sendSmartPrivateMessage(name, "Arena is now locked.");
         } else if( message.startsWith( "!dounlock" )){
             doLock = 2;
             m_botAction.toggleLocked();
+            m_botAction.sendSmartPrivateMessage(name, "Arena is now unlocked.");
         } else if( message.startsWith( "!setship " )){
             String[] parameters = Tools.stringChopper( message.substring( 8 ).trim(), ' ' );
             try{
@@ -128,6 +135,7 @@ public class utilstandard extends MultiUtil {
             }catch( Exception e ){}
         } else if( message.startsWith( "!restart" )){
             m_botAction.sendUnfilteredPublicMessage("*restart");
+            m_botAction.sendSmartPrivateMessage(name, "Restart command successful.");
         } else if( message.startsWith( "!specallkeepfreqs" )){
             storePlayerInfo( -1 );
             m_botAction.specAllAndKeepFreqs();
