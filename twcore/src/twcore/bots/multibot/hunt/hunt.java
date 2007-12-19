@@ -52,7 +52,6 @@ public class hunt extends MultiModule {
 		events.request(this, EventRequester.PLAYER_DEATH);
 		events.request(this, EventRequester.PLAYER_LEFT);
 		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-		events.request(this, EventRequester.ARENA_JOINED);
 	}
 
 	// Added per ticket #156 for reliable locking - Pio
@@ -107,7 +106,7 @@ public class hunt extends MultiModule {
         }*/
 
         if ( keys.size() < 2 ){
-            m_botAction.sendPrivateMessage( hostName, "Cannot start game with less then 2 people in play." );
+            m_botAction.sendPrivateMessage( hostName, "Cannot start game with less than 2 people in play." );
             return;
         }
         m_botAction.sendArenaMessage( "Hunt mode activated by " + hostName + ". Type :" + m_botAction.getBotName() + ":!prey if you forget who you are hunting." );
@@ -240,27 +239,16 @@ public class hunt extends MultiModule {
         }
     }
     
-    public void handleEvent (ArenaJoined joined) {
-    	m_botAction.toggleLocked();
-    }
     public void handleEvent( Message event ){
         String message = event.getMessage();
         /* <revision> Added per ticket #156 for reliable locking - Pio */
         if (event.getMessageType() == Message.ARENA_MESSAGE) {
         	if (message.equals("Arena LOCKED")) {
-        			if (lockState == lockStates.UNKNOWN) {
-        				lockState = lockStates.LOCKED;
-        				return;
-        			}
         			if (lockState == lockStates.UNLOCKED) {
         				m_botAction.toggleLocked();
         			}
         		 }
         		else if (message.equals("Arena UNLOCKED")) {
-        			if (lockState == lockStates.UNKNOWN) {
-        				lockState = lockStates.UNLOCKED;
-        				return;
-        			}
         			if (lockState == lockStates.LOCKED){
         				m_botAction.toggleLocked();
         			}
