@@ -1203,26 +1203,16 @@ public class distensionbot extends SubspaceBot {
         String[] beta = {
                 "BETA INFO - BASIC",
                 "-----------------",
-                " - Beta is expected to continue for several months before public release",
-                " - Data is saved, but will be cleared at release",
+                " - Data is saved, but will be cleared at release (coming soon)",
                 " - Top 3 players (combined earned RP) awarded bonus points in public release",
                 " - For every bug reported, points will be awarded (?message dugwyler)",
-                " - You may be sent PMs by the bot when a new test is starting",
-                " - Everything is subject to change while testing!",
                 ".",
-                "RECENT UPDATES  -  12/07/07",
+                "RECENT UPDATES  -  12/19/07",
+                " - Adjustment of WB toward a sniper ship which will not do well in close quarters",
                 " - Upgrades cheapened slightly; RP rates for jav, levi, and all ships 25+ reduced",
                 " - !scrap within 15% of start of rank is free; >15% returns you to 15%",
-                " - Armies randomized in an effort to promote better play",
-                " - !status now shows participation percentage",
-                " - !modhelp, !savedie, !db-changename and !db-wipeship for HighMod+",
-                " - New profit-sharing ability for all support ships.  Terrs can upgrade it.",
-                " - Dynamic end-round point adjustment based on # support vs. # attack",
                 " - !scrapall to scrap all of a specific upgrade, all upgrades, etc.",
-                " - Player limit and queuing for slot system implemented",
-                " - !killmsg to toggle on/off kill messages (off gives +1% bonus)",
-                " - !lagout for those that lag or are DC'd, to maintain participation",
-                " - Serious tweaking of upgrades to encourage speed-based ships",
+                " - Serious tweaking of upgrades to encourage more speed-based ships",
         };
         spamWithDelay( p.getArenaPlayerID(), beta );
     }
@@ -5731,6 +5721,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN!!  " + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!!", Tools.Sound.INCONCEIVABLE );
                 else if( remain < 10 )
                     m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!", Tools.Sound.CROWD_OOO );
+                else if( remain == 10 )
+                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ")" );
                 else
                     m_botAction.sendPrivateMessage( p.getName(), "HOLD BROKEN: You have broken the sector hold.");
                 addSectorBreak( p.getName() );
@@ -6078,7 +6070,7 @@ public class distensionbot extends SubspaceBot {
      * -4:  Targetted EMP against all enemies (uses !emp command)
      * -5:  Super chance every 30 seconds, for spiders
      * -6:  Repel chance every 30 seconds, for sharks
-     * -7:  Profit sharing (+1% of RP of each teammate's kills per level), for terrs
+     * -7:  Profit sharing (+1% of RP of each teammate's kills per level), for terrs / sharks
      *
      *
      * Order of speed of rank upgrades (high speed to low speed, lower # being faster ranks):
@@ -6119,10 +6111,10 @@ public class distensionbot extends SubspaceBot {
         // Med upg speed; rotation starts +1, energy has smaller spread, smaller max, & starts v. low
         // 4:  L2 Guns
         // 17: Multi
-        // 21: Decoy
-        // 27: L3 Guns
+        // 24: Decoy
+        // 31: L3 Guns
         // 36: Mines
-        // 42: Thor
+        // 44: Thor
         // 48: XRadar
         ship = new ShipProfile( 0, 15f );
         //                                                    | <--- this mark and beyond is not seen for upg names
@@ -6132,15 +6124,19 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Drag Balancer            [SPD]", Tools.Prize.TOPSPEED, 1, 0, 7 );           // 400 x7
         ship.addUpgrade( upg );
-        int costs1[] = { 1, 1, 1, 1, 1,  1, 2, 4, 6, 8 };
-        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, 0, 10 );     // 300 x10
+        int costs1[] =          { 1, 1,  1, 1,  1,   1, 2, 4,  6, 8 };
+        int rechargeLevels1[] = { 0, 0, 10, 0, 20,  25, 0, 0, 40, 0 };
+        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, costs1, rechargeLevels1, 10 );     // 300 x10
         ship.addUpgrade( upg );
-        int costs1b[] =       { 1, 1, 1,  1,  1,   1,  2,  4,  6,  7,   8, 10 };
-        int energyLevels1[] = { 0, 3, 5, 10, 15,  20, 25, 30, 35, 40,  45, 50 };
-        upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, costs1b, energyLevels1, 12 );    // 150 x12
+        //                               L2     L2Mult    L3           L3 Multi
+        //                 550    850   1150     1450    1750    2050
+        //                     700  1000    1300     1600    1900     2200
+        int costs1b[] =       { 1, 1, 1,  1,  1,   2,  3,  4,  6,  7,   8 };
+        int energyLevels1[] = { 0, 3, 5,  7, 15,  20, 25, 30, 35, 40,  45 };
+        upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, costs1b, energyLevels1, 11 );    // 150 x12
         ship.addUpgrade( upg );
         int p1a1[] = { 1, 3 };
-        int p1a2[] = { 4, 27 };
+        int p1a2[] = { 8, 31 };
         upg = new ShipUpgrade( "High-Impact Cannon", Tools.Prize.GUNS, p1a1, p1a2, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Bombs only as special)", Tools.Prize.BOMBS, 0, 0, -1 );
@@ -6149,11 +6145,11 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 6, 48, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Warbird Reiterator", Tools.Prize.DECOY, 1, 21, 1 );
+        upg = new ShipUpgrade( "Warbird Reiterator", Tools.Prize.DECOY, 1, 24, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, 3, 36, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 3, 42, 1 );
+        upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 3, 44, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "S3", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -6184,10 +6180,10 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Engine Reoptimization    [SPD]", Tools.Prize.TOPSPEED, 1, 0, 5 );       // 400 x5
         ship.addUpgrade( upg );
         int costs2a[] = { 1, 1, 1, 1, 1, 3, 1, 1, 1, 2, 3, 10, 15 };
-        int costs2b[] = { 1, 1, 1, 1, 1, 3, 1, 1, 1, 2, 3, 10 };
         int p2a2[] = { 0, 0, 0, 0, 0,  15, 0, 0, 0, 0,  55, 70, 80 };
         upg = new ShipUpgrade( "Tactical Engineering     [CHG]", Tools.Prize.RECHARGE, costs2a, p2a2, 13 ); // 150 x13
         ship.addUpgrade( upg );
+        int costs2b[] =       { 1, 1, 1, 1, 1,     3, 1, 1, 1, 2, 3, 10 };
         int energyLevels2[] = { 2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 55, 70 };
         upg = new ShipUpgrade( "Reinforced Plating       [NRG]", Tools.Prize.ENERGY, costs2b, energyLevels2, 12 );  // 146 x12
         ship.addUpgrade( upg );
@@ -6353,7 +6349,7 @@ public class distensionbot extends SubspaceBot {
         // 65: Burst 5
         // 70: Portal 5
         // 80: Burst 6
-        ship = new ShipProfile( RANK_REQ_SHIP5, 10.2f );
+        ship = new ShipProfile( RANK_REQ_SHIP5, 10.4f );
         upg = new ShipUpgrade( "Correction Engine        [ROT]", Tools.Prize.ROTATION, 1, 0, 6 );         // 60 x6
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Interwoven Propulsor     [THR]", Tools.Prize.THRUST, 1, 0, 9 );           // 3 x9
