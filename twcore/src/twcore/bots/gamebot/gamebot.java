@@ -5,6 +5,7 @@ import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.Vector;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class gamebot extends SubspaceBot {
     private boolean isLast = false, hasGame = false;
     private OperatorList opList;
     private MultiModule multiModule;
+    private String keywords;
     private String initialArena;
     private String modulePath;
     private String botChat;
@@ -61,6 +63,7 @@ public class gamebot extends SubspaceBot {
         "Core Location");
 
         initialArena = botSettings.getString("initialarena");
+        keywords = botSettings.getString("RacistWords");
         opList = m_botAction.getOperatorList();
         botChat = botSettings.getString("chat");
         modulePath = coreRoot + "/twcore/bots/gamebot";
@@ -96,6 +99,14 @@ public class gamebot extends SubspaceBot {
         String sender = getSender(event);
         String message = event.getMessage();
         int messageType = event.getMessageType();
+        String messageTypeString = getMessageTypeString(messageType);
+        
+        if(isRacist(message) && messageType != Message.ALERT_MESSAGE){
+        	if(sender == null)
+        		sender = "Sender Unknown";
+        	m_botAction.sendUnfilteredPublicMessage("?cheater " + messageTypeString + ": (" + sender + "): " + message);
+        	
+        }
         
         if (event.getMessageType() == Message.PUBLIC_MESSAGE || event.getMessageType() == Message.PRIVATE_MESSAGE) {
         	if (gameProgress == 1){
@@ -619,6 +630,66 @@ public class gamebot extends SubspaceBot {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+    
+    /**
+     * Finds if a message contains a racist word.
+     * @param message - The message.
+     * @return True if racism is found. Else-false;
+     */
+    
+    private boolean isRacist(String message)
+    {
+      StringTokenizer keywordTokens = new StringTokenizer(keywords," ");
+      String racistWord;
+      char character;
+      StringBuffer stringBuffer = new StringBuffer();
+      for(int index = 0; index < message.length(); index++)
+      {
+        character = Character.toLowerCase(message.charAt(index));
+        if(Character.isLetterOrDigit(character) || character == ' ')
+          stringBuffer.append(character);
+      }
+      message = stringBuffer.toString();
+      while(keywordTokens.hasMoreTokens()) {
+    	racistWord = keywordTokens.nextToken();
+        if(message.contains(racistWord))
+          return true;
+      }
+      return false;
+    }
+    
+    /**
+     * Returns a string for the messageType.
+     * @param messageType
+     * @return
+     */
+    private String getMessageTypeString(int messageType)
+    {
+      switch(messageType)
+      {
+        case Message.PUBLIC_MESSAGE:
+          return "Public";
+        case Message.PRIVATE_MESSAGE:
+          return "Private";
+        case Message.TEAM_MESSAGE:
+          return "Team";
+        case Message.OPPOSING_TEAM_MESSAGE:
+          return "Opp. Team";
+        case Message.ARENA_MESSAGE:
+          return "Arena";
+        case Message.PUBLIC_MACRO_MESSAGE:
+          return "Pub. Macro";
+        case Message.REMOTE_PRIVATE_MESSAGE:
+          return "Private";
+        case Message.WARNING_MESSAGE:
+          return "Warning";
+        case Message.SERVER_ERROR:
+          return "Serv. Error";
+        case Message.ALERT_MESSAGE:
+          return "Alert";
+      }
+      return "Other";
     }
 
     /**
