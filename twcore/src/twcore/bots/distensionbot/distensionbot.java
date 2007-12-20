@@ -74,8 +74,8 @@ public class distensionbot extends SubspaceBot {
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final float EARLY_RANK_FACTOR = 1.6f;          // Factor for rank increases (lvl 1-9)
     private final float LOW_RANK_FACTOR = 1.15f;           // Factor for rank increases (lvl 10+)
-    private final float NORMAL_RANK_FACTOR = 1.25f;        // Factor for rank increases (lvl 25+)
-    private final float HIGH_RANK_FACTOR = 1.35f;          // Factor for rank increases (lvl 50+)
+    private final float NORMAL_RANK_FACTOR = 1.20f;        // Factor for rank increases (lvl 25+)
+    private final float HIGH_RANK_FACTOR = 1.25f;          // Factor for rank increases (lvl 50+)
     private final float STUPIDLY_HIGH_RANK_FACTOR = 1.5f;  // Factor for rank increases (lvl 70+)
     private final int RANK_DIFF_LOW = 10;                  // Rank difference calculations
     private final int RANK_DIFF_MED = 15;                  // for humiliation and low-rank RP caps
@@ -276,7 +276,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setMessageLimit( 8 );
         m_botAction.setReliableKills(1);
         m_botAction.setPlayerPositionUpdating(400);
-        m_botAction.setLowPriorityPacketCap(20);
+        m_botAction.setLowPriorityPacketCap(25);
         m_botAction.specAll();
         m_botAction.toggleLocked();
         m_botAction.resetFlagGame();
@@ -650,7 +650,7 @@ public class distensionbot extends SubspaceBot {
                 "| !die                  |  Kills DistensionBot -- use !savedie instead!",
                 "|______________________/",
                 "    DB COMMANDS",
-                "  !db-namechange <oldname>:<newname>   - Changes name from oldname to newname.",
+                "  !db-changename <oldname>:<newname>   - Changes name from oldname to newname.",
                 "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
                 "  !db-randomarmies                     - Randomizes all armies."
         };
@@ -747,20 +747,13 @@ public class distensionbot extends SubspaceBot {
      */
     public void handleEvent(PlayerLeft event) {
         String name = m_botAction.getPlayerName(event.getPlayerID());
-        if( name == null ) {
-            for( DistensionArmy a : m_armies.values() )
-                a.recalculateFigures();
-            return;
-        }
         DistensionPlayer player = m_players.get( name );
-        if( player == null ) {
-            for( DistensionArmy a : m_armies.values() )
-                a.recalculateFigures();
+        for( DistensionArmy a : m_armies.values() )
+            a.recalculateFigures();
+        if( player == null )
             return;
-        }
         if( player.getShipNum() > 0 ) {
             checkFlagTimeStop();
-            player.getArmy().recalculateFigures();
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
                 checkForAssistAdvert = true;
             if( flagTimer != null && flagTimer.isRunning() && player.canUseLagout() ) {
@@ -946,7 +939,7 @@ public class distensionbot extends SubspaceBot {
                 if( killer.getShipType() == Tools.Ship.SHARK )
                     div = 8;
                 else {
-                    if( loser.isSupportShip() )
+                    if( loser.isSupportShip() || loser.getShipNum() == Tools.Ship.WARBIRD )
                         div = 1.0f;
                     else
                         div = 2;
@@ -1143,7 +1136,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         String[] intro1 = {
-                "DISTENSION - The Trench Wars RPG - G. Dugwyler",
+                "DISTENSION - The Trench Wars RPG - by G. Dugwyler",
                 "Presently in beta.  Intro to come soon.  Type !beta for info on recent updates."
         };
         spamWithDelay(p.getArenaPlayerID(), intro1);
@@ -1207,9 +1200,11 @@ public class distensionbot extends SubspaceBot {
                 " - Top 3 players (combined earned RP) awarded bonus points in public release",
                 " - For every bug reported, points will be awarded (?message dugwyler)",
                 ".",
-                "RECENT UPDATES  -  12/19/07",
+                "RECENT UPDATES  -  12/20/07",
+                " - Rank 25+ to-next-rank amount required reduced yet again",
+                " - !scrap now free for guns/bombs/multi",
+                " - End round bonuses less round-time- dependent.",
                 " - Adjustment of WB toward a sniper ship which will not do well in close quarters",
-                " - Upgrades cheapened slightly; RP rates for jav, levi, and all ships 25+ reduced",
                 " - !scrap within 15% of start of rank is free; >15% returns you to 15%",
                 " - !scrapall to scrap all of a specific upgrade, all upgrades, etc.",
                 " - Serious tweaking of upgrades to encourage more speed-based ships",
@@ -1982,8 +1977,8 @@ public class distensionbot extends SubspaceBot {
         } else {
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] upgraded to Level " + (currentUpgradeLevel + 1) + ".  -" + cost + "UP from army allowance." );
         }
-        if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS )
-            m_botAction.sendPrivateMessage( name, "--- IMPORTANT NOTE !! ---: If you can't fire after this upgrade, your ship may not have enough energy!  Use !scrap " + (upgradeNum + 1) + " to return to your old weapon if needed.");
+        if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS || upgrade.getPrizeNum() == Tools.Prize.MULTIFIRE )
+            m_botAction.sendPrivateMessage( name, "--- IMPORTANT NOTE !! ---: Your new weapon may require too much energy for you to use.  If this is the case, !scrap " + (upgradeNum + 1) + " to return to your old weapon free of charge.");
     }
 
 
@@ -2045,16 +2040,22 @@ public class distensionbot extends SubspaceBot {
         } else {
             m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] downgraded to level " + (currentUpgradeLevel - 1) + ".  +" + cost + "UP to army allowance." );
         }
-        int pointsSince = player.getPointsSinceLastRank();
-        int fifteenPercentOfRank = player.getRankPointsForPercentage( 15.0f );
-        if( pointsSince >= fifteenPercentOfRank ) {
-            int points = player.getPointsSinceLastRank() - fifteenPercentOfRank;
-            if( points < 0 )
-                points = 0;
-            player.addRankPoints( -points );
-            m_botAction.sendPrivateMessage( name, "Ship returned to 15% progress; -" + points + "RP." );
+
+        // Gun/bomb/multi is a free scrap, as sometimes you can't fire after upgrading it
+        if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS || upgrade.getPrizeNum() == Tools.Prize.MULTIFIRE ) {
+            m_botAction.sendPrivateMessage( name, "No rank progress lost (gun/bomb/multifire scraps are free)." );
         } else {
-            m_botAction.sendPrivateMessage( name, "Scrap done within 15% of start of rank; no RP lost." );
+            int pointsSince = player.getPointsSinceLastRank();
+            int fifteenPercentOfRank = player.getRankPointsForPercentage( 15.0f );
+            if( pointsSince >= fifteenPercentOfRank ) {
+                int points = player.getPointsSinceLastRank() - fifteenPercentOfRank;
+                if( points < 0 )
+                    points = 0;
+                player.addRankPoints( -points );
+                m_botAction.sendPrivateMessage( name, "Ship returned to 15% progress; -" + points + "RP." );
+            } else {
+                m_botAction.sendPrivateMessage( name, "Scrap done within 15% of start of rank; no RP lost." );
+            }
         }
     }
 
@@ -2167,7 +2168,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "You will be warped out of the resupply area after being armed." );
             Player p = m_botAction.getPlayer(name);
             if( p != null ) {
-                if( p.getYTileLocation() != 0 && (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE) )
+                if( p.getYTileLocation() != 0 && (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE) && !p.isAttached() )
                     player.doWarp(false);
             }
         }
@@ -2393,11 +2394,11 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.shipReset(name);
                     p.prizeUpgradesNow();
                 }
-                for( DistensionArmy a : m_armies.values() )
-                    a.recalculateFigures();
             } else {
                 p.setAssist( armyToAssist );
             }
+            for( DistensionArmy a : m_armies.values() )
+                a.recalculateFigures();
             m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has left to assist the other army." );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is now assisting your army." );
         } else {
@@ -3256,7 +3257,8 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.hideObjectForPlayer( arenaIDToSpam, LVZ_REARMING );
                 Player p = m_botAction.getPlayer( arenaIDToSpam );
                 try {
-                    m_players.get( p.getPlayerName() ).doWarp(false);
+                    if( doWarp )
+                        m_players.get( p.getPlayerName() ).doWarp(false);
                 } catch (Exception e) {}
                 this.cancel();
             } else {
@@ -3645,11 +3647,11 @@ public class distensionbot extends SubspaceBot {
                 //                       (+5% for each, up to a total of 50%)
                 double portChance = Math.random() * 20.0;
                 double burstChance = Math.random() * 20.0;
-                if( purchasedUpgrades[11] >= portChance ) {
+                if( (double)purchasedUpgrades[11] > portChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.PORTAL );
                     prized = true;
                 }
-                if( purchasedUpgrades[11] >= burstChance ) {
+                if( (double)purchasedUpgrades[11] > burstChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.BURST );
                     prized = true;
                 }
@@ -3659,20 +3661,20 @@ public class distensionbot extends SubspaceBot {
             else if( shipNum == 3) {
                 // Refueling ability; each level worth an additional 50%
                 double fcChance = Math.random() * 2.0;
-                if( purchasedUpgrades[10] >= fcChance ) {
+                if( (double)purchasedUpgrades[10] > fcChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.FULLCHARGE );
                     prized = true;
                 }
                 // Energy stream ability; each level worth an additional 5%
                 double superChance = Math.random() * 20.0;
-                if( purchasedUpgrades[11] >= superChance ) {
+                if( (double)purchasedUpgrades[11] > superChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.SUPER );
                     prized = true;
                 }
             } else if( shipNum == 8) {
                 // Repel regen ability; each level worth an additional 10%
                 double repChance = Math.random() * 10.0;
-                if( purchasedUpgrades[9] >= repChance ) {
+                if( (double)purchasedUpgrades[9] > repChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.REPEL );
                     prized = true;
                 }
@@ -3811,6 +3813,8 @@ public class distensionbot extends SubspaceBot {
             }
             resetProgressBar();
             initProgressBar();
+            if( rank >= 25 )
+                m_botAction.sendArenaMessage( name.toUpperCase() + " of " + getArmyName().toUpperCase() + " has been promoted to RANK " + rank + "!", 1 );
 
             if( rank >= RANK_REQ_SHIP2 ) {
                 if( shipsAvail[1] == false ) {
@@ -3912,7 +3916,8 @@ public class distensionbot extends SubspaceBot {
             if( purchasedUpgrades[upgrade] + amt < 0 )
                 return;
             purchasedUpgrades[upgrade] += amt;
-            getArmy().recalculateFigures();
+            for( DistensionArmy a : m_armies.values() )
+                a.recalculateFigures();
             if( (shipNum == 3 && (purchasedUpgrades[10] > 0 || purchasedUpgrades[11] > 0)) ||
                 (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
                 (shipNum == 8 && (purchasedUpgrades[9] > 0) ) )
@@ -5191,6 +5196,13 @@ public class distensionbot extends SubspaceBot {
         } else if( armyDiffWeight < 0.3f ) {
             armyDiffWeight = 0.3f;
         }
+
+        // Make sure to give a reasonable amount of points even if it's a short match
+        if( minsToWin < 15 )
+            minsToWin = 15;
+        // Cap at 40 to keep extreme bonuses down
+        if( minsToWin > 40 )
+            minsToWin = 40;
 
         // Points to be divided up by army
         float totalPoints = (float)(minsToWin * 0.3f) * (float)opposingStrengthAvg * armyDiffWeight;
