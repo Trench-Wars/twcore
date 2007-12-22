@@ -432,6 +432,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!t", acceptedMessages, this, "cmdTerr" );
         m_commandInterpreter.registerCommand( "!tm", acceptedMessages, this, "cmdTeam" );
         m_commandInterpreter.registerCommand( "!u", acceptedMessages, this, "cmdUpgrade" );
+        m_commandInterpreter.registerCommand( "!upg", acceptedMessages, this, "cmdUpgrade" );
         m_commandInterpreter.registerCommand( "!ui", acceptedMessages, this, "cmdUpgInfo" );
         m_commandInterpreter.registerCommand( "!w", acceptedMessages, this, "cmdWarp" );
         m_commandInterpreter.registerCommand( "!wh", acceptedMessages, this, "cmdWhereIs" );
@@ -1199,6 +1200,7 @@ public class distensionbot extends SubspaceBot {
                 ".",
                 "RECENT UPDATES  -  12/20/07",
                 " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs !!",
+                "   NOTE: All upgrades were refunded; you will need to buy all upgrades again!",
                 " - Fixed rotation bug!",
                 " - Due to the new upgrade system, !scrap will be free for a while.  Merry Kwanza!",
                 " - Rank 25+ to-next-rank amount required reduced yet again",
@@ -2119,9 +2121,10 @@ public class distensionbot extends SubspaceBot {
             int points = player.getPointsSinceLastRank();
             if( points < 0 )
                 points = 0;
-            player.addRankPoints( -points );
+            //player.addRankPoints( -points );
             player.addUpgPoints( pointsReturned );
-            m_botAction.sendPrivateMessage( name, "Mass scrap successful.  Ship returned to the start of rank; -" + points + "RP.  +" + pointsReturned + "UP returned.  You now have " + player.getUpgradePoints() + "UP." );
+            m_botAction.sendPrivateMessage( name, "Mass scrap successful.  +" + pointsReturned + "UP returned.  You now have " + player.getUpgradePoints() + "UP." );
+            //m_botAction.sendPrivateMessage( name, "Mass scrap successful.  Ship returned to the start of rank; -" + points + "RP.  +" + pointsReturned + "UP returned.  You now have " + player.getUpgradePoints() + "UP." );
         } else {
             m_botAction.sendPrivateMessage( name, "Mass scrap failed: nothing to scrap!" );
         }
@@ -2201,9 +2204,9 @@ public class distensionbot extends SubspaceBot {
         if( player == null )
             return;
         if( player.sendKillMessages() )
-            m_botAction.sendPrivateMessage( name, "You will receive kill messages when you destroy another ship, and receive no bonus." );
+            m_botAction.sendPrivateMessage( name, "Messages ON: kills, repeats, profit-sharing, TKs, humiliation.  1% bonus no longer in effect.  This setting is SAVED." );
         else
-            m_botAction.sendPrivateMessage( name, "You will no longer receive kill messages, and will receive a +1% bonus for every kill." );
+            m_botAction.sendPrivateMessage( name, "Messages OFF: kills, repeats, profit-sharing, TKs, humiliation.  +1% bonus to all RP earned.  This setting is SAVED." );
     }
 
 
@@ -3379,6 +3382,7 @@ public class distensionbot extends SubspaceBot {
                     playerID = r.getInt("fnID");
                     armyID = r.getInt( "fnArmyID" );
                     timePlayed = r.getInt( "fnTime" );
+                    sendKillMessages = r.getString( "fcSendKillMsg" ).equals("y");
                     for( int i = 0; i < 8; i++ )
                         shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ).equals( "y" ) ? true : false );
                     success = true;
@@ -3396,7 +3400,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void savePlayerTimeToDB() {
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='" + timePlayed +"' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='" + timePlayed +"' WHERE fnID='" + playerID + "'" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
 
@@ -3418,7 +3422,7 @@ public class distensionbot extends SubspaceBot {
                 return;
             shipsAvail[ shipNumToAdd - 1 ] = true;
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fnID='" + playerID + "'" );
                 if( startingRankPoints == 0 )
                     m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES (" + playerID + ", " + shipNumToAdd + ")" );
                 else
@@ -3427,16 +3431,15 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Adds a ship as available on a player's record, optionally giving them upgrade
-         * points to begin with.
-         * @param shipNum Ship # to make available
+         * Removes a ship as being available on a player's record, and wipes all ship data.
+         * @param shipNum Ship # to remove
          */
         public void removeShipFromDB( int shipNumToRemove ) {
             if( shipNumToRemove < 1 || shipNumToRemove > 8 )
                 return;
             shipsAvail[ shipNumToRemove - 1 ] = false;
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToRemove + "='n' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToRemove + "='n' WHERE fnID='" + playerID + "'" );
                 m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionShip WHERE fnPlayerID='" + playerID + "' AND fnShipNum='" + shipNumToRemove + "'" );
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
@@ -3990,7 +3993,7 @@ public class distensionbot extends SubspaceBot {
         public void ban() {
             banned = true;
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fnID='" + playerID + "'" );
                 saveCurrentShipToDB();
                 m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer play Distension." );
                 m_botAction.sendUnfilteredPrivateMessage( name, "*kill" );
@@ -4004,7 +4007,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void unban() {
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fnID='" + playerID + "'" );
                 m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
                 banned = false;
             } catch (SQLException e ) {
@@ -4042,7 +4045,7 @@ public class distensionbot extends SubspaceBot {
                     try {
                         ResultSet r = m_botAction.SQLQuery( m_database, query );
                         if( r.next() ) {
-                            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fnID='" + playerID + "'" );
                             m_botAction.sendPrivateMessage(name, "For 20 successive kills, your Weasel has been returned to the hangar!");
                         } else {
                             m_botAction.sendPrivateMessage(name, "AWARD FOR MASTERFUL DOGFIGHTING.  You are quite the pilot, and have proven yourself capable of joining our stealth operations.  The Weasel is now available in your !hangar." );
@@ -4086,7 +4089,7 @@ public class distensionbot extends SubspaceBot {
             setArmy( armyID );
             getArmy().adjustPilotsTotal(1);
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID=" + armyID + " WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID=" + armyID + " WHERE fnID='" + playerID + "'" );
             } catch (SQLException e) {
                 m_botAction.sendPrivateMessage( name, "ERROR CHANGING ARMY!  Report to a mod immediately!" );
             }
@@ -4206,6 +4209,9 @@ public class distensionbot extends SubspaceBot {
          */
         public boolean sendKillMessages() {
             sendKillMessages = !sendKillMessages;
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcSendKillMsg='" + (sendKillMessages?'y':'n') +"' WHERE fnID='" + playerID + "'" );
+            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
             return sendKillMessages;
         }
 
@@ -6323,7 +6329,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Collection Drive         [SPD]", Tools.Prize.TOPSPEED, 15, 0, 7 );      //1000 x7
         ship.addUpgrade( upg );
-        int costs4[] = { 9, 10, 12, 14, 15, 16, 18, 20, 22, 27, 30, 35, 45 };
+        int costs4[] = { 9, 10, 12, 14, 15, 16,  18, 20, 22, 27, 30, 35 };
         upg = new ShipUpgrade( "Power Recirculator       [CHG]", Tools.Prize.RECHARGE, costs4, 0, 12 );  // 140 x12
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Carbon-Forced Armor      [NRG]", Tools.Prize.ENERGY, 10, 0, 20 );         // 100 x20
@@ -6491,7 +6497,7 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( 10, 14f );       // Level 10 unlock: beta only
         upg = new ShipUpgrade( "Directive Realigner      [ROT]", Tools.Prize.ROTATION, new int[]{5,5,5,5,5}, 0, 5 );        //  20 x5
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "InitiaTek Burst Engine   [THR]", Tools.Prize.THRUST, new int[]{4,5,6,6,7,7,8,9,10}, 0, 10 );         //   1 x10
+        upg = new ShipUpgrade( "InitiaTek Burst Engine   [THR]", Tools.Prize.THRUST, new int[]{4,5,6,6,7, 7,8,9,9,10}, 0, 10 );         //   1 x10
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Streamlining Unit        [SPD]", Tools.Prize.TOPSPEED, new int[]{3,5,5,5,5,6,6,5,7,7}, 0, 10 );        // 150 x10
         ship.addUpgrade( upg );
