@@ -1,7 +1,7 @@
 package twcore.bots.multibot.zombies;
 
 import java.util.HashSet;
-import java.util.List;
+import java.util.ArrayList;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -70,7 +70,7 @@ public class zombies extends MultiModule {
 
     public void deleteKillMessage( String name, int index ){
 
-        List list = killmsgs.getList();
+        ArrayList<String> list = killmsgs.getList();
 
         if( !( 1 <= index && index <= list.size() )){
             m_botAction.sendPrivateMessage( name, "Error: Can't find the index" );
@@ -88,7 +88,7 @@ public class zombies extends MultiModule {
 
     public void listKillMessages( String name ){
         m_botAction.sendPrivateMessage( name, "The following messages are in my posession: " );
-        List list = killmsgs.getList();
+        ArrayList<String> list = killmsgs.getList();
         for( int i = 0; i < list.size(); i++ ){
             if( ((String)list.get( i )).startsWith( "'" )){
                 m_botAction.sendPrivateMessage( name, i + 1 + ". " + "<name>" + (String)list.get( i ));
