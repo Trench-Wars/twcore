@@ -116,8 +116,8 @@ public class acro extends MultiModule{
                 gameState = 2;
                 m_botAction.sendArenaMessage( "Submitted Answers: " );
                 int i = 0;
-                Set set = playerIdeas.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerIdeas.keySet();
+                Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
                     i++;
                     String curAnswer = (String) it.next();
@@ -178,8 +178,8 @@ public class acro extends MultiModule{
         TimerTask game = new TimerTask() {
             public void run() {
                 m_botAction.sendArenaMessage( "Game Over, Scores: ", 5 );
-                Set set = playerScores.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerScores.keySet();
+                Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
                     String curAnswer = (String) it.next();
                     m_botAction.sendArenaMessage( Tools.formatString( curAnswer, 30 ) +"- " + playerScores.get( curAnswer ) );
