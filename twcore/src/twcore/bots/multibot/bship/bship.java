@@ -38,6 +38,8 @@ import twcore.core.util.Tools;
  * game events. Extremely flexible in the way games can be set up on multiple
  * boards and with practically any team-ship arrangement.
  *
+ * Update 12/23/07 10:39am - Fixed all raw type references. -Pio
+ *
  * Check http://d1st0rt.sscentral.com for latest releases
  *
  * @Author D1st0rt
@@ -667,7 +669,7 @@ public class bship extends MultiModule implements TSChangeListener
 		howmany -= 1;
 
 		//stick all of the players in randomizer
-		Iterator i = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 		while(i.hasNext())
 			plist.add(((Player)i.next()).getPlayerName());
 
@@ -732,7 +734,7 @@ public class bship extends MultiModule implements TSChangeListener
 		m_botAction.sendUnfilteredPublicMessage("?set Spawn:Team1-Radius=1");
 
 		//Update main game data with current ships and initial lives
-		Iterator i = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 		while(i.hasNext())
 		{
 			Player p = (Player)i.next();
@@ -1057,7 +1059,7 @@ public class bship extends MultiModule implements TSChangeListener
 	 */
 	private void specFreq(int freq)
 	{
-		Iterator it = m_botAction.getFreqPlayerIterator(freq);
+		Iterator<Player> it = m_botAction.getFreqPlayerIterator(freq);
 		while(it.hasNext())
 		{
 			Player p = (Player)it.next();
@@ -1161,7 +1163,7 @@ public class bship extends MultiModule implements TSChangeListener
 			plist[x] = new StringBag();
 
 		//stick all of the players in randomizer
-		Iterator i = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 		while(i.hasNext())
 		{
 			Player p = (Player)i.next();
@@ -1846,7 +1848,7 @@ public class bship extends MultiModule implements TSChangeListener
 				Player targetPlayer = null;
 
 				//Find attachable ships
-				Iterator i = m_botAction.getPlayingPlayerIterator();
+				Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 				while(i.hasNext())
 				{
 					Player p = (Player)i.next();
