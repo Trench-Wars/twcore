@@ -2,7 +2,6 @@ package twcore.bots.multibot.rabbit;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
@@ -291,8 +290,8 @@ public class rabbit extends MultiModule{
 			}
 		else
 			{
-			List killMsgsOut = killMsgs.getList();
-			Iterator it = killMsgsOut.iterator();
+			ArrayList<String> killMsgsOut = killMsgs.getList();
+			Iterator<String> it = killMsgsOut.iterator();
 			int i = 1;
 			while (it.hasNext())
 				{
@@ -325,8 +324,8 @@ public class rabbit extends MultiModule{
 			}
 		else
 			{
-			List fcMsgsOut = fcMsgs.getList();
-			Iterator it = fcMsgsOut.iterator();
+			ArrayList<String> fcMsgsOut = fcMsgs.getList();
+			Iterator<String> it = fcMsgsOut.iterator();
 			int i = 1;
 			while (it.hasNext())
 				{
@@ -399,7 +398,7 @@ public class rabbit extends MultiModule{
 		{
 		int freq = -1;
 		int playerCount = 1;
-		Iterator it = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 		if (it == null)
 			return 0;
 		while (it.hasNext())
@@ -417,7 +416,7 @@ public class rabbit extends MultiModule{
 		{
 		int bestScore = 0;
 		String playerName = "";
-		Iterator it = m_botAction.getPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayerIterator();
 		while (it.hasNext())
 			{
 			Player p = (Player)it.next();
