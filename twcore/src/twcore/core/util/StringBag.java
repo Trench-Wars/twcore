@@ -6,7 +6,6 @@ package twcore.core.util;
  * Created on January 11, 2002, 11:37 AM
  */
 import java.util.ArrayList;
-import java.util.List;
 public class StringBag {
     ArrayList<String> list;
     /** Creates a new instance of StringBag */
@@ -27,8 +26,8 @@ public class StringBag {
         list.add( string );
     }
 
-    public List getList(){
-        return (List)list;
+    public ArrayList<String> getList(){
+        return list;
     }
 
     public String grab(){
