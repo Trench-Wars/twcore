@@ -376,7 +376,7 @@ public class BuildTWCore {
                 recursiveCompile(new File("twcore/core"), false, false, classpath);
                 doneSomething = true;
             } else {
-                ListIterator i = coreList.listIterator();
+                ListIterator<String> i = coreList.listIterator();
                 String s;
                 while (i.hasNext()) {
                     s = (String)i.next();
