@@ -2,7 +2,6 @@ package twcore.bots.multibot.util;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.TimerTask;
 
 import twcore.bots.MultiUtil;
@@ -19,9 +18,11 @@ import twcore.core.util.Tools;
  * - Added a few confirmation messages for commands (e.g. !dolock, !dounlock)
  * </revision>
  * @author  harvey
+ * @version 1.1
+
  */
 public class utilstandard extends MultiUtil {
-    LinkedList arenaTasks = new LinkedList();
+   // LinkedList arenaTasks = new LinkedList(); Unreferenced?
     HashMap<String,StoredPlayer> storedPlayers = new HashMap<String,StoredPlayer>();
     // Lock toggle, for internal use.  0=ignore lock msgs; 1=lock arena; 2=unlock arena
     int doLock = 0;
@@ -226,7 +227,7 @@ public class utilstandard extends MultiUtil {
 
     public void killEasy() {
         m_botAction.setPlayerPositionUpdating(200);
-        Iterator it = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         while(it.hasNext()) {
             Player p = (Player)it.next();
             Ship s = m_botAction.getShip();
@@ -242,7 +243,7 @@ public class utilstandard extends MultiUtil {
      * @param freq Frequency to store; -1 for all players
      */
     private void storePlayerInfo( int freq ) {
-        Iterator i;
+        Iterator<Player> i;
         if( freq == -1 )
             i = m_botAction.getPlayingPlayerIterator();
         else
@@ -261,7 +262,7 @@ public class utilstandard extends MultiUtil {
      * of the memory-enabled commands.
      */
     private void restorePlayers() {
-        Iterator i = storedPlayers.keySet().iterator();
+        Iterator<String> i = storedPlayers.keySet().iterator();
 
         while( i.hasNext() ) {
             String player = (String)i.next();
@@ -293,7 +294,7 @@ public class utilstandard extends MultiUtil {
         int current = 0;
         int howmany = _teams - 1;
 
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
         while( i.hasNext() ) {
 
             if(current > howmany)
