@@ -65,7 +65,7 @@ public class OperatorList {
     /**
      * @return The entire access mapping of player names to access levels
      */
-    public Map getList() {
+    public Map<String, Integer> getList() {
         return m_accessList;
     }
 
@@ -357,7 +357,7 @@ public class OperatorList {
             return null;
 
         HashSet<String> gathered = new HashSet<String>();
-        Iterator i = m_accessList.keySet().iterator();
+        Iterator<String> i = m_accessList.keySet().iterator();
         String player;
 
         while( i.hasNext() ) {
@@ -377,7 +377,7 @@ public class OperatorList {
      * @param accessLevel A number corresponding to the OperatorList access standard to change to
      */
     public void changeAllMatches( String pattern, int accessLevel ){
-        Iterator        i;
+        Iterator<String>        i;
         String          player;
         String          tempPattern;
 
