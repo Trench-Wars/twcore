@@ -52,8 +52,4 @@
     	</copy>
 	</target>	
     
-	<target name="distensionbot" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)">
-		<echo>Compiling bot directory ${botdir}</echo>
-		<javac classpath="../bin/twcore.jar" srcdir="twcore/bots/distensionbot" destdir="../bin" debug="on" debuglevel="lines,vars,source" />
-	</target>
 </project>
