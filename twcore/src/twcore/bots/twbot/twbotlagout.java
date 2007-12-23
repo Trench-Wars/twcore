@@ -535,7 +535,7 @@ public class twbotlagout extends TWBotExtension
     int freq = lagoutTask.getFreq();
     int ship = lagoutTask.getShip();
     int playerID = lagoutTask.getPlayerID();
-    Iterator iterator = notifyList.iterator();
+    Iterator<NotifyTask> iterator = notifyList.iterator();
 
     while(iterator.hasNext())
     {
@@ -550,8 +550,8 @@ public class twbotlagout extends TWBotExtension
   {
     int playerID = event.getPlayerID();
     LagoutTask lagoutTask;
-    Collection collection = lagoutList.values();
-    Iterator iterator = collection.iterator();
+    Collection<LagoutTask> collection = lagoutList.values();
+    Iterator<LagoutTask> iterator = collection.iterator();
 
     if(lagoutOn)
     {
@@ -621,7 +621,7 @@ public class twbotlagout extends TWBotExtension
 
   private void updatePlayers()
   {
-    Iterator iterator = m_botAction.getPlayingPlayerIterator();
+    Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
     Player player;
     String playerName;
     LagoutTask lagoutTask;
@@ -642,8 +642,8 @@ public class twbotlagout extends TWBotExtension
 
   private String getFuzzyLaggot(String argString)
   {
-    Set set = lagoutList.keySet();
-    Iterator iterator = set.iterator();
+    Set<String> set = lagoutList.keySet();
+    Iterator<String> iterator = set.iterator();
     String playerName = null;
     String checkName;
 
