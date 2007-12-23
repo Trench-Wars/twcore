@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.core.command.CommandInterpreter;
