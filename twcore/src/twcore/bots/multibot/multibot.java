@@ -379,8 +379,10 @@ public class multibot extends SubspaceBot {
      *            is the sender of the command.
      */
     private void doLockCmd( String sender ) {
-        if( !m_isLocked )
+        if( m_isLocked ) {
             doUnlockCmd( sender, false );
+            return;
+        }
 
         m_isLocked = true;
         boolean defaultUtilsLoaded = true;
@@ -700,8 +702,8 @@ public class multibot extends SubspaceBot {
             m_botAction.smartPrivateMessageSpam( sender, m_eventModule.getModHelpMessage() );
     }
     final static String[] help_standard = {
-        "Commands: !go <arena>, !gowith <arena>, !lock, !unlock, !unlockwith, !load, !unload, !unloadall, " +
-        "!listgames, !listutils, !loaded, !follow, !gtfo, !die, !help !<cmd>, !help <utility>, !modhelp, !mybot, !override",
+        "Commands: !go <arena>, !lock, !unlock, !unlockwith, !load, !unload, !unloadall, !listgames, !listutils, "
+        + "!loaded, !follow, !gtfo, !die, !help !<cmd>, !help <utility>, !modhelp, !mybot, !override, !free",
         "Use !help !<cmd> for information on a command.  Ex: !help !go"
 	};
 
