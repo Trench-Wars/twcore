@@ -32,7 +32,7 @@ public class multibot extends SubspaceBot {
     private static final String CONFIG_EXTENSION = ".cfg";
     private static final String UTIL_NAME = "util";
     private static final long DIE_DELAY = 500;
-    private static final long OWNER_RESET_TIME = Tools.TimeInMillis.MINUTE * 3;     // Time in ms before
+    private static final long OWNER_RESET_TIME = Tools.TimeInMillis.MINUTE * 30;    // Time in ms before
                                                                                     // new owner is set
     private OperatorList m_opList;
     private MultiModule m_eventModule;
@@ -47,6 +47,7 @@ public class multibot extends SubspaceBot {
     ModuleEventRequester m_modEventReq;
     private boolean m_isLocked = false;
     private boolean m_followEnabled = false;
+    private boolean m_doCome = false;
     private boolean m_ownerOverride = false;
 
     public multibot(BotAction botAction) {
@@ -104,11 +105,22 @@ public class multibot extends SubspaceBot {
         String message = event.getMessage();
         int messageType = event.getMessageType();
         boolean foundCmd = false;
+        boolean isER = m_opList.isER(sender);
         if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {
-            if( m_opList.isER(sender) ) {
+
+            // Attempt to handle player commands (with oodles of TWBot backwards compatibility)
+            if( message.equalsIgnoreCase("!where") || message.equalsIgnoreCase("!host") || message.equalsIgnoreCase("!games") ) {
+                doWhereCmd(sender, isER);
+                foundCmd = true;
+            } else if( message.equalsIgnoreCase("!help") && !isER ) {
+                m_botAction.sendSmartPrivateMessage(sender, "Hi, I'm a bot that helps host Trench Wars games!  Send !where to see who is hosting me, where at, and what they're hosting." );
+            }
+
+            if( isER ) {
                 if( m_owner == null ) {
                     m_owner = sender;
                     m_lastUse = System.currentTimeMillis();
+                    m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
                     foundCmd = handleCommands(sender, message, messageType);
                 } else {
                     if( m_owner.equals(sender) ) {
@@ -118,30 +130,38 @@ public class multibot extends SubspaceBot {
                         if( System.currentTimeMillis() > m_lastUse + OWNER_RESET_TIME ) {
                             m_owner = sender;
                             m_lastUse = System.currentTimeMillis();
-                            m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free to relinquish ownership (!gtfo will also work)." );
+                            m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
                             foundCmd = handleCommands(sender, message, messageType);
                         } else {
                             if( m_ownerOverride ) {
                                 foundCmd = handleCommands(sender, message, messageType);
                             } else {
                                 m_botAction.sendSmartPrivateMessage(sender, "I am owned by: " + m_owner + " - last use: " + Tools.getTimeDiffString(m_lastUse, true) + "  !mybot to claim; !override to command w/o owner change." );
-                                if( message.equalsIgnoreCase("!mybot") || message.equalsIgnoreCase("!override") || message.equalsIgnoreCase("!where"))
+                                if( message.equalsIgnoreCase("!mybot") || message.equalsIgnoreCase("!override") )
                                     foundCmd = handleCommands(sender, message, messageType);
                             }
                         }
                     }
                 }
-            } else if( message.toLowerCase().startsWith("!where") ) {
-                doWhereCmd(sender, false);
-                foundCmd = true;
             }
         }
 
         // In Follow mode: decipher ?find report and change to arena
-        if( m_followEnabled && messageType == Message.ARENA_MESSAGE ) {
+        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE ) {
             if( message.startsWith(m_owner + " - ") ) {
                 try {
-                    m_botAction.changeArena( message.substring( message.indexOf("- ") + 2 ) );
+                    String arena = message.substring( message.indexOf("- ") + 2 );
+                    if( arena.equalsIgnoreCase( m_botAction.getArenaName()) ) {
+                        m_botAction.sendSmartPrivateMessage(m_owner, "I'm already here." );
+                        m_doCome = false;
+                        return;
+                    } else if( isPublicArena(arena) && !m_opList.isSmod(m_owner) ) {
+                        m_botAction.sendSmartPrivateMessage(m_owner, "Sorry, I can't go to public arenas." );
+                        m_doCome = false;
+                        return;
+                    }
+                    m_botAction.changeArena( arena );
+                    m_doCome = false;
                 } catch (Exception e) {
                 }
             }
@@ -197,23 +217,25 @@ public class multibot extends SubspaceBot {
             else if (command.equals("!loaded") || command.equals("!ll") || command.startsWith("!module") )
                 doListLoadedCmd(sender);
             else if (command.startsWith("!help !"))
-                doCommandHelpCmd(sender, message.substring(7).trim());
+                doCommandHelpCmd(sender, message.substring(7).trim(), false);
+            else if (command.startsWith("? !"))
+                doCommandHelpCmd(sender, message.substring(3).trim(), false);
             else if (command.startsWith("!help "))
                 doModuleHelpCmd(sender, message.substring(6).trim());
-            else if (command.equals("!help") || command.equals("?"))
-                doStandardHelpMessage(sender);
-            else if (command.startsWith("? !"))
-                doCommandHelpCmd(sender, message.substring(3).trim());
             else if (command.startsWith("? "))
                 doModuleHelpCmd(sender, message.substring(2).trim());
+            else if (command.equals("!help") || command.equals("?"))
+                doStandardHelpMessage(sender);
             else if (command.equals("!modhelp") || command.equals("!mh"))
                 doGameModuleHelpMessage(sender);
-            else if (command.equals("!where") || command.equals("!wh") )
+            else if (command.equals("!where") || command.equals("!wh") || command.equals("!host") )
                 doWhereCmd(sender, true);
             else if (command.equals("!gtfo") || command.equals("!home") || command.equals("!!"))
                 doGTFOCmd(sender);
             else if (command.startsWith("!go "))
                 doGoCmd(sender, message.substring(4).trim());
+            else if (command.startsWith("!come") || command.equals("!c"))
+                doComeCmd(sender);
             else if (command.equals("!lock") || command.equals("!lo"))
                 doLockCmd(sender);
             else if (command.equals("!unlock") || command.equals("!ulo"))
@@ -245,8 +267,6 @@ public class multibot extends SubspaceBot {
      *            is the sender of the command.
      * @param argString
      *            is the argument string.
-     * @param goWith
-     *            True if this is a "goWith" command (move w/ modules loaded)
      */
     private void doGoCmd(String sender, String argString ) {
         String currentArena = m_botAction.getArenaName();
@@ -256,6 +276,17 @@ public class multibot extends SubspaceBot {
             throw new IllegalArgumentException("Bot can not go into public arenas.");
        	m_botAction.changeArena(argString);
         m_botAction.sendSmartPrivateMessage(sender, "Going to " + argString + ".");
+    }
+
+    /**
+     * This method tells the bot to come to your current arena.
+     *
+     * @param sender
+     *            is the sender of the command.
+     */
+    private void doComeCmd(String sender) {
+        m_botAction.sendSmartPrivateMessage(sender, "Coming...");
+        m_botAction.sendUnfilteredPublicMessage("?find " + m_owner );
     }
 
     /**
@@ -601,40 +632,35 @@ public class multibot extends SubspaceBot {
     }
 
     /**
-     * Display help for a specific module.
-     *
-     * @param name
-     *            Individual requesting help
-     */
-    public void doModuleHelpCmd(String name, String key) {
-        key = key.toLowerCase();
-        if( m_eventModule != null && m_eventModule.getClass().getSimpleName().toLowerCase().equals(key) ) {
-            m_botAction.smartPrivateMessageSpam(name, m_eventModule.getModHelpMessage());
-        } else if (m_utils.containsKey(key)) {
-            try {
-                String[] helps = (m_utils.get(key)).getHelpMessages();
-                m_botAction.privateMessageSpam(name, helps);
-            } catch (Exception e) {
-                m_botAction.sendPrivateMessage(name, "There was a problem accessing the " + key + " utility.  Try reloading it.");
-            }
-        } else {
-            m_botAction.sendPrivateMessage(name, "Sorry, but the module " + key + " has not been loaded.");
-        }
-    }
-
-    /**
-     * This method tells the player wehre the bot is.
+     * This method tells the player where the bot is / who is hosting with it.
      *
      * @param sender
      *            is the sender of the command.
      */
     private void doWhereCmd(String sender, boolean staff) {
-        if( staff )
-            m_botAction.sendSmartPrivateMessage(sender, "I'm being used in " + m_botAction.getArenaName() + ".");
-        else if (m_botAction.getArenaName().startsWith("#"))
+        if( m_botAction.getArenaName().equals("#robopark") ) {
+            m_botAction.sendSmartPrivateMessage(sender, "I'm not in use.");
+            return;
+        }
+        if( m_botAction.getPlayer(sender) != null ) {
+            m_botAction.sendSmartPrivateMessage(sender, m_owner + " is hosting " + m_eventModule.getModuleName() + " here.");
+            return;
+        }
+        String arenaName = m_botAction.getArenaName();
+
+        // For arenas other than present one
+        if(arenaName.startsWith("#") && !staff )
             m_botAction.sendSmartPrivateMessage(sender, "I'm being used in a private arena.");
-        else
-            m_botAction.sendSmartPrivateMessage(sender, "I'm being used in " + m_botAction.getArenaName() + ".");
+        else {
+            if( m_owner != null ) {
+                if( m_eventModule != null )
+                    m_botAction.sendSmartPrivateMessage(sender, m_owner + " is using me in " + arenaName + " for " + m_eventModule.getModuleName() +".");
+                else
+                    m_botAction.sendSmartPrivateMessage(sender, m_owner + " is using me in " + arenaName + ", but for what I don't yet know.");
+            } else {
+                m_botAction.sendSmartPrivateMessage(sender, "I am stranded in " + arenaName + " with no owner!");
+            }
+        }
     }
 
     /**
@@ -691,6 +717,29 @@ public class multibot extends SubspaceBot {
     }
 
     /**
+     * Display help for a specific module.
+     *
+     * @param sender
+     *            Individual requesting help
+     */
+    public void doModuleHelpCmd(String sender, String key) {
+        key = key.toLowerCase();
+        if( m_eventModule != null && m_eventModule.getClass().getSimpleName().toLowerCase().equals(key) ) {
+            m_botAction.smartPrivateMessageSpam(sender, m_eventModule.getModHelpMessage());
+        } else if (m_utils.containsKey(key)) {
+            try {
+                String[] helps = (m_utils.get(key)).getHelpMessages();
+                m_botAction.privateMessageSpam(sender, helps);
+            } catch (Exception e) {
+                m_botAction.sendPrivateMessage(sender, "There was a problem accessing the " + key + " utility.  Try reloading it.");
+            }
+        } else {
+            // When nothing is found, try
+            doCommandHelpCmd(sender, key, true);
+        }
+    }
+
+    /**
      * This method displays the help message.
      *
      * @param sender
@@ -702,17 +751,23 @@ public class multibot extends SubspaceBot {
             m_botAction.smartPrivateMessageSpam( sender, m_eventModule.getModHelpMessage() );
     }
     final static String[] help_standard = {
-        "Commands: !go <arena>, !lock, !unlock, !unlockwith, !load, !unload, !unloadall, !listgames, !listutils, "
+        "Commands: !go <arena>, !come, !lock, !unlock, !unlockwith, !load, !unload, !unloadall, !listgames, !listutils, "
         + "!loaded, !follow, !gtfo, !die, !help !<cmd>, !help <utility>, !modhelp, !mybot, !override, !free",
-        "Use !help !<cmd> for information on a command.  Ex: !help !go"
+        "Use !help !<cmd> for command descriptions and shortcuts.  Ex: !help !go"
 	};
 
-    private void doCommandHelpCmd(String sender, String cmd) {
-        String returnMsg = "Command not found: !" + cmd;
+    private void doCommandHelpCmd(String sender, String cmd, boolean triedModuleHelp) {
+        String returnMsg;
+        if( triedModuleHelp )
+            returnMsg = "Could not find a module loaded that is named '" + cmd + "', or the general command '!" + cmd + "'";
+        else
+            returnMsg = "Command not found: !" + cmd;
         if( cmd.equals("go") )
             returnMsg = "!go <arena>  -  Sends the bot to <arena>.";
+        else if( cmd.equals("come") )
+            returnMsg = "!come  -  Tells the bot to join you in your present arena. (Shortcut: !c)";
         else if( cmd.equals("follow") )
-            returnMsg = "!follow  -  Toggles follow mode on and off.  If on, when you leave the arena the bot will follow you.  WORKS.  (Shortcut: !f)";
+            returnMsg = "!follow  -  Toggles follow mode on and off.  If on, when you leave the arena the bot will follow you.  Now WORKS. (Shortcut: !f)";
         else if( cmd.equals("lock") )
             returnMsg = "!lock  -  Locks the bot in place, and loads the standard util set. (Shortcut: !lo)";
         else if( cmd.equals("unlock") )
