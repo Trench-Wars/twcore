@@ -114,9 +114,7 @@ public class multibot extends SubspaceBot {
                 foundCmd = true;
             } else if( message.equalsIgnoreCase("!help") && !isER ) {
                 m_botAction.sendSmartPrivateMessage(sender, "Hi, I'm a bot that helps host Trench Wars games!  Send !where to see who is hosting me, where at, and what they're hosting." );
-            }
-
-            if( isER ) {
+            } else if( isER ) {
                 if( m_owner == null ) {
                     m_owner = sender;
                     m_lastUse = System.currentTimeMillis();
@@ -147,7 +145,7 @@ public class multibot extends SubspaceBot {
         }
 
         // In Follow mode: decipher *locate report and change to arena
-        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE ) {
+        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE && !m_isLocked ) {
             if( message.startsWith(m_owner + " - ") ) {
                 try {
                     String arena = message.substring( message.indexOf("- ") + 2 );
@@ -269,6 +267,8 @@ public class multibot extends SubspaceBot {
      *            is the argument string.
      */
     private void doGoCmd(String sender, String argString ) {
+        if( m_isLocked )
+            throw new IllegalArgumentException("I am locked, sorry.  Use !unlock or !unlockwith before trying to move me.");
         String currentArena = m_botAction.getArenaName();
         if (currentArena.equalsIgnoreCase(argString))
             throw new IllegalArgumentException("Bot is already in that arena.");
@@ -285,6 +285,8 @@ public class multibot extends SubspaceBot {
      *            is the sender of the command.
      */
     private void doComeCmd(String sender) {
+        if( m_isLocked )
+            throw new IllegalArgumentException("I am locked, sorry.  Use !unlock or !unlockwith before trying to move me.");
         m_botAction.sendSmartPrivateMessage(sender, "Coming...");
         m_botAction.sendUnfilteredPublicMessage("*locate " + m_owner );
         m_doCome = true;
@@ -300,7 +302,10 @@ public class multibot extends SubspaceBot {
     private void doFollowCmd(String sender) {
         m_followEnabled = !m_followEnabled;
         if( m_followEnabled )
-            m_botAction.sendSmartPrivateMessage(sender, "Follow ON.  I will now follow you when you leave.");
+            if( m_isLocked )
+                m_botAction.sendSmartPrivateMessage(sender, "Follow ON.  However, I am still locked.  First use !unlock or !unlockwith if you would like me to follow.");
+            else
+                m_botAction.sendSmartPrivateMessage(sender, "Follow ON.  I will now follow you when you leave.");
         else
             m_botAction.sendSmartPrivateMessage(sender, "Follow OFF.  I will no longer follow you when you leave.");
     }
