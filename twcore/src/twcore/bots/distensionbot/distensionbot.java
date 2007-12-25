@@ -164,8 +164,10 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_SHARK_REGEN = -6;
     public final int ABILITY_PROFIT_SHARING = -7;
 
-    public final int DEFAULT_MAX_OP = 3;
-    public final int DEFAULT_OP_REGEN = 2;      // 2 = 20%
+    // TACTICAL OPS DATA
+    public final int DEFAULT_MAX_OP = 3;                    // Max OP points when not upgraded
+    public final int DEFAULT_OP_REGEN = 2;                  // Default % chance OP regen (2 = 20%)
+    public final int DEFAULT_OP_MAX_COMMS = 3;              // Max # communications Ops can save up
 
     // TACTICAL OPS ABILITY PRIZE #s
     public final int OPS_INCREASE_MAX_OP = -11;
@@ -498,6 +500,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!lagout", acceptedMessages, this, "cmdLagout" );
         m_commandInterpreter.registerCommand( "!killmsg", acceptedMessages, this, "cmdKillMsg" );
         m_commandInterpreter.registerCommand( "!battleinfo", acceptedMessages, this, "cmdBattleInfo" );
+        m_commandInterpreter.registerCommand( "!opshelp", acceptedMessages, this, "cmdOpsHelp" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
         m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
@@ -684,10 +687,80 @@ public class distensionbot extends SubspaceBot {
                 "  !db-randomarmies                     - Randomizes all armies."
         };
         spamWithDelay(p.getArenaPlayerID(), helps);
-        if( m_botAction.getOperatorList().isSysopExact(name) ) {
-            m_botAction.sendPrivateMessage(name, "Hidden command: !db-wipeplayer <name>    - Wipes all records of a player from DB.");
+        if( m_botAction.getOperatorList().isSmod(name) ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Hidden command: !db-wipeplayer <name>    - Wipes all records of a player from DB.");
         }
     }
+
+    /**
+     * Display help for Tactical Ops players.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsHelp( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+
+        if( p.getShipNum() != 9 ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You are not at a Tactical Ops console, and have no way to refer to the Ops manual.");
+            return;
+        }
+
+
+        if( msg.equals("") ) {
+            String[] helps = {
+                    "   TACTICAL OPS CONSOLE",
+                    ".-----------------------",
+                    "| COMMUNICATIONS    Cost|",
+                    "|  !opsmsg <#>        1 |  Msg army.  See !opshelp msg for available messages",
+                    "|  !opsPM <name>:<#>  1 |  Msg specific players.  See !opshelp msg",
+                    "|  !opssab            2 |  Sabotage msg to enemy.  See !opshelp msg",
+                    "|  !opsradar          1 |  Shows approx. location of all pilots, + Terr info",
+                    "| ACTIONS               |",
+                    "|  !opsrearm          1 |  Increase rearm/decrease enemy rearm for short time",
+                    "|  !opscover <#>      1 |  Deploy cover in home base.  1:MidLeft 2:MidRight",
+                    "|                       |    3:MidCenter  4:FR  5:Ears  6:Tube  7:LowCenter",
+                    "|  !opsdoor <#>   1/2/3 |  Close doors.  1:Sides  2:Tube  (L2- 3:FR  4: Flag)",
+                    "|                       |  (L3- Enemy doors):  5:Sides  6:Tube  7:FR  8:Flag",
+                    "|  !opsmine <#>       2 |  False minefield in home base.  1:MidBase  2:In FR",
+                    "|                       |    3:FR Entrance  4:TopTube  5:In Tube  6:LowCenter",
+                    "|  !opsorb <name>   2/5 |  Cover enemy with orb.  L2: All NME in base (cost 5)",
+                    "|  !opsdark <name>  2/5 |  Cone of darkness.  L2: All NME in base (cost 5)",
+                    "|                   3/7 |   L3: Shroud (cost 3).  L4: Shroud all (cost 7)",
+                    "|  !opsblind      3/4/5 |  Briefly blind all NME in base.  L2,3: Longer.",
+                    "|  !opsshield         5 |  Shield all friendlies in home base.",
+                    "|  !opsemp            6 |  Quick EMP all enemies in home base to 0 energy.",
+                    "|______________________/",
+            };
+            spamWithDelay(p.getArenaPlayerID(), helps);
+        } else if( msg.equalsIgnoreCase("msg") ) {
+            String[] helps = {
+                    "      OPS MESSAGES",
+                    ".-----------------------------------------------------------------.",
+                    "| TIER 1: !opsmsg #                    | To all army pilots       |",
+                    "| TIER 2: !opsPM name:#  (T/S for name)| To 1 pilot/Terrs/Sharks  |",
+                    "| TIER 3: !opssab msg|PM #|name:#      | Msg or PM sent to enemy  |",
+                    ".______________________________________|_________________________/",
+                    "| !opsmsg 1             |  Defend/assault top base (friend/foe #s, name of terr)",
+                    "|         2             |  Defend/assault bottom base",
+                    "|         3             |  Terr needed ASAP; requesting change of ships",
+                    "|         4             |  Shark needed ASAP; requesting change of ships",
+                    "| !opsPM <name>:1       |  (To individual) Order to secure and hold top base",
+                    "|               2       |  (To individual) Order to secure and hold bottom base",
+                    "| !opsPM T:1            |  (To all Terrs)  Terr needed at top base immediately",
+                    "|          2            |  (To all Terrs)  Terr needed at bottom base immediately",
+                    "| !opsPM S:1            |  (To all Sharks) Shark needed at top base immediately",
+                    "|          2            |  (To all Sharks) Shark needed at bottom base immediately",
+                    "| !opssab               |  Works like above commands but sends to enemy army. Ex:",
+                    "|                       |  '!opssab msg 2' sends !opsmsg 2 to enemy w/ fake data.",
+                    "|                       |  (False pilot counts, says there is no Terr, etc.)",
+                    "|______________________/",
+            };
+            spamWithDelay(p.getArenaPlayerID(), helps);
+        }
+    }
+
 
     // ***** EVENT PROCESSING
 
@@ -3390,12 +3463,13 @@ public class distensionbot extends SubspaceBot {
         private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
         private boolean[] shipsAvail;           // Marks which ships are available
         private int[]     lastIDsKilled = { -1, -1, -1, -1 };  // ID of last player killed (feeding protection)
-        private int       currentOP;            // Current # OP points (for Tactical Ops)
-        private int       maxOP;                // Max # OP points (for Tactical Ops)
         private int       spawnTicks;           // # queue "ticks" until spawn
         private int       idleTicks;            // # ticks player has been idle
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
         private int       recentlyEarnedRP;     // RP earned since changing to this ship
+        private int       currentOP;            // Current # OP points (for Tactical Ops)
+        private int       maxOP;                // Max # OP points (for Tactical Ops)
+        private int       currentComms;         // Current # communications saved up (for Tactical Ops)
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
@@ -3729,8 +3803,10 @@ public class distensionbot extends SubspaceBot {
          * -4:  Targetted EMP against all enemies -- recharged every 10 min or so, and not lost on death
          * -5:  Super for spiders
          * -6:  Repels for sharks
+         *
+         * @param tick Number of times this method has been run; used for intermittent abilities
          */
-        public void prizeSpecialAbilities() {
+        public void prizeSpecialAbilities( int tick ) {
             boolean prized = false;
             if( shipNum == 5 ) {
                 // Regeneration ability; each level worth an additional 5% of prizing either port or burst
@@ -3769,6 +3845,12 @@ public class distensionbot extends SubspaceBot {
                     prized = true;
                 }
             } else if( shipNum == 9 ) {
+                // Allow another Comm every minute, up to max allowed
+                if( tick % 2 == 0 ) {
+                    if( currentComms < DEFAULT_OP_MAX_COMMS )
+                        currentComms++;
+                }
+
                 // Regenerate OP
                 double regenOPChance = Math.random() * 10.0;
                 if( (double)purchasedUpgrades[2] + DEFAULT_OP_REGEN > regenOPChance ) {
@@ -5157,6 +5239,7 @@ public class distensionbot extends SubspaceBot {
      */
     private class SpecialAbilityTask extends TimerTask {
         LinkedList <DistensionPlayer>players = new LinkedList<DistensionPlayer>();
+        int ticks = 0;      // # times task has been run
 
         /**
          * Adds a player to be checked for random special prizing every 30 seconds.
@@ -5175,8 +5258,9 @@ public class distensionbot extends SubspaceBot {
          * Checks all players added for special prizing.
          */
         public void run() {
+            ticks++;
             for( DistensionPlayer p : players )
-                p.prizeSpecialAbilities();
+                p.prizeSpecialAbilities( ticks );
         }
     }
 
@@ -5331,8 +5415,8 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Make sure to give a reasonable amount of points even if it's a short match
-        if( minsToWin < 15 )
-            minsToWin = 15;
+        if( minsToWin < 12 )
+            minsToWin = 12;
         // Cap at 40 to keep extreme bonuses down
         if( minsToWin > 40 )
             minsToWin = 40;
@@ -6770,6 +6854,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETTED_EMP, 0, 0, 1 );
         ship.addUpgrade( upg );
+        m_shipGeneralData.add( ship );
     }
 
 }
