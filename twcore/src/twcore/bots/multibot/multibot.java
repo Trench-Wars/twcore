@@ -146,7 +146,7 @@ public class multibot extends SubspaceBot {
             }
         }
 
-        // In Follow mode: decipher ?find report and change to arena
+        // In Follow mode: decipher *locate report and change to arena
         if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE ) {
             if( message.startsWith(m_owner + " - ") ) {
                 try {
@@ -173,7 +173,7 @@ public class multibot extends SubspaceBot {
 
     /**
      * This method monitors PlayerLeft events, for use with the follow cmd,
-     * and sends out a ?find when the owner of the bot leaves.
+     * and sends out a *locate when the owner of the bot leaves.
      *
      * @param event
      *            is the event to handle.
@@ -182,7 +182,7 @@ public class multibot extends SubspaceBot {
         if( m_followEnabled ) {
             Player p = m_botAction.getPlayer( event.getPlayerID() );
             if( p != null && p.getPlayerName().equals(m_owner) )
-                m_botAction.sendUnfilteredPublicMessage("?find " + m_owner );
+                m_botAction.sendUnfilteredPublicMessage("*locate " + m_owner );
         }
         handleEvent((SubspaceEvent) event);
     }
@@ -286,7 +286,8 @@ public class multibot extends SubspaceBot {
      */
     private void doComeCmd(String sender) {
         m_botAction.sendSmartPrivateMessage(sender, "Coming...");
-        m_botAction.sendUnfilteredPublicMessage("?find " + m_owner );
+        m_botAction.sendUnfilteredPublicMessage("*locate " + m_owner );
+        m_doCome = true;
     }
 
     /**
