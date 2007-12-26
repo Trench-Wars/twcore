@@ -649,7 +649,10 @@ public class multibot extends SubspaceBot {
             return;
         }
         if( m_botAction.getPlayer(sender) != null ) {
-            m_botAction.sendSmartPrivateMessage(sender, m_owner + " is hosting " + m_eventModule.getModuleName() + " here.");
+            if( m_eventModule != null )
+                m_botAction.sendSmartPrivateMessage(sender, m_owner + " is hosting " + m_eventModule.getModuleName() + " here.");
+            else
+                m_botAction.sendSmartPrivateMessage(sender, m_owner + " is using me here, but for what I don't yet know.");
             return;
         }
         String arenaName = m_botAction.getArenaName();
