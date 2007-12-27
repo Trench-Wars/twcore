@@ -26,7 +26,7 @@ public class PlayerPosition extends SubspaceEvent{
 
     // DISABLED: Weapon info
     // Used in weapons (long) packet only
-    // private short m_weaponInfo = 0;
+    private short m_weaponInfo = 0;
 
     //Togglables
     private boolean m_stealthOn;
@@ -102,7 +102,7 @@ public class PlayerPosition extends SubspaceEvent{
             m_bounty = array.readLittleEndianShort(17);
 
             // Weapon info currently unused.  Uncomment and add to Player to use
-            // m_weaponInfo = array.readLittleEndianShort(19);
+            m_weaponInfo = array.readLittleEndianShort(19);
 
             if( m_size > 21 ){
                 //parse beginning until size 23
@@ -300,8 +300,8 @@ public class PlayerPosition extends SubspaceEvent{
      * @return 0
      */
     public short getWeaponInfo(){
-        return 0;
-        //return m_weaponInfo;
+        //return 0;
+        return m_weaponInfo;
     }
 
     /**
