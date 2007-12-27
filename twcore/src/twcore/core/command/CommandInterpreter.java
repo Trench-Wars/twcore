@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
+import java.lang.reflect.InvocationTargetException;
 
 import twcore.core.BotAction;
 import twcore.core.events.Message;
@@ -280,6 +281,15 @@ public class CommandInterpreter {
                             methodClass.getClass().getMethod( command.getMethodName(), parameterTypes ).invoke( methodClass, parameters );
                         }
                         result = true;
+                    } catch( InvocationTargetException e ) {
+                        if( e.getCause() != null && e.getCause().getMessage() != null ) {
+                            if( e.getCause() instanceof TWCoreException )
+                                m_botAction.sendSmartPrivateMessage( messager, e.getCause().getMessage() );
+                            else
+                                Tools.printStackTrace( (Exception)e.getCause() );
+                        } else {
+                            Tools.printStackTrace( e );
+                        }
                     } catch( Exception e ){
                         Tools.printStackTrace( e );
                     }
