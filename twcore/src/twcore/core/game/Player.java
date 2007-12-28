@@ -36,6 +36,7 @@ public class Player {
     private short   m_playerID;         // Player ID (for this arena -- diff. from ?userid)
     private String  m_squadName;        // Squad name
     private byte    m_shipType;         // Type of ship.  1-8 in game, 0 spectating
+    private int 	m_weaponType;		// Type of Weapon (1-12, see WeaponFired.java for descriptions)
     private short   m_xLocation;        // X coordinate of location
     private short   m_yLocation;        // Y coordinate of location
     private short   m_xVelocity;        // Pixels every 10 seconds ship travels on X axis
@@ -85,7 +86,6 @@ public class Player {
      * @param playerEntered Event to instantiate with
      */
     public Player( PlayerEntered playerEntered ){
-
         m_ping = 0;
         m_score = 0;
         m_timer = 0;
@@ -98,6 +98,7 @@ public class Player {
         m_xVelocity = 0;
         m_yVelocity = 0;
         m_timeStamp = 0;
+        m_weaponType = 0;
 
         m_wins = playerEntered.getWins();
         m_losses = playerEntered.getLosses();
@@ -123,7 +124,6 @@ public class Player {
      * @param playerEntered Event to set data from
      */
     public void setPlayer( PlayerEntered playerEntered ){
-
         m_wins = playerEntered.getWins();
         m_losses = playerEntered.getLosses();
         m_frequency = playerEntered.getTeam();
@@ -147,7 +147,6 @@ public class Player {
      * Resets all data to defaults.
      */
     public void clearPlayer(){
-
         m_wins = 0;
         m_ping = 0;
         m_score = 0;
@@ -158,6 +157,7 @@ public class Player {
         m_S2CLag = 0;
         m_hasKOTH = false;
         m_shipType = 0;
+        m_weaponType = 0;
         m_rotation = 0;
         m_xLocation = 0;
         m_yLocation = 0;
@@ -211,7 +211,6 @@ public class Player {
      * @param message Class representation of packet/event
      */
     public void updatePlayer( PlayerDeath message ){
-
         if( message.getKillerID() == m_playerID ){
             m_wins++;
             // This particular operation (adding bounty of the killed to score) is questionable;
@@ -238,7 +237,6 @@ public class Player {
      * @param message Class representation of packet/event
      */
     public void updatePlayer( ScoreUpdate message ){
-
         m_wins = message.getWins();
         m_losses = message.getLosses();
         m_flagPoints = message.getFlagPoints();
@@ -251,7 +249,6 @@ public class Player {
      * @param message Class representation of packet/event
      */
     public void updatePlayer( FlagVictory message ){
-
         if( message.getFrequency() == m_frequency ){
             m_score += message.getReward();
         }
@@ -262,7 +259,6 @@ public class Player {
      * @param message Class representation of packet/event
      */
     public void updatePlayer( FlagReward message ){
-
         if( message.getFrequency() == m_frequency ){
             m_score += message.getPoints();
         }
@@ -273,7 +269,6 @@ public class Player {
      * @param message Class representation of packet/event
      */
     public void updatePlayer( FrequencyChange message ){
-
         m_frequency = message.getFrequency();
         m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
     }
@@ -283,7 +278,6 @@ public class Player {
      * @param message Class representation of packet/event
      */
     public void updatePlayer( FrequencyShipChange message ){
-
         m_frequency = message.getFrequency();
         m_shipType = message.getShipType();
         m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
@@ -320,6 +314,9 @@ public class Player {
         m_xVelocity = message.getXVelocity();
         m_ping = message.getPing();
         m_timeStamp = message.getTimeStamp();
+
+        short wepinfo = message.getWeaponInfo();
+        m_weaponType = wepinfo & 0x001f;
 
         // Togglables
         m_stealthOn = message.isStealthed();
@@ -446,6 +443,24 @@ public class Player {
         return m_shipType;
     }
 
+    /**
+     * Gets the player's <b>most recently updated</b> Weapon Fired
+     * <p>
+     * A VERY IMPORTANT consideration is that a player's weapon type may not be accurate
+     * / updated.  Use BotAction's setPlayerPositionUpdating() to make this information
+     * more reliable.  Updates only when a weapon is fired and includes specials.
+     * @return Player's weapon type (1-12, updated on WeaponFired event)
+     *    WEAPON_BULLET = 1;                WEAPON_BURST = 7;
+     *    WEAPON_BULLET_BOUNCING = 2;       WEAPON_THOR = 8;
+     *    WEAPON_BOMB = 3;                  WEAPON_MULTIFIRE = 9;
+     *    WEAPON_EMP_BOMB = 4;              WEAPON_SINGLEFIRE = 10;
+     *    WEAPON_REPEL = 5;                 WEAPON_MINE = 11;
+     *    WEAPON_DECOY = 6;                 WEAPON_NOTMINE = 12;
+     */
+    public int getWeaponType(){
+        return m_weaponType;
+    }
+    
     /**
      * Gets the player's <b>most recently updated</b> X location, in pixels (0...16384)
      * <p>
