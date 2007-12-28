@@ -417,7 +417,7 @@ public class multibot extends SubspaceBot {
      */
     private void doLockCmd( String sender ) {
         if( m_isLocked ) {
-            doUnlockCmd( sender, false );
+            m_botAction.sendSmartPrivateMessage(sender, "I'm already locked.");
             return;
         }
 

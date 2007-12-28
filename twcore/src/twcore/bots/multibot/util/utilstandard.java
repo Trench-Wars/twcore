@@ -64,18 +64,13 @@ public class utilstandard extends MultiUtil {
     }
 
     public void handleEvent( Message event ){
-        if(event.getMessageType() == Message.ARENA_MESSAGE && doLock != 0 ) {
-            if(event.getMessage().startsWith("Arena UNLOCKED")) {
-                if(doLock == 1) {
-                    doLock = 0;
-                    m_botAction.toggleLocked();
-                }
-            } else if(event.getMessage().startsWith("Arena LOCKED")) {
-                if(doLock == 2) {
-                    doLock = 0;
-                    m_botAction.toggleLocked();
-                }
+        if(doLock != 0 && event.getMessageType() == Message.ARENA_MESSAGE) {
+            if(doLock == 1 && event.getMessage().equals("Arena UNLOCKED")) {
+                m_botAction.toggleLocked();
+            } else if(doLock == 2 && event.getMessage().equals("Arena LOCKED")) {
+                m_botAction.toggleLocked();
             }
+            doLock = 0;
         }
 
         String message = event.getMessage();
@@ -94,15 +89,15 @@ public class utilstandard extends MultiUtil {
             m_botAction.sendSmartPrivateMessage(name, "Teams were created successfully.");
         } else if( message.startsWith( "!door " )){
             m_botAction.setDoors( getInteger( message.substring( 6 )));
-            m_botAction.sendSmartPrivateMessage(name, "Door time was set to " + message.substring(6));            
+            m_botAction.sendSmartPrivateMessage(name, "Door mode was set to " + message.substring(6));
         } else if( message.startsWith( "!dolock" )){
             doLock = 1;
             m_botAction.toggleLocked();
-            m_botAction.sendSmartPrivateMessage(name, "Arena is now locked.");
+            m_botAction.sendArenaMessage("Arena is now locked.");
         } else if( message.startsWith( "!dounlock" )){
             doLock = 2;
             m_botAction.toggleLocked();
-            m_botAction.sendSmartPrivateMessage(name, "Arena is now unlocked.");
+            m_botAction.sendArenaMessage("Arena is now unlocked.");
         } else if( message.startsWith( "!setship " )){
             String[] parameters = Tools.stringChopper( message.substring( 8 ).trim(), ' ' );
             try{
