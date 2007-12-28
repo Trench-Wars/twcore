@@ -24,7 +24,7 @@ public class PlayerPosition extends SubspaceEvent{
     // DISABLED: Checksum
     // private int m_checksum;
 
-    // DISABLED: Weapon info
+    // RE-ENABLED: Weapon info (used by bfallout/spaceball/etc modules)
     // Used in weapons (long) packet only
     private short m_weaponInfo = 0;
 
@@ -101,7 +101,7 @@ public class PlayerPosition extends SubspaceEvent{
             m_yLocation = array.readLittleEndianShort(15);
             m_bounty = array.readLittleEndianShort(17);
 
-            // Weapon info currently unused.  Uncomment and add to Player to use
+            // Weapon info.  Also added to Player
             m_weaponInfo = array.readLittleEndianShort(19);
 
             if( m_size > 21 ){
@@ -295,12 +295,7 @@ public class PlayerPosition extends SubspaceEvent{
         // return m_checksum;
     }
 
-    /**
-     * DISABLED.
-     * @return 0
-     */
     public short getWeaponInfo(){
-        //return 0;
         return m_weaponInfo;
     }
 
