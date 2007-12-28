@@ -14,6 +14,7 @@ import twcore.core.BotSettings;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.stats.PlayerProfile;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 import twcore.core.events.Message;
 import twcore.core.lvz.*;
 
@@ -107,6 +108,9 @@ public class boggle extends MultiModule {
         
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!help",      acceptedMessages, this, "doHelp" );
+        m_commandInterpreter.registerCommand( "!board",      acceptedMessages, this, "doBoard" );
+        m_commandInterpreter.registerCommand( "!pm",      acceptedMessages, this, "doPm" );
+        
         //if(!autoStart)m_commandInterpreter.registerCommand( "!topten",    acceptedMessages, this, "doTopTen" );
         //if(!autoStart)m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
         //m_commandInterpreter.registerCommand( "!rules",     acceptedMessages, this, "doRules" );
@@ -246,6 +250,10 @@ public class boggle extends MultiModule {
     		String pName = (String) i3.next();
     		PlayerProfile pProf = pointsMap.get(pName);
     		m_botAction.sendArenaMessage("|  " + padString(pName,pProf.getData(5),25) + padInt(pProf.getData(3),5) + " | " + padInt(pProf.getData(0),5) + " | " + padInt(pProf.getData(1),5) + " | " + padInt(pProf.getData(2),5) + " | " + padInt(pProf.getData(4),8) + " |");
+    		if(pName.equalsIgnoreCase(roundWinner))
+    			storePlayerStats(pName, pProf.getData(3), pProf.getData(4), true);
+    		else
+    			storePlayerStats(pName, pProf.getData(3), pProf.getData(4), false);
     	}
     	m_botAction.sendArenaMessage("`---------------------------------+-------+-------+-------+----------'");
     	if(!(roundWinner == null))
@@ -381,7 +389,22 @@ public class boggle extends MultiModule {
     	m_botAction.sendArenaMessage("| " + b[0][3] + " | " + b[1][3] + " | " + b[2][3] + " | " + b[3][3] + " |");
     	m_botAction.sendArenaMessage("+---+---+---+---+");
     }
+    
+    public void doBoard(String name, String message){
+    	m_botAction.sendSmartPrivateMessage(name,"+---+---+---+---+");
+    	m_botAction.sendSmartPrivateMessage(name,"| " + m_board.getBoard()[0][0] + " | " + m_board.getBoard()[1][0] + " | " + m_board.getBoard()[2][0] + " | " + m_board.getBoard()[3][0] + " |");
+    	m_botAction.sendSmartPrivateMessage(name,"+---+---+---+---+");
+    	m_botAction.sendSmartPrivateMessage(name,"| " + m_board.getBoard()[0][1] + " | " + m_board.getBoard()[1][1] + " | " + m_board.getBoard()[2][1] + " | " + m_board.getBoard()[3][1] + " |");
+    	m_botAction.sendSmartPrivateMessage(name,"+---+---+---+---+");
+    	m_botAction.sendSmartPrivateMessage(name,"| " + m_board.getBoard()[0][2] + " | " + m_board.getBoard()[1][2] + " | " + m_board.getBoard()[2][2] + " | " + m_board.getBoard()[3][2] + " |");
+    	m_botAction.sendSmartPrivateMessage(name,"+---+---+---+---+");
+    	m_botAction.sendSmartPrivateMessage(name,"| " + m_board.getBoard()[0][3] + " | " + m_board.getBoard()[1][3] + " | " + m_board.getBoard()[2][3] + " | " + m_board.getBoard()[3][3] + " |");
+    	m_botAction.sendSmartPrivateMessage(name,"+---+---+---+---+");
+    }
   
+    public void doPm(String name, String message){
+    	m_botAction.sendSmartPrivateMessage( name, "You can now use :: to submit your answers.");
+    }
     
     /**
      * This method adds all messages sent during game play to an ArrayList mapped
@@ -536,6 +559,25 @@ public boolean searchStack(BoggleStack curStack) {
 public void boardCopy(char[][] source,char[][] destination) {
     for (int a=0; a<source.length; a++) {
             System.arraycopy(source[a],0,destination[a],0,source[a].length);
+    }
+}
+
+public void storePlayerStats( String username, int points, int rating, boolean wonRound ) {
+    try {
+    	int wonAdd = 0;
+        if (wonRound) wonAdd = 1;
+
+        ResultSet qry = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating FROM tblBoggle_UserStats WHERE fcUserName = \"" + username+"\"");
+        if (!qry.next()) {
+            m_botAction.SQLQueryAndClose( mySQLHost, "INSERT INTO tblBoggle_UserStats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""+username+"\",1,"+wonAdd+","+points+",1,"+rating+")");
+        } else {
+            double pos    = qry.getInt("fnPossible") + 1;
+            double rate = ((qry.getInt("fnRating") * (pos-1)) + rating) / pos ;
+            m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblBoggle_UserStats SET fnPlayed = fnPlayed+1, fnWon = fnWon + "+wonAdd+", fnPoints = fnPoints + "+ points+", fnPossible = fnPossible+1, fnRating = "+rate+" WHERE fcUserName = \"" + username+"\"");
+        }
+        m_botAction.SQLClose( qry );
+    } catch (Exception e) {
+        Tools.printStackTrace(e);
     }
 }
 
