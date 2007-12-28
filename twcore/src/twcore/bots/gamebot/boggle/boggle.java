@@ -45,16 +45,22 @@ public class boggle extends MultiModule {
 
     //GUIs
     String[] helpmsg={
-    	" testing 123 help"
+    	"!help		-- displays this",
+    	"!board	    -- displays the current board",
+    	"!pm     	-- enables easier game messaging"
+    	
     };
     String[] autohelpmsg={
-    		""
+    	"!help		-- displays this",
+        "!board	    -- displays the current board",
+        "!pm     	-- enables easier game messaging"
     };
 	String[] opmsg={
-		" testing 123 modhelp"
+		"!start		-- starts a game of Boggle",
+		"!cancel    -- cancels the current game"
 	};
 	String[] autoopmsg={
-			" "
+		"!cancel		-- cancels the current game"
 	};
 
 	public void init(){
