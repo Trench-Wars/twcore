@@ -231,19 +231,16 @@ public class pubarrogant extends SubspaceBot
   /**
    * This method kills all of the idlers in the arena.
    */
-
-  private void killIdlers()
+  private synchronized void killIdlers()
   {
-    Iterator iterator = m_botAction.getPlayerIDIterator();
+    Iterator <Integer>iterator = m_botAction.getPlayerIDIterator();
     Integer playerID;
-    String playerName;
 
     while(iterator.hasNext())
     {
-      playerID = (Integer) iterator.next();
-      playerName = m_botAction.getPlayerName(playerID.intValue());
-      m_botAction.sendUnfilteredPrivateMessage(playerName, "*info");
-      m_botAction.sendUnfilteredPrivateMessage(playerName, "*einfo");
+      playerID = iterator.next();
+      m_botAction.sendUnfilteredPrivateMessage(playerID.intValue(), "*info");
+      m_botAction.sendUnfilteredPrivateMessage(playerID.intValue(), "*einfo");
     }
   }
 
