@@ -449,7 +449,7 @@ public class distensionbot extends SubspaceBot {
 
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
-            //m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
+            m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
             m_botAction.sendArenaMessage("Distension BETA loaded.  Use !return (~) to return to your current ship or !enlist if you're new.  Please see the beta thread on the forums for bug reports & suggestions.");
             // Reset all times at each load
             try {
@@ -864,7 +864,8 @@ public class distensionbot extends SubspaceBot {
                 " - Top 3 players (combined earned RP) awarded bonus points in public release",
                 " - For every bug reported, points will be awarded (?message dugwyler)",
                 ".",
-                "RECENT UPDATES  -  12/20/07",
+                "RECENT UPDATES  -  12/31/07",
+                " - New round-end goal: you must win 3 rounds ahead of the other team",
                 " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs !!",
                 "   NOTE: All upgrades were refunded; you will need to buy all upgrades again!",
                 " - Fixed rotation bug!",
@@ -3012,6 +3013,14 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), "OPS used FAST REARM: Enabled for the next " + (time / 1000) + " seconds." );
     }
 
+    /**
+     *
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsDoor( String name, String msg ) {
+
+    }
 
     // ***** HIGHMOD+ COMMANDS
 
@@ -6619,7 +6628,7 @@ public class distensionbot extends SubspaceBot {
                 else
                     scoreDisplay += "=";
             scoreDisplay += "|";
-            for(int i=1; i<SCORE_REQUIRED_FOR_WIN+1; i--)
+            for(int i=1; i<SCORE_REQUIRED_FOR_WIN+1; i++)
                 if( i > m_freq1Score)
                     scoreDisplay += " ";
                 else
