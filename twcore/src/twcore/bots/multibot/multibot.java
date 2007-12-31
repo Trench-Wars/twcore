@@ -134,7 +134,8 @@ public class multibot extends SubspaceBot {
                             if( m_ownerOverride ) {
                                 foundCmd = handleCommands(sender, message, messageType);
                             } else {
-                                m_botAction.sendSmartPrivateMessage(sender, "I am owned by: " + m_owner + " - last use: " + Tools.getTimeDiffString(m_lastUse, true) + "  !mybot to claim; !override to command w/o owner change." );
+                                if( message.startsWith("!") )
+                                    m_botAction.sendSmartPrivateMessage(sender, "I am owned by: " + m_owner + " - last use: " + Tools.getTimeDiffString(m_lastUse, true) + "  !mybot to claim; !override to command w/o owner change." );
                                 if( message.equalsIgnoreCase("!mybot") || message.equalsIgnoreCase("!override") )
                                     foundCmd = handleCommands(sender, message, messageType);
                             }
