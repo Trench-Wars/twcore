@@ -11,6 +11,7 @@ import java.util.Vector;
 import java.util.ArrayList;
 
 import twcore.bots.MultiModule;
+import twcore.bots.gamebot.gamebot;
 import twcore.core.BotSettings;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.StringBag;
@@ -32,13 +33,14 @@ public class pictionary extends MultiModule {
 
     Random          m_rnd;
     String          mySQLHost = "local";
-    TimerTask       startGame, timerQuestion, timerHint, timerAnswer, timerNext, warn, forcePass;
+    TimerTask       timerQuestion, timerHint, timerAnswer, timerNext, warn, forcePass;
      
     TreeMap<String, PlayerProfile> playerMap = new TreeMap<String, PlayerProfile>();
     HashMap<String, String> accessList = new HashMap<String, String>();
     HashMap<String, Integer> votes = new HashMap<String, Integer>();
     Vector<String>  topTen;
     ArrayList<String> cantPlay = new ArrayList<String>();
+    ArrayList<String> notPlaying = new ArrayList<String>();
     ArrayList<String> hasVoted = new ArrayList<String>();
     int             gameProgress = -1, toWin = 10, pictNumber = 1, curLeader = 0;
     int             m_mintimesused = -1, vote;
@@ -139,7 +141,6 @@ public class pictionary extends MultiModule {
 		TimerTask endVote = new TimerTask(){
 			public void run(){
 				isVoting = false;
-				gameProgress = 2;
 				vote = countVote(2);
 				if (vote == 1){
 					game = "default";
@@ -157,9 +158,7 @@ public class pictionary extends MultiModule {
 		};
 		m_botAction.scheduleTask(endVote, 15000);
     }
-    /**
-     * 
-     */
+    
     public void handleVote(String name, String message){
     	try{
     	int vNum = Integer.parseInt(message);    	
@@ -207,24 +206,24 @@ public class pictionary extends MultiModule {
     /****************************************************************/
     public void registerCommands() {
         int acceptedMessages;
-
+        
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start",     acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!cancel",    acceptedMessages, this, "doCancelGame" );
         m_commandInterpreter.registerCommand( "!showanswer",acceptedMessages, this, "doShowAnswer" );
         
         acceptedMessages = Message.PRIVATE_MESSAGE;
-        m_commandInterpreter.registerCommand( "!ready",    acceptedMessages, this, "doReady" );
-        m_commandInterpreter.registerCommand( "!repeat",    acceptedMessages, this, "doRepeat" );
+        m_commandInterpreter.registerCommand( "!ready",     acceptedMessages, this, "doReady" );
         m_commandInterpreter.registerCommand( "!pass",		acceptedMessages, this, "doPass" );
         m_commandInterpreter.registerCommand( "!help",      acceptedMessages, this, "doHelp" );
+        m_commandInterpreter.registerCommand( "!notplaying",acceptedMessages, this, "doNotPlaying" );
         if(!autoStart)m_commandInterpreter.registerCommand( "!topten",    acceptedMessages, this, "doTopTen" );
         if(!autoStart)m_commandInterpreter.registerCommand( "!stats",     acceptedMessages, this, "doStats" );
         m_commandInterpreter.registerCommand( "!score",     acceptedMessages, this, "doScore" );
+        m_commandInterpreter.registerCommand( "!myscore",   acceptedMessages, this, "doMyScore" );
         m_commandInterpreter.registerCommand( "!rules",     acceptedMessages, this, "doRules" );
-        m_commandInterpreter.registerCommand( "!lagout",     acceptedMessages, this, "doLagout" );
+        m_commandInterpreter.registerCommand( "!lagout",    acceptedMessages, this, "doLagout" );
 
-        m_commandInterpreter.registerDefaultCommand( Message.PUBLIC_MESSAGE, this, "doCheckAnswers" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCustomWord" );
     }
   
@@ -234,7 +233,7 @@ public class pictionary extends MultiModule {
     /****************************************************************/
     
     public void doLagout ( String name, String message ){
-    	if (name.equals(curArtist) && ((gameProgress == 2) || (gameProgress == 3))){
+    	if (name.equals(curArtist) && (gameProgress == 3 || gameProgress == 2)){
             m_botAction.setShip(curArtist, 1);
             m_botAction.warpTo(curArtist,XSpot,YSpot);
     	}
@@ -242,14 +241,19 @@ public class pictionary extends MultiModule {
     }
     
     /****************************************************************/
-    /*** Repeats hint or answer.                                  ***/
+    /*** Puts the artist back in if he lags out                   ***/
     /****************************************************************/
     
-    public void doRepeat( String name, String message ){
-        if( gameProgress == 4 ){
-            m_botAction.sendSmartPrivateMessage( name, m_prec + "Answer: " + t_word );
-        } else if( gameProgress == 3 ){
-            m_botAction.sendSmartPrivateMessage( name, m_prec + "Hint: " + t_definition );
+    public void doNotPlaying ( String name, String message ){
+    	if ((gameProgress == 3 || gameProgress == 2) && name.equalsIgnoreCase(curArtist))
+    		doPass(curArtist, "");
+        if(!notPlaying.contains(name)){
+        	notPlaying.add(name);
+        	m_botAction.sendSmartPrivateMessage( name, "Not playing enabled. You will not be allowed to draw or guess.");
+        }
+        else {
+        	notPlaying.remove(name);
+        	m_botAction.sendSmartPrivateMessage( name, "Not playing disabled. You are now allowed to draw and guess.");
         }
     }
     
@@ -306,15 +310,12 @@ public class pictionary extends MultiModule {
             	m_botAction.sendArenaMessage(m_prec + "A game of Pictionary is starting | Win by getting " + toWin + " pts!", 22);
             	m_botAction.sendArenaMessage(m_prec + "Type your guesses in public chat.");
             	m_botAction.sendArenaMessage(m_prec + "PM !notplaying to " + m_botAction.getBotName() + " if you don't want to play.");
-            	startGame = new TimerTask() {
-            		public void run() {
-            			pickPlayer();
-            			grabWord();
-            			if (!custGame)
-            				doReadyCheck();
-            		}
-            	};
-            	m_botAction.scheduleTask(startGame, 5000); 
+            	gameProgress = 1;
+            	pickPlayer();
+            	grabWord();
+            	if (!custGame)
+            		doReadyCheck();
+
             }
             else {
             	m_botAction.sendArenaMessage("There aren't enough players to play!", 13);
@@ -333,7 +334,7 @@ public class pictionary extends MultiModule {
     /*** Cancels the game, stores results.                        ***/
     /****************************************************************/
 
-    public void doCancelGame( String name) {
+    public void doCancelGame( String name , String message) {
         if( (m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) ) && gameProgress != -1 ){
             gameProgress = -1;
             m_botAction.sendArenaMessage( m_prec + "This game of Pictionary has been canceled." );
@@ -359,16 +360,18 @@ public class pictionary extends MultiModule {
     /*** Passes the artist's turn to a random player.             ***/
     /****************************************************************/
 
-    public void doPass(String name) {
-    	if (name.equals(curArtist) || opList.isZH(name)){
+    public void doPass( String name, String message ) {
+    	if ((name.equals(curArtist) || opList.isZH(name)) && gameProgress < 4 && gameProgress > 0){
     		String passing = curArtist;
             m_botAction.spec(curArtist);
             m_botAction.spec(curArtist);
             while (passing.equals(curArtist)){pickPlayer();}
     		m_botAction.sendArenaMessage(passing + " passes to " + curArtist + ".");
     		cantPlay.clear();
-            doReadyCheck();
-    		
+    		cantPlay.add(curArtist);
+    		m_botAction.cancelTasks();
+    		grabWord();
+            doReadyCheck();    		
     	}
     }
     
@@ -382,7 +385,7 @@ public class pictionary extends MultiModule {
             StringBag randomPlayerBag = new StringBag();
             if (m_botAction.getArenaSize() > minPlayers)
             {
-            	Iterator i = m_botAction.getPlayerIterator();
+            	Iterator<Player> i = m_botAction.getPlayerIterator();
             	if( i == null ) return;
             	while( i.hasNext() ){
             		p = (Player)i.next();
@@ -390,14 +393,14 @@ public class pictionary extends MultiModule {
             		randomPlayerBag.add(addPlayerName);
             	}
             	addPlayerName = randomPlayerBag.grabAndRemove();
-            	if (!addPlayerName.equals(m_botAction.getBotName()))
+            	if (!addPlayerName.equals(m_botAction.getBotName()) && !notPlaying.contains(addPlayerName))
             		curArtist = addPlayerName;
             	else pickPlayer();
             	cantPlay.add(curArtist);
             }
             else {
             	m_botAction.sendArenaMessage("There are not enough players to procede.");
-            	doCancelGame(m_botAction.getBotName());
+            	doCancelGame(m_botAction.getBotName(), "");
             }
     	
     }
@@ -407,6 +410,8 @@ public class pictionary extends MultiModule {
     /****************************************************************/
     public void doReadyCheck(){
     	if (ready){
+    		m_botAction.cancelTasks();    		
+    		ready = false;
     		doDraw();
     	}
     	else {
@@ -418,15 +423,15 @@ public class pictionary extends MultiModule {
     		};
     		forcePass = new TimerTask() {
     			public void run(){
-    				doPass(m_botAction.getBotName());
+    				doPass(m_botAction.getBotName(), "");
     			}
     		};
     		if (custGame){
-    			m_botAction.sendSmartPrivateMessage(curArtist, "Type !ready to begin.");
+    			m_botAction.sendSmartPrivateMessage(curArtist, "Private message me with !ready to begin or !pass to pass.");
     			m_botAction.scheduleTask(warn, 15000);
     		}
     		else {	
-    			m_botAction.sendSmartPrivateMessage(curArtist, "You've been chosen to draw. Please private message me with !ready to begin.");
+    			m_botAction.sendSmartPrivateMessage(curArtist, "You've been chosen to draw. Please private message me with !ready to begin or !pass to pass.");
     			m_botAction.scheduleTask(warn, 15000);
     		}
     	} 	
@@ -452,8 +457,7 @@ public class pictionary extends MultiModule {
     /****************************************************************/
     /*** Drawing Begins.                                          ***/
     /****************************************************************/
-    public void doDraw() {
-        gameProgress = 1; 
+    public void doDraw() { 
         m_botAction.sendArenaMessage( m_prec + "Picture #" + pictNumber + ":");
         m_botAction.setShip(curArtist, 1);
         m_botAction.warpTo(curArtist, XSpot, YSpot);
@@ -503,6 +507,7 @@ public class pictionary extends MultiModule {
                     m_botAction.sendArenaMessage( m_prec + "No one has given the correct answer of '" + t_word + "'", 103);
                    
                     doCheckScores();
+                    theWinner = m_botAction.getBotName();
                     startNextRound();
                 }
             }
@@ -524,8 +529,12 @@ public class pictionary extends MultiModule {
                 		t_word = qryWordData.getString("Word").toLowerCase();
                 		if (t_word.length() < 4){
                 			grabWord();
+                			return;
                 		}
-                		t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
+                		if (!(t_word.trim().split(" ").length > 1))
+                			t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
+                		else
+                			t_definition = t_word.trim().split(" ").length + " words: First word begins with '" + t_word.substring(0,1) + "'.";
                 		int ID = qryWordData.getInt("WordID");
                 		m_botAction.SQLQuery( mySQLHost, "UPDATE tblPict_Words SET TimesUsed = TimesUsed + 1 WHERE WordID = "+ ID);
                 	}
@@ -544,12 +553,17 @@ public class pictionary extends MultiModule {
     /*** Gets a custom word from the artist.                      ***/
     /****************************************************************/
     public void doCustomWord (String name, String message) {
-    	if (name.equalsIgnoreCase(curArtist) && custGame && gameProgress == 0){
+    	if (name.equalsIgnoreCase(curArtist) && custGame && gameProgress == 1){
     		if (message.length() < 13){
-    			t_word = message.toLowerCase().trim();
-    			t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
-    			m_botAction.sendSmartPrivateMessage(curArtist, "Word to draw: " + t_word);
-    			doReadyCheck();  	
+    			if(!twcore.bots.gamebot.gamebot.isRacist(message)){
+    				t_word = message.toLowerCase().trim();
+    				t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
+    				m_botAction.sendSmartPrivateMessage(curArtist, "Word to draw: " + t_word);
+    				doReadyCheck();
+    			}
+    			else {
+    				m_botAction.sendSmartPrivateMessage( curArtist, "Racist words are not allowed.");
+    			}
     		}
     		else
     			m_botAction.sendSmartPrivateMessage(curArtist, "Please pick a word of 12 letters or less.");
@@ -567,7 +581,7 @@ public class pictionary extends MultiModule {
         	String curAns = t_word.replaceAll(" ", "");
             String msg = message.toLowerCase().replaceAll(" ", "");
             if(msg.contains(curAns)) {
-                if(!cantPlay.contains(name))
+                if(!cantPlay.contains(name) && !notPlaying.contains(name))
                 {
                 	theWinner = name;
                     answerSpeed = (new java.util.Date().getTime() - giveTime) / 1000.0;
@@ -609,10 +623,19 @@ public class pictionary extends MultiModule {
                	}
                 else {
                		if (name.equals(curArtist)){
-               			m_botAction.sendSmartPrivateMessage(name, "Don't give away the answer!");
+               			m_botAction.sendSmartPrivateMessage(name, "A point has been deducted from your score for showing the answer.");
+               			if(playerMap.containsKey(curArtist)){
+               				PlayerProfile tempPlayer = playerMap.get(curArtist);
+               				tempPlayer.decData(0);
+               			}
+               			else {
+               				playerMap.put(curArtist, new PlayerProfile(curArtist));
+               				PlayerProfile tempPlayer = playerMap.get(curArtist);
+               				tempPlayer.setData(0, -1);
+               			}
                		}
                 	else {
-                		m_botAction.sendSmartPrivateMessage(name, "You've already seen the answer!");
+                		m_botAction.sendSmartPrivateMessage(name, "You are not allowed to guess.");
                 	}
                 }
             }
@@ -685,7 +708,16 @@ public class pictionary extends MultiModule {
     }
 
     public void handleEvent( Message event ){
-        m_commandInterpreter.handleEvent( event );
+        int mType = event.getMessageType();
+        if(mType == Message.PUBLIC_MESSAGE ||
+           mType == Message.PUBLIC_MACRO_MESSAGE ||
+           mType == Message.TEAM_MESSAGE ||
+           mType == Message.OPPOSING_TEAM_MESSAGE){
+        	doCheckAnswers(m_botAction.getPlayerName(event.getPlayerID()), event.getMessage());
+        }
+        else {
+        	m_commandInterpreter.handleEvent( event );
+        }
     }
 
     /****************************************************************/
@@ -808,7 +840,20 @@ public class pictionary extends MultiModule {
                 }
                 curPoints--;
             }
+            m_botAction.sendSmartPrivateMessage( name, m_prec + "----------------------------");
         }
+    }
+    
+    public void doMyScore(String name, String message){
+    	if(gameProgress != -1){
+    		if(playerMap.containsKey(name)){
+    			PlayerProfile temp = playerMap.get(name);
+    			m_botAction.sendSmartPrivateMessage( name, "You currently have " + temp.getData(0) + " points.");
+    		}
+    		else{
+    			m_botAction.sendSmartPrivateMessage( name, "You currently have 0 points.");
+    		}    			
+    	}
     }
 
     /****************************************************************/
@@ -816,14 +861,19 @@ public class pictionary extends MultiModule {
     /****************************************************************/
     public void startNextRound() {
                 if( gameProgress == 4 ) {
-                	gameProgress = 0;
+                	gameProgress = 1;
                     pictNumber++;
                     cantPlay.clear();
                     m_botAction.spec(curArtist);
                     m_botAction.spec(curArtist);
-                    curArtist = theWinner;
-                    cantPlay.add(curArtist);
-                    ready = false;
+                    if(theWinner.equals(m_botAction.getBotName())){
+                    	String temp = curArtist;
+                    	while(temp.equals(curArtist)){pickPlayer();}
+                    }
+                    else
+                    	curArtist = theWinner;
+                    if(!cantPlay.contains(curArtist))
+                    	cantPlay.add(curArtist);
                     grabWord();
                     doReadyCheck();
                 }
@@ -858,4 +908,5 @@ public class pictionary extends MultiModule {
         m_botAction.cancelTasks();
         if (autoStart)m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!unlock");        
     }
+    
 }

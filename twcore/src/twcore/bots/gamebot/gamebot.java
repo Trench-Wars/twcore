@@ -37,7 +37,7 @@ public class gamebot extends SubspaceBot {
     private boolean isLast = false, hasGame = false;
     private OperatorList opList;
     private MultiModule multiModule;
-    private String keywords;
+    public static String keywords;
     private String initialArena;
     private String modulePath;
     private String botChat;
@@ -101,9 +101,9 @@ public class gamebot extends SubspaceBot {
         int messageType = event.getMessageType();
         String messageTypeString = getMessageTypeString(messageType);
         
-        if(isRacist(message) && messageType != Message.ALERT_MESSAGE){
+        if(isRacist(message) && messageType != Message.ALERT_MESSAGE && messageType != Message.PRIVATE_MESSAGE && messageType != Message.REMOTE_PRIVATE_MESSAGE){
         	if(sender == null)
-        		sender = "Sender Unknown";
+        		sender = "-anonymous-";
         	m_botAction.sendUnfilteredPublicMessage("?cheater " + messageTypeString + ": (" + sender + "): " + message);
         	
         }
@@ -135,8 +135,6 @@ public class gamebot extends SubspaceBot {
             
 
         try {
-        	if (command.equalsIgnoreCase("!last"))
-            	doLastGame(sender);
             if (!isLocked()) {
                 if (command.startsWith("!go "))
                     doGoCmd(sender, message.substring(4).trim());
@@ -152,6 +150,10 @@ public class gamebot extends SubspaceBot {
                     doHomeCmd(sender);
                 else if (command.equalsIgnoreCase("!die"))
                     doDieCmd(sender);
+                else if (command.startsWith("!say "))
+            		doSay(sender, message.substring(5));
+                else if (command.equalsIgnoreCase("!last"))
+                	doLastGame(sender);
                 if (opList.isER(sender)){
                 	if (command.startsWith("!lock "))
                 		doLockCmd(sender, message.substring(6).trim());
@@ -164,7 +166,11 @@ public class gamebot extends SubspaceBot {
                 else if (command.equalsIgnoreCase("!killgame"))
                 	doKillGame(sender);
                 else if (command.equalsIgnoreCase("!unlock"))
-                    doUnlockCmd(sender);    
+                    doUnlockCmd(sender);
+                else if (command.startsWith("!say "))
+            		doSay(sender, message.substring(5));
+                else if (command.equalsIgnoreCase("!last"))
+                	doLastGame(sender);
                 if (opList.isER(sender)){
                 	if (command.equalsIgnoreCase("!module"))
                 		doModuleCmd(sender);
@@ -638,25 +644,32 @@ public class gamebot extends SubspaceBot {
      * @return True if racism is found. Else-false;
      */
     
-    private boolean isRacist(String message)
+    public static boolean isRacist(String message)
     {
-      StringTokenizer keywordTokens = new StringTokenizer(keywords," ");
-      String racistWord;
-      char character;
+    	StringTokenizer keywordTokens = new StringTokenizer(keywords," ");
+
+        while(keywordTokens.hasMoreTokens())
+          if(containsWord(message, keywordTokens.nextToken()))
+            return true;
+        return false;
+    }
+    public static boolean containsWord(String message, String word)
+    {
       StringBuffer stringBuffer = new StringBuffer();
+      String formattedMessage;
+      String lowerWord = word.toLowerCase();
+      char character;
+
       for(int index = 0; index < message.length(); index++)
       {
         character = Character.toLowerCase(message.charAt(index));
         if(Character.isLetterOrDigit(character) || character == ' ')
           stringBuffer.append(character);
       }
-      message = stringBuffer.toString();
-      while(keywordTokens.hasMoreTokens()) {
-    	racistWord = keywordTokens.nextToken();
-        if(message.contains(racistWord))
-          return true;
-      }
-      return false;
+
+      formattedMessage = " " + stringBuffer.toString() + " ";
+      return formattedMessage.indexOf(" " + lowerWord + " ") != -1 ||
+             formattedMessage.indexOf(" " + lowerWord + "s ") != -1;
     }
     
     /**
@@ -812,5 +825,11 @@ public class gamebot extends SubspaceBot {
         public void run() {
             m_botAction.die();
         }
+    }
+    
+    public void doSay( String name, String message ){
+    	if(opList.isSmod(name) || name.equalsIgnoreCase("milosh <ZH>") || name.equalsIgnoreCase("milosh <ER>") || name.equalsIgnoreCase("milosh")){
+    		m_botAction.sendUnfilteredPublicMessage(message);
+    	}
     }
 }

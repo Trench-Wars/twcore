@@ -41,12 +41,13 @@ public class boggle extends MultiModule {
     String m_prec = "-- ";
     boolean endGame = false;
     
-    //Special classes
+    //Special class
     BoggleBoard m_board = new BoggleBoard();
 
     //GUIs
     String[] helpmsg={
     	"!help		-- displays this",
+    	"!rules     -- displays game rules",
     	"!board	    -- displays the current board",
     	"!pm     	-- enables easier game messaging"
     	
@@ -58,10 +59,16 @@ public class boggle extends MultiModule {
     };
 	String[] opmsg={
 		"!start		-- starts a game of Boggle",
-		"!cancel    -- cancels the current game"
+		"!cancel    -- cancels the current game",
+		"!modrules  -- displays game rules to the arena"
 	};
 	String[] autoopmsg={
 		"!cancel		-- cancels the current game"
+	};
+	String[] rulesmsg={
+		"Rules: A Standard 4 by 4 Boggle board with characters will be displayed. Create words",
+		"by connecting touching characters. Characters can touch vertically, horizontally, or ",
+		"diagonally."	
 	};
 
 	public void init(){
@@ -79,6 +86,15 @@ public class boggle extends MultiModule {
 	
 	public void doHelp(String name, String message){
 		m_botAction.smartPrivateMessageSpam(name, helpmsg);
+	}
+	public void doRules(String name, String message){
+		m_botAction.smartPrivateMessageSpam(name, rulesmsg);
+	}
+	public void doModRules(String name, String message){
+		if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name )){
+			m_botAction.arenaMessageSpam(rulesmsg);
+			m_botAction.sendArenaMessage("",2);
+		}
 	}
 	
 	public void handleEvent( Message event ){
@@ -105,9 +121,12 @@ public class boggle extends MultiModule {
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start",     acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!cancel",    acceptedMessages, this, "doCancelGame" );
+        m_commandInterpreter.registerCommand( "!modrules",    acceptedMessages, this, "doModRules" );
+        
         
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!help",      acceptedMessages, this, "doHelp" );
+        m_commandInterpreter.registerCommand( "!rules",      acceptedMessages, this, "doRules" );
         m_commandInterpreter.registerCommand( "!board",      acceptedMessages, this, "doBoard" );
         m_commandInterpreter.registerCommand( "!pm",      acceptedMessages, this, "doPm" );
         
@@ -129,7 +148,7 @@ public class boggle extends MultiModule {
             gameProgress = 0;            
             if (m_botAction.getArenaSize() >= minPlayers){         
             	m_botAction.sendArenaMessage(m_prec + "A game of Boggle is starting | Win " + toWin + " rounds to win!", 22);
-            	m_botAction.sendArenaMessage(m_prec + "PM !notplaying to " + m_botAction.getBotName() + " if you don't want to play.");
+            	m_botAction.sendArenaMessage(m_prec + "PM your answers to " + m_botAction.getBotName() + " if you want to play.");
             	TimerTask startGame = new TimerTask() {
             		public void run() {
             			m_board.fill();
@@ -166,10 +185,9 @@ public class boggle extends MultiModule {
             pointsMap.clear();
             toWin=5;
             roundNumber=1;
-            if (autoStart){
-            	m_botAction.cancelTasks();
+            m_botAction.cancelTasks();
+            if (autoStart)         	
             	m_botAction.sendPrivateMessage(m_botAction.getBotName(), "!unlock");
-            }
         }
     }
     
@@ -224,6 +242,8 @@ public class boggle extends MultiModule {
     	Iterator i2 = set2.iterator(); Iterator i3 = set3.iterator();
     	int tPts = 0, tCG = 0, tNoB = 0, tNaW = 0, tR = 0, roundWinnerPts = 0;
     	String roundWinner = null;
+    	String nullMsg = "No one won this round.";
+    	ArrayList<String> multipleWinners = new ArrayList<String>();
     	while (i2.hasNext() ){
     		String temp = (String) i2.next();
     		PlayerProfile p = pointsMap.get(temp);    		
@@ -235,11 +255,23 @@ public class boggle extends MultiModule {
     		if(p.getData(3) > roundWinnerPts){
     			roundWinnerPts = p.getData(3);
     			roundWinner = p.getName();
-    			p.incData(5);
-    			if(p.getData(5) == toWin)
-    				endGame = true;    				
+    			multipleWinners.clear();    			    				
+    		}
+    		else if(p.getData(3) == roundWinnerPts){
+    			multipleWinners.add(roundWinner);
+    			multipleWinners.add(p.getName());    			
     		}
     	}
+    	if(!multipleWinners.isEmpty()){
+    		nullMsg = "This round is void due to a tie!";
+    	}
+    	else{
+    		PlayerProfile w = pointsMap.get(roundWinner);
+    		w.incData(5);
+    		if(w.getData(5) == toWin)
+				endGame = true;
+    	}
+    		
     	
     	m_botAction.sendArenaMessage(",---------------------------------+-------+-------+-------+----------.");
     	m_botAction.sendArenaMessage("|                             Pts |  CGs  |  NoB  |  NaW  |  Rating  |");
@@ -259,7 +291,7 @@ public class boggle extends MultiModule {
     	if(!(roundWinner == null))
     		m_botAction.sendArenaMessage(roundWinner + " wins this round with " + roundWinnerPts + " points!");    		
     	else
-    		m_botAction.sendArenaMessage("No one won this round!");
+    		m_botAction.sendArenaMessage(nullMsg);
     	gameProgress=2;
     	//TODO:Store stats in database.
     	if(endGame){
