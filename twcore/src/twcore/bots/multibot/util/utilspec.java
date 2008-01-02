@@ -72,7 +72,7 @@ import twcore.core.EventRequester;
 public class utilspec extends MultiUtil
 {
     public static final String COLON = ":";
-
+    
     private Vector <SpecTask>specTasks;
 
     /**
@@ -361,23 +361,36 @@ public class utilspec extends MultiUtil
     }
 
     public void doSpecNotSafe (String sender)	{
-    	m_botAction.scheduleTask(StartSafeTask(), 100);
-    	m_botAction.scheduleTask(StartSafeTask(), 1000);
-    	m_botAction.sendPrivateMessage(sender, "All players not in safe have been speced.");
-    }
-
-    public TimerTask StartSafeTask()	{
-    	TimerTask check = new TimerTask()	{
-    		public void run()	{
-    			Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
-    	    	while(players.hasNext())	{
-    	    		Player temp = (Player)players.next();
-    	    		if (temp != null && !temp.isInSafe())
-    	    				m_botAction.specWithoutLock(temp.getPlayerName());
-    	    	}
-    		}
-    	};
-    	return check;
+    	// Cycle each player:
+    	// - Make the bot spectate each individual player for a small amount of time 
+    	//   to determine if the player is in safe or not
+    	// - bot specs the player if he's not in safe
+    	// - continue on to the next player until all players are done
+    	
+    	m_botAction.sendPrivateMessage(sender, "Spectating players who are not in safe...");
+    	
+    	Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
+    	while(players.hasNext()) {
+    		Player player = players.next();
+    		if(player == null) continue;
+    		
+    		m_botAction.spectatePlayer(player.getPlayerID());
+    		
+    		SpecNotSafe specNotSafe = new SpecNotSafe();
+    		specNotSafe.setPlayer(player);
+    		specNotSafe.setThread(Thread.currentThread());
+    		m_botAction.scheduleTask(specNotSafe, 500);
+    		
+        	// Wait for the specNotSafe TimerTask to complete.
+        	try {
+        		Thread.sleep(1000); // 1 seconds maximum
+        		specNotSafe.cancel(); // In case we hit the timeout, cancel the timertask
+        	} catch(InterruptedException e) {}
+    		
+    	}
+    	
+    	m_botAction.sendPrivateMessage(sender, "Done spectating players who are not in safe.");
+    	
     }
 
     /**
@@ -768,5 +781,33 @@ public class utilspec extends MultiUtil
 
             return value2 - value1;
         }
+    }
+    
+    private class SpecNotSafe extends TimerTask {
+    	private Thread multibot;
+		private Player player;
+		
+		public void run()	{
+			Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
+	    	while(players.hasNext())	{
+	    		Player p = (Player)players.next();
+	    		if(p != null && p.getPlayerID() == player.getPlayerID() && p.isPlaying() && !p.isInSafe()) {
+	    			m_botAction.specWithoutLock(p.getPlayerID());
+	    			break;
+	    		} else if(p != null && p.getPlayerID() == player.getPlayerID()) {
+	    			break;
+	    		}
+	    	}
+	    	multibot.interrupt();
+		}
+		
+		public void setThread(Thread t) {
+			this.multibot = t;
+		}
+		
+		public void setPlayer(Player p) {
+			this.player = p;
+		}
+    	
     }
 }
