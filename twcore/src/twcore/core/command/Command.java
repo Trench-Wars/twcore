@@ -22,7 +22,7 @@ public class Command {
     ArrayList<Object> m_params;
 
     CommandDefinition m_commandDefinition;
-    ArrayList m_cDefList;
+    ArrayList<CommandParameterDefinition> m_cDefList;
 
     boolean m_isInvalidCommand = false;
     String m_invalidMessage;
@@ -104,7 +104,7 @@ public class Command {
     public boolean isInvalid() { return m_isInvalidCommand; }
     public String getInvalidMessage() { return m_invalidMessage; }
     public String getName() { return m_name; }
-    public ArrayList getParameters() { return m_params; }
+    public ArrayList<Object> getParameters() { return m_params; }
 
     public Object get(int n) {
         if (n < m_params.size())
