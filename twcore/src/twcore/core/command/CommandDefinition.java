@@ -85,7 +85,7 @@ public class CommandDefinition {
     public int getMessageTypes() { return m_messageTypes; }
     public char getDelimiter() { return m_delimiter; }
     public boolean isEnabled() { return m_enabled; }
-    public ArrayList getCommandParameterDefinitions() { return m_paramTypes; }
+    public ArrayList<CommandParameterDefinition> getCommandParameterDefinitions() { return m_paramTypes; }
 
     public String getFriendlySyntax() {
         String s = m_trigger + " ";
