@@ -244,16 +244,16 @@ public class BotQueue extends Thread {
         ChildBot c;
         LinkedList<String> names = new LinkedList<String>();
 
-        Iterator i = m_botStable.values().iterator();
+        Iterator<ChildBot> i = m_botStable.values().iterator();
         while( i.hasNext() ) {
             c = (ChildBot)i.next();
             if( c != null )
                 if( c.getClassName().equals( rawClassName ) )
                     names.add( c.getBot().getBotName() );
         }
-        i = names.iterator();
-        while( i.hasNext() ) {
-            String name = (String)i.next();
+        Iterator<String> j = names.iterator();
+        while( j.hasNext() ) {
+            String name = j.next();
             removeBot( name, "!hardremove by " + initiator );
             m_botAction.sendChatMessage( 1, name + " logged off." );
         }
@@ -270,16 +270,16 @@ public class BotQueue extends Thread {
         ChildBot c;
         LinkedList<String> names = new LinkedList<String>();
 
-        Iterator i = m_botStable.values().iterator();
+        Iterator<ChildBot> i = m_botStable.values().iterator();
         while( i.hasNext() ) {
             c = (ChildBot)i.next();
             if( c != null ) {
                 names.add( c.getBot().getBotName() );
             }
         }
-        i = names.iterator();
-        while( i.hasNext() ) {
-            String name = (String)i.next();
+        Iterator<String> j = names.iterator();
+        while( j.hasNext() ) {
+            String name = j.next();
             removeBot( name, "core shutdown" );
             m_botAction.sendChatMessage( 1, name + " logged off." );
         }
