@@ -1,6 +1,8 @@
 package twcore.bots.bannerboy;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -32,6 +34,13 @@ public class bannerboy extends SubspaceBot {
 
 	//Boolean to track if 'talking' mode is on
 	private boolean m_talk;
+	
+	
+	// PreparedStatements
+	PreparedStatement psGetBannerID;
+	PreparedStatement psSaveBanner;
+	PreparedStatement psSeenBanner;
+	PreparedStatement psCheckSeen;
 
 	public bannerboy( BotAction botAction ) {
 		super( botAction );
@@ -42,8 +51,11 @@ public class bannerboy extends SubspaceBot {
 		req.request( EventRequester.ARENA_LIST );
 
 		m_toCheck = new Vector<BannerCheck>();
-
 		m_talk = false;
+		psGetBannerID = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "SELECT fnBannerID FROM tblBanner WHERE fcBanner = ? LIMIT 0,1");
+        psSaveBanner = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "INSERT INTO tblBanner (fnUserID, fcBanner, fdDateFound) VALUES ( ? , ? , NOW())");
+        psSeenBanner = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "INSERT INTO tblWore (fnUserId, fnBannerId) VALUES ( ? , ? )");
+        psCheckSeen = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "SELECT fnUserId FROM tblWore WHERE fnUserID = ? AND fnBannerID = ? LIMIT 0,1");
 	}
 
 	public void handleEvent( PlayerBanner event ) {
@@ -66,6 +78,8 @@ public class bannerboy extends SubspaceBot {
 	public void handleEvent( ArenaList event ) {
 
 		String currentPick = "#robopark";
+		// If arena name starts with # or less then 10 players are in it, pick a random arena again.
+		// Note: This can create an indefinite loop if there are only # arenas or there are only arenas with less then 10 players in it. 
 		while( currentPick.startsWith( "#" ) || event.getSizeOfArena( currentPick ) < 10 )  {
 			String[] arenaNames = event.getArenaNames();
 			int arenaIndex = (int) (Math.random() * arenaNames.length);
@@ -74,57 +88,54 @@ public class bannerboy extends SubspaceBot {
 		m_botAction.changeArena( currentPick );
 
 	}
+	
+	public void handleDisconnect() {
+	    m_botAction.closePreparedStatement(m_sqlHost, this.psCheckSeen);
+	    m_botAction.closePreparedStatement(m_sqlHost, this.psGetBannerID);
+	    m_botAction.closePreparedStatement(m_sqlHost, this.psSaveBanner);
+	    m_botAction.closePreparedStatement(m_sqlHost, this.psSeenBanner);
+	    m_botAction.cancelTasks();
+	}
 
 	private boolean bannerExists( byte[] b ) {
-
-		String banner = getBannerString( b );
 		try {
-                        boolean exists = false;
-			String query = "SELECT * FROM tblBanner WHERE fcBanner = '"+banner+"'";
-			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
-			if( result.next() ) exists = true;
-                        m_botAction.SQLClose( result );
-                        return exists;
-		} catch (Exception e) {
-			Tools.printStackTrace( e );
+            psGetBannerID.setString(1, getBannerString( b ));
+            ResultSet rs = psGetBannerID.executeQuery();
+			
+            if( rs.next() ) return true;
+            else            return false;
+		} catch (SQLException sqle) {
+			Tools.printStackTrace( sqle );
 			return true;
 		}
 	}
 
 	private void saveBanner( String player, byte[] b ) {
-
-		int fnUserID = getPlayerID( player );
-		String banner = getBannerString( b );
-
 		try {
-			String query = "INSERT INTO tblBanner (fnUserID, fcBanner, fdDateFound) VALUES ";
-			query += "('"+fnUserID+"', '"+banner+"', NOW() )";
-			m_botAction.SQLQueryAndClose( m_sqlHost, query );
+			psSaveBanner.setInt(1, getPlayerID( player ));
+			psSaveBanner.setString(2, getBannerString( b ));
+			psSaveBanner.execute();
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
 	}
 
 	private int getPlayerID( String player ) {
-
 		DBPlayerData dbPlayer = new DBPlayerData( m_botAction, m_sqlHost, player, true );
 		return dbPlayer.getUserID();
 	}
 
 	private int getBannerID( byte[] b ) {
-
-		String banner = getBannerString( b );
-
+        int id = -1;
 		try {
-                        int id = -1;
-			String query = "SELECT fnBannerID FROM tblBanner WHERE fcBanner = '"+banner+"'";
-			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
-			if( result.next() )
-				id = result.getInt( "fnBannerID" );
-                        m_botAction.SQLClose( result );
-                        return id;
-		} catch (Exception e) {
-			Tools.printStackTrace( e );
+		    psGetBannerID.setString(1, getBannerString( b ));
+		    ResultSet rs = psGetBannerID.executeQuery();
+			if( rs.next() ) {
+			    id = rs.getInt("fnBannerID");
+			}
+            return id;
+		} catch (SQLException sqle) {
+			Tools.printStackTrace( sqle );
 			return -1;
 		}
 	}
@@ -145,30 +156,32 @@ public class bannerboy extends SubspaceBot {
 		int bannerId = getBannerID( banner );
 		int userId = getPlayerID( player );
 
-		if( bannerId <= 0 ) return;
+		if( bannerId <= 0 ) 
+		    return;
 
-		if( alreadyMarked( userId, bannerId ) ) return;
+		if( alreadyMarked( userId, bannerId ) ) 
+		    return;
 
 		try {
-			String query = "INSERT into tblWore (fnUserId, fnBannerId) VALUES ";
-			query += "("+userId+", "+bannerId+")";
-                         m_botAction.SQLQueryAndClose( m_sqlHost, query );
-		} catch (Exception e) {
-			Tools.printStackTrace( e );
+		    psSeenBanner.setInt(1, userId);
+		    psSeenBanner.setInt(2, bannerId);
+		    psSeenBanner.execute();
+		} catch (SQLException sqle) {
+			Tools.printStackTrace( sqle );
 		}
 	}
 
 	private boolean alreadyMarked( int userId, int bannerId ) {
-
 		try {
-                        boolean marked = false;
-			String query = "SELECT fnUserId FROM tblWore WHERE fnUserID = "+userId+" AND fnBannerID = "+bannerId;
-			ResultSet result = m_botAction.SQLQuery( m_sqlHost, query );
-			if( result.next() ) marked = true;
-                        m_botAction.SQLClose( result );
-                        return marked;
-		} catch (Exception e) {
-			Tools.printStackTrace( e );
+		    psCheckSeen.setInt(1, userId);
+		    psCheckSeen.setInt(2, bannerId);
+		    ResultSet rs = psCheckSeen.executeQuery();
+			if( rs.next() ) 
+			    return true;
+			else
+			    return false;
+		} catch (SQLException sqle) {
+			Tools.printStackTrace( sqle );
 			return true;
 		}
 	}
@@ -187,56 +200,81 @@ public class bannerboy extends SubspaceBot {
 	}
 
 	public void handleEvent( Message event ) {
-
 		if( event.getMessageType() != Message.PRIVATE_MESSAGE &&
-		    event.getMessageType() != Message.REMOTE_PRIVATE_MESSAGE) return;
+		    event.getMessageType() != Message.REMOTE_PRIVATE_MESSAGE) 
+		    return;
 
 		String player = m_botAction.getPlayerName( event.getPlayerID() );
+		String message = event.getMessage();
 
 		if( event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE )
 			player = event.getMessager();
 
 
-		if( player.equals( "2dragons" ) ) {
-			if( event.getMessage().startsWith( "!die" ) )
-				m_botAction.die();
-			else if( event.getMessage().startsWith( "!go " ) )
-				m_botAction.joinArena( event.getMessage().substring( 4 ) );
-			else if( event.getMessage().startsWith( "!say " ) ) sayCommand( event.getMessage().substring( 5 ) );
-			else if( event.getMessage().startsWith( "!tsay ") ) sayTCommand( event.getMessage().substring( 6 ) );
-			else if( event.getMessage().startsWith( "!talk" ) ) toggleTalk( player );
+		if( m_botAction.getOperatorList().isSmod(player)) {
+		    if(message.startsWith("!help")) {
+		        String[] help = {
+                     "Available commands:",
+                     " !go <arena>                 - Makes the bot move to <arena>",
+                     " !say <playername>:<message> - Sends PM with <message> to <playername>",
+                     " !tsay <message>             - Sends team <message>",
+                     " !talk                       - Toggles if the bot talks to the player",
+                     "                               when copying/wearing his banner",
+                     " !die                        - Disconnects the bot"
+                     };
+		        m_botAction.smartPrivateMessageSpam(player, help);
+		    } else
+		        
+			if(message.startsWith("!die")) {
+			    this.handleDisconnect();
+			    m_botAction.die("Disconnected by "+player);
+			} else 
+			    
+			if(message.startsWith("!go ")) {
+			    String arena = message.substring(4);
+			    
+			    if(arena.length() > 0) {
+			        m_botAction.sendSmartPrivateMessage(player, "Going to "+arena);
+			        m_botAction.joinArena( arena );
+			    }
+			} else
+			    
+			if(message.startsWith("!say ")) {
+			    if(message.indexOf(':')==-1)
+			        return;
+			    
+			    String pieces[] = message.split( ":" );
+		        m_botAction.sendSmartPrivateMessage( pieces[0], pieces[1] );
+		        m_botAction.sendSmartPrivateMessage( player, "PM send to "+pieces[0]);
+			} else 
+			    
+			if(message.startsWith("!tsay ")) {
+			    if(message.length()>0)
+			        m_botAction.sendTeamMessage( message );
+			} else 
+			    
+			 if(message.startsWith("!talk")) {
+			     m_talk = !m_talk;
+			     if( m_talk ) m_botAction.sendSmartPrivateMessage( player, "Talk on" );
+			     else         m_botAction.sendSmartPrivateMessage( player, "Talk off" );
+			 }
 		}
-		else m_botAction.sendSmartPrivateMessage( "2dragons", player + "> "+event.getMessage() );
-	}
-
-	private void toggleTalk( String _name ) {
-
-		m_talk = !m_talk;
-		if( m_talk ) m_botAction.sendSmartPrivateMessage( _name, "Talk on" );
-		else m_botAction.sendSmartPrivateMessage( _name, "Talk off" );
-	}
-
-	private void sayCommand( String message ) {
-
-		String pieces[] = message.split( ":" );
-
-		try {
-		m_botAction.sendSmartPrivateMessage( pieces[0], pieces[1] );
-		} catch (Exception e) {
-		}
-	}
-
-	private void sayTCommand( String message ) {
-
-		try {
-		m_botAction.sendTeamMessage( message );
-		} catch (Exception e) {
-			System.out.println( e );
+		else {
+		    m_botAction.sendChatMessage(player + "> "+event.getMessage());
 		}
 	}
 
 	public void handleEvent( LoggedOn event ) {
+	    
+	    if(psGetBannerID == null || psSaveBanner == null || psSeenBanner == null || psCheckSeen == null) {
+            //Something went wrong, we can't continue
+            handleDisconnect();
+            m_botAction.die("Error while creating PreparedStatements");
+            return;
+        }
+        
 		m_botAction.joinArena( "baseelim" );
+		m_botAction.sendUnfilteredPublicMessage("?chat="+m_botAction.getGeneralSettings().getString("Chat Name"));
 
 		TimerTask changeArenas = new TimerTask() {
 			public void run() {
