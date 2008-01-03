@@ -82,7 +82,7 @@ public class MessageLimiter {
     public void reduce( long difference ){
         long times = difference/time;
         for( int j = 0; j < times && j < m_rate; j++ ){
-            Iterator i = m_timeMap.keySet().iterator();
+            Iterator<String> i = m_timeMap.keySet().iterator();
             while( i.hasNext() ){
                 String name = (String)i.next();
                 Integer theInteger = m_timeMap.get( name );
