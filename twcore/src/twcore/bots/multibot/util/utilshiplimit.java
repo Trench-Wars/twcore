@@ -1,10 +1,8 @@
 package twcore.bots.multibot.util;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Random;
 import java.util.StringTokenizer;
-
+import java.util.TreeMap;
 import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
 import twcore.core.events.FrequencyChange;
@@ -12,25 +10,45 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 
 public class utilshiplimit extends MultiUtil
 {
+	
+  public TreeMap<Integer, Integer> shipLimits = new TreeMap<Integer, Integer>();
   public static final int UNLIMITED = -1;
-  public static final int MAXSHIP = 8;
+  public static final int MAXSHIP = 9;
   public static final int MINSHIP = 1;
   public static final int SPEC = 0;
 
-  private int[] shipLimits;
-  private Random rand = new Random();
-  
   /**
-   * Initializes variables.
+   * Initializes initial shipLimits.
    */
-  
   public void init()	{
-	  shipLimits = new int[MAXSHIP];
-	  for(int index = 0; index < MAXSHIP; index++)
-		  shipLimits[index] = UNLIMITED;
+	  for (int i=MINSHIP; i < MAXSHIP; i++) {
+	      setLimit(i, UNLIMITED); 
+	    }
+  }
+  /**
+   * Gets the ship limit for the specified ship.
+   * @param ship ship to retrieve the limit for
+   * @return limit for ship
+   */
+  private int getLimit(int ship) {
+	  if (!shipLimits.containsKey(ship)) { 
+		  // for some reason this should arise!
+		  return -1; }
+	  else {
+	      return shipLimits.get(ship); 
+	  }
+  }
+  /**
+   * Sets the ship's limit to limit
+   * @param ship ship to set a limit on
+   * @param limit limit to set for the ship
+   */
+  private void setLimit(int ship, int limit) {
+	  shipLimits.put(ship, limit);
   }
   
   /**
@@ -43,14 +61,46 @@ public class utilshiplimit extends MultiUtil
   }
   
   /**
+   * Puts a player in a new LEGAL ship, if one does not
+   * exist it puts the player in spec.
+   * Added instead of getValidShip.
+   * @param player Player who's ship needs to be changed.
+   */
+  public void putPlayerInNewShip(Player player) {
+		int freq = player.getFrequency();
+		int shipTypeOnFreq;
+		int limit = 0;
+
+	    for (int i = MINSHIP; i < MAXSHIP; i++) {
+				shipTypeOnFreq = getShipTypeOnFreq(i, freq);				
+				limit = getLimit(i);
+				
+			    if((shipTypeOnFreq > limit && limit != UNLIMITED) || limit == 0)
+				{ // This ship is illegal!
+				} 
+				else 
+			  	{
+				  // Puts them in the first non-illegal ship
+				  m_botAction.setShip(player.getPlayerID(), i);
+				  return;
+			  	}
+		  }
+		  
+			// No legal ships are legal, spec the player...
+			m_botAction.specWithoutLock(player.getPlayerID());
+			m_botAction.sendSmartPrivateMessage(player.getPlayerName(), "Ship limiting is enabled in this arena. All of the ships are taken at this time.");
+			return;
+	}
+  
+  /**
    * Turns all limits off.
    */
 
   public void doLimitsOffCmd()
   {
-    for(int index = 0; index < MAXSHIP; index++)
-      shipLimits[index] = UNLIMITED;
-    m_botAction.sendArenaMessage("Ship Limits have been turned off.");
+    for(int index = MINSHIP; index < MAXSHIP; index++) {
+      setLimit(index, UNLIMITED); }
+      m_botAction.sendArenaMessage("Ship limiting has been disabled.");
   }
   
   /**
@@ -64,14 +114,14 @@ public class utilshiplimit extends MultiUtil
     int limit;
     String limitString;
 
-    for(int index = 0; index < MAXSHIP; index++)
+    for(int index = MINSHIP; index < MAXSHIP; index++)
     {
-      limit = shipLimits[index];
+      limit = getLimit(index);
       if(limit == UNLIMITED)
         limitString = "Off";
       else
         limitString = Integer.toString(limit);
-      m_botAction.sendSmartPrivateMessage(sender, "Ship: " + (index + 1) + "  -  Limit: " + limitString + ".");
+        m_botAction.sendSmartPrivateMessage(sender, Tools.shipName(index) + "'s ship limit is " + limitString + ".");
     }
   }
   
@@ -97,19 +147,27 @@ public class utilshiplimit extends MultiUtil
       if(ship < MINSHIP || ship > MAXSHIP)
         throw new IllegalArgumentException("Invalid ship number.");
       limitString = argTokens.nextToken();
+      
       if(limitString.equals("off"))
       {
         limit = UNLIMITED;
-        m_botAction.sendArenaMessage("Ship limit for ship " + ship + " has been turned off.");
+        m_botAction.sendArenaMessage("Ship limiting for " + Tools.shipName(ship) + "'s has been disabled.");
       }
       else
       {
         limit = Integer.parseInt(limitString);
-        if(limit < 0)
-          throw new IllegalArgumentException("Invalid ship limit.  If you wish to remove the limit type !Limit <Ship> Off");
-        m_botAction.sendArenaMessage("Ship limit for ship " + ship + " has been set to " + limit + " per freq.");
-      }
-      shipLimits[ship - 1] = limit;
+        if(limit == 0) 
+        	{
+        		m_botAction.sendArenaMessage("The " + Tools.shipName(ship) + " has been disabled.");
+        	} else {
+        	    m_botAction.sendArenaMessage(Tools.shipName(ship) + " is now limited to " + limit + " per frequency.");
+        	      
+        	}
+        
+       }
+
+      setLimit(ship, limit);
+      checkPlayers();
     }
     catch(NumberFormatException e)
     {
@@ -118,15 +176,25 @@ public class utilshiplimit extends MultiUtil
   }
   
   /**
+   * Enforces NEW limit rules.
+   */
+  public void checkPlayers() { 
+	  Iterator<Player> p = m_botAction.getPlayingPlayerIterator();
+	  Player im;
+	  while(p.hasNext()) {
+		  im = p.next();
+		 checkLimit(im.getPlayerID());
+	  }
+  }
+  /**
    * Checks the player for ship restrictions.
    * 
-   * @param playerName
+   * @param playerID
    */
-  
-  private void checkLimit(String playerName)
+  private void checkLimit(int playerID)
   {
-    Player player = m_botAction.getPlayer(playerName);
-    int ship = player.getShipType();
+    Player player = m_botAction.getPlayer(playerID);
+    byte ship = player.getShipType();
     int freq = player.getFrequency();
     int shipTypeOnFreq;
     int limit;
@@ -134,27 +202,17 @@ public class utilshiplimit extends MultiUtil
     if(ship != SPEC)
     {
       shipTypeOnFreq = getShipTypeOnFreq(ship, freq);
-      limit = shipLimits[ship - 1];
-      if(shipTypeOnFreq > limit && limit != UNLIMITED)
+      limit = getLimit(ship);
+      if((shipTypeOnFreq > limit && limit != UNLIMITED) || limit == 0)
       {
-    	  m_botAction.setShip(playerName, getValidShip());
-        m_botAction.sendSmartPrivateMessage(playerName, "The maximum number of ship " + ship + " has been reached on freq " + freq + ".");
+    	if(limit == 0) {
+    		m_botAction.sendSmartPrivateMessage(player.getPlayerName(), "The " + Tools.shipName(ship) + " has been disabled in this arena.");
+    	} else {
+    		m_botAction.sendSmartPrivateMessage(player.getPlayerName(), "The maximum number of " + Tools.shipName(ship) + "'s have been reached for frequency " + freq + ".");
+    	}
+        putPlayerInNewShip(player);
       }
     }
-  }
-  
-  /**
-   * Gets a non restricted ship.
-   * 
-   * @return a non restricted ship.
-   */
-  
-  private int getValidShip()	{
-	  ArrayList<Integer> acceptable = new ArrayList<Integer>();
-	  for ( int i=1 ; i<shipLimits.length ; i++)
-		  if (shipLimits[i] == -1)
-			  acceptable.add(new Integer(i));
-	  return acceptable.get( rand.nextInt(acceptable.size()) ).intValue();
   }
   
   /**
@@ -164,16 +222,15 @@ public class utilshiplimit extends MultiUtil
    * @param freq is the freq to check.
    * @return the number of specified ships on the given freq.
    */
-  
   private int getShipTypeOnFreq(int ship, int freq)
   {
     int shipCount = 0;
-    Player player;
+    Player player = null;
 
-    Iterator<Player> iterator = m_botAction.getPlayerIterator();
+    Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
     while(iterator.hasNext())
     {
-      player = (Player) iterator.next();
+      player = iterator.next();
       if(player.getShipType() == ship && player.getFrequency() == freq)
         shipCount++;
     }
@@ -184,11 +241,13 @@ public class utilshiplimit extends MultiUtil
    * Handles freq ship changes.
    */
   
+  /**
+   * Handles freq ship changes.
+   */
+  
   public void handleEvent(FrequencyChange event)
   {
-    int playerID = event.getPlayerID();
-    String playerName = m_botAction.getPlayerName(playerID);
-    checkLimit(playerName);
+	  checkLimit(event.getPlayerID());
   }
   
   /**
@@ -197,9 +256,7 @@ public class utilshiplimit extends MultiUtil
 
   public void handleEvent(FrequencyShipChange event)
   {
-    int playerID = event.getPlayerID();
-    String playerName = m_botAction.getPlayerName(playerID);
-    checkLimit(playerName);
+	  checkLimit(event.getPlayerID());
   }
   
   /**
@@ -231,15 +288,15 @@ public class utilshiplimit extends MultiUtil
     {
       if(command.equals("!limitsoff"))
         doLimitsOffCmd();
-      if(command.equals("!listlimits"))
+      if(command.equals("!limits") || command.equals("!listlimits"))
         doListLimitsCmd(sender);
       if(command.startsWith("!limit "))
         doLimitCmd(message.substring(7));
     }
     catch(Exception e)
-    {
+ {
       m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
-    }
+}
   }
   
   /**
@@ -248,15 +305,15 @@ public class utilshiplimit extends MultiUtil
   
   public String[] getHelpMessages()
   {
-    String[] message =
-    {
-      "!LimitsOff                                     -- Turns all of the ship limits off.",
-      "!ListLimits                                    -- Displays the current ship limits.",
-      "!Limit <Ship> <Limit>                          -- Limits the number of <Ship> to <Limit> per freq.",
-      "                                                  To turn the limit off, type !Limit <Ship> Off"
-    };
+	    String[] message =
+	    {
+	      "!LimitsOff                                     -- Turns all of the ship limits off.",
+	      "!Limits                                        -- Displays the current ship limits.",
+	      "!Limit <Ship> <Limit>                          -- Limits the number of <Ship> to <Limit> per freq.",
+	      "!Limit <Ship> Off                              -- Turns limiting off for <Ship>."
+	    };
 
-    return message;
+	    return message;
   }
 }
 
