@@ -174,7 +174,7 @@ public class Session extends Thread {
         return m_name;
     }
 
-    public Class getBotClass(){
+    public Class<? extends SubspaceBot> getBotClass(){
         return m_roboClass;
     }
 

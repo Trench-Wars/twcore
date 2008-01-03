@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -28,7 +29,7 @@ public class SQLConnectionPool implements Runnable {
                                                 // False - throw SQLException if no
                                                 //         connection is available
     private Vector<Connection>  availableConnections;       // Connections not in use
-    private Vector<Connection>  busyConnections;            // Connections currently querying
+    private HashMap<String, Connection>  busyConnections;            // Connections currently querying
     private boolean connectionPending = false;  // True if a connection is being made
     private int     currentBackground = 0;      // Total number of background queries
 
@@ -59,7 +60,7 @@ public class SQLConnectionPool implements Runnable {
             initialConnections = maxConnections;
         }
         availableConnections = new Vector<Connection>(initialConnections);
-        busyConnections = new Vector<Connection>();
+        busyConnections = new HashMap<String, Connection>();
         for(int i=0; i<initialConnections; i++) {
             availableConnections.addElement(makeNewConnection());
         }
@@ -98,17 +99,28 @@ public class SQLConnectionPool implements Runnable {
     }
 
     /**
-     * Attempts to retrieve a connection from the connection pool.  If there is
-     * one available, it will be returned and added to the busy connection list.
-     * Otherwise, if the number of total connections is less than the maximum
+     * Attempts to retrieve a connection from the connection pool using the specified unique ID.
+     * If there is a busy connection using the same unique ID, this will be returned 
+     * (only used for PreparedStatements as creating a PreparedStatement locks the bot).  
+     * Otherwise, if there is one available, it will be returned and added to the busy connection 
+     * list using the specified unique ID.
+     * If there is no connection available; if the number of total connections is less than the maximum
      * allowed, a new connection will be made in the background and returned to
      * the available list once created, at which point the method will recurse
      * back on itself and grab the newly made connection.
+     * 
+     * @param uniqueID unique string used for reusing busy connections with the same unique id
      * @return An available connection
      * @throws SQLException
      */
-    public synchronized Connection getConnection() throws SQLException {
-        if (!availableConnections.isEmpty()) {
+    public synchronized Connection getConnection(String uniqueID) throws SQLException {
+        if(uniqueID.equals("0")==false) {
+            if(busyConnections.containsKey(uniqueID)) {
+                return busyConnections.get(uniqueID);
+            }
+        }
+        
+        if (availableConnections.isEmpty()==false) {
             Connection existingConnection = availableConnections.lastElement();
             int lastIndex = availableConnections.size() - 1;
             availableConnections.removeElementAt(lastIndex);
@@ -116,7 +128,7 @@ public class SQLConnectionPool implements Runnable {
                 notifyAll(); // Freed up a spot for anybody waiting
                 return(getConnection());
             } else {
-                busyConnections.addElement(existingConnection);
+                busyConnections.put(uniqueID, existingConnection);
                 return(existingConnection);
             }
         } else {
@@ -129,8 +141,22 @@ public class SQLConnectionPool implements Runnable {
                 wait();
             } catch(InterruptedException ie) {}
             // Someone freed up a connection, so try again.
-            return getConnection();
+            return getConnection(uniqueID);
         }
+    }
+    
+    /**
+     * Attempts to retrieve a connection from the connection pool.  If there is
+     * one available, it will be returned and added to the busy connection list.
+     * Otherwise, if the number of total connections is less than the maximum
+     * allowed, a new connection will be made in the background and returned to
+     * the available list once created, at which point the method will recurse
+     * back on itself and grab the newly made connection.
+     * @return An available connection
+     * @throws SQLException
+     */
+    public Connection getConnection() throws SQLException {
+        return this.getConnection("0");
     }
 
     /**
@@ -188,7 +214,7 @@ public class SQLConnectionPool implements Runnable {
      * @param connection The connection to free
      */
     public synchronized void free( Connection connection ) {
-        busyConnections.removeElement(connection);
+        busyConnections.remove(connection);
         availableConnections.addElement(connection);
         // Wake up threads that are waiting for a connection
         notifyAll();
@@ -206,22 +232,36 @@ public class SQLConnectionPool implements Runnable {
      * Closes all of the connections monitored by this connection pool.
      */
     public synchronized void closeAllConnections() {
-        closeConnections(availableConnections);
+        closeAvailableConnections(availableConnections);
         availableConnections = new Vector<Connection>();
-        closeConnections(busyConnections);
-        busyConnections = new Vector<Connection>();
+        closeBusyConnections(busyConnections);
+        busyConnections = new HashMap<String,Connection>();
     }
 
     /**
      * Closes all of the connections in a given vector.
      * @param connections Vector containing connections to close
      */
-    private void closeConnections(Vector connections) {
+    private void closeAvailableConnections(Vector<Connection> connections) {
         try {
-            for(int i=0; i<connections.size(); i++) {
-                Connection connection = (Connection)connections.elementAt(i);
-                if (!connection.isClosed()) {
-                    connection.close();
+            for(Connection con:connections) {
+                if (!con.isClosed()) {
+                    con.close();
+                }
+            }
+        } catch(SQLException sqle) {
+        }
+    }
+    
+    /**
+     * Closes all of the connections in the given HashMap.
+     * @param connections Vector containing connections to close
+     */
+    private void closeBusyConnections(HashMap<String,Connection> connections) {
+        try {
+            for(Connection conn:connections.values()) {
+                if (!conn.isClosed()) {
+                    conn.close();
                 }
             }
         } catch(SQLException sqle) {
@@ -263,7 +303,7 @@ public class SQLConnectionPool implements Runnable {
      * @return True if # background connections is equal to max # connections allowed
      */
     public synchronized boolean reachedMaxBackground(){
-        return currentBackground == maxConnections;
+        return (currentBackground == maxConnections);
     }
 
     /**

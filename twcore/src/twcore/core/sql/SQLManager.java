@@ -1,6 +1,8 @@
 package twcore.core.sql;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -10,6 +12,7 @@ import twcore.core.BotSettings;
 import twcore.core.SubspaceBot;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.util.Tools;
+
 
 /**
  * Thread-based main class for the core's SQL database functionality.
@@ -82,8 +85,8 @@ public class SQLManager extends Thread {
                 queues.put( name, new SQLBackgroundQueue() );
             }
             Tools.printLog( "SQL Connection Pools initialized successfully." );
-            for( Iterator i = pools.values().iterator(); i.hasNext(); ){
-                Tools.printLog( ((SQLConnectionPool)i.next()).toString() );
+            for( Iterator<SQLConnectionPool> i = pools.values().iterator(); i.hasNext(); ){
+                Tools.printLog( i.next().toString() );
             }
         } catch( SQLException e ){
             Tools.printLog( "Failed to load SQL Connection Pools.  Driver missing?" );
@@ -165,6 +168,63 @@ public class SQLManager extends Thread {
             return pools.get( connectionName ).query( query );
         }
     }
+    
+    
+    /** 
+     * Creates a PreparedStatement.
+     * Gets a Connection from the specified SQLConnectionPool (specified by the connectionName) 
+     * and creates a PreparedStatement object using the specified query.
+     * Note that this sets the connection to "busy" in the SQLConnectionPool so it isn't used by other processes.
+     * 
+     * You need to free it when the bot doesn't use the PreparedStatement anymore or this will be a Connection-leak !!
+     *  
+     * @param connectionName Name of the connection as defined in sql.cfg
+     * @param uniqueID A unique string that is used for re-using (busy) Connections in the connection pool. This is only used for PreparedStatements as their Connection is locked when a bot creates a PreparedStatement.
+     * @param sqlstatement The (dynamic) SQL INSERT/UPDATE statement that will be pre-parsed for the PreparedStatement
+     * @return PreparedStatement object or null if there was an error
+     */
+    public PreparedStatement createPreparedStatement(String connectionName, String uniqueID, String sqlstatement) {
+    	if( !operational ) {
+    		Tools.printLog( "Unable to create PreparedStatement object; SQL System is not operational");
+            return null;
+    	} else {
+    		if(!pools.containsKey( connectionName ))
+    			return null;
+    		else {
+    			try {
+    			    // Have we hit the maximum number of allowed connections in the pool? 
+    			    if(pools.get(connectionName).totalConnections() < pools.get(connectionName).getMaxConnections()) {
+    			        Connection conn = pools.get( connectionName ).getConnection(uniqueID);
+        			    return conn.prepareStatement(sqlstatement);
+    			    } else {
+    			        Tools.printLog("No more connections available in pool '"+connectionName+"' to create PreparedStatement!");
+    			        return null;
+    			    }
+    			} catch(SQLException sqle) {
+    				Tools.printLog("SQLException encountered while trying to create a PreparedStatement from a Connection from '"+connectionName+"':"+sqle.getMessage());
+    				return null;
+    			}
+    		}
+    	}
+    }
+    
+    /**
+     * Frees specified Connection for specified connectionpool.
+     * This should be used when closing a PreparedStatement as it locks a connection on creation.
+     * 
+     * @param connectionName Name of the connection as defined in sql.cfg
+     * @param conn Connection used when creating a PreparedStatement
+     */
+    public void freeConnection(String connectionName, Connection conn) {
+    	if( !operational ) {
+    		Tools.printLog( "Unable to free Connection; SQL System is not operational");
+    	} else {
+    		if(pools.containsKey( connectionName )) {
+    			pools.get( connectionName ).free(conn);
+    		}
+    	}
+    	
+    }
 
     /**
      * @return True if the SQL system is operational
@@ -192,9 +252,9 @@ public class SQLManager extends Thread {
      */
     public String[] getPoolStatus() {
         String[] status = new String[pools.size()];
-        Iterator i = pools.values().iterator();
+        Iterator<SQLConnectionPool> i = pools.values().iterator();
         for(int j = 0; j<status.length; j++)
-            status[j] = ((SQLConnectionPool)i.next()).toString();
+            status[j] = i.next().toString();
         return status;
     }
     
@@ -207,9 +267,9 @@ public class SQLManager extends Thread {
      */
     public void run() {
         while( true ){
-            Iterator i = queues.keySet().iterator();
+            Iterator<String> i = queues.keySet().iterator();
             while( i.hasNext() ){
-                String name = (String)i.next();
+                String name = i.next();
                 SQLBackgroundQueue queue = queues.get( name );
                 SQLConnectionPool pool = pools.get( name );
                 while( !queue.isEmpty() && !pool.reachedMaxBackground() ){

@@ -1,17 +1,19 @@
 package twcore.core;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collections;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.WeakHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.List;
+import java.util.WeakHashMap;
 
 import twcore.core.command.TempSettingsManager;
 import twcore.core.game.Arena;
@@ -24,6 +26,7 @@ import twcore.core.util.InterProcessCommunicator;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
+
 
 /**
  * The main bot utility class, your bot's best and easiest method of performing
@@ -2715,6 +2718,54 @@ public class BotAction
             }
         }
 
+    }
+    
+    /**
+     * Creates a PreparedStatement with the specified query using the specified connection.
+     * 
+     * NOTE: This PreparedStatement MUST be closed when it's destroyed!! (At the end of a method or when the bot disconnects.)
+     * Use the method closePreparedStatement for this.
+     * If you don't, the connection in the connectionpool will be left locked and no other bots will be able to use it.
+     * This will become a connection leak!
+     * NOTE2: The returned value can be NULL if something went wrong or if there were no more connections available.
+     * Always check for this!
+     *  
+     * @param connectionName The connection name as specified in sql.cfg.
+     * @param uniqueID A unique string that you can identify your bot with. Usually your bot name suffices. <br/>You will get a PreparedStatement on the same Connection when using the same uniqueID.
+     * @param sqlstatement The (dynamic) SQL INSERT/UPDATE statement for pre-parsing 
+     * @return a PreparedStatement object or null if there was an error
+     */
+    public PreparedStatement createPreparedStatement(String connectionName, String uniqueID, String sqlstatement) {
+        return getCoreData().getSQLManager().createPreparedStatement(connectionName, uniqueID, sqlstatement);
+    }
+    
+    /** 
+     * Closes the specified PreparedStatement and frees the used Connection in the specified connection pool.
+     * 
+     * You MUST close this PreparedStatement when it's about to be destroyed! (At the end of a method or when the bot disconnects.)
+     * 
+     * If you don't, the connection in the connectionpool will be left locked and no other bots will be able to use it.
+     * This will become a connection leak!
+     * 
+     * @param connectionName The connection name as specified in sql.cfg.
+     * @param p The PreparedStatement to be closed
+     */
+    public void closePreparedStatement(String connectionName, PreparedStatement p) {
+    	if(p != null) {
+	    	Connection conn = null;
+	    	try { 
+	    		conn = p.getConnection();
+	    	} catch(SQLException sqle) {}
+	    	
+	    	try {
+	    		p.close();
+	    	} catch(SQLException sqle) {}
+	    		
+	    	if(conn != null) {
+	    		getCoreData().getSQLManager().freeConnection(connectionName, conn);
+	    	}
+    	}
+    
     }
 
 
