@@ -59,7 +59,7 @@ public class InterProcessCommunicator {
      */
     public synchronized String[] getSubscribedChannels( SubspaceBot bot ){
         synchronized (channels) {
-            Iterator i = channels.values().iterator();
+            Iterator<IPCChannel> i = channels.values().iterator();
             ArrayList<String> list = new ArrayList<String>();
             while( i.hasNext() ){
                 IPCChannel ipc = (IPCChannel)i.next();
@@ -116,7 +116,7 @@ public class InterProcessCommunicator {
      */
     public synchronized void removeFromAll( SubspaceBot bot ){
         synchronized (channels) {
-            Iterator i = channels.values().iterator();
+            Iterator<IPCChannel> i = channels.values().iterator();
             while( i.hasNext() ){
                 IPCChannel channel = (IPCChannel)i.next();
                 channel.unsubscribe( bot );
@@ -162,9 +162,9 @@ public class InterProcessCommunicator {
          */
         public void broadcast( InterProcessEvent e ){
             synchronized (bots) {
-                Iterator i = bots.iterator();
+                Iterator<SubspaceBot> i = bots.iterator();
                 while( i.hasNext() ){
-                    ((SubspaceBot)i.next()).handleEvent( e );
+                    (i.next()).handleEvent( e );
                 }
             }
         }
