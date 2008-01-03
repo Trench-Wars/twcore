@@ -158,8 +158,8 @@ public class ModuleHandler
 
   public void handleEvent(SubspaceEvent event)
   {
-    Collection collection = moduleList.values();
-    Iterator iterator = collection.iterator();
+    Collection<Module> collection = moduleList.values();
+    Iterator<Module> iterator = collection.iterator();
     Module module;
 
     try {
