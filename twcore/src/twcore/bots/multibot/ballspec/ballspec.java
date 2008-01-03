@@ -248,7 +248,7 @@ public class ballspec extends MultiModule {
         if( event.getShipType() == f_specship && isRunning ) {
 
             int numPlayers = 0;
-            Iterator i = m_botAction.getPlayingPlayerIterator();
+            Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
             while ( i.hasNext() ) {
                 numPlayers++;
@@ -257,7 +257,7 @@ public class ballspec extends MultiModule {
 
             // check for two players: the elim'r, and our winner
             if( numPlayers <= 2) {
-                Iterator i2 = m_botAction.getPlayingPlayerIterator();
+                Iterator<Player> i2 = m_botAction.getPlayingPlayerIterator();
 
                 try {
                     Player winner = (Player) i2.next();
