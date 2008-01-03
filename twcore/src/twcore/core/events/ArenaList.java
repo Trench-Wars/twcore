@@ -43,7 +43,7 @@ public class ArenaList extends SubspaceEvent {
 
     public String[] getArenaNames(){
         String[] arena = new String[ m_arenaList.size() ];
-        Iterator i = m_arenaList.keySet().iterator();
+        Iterator<String> i = m_arenaList.keySet().iterator();
         for( int x = 0; i.hasNext(); x++ ){
             arena[x] = (String)i.next();
         }
@@ -55,7 +55,7 @@ public class ArenaList extends SubspaceEvent {
     }
 
     public String getCurrentArenaName(){
-        Iterator i = m_arenaList.keySet().iterator();
+        Iterator<String> i = m_arenaList.keySet().iterator();
         while( i.hasNext() ){
             String key = (String)i.next();
             Integer value = m_arenaList.get( key );
@@ -65,7 +65,7 @@ public class ArenaList extends SubspaceEvent {
         }
         return null;
     }
-    public Map getArenaList(){
+    public Map<String, Integer> getArenaList(){
         return m_arenaList;
     }
 }
