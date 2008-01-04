@@ -8,7 +8,6 @@ import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
-import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
 /**
@@ -33,6 +32,7 @@ public class utilhotspots extends MultiUtil {
         hotSpots = new Vector<HotSpot>();
         // Turn off updating -- we will do it ourselves
         m_botAction.setPlayerPositionUpdating(0);
+        m_botAction.stopSpectatingPlayer();
         watching = false;
     }
 
@@ -92,17 +92,16 @@ public class utilhotspots extends MultiUtil {
      */
 
     public void handleEvent( PlayerPosition event ) {
+        
 
-        Player p = m_botAction.getPlayer( event.getPlayerID() );
-        String name = m_botAction.getPlayerName( event.getPlayerID() );
 
-            if( watch != null )
-                if( p != null )
-                    if( watch.inside( p.getXLocation(), p.getYLocation() ) ) {
-                        m_botAction.warpTo( name, watch.getX2(), watch.getY2() );
-                        if( watch.getPrize() != -1 )
-                            m_botAction.specificPrize( name, watch.getPrize() );
-                    }
+            if( watch != null ) {
+                if( watch.inside( event.getXLocation(), event.getYLocation() ) ) {
+                    m_botAction.warpTo( event.getPlayerID(), watch.getX2(), watch.getY2() );
+                    if( watch.getPrize() != -1 )
+                        m_botAction.specificPrize( event.getPlayerID(), watch.getPrize() );
+                }
+            }
     }
 
     /**
@@ -295,10 +294,10 @@ class HotSpot {
     public boolean inside( int playerX, int playerY ) {
 
         double dist = Math.sqrt( Math.pow( x*16 - playerX , 2 ) + Math.pow( y*16 - playerY , 2 ) );
-        if( dist < r*16 ) return true;
+        if( Math.round(dist) <= r*16 ) return true;
         else return false;
     }
-
+    
     public String toString()	{
     	if(prize == -1)
     		return ("X:" + x + " Y:" + y + " Radius:" + r + " destX:" + x2 + " desty:" + y2);
