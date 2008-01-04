@@ -7,6 +7,7 @@ import java.util.HashSet;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.FileArrived;
 import twcore.core.events.LoggedOn;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
@@ -39,6 +40,7 @@ public class HubBot extends SubspaceBot {
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.LOGGED_ON );
+        events.request( EventRequester.ARENA_JOINED );
         events.request( EventRequester.FILE_ARRIVED );
         try {
             Thread.sleep( 5000 );
@@ -101,6 +103,13 @@ public class HubBot extends SubspaceBot {
         } catch( Exception e ){
             Tools.printStackTrace( "Exception while auto-loading bots", e );
         }
+    }
+
+    /**
+     * Sends online message once arena has been joined successfully.
+     */
+    public void handleEvent( ArenaJoined event ){
+        m_botAction.sendChatMessage(m_botAction.getBotName() + " bot hub is now online.");
     }
 
     /**
