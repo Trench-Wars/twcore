@@ -30,7 +30,7 @@ public class trivia extends MultiModule {
     CommandInterpreter  m_commandInterpreter;
 
     Random          m_rnd;
-    String          mySQLHost = "server";
+    String          mySQLHost = "website";
     TimerTask       startGame, timerQuestion, timerHint, timerAnswer, timerNext;
     TimerTask       timedMessages, timedMessages2;
     TreeMap<String, PlayerProfile> playerMap = new TreeMap<String, PlayerProfile>();

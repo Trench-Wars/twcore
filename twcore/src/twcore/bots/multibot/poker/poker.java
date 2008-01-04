@@ -296,7 +296,7 @@ public class poker extends MultiModule
 	public int getChips(String name) {
 		String query = "SELECT * FROM tblPlayerPoints WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
 		try {
-			ResultSet results = m_botAction.SQLQuery("local", query);
+			ResultSet results = m_botAction.SQLQuery("website", query);
                         int points = -10;
 			if(results != null && results.next())
 				points = results.getInt("fnPoints");
@@ -309,7 +309,7 @@ public class poker extends MultiModule
 	public void setChips(String name, int chips) {
 		String query = "UPDATE tblPlayerPoints SET fnPoints = " + chips + " WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
 		try {
-		    m_botAction.SQLQueryAndClose("local", query);
+		    m_botAction.SQLQueryAndClose("website", query);
 		} catch(Exception e) {}
 	}
 

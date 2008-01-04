@@ -29,7 +29,7 @@ public class scramble extends MultiModule {
     CommandInterpreter  m_commandInterpreter;
 
     Random          m_rnd;
-    String          mySQLHost = "local";
+    String          mySQLHost = "website";
     StringBuilder   builder;
     TimerTask       startGame, timerQuestion, timerHint, timerAnswer, timerNext;
      
