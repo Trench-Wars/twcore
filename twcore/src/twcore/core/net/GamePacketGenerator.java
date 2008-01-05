@@ -4,6 +4,8 @@ import java.net.DatagramPacket;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,16 +24,19 @@ public class GamePacketGenerator {
     private Sender                 m_outboundQueue;  // Outgoing packet queue
     private int                    m_serverTimeDifference;   // Diff (*tinfo)
     private ReliablePacketHandler  m_reliablePacketHandler;  // Handles reliable sends
-
+    private LinkedList<ByteArray>  m_lvzToggleCluster;       // LVZ obj toggle group
+    private Map<Integer,LinkedList<ByteArray>> m_lvzPlayerToggleCluster;   // Toggle clusters for
+                                                                           // individual playerIDs
     private long                   m_sendDelay = 75;         // Delay between packet sends
-    private final static int       DEFAULT_PACKET_CAP = 100; // Default # low-priority packets
-                                                             // allowed per clustered send
+    private final static int       DEFAULT_PACKET_CAP = 45;  // Default # low-priority packets allowed
+                                                             // per clustered send
 
     /**
      * Creates a new instance of GamePacketGenerator.
      * @param outboundQueue Packet sending queue
      * @param ssEncryption Encryption algorithm class
      * @param timer Bot's universal timer
+     * @param isLocalConnection True if we are connecting locally to the server
      */
     public GamePacketGenerator( Sender outboundQueue, SSEncryption ssEncryption, Timer timer ){
         m_timer = timer;
@@ -39,6 +44,8 @@ public class GamePacketGenerator {
         m_ssEncryption = ssEncryption;
         m_outboundQueue = outboundQueue;
         m_messageList = new DelayedPacketList<ByteArray>( DEFAULT_PACKET_CAP );
+        m_lvzToggleCluster = new LinkedList<ByteArray>();
+        m_lvzPlayerToggleCluster = Collections.synchronizedMap( new HashMap<Integer,LinkedList<ByteArray>>() );
 
         m_timerTask = new TimerTask(){
             int size;
@@ -46,8 +53,14 @@ public class GamePacketGenerator {
 
                 synchronized (m_messageList) {
                     size = m_messageList.size();
-                    if( size == 1 ){
-                        sendReliableMessage( m_messageList.getNextPacket() );
+                    if( size == 1 ) {
+                        ByteArray packet = m_messageList.getNextPacket();
+                        if( packet.size() == 6 && packet.readLittleEndianShort(0) == ((short)0x0400) ) {
+                            // Do not send single ACKs reliably
+                            composeImmediatePacket( packet, 6 );
+                        } else {
+                            sendReliableMessage( packet );
+                        }
                     } else if( size > 1 ){
                         sendClusteredPacket();
                     }
@@ -219,6 +232,19 @@ public class GamePacketGenerator {
     }
 
     /**
+     * Sends a reliable message that must receive an ACKnowledged packet in
+     * response.  The ReliablePacketHandler will continue to resend the packet
+     * until the ACK message is received.  Note that sending a message this
+     * way will ensure it is not clustered with any other.  If at all possible,
+     * composePacket methods should be used instead to minimize bandwidth use.
+     * @param message
+     */
+    public void sendReliableMessage( ByteArray message ){
+
+        m_reliablePacketHandler.sendReliableMessage( message );
+    }
+
+    /**
      * Manually sets server time difference to a new value.
      * @param newTimeDifference Value to set to
      */
@@ -232,17 +258,6 @@ public class GamePacketGenerator {
      */
     public int getServerTimeDifference() {
     	return m_serverTimeDifference;
-    }
-
-    /**
-     * Sends a reliable message that must receive an ACKnowledged packet in
-     * response.  The ReliablePacketHandler will continue to resend the packet
-     * until the ACK message is received.
-     * @param message
-     */
-    public void sendReliableMessage( ByteArray message ){
-
-        m_reliablePacketHandler.sendReliableMessage( message );
     }
 
     /**
@@ -626,7 +641,7 @@ public class GamePacketGenerator {
         } else
             bytearray.addLittleEndianShort( playerID );
 
-        sendReliableMessage( bytearray );
+        composePacket( bytearray );
     }
 
     /**
@@ -772,6 +787,107 @@ public class GamePacketGenerator {
     }
 
     /**
+     * Adds an LVZ object ID state (whether to turn it on or off) to the object queue.
+     * Use {@link #sendLVZObjectCluster(int)} to send out a packet containing the
+     * toggling instructions.
+     * @param playerID ID of player to send to; use -1 for all players
+     * @param objID Object ID to toggle
+     * @param objVisible True if object is to be visible after being set; false if invisible
+     * @see #sendLVZObjectCluster(int)
+     */
+    public void setupLVZObjectToggle( int playerID, int objID, boolean objVisible ) {
+        ByteArray objData = new ByteArray( 2 );
+        objData.addLittleEndianShort( (short) (objVisible ? (objID & 0x7FFF) : (objID | 0x8000)) );
+        if( playerID == -1 )
+            m_lvzToggleCluster.addLast( objData );
+        else {
+            LinkedList <ByteArray>playerCluster = m_lvzPlayerToggleCluster.remove(playerID);
+            if( playerCluster == null )
+                playerCluster = new LinkedList<ByteArray>();
+            playerCluster.addLast( objData );
+            m_lvzPlayerToggleCluster.put( playerID, playerCluster );
+        }
+    }
+
+    /**
+     * Adds one or more LVZ object ID states (whether to turn it on or off) to an object
+     * toggle queue at once, using a HashMap with (Integer)ObjectID->(Boolean)Visible
+     * mappings.  Use {@link #sendLVZObjectCluster(int)} to send out a packet containing the
+     * toggling instructions.
+     * @param playerID ID of player to send to; use -1 for all players
+     * @param toggles Mapping of object ID to visibility state to set
+     * @see #sendLVZObjectCluster(int)
+     */
+    public void setupMultipleLVZObjectToggles( int playerID, HashMap<Integer,Boolean> toggles ) {
+        if( playerID == -1 ) {
+            for( Integer objID : toggles.keySet() ) {
+                ByteArray objData = new ByteArray( 2 );
+                objData.addLittleEndianShort( (short) (toggles.get(objID) ? (objID & 0x7FFF) : (objID | 0x8000)) );
+                m_lvzToggleCluster.addLast( objData );
+            }
+        } else {
+            LinkedList <ByteArray>playerCluster = m_lvzPlayerToggleCluster.remove(playerID);
+            if( playerCluster == null )
+                playerCluster = new LinkedList<ByteArray>();
+            for( Integer objID : toggles.keySet() ) {
+                ByteArray objData = new ByteArray( 2 );
+                objData.addLittleEndianShort( (short) (toggles.get(objID) ? (objID & 0x7FFF) : (objID | 0x8000)) );
+                playerCluster.addLast( objData );
+            }
+            m_lvzPlayerToggleCluster.put( playerID, playerCluster );
+        }
+    }
+
+    /**
+     * Sends the current LVZ object toggle cluster to the player specified by the ID;
+     * -1 for all players.  Use {@link #addLVZObjectToggle(int, int, boolean)} to add objects
+     * before sending out the packet.
+     * @param playerID ID of player to send to; use -1 for all players
+     * @see #addLVZObjectToggle(int, int, boolean)
+     */
+    public void sendLVZObjectCluster( int playerID ) {
+        if( playerID == -1 ) {
+            if( m_lvzToggleCluster.size() > 0 ) {
+                ByteArray objPacket = new ByteArray( m_lvzToggleCluster.size() * 2 + 4 );
+                objPacket.addByte( 0x0A );  // Type byte
+                objPacket.addLittleEndianShort( ((short) 0xFFFF ) );
+                objPacket.addByte( 0x35 );  // LVZ packet type byte
+                while( m_lvzToggleCluster.size() > 0 )
+                    objPacket.addLittleEndianShort( m_lvzToggleCluster.removeFirst().readLittleEndianShort(0) );
+                composePacket( objPacket );
+            }
+        } else {
+            LinkedList <ByteArray>playerCluster = m_lvzPlayerToggleCluster.remove(playerID);
+            if( playerCluster != null && playerCluster.size() > 0 ) {
+                ByteArray objPacket = new ByteArray( playerCluster.size() * 2 + 4 );
+                objPacket.addByte( 0x0A );  // Type byte
+                objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
+                objPacket.addByte( 0x35 );  // LVZ packet type byte
+                while( playerCluster.size() > 0 )
+                    objPacket.addLittleEndianShort( playerCluster.removeFirst().readLittleEndianShort(0) );
+                composePacket( objPacket );
+            }
+        }
+    }
+
+    /**
+     * Sends a single LVZ object toggle to the player specified by the ID;
+     * -1 for all players.  Using this method does not interfere with or check
+     * against the object toggling queues in any way.
+     * @param objID Object ID to toggle
+     * @param playerID ID of player to send to; use -1 for all players
+     * @param objVisible True if object is to be visible after being set; false if invisible
+     */
+    public void sendSingleLVZObjectToggle( int playerID, int objID, boolean objVisible ) {
+        ByteArray objPacket = new ByteArray( 6 );
+        objPacket.addByte( 0x0A );  // Type byte
+        objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
+        objPacket.addByte( 0x35 );  // LVZ packet type byte
+        objPacket.addLittleEndianShort( (short) (objVisible ? (objID & 0x7FFF) : (objID | 0x8000)) );
+        composePacket( objPacket );
+    }
+
+    /**
      * Implementation to send out most packets as normal, while placing a cap
      * on the number of less-important packets (generally messages) that are
      * sent out per run of the cluster packet composition timer.
@@ -821,7 +937,7 @@ public class GamePacketGenerator {
         }
 
         public int cappedSize() {
-            return m_normalPacketList.size() + Math.min( m_cappedPacketList.size(), m_packetCap );
+            return m_normalPacketList.size() + Math.min( m_cappedPacketList.size(), m_remainingCap );
         }
     }
 }

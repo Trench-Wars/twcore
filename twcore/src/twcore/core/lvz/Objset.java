@@ -19,23 +19,23 @@ import java.util.Map;
  *    http://www.kolumbus.fi/sakari.aura/contmapdevguide.html
  */
 public class Objset {
-    Map<Integer, String> m_objects;              // Objects that have already had their show/hide *objset.
+    Map<Integer, Boolean> m_objects;              // Objects that have already had their show/hide *objset.
                       					         // (Integer)Obj# -> (String) +/- [shown or hidden]
-    Map<Integer, String> m_unsetObjects;         // Objects that have not yet had their show/hide *objset.
+    Map<Integer, Boolean> m_unsetObjects;         // Objects that have not yet had their show/hide *objset.
                         					     // (Integer)Obj# -> (String) +/- [shown or hidden]
-    Map<Integer, Map<Integer, String>> m_privateObjects;    // Objects for a specific player already *objset
+    Map<Integer, Map<Integer, Boolean>> m_privateObjects;    // Objects for a specific player already *objset
                                 							// (Integer)PlayerID -> ((Integer)Obj# -> (String) +/-)
-    Map<Integer, Map<Integer, String>> m_privateUnsetObjects;  // Objects for a specific player not yet *objset
+    Map<Integer, Map<Integer, Boolean>> m_privateUnsetObjects;  // Objects for a specific player not yet *objset
                              								   // (Integer)PlayerID -> ((Integer)Obj# -> (String) +/-)
 
     /**
      * Creates a new instantiation of Objset.  For use with LVZ object defines.
      */
     public Objset() {
-        m_objects = Collections.synchronizedMap(new HashMap<Integer, String>());
-        m_unsetObjects = Collections.synchronizedMap(new HashMap<Integer, String>());
-        m_privateObjects = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, String>>());
-        m_privateUnsetObjects = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, String>>());
+        m_objects = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
+        m_unsetObjects = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
+        m_privateObjects = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, Boolean>>());
+        m_privateUnsetObjects = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, Boolean>>());
     }
 
     /**
@@ -44,7 +44,7 @@ public class Objset {
      */
     public void showObject( int object ) {
 
-        m_unsetObjects.put( new Integer( object ), "+" );
+        m_unsetObjects.put( new Integer( object ), true );
     }
 
     /**
@@ -56,12 +56,12 @@ public class Objset {
 
         if( playerId < 0 ) return;
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) )
-            m_privateUnsetObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, String>()) );
+            m_privateUnsetObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) )
-            m_privateObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, String>()) );
+            m_privateObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
 
-        Map<Integer, String> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
-        playerMap.put( new Integer( object ), "+" );
+        Map<Integer, Boolean> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
+        playerMap.put( new Integer( object ), true );
     }
 
     /**
@@ -71,10 +71,10 @@ public class Objset {
     public void hideObject( int object ) {
 
         if( m_objects.containsKey( new Integer( object ) ) ) {
-            String status = m_objects.get( new Integer( object ) );
-            if( status.equals( "+" ) )
-                m_unsetObjects.put( new Integer( object ), "-" );
-        } else m_unsetObjects.put( new Integer( object ), "-" );
+            boolean status = m_objects.get( new Integer( object ) );
+            if( status == true )
+                m_unsetObjects.put( new Integer( object ), false );
+        } else m_unsetObjects.put( new Integer( object ), false );
     }
 
     /**
@@ -86,18 +86,18 @@ public class Objset {
 
         if( playerId < 0 ) return;
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) )
-            m_privateUnsetObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, String>()) );
+            m_privateUnsetObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) )
-            m_privateObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, String>()) );
+            m_privateObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
 
-        Map<Integer, String> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
-        Map<Integer, String> playerObj = m_privateObjects.get( new Integer( playerId ) );
+        Map<Integer, Boolean> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
+        Map<Integer, Boolean> playerObj = m_privateObjects.get( new Integer( playerId ) );
 
         if( playerObj.containsKey( new Integer( object ) ) ) {
-            String status = playerObj.get( new Integer( object ) );
-            if( status != null && status.equals( "+" ) )
-                playerMap.put( new Integer( object ), "-" );
-        } else playerMap.put( new Integer( object ), "-" );
+            Boolean status = playerObj.get( new Integer( object ) );
+            if( status != null && status == true )
+                playerMap.put( new Integer( object ), false );
+        } else playerMap.put( new Integer( object ), false );
     }
 
     /**
@@ -106,12 +106,12 @@ public class Objset {
     public void hideAllObjects() {
         m_unsetObjects.clear();
         synchronized (m_objects) {
-            Iterator<Integer> it = m_objects.keySet().iterator();
+            Iterator it = m_objects.keySet().iterator();
             while( it.hasNext() ) {
                 int x = ((Integer)it.next()).intValue();
-                String status = m_objects.get( new Integer( x ) );
-                if( status != null && status.equals( "+" ) )
-                    m_unsetObjects.put( new Integer( x ), "-" );
+                Boolean status = m_objects.get( new Integer( x ) );
+                if( status != null && status == true )
+                    m_unsetObjects.put( new Integer( x ), false );
             }
         }
     }
@@ -125,17 +125,17 @@ public class Objset {
         if( playerId < 0 ) return;
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return;
 
-        Map<Integer, String> playerUnset = m_privateUnsetObjects.get( new Integer( playerId ) );
-        Map<Integer, String> playerObj = m_privateObjects.get( new Integer( playerId ) );
+        Map<Integer, Boolean> playerUnset = m_privateUnsetObjects.get( new Integer( playerId ) );
+        Map<Integer, Boolean> playerObj = m_privateObjects.get( new Integer( playerId ) );
 
         playerUnset.clear();
         synchronized (playerObj) {
-            Iterator<Integer> it = playerObj.keySet().iterator();
+            Iterator it = playerObj.keySet().iterator();
             while( it.hasNext() ) {
                 int x = ((Integer)it.next()).intValue();
-                String status = playerObj.get( new Integer( x ) );
-                if( status != null && status.equals( "+" ) )
-                    playerUnset.put( new Integer( x ), "-" );
+                Boolean status = playerObj.get( new Integer( x ) );
+                if( status != null && status == true )
+                    playerUnset.put( new Integer( x ), false );
             }
         }
     }
@@ -148,8 +148,8 @@ public class Objset {
     public boolean objectShown( int object ) {
         if( !m_objects.containsKey( new Integer( object ) ) )
             return false;
-        String status = m_objects.get( new Integer( object ) );
-        if( status != null && status.equals("+") ) return true;
+        Boolean status = m_objects.get( new Integer( object ) );
+        if( status != null && status == true ) return true;
         else return false;
     }
 
@@ -162,7 +162,7 @@ public class Objset {
     public boolean objectShown( int playerId, int object ) {
         if( playerId < 0 ) return false;
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return false;
-        Map<Integer, String> playerObj = m_privateObjects.get( new Integer( playerId ) );
+        Map playerObj = (Map)m_privateObjects.get( new Integer( playerId ) );
         String status = (String)playerObj.get( new Integer( object ) );
         if( status != null && status.equals("+") ) return true;
         else return false;
@@ -184,7 +184,7 @@ public class Objset {
     public boolean toSet( int playerId ) {
         if( playerId < 0 ) return false;
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) ) return false;
-        Map<Integer, String> playerObj = m_privateUnsetObjects.get( new Integer( playerId ) );
+        Map playerObj = (Map)m_privateUnsetObjects.get( new Integer( playerId ) );
         return !playerObj.isEmpty();
     }
 
@@ -194,16 +194,13 @@ public class Objset {
      * to the "set" objects list.
      * @return String of objects in the objset format
      */
-    public String getObjects() {
-        String theseObjects = " ";
+    public HashMap<Integer,Boolean> getObjects() {
+        HashMap <Integer,Boolean> theseObjects = new HashMap<Integer,Boolean>();
         synchronized (m_unsetObjects) {
-            Iterator<Integer> it = m_unsetObjects.keySet().iterator();
-            while( it.hasNext() ) {
-                //Gets object and on/off value
-                int x = ((Integer)it.next()).intValue();
-                String s = m_unsetObjects.get( new Integer( x ) );
-                theseObjects += s + x + ",";
-                m_objects.put( new Integer( x ), s );
+            for( Integer id : m_unsetObjects.keySet() ) {
+                Boolean status = m_unsetObjects.get( new Integer( id ) );
+                theseObjects.put( id, status );
+                m_objects.put( id , status );
             }
         }
         m_unsetObjects.clear();
@@ -217,21 +214,18 @@ public class Objset {
      * @param playerId
      * @return A String containing a list of objects and their show or hide values for use with *objset.
      */
-    public String getObjects( int playerId ) {
-        if( playerId < 0 ) return "";
-        if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return "";
+    public HashMap<Integer,Boolean> getObjects( int playerId ) {
+        if( playerId < 0 ) return null;
+        if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return null;
 
-        Map<Integer, String> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
-        Map<Integer, String> playerObj = m_privateObjects.get( new Integer( playerId ) );
-        String theseObjects = " ";
+        Map<Integer, Boolean> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
+        Map<Integer, Boolean> playerObj = m_privateObjects.get( new Integer( playerId ) );
+        HashMap <Integer,Boolean> theseObjects = new HashMap<Integer,Boolean>();
         synchronized (playerMap) {
-            Iterator<Integer> it = playerMap.keySet().iterator();
-            while( it.hasNext() ) {
-                //Gets object and on/off value
-                int x = ((Integer)it.next()).intValue();
-                String s = playerMap.get( new Integer( x ) );
-                theseObjects += s + x + ",";
-                playerObj.put( new Integer( x ), s );
+            for( Integer id : playerMap.keySet() ) {
+                Boolean status = playerMap.get( new Integer( id ) );
+                theseObjects.put( id, status );
+                playerObj.put( id , status );
             }
         }
         playerMap.clear();

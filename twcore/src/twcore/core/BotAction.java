@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.WeakHashMap;
+import java.util.HashMap;
 
 import twcore.core.command.TempSettingsManager;
 import twcore.core.game.Arena;
@@ -2353,8 +2354,10 @@ public class BotAction
     	int delay = Math.max(0, milliseconds);
     	Ship ship = getShip();
 
-    	if(delay == 0) {
+    	if(delay <= 0) {
 			ship.setSpectatorUpdateTime(0);
+            stopSpectatingPlayer();
+            moveToTile(512, 512);
     		return;
     	}
 
@@ -2421,7 +2424,7 @@ public class BotAction
      */
     public void showObject(int objID)
     {
-        sendUnfilteredPublicMessage("*objon " + objID);
+        m_packetGenerator.sendSingleLVZObjectToggle(-1, objID, true);
     }
 
     /**
@@ -2434,7 +2437,7 @@ public class BotAction
      */
     public void hideObject(int objID)
     {
-        sendUnfilteredPublicMessage("*objoff " + objID);
+        m_packetGenerator.sendSingleLVZObjectToggle(-1, objID, false);
     }
 
     /**
@@ -2444,7 +2447,7 @@ public class BotAction
      */
     public void showObjectForPlayer(int playerID, int objID)
     {
-        sendUnfilteredPrivateMessage(playerID, "*objon " + objID);
+        m_packetGenerator.sendSingleLVZObjectToggle(playerID, objID, true);
     }
 
     /**
@@ -2454,7 +2457,44 @@ public class BotAction
      */
     public void hideObjectForPlayer(int playerID, int objID)
     {
-        sendUnfilteredPrivateMessage(playerID, "*objoff " + objID);
+        m_packetGenerator.sendSingleLVZObjectToggle(playerID, objID, false);
+    }
+
+    /**
+     * Setup the specified LVZ object to be shown or hidden to all players.
+     * @param objID ID of object.
+     * @param isVisible True if object should be shown; false if hidden
+     */
+    public void setupObject( int objID, boolean isVisible )
+    {
+        m_packetGenerator.setupLVZObjectToggle(-1, objID, true);
+    }
+
+    /**
+     * Setup the specified LVZ object to be shown or hidden to a specific
+     * player.
+     * @param playerID ID of player to whom you shall send the objects
+     * @param objID ID of object.
+     * @param isVisible True if object should be shown; false if hidden
+     */
+    public void setupObject( int playerID, int objID, boolean isVisible )
+    {
+        m_packetGenerator.setupLVZObjectToggle(playerID, objID, true);
+    }
+
+    /**
+     * Sends all objects that have been set up to be sent to all players.
+     */
+    public void sendSetupObjects() {
+        m_packetGenerator.sendLVZObjectCluster(-1);
+    }
+
+    /**
+     * Sends all objects that have been set up to be sent to a specific player.
+     * @param playerID ID of player.
+    */
+    public void sendSetupObjectsForPlayer(int playerID ) {
+        m_packetGenerator.sendLVZObjectCluster(playerID);
     }
 
     /**
@@ -2465,21 +2505,20 @@ public class BotAction
      * <p>  "+2,+5,-7,+12,-14,+15,"
      * @param objString Comma-separated list of object IDs marked with + for show or - for hide, ending with a comma.
      */
-    public void manuallySetObjects( String objString ) {
-        sendUnfilteredPublicMessage("*objset " + objString );
+    public void manuallySetObjects( HashMap <Integer,Boolean>objects ) {
+        m_packetGenerator.setupMultipleLVZObjectToggles(-1, objects );
+        m_packetGenerator.sendLVZObjectCluster(-1);
     }
 
     /**
-     * Manually sets multiple objects to either be shown or hidden using the
-     * syntax of the *objset command for a single player.  objString should
-     * contain comma-separated object IDs marked either with a + or - for show
-     * or hide.  Also the string MUST terminate with a comma!  For example:
-     * <p>  "+2,+5,-7,+12,-14,+15,"
+     * Manually sets multiple objects to either be shown or hidden using a HashMap
+     * with mappings from Integer objIDs to Boolean visibility.
+     * @param objects Mapping from Integer objID to Boolean visibility
      * @param playerID ID of the player to send to.
-     * @param objString Comma-separated list of object IDs marked with + for show or - for hide, ending with a comma.
      */
-    public void manuallySetObjects( String objString, int playerID ) {
-        sendUnfilteredPrivateMessage( playerID, "*objset " + objString );
+    public void manuallySetObjects( HashMap <Integer,Boolean>objects, int playerID ) {
+        m_packetGenerator.setupMultipleLVZObjectToggles(playerID, objects );
+        m_packetGenerator.sendLVZObjectCluster(playerID);
     }
 
     /**
@@ -2489,7 +2528,8 @@ public class BotAction
      */
     public void setObjects() {
         if( m_objectSet.toSet() ) {
-            sendUnfilteredPublicMessage( "*objset" + m_objectSet.getObjects() );
+            m_packetGenerator.setupMultipleLVZObjectToggles(-1, m_objectSet.getObjects() );
+            m_packetGenerator.sendLVZObjectCluster(-1);
         }
     }
 
@@ -2498,11 +2538,12 @@ public class BotAction
      * for a specific player, as specified by ID.  In order for this command to
      * work, first get the Objset with getObjectSet(), add the objects you would
      * like set all at once, and then run the command.
-     * @param playerId ID of the player to send to.
+     * @param playerID ID of the player to send to.
      */
-    public void setObjects( int playerId ) {
-        if( m_objectSet.toSet( playerId ) ) {
-            sendUnfilteredPrivateMessage( playerId, "*objset" + m_objectSet.getObjects( playerId ) );
+    public void setObjects( int playerID ) {
+        if( m_objectSet.toSet( playerID ) ) {
+            m_packetGenerator.setupMultipleLVZObjectToggles(playerID, m_objectSet.getObjects( playerID ) );
+            m_packetGenerator.sendLVZObjectCluster(playerID);
         }
     }
 
