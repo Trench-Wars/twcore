@@ -50,6 +50,8 @@ public class zombies extends MultiModule {
         m_rebirthkills = rebirthkills;
         if(m_rebirthkills > 0)
         	rebK = true;
+        else
+        	rebK = false;
         modeSet = true;
     }
 
