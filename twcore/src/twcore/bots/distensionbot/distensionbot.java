@@ -215,8 +215,8 @@ public class distensionbot extends SubspaceBot {
 
 
     // DATA FOR FLAG TIMER
-    private static final int SCORE_REQUIRED_FOR_WIN = 5;	// Max # rounds (odd numbers only)
-    private static final int SECTOR_CHANGE_SECONDS = 10;	// Seconds it takes to secure hold or break one
+    private static final int SCORE_REQUIRED_FOR_WIN = 3; // Max # rounds (odd numbers only)
+    private static final int SECTOR_CHANGE_SECONDS = 10; // Seconds it takes to secure hold or break one
     private static final int INTERMISSION_SECS = 90;    // Seconds between end of round & start of next
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
@@ -922,32 +922,32 @@ public class distensionbot extends SubspaceBot {
         m_players.remove( name );
         // If mid-round in a flag game, show appropriate flag info
         if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
-            String flagString = "";
+            HashMap <Integer,Boolean>flags = new HashMap<Integer,Boolean>();
             switch( m_flagOwner[0] ) {
             case -1:
-                flagString += "+" + LVZ_TOPBASE_EMPTY + ",";
+                flags.put(LVZ_TOPBASE_EMPTY, true);
                 break;
             case 0:
-                flagString += "+" + LVZ_TOPBASE_ARMY0 + ",";
+                flags.put(LVZ_TOPBASE_ARMY0, true);
                 break;
             case 1:
-                flagString += "+" + LVZ_TOPBASE_ARMY1 + ",";
+                flags.put(LVZ_TOPBASE_ARMY1, true);
                 break;
             }
             switch( m_flagOwner[1] ) {
             case -1:
-                flagString += "+" + LVZ_BOTBASE_EMPTY + ",";
+                flags.put(LVZ_BOTBASE_EMPTY, true);
                 break;
             case 0:
-                flagString += "+" + LVZ_BOTBASE_ARMY0 + ",";
+                flags.put(LVZ_BOTBASE_ARMY0, true);
                 break;
             case 1:
-                flagString += "+" + LVZ_BOTBASE_ARMY1 + ",";
+                flags.put(LVZ_BOTBASE_ARMY1, true);
                 break;
             }
             if( flagTimer.getSecondsHeld() > 0 )
-                flagString += "+" + LVZ_SECTOR_HOLD + ",";
-            m_botAction.manuallySetObjects(flagString, event.getPlayerID());
+                flags.put(LVZ_SECTOR_HOLD, true);
+            m_botAction.manuallySetObjects(flags, event.getPlayerID());
         }
         DistensionPlayer p = new DistensionPlayer(name);
         m_players.put( name, p );
