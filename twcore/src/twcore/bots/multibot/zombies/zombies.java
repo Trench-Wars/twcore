@@ -39,6 +39,7 @@ public class zombies extends MultiModule {
     boolean isRunning = false;
     boolean modeSet = false;
     boolean killerShipSet = false;
+    boolean rebK = false;
 
     public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
         m_humanfreq = srcfreq;
@@ -47,6 +48,8 @@ public class zombies extends MultiModule {
         m_zombieship = destship;
         m_lives = lives;
         m_rebirthkills = rebirthkills;
+        if(m_rebirthkills > 0)
+        	rebK = true;
         modeSet = true;
     }
 
@@ -230,7 +233,8 @@ public class zombies extends MultiModule {
                 if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq ){
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
-                    m_botAction.scoreReset( event.getKilleeID() );
+                    if(!rebK)
+                    	m_botAction.scoreReset( event.getKilleeID() );
                     String killmsg = killmsgs.toString();
                     int soundPos = killmsg.indexOf('%');
                     int soundCode = 0;
@@ -262,7 +266,7 @@ public class zombies extends MultiModule {
                         m_botAction.setShip(event.getKillerID(), m_killerShip);
                 }
                 // Rebirth kill check
-                if( m_rebirthkills > 0 && m_zombieship == p2.getShipType() && p2.getWins() >= m_rebirthkills ) {
+                if( m_rebirthkills > 0 && m_zombieship == p2.getShipType() && (p2.getWins()) >= m_rebirthkills ) {
                     int shipNum = m_srcship.iterator().next().intValue(); // Get any ship available, as there's no preference
                     m_botAction.setShip(event.getKillerID(), shipNum);
                     m_botAction.scoreReset( p2.getPlayerName() );
