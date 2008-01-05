@@ -3,8 +3,10 @@ package twcore.core;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 
@@ -68,8 +70,10 @@ public class BotSettings {
             }
 
             in.close();
-        }catch(Exception e){
-            Tools.printLog( "Failed to read file to memory: " + file.getName() );
+        } catch(FileNotFoundException fnfe) {
+            Tools.printLog( "BotSettings configuration file ("+file.getName()+") not found: " + fnfe.getMessage());
+        } catch(IOException ioe) {
+            Tools.printLog( "BotSettings configuration file ("+file.getName()+") I/O exception: " + ioe.getMessage());
         }
     }
 
@@ -135,8 +139,9 @@ public class BotSettings {
 
     /**
      * Returns data associated with a specified field.
+     * 
      * @param keyName Field to fetch from
-     * @return Data associated with the specified field
+     * @return Data associated with the specified field or NULL if not found
      */
     public String getString( String keyName ){
         String      value = m_data.get( keyName.toLowerCase() );
