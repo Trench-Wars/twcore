@@ -336,7 +336,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setMessageLimit( 12 );
         m_botAction.setReliableKills( 1 );
         m_botAction.setPlayerPositionUpdating( 400 );
-        m_botAction.setLowPriorityPacketCap( 40 );
+        m_botAction.setLowPriorityPacketCap( 25 );
         m_botAction.specAll();
         m_botAction.toggleLocked();
         m_botAction.resetFlagGame();
@@ -653,7 +653,7 @@ public class distensionbot extends SubspaceBot {
                     "| !battleinfo       !bi |  Display current battle status",
                     "|______________________/"
             };
-            spamWithDelay(p.getArenaPlayerID(), helps);
+            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         } else {
             String[] helps = {
                     "      PILOT CONSOLE  ",
@@ -683,7 +683,7 @@ public class distensionbot extends SubspaceBot {
                     "| !battleinfo       !bi |  Display current battle status",
                     "|______________________/"
             };
-            spamWithDelay(p.getArenaPlayerID(), helps);
+            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         }
 
         if( shipNum == 9 )
@@ -721,7 +721,7 @@ public class distensionbot extends SubspaceBot {
                 "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
                 "  !db-randomarmies                     - Randomizes all armies."
         };
-        spamWithDelay(p.getArenaPlayerID(), helps);
+        m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         if( m_botAction.getOperatorList().isSmod(name) ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Hidden command: !db-wipeplayer <name>    - Wipes all records of a player from DB.");
         }
@@ -767,7 +767,7 @@ public class distensionbot extends SubspaceBot {
                     "|  !opsemp            6 |  Quick EMP all enemies in home base to 0 energy.",
                     "|______________________/",
             };
-            spamWithDelay(p.getArenaPlayerID(), helps);
+            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         } else if( msg.equalsIgnoreCase("msg") ) {
             String[] helps = {
                     "      OPS MESSAGES  -  Each uses 1 COMM, +1 if msg is a sabotage",
@@ -791,7 +791,7 @@ public class distensionbot extends SubspaceBot {
                     "|                       |  (False pilot counts, says there is no Terr, etc.)",
                     "|______________________/",
             };
-            spamWithDelay(p.getArenaPlayerID(), helps);
+            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         }
     }
 
@@ -810,7 +810,7 @@ public class distensionbot extends SubspaceBot {
                 "DISTENSION - The Trench Wars RPG - by G. Dugwyler",
                 "Presently in beta.  Intro to come soon.  Type !beta for info on recent updates."
         };
-        spamWithDelay(p.getArenaPlayerID(), intro1);
+        m_botAction.privateMessageSpam(p.getArenaPlayerID(), intro1);
     }
 
 
@@ -865,20 +865,14 @@ public class distensionbot extends SubspaceBot {
                 " - For every bug reported, points will be awarded (?message dugwyler)",
                 ".",
                 "RECENT UPDATES  -  12/31/07",
+                " - Several net and CPU efficiency improvements (internal and external)",
                 " - New round-end goal: you must win 3 rounds ahead of the other team",
-                " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs !!",
+                " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs...",
                 "   NOTE: All upgrades were refunded; you will need to buy all upgrades again!",
-                " - Fixed rotation bug!",
-                " - Due to the new upgrade system, !scrap will be free for a while.  Merry Kwanza!",
-                " - Rank 25+ to-next-rank amount required reduced yet again",
-                " - !scrap now free for guns/bombs/multi",
-                " - End round bonuses less round-time- dependent.",
-                " - Adjustment of WB toward a sniper ship which will not do well in close quarters",
-                " - !scrap within 15% of start of rank is free; >15% returns you to 15%",
-                " - !scrapall to scrap all of a specific upgrade, all upgrades, etc.",
-                " - Serious tweaking of upgrades to encourage more speed-based ships",
+                " - Fixed rotation bug",
+                " - To encourage build experimentation, !scrap is FREE for the rest of beta."
         };
-        spamWithDelay( p.getArenaPlayerID(), beta );
+        m_botAction.privateMessageSpam( p.getArenaPlayerID(), beta );
     }
 
 
@@ -2954,7 +2948,7 @@ public class distensionbot extends SubspaceBot {
                                          makeBar( eships[5], 10) + "|" + makeBar( eterrs[5], 10) + "|" );
         display.add( "|(Resupplying)|" + makeBar( fships[0], 10) + "|" + makeBar( fterrs[0], 10) + "|" +
                                          makeBar( eships[0], 10) + "|" + makeBar( eterrs[0], 10) + "|" );
-        spamWithDelay(p.getArenaPlayerID(), display);
+        m_botAction.privateMessageSpam( p.getArenaPlayerID(), display );
     }
 
     /**
@@ -3802,7 +3796,7 @@ public class distensionbot extends SubspaceBot {
             } else {
                 Integer prize = remainingPrizes.remove();
                 if( prize != null )
-                    m_botAction.sendUnfilteredPrivateMessage( arenaIDToSpam, "*prize #" + prize );
+                    m_botAction.sendUnfilteredPrivateMessage( arenaIDToSpam, "*prize#" + prize );
             }
         }
     }
@@ -4108,7 +4102,6 @@ public class distensionbot extends SubspaceBot {
 
         /**
          * Performs necessary actions to spawn the player, if ready.
-         * @param specialRespawn True if this is a special (not real) spawn
          */
         public boolean doSpawn() {
             if( specialRespawn ) {
@@ -4142,9 +4135,9 @@ public class distensionbot extends SubspaceBot {
         public int prizeUpgrades( boolean warp ) {
             if( shipNum < 1 )
                 return 0;
-            LinkedList <Integer>prizing = new LinkedList<Integer>();
             Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
             int prize = -1;
+            int totalPrized = 0;
             for( int i = 0; i < NUM_UPGRADES; i++ ) {
                 prize = upgrades.get( i ).getPrizeNum();
                 if( prize > 0 )
@@ -4153,17 +4146,24 @@ public class distensionbot extends SubspaceBot {
                         if( shipNum == 7 && i == 11 && purchasedUpgrades[11] > 0 ) {
                             Player p = m_botAction.getPlayer(arenaPlayerID);
                             if( p != null )
-                                if( !p.isAttached() )
-                                    prizing.add( prize );
+                                if( !p.isAttached() ) {
+                                    m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + prize );
+                                    totalPrized++;
+                                }
                         }
-                        else
-                            prizing.add( prize );
+                        else {
+                            m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + prize );
+                            totalPrized++;
+                        }
                     }
             }
             if( isFastRespawn() )
-                prizing.add( Tools.Prize.FULLCHARGE );
-            prizeSpam( arenaPlayerID, prizing, warp );
-            return prizing.size() * PRIZE_SPAM_DELAY;
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.FULLCHARGE );
+            if( warp )
+                doWarp(false);
+            m_botAction.hideObjectForPlayer(arenaPlayerID, LVZ_REARMING);
+            //prizeSpam( arenaPlayerID, prizing, warp );
+            return totalPrized * PRIZE_SPAM_DELAY;
         }
 
         /**
