@@ -11,7 +11,6 @@ import java.util.Vector;
 import java.util.ArrayList;
 
 import twcore.bots.MultiModule;
-import twcore.bots.gamebot.gamebot;
 import twcore.core.BotSettings;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.StringBag;
@@ -369,7 +368,7 @@ public class pictionary extends MultiModule {
     		m_botAction.sendArenaMessage(passing + " passes to " + curArtist + ".");
     		cantPlay.clear();
     		cantPlay.add(curArtist);
-    		m_botAction.cancelTasks();
+    		try{m_botAction.cancelTasks();}catch(Exception e){}
     		grabWord();
             doReadyCheck();    		
     	}
@@ -399,7 +398,7 @@ public class pictionary extends MultiModule {
             	cantPlay.add(curArtist);
             }
             else {
-            	m_botAction.sendArenaMessage("There are not enough players to procede.");
+            	m_botAction.sendArenaMessage(m_prec + "There are not enough players to procede.");
             	doCancelGame(m_botAction.getBotName(), "");
             }
     	
@@ -410,7 +409,7 @@ public class pictionary extends MultiModule {
     /****************************************************************/
     public void doReadyCheck(){
     	if (ready){
-    		m_botAction.cancelTasks();    		
+    		try{m_botAction.cancelTasks();}catch(Exception e){}    		
     		ready = false;
     		doDraw();
     	}
@@ -444,10 +443,7 @@ public class pictionary extends MultiModule {
     			grabWord();
     			custGame = true;
     		}
-    		try{
-    		m_botAction.cancelTask(warn);
-    		m_botAction.cancelTask(forcePass);
-    		}catch(Exception e){}
+    		try{m_botAction.cancelTasks();}catch(Exception e){}
     		doReadyCheck();
     	}
     	
@@ -555,15 +551,15 @@ public class pictionary extends MultiModule {
     public void doCustomWord (String name, String message) {
     	if (name.equalsIgnoreCase(curArtist) && custGame && gameProgress == 1){
     		if (message.length() < 13){
-    			if(!twcore.bots.gamebot.gamebot.isRacist(message)){
+    			//TODO:Racism check
     				t_word = message.toLowerCase().trim();
     				t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
     				m_botAction.sendSmartPrivateMessage(curArtist, "Word to draw: " + t_word);
     				doReadyCheck();
-    			}
+    			/*
     			else {
     				m_botAction.sendSmartPrivateMessage( curArtist, "Racist words are not allowed.");
-    			}
+    			}*/
     		}
     		else
     			m_botAction.sendSmartPrivateMessage(curArtist, "Please pick a word of 12 letters or less.");
@@ -598,11 +594,11 @@ public class pictionary extends MultiModule {
                 		if( tempP.getData( 0 ) >= toWin ) doEndGame( name );
                 	}
                 	twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
-                	if(answerSpeed < 2){
+                	if(answerSpeed < 5){
                 		String trail = getRank( tempP.getData(0) );
                 		m_botAction.sendArenaMessage(m_prec + "Cheater! " + name + " got the correct answer, '"+ t_word + "' in only " + trail, 13 );                    	
                 	}
-                	else if(answerSpeed < 20 && answerSpeed > 2){
+                	else if(answerSpeed < 25 && answerSpeed > 5){
                			String trail = getRank( tempP.getData(0) );
                 		m_botAction.sendArenaMessage(m_prec + "Inconceivable! " + name + " got the correct answer, '"+ t_word + "' in only " + trail, 7 );                  		
                 	}
@@ -674,8 +670,8 @@ public class pictionary extends MultiModule {
             m_botAction.sendArenaMessage(m_prec2 + "-----------------------------|");
             m_botAction.sendArenaMessage(m_prec + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while (numberShown < 5 && curPoints != 0){
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerMap.keySet();
+                Iterator<String> it = set.iterator();
                 while (it.hasNext() && numberShown < 5) {
                     String curPlayer = (String) it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
