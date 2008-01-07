@@ -967,10 +967,11 @@ public class distensionbot extends SubspaceBot {
     public void handleEvent(PlayerLeft event) {
         String name = m_botAction.getPlayerName(event.getPlayerID());
         DistensionPlayer player = m_players.get( name );
-        for( DistensionArmy a : m_armies.values() )
-            a.recalculateFigures();
-        if( player == null )
+        if( player == null ) {
+            for( DistensionArmy a : m_armies.values() )
+                a.recalculateFigures();
             return;
+        }
         if( player.getShipNum() > 0 ) {
             checkFlagTimeStop();
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
@@ -989,6 +990,8 @@ public class distensionbot extends SubspaceBot {
         m_waitingToEnter.remove( player );
         doSwapOut( player, false );
         m_players.remove( name );
+        for( DistensionArmy a : m_armies.values() )
+            a.recalculateFigures();
     }
 
 
@@ -1718,6 +1721,14 @@ public class distensionbot extends SubspaceBot {
                 a.recalculateFigures();
             return;
         }
+        checkFlagTimeStop();
+        if( p.saveCurrentShipToDBNow() ) {
+            String shipname = (p.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status logged to our records.  Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP.  You are now docked.");
+            p.setShipNum( 0 );
+        } else {
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status was NOT logged.  Please notify a member of staff immediately!");
+        }
         DistensionArmy army = p.getArmy();
         if( army != null ) {
             army.recalculateFigures();
@@ -1726,14 +1737,6 @@ public class distensionbot extends SubspaceBot {
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
             p.assistArmyID = -1;
-        }
-        checkFlagTimeStop();
-        if( p.saveCurrentShipToDBNow() ) {
-            String shipname = (p.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status logged to our records.  Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP.  You are now docked.");
-            p.setShipNum( 0 );
-        } else {
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status was NOT logged.  Please notify a member of staff immediately!");
         }
     }
 
@@ -4472,8 +4475,6 @@ public class distensionbot extends SubspaceBot {
             if( purchasedUpgrades[upgrade] + amt < 0 )
                 return;
             purchasedUpgrades[upgrade] += amt;
-            for( DistensionArmy a : m_armies.values() )
-                a.recalculateFigures();
             if( (shipNum == 3 && (purchasedUpgrades[10] > 0 || purchasedUpgrades[11] > 0)) ||
                     (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
                     (shipNum == 8 && (purchasedUpgrades[9] > 0) ) ||
@@ -5857,11 +5858,13 @@ public class distensionbot extends SubspaceBot {
         // If support makes up 40% or less of the team, support cut is percentage * support rate
         int supportPoints;
         int attackPoints;
-        if( percentSupport < 0.4f ) {
+        if( percentSupport < 0.5f ) {
             percentSupport = percentSupport * SUPPORT_RATE;
         } else {
-            // >=40% support means support gets capped max of 40% * support rate
-            percentSupport = 0.4f * SUPPORT_RATE;
+            if( percentSupport != 1.0f ) {
+                // >=40% support (without everyone being support) means support gets capped max of 40% * support rate
+                percentSupport = 0.5f * SUPPORT_RATE;
+            }
         }
         supportPoints = Math.round( totalPoints * percentSupport );
         percentAttack = 1.0f - percentSupport;
