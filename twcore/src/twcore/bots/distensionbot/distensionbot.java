@@ -1963,7 +1963,8 @@ public class distensionbot extends SubspaceBot {
         int[] purchasedUpgrades = p.getPurchasedUpgrades();
         String printmsg;
         boolean printCost;
-        String[] display = new String[NUM_UPGRADES + 1];
+        //String[] display = new String[NUM_UPGRADES + 1];
+        LinkedList <String>display = new LinkedList<String>();
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
             printCost = true;
             currentUpgrade = upgrades.get( i );
@@ -2000,11 +2001,11 @@ public class distensionbot extends SubspaceBot {
                     } else
                         printmsg += "Rank " + (req < 10 ? " " : "") + req;
                 }
-                display[i] = printmsg;
+                display.add(printmsg);
             }
         }
-        display[NUM_UPGRADES] = "RANK: " + p.getRank() + "  UPGRADES: " + p.getUpgradeLevel() + "  UP: " + p.getUpgradePoints()
-        + (p.getUpgradePoints() == 0?"  (Rank up for +1UP)":"");
+        display.add( "RANK: " + p.getRank() + "  UPGRADES: " + p.getUpgradeLevel() + "  UP: " + p.getUpgradePoints()
+        + (p.getUpgradePoints() == 0?"  (Rank up for +1UP)":"") );
         m_botAction.privateMessageSpam(p.getArenaPlayerID(), display);
     }
 
@@ -7000,7 +7001,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p4b1[] = { 40 };
         int p4b2[] = { 35 };
-        upg = new ShipUpgrade( "Spill Guns", Tools.Prize.GUNS, p4b1, p4b2, 2 );         // DEFINE
+        upg = new ShipUpgrade( "Spill Guns", Tools.Prize.GUNS, p4b1, p4b2, 1 );         // DEFINE
         ship.addUpgrade( upg );
         int p4c1[] = { 7, 20, 55 };
         int p4c2[] = { 4, 13, 48 };
@@ -7125,7 +7126,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p6b1[] = { 32 };
         int p6b2[] = { 35 };
-        upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, p6b1, p6b2, 2 );
+        upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, p6b1, p6b2, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Bombing ability disabled)", Tools.Prize.BOMBS, 0, 0, -1 );
         ship.addUpgrade( upg );
