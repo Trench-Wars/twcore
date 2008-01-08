@@ -20,9 +20,9 @@ public final class Ship extends Thread {
 							 INTERNAL_TERRIER = 4, INTERNAL_WEASEL = 5, INTERNAL_LANCASTER = 6, INTERNAL_SHARK = 7,
 							 INTERNAL_SPECTATOR = 8, INTERNAL_PLAYINGSHIP = 9, INTERNAL_ALL = 10;
 
-    private volatile long	m_movingUpdateTime  = 100;          // How often a moving ship's
+    private volatile long	m_movingUpdateTime  = 100;      // How often a moving ship's
                                                             //   position is updated
-    private volatile long	m_unmovingUpdateTime = 1000;        // How often an unmoving ship's
+    private volatile long	m_unmovingUpdateTime = 1000;    // How often an unmoving ship's
                                                             //   position is updated
 
     private short       x = 8192;           // X coord (0-16384)
@@ -192,8 +192,7 @@ public final class Ship extends Thread {
         this.togglables = (byte)togglables;
         this.energy = (short)energy;
         this.bounty = (short)bounty;
-        if( shipType != INTERNAL_SPECTATOR )
-            sendPositionPacket();
+        sendPositionPacket();
     }
 
     /**
@@ -210,8 +209,7 @@ public final class Ship extends Thread {
         this.lastYV = this.yVel;
         this.xVel = (short)xVel;
         this.yVel = (short)yVel;
-        if( shipType != INTERNAL_SPECTATOR )
-            sendPositionPacket();
+        sendPositionPacket();
     }
 
     /**
@@ -231,8 +229,7 @@ public final class Ship extends Thread {
         this.lastYV = this.yVel;
         this.xVel = 0;
         this.yVel = 0;
-        //if( shipType != INTERNAL_SPECTATOR )
-            sendPositionPacket();
+        sendPositionPacket();
     }
 
     /**
@@ -272,6 +269,22 @@ public final class Ship extends Thread {
     }
 
     /**
+     * Increases or decreases velocity.  Using this method prevents having to
+     * look up the old velocity in order to set it, acting as more an accelerator
+     * or decelerator.
+     * @param xVelChange
+     * @param yVelChange
+     */
+    public void alterVelocity(int xVelChange, int yVelChange ) {
+        this.lastXV = this.xVel;
+        this.lastYV = this.yVel;
+        this.xVel = (short)(xVel + xVelChange);
+        this.yVel = (short)(yVel + yVelChange);
+        if( shipType != INTERNAL_SPECTATOR )
+            sendPositionPacket();
+    }
+
+    /**
      * Sets direction the ship is facing, in Subspace degrees.
      * SS directions:
      *     0 - Left
@@ -281,6 +294,10 @@ public final class Ship extends Thread {
      * @param rotation Direction to face ship in Subspace degrees (0-39)
      */
     public void setRotation( int rotation ){
+        if( rotation < 0 )
+            rotation = 0;
+        else if( rotation > 39 )
+            rotation = 39;
         lastD = (byte)rotation;
         direction = (byte)rotation;
         if( shipType != INTERNAL_SPECTATOR )
@@ -304,6 +321,32 @@ public final class Ship extends Thread {
             degrees = 360;
         int rotate = (Math.round( (float)degrees / (float)9 ) + 10) % 40;
         setRotation( rotate );
+    }
+
+    /**
+     * Rotates the ship left by the number of Subspace rotation points given.
+     * This prevents having to look up or store which direction the ship is
+     * currently facing.
+     * @param rotationAmount Number of SS rotation points by which to rotate left
+     */
+    public void rotateLeft( int rotationAmount ) {
+        int newrot = this.direction - rotationAmount;
+        if( newrot < 0 )
+            newrot = 40 + newrot;
+        setRotation( newrot );
+    }
+
+    /**
+     * Rotates the ship right by the number of Subspace rotation points given.
+     * This prevents having to look up or store which direction the ship is
+     * currently facing.
+     * @param rotationAmount Number of SS rotation points by which to rotate right
+     */
+    public void rotateRight( int rotationAmount ) {
+        int newrot = this.direction + rotationAmount;
+        if( newrot > 39 )
+            newrot = newrot - 40;
+        setRotation( newrot );
     }
 
     /**
