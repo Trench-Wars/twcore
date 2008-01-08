@@ -55,7 +55,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.
-    private final float DEBUG_MULTIPLIER = 3.4f;           // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 3.5f;           // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -69,7 +69,7 @@ public class distensionbot extends SubspaceBot {
     private final int LAGOUT_VALID_SECONDS = 120;          // # seconds since lagout in which you can use !lagout
     private final int LAGOUT_WAIT_SECONDS = 30;            // # seconds a player must wait to be placed back in the game
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
-    private final int STREAK_RANK_PROXIMITY = 12;          // Max rank difference for a kill to count toward a streak
+    private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final float EARLY_RANK_FACTOR = 1.6f;          // Factor for rank increases (lvl 1-9)
@@ -77,10 +77,9 @@ public class distensionbot extends SubspaceBot {
     private final float NORMAL_RANK_FACTOR = 1.10f;        // Factor for rank increases (lvl 25+)
     private final float HIGH_RANK_FACTOR = 1.2f;          // Factor for rank increases (lvl 50+)
     private final float STUPIDLY_HIGH_RANK_FACTOR = 1.5f;  // Factor for rank increases (lvl 70+)
-    private final int RANK_DIFF_LOW = 10;                  // Rank difference calculations
-    private final int RANK_DIFF_MED = 15;                  // for humiliation and low-rank RP caps
-    private final int RANK_DIFF_HIGH = 20;
-    private final int RANK_DIFF_VHIGH = 30;
+    private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
+    private final int RANK_DIFF_HIGH = 30;                 // for humiliation and low-rank RP caps
+    private final int RANK_DIFF_VHIGH = 40;
     private final int RANK_DIFF_HIGHEST = 50;
     private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
     private final int RANK_REQ_SHIP2 = 5;    // 15
@@ -864,6 +863,7 @@ public class distensionbot extends SubspaceBot {
                 " - For every bug reported, points will be awarded (?message dugwyler)",
                 ".",
                 "RECENT UPDATES  -  12/31/07",
+                " - Humiliation reduced; low & high rank cap reduced; streak probability increased",
                 " - Energy and recharge start higher but upgrade slower on all ships",
                 " - Several net and CPU efficiency improvements (internal and external)",
                 " - New round-end goal: you must win 3 rounds ahead of the other team",
@@ -1192,26 +1192,21 @@ public class distensionbot extends SubspaceBot {
                 int rankDiff = loserRank - victorRank;
 
                 // Loser is many levels above victor:
-                //   Victor may have a cap, but loser is humiliated with some point loss
-                if( rankDiff >= RANK_DIFF_MED ) {
+                //   Victor capped, but loser is humiliated with some point loss
+                if( rankDiff >= RANK_DIFF_HIGH ) {
 
-                    if( rankDiff >= RANK_DIFF_HIGH ) {
-                        points = victorRank + RANK_DIFF_HIGH;
-                        isMaxReward = true;
-                    } else
-                        points = loserRank;
+                    points = victorRank + RANK_DIFF_HIGH;
+                    isMaxReward = true;
 
                     // Support ships are not humiliated; assault are
                     if( ! loser.isSupportShip() ) {
                         int loss = 0;
                         if( rankDiff >= RANK_DIFF_HIGHEST )
-                            loss = loserRank;
-                        else if( rankDiff >= RANK_DIFF_VHIGH )
                             loss = points;
-                        else if( rankDiff >= RANK_DIFF_HIGH )
+                        else if( rankDiff >= RANK_DIFF_VHIGH )
                             loss = (points / 2);
                         else
-                            loss = (points / 3);    // Default
+                            loss = (points / 3);
                         if( points > 0 ) {
                             loser.addRankPoints( -loss );
                             if( loser.wantsKillMsg() )
@@ -1219,16 +1214,14 @@ public class distensionbot extends SubspaceBot {
                         }
                     }
 
-                    // Loser is 10 or more levels below victor: victor gets fewer points
-                } else if( rankDiff <= -RANK_DIFF_LOW ) {
+                // Loser is 20 or more levels below victor: victor gets fewer points
+                } else if( rankDiff <= -RANK_DIFF_MED ) {
                     isMinReward = true;
                     if( rankDiff <= -RANK_DIFF_HIGHEST )
                         points = 1;
                     else if( rankDiff <= -RANK_DIFF_VHIGH )
-                        points = loserRank / 4;
-                    else if( rankDiff <= -RANK_DIFF_HIGH )
                         points = loserRank / 3;
-                    else if( rankDiff <= -RANK_DIFF_MED )
+                    else if( rankDiff <= -RANK_DIFF_HIGH )
                         points = loserRank / 2;
                     else
                         points = (int)(loserRank / 1.5f);
@@ -1291,10 +1284,11 @@ public class distensionbot extends SubspaceBot {
                 } else if( isSharkK )
                     points -= Math.round((float)points * 0.20f);
 
+                boolean addedToStreak = rankDiff > -STREAK_RANK_PROXIMITY;
                 // Track successive kills for weasel unlock & streaks
-                if( rankDiff > -STREAK_RANK_PROXIMITY ) {   // Streaks only count players close to your lvl
+                if( addedToStreak ) {   // Streaks only count players close to your lvl
                     if( victor.addSuccessiveKill() ) {
-                        // If player earned weasel off this kill, check if loser/killed player has weasel ...
+                        // TODO: If player earned weasel off this kill, check if loser/killed player has weasel ...
                         // and remove it if they do!
                     }
                 }
@@ -1317,32 +1311,36 @@ public class distensionbot extends SubspaceBot {
 
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     points = Math.round((float)points * DEBUG_MULTIPLIER);
-                String msg = "KILL: " + points + " RP - " + loser.getName() + "(" + loser.getRank() + ")";
+                String msg = "+" + points + " RP: " + loser.getName() + "(" + loser.getRank() + ")";
                 if( isMinReward )
-                    msg += " [Low rank kill: CAP]";
+                    msg += " [Low rank cap]";
                 else if( isMaxReward )
-                    msg += " [High rank kill: CAP]";
+                    msg += " [High rank cap]";
                 if( isRepeatKillLight )
-                    msg += " [Repeat kill: -50%]";
+                    msg += " [Repeat: -50%]";
                 else if( isRepeatKillHard )
-                    msg += " [Repeat kill: 1 RP]";
+                    msg += " [Multi-Repeat: 1 RP]";
                 if( isTeK )
                     if( isBTeK )
-                        msg += " [Base Terr: +50%]";
+                        msg += " [BTerr: +50%]";
                     else
                         msg += " [Terr: +10%]";
                 else if( isSharkK )
                     msg += " [Shark: -20%]";
                 if( flagMulti == 1.5f )
-                    msg += " [SECTOR HOLD: +50% RP]";
+                    msg += " [Both flags: +50% RP]";
                 if( flagMulti == 0.5f )
                     msg += " [No flags: -50%]";
                 if( endedStreak )
-                    msg += " [Ended a streak: +50%]";
+                    msg += " [Ended streak: +50%]";
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     msg += " [x" + DEBUG_MULTIPLIER + " beta]";
                 if( isFirstKill )
                     msg += " (!killmsg turns off this msg & gives +1% kill bonus)";
+                int suc = victor.getSuccessiveKills();
+                if( suc > 1 ) {
+                    msg += " (Streak: " + suc + (addedToStreak ? "":" [low/no inc.]") + ")";
+                }
                 m_botAction.sendPrivateMessage(victor.getName(), msg);
             }
         }
@@ -5054,6 +5052,13 @@ public class distensionbot extends SubspaceBot {
          */
         public boolean isAssisting() {
             return assistArmyID != -1;
+        }
+
+        /**
+         * @return # successive kills player has made.
+         */
+        public int getSuccessiveKills() {
+            return successiveKills;
         }
 
         /**
