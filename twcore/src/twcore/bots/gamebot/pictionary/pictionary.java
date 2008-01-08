@@ -78,10 +78,11 @@ public class pictionary extends MultiModule {
     String[]        opmsg =
     { "Moderator Commands:",
       "!start                  -- Starts a default game of Pictionary to 10.",
-      "!start <type>:<num>     -- Starts a game of <type> (default or custom) to <num> (1-25).",
+      "!start <num>:<type>     -- Starts a game to <num> points of <type>(Custom words/Default).",
       "                        -- (e.g. !start custom:15)",
       "!cancel                 -- Cancels this game of Pictionary.",
-      "!showanswer             -- Shows you the answer."
+      "!showanswer             -- Shows you the answer.",
+      "!displayrules		   -- Shows the rules in *arena messages."
     };
     String[]		autoopmsg =
     {"Moderator Commands:",
@@ -93,9 +94,16 @@ public class pictionary extends MultiModule {
     {
     	"Rules: Racism and pornography are strictly forbidden. The bot will designate",
     	"an artist. Players attempt to guess what the artist is drawing before the time",
-    	"ends(5 minutes). After each round player stats are stored.",
+    	"ends. Get " + toWin + " points to win.",
     	"-Note: You must have at least 100 possible points to gain Top Ten status.",
     	"-Questions? Comments? Suggestions? Bugs?: miloshtw@gmail.com"
+    };
+    String[]		displayrules =
+    {
+    	"''''RULES: Racism and pornography are strictly forbidden. The bot will designate  ''''",
+        "'''  an artist. Players attempt to guess what the artist is drawing before the time'''",
+        "''   ends to gain points. If you guess correctly then it is your turn to draw       ''",
+        "'    The first player to reach " + toWin + " points wins the game.                   '"
     };
     String[]        oprules =
     {
@@ -151,7 +159,7 @@ public class pictionary extends MultiModule {
 				}
 				
 				m_botAction.sendArenaMessage("Game Type: " + gameType);
-				doStartGame(m_botAction.getBotName(),game);
+				doStartGame(m_botAction.getBotName(),10 + game);
 				
 			}
 		};
@@ -210,6 +218,7 @@ public class pictionary extends MultiModule {
         m_commandInterpreter.registerCommand( "!start",     acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!cancel",    acceptedMessages, this, "doCancelGame" );
         m_commandInterpreter.registerCommand( "!showanswer",acceptedMessages, this, "doShowAnswer" );
+        m_commandInterpreter.registerCommand( "!displayrules",acceptedMessages, this, "doArenaRules" );
         
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!ready",     acceptedMessages, this, "doReady" );
@@ -279,6 +288,16 @@ public class pictionary extends MultiModule {
     }
     
     /****************************************************************/
+    /*** Displays the rules.                                      ***/
+    /****************************************************************/
+    
+    public void doArenaRules( String name, String message) {
+    	if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name )) {
+    		m_botAction.arenaMessageSpam(displayrules);
+    	}
+    }
+    
+    /****************************************************************/
     /*** Starts the game.                                         ***/
     /****************************************************************/
     
@@ -289,26 +308,30 @@ public class pictionary extends MultiModule {
             toWin = 10;
             String[] msg = message.split(":");
             try {
-            	if ( msg[0].trim().equalsIgnoreCase("custom")){
+            	if ( msg[1].trim().equalsIgnoreCase("custom")){
             		custGame = true;
             		
             	}
-            	else if ( msg[0].trim().equalsIgnoreCase("default") ){
+            	else if ( msg[1].trim().equalsIgnoreCase("default") ){
             		custGame = false;
             	}
             }
-            catch (Exception e) {}
+            catch (Exception e) {custGame = false;}
             try {
-                toWin = Integer.parseInt( msg[1] );
+                toWin = Integer.parseInt( msg[0] );
                 if( toWin < 1 || toWin > 25 ) toWin = 10;
             }
-            catch (Exception e) {}
+            catch (Exception e) {toWin = 10;}
             gameProgress = 0;
-            m_botAction.specAll();            
-            if (m_botAction.getArenaSize() >= minPlayers){         
-            	m_botAction.sendArenaMessage(m_prec + "A game of Pictionary is starting | Win by getting " + toWin + " pts!", 22);
-            	m_botAction.sendArenaMessage(m_prec + "Type your guesses in public chat.");
-            	m_botAction.sendArenaMessage(m_prec + "PM !notplaying to " + m_botAction.getBotName() + " if you don't want to play.");
+            m_botAction.specAll();
+            if(autoStart)doArenaRules(m_botAction.getBotName(),"");
+            
+            if (m_botAction.getArenaSize() >= minPlayers){
+            	if(!autoStart){
+            		m_botAction.sendArenaMessage(m_prec + "A game of Pictionary is starting | Win by getting " + toWin + " pts!", 22);
+            		m_botAction.sendArenaMessage(m_prec + "Type your guesses in public chat.");
+            		m_botAction.sendArenaMessage(m_prec + "PM !notplaying to " + m_botAction.getBotName() + " if you don't want to play.");
+            	}
             	gameProgress = 1;
             	pickPlayer();
             	grabWord();
@@ -525,7 +548,6 @@ public class pictionary extends MultiModule {
                 		t_word = qryWordData.getString("Word").toLowerCase();
                 		if (t_word.length() < 4){
                 			grabWord();
-                			return;
                 		}
                 		if (!(t_word.trim().split(" ").length > 1))
                 			t_definition = "The word begins with '" + t_word.substring(0,1) + "'.";
