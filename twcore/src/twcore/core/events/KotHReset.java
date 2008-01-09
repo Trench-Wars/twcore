@@ -28,8 +28,8 @@ import twcore.core.util.ByteArray;
 public class KotHReset extends SubspaceEvent {
     
     private boolean enabled;    // whether King of the Hill is running for the specified player ID
-    private int timer;          // King of the Hill timer ?? >0 when running, ==0 when koth game is over for specified player
-    private short playerID;     // specified player ID
+    private int timer;          // King of the Hill timer ?? >0 when running, 0 when koth game is over for specified player
+    private short playerID;     // specified player ID or -1 for all
     
     /**
 	 * Creates a new instance of BallPosition; this is called by
