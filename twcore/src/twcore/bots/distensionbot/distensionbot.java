@@ -46,7 +46,7 @@ import twcore.core.util.Tools;
  *
  * Lower priority (in order):
  * - !intro, !intro2, !intro3, etc.
- * - !emp for terr "targetted EMP" ability, and appropriate player data.  This involves negative full charge.
+ * - !emp for terr "targeted EMP" ability, and appropriate player data.  This involves negative full charge.
  * - F1 Help -- item descriptions?  At least say which slot is which, if not providing info on the specials
  * - LVZ stuff: replacement sounds
  *
@@ -158,10 +158,12 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_PRIORITY_REARM = -1;
     public final int ABILITY_TERR_REGEN = -2;
     public final int ABILITY_REFUELER = -3;
-    public final int ABILITY_TARGETTED_EMP = -4;
+    public final int ABILITY_TARGETED_EMP = -4;
     public final int ABILITY_SUPER = -5;
     public final int ABILITY_SHARK_REGEN = -6;
     public final int ABILITY_PROFIT_SHARING = -7;
+    public final int ABILITY_VENGEFUL_BASTARD = -8;
+    public final int ABILITY_EJECT_POD = -9;
 
     // TACTICAL OPS DATA
     public final int DEFAULT_MAX_OP = 3;                    // Max OP points when not upgraded
@@ -862,10 +864,11 @@ public class distensionbot extends SubspaceBot {
                 " - Top 3 players (combined earned RP) awarded bonus points in public release",
                 " - For every bug reported, points will be awarded (?message dugwyler)",
                 ".",
-                "RECENT UPDATES  -  12/31/07",
+                "RECENT UPDATES  -  1/9/07",
+                " - Vengeful Bastard ability added for Weasel & Lanc: kill them for a surprise...",
+                " - Levis are now a support ship; weasels are not, but receive small profitsharing",
                 " - Humiliation reduced; low & high rank cap reduced; streak probability increased",
                 " - Energy and recharge start higher but upgrade slower on all ships",
-                " - Several net and CPU efficiency improvements (internal and external)",
                 " - New round-end goal: you must win 3 rounds ahead of the other team",
                 " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs...",
                 "   NOTE: All upgrades were refunded; you will need to buy all upgrades again!",
@@ -1136,131 +1139,135 @@ public class distensionbot extends SubspaceBot {
         else
             return;
 
-        if( killer != null ) {
-            DistensionPlayer victor = m_players.get( killer.getPlayerName() );
-            if( victor == null )
-                return;
-            boolean isTeK = (loser.getShipNum() == Tools.Ship.TERRIER);
-            boolean isBTeK = false;
-            if( isTeK ) {
-                Player p = m_botAction.getPlayer( loser.getArenaPlayerID() );
-                if( p.getYTileLocation() <= TOP_FR || p.getYTileLocation() >= BOT_FR )
-                    isBTeK = true;
+        if( killer == null ) {
+            loser.clearSuccessiveKills();
+            return;
+        }
+
+        DistensionPlayer victor = m_players.get( killer.getPlayerName() );
+        if( victor == null )
+            return;
+        boolean isTeK = (loser.getShipNum() == Tools.Ship.TERRIER);
+        boolean isBTeK = false;
+        if( isTeK ) {
+            Player p = m_botAction.getPlayer( loser.getArenaPlayerID() );
+            if( p.getYTileLocation() <= TOP_FR || p.getYTileLocation() >= BOT_FR )
+                isBTeK = true;
+        }
+        boolean isSharkK = (loser.getShipNum() == Tools.Ship.SHARK);
+        boolean isMaxReward = false;
+        boolean isMinReward = false;
+        boolean isRepeatKillLight = false;
+        boolean isRepeatKillHard = false;
+        boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
+        boolean endedStreak = false;
+
+        // IF TK: TKer loses points equal to half their level, and they are notified
+        // of it if they have not yet been notified this match.  Successive kills are
+        // also cleared.
+        if( killed.getFrequency() == killer.getFrequency() ) {
+            float div;
+            // Sharks get off a little easier for TKs
+            if( killer.getShipType() == Tools.Ship.SHARK || loser.getShipNum() == Tools.Ship.WARBIRD )
+                div = 8.0f;
+            else {
+                if( loser.isSupportShip() )
+                    div = 1.0f;
+                else
+                    div = 2.0f;
             }
-            boolean isSharkK = (loser.getShipNum() == Tools.Ship.SHARK);
-            boolean isMaxReward = false;
-            boolean isMinReward = false;
-            boolean isRepeatKillLight = false;
-            boolean isRepeatKillHard = false;
-            boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
-            boolean endedStreak = false;
+            // If lowbies get TKd, it shouldn't hurt as much, because ... well, it's easy to TK them.
+            if( loser.getRank() < 10 )
+                div *= 1.5f;
+            int loss = Math.round((float)victor.getRank() / div);
+            victor.addRankPoints( -loss );
+            victor.clearSuccessiveKills();
+            if( loss > 0 && victor.wantsKillMsg() )
+                m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
+            m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
+            m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
+        } else {
+            // Otherwise: Add points via level scheme
+            DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
+            DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
+            if( killerarmy == null || killedarmy == null )
+                return;
+            endedStreak = loser.clearSuccessiveKills();
+            int points;
+            int loserRank = Math.max( 1, loser.getRank() );
+            int victorRank = Math.max( 1, victor.getRank() );
+            int rankDiff = loserRank - victorRank;
 
-            // IF TK: TKer loses points equal to half their level, and they are notified
-            // of it if they have not yet been notified this match.  Successive kills are
-            // also cleared.
-            if( killed.getFrequency() == killer.getFrequency() ) {
-                float div;
-                // Sharks get off a little easier for TKs
-                if( killer.getShipType() == Tools.Ship.SHARK || loser.getShipNum() == Tools.Ship.WARBIRD )
-                    div = 8.0f;
-                else {
-                    if( loser.isSupportShip() )
-                        div = 1.0f;
+            // Loser is many levels above victor:
+            //   Victor capped, but loser is humiliated with some point loss
+            if( rankDiff >= RANK_DIFF_HIGH ) {
+
+                points = victorRank + RANK_DIFF_HIGH;
+                isMaxReward = true;
+
+                // Support ships are not humiliated; assault are
+                if( ! loser.isSupportShip() ) {
+                    int loss = 0;
+                    if( rankDiff >= RANK_DIFF_HIGHEST )
+                        loss = points;
+                    else if( rankDiff >= RANK_DIFF_VHIGH )
+                        loss = (points / 2);
                     else
-                        div = 2.0f;
-                }
-                // If lowbies get TKd, it shouldn't hurt as much, because ... well, it's easy to TK them.
-                if( loser.getRank() < 10 )
-                    div *= 1.5f;
-                int loss = Math.round((float)victor.getRank() / div);
-                victor.addRankPoints( -loss );
-                victor.clearSuccessiveKills();
-                if( loss > 0 && victor.wantsKillMsg() )
-                    m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
-                m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
-                m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
-            } else {
-                // Otherwise: Add points via level scheme
-                DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
-                DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
-                if( killerarmy == null || killedarmy == null )
-                    return;
-                endedStreak = loser.clearSuccessiveKills();
-                int points;
-                int loserRank = Math.max( 1, loser.getRank() );
-                int victorRank = Math.max( 1, victor.getRank() );
-                int rankDiff = loserRank - victorRank;
-
-                // Loser is many levels above victor:
-                //   Victor capped, but loser is humiliated with some point loss
-                if( rankDiff >= RANK_DIFF_HIGH ) {
-
-                    points = victorRank + RANK_DIFF_HIGH;
-                    isMaxReward = true;
-
-                    // Support ships are not humiliated; assault are
-                    if( ! loser.isSupportShip() ) {
-                        int loss = 0;
-                        if( rankDiff >= RANK_DIFF_HIGHEST )
-                            loss = points;
-                        else if( rankDiff >= RANK_DIFF_VHIGH )
-                            loss = (points / 2);
-                        else
-                            loss = (points / 3);
-                        if( points > 0 ) {
-                            loser.addRankPoints( -loss );
-                            if( loser.wantsKillMsg() )
-                                m_botAction.sendPrivateMessage(loser.getArenaPlayerID(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getRank() + ")");
-                        }
+                        loss = (points / 3);
+                    if( points > 0 ) {
+                        loser.addRankPoints( -loss );
+                        if( loser.wantsKillMsg() )
+                            m_botAction.sendPrivateMessage(loser.getArenaPlayerID(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getRank() + ")");
                     }
+                }
 
                 // Loser is 20 or more levels below victor: victor gets fewer points
-                } else if( rankDiff <= -RANK_DIFF_MED ) {
-                    isMinReward = true;
-                    if( rankDiff <= -RANK_DIFF_HIGHEST )
-                        points = 1;
-                    else if( rankDiff <= -RANK_DIFF_VHIGH )
-                        points = loserRank / 3;
-                    else if( rankDiff <= -RANK_DIFF_HIGH )
-                        points = loserRank / 2;
-                    else
-                        points = (int)(loserRank / 1.5f);
+            } else if( rankDiff <= -RANK_DIFF_MED ) {
+                isMinReward = true;
+                if( rankDiff <= -RANK_DIFF_HIGHEST )
+                    points = 1;
+                else if( rankDiff <= -RANK_DIFF_VHIGH )
+                    points = loserRank / 3;
+                else if( rankDiff <= -RANK_DIFF_HIGH )
+                    points = loserRank / 2;
+                else
+                    points = (int)(loserRank / 1.5f);
 
-                    // Normal kill:
+                // Normal kill:
                     //   Victor earns the rank of the loser in points.  Level 0 players are worth 1 point.
+            } else {
+                points = loser.getRank();
+            }
+
+            // Points adjusted based on size of victor's army v. loser's
+            float armySizeWeight;
+            float killedArmyStr = killedarmy.getTotalStrength();
+            float killerArmyStr = killerarmy.getTotalStrength();
+            if( killedArmyStr <= 0 ) killedArmyStr = 1;
+            if( killerArmyStr <= 0 ) killerArmyStr = 1;
+            armySizeWeight = killedArmyStr / killerArmyStr;
+            if( armySizeWeight > 3.0f )
+                armySizeWeight = 3.0f;
+            else if( armySizeWeight < 0.2f )
+                armySizeWeight = 0.2f;
+
+            float flagMulti = killerarmy.getNumFlagsOwned();
+            if( flagMulti == 0f ) {
+                if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
+                    flagMulti = 0.5f;
                 } else {
-                    points = loser.getRank();
+                    // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
+                    flagMulti = 1;
                 }
+            } else if( flagMulti == 2f ) {
+                flagMulti = 1.5f;
+            }
 
-                // Points adjusted based on size of victor's army v. loser's
-                float armySizeWeight;
-                float killedArmyStr = killedarmy.getTotalStrength();
-                float killerArmyStr = killerarmy.getTotalStrength();
-                if( killedArmyStr <= 0 ) killedArmyStr = 1;
-                if( killerArmyStr <= 0 ) killerArmyStr = 1;
-                armySizeWeight = killedArmyStr / killerArmyStr;
-                if( armySizeWeight > 3.0f )
-                    armySizeWeight = 3.0f;
-                else if( armySizeWeight < 0.2f )
-                    armySizeWeight = 0.2f;
+            points = Math.round(((float)points * armySizeWeight));
+            points = (int)((float)points * flagMulti);
 
-                float flagMulti = killerarmy.getNumFlagsOwned();
-                if( flagMulti == 0f ) {
-                    if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                        flagMulti = 0.5f;
-                    } else {
-                        // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
-                        flagMulti = 1;
-                    }
-                } else if( flagMulti == 2f ) {
-                    flagMulti = 1.5f;
-                }
-
-                points = Math.round(((float)points * armySizeWeight));
-                points = (int)((float)points * flagMulti);
-
-                if( killedarmy.getPilotsInGame() != 1 ) {
-                    switch( victor.getRepeatKillAmount( event.getKilleeID() ) ) {
+            if( killedarmy.getPilotsInGame() != 1 ) {
+                switch( victor.getRepeatKillAmount( event.getKilleeID() ) ) {
                     case 3:
                         points /= 2;
                         isRepeatKillLight = true;
@@ -1273,76 +1280,78 @@ public class distensionbot extends SubspaceBot {
                         if( victor.wantsKillMsg() )
                             m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
                         break;
-                    }
                 }
-
-                if( isTeK ) {
-                    if( isBTeK )
-                        points = Math.round((float)points * 1.50f);
-                    else
-                        points = Math.round((float)points * 1.10f);
-                } else if( isSharkK )
-                    points -= Math.round((float)points * 0.20f);
-
-                boolean addedToStreak = rankDiff > -STREAK_RANK_PROXIMITY;
-                // Track successive kills for weasel unlock & streaks
-                if( addedToStreak ) {   // Streaks only count players close to your lvl
-                    if( victor.addSuccessiveKill() ) {
-                        // TODO: If player earned weasel off this kill, check if loser/killed player has weasel ...
-                        // and remove it if they do!
-                    }
-                }
-
-                if( endedStreak )
-                    points = Math.round((float)points * 1.50f);
-
-                if( points < 1 )
-                    points = 1;
-                // Check if player ranked up from the kill
-                if( victor.addRankPoints( points ) ) {
-                    // ... and taunt loser if he/she did
-                    if( loser.wantsKillMsg() )
-                        m_botAction.sendPrivateMessage( loser.getArenaPlayerID(), "INSULT TO INJURY: " + victor.getName() + " just ranked up from your kill!", Tools.Sound.CRYING );
-                }
-                victor.getArmy().addSharedProfit( points );
-
-                if( ! victor.wantsKillMsg() )
-                    return;
-
-                if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
-                    points = Math.round((float)points * DEBUG_MULTIPLIER);
-                String msg = "+" + points + " RP: " + loser.getName() + "(" + loser.getRank() + ")";
-                if( isMinReward )
-                    msg += " [Low rank cap]";
-                else if( isMaxReward )
-                    msg += " [High rank cap]";
-                if( isRepeatKillLight )
-                    msg += " [Repeat: -50%]";
-                else if( isRepeatKillHard )
-                    msg += " [Multi-Repeat: 1 RP]";
-                if( isTeK )
-                    if( isBTeK )
-                        msg += " [BTerr: +50%]";
-                    else
-                        msg += " [Terr: +10%]";
-                else if( isSharkK )
-                    msg += " [Shark: -20%]";
-                if( flagMulti == 1.5f )
-                    msg += " [Both flags: +50% RP]";
-                if( flagMulti == 0.5f )
-                    msg += " [No flags: -50%]";
-                if( endedStreak )
-                    msg += " [Ended streak: +50%]";
-                if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
-                    msg += " [x" + DEBUG_MULTIPLIER + " beta]";
-                if( isFirstKill )
-                    msg += " (!killmsg turns off this msg & gives +1% kill bonus)";
-                int suc = victor.getSuccessiveKills();
-                if( suc > 1 ) {
-                    msg += " (Streak: " + suc + (addedToStreak ? "":" [low/no inc.]") + ")";
-                }
-                m_botAction.sendPrivateMessage(victor.getName(), msg);
             }
+
+            if( isTeK ) {
+                if( isBTeK )
+                    points = Math.round((float)points * 1.50f);
+                else
+                    points = Math.round((float)points * 1.10f);
+            } else if( isSharkK )
+                points -= Math.round((float)points * 0.20f);
+
+            boolean addedToStreak = rankDiff > -STREAK_RANK_PROXIMITY;
+            // Track successive kills for weasel unlock & streaks
+            if( addedToStreak ) {   // Streaks only count players close to your lvl
+                if( victor.addSuccessiveKill() ) {
+                    // TODO: If player earned weasel off this kill, check if loser/killed player has weasel ...
+                    // and remove it if they do!
+                }
+            }
+
+            if( endedStreak )
+                points = Math.round((float)points * 1.50f);
+
+            if( points < 1 )
+                points = 1;
+            // Check if player ranked up from the kill
+            if( victor.addRankPoints( points ) ) {
+                // ... and taunt loser if he/she did
+                if( loser.wantsKillMsg() )
+                    m_botAction.sendPrivateMessage( loser.getArenaPlayerID(), "INSULT TO INJURY: " + victor.getName() + " just ranked up from your kill!", Tools.Sound.CRYING );
+            }
+            victor.getArmy().addSharedProfit( points );
+
+            if( ! victor.wantsKillMsg() )
+                return;
+
+            if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
+                points = Math.round((float)points * DEBUG_MULTIPLIER);
+            String msg = "+" + points + " RP: " + loser.getName() + "(" + loser.getRank() + ")";
+            if( isMinReward )
+                msg += " [Low rank cap]";
+            else if( isMaxReward )
+                msg += " [High rank cap]";
+            if( isRepeatKillLight )
+                msg += " [Repeat: -50%]";
+            else if( isRepeatKillHard )
+                msg += " [Multi-Repeat: 1 RP]";
+            if( isTeK )
+                if( isBTeK )
+                    msg += " [BTerr: +50%]";
+                else
+                    msg += " [Terr: +10%]";
+            else if( isSharkK )
+                msg += " [Shark: -20%]";
+            if( flagMulti == 1.5f )
+                msg += " [Both flags: +50% RP]";
+            if( flagMulti == 0.5f )
+                msg += " [No flags: -50%]";
+            if( endedStreak )
+                msg += " [Ended streak: +50%]";
+            if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
+                msg += " [x" + DEBUG_MULTIPLIER + " beta]";
+            if( isFirstKill )
+                msg += " (!killmsg turns off this msg & gives +1% kill bonus)";
+            int suc = victor.getSuccessiveKills();
+            if( suc > 1 ) {
+                msg += "  Streak: " + suc + (addedToStreak ? "":" [low/no inc.]");
+            }
+            m_botAction.sendPrivateMessage(victor.getName(), msg);
+
+            // Determine whether or not vengeance is to be inflicted
+            loser.checkVengefulBastard( victor.getArenaPlayerID() );
         }
     }
 
@@ -1505,7 +1514,7 @@ public class distensionbot extends SubspaceBot {
             if( pwd != null && !pwd.equals(army.getPassword()) )
                 throw new TWCoreException( "That's a private army there.  And the password doesn't seem to match up.  Duff off." );
 
-        DistensionArmy oldarmy = m_armies.get( p.getArmyID() );
+        DistensionArmy oldarmy = m_armies.get( p.getNaturalArmyID() );
         if( oldarmy != null )
             if( oldarmy.getID() == army.getID() )
                 throw new TWCoreException( "Now that's just goddamn stupid.  You're already in that army!" );
@@ -1661,7 +1670,7 @@ public class distensionbot extends SubspaceBot {
                     if( flagTimer.getHoldingFreq() == p.getArmyID() && flagTimer.getSecondsHeld() > 0 ) {
                         // If player is changing to a support ship while their freq is securing a hold,
                         // they're probably just doing it to steal the points; don't keep MVP
-                        m_botAction.sendPrivateMessage( name, "You changed to a support ship, but your participation has still been reset, as you presently have a sector hold." );
+                        m_botAction.sendPrivateMessage( name, "You changed to a needed support ship, but your participation has still been reset, as your army presently has a sector hold!" );
                         m_playerTimes.remove( name );
                     } else {
                         m_botAction.sendPrivateMessage( name, "For switching to a needed support ship, your participation counter has not been reset." );
@@ -3665,7 +3674,7 @@ public class distensionbot extends SubspaceBot {
              * -1:  Fast respawn (puts you at the head of the respawning queue when you die)
              * -2:  Prizing burst + warp every 60 seconds, for terriers
              * -3:  Full charge chance every 30 seconds, for spiders
-             * -4:  Targetted EMP against all enemies (uses !emp command)
+             * -4:  Targeted EMP against all enemies (uses !emp command)
              * -5:  Super chance every 30 seconds, for spiders
              * -6:  Repel chance every 30 seconds, for sharks
              * -7:  Profit sharing
@@ -3679,7 +3688,7 @@ public class distensionbot extends SubspaceBot {
         case ABILITY_REFUELER:
             desc = "+50% chance of full charge every 30 seconds";
             break;
-        case ABILITY_TARGETTED_EMP:
+        case ABILITY_TARGETED_EMP:
             desc = "EMP ALL enemies with !emp (every 20 minutes)";
             break;
         case ABILITY_SUPER:
@@ -3690,6 +3699,9 @@ public class distensionbot extends SubspaceBot {
             break;
         case ABILITY_PROFIT_SHARING:
             desc = "+1% of team's kill RP earned per level";
+            break;
+        case ABILITY_VENGEFUL_BASTARD:
+            desc = "+10% chance of something awful happening to your killers";
             break;
         }
         return desc;
@@ -3838,6 +3850,9 @@ public class distensionbot extends SubspaceBot {
         private int       currentOP;            // Current # OP points (for Tactical Ops)
         private int       maxOP;                // Max # OP points (for Tactical Ops)
         private int       currentComms;         // Current # communications saved up (for Tactical Ops)
+        private int       lastX;                // Last X position
+        private int       lastY;                // Last Y position
+        private int       vengefulBastard;      // Levels of Vengeful Bastard ability
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
@@ -3872,6 +3887,9 @@ public class distensionbot extends SubspaceBot {
             assistArmyID = -1;
             recentlyEarnedRP = 0;
             bonusBuildup = 0.0;
+            lastX = 0;
+            lastY = 0;
+            vengefulBastard = 0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[9];
             for( int i = 0; i < 9; i++ )
@@ -4074,6 +4092,8 @@ public class distensionbot extends SubspaceBot {
                         fastRespawn = true;
                     else if( upgrades.get( i ).getPrizeNum() == OPS_INCREASE_MAX_OP )
                         maxOP += purchasedUpgrades[i];
+                    else if( upgrades.get( i ).getPrizeNum() == ABILITY_VENGEFUL_BASTARD )
+                        vengefulBastard = purchasedUpgrades[i];
                 }
 
                 m_botAction.SQLClose(r);
@@ -4175,7 +4195,7 @@ public class distensionbot extends SubspaceBot {
          * Special prize #s that are prized with this method:
          * -2:  Prizing burst + warp for terriers
          * -3:  Full charge for spiders
-         * -4:  Targetted EMP against all enemies -- recharged every 10 min or so, and not lost on death
+         * -4:  Targeted EMP against all enemies -- recharged every 10 min or so, and not lost on death
          * -5:  Super for spiders
          * -6:  Repels for sharks
          *
@@ -4481,6 +4501,8 @@ public class distensionbot extends SubspaceBot {
                 m_specialAbilityPrizer.addPlayer(this);
             else
                 m_specialAbilityPrizer.removePlayer(this);
+            if( (shipNum == 6 || shipNum == 7) && upgrade == 6 )
+                vengefulBastard = purchasedUpgrades[6];
             shipDataSaved = false;
         }
 
@@ -4509,6 +4531,9 @@ public class distensionbot extends SubspaceBot {
             recentlyEarnedRP = 0;
             currentOP = 0;
             currentComms = 0;
+            vengefulBastard = 0;
+            lastX = 0;
+            lastY = 0;
         }
 
         /**
@@ -4649,7 +4674,13 @@ public class distensionbot extends SubspaceBot {
         public void checkIdleStatus() {
             Player p = m_botAction.getPlayer(arenaPlayerID);
             if( p == null ) return;
-            if( shipNum > 0 && shipNum != 9 && (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE) ) {
+            boolean idle = (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE);
+            if( !idle ) {
+                if( lastX >= p.getXTileLocation() - 5 && lastX <= p.getXTileLocation() + 5 &&
+                    lastY >= p.getYTileLocation() - 5 && lastY <= p.getYTileLocation() + 5 )
+                    idle = true;
+            }
+            if( shipNum > 0 && shipNum != 9 && idle ) {
                 idleTicks++;
                 if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle; you will be automatically docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of the rearmament area.");
@@ -4657,19 +4688,22 @@ public class distensionbot extends SubspaceBot {
                     cmdDock(name, "");
             } else
                 idleTicks = 0;
+            lastX = p.getXTileLocation();
+            lastY = p.getYTileLocation();
         }
 
         /**
-         * Shares a portion of the RP "profits" earned in the last minute with a terr that
-         * has the profit-sharing ability.
+         * Shares a portion of the RP "profits" earned in the last minute with support ships,
+         * and to a lesser degree, with weasels.  Levis and especially weasels do not receive
+         * as large a share of profit sharing as do sharks and terrs.
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
-            if( isSupportShip() ) {
+            if( isSupportShip() || shipNum == 6 ) {
                 float sharingPercent;
-                if( rank >= 10 )
+                if( rank >= 10 && (shipNum != 4 && shipNum != 6) )
                     sharingPercent = 2.0f;
-                else if( rank >= 5 )
+                else if( rank >= 5 && shipNum != 6 )
                     sharingPercent = 1.0f;
                 else
                     sharingPercent = 0.5f;
@@ -4699,6 +4733,38 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.specificPrize( arenaPlayerID, -Tools.Prize.BOMBS );
             else
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.BOMBS );
+        }
+
+        /**
+         * Checks if the Vengeful Bastard ability should fire, and if so, fires
+         * it on the ID of the player provided.
+         * @param killerID ID of player who killed the vengeful bastard
+         */
+        public void checkVengefulBastard( int killerID ) {
+            if( vengefulBastard <= 0 )
+                return;
+            double vengeChance = Math.random() * 10.0;
+            if( (double)vengefulBastard > vengeChance ) {
+                double vengeType = Math.random() * 100.0;
+                if( vengeType >= 99.0 ) {
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ENGINE_SHUTDOWN );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.GUNS );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.FULLCHARGE );
+                } else if( vengeType >= 97.0 )
+                    m_botAction.specificPrize( killerID, Tools.Prize.WARP );
+                else if( vengeType >= 95.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ENGINE_SHUTDOWN );
+                else if( vengeType >= 93.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.GUNS );
+                else if( vengeType >= 81.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.FULLCHARGE );
+                else
+                    m_botAction.specificPrize( killerID, Tools.Prize.ENGINE_SHUTDOWN );
+            }
+
         }
 
 
@@ -5044,7 +5110,7 @@ public class distensionbot extends SubspaceBot {
          * @return True if player is a support ship (5 or 8)
          */
         public boolean isSupportShip() {
-            return (shipNum == 5 || shipNum == 8 || shipNum == 9);
+            return (shipNum == 5 || shipNum == 8 || shipNum == 9 || shipNum == 4 );
         }
 
         /**
@@ -6102,7 +6168,7 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p;
         while( i.hasNext() ) {
             p = i.next();
-            if( (p.isSupportShip() && p.getShipNum() != 9) || p.getShipNum() == 4 || p.getShipNum() == 6 ) {
+            if( (p.isSupportShip() && p.getShipNum() != 9) || p.getShipNum() == 6 ) {
                 m_botAction.setShip( p.getArenaPlayerID(), 1 );
                 m_botAction.setShip( p.getArenaPlayerID(), p.getShipNum() );
                 if( !p.isRespawning() )
@@ -6665,7 +6731,7 @@ public class distensionbot extends SubspaceBot {
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
-                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE FINAL BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the battle.", Tools.Sound.GOGOGO );
+                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE DECISIVE BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the battle.", Tools.Sound.GOGOGO );
                     resetAllFlagData();
                     setupPlayerTimes();
                     warpPlayers();
@@ -6746,8 +6812,10 @@ public class distensionbot extends SubspaceBot {
          * Runs the LVZ-based timer.
          */
         private void do_updateTimer() {
-            int secsNeeded = flagMinutesRequired * 60 - secondsHeld;
             flagTimerObjs.hideAllObjects();
+            if( sectorHoldingArmyID == -1 )
+                return;
+            int secsNeeded = flagMinutesRequired * 60 - secondsHeld;
             int minutes = secsNeeded / 60;
             int seconds = secsNeeded % 60;
             if( minutes < 1 ) flagTimerObjs.showObject( 1100 );
@@ -6773,7 +6841,7 @@ public class distensionbot extends SubspaceBot {
      * -1:  Fast respawn (puts you at the head of the respawning queue when you die)
      * -2:  Prizing burst + warp every 60 seconds, for terriers
      * -3:  Full charge chance every 30 seconds, for spiders
-     * -4:  Targetted EMP against all enemies (uses !emp command)
+     * -4:  Targeted EMP against all enemies (uses !emp command)
      * -5:  Super chance every 30 seconds, for spiders
      * -6:  Repel chance every 30 seconds, for sharks
      * -7:  Profit sharing (+1% of RP of each teammate's kills per level), for terrs / sharks
@@ -6854,7 +6922,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 34, 44, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "S3", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Eject Pod", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "S4", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -7046,7 +7114,7 @@ public class distensionbot extends SubspaceBot {
         // 43: Profit-sharing 4
         // 46: Burst 3
         // 48: Portal 3
-        // 50: Targetted EMP (negative full charge to all of the other team)
+        // 50: Targeted EMP (negative full charge to all of the other team)
         // 53: Profit-sharing 5
         // 55: Burst 4
         // 60: Portal 4
@@ -7089,7 +7157,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 8, 9, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Targetted EMP", ABILITY_TARGETTED_EMP, 40, 50, 1 );
+        upg = new ShipUpgrade( "Targeted EMP", ABILITY_TARGETED_EMP, 40, 50, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
@@ -7098,15 +7166,20 @@ public class distensionbot extends SubspaceBot {
         //                        and all have level requirements; special upgrades come somewhat early
         //  5: XRadar
         //  7: Rocket 1
+        // 10: 10% Vengeful Bastard 1
         // 13: L2 Guns
         // 18: Multifire
+        // 20: 10% Vengeful Bastard 2
         // 23: Cloak
         // 29: Portal
+        // 30: 10% Vengeful Bastard 3
         // 35: L3 Guns
         // 40: Stealth
         // 42: Decoy
+        // 45: 10% Vengeful Bastard 4
         // 46: Rocket 2
         // 50: Brick
+        // 55: 10% Vengeful Bastard 5
         // 60: Rocket 3
         ship = new ShipProfile( RANK_REQ_SHIP6, 15f );
         int p6a1a[] = {15, 9,  8,  7,  7,  6, 5 };
@@ -7133,7 +7206,7 @@ public class distensionbot extends SubspaceBot {
         int p6b2[] = { 35 };
         upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, p6b1, p6b2, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Bombing ability disabled)", Tools.Prize.BOMBS, 0, 0, -1 );
+        upg = new ShipUpgrade( "+10% Vengeful Bastard", ABILITY_VENGEFUL_BASTARD, new int[]{9,12,15,18,20}, new int[]{10,20,30,45,55}, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Cannon Distributor", Tools.Prize.MULTIFIRE, 19, 18, 1 );
         ship.addUpgrade( upg );
@@ -7155,11 +7228,13 @@ public class distensionbot extends SubspaceBot {
 
         // LANCASTER -- special unlock  (10 for beta)
         // Fast upgrade speed; all upgrades only get lanc to 120% of stock lanc, but energy has few level requirements.
-        // 0: +1 Guns (other gun is level 38 but has no upgrade cost)
         // 20: Multifire
         // 26: Bombing special ability
+        // 30: +10% Vengeful Bastard 1
         // 38: +1 Guns (other gun costs 6 but is available from start; these are free)
+        // 40: +10% Vengeful Bastard 2
         // 45: The Firebloom
+        // 50: +10% Vengeful Bastard 3
         // 55: Prox
         // 60: XRadar
         // 69: Shrap (10 levels)
@@ -7179,7 +7254,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Modernized Projector", Tools.Prize.GUNS, 45, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Bombing as special)", Tools.Prize.BOMBS, 0, 0, -1 );
+        upg = new ShipUpgrade( "+10% Vengeful Bastard", ABILITY_VENGEFUL_BASTARD, new int[]{15,18,20}, new int[]{30,40,50}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Magnified Output Force", Tools.Prize.MULTIFIRE, 23, 20, 1 );
         ship.addUpgrade( upg );
@@ -7291,7 +7366,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, 0, 0, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETTED_EMP, 0, 0, 1 );
+        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 0, 0, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
     }
