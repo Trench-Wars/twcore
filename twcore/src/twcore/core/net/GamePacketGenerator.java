@@ -886,6 +886,16 @@ public class GamePacketGenerator {
         objPacket.addLittleEndianShort( (short) (objVisible ? (objID & 0x7FFF) : (objID | 0x8000)) );
         composePacket( objPacket );
     }
+    
+    /**
+     * Sends a signal to the server that this client is no longer in the King of the Hill game.
+     * (In Continuum this only happens when you die or the timer runs out.) 
+     */
+    public void sendEndKoTH() {
+        ByteArray objPacket = new ByteArray( 1 );
+        objPacket.addByte( 0x1E );
+        composePacket(objPacket);
+    }
 
     /**
      * Implementation to send out most packets as normal, while placing a cap

@@ -1175,6 +1175,13 @@ public class BotAction
     public void warpRandomly( String playerName ) {
         specificPrize(playerName, Tools.Prize.WARP);
     }
+    
+    /** 
+     * Signals the end of the King of the Hill game for this client.
+     */
+    public void endKOTH() {
+        m_packetGenerator.sendEndKoTH();  
+    }
 
     /**
      * Issues a /*spec command to the given player, sending them immediately to
@@ -2788,7 +2795,7 @@ public class BotAction
     public PreparedStatement createPreparedStatement(String connectionName, String uniqueID, String sqlstatement) {
         return getCoreData().getSQLManager().createPreparedStatement(connectionName, uniqueID, sqlstatement, false);
     }
-    
+
     /**
      * Creates a PreparedStatement with the specified query using the specified connection.
      * 

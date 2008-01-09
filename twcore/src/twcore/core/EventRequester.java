@@ -23,7 +23,7 @@ public class EventRequester {
      */
     
     // Total number of events that can possibly be handled
-    public static final int TOTAL_NUMBER = 26;
+    public static final int TOTAL_NUMBER = 27;
     
     // Fired on message sent to the bot, including arenas/errors/alerts (Message.java)
     public static final int MESSAGE = 0;
@@ -88,6 +88,8 @@ public class EventRequester {
     public static final int TURRET_EVENT = 24;
     // Fired whenever the bot receives a new banner (PlayerBanner.java)
     public static final int PLAYER_BANNER = 25;
+    // Fired whenever the bot receives notice that King of the Hill game is reset
+    public static final int KOTH_RESET = 26;
    
     private boolean[] array;
     

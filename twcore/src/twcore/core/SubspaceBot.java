@@ -12,6 +12,7 @@ import twcore.core.events.FlagVictory;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.InterProcessEvent;
+import twcore.core.events.KotHReset;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerBanner;
@@ -281,6 +282,17 @@ public abstract class SubspaceBot {
      */
     public void handleEvent( SoccerGoal event ) {
         Tools.printLog( m_botAction.getBotName() + ": SoccerGoal event not handled; ignored" );
+    }
+    
+    /**
+     * Request this event from EventRequester and override this method in your bot to
+     * handle this event (packet).  If you request this event and do not handle it,
+     * the default behavior defined here will be executed.  If you attempt to handle
+     * the event without requesting it from EventRequester, it will not be handled.
+     * @param event Event object of handled event (packet)
+     */
+    public void handleEvent( KotHReset event ) {
+        Tools.printLog( m_botAction.getBotName() + ": KotHReset event not handled; ignored");
     }
 
     /**

@@ -237,7 +237,9 @@ public class GamePacketInterpreter {
             // 0x29 - Map information (basic): Unhandled
             // 0x2A - Compressed map file: Unhandled
             // 0x2B - Set bot's KotH timer: Unhandled
-            // 0x2C - KotH Game Reset: Unhandled
+            case 0x2C:  // KotH Game Reset
+                handleKotHReset( array, alreadyDecrypted );
+                break;
             // 0x2D - Add KotH time: Unhandled
             case 0x2E:
                 handleBallPosition( array, alreadyDecrypted );
@@ -559,6 +561,29 @@ public class GamePacketInterpreter {
 
         if( m_requester.check( EventRequester.FLAG_DROPPED ) ){
             m_subspaceBot.handleEvent( new FlagDropped( message ) );
+        }
+    }
+    
+    /**
+     * Translates packet into appropriate event.
+     * 
+     * @param message Packet data
+     * @param alreadyDecrypted True if packet has already been decrypted
+     */
+    void handleKotHReset( ByteArray message, boolean alreadyDecrypted ) {
+        // Check for valid message
+        if(message.size() < 8) {
+            return;
+        }
+        
+        if(!alreadyDecrypted) {
+            m_ssEncryption.decrypt( message, message.size()-1, 1);
+        }
+        
+        // TODO: Update player tracker and player
+        
+        if( m_requester.check( EventRequester.KOTH_RESET ) ) {
+            m_subspaceBot.handleEvent( new KotHReset( message ) );
         }
     }
 
