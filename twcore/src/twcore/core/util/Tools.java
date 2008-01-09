@@ -530,7 +530,9 @@ public class Tools {
         public static final int THRUST = 11;
         public static final int TOPSPEED = 12;
         public static final int FULLCHARGE = 13;
+        public static final int ENERGY_DEPLETED = -13;          // Puts energy to 0
         public static final int ENGINE_SHUTDOWN = 14;
+        public static final int ENGINE_SHUTDOWN_EXTENDED = -14; // Shuts down engines for longer
         public static final int MULTIFIRE = 15;
         public static final int PROXIMITY = 16;
         public static final int SUPER = 17;
