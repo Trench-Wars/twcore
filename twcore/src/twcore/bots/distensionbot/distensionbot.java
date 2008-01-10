@@ -163,7 +163,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_SHARK_REGEN = -6;
     public final int ABILITY_PROFIT_SHARING = -7;
     public final int ABILITY_VENGEFUL_BASTARD = -8;
-    public final int ABILITY_EJECT_POD = -9;
+    public final int ABILITY_ESCAPE_POD = -9;
 
     // TACTICAL OPS DATA
     public final int DEFAULT_MAX_OP = 3;                    // Max OP points when not upgraded
@@ -859,20 +859,20 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         String[] beta = {
-                "BETA INFO",
                 " - Data is saved, but will be cleared at release (coming soon)",
                 " - Top 3 players (combined earned RP) awarded bonus points in public release",
                 " - For every bug reported, points will be awarded (?message dugwyler)",
                 ".",
-                "RECENT UPDATES  -  1/9/07",
-                " - Vengeful Bastard ability added for Weasel & Lanc: kill them for a surprise...",
+                "RECENT UPDATES  -  1/10/07",
+                " - Escape Pod added for Terr & WB: when you die, chance to respawn there immediately",
+                " - Levi MultiFire made cool.  Please kindly stop your whining at this juncture.",
+                " - Priority rearm: now free for Terrs; now available on WB, Spid and Jav",
+                " - Vengeful B*stard ability added for Weasel & Lanc: kill them for a surprise...",
                 " - Levis are now a support ship; weasels are not, but receive small profitsharing",
                 " - Humiliation reduced; low & high rank cap reduced; streak probability increased",
                 " - Energy and recharge start higher but upgrade slower on all ships",
-                " - New round-end goal: you must win 3 rounds ahead of the other team",
                 " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs...",
                 "   NOTE: All upgrades were refunded; you will need to buy all upgrades again!",
-                " - Fixed rotation bug",
                 " - To encourage build experimentation, !scrap is FREE for the rest of beta."
         };
         m_botAction.privateMessageSpam( p.getArenaPlayerID(), beta );
@@ -1234,7 +1234,7 @@ public class distensionbot extends SubspaceBot {
                     points = (int)(loserRank / 1.5f);
 
                 // Normal kill:
-                    //   Victor earns the rank of the loser in points.  Level 0 players are worth 1 point.
+                //   Victor earns the rank of the loser in points.  Level 0 players are worth 1 point.
             } else {
                 points = loser.getRank();
             }
@@ -1991,7 +1991,7 @@ public class distensionbot extends SubspaceBot {
                     printmsg += Tools.formatString("( " + (purchasedUpgrades[i] < 10 ? " " : "") + purchasedUpgrades[i] + " / " +
                             (currentUpgrade.getMaxLevel() < 10 ? " " : "") + currentUpgrade.getMaxLevel() + " )", 18);
                     if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i]) {
-                        printmsg += " [MAX]";
+                        printmsg += "[MAX]";
                         printCost = false;
                     }
                 }
@@ -3087,6 +3087,7 @@ public class distensionbot extends SubspaceBot {
         while( i.hasNext() ) {
             id = i.next();
             playerObjs.hideAllObjects( id );
+            m_botAction.manuallySetObjects(playerObjs.getObjects(id), id);
         }
         m_botAction.setObjects();
         m_botAction.manuallySetObjects(flagObjs.getObjects());
@@ -3622,10 +3623,10 @@ public class distensionbot extends SubspaceBot {
             desc = "Maximum energy";
             break;
         case Tools.Prize.GUNS:
-            desc = "Gunning systems";
+            desc = "Higher-powered gunning systems";
             break;
         case Tools.Prize.BOMBS:
-            desc = "Bombing systems";
+            desc = "Higher-powered bombing systems";
             break;
         case Tools.Prize.MULTIFIRE:
             desc = "Multifire";
@@ -3680,7 +3681,7 @@ public class distensionbot extends SubspaceBot {
              * -7:  Profit sharing
              */
         case ABILITY_PRIORITY_REARM:
-            desc = "Always first in line to rearm";
+            desc = "Always first in line to rearm, plus full energy after rearm";
             break;
         case ABILITY_TERR_REGEN:
             desc = "+5% chance of burst/portal every 30 seconds";
@@ -3701,7 +3702,10 @@ public class distensionbot extends SubspaceBot {
             desc = "+1% of team's kill RP earned per level";
             break;
         case ABILITY_VENGEFUL_BASTARD:
-            desc = "+10% chance of something awful happening to your killers";
+            desc = "+15% chance of something awful happening to your killers";
+            break;
+        case ABILITY_ESCAPE_POD:
+            desc = "+10% chance of respawning in the exact spot you died";
             break;
         }
         return desc;
@@ -3853,6 +3857,7 @@ public class distensionbot extends SubspaceBot {
         private int       lastX;                // Last X position
         private int       lastY;                // Last Y position
         private int       vengefulBastard;      // Levels of Vengeful Bastard ability
+        private int       escapePod;            // Levels of Escape Pod ability
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
@@ -3890,6 +3895,7 @@ public class distensionbot extends SubspaceBot {
             lastX = 0;
             lastY = 0;
             vengefulBastard = 0;
+            escapePod = 0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[9];
             for( int i = 0; i < 9; i++ )
@@ -4082,7 +4088,9 @@ public class distensionbot extends SubspaceBot {
                     shipDataSaved = false;
                 }
 
-                fastRespawn = false;
+                fastRespawn = (shipNum == 5);  // Terrs always have priority rearm
+                vengefulBastard = 0;
+                escapePod = 0;
                 if( shipNum == 9 )
                     maxOP = DEFAULT_MAX_OP;
                 // Setup special (aka unusual) abilities
@@ -4094,6 +4102,8 @@ public class distensionbot extends SubspaceBot {
                         maxOP += purchasedUpgrades[i];
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_VENGEFUL_BASTARD )
                         vengefulBastard = purchasedUpgrades[i];
+                    else if( upgrades.get( i ).getPrizeNum() == ABILITY_ESCAPE_POD )
+                        escapePod = purchasedUpgrades[i];
                 }
 
                 m_botAction.SQLClose(r);
@@ -4116,6 +4126,16 @@ public class distensionbot extends SubspaceBot {
         public void doSpawnTick() {
             spawnTicks--;
             if( spawnTicks == 3 ) { // 3 ticks (1.5 sec) before spawn end, warp to safe and shipreset
+                if( escapePod > 0 ) {
+                    // Check for the escape pod, and set respawn as special if it works (does not warp)
+                    double podChance = Math.random() * 10.0;
+                    if( escapePod >= podChance ) {
+                        m_botAction.shipReset(name);
+                        specialRespawn = true;
+                        spawnTicks = 0;
+                        return;
+                    }
+                }
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_REARMING);
                 doRearmAreaWarp();
                 m_botAction.shipReset(name);
@@ -4315,6 +4335,7 @@ public class distensionbot extends SubspaceBot {
             } else {
                 m_prizeQueue.addPlayer( this );
             }
+            spawnTicks = 0;
         }
 
         /**
@@ -4503,6 +4524,8 @@ public class distensionbot extends SubspaceBot {
                 m_specialAbilityPrizer.removePlayer(this);
             if( (shipNum == 6 || shipNum == 7) && upgrade == 6 )
                 vengefulBastard = purchasedUpgrades[6];
+            if( (shipNum == 1 || shipNum == 5) && upgrade == 12 )
+                escapePod = purchasedUpgrades[6];
             shipDataSaved = false;
         }
 
@@ -4532,6 +4555,7 @@ public class distensionbot extends SubspaceBot {
             currentOP = 0;
             currentComms = 0;
             vengefulBastard = 0;
+            escapePod = 0;
             lastX = 0;
             lastY = 0;
         }
@@ -4743,8 +4767,8 @@ public class distensionbot extends SubspaceBot {
         public void checkVengefulBastard( int killerID ) {
             if( vengefulBastard <= 0 )
                 return;
-            double vengeChance = Math.random() * 10.0;
-            if( (double)vengefulBastard > vengeChance ) {
+            double vengeChance = Math.random() * 100.0;
+            if( (double)(vengefulBastard * 15) > vengeChance ) {
                 double vengeType = Math.random() * 100.0;
                 if( vengeType >= 99.0 ) {
                     m_botAction.specificPrize( killerID, -Tools.Prize.ENGINE_SHUTDOWN );
@@ -6813,8 +6837,10 @@ public class distensionbot extends SubspaceBot {
          */
         private void do_updateTimer() {
             flagTimerObjs.hideAllObjects();
-            if( sectorHoldingArmyID == -1 )
+            if( sectorHoldingArmyID == -1 ) {
+                m_botAction.setObjects();
                 return;
+            }
             int secsNeeded = flagMinutesRequired * 60 - secondsHeld;
             int minutes = secsNeeded / 60;
             int seconds = secsNeeded % 60;
@@ -6887,8 +6913,12 @@ public class distensionbot extends SubspaceBot {
         // 24: Decoy
         // 31: L3 Guns
         // 36: Mines
-        // 44: Thor
+        // 40: Escape Pod 1
+        // 45: Priority Rearm
         // 48: XRadar
+        // 50: Thor
+        // 55: Escape Pod 2
+        // 70: Escape Pod 3
         ship = new ShipProfile( 0, 15f );
         //                                                    | <--- this mark and beyond is not seen for upg names
         upg = new ShipUpgrade( "Side Thrusters           [ROT]", Tools.Prize.ROTATION, new int[]{7,7,7,8,8,9,10,12}, 0, 8 );           // 20 x8
@@ -6920,27 +6950,28 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, 21, 36, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 34, 44, 1 );
+        upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 34, 50, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Eject Pod", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{25,35,45}, new int[]{40,55,70}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "S4", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 20, 45, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
         // JAVELIN -- rank 15
         // Very slow upg speed; standard upgrades but recharge & energy have +2 max
         // 9:  L1 Guns
-        // 15: Shrap (3 levels)
+        // 15: Shrap (2 levels)
         // 26: Multi
         // 26: L2 Guns
         // 28: Decoy 1
-        // 30: Shrap (7 more levels)
+        // 30: Shrap (3 more levels)
         // 35: Rocket
         // 40: L2 Bombs
         // 42: XRadar
+        // 45: Priority Rearm
         // 50: Decoy 2
-        // 55: Shrap (10 more levels)
+        // 55: Shrap (7 more levels)
         // 60: L3 Guns
         // 80: L3 Bombs
         ship = new ShipProfile( RANK_REQ_SHIP2, 16f );
@@ -6978,10 +7009,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Splintering Mortar 1", Tools.Prize.SHRAPNEL, 9, 15, 2 );
         ship.addUpgrade( upg );
-        int p2e2[] = { 30, 40, 50 };
-        upg = new ShipUpgrade( "Splintering Mortar 2", Tools.Prize.SHRAPNEL, 11, p2e2, 3 );
+        upg = new ShipUpgrade( "Splintering Mortar 2", Tools.Prize.SHRAPNEL, new int[]{11,11,11,12,13,14,15,16}, new int[]{30,40,50,55,0,0,0,0}, 8 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Splintering Mortar 3", Tools.Prize.SHRAPNEL, 18, 55, 5 );
+        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 21, 45, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
@@ -7000,6 +7030,7 @@ public class distensionbot extends SubspaceBot {
         // 42: XRadar
         // 45: +5% Super 4
         // 47: Decoy 3
+        // 50: Priority Rearm
         // 55: +5% Super 5
         ship = new ShipProfile( RANK_REQ_SHIP3, 16f );
         upg = new ShipUpgrade( "Central Realigner        [ROT]", Tools.Prize.ROTATION, new int[]{6,7,8,8,8,9,9,9,10}, 0, 9 );       // 20 x9
@@ -7038,7 +7069,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warp Field Stabilizer", Tools.Prize.ANTIWARP, 35, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "S4", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 21, 50, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
@@ -7107,19 +7138,24 @@ public class distensionbot extends SubspaceBot {
         // 16: Multi (slightly more forward than regular)
         // 21: Burst 2
         // 23: Profit-sharing 2
+        // 25: Escape Pod 1
         // 29: Portal 2
         // 33: Profit-sharing 3
+        // 35: Escape Pod 2
         // 36: L2 Guns
         // 40: (Can attach to other terrs)
         // 43: Profit-sharing 4
+        // 45: Escape Pod 3
         // 46: Burst 3
         // 48: Portal 3
         // 50: Targeted EMP (negative full charge to all of the other team)
         // 53: Profit-sharing 5
         // 55: Burst 4
+        // 57: Escape Pod 4
         // 60: Portal 4
         // 65: Burst 5
         // 70: Portal 5
+        // 75: Escape Pod 5
         // 80: Burst 6
         ship = new ShipProfile( RANK_REQ_SHIP5, 10.4f );
         upg = new ShipUpgrade( "Correction Engine        [ROT]", Tools.Prize.ROTATION, 7, 0, 15 );         // 20 x15
@@ -7155,7 +7191,7 @@ public class distensionbot extends SubspaceBot {
         int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
         upg = new ShipUpgrade( "+5% Regeneration", ABILITY_TERR_REGEN, 12, p5c1, 10 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 8, 9, 1 );
+        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{12,13,14,15,20}, new int[]{25,35,45,57,75}, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Targeted EMP", ABILITY_TARGETED_EMP, 40, 50, 1 );
         ship.addUpgrade( upg );
@@ -7206,7 +7242,7 @@ public class distensionbot extends SubspaceBot {
         int p6b2[] = { 35 };
         upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, p6b1, p6b2, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+10% Vengeful Bastard", ABILITY_VENGEFUL_BASTARD, new int[]{9,12,15,18,20}, new int[]{10,20,30,45,55}, 5 );
+        upg = new ShipUpgrade( "+15% Vengeful B*stard", ABILITY_VENGEFUL_BASTARD, new int[]{9,12,15,20}, new int[]{10,20,30,55}, 4 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Cannon Distributor", Tools.Prize.MULTIFIRE, 19, 18, 1 );
         ship.addUpgrade( upg );
@@ -7254,7 +7290,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Modernized Projector", Tools.Prize.GUNS, 45, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+10% Vengeful Bastard", ABILITY_VENGEFUL_BASTARD, new int[]{15,18,20}, new int[]{30,40,50}, 3 );
+        upg = new ShipUpgrade( "+15% Vengeful B*stard", ABILITY_VENGEFUL_BASTARD, new int[]{15,18,20}, new int[]{30,40,50}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Magnified Output Force", Tools.Prize.MULTIFIRE, 23, 20, 1 );
         ship.addUpgrade( upg );
@@ -7278,10 +7314,10 @@ public class distensionbot extends SubspaceBot {
         //                      has high req later on (designed to give bomb capability early)
         // (Starts with 1 repel, so that repel 1 is actually second)
         //  4: Repel 1
+        // 10: Priority Rearmament
         // 12: Guns
         // 15: Repel 2
         // 17: XRadar
-        // 20: Priority Rearmament
         // 22: Shrap 1
         // 25: Repel 3
         // 28: Multifire
@@ -7334,7 +7370,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Nonexistence Device", Tools.Prize.CLOAK, 55, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 9, 20, 1 );   // DEFINE
+        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 9, 10, 1 );   // DEFINE
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
