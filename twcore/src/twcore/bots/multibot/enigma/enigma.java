@@ -3,7 +3,7 @@ package twcore.bots.multibot.enigma;
 
 import java.util.Random;
 import java.util.TimerTask;
-import java.util.TreeMap;
+//import java.util.TreeMap;
 
 import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
@@ -23,7 +23,7 @@ import twcore.core.events.PlayerEntered;
 public class enigma extends MultiModule {
     //Standard variables
     OperatorList        opList;
-    TreeMap             rawData;
+    //TreeMap             rawData;
     CommandInterpreter  m_commandInterpreter;
     BotSettings         m_botSettings;
 
@@ -106,7 +106,7 @@ public class enigma extends MultiModule {
             checkMessages = curTime + 2;
             m_botAction.showObject(10);
             m_botAction.sendArenaMessage("Enigma is starting!", 21);
-            m_botAction.sendUnfilteredPublicMessage("*lock");
+            m_botAction.toggleLocked();
             m_botAction.setAlltoFreq(0);
             m_botAction.changeAllShips(1);
             //This is confusing but easiest way to do it in my opinion without sleeping.
@@ -158,7 +158,7 @@ public class enigma extends MultiModule {
     public void doCancelGame(String name, String message) {
         if( m_botAction.getOperatorList().isER( name ) && gameProgress == true) {
             m_botAction.sendArenaMessage("Enigma has been cancelled.", 103);
-            m_botAction.sendUnfilteredPublicMessage("*lock");
+            m_botAction.toggleLocked();
             m_botAction.setDoors(255);
             m_botAction.prizeAll(7);
             if(eventProgress) {
