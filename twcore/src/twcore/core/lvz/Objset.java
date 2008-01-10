@@ -192,7 +192,7 @@ public class Objset {
      * Returns a String of all public objects entered into Objset, parsed to work
      * with the *objset command, and then moves them from the "unset" objects list
      * to the "set" objects list.
-     * @return String of objects in the objset format
+     * @return A HashMap containing a list of objects and their show or hide values
      */
     public HashMap<Integer,Boolean> getObjects() {
         HashMap <Integer,Boolean> theseObjects = new HashMap<Integer,Boolean>();
@@ -212,15 +212,14 @@ public class Objset {
      * work with the *objset command, and then moves them from the "unset" objects list
      * to the "set" objects list.
      * @param playerId
-     * @return A String containing a list of objects and their show or hide values for use with *objset.
+     * @return A HashMap containing a list of objects and their show or hide values
      */
     public HashMap<Integer,Boolean> getObjects( int playerId ) {
-        if( playerId < 0 ) return null;
-        if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return null;
+        HashMap <Integer,Boolean> theseObjects = new HashMap<Integer,Boolean>();
+        if( playerId < 0 || !m_privateObjects.containsKey( new Integer( playerId ) ) ) return theseObjects;
 
         Map<Integer, Boolean> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
         Map<Integer, Boolean> playerObj = m_privateObjects.get( new Integer( playerId ) );
-        HashMap <Integer,Boolean> theseObjects = new HashMap<Integer,Boolean>();
         synchronized (playerMap) {
             for( Integer id : playerMap.keySet() ) {
                 Boolean status = playerMap.get( new Integer( id ) );

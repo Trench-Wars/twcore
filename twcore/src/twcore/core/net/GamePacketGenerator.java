@@ -819,6 +819,8 @@ public class GamePacketGenerator {
      * @see #sendLVZObjectCluster(int)
      */
     public void setupMultipleLVZObjectToggles( int playerID, HashMap<Integer,Boolean> toggles ) {
+        if( toggles == null )
+            return;
         if( playerID == -1 ) {
             for( Integer objID : toggles.keySet() ) {
                 ByteArray objData = new ByteArray( 2 );
