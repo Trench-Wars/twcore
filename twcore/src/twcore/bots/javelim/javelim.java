@@ -1,41 +1,36 @@
 package twcore.bots.javelim;
 
-import java.util.Collections;
-import java.util.Collection;
-import java.util.TimerTask;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Arrays;
-import java.util.Formatter;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.SortedMap;
+import java.util.TimerTask;
+import java.util.TreeMap;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.PlayerLeft;
-import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.PlayerEntered;
-import twcore.core.events.ScoreUpdate;
-import twcore.core.OperatorList;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
-import twcore.core.util.Tools;
 import twcore.core.util.ShortMap;
+import twcore.core.util.Tools;
 
 /**
  * Bot for hosting ?go javelim (<a href=http://www.twcore.org/ticket/74>ticket #74</a>)
@@ -874,9 +869,13 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
             public void run() {
                 KimPlayer kp;
                 synchronized(m_deathMap) {
-                    kp = m_deathMap.get(m_deathMap.firstKey());
+                    try {
+                        kp = m_deathMap.get(m_deathMap.firstKey());
+                    } catch(NoSuchElementException nsee) { // m_deathMap is empty
+                        kp = null;
+                    }
                 }
-                if(m_mvp != m_prevMvp || m_survivor != kp) {
+                if(m_mvp != m_prevMvp || (kp != null && m_survivor != kp)) {
                     m_prevMvp = m_mvp;
                     refreshScoreboard();
                 }
