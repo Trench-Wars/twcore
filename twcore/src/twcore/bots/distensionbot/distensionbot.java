@@ -55,7 +55,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.
-    private final float DEBUG_MULTIPLIER = 3.5f;           // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 3.6f;           // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -89,7 +89,7 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
     private final int RANK_REQ_SHIP7 = 10;   // N/A (only has level for beta)
     private final int RANK_REQ_SHIP8 = 1;    //  2
-    private final int RANK_REQ_SHIP9 = 99;   // 25
+    private final int RANK_REQ_SHIP9 = 87;   // 25
 
     // Spawn, safe, and basewarp coords
     private final int SPAWN_BASE_0_Y_COORD = 456;               // Y coord around which base 0 owners (top) spawn
@@ -173,6 +173,7 @@ public class distensionbot extends SubspaceBot {
     public boolean m_army1_fastRearm = false;
     public TimerTask m_army0_fastRearmTask;
     public TimerTask m_army1_fastRearmTask;
+    public TimerTask m_doorOffTask;
     public final int OPS_TOP_WARP1_X = 512; // mid
     public final int OPS_TOP_WARP1_Y = 374;
     public final int OPS_TOP_WARP2_X = 450; // left
@@ -754,7 +755,7 @@ public class distensionbot extends SubspaceBot {
                     "|  !opsrearm          1 |  Fast rearm/slow enemy rearm for: (L1)15s/(L2)25s",
                     "|  !opsdoor <#>   1/2/3 |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
                     "|                       |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
-                    "|  !opswarp <nm>:<#>    |  Warps <nm> to ...   1:Tube   2:LeftMid  3:RightMid",
+                    "|  !opswarp <name>:<#>  |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
                     "|                 2/3/4 |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
                     "|  !opscover <#>      1 |  Deploy cover in home base.  1:MidLeft 2:MidRight",
                     "|                       |    3:MidCenter  4:FR  5:Ears  6:Tube  7:LowCenter",
@@ -1295,7 +1296,7 @@ public class distensionbot extends SubspaceBot {
             // Track successive kills for weasel unlock & streaks
             if( addedToStreak ) {   // Streaks only count players close to your lvl
                 if( victor.addSuccessiveKill() ) {
-                    // TODO: If player earned weasel off this kill, check if loser/killed player has weasel ...
+                    // If player earned weasel off this kill, check if loser/killed player has weasel ...
                     // and remove it if they do!
                 }
             }
@@ -1945,7 +1946,7 @@ public class distensionbot extends SubspaceBot {
         }
         String progString = Tools.formatString("", progChars, "=" );
         progString = Tools.formatString(progString, 20 );
-        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext + "  (" + p.getPointsToNextRank() + " to Rank " + (p.getRank() + 1) + ")    [" + progString + "]  " + percent + "%" );
+        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext + "  (" + p.getPointsToNextRank() + " to Rank " + (p.getRank() + 1) + ")    [" + progString + "]  " + percent + "%  UP: " + p.getUpgradePoints() );
     }
 
 
@@ -2389,15 +2390,19 @@ public class distensionbot extends SubspaceBot {
                 if( autoReturn ) {
                     m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is automatically returning to their army to provide needed support." );
                     m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has automatically returned to the army." );
+                    if( DEBUG && p.getNaturalArmyID() == p.getArmyID() )
+                        m_botAction.sendSmartPrivateMessage("dugwyler", "Natural ID=new Army ID in auto return assist: " + p.getArmyID() + "  armyToAssist=" + armyToAssist );
                 } else {
                     m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " has finished assistance and is returning to their army." );
                     m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has returned to the army." );
+                    if( DEBUG && p.getNaturalArmyID() == p.getArmyID() )
+                        m_botAction.sendSmartPrivateMessage("dugwyler", "Natural ID=new Army ID in return assist: " + p.getArmyID() + "  armyToAssist=" + armyToAssist );
                 }
                 if( p.getShipNum() == 0 ) {
                     p.setAssist( -1 );
                 } else {
                     p.setAssist( -1 );
-                    m_botAction.setFreq(name, armyToAssist );
+                    m_botAction.setFreq(name, p.getNaturalArmyID() );
                     if( !p.isRespawning() ) {
                         m_botAction.shipReset(name);
                         p.prizeUpgradesNow();
@@ -2461,6 +2466,8 @@ public class distensionbot extends SubspaceBot {
                 a.recalculateFigures();
             m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has left to assist the other army." );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is now assisting your army." );
+            if( DEBUG && p.getNaturalArmyID() == p.getArmyID() )
+                m_botAction.sendSmartPrivateMessage("dugwyler", "Natural ID=new Army ID in assist: " + p.getArmyID() + "  armyToAssist=" + armyToAssist );
         } else {
             m_botAction.sendPrivateMessage( name, "Not overly imbalanced -- consider flying a lower-rank ship to even the battle instead!" );
             if( DEBUG )
@@ -2726,6 +2733,10 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You must be at the Tactical Ops station to do this." );
             return false;
         }
+        if( p.getPurchasedUpgrade(3) < 2 ) {
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your communication systems must receive the proper !upgrade before you can use this ability." );
+            return false;
+        }
         int msgNum = 0;
         String[] params = msg.split(":", 2);
         String target;
@@ -2758,10 +2769,6 @@ public class distensionbot extends SubspaceBot {
             }
         } else {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Please provide a message number (1 or 2).  Use '!opshelp msg' for assistance." );
-            return false;
-        }
-        if( p.getPurchasedUpgrade(3) < 2 ) {
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your communication systems must receive the proper !upgrade before you can use this ability." );
             return false;
         }
         if( p.getCurrentComms() < 1 ) {
@@ -2979,14 +2986,14 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Already using a fast rearm -- we can't rearm any faster!" );
         if( p.getPurchasedUpgrade(4) < 1 )
             throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+        if( p.getCurrentComms() < 1 )
+            throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+        p.adjustOP(-1);
         int time;
         if( p.getPurchasedUpgrade(4) == 1 )
             time = 15000;
         else
             time = 25000;
-        if( p.getCurrentComms() < 1 )
-            throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-        p.adjustComms(-1);
 
         if( p.getArmyID() == 0 ) {
             if( m_army0_fastRearmTask != null ) {
@@ -3019,13 +3026,180 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
-     *
+     * Allows ops to control various doors on the map.  Tube or sides cost 1, FR entrance or flag cost 2,
+     * and all enemy doors cost 3 OP to close.
      * @param name
      * @param msg
      */
     public void cmdOpsDoor( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(6);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
 
+        Integer doorNum;
+        try {
+            doorNum = Integer.parseInt(msg);
+        } catch ( NumberFormatException e ) {
+            throw new TWCoreException( "Please specify a door # between 1 and 8.  Use !opshelp for more info." );
+        }
+        if( doorNum < 1 || doorNum > 8 )
+            throw new TWCoreException( "Please specify a door # between 1 and 8.  Use !opshelp for more info." );
+        if( (upgLevel == 1 && doorNum > 2) ||
+            (upgLevel <= 2 && doorNum > 4) )
+            throw new TWCoreException( "You are not able to control that door at your level of clearance.  Consider spending more points on door operations training." );
+        if( (p.getCurrentComms() < 1) ||
+            (p.getCurrentComms() < 2 && doorNum > 2) ||
+            (p.getCurrentComms() < 3 && doorNum > 4) )
+            throw new TWCoreException( "You do not have the proper amount of OP to set that door.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible.  !opshelp for costs of each door." );
+        if( doorNum > 4 )
+            p.adjustOP(-3);
+        else if( doorNum > 2 )
+            p.adjustOP(-2);
+        else
+            p.adjustOP(-1);
+        int time;
+        switch( p.getPurchasedUpgrade(4) ) {
+            case 1:
+                time = 10000;
+                break;
+            case 2:
+                time = 15000;
+                break;
+            default:
+                time = 20000;
+                break;
+        }
+        m_botAction.setDoors((int) Math.pow(2, (doorNum - 1)));
+
+        if( m_doorOffTask != null ) {
+            try {
+                m_doorOffTask.cancel();
+            } catch (Exception e) {}
+        }
+        m_doorOffTask = new TimerTask() {
+            public void run() {
+                m_botAction.setDoors(0);
+            }
+        };
+        m_botAction.scheduleTask( m_doorOffTask, time );
+        String doorName = "";
+        switch( doorNum ) {
+            case 1:
+                doorName = "HOME SIDES";
+                break;
+            case 2:
+                doorName = "HOME TUBE";
+                break;
+            case 3:
+                doorName = "HOME FR ENTRANCE";
+                break;
+            case 4:
+                doorName = "HOME FLAG GATES";
+                break;
+            case 5:
+                doorName = "ENEMY SIDES";
+                break;
+            case 6:
+                doorName = "ENEMY TUBE";
+                break;
+            case 7:
+                doorName = "ENEMY FR ENTRANCE";
+                break;
+            case 8:
+                doorName = "ENEMY FLAG GATES";
+                break;
+        }
+        m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), "OPS used DOOR CONTROL: Closed " + doorName + " for the next " + (time / 1000) + " seconds." );
     }
+
+    /**
+     * Ops ability to warp a specific player to various locations in the home base.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsWarp( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(7);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+        int warpPoint = 0;
+        String[] params = msg.split(":", 2);
+        int freq = p.getArmyID();
+        Player p2 = m_botAction.getPlayer(params[0]);
+        if( p2 == null ) {
+            p2 = m_botAction.getFuzzyPlayer(params[0]);
+        }
+        if( p2 == null ) {
+            throw new TWCoreException( "Can't find pilot '" + params[0] + "'." );
+        } else {
+            if( p2.getFrequency() != freq )
+                throw new TWCoreException( p2.getPlayerName() + " isn't on the army!" );
+            if( p2.getShipType() == Tools.Ship.SPECTATOR )
+                throw new TWCoreException( p2.getPlayerName() + " isn't in a ship!" );
+        }
+        if( Tools.isAllDigits(params[1]) ) {
+            warpPoint = Integer.parseInt(params[1]);
+            if( warpPoint < 1 || warpPoint > 6 )
+                throw new TWCoreException( "Please provide an appropriate warp point (1 through 6).  Use !opshelp for assistance." );
+        } else
+            throw new TWCoreException( "Please provide an appropriate warp point (1 through 6).  Use !opshelp for assistance." );
+        if( (upgLevel == 1 && warpPoint > 3) ||
+            (upgLevel <= 2 && warpPoint > 5) )
+                throw new TWCoreException( "You are not able to warp to that point at your level of clearance.  Consider spending more points on warp operations training." );
+        if( (p.getCurrentComms() < 1) ||
+            (p.getCurrentComms() < 2 && warpPoint > 3) ||
+            (p.getCurrentComms() < 3 && warpPoint == 6) )
+                throw new TWCoreException( "You do not have the proper amount of OP to warp to that point.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible.  !opshelp for costs of each warp point." );
+        if( warpPoint == 6 )
+            p.adjustOP(-4);
+        else if( warpPoint > 3 )
+            p.adjustOP(-3);
+        else
+            p.adjustOP(-2);
+        if( freq % 2 == 0 ) {
+            switch( warpPoint ) {
+                case 1:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_TOP_WARP1_X, OPS_TOP_WARP1_Y );  break;
+                case 2:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_TOP_WARP2_X, OPS_TOP_WARP2_Y );  break;
+                case 3:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_TOP_WARP3_X, OPS_TOP_WARP3_Y );  break;
+                case 4:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_TOP_WARP4_X, OPS_TOP_WARP4_Y );  break;
+                case 5:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_TOP_WARP5_X, OPS_TOP_WARP5_Y );  break;
+                case 6:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_TOP_WARP6_X, OPS_TOP_WARP6_Y );  break;
+            }
+        } else {
+            switch( warpPoint ) {
+                case 1:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_BOT_WARP1_X, OPS_BOT_WARP1_Y );  break;
+                case 2:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_BOT_WARP2_X, OPS_BOT_WARP2_Y );  break;
+                case 3:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_BOT_WARP3_X, OPS_BOT_WARP3_Y );  break;
+                case 4:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_BOT_WARP4_X, OPS_BOT_WARP4_Y );  break;
+                case 5:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_BOT_WARP5_X, OPS_BOT_WARP5_Y );  break;
+                case 6:
+                    m_botAction.warpTo(p2.getPlayerID(), OPS_BOT_WARP6_X, OPS_BOT_WARP6_Y );  break;
+            }
+        }
+        m_botAction.sendPrivateMessage(p2.getPlayerID(), "OPS opened WORMHOLE on your ship." );
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Opened WORMHOLE on " + p2.getPlayerName() + "'s ship." );
+    }
+
 
     // ***** HIGHMOD+ COMMANDS
 
@@ -3087,7 +3261,9 @@ public class distensionbot extends SubspaceBot {
         while( i.hasNext() ) {
             id = i.next();
             playerObjs.hideAllObjects( id );
-            m_botAction.manuallySetObjects(playerObjs.getObjects(id), id);
+            HashMap <Integer,Boolean>pobjs = playerObjs.getObjects(id);
+            if( pobjs != null )
+                m_botAction.manuallySetObjects(pobjs, id);
         }
         m_botAction.setObjects();
         m_botAction.manuallySetObjects(flagObjs.getObjects());
@@ -4707,7 +4883,7 @@ public class distensionbot extends SubspaceBot {
             if( shipNum > 0 && shipNum != 9 && idle ) {
                 idleTicks++;
                 if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle; you will be automatically docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of the rearmament area.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle; you will be automatically docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move.");
                 else if( idleTicks >= IDLE_TICKS_BEFORE_DOCK )
                     cmdDock(name, "");
             } else
@@ -5089,7 +5265,7 @@ public class distensionbot extends SubspaceBot {
          * @return Level of purchased upgrade
          */
         public int getPurchasedUpgrade( int upgrade ) {
-            if( upgrade < 0 || upgrade > NUM_UPGRADES)
+            if( upgrade < 0 || upgrade >= NUM_UPGRADES)
                 return -1;
             return purchasedUpgrades[upgrade];
         }
@@ -6414,6 +6590,7 @@ public class distensionbot extends SubspaceBot {
             if( armyID == sectorHoldingArmyID ) {
                 if( claimBeingBroken ) {
                     claimBeingBroken = false;
+                    claimBeingEstablished = false;
                     breakingArmyID = -1;
                     breakSeconds = 0;
                     return;
@@ -6438,6 +6615,7 @@ public class distensionbot extends SubspaceBot {
             sectorHoldingArmyID = securingArmyID;
             m_botAction.showObject(LVZ_FLAG_CLAIMED); // Shows flag claimed lvz
             secondsHeld = 0;
+            claimBeingBroken = false;
             claimBeingEstablished = false;
             securingSeconds = 0;
             securingArmyID = -1;
@@ -6467,6 +6645,8 @@ public class distensionbot extends SubspaceBot {
             // it's not a sector break
             if( claimBeingEstablished ) {
                 claimBeingEstablished = false;
+                claimBeingBroken = false;
+                securingArmyID = -1;
                 breakingArmyID = -1;
                 securingSeconds = 0;
                 sectorHoldingArmyID = -1;
@@ -6505,6 +6685,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendArenaMessage( "HOLD BROKEN" );
             }
             claimBeingBroken = false;
+            claimBeingEstablished = false;
             breakSeconds = 0;
             breakingArmyID = -1;
             sectorHoldingArmyID = -1;
