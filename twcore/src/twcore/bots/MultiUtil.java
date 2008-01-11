@@ -96,6 +96,8 @@ public abstract class MultiUtil {
             handleEvent( (FlagVictory)event );
         else if( event instanceof LoggedOn )
             handleEvent( (LoggedOn)event );
+        else if( event instanceof KotHReset )
+            handleEvent( (KotHReset)event );
         else if( event instanceof Prize )
             handleEvent( (Prize)event );
         else if( event instanceof WatchDamage )
@@ -135,6 +137,7 @@ public abstract class MultiUtil {
     public void handleEvent( FileArrived event ){}
     public void handleEvent( FlagReward event ){}
     public void handleEvent( FlagVictory event ){}
+    public void handleEvent( KotHReset event ) {}
     public void handleEvent( LoggedOn event ){}
     public void handleEvent( WatchDamage event ){}
     public void handleEvent( SoccerGoal event ){}

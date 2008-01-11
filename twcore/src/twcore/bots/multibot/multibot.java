@@ -1046,6 +1046,10 @@ public class multibot extends SubspaceBot {
     public void handleEvent(InterProcessEvent event) {
         handleEvent((SubspaceEvent) event);
     }
+    
+    public void handleEvent(KotHReset event) {
+        handleEvent((SubspaceEvent) event);
+    }
 
     public void handleEvent(TurretEvent event) {
         handleEvent((SubspaceEvent) event);
