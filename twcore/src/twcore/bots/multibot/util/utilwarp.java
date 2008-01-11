@@ -37,19 +37,25 @@
  *
  * Author: Cpt.Guano!
  * July 06, 2003
+ * Added Spawn options January 01, 2008 -milosh
  */
 
 package twcore.bots.multibot.util;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
@@ -67,13 +73,18 @@ public class utilwarp extends MultiUtil
 
   public static final int MIN_COORD = 1;
   public static final int MAX_COORD = 1022;
+  
+  public static final int SPAWN_TIME = 5005;
 
   public static final String COLON = ":";
+  
+  private Vector <SpawnTask> spawnTasks;
   
   private static final String database = "website";
 
   public void init()
   {
+	  spawnTasks = new Vector<SpawnTask>();
   }
 
   public void requestEvents( ModuleEventRequester modEventReq ) {
@@ -86,6 +97,12 @@ public class utilwarp extends MultiUtil
           "!Warpto <X>:<Y>:<Radius>                  -- Warps everyone to <X>, <Y> within a distance of <Radius>.",
           "!WarpFreq <Freq>:<X>:<Y>:<Radius>         -- Warps freq <Freq> to <X>, <Y> within a distance of <Radius>.",
           "!WarpShip <Ship>:<X>:<Y>:<Radius>         -- Warps ship <Ship> to <X>, <Y> within a distance of <Radius>.",
+          "!Spawn <X>:<Y>:<Radius>                   -- Spawns all players at <X>, <Y> within a distance of <Radius>",
+          "!SpawnFreq <Freq>:<X>:<Y>:<Radius>        -- Spawns frequency <Freq> at <X>, <Y> within a distance of <Radius>",
+          "!SpawnShip <Ship>:<X>:<Y>:<Radius>        -- Spawns ship <Ship> at <X>, <Y> within a distance of <Radius>",
+          "!SpawnList                                -- Shows a list of all spawn tasks.",
+          "!SpawnDel <Index>                         -- Deletes the spawn task at index <Index>",
+          "!SpawnOff                                 -- Removes all spawn tasks.",
           "!SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>.",
           "!SetupWarpList                            -- Displays the setup warp information.",
           "!Whereami                                 -- Shows your current coords."
@@ -164,6 +181,217 @@ public class utilwarp extends MultiUtil
     }
   }
 
+  /**
+   * This handles the player death event and spawns if needed.
+   *
+   * @param event is the player death event.
+   */
+  public void handleEvent(PlayerDeath event)
+  {
+      int playerID = event.getKilleeID();
+      Player curPlayer = m_botAction.getPlayer(playerID);
+      int freq = curPlayer.getFrequency();
+      int ship = curPlayer.getShipType();
+      SpawnTask spawnTask = getValidSpawnTask(freq, ship, playerID);
+
+      if(spawnTask != null) {
+    	  new SpawnTimer(m_botAction.getPlayerName(playerID), spawnTask.getX(), spawnTask.getY(), spawnTask.getRadius(), SPAWN_TIME);
+      }
+  }
+
+  /**
+   * This private method adds a spawn task to the task list.
+   *
+   * @param spawnTask is the Spawn Task to be added.
+   */
+  private void addTask(SpawnTask spawnTask) {
+      int replaceIndex = spawnTasks.indexOf(spawnTask);
+
+      if(replaceIndex != -1)
+          spawnTasks.remove(replaceIndex);
+      spawnTasks.add(spawnTask);
+      Collections.sort(spawnTasks, new SpawnTaskComparator());
+  }
+  
+  /**
+   * This method displays a list of all of the spawn tasks.
+   *
+   * @param sender is the person that messaged the bot.
+   */
+  public void doSpawnListCmd(String sender)
+  {
+      int numTasks = spawnTasks.size();
+      SpawnTask spawnTask;
+
+      if(numTasks == 0)
+          m_botAction.sendSmartPrivateMessage(sender, "There are currently no spawn tasks.");
+      else
+          for(int index = 0; index < numTasks; index++)
+          {
+              spawnTask = spawnTasks.get(index);
+              m_botAction.sendSmartPrivateMessage(sender, "Task " + index + ") " + spawnTask);
+          }
+  }
+  
+  /**
+   * This method removes a spawn task.
+   *
+   * @param sender is the person that messaged the bot.
+   * @param argString is the spawn task number that is to be removed.
+   */
+  public void doSpawnDelCmd(String sender, String argString)
+  {
+      StringTokenizer argTokens = getArgTokens(argString);
+
+      if(argTokens.countTokens() != 1)
+          throw new IllegalArgumentException("Please use the following format: !SpawnDel <Task Number>.");
+      try
+      {
+          int taskNumber = Integer.parseInt(argTokens.nextToken());
+          SpawnTask spawnTask = spawnTasks.get(taskNumber);
+
+          spawnTasks.remove(taskNumber);
+          m_botAction.sendArenaMessage("Removing Task: " + spawnTask.toString() + " -" + sender);
+      }
+      catch(NumberFormatException e)
+      {
+          throw new NumberFormatException("Please use the following format: !SpawnDel <Task Number>.");
+      }
+      catch(ArrayIndexOutOfBoundsException e)
+      {
+          throw new IllegalArgumentException("Invalid Spawn Task.");
+      }
+  }
+  
+  /**
+   * This method clears all of the spawn tasks.
+   */
+  public void doSpawnOffCmd(String sender)
+  {
+      if(spawnTasks.isEmpty())
+          throw new RuntimeException("No spawn tasks to clear.");
+      spawnTasks.clear();
+      m_botAction.sendArenaMessage("Removing all spawn tasks. -" + sender);
+  }
+  
+  /**
+   * This method spawns all players at a specified location.
+   *
+   * @param sender is the person operating the bot.
+   * @param argString is the string of the arguments.
+   */
+  public void doSpawnCmd(String sender, String argString)
+  {
+      StringTokenizer argTokens = getArgTokens(argString);
+      if(argTokens.countTokens() != 3)
+          throw new IllegalArgumentException("Please use the following format: !Spawn <X>:<Y>:<Radius>.");          
+      try
+      {
+          int x = Integer.parseInt(argTokens.nextToken());
+          int y = Integer.parseInt(argTokens.nextToken());
+          double radius = Double.parseDouble(argTokens.nextToken());
+          SpawnTask spawnTask = new SpawnTask(x,y,radius);
+
+          addTask(spawnTask);
+          m_botAction.sendArenaMessage(spawnTask.toString() + " -" + sender);
+      }
+      catch(NumberFormatException e)
+      {
+          throw new NumberFormatException("Please use the following format: !Spawn <X>:<Y>:<Radius>.");
+      }
+  }
+
+  /**
+   * This method spawns all players on a specific frequency at a specified location.
+   *
+   * @param sender is the person operating the bot.
+   * @param argString is the string of the arguments.
+   */
+  public void doSpawnFreqCmd(String sender, String argString)
+  {
+      StringTokenizer argTokens = getArgTokens(argString);
+
+      if(argTokens.countTokens() != 4)
+          throw new IllegalArgumentException("Please use the following format: !SpawnFreq <Freq>:<X>:<Y>:<Radius>.");
+      try
+      {
+          int freq = Integer.parseInt(argTokens.nextToken());
+          int x = Integer.parseInt(argTokens.nextToken());
+          int y = Integer.parseInt(argTokens.nextToken());
+          double radius = Double.parseDouble(argTokens.nextToken());
+          SpawnTask spawnTask = new SpawnTask(freq, x, y, radius, SpawnTask.SPAWN_FREQ);
+
+          addTask(spawnTask);
+          m_botAction.sendArenaMessage(spawnTask.toString() + " -" + sender);
+      }
+      catch(NumberFormatException e)
+      {
+          throw new NumberFormatException("Please use the following format: !SpawnFreq <Freq>:<X>:<Y>:<Radius>.");
+      }
+  }
+
+  /**
+   * This method spawns all players in a specific ship at a specified location.
+   *
+   * @param sender is the person operating the bot.
+   * @param argString is the string of the arguments.
+   */
+  public void doSpawnShipCmd(String sender, String argString)
+  {
+      StringTokenizer argTokens = getArgTokens(argString);
+
+      if(argTokens.countTokens() != 4)
+          throw new IllegalArgumentException("Please use the following format: !SpawnShip <Ship>:<X>:<Y>:<Radius>.");
+      try
+      {
+          int ship = Integer.parseInt(argTokens.nextToken());
+          int x = Integer.parseInt(argTokens.nextToken());
+          int y = Integer.parseInt(argTokens.nextToken());
+          double radius = Double.parseDouble(argTokens.nextToken());
+          SpawnTask spawnTask = new SpawnTask(ship, x, y, radius, SpawnTask.SPAWN_SHIP);
+
+          addTask(spawnTask);
+          m_botAction.sendArenaMessage(spawnTask.toString() + " -" + sender);
+      }
+      catch(NumberFormatException e)
+      {
+          throw new NumberFormatException("Please use the following format: !SpawnShip <Ship>:<X>:<Y>:<Radius>.");
+      }
+  }
+
+  /**
+   * This method spawns a specific player at a specified location.
+   *
+   * @param sender is the person operating the bot.
+   * @param argString is the string of the arguments.
+   */
+  public void doSpawnPlayerCmd(String sender, String argString)
+  {
+      StringTokenizer argTokens = getArgTokens(argString);
+
+      if(argTokens.countTokens() != 4)
+          throw new IllegalArgumentException("Please use the following format: !SpawnPlayer <Player>:<X>:<Y>:<Radius>.");
+      try
+      {
+          String playerName = m_botAction.getFuzzyPlayerName(argTokens.nextToken());
+          int playerID = m_botAction.getPlayerID(playerName);
+          int x = Integer.parseInt(argTokens.nextToken());
+          int y = Integer.parseInt(argTokens.nextToken());
+          double radius = Double.parseDouble(argTokens.nextToken());
+          SpawnTask spawnTask = new SpawnTask(playerID, x, y, radius, SpawnTask.SPAWN_PLAYER);
+
+          if(playerName == null)
+              throw new IllegalArgumentException("Player not found in the arena.");
+//        check to see if the player is in spec...
+          addTask(spawnTask);
+          m_botAction.sendArenaMessage(spawnTask.toString() + " -" + sender);
+      }
+      catch(NumberFormatException e)
+      {
+          throw new NumberFormatException("Please use the following format: !SpawnPlayer <Player>:<X>:<Y>:<Radius>.");
+      }
+  }
+  
   public void doSetupWarpListCmd(String sender)
   {
     String arenaName = m_botAction.getArenaName();
@@ -306,23 +534,34 @@ public class utilwarp extends MultiUtil
     {
       if(command.startsWith("!warpto "))
         doWarpToCmd(sender, message.substring(8));
-      if(command.startsWith("!warpfreq "))
+      else if(command.startsWith("!warpfreq "))
         doWarpFreqCmd(sender, message.substring(10));
-      if(command.startsWith("!warpship "))
+      else if(command.startsWith("!warpship "))
         doWarpShipCmd(sender, message.substring(10));
-      if(command.equalsIgnoreCase("!setupwarp"))
+      else if(command.startsWith("!spawn "))
+    	doSpawnCmd(sender, message.substring(7));
+      else if(command.startsWith("!spawnfreq "))
+        doSpawnFreqCmd(sender, message.substring(11));
+      else if(command.startsWith("!spawnship "))
+        doSpawnShipCmd(sender, message.substring(11));
+      else if(command.startsWith("!spawnplayer "))
+        doSpawnPlayerCmd(sender, message.substring(13));
+      else if(command.equalsIgnoreCase("!spawnlist"))
+    	doSpawnListCmd(sender);
+      else if(command.startsWith("!spawndel "))
+    	doSpawnDelCmd(sender, message.substring(10));
+      else if(command.equalsIgnoreCase("!spawnoff"))
+    	doSpawnOffCmd(sender);
+      else if(command.equalsIgnoreCase("!setupwarp"))
         doSetupWarpCmd(sender, "");
-      if(command.startsWith("!setupwarp "))
+      else if(command.startsWith("!setupwarp "))
         doSetupWarpCmd(sender, message.substring(11));
-      if(command.equalsIgnoreCase("!setupwarplist"))
+      else if(command.equalsIgnoreCase("!setupwarplist"))
         doSetupWarpListCmd(sender);
-      if(command.equalsIgnoreCase("!whereami"))
+      else if(command.equalsIgnoreCase("!whereami"))
         doWhereCmd(sender);
     }
-    catch(RuntimeException e)
-    {
-      m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
-    }
+    catch(RuntimeException e){}
   }
 
   public void handleEvent(Message event)
@@ -470,5 +709,243 @@ public class utilwarp extends MultiUtil
     for(int index = 0; index < length - string.length(); index++)
       returnString.append(" ");
     return returnString.toString();
+  }
+  
+  /**
+   * This private method gets the first spawn task that affects a player with the
+   * given attributes.
+   *
+   * @param freq is the freq of the player.
+   * @param ship is the ship of the player.
+   * @param playerID is the ID of the player.
+   * @return The appropriate spawn task is returned.
+   */
+  private SpawnTask getValidSpawnTask(int freq, int ship, int playerID)
+  {
+      SpawnTask spawnTask;
+
+      for(int index = 0; index < spawnTasks.size(); index++)
+      {
+          spawnTask = spawnTasks.get(index);
+          if(spawnTask.isSameType(freq, ship, playerID))
+              return spawnTask;
+      }
+      return null;
+  }
+  
+  private class SpawnTask
+  {
+      public static final int SPAWN_ALL = 0;
+      public static final int SPAWN_FREQ = 1;
+      public static final int SPAWN_SHIP = 2;
+      public static final int SPAWN_PLAYER = 3;
+
+      public static final int MAX_FREQ = 9999;
+      public static final int MIN_FREQ = 0;
+      public static final int MAX_SHIP = 8;
+      public static final int MIN_SHIP = 1;
+
+      private int spawnID;
+      private int spawnType;
+      private int x;
+      private int y;
+      private double radius;
+
+      /**
+       * Creates a new SpawnTask that spawns all players at (x,y) in a radius of radius upon death.
+       * @param x - The x location in tiles.
+       * @param y - The y location in tiles.
+       * @param radius - The radius in tiles.
+       */
+      public SpawnTask(int x, int y, double radius)
+      {
+          if(x <= 0 || y <= 0 || x > 1020 || y > 1020)
+              throw new IllegalArgumentException("Invalid coordinates.");
+          if(radius < 0)
+        	  throw new IllegalArgumentException("Invalid radius.");
+          this.x = x;
+          this.y = y;
+          this.radius = radius;
+          this.spawnType = SPAWN_ALL;
+      }
+
+      /**
+       * This constructor initializes a spawn task of variable type with the given
+       * number of deaths.
+       *
+       * @param specID who is affected by the spawn task.  This could be the freq
+       * ID, the ship type or the playerID.
+       * @param x - The x location in tiles.
+       * @param y - The y location in tiles.
+       * @param radius - The radius in tiles.
+       * @param specType this is the type of task and defines who the task
+       * affects.
+       */
+      public SpawnTask(int spawnID, int x, int y, double radius, int spawnType)
+      {
+          if(spawnType < 0 || spawnType > 3)
+              throw new IllegalArgumentException("ERROR: Unknown Spawn Type.");
+          if((spawnID < MIN_FREQ || spawnID > MAX_FREQ) && spawnType == SPAWN_FREQ)
+              throw new IllegalArgumentException("Invalid freq number.");
+          if((spawnID < MIN_SHIP || spawnID > MAX_SHIP) && spawnType == SPAWN_SHIP)
+              throw new IllegalArgumentException("Invalid ship type.");
+          if(x <= 0 || y <= 0 || x > 1020 || y > 1020)
+              throw new IllegalArgumentException("Invalid coordinates.");
+          if(radius < 0)
+        	  throw new IllegalArgumentException("Invalid radius.");
+
+          this.spawnID = spawnID;
+          this.x = x;
+          this.y = y;
+          this.radius = radius;
+          this.spawnType = spawnType;
+      }
+
+      /**
+       * This method gets the spawn type.
+       * @return the spawn type is returned.
+       */
+      public int getSpawnType()
+      {
+          return spawnType;
+      }
+
+      /**
+       * This method gets the x coordinate.
+       * @return the x coordinate is returned.
+       */
+      public int getX()
+      {
+          return x;
+      }
+      
+      /**
+       * This method gets the y coordinate.
+       * @return the y coordinate is returned.
+       */
+      public int getY()
+      {
+          return y;
+      }
+      
+      /**
+       * This method gets the radius size.
+       * @return the radius is returned.
+       */
+      public double getRadius()
+      {
+          return radius;
+      }
+
+      /**
+       * This method checks to see if a player with the given attributes will
+       * be spawned by this particular spawn task.
+       *
+       * @param freq is the freq of the player.
+       * @param ship is the ship of the player.
+       * @playerID is the ID of the player.
+       * @return True if the player is affected, false if not.
+       */
+      public boolean isSameType(int freq, int ship, int playerID)
+      {
+          switch(spawnType)
+          {
+          case SPAWN_ALL:
+              return true;
+          case SPAWN_FREQ:
+              return freq == spawnID;
+          case SPAWN_SHIP:
+              return ship == spawnID;
+          case SPAWN_PLAYER:
+              return playerID == spawnID;
+          }
+          return false;
+      }
+
+      /**
+       * This method returns a string representation of the spawn task.
+       *
+       * @return a string representation of the spawn task is returned.
+       */
+      public String toString()
+      {
+          String specTypeName;
+
+          switch(spawnType)
+          {
+          case SPAWN_ALL:
+              specTypeName = "all players";
+              break;
+          case SPAWN_FREQ:
+              specTypeName = "freq " + spawnID;
+              break;
+          case SPAWN_SHIP:
+              specTypeName = "ship " + spawnID;
+              break;
+          case SPAWN_PLAYER:
+              specTypeName = "player " + m_botAction.getPlayerName(spawnID);
+              break;
+          default:
+              specTypeName = "ERROR: Unknown Spec Type";
+          }
+
+          return "Spawning " + specTypeName + " at (" + x + "," + y + ") with a radius of " + radius + ".";
+      }
+
+      /**
+       * This overrides the equals method so as to check the spawn types and the
+       * spawn IDs.
+       *
+       * @param obj is the other spawn task to check.
+       * @return True if the spawn tasks have the same specID and the same
+       * specType.  False if not.
+       */
+      public boolean equals(Object obj)
+      {
+          SpawnTask spawnTask = (SpawnTask) obj;
+          return spawnTask.spawnID == spawnID && spawnTask.spawnType == spawnType;
+      }
+  }
+  private class SpawnTaskComparator implements Comparator<SpawnTask>
+  {
+
+      /**
+       * This method provides a compare function for two spawnTasks.  This is used
+       * for ordering the tasks in the list.
+       *
+       * @param obj1 is the first spawn task to compare.
+       * @param obj2 is the second spawn task to compare.
+       * @return a numerical representation of the difference of the two spawn
+       * tasks.
+       */
+      public int compare(SpawnTask task1, SpawnTask task2)
+      {
+          int value1 = task1.getSpawnType() * SpawnTask.MAX_FREQ + task1.spawnID;
+          int value2 = task2.getSpawnType() * SpawnTask.MAX_FREQ + task2.spawnID;
+
+          return value2 - value1;
+      }
+  }
+  private class SpawnTimer{
+	  String playerName;
+	  private int x, y;
+	  private double radius;
+	  private Timer clock;
+	  private TimerTask runIt = new TimerTask(){
+		  public void run(){
+			  runIt();
+		  }
+	  };
+	  public SpawnTimer(String playerName, int x, int y, double radius, int spawnTime){
+		  this.playerName = playerName;
+		  this.x = x;
+		  this.y = y;
+		  this.radius = radius;
+		  clock = new Timer();
+		  clock.schedule(runIt, spawnTime);
+	  }
+	  public void runIt(){
+		  doRandomWarp(playerName,x,y,radius);
+	  }
   }
 }
