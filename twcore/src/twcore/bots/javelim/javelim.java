@@ -515,7 +515,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
                     killer.m_kills++;
                     m_mvp = mvpCompare(m_mvp, killer);
 
-                    Integer key = new Integer(killer.m_deaths);
+                    Integer key = Integer.valueOf(killer.m_deaths);
                     KimPlayer kp = m_deathMap.get(key);
                     if(kp == null || mvpCompare(killer, kp) == killer) {
                         m_deathMap.put(key, killer);
@@ -528,12 +528,12 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
                 victim.resetTime();
                 int oldDeaths = victim.m_deaths++;
 
-                Integer key = new Integer(oldDeaths);
+                Integer key = Integer.valueOf(oldDeaths);
                 KimPlayer kp = m_deathMap.get(key);
                 if(kp == victim) {
                     m_deathMap.remove(key);
                 }
-                key = new Integer(oldDeaths + 1);
+                key = Integer.valueOf(oldDeaths + 1);
                 kp = m_deathMap.get(key);
                 if(kp == null || mvpCompare(victim, kp) == victim) {
                     m_deathMap.put(key, victim);
@@ -875,8 +875,9 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
                         kp = null;
                     }
                 }
-                if(m_mvp != m_prevMvp || (kp != null && m_survivor != kp)) {
+                if(m_mvp != m_prevMvp || m_survivor != kp) {
                     m_prevMvp = m_mvp;
+                    m_survivor = kp;
                     refreshScoreboard();
                 }
             }
