@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.TreeMap;
@@ -12,10 +11,10 @@ import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
-import twcore.core.util.ModuleEventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.stats.PlayerProfile;
+import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 /**
@@ -263,10 +262,9 @@ public class trivia extends MultiModule {
         m_botAction.sendChatMessage( 1, m_prec + "Player: " + name + " has won this round of trivia!" );
         m_botAction.sendArenaMessage( m_prec + "Player: " + name + " has won this round of trivia!", 5 );
         //Save stats
-        Set set = playerMap.keySet();
-        Iterator it = set.iterator();
+        Iterator<String> it = playerMap.keySet().iterator();
         while (it.hasNext()) {
-            String curPlayer = (String) it.next();
+            String curPlayer = it.next();
             PlayerProfile tempPlayer = playerMap.get(curPlayer);
             if( name.equals(curPlayer) )
                 storePlayerStats( curPlayer, tempPlayer.getData( 0 ), true );
@@ -332,10 +330,9 @@ public class trivia extends MultiModule {
             m_botAction.sendRemotePrivateMessage( name, m_prec + doTrimString( "Player Name", 18 ) + doTrimString( "Points", 10 ) + "|" );
             int curPoints = curLeader;
             while( curPoints != 0 ){
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Iterator<String> it = playerMap.keySet().iterator();
                 while( it.hasNext() ){
-                    String curPlayer = (String)it.next();
+                    String curPlayer = it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
                     tempPlayer = playerMap.get( curPlayer );
                     if( tempPlayer.getData( 0 ) == curPoints ){
@@ -411,10 +408,9 @@ public class trivia extends MultiModule {
             m_botAction.sendChatMessage(1, "--|-- " + doTrimString("     Current Scores",28) + "|");
             m_botAction.sendChatMessage(1, "--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while( numberShown < 8 && curPoints != 0) {
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Iterator<String> it = playerMap.keySet().iterator();
                 while (it.hasNext()) {
-                    String curPlayer = (String) it.next();
+                    String curPlayer = it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
                     tempPlayer = playerMap.get(curPlayer);
                     if(tempPlayer.getData(0) == curPoints) {
@@ -434,10 +430,9 @@ public class trivia extends MultiModule {
             m_botAction.sendArenaMessage("--|-- " + doTrimString("     Current Scores",28) + "|");
             m_botAction.sendArenaMessage("--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while( numberShown < 8 && curPoints != 0) {
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Iterator<String> it = playerMap.keySet().iterator();
                 while (it.hasNext()) {
-                    String curPlayer = (String) it.next();
+                    String curPlayer = it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
                     tempPlayer = playerMap.get(curPlayer);
                     if(tempPlayer.getData(0) == curPoints) {
