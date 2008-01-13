@@ -2590,7 +2590,7 @@ public class BotAction
      * @param connectName The connection name as specified in sql.cfg
      * @param query The SQL query to be executed
      * @throws SQLException SQLException
-     * @return ResultSet from the SQL Query.  You must close w/ {@link #SQLClose(ResultSet)} after use.
+     * @return ResultSet from the SQL Query. (MAY be null)  You must close w/ {@link #SQLClose(ResultSet)} after use.
      * @see #SQLQueryAndClose(String, String)
      */
     public ResultSet SQLQuery(String connectName, String query) throws SQLException

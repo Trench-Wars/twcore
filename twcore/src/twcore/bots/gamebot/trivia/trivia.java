@@ -30,7 +30,7 @@ public class trivia extends MultiModule {
     CommandInterpreter  m_commandInterpreter;
 
     Random          m_rnd;
-    String          mySQLHost = "server";
+    String          mySQLHost = "website";
     TimerTask       startGame, timerQuestion, timerHint, timerAnswer, timerNext;
     TimerTask       timedMessages, timedMessages2;
     TreeMap<String, PlayerProfile> playerMap = new TreeMap<String, PlayerProfile>();
@@ -510,7 +510,7 @@ public class trivia extends MultiModule {
         try {
             ResultSet qryQuestionData;
             do {
-                qryQuestionData = m_botAction.SQLQuery( mySQLHost, "SELECT fnQuestionID, fcQuestion, fcAnswer, fcQuestionTypeName FROM tblquestion, tblquestiontype WHERE tblquestion.fnQuestionTypeID = tblquestiontype.fnQuestionTypeid AND fnTimesUsed="+m_mintimesused+" ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
+                qryQuestionData = m_botAction.SQLQuery( mySQLHost, "SELECT fnQuestionID, fcQuestion, fcAnswer, fcQuestionTypeName FROM tblQuestion, tblQuestionType WHERE tblQuestion.fnQuestionTypeID = tblQuestionType.fnQuestionTypeid AND fnTimesUsed="+m_mintimesused+" ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
                 if (!qryQuestionData.isBeforeFirst()) getMinTimesUsed();
             } while (!qryQuestionData.isBeforeFirst());
 
@@ -519,7 +519,7 @@ public class trivia extends MultiModule {
                 t_question = qryQuestionData.getString("fcQuestion").replaceAll("\\\\", "");
                 t_answer   = qryQuestionData.getString("fcAnswer").replaceAll("\\\\", "");
                 int ID = qryQuestionData.getInt("fnQuestionID");
-                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblquestion SET fnTimesUsed = fnTimesUsed + 1 WHERE fnQuestionID = "+ ID);
+                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblQuestion SET fnTimesUsed = fnTimesUsed + 1 WHERE fnQuestionID = "+ ID);
             }
             m_botAction.SQLClose( qryQuestionData );
         } catch (Exception e) {
@@ -535,7 +535,7 @@ public class trivia extends MultiModule {
     /****************************************************************/
     public void getMinTimesUsed() {
         try {
-            ResultSet qryMinTimesUsed = m_botAction.SQLQuery( mySQLHost, "SELECT MIN(fnTimesUsed) AS fnMinTimesUsed FROM tblquestion");
+            ResultSet qryMinTimesUsed = m_botAction.SQLQuery( mySQLHost, "SELECT MIN(fnTimesUsed) AS fnMinTimesUsed FROM tblQuestion");
             qryMinTimesUsed.next();
             int minUsed = qryMinTimesUsed.getInt("fnMinTimesUsed");
             m_mintimesused = minUsed;
@@ -552,7 +552,7 @@ public class trivia extends MultiModule {
     public void getTopTen() {
         topTen = new Vector<String>();
         try {
-            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tblusertriviastats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
+            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tblUserTriviaStats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
             while(result != null && result.next())
                 topTen.add(doTrimString(result.getString("fcUsername"), 17 ) + "Games Won ("+ doTrimString(""+result.getInt("fnWon") +":" + result.getInt("fnPlayed") +")",9) + "Pts Scored (" +doTrimString(""+ result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")", 10) + "Rating: " + result.getInt("fnRating"));
             m_botAction.SQLClose( result );
@@ -569,17 +569,17 @@ public class trivia extends MultiModule {
             int wonAdd = 0;
             if (won) wonAdd = 1;
 
-            ResultSet qryHasTriviaRecord = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible FROM tblusertriviastats WHERE fcUserName = \"" + username+"\"");
+            ResultSet qryHasTriviaRecord = m_botAction.SQLQuery( mySQLHost, "SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible FROM tblUserTriviaStats WHERE fcUserName = \"" + username+"\"");
             if (!qryHasTriviaRecord.next()) {
                 double rating = ( (points+.0) / toWin * 750.0 ) * ( 1.0 + (wonAdd / 3.0) );
-                m_botAction.SQLQueryAndClose( mySQLHost, "INSERT INTO tblusertriviastats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""+username+"\",1,"+wonAdd+","+points+","+toWin+","+rating+")");
+                m_botAction.SQLQueryAndClose( mySQLHost, "INSERT INTO tblUserTriviaStats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""+username+"\",1,"+wonAdd+","+points+","+toWin+","+rating+")");
             } else {
                 double played = qryHasTriviaRecord.getInt("fnPlayed") + 1.0;
                 double wins   = qryHasTriviaRecord.getInt("fnWon") + wonAdd;
                 double pts    = qryHasTriviaRecord.getInt("fnPoints") + points;
                 double pos    = qryHasTriviaRecord.getInt("fnPossible") + toWin;
                 double rating = ( pts / pos * 750.0) * ( 1.0 + (wins / played / 3.0) );
-                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblusertriviastats SET fnPlayed = fnPlayed+1, fnWon = fnWon + "+wonAdd+", fnPoints = fnPoints + "+ points+", fnPossible = fnPossible + "+ toWin +", fnRating = "+rating+" WHERE fcUserName = \"" + username+"\"");
+                m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblUserTriviaStats SET fnPlayed = fnPlayed+1, fnWon = fnWon + "+wonAdd+", fnPoints = fnPoints + "+ points+", fnPossible = fnPossible + "+ toWin +", fnRating = "+rating+" WHERE fcUserName = \"" + username+"\"");
             }
             m_botAction.SQLClose( qryHasTriviaRecord );
         } catch (Exception e) {
@@ -593,7 +593,7 @@ public class trivia extends MultiModule {
     public String getPlayerStats(String username) {
         try{
 
-            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnPoints, fnWon, fnPlayed, fnPossible, fnRating FROM tblusertriviastats WHERE fcUserName = \"" + username+"\"");
+            ResultSet result = m_botAction.SQLQuery( mySQLHost, "SELECT fnPoints, fnWon, fnPlayed, fnPossible, fnRating FROM tblUserTriviaStats WHERE fcUserName = \"" + username+"\"");
             String info = "There is no record of player " + username;
             if(result.next())
                 info = username + "- Games Won: ("+ result.getInt("fnWon") + ":" + result.getInt("fnPlayed") + ")  Pts Scored: (" +result.getInt("fnPoints") + ":" + result.getInt("fnPossible") + ")  Rating: " + result.getInt("fnRating");
