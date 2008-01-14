@@ -4,6 +4,7 @@ import java.util.StringTokenizer;
 
 import twcore.core.BotAction;
 import twcore.core.events.Message;
+import twcore.core.BotSettings;
 
 /**
  * Racism spy.  Extremely similar to PubBot's spy module.  When instantiated, a bot
@@ -11,14 +12,40 @@ import twcore.core.events.Message;
  * the message for racism, and sends a ?cheater call if necessary.
  *  
  * This could easily be altered to check for other words or perform another action. 
+ * 
+ * <added by Pio>
+ * Added ability to update via racism.cfg within the data folder.
+ * Example usage:
+ * import twcore.core.util.Spy;
+ * 
+ * 
+ *     public multibot(BotAction botAction) {
+ *       super(botAction);
+ *       watcher = new Spy(botAction); // implement spy.java
+ *       m_eventModule = null;  
+ *  }
+    
+    On your bots handleEvent for Messages do the folowing:
+        public void handleEvent(Message event) {
+    	   watcher.handleEvent(event);
+    	}
+ *</added by Pio>
  */
 public class Spy {
-    public static final String keywords = "j3w jew chink nig nigger n1g n1gg3r nigg3r paki gook nigg@ n1gg@ nigga";
-    
+    public String keywords = "";    
     private BotAction   m_botAction;        // BotAction reference
 
     public Spy( BotAction botAction ) {
 		m_botAction = botAction;
+		BotSettings bs;
+		try {
+			bs = new BotSettings(m_botAction.getDataFile("racism.cfg"));
+			keywords = bs.getString("words"); }
+		catch (Exception e) {
+			keywords = "nig n1g jew gook chink"; // just in case...
+		}
+
+		bs = null;
 	}
     
     public void handleEvent( Message event ){
@@ -27,12 +54,11 @@ public class Spy {
         String message = event.getMessage();
         String messageTypeString = getMessageTypeString(messageType);
 
-        if(sender != null && messageType != Message.CHAT_MESSAGE && messageType != Message.PRIVATE_MESSAGE &&
-                             messageType != Message.REMOTE_PRIVATE_MESSAGE)
+        if(sender != null)
         {
           if(isRacist(message))
               m_botAction.sendUnfilteredPublicMessage("?cheater " + messageTypeString + ": (" + sender + "): " + message);
-        }    	
+        }
     }
     
     private String getMessageTypeString(int messageType)
@@ -63,31 +89,12 @@ public class Spy {
       return "Other";
     }    
     
-    private boolean containsWord(String message, String word)
-    {
-      StringBuffer stringBuffer = new StringBuffer();
-      String formattedMessage;
-      String lowerWord = word.toLowerCase();
-      char character;
-
-      for(int index = 0; index < message.length(); index++)
-      {
-        character = Character.toLowerCase(message.charAt(index));
-        if(Character.isLetterOrDigit(character) || character == ' ')
-          stringBuffer.append(character);
-      }
-
-      formattedMessage = " " + stringBuffer.toString() + " ";
-      return formattedMessage.indexOf(" " + lowerWord + " ") != -1 ||
-             formattedMessage.indexOf(" " + lowerWord + "s ") != -1;
-    }
-
     public boolean isRacist(String message)
     {
       StringTokenizer keywordTokens = new StringTokenizer(keywords);
 
       while(keywordTokens.hasMoreTokens())
-        if(containsWord(message, keywordTokens.nextToken()))
+    	if(message.toLowerCase().contains(keywordTokens.nextToken()))
           return true;
       return false;
     }
