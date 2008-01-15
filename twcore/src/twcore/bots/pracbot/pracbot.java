@@ -18,10 +18,17 @@ import twcore.core.events.WeaponFired;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.OperatorList;
 import twcore.core.game.Player;
 import twcore.core.util.ipc.IPCMessage;
 
+/**
+ * The original PracBot.
+ * 
+ * @author milosh - 1.15.08
+ */
 public class pracbot extends SubspaceBot {
 
 	private static final double SS_CONSTANT = 0.1111111;
@@ -86,8 +93,18 @@ public class pracbot extends SubspaceBot {
         req.request(EventRequester.LOGGED_ON);
         req.request(EventRequester.PLAYER_POSITION);
         req.request(EventRequester.PLAYER_DEATH);
+        req.request(EventRequester.PLAYER_LEFT);
+        req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
     }
 
+    public void handleEvent(PlayerLeft event){
+    	if(m_botAction.getPlayerName(event.getPlayerID()).equals(turret))doUnAttachCmd();
+    }
+    
+    public void handleEvent(FrequencyShipChange event){
+    	if(m_botAction.getPlayerName(event.getPlayerID()).equals(turret) && event.getShipType() == 0)doUnAttachCmd();
+    }
+    
     public void handleEvent(PlayerDeath event) {
     	if(turret == null)return;
     	String killed = m_botAction.getPlayerName(event.getKilleeID());
@@ -152,7 +169,7 @@ public class pracbot extends SubspaceBot {
      					m_botAction.scheduleTask(spawned, SPAWN_TIME);
      					IPCMessage ipcMessage = new IPCMessage("hit:" + b.getOwner() + ":" + botX + ":" + botY);
      					m_botAction.ipcTransmit("tutorialbots", ipcMessage);
-     					m_botAction.sendDeath(m_botAction.getPlayerID(m_botAction.getBotName()), 0);
+     					m_botAction.sendDeath(m_botAction.getPlayerID(b.getOwner()), 0);
      					Iterator<RepeatFireTimer> i = repeatFireTimers.iterator();
      					while(i.hasNext())i.next().pause(); 				
      					it.remove();
