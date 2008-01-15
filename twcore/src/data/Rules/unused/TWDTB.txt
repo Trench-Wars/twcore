@@ -10,11 +10,14 @@ rounds=1
 maxrounds=1
 winby=timerace
 defaulttarget=15
-pickbyturn=1
+pickbyturn=0
+forfeit_loser_score=0
+forfeit_winner_score=100000
 captainsfixed=0
 waitafterlagout=15
 aliascheck=0
-blueout=0
+blueout=1
+lineuptime=10
 
 # assign the maximum number of ships allowed per shiptype.
 # -1 indicates that the ship is NOT allowed
@@ -25,7 +28,6 @@ maxship3=4
 
 squadjoined=0
 rosterjoined=0
-#eligibleafter=3
 shipchanges=10
 shipswitches=5
 substitutes=-1
@@ -55,7 +57,9 @@ C2SPloss=3
 WeaponPloss=3
 SlowS2C=4
 SlowC2S=4
-Med=100
+Med=55
 SpikeCount=6
 
 EnableLagLimits=1
+strictmidip=0
+specialaccess=

@@ -1,53 +1,49 @@
 [General]
-name=TWLB
-arena=twlb,twlb2,twlb3,twlb4,twlb5,twlb6,twlb7
+name=TWBD
+arena=twbd,twbd2,twbd3,twbd4,twbd5,twbd6,twbd7
 ship=0
 players=8
-minplayers=6
+minplayers=5
 deaths=-1
-time=41
+time=31
 rounds=1
 maxrounds=1
 winby=timerace
 defaulttarget=15
-pickbyturn=2
+pickbyturn=0
 forfeit_loser_score=0
-forfeit_winner_score=1
-captainsfixed=1
-pingmax=350
-maxcurrping=350
-maxploss=3.5
-staffonly=1
-zoneok=1
-waitafterlagout=15
+forfeit_winner_score=900
+captainsfixed=0
+maxping=700
+lagoutextension=60
+waitafterlagout=10
+captain_can_start_game=1
 lineuptime=7
-manual_game_start=1
 blueout=1
-aliascheck=1
 
 # assign the maximum number of ships allowed per shiptype.
 # -1 indicates that the ship is NOT allowed
 maxship5=1
 maxship8=2
 maxship4=-1
-maxship6=-1
 
 squadjoined=1
 rosterjoined=1
 shipchanges=2
 shipswitches=3
 substitutes=3
-lagouts=99
+lagouts=-1
+aliascheck=1
 
 [Arena]
 safe1x=312
 safe1y=482
 safe1xout=486
-safe1yout=256
+safe1yout=255
 safe2x=712
 safe2y=482
 safe2xout=538
-safe2yout=256
+safe2yout=255
 obj_countdown10=1
 obj_countdown54321=2
 obj_gogogo=3
@@ -55,17 +51,17 @@ obj_gameover=4
 
 storegame=1
 loggame=0
-matchtype=3
+matchtype=6
 
-CurPing=330
-AvePing=300
-S2CPloss=4
-C2SPloss=4
+CurPing=360
+AvePing=320
+S2CPloss=3
+C2SPloss=3
 WeaponPloss=3
-SlowS2C=6
-SlowC2S=6
-Med=70
-SpikeCount=5
+SlowS2C=5
+SlowC2S=5
+Med=85
+SpikeCount=6
 
 EnableLagLimits=1
 strictmidip=0
