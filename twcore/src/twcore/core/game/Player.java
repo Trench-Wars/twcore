@@ -11,6 +11,7 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.ScoreReset;
 import twcore.core.events.ScoreUpdate;
+import twcore.core.util.Tools.Weapon;
 
 /**
  * The essential class holding information on a single Subspace player.  It contains
@@ -459,6 +460,39 @@ public class Player {
      */
     public int getWeaponType(){
         return m_weaponType;
+    }
+    
+    /**
+	 * Gets the player's <b>most recently updated</b> Weapon fired's speed
+     * <p>
+     * A VERY IMPORTANT consideration is that a player's weapon type may not be accurate
+     * / updated.  Use BotAction's setPlayerPositionUpdating() to make this information
+     * more reliable.  Updates only when a weapon is fired and includes specials.
+     * @return Speed of player's weapon type based on standard SSCU Trench Wars settings.
+     */
+    public double getWeaponSpeed(){
+    	double speed=0;
+    	if(m_weaponType == 1 || m_weaponType == 2){
+    		if(m_shipType == 1)speed = Weapon.WARBIRD_BULLET_SPEED;
+    		else if(m_shipType == 2)speed = Weapon.JAVELIN_BULLET_SPEED;
+    		else if(m_shipType == 3)speed = Weapon.SPIDER_BULLET_SPEED;
+    		else if(m_shipType == 4)speed = Weapon.LEVIATHAN_BULLET_SPEED;
+    		else if(m_shipType == 5)speed = Weapon.TERRIER_BULLET_SPEED;
+    		else if(m_shipType == 6)speed = Weapon.WEASEL_BULLET_SPEED;
+    		else if(m_shipType == 7)speed = Weapon.LANCASTER_BULLET_SPEED;
+    		else if(m_shipType == 8)speed = Weapon.SHARK_BULLET_SPEED;
+    	}
+    	else if(m_weaponType == 3 || m_weaponType == 4 || m_weaponType == 8){
+    		if(m_shipType == 1)speed = Weapon.WARBIRD_BOMB_SPEED;
+    		else if(m_shipType == 2)speed = Weapon.JAVELIN_BOMB_SPEED;
+    		else if(m_shipType == 3)speed = Weapon.SPIDER_BOMB_SPEED;
+    		else if(m_shipType == 4)speed = Weapon.LEVIATHAN_BOMB_SPEED;
+    		else if(m_shipType == 5)speed = Weapon.TERRIER_BOMB_SPEED;
+    		else if(m_shipType == 6)speed = Weapon.WEASEL_BOMB_SPEED;
+    		else if(m_shipType == 7)speed = Weapon.LANCASTER_BOMB_SPEED;
+    		else if(m_shipType == 8)speed = Weapon.SHARK_BOMB_SPEED;
+    	}
+    	return speed;
     }
     
     /**

@@ -608,4 +608,28 @@ public class Tools {
         public static final int DAY    = 86400000;
         public static final int WEEK   = 604800000;
     }
+    
+    /** Weapons - These are the <b>STANDARD</b> weapon speed settings in SSCU Trench Wars
+     */
+    public class Weapon {
+    	public static final double WARBIRD_BULLET_SPEED = 5000.0;
+    	public static final double JAVELIN_BULLET_SPEED = -900.0;
+    	public static final double SPIDER_BULLET_SPEED = 4000.0;
+    	public static final double LEVIATHAN_BULLET_SPEED = 1000.0;
+    	public static final double TERRIER_BULLET_SPEED = 1300.0;
+    	public static final double WEASEL_BULLET_SPEED = 800.0;
+    	public static final double LANCASTER_BULLET_SPEED = 3650.0;
+    	public static final double SHARK_BULLET_SPEED = 1.0;
+    	
+    	public static final double WARBIRD_BOMB_SPEED = 4000.0;
+    	public static final double JAVELIN_BOMB_SPEED = 2250.0;
+    	public static final double SPIDER_BOMB_SPEED = 1.0;
+    	public static final double LEVIATHAN_BOMB_SPEED = 4000.0;
+    	public static final double TERRIER_BOMB_SPEED = 1.0;
+    	public static final double WEASEL_BOMB_SPEED = 30000.0;
+    	public static final double LANCASTER_BOMB_SPEED = 1.0;
+    	public static final double SHARK_BOMB_SPEED = 1.0;
+    	
+    }
+    
 }
