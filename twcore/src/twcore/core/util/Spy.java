@@ -39,7 +39,7 @@ public class Spy {
 		m_botAction = botAction;
 		BotSettings bs;
 		try {
-			bs = new BotSettings(m_botAction.getDataFile("racism.cfg"));
+			bs = new BotSettings(m_botAction.getCoreCfg("racism.cfg"));
 			keywords = bs.getString("words"); }
 		catch (Exception e) {
 			keywords = "nig n1g jew gook chink"; // just in case...
