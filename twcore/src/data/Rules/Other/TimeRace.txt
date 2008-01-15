@@ -1,0 +1,86 @@
+[General]
+name=Time Race
+arena=base,base2,base3
+ship=0
+players=8
+minplayers=0
+deaths=-1
+time=41
+rounds=1
+maxrounds=1
+aliascheck=0
+
+winby=timerace
+scoreboard_flags=1
+#this is to ensure you have a default setting if user doesn't define any
+defaulttarget=10
+
+pickbyturn=1
+forfeit_loser_score=0
+forfeit_winner_score=100000
+captainsfixed=0
+#maxping=700
+waitafterlagout=15
+specialaccess=Adman:Divine Rides:Nockm:greven:fit of rage:stabwound:Legionair:randedl:ph:Disqualifier:peace_maker:fireballz:P0LLUX:Mantra-Slider
+
+# assign the maximum number of ships allowed per shiptype.
+# -1 indicates that the ship is NOT allowed
+maxship5=1
+maxship8=2
+maxship4=-1
+maxship6=-1
+
+squadjoined=0
+
+#this is to differentiate between TWD games. 1 is to ensure roster joined
+rosterjoined=0
+
+eligibleafter=3
+shipchanges=10
+shipswitches=5
+substitutes=-1
+lagouts=-1
+
+#spikesize=400
+#maxcurrping=400
+#maxploss=6
+#maxslowpackets=5
+#maxstandarddeviation=300
+#maxnumspikes=4
+#lagcheckdelay=60
+
+[Arena]
+safe1x=312
+safe1y=482
+safe1xout=486
+safe1yout=256
+safe2x=712
+safe2y=482
+safe2xout=538
+safe2yout=256
+obj_countdown10=51
+obj_gogogo=52
+obj_gameover=50
+
+storegame=1
+loggame=0
+matchtype=14
+
+CurPing=400
+AvePing=350
+S2CPloss=5
+C2SPloss=5
+WeaponPloss=9
+SlowS2C=7
+SlowC2S=7
+Med=100
+SpikeCount=5
+
+EnableLagLimits=0
+
+[AutoZone]
+advertise=1
+zoner=8 v 8 basing is about to begin. type ?go %a -%n
+peopletoad=14
+advertDelay=1
+# Number of minutes before another base advert is allowed
