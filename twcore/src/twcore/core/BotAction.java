@@ -2141,7 +2141,8 @@ public class BotAction
     }
 
     /**
-     * Moves the bot to the tile (x,y).  512, 512 is the center of the map.
+     * Moves the bot to the center of tile (x,y).  512, 512 is the center of the map.
+     * To make the bot move to the center of the specified tile, +7 is added to the pixel count.
      * For more complex operations, get a copy of the Ship object with getShip().
      * @param x X value to move the bot to
      * @param y Y value to move the bot to
