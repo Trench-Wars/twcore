@@ -149,7 +149,7 @@ public class golden extends MultiModule {
            Player p;
            String addPlayerName;
            StringBag randomPlayerBag = new StringBag();
-           Iterator i = m_botAction.getPlayingPlayerIterator();
+           Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
            if( i == null ) return;
            while( i.hasNext() ){
                p = (Player)i.next();
@@ -176,7 +176,7 @@ public class golden extends MultiModule {
            Player p;
            String addPlayerName;
            StringBag randomPlayerBag = new StringBag();
-           Iterator i = m_botAction.getPlayingPlayerIterator();
+           Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
            if( i == null ) return;
            while( i.hasNext() ){
                p = (Player)i.next();
