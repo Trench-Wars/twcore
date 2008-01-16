@@ -170,7 +170,7 @@ public class dangerous extends MultiModule {
         if( m_players.values() == null )
             return;
 
-        Iterator i = m_players.values().iterator();
+        Iterator<PlayerInfo> i = m_players.values().iterator();
 
         while( i.hasNext() ) {
             PlayerInfo p = (PlayerInfo)i.next();
@@ -190,8 +190,8 @@ public class dangerous extends MultiModule {
     public void declareWinner() {
         isRunning = false;
 
-        Iterator i = m_botAction.getPlayingPlayerIterator();
-        Player winner = (Player) i.next();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+        Player winner = i.next();
 
         PlayerInfo player = m_players.get( winner.getPlayerName() );
         m_botAction.sendArenaMessage( "It is " + getTimeString( m_totalTime ) + "!  Someone has survived the Game.", 13 );
@@ -213,17 +213,17 @@ public class dangerous extends MultiModule {
      * @return Name and time of person with highest current time.
      */
     public String getTimeLeaderString() {
-        Iterator i = m_players.values().iterator();
+        Iterator<PlayerInfo> i = m_players.values().iterator();
         PlayerInfo highPlayer;
 
         if( i.hasNext() ) {
-            highPlayer = (PlayerInfo)i.next();
+            highPlayer = i.next();
         } else {
             return "";
         }
 
         while( i.hasNext() ) {
-            PlayerInfo p = (PlayerInfo)i.next();
+            PlayerInfo p = i.next();
             // Doesn't retain tied high times.  Cry -> river
             if( p.getTimeInt() > highPlayer.getTimeInt() ) {
                 highPlayer = p;
@@ -239,7 +239,7 @@ public class dangerous extends MultiModule {
      * @return Name and time of person with highest max time.
      */
     public String getMaxTimeLeaderString() {
-        Iterator i = m_players.values().iterator();
+        Iterator<PlayerInfo> i = m_players.values().iterator();
         PlayerInfo highPlayer;
 
         if( i.hasNext() ) {
