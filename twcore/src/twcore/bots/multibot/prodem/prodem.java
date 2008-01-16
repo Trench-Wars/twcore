@@ -117,7 +117,7 @@ public void handleEvent( Message event ) {
         records[6] = 0;
 
         //Stores players information.
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
         if( i == null ) return;
         while( i.hasNext() ){
             Player tempP = (Player)i.next();
@@ -275,8 +275,8 @@ public void handleEvent( Message event ) {
     ///*** Declares the end of game. ***///
     public void botEnd( String winner ) {
         //Sets the score for players.
-        Set set = playerMap.keySet();
-        Iterator i = set.iterator();
+        Set<String> set = playerMap.keySet();
+        Iterator<String> i = set.iterator();
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
             PlayerProfile tempPlayer;
@@ -305,8 +305,8 @@ public void handleEvent( Message event ) {
     }
 
     public String getHolder( int location, int score ) {
-        Set set = playerMap.keySet();
-        Iterator i = set.iterator();
+        Set<String> set = playerMap.keySet();
+        Iterator<String> i = set.iterator();
         String recordH = "";
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
@@ -319,8 +319,8 @@ public void handleEvent( Message event ) {
     }
 
     public String getHolder( String location, int score ) {
-        Set set = playerMap.keySet();
-        Iterator i = set.iterator();
+        Set<String> set = playerMap.keySet();
+        Iterator<String> i = set.iterator();
         String recordH = "";
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
