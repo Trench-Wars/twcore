@@ -95,7 +95,7 @@ public class platoon extends MultiModule
         }
 
         String exemptShipList = "Exempt ships are: ";
-        Iterator it = exemptShips.iterator();
+        Iterator<Integer> it = exemptShips.iterator();
         while(it.hasNext())
         {
             exemptShipList += " " + ((Integer)it.next()).intValue();
@@ -121,7 +121,7 @@ public class platoon extends MultiModule
                 m_botAction.spec(event.getKilleeID());
                 m_botAction.spec(event.getKilleeID());
                 m_botAction.sendArenaMessage(m_botAction.getPlayerName(event.getKilleeID()) + " is out!");
-                Iterator it = m_botAction.getPlayingPlayerIterator();
+                Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
                 int players = 0;
 
                 while(it.hasNext()) { it.next(); players++; }
@@ -149,7 +149,7 @@ public class platoon extends MultiModule
     {
         if(!isRunning)
             return;
-        Iterator it = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         int players = 0;
 
         while(it.hasNext()) { it.next(); players++; }
@@ -164,7 +164,7 @@ public class platoon extends MultiModule
             return;
         if(event.getShipType() == 0)
         {
-            Iterator it = m_botAction.getPlayingPlayerIterator();
+            Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
             int players = 0;
 
             while(it.hasNext()) { it.next(); players++; }
@@ -182,7 +182,7 @@ public class platoon extends MultiModule
 
     public void gameOver()
     {
-        Iterator it = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         String winner = "";
         while(it.hasNext())
         {
