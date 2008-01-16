@@ -190,7 +190,7 @@ public class bfallout extends MultiModule {
 		TimerTask fiveSeconds = new TimerTask() {
 			public void run() {
 
-				Iterator i = m_botAction.getPlayingPlayerIterator();
+				Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 				while (i.hasNext()) {
 					Player p = (Player)i.next();
 
@@ -212,7 +212,7 @@ public class bfallout extends MultiModule {
 		TimerTask tenSeconds = new TimerTask() {
 			public void run() {
 
-				Iterator i = m_botAction.getPlayingPlayerIterator();
+				Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 				while (i.hasNext()) {
 					Player p = (Player)i.next();
 
@@ -234,7 +234,7 @@ public class bfallout extends MultiModule {
 
 					fallOutCheck = new TimerTask() {
 						public void run() {
-							Iterator i = m_botAction.getPlayingPlayerIterator();
+							Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 							while (i.hasNext()) {
 								Player p = (Player)i.next();
 
@@ -422,7 +422,7 @@ public class bfallout extends MultiModule {
 		BFPlayer p;
 		String winner = null;
 		int g = 0;
-		Iterator i = players.keySet().iterator();
+		Iterator<String> i = players.keySet().iterator();
 		while (i.hasNext()) {
 			winner = (String)i.next();
 			p = players.get(winner);
