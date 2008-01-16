@@ -148,7 +148,7 @@ public class untouchable extends MultiModule {
     public void makeNewRandomUntouchable() {
         m_untouchable = "";
 
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
         while ( m_untouchable == "" && i.hasNext() ) {
             if (i != null) {
@@ -308,7 +308,7 @@ public class untouchable extends MultiModule {
             if( m_untouchable.equals( m_botAction.getPlayerName( event.getPlayerID() ) ) ) {
 
                 int numPs = 0;
-                Iterator i3 = m_botAction.getPlayingPlayerIterator();
+                Iterator<Player> i3 = m_botAction.getPlayingPlayerIterator();
 
                 while ( i3.hasNext() ) {
                     numPs++;
@@ -321,7 +321,7 @@ public class untouchable extends MultiModule {
             } else {
 
                 int numPlayers = 0;
-                Iterator i = m_botAction.getPlayingPlayerIterator();
+                Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
                 while ( i.hasNext() ) {
                     numPlayers++;
@@ -329,7 +329,7 @@ public class untouchable extends MultiModule {
                 }
 
                 if( numPlayers <= 2) {
-                    Iterator i2 = m_botAction.getPlayingPlayerIterator();
+                    Iterator<Player> i2 = m_botAction.getPlayingPlayerIterator();
 
                     try {
                         Player winner = (Player) i2.next();
