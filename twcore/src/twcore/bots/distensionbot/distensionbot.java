@@ -4791,10 +4791,12 @@ public class distensionbot extends SubspaceBot {
                 m_specialAbilityPrizer.addPlayer(this);
             else
                 m_specialAbilityPrizer.removePlayer(this);
-            if( (shipNum == 6 || shipNum == 7) && upgrade == 6 )
+            if( shipNum == 6 && upgrade == 6 )
                 vengefulBastard = purchasedUpgrades[6];
             if( (shipNum == 1 || shipNum == 5) && upgrade == 12 )
                 escapePod = purchasedUpgrades[6];
+            if( shipNum == 7 && upgrade == 6 )
+                leeching = purchasedUpgrades[6];
             shipDataSaved = false;
         }
 
@@ -5081,6 +5083,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage(arenaPlayerID, "You do not presently have an energy tank to use!" );
             } else {
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.FULLCHARGE );
+                energyTank = false;
             }
         }
 
