@@ -178,7 +178,7 @@ public class fallout extends MultiModule {
 
 	public void doHandleWin() {
 		String winner = "I (the best bot around town)";
-		Iterator it = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 		int i = 0;
 	    if( it != null ) {
             if( it.hasNext() ) {
@@ -214,7 +214,7 @@ public class fallout extends MultiModule {
 	public int getPlayerCount() {
 		int freq = -1;
 		int i = 1;
-		Iterator it = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 	    if( it == null ) return 0;
 	    while( it.hasNext() ){
 	    	Player p = (Player)it.next();
