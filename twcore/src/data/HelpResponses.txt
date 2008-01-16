@@ -106,7 +106,9 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Staff &Become &How|TW Staff are looking for players who play regulary and are friendly, helpful, knowledgeable and who show a desire to improving the zone. If you are interested in joining TW Staff, e-mail TWStaff@gmail.com with 1) Aliases 2) Interests in staff 3) References from current staffers 4) Availability 5) Why you should be hired instead of someone else 6) Other useful info.
 &Staff &Invite|TW Staff are looking for players who play regulary and are friendly, helpful, knowledgeable and who show a desire to improving the zone. If you are interested in joining TW Staff, e-mail TWStaff@gmail.com with 1) Aliases 2) Interests in staff 3) References from current staffers 4) Availability 5) Why you should be hired instead of someone else 6) Other useful info.
 &Sysop &Who|The sysops of SSCU Trench Wars are Pure_Luck and Kim.
+&Sysops &Who|The sysops of SSCU Trench Wars are Pure_Luck and Kim.
 &Owner &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
+&Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 Abuse Abusing Abused Abuser|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 &Staff &Complaint|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 Host H0st Ho$t H0$t hozt h-o-s-t tsoh -Zombies -Enigma -Twtown -Twcity -Gatez -Gatez2 -Base -Base2 -Base3 -Wbduel -Wbduel2 -Javduel -Javduel2 -Highschool -Jurassic|Trench Wars Staff have received your request for an event to be hosted. There is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
