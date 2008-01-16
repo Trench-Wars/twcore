@@ -275,7 +275,7 @@ public class spaceball extends MultiModule {
 				m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*prize #14");
 				m_botAction.sendPrivateMessage(event.getPlayerID(), "Do not cross the planetary boundaries!");
 			} else {
-				ListIterator it;
+				ListIterator<Cannon> it;
 				if (p.getTeam() == 0) {
 					it = team1_cannons.listIterator();
 				} else {
@@ -415,7 +415,7 @@ public class spaceball extends MultiModule {
 	 */
 
 	public void startGame() {
-		Iterator i = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 		while (i.hasNext())	{
 			Player p = (Player) i.next();
 			if (!p.getPlayerName().equalsIgnoreCase(m_botAction.getBotName())) {
@@ -654,7 +654,7 @@ public class spaceball extends MultiModule {
 			oShip.move(dir, botX, botY, botVX, botVY, 0, 1500, 1337);
 		}
 
-		ListIterator it = fired_projectiles.listIterator();
+		ListIterator<Projectile> it = fired_projectiles.listIterator();
 		while (it.hasNext()) {
 			Projectile b = (Projectile) it.next();
 
