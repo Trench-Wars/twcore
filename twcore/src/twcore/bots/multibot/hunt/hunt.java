@@ -18,12 +18,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -516,8 +514,8 @@ class PlayerBag {
         list.add( string );
     }
 
-    public List getList(){
-        return (List)list;
+    public ArrayList<String> getList(){
+        return list;
     }
 
     public String grab(){
