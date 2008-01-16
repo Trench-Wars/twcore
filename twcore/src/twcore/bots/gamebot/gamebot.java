@@ -5,7 +5,6 @@ import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.Vector;
 import java.util.ArrayList;
@@ -20,6 +19,8 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.*;
 import twcore.core.util.Tools;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Spy;
+
 
 /**
  * Bot designed for non-combat games. (e.g. trivia, acro, pictionary)
@@ -48,10 +49,11 @@ public class gamebot extends SubspaceBot {
     private ModuleEventRequester modEventReq;
     private File directory;
     private File[] files;
+    public Spy watcher = null;
     
-
     public gamebot(BotAction botAction) {
         super(botAction);
+        watcher = new Spy(botAction);
         hasVoted = new ArrayList<String>();
         votes = new HashMap<String, Integer>();
         multiModule = null;
@@ -96,17 +98,10 @@ public class gamebot extends SubspaceBot {
      *            is the event to handle.
      */
     public void handleEvent(Message event) {
-        String sender = getSender(event);
+        watcher.handleEvent(event); // detect racism
+    	String sender = getSender(event);
         String message = event.getMessage();
         int messageType = event.getMessageType();
-        String messageTypeString = getMessageTypeString(messageType);
-        
-        if(isRacist(message) && messageType != Message.ALERT_MESSAGE && messageType != Message.PRIVATE_MESSAGE && messageType != Message.REMOTE_PRIVATE_MESSAGE){
-        	if(sender == null)
-        		sender = "-anonymous-";
-        	m_botAction.sendUnfilteredPublicMessage("?cheater " + messageTypeString + ": (" + sender + "): " + message);
-        	
-        }
         
         if (event.getMessageType() == Message.PUBLIC_MESSAGE || event.getMessageType() == Message.PRIVATE_MESSAGE) {
         	if (gameProgress == 1){
@@ -638,73 +633,6 @@ public class gamebot extends SubspaceBot {
         }
     }
     
-    /**
-     * Finds if a message contains a racist word.
-     * @param message - The message.
-     * @return True if racism is found. Else-false;
-     */
-    
-    public static boolean isRacist(String message)
-    {
-    	StringTokenizer keywordTokens = new StringTokenizer(keywords," ");
-
-        while(keywordTokens.hasMoreTokens())
-          if(containsWord(message, keywordTokens.nextToken()))
-            return true;
-        return false;
-    }
-    public static boolean containsWord(String message, String word)
-    {
-      StringBuffer stringBuffer = new StringBuffer();
-      String formattedMessage;
-      String lowerWord = word.toLowerCase();
-      char character;
-
-      for(int index = 0; index < message.length(); index++)
-      {
-        character = Character.toLowerCase(message.charAt(index));
-        if(Character.isLetterOrDigit(character) || character == ' ')
-          stringBuffer.append(character);
-      }
-
-      formattedMessage = " " + stringBuffer.toString() + " ";
-      return formattedMessage.indexOf(" " + lowerWord + " ") != -1 ||
-             formattedMessage.indexOf(" " + lowerWord + "s ") != -1;
-    }
-    
-    /**
-     * Returns a string for the messageType.
-     * @param messageType
-     * @return
-     */
-    private String getMessageTypeString(int messageType)
-    {
-      switch(messageType)
-      {
-        case Message.PUBLIC_MESSAGE:
-          return "Public";
-        case Message.PRIVATE_MESSAGE:
-          return "Private";
-        case Message.TEAM_MESSAGE:
-          return "Team";
-        case Message.OPPOSING_TEAM_MESSAGE:
-          return "Opp. Team";
-        case Message.ARENA_MESSAGE:
-          return "Arena";
-        case Message.PUBLIC_MACRO_MESSAGE:
-          return "Pub. Macro";
-        case Message.REMOTE_PRIVATE_MESSAGE:
-          return "Private";
-        case Message.WARNING_MESSAGE:
-          return "Warning";
-        case Message.SERVER_ERROR:
-          return "Serv. Error";
-        case Message.ALERT_MESSAGE:
-          return "Alert";
-      }
-      return "Other";
-    }
-
     /**
      * This method sets the bots chat.
      *
