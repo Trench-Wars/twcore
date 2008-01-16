@@ -282,14 +282,14 @@ public class robohelp extends SubspaceBot {
         try {
             BufferedReader in = new BufferedReader(new FileReader( m_botAction.getDataFile( "HelpResponses.txt" )));
             String line;
-        int i = 0;
+            int i = 0;
             do{
                 line = in.readLine();
-        try{
-                    if ( line != null ){
+                try{
+                    if ( line != null){
                         line = line.trim();
                         int indexOfLine = line.indexOf( '|' );
-                        if( indexOfLine != -1 ){
+                        if( indexOfLine != -1 && line.startsWith("#") == false){
                             String key = line.substring( 0, indexOfLine );
                             String response = line.substring( indexOfLine + 1 );
                             search.add( response, key );
