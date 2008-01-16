@@ -24,7 +24,8 @@ public class Reaction
 
 	public static void OnShot( Incident shot )
 	{
-		Position shotPos = new Position( shot.m_x, shot.m_y );
+		// Removed due to not being used anywhere? -Pio
+		//Position shotPos = new Position( shot.m_x, shot.m_y );
 	}
 
 	public static void OnPickup( Incident picker, Incident passer )
