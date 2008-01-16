@@ -134,8 +134,8 @@ public class bouncerbot extends SubspaceBot {
         try{
             PrintWriter out = new PrintWriter( new FileWriter( "bouncerbot.log" ));
             m_log.add( timestamp + event );
-            for( Iterator i = m_log.iterator(); i.hasNext(); ){
-                out.println( (String)i.next() );
+            for( Iterator<String> i = m_log.iterator(); i.hasNext(); ){
+                out.println( i.next() );
             }
             out.close();
         }catch(Exception e){
