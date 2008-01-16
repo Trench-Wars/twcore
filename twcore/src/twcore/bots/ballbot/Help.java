@@ -20,7 +20,7 @@ public class Help
 	static String m_delim = "|";
 
 
-	public static Vector GetHelpText( Vector botCommands )
+	public static Vector<String> GetHelpText( Vector<Command> botCommands )
 	{
 		int totalWidth = 0;
 		String totalWidthLine = "";
