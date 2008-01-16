@@ -360,8 +360,8 @@ public class strikeballbot extends SubspaceBot {
         m_roundPause = new TimerTask() {
             public void run() {
 
-                Collection team1, team2;
-                Iterator t1, t2;
+                Collection<StrikeballPlayer> team1, team2;
+                Iterator<StrikeballPlayer> t1, t2;
                 StrikeballPlayer sbP;
                 team1 = m_team1.values();
                 team2 = m_team2.values();
@@ -370,7 +370,7 @@ public class strikeballbot extends SubspaceBot {
                 t2 = team2.iterator();
 
                 while( t1.hasNext() ) {
-                    sbP = (StrikeballPlayer)t1.next();
+                    sbP = t1.next();
 
                     // If first or odd round, standard ship setup
                     if( m_currentRound % 2 == 1 ) {
@@ -383,7 +383,7 @@ public class strikeballbot extends SubspaceBot {
                 }
 
                 while( t2.hasNext() ) {
-                    sbP = (StrikeballPlayer)t2.next();
+                    sbP = t2.next();
 
                     // If first or odd round, standard ship setup
                     if( m_currentRound % 2 == 1 ) {
@@ -460,7 +460,7 @@ public class strikeballbot extends SubspaceBot {
     /** Shows player scores.
      * @return Vector containing Strings that make up the score displays.
      */
-    public Vector do_showScores() {
+    public Vector<String> do_showScores() {
         String line, val, space = "";
         int length;
         int[] stats;
@@ -551,7 +551,7 @@ public class strikeballbot extends SubspaceBot {
 
     /** Stores the scores in a log file.
      */
-    public void do_storeScores( Vector scoreDisp ) {
+    public void do_storeScores( Vector<String> scoreDisp ) {
         try {
             // Open for append
             BufferedWriter outBuffer = new BufferedWriter( new FileWriter( m_botSettings.getString("LogPath") + m_botSettings.getString("LogFile"), true ) );
@@ -598,7 +598,7 @@ public class strikeballbot extends SubspaceBot {
             outBuffer.newLine();
 
             // Dump main score details
-            Iterator i = scoreDisp.iterator();
+            Iterator<String> i = scoreDisp.iterator();
             String line;
             while( i.hasNext() ) {
                 line = (String)i.next();
@@ -714,8 +714,8 @@ public class strikeballbot extends SubspaceBot {
      * @param name Ref's name
      */
     public void cmd_startgame( String name ) {
-        Collection team1, team2;
-        Iterator t1, t2;
+        Collection<StrikeballPlayer> team1, team2;
+        Iterator<StrikeballPlayer> t1, t2;
         StrikeballPlayer sbP;
         String teamOutput = "";
 
