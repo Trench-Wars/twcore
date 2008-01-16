@@ -1,7 +1,7 @@
 package twcore.bots.ballbot;
 
 import twcore.core.BotAction;
-import twcore.core.BotSettings;
+//import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
 import twcore.core.events.BallPosition;
@@ -44,8 +44,8 @@ public class ballbot extends SubspaceBot
 	// connects, not just in the bot's constructor.
 	public void handleEvent( LoggedOn event )
 	{		
-		BotSettings config = m_botAction.getBotSettings();			// Get the .cfg information from the core		
-		String initialArena = config.getString( "InitialArena" );	// Get the initial arena from the .cfg file		
+		//BotSettings config = m_botAction.getBotSettings();			// Get the .cfg information from the core		
+		//String initialArena = config.getString( "InitialArena" );	// Get the initial arena from the .cfg file		
 		m_botAction.joinArena( "hockey" );						    // Join the arena
 	}
 
