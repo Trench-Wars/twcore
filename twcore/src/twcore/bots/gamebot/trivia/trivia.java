@@ -280,8 +280,8 @@ public class trivia extends MultiModule {
         m_botAction.sendChatMessage( 1, m_prec + "Player: " + name + " has won this round of trivia!" );
         m_botAction.sendArenaMessage( m_prec + "Player: " + name + " has won this round of trivia!", 5 );
         //Save stats
-        Set set = playerMap.keySet();
-        Iterator it = set.iterator();
+        Set<String> set = playerMap.keySet();
+        Iterator<String> it = set.iterator();
         while (it.hasNext()) {
             String curPlayer = (String) it.next();
             PlayerProfile tempPlayer = playerMap.get(curPlayer);
@@ -347,8 +347,8 @@ public class trivia extends MultiModule {
             m_botAction.sendRemotePrivateMessage( name, m_prec + doTrimString( "Player Name", 18 ) + doTrimString( "Points", 10 ) + "|" );
             int curPoints = curLeader;
             while( curPoints != 0 ){
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerMap.keySet();
+                Iterator<String> it = set.iterator();
                 while( it.hasNext() ){
                     String curPlayer = (String)it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
@@ -426,8 +426,8 @@ public class trivia extends MultiModule {
             m_botAction.sendChatMessage(1, "--|-- " + doTrimString("     Current Scores",28) + "|");
             m_botAction.sendChatMessage(1, "--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while( numberShown < 8 && curPoints != 0) {
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerMap.keySet();
+                Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
                     String curPlayer = (String) it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
@@ -449,8 +449,8 @@ public class trivia extends MultiModule {
             m_botAction.sendArenaMessage("--|-- " + doTrimString("     Current Scores",28) + "|");
             m_botAction.sendArenaMessage("--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while( numberShown < 8 && curPoints != 0) {
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerMap.keySet();
+                Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
                     String curPlayer = (String) it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
