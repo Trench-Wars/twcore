@@ -43,7 +43,8 @@ final class IntQueue {
 
     synchronized int getAndSendToBack() {
         QItem item = m_head.right;
-        QItem right = item.right;
+        //Declaration was never used. -Pio
+        //QItem right = item.right;
         if(m_size > 1) {
             m_head.right = item.right;
             item.right.left = m_head;
