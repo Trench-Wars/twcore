@@ -413,7 +413,7 @@ class PowerBall {
 
 	public void updateCarrierList( String name ) {
 
-		Iterator it = carrierList.iterator();
+		Iterator<String> it = carrierList.iterator();
 		while( it.hasNext() )
 			if( ((String)it.next()).equals( name ) )
 				it.remove();
