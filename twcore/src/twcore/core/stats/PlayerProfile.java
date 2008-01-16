@@ -74,8 +74,8 @@ public class PlayerProfile
     public void toggleState() { state = !state; }
 
     public void reset() {
-    	Set s = peeps.keySet();
-    	Iterator i = s.iterator();
+    	Set<String> s = peeps.keySet();
+    	Iterator<String> i = s.iterator();
     	while( i.hasNext() ) {
     		String name = (String)i.next();
     		peeps.get( name ).zeroDamage();
@@ -99,8 +99,8 @@ public class PlayerProfile
 	public String getAssist( int m, String killer, BotAction m_botAction ) {
 		String result = "";
 		int min = m;
-		Set s = peeps.keySet();
-    	Iterator i = s.iterator();
+		Set<String> s = peeps.keySet();
+    	Iterator<String> i = s.iterator();
     	while( i.hasNext() ) {
     		String name = (String)i.next();
     		Enemy e = peeps.get( name );
@@ -115,8 +115,8 @@ public class PlayerProfile
 
 	public int getDamageDealt() {
 		int dd = 0;
-		Set s = peeps.keySet();
-    	Iterator i = s.iterator();
+		Set<String> s = peeps.keySet();
+    	Iterator<String> i = s.iterator();
     	while( i.hasNext() ) {
     		String name = (String)i.next();
     		Enemy e = peeps.get( name );
@@ -127,8 +127,8 @@ public class PlayerProfile
 
 	public int getDamageTaken() {
 		int dd = 0;
-		Set s = peeps.keySet();
-    	Iterator i = s.iterator();
+		Set<String> s = peeps.keySet();
+    	Iterator<String> i = s.iterator();
     	while( i.hasNext() ) {
     		String name = (String)i.next();
     		Enemy e = peeps.get( name );
