@@ -20,7 +20,7 @@ public class PrepareGame extends TimerTask {
 		
 		// Set everybody to the right ship
 		if(elimbot.ship != 0) {	// after a vote, only one ship is allowed
-			Iterator playerIterator = elimbot.m_botAction.getPlayingPlayerIterator();
+			Iterator<Player> playerIterator = elimbot.m_botAction.getPlayingPlayerIterator();
 			
 			while( playerIterator.hasNext()) {
 				Player p = (Player)playerIterator.next();
@@ -30,7 +30,7 @@ public class PrepareGame extends TimerTask {
 			}
 			
 		} else {				// Without a vote, several ships are allowed
-			Iterator playerIterator = elimbot.m_botAction.getPlayingPlayerIterator();
+			Iterator<Player> playerIterator = elimbot.m_botAction.getPlayingPlayerIterator();
 			int[] allowedShips = elimbot.getConfiguration().getCurrentConfig().getShips();
 			int allowedShip = 1;
 			
@@ -50,7 +50,7 @@ public class PrepareGame extends TimerTask {
 		}
 		
 		// Registers the players for !lagout feature
-		Iterator playerIt = elimbot.m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> playerIt = elimbot.m_botAction.getPlayingPlayerIterator();
 		
 		while(playerIt.hasNext()) {
 			Player p = (Player)playerIt.next();
