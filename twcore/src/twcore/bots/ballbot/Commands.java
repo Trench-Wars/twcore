@@ -98,7 +98,7 @@ class BotCommand_Help extends Command
 
 	void Execute( ballbot bot, Message message )
 	{	
-		Vector helpText = bot.m_commandRegistry.GetHelpText();
+		Vector<String> helpText = bot.m_commandRegistry.GetHelpText();
 		
 		for( int i=0; i<helpText.size(); i++ )
 		{
