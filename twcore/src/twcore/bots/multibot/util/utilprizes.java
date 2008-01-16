@@ -877,11 +877,11 @@ public class utilprizes extends MultiUtil
   {
     try
     {
-      Iterator iterator = m_botAction.getPlayerIterator();
+      Iterator<Player> iterator = m_botAction.getPlayerIterator();
       Player player;
       while(iterator.hasNext())
       {
-        player = (Player) iterator.next();
+        player = iterator.next();
         if(player.getFrequency() == freqID)
           prizePlayer(player.getPlayerName(), prizeNum );
       }
@@ -902,11 +902,11 @@ public class utilprizes extends MultiUtil
   {
     try
     {
-      Iterator iterator = m_botAction.getPlayerIterator();
+      Iterator<Player> iterator = m_botAction.getPlayerIterator();
       Player player;
       while(iterator.hasNext())
       {
-        player = (Player) iterator.next();
+        player = iterator.next();
         if(player.getShipType() == ship)
           prizePlayer(player.getPlayerName(), prizeNum);
       }
