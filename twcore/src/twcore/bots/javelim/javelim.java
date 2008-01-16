@@ -83,7 +83,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     private final static long   OUTSIDE_TIME_LIMIT = 15000; //15 seconds
     private final static long   OUTSIDE_TIME_WARN = 10000;
     private final static int    MAX_OUTSIDE_TIME_INC = 3000;
-    private final static String COUNTDOWN_OBJID  = "2758";
+    public final static String COUNTDOWN_OBJID  = "2758";
     private final static int    MAX_NAMELENGTH = 18;
     private final static int    SCOREBOARD_CHECK_PERIOD = 5000;
 
@@ -96,14 +96,14 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     /* delays for each step in pregame and in starting final round in milliseconds */
     private final static int    DELAY_ENTER = 5000;
     private final static int    DELAY_LOCK  = 30000;
-    private final static int    DELAY_PRIZE = 31000;
+    public final static int    DELAY_PRIZE = 31000;
     private final static int    DELAY_SETUP = 34000;
     private final static int    DELAY_COUNTDOWN = 36000;
     private final static int    DELAY_GOGOGO = 40000;
     private final static int    DELAY_SPECTATE = 40500;
     private final static int    DELAY_EXTEND = 60000; //added to delays if team game to allow arranging teams
 
-    private final static int    DELAY_FINAL_PRIZE = 10000;
+    public final static int    DELAY_FINAL_PRIZE = 10000;
     private final static int    DELAY_FINAL_SETUP = 15000;
     private final static int    DELAY_FINAL_COUNTDOWN = 21000;
     private final static int    DELAY_FINAL_GOGOGO = 25000;
@@ -1374,7 +1374,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     }
 
 
-    private StringBuilder padHelper(StringBuilder sb, String str, int width) {
+    public StringBuilder padHelper(StringBuilder sb, String str, int width) {
         if(str.length() > width) {
             return sb.append(str.substring(0, width));
         }
@@ -1385,7 +1385,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         }
         return sb;
     }
-    private StringBuilder padHelper(StringBuilder sb, int num, int width) {
+    public StringBuilder padHelper(StringBuilder sb, int num, int width) {
         int digits = 1;
         if(num > 0) {
             digits = (int)Math.log10(num) + 1;
