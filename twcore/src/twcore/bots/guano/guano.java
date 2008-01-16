@@ -152,7 +152,7 @@ public class guano extends SubspaceBot
         if(currentCheck.isActive())
             throw new RuntimeException("Already performing a check.  Please try again momentarily.");
 
-        Vector altNicks = getAltNicks(argString);
+        Vector<String> altNicks = getAltNicks(argString);
         if(altNicks.isEmpty())
             throw new RuntimeException("Player not found in database.");
         currentCheck.startCheck(sender, altNicks);
@@ -170,7 +170,7 @@ public class guano extends SubspaceBot
         if(currentCheck.isActive())
             throw new RuntimeException("Already performing a check.  Please try again momentarily.");
 
-        Vector altNicks = getAltNicks(argString);
+        Vector<String> altNicks = getAltNicks(argString);
         if(altNicks.isEmpty())
             throw new RuntimeException("Player not found in database.");
         findWarnings(sender, argString, altNicks);
@@ -200,10 +200,10 @@ public class guano extends SubspaceBot
      *
      * @param altNicks are the names to perform the altnick command on.
      */
-    private void locateAll(Vector altNicks)
+    private void locateAll(Vector<String> altNicks)
     {
         for(int index = 0; index < altNicks.size(); index++)
-            m_botAction.sendUnfilteredPublicMessage("*locate " + (String) altNicks.get(index));
+            m_botAction.sendUnfilteredPublicMessage("*locate " + altNicks.get(index));
     }
 
     /**
@@ -211,7 +211,7 @@ public class guano extends SubspaceBot
      *
      * @param altNicks are the names to perform the altNick command on.
      */
-    private void findWarnings(String sender, String name, Vector altNicks)
+    private void findWarnings(String sender, String name, Vector<String> altNicks)
     {
         if( altNicks.size() <= 0 )
             throw new RuntimeException( "Unable to retreive any altnicks for player." );
@@ -219,7 +219,7 @@ public class guano extends SubspaceBot
         m_botAction.sendRemotePrivateMessage(sender, "Warnings for " + name + ":");
 
         try {
-            Iterator i = altNicks.iterator();
+            Iterator<String> i = altNicks.iterator();
             String altnick;
             while( i.hasNext() ) {
                 altnick = (String)i.next();
@@ -237,7 +237,7 @@ public class guano extends SubspaceBot
      * @param playerName is the player to check.
      * @return the results of the query are returned.
      */
-    private Vector getAltNicks(String playerName)
+    private Vector<String> getAltNicks(String playerName)
     {
         try
         {
@@ -318,7 +318,7 @@ public class guano extends SubspaceBot
             isActive = false;
         }
 
-        public void startCheck(String checkSender, Vector altNicks)
+        public void startCheck(String checkSender, Vector<String> altNicks)
         {
             if(isActive)
                 throw new RuntimeException("Already performing a check.  Please try again momentarily.");
@@ -356,7 +356,7 @@ public class guano extends SubspaceBot
          *
          * @return a Vector containing the results of a check is returned.
          */
-        public Vector getResults()
+        public Vector<String> getResults()
         {
             Vector<String> results = new Vector<String>();
             Collection<String> allResults = checkResults.values();
@@ -402,13 +402,13 @@ public class guano extends SubspaceBot
          *
          * @param altNicks are the names that will be checked.
          */
-        private void populateResults(Vector altNicks)
+        private void populateResults(Vector<String> altNicks)
         {
             String altNick;
 
             for(int index = 0; index < altNicks.size(); index++)
             {
-                altNick = (String) altNicks.get(index);
+                altNick = altNicks.get(index);
                 checkResults.put(altNick.toLowerCase(), null);
             }
         }
@@ -422,7 +422,7 @@ public class guano extends SubspaceBot
      * @param checkType
      * @param results
      */
-    private void displayResults(String sender, int numNicks, Vector results)
+    private void displayResults(String sender, int numNicks, Vector<String> results)
     {
         if(results.isEmpty())
             throw new RuntimeException("Player not online.");
@@ -443,7 +443,7 @@ public class guano extends SubspaceBot
     {
         public void run()
         {
-            Vector results = currentCheck.getResults();
+            Vector<String> results = currentCheck.getResults();
             String checkSender = currentCheck.getCheckSender();
             int numNicks = currentCheck.getNumNicks();
 
