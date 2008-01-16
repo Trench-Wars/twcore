@@ -127,7 +127,7 @@ public class alertbot extends SubspaceBot {
             if(startPattern.matcher(message).matches()){
                 if ( needsNotPlaying ) {
                     // find our mysterious matchbot
-                    Iterator iter = m_botAction.getPlayerIterator();
+                    Iterator<Player> iter = m_botAction.getPlayerIterator();
                     if (iter != null) {
                         while ( iter.hasNext() ) {
                             String player = ((Player)iter.next()).getPlayerName();
