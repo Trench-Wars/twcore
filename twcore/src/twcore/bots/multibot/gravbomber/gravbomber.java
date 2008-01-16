@@ -3,7 +3,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -833,8 +832,8 @@ public class gravbomber extends MultiModule {
             list.add( string );
         }
 
-        public List getList(){
-            return (List)list;
+        public ArrayList<String> getList(){
+            return list;
         }
 
         public String grab(){
