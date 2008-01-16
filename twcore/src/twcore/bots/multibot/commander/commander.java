@@ -705,7 +705,7 @@ public class commander extends MultiModule {
 
                         String[] doorStats = new String[8];
                         String doorsParsed, shipsParsed1, shipsParsed2;
-                        Iterator fi;
+                        Iterator<Player> fi;
 
                         for( int i = 0; i < 8; i++ ) {
                             if( m_doors[i] == 0 )
@@ -731,7 +731,7 @@ public class commander extends MultiModule {
 
                         if( fi != null ) {
                             while( fi.hasNext() ) {
-                                target = (Player)fi.next();
+                                target = fi.next();
                                 if( target.getFrequency() == commFreq )
                                     shipCnt[ target.getShipType() ]++;
                             }
