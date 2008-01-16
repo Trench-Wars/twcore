@@ -433,8 +433,8 @@ public class scramble extends MultiModule {
         m_botAction.sendArenaMessage( m_prec + "Answer: '" + t_word + "'" );
         m_botAction.sendArenaMessage( m_prec + "Player: " + name + " has won this round of scramble!", 5 );
         //Save statistics
-        Set set = playerMap.keySet();
-        Iterator it = set.iterator();
+        Set<String> set = playerMap.keySet();
+        Iterator<String> it = set.iterator();
         while (it.hasNext()) {
             String curPlayer = (String) it.next();
             PlayerProfile tempPlayer = playerMap.get(curPlayer);
@@ -499,8 +499,8 @@ public class scramble extends MultiModule {
             m_botAction.sendSmartPrivateMessage( name, m_prec + doTrimString( "Player Name", 18 ) + doTrimString( "Points", 10 ) + "|" );
             int curPoints = curLeader;
             while( curPoints != 0 ){
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerMap.keySet();
+                Iterator<String> it = set.iterator();
                 while( it.hasNext() ){
                     String curPlayer = (String)it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
@@ -602,8 +602,8 @@ public class scramble extends MultiModule {
             m_botAction.sendArenaMessage(m_prec2 + "-----------------------------|");
             m_botAction.sendArenaMessage(m_prec + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while (numberShown < 5 && curPoints != 0){
-                Set set = playerMap.keySet();
-                Iterator it = set.iterator();
+                Set<String> set = playerMap.keySet();
+                Iterator<String> it = set.iterator();
                 while (it.hasNext() && numberShown < 5) {
                     String curPlayer = (String) it.next();
                     twcore.core.stats.PlayerProfile tempPlayer;
