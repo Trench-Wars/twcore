@@ -120,7 +120,7 @@ public class ReliablePacketHandler {
         Integer         i;
         ByteArray       packet;
         ReliablePacket  message;
-        Iterator        iterator;
+        Iterator<Integer>        iterator;
         long            currentTime = System.currentTimeMillis();
 
         final int       RESEND_DELAY = 3000;
