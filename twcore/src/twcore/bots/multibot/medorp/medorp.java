@@ -74,7 +74,7 @@ public class medorp extends MultiModule {
     /**
      * Used to grab specific player data from the hashmap
      */
-    private Iterator playerList;
+    private Iterator<Player> playerList;
 
     /**
      * Hold the name of the current MVP
@@ -423,8 +423,8 @@ public class medorp extends MultiModule {
      */
     private void checkAnnounceWinner() {
         if (getNumPlayers() == 1) {
-            Iterator it = m_botAction.getPlayingPlayerIterator();
-            Player winner = (Player) it.next();
+            Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
+            Player winner = it.next();
 
             m_botAction.sendArenaMessage("And the winner is ... " +
                 winner.getPlayerName() + "!", 5);
@@ -483,7 +483,7 @@ public class medorp extends MultiModule {
         //so this method will arrange everyone on a unique freq (teams of 1).
         int i = 0;
 
-        Iterator freqIterator = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> freqIterator = m_botAction.getPlayingPlayerIterator();
         Player tempPlayer;
 
         while (freqIterator.hasNext()) {
