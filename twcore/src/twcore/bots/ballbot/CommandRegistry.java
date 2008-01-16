@@ -60,7 +60,7 @@ public class CommandRegistry
 		if( ( command.GetAccessLevel() == OperatorList.OWNER_LEVEL  		&&  bot.m_botAction.getOperatorList().isOwner( playerName ) ) ) 		{ command.DoCommand( bot, msg );  	return; }
 	}
 
-	public Vector GetHelpText()
+	public Vector<String> GetHelpText()
 	{
 		return Help.GetHelpText( m_rgdCommands );
 	}
