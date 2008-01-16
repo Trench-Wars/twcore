@@ -705,7 +705,7 @@ public class Player {
     /**
      * @return List of Integers containing the IDs of all players attached to this player
      */
-    public LinkedList getTurrets() {
+    public LinkedList<Integer> getTurrets() {
         return m_turrets;
     }
 
