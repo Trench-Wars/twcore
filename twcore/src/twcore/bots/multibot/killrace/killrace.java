@@ -88,7 +88,7 @@ public class killrace extends MultiModule {
     }
 
     private void printScores( String name ) {
-        Iterator i = freqScores.keySet().iterator();
+        Iterator<Integer> i = freqScores.keySet().iterator();
         while( i.hasNext() ) {
             Integer team = (Integer)i.next();
             int score = freqScores.get(team);
