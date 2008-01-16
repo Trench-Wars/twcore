@@ -401,7 +401,7 @@ public class freezetag extends MultiModule {
      */
 
     public void fillFreqSets() {
-        Iterator it = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         while( it.hasNext() ) {
             Player p = (Player)it.next();
             if( p.getFrequency() == 0 ) {
