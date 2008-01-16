@@ -69,7 +69,7 @@ public class soccerrace extends MultiModule
     		m_botAction.sendArenaMessage("Rules: Take the ball through your section of the course and pass the ball to your teammate at the end of your section",2);
     		m_botAction.sendArenaMessage("The first team to score wins, good luck and have fun!");
 
-    		Iterator it = m_botAction.getPlayingPlayerIterator();
+    		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 
     		for(int i = 0;it.hasNext();i++) {
     			Player p = (Player)it.next();
