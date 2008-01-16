@@ -603,7 +603,7 @@ public class multibot extends SubspaceBot {
      * @param beQuiet True if the method should not PM the ER
      */
     private void doUnloadAllCmd(String sender, boolean beQuiet ) {
-        Iterator i = m_utils.values().iterator();
+        Iterator<MultiUtil> i = m_utils.values().iterator();
         while (i.hasNext())
             ((MultiUtil) i.next()).cancel();
         m_utils.clear();
@@ -631,7 +631,7 @@ public class multibot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "Utilities: none");
         } else {
             m_botAction.sendPrivateMessage(name, "Utilities:");
-            Iterator i = m_utils.keySet().iterator();
+            Iterator<String> i = m_utils.keySet().iterator();
             while (i.hasNext()) {
                 m_botAction.sendPrivateMessage(name, "- " + (String) i.next());
             }
@@ -948,9 +948,9 @@ public class multibot extends SubspaceBot {
         }
 
         try {
-            Iterator i = m_utils.entrySet().iterator();
+            Iterator<Map.Entry<String, MultiUtil>> i = m_utils.entrySet().iterator();
             while( i.hasNext() ) {
-                Map.Entry entry = (Map.Entry) i.next();
+                Map.Entry<String, MultiUtil> entry =  i.next();
                 MultiUtil util = (MultiUtil) entry.getValue();
                 util.handleEvent(event);
             }
