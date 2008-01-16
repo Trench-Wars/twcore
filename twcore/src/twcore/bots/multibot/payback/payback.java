@@ -78,9 +78,9 @@ public class payback extends MultiModule
 
         String player = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
         if(beingTracked.containsKey(player)) {
-            Iterator it = ((HashSet)beingTracked.get(player)).iterator();
+            Iterator<String> it = beingTracked.get(player).iterator();
             while(it.hasNext()) {
-                String avenger = (String)it.next();
+                String avenger = it.next();
                 if(payback.containsKey(player + avenger)) {
                     PaybackTask pb = (PaybackTask)payback.get(player + avenger);
                     m_botAction.cancelTask(pb);
@@ -97,7 +97,7 @@ public class payback extends MultiModule
         if(event.getShipType() == 0) {
             String player = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
             if(beingTracked.containsKey(player)) {
-                Iterator it = ((HashSet)beingTracked.get(player)).iterator();
+                Iterator<String> it = beingTracked.get(player).iterator();
                 while(it.hasNext()) {
                     String avenger = (String)it.next();
                     if(payback.containsKey(player + avenger)) {
@@ -150,9 +150,9 @@ public class payback extends MultiModule
     }
 
     public void cancel() {
-        Iterator it = payback.values().iterator();
+        Iterator<PaybackTask> it = payback.values().iterator();
         while(it.hasNext()) {
-            PaybackTask pb = (PaybackTask)it.next();
+            PaybackTask pb = it.next();
             if(!pb.isCancelled())
                 m_botAction.cancelTask(pb);
         }
