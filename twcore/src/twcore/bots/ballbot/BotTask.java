@@ -31,7 +31,7 @@ public class BotTask
 	
 	public static Player GetAnyPlayer()
 	{
-		Iterator it = m_bot.m_botAction.getPlayerIterator();
+		Iterator<Player> it = m_bot.m_botAction.getPlayerIterator();
 		
 		while( it.hasNext() )
 			return (Player)it.next();
@@ -42,7 +42,7 @@ public class BotTask
 	public static int GetNumFoOccupants( int freq )
 	{
 		int acc = 0;
-		Iterator it = m_bot.m_botAction.getPlayerIterator();
+		Iterator<Player> it = m_bot.m_botAction.getPlayerIterator();
 		
 		while( it.hasNext() )
 		{
@@ -58,7 +58,7 @@ public class BotTask
 	
 	public static boolean IsGoalieInOwnCrease( int freq )
 	{		
-		Iterator it = m_bot.m_botAction.getPlayerIterator();
+		Iterator<Player> it = m_bot.m_botAction.getPlayerIterator();
 		
 		while( it.hasNext() )
 		{
