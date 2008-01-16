@@ -50,9 +50,9 @@ public class utilflags extends MultiUtil {
 
     public void showFlagDetails() {
     try {
-		Iterator it = m_botAction.getFlagIDIterator();
+		Iterator<Integer> it = m_botAction.getFlagIDIterator();
 		while( it.hasNext() ) {
-			Flag f = (Flag)it.next();
+			Flag f = m_botAction.getFlag(it.next());
 			int flagId = f.getFlagID();
 			boolean carried = f.carried();
 			String player = m_botAction.getPlayerName( f.getPlayerID() );
@@ -74,10 +74,10 @@ public class utilflags extends MultiUtil {
 				y = Integer.parseInt( pieces[2] );
 			} catch (Exception e) {}
 			m_botAction.getShip().setShip( 0 );
-	    	Iterator it = m_botAction.getFlagIDIterator();
+	    	Iterator<Integer> it = m_botAction.getFlagIDIterator();
 			while( it.hasNext() ) {
 				m_botAction.getShip().setFreq( new Random().nextInt( 9998 ) );
-				Flag f = (Flag)it.next();
+				Flag f = m_botAction.getFlag(it.next());
 				if( !f.carried() ) {
 					m_botAction.grabFlag( f.getFlagID() );
 					m_botAction.moveToTile( x, y );
