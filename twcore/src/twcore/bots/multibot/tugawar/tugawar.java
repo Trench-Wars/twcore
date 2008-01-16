@@ -92,7 +92,7 @@ public class tugawar extends MultiModule {
                 m_botAction.sendUnfilteredPublicMessage( "?set kill:enterdelay:0" );
                 startEvent = new TimerTask() {
                     public void run() {
-                        Iterator i = m_botAction.getPlayingPlayerIterator();
+                        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
                         if( i == null ) return;
                         Vector <String>zeroTeam = new Vector<String>();
                         Vector <String>oneTeam = new Vector<String>();
@@ -149,7 +149,7 @@ public class tugawar extends MultiModule {
         if( !event ) {
             MiscTask thisCheck = new MiscTask( "Check__Players", -1 );
             m_botAction.scheduleTaskAtFixedRate( thisCheck, 0, 1000 );
-            Iterator i = m_botAction.getPlayingPlayerIterator();
+            Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
             while( i.hasNext() ){
                 Player player = (Player)i.next();
                 String curName   = player.getPlayerName();
@@ -308,7 +308,7 @@ public class tugawar extends MultiModule {
                     for( int i=0; i < 6; i++ )
                         areas[i] = 0;
                     //Checks player positions to toggle doors
-                    Iterator i = m_botAction.getPlayingPlayerIterator();
+                    Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
                     if( i == null ) return;
                     while( i.hasNext() ){
                         Player player = (Player)i.next();
