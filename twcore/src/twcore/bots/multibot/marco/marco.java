@@ -273,7 +273,7 @@ public class marco extends MultiModule
                 currentWord = word;
             m_botAction.sendArenaMessage("MARCO!  Say " + currentWord + " to get you cloak back!!!", 13);
             m_botAction.sendUnfilteredPublicMessage("*prize #-5");
-            Iterator it = m_botAction.getPlayingPlayerIterator();
+            Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
             while(it.hasNext())
             {
                 Player p = (Player)it.next();
