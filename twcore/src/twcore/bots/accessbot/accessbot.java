@@ -131,9 +131,9 @@ public class accessbot extends SubspaceBot {
                         
                         m_botAction.SQLClose( result );
 			
-			Map access = m_botAction.getOperatorList().getList();
-			Set set = access.keySet();
-			Iterator it = set.iterator();
+			Map<String, Integer> access = m_botAction.getOperatorList().getList();
+			Set<String> set = access.keySet();
+			Iterator<String> it = set.iterator();
 			while( it.hasNext() ) {
 				String curPlayer = (String) it.next();
 					DBPlayerData man = new DBPlayerData( m_botAction, "local", curPlayer, true );
