@@ -181,7 +181,7 @@ public class killer extends MultiModule {
     public void makeNewRandomKiller() {
         m_killer = "";
 
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
         while (m_killer == "" && i.hasNext() ) {
             if (i != null) {
@@ -389,7 +389,7 @@ public class killer extends MultiModule {
             if( m_killer.equals( m_botAction.getPlayerName( event.getPlayerID() ) ) ) {
 
                 int numPs = 0;
-                Iterator i3 = m_botAction.getPlayingPlayerIterator();
+                Iterator<Player> i3 = m_botAction.getPlayingPlayerIterator();
 
                 while ( i3.hasNext() ) {
                     numPs++;
@@ -402,7 +402,7 @@ public class killer extends MultiModule {
             } else {
 
                 int numPlayers = 0;
-                Iterator i = m_botAction.getPlayingPlayerIterator();
+                Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
                 while ( i.hasNext() ) {
                     numPlayers++;
@@ -422,7 +422,7 @@ public class killer extends MultiModule {
                     }
 
                 } else if( numPlayers == 1) {
-                    Iterator i2 = m_botAction.getPlayingPlayerIterator();
+                    Iterator<Player> i2 = m_botAction.getPlayingPlayerIterator();
 
                     try {
                         Player winner = (Player) i2.next();
