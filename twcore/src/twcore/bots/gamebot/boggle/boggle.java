@@ -206,8 +206,8 @@ public class boggle extends MultiModule {
     	
     	
     	
-    	Set set = playerMap.keySet();
-    	Iterator i = set.iterator();
+    	Set<String> set = playerMap.keySet();
+    	Iterator<String> i = set.iterator();
     	while ( i.hasNext() ){
     		String temp = (String) i.next();
     		ArrayList<String> rayList = playerMap.get(temp);
@@ -238,8 +238,8 @@ public class boggle extends MultiModule {
     		}
     	}
     	
-    	Set set2 = pointsMap.keySet(); Set set3 = pointsMap.keySet();
-    	Iterator i2 = set2.iterator(); Iterator i3 = set3.iterator();
+    	Set<String> set2 = pointsMap.keySet(); Set<String> set3 = pointsMap.keySet();
+    	Iterator<String> i2 = set2.iterator(); Iterator<String> i3 = set3.iterator();
     	int tPts = 0, tCG = 0, tNoB = 0, tNaW = 0, tR = 0, roundWinnerPts = 0;
     	String roundWinner = null;
     	String nullMsg = "No one won this round.";
@@ -372,8 +372,8 @@ public class boggle extends MultiModule {
                 if( gameProgress == 2 ) {
                 	gameProgress = 0;
                     roundNumber++;
-                    Set set = pointsMap.keySet();
-                    Iterator i = set.iterator();
+                    Set<String> set = pointsMap.keySet();
+                    Iterator<String> i = set.iterator();
                     while(i.hasNext()){
                     	PlayerProfile p = pointsMap.get(i.next());
                     	p.setData(0, 0);   	p.setData(1, 0);
