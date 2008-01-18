@@ -55,7 +55,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.
-    private final float DEBUG_MULTIPLIER = 3.7f;           // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 3.75f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -90,7 +90,7 @@ public class distensionbot extends SubspaceBot {
     // Specials
     private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
     private final int RANK_REQ_SHIP7 = 10;   // N/A (only has level for beta)
-    private final int RANK_REQ_SHIP9 = 87;   // All ships rank 10
+    private final int RANK_REQ_SHIP9 = 83;   // All ships rank 10
 
     // Spawn, safe, and basewarp coords
     private final int SPAWN_BASE_0_Y_COORD = 456;               // Y coord around which base 0 owners (top) spawn
@@ -170,7 +170,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_LEECHING = -10;
 
     // TACTICAL OPS DATA
-    public final int DEFAULT_MAX_OP = 3;                    // Max OP points when not upgraded
+    public final int DEFAULT_MAX_OP = 1;                    // Max OP points when not upgraded
     public final int DEFAULT_OP_REGEN = 2;                  // Default % chance OP regen (2 = 20%)
     public final int DEFAULT_OP_MAX_COMMS = 3;              // Max # communications Ops can save up
     public boolean m_army0_fastRearm = false;
@@ -263,6 +263,12 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_INTERMISSION = 1000;          // Green intermission "highlight around" gfx
     private final int LVZ_ROUND_COUNTDOWN = 2300;       // Countdown before round start
     private final int LVZ_FLAG_CLAIMED = 2400;          // Flag claimed "brightening"
+    private final int LVZ_OPS_SPHERE = 300;             // OPS special ability LVZ
+    private final int LVZ_OPS_BLIND1 = 301;
+    private final int LVZ_OPS_BLIND2 = 302;
+    private final int LVZ_OPS_BLIND3 = 303;
+    private final int LVZ_OPS_SHROUD_SM = 304;
+    private final int LVZ_OPS_SHROUD_LG = 305;
 
 
 
@@ -789,16 +795,16 @@ public class distensionbot extends SubspaceBot {
                     "|                       |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
                     "|  !opswarp <name>:<#>  |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
                     "|                 2/3/4 |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
-                    "|  !opscover <#>      1 |  Deploy cover in home base.  1:MidLeft 2:MidRight",
-                    "|                       |    3:MidCenter  4:FR  5:Ears  6:Tube  7:LowCenter",
+                    "|  !opscover <#>      1 |  Deploy cover in home base.   1:MidLeft  2:MidRight",
+                    "|                       |       3:Before FR    4:Flag   5:Tube     6:Entrance",
                     "|  !opsmine <#>       2 |  False minefield in home base.  1:MidBase  2:In FR",
                     "|                       |    3:FR Entrance  4:TopTube  5:In Tube  6:LowCenter",
-                    "|  !opsorb <name>   2/5 |  Cover enemy w/ orb.  (L2)<all> NME in base (cost 5)",
-                    "|  !opsdark <name>  2/5 |  Cone of darkness.  (L2)<all> NME in base (cost 5)",
+                    "|  !opsorb <name>   1/3 |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
+                    "|  !opsdark <name>  2/5 |  Cone of darkness.  (L2)<all> = All NME in base",
                     "|                       |   L3: Shroud (larger).  L4: Shroud <all> (cost 5)",
                     "|  !opsblind <#>  3/4/5 |  Blind all NME in base.  <#> specifies which level.",
                     "|  !opsshield         5 |  Shield all friendlies in home base.",
-                    "|  !opsemp            6 |  Quick EMP all enemies in home base to 0 energy.",
+                    "|  !opsemp            6 |  Instantly EMP all enemies in home base to 0 energy.",
                     "|______________________/",
             };
             m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
@@ -1351,6 +1357,11 @@ public class distensionbot extends SubspaceBot {
             }
             victor.getArmy().addSharedProfit( points );
 
+            // Determine whether or not vengeance is to be inflicted
+            loser.checkVengefulBastard( victor.getArenaPlayerID() );
+            // Determine if the victor's Leeching should fire (full charge prized after a kill)
+            victor.checkLeeching();
+
             if( ! victor.wantsKillMsg() )
                 return;
 
@@ -1385,11 +1396,6 @@ public class distensionbot extends SubspaceBot {
                 msg += "  Streak: " + suc + (addedToStreak ? "":" [low/no inc.]");
             }
             m_botAction.sendPrivateMessage(victor.getName(), msg);
-
-            // Determine whether or not vengeance is to be inflicted
-            loser.checkVengefulBastard( victor.getArenaPlayerID() );
-            // Determine if the victor's Leeching should fire (full charge prized after a kill)
-            victor.checkLeeching();
         }
     }
 
@@ -2711,10 +2717,6 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Please provide a message number (1-4).  Use '!opshelp msg' for assistance." );
             return false;
         }
-        if( p.getPurchasedUpgrade(3) < 1 ) {
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your communication systems must receive the proper !upgrade before you can use this ability." );
-            return false;
-        }
         if( p.getCurrentComms() < 1 ) {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You need a communication authorization to send out a message.  (+1 every minute)" );
             return false;
@@ -2818,7 +2820,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You must be at the Tactical Ops station to do this." );
             return false;
         }
-        if( p.getPurchasedUpgrade(3) < 2 ) {
+        if( p.getPurchasedUpgrade(3) < 1 ) {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your communication systems must receive the proper !upgrade before you can use this ability." );
             return false;
         }
@@ -2954,7 +2956,7 @@ public class distensionbot extends SubspaceBot {
             return;
         if( p.getShipNum() != 9 )
             throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
-        if( p.getPurchasedUpgrade(3) < 3 )
+        if( p.getPurchasedUpgrade(3) < 2 )
             throw new TWCoreException( "Your communication systems must receive the proper !upgrade before you can use this ability." );
         if( p.getCurrentComms() < 2 )
             throw new TWCoreException( "You need 2 communication authorizations to send a sabotaged message.  (+1 every minute)" );
@@ -7191,7 +7193,7 @@ public class distensionbot extends SubspaceBot {
      * -7:  Profit sharing (+1% of RP of each teammate's kills per level), for terrs / sharks
      *
      * Order of speed of rank upgrades (high speed to low speed, lower # being faster ranks):
-     * Terr   - 10.2  (unlock @ 7)
+     * Terr   - 10.4  (start)
      * Shark  - 11    (unlock @ 2)
      * Lanc   - 14    (unlock @ 10)
      * WB     - 15    (start)
@@ -7697,34 +7699,48 @@ public class distensionbot extends SubspaceBot {
         m_shipGeneralData.add( ship );
 
         // TACTICAL OPS -- rank 25
-        ship = new ShipProfile( RANK_REQ_SHIP9, 12f );
-        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, 0, 0, 5 ); //
+        //  2: Comm 1 (PM)
+        //  5: Fast rearm
+        //  8: Profit Sharing 1
+        // 10: Door Control 1 (basic)
+        // 13: Warp 1 (lower base)
+        // 16: Profit Sharing 2
+        // 18: Comm 2 (Sabotage)
+        // 19: Door Control 2 (FR)
+        // 21: Warp 2 (FR entrance, roof)
+        // 23: Profit Sharing 3
+        // 31: Door Control 3 (enemy)
+        // 35: Warp 3 (FR)
+        // 37: Profit Sharing 4
+        // 44: Profit Sharing 5
+        ship = new ShipProfile( RANK_REQ_SHIP9, 10f );
+        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,44}, 5 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, 0, 0, 6 );      //
+        upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, new int[]{5,7,9,10,11,13,15,20,25}, new int[]{0,3,5,10,15,20,25,35,45}, 9 );      //
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+20% OP Regen Rate", OPS_REGEN_RATE, 0, 0, 4 );
+        upg = new ShipUpgrade( "+20% OP Regen Rate", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{10,20,30,40}, 4 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, 0, 0, 3 );
+        upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,20}, new int[]{2,18}, 2 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, 0, 0, 1 );
+        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, 12, 5, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 0, 0, 1 );
+        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Security Door Systems", OPS_DOOR_CONTROL, 0, 0, 1 );
+        upg = new ShipUpgrade( "Security Door Systems", OPS_DOOR_CONTROL, new int[]{13,15,21}, new int[]{10,19,31}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, 0, 0, 1 );
+        upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, new int[]{7,15,25}, new int[]{13,21,31}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, 0, 0, 1 );
+        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, 0, 0, 1 );
+        upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Shroud of Darkness", OPS_SHROUD, 0, 0, 1 );
+        upg = new ShipUpgrade( "Shroud of Darkness", OPS_SHROUD, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, 0, 0, 1 );
+        upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, 0, 0, 1 );
+        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 0, 0, 1 );
+        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 0, 0, -1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
     }
