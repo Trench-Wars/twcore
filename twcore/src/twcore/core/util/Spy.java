@@ -37,15 +37,11 @@ public class Spy {
 
     public Spy( BotAction botAction ) {
 		m_botAction = botAction;
-		BotSettings bs;
-		try {
-			bs = new BotSettings(m_botAction.getCoreCfg("racism.cfg"));
-			keywords = bs.getString("words"); }
-		catch (Exception e) {
-			keywords = "nig n1g jew gook chink"; // just in case...
+		keywords = new BotSettings(m_botAction.getCoreCfg("racism.cfg")).getString("words"); 
+		
+		if(keywords == null) {
+		    keywords = "nig n1g jew gook chink"; // just in case if racism.cfg isn't found
 		}
-
-		bs = null;
 	}
     
     public void handleEvent( Message event ){
