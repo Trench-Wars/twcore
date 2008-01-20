@@ -108,7 +108,7 @@ public class elimbot extends SubspaceBot {
 
 	@Override
 	public void handleEvent(Message event) {
-		if(event.getMessageType() == Message.ALERT_MESSAGE) {
+		if(event.getMessageType() == Message.ARENA_MESSAGE) {
 			// Check if the arena is really locked by the alert message
 			if(event.getMessage().equals("Arena LOCKED")) {
 				if(this.arenaLock == false) {
