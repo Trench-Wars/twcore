@@ -488,7 +488,7 @@ public class distensionbot extends SubspaceBot {
 
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
-            //m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
+            m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
             m_botAction.sendArenaMessage("Distension BETA loaded.  Use !return (~) to return to your current ship or !enlist if you're new.  Please see the beta thread on the forums for bug reports & suggestions.");
             // Reset all times at each load
             try {
@@ -1140,7 +1140,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( event.getShipType() != 0 ) {
-            if( m_ignoreShipChangePlayers.contains( p.getName() ) )
+            if( m_ignoreShipChangePlayers.remove( p.getName() ) )
                 return;
             // If player hops into a ship and has not yet done !return (or !enlist),
             // try to autoreturn (or enlist)
@@ -1763,6 +1763,8 @@ public class distensionbot extends SubspaceBot {
             for( DistensionPlayer p2 : m_players.values() )
                 if( p2.getShipNum() == 9 && p2.getArmyID() == p.getArmyID() )
                     throw new TWCoreException( "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
+            if( p.getShipNum() > 0 )
+                m_botAction.specWithoutLock(p.getArenaPlayerID());
         }
 
         if( p.getShipNum() > 0 ) {
@@ -2672,11 +2674,11 @@ public class distensionbot extends SubspaceBot {
 
         m_ignoreShipChangePlayers.add(name);
         m_botAction.setShip( name, 1 );
+        m_ignoreShipChangePlayers.add(name);
         m_botAction.setShip( name, p.getShipNum() );
         p.prizeUpgradesNow();
         m_mineClearedPlayers.add( name );
         m_botAction.sendPrivateMessage( name, "Mines cleared.  You may do this once per battle.  Use safety areas in rearmament zone to clear mines manually." );
-        m_ignoreShipChangePlayers.remove(name);
     }
 
     /**
@@ -3134,7 +3136,7 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Already using a fast rearm -- we can't rearm any faster!" );
         if( p.getPurchasedUpgrade(4) < 1 )
             throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
-        if( p.getCurrentComms() < 1 )
+        if( p.getCurrentOP() < 1 )
             throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
         p.adjustOP(-1);
         int time;
@@ -3200,9 +3202,9 @@ public class distensionbot extends SubspaceBot {
         if( (upgLevel == 1 && doorNum > 2) ||
             (upgLevel <= 2 && doorNum > 4) )
             throw new TWCoreException( "You are not able to control that door at your level of clearance.  Consider spending more points on door operations training." );
-        if( (p.getCurrentComms() < 1) ||
-            (p.getCurrentComms() < 2 && doorNum > 2) ||
-            (p.getCurrentComms() < 3 && doorNum > 4) )
+        if( (p.getCurrentOP() < 1) ||
+            (p.getCurrentOP() < 2 && doorNum > 2) ||
+            (p.getCurrentOP() < 3 && doorNum > 4) )
             throw new TWCoreException( "You do not have the proper amount of OP to set that door.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible.  !opshelp for costs of each door." );
         if( doorNum > 4 )
             p.adjustOP(-3);
@@ -3303,9 +3305,9 @@ public class distensionbot extends SubspaceBot {
         if( (upgLevel == 1 && warpPoint > 3) ||
             (upgLevel <= 2 && warpPoint > 5) )
                 throw new TWCoreException( "You are not able to warp to that point at your level of clearance.  Consider spending more points on warp operations training." );
-        if( (p.getCurrentComms() < 1) ||
-            (p.getCurrentComms() < 2 && warpPoint > 3) ||
-            (p.getCurrentComms() < 3 && warpPoint == 6) )
+        if( (p.getCurrentOP() < 1) ||
+            (p.getCurrentOP() < 2 && warpPoint > 3) ||
+            (p.getCurrentOP() < 3 && warpPoint == 6) )
                 throw new TWCoreException( "You do not have the proper amount of OP to warp to that point.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible.  !opshelp for costs of each warp point." );
         if( warpPoint == 6 )
             p.adjustOP(-4);
@@ -6577,11 +6579,11 @@ public class distensionbot extends SubspaceBot {
             if( (p.isSupportShip() && p.getShipNum() != 9) || p.getShipNum() == 6 ) {
                 m_ignoreShipChangePlayers.add( p.getName() );
                 m_botAction.setShip( p.getArenaPlayerID(), 1 );
+                m_ignoreShipChangePlayers.add( p.getName() );
                 m_botAction.setShip( p.getArenaPlayerID(), p.getShipNum() );
                 m_botAction.shipReset( p.getArenaPlayerID() ); // Just in case, as we seem to have problems.
                 if( !p.isRespawning() )
                     p.doSetupSpecialRespawn();
-                m_ignoreShipChangePlayers.remove( p.getName() );
             }
         }
     }
@@ -6731,6 +6733,7 @@ public class distensionbot extends SubspaceBot {
                 for( DistensionArmy a : m_armies.values() )
                     a.recalculateFigures();
                 player.putInCurrentShip();
+                m_botAction.setShip(player.getArenaPlayerID(), player.getShipNum());
                 player.prizeUpgradesNow();
                 m_lagouts.remove( name );
                 if( !flagTimeStarted || stopFlagTime ) {
