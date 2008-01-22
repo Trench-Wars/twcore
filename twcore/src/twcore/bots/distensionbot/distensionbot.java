@@ -170,7 +170,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_LEECHING = -10;
 
     // TACTICAL OPS DATA
-    public final int DEFAULT_MAX_OP = 1;                    // Max OP points when not upgraded
+    public final int DEFAULT_MAX_OP = 0;                    // Max OP points when not upgraded
     public final int DEFAULT_OP_REGEN = 2;                  // Default % chance OP regen (2 = 20%)
     public final int DEFAULT_OP_MAX_COMMS = 3;              // Max # communications Ops can save up
     public boolean m_army0_fastRearm = false;
@@ -269,6 +269,8 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_OPS_BLIND3 = 303;
     private final int LVZ_OPS_SHROUD_SM = 304;
     private final int LVZ_OPS_SHROUD_LG = 305;
+    private final int LVZ_OPS_COVER_TOP_FIRST = 320;
+    private final int LVZ_OPS_COVER_BOT_FIRST = 330;
 
 
 
@@ -578,6 +580,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!opsradar", acceptedMessages, this, "cmdOpsRadar" );
         m_commandInterpreter.registerCommand( "!opsrearm", acceptedMessages, this, "cmdOpsRearm" );
         m_commandInterpreter.registerCommand( "!opsdoor", acceptedMessages, this, "cmdOpsDoor" );
+        m_commandInterpreter.registerCommand( "!opscover", acceptedMessages, this, "cmdOpsCover" );
         m_commandInterpreter.registerCommand( "!opswarp", acceptedMessages, this, "cmdOpsWarp" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
@@ -2040,6 +2043,18 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( theName,  "Current total participation this round: " + (int)(percentOnFreq * 100) + "%" );
             }
         }
+        if( p.isSupportShip() || p.getShipNum() == 6 ) {
+            float sharingPercent;
+            float calcRank = (float)p.getRank();
+            if( shipNum == 4 )
+                if( calcRank > 10.0f )
+                    calcRank = 10.0f;
+            if( shipNum == 6 )
+                if( calcRank > 8.0f )
+                    calcRank = 8.0f;
+            sharingPercent = calcRank / 10.0f;
+            m_botAction.sendPrivateMessage( theName, "Profit sharing: " + sharingPercent + "%" );
+        }
         if( shipNum == 9 )
             m_botAction.sendPrivateMessage( theName, "OP:  ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations: " + p.getCurrentComms() );
         if( mod == null )
@@ -2790,8 +2805,6 @@ public class distensionbot extends SubspaceBot {
         if( msgNum == 1 || msgNum == 2 ) {
             int friendlies = 0;
             int foes = 0;
-            int friendTerr = 0;
-            int foeTerr = 0;
             String bestTerr = null;
             int bestTerrLoc = 0;
             if( falsify ) {
@@ -2799,14 +2812,12 @@ public class distensionbot extends SubspaceBot {
                 int total = m_botAction.getNumPlaying();
                 friendlies = (int)(Math.random() * (total / 4));
                 foes = (int)(Math.random() * (total / 2));
-                foeTerr = (int)(Math.random() * 2);
             } else {
                 for( Player p2 : m_botAction.getPlayingPlayers() ) {
                     if( p2.getYTileLocation() > (msgNum==1 ? TOP_ROOF : BOT_MID)
                             && p2.getYTileLocation() < (msgNum==1 ? TOP_MID  : BOT_ROOF) ) {
                         if( p2.getFrequency() == p.getArmyID() ) {
                             if( p2.getShipType() == Tools.Ship.TERRIER ) {
-                                friendTerr++;
                                 if( bestTerr == null ||
                                         (msgNum==1 ?
                                                 p2.getYTileLocation() < bestTerrLoc :
@@ -2817,22 +2828,29 @@ public class distensionbot extends SubspaceBot {
                             }
                             friendlies++;
                         } else {
-                            if( p2.getShipType() == Tools.Ship.TERRIER )
-                                foeTerr++;
                             foes++;
                         }
                     }
                 }
             }
             int freq = (falsify ? armyIDSpoof : p.getArmyID() );
+            int diff = Math.abs(friendlies - foes);
+            String diffText;
+            if( diff == 0 ) {
+                diffText = "Even: " + friendlies + "v" + foes;
+            } else {
+                if( friendlies > foes ) {
+                    diffText = "We have +" + diff + ": " + friendlies + "v" + foes;
+                } else {
+                    diffText = "They have +" + diff + ": " + friendlies + "v" + foes;
+                }
+            }
             String messageToSend =
-                "OPS: " + (m_flagOwner[0] == freq ? "Defend" : "Assault") +
-                (msgNum==1 ? " TOP BASE" : " BOTTOM BASE" ) +
-                "!  Friend: " + friendlies + " (" + friendTerr + " Terr) " +
-                "-vs- Enemy: " + foes + " (" + foeTerr + " Terr) ...  " +
-                (bestTerr!=null ?
-                        "Attach to: " + bestTerr + " (" + getLocation(bestTerrLoc) + ")" :
-                "[No Terr found]");
+                "OPS: " + (m_flagOwner[0] == freq ? "HELP @" : "ATTACK @") +
+                (msgNum==1 ? " TOP" : " BOTTOM" ) +
+                (bestTerr != null ?
+                        " ->  Attach to " + bestTerr + " (" + getLocation(bestTerrLoc) + ")" : "->  ... need Terrier!" ) +
+                "   (" + diffText + ")";
             m_botAction.sendOpposingTeamMessageByFrequency( freq, messageToSend );
             if( falsify )
                 m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Sent to enemy:  " + messageToSend );
@@ -3224,7 +3242,26 @@ public class distensionbot extends SubspaceBot {
                 time = 20000;
                 break;
         }
-        m_botAction.setDoors((int) Math.pow(2, (doorNum - 1)));
+
+        String doorName;
+        int realDoorNum = doorNum;
+        // Translate door #s if it's a top army
+        if( p.getArmyID() % 2 == 1 ) {
+            if( doorNum > 4 ) {
+                doorName = "TOP ";
+                realDoorNum = doorNum - 4;
+            } else {
+                doorName = "BOTTOM ";
+                realDoorNum = doorNum + 4;
+            }
+        } else {
+            if( doorNum > 4 ) {
+                doorName = "BOTTOM ";
+            } else {
+                doorName = "TOP ";
+            }
+        }
+        m_botAction.setDoors((int) Math.pow(2, (realDoorNum - 1)));
 
         if( m_doorOffTask != null ) {
             try {
@@ -3237,34 +3274,85 @@ public class distensionbot extends SubspaceBot {
             }
         };
         m_botAction.scheduleTask( m_doorOffTask, time );
-        String doorName = "";
         switch( doorNum ) {
             case 1:
-                doorName = "HOME SIDES";
+            case 5:
+                doorName += "SIDE";
                 break;
             case 2:
-                doorName = "HOME TUBE";
+            case 6:
+                doorName += "TUBE";
                 break;
             case 3:
-                doorName = "HOME FR ENTRANCE";
+            case 7:
+                doorName += "FR ENTRANCE";
                 break;
             case 4:
-                doorName = "HOME FLAG GATES";
-                break;
-            case 5:
-                doorName = "ENEMY SIDES";
-                break;
-            case 6:
-                doorName = "ENEMY TUBE";
-                break;
-            case 7:
-                doorName = "ENEMY FR ENTRANCE";
-                break;
             case 8:
-                doorName = "ENEMY FLAG GATES";
+                doorName += "FLAG";
                 break;
         }
-        m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), "OPS used DOOR CONTROL: Closed " + doorName + " for the next " + (time / 1000) + " seconds." );
+        m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), "OPS closed " + doorName + " GATES for the next " + (time / 1000) + " seconds." );
+    }
+
+    /**
+     * Allows Ops to deply cover at left, right, before FR, over the flag, in the tube, and at the
+     * lower base entrance.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsCover( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(5);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+
+        Integer coverNum;
+        try {
+            coverNum = Integer.parseInt(msg);
+        } catch ( NumberFormatException e ) {
+            throw new TWCoreException( "Please specify a number between 1 and 6.  Use !opshelp for more info." );
+        }
+        if( coverNum < 1 || coverNum > 6 )
+            throw new TWCoreException( "Please specify a number between 1 and 6.  Use !opshelp for more info." );
+        if( p.getCurrentOP() < 1 )
+            throw new TWCoreException( "You need 1 OP to deploy cover.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+        p.adjustOP(-1);
+
+        String coverName;
+        if( p.getArmyID() % 2 == 0 ) {
+            coverName = "TOP, ";
+            m_botAction.showObject( LVZ_OPS_COVER_TOP_FIRST + coverNum - 1 );
+        } else {
+            coverName = "BOTTOM, ";
+            m_botAction.showObject( LVZ_OPS_COVER_BOT_FIRST + coverNum - 1 );
+        }
+
+        switch( coverNum ) {
+            case 1:
+                coverName += "LEFT SIDE";
+                break;
+            case 2:
+                coverName += "RIGHT SIDE";
+                break;
+            case 3:
+                coverName += "FR ENTRANCE";
+                break;
+            case 4:
+                coverName += "OVER FLAG";
+                break;
+            case 5:
+                coverName += "IN TUBE";
+                break;
+            case 6:
+                coverName += "LOWER ENTRANCE";
+                break;
+        }
+        m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), "OPS deployed COVER at " + coverName + " for 15 seconds." );
     }
 
     /**
@@ -4610,11 +4698,31 @@ public class distensionbot extends SubspaceBot {
 
                 // Regenerate OP
                 double regenOPChance = Math.random() * 10.0;
-                if( (double)purchasedUpgrades[2] + DEFAULT_OP_REGEN > regenOPChance ) {
+                if( (double)(purchasedUpgrades[2] * 2) + DEFAULT_OP_REGEN > regenOPChance ) {
                     if( currentOP < maxOP ) {
                         m_botAction.sendPrivateMessage( arenaPlayerID, "+1 OP" );
                         currentOP++;
                     }
+                }
+
+                // Give report on Shark/Terr status every 5 min
+                if( tick % 10 == 0 ) {
+                    int terrs = 0;
+                    int sharks = 0;
+                    int others = 0;
+                    int id = getArmyID();
+                    for( DistensionPlayer p : m_players.values() ) {
+                        if( p.getArmyID() == id ) {
+                            if( p.getShipNum() == Tools.Ship.TERRIER ) {
+                                terrs++;
+                            } else if( p.getShipNum() == Tools.Ship.SHARK ) {
+                                sharks++;
+                            } else {
+                                others++;
+                            }
+                        }
+                    }
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "TEAM REPORT:  " + terrs + " Terrs, " + sharks + " Sharks; " + others + " others."  );
                 }
             }
             if( prized )
@@ -5083,7 +5191,7 @@ public class distensionbot extends SubspaceBot {
                 int shared = Math.round((float)profits * (sharingPercent / 100.0f ));
                 if( shared > 0 ) {
                     if( sendKillMessages )
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "Profit-sharing: +" + (DEBUG ? (int)(DEBUG_MULTIPLIER * shared) : shared ) + "RP" );
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "Profit-sharing: +" + (DEBUG ? (int)(DEBUG_MULTIPLIER * shared) : shared ) + "RP  (" + sharingPercent + "%)" );
                     addRankPoints(shared);
                 }
             }
@@ -6732,8 +6840,8 @@ public class distensionbot extends SubspaceBot {
                 }
                 for( DistensionArmy a : m_armies.values() )
                     a.recalculateFigures();
-                player.putInCurrentShip();
                 m_botAction.setShip(player.getArenaPlayerID(), player.getShipNum());
+                player.putInCurrentShip();
                 player.prizeUpgradesNow();
                 m_lagouts.remove( name );
                 if( !flagTimeStarted || stopFlagTime ) {
@@ -7776,6 +7884,7 @@ public class distensionbot extends SubspaceBot {
         // TACTICAL OPS -- rank 25
         //  2: Comm 1 (PM)
         //  5: Fast rearm
+        //  7: Cover
         //  8: Profit Sharing 1
         // 10: Door Control 1 (basic)
         // 13: Warp 1 (lower base)
@@ -7791,15 +7900,15 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP9, 10f );
         upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,44}, 5 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, new int[]{5,7,9,10,11,13,15,20,25}, new int[]{0,3,5,10,15,20,25,35,45}, 9 );      //
+        upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, new int[]{5,7,9,10,11,13,15,20,25}, new int[]{0,3,5,11,15,20,25,35,45}, 9 );      //
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+20% OP Regen Rate", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{10,20,30,40}, 4 );
+        upg = new ShipUpgrade( "+20% OP Regen Rate", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{9,20,30,40}, 4 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,20}, new int[]{2,18}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, 12, 5, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 0, 0, -1 );
+        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 20, 7, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Security Door Systems", OPS_DOOR_CONTROL, new int[]{13,15,21}, new int[]{10,19,31}, 3 );
         ship.addUpgrade( upg );
