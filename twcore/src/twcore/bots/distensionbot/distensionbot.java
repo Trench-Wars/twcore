@@ -1732,6 +1732,13 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdManOps( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() > 0 ) {
+            p.setLagoutAllowed(false);
+            m_botAction.specWithoutLock(p.getArenaPlayerID());
+        }
         cmdPilot( name, "9" );
     }
 
@@ -1766,8 +1773,6 @@ public class distensionbot extends SubspaceBot {
             for( DistensionPlayer p2 : m_players.values() )
                 if( p2.getShipNum() == 9 && p2.getArmyID() == p.getArmyID() )
                     throw new TWCoreException( "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
-            if( p.getShipNum() > 0 )
-                m_botAction.specWithoutLock(p.getArenaPlayerID());
         }
 
         if( p.getShipNum() > 0 ) {
@@ -2056,7 +2061,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( theName, "Profit sharing: " + sharingPercent + "%" );
         }
         if( shipNum == 9 )
-            m_botAction.sendPrivateMessage( theName, "OP:  ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations: " + p.getCurrentComms() );
+            m_botAction.sendPrivateMessage( theName, "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
         if( mod == null )
             cmdProgress( name, msg, null );
         else
@@ -2508,6 +2513,8 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You must !return or !enlist in an army first." );
         if( p.getShipNum() == 9 )
             throw new TWCoreException( "Tactical Ops can't assist ... you'll have to !dock back at HQ in your shuttle before you even think about it!" );
+        if( p.isRespawning() )
+            throw new TWCoreException( "Please wait until your current ship is rearmed before attempting to assist." );
         int armyToAssist = -1;
         boolean autoReturn = msg.equals(":auto:");
         if( msg.equals("") || autoReturn ) {
@@ -7412,14 +7419,16 @@ public class distensionbot extends SubspaceBot {
         // 4:  L2 Guns
         // 17: Multi
         // 24: Decoy
+        // 30: Escape Pod 1
         // 31: L3 Guns
-        // 36: Mines
-        // 40: Escape Pod 1
+        // 36: Mines (+ expensive bomb) L1
+        // 40: XRadar
         // 45: Priority Rearm
-        // 48: XRadar
         // 50: Thor
         // 55: Escape Pod 2
+        // 60: Mines (+ expensive bomb) L2
         // 70: Escape Pod 3
+        // 80: Mines (+ expensive bomb) L3
         ship = new ShipProfile( 0, 15f );
         //                                                    | <--- this mark and beyond is not seen for upg names
         upg = new ShipUpgrade( "Side Thrusters           [ROT]", Tools.Prize.ROTATION, new int[]{7,7,7,8,8,9,10,12}, 0, 8 );           // 20 x8
@@ -7445,15 +7454,15 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Beam-Splitter", Tools.Prize.MULTIFIRE, 19, 17, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 55, 48, 1 );
+        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 35, 40, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warbird Reiterator", Tools.Prize.DECOY, 14, 24, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, 21, 36, 1 );
+        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{21,31,50}, new int[]{36,60,80}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 34, 50, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{25,35,45}, new int[]{40,55,70}, 3 );
+        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{25,35,45}, new int[]{30,55,70}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 20, 45, 1 );
         ship.addUpgrade( upg );
@@ -7464,13 +7473,13 @@ public class distensionbot extends SubspaceBot {
         // 9:  L1 Guns
         // 15: Shrap (2 levels)
         // 20: Rocket 1
+        // 24: XRadar
         // 26: Multi
         // 26: L2 Guns
         // 28: Decoy 1
         // 30: Shrap (3 more levels)
         // 35: Rocket 2
         // 40: L2 Bombs
-        // 42: XRadar
         // 45: Priority Rearm
         // 50: Decoy 2
         // 55: Shrap (7 more levels)
@@ -7502,7 +7511,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Modified Defense Cannon", Tools.Prize.MULTIFIRE, 18, 23, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Detection System", Tools.Prize.XRADAR, 31, 42, 1 );
+        upg = new ShipUpgrade( "Detection System", Tools.Prize.XRADAR, 21, 24, 1 );
         ship.addUpgrade( upg );
         int p2d1[] = { 8,  35 };
         int p2d2[] = { 28, 50 };
@@ -7527,11 +7536,11 @@ public class distensionbot extends SubspaceBot {
         // 25: +5% Super 2
         // 26: Multi (rear)
         // 29: Decoy 2
+        // 30: XRadar
         // 33: +10% Energy Tank 3
         // 35: +5% Super 3
         // 38: Anti
         // 40: L2 Guns
-        // 42: XRadar
         // 45: +5% Super 4
         // 47: Decoy 3
         // 50: Priority Rearm
@@ -7562,7 +7571,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Split Projector", Tools.Prize.MULTIFIRE, 28, 26, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 45, 42, 1 );
+        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 25, 30, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, new int[]{9,15,23}, new int[]{18,29,47}, 3 );
         ship.addUpgrade( upg );
@@ -7585,12 +7594,12 @@ public class distensionbot extends SubspaceBot {
         // 4:  L1 Bombs
         // 8:  L2 Guns
         // 15: L2 Bombs
+        // 20: XRadar
         // 25: Stealth
         // 28: Portal
         // 30: Multi (close shotgun)
         // 35: L3 Guns
         // 40: Decoy
-        // 44: XRadar
         // 48: L3 Bombs
         // 60: Prox
         // 70: Shrapnel
@@ -7618,7 +7627,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Sidekick Cannons", Tools.Prize.MULTIFIRE, 16, 30, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 22, 44, 1 );
+        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 15, 20, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Leviathan Reiterator", Tools.Prize.DECOY, 15, 40, 1 );
         ship.addUpgrade( upg );
@@ -7689,8 +7698,8 @@ public class distensionbot extends SubspaceBot {
         int p5a2[] = { 7, 29, 48, 60, 70 };
         upg = new ShipUpgrade( "Wormhole Creation Kit", Tools.Prize.PORTAL, p5a1, p5a2, 5 );        // DEFINE
         ship.addUpgrade( upg );
-        int p5b1[] = { 6, 17, 28, 30, 40, 50 };
-        int p5b2[] = { 2, 21, 46, 55, 65, 80 };
+        int p5b1[] = { 6, 17, 58, 70, 90, 100 };
+        int p5b2[] = { 2, 21, 46, 55, 65, 80  };
         upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2, 6 );       // DEFINE
         ship.addUpgrade( upg );
         int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
@@ -7771,6 +7780,7 @@ public class distensionbot extends SubspaceBot {
         // Fast upgrade speed; all upgrades only get lanc to 120% of stock lanc, but energy has few level requirements.
         // 15: +20% Leeching 1
         // 20: Multifire
+        // 24: XRadar
         // 26: Bombing special ability
         // 30: +20% Leeching 2
         // 38: +1 Guns (other gun costs 6 but is available from start; these are free)
@@ -7778,7 +7788,6 @@ public class distensionbot extends SubspaceBot {
         // 45: The Firebloom
         // 50: +20% Leeching 4
         // 55: Prox
-        // 60: XRadar
         // 69: Shrap (10 levels)
         // 70: +20% Leeching 5
         // 80: Decoy
@@ -7801,7 +7810,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Magnified Output Force", Tools.Prize.MULTIFIRE, 23, 20, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 30, 60, 1 );
+        upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 16, 24, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Lancaster Reiterator", Tools.Prize.DECOY, 50, 80, 1 );
         ship.addUpgrade( upg );
