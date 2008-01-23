@@ -582,6 +582,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!opsdoor", acceptedMessages, this, "cmdOpsDoor" );
         m_commandInterpreter.registerCommand( "!opscover", acceptedMessages, this, "cmdOpsCover" );
         m_commandInterpreter.registerCommand( "!opswarp", acceptedMessages, this, "cmdOpsWarp" );
+        m_commandInterpreter.registerCommand( "!opsorb", acceptedMessages, this, "cmdOpsOrb" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
         m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
@@ -3445,7 +3446,75 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Opened WORMHOLE on " + p2.getPlayerName() + "'s ship." );
     }
 
+    /**
+     * Ops ability to cover the enemy with an orb.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsOrb( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(8);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+        if( upgLevel < 2 && msg.equals("all") )
+            throw new TWCoreException( "You are not yet able to use this ability on all players in the base -- first you must install the appropriate !upgrade." );
 
+        Player p2 = null;
+        if( !msg.equals("all") ) {
+            p2 = m_botAction.getPlayer( msg );
+            if( p2 == null ) {
+                p2 = m_botAction.getFuzzyPlayer( msg );
+            }
+            if( p2 == null ) {
+                throw new TWCoreException( "Can't find pilot '" + msg + "'." );
+            } else {
+                if( p2.getFrequency() == p.getArmyID() )
+                    throw new TWCoreException( p2.getPlayerName() + " is on your army!" );
+                if( p2.getShipType() == Tools.Ship.SPECTATOR )
+                    throw new TWCoreException( p2.getPlayerName() + " isn't in a ship!" );
+            }
+        }
+        
+        if( msg.equals("all") ) {
+            if( p.getCurrentOP() < 3 )
+                throw new TWCoreException( "You need 3 OP to use this ability on all players in base.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            else
+                p.adjustOP(-3);
+            
+            int freq = p.getArmyID();
+            for( DistensionPlayer p3 : m_players.values() ) {
+                if( p3.getArmyID() != freq ) {
+                    Player pobj = m_botAction.getPlayer( p3.getArenaPlayerID() );
+                    if( freq % 2 == 0 ) {
+                        if( pobj != null && pobj.getYLocation() > TOP_ROOF && pobj.getYLocation() < TOP_LOW )
+                            m_botAction.showObjectForPlayer( pobj.getPlayerID(), LVZ_OPS_SPHERE );
+                    } else {
+                        if( pobj != null && pobj.getYLocation() > BOT_LOW && pobj.getYLocation() < BOT_ROOF )
+                            m_botAction.showObjectForPlayer( pobj.getPlayerID(), LVZ_OPS_SPHERE );
+                    }
+                }
+            }
+            
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS covered your army with SPHERE OF SECLUSION in " + (freq % 2 == 0 ? "TOP BASE." : "BOTTOM BASE.") );
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Covered all enemies in " + (freq % 2 == 0 ? "TOP BASE" : "BOTTOM BASE") + " with SPHERE OF SECLUSION." );
+        } else {
+            if( p.getCurrentOP() < 1 )
+                throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            else
+                p.adjustOP(-1);
+            m_botAction.showObjectForPlayer( p2.getPlayerID(), LVZ_OPS_SPHERE );            
+            m_botAction.sendPrivateMessage(p2.getPlayerID(), "ENEMY OPS has covered you with the SPHERE OF SECLUSION!" );
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Covered " + p2.getPlayerName() + " with SPHERE OF SECLUSION." );
+        }
+
+        
+    }
+
+    
     // ***** HIGHMOD+ COMMANDS
 
     /**
@@ -7897,11 +7966,13 @@ public class distensionbot extends SubspaceBot {
         //  8: Profit Sharing 1
         // 10: Door Control 1 (basic)
         // 13: Warp 1 (lower base)
+        // 15: Seclusion 1
         // 16: Profit Sharing 2
         // 18: Comm 2 (Sabotage)
         // 19: Door Control 2 (FR)
         // 21: Warp 2 (FR entrance, roof)
         // 23: Profit Sharing 3
+        // 25: Seclusion 2
         // 31: Door Control 3 (enemy)
         // 35: Warp 3 (FR)
         // 37: Profit Sharing 4
@@ -7923,7 +7994,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, new int[]{7,15,25}, new int[]{13,21,31}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, 0, 0, -1 );
+        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{15,25}, -1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, 0, 0, -1 );
         ship.addUpgrade( upg );
