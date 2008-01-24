@@ -491,7 +491,7 @@ public class distensionbot extends SubspaceBot {
         if( DEBUG ) {
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
-            m_botAction.sendArenaMessage("Distension BETA loaded.  Use !return (~) to return to your current ship or !enlist if you're new.  Please see the beta thread on the forums for bug reports & suggestions.");
+            m_botAction.sendArenaMessage("Distension BETA loaded.  Just enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
             // Reset all times at each load
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
@@ -1279,12 +1279,12 @@ public class distensionbot extends SubspaceBot {
             m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
             m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
         } else {
+            endedStreak = loser.clearSuccessiveKills();
             // Otherwise: Add points via level scheme
             DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
             DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
             if( killerarmy == null || killedarmy == null )
                 return;
-            endedStreak = loser.clearSuccessiveKills();
             int points;
             int loserRank = Math.max( 1, loser.getRank() );
             int victorRank = Math.max( 1, victor.getRank() );
@@ -1648,7 +1648,7 @@ public class distensionbot extends SubspaceBot {
         int ship = p.getShipNum();
         if( ship != -1 ) {
             if( ship == 0 )
-                throw new TWCoreException( "You are currently docked at " + p.getArmyName().toUpperCase() + " HQ.  You may !pilot a ship at any time.  You may !leave to record all data and stop the battle timer." );
+                throw new TWCoreException( "You are currently docked at " + p.getArmyName().toUpperCase() + " HQ.  You may pilot a ship at any time by hitting ESC + #.  You may !leave to record all data and stop the battle timer." );
             else
                 throw new TWCoreException( "You are currently in flight." );
         }
@@ -2598,6 +2598,7 @@ public class distensionbot extends SubspaceBot {
                 if( System.currentTimeMillis() > lastAssistReward + ASSIST_REWARD_TIME ) {
                     lastAssistReward = System.currentTimeMillis();
                     int reward = p.getRank();
+                    if( reward == 0 ) reward = 1;
                     if( armySizeWeight < .5 )
                         reward = p.getRank() * 5;
                     else if( armySizeWeight < .6 )
@@ -3168,8 +3169,10 @@ public class distensionbot extends SubspaceBot {
         int time;
         if( p.getPurchasedUpgrade(4) == 1 )
             time = 15000;
+        else if ( p.getPurchasedUpgrade(4) == 2 )
+            time = 35000;
         else
-            time = 25000;
+            time = 60000;
 
         if( p.getArmyID() == 0 ) {
             if( m_army0_fastRearmTask != null ) {
@@ -3478,13 +3481,13 @@ public class distensionbot extends SubspaceBot {
                     throw new TWCoreException( p2.getPlayerName() + " isn't in a ship!" );
             }
         }
-        
+
         if( msg.equals("all") ) {
             if( p.getCurrentOP() < 3 )
                 throw new TWCoreException( "You need 3 OP to use this ability on all players in base.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
             else
                 p.adjustOP(-3);
-            
+
             int freq = p.getArmyID();
             for( DistensionPlayer p3 : m_players.values() ) {
                 if( p3.getArmyID() != freq ) {
@@ -3498,7 +3501,7 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             }
-            
+
             m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS covered your army with SPHERE OF SECLUSION in " + (freq % 2 == 0 ? "TOP BASE." : "BOTTOM BASE.") );
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Covered all enemies in " + (freq % 2 == 0 ? "TOP BASE" : "BOTTOM BASE") + " with SPHERE OF SECLUSION." );
         } else {
@@ -3506,15 +3509,15 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
             else
                 p.adjustOP(-1);
-            m_botAction.showObjectForPlayer( p2.getPlayerID(), LVZ_OPS_SPHERE );            
+            m_botAction.showObjectForPlayer( p2.getPlayerID(), LVZ_OPS_SPHERE );
             m_botAction.sendPrivateMessage(p2.getPlayerID(), "ENEMY OPS has covered you with the SPHERE OF SECLUSION!" );
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Covered " + p2.getPlayerName() + " with SPHERE OF SECLUSION." );
         }
 
-        
+
     }
 
-    
+
     // ***** HIGHMOD+ COMMANDS
 
     /**
@@ -7932,7 +7935,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p8b1[] = {10,10, 12, 14, 16, 20, 30, 80 };
         int p8b2[] = { 3, 5, 10, 20, 30, 40, 50, 75 };
-        upg = new ShipUpgrade( "Projectile Slip PlateS   [NRG]", Tools.Prize.ENERGY, p8b1, p8b2, 8 );       //  75 x8
+        upg = new ShipUpgrade( "Projectile Slip Plates   [NRG]", Tools.Prize.ENERGY, p8b1, p8b2, 8 );       //  75 x8
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 10, 12, 1 );
         ship.addUpgrade( upg );
@@ -7961,18 +7964,20 @@ public class distensionbot extends SubspaceBot {
 
         // TACTICAL OPS -- rank 25
         //  2: Comm 1 (PM)
-        //  5: Fast rearm
+        //  4: Warp 1 (lower base)
+        //  5: Fast rearm 1
         //  7: Cover
         //  8: Profit Sharing 1
+        //  9: Fast rearm 2
         // 10: Door Control 1 (basic)
-        // 13: Warp 1 (lower base)
-        // 15: Seclusion 1
+        // 12: Orb/Sphere 1 (1 target)
         // 16: Profit Sharing 2
+        // 17: Fast rearm 3
         // 18: Comm 2 (Sabotage)
         // 19: Door Control 2 (FR)
         // 21: Warp 2 (FR entrance, roof)
         // 23: Profit Sharing 3
-        // 25: Seclusion 2
+        // 25: Orb/Sphere 2 (all in base)
         // 31: Door Control 3 (enemy)
         // 35: Warp 3 (FR)
         // 37: Profit Sharing 4
@@ -7986,15 +7991,15 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,20}, new int[]{2,18}, 2 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, 12, 5, 1 );
+        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, new int[]{12,7,5}, new int[]{5,9,17}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 20, 7, 1 );
-        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 20, 7, 1 );   // Consider another level offering longer cover
+        ship.addUpgrade( upg );                                                 // via diff
         upg = new ShipUpgrade( "Security Door Systems", OPS_DOOR_CONTROL, new int[]{13,15,21}, new int[]{10,19,31}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, new int[]{7,15,25}, new int[]{13,21,31}, 3 );
+        upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, new int[]{7,15,25}, new int[]{4,21,31}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{15,25}, -1 );
+        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{12,25}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, 0, 0, -1 );
         ship.addUpgrade( upg );
