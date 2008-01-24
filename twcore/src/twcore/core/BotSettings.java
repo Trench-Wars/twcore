@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import twcore.core.util.Tools;
 
@@ -54,7 +55,6 @@ public class BotSettings {
             BufferedReader  in = new BufferedReader( new FileReader( file ));
 
             while( (line = in.readLine()) != null ){
-
                 if( line.length() != 0 ){
                     char firstChar = line.trim().charAt( 0 );
                     if( !(firstChar == '#' || firstChar == '[' )){
@@ -78,7 +78,7 @@ public class BotSettings {
     }
 
     /**
-     * Overwrites default loaded data with new data.
+     * Overwrites default loaded data or adds new data.
      * @param keyName Name of the field to be replaced
      * @param data New data
      */
@@ -88,7 +88,7 @@ public class BotSettings {
     }
 
     /**
-     * Overwrites default loaded data with new data.
+     * Overwrites default loaded data or adds new data.
      * @param keyName Name of the field to be replaced
      * @param data New data
      */
@@ -98,13 +98,22 @@ public class BotSettings {
     }
 
     /**
-     * Overwrites default loaded data with new data.
+     * Overwrites default loaded data or adds new data.
      * @param keyName Name of the field to be replaced
      * @param data New data
      */
     public void put( String keyName, double data ){
 
         m_data.put( keyName.toLowerCase(), new String( "" + data ) );
+    }
+    
+    /**
+     * Removes specified key.
+     * 
+     * @param keyName
+     */
+    public void remove( String keyName ) {
+        m_data.remove(keyName.toLowerCase());
     }
 
     /**
@@ -181,6 +190,7 @@ public class BotSettings {
             int             equalsIndex;
             BufferedReader  in = new BufferedReader( new FileReader( m_fileName ));
             PrintWriter     out = new PrintWriter( new BufferedWriter ( new FileWriter(m_fileName + ".tmp")));
+            HashSet <String> existingKeys = new HashSet<String>();
 
             while( (line = in.readLine()) != null ){
 
@@ -192,11 +202,25 @@ public class BotSettings {
                         if( equalsIndex != -1 ){
                             key = line.substring( 0, equalsIndex);
                             value = this.getString(key.toLowerCase());
-                            line = key + "=" + value;
+                            if(value != null) {
+                                line = key + "=" + value;
+                                existingKeys.add(key.toLowerCase());
+                            } else {
+                                line = null;
+                            }
                         }
                     }
                 }
-                out.println(line);
+                
+                if(line != null)
+                    out.println(line);
+            }
+            
+            // Write any new key/values to the end of the .cfg file
+            for(String newKey:m_data.keySet()) {
+                if(!existingKeys.contains(newKey.toLowerCase())) {
+                    out.println(newKey+"="+m_data.get(newKey));
+                }
             }
             in.close();
             out.close();
