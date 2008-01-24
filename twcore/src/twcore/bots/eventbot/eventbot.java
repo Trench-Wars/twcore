@@ -26,6 +26,8 @@ public class eventbot extends SubspaceBot {
     private CommandInterpreter commandInterpreter;
     
     private final int REQUEST_EXPIRE_TIME_MS = 1000*60*60;	// 60 min.
+    private final String SUBSCRIBE_ALL = "all";
+    private final String SUBSCRIBE_BWJS = "bwjs";
     
     //This vector stores all the requests
     private HashMap<String,EventRequest> requests = new HashMap<String,EventRequest>(64);
@@ -113,8 +115,8 @@ public class eventbot extends SubspaceBot {
     public void cmdHelp(String name, String message) {
     	// Public commands
     	String[] startCommands = 
-    	{   "/-------------------------------------------------------------------------------\\",
-    		"|                                 EVENTBOT                                      |",  };
+    	{   "+-------------------------------------------------------------------------------+",
+    		"|                                 EVENTBOT                                      |"  };
     	String[] publicCommands = 
     	{	"|                                                                               |",
     		"| !request <event>:[comments] - Request an <event> to be hosted. Optional; any  |",
@@ -123,9 +125,10 @@ public class eventbot extends SubspaceBot {
     		"| !request -                  - Cancels your current request.                   |"   };
     	String[] zhCommands = 
     	{   "|------------------------------     ZH+    -------------------------------------|",
-    	    "| !subscribe all              - EventBot will PM you on any event request       |",
-    	    "| !subscribe bwjs             - EventBot will PM you on event requests for base,|",
-    	    "|                               WBDuel, JavDuel or SpidDuel                     |",
+    	    "| !subscribe all              - EventBot will PM you on all event requests      |",
+    	    "|                               except for Base, WBDuel, JavDuel and SpidDuel   |",
+    	    "| !subscribe bwjs             - EventBot will only PM you on event requests for |",
+    	    "|                               Base, WBDuel, JavDuel or SpidDuel               |",
     	    "| !subscribe off              - Removes any subscription to event requests      |"
     	};
     	String[] erCommands = 
@@ -146,7 +149,7 @@ public class eventbot extends SubspaceBot {
     	    "| !liftban <name>             - Removes ban on <name>                           |"   };
     	String[] smodCommands = 
     	{   "|-------------------------------   SMOD+   -------------------------------------|",
-    	    "|  !die                       - Removes EventBot from the zone                  |"    };
+    	    "| !die                        - Removes EventBot from the zone                  |"    };
     	String[] endCommands =
     	{   "\\-------------------------------------------------------------------------------/"    };
     	
@@ -180,8 +183,6 @@ public class eventbot extends SubspaceBot {
     public void cmdRequest(String name, String message) {
     	message = message.trim();
     	
-    	// TODO: Spread PMs to subscribers on event request
-    	
     	// Cleanup expired requests
     	this.removeExpiredRequests();
     	
@@ -192,14 +193,14 @@ public class eventbot extends SubspaceBot {
     	}
     	
     	// Check if this player isn't banned
-    	if(isBannedPlayer(name.toLowerCase())) {
+    	if(isBannedPlayer(name)) {
     		m_botAction.sendSmartPrivateMessage(name, "I'm sorry but you aren't allowed to use !request.");
     		return;
     	}
     	
     	// Staff shouldn't make !requests
     	if(m_botAction.getOperatorList().isZH(name)) {
-    		m_botAction.sendSmartPrivateMessage(name, "I'm sorry but staff can't make !requests. Type ';hey I want to have <event> hosted!' to continue.");
+    		m_botAction.sendSmartPrivateMessage(name, "I'm sorry but staff can't make !requests.");
     		return;
     	}
     	
@@ -208,7 +209,7 @@ public class eventbot extends SubspaceBot {
     	    if(requests.containsKey(name.toLowerCase())) {
     	        String event = requests.get(name.toLowerCase()).getEvent();
     	        m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" has been removed.");
-    	        m_botAction.sendChatMessage(name+" removed his request for "+event+" .");
+    	        m_botAction.sendChatMessage(name+" removed his request for '"+event+"' .");
                 requests.remove(name.toLowerCase());
             } else {
                 m_botAction.sendSmartPrivateMessage(name, "No request was found to remove.");
@@ -235,7 +236,7 @@ public class eventbot extends SubspaceBot {
     			
     			if((new Date().getTime() - eventReq.getDate().getTime()) <= (1000*60)) {
     				// Player made the request less then one minute ago, tell him he needs to wait before doing another request
-    				m_botAction.sendSmartPrivateMessage(name, "You have to wait one minute before changing your previous request. Please try again later.");
+    				m_botAction.sendSmartPrivateMessage(name, "You have to wait at least one minute before changing your previous request. Please try again later.");
     				return;
     			}
     		}
@@ -249,6 +250,9 @@ public class eventbot extends SubspaceBot {
     			
     			// Inform staff
     			m_botAction.sendChatMessage("> Staff, please start a new game in "+event+". (Requested by "+name+")");
+    			
+    			// Notify subscribed staffers of request
+    			this.notifySubscribed(SUBSCRIBE_BWJS, eventRequest);
 
     			// Notify requester about his request
     			m_botAction.sendSmartPrivateMessage(name, "Your request for '"+event+"' has been forwarded to staff. It will be dealt with as soon as possible.");
@@ -267,9 +271,14 @@ public class eventbot extends SubspaceBot {
         		if(comments.length() > 0)	comments = "("+comments+") ";
         		
         		if(newRequest)
-        			m_botAction.sendChatMessage(name+" requested '"+event+"' "+comments+"(rank: "+getEventRank(event)+")");
+        			m_botAction.sendChatMessage(name+" requested event '"+event+"' "+comments+"(rank: "+getEventRank(event)+")");
         		else
         			m_botAction.sendChatMessage(name+" changed request to '"+event+"' "+comments+"(rank: "+getEventRank(event)+")");
+        		
+        		// Notify subscribed staffers of request
+        		if(newRequest) {
+        		    this.notifySubscribed(SUBSCRIBE_ALL, eventRequest);
+        		}
     			
     			// Notify requester about his request
         		m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" has been registered and forwarded to staff.");
@@ -295,32 +304,22 @@ public class eventbot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Command syntax error. Please specify 'all', 'bwjs' or 'off'. Type ::!help for more information.");
 
         } else if(message.equals("all")) {
-            if(subscribers.containsKey(staffer) && subscribers.get(staffer).indexOf("all")>-1) {
+            if(subscribers.containsKey(staffer) && subscribers.get(staffer).indexOf(SUBSCRIBE_ALL)>-1) {
                 m_botAction.sendSmartPrivateMessage(name, "You are already subscribed for all event requests.");
             } else {
-                if(subscribers.containsKey(staffer) && subscribers.get(staffer).equals("bwjs")) {
-                    subscribers.put(staffer, "all+bwjs");
-                } else {
-                    subscribers.put(staffer, "all");
-                }
-                
+                subscribers.put(staffer, SUBSCRIBE_ALL);
                 m_botAction.sendSmartPrivateMessage(name, "You are now subscribed to all event requests.");
             }
         } else if(message.equals("bwjs")) {
-            if(subscribers.containsKey(staffer) && subscribers.get(staffer).indexOf("bwjs")>-1) {
+            if(subscribers.containsKey(staffer) && subscribers.get(staffer).indexOf(SUBSCRIBE_BWJS)>-1) {
                 m_botAction.sendSmartPrivateMessage(name, "You are already subscribed for Base/WbDuel/JavDuel/SpidDuel event requests.");
             } else {
-                if(subscribers.containsKey(staffer) && subscribers.get(staffer).equals("all")) {
-                    subscribers.put(staffer, "all+bwjs");
-                } else {
-                    subscribers.put(staffer, "bwjs");
-                }
-                
+                subscribers.put(staffer, SUBSCRIBE_BWJS);
                 m_botAction.sendSmartPrivateMessage(name, "You are now subscribed to Base/WbDuel/JavDuel/SpidDuel event requests.");
             }
         } else if(message.equals("off")) {
             if(subscribers.containsKey(staffer)) {
-                m_botAction.sendSmartPrivateMessage(name, "Removed any subscriptions for event requests.");
+                m_botAction.sendSmartPrivateMessage(name, "Removed subscriptions for event requests.");
                 subscribers.remove(staffer);
             } else {
                 m_botAction.sendSmartPrivateMessage(name, "You are not subscribed to any event requests.");
@@ -408,12 +407,17 @@ public class eventbot extends SubspaceBot {
     			m_botAction.sendSmartPrivateMessage(name, "----------------------------------");
     			
     			for(EventRequest er:events) {
+    			    String requester = er.getRequester();
+    			    if(requester.length() >= 12) {
+    			        requester = requester.substring(0,12);
+    			    }
+    			    
     				if(er.getComments() != null && er.getComments().length()>0) {
     					m_botAction.sendSmartPrivateMessage(name, 
-    							Tools.rightString(er.getRequester()+"> ", 20)+er.getComments());
+    							Tools.rightString(requester+"> ", 14)+er.getComments());
     				} else {
     					m_botAction.sendSmartPrivateMessage(name, " "+
-        						Tools.rightString(er.getRequester(), 20));
+        						Tools.rightString(requester, 14));
     				}
     			}
     		} else {
@@ -436,7 +440,7 @@ public class eventbot extends SubspaceBot {
         this.removeExpiredRequests();
     	
     	if(requests.containsKey(requester)) {
-    		m_botAction.sendChatMessage(name+" removed request of "+message+" ("+requests.get(requester).getEvent()+") removed.");
+    		m_botAction.sendChatMessage(name+" removed request of "+message+" ("+requests.get(requester).getEvent()+").");
     		requests.remove(requester);
     	} else {
     		m_botAction.sendSmartPrivateMessage(name, "No requests found of '"+message+"' .");
@@ -465,10 +469,10 @@ public class eventbot extends SubspaceBot {
     			// Remove request
     			requests.remove(er.getRequester().toLowerCase());
     		}
-    		m_botAction.sendChatMessage(name+" filled requests for "+event+", informing "+matchingRequests.size()+" players. (Matching requests removed.)");
+    		m_botAction.sendChatMessage(name+" filled requests for "+event+", informing "+matchingRequests.size()+" player(s). (Matching requests removed.)");
     		
     	} else {
-    		m_botAction.sendSmartPrivateMessage(name,"No matching requests with the event '"+event+"' found.");
+    		m_botAction.sendSmartPrivateMessage(name,"No matching requests for the event '"+event+"' found.");
     	}
     }
     
@@ -506,9 +510,6 @@ public class eventbot extends SubspaceBot {
     	if(bannedPlayers.size() == 0) {
     		m_botAction.sendSmartPrivateMessage(name, "No banned players found.");
     	} else {
-	    	m_botAction.sendSmartPrivateMessage(name, "Banned EventBot players:");
-	    	m_botAction.sendSmartPrivateMessage(name, "------------------------");
-	    	
 	    	int i = 1;
 	    	int count = 10;
 	    	int start = 0;
@@ -521,25 +522,56 @@ public class eventbot extends SubspaceBot {
 	    	        m_botAction.sendSmartPrivateMessage(name, "Wrong command syntax, only use a number for displaying bans count. Defaulting back to 10 bans.");
 	    	    }
 	    	}
+	    	if(count < 0) {
+	    	    count = 10;   
+	    	}
 	    	
-	    	if(bannedPlayers.size() > count) {
-	    	    start = bannedPlayers.size() - count;
+	    	m_botAction.sendSmartPrivateMessage(name, "Last "+count+" EventBot banned players:");
+	        m_botAction.sendSmartPrivateMessage(name, "--------------------------------");
+	            
+
+	    	
+	    	// Sort the list by date first
+	    	Vector<BannedPlayer> bannedSorted = new Vector<BannedPlayer>();
+    	    for(BannedPlayer player:bannedPlayers) {
+    	        if(!bannedSorted.contains(player)) {
+    	            if(bannedSorted.size() == 0) {
+    	                bannedSorted.add(player);
+    	            } else {
+        	            for(int c = 0 ; c < bannedSorted.size(); c++) {
+        	                if(bannedSorted.get(c).date.after(player.date)) {
+        	                    bannedSorted.add(c, player);
+        	                    break;
+        	                } else if(c+1 == bannedSorted.size()) {
+        	                    bannedSorted.add(player);
+        	                    break;
+        	                }
+        	            }
+    	            }
+    	        }
+    	    }
+	    	
+	    	if(bannedSorted.size() > count) {
+	    	    start = bannedSorted.size() - count;
 	    	    offset = start;
 	    	}
 	    	
-	    	for(BannedPlayer player:bannedPlayers) {
+	    	for(BannedPlayer player:bannedSorted) {
 	    	    if(start > 0) {
 	    	        start--;
 	    	        continue;
 	    	    }
 	    	    
 	    	    String date = banDateFormat.format(player.date);
-	    	    String bannedby = player.bannedby.substring(0,10);
+	    	    String bannedby = player.bannedby;
+	    	    if(bannedby.length() > 10) {
+	    	        bannedby.substring(0,11);
+	    	    }
 	    	    
-	    		m_botAction.sendSmartPrivateMessage(name, "#"+(offset+i)+" by "+bannedby+" "+date+" "+player.name);
+	    		m_botAction.sendSmartPrivateMessage(name, "#"+(offset+i)+" by "+Tools.formatString(bannedby,10)+" "+date+" "+player.name);
 	    		i++;
 	    		
-	    		if(i >= count) {
+	    		if(i > count) {
 	    		    break;
 	    		}
 	    	}
@@ -658,7 +690,7 @@ public class eventbot extends SubspaceBot {
     private void loadBannedPlayers() {
         
         int nr = 0;
-        String banLine = m_botAction.getBotSettings().getString("bannedPlayer0");
+        String banLine = m_botSettings.getString("bannedPlayer0");
         
         while(banLine != null) {
             if(banLine.trim().length() > 0) {
@@ -670,7 +702,7 @@ public class eventbot extends SubspaceBot {
             }
             
             nr++;
-            banLine = m_botAction.getBotSettings().getString("bannedPlayer"+nr);
+            banLine = m_botSettings.getString("bannedPlayer"+nr);
         }
     }
     
@@ -680,11 +712,24 @@ public class eventbot extends SubspaceBot {
     private void saveBannedPlayers() {
     	int nr = 0;
     	
-    	for(BannedPlayer player:bannedPlayers) {
-    	    m_botAction.getBotSettings().put("bannedPlayer"+(nr++), player.getDateTime()+":"+player.bannedby+":"+player.name);
+    	// remove all bans from configuration file as it will be put again
+    	int i = 0;
+    	String key = "bannedPlayer"+i;
+    	String p = m_botSettings.getString(key);
+    	
+    	while(p != null) {
+    	    m_botSettings.remove(key);
+    	    i++;
+    	    key = "bannedPlayer"+i;
+            p = m_botSettings.getString(key);
     	}
     	
-    	m_botAction.getBotSettings().save();
+    	// Put all bans to configuration file
+    	for(BannedPlayer player:bannedPlayers) {
+    	    m_botSettings.put("bannedPlayer"+(nr++), player.getDateTime()+":"+player.bannedby+":"+player.name);
+    	}
+    	
+    	m_botSettings.save();
     }
     
     /**
@@ -693,7 +738,7 @@ public class eventbot extends SubspaceBot {
      */
     private void removeBannedPlayer(String name) {
         for(BannedPlayer p:bannedPlayers) {
-            if(p.equals(name)) {
+            if(p.name.equals(name)) {
                 bannedPlayers.remove(p);
                 break;
             }
@@ -709,7 +754,7 @@ public class eventbot extends SubspaceBot {
     private boolean isBannedPlayer(String name) {
         boolean result = false;
         for(BannedPlayer p:bannedPlayers) {
-            if(p.name.equals(name)) {
+            if(p.name.equalsIgnoreCase(name)) {
                 result = true;
                 break;
             }
@@ -717,6 +762,26 @@ public class eventbot extends SubspaceBot {
         return result;
     }
     
+    /**
+     * Sends a PM to every subscribed staffer
+     *  
+     * @param subscriptionType
+     * @param request
+     */
+    private void notifySubscribed(String subscriptionType, EventRequest request) {
+        for(String name:subscribers.keySet()) {
+            if(subscribers.get(name).equals(subscriptionType)) {
+                if(subscriptionType.equals(SUBSCRIBE_ALL)) {
+                    String comments = "";
+                    
+                    if(comments.length() > 0)   comments = "("+comments+") ";
+                    m_botAction.sendRemotePrivateMessage(name, " "+request.getRequester()+" requested event '"+request.getEvent()+"' "+comments+"(rank: "+getEventRank(request.getEvent())+")");
+                }
+                else if(subscriptionType.equals(SUBSCRIBE_BWJS))
+                    m_botAction.sendRemotePrivateMessage(name, "Please start a new game in "+request.getEvent()+". (Requested by "+name+")");
+            }
+        }
+    }
 }
 
 class BannedPlayer {
@@ -734,4 +799,51 @@ class BannedPlayer {
     public String getDateTime() {
         return String.valueOf(this.date.getTime());
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((bannedby == null) ? 0 : bannedby.hashCode());
+        result = prime * result + ((date == null) ? 0 : date.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        
+        final BannedPlayer other = (BannedPlayer) obj;
+        if (bannedby == null) {
+            if (other.bannedby != null)
+                return false;
+        } else if (!bannedby.equals(other.bannedby))
+            return false;
+        if (date == null) {
+            if (other.date != null)
+                return false;
+        } else if (!date.equals(other.date))
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        return true;
+    }
+    
+    
 }
