@@ -75,8 +75,8 @@ public class distensionbot extends SubspaceBot {
     private final float EARLY_RANK_FACTOR = 1.6f;          // Factor for rank increases (lvl 1-9)
     private final float LOW_RANK_FACTOR = 1.15f;           // Factor for rank increases (lvl 10+)
     private final float NORMAL_RANK_FACTOR = 1.10f;        // Factor for rank increases (lvl 25+)
-    private final float HIGH_RANK_FACTOR = 1.2f;           // Factor for rank increases (lvl 50+)
-    private final float STUPIDLY_HIGH_RANK_FACTOR = 1.5f;  // Factor for rank increases (lvl 70+)
+    private final float HIGH_RANK_FACTOR = 1.25f;          // Factor for rank increases (lvl 50+)
+    private final float STUPIDLY_HIGH_RANK_FACTOR = 1.7f;  // Factor for rank increases (lvl 70+)
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_HIGH = 30;                 // for humiliation and low-rank RP caps
     private final int RANK_DIFF_VHIGH = 40;
@@ -527,7 +527,6 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!l", acceptedMessages, this, "cmdLeave" );
         m_commandInterpreter.registerCommand( "!la", acceptedMessages, this, "cmdLagout" );
         m_commandInterpreter.registerCommand( "!mh", acceptedMessages, this, "cmdModHelp" );
-        //m_commandInterpreter.registerCommand( "!p", acceptedMessages, this, "cmdPilot" );
         m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
@@ -539,6 +538,22 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!ui", acceptedMessages, this, "cmdUpgInfo" );
         m_commandInterpreter.registerCommand( "!w", acceptedMessages, this, "cmdWarp" );
         m_commandInterpreter.registerCommand( "!wh", acceptedMessages, this, "cmdWhereIs" );
+        m_commandInterpreter.registerCommand( "!mo", acceptedMessages, this, "cmdManOps" );
+        // Ops shortcuts
+        m_commandInterpreter.registerCommand( "!oh", acceptedMessages, this, "cmdOpsHelp" );
+        m_commandInterpreter.registerCommand( "!om", acceptedMessages, this, "cmdOpsMsg" );
+        m_commandInterpreter.registerCommand( "!opm", acceptedMessages, this, "cmdOpsPM" );
+        m_commandInterpreter.registerCommand( "!osm", acceptedMessages, this, "cmdOpsSab" );
+        m_commandInterpreter.registerCommand( "!or", acceptedMessages, this, "cmdOpsRadar" );
+        m_commandInterpreter.registerCommand( "!ore", acceptedMessages, this, "cmdOpsRearm" );
+        m_commandInterpreter.registerCommand( "!od", acceptedMessages, this, "cmdOpsDoor" );
+        m_commandInterpreter.registerCommand( "!oc", acceptedMessages, this, "cmdOpsCover" );
+        m_commandInterpreter.registerCommand( "!ow", acceptedMessages, this, "cmdOpsWarp" );
+        m_commandInterpreter.registerCommand( "!oo", acceptedMessages, this, "cmdOpsOrb" );
+        m_commandInterpreter.registerCommand( "!oda", acceptedMessages, this, "cmdOpsDark" );
+        m_commandInterpreter.registerCommand( "!ob", acceptedMessages, this, "cmdOpsBlind" );
+//        m_commandInterpreter.registerCommand( "!os", acceptedMessages, this, "cmdOpsShield" );
+//        m_commandInterpreter.registerCommand( "!oe", acceptedMessages, this, "cmdOpsEMP" );
         // Full trigger versions
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "cmdHelp" );
         m_commandInterpreter.registerCommand( "!modhelp", acceptedMessages, this, "cmdModHelp" );
@@ -546,8 +561,6 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!defect", acceptedMessages, this, "cmdDefect" );
         m_commandInterpreter.registerCommand( "!return", acceptedMessages, this, "cmdReturn" );
         m_commandInterpreter.registerCommand( "!leave", acceptedMessages, this, "cmdLeave" );
-        //m_commandInterpreter.registerCommand( "!pilot", acceptedMessages, this, "cmdPilot" );
-        //m_commandInterpreter.registerCommand( "!ship", acceptedMessages, this, "cmdPilot" );    // For the confused, such as me
         m_commandInterpreter.registerCommand( "!dock", acceptedMessages, this, "cmdDock" );
         m_commandInterpreter.registerCommand( "!armies", acceptedMessages, this, "cmdArmies" );
         m_commandInterpreter.registerCommand( "!hangar", acceptedMessages, this, "cmdHangar" );
@@ -583,6 +596,10 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!opscover", acceptedMessages, this, "cmdOpsCover" );
         m_commandInterpreter.registerCommand( "!opswarp", acceptedMessages, this, "cmdOpsWarp" );
         m_commandInterpreter.registerCommand( "!opsorb", acceptedMessages, this, "cmdOpsOrb" );
+        m_commandInterpreter.registerCommand( "!opsdark", acceptedMessages, this, "cmdOpsDark" );
+        m_commandInterpreter.registerCommand( "!opsblind", acceptedMessages, this, "cmdOpsBlind" );
+//        m_commandInterpreter.registerCommand( "!opsshield", acceptedMessages, this, "cmdOpsShield" );
+//        m_commandInterpreter.registerCommand( "!opsemp", acceptedMessages, this, "cmdOpsEMP" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
         m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
@@ -594,11 +611,11 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!savedie", acceptedMessages, this, "cmdSaveDie", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeplayer", acceptedMessages, this, "cmdDBWipePlayer", OperatorList.HIGHMOD_LEVEL );  // Not published in !help
         m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies", OperatorList.HIGHMOD_LEVEL );
 
-        //m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleArenaMessage" );
     }
@@ -610,9 +627,6 @@ public class distensionbot extends SubspaceBot {
      * @param message
      */
     public void handleArenaMessage( String name, String message ) {
-        //if( message.equals( "Arena UNLOCKED" ) && !dying )
-        //    m_botAction.toggleLocked();
-
         // Beta should not be loaded w/o me; ?find dugwyler done at start to ensure this.
         if( DEBUG )
             if( message.startsWith("Not online, last seen") ) {
@@ -623,24 +637,6 @@ public class distensionbot extends SubspaceBot {
                 cmdDie(name, message);
             }
     }
-
-
-    /**
-     * Display appropriate message for invalid commands.
-     * @param name
-     * @param msg
-     */
-    /*
-    public void handleInvalidMessage( String name, String msg ) {
-        if( name.equals( m_botAction.getBotName() ) )
-            return;
-        try {
-            Integer i = Integer.parseInt(msg);
-            if( i >= 1 && i <= 9 )      // For lazy pilots
-                cmdPilot( name, msg );
-        } catch (NumberFormatException e) {
-        }
-    }*/
 
 
     /**
@@ -710,7 +706,7 @@ public class distensionbot extends SubspaceBot {
                     "| !assist <army>    !as |  Temporarily assist <army> at no penalty to you",
                     "| !defect <army>    !d  |  Change to <army>.  All ships LOSE A FULL RANK,",
                     "|                       |     unless the new army has 4+ fewer pilots.",
-                    "| !manops               |  Mans the Tactical Ops console, if you have clearance",
+                    "| !manops           !mo |  Mans the Tactical Ops console, if you have clearance",
                     "|______________________/",
                     "               -=(  Use  !help 2  for additional commands  )=-"
             };
@@ -730,7 +726,7 @@ public class distensionbot extends SubspaceBot {
                     "| !dock             !d  |  Dock your ship, saving all progress",
                     "| !leave            !l  |  Leave the battle, opening your position",
                     "| !assist <army>    !as |  Temporarily assists <army> at no penalty to you",
-                    "| !manops               |  Mans the Tactical Ops console, if you have clearance",
+                    "| !manops           !mo |  Mans the Tactical Ops console, if you have clearance",
                     "|______________________/",
                     "               -=(  Use  !help 2  for additional commands  )=-",
             };
@@ -738,10 +734,10 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( shipNum == 9 )
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "              -=(  Use  !opshelp  for Tactical Ops commands  )=-" );
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "            -=(  Use  !opshelp (!oh) for Tactical Ops commands  )=-" );
 
         if( m_botAction.getOperatorList().isHighmod(name) )
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "               -=(  Use  !modhelp  for Moderator commands  )=-" );
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "              -=(  Use  !modhelp (!mh) for Moderator commands  )=-" );
 
     }
 
@@ -769,12 +765,13 @@ public class distensionbot extends SubspaceBot {
                 "|______________________/",
                 "    DB COMMANDS",
                 "  !db-changename <oldname>:<newname>   - Changes name from oldname to newname.",
+                "  !db-addship <name>:<ship#>           - Adds ship# to name's record.",
                 "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
                 "  !db-randomarmies                     - Randomizes all armies."
         };
         m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         if( m_botAction.getOperatorList().isSmod(name) ) {
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Hidden command: !db-wipeplayer <name>    - Wipes all records of a player from DB.");
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Hidden command: !db-wipeplayer <name>  - Wipes all records of a player from DB.");
         }
     }
 
@@ -793,29 +790,29 @@ public class distensionbot extends SubspaceBot {
 
         if( msg.equals("") ) {
             String[] helps = {
-                    ".-----------------------",
-                    "| COMMUNICATIONS    Cost|",
-                    "|  !opsradar          1 |  Shows approx. location of all pilots, + Terr info",
-                    "|  !opsmsg <#>        1 |  Msg army.  See !opshelp msg for available messages",
-                    "|  !opsPM <name>:<#>  1 |  Msg specific players.  See !opshelp msg",
-                    "|  !opssab            2 |  Sabotage msg to enemy.  See !opshelp msg",
-                    "| ACTIONS               |",
-                    "|  !opsrearm          1 |  Fast rearm/slow enemy rearm for: (L1)15s/(L2)25s",
-                    "|  !opsdoor <#>   1/2/3 |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
-                    "|                       |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
-                    "|  !opswarp <name>:<#>  |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
-                    "|                 2/3/4 |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
-                    "|  !opscover <#>      1 |  Deploy cover in home base.   1:MidLeft  2:MidRight",
-                    "|                       |       3:Before FR    4:Flag   5:Tube     6:Entrance",
-                    "|  !opsmine <#>       2 |  False minefield in home base.  1:MidBase  2:In FR",
-                    "|                       |    3:FR Entrance  4:TopTube  5:In Tube  6:LowCenter",
-                    "|  !opsorb <name>   1/3 |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
-                    "|  !opsdark <name>  2/5 |  Cone of darkness.  (L2)<all> = All NME in base",
-                    "|                       |   L3: Shroud (larger).  L4: Shroud <all> (cost 5)",
-                    "|  !opsblind <#>  3/4/5 |  Blind all NME in base.  <#> specifies which level.",
-                    "|  !opsshield         5 |  Shield all friendlies in home base.",
-                    "|  !opsemp            6 |  Instantly EMP all enemies in home base to 0 energy.",
-                    "|______________________/",
+                    ".----------------------------",
+                    "| COMMUNICATIONS    Cost     |",
+                    "|  !opsradar          1  !or |  Shows approx. location of all pilots, + Terr info",
+                    "|  !opsmsg <#>        1  !om |  Msg army.  See !opshelp msg for available messages",
+                    "|  !opsPM <name>:<#>  1  !opm|  Msg specific players.  See !opshelp msg",
+                    "|  !opssab            2  !osm|  Sabotage msg to enemy.  See !opshelp msg",
+                    "| ACTIONS                    |",
+                    "|  !opsrearm          1  !ore|  Fast rearm/slow enemy rearm for: (L1)15s/(L2)25s",
+                    "|  !opsdoor <#>   1/2/3  !od |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
+                    "|                            |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
+                    "|  !opswarp <name>:<#>   !ow |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
+                    "|                 2/3/4      |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
+                    "|  !opscover <#>      1  !oc |  Deploy cover in home base.   1:MidLeft  2:MidRight",
+                    "|                            |       3:Before FR    4:Flag   5:Tube     6:Entrance",
+                    "|  !opsmine <#>       2  !op |  False minefield in home base.  1:MidBase  2:In FR",
+                    "|                            |    3:FR Entrance  4:TopTube  5:In Tube  6:LowCenter",
+                    "|  !opsorb <name>   1/3  !oo |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
+                    "|  !opsdark <name>  2/5  !oda|  Cone of darkness.    (L2)<all> = All NME in base",
+                    "|                            |   L3: Shroud (larger).  L4: Shroud <all>",
+                    "|  !opsblind <#>  3/4/5  !ob |  Blind all NME in base.  <#> specifies which level.",
+                    "|  !opsshield         5  !os |  Shield all friendlies in home base.",
+                    "|  !opsemp            6  !oe |  Instantly EMP all enemies in home base to 0 energy.",
+                    "|___________________________/",
             };
             m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         } else if( msg.equalsIgnoreCase("msg") ) {
@@ -826,17 +823,17 @@ public class distensionbot extends SubspaceBot {
                     "| TIER 2: !opsPM name:#  (T/S for name)| To 1 pilot/Terrs/Sharks  |",
                     "| TIER 3: !opssab msg|PM #|name:#      | Msg or PM sent to enemy  |",
                     ".______________________________________|_________________________/",
-                    "| !opsmsg 1             |  Defend/assault top base (friend/foe #s, name of terr)",
+                    "| !opsmsg 1         !om |  Defend/assault top base (friend/foe #s, name of terr)",
                     "|         2             |  Defend/assault bottom base",
                     "|         3             |  Terr needed ASAP; requesting change of ships",
                     "|         4             |  Shark needed ASAP; requesting change of ships",
-                    "| !opsPM <name>:1       |  (To individual) Order to secure and hold top base",
+                    "| !opsPM <name>:1   !opm|  (To individual) Order to secure and hold top base",
                     "|               2       |  (To individual) Order to secure and hold bottom base",
                     "| !opsPM T:1            |  (To all Terrs)  Terr needed at top base immediately",
                     "|          2            |  (To all Terrs)  Terr needed at bottom base immediately",
                     "| !opsPM S:1            |  (To all Sharks) Shark needed at top base immediately",
                     "|          2            |  (To all Sharks) Shark needed at bottom base immediately",
-                    "| !opssab               |  Works like above commands but sends to enemy army. Ex:",
+                    "| !opssab           !osm|  Works like above commands but sends to enemy army. Ex:",
                     "|                       |  '!opssab msg 2' sends !opsmsg 2 to enemy w/ fake data.",
                     "|                       |  (False pilot counts, says there is no Terr, etc.)",
                     "|______________________/",
@@ -1463,7 +1460,7 @@ public class distensionbot extends SubspaceBot {
         // Easy fix: Disallow names >18 chars to avoid name hacking.
         // (Extra char padding ensures no-one can imitate, in case "name" String only shows 19 total)
         if( name.length() > 18 )
-            throw new TWCoreException( "Whoa there, is that a name you have, or a novel?  You need something short and snappy.  Hell, I'd reckon that anything 20 letters or more just won't cut it.  Come back when you have a better name.");
+            throw new TWCoreException( "Whoa there, is that a name you have, or a novel?  You need something short and snappy.  Hell, I'd reckon that anything 19 letters or more just won't cut it.  Come back when you have a better name.");
 
         DistensionPlayer p = m_players.get( name );
         if( p == null ) {
@@ -2793,6 +2790,10 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You must be at the Tactical Ops station to do this." );
             return false;
         }
+        if( p.getPurchasedUpgrade(3) < 1 ) {
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your communication systems must receive the proper !upgrade before you can use this ability." );
+            return false;
+        }
         int msgNum = 0;
         if( Tools.isAllDigits(msg) ) {
             msgNum = Integer.parseInt(msg);
@@ -2910,7 +2911,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You must be at the Tactical Ops station to do this." );
             return false;
         }
-        if( p.getPurchasedUpgrade(3) < 1 ) {
+        if( p.getPurchasedUpgrade(3) < 2 ) {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your communication systems must receive the proper !upgrade before you can use this ability." );
             return false;
         }
@@ -3046,7 +3047,7 @@ public class distensionbot extends SubspaceBot {
             return;
         if( p.getShipNum() != 9 )
             throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
-        if( p.getPurchasedUpgrade(3) < 2 )
+        if( p.getPurchasedUpgrade(3) < 3 )
             throw new TWCoreException( "Your communication systems must receive the proper !upgrade before you can use this ability." );
         if( p.getCurrentComms() < 2 )
             throw new TWCoreException( "You need 2 communication authorizations to send a sabotaged message.  (+1 every minute)" );
@@ -3502,8 +3503,8 @@ public class distensionbot extends SubspaceBot {
                 }
             }
 
-            m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS covered your army with SPHERE OF SECLUSION in " + (freq % 2 == 0 ? "TOP BASE." : "BOTTOM BASE.") );
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Covered all enemies in " + (freq % 2 == 0 ? "TOP BASE" : "BOTTOM BASE") + " with SPHERE OF SECLUSION." );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS placed SPHERE OF SECLUSION over all your army's pilots in " + (freq % 2 == 0 ? "TOP BASE!" : "BOTTOM BASE!") );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS covered all enemies in " + (freq % 2 == 0 ? "TOP BASE" : "BOTTOM BASE") + " with SPHERE OF SECLUSION!" );
         } else {
             if( p.getCurrentOP() < 1 )
                 throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
@@ -3511,9 +3512,134 @@ public class distensionbot extends SubspaceBot {
                 p.adjustOP(-1);
             m_botAction.showObjectForPlayer( p2.getPlayerID(), LVZ_OPS_SPHERE );
             m_botAction.sendPrivateMessage(p2.getPlayerID(), "ENEMY OPS has covered you with the SPHERE OF SECLUSION!" );
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Covered " + p2.getPlayerName() + " with SPHERE OF SECLUSION." );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS covered " + p2.getPlayerName() + " with SPHERE OF SECLUSION." );
+        }
+    }
+
+    /**
+     * Ops ability to cover the enemy with shroud of darkness.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsDark( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(10);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+        if( upgLevel < 2 && msg.equals("all") )
+            throw new TWCoreException( "You are not yet able to use this ability on all players in the base -- first you must install the appropriate !upgrade." );
+
+        Player p2 = null;
+        if( !msg.equals("all") ) {
+            p2 = m_botAction.getPlayer( msg );
+            if( p2 == null ) {
+                p2 = m_botAction.getFuzzyPlayer( msg );
+            }
+            if( p2 == null ) {
+                throw new TWCoreException( "Can't find pilot '" + msg + "'." );
+            } else {
+                if( p2.getFrequency() == p.getArmyID() )
+                    throw new TWCoreException( p2.getPlayerName() + " is on your army!" );
+                if( p2.getShipType() == Tools.Ship.SPECTATOR )
+                    throw new TWCoreException( p2.getPlayerName() + " isn't in a ship!" );
+            }
         }
 
+        if( msg.equals("all") ) {
+            if( p.getCurrentOP() < 5 )
+                throw new TWCoreException( "You need 5 OP to use this ability on all players in base.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            else
+                p.adjustOP(-5);
+
+            int lvzNum = p.getPurchasedUpgrade(10) > 3 ? LVZ_OPS_SHROUD_LG : LVZ_OPS_SHROUD_SM;
+            int freq = p.getArmyID();
+            for( DistensionPlayer p3 : m_players.values() ) {
+                if( p3.getArmyID() != freq ) {
+                    Player pobj = m_botAction.getPlayer( p3.getArenaPlayerID() );
+                    if( freq % 2 == 0 ) {
+                        if( pobj != null && pobj.getYLocation() > TOP_ROOF && pobj.getYLocation() < TOP_LOW )
+                            m_botAction.showObjectForPlayer( pobj.getPlayerID(), lvzNum );
+                    } else {
+                        if( pobj != null && pobj.getYLocation() > BOT_LOW && pobj.getYLocation() < BOT_ROOF )
+                            m_botAction.showObjectForPlayer( pobj.getPlayerID(), lvzNum );
+                    }
+                }
+            }
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS placed SHROUD OF DARKNESS over all your army's pilots in " + (freq % 2 == 0 ? "TOP BASE!" : "BOTTOM BASE!") );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS covered all enemies in " + (freq % 2 == 0 ? "TOP BASE" : "BOTTOM BASE") + " with SHROUD OF DARKNESS!" );
+
+        } else {
+            if( p.getCurrentOP() < 2 )
+                throw new TWCoreException( "You need 2 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            else
+                p.adjustOP(-2);
+            int lvzNum = p.getPurchasedUpgrade(10) > 2 ? LVZ_OPS_SHROUD_LG : LVZ_OPS_SHROUD_SM;
+            m_botAction.showObjectForPlayer( p2.getPlayerID(), lvzNum );
+            m_botAction.sendPrivateMessage(p2.getPlayerID(), "ENEMY OPS has covered you with the SHROUD OF DARKNESS!" );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS covered " + p2.getPlayerName() + " with SHROUD OF DARKNESS." );
+        }
+    }
+
+    /**
+     * Ops ability to blind all enemies completely for a short period of time.
+     * Does this by showing scary picture of MES from The Fall over a black backdrop.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsBlind( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(11);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+
+        Integer blindLevel;
+        if( msg.equals("") )
+            blindLevel = 1;
+        else {
+            try {
+                blindLevel = Integer.parseInt(msg);
+            } catch ( NumberFormatException e ) {
+                throw new TWCoreException( "Please specify a blindness intensity between 1 and 3.  Use !opshelp for more info." );
+            }
+            if( blindLevel < 1 || blindLevel > 3 )
+                throw new TWCoreException( "Please specify a blindness intensity between 1 and 3.  Use !opshelp for more info." );
+        }
+        if( blindLevel > p.getPurchasedUpgrade(11) )
+            throw new TWCoreException( "You are not yet able to use the field of blindness at that level -- first you must install the appropriate !upgrade." );
+
+        if( p.getCurrentOP() < 2 + blindLevel )
+            throw new TWCoreException( "You need " + (2 + blindLevel) + " OP to use a level " + blindLevel + " blindness.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+        else
+            p.adjustOP(-(2 + blindLevel));
+
+        int lvzNum;
+        String desc;
+        if( blindLevel == 3 ) {
+            lvzNum = LVZ_OPS_BLIND3;
+            desc = "MINOR";
+        } else if( blindLevel == 2 ) {
+            lvzNum = LVZ_OPS_BLIND2;
+            desc = "MAJOR";
+        } else {
+            lvzNum = LVZ_OPS_BLIND1;
+            desc = "MASSIVE";
+        }
+
+        int freq = p.getArmyID();
+        for( DistensionPlayer p3 : m_players.values() ) {
+            if( p3.getArmyID() != freq )
+                m_botAction.showObjectForPlayer( p3.getArenaPlayerID(), lvzNum );
+        }
+        m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS disabled all army sensors with FIELD OF BLINDNESS!" );
+        m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS knocked out all enemy sensors with a " + desc + " FIELD OF BLINDNESS!" );
 
     }
 
@@ -3732,6 +3858,38 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
+     * Adds a ship to a player's profile in the DB.
+     * @param name
+     * @param msg
+     */
+    public void cmdDBAddShip( String name, String msg ) {
+        String[] args = msg.split(":");
+        if( args.length != 2 || args[0].equals("") || args[1].equals("") )
+            throw new TWCoreException( "Syntax: !db-addship <name>:<ship#>" );
+        DistensionPlayer player = m_players.get( args[0] );
+        if( player == null ) {
+            m_botAction.sendPrivateMessage( name, args[0] + " not found in arena.  Player must be in arena in order to use this command." );
+            return;
+        }
+        int shipNumToAdd = 0;
+        try {
+            shipNumToAdd = Integer.parseInt( args[1] );
+        } catch (NumberFormatException e) {
+            throw new TWCoreException( "Invalid ship #.  Syntax: !db-addship <name>:<ship#>" );
+        }
+        if( shipNumToAdd < 1 || shipNumToAdd > 8 )
+            throw new TWCoreException( "Invalid ship #.  Syntax: !db-addship <name>:<ship#>" );
+        if( player.shipIsAvailable(shipNumToAdd))
+            throw new TWCoreException( "That ship is already available to that player." );
+
+        player.addShipToDB( shipNumToAdd );
+        String shipname = ( player.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(shipNumToAdd) );
+        m_botAction.sendPrivateMessage( name, shipname + " has been added to " + player.getName() + "'s hangar." );
+        Tools.printLog( name + " added ship #" + shipNumToAdd + " to " + args[0] + "'s hangar in Distension DB." );
+    }
+
+
+    /**
      * Removes a player's ship from the DB.
      * @param name
      * @param msg
@@ -3759,7 +3917,7 @@ public class distensionbot extends SubspaceBot {
         player.removeShipFromDB( shipNumToWipe );
         String shipname = ( player.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(shipNumToWipe) );
         m_botAction.sendPrivateMessage( name, shipname + " has been removed from " + player.getName() + "'s hangar." );
-        Tools.printLog(name + " deleted " + args[0] + "'s ship #" + shipNumToWipe + " from Distension DB." );
+        Tools.printLog( name + " deleted " + args[0] + "'s ship #" + shipNumToWipe + " from Distension DB." );
     }
 
 
@@ -5631,7 +5789,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return True if the given ship is available (1 to 8).
+         * @return True if the given ship is available (1 to 9).
          */
         public boolean shipIsAvailable( int shipNumToCheck ) {
             if( shipNumToCheck < 1 || shipNumToCheck > 9 )
@@ -7963,7 +8121,8 @@ public class distensionbot extends SubspaceBot {
         m_shipGeneralData.add( ship );
 
         // TACTICAL OPS -- rank 25
-        //  2: Comm 1 (PM)
+        //  1: Comm 1 (normal msg)
+        //  2: Comm 2 (PM)
         //  4: Warp 1 (lower base)
         //  5: Fast rearm 1
         //  7: Cover
@@ -7971,17 +8130,24 @@ public class distensionbot extends SubspaceBot {
         //  9: Fast rearm 2
         // 10: Door Control 1 (basic)
         // 12: Orb/Sphere 1 (1 target)
+        // 15: Shroud 1 (1 target, sm)
         // 16: Profit Sharing 2
         // 17: Fast rearm 3
-        // 18: Comm 2 (Sabotage)
+        // 18: Comm 3 (Sabotage)
         // 19: Door Control 2 (FR)
+        // 20: Orb/Sphere 2 (all in base)
         // 21: Warp 2 (FR entrance, roof)
+        // 22: Shroud 2 (all in base, sm)
         // 23: Profit Sharing 3
-        // 25: Orb/Sphere 2 (all in base)
+        // 25: Blind 1
+        // 30: Shroud 3 (1 target, LG)
         // 31: Door Control 3 (enemy)
+        // 33: Blind 2
         // 35: Warp 3 (FR)
         // 37: Profit Sharing 4
         // 44: Profit Sharing 5
+        // 46: Shroud 4 (all in base, LG)
+        // 50: Blind 3
         ship = new ShipProfile( RANK_REQ_SHIP9, 10f );
         upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,44}, 5 );
         ship.addUpgrade( upg );
@@ -7989,7 +8155,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "+20% OP Regen Rate", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{9,20,30,40}, 4 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,20}, new int[]{2,18}, 2 );
+        upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,7,20}, new int[]{1,3,18}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, new int[]{12,7,5}, new int[]{5,9,17}, 3 );
         ship.addUpgrade( upg );
@@ -7999,13 +8165,13 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, new int[]{7,15,25}, new int[]{4,21,31}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{12,25}, 2 );
+        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{12,20}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Shroud of Darkness", OPS_SHROUD, 0, 0, -1 );
+        upg = new ShipUpgrade( "Shroud of Darkness", OPS_SHROUD, new int[]{11,20,12,22}, new int[]{15,22,30,46}, 4 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, 0, 0, -1 );
+        upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, new int[]{10,15,18}, new int[]{25,33,50}, -1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, 0, 0, -1 );
         ship.addUpgrade( upg );
