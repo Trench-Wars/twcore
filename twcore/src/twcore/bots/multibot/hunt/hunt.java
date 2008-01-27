@@ -1,549 +1,614 @@
-/*
- * twbothunt.java
- *
- * Created on March 9, 2002, 8:36 PM
- * <revision date='December 19, 2007, 12:46 PM' by='Pio'> 
- * - Added reliable locking per ticket #156.
- * </revision>
- */
-
-/**
- *
- * @author  thomas
- *
- */
 package twcore.bots.multibot.hunt;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Vector;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.events.FrequencyShipChange;
+import twcore.core.util.StringBag;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.game.Player;
 
+/**
+ * Complete hunt make-over.
+ * @author milosh
+ */
 public class hunt extends MultiModule {
-    int specPlayers = 5; //default unless changed by host
-    private HashMap<String, HuntPlayer> data;
-    private LinkedList<String> keys;
-    private boolean gameStarted = false;
-    private String mvpName;
-    private int mvpScore;
-    private int huntReward = 5; //default unless changed by host
-    private int huntPenalty = 2; //default unless changed by host
-    private int preyReward = 1; //default unless changed by host
-   
-    private enum lockStates {
-    	UNKNOWN, LOCKED, UNLOCKED }
-    private lockStates lockState = lockStates.UNKNOWN;
-    
-	public void init()    {		
-	}
+	
+public boolean isRunning = false;
 
-	public void requestEvents(ModuleEventRequester events)	{
-		events.request(this, EventRequester.PLAYER_DEATH);
-		events.request(this, EventRequester.PLAYER_LEFT);
-		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-	}
+public int deaths = 99;
+public int preyKillPoints = 3;
+public int hunterKillPoints = 1;
+public int nonHunterPoints = -2;
 
-	// Added per ticket #156 for reliable locking - Pio
-	public void arenaLock(boolean unlock) 
-	{
-		if (unlock) {
-			lockState = lockStates.UNLOCKED;
-			m_botAction.toggleLocked();
-		} else {
-			lockState = lockStates.LOCKED;
-			m_botAction.toggleLocked();
+public Vector<HuntFreq> freqs;
+public Vector<HuntPlayer> mvpPlayers;
+
+public String[] opmsg = {
+	"!starthunt  - starts a game of hunt",
+	"!stop       - stops the game",
+	"!huntspec # - sets non-hunted death limit. (Default:99)",
+	"!prey #     - sets the point reward for a successful hunt. (Default:3)",
+	"!hunter #   - sets the point reward for killing your hunter. (Default:1)",
+	"!other #    - sets the point reward for killing other players. (Default: -2)"
+};
+public String[] helpmsg = {
+	"!prey      - shows your current prey.",
+	"!help      - displays this"
+};
+public void init(){
+	freqs = new Vector<HuntFreq>();
+	mvpPlayers = new Vector<HuntPlayer>();
+}
+
+////////////
+//EVENTS////
+////////////
+public void requestEvents(ModuleEventRequester events){
+	events.request(this, EventRequester.PLAYER_DEATH);
+	events.request(this, EventRequester.PLAYER_LEFT);
+	events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+}
+public void handleEvent(Message event){
+	int messageType = event.getMessageType();
+	String message = event.getMessage();
+	String name = m_botAction.getPlayerName(event.getPlayerID());
+	if(messageType == Message.PRIVATE_MESSAGE && opList.isER(name)){
+		handleModCommands(name, message);		
+	}
+	if(messageType == Message.PRIVATE_MESSAGE){
+		handlePubCommands(name, message);
+	}
+}
+
+public void handleEvent(PlayerDeath event){
+	Player pKiller = m_botAction.getPlayer(event.getKillerID());
+	Player pKilled = m_botAction.getPlayer(event.getKilleeID());
+	HuntFreq hfKiller = getHuntFreq(pKiller.getFrequency());
+	HuntFreq hfKilled = getHuntFreq(pKilled.getFrequency());
+	if(pKiller == null || pKilled == null || hfKiller == null || hfKilled == null)return;
+	if(hfKiller.getPrey().equals(pKilled.getPlayerName())){
+		m_botAction.specWithoutLock(pKilled.getPlayerID());
+		int points = hfKilled.getHuntPlayer(pKilled.getPlayerName()).getPoints();
+		m_botAction.sendArenaMessage(pKilled.getPlayerName() + " has been hunted by " + pKiller.getPlayerName() + " and is out! (" + points + " point(s))");
+		mvpPlayers.add(hfKilled.getHuntPlayer(pKilled.getPlayerName()));
+		hfKilled.remove(event.getKilleeID());
+		hfKiller.getHuntPlayer(pKiller.getPlayerName()).addPoints(preyKillPoints);
+		hfKiller.setPrey();			
+	}
+	else if(pKilled.getLosses() == deaths){
+		mvpPlayers.add(hfKilled.getHuntPlayer(pKilled.getPlayerName()));
+		m_botAction.sendArenaMessage(pKilled.getPlayerName() + " is out! (" + hfKilled.getHuntPlayer(pKilled.getPlayerName()).getPoints() + " point(s))");
+		hfKilled.remove(event.getKilleeID());
+		if(pKilled.getPlayerName().equals(hfKilled.getHunterFreq().getPrey())){
+			hfKilled.getHunterFreq().setPrey();
 		}
 	}
-	
-    public void startHunt ( String hostName ){
-        m_botAction.scoreResetAll(); //in case host forgot
-    	Player p;
-        String addPlayerName;
-        mvpScore = 0; //reset from previous game
-    	data = new HashMap<String, HuntPlayer>();
-        keys = new LinkedList<String>();
-    	PlayerBag huntPlayerBag = new PlayerBag();
+	else if(hfKilled.getPrey().equals(pKiller.getPlayerName())){
+		m_botAction.sendSmartPrivateMessage( pKiller.getPlayerName(), "You killed your hunter! (" + hunterKillPoints + " point(s))");
+		hfKiller.getHuntPlayer(pKiller.getPlayerName()).addPoints(hunterKillPoints);
+	}
+	else {
+		m_botAction.sendSmartPrivateMessage( pKiller.getPlayerName(), "You killed an innocent bystander! (" + nonHunterPoints + " point(s))");
+		hfKiller.getHuntPlayer(pKiller.getPlayerName()).addPoints(nonHunterPoints);		
+	}
 
-    	Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
-        if( i == null ) return;
-        while( i.hasNext() ){
-       	    p = i.next();
-            addPlayerName = p.getPlayerName();
-            //HuntPlayer temp;
+}
 
-            huntPlayerBag.add(addPlayerName);
-        }
-
-        int y = huntPlayerBag.size(); //need to take a snapshot
-        for( int x = 0; x < y; x++){
-            addPlayerName = huntPlayerBag.grab();
-
-            //Store playerName in the HuntPlayer class to preserve caps
-            data.put(addPlayerName.toLowerCase(), new HuntPlayer(addPlayerName));
-
-            //do it this way or else the list will sort them when it imports and we will lose randomization
-            keys.addLast(addPlayerName.toLowerCase());
-
-            //m_botAction.sendChatMessage( "++++++" + addPlayerName );
-        }
-
-        /*debug code
-        HuntPlayer temp;
-        for( int x = 0; x <= keys.size() - 1; x++ ){
-            temp = (HuntPlayer)data.get(keys.get(x));
-            m_botAction.sendChatMessage( x + ": " + keys.get(x).toString() );
-        }*/
-
-        if ( keys.size() < 2 ){
-            m_botAction.sendPrivateMessage( hostName, "Cannot start game with less than 2 people in play." );
-            return;
-        }
-        m_botAction.sendArenaMessage( "Hunt mode activated by " + hostName + ". Type :" + m_botAction.getBotName() + ":!prey if you forget who you are hunting." );
-        m_botAction.sendArenaMessage( "Removing players with " + specPlayers + " non-hunted deaths." );
-        gameStarted = true;
-        // Added per ticket #156 -Pio
-        arenaLock(false);
-        /*causes problem, warps everyone then starts the game right away
-          either have the host do it manually or insert a timer.
-
-          m_botAction.createRandomTeams( 1 ); //in case host forgot
-        */
-        tellArenaPreyName();
-    }
-
-    public void endHunt( String winnerName ){
-    	HuntPlayer winner;
-
-        checkMVP(winnerName);
-    	winner = data.get( winnerName.toLowerCase() );
-
-        gameStarted = false;
-        // Added per ticket #156 -Pio
-        arenaLock(true);
-        m_botAction.sendArenaMessage ("GAME OVER!", 5);
-        m_botAction.sendArenaMessage ("Survivor is: " + winner.getName() + " (" + winner.getPoints() + " points)");
-        m_botAction.sendArenaMessage ("MVP is: " + mvpName + " (" + mvpScore + " points)");
-    }
-
-    public Integer findScore( String playerName ){
-        if (gameStarted){
-            HuntPlayer tempPlayer;
-
-            try{
-                tempPlayer = data.get( playerName.toLowerCase() );
-                return new Integer(tempPlayer.getPoints());
-            } catch( Exception e ){
-                return null;
-            }
-    	}
-    	return null;
-    }
-
-    public void tellScore( String playerName ){
-    	tellScore( playerName, playerName );
-    }
-
-    public void tellScore( String sendtoName, String lookupName ){
-    	Integer score;
-        score = findScore( lookupName );
-
-        if(score != null){
-            if( lookupName.equals(sendtoName) ){
-                m_botAction.sendPrivateMessage( sendtoName, "Your current score: " + score );
-            } else {
-            	m_botAction.sendPrivateMessage( sendtoName, "Player score: " + score );
-            }
-        } else {
-            m_botAction.sendPrivateMessage( sendtoName, "Player score not found" );
-        }
-    }
-
-    public String findPreyName( String hunterName ){
-    	if (gameStarted){
-    	    int i;
-    	    HuntPlayer prey;
-
-    	    i = keys.indexOf( hunterName.toLowerCase() );
-    	    if (i > 0){
-    	    	prey = data.get(keys.get( --i ));
-    	    	return prey.getName();
-    	    } else if (i == 0){
-    	    	prey = data.get(keys.get( keys.size() - 1 ));
-    	    	return prey.getName();
-    	    }
-    	}
-    	return null;
-    }
-
-    
-    public void tellPreyName( String playerName ){
-    	String preyName;
-
-    	preyName = findPreyName( playerName );
-    	if (preyName != null){
-    	    m_botAction.sendPrivateMessage( playerName, "Your current prey is: " + preyName);
-    	} else {
-            m_botAction.sendPrivateMessage( playerName, "You are currently not assigned a prey.");
-    	}
-    }
-
-    public void tellArenaPreyName(){
-        for( int i = 0; i < keys.size(); i++){
-          tellPreyName( keys.get(i).toString() );
-        }
-    }
-
-    public void checkMVP( String playerName ){
-        HuntPlayer checkPlayer;
-        checkPlayer = data.get(playerName.toLowerCase());
-
-        if (mvpScore <= checkPlayer.getPoints()){
-            mvpName = checkPlayer.getName();
-    	    mvpScore = checkPlayer.getPoints();
-        }
-    }
-
-    public void removeHuntPlayer( String playerName ){
-    	int i = keys.indexOf( playerName.toLowerCase() );
-
-    	if (gameStarted){
-    	    if ( i != -1 ){
-    	    	checkMVP( playerName );
-
-    	    	keys.remove( playerName.toLowerCase() );
-                //m_botAction.sendChatMessage( playerName + " has been removed from the chain." );
-
-                if (keys.size() > 1){
-                    //In case they are the last person on the list
-                    if ( i == keys.size() ) { i = 0; }
-
-                    //No need to go to the next on list since it will replace the one we just removed
-                    tellPreyName( keys.get( i ).toString() );
-                }
-            }
-
-            if (keys.size() == 1) {
-            	endHunt( keys.getFirst().toString() );
-            }
-        }
-    }
-    
-    public void handleEvent( Message event ){
-        String message = event.getMessage();
-        /* <revision> Added per ticket #156 for reliable locking - Pio */
-        if (event.getMessageType() == Message.ARENA_MESSAGE) {
-        	if (message.equals("Arena LOCKED")) {
-        			if (lockState == lockStates.UNLOCKED) {
-        				m_botAction.toggleLocked();
-        			}
-        		 }
-        		else if (message.equals("Arena UNLOCKED")) {
-        			if (lockState == lockStates.LOCKED){
-        				m_botAction.toggleLocked();
-        			}
-        		}
-        	}
-        /* </revision> */
-    
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
-            String name = m_botAction.getPlayerName( event.getPlayerID() );
-            if( opList.isER( name ) ) {
-            	handleCommand( name, message );
-            } else {
-                handlePublicCommand( name, message );
-            }
-        }
-    }
-
-    public void handleEvent( PlayerDeath event ){
-        Player pKilled = m_botAction.getPlayer( event.getKilleeID() );
-        Player pKiller = m_botAction.getPlayer( event.getKillerID() );
-
-        if( pKilled == null || pKiller == null )
-            return;
-
-        String killedName = pKilled.getPlayerName();
-        String killerName = pKiller.getPlayerName();
-
-        if (gameStarted){
-            HuntPlayer tempPlayer;
-
-            if ( killedName.equals( findPreyName( killerName ))){ //Hunter kills prey
-                m_botAction.spec( event.getKilleeID() );
-                m_botAction.spec( event.getKilleeID() );
-
-                tempPlayer = data.get( killedName.toLowerCase() );
-                if(tempPlayer != null){
-                    m_botAction.sendArenaMessage( killedName + " (" + tempPlayer.getPoints() + " points) has been hunted and killed by " + killerName );
-
-                    tempPlayer = data.get( killerName.toLowerCase() );
-                    tempPlayer.addHuntKill();
-                    tempPlayer.addPoints(huntReward);
-                    m_botAction.sendPrivateMessage( killerName, "Successful hunt! " + huntReward + " points added to your score." );
-                }
-                return;
-            } else if( killerName.equals( findPreyName( killedName ) ) ) { //Prey kills hunter
-            	tempPlayer = data.get( killerName.toLowerCase() );
-
-            	if(tempPlayer != null){
-            	    tempPlayer.addPoints(preyReward);
-            	    m_botAction.sendPrivateMessage( killerName, "You killed your hunter! " + preyReward + " points added to your score." );
-            	}
-            } else { //Player kills wrong person
-            	tempPlayer = data.get( killerName.toLowerCase() );
-
-            	if(tempPlayer != null){
-            	    tempPlayer.remPoints(huntPenalty);
-                    m_botAction.sendPrivateMessage( killerName , "You killed the wrong person! " + huntPenalty + " points deducted from your score." );
-                }
-            }
-
-      	    if ( pKilled.getLosses() >= specPlayers ){
-                m_botAction.spec( event.getKilleeID() );
-                m_botAction.spec( event.getKilleeID() );
-
-                tempPlayer = data.get( killedName.toLowerCase() );
-                if(tempPlayer != null) {
-	                m_botAction.sendArenaMessage( killedName + " is out with " + tempPlayer.getPoints() + " points, " + pKilled.getLosses() + " losses." );
-                }
-            }
-        }
-    }
-
-    public void handleEvent( PlayerLeft event ){
-    	if (gameStarted){
-            removeHuntPlayer( m_botAction.getPlayerName( event.getPlayerID() ) );
-        }
-    }
-
-    public void handleEvent( FrequencyShipChange event ){
-    	if (gameStarted){
-    	    String name = m_botAction.getPlayerName( event.getPlayerID() );
-    	    int ship = event.getShipType();
-    	    if ( ship == 0 ){
-    	        removeHuntPlayer( name );
-    	    } else {
-    	    	//Keep players out of the game who aren't on the list
-    	    	if( keys.indexOf( name.toLowerCase() ) == -1 ){
-    	    	    m_botAction.spec( event.getPlayerID() );
-    	    	    m_botAction.spec( event.getPlayerID() );
-                    //m_botAction.sendChatMessage( "Hunt Error: Unregistered player (" + name + ") forced to spec" );
-                    m_botAction.sendPrivateMessage( name, "You cannot join a Hunt game while it is in progress" );
-    	    	}
-    	    }
-    	}
-    }
-
-    public void handleCommand( String name, String message ){
-    	message = message.toLowerCase();
-    	/* Added per ticket #156 -Pio */
-    	if ( message.equals("!lock")) {
-    		arenaLock(false);
-			m_botAction.sendArenaMessage("Arena is now Locked.");
-    		return;
-    	} else if (message.equals("!ulock")) {
-    		arenaLock(true);
-			m_botAction.sendArenaMessage("Arena is now Unlocked. Free to enter.");
-    		return;
-    	}
-    	
-        if( message.startsWith( "!huntspec " )){
-            if(gameStarted){
-            	m_botAction.sendPrivateMessage( name, "Cannot change !huntspec while a game is in progress" );
-            } else {
-            	if( getInteger( message.substring( 10 )) < 1 ){
-            	    m_botAction.sendPrivateMessage( name, "The !huntspec cannot be less then 1" );
-            	} else {
-                    specPlayers = getInteger( message.substring( 10 ));
-                    m_botAction.sendPrivateMessage( name, "Non-hunted death limit set to: " + specPlayers );
-                }
-            }
-        } else if( message.startsWith( "!starthunt" )){
-            startHunt( name );
-        } else if( message.equals( "!stophunt" )){
-            if(gameStarted){
-                gameStarted = false;
-                arenaLock(true);
-                m_botAction.sendArenaMessage( "Hunt mode deactivated by " + name );
-            }
-        } else if( message.startsWith( "!huntreward" ) ){
-            if(gameStarted){
-                m_botAction.sendPrivateMessage( name, "Cannot change !huntreward while a game is in progress" );
-            } else {
-                huntReward = getInteger( message.substring( 12 ));
-                m_botAction.sendPrivateMessage( name, "Hunt kill reward set to: " + huntReward );
-            }
-        } else if( message.startsWith( "!huntpenalty" ) ){
-            if(gameStarted){
-                m_botAction.sendPrivateMessage( name, "Cannot change !huntpenalty while a game is in progress" );
-            } else {
-                huntPenalty = getInteger( message.substring( 13 ));
-                m_botAction.sendPrivateMessage( name, "Non-hunt kill penalty set to: " + huntPenalty );
-            }
-        } else if( message.startsWith( "!preyreward" ) ){
-            if(gameStarted){
-                m_botAction.sendPrivateMessage( name, "Cannot change !preyreward while a game is in progress" );
-            } else {
-                preyReward = getInteger( message.substring( 12 ));
-                m_botAction.sendPrivateMessage( name, "Prey killing hunter reward set to: " + preyReward );
-            }
-        } else {
-            handlePublicCommand( name, message );
-        }
-    }
-
-    public void handlePublicCommand( String name, String message){
-        if( message.startsWith( "!prey" ) ){
-            if(gameStarted){tellPreyName( name );}
-        } else if( message.equals( "!scoreleader" ) ){
-            if(gameStarted){
-            	if( mvpName != null ){
-                    m_botAction.sendPrivateMessage( name, "Current score leader is: " + mvpName + " with: " + mvpScore + " points" );
-                } else {
-                    m_botAction.sendPrivateMessage( name, "There currently is no leader" );
-                }
-            };
-        } else if( message.equals( "!score" ) ){
-            if(gameStarted){tellScore( name );}
-        } else if( message.startsWith( "!score " ) ){
-            if(gameStarted){
-            	tellScore( name, message.substring(7).trim() );
-            }
-        }
-    }
-
-    public String[] getModHelpMessage() {
-        String[] help = {
-            "Commands for the hunt module",
-            "!huntspec <numdeaths>  - Spec players who reach this death count before being hunted. (Default is 5)",
-            "!huntreward <points>   - Set how many points rewarded for a hunt kill. (Default 5)",
-            "!huntpenalty <points>  - Set how many points deducted for a non-hunt kill. (Default 2)",
-            "!preyreward  <points>  - Set how many points rewarded to the prey for killing their hunter. (Default 1)",
-            "!starthunt             - Starts the hunt. Make sure everyone who wishes to play is already in a ship.",
-            "                         Do not let people in the game late and do not let lagouts in. It won't work.",
-            "                         The arena is locked when the game starts (!lock) and unlocked when it ends (!ulock)",
-            "!stophunt              - Stops the hunt and unlocks the arena (!ulock).",
-            "!prey                  - (Public Command) Tells who you should be hunting if you forget.",
-            "!score <name>          - (Public Command) Checks your score or score of another if specified.",
-            "!scoreleader           - (Public Command) Tells who currently has highest score.",
-            "!lock                  - Locks the arena (Reliably)",
-            "!ulock                 - Unlocks the arena (Reliably)",
-        };
-        return help;
-    }
-
-    public int getInteger( String input ){
-        try{
-            return Integer.parseInt( input.trim() );
-        } catch( Exception e ){
-            return 1;
-        }
-    }
-
-    public void cancel(){
-
-    }
-    public boolean isUnloadable()	{
-		return true;
+public void handleEvent(PlayerLeft event){	
+	HuntFreq hf = getHuntFreq(event.getPlayerID());
+	if(hf == null)return;
+	mvpPlayers.add(hf.getHuntPlayer(event.getPlayerID()));
+	m_botAction.sendArenaMessage(hf.getHuntPlayer(event.getPlayerID()).getPlayerName() + " is out! (" + hf.getHuntPlayer(event.getPlayerID()).getPoints() + " point(s))");
+	hf.remove(event.getPlayerID());
+	if(hf.getHuntPlayer(event.getPlayerID()).getPlayerName().equals(hf.getHunterFreq().getPrey())){
+		hf.getHunterFreq().setPrey();
 	}
 }
 
-class HuntPlayer {
-    int huntKills = 0;
-    int score = 0;
-    String name;
+public void handleEvent(FrequencyShipChange event){
+	Player p = m_botAction.getPlayer(event.getPlayerID());
+	HuntFreq hf = getHuntFreq(p.getFrequency());
+	if(p == null || hf == null)return;
+	mvpPlayers.add(hf.getHuntPlayer(p.getPlayerName()));
+	m_botAction.sendArenaMessage(p.getPlayerName() + " is out! (" + hf.getHuntPlayer(p.getPlayerName()).getPoints() + " point(s))");
+	hf.remove(event.getPlayerID());
+	if(p.getPlayerName().equals(hf.getHunterFreq().getPrey())){
+		hf.getHunterFreq().setPrey();
+	}
+}
+////////////
+//COMMANDS//
+////////////
+public void handleModCommands(String sender, String cmd){
+	if(cmd.equalsIgnoreCase("!starthunt"))
+		doStartCmd(sender);
+	else if(cmd.equalsIgnoreCase("!stop"))
+		doStopCmd(sender);
+	else if(cmd.startsWith("!huntspec "))
+		huntSpec(sender, cmd.substring(10));
+	else if(cmd.startsWith("!prey "))
+		preyReward(sender, cmd.substring(6));
+	else if(cmd.startsWith("!hunter "))
+		hunterReward(sender, cmd.substring(8));
+	else if(cmd.startsWith("!other "))
+		nonReward(sender, cmd.substring(7));
+}
+public void handlePubCommands(String sender, String cmd){
+	if(cmd.equalsIgnoreCase("!prey"))
+		doTellPreyCmd(sender);
+	else if(cmd.equalsIgnoreCase("!help"))
+		doHelpCmd(sender);
+}
 
-    public HuntPlayer(){
+public void doHelpCmd(String name){
+	m_botAction.smartPrivateMessageSpam(name, helpmsg);
+}
+////////////
+//GAME//////
+////////////
+public void doStartCmd(String name){
+	if(isRunning){
+		m_botAction.sendSmartPrivateMessage( name, "Hunt is already running.");
+		return;
+	}
+	isRunning = true;
+	m_botAction.sendArenaMessage( "Hunt mode activated by " + name + ". Type :" + m_botAction.getBotName() + ":!prey if you forget who you are hunting." );
+	m_botAction.sendArenaMessage( "Removing players with " + deaths + " non-hunted deaths." );
+	
+	m_botAction.scoreResetAll();
+	m_botAction.shipResetAll();
+    freqs.clear();
+    mvpPlayers.clear();
+    
+    int x=0;
+    for(int i=0; i<10000; i++){
+    	int size = m_botAction.getFrequencySize(i);
+    	if(size>0){
+    		freqs.add(x, new HuntFreq(i, x));//Find existing frequencies and add them to the frequency Vector.
+    		x++;
+    	}   	
     }
-
-    public HuntPlayer( String playerName ){
-    	name = playerName;
+    
+    
+    Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+    if(!i.hasNext()){
+    	m_botAction.sendSmartPrivateMessage( name, "Not enough players.");
+    	doStopCmd(name);
+    	return;
     }
-
-    public String getName(){
-        return name;
+    while(i.hasNext()){
+    	Player p = i.next();
+    		for(int z = 0; z < freqs.size(); z++){
+    			if(freqs.elementAt(z).getFreq() == p.getFrequency()){
+    				freqs.elementAt(z).add(new HuntPlayer(p));
+    				break;
+    			}
+    		}
     }
-
-    public void addPoints( int amount ){
-        score += amount;
+    Iterator<HuntFreq> it = freqs.iterator();
+    if(!it.hasNext()){
+    	m_botAction.sendSmartPrivateMessage( name, "Couldn't find enough playing frequencies");
+    	doStopCmd(name);
+    	return;
     }
-
-    public void remPoints( int amount ){
-        score -= amount;
+    while(it.hasNext()){
+    	HuntFreq f = it.next();
+    	if(f.size() < 1){
+    		it.remove();//If there are frequencies without any players(only spectators) remove them. (Spectators in other frequencies are unimportant as they don't exist in the HuntFreq)
+    	}
     }
-
-    public int getPoints(){
-        return score;
+    if(freqs.size() < 2){
+    	m_botAction.sendSmartPrivateMessage( name, "Couldn't find enough playing frequencies");
+    	doStopCmd(name);
+    	return;
     }
-
-    public void addHuntKill(){
-       huntKills++;
+    updateIndices();
+    Iterator<HuntFreq> it2 = freqs.iterator();
+    while(it2.hasNext()){
+    	it2.next().setPrey();
     }
+    //We now have all HuntFreqs with their HuntPlayers created and preys assigned.
+    
+    
+}
 
-    public int getHuntKills(){
-       return huntKills;
+public void doStopCmd(String name){
+	if(!isRunning){
+		m_botAction.sendSmartPrivateMessage( name, "Hunt is not currently running.");
+		return;
+	}
+	else{
+		freqs.clear();
+		mvpPlayers.clear();
+		m_botAction.sendArenaMessage("Game stopped. -" + name);
+		isRunning = false;
+	}
+	
+}
+
+public void end(HuntFreq h){
+	mvpPlayers.addAll(h.players);
+	m_botAction.sendArenaMessage("Game over!", 5);
+	if(h.size() == 1)m_botAction.sendArenaMessage("Winner: " + h.toString());
+	else if(h.size() > 1) m_botAction.sendArenaMessage("Frequency " + h.getFreq() + " wins! Survivors: " + h.toString());
+	m_botAction.sendArenaMessage(getMVP());
+	freqs.clear();
+	mvpPlayers.clear();
+	isRunning = false;
+}
+
+public void preyReward(String name, String msg){
+	boolean badmsg = false;
+	int x = 0;
+	try{
+		x = Integer.parseInt(msg);
+	}catch(Exception e){badmsg = true;}
+	if(!isRunning && !badmsg){
+		preyKillPoints = x;
+		m_botAction.sendSmartPrivateMessage( name, "Players will receive " + x + " point(s) for a successful hunt.");
+	}
+	else if(isRunning){
+		m_botAction.sendSmartPrivateMessage( name, "Please modify point rewards before you start the game.");
+	}
+	else if(badmsg){
+		m_botAction.sendSmartPrivateMessage( name, "Command Format: !prey #");
+	}
+}
+
+public void hunterReward(String name, String msg){
+	boolean badmsg = false;
+	int x = 0;
+	try{
+		x = Integer.parseInt(msg);
+	}catch(Exception e){badmsg = true;}
+	if(!isRunning && !badmsg){
+		hunterKillPoints = x;
+		m_botAction.sendSmartPrivateMessage( name, "Players will receive " + x + " point(s) for killing their hunter.");
+	}
+	else if(isRunning){
+		m_botAction.sendSmartPrivateMessage( name, "Please modify point rewards before you start the game.");
+	}
+	else if(badmsg){
+		m_botAction.sendSmartPrivateMessage( name, "Command Format: !hunter #");
+	}
+}
+
+public void nonReward(String name, String msg){
+	boolean badmsg = false;
+	int x = 0;
+	try{
+		x = Integer.parseInt(msg);
+	}catch(Exception e){badmsg = true;}
+	if(!isRunning && !badmsg){
+		nonHunterPoints = x;
+		m_botAction.sendSmartPrivateMessage( name, "Players will receive " + x + " point(s) for killing other players.");
+	}
+	else if(isRunning){
+		m_botAction.sendSmartPrivateMessage( name, "Please modify point rewards before you start the game.");
+	}
+	else if(badmsg){
+		m_botAction.sendSmartPrivateMessage( name, "Command Format: !other #");
+	}
+}
+
+public void huntSpec(String name, String msg){
+	boolean badmsg = false;
+	int x = 0;
+	try{
+		x = Integer.parseInt(msg);
+		if(x < 0)
+			throw new Exception();
+	}catch(Exception e){badmsg = true;}
+	if(!isRunning && !badmsg){
+		deaths = x;
+		m_botAction.sendSmartPrivateMessage( name, "Non-hunted death limit set to: " + x);
+	}
+	else if(isRunning){
+		m_botAction.sendSmartPrivateMessage( name, "Please make changes before you start the game.");
+	}
+	else if(badmsg){
+		m_botAction.sendSmartPrivateMessage( name, "Command Format: !huntspec # (# must be positive)");
+	}
+}
+
+public void doTellPreyCmd(String name){
+	HuntFreq hf;
+	for(int i = 0; i < freqs.size(); i++){
+		hf = freqs.elementAt(i);
+		HuntPlayer p = hf.getHuntPlayer(name);
+		if(p != null){
+			m_botAction.sendSmartPrivateMessage( name, "You are currently hunting " + hf.getPrey() + ".");
+			return;
+		}
+	}
+	m_botAction.sendSmartPrivateMessage( name, "You are not playing!");
+}
+
+public HuntFreq getHuntFreq(int freq){
+	for(int i = 0; i < freqs.size(); i++){
+		if(freqs.elementAt(i).getFreq() == freq)
+			return freqs.elementAt(i);
+	}
+	return null;
+}
+
+public void updateIndices(){
+	for(int i = 0; i < freqs.size(); i++){
+		freqs.elementAt(i).setIndex(i);
+	}
+}
+
+public String getMVP(){
+	int mvpPoints = 0;
+	String mvp = null;	
+	Iterator<HuntPlayer> i = mvpPlayers.iterator();
+	while(i.hasNext()){
+		HuntPlayer p = i.next();
+		if(p.getPoints() > mvpPoints){
+			mvpPoints = p.getPoints();
+			mvp = p.getPlayerName();
+		}
+	}
+	if(mvp == null){
+		return "MVP: None. No one had positive points.";
+	}
+	return "MVP: " + mvp + " (" + mvpPoints + " point(s))!";
+}
+	
+public String[] getModHelpMessage(){return opmsg;}
+public boolean isUnloadable(){if(isRunning)return false;return true;}
+public void cancel(){}
+
+//////////////////////////////////////////////
+/////////PRIVATE CLASSES//////////////////////
+//////////////////////////////////////////////
+private class HuntFreq{
+	
+private Vector<HuntPlayer> players;
+public int freq, index;
+public String prey;
+
+public HuntFreq(int freq, int index){
+	this.freq = freq;
+	this.index = index;
+	players = new Vector<HuntPlayer>();
+}
+
+/**
+ * Returns a HuntPlayer Object by the player's name.
+ * @param playerName
+ * @return
+ */
+public HuntPlayer getHuntPlayer(String playerName){
+	for(int i = 0; i < players.size(); i++){
+		if(players.elementAt(i).getPlayerName().equals(playerName))
+			return players.elementAt(i);
+	}
+	return null;
+}
+
+/**
+ * Returns a HuntPlayer Object by the player's ID.
+ * @param playerID
+ * @return
+ */
+public HuntPlayer getHuntPlayer(int playerID){
+	for(int i = 0; i < players.size(); i++){
+		if(players.elementAt(i).getPlayerID() == playerID)
+			return players.elementAt(i);
+	}
+	return null;
+}
+
+/**
+ * Adds a HuntPlayer Object to this Object
+ * @param p
+ */
+public void add(HuntPlayer p){
+	players.add(p);
+}
+
+/**
+ * Removes a HuntPlayer Object from this HuntFreq by playerID
+ * @param id - the playerID
+ */
+public void remove(int id){
+	for(int i = 0; i < players.size(); i++){
+		if(players.elementAt(i).getPlayerID() == id)
+			players.remove(i);
+	}
+}
+
+/**
+ * Returns the frequency number of this HuntFreq.
+ * @return
+ */
+public int getFreq(){
+	return freq;
+}
+
+/**
+ * Changes local knowledge of this frequency's index to the parameter.
+ * @param index
+ */
+public void setIndex(int index){
+	this.index = index;
+}
+
+/**
+ * Returns the size of this frequency.
+ * @return
+ */
+public int size(){
+	return players.size();
+}
+
+/**
+ * Returns the name of the person this frequency is hunting.
+ * @return
+ */
+public String getPrey(){
+	return prey;
+}
+
+/**
+ * Returns the HuntFreq Object of the frequency this one is hunting.
+ * @return
+ */
+public HuntFreq getPreyFreq(){
+	if(index == 0)
+		return freqs.lastElement();
+	return freqs.elementAt(index - 1);
+}
+
+/**
+ * Returns the HuntFreq Object of the frequency hunting this one.
+ * @return
+ */
+public HuntFreq getHunterFreq(){
+	if(index == freqs.lastIndexOf(freqs.lastElement()))
+		return freqs.elementAt(0);
+	return freqs.elementAt(index + 1);
+}
+
+/**
+ * Changes the prey for this frequency to a random person on the frequency they are hunting.
+ * If no players are found then the prey frequency is removed and it re-runs. If this freq
+ * is the last frequency remaining this ends the game.
+ */
+public void setPrey(){
+	String addPlayerName;
+	StringBag randomPlayerBag = new StringBag();
+    Iterator<HuntPlayer> i = getPreyFreq().players.iterator();
+    if( i.hasNext() ) {
+    	while( i.hasNext() ){
+    		addPlayerName = i.next().getPlayerName();    		
+    		randomPlayerBag.add(addPlayerName);
+    	}
+    	prey = randomPlayerBag.grabAndRemove();
+    	Iterator<HuntPlayer> it = players.iterator();
+    	while(it.hasNext()){
+    		HuntPlayer p = it.next();
+    		p.setPrey(prey);
+    	}
+    	tellPreyName();
+    }else{
+    	m_botAction.sendArenaMessage("Frequency " + getPreyFreq().getFreq() + " is out!");
+    	freqs.remove(getPreyFreq());
+    	if(freqs.size() == 1)end(this);
+    	else{
+    		updateIndices();
+    		this.setPrey();
+    	}
     }
 }
 
-class PlayerBag {
-    ArrayList<String> list;
+/**
+ * Tell's everyone on this frequency who the prey is.
+ */
+public void tellPreyName(){
+	Iterator<HuntPlayer> i = players.iterator();
+	while(i.hasNext()){
+		HuntPlayer p = i.next();
+		p.tellPreyName();
+	}
+}
 
-    public PlayerBag(){
-        list = new ArrayList<String>();
-    }
 
-    public PlayerBag( String string ){
-        this();
-        add( string );
-    }
+public String toString(){
+	ArrayList<String> s = new ArrayList<String>();
+	int size = players.size();
+	Iterator<HuntPlayer> i = players.iterator();
+	
+	if(size == 1)return players.firstElement().getPlayerName() + " (" + players.firstElement().getPoints() + " point(s))";
+	while(i.hasNext()){
+		HuntPlayer p = i.next();
+		s.add(p.getPlayerName() + " (" + p.getPoints() + ")");
+	}
+	return s.toString();	
+}
 
-    public void clear(){
-        list.clear();
-    }
+}
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+private class HuntPlayer{
 
-    public void add( String string ){
-        list.add( string );
-    }
+public Player p;
+public String prey;
+public int points;
+	
 
-    public ArrayList<String> getList(){
-        return list;
-    }
+public HuntPlayer(Player p){
+	this.p = p;
+}
 
-    public String grab(){
-    	if( isEmpty() ){
-            return null;
-        } else {
-            int i = random( list.size() );
-            String grabbed;
+/**
+ * Returns the player's name.
+ * @return
+ */
+public String getPlayerName(){
+	return p.getPlayerName();
+}
 
-            grabbed = list.get( i ) ;
-            list.remove( i );
-            return grabbed;
-        }
-    }
+/**
+ * Returns the player's ID.
+ * @return
+ */
+public int getPlayerID(){
+	return p.getPlayerID();
+}
 
-    public int size(){
-        return list.size();
-    }
+/**
+ * Returns the player's frequency.
+ * @return
+ */
+public int getFreq(){
+	return p.getFrequency();
+}
 
-    private int random( int maximum ){
-        return (int)(Math.random()*maximum);
-    }
+/**
+ * Changes this players prey to the parameter.
+ * @param prey
+ */
+public void setPrey(String prey){
+	this.prey = prey;
+}
 
-    public boolean isEmpty(){
-        return list.isEmpty();
-    }
+/**
+ * Tells this player who his prey is.
+ */
+public void tellPreyName(){
+	if(prey == null)return;
+	m_botAction.sendSmartPrivateMessage( getPlayerName() , "Prey: " + prey + ".");
+}
 
-    public String toString(){
-        return grab();
-    }
+/**
+ * Returns this players current points.
+ * @return 
+ */
+public int getPoints(){
+	return points;
+}
+
+/**
+ * Adds points to the player. Just use a negative value to subtract points.
+ * @param x - The amount you want to add.
+ */
+public void addPoints(int x){
+	points += x;
+}
+
+public String toString(){
+	return getPlayerName();
+}
+
+}
+//////////////////////////////////////////////
 }
