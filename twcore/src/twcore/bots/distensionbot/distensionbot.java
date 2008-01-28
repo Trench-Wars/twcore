@@ -444,8 +444,10 @@ public class distensionbot extends SubspaceBot {
                     for( DistensionPlayer p : m_players.values() )
                         if( !helped && p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
                             if( p.getStrength() <= maxStrToAssist ) {
-                                cmdAssist( p.getName(), ":auto:" );
-                                helped = true;
+                                try {
+                                    cmdAssist( p.getName(), ":auto:" );
+                                    helped = true;
+                                } catch (TWCoreException e ) {}
                             }
                         }
                     if( !helped ) {
@@ -1166,7 +1168,7 @@ public class distensionbot extends SubspaceBot {
         if( !readyForPlay )         // If bot has not fully started up,
             return;                 // don't operate normally here.
         if( event.getShipType() == 0 ) {
-            if( p.getShipNum() > 0 ) {
+            if( p.getShipNum() > 0 && p.getShipNum() != 9 ) {
                 doDock( p );
                 if( flagTimer != null && flagTimer.isRunning() ) {
                     if( p.canUseLagout() ) {    // Essentially: did player spec or !dock (not !leave)
@@ -2512,10 +2514,10 @@ public class distensionbot extends SubspaceBot {
             return;
         if( p.getShipNum() == -1 )
             throw new TWCoreException( "You must !return or !enlist in an army first." );
+        boolean autoReturn = msg.equals(":auto:");
         if( p.isRespawning() )
             throw new TWCoreException( "Please wait until your current ship is rearmed before attempting to assist." );
         int armyToAssist = -1;
-        boolean autoReturn = msg.equals(":auto:");
         if( msg.equals("") || autoReturn ) {
             armyToAssist = p.getNaturalArmyID();
         } else {
@@ -4048,7 +4050,9 @@ public class distensionbot extends SubspaceBot {
             }
             m_botAction.sendPrivateMessage( name, players + " players added to notify list." );
             m_botAction.SQLClose(r);
-        } catch (SQLException e) {}
+        } catch (SQLException e) {
+            m_botAction.sendSmartPrivateMessage( "dugwyler", e.getMessage() );
+        }
 
         TimerTask msgTask = new TimerTask() {
             public void run() {
