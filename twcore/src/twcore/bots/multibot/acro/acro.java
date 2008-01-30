@@ -30,12 +30,13 @@ public class acro extends MultiModule{
     HashMap<String, String> playerScores = new HashMap<String, String>();
     Vector<String>      phrases;
     int                 votes[];
-    Spy                 racismSpy = new Spy( m_botAction );
+    Spy                 racismSpy;
 
     public void init()    {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         generator = new Random();
+        racismSpy = new Spy( m_botAction );
     }
 
     public void requestEvents(ModuleEventRequester events)    {
