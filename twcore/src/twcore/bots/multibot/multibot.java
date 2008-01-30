@@ -546,7 +546,8 @@ public class multibot extends SubspaceBot {
                 repository.add(new File(m_modulePath, lowerName));
                 if (m_loader.shouldReload())
                     m_loader.reinstantiate();
-                m_eventModule = (MultiModule) m_loader.loadClass(getParentClass() + "." + lowerName + "." + lowerName).newInstance();
+                Class<?> classmulti = m_loader.loadClass(getParentClass() + "." + lowerName + "." + lowerName);
+                m_eventModule = (MultiModule)classmulti.newInstance();
                 m_eventModule.initialize(m_botAction, moduleSettings, m_modEventReq);
                 if( !quiet )
                     m_botAction.sendPrivateMessage(name, "Loaded game: " + m_eventModule.getModuleName() );
@@ -556,6 +557,9 @@ public class multibot extends SubspaceBot {
                 throw new RuntimeException("Access problem encountered while attempting to load the module (module: "+module+", error: "+iae.getMessage()+"). Please contact a member of TW Bot Development.");
             } catch (ClassNotFoundException cnfe) {
                 throw new RuntimeException("This game module ('"+module+"') can't be loaded because it isn't found. Use !listgames to see available games; !listutils to see utils.");
+            } catch (NullPointerException npe) {
+                //NullPointerException can be thrown if classmulti.newInstance() can't instantiate the class
+                throw new RuntimeException("Unable to load module '"+module+"' (NullPointerException). Please contact a member of TW Bot Development.");
             }
         } else {
             // Not a game module; try util instead
@@ -574,6 +578,9 @@ public class multibot extends SubspaceBot {
                 throw new RuntimeException("Access problem encountered while attempting to load the utility (module: "+module+", error: "+iae.getMessage()+"). Please contact a member of TW Bot Development.");
             } catch (ClassNotFoundException cnfe) {
                 throw new RuntimeException("This utility ('"+module+"') can't be loaded because it isn't found. Use !listgames to see available games; !listutils to see utils.");
+            } catch (NullPointerException npe) {
+                //NullPointerException can be thrown if classmulti.newInstance() can't instantiate the class
+                throw new RuntimeException("Unable to load module '"+module+"' (NullPointerException). Please contact a member of TW Bot Development.");
             }
         }
     }
