@@ -550,8 +550,12 @@ public class multibot extends SubspaceBot {
                 m_eventModule.initialize(m_botAction, moduleSettings, m_modEventReq);
                 if( !quiet )
                     m_botAction.sendPrivateMessage(name, "Loaded game: " + m_eventModule.getModuleName() );
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to load game: " + module + ".  Use !listgames to see available games; !listutils to see utils.");
+            } catch (InstantiationException ie) {
+                throw new RuntimeException("Unknown problem encountered while attempting to load the module (module: "+module+", error: "+ie.getMessage()+"). Please contact a member of TW Bot Development.");
+            } catch (IllegalAccessException iae) {
+                throw new RuntimeException("Access problem encountered while attempting to load the module (module: "+module+", error: "+iae.getMessage()+"). Please contact a member of TW Bot Development.");
+            } catch (ClassNotFoundException cnfe) {
+                throw new RuntimeException("This game module ('"+module+"') can't be loaded because it isn't found. Use !listgames to see available games; !listutils to see utils.");
             }
         } else {
             // Not a game module; try util instead
@@ -564,8 +568,12 @@ public class multibot extends SubspaceBot {
                 m_utils.put(module, util);
                 if( !quiet )
                     m_botAction.sendPrivateMessage(name, "Loaded utility: " + module);
-            } catch (Exception e) {
-                m_botAction.sendPrivateMessage(name, "Failed to load utility " + module + ".  Use !listgames to see available games; !listutils to see utils.");
+            } catch (InstantiationException ie) {
+                throw new RuntimeException("Unknown problem encountered while attempting to load the utility (module: "+module+", error: "+ie.getMessage()+"). Please contact a member of TW Bot Development.");
+            } catch (IllegalAccessException iae) {
+                throw new RuntimeException("Access problem encountered while attempting to load the utility (module: "+module+", error: "+iae.getMessage()+"). Please contact a member of TW Bot Development.");
+            } catch (ClassNotFoundException cnfe) {
+                throw new RuntimeException("This utility ('"+module+"') can't be loaded because it isn't found. Use !listgames to see available games; !listutils to see utils.");
             }
         }
     }
