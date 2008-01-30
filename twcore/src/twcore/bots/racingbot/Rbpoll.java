@@ -137,7 +137,7 @@ public class Rbpoll extends RBExtender {
             + poll[0] );
 
             int[] counters = new int[range+1];
-            Iterator iterator = votes.values().iterator();
+            Iterator<Integer> iterator = votes.values().iterator();
             while( iterator.hasNext() ){
                 counters[((Integer)iterator.next()).intValue()]++;
             }

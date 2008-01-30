@@ -66,7 +66,7 @@ public class RbTWRC extends RacingBotExtension
 
 	public void updatePeopleFile()
 	{
-		Iterator it = signups.iterator();
+		Iterator<String> it = signups.iterator();
 		try {
 			FileWriter out = new FileWriter(people, true);
 			while(it.hasNext())
@@ -183,13 +183,13 @@ public class RbTWRC extends RacingBotExtension
 		writeLog(opName + " started a normal race update, points changes follow.");
 		RbRace race = (RbRace)modules.get("Race");
 		Track track = race.getTrack(race.currentTrack);
-		HashMap positions = track.positions;
-		HashMap leaders = track.lapLeaders;
-		Set set = leaders.keySet();
-		Collection col = leaders.values();
-		Iterator it = positions.keySet().iterator();
-		Iterator it2 = set.iterator();
-		Iterator it3 = col.iterator();
+		HashMap<Integer, String> positions = track.positions;
+		HashMap<String, Integer> leaders = track.lapLeaders;
+		Set<String> set = leaders.keySet();
+		Collection<Integer> col = leaders.values();
+		Iterator<Integer> it = positions.keySet().iterator();
+		Iterator<String> it2 = set.iterator();
+		Iterator<Integer> it3 = col.iterator();
 		String leadName = "";
 		int mostLaps = 0;
 		while(it2.hasNext())
@@ -259,13 +259,13 @@ public class RbTWRC extends RacingBotExtension
 		writeLog(opName + " started a major race update, point changes follow.");
 		RbRace race = (RbRace)modules.get("Race");
 		Track track = race.getTrack(race.currentTrack);
-		HashMap positions = track.positions;
-		HashMap leaders = track.lapLeaders;
-		Set set = leaders.keySet();
-		Collection col = leaders.values();
-		Iterator it = positions.keySet().iterator();
-		Iterator it2 = set.iterator();
-		Iterator it3 = col.iterator();
+		HashMap<Integer, String> positions = track.positions;
+		HashMap<String, Integer> leaders = track.lapLeaders;
+		Set<String> set = leaders.keySet();
+		Collection<Integer> col = leaders.values();
+		Iterator<Integer> it = positions.keySet().iterator();
+		Iterator<String> it2 = set.iterator();
+		Iterator<Integer> it3 = col.iterator();
 		String leadName = "";
 		int mostLaps = 0;
 		while(it2.hasNext())
@@ -336,13 +336,13 @@ public class RbTWRC extends RacingBotExtension
 		writeLog(opName + " started a marathon race update, point changes follow.");
 		RbRace race = (RbRace)modules.get("Race");
 		Track track = race.getTrack(race.currentTrack);
-		HashMap positions = track.positions;
-		HashMap leaders = track.lapLeaders;
-		Set set = leaders.keySet();
-		Collection col = leaders.values();
-		Iterator it = positions.keySet().iterator();
-		Iterator it2 = set.iterator();
-		Iterator it3 = col.iterator();
+		HashMap<Integer, String> positions = track.positions;
+		HashMap<String, Integer> leaders = track.lapLeaders;
+		Set<String> set = leaders.keySet();
+		Collection<Integer> col = leaders.values();
+		Iterator<Integer> it = positions.keySet().iterator();
+		Iterator<String> it2 = set.iterator();
+		Iterator<Integer> it3 = col.iterator();
 		String leadName = "";
 		int mostLaps = 0;
 		while(it2.hasNext())
@@ -440,11 +440,11 @@ public class RbTWRC extends RacingBotExtension
 		RbRace race = (RbRace)modules.get("Race");
 		Track track = race.getTrack(race.currentTrack);
 		int players = 0;
-		ArrayList trackPositions = track.playerPositions;
-		ArrayList currentLap;
+		ArrayList<ArrayList<String>> trackPositions = track.playerPositions;
+		ArrayList<String> currentLap;
 		for(int k = 0;k < trackPositions.size();k++)
 		{
-			currentLap = (ArrayList)trackPositions.get(k);
+			currentLap = trackPositions.get(k);
 			players += currentLap.size();
 		}
 		racePlayers = players;

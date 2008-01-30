@@ -233,7 +233,7 @@ public class RbRace extends RacingBotExtension {
 				m_botAction.toggleLocked();
 				Track thisTrack = getTrack( currentTrack );
 				ArrayList<String> zeroLap = new ArrayList<String>();
-				Iterator it = m_botAction.getPlayingPlayerIterator();
+				Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 				while( it.hasNext() ) {
 					Player p = (Player)it.next();
 					if( thisTrack.checkShip( p.getShipType() ) )
@@ -329,7 +329,7 @@ public class RbRace extends RacingBotExtension {
 	}
 
 	public void listTracks( String name ) {
-		Iterator it = trackIDList.keySet().iterator();
+		Iterator<Integer> it = trackIDList.keySet().iterator();
 		while( it.hasNext() ) {
 			int i = ((Integer)it.next()).intValue();
 			Track n = trackIDList.get( new Integer( i ) );
@@ -415,12 +415,12 @@ public class RbRace extends RacingBotExtension {
 
 	public int getPosition(String name)
 	{
-		ArrayList positions = getTrack(currentTrack).playerPositions;
+		ArrayList<ArrayList<String>> positions = getTrack(currentTrack).playerPositions;
 		int position = 1;
 
 		for(int k = positions.size() - 1;k >= 0;k--)
 		{
-			ArrayList currentLap = (ArrayList)positions.get(k);
+			ArrayList<String> currentLap = positions.get(k);
 			if(currentLap.indexOf(name.toLowerCase()) == -1)
 				position += currentLap.size();
 			else

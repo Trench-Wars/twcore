@@ -126,21 +126,21 @@ public class Rbobjons extends RBExtender
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
-							player1 = (Player) iterator1.next();
+							player1 = iterator1.next();
 							if(player1.getFrequency() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player1.getPlayerName(), "*objon " + params[0]);
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
-							player2 = (Player) iterator2.next();
+							player2 = iterator2.next();
 							if(player2.getFrequency() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player2.getPlayerName(), "*objon " + params[0]);
 						}
@@ -148,11 +148,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getFrequency() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objoff " + params[0]);
 								}
@@ -166,11 +166,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getFrequency() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objoff " + params[0]);
 								}
@@ -180,11 +180,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getFrequency() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objon " + params[0]);
 								}
@@ -203,21 +203,21 @@ public class Rbobjons extends RBExtender
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
-							player1 = (Player) iterator1.next();
+							player1 = iterator1.next();
 							if(player1.getShipType() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player1.getPlayerName(), "*objon " + params[0]);
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
-							player2 = (Player) iterator2.next();
+							player2 = iterator2.next();
 							if(player2.getShipType() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player2.getPlayerName(), "*objon " + params[0]);
 						}
@@ -225,11 +225,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getShipType() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objoff " + params[0]);
 								}
@@ -243,11 +243,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getShipType() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objoff " + params[0]);
 								}
@@ -257,11 +257,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getShipType() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objon " + params[0]);
 								}
@@ -347,21 +347,21 @@ public class Rbobjons extends RBExtender
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
-							player1 = (Player) iterator1.next();
+							player1 = iterator1.next();
 							if(player1.getFrequency() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player1.getPlayerName(), "*objoff " + params[0]);
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
-							player2 = (Player) iterator2.next();
+							player2 = iterator2.next();
 							if(player2.getFrequency() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player2.getPlayerName(), "*objoff " + params[0]);
 						}
@@ -369,11 +369,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getFrequency() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objon " + params[0]);
 								}
@@ -387,11 +387,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getFrequency() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objoff " + params[0]);
 								}
@@ -409,21 +409,21 @@ public class Rbobjons extends RBExtender
 				switch(params.length)
 				{
 					case 2:
-						Iterator iterator1 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator1 = m_botAction.getPlayerIterator();
 						Player player1;
 						while(iterator1.hasNext())
 						{
-							player1 = (Player) iterator1.next();
+							player1 = iterator1.next();
 							if(player1.getShipType() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player1.getPlayerName(), "*objoff " + params[0]);
 						}
 						break;
 					case 3:
-						Iterator iterator2 = m_botAction.getPlayerIterator();
+						Iterator<Player> iterator2 = m_botAction.getPlayerIterator();
 						Player player2;
 						while(iterator2.hasNext())
 						{
-							player2 = (Player) iterator2.next();
+							player2 = iterator2.next();
 							if(player2.getShipType() == Integer.parseInt(params[1]))
 								m_botAction.sendUnfilteredPrivateMessage(player2.getPlayerName(), "*objoff " + params[0]);
 						}
@@ -431,11 +431,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getShipType() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objon " + params[0]);
 								}
@@ -449,11 +449,11 @@ public class Rbobjons extends RBExtender
 						{
 							public void run()
 							{
-								Iterator iterator = m_botAction.getPlayerIterator();
+								Iterator<Player> iterator = m_botAction.getPlayerIterator();
 								Player player;
 								while(iterator.hasNext())
 								{
-									player = (Player) iterator.next();
+									player = iterator.next();
 									if(player.getShipType() == Integer.parseInt(params[1]))
 										m_botAction.sendUnfilteredPrivateMessage(player.getPlayerName(), "*objoff " + params[0]);
 								}

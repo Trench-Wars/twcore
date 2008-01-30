@@ -99,7 +99,7 @@ public class Rbtfrace extends RBExtender
 
     public void freq0()
     {
-    	Iterator it = m_botAction.getPlayingPlayerIterator();
+    	Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
     	while(it.hasNext())
     	{
     		p = (Player) it.next();
@@ -129,7 +129,7 @@ public class Rbtfrace extends RBExtender
 
     public void freq1()
     {
-    	Iterator it = m_botAction.getPlayingPlayerIterator();
+    	Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
     	while(it.hasNext())
     	{
     		p = (Player) it.next();
@@ -159,7 +159,7 @@ public class Rbtfrace extends RBExtender
 
     public void freq2()
     {
-    	Iterator it = m_botAction.getPlayingPlayerIterator();
+    	Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
     	while(it.hasNext())
     	{
     		p = (Player) it.next();
@@ -189,7 +189,7 @@ public class Rbtfrace extends RBExtender
 
     public void freq3()
     {
-    	Iterator it = m_botAction.getPlayingPlayerIterator();
+    	Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
     	while(it.hasNext())
     	{
     		p = (Player) it.next();

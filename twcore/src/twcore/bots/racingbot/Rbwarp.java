@@ -212,7 +212,7 @@ public class Rbwarp extends RBExtender
 
         if(warpType == WARP_FIRST_FREQ)
         {
-            Vector freqNumbers = getFreqNumbers();
+            Vector<Integer> freqNumbers = getFreqNumbers();
 
             if(warpID < freqNumbers.size())
             {
@@ -226,7 +226,7 @@ public class Rbwarp extends RBExtender
 
     public void doWarpGroup(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup)
     {
-        Iterator iterator = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
 
         while(iterator.hasNext())

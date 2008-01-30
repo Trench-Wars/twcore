@@ -36,7 +36,7 @@ public abstract class RacingBotExtension {
     OperatorList m_opList;
     String m_sqlHost;
 	racingbot m_bot;
-	HashMap modules;
+	HashMap<String, RacingBotExtension> modules;
 
     public RacingBotExtension() {
     }

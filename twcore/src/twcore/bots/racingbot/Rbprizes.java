@@ -733,7 +733,7 @@ public class Rbprizes extends RBExtender
   {
     try
     {
-      Iterator iterator = m_botAction.getPlayerIterator();
+      Iterator<Player> iterator = m_botAction.getPlayerIterator();
       Player player;
       while(iterator.hasNext())
       {
@@ -758,7 +758,7 @@ public class Rbprizes extends RBExtender
   {
     try
     {
-      Iterator iterator = m_botAction.getPlayerIterator();
+      Iterator<Player> iterator = m_botAction.getPlayerIterator();
       Player player;
       while(iterator.hasNext())
       {
