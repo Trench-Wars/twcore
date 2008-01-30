@@ -1090,7 +1090,7 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException("Can't find you.  Please report this to staff.");
         if( p.getShipType() == 0 )
             throw new RuntimeException("You must be in a ship for this command to work.");
-        Iterator i = m_botAction.getFreqPlayerIterator(p.getFrequency());
+        Iterator<Player> i = m_botAction.getFreqPlayerIterator(p.getFrequency());
         if( !i.hasNext() )
             throw new RuntimeException("ERROR: No players detected on your frequency!");
         m_botAction.sendPrivateMessage(sender, "Name of Terrier          Last seen");
@@ -1160,7 +1160,7 @@ public class purepubbot extends SubspaceBot
         for( int i = 0; i < 9; i++ ) {
             team.add( new Vector<String>() );
         }
-        Iterator i = m_botAction.getFreqPlayerIterator(freq);
+        Iterator<Player> i = m_botAction.getFreqPlayerIterator(freq);
         while( i.hasNext() ) {
             Player p = (Player)i.next();
             team.get(p.getShipType()).add(p.getPlayerName());
@@ -1297,7 +1297,7 @@ public class purepubbot extends SubspaceBot
 
         // For all other weights, we must decide whether they can play based on the
         // number of people on freq who are also using the ship.
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
         if( i == null)
             return;
 
@@ -1450,7 +1450,7 @@ public class purepubbot extends SubspaceBot
      */
     private void specRestrictedShips()
     {
-        Iterator iterator = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
 
         while(iterator.hasNext())
@@ -1466,7 +1466,7 @@ public class purepubbot extends SubspaceBot
      */
     private void fillFreqLists()
     {
-        Iterator iterator = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
         String lowerName;
 
@@ -1489,7 +1489,7 @@ public class purepubbot extends SubspaceBot
      */
     private void fixFreqs()
     {
-        Iterator iterator = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
         Player player;
 
         fillFreqLists();
@@ -1641,7 +1641,7 @@ public class purepubbot extends SubspaceBot
                 }
             }
 
-            Iterator iterator = m_botAction.getPlayingPlayerIterator();
+            Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
             Player player;
             while(iterator.hasNext()) {
                 player = (Player) iterator.next();
@@ -1729,7 +1729,7 @@ public class purepubbot extends SubspaceBot
                 for( int j = 0; j<otherleaders.length; j++ )
                     MVPs.remove( otherleaders[j] );
             }
-            Iterator i = MVPs.iterator();
+            Iterator<String> i = MVPs.iterator();
 
             if( i.hasNext() ) {
                 switch( special ) {
@@ -1848,7 +1848,7 @@ public class purepubbot extends SubspaceBot
     public void setupPlayerTimes() {
         playerTimes = new HashMap<String,Integer>();
 
-        Iterator i = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
         Player player;
 
         try {
@@ -1882,8 +1882,8 @@ public class purepubbot extends SubspaceBot
      * Ensures !warpers on freqs are warped all to 'their' side, but not predictably.
      */
     private void warpPlayers() {
-        Iterator i;
-
+        Iterator<?> i;
+   
         if( strictFlagTime )
             i = m_botAction.getPlayingPlayerIterator();
         else
