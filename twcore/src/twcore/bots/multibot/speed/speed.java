@@ -334,7 +334,7 @@ public class speed extends MultiModule {
 	}
 
 	public void updatePositions() {
-		Iterator it = players.keySet().iterator();
+		Iterator<String> it = players.keySet().iterator();
 
 		while (it.hasNext()) {
 			String name = (String)it.next();
@@ -345,7 +345,7 @@ public class speed extends MultiModule {
 	public void registerPlayers() {
 		players.clear();
 
-		Iterator it = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 		while (it.hasNext()) {
 			Player p = (Player)it.next();
 			players.put(p.getPlayerName(), new SpeedPlayer(p.getPlayerName()));
@@ -433,7 +433,7 @@ public class speed extends MultiModule {
 	public void declareWinner() {
 		String winner = "- Nobody (?) -";
 
-		Iterator it = players.keySet().iterator();
+		Iterator<String> it = players.keySet().iterator();
 		while (it.hasNext()) {
 			winner = (String)it.next();
 		}
