@@ -4,7 +4,9 @@ import java.util.StringTokenizer;
 
 import twcore.core.BotAction;
 import twcore.core.events.Message;
-import twcore.core.BotSettings;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
 
 /**
  * Racism spy.  Extremely similar to PubBot's spy module.  When instantiated, a bot
@@ -14,7 +16,7 @@ import twcore.core.BotSettings;
  * This could easily be altered to check for other words or perform another action. 
  * 
  * <added by Pio>
- * Added ability to update via racism.cfg within the data folder.
+ * Added ability to update via racism.cfg within the corecfg folder.
  * Example usage:
  * import twcore.core.util.Spy;
  * 
@@ -24,26 +26,60 @@ import twcore.core.BotSettings;
  *       watcher = new Spy(botAction); // implement spy.java
  *       m_eventModule = null;  
  *  }
-    
-    On your bots handleEvent for Messages do the folowing:
-        public void handleEvent(Message event) {
-    	   watcher.handleEvent(event);
-    	}
+ *   
+ *   On your bots handleEvent for Messages do the folowing:
+ *       public void handleEvent(Message event) {
+ *   	   watcher.handleEvent(event);
+ *		 }
  *</added by Pio>
  */
+
 public class Spy {
-    public String keywords = "";    
-    private BotAction   m_botAction;        // BotAction reference
+    public ArrayList<String> keywords = new ArrayList<String>(); // our banned words
+    public ArrayList<String> fragments = new ArrayList<String>(); // our banned fragments
+    private BotAction   m_botAction;   // BotAction reference
 
     public Spy( BotAction botAction ) {
 		m_botAction = botAction;
-		keywords = new BotSettings(m_botAction.getCoreCfg("racism.cfg")).getString("words"); 
-		
-		if(keywords == null) {
-		    keywords = "nig n1g jew gook chink"; // just in case if racism.cfg isn't found
-		}
+		loadConfig();
 	}
     
+    /*** 
+     * Loads the banned keywords and fragments via corecfg/racism.cfg
+     */
+    public void loadConfig () { 
+    	BufferedReader sr;
+    	String line;
+    	boolean loadWords = true;
+    	try {
+    		sr = new BufferedReader(new FileReader(m_botAction.getCoreCfg("racism.cfg")));
+    		while((line = sr.readLine()) != null)
+    		{
+    		   if(line.contains("[Words]")) { loadWords = true; }
+    		   if(line.contains("[Fragments]")) { loadWords = false; }
+    		   
+    		   if(line.startsWith("[") == false) { 
+    			   if (loadWords) {
+    				   keywords.add(line.trim());
+    			   }
+    			   else {
+    				   fragments.add(line.trim());
+    			   }
+    		   }
+    		}
+    		sr.close();
+    		sr = null;
+    	}
+    		catch (Exception e) {
+    		sr = null;
+    	}
+    	
+    }
+
+    /***
+     * Handles the Message event and checks for Banned words
+     * @param event event from a Message Event
+     */
     public void handleEvent( Message event ){
         int messageType = event.getMessageType();
         String sender = getSender(event);
@@ -57,6 +93,11 @@ public class Spy {
         }
     }
     
+    /***
+     * Matches messageType to a human representation.
+     * @param messageType Type of message to represent.
+     * @return Human representation of the messageType.
+     */
     private String getMessageTypeString(int messageType)
     {
       switch(messageType)
@@ -85,13 +126,31 @@ public class Spy {
       return "Other";
     }    
     
+    /***
+     * Searches words/fragments for banned words in corecfg/racism.cfg
+     * @param message Text to check
+     * @return True: If a word/fragment is detected. False: If nothing is found.
+     */
     public boolean isRacist(String message)
     {
-      StringTokenizer keywordTokens = new StringTokenizer(keywords);
+      StringTokenizer words = new StringTokenizer(message.toLowerCase(), " ");
+      String word = "";
+      
+      while(words.hasMoreTokens()) {
+    	  word = words.nextToken();
+    	  for (String i : keywords){ 
+    		  if (word.trim().equals(i.trim())) {
+    			  return true;
+    		  }
+    	  }
+    	  
+    	  for (String i : fragments){ 
+    		  if (word.contains(i)) {
+    			  return true;
+    		  }
+    	  }
+      }
 
-      while(keywordTokens.hasMoreTokens())
-    	if(message.toLowerCase().contains(keywordTokens.nextToken()))
-          return true;
       return false;
     }
 
@@ -102,15 +161,14 @@ public class Spy {
      * @return the name of the sender is returned.  If the sender cannot be
      * determined then null is returned.
      */
-
-    private String getSender(Message event)
-    {
-      int messageType = event.getMessageType();
-
-      if(messageType == Message.REMOTE_PRIVATE_MESSAGE || messageType == Message.CHAT_MESSAGE)
-        return event.getMessager();
-      int senderID = event.getPlayerID();
-      return m_botAction.getPlayerName(senderID);
-    }
-    
-}
+	private String getSender(Message event)
+	    {
+	      int messageType = event.getMessageType();
+	
+	      if(messageType == Message.REMOTE_PRIVATE_MESSAGE || messageType == Message.CHAT_MESSAGE)
+	        return event.getMessager();
+	      int senderID = event.getPlayerID();
+	      return m_botAction.getPlayerName(senderID);
+	    }
+	    
+	}
