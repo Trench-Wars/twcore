@@ -15,7 +15,7 @@ import java.util.ArrayList;
  *  
  * This could easily be altered to check for other words or perform another action. 
  * 
- * <added by Pio>
+ * [added by Pio]
  * Added ability to update via racism.cfg within the corecfg folder.
  * Example usage:
  * import twcore.core.util.Spy;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
  *       public void handleEvent(Message event) {
  *   	   watcher.handleEvent(event);
  *		 }
- *</added by Pio>
+ *[/added by Pio]
  */
 
 public class Spy {

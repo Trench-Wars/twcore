@@ -17,7 +17,7 @@
  * this once the bot is able to read maps.
  *
  * The setup warping feature is done as follows:
- * !Setupwarp <Argument>
+ * !Setupwarp &lt;Argument&gt;
  *
  * The arguments can be seen when you type !Setupwarplist.
  * The warp coordinates are stored in the Trench Wars Database and must be added
@@ -28,7 +28,7 @@
  * !Warpto <X>:<Y>:<Radius>                  -- Warps everyone to <X>, <Y> within a distance of <Radius>."
  * !WarpFreq <Freq>:<X>:<Y>:<Radius>         -- Warps freq <Freq> to <X>, <Y> within a distance of <Radius>."
  * !WarpShip <Ship>:<X>:<Y>:<Radius>         -- Warps ship <Ship> to <X>, <Y> within a distance of <Radius>."
- * !SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>."
+ * !SetupWarp &lt;Argument&gt;                     -- Performs the setup warp for this arena based on the <Argument>."
  * !SetupWarpList                            -- Displays the setup warp information."
  * !Where                                    -- Shows your current coords."
  *

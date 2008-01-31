@@ -33,7 +33,7 @@ import twcore.core.util.ShortMap;
 import twcore.core.util.Tools;
 
 /**
- * Bot for hosting ?go javelim (<a href=http://www.twcore.org/ticket/74>ticket #74</a>)
+ * Bot for hosting ?go javelim (<a href="http://www.twcore.org/ticket/74">ticket #74</a>)
  * @author  flibb
  */
 public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagoutHandler<String> {

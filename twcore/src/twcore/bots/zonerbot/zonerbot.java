@@ -330,7 +330,7 @@ public class zonerbot extends SubspaceBot
 
   /**
    * This method performs the old advert command with the format:
-   * !Advert <advert text>.
+   * !Advert &lt;advert text&gt;.
    *
    * @param sender is the person issuing the command.
    * @param argString is the message to advert.
