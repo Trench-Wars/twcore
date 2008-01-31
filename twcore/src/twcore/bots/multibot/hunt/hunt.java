@@ -1,3 +1,4 @@
+
 package twcore.bots.multibot.hunt;
 
 import java.util.Vector;
@@ -102,23 +103,24 @@ public void handleEvent(PlayerDeath event){
 }
 
 public void handleEvent(PlayerLeft event){	
-	HuntFreq hf = getHuntFreq(event.getPlayerID());
-	if(hf == null)return;
-	mvpPlayers.add(hf.getHuntPlayer(event.getPlayerID()));
-	m_botAction.sendArenaMessage(hf.getHuntPlayer(event.getPlayerID()).getPlayerName() + " is out! (" + hf.getHuntPlayer(event.getPlayerID()).getPoints() + " point(s))");
-	hf.remove(event.getPlayerID());
-	if(hf.getHuntPlayer(event.getPlayerID()).getPlayerName().equals(hf.getHunterFreq().getPrey())){
+	Player p = m_botAction.getPlayer(event.getPlayerID());if(p == null)return;
+	HuntFreq hf = getHuntFreq(p.getFrequency());if(hf == null)return;
+	HuntPlayer hp = hf.getHuntPlayer(event.getPlayerID());if(hp == null)return;
+	mvpPlayers.add(hp);
+	m_botAction.sendArenaMessage(p.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
+	hf.remove(hp);
+	if(p.getPlayerName().equals(hf.getHunterFreq().getPrey())){
 		hf.getHunterFreq().setPrey();
 	}
 }
 
-public void handleEvent(FrequencyShipChange event){
-	Player p = m_botAction.getPlayer(event.getPlayerID());
-	HuntFreq hf = getHuntFreq(p.getFrequency());
-	if(p == null || hf == null)return;
-	mvpPlayers.add(hf.getHuntPlayer(p.getPlayerName()));
-	m_botAction.sendArenaMessage(p.getPlayerName() + " is out! (" + hf.getHuntPlayer(p.getPlayerName()).getPoints() + " point(s))");
-	hf.remove(event.getPlayerID());
+public void handleEvent(FrequencyShipChange event){ 
+	Player p = m_botAction.getPlayer(event.getPlayerID());if(p == null)return;
+	HuntFreq hf = getHuntFreq(p.getFrequency());if(hf == null)return;
+	HuntPlayer hp = hf.getHuntPlayer(event.getPlayerID());if(hp == null)return;
+	mvpPlayers.add(hp);
+	m_botAction.sendArenaMessage(p.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
+	hf.remove(hp);
 	if(p.getPlayerName().equals(hf.getHunterFreq().getPrey())){
 		hf.getHunterFreq().setPrey();
 	}
@@ -427,6 +429,14 @@ public void remove(int id){
 }
 
 /**
+ * Removes a HuntPlayer Object from this HuntFreq
+ * @param hp
+ */
+public void remove(HuntPlayer hp){
+	players.remove(hp);
+}
+
+/**
  * Returns the frequency number of this HuntFreq.
  * @return
  */
@@ -502,7 +512,7 @@ public void setPrey(){
     }else{
     	m_botAction.sendArenaMessage("Frequency " + getPreyFreq().getFreq() + " is out!");
     	freqs.remove(getPreyFreq());
-    	if(freqs.size() == 1)end(this);
+    	if(freqs.size() == 1)end(this);//Cool!
     	else{
     		updateIndices();
     		this.setPrey();
