@@ -103,25 +103,24 @@ public void handleEvent(PlayerDeath event){
 }
 
 public void handleEvent(PlayerLeft event){	
-	Player p = m_botAction.getPlayer(event.getPlayerID());if(p == null)return;
-	HuntFreq hf = getHuntFreq(p.getFrequency());if(hf == null)return;
+	HuntFreq hf = getHuntFreq(event.getPlayerID());if(hf == null)return;
 	HuntPlayer hp = hf.getHuntPlayer(event.getPlayerID());if(hp == null)return;
 	mvpPlayers.add(hp);
-	m_botAction.sendArenaMessage(p.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
+	m_botAction.sendArenaMessage(hp.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
 	hf.remove(hp);
-	if(p.getPlayerName().equals(hf.getHunterFreq().getPrey())){
+	if(hp.getPlayerName().equals(hf.getHunterFreq().getPrey())){
 		hf.getHunterFreq().setPrey();
 	}
 }
 
 public void handleEvent(FrequencyShipChange event){ 
-	Player p = m_botAction.getPlayer(event.getPlayerID());if(p == null)return;
-	HuntFreq hf = getHuntFreq(p.getFrequency());if(hf == null)return;
+	m_botAction.specWithoutLock(event.getPlayerID());
+	HuntFreq hf = getHuntFreq(event.getPlayerID());if(hf == null)return;
 	HuntPlayer hp = hf.getHuntPlayer(event.getPlayerID());if(hp == null)return;
 	mvpPlayers.add(hp);
-	m_botAction.sendArenaMessage(p.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
+	m_botAction.sendArenaMessage(hp.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
 	hf.remove(hp);
-	if(p.getPlayerName().equals(hf.getHunterFreq().getPrey())){
+	if(hp.getPlayerName().equals(hf.getHunterFreq().getPrey())){
 		hf.getHunterFreq().setPrey();
 	}
 }
@@ -333,9 +332,9 @@ public void doTellPreyCmd(String name){
 	m_botAction.sendSmartPrivateMessage( name, "You are not playing!");
 }
 
-public HuntFreq getHuntFreq(int freq){
+public HuntFreq getHuntFreq(int playerID){
 	for(int i = 0; i < freqs.size(); i++){
-		if(freqs.elementAt(i).getFreq() == freq)
+		if(freqs.elementAt(i).getHuntPlayer(playerID) != null)
 			return freqs.elementAt(i);
 	}
 	return null;
