@@ -55,7 +55,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private final boolean DEBUG = true;                    // Debug mode.
-    private final float DEBUG_MULTIPLIER = 3.75f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 3.8f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -136,7 +136,6 @@ public class distensionbot extends SubspaceBot {
     private boolean readyForPlay = false;                   // True if bot has entered arena and is ready to go
     private int[] m_flagOwner = {-1, -1};                   // ArmyIDs of flag owners; -1 for none
     private List <String>m_mineClearedPlayers;              // Players who have already cleared mines this battle
-    private List <String>m_ignoreShipChangePlayers;         // Players whose ship changes should be ignored
     private LinkedList <String>m_msgBetaPlayers;            // Players to send beta msg to
     private HashMap <String,Integer>m_defectors;            // Players wishing to defect who need to confirm defection
 
@@ -298,7 +297,6 @@ public class distensionbot extends SubspaceBot {
         m_lagouts = new HashMap<String,Integer>();
         m_lagShips = new HashMap<String,Integer>();
         m_mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
-        m_ignoreShipChangePlayers = Collections.synchronizedList( new LinkedList<String>() );
         m_msgBetaPlayers = new LinkedList<String>();
         m_defectors = new HashMap<String,Integer>();
         m_waitingToEnter = new LinkedList<DistensionPlayer>();
@@ -554,8 +552,8 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!oo", acceptedMessages, this, "cmdOpsOrb" );
         m_commandInterpreter.registerCommand( "!oda", acceptedMessages, this, "cmdOpsDark" );
         m_commandInterpreter.registerCommand( "!ob", acceptedMessages, this, "cmdOpsBlind" );
-//        m_commandInterpreter.registerCommand( "!os", acceptedMessages, this, "cmdOpsShield" );
-//        m_commandInterpreter.registerCommand( "!oe", acceptedMessages, this, "cmdOpsEMP" );
+        m_commandInterpreter.registerCommand( "!os", acceptedMessages, this, "cmdOpsShield" );
+        m_commandInterpreter.registerCommand( "!oe", acceptedMessages, this, "cmdOpsEMP" );
         // Full trigger versions
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "cmdHelp" );
         m_commandInterpreter.registerCommand( "!modhelp", acceptedMessages, this, "cmdModHelp" );
@@ -587,6 +585,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!killmsg", acceptedMessages, this, "cmdKillMsg" );
         m_commandInterpreter.registerCommand( "!battleinfo", acceptedMessages, this, "cmdBattleInfo" );
         m_commandInterpreter.registerCommand( "!!", acceptedMessages, this, "cmdEnergyTank" );
+        m_commandInterpreter.registerCommand( "!emp", acceptedMessages, this, "cmdTargetedEMP" );
         m_commandInterpreter.registerCommand( "!manops", acceptedMessages, this, "cmdManOps" );
         m_commandInterpreter.registerCommand( "!opshelp", acceptedMessages, this, "cmdOpsHelp" );
         m_commandInterpreter.registerCommand( "!opsmsg", acceptedMessages, this, "cmdOpsMsg" );
@@ -600,8 +599,8 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!opsorb", acceptedMessages, this, "cmdOpsOrb" );
         m_commandInterpreter.registerCommand( "!opsdark", acceptedMessages, this, "cmdOpsDark" );
         m_commandInterpreter.registerCommand( "!opsblind", acceptedMessages, this, "cmdOpsBlind" );
-//        m_commandInterpreter.registerCommand( "!opsshield", acceptedMessages, this, "cmdOpsShield" );
-//        m_commandInterpreter.registerCommand( "!opsemp", acceptedMessages, this, "cmdOpsEMP" );
+        m_commandInterpreter.registerCommand( "!opsshield", acceptedMessages, this, "cmdOpsShield" );
+        m_commandInterpreter.registerCommand( "!opsemp", acceptedMessages, this, "cmdOpsEMP" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
         m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
@@ -792,29 +791,29 @@ public class distensionbot extends SubspaceBot {
 
         if( msg.equals("") ) {
             String[] helps = {
-                    ".----------------------------",
-                    "| COMMUNICATIONS    Cost     |",
-                    "|  !opsradar          1  !or |  Shows approx. location of all pilots, + Terr info",
-                    "|  !opsmsg <#>        1  !om |  Msg army.  See !opshelp msg for available messages",
-                    "|  !opsPM <name>:<#>  1  !opm|  Msg specific players.  See !opshelp msg",
-                    "|  !opssab            2  !osm|  Sabotage msg to enemy.  See !opshelp msg",
-                    "| ACTIONS                    |",
-                    "|  !opsrearm          1  !ore|  Fast rearm/slow enemy rearm for: (L1)15s/(L2)25s",
-                    "|  !opsdoor <#>   1/2/3  !od |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
-                    "|                            |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
-                    "|  !opswarp <name>:<#>   !ow |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
-                    "|                 2/3/4      |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
-                    "|  !opscover <#>      1  !oc |  Deploy cover in home base.   1:MidLeft  2:MidRight",
-                    "|                            |       3:Before FR    4:Flag   5:Tube     6:Entrance",
-                    "|  !opsmine <#>       2  !op |  False minefield in home base.  1:MidBase  2:In FR",
-                    "|                            |    3:FR Entrance  4:TopTube  5:In Tube  6:LowCenter",
-                    "|  !opsorb <name>   1/3  !oo |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
-                    "|  !opsdark <name>  2/5  !oda|  Cone of darkness.    (L2)<all> = All NME in base",
-                    "|                            |   L3: Shroud (larger).  L4: Shroud <all>",
-                    "|  !opsblind <#>  3/4/5  !ob |  Blind all NME in base.  <#> specifies which level.",
-                    "|  !opsshield         5  !os |  Shield all friendlies in home base.",
-                    "|  !opsemp            6  !oe |  Instantly EMP all enemies in home base to 0 energy.",
-                    "|___________________________/",
+                    ".-----------------------------",
+                    "| COMMUNICATIONS     Cost     |",
+                    "|  !opsradar           1  !or |  Shows approx. location of all pilots, + Terr info",
+                    "|  !opsmsg <#>         1  !om |  Msg army.  See !opshelp msg (!oh msg) for avail. msgs",
+                    "|  !opsPM <name>:<#>   1  !opm|  Msg specific players.  See !opshelp msg",
+                    "|  !opssab             2  !osm|  Sabotage msg to enemy.  See !opshelp msg",
+                    "| ACTIONS                     |",
+                    "|  !opsrearm           1  !ore|  Fast rearm/slow enemy rearm for: (L1)15s/(L2)25s",
+                    "|  !opsdoor <#>    1/2/3  !od |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
+                    "|                             |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
+                    "|  !opswarp <name>:<#>    !ow |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
+                    "|                  2/3/4      |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
+                    "|  !opscover <#>       1  !oc |  Deploy cover in home base.   1:MidLeft  2:MidRight",
+                    "|                             |       3:Before FR    4:Flag   5:Tube     6:Entrance",
+                    "|  !opsmine <#>        2  !omi|  False minefield @ home base. 1:FR Entrance  2:In FR",
+                    "|                             |       3:Midbase   4:TubeTop   5:Inside/Mid Tube",
+                    "|  !opsorb <name>    1/3  !oo |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
+                    "|  !opsdark <name>   2/5  !oda|  Cone of darkness.    (L2)<all> = All NME in base",
+                    "|                             |   L3: Shroud (larger).  L4: Shroud <all>",
+                    "|  !opsblind <#>   2/3/4  !ob |  Blind all NME in base.  <#> specifies which level",
+                    "|  !opsshield <name> 2/5  !os |  Shield <name>.  (L2)<all> = All friendlies in base",
+                    "|  !opsemp             6  !oe |  EMP all enemies to 0 energy and shut down engines",
+                    "|____________________________/",
             };
             m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         } else if( msg.equalsIgnoreCase("msg") ) {
@@ -912,18 +911,18 @@ public class distensionbot extends SubspaceBot {
                 " - Top 3 players (combined earned RP) awarded bonus points in public release",
                 " - For every bug reported, points will be awarded (?message dugwyler)",
                 " - Suggestions and bugs: http://forums.trenchwars.org/showthread.php?t=31676",
+                " - Stats are up here courtesy of Foreign: http://www.trenchwars.org/distension",
                 ".",
-                "RECENT UPDATES  -  1/16/07",
+                "RECENT UPDATES  -  2/1/07",
+                " - Spider Energy Tank now +15% per level (previously 10%)",
+                " - Armies were randomized once again -- you may now have different teammates",
                 " - Lanc Vengeful B*stard replaced with Leecher: chance of full charge after kills",
                 " - Spider Refueler ability changed to Energy Tank; PM !! to receive full energy",
                 " - You now receive a bonus for changing to Terr or Shark when ship is needed",
                 " - Every player now also starts with a Terr",
                 " - Shark weapons buff: 6 mines allowed; gun energy reduced; multi much improved",
                 " - Escape Pod added for Terr & WB: when you die, chance to respawn there immediately",
-                " - Priority rearm: now free for Terrs; now available on WB, Spid and Jav",
-                " - Vengeful B*stard ability added for Weasel: kill one for a surprise...",
                 " - Levis are now a support ship; weasels are not, but receive small profitsharing",
-                " - Energy and recharge start higher but upgrade slower on all ships",
                 " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs...",
                 "   NOTE: All upgrades were refunded; you will need to buy all upgrades again!",
                 " - To encourage build experimentation, !scrap is FREE for the rest of beta."
@@ -1136,14 +1135,20 @@ public class distensionbot extends SubspaceBot {
     public void handleEvent(FrequencyShipChange event) {
         DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
 
-        if( p == null || p.getShipNum() == event.getShipType() ) {
+        if( p == null  ) {
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
                 checkForAssistAdvert = true;
             return;
         }
 
+        if( p.getShipNum() == event.getShipType() ) {
+            if( p.ignoreShipChanges() )         // If we've been ignoring their shipchanges and they returned to
+                p.setIgnoreShipChanges(false);  // their old ship, mission complete.
+            return;
+        }
+
         if( event.getShipType() != 0 ) {
-            if( m_ignoreShipChangePlayers.remove( p.getName() ) )
+            if( p.ignoreShipChanges() )
                 return;
             // If player hops into a ship and has not yet done !return (or !enlist),
             // try to autoreturn (or enlist)
@@ -1168,7 +1173,10 @@ public class distensionbot extends SubspaceBot {
         if( !readyForPlay )         // If bot has not fully started up,
             return;                 // don't operate normally here.
         if( event.getShipType() == 0 ) {
-            if( p.getShipNum() > 0 && p.getShipNum() != 9 ) {
+            if( p.getShipNum() == 9 && p.ignoreShipChanges() ) {
+                p.setIgnoreShipChanges(false);
+                doDock(p);
+            } else if( p.getShipNum() > 0 && p.getShipNum() != 9 ) {
                 doDock( p );
                 if( flagTimer != null && flagTimer.isRunning() ) {
                     if( p.canUseLagout() ) {    // Essentially: did player spec or !dock (not !leave)
@@ -1717,7 +1725,7 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() == -1 ) {
             throw new TWCoreException( "You are not currently in the battle.  Use !return to return to your army." );
         } else if( p.getShipNum() > 0 ) {
-            m_botAction.specWithoutLock( name );
+            cmdDock(name,"");
         }
 
         m_botAction.sendPrivateMessage( name, p.getName().toUpperCase() + " leaving hangars of " + p.getArmyName().toUpperCase() + ".  Your flight timer has stopped." );
@@ -1773,6 +1781,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP" );
             if( ! p.saveCurrentShipToDBNow() )
                 throw new TWCoreException( "PROBLEM SAVING SHIP BEFORE CHANGE -- Notify a member of staff immediately." );
+            m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " has left the Tactical Ops console." );
         } else {
             m_playerTimes.remove( name );
         }
@@ -1787,6 +1796,9 @@ public class distensionbot extends SubspaceBot {
             a.recalculateFigures();
         p.putInCurrentShip();
         p.prizeUpgradesNow();
+
+        if( shipNum == 9 )
+            m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " is now manning the Tactical Ops console." );
 
         // Simple fix to cause sharks and terrs to not lose MVP
         if( shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.LEVIATHAN || shipNum == 9 ) {
@@ -1859,9 +1871,12 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
-        if( p.getShipNum() == 9 )
-            doDock(p);
-        else
+        if( p.getShipNum() == 9 ) {
+            m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " has left the Tactical Ops console." );
+            p.setIgnoreShipChanges(true);
+            m_botAction.setShip( p.getArenaPlayerID(), 1 );
+            m_botAction.specWithoutLock( p.getArenaPlayerID() );
+        } else
             m_botAction.specWithoutLock( name );
     }
 
@@ -1880,6 +1895,7 @@ public class distensionbot extends SubspaceBot {
         if( p.saveCurrentShipToDBNow() ) {
             String shipname = (p.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status logged to our records.  Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP.  You are now docked.");
+            p.setIgnoreShipChanges(false);
             p.setShipNum( 0 );
         } else {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status was NOT logged.  Please notify a member of staff immediately!");
@@ -2616,7 +2632,7 @@ public class distensionbot extends SubspaceBot {
                         reward = p.getRank() * 3;
                     else if( armySizeWeight < .8 )
                         reward = p.getRank() * 2;
-                    if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() ) {
+                    if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() && flagTimer != null && flagTimer.isRunning() ) {
                         reward *= 2;
                         m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, you also receive a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
                     } else {
@@ -2703,9 +2719,11 @@ public class distensionbot extends SubspaceBot {
         if( p.isRespawning() )
             throw new TWCoreException( "You can't reset your mines while rearming." );
 
-        m_ignoreShipChangePlayers.add(name);
-        m_botAction.setShip( name, 1 );
-        m_ignoreShipChangePlayers.add(name);
+        p.setIgnoreShipChanges(true);
+        if( p.getShipNum() == Tools.Ship.WARBIRD )
+            m_botAction.setShip( name, 2 );
+        else
+            m_botAction.setShip( name, 1 );
         m_botAction.setShip( name, p.getShipNum() );
         p.prizeUpgradesNow();
         m_mineClearedPlayers.add( name );
@@ -2760,7 +2778,7 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
-     * Puts a player back into the game with participation bonus intact.
+     * Uses energy tank ability, if available.
      * @param name
      * @param msg
      */
@@ -2772,7 +2790,37 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You must !return first." );
         if( p.getShipNum() == 0 )
             throw new TWCoreException( "You must pilot your ship first." );
+        if( p.getShipNum() != Tools.Ship.SPIDER )
+            throw new TWCoreException( "Only Spiders possess the Energy Tank ability." );
         p.useEnergyTank();
+    }
+
+    /**
+     * Uses Targeted EMP ability, if available.
+     * @param name
+     * @param msg
+     */
+    public void cmdTargetedEMP( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() == -1 )
+            throw new TWCoreException( "You must !return first." );
+        if( p.getShipNum() == 0 )
+            throw new TWCoreException( "You must pilot your ship first." );
+        if( p.getShipNum() != Tools.Ship.TERRIER )
+            throw new TWCoreException( "Only Terriers possess the Targeted EMP ability." );
+        if( !p.useTargetedEMP() )
+            throw new TWCoreException( "You have no EMP charged.  Average recharge time: 15 minutes." );
+        int freq = p.getArmyID();
+        for( DistensionPlayer p3 : m_players.values() ) {
+            if( p3.getArmyID() != freq ) {
+                m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
+                m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
+            }
+        }
+        m_botAction.sendPrivateMessage( name, "Targetted EMP sent!  All enemies have been disabled." );
+        m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an EMP PULSE on your army!" );
     }
 
 
@@ -3253,7 +3301,7 @@ public class distensionbot extends SubspaceBot {
         else
             p.adjustOP(-1);
         int time;
-        switch( p.getPurchasedUpgrade(4) ) {
+        switch( p.getPurchasedUpgrade(6) ) {
             case 1:
                 time = 10000;
                 break;
@@ -3474,6 +3522,8 @@ public class distensionbot extends SubspaceBot {
         int upgLevel = p.getPurchasedUpgrade(8);
         if( upgLevel < 1 )
             throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+        if( msg.equals("") )
+            msg = "all";
         if( upgLevel < 2 && msg.equals("all") )
             throw new TWCoreException( "You are not yet able to use this ability on all players in the base -- first you must install the appropriate !upgrade." );
 
@@ -3540,6 +3590,8 @@ public class distensionbot extends SubspaceBot {
         int upgLevel = p.getPurchasedUpgrade(10);
         if( upgLevel < 1 )
             throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+        if( msg.equals("") )
+            msg = "all";
         if( upgLevel < 2 && msg.equals("all") )
             throw new TWCoreException( "You are not yet able to use this ability on all players in the base -- first you must install the appropriate !upgrade." );
 
@@ -3625,10 +3677,10 @@ public class distensionbot extends SubspaceBot {
         if( blindLevel > p.getPurchasedUpgrade(11) )
             throw new TWCoreException( "You are not yet able to use the field of blindness at that level -- first you must install the appropriate !upgrade." );
 
-        if( p.getCurrentOP() < 2 + blindLevel )
+        if( p.getCurrentOP() < 1 + blindLevel )
             throw new TWCoreException( "You need " + (2 + blindLevel) + " OP to use a level " + blindLevel + " blindness.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
         else
-            p.adjustOP(-(2 + blindLevel));
+            p.adjustOP(-(1 + blindLevel));
 
         int lvzNum;
         String desc;
@@ -3651,6 +3703,103 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS disabled all army sensors with FIELD OF BLINDNESS!" );
         m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS knocked out all enemy sensors with a " + desc + " FIELD OF BLINDNESS!" );
 
+    }
+
+    /**
+     * Ops ability to place shields over one player, or all friendly players in base.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsShield( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(12);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+        if( msg.equals("") )
+            msg = "all";
+        if( upgLevel < 2 && msg.equals("all") )
+            throw new TWCoreException( "You are not yet able to use this ability on all players in the base -- first you must install the appropriate !upgrade." );
+
+        Player p2 = null;
+        if( !msg.equals("all") ) {
+            p2 = m_botAction.getPlayer( msg );
+            if( p2 == null ) {
+                p2 = m_botAction.getFuzzyPlayer( msg );
+            }
+            if( p2 == null ) {
+                throw new TWCoreException( "Can't find pilot '" + msg + "'." );
+            } else {
+                if( p2.getFrequency() != p.getArmyID() )
+                    throw new TWCoreException( p2.getPlayerName() + " isn't on your army!" );
+                if( p2.getShipType() == Tools.Ship.SPECTATOR )
+                    throw new TWCoreException( p2.getPlayerName() + " isn't in a ship!" );
+            }
+        }
+
+        if( msg.equals("all") ) {
+            if( p.getCurrentOP() < 5 )
+                throw new TWCoreException( "You need 5 OP to use this ability on all players in base.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            else
+                p.adjustOP(-5);
+
+            int freq = p.getArmyID();
+            for( DistensionPlayer p3 : m_players.values() ) {
+                if( p3.getArmyID() == freq ) {
+                    Player pobj = m_botAction.getPlayer( p3.getArenaPlayerID() );
+                    if( freq % 2 == 0 ) {
+                        if( pobj != null && pobj.getYLocation() > TOP_ROOF && pobj.getYLocation() < TOP_LOW )
+                            m_botAction.specificPrize( pobj.getPlayerID(), Tools.Prize.SHIELDS );
+                    } else {
+                        if( pobj != null && pobj.getYLocation() > BOT_LOW && pobj.getYLocation() < BOT_ROOF )
+                            m_botAction.specificPrize( pobj.getPlayerID(), Tools.Prize.SHIELDS );
+                    }
+                }
+            }
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS provided PROTECTIVE SHIELDING for all friendly pilots in " + (freq % 2 == 0 ? "TOP BASE!" : "BOTTOM BASE!") );
+
+        } else {
+            if( p.getCurrentOP() < 3 )
+                throw new TWCoreException( "You need 3 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            else
+                p.adjustOP(-3);
+            m_botAction.specificPrize( p2.getPlayerID(), Tools.Prize.SHIELDS );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS provided PROTECTIVE SHIELDING for " + p2.getPlayerName() + "." );
+        }
+    }
+
+    /**
+     * EMPs all enemies, reducing their energy to 0 and shutting down engines.
+     * @param name
+     * @param msg
+     */
+    public void cmdOpsEMP( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 9 )
+            throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
+        int upgLevel = p.getPurchasedUpgrade(13);
+        if( upgLevel < 1 )
+            throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
+
+        if( p.getCurrentOP() < 6 )
+            throw new TWCoreException( "You need 6 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+        else
+            p.adjustOP(-6);
+
+        int freq = p.getArmyID();
+        for( DistensionPlayer p3 : m_players.values() ) {
+            if( p3.getArmyID() != freq ) {
+                m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
+                m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
+            }
+        }
+        m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS unleashed an EMP PULSE over your entire army!" );
+        m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS unleashed an EMP PULSE over all enemies!" );
     }
 
 
@@ -3704,10 +3853,13 @@ public class distensionbot extends SubspaceBot {
     public void cmdDie( String name, String msg ) {
         readyForPlay = false;	// To prevent spec-docking / unnecessary DB accesses
         m_botAction.specAll();
-        //m_botAction.toggleLocked();
         flagObjs.hideAllObjects();
         flagTimerObjs.hideAllObjects();
         m_botAction.hideObject(LVZ_REARMING);
+        // Dock Ops so they are put on the spec freq properly
+        for( DistensionPlayer p : m_players.values() )
+            if( p.getShipNum() == 9 )
+                cmdDock( p.getName(), "" );
         Integer id;
         Iterator <Integer>i = m_botAction.getPlayerIDIterator();
         while( i.hasNext() ) {
@@ -3723,7 +3875,8 @@ public class distensionbot extends SubspaceBot {
         if( !DEBUG ) {
             m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
         } else {
-            m_botAction.sendArenaMessage( "Distension Beta Test concluded.  Thanks for testing!  Join ?chat=distension to ask questions and stay up on tests.  See this thread for bugs and suggestions: http://forums.trenchwars.org/showthread.php?t=31676", 1 );
+            m_botAction.sendArenaMessage( "Distension Beta Test concluded.  Thanks for testing!  Join ?chat=distension to ask questions and stay up on tests.  See this thread for bugs and suggestions: http://forums.trenchwars.org/showthread.php?t=31676" );
+            m_botAction.sendArenaMessage( "Check out the top 5 ranked players in every ship at: http://www.trenchwars.org/distension   Thanks goes to Foreign for the site.", 5 );
         }
         Thread.yield();
         try { Thread.sleep(500); } catch (Exception e) {};
@@ -4525,6 +4678,7 @@ public class distensionbot extends SubspaceBot {
         private int       lastX;                // Last X position
         private int       lastY;                // Last Y position
         private boolean   energyTank;           // True if player has an energy tank available
+        private boolean   targetedEMP;          // True if player has targeted EMP available
         private int       vengefulBastard;      // Levels of Vengeful Bastard ability
         private int       escapePod;            // Levels of Escape Pod ability
         private int       leeching;             // Levels of Leeching ability
@@ -4539,6 +4693,7 @@ public class distensionbot extends SubspaceBot {
         private boolean   specialRespawn;       // True if in spawn queue w/o actually spawning
         private boolean   sendKillMessages;     // True if player wishes to receive kill msgs
         private boolean   allowLagout;          // True if !lagout should be allowed
+        private boolean   ignoreShipChanges;    // True if all ship changes should be ignored until old ship is entered
 
         public DistensionPlayer( String name ) {
             this.name = name;
@@ -4582,6 +4737,8 @@ public class distensionbot extends SubspaceBot {
             sendKillMessages = true;
             allowLagout = true;
             energyTank = false;
+            targetedEMP = false;
+            ignoreShipChanges = false;
         }
 
 
@@ -4764,6 +4921,8 @@ public class distensionbot extends SubspaceBot {
                 vengefulBastard = 0;
                 escapePod = 0;
                 leeching = 0;
+                energyTank = false;
+                targetedEMP = false;
                 if( shipNum == 9 )
                     maxOP = DEFAULT_MAX_OP;
                 // Setup special (aka unusual) abilities
@@ -4911,14 +5070,17 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specificPrize( name, Tools.Prize.BURST );
                     prized = true;
                 }
-                // EMP ability; re-enable every 20 ticks
-                //if( purchasedUpgrades[13] > 0 )
+                // EMP ability; re-enable every 30 ticks (15 min)
+                if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 30 == 0 ) {
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "Targeted EMP recharged.  !emp to use.");
+                    targetedEMP = true;
+                }
             }
             else if( shipNum == 3) {
                 // Energy tank ability; each level worth an additional 10%
                 if( !energyTank ) {
-                    double etChance = Math.random() * 10.0;
-                    if( (double)purchasedUpgrades[10] > etChance ) {
+                    double etChance = Math.random() * 100.0;
+                    if( ((double)purchasedUpgrades[10] * 15.0) > etChance ) {
                         m_botAction.sendPrivateMessage(arenaPlayerID, "Energy Tank replenished.  !! to use.");
                         energyTank = true;
                     }
@@ -5522,7 +5684,8 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Checks if the Leeching ability should fire, and if so, prizes full charge.
+         * Checks if the player has an available energy tank, and if so, uses it to restore
+         * the player to full energy.
          */
         public void useEnergyTank() {
             if( energyTank == false ) {
@@ -5533,6 +5696,15 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
+        /**
+         * Checks if the player has Targeted EMP available; if so, makes it unavailable and returns true.
+         * @return True if TargetedEMP is available
+         */
+        public boolean useTargetedEMP() {
+            boolean canemp = targetedEMP;
+            targetedEMP = false;
+            return canemp;
+        }
 
         // BASIC SETTERS
 
@@ -5640,6 +5812,15 @@ public class distensionbot extends SubspaceBot {
                 currentComms = 0;
             else if( currentComms > DEFAULT_OP_MAX_COMMS )
                 currentComms = DEFAULT_OP_MAX_COMMS;
+        }
+
+        /**
+         * Sets the player to be ignored by the ship changer for changing to any ship; after
+         * they change back to their original ship this is returned to false.
+         * @oaran value True if ship changes should be ignored
+         */
+        public void setIgnoreShipChanges( boolean value ) {
+            ignoreShipChanges = value;
         }
 
         // GETTERS
@@ -5969,6 +6150,14 @@ public class distensionbot extends SubspaceBot {
                 should = true;
             return should;
         }
+
+        /**
+         * @return True if all ship changes should be ignored until shipchange event fires with their original ship
+         */
+        public boolean ignoreShipChanges() {
+            return ignoreShipChanges;
+        }
+
 
         // PROGRESS BAR
         public void checkProgress() {
@@ -6951,9 +7140,8 @@ public class distensionbot extends SubspaceBot {
         while( i.hasNext() ) {
             p = i.next();
             if( (p.isSupportShip() && p.getShipNum() != 9) || p.getShipNum() == 6 ) {
-                m_ignoreShipChangePlayers.add( p.getName() );
+                p.setIgnoreShipChanges(true);
                 m_botAction.setShip( p.getArenaPlayerID(), 1 );
-                m_ignoreShipChangePlayers.add( p.getName() );
                 m_botAction.setShip( p.getArenaPlayerID(), p.getShipNum() );
                 m_botAction.shipReset( p.getArenaPlayerID() ); // Just in case, as we seem to have problems.
                 if( !p.isRespawning() )
@@ -7788,15 +7976,15 @@ public class distensionbot extends SubspaceBot {
 
         // SPIDER -- rank 4
         // Med upg speed; lvl req for thurst & speed; thrust perm+1; speed has wide spread; recharge has 20 lvls
-        //  9: +10% Energy Tank 1
+        //  9: +15% Energy Tank 1
         // 15: +5% Super 1
         // 18: Decoy 1
-        // 20: +10% Energy Tank 2
+        // 20: +15% Energy Tank 2
         // 25: +5% Super 2
         // 26: Multi (rear)
         // 29: Decoy 2
         // 30: XRadar
-        // 33: +10% Energy Tank 3
+        // 33: +15% Energy Tank 3
         // 35: +5% Super 3
         // 38: Anti
         // 40: L2 Guns
@@ -7804,7 +7992,7 @@ public class distensionbot extends SubspaceBot {
         // 47: Decoy 3
         // 50: Priority Rearm
         // 55: +5% Super 5
-        // 60: +10% Energy Tank 4
+        // 60: +15% Energy Tank 4
         ship = new ShipProfile( RANK_REQ_SHIP3, 16f );
         upg = new ShipUpgrade( "Central Realigner        [ROT]", Tools.Prize.ROTATION, new int[]{6,7,8,8,8,9,9,9,10}, 0, 9 );       // 20 x9
         ship.addUpgrade( upg );
@@ -7834,7 +8022,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, new int[]{9,15,23}, new int[]{18,29,47}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+10% Energy Tank", ABILITY_ENERGY_TANK, new int[]{12,17,22,30}, new int[]{9,20,33,60}, 4 );
+        upg = new ShipUpgrade( "+15% Energy Tank", ABILITY_ENERGY_TANK, new int[]{12,17,22,30}, new int[]{9,20,33,60}, 4 );
         ship.addUpgrade( upg );
         int p3f1[] = { 13, 15, 17, 19, 20 };
         int p3f2[] = { 15, 25, 35, 45, 55 };
@@ -8174,11 +8362,14 @@ public class distensionbot extends SubspaceBot {
         // 33: Blind 2
         // 35: Warp 3 (FR)
         // 37: Profit Sharing 4
-        // 44: Profit Sharing 5
+        // 40: Shields (single player)
         // 46: Shroud 4 (all in base, LG)
         // 50: Blind 3
+        // 52: Profit Sharing 5
+        // 55: EMP Pulse
+        // 60: Shields (all on team)
         ship = new ShipProfile( RANK_REQ_SHIP9, 10f );
-        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,44}, 5 );
+        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,52}, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, new int[]{5,7,9,10,11,13,15,20,25}, new int[]{0,3,5,11,15,20,25,35,45}, 9 );      //
         ship.addUpgrade( upg );
@@ -8202,9 +8393,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, new int[]{10,15,18}, new int[]{25,33,50}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, 0, 0, -1 );
+        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, new int[]{24,50}, new int[]{40,60}, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 0, 0, -1 );
+        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 40, 55, -1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
     }
