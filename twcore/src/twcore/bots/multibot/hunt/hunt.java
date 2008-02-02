@@ -12,6 +12,7 @@ import twcore.core.util.StringBag;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerEntered;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.game.Player;
 
@@ -56,6 +57,7 @@ public void requestEvents(ModuleEventRequester events){
 	events.request(this, EventRequester.PLAYER_DEATH);
 	events.request(this, EventRequester.PLAYER_LEFT);
 	events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+	events.request(this, EventRequester.PLAYER_ENTERED);
 }
 public void handleEvent(Message event){
 	int messageType = event.getMessageType();
@@ -76,6 +78,7 @@ public void handleEvent(PlayerDeath event){
 	HuntFreq hfKiller = getHuntFreq(event.getKillerID());
 	HuntFreq hfKilled = getHuntFreq(event.getKilleeID());
 	if(killer == null || killed == null || hfKiller == null || hfKilled == null)return;
+	hfKilled.getHuntPlayer(event.getKilleeID()).addDeath();
 	if(hfKiller.getPrey().equals(killed)){
 		m_botAction.specWithoutLock(event.getKilleeID());
 		int points = hfKilled.getHuntPlayer(killed).getPoints();
@@ -83,17 +86,10 @@ public void handleEvent(PlayerDeath event){
 		mvpPlayers.add(hfKilled.getHuntPlayer(killed));
 		hfKilled.remove(event.getKilleeID());
 		hfKiller.getHuntPlayer(killer).addPoints(preyKillPoints);
-		hfKiller.setPrey();			
+		hfKiller.setPrey();
+		return;
 	}
-	else if(hfKilled.getHuntPlayer(event.getKilleeID()).getLosses() == deaths){
-		mvpPlayers.add(hfKilled.getHuntPlayer(killed));
-		m_botAction.sendArenaMessage(killed + " is out! (" + hfKilled.getHuntPlayer(killed).getPoints() + " point(s))");
-		hfKilled.remove(event.getKilleeID());
-		if(killed.equals(hfKilled.getHunterFreq().getPrey())){
-			hfKilled.getHunterFreq().setPrey();
-		}
-	}
-	else if(hfKilled.getPrey().equals(killer)){
+	if(hfKilled.getPrey().equals(killer)){
 		m_botAction.sendSmartPrivateMessage( killer, "You killed your hunter! (" + hunterKillPoints + " point(s))");
 		hfKiller.getHuntPlayer(killer).addPoints(hunterKillPoints);
 	}
@@ -101,15 +97,32 @@ public void handleEvent(PlayerDeath event){
 		m_botAction.sendSmartPrivateMessage( killer, "You killed an innocent bystander! (" + nonHunterPoints + " point(s))");
 		hfKiller.getHuntPlayer(killer).addPoints(nonHunterPoints);
 	}
+	if(hfKilled.getHuntPlayer(event.getKilleeID()).getLosses() == deaths){
+		mvpPlayers.add(hfKilled.getHuntPlayer(killed));
+		m_botAction.sendArenaMessage(killed + " is out! (" + hfKilled.getHuntPlayer(killed).getPoints() + " point(s))");
+		hfKilled.remove(event.getKilleeID());
+		if(killed.equals(hfKilled.getHunterFreq().getPrey())){
+			hfKilled.getHunterFreq().setPrey();
+		}
+	}
 
 }
 
+/**
+ * If the host forgot to lock the arena. Make sure no one can sneak into the game.
+ */
+public void handleEvent(PlayerEntered event){
+	m_botAction.specWithoutLock(event.getPlayerID());
+}
+
+/**
+ * If someone leaves the arena or lags out while playing, they are removed. 
+ */
 public void handleEvent(PlayerLeft event){
 	if(!isRunning)return;
 	HuntFreq hf = getHuntFreq(event.getPlayerID());
 	if(hf == null)return;
 	HuntPlayer hp = hf.getHuntPlayer(event.getPlayerID());
-	if(hp == null)return;
 	mvpPlayers.add(hp);
 	m_botAction.sendArenaMessage(hp.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
 	hf.remove(hp);
@@ -117,14 +130,17 @@ public void handleEvent(PlayerLeft event){
 		hf.getHunterFreq().setPrey();
 	}
 }
-
+/**
+ * This method ensures reliability even if the arena isn't locked. People not 
+ * in the game are not allowed to enter. People who are in the game but decide 
+ * to spectate, change frequencies or change ships are removed.
+ */
 public void handleEvent(FrequencyShipChange event){
 	if(!isRunning)return;
 	m_botAction.specWithoutLock(event.getPlayerID());
 	HuntFreq hf = getHuntFreq(event.getPlayerID());
 	if(hf == null)return;
 	HuntPlayer hp = hf.getHuntPlayer(event.getPlayerID());
-	if(hp == null)return;
 	mvpPlayers.add(hp);
 	m_botAction.sendArenaMessage(hp.getPlayerName() + " is out! (" + hp.getPoints() + " point(s))");
 	hf.remove(hp);
@@ -135,6 +151,9 @@ public void handleEvent(FrequencyShipChange event){
 ////////////
 //COMMANDS//
 ////////////
+/**
+ * Commands that only Moderators can use.
+ */
 public void handleModCommands(String sender, String cmd){
 	if(cmd.equalsIgnoreCase("!starthunt"))
 		doStartCmd(sender);
@@ -149,6 +168,9 @@ public void handleModCommands(String sender, String cmd){
 	else if(cmd.startsWith("!other "))
 		nonReward(sender, cmd.substring(7));
 }
+/**
+ * Commands that anyone can use.
+ */
 public void handlePubCommands(String sender, String cmd){
 	if(cmd.equalsIgnoreCase("!prey"))
 		doTellPreyCmd(sender);
@@ -156,12 +178,19 @@ public void handlePubCommands(String sender, String cmd){
 		doHelpCmd(sender);
 }
 
+/**
+ * Give basic help info to anyone who asks for it. Use modhelp for more information.
+ * @param name
+ */
 public void doHelpCmd(String name){
 	m_botAction.smartPrivateMessageSpam(name, helpmsg);
 }
 ////////////
 //GAME//////
 ////////////
+/**
+ * Starts the game. See comments within this method for a more detailed description of how it operates.
+ */
 public void doStartCmd(String name){
 	if(isRunning){
 		m_botAction.sendSmartPrivateMessage( name, "Hunt is already running.");
@@ -174,7 +203,7 @@ public void doStartCmd(String name){
 	m_botAction.scoreResetAll();
 	m_botAction.shipResetAll();
     freqs.clear();
-    mvpPlayers.clear();
+    mvpPlayers.clear();//Start with a clean slate.
     
     int x=0;
     for(int i=0; i<10000; i++){
@@ -189,14 +218,14 @@ public void doStartCmd(String name){
     Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
     if(!i.hasNext()){
     	m_botAction.sendSmartPrivateMessage( name, "Not enough players.");
-    	doStopCmd(name);
+    	doStopCmd(name);//If everyone is in spec... The game can't be played.
     	return;
     }
     while(i.hasNext()){
     	Player p = i.next();
     		for(int z = 0; z < freqs.size(); z++){
     			if(freqs.elementAt(z).getFreq() == p.getFrequency()){
-    				freqs.elementAt(z).add(new HuntPlayer(p));
+    				freqs.elementAt(z).add(new HuntPlayer(p));//Add frequencies that have playing players to the freqs Vector
     				break;
     			}
     		}
@@ -204,7 +233,7 @@ public void doStartCmd(String name){
     Iterator<HuntFreq> it = freqs.iterator();
     if(!it.hasNext()){
     	m_botAction.sendSmartPrivateMessage( name, "Couldn't find enough playing frequencies");
-    	doStopCmd(name);
+    	doStopCmd(name);//If everyone is on the same frequency... The game can't be played.
     	return;
     }
     while(it.hasNext()){
@@ -215,19 +244,23 @@ public void doStartCmd(String name){
     }
     if(freqs.size() < 2){
     	m_botAction.sendSmartPrivateMessage( name, "Couldn't find enough playing frequencies");
-    	doStopCmd(name);
+    	doStopCmd(name);//If everyone is on the same frequency after removing ones with only spectators... The game can't be played.
     	return;
     }
     updateIndices();
     Iterator<HuntFreq> it2 = freqs.iterator();
     while(it2.hasNext()){
-    	it2.next().setPrey();
+    	it2.next().setPrey();//Tell everyone who they are hunting.
     }
     //We now have all HuntFreqs with their HuntPlayers created and preys assigned.
     
     
 }
 
+/**
+ * Stops the game whilst in progress. Cleans up public Vector Objects.
+ * @param name
+ */
 public void doStopCmd(String name){
 	if(!isRunning){
 		m_botAction.sendSmartPrivateMessage( name, "Hunt is not currently running.");
@@ -242,6 +275,10 @@ public void doStopCmd(String name){
 	
 }
 
+/**
+ * Displays winner(s) and MVP(s). Cleans up public Vector Objects.
+ * @param h
+ */
 public void end(HuntFreq h){
 	mvpPlayers.addAll(h.players);
 	m_botAction.sendArenaMessage("Game over!", 5);
@@ -253,6 +290,10 @@ public void end(HuntFreq h){
 	isRunning = false;
 }
 
+/**
+ * A registered command. Changes the number of points a player receives for killing their prey.
+ * This can only be done when the game is not running.
+ */
 public void preyReward(String name, String msg){
 	boolean badmsg = false;
 	int x = 0;
@@ -271,6 +312,10 @@ public void preyReward(String name, String msg){
 	}
 }
 
+/**
+ * A registered command. Changes the number of points a player receives for killing their hunter.
+ * This can only be done when the game is not running.
+ */
 public void hunterReward(String name, String msg){
 	boolean badmsg = false;
 	int x = 0;
@@ -289,6 +334,10 @@ public void hunterReward(String name, String msg){
 	}
 }
 
+/**
+ * A registered command. Changes the number of points a player receives for killing innocent bystanders.
+ * This can only be done when the game is not running.
+ */
 public void nonReward(String name, String msg){
 	boolean badmsg = false;
 	int x = 0;
@@ -307,6 +356,10 @@ public void nonReward(String name, String msg){
 	}
 }
 
+/**
+ * A registered command. Changes the number of non-hunted deaths players have before being removed from the game.
+ * This can only be done when the game is not running.
+ */
 public void huntSpec(String name, String msg){
 	boolean badmsg = false;
 	int x = 0;
@@ -327,6 +380,10 @@ public void huntSpec(String name, String msg){
 	}
 }
 
+/**
+ * Tells the specified player who he/she is currently hunting.
+ * @param name - The name of the player to find the prey of.
+ */
 public void doTellPreyCmd(String name){
 	HuntFreq hf;
 	for(int i = 0; i < freqs.size(); i++){
@@ -340,6 +397,11 @@ public void doTellPreyCmd(String name){
 	m_botAction.sendSmartPrivateMessage( name, "You are not playing!");
 }
 
+/**
+ * Finds the frequency a player is on and then returns the HuntFreq Object for that frequency.
+ * @param playerID - The ID of the player you wish to find the frequency of.
+ * @return HuntFreq Object for the player parameter.
+ */
 public HuntFreq getHuntFreq(int playerID){
 	for(int i = 0; i < freqs.size(); i++){
 		if(freqs.elementAt(i).getHuntPlayer(playerID) != null)
@@ -348,25 +410,43 @@ public HuntFreq getHuntFreq(int playerID){
 	return null;
 }
 
+/**
+ * Tells each HuntFreq object what its index in the main freqs Vector is.
+ */
 public void updateIndices(){
 	for(int i = 0; i < freqs.size(); i++){
 		freqs.elementAt(i).setIndex(i);
 	}
 }
 
+/**
+ * Returns a string of the HuntPlayer with the most points in the format "MVP: [PlayerName] (# point(s))!"
+ * If more than one players share the high score it displays them all.
+ * @return
+ */
 public String getMVP(){
 	int mvpPoints = 0;
 	String mvp = null;	
+	ArrayList<String> multiMvps = new ArrayList<String>();
 	Iterator<HuntPlayer> i = mvpPlayers.iterator();
 	while(i.hasNext()){
 		HuntPlayer p = i.next();
-		if(p.getPoints() >= mvpPoints){
+		if(p.getPoints() > mvpPoints){
 			mvpPoints = p.getPoints();
 			mvp = p.getPlayerName();
 		}
 	}
+	Iterator<HuntPlayer> it = mvpPlayers.iterator();
+	while(it.hasNext()){
+		HuntPlayer p = it.next();
+		if(p.getPoints() == mvpPoints)
+			multiMvps.add(p.getPlayerName() + " (" + p.getPoints() + ")");
+	}
 	if(mvp == null){
 		return "MVP: None. No one had positive points.";
+	}
+	if(multiMvps.size() > 1){
+		return "MVPs: " + multiMvps.toString();
 	}
 	return "MVP: " + mvp + " (" + mvpPoints + " point(s))!";
 }
