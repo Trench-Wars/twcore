@@ -250,7 +250,9 @@ public void doStartCmd(String name){
     updateIndices();
     Iterator<HuntFreq> it2 = freqs.iterator();
     while(it2.hasNext()){
-    	it2.next().setPrey();//Tell everyone who they are hunting.
+    	HuntFreq h = it2.next();
+    	h.setPrey();//Tell everyone who they are hunting.
+    	h.setInitialSize();//Record the initial size of this frequency
     }
     //We now have all HuntFreqs with their HuntPlayers created and preys assigned.
     
@@ -461,7 +463,7 @@ public void cancel(){}
 private class HuntFreq{
 	
 private Vector<HuntPlayer> players;
-public int freq, index;
+public int freq, index, initialSize;
 public String prey;
 
 public HuntFreq(int freq, int index){
@@ -539,6 +541,10 @@ public void setIndex(int index){
 	this.index = index;
 }
 
+public void setInitialSize(){
+	initialSize = players.size();
+}
+
 /**
  * Returns the size of this frequency.
  * @return
@@ -597,10 +603,8 @@ public void setPrey(){
     	}
     	tellPreyName();
     }else{
-    	if(getPreyFreq().getFreq() < 100)
+    	if(initialSize > 1)
     		m_botAction.sendArenaMessage("Frequency " + getPreyFreq().getFreq() + " is out!");
-    	else
-    		m_botAction.sendArenaMessage("Frequency (PRIVATE) is out!");
     	freqs.remove(getPreyFreq());
     	if(freqs.size() == 1)end(this);//Cool!
     	else{
