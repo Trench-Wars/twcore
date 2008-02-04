@@ -1,6 +1,5 @@
 package twcore.bots.zonerbot;
 
-import java.util.StringTokenizer;
 import java.util.TimerTask;
 
 import twcore.core.BotAction;
@@ -36,12 +35,10 @@ public class zonerbot extends SubspaceBot
   public static final String ZONE_CHANNEL = "Zone Channel";
   public static final String HOSTNAME = "localhost";
   public static final String GO_STRING = "?go ";
-  public static final long CLEAR_REQUESTS_DELAY = 10 * 60 * 1000;
   public static final int LINE_LENGTH = 120;
   public static final int REQUEST_LIFE_TIME = 120;
   public static final int NATURAL_LINE_LENGTH = 200;
 
-  private VectorMap<String, RequestRecord> requestList;
   private VectorMap<String, Advert> advertQueue;
   private TimedHashSet<String> recentAdvertList;
   private AdvertTimer advertTimer;
@@ -61,7 +58,6 @@ public class zonerbot extends SubspaceBot
   {
     super(botAction);
     requestEvents();
-    requestList = new VectorMap<String, RequestRecord>();
     advertQueue = new VectorMap<String, Advert>();
     recentAdvertList = new TimedHashSet<String>();
     advertTime = 10;
@@ -91,8 +87,6 @@ public class zonerbot extends SubspaceBot
           handleModCommands(sender, message, messageType);
         if(opList.isER(sender) || advertQueue.containsKey(sender.toLowerCase()))
           handleERCommands(sender, message, messageType, alertCommandType);
-        if(opList.isZH(sender))
-          handleZHCommands(sender, message, messageType);
       }
       if(messageType == Message.ARENA_MESSAGE)
         handleArenaMessage(message);
@@ -105,114 +99,6 @@ public class zonerbot extends SubspaceBot
   
   // This is to catch any IPC events though none of them need to be catched to do something with the results
   public void handleEvent( InterProcessEvent event ) {}
-
-  /**
-   * This private method handles all of the ZH commands.
-   *
-   * @param sender is the sender of the command.
-   * @param message is the message that was sent.
-   * @param messageType is the type of message that was sent.
-   */
-  private void handleZHCommands(String sender, String message, int messageType)
-  {
-    String command = message.toLowerCase();
-
-    if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
-    {
-      if(command.startsWith("!request "))
-        doRequestCmd(sender, message.substring(9).trim());
-      if(command.equals("!requested"))
-        doRequestedCmd(sender);
-      if(command.startsWith("!delrequest "))
-        doDelRequestCmd(sender, message.substring(12).trim());
-      if(command.equals("!help"))
-        doZHHelpCmd(sender);
-    }
-  }
-
-  /**
-   * This method adds a request to the request list.
-   *
-   * @param sender is the sender of the message.
-   * @param argString are the arguments sent to the command.
-   */
-  private void doRequestCmd(String sender, String argString)
-  {
-    StringTokenizer argTokens = new StringTokenizer(argString, ":");
-    RequestRecord requestRecord;
-    String requester;
-    String request;
-
-    if(argTokens.countTokens() != 2)
-      throw new IllegalArgumentException("Please use the following format: !Request <Requester>:<Event>");
-    requester = argTokens.nextToken();
-    request = argTokens.nextToken();
-
-    requestRecord = new RequestRecord(requester, request);
-
-    if(requestList.containsKey(requester.toLowerCase()))
-      m_botAction.sendSmartPrivateMessage(sender, "Previous request replaced.");
-    else
-      m_botAction.sendSmartPrivateMessage(sender, "Request added.");
-    requestList.put(requester.toLowerCase(), requestRecord);
-  }
-
-  /**
-   * This method sends a message containing all of the requests that are
-   * currently in the request list to the sender.
-   *
-   * @param sender is the sender of the command.
-   */
-  private void doRequestedCmd(String sender)
-  {
-    RequestRecord requestRecord;
-
-    if(requestList.isEmpty())
-      m_botAction.sendSmartPrivateMessage(sender, "No events have been requested.");
-
-    for(int index = 0; index < requestList.size(); index++)
-    {
-      requestRecord = requestList.get(index);
-      m_botAction.sendSmartPrivateMessage(sender, requestRecord.toString());
-    }
-  }
-
-  /**
-   * This method removes a request from the request list.
-   *
-   * @param sender is the person that sent the command.
-   * @param argString are the command arguments.
-   */
-  private void doDelRequestCmd(String sender, String argString)
-  {
-    String requester = argString.toLowerCase();
-
-    if(!requestList.containsKey(requester))
-      throw new IllegalArgumentException("No request was made by " + argString + ".");
-    requestList.remove(requester);
-    m_botAction.sendSmartPrivateMessage(sender, "Request made by " + argString + " was removed.");
-  }
-
-  /**
-   * This method processes a ZH !help command.  It sends the help message to the
-   * sender.
-   *
-   * @param sender is the player that sent the message.
-   */
-  private void doZHHelpCmd(String sender)
-  {
-    String message[] =
-    {
-      "=========================================== ZH Commands ============================================",
-      "!Request <Requester>:<Request>     -- Adds the hosting request, <Request> made by <Requester> to the",
-      "                                      request list.",
-      "!Requested                         -- Displays all events requested in the past hour.",
-      "!DelRequest <Requester>            -- Removes the request of <Requester> from the request list.",
-      "!Help                              -- Displays this help message."
-    };
-
-    m_botAction.smartPrivateMessageSpam(sender, message);
-  }
 
   /**
    * This private method handles all of the ER commands.
@@ -926,7 +812,6 @@ public class zonerbot extends SubspaceBot
 
     m_botAction.ipcSubscribe(ZONE_CHANNEL);
     m_botAction.changeArena(initialArena);
-    m_botAction.scheduleTask(new ClearRequestsTask(), CLEAR_REQUESTS_DELAY);
     setAdvertTimer(1000);
   }
 
@@ -960,26 +845,6 @@ public class zonerbot extends SubspaceBot
   }
 
   /**
-   * This method clears any requests from the request list that are older than
-   * REQUEST_LIFE_TIME.
-   */
-  private void clearOldRequests()
-  {
-    RequestRecord requestRecord;
-    int index = 0;
-
-    for(;;)
-    {
-      requestRecord = requestList.get(index);
-      if(requestRecord == null ||
-         System.currentTimeMillis() - requestRecord.getTimeRequested() > REQUEST_LIFE_TIME)
-        break;
-      requestList.remove(requestRecord.getRequester());
-      index++;
-    }
-  }
-
-  /**
    * This private method gets the name of the sender of a message regardless
    * of the message type.  If there was no sender then null is returned.
    *
@@ -997,76 +862,6 @@ public class zonerbot extends SubspaceBot
       return message.getMessager();
     senderID = message.getPlayerID();
     return m_botAction.getPlayerName(senderID);
-  }
-
-  /**
-   * <p>Title: RequestRecord</p>
-   * <p>Description: This class keeps track of host requests.</p>
-   * <p>Copyright: Copyright (c) 2004</p>
-   * <p>Company: For SSCU Trench Wars</p>
-   * @author Cpt.Guano!
-   * @version 1.0
-   */
-  private class RequestRecord
-  {
-    private String requester;
-    private String request;
-    private long timeRequested;
-
-    /**
-     * This method creates a new request record.
-     *
-     * @param requester is the person that requested the event.
-     * @param request is the request made by the person.
-     */
-    public RequestRecord(String requester, String request)
-    {
-      this.requester = requester;
-      this.request = request;
-      timeRequested = System.currentTimeMillis();
-    }
-
-    public String getRequester()
-    {
-      return requester;
-    }
-
-    /**
-     * This method gets the time that the request was made.
-     *
-     * @return the time that the request was made is returned.
-     */
-    public long getTimeRequested()
-    {
-      return timeRequested;
-    }
-
-    /**
-     * This method returns a String representation of the request record.
-     *
-     * @return a string containing all of the request information is returned.
-     */
-    public String toString()
-    {
-      return "\"" + request + "\" Requested by: " + requester + " " + getElapsedTime() + " ago.";
-    }
-
-    /**
-     * This method gets a string in the form: "HH hours and MM mins"
-     * representing the time that has elapsed since the record has been
-     * requested.
-     *
-     * @return a string of the form "HH hours and MM mins" representing the
-     * time that has elapsed is returned.
-     */
-    private String getElapsedTime()
-    {
-      long elapsedTime = (System.currentTimeMillis() - timeRequested) / (60 * 1000);
-      int mins = (int) (elapsedTime % 60);
-      int hours = (int) (elapsedTime / 60);
-
-      return StringTools.pluralize(hours, "hour") + " and " + StringTools.pluralize(mins, "min");
-    }
   }
 
   private class IdleTimer extends DetailedTimerTask
@@ -1117,52 +912,6 @@ public class zonerbot extends SubspaceBot
     }
   }
 
-  private class RecentRequestTimer extends DetailedTimerTask
-  {
-    private String playerName;
-
-    public RecentRequestTimer(String playerName, long recentRequestTime)
-    {
-      super(recentRequestTime);
-      this.playerName = playerName;
-    }
-
-    public void run()
-    {
-      // recentRequestList.remove(playerName);
-    }
-  }
-
-  private class RecentAdvertTimer extends DetailedTimerTask
-  {
-    private String playerName;
-
-    public RecentAdvertTimer(String playerName, long recentAdvertTime)
-    {
-      super(recentAdvertTime);
-      this.playerName = playerName;
-    }
-
-    public void run()
-    {
-      recentAdvertList.remove(playerName);
-    }
-
-    public boolean cancel()
-    {
-      recentAdvertList.remove(playerName);
-      return super.cancel();
-    }
-  }
-
-  private class ClearRequestsTask extends TimerTask
-  {
-    public void run()
-    {
-      clearOldRequests();
-    }
-  }
-
   /**
    * <p>Title: Advert</p>
    * <p>Description: This class is an advert.  It keeps track of the sound,
@@ -1188,9 +937,7 @@ public class zonerbot extends SubspaceBot
     public static final int NOT_APPROVED_STATUS = 1;
     public static final int APPROVED_STATUS = 2;
 
-    private long timeCreated;
     private String adverter;
-    private String approver;
     private String advertText;
     private int sound;
     private int advertStatus;
@@ -1204,7 +951,6 @@ public class zonerbot extends SubspaceBot
      */
     public Advert(String adverter, boolean isGrant)
     {
-      timeCreated = System.currentTimeMillis();
       this.adverter = adverter;
       advertText = new String();
       sound = DEFAULT_SOUND;
@@ -1213,7 +959,6 @@ public class zonerbot extends SubspaceBot
         advertStatus = NOT_APPROVED_STATUS;
       else
       {
-        approver = adverter;
         advertStatus = PRE_APPROVED_STATUS;
       }
 
@@ -1302,7 +1047,6 @@ public class zonerbot extends SubspaceBot
         throw new IllegalArgumentException("Advert does not need to be approved.");
       if(advertStatus == APPROVED_STATUS)
         throw new IllegalArgumentException("Advert has already been approved.");
-      this.approver = approver;
       advertStatus = APPROVED_STATUS;
     }
 
@@ -1316,7 +1060,6 @@ public class zonerbot extends SubspaceBot
         throw new IllegalArgumentException("Advert does not need to be approved.");
       if(advertStatus == NOT_APPROVED_STATUS)
         throw new IllegalArgumentException("Advert has not yet been approved.");
-      approver = null;
       advertStatus = NOT_APPROVED_STATUS;
     }
 
@@ -1360,6 +1103,7 @@ public class zonerbot extends SubspaceBot
     /**
      * This method gets the arena name from the advert text.  If no arena name
      * is present then null is returned.
+     * Modded by milosh - 2.4.08
      *
      * @param advertText is the advert to parse.
      * @return the name of the arena is returned.
@@ -1368,14 +1112,12 @@ public class zonerbot extends SubspaceBot
     {
       String lowerAdvert = advertText.toLowerCase();
       int beginIndex = lowerAdvert.lastIndexOf(GO_STRING) + GO_STRING.length();
-      int endIndex;
+      String advertTail = lowerAdvert.substring(beginIndex).trim();
+      int endIndex = advertTail.indexOf(' ');
 
-      if(beginIndex == -1)
+      if(beginIndex == -1 || endIndex == -1)
         return null;
-      endIndex = lowerAdvert.indexOf(' ', beginIndex);
-      if(endIndex == -1)
-        return lowerAdvert.substring(beginIndex);
-      return lowerAdvert.substring(beginIndex, endIndex);
+      return advertTail.substring(0, endIndex);
     }
 
     private boolean isBannedSound(int sound)
