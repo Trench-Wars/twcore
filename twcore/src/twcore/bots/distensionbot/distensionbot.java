@@ -46,7 +46,6 @@ import twcore.core.util.Tools;
  *
  * Lower priority (in order):
  * - !intro, !intro2, !intro3, etc.
- * - !emp for terr "targeted EMP" ability, and appropriate player data.  This involves negative full charge.
  * - F1 Help -- item descriptions?  At least say which slot is which, if not providing info on the specials
  * - LVZ stuff: replacement sounds
  *
@@ -855,9 +854,10 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         String[] intro1 = {
-                "DISTENSION - The Trench Wars RPG - by G. Dugwyler",
+                "         DISTENSION   -   Upgradeable Trench Wars Basing    -   by G. Dugwyler",
                 "Presently in beta.  Intro to come soon.  Type !beta for info on recent updates.",
-                "Join ?chat=distension for help, or see the forums.trenchwars.org thread for more info."
+                "Join ?chat=distension for help, or see the forums.trenchwars.org thread for more info.",
+                ""
         };
         m_botAction.privateMessageSpam(p.getArenaPlayerID(), intro1);
     }
@@ -1781,7 +1781,8 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP" );
             if( ! p.saveCurrentShipToDBNow() )
                 throw new TWCoreException( "PROBLEM SAVING SHIP BEFORE CHANGE -- Notify a member of staff immediately." );
-            m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " has left the Tactical Ops console." );
+            if( p.getShipNum() == 9 )
+                m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " has left the Tactical Ops console." );
         } else {
             m_playerTimes.remove( name );
         }
@@ -1792,10 +1793,6 @@ public class distensionbot extends SubspaceBot {
             p.setShipNum( 0 );
             return;
         }
-        for( DistensionArmy a : m_armies.values() )
-            a.recalculateFigures();
-        p.putInCurrentShip();
-        p.prizeUpgradesNow();
 
         if( shipNum == 9 )
             m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " is now manning the Tactical Ops console." );
@@ -1845,6 +1842,10 @@ public class distensionbot extends SubspaceBot {
         } else
             m_playerTimes.remove( name );
 
+        for( DistensionArmy a : m_armies.values() )
+            a.recalculateFigures();
+        p.putInCurrentShip();
+        p.prizeUpgradesNow();
         m_lagouts.remove( name );
         m_lagShips.remove( name );
         p.setLagoutAllowed(true);
@@ -5399,7 +5400,7 @@ public class distensionbot extends SubspaceBot {
                 nextRank = -1;
                 upgPoints = -1;
                 warpInBase = false;
-                if( this.shipNum > 0 ) {
+                if( this.shipNum > 0 && this.shipNum != 9 ) {
                     m_botAction.specWithoutLock( name );
                     lastShipNum = this.shipNum;     // Record for lagout
                 }
@@ -8393,9 +8394,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, new int[]{10,15,18}, new int[]{25,33,50}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, new int[]{24,50}, new int[]{40,60}, -1 );
+        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, new int[]{24,50}, new int[]{40,60}, 2 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 40, 55, -1 );
+        upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 40, 55, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
     }
