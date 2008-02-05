@@ -22,7 +22,7 @@ import twcore.core.util.Tools;
  * @author  Kyace
  */
 public class golden extends MultiModule {
-   
+
    boolean isRunning = false;
    String hasGun = "";
    String killMessage = " has got the Golden Gun! Run!";
@@ -36,11 +36,11 @@ public class golden extends MultiModule {
 
    public void init() {
    }
-   
+
    public void requestEvents(ModuleEventRequester events) {
        events.request(this, EventRequester.PLAYER_DEATH);
-   }   
-   
+   }
+
    /**
     * This method switchs ships and freqs and specs depending
     * on if guy with gun died and limit and such.
@@ -189,11 +189,15 @@ public class golden extends MultiModule {
 
        }
        else if( message.startsWith( "!stop" )){
-           if( !isRunning )
-              {m_botAction.sendPrivateMessage(name, "Golden Gun is already stopped, cannot stop.");
-               return;}
+           if( !isRunning ) {
+               m_botAction.sendPrivateMessage(name, "Golden Gun is already stopped, cannot stop.");
+               return;
+           }
            m_botAction.sendPrivateMessage(name, "Golden Gun deactivated");
            isRunning = false;
+           try {
+               resetPlayer.cancel();
+           } catch (Exception e) {}
            //Stops checking at death.
        }
        else if( message.startsWith( "!setgun " )){
@@ -299,7 +303,7 @@ public class golden extends MultiModule {
            return 1;
        }
    }
-   
+
    public String[] getModHelpMessage() {
        String[] GoldenHelp = {
                "!startrandom     - starts Golden Gun with random gunner",
@@ -317,9 +321,12 @@ public class golden extends MultiModule {
                "!resetdelay <#)  - changes deley between when goldengun dies and *shipreset"
        };
        return GoldenHelp;
-   }   
+   }
 
    public void cancel() {
+       try {
+           resetPlayer.cancel();
+       } catch (Exception e) {}
    }
 
    public boolean isUnloadable()    {
