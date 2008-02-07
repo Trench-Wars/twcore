@@ -63,8 +63,8 @@ public class distensionbot extends SubspaceBot {
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
-    private final int IDLE_FREQUENCY_CHECK = 20;           // In seconds, how frequently to check for idlers
-    private final int IDLE_TICKS_BEFORE_DOCK = 9;          // # IDLE_FREQUENCY_CHECKS in idle before player is docked
+    private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
+    private final int IDLE_TICKS_BEFORE_DOCK = 18;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int LAGOUT_VALID_SECONDS = 120;          // # seconds since lagout in which you can use !lagout
     private final int LAGOUT_WAIT_SECONDS = 30;            // # seconds a player must wait to be placed back in the game
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
@@ -618,6 +618,7 @@ public class distensionbot extends SubspaceBot {
 
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleArenaMessage" );
+        m_commandInterpreter.registerDefaultCommand( Message.PUBLIC_MESSAGE, this, "handlePublicMessage" );
     }
 
 
@@ -646,6 +647,18 @@ public class distensionbot extends SubspaceBot {
      */
     public void handleRemoteMessage( String name, String msg ) {
         m_botAction.sendSmartPrivateMessage( name, "Can't quite hear ya.  C'mere, and maybe I'll !help you."  );
+    }
+
+
+    /**
+     * Reset away timer whenever player speaks.
+     * @param name
+     * @param msg
+     */
+    public void handlePublicMessage( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p != null )
+            p.resetIdle();
     }
 
 
@@ -1415,6 +1428,7 @@ public class distensionbot extends SubspaceBot {
             loser.checkVengefulBastard( victor.getArenaPlayerID() );
             // Determine if the victor's Leeching should fire (full charge prized after a kill)
             victor.checkLeeching();
+            victor.resetIdle();
 
             if( ! victor.wantsKillMsg() )
                 return;
@@ -4216,7 +4230,7 @@ public class distensionbot extends SubspaceBot {
                     this.cancel();
             }
         };
-        m_botAction.scheduleTask(msgTask, 100, 100);
+        m_botAction.scheduleTask(msgTask, 1000, 100);
     }
 
 
@@ -4504,13 +4518,13 @@ public class distensionbot extends SubspaceBot {
             desc = "Always first in line to rearm, plus full energy after rearm";
             break;
         case ABILITY_TERR_REGEN:
-            desc = "+5% chance of burst/portal every 30 seconds";
+            desc = "+6% chance of burst/portal every 30 seconds";
             break;
         case ABILITY_ENERGY_TANK:
             desc = "+10% chance of replenishing a reusable energy tank";
             break;
         case ABILITY_TARGETED_EMP:
-            desc = "EMP ALL enemies with !emp (every 20 minutes)";
+            desc = "EMP ALL enemies (possible every 15 minutes in Terr)";
             break;
         case ABILITY_SUPER:
             desc = "+5% chance of super every 30 seconds";
@@ -4678,6 +4692,9 @@ public class distensionbot extends SubspaceBot {
         private int       currentComms;         // Current # communications saved up (for Tactical Ops)
         private int       lastX;                // Last X position
         private int       lastY;                // Last Y position
+        private int       lastXVel;             // Last X velocity
+        private int       lastYVel;             // Last Y velocity
+        private int       lastRot;              // Last rotation
         private boolean   energyTank;           // True if player has an energy tank available
         private boolean   targetedEMP;          // True if player has targeted EMP available
         private int       vengefulBastard;      // Levels of Vengeful Bastard ability
@@ -5061,13 +5078,13 @@ public class distensionbot extends SubspaceBot {
             if( shipNum == 5 ) {
                 // Regeneration ability; each level worth an additional 5% of prizing either port or burst
                 //                       (+5% for each, up to a total of 50%)
-                double portChance = Math.random() * 20.0;
-                double burstChance = Math.random() * 20.0;
-                if( (double)purchasedUpgrades[11] > portChance ) {
+                double portChance = Math.random() * 100.0;
+                double burstChance = Math.random() * 100.0;
+                if( ((double)purchasedUpgrades[11] * 6.0) > portChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.PORTAL );
                     prized = true;
                 }
-                if( (double)purchasedUpgrades[11] > burstChance ) {
+                if( ((double)purchasedUpgrades[11] * 6.0) > burstChance ) {
                     m_botAction.specificPrize( name, Tools.Prize.BURST );
                     prized = true;
                 }
@@ -5560,7 +5577,8 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Checks player for idling, and docks them if they are idle too long.
+         * Checks player for idling, and docks them if they are idle too long.  Players can kill
+         * the idle by speaking in pubchat or making kills.
          */
         public void checkIdleStatus() {
             if( shipNum == 9 ) return;
@@ -5570,38 +5588,55 @@ public class distensionbot extends SubspaceBot {
             boolean idleinsafe = (p.getYTileLocation() <= TOP_SAFE || p.getYTileLocation() >= BOT_SAFE);
             boolean idle = idleinsafe;
             if( !idle ) {
-                if( lastX >= p.getXTileLocation() - 5 && lastX <= p.getXTileLocation() + 5 &&
-                    lastY >= p.getYTileLocation() - 5 && lastY <= p.getYTileLocation() + 5 )
+                // Check for people sitting in the same spot, moving in a straight line w/o changing velocity,
+                // and bouncing in the rocks without changing their rotation.
+                if( lastX >= p.getXTileLocation() - 3 && lastX <= p.getXTileLocation() + 3 &&
+                    lastY >= p.getYTileLocation() - 3 && lastY <= p.getYTileLocation() + 3 )
+                    idle = true;
+                else if( lastXVel == p.getXVelocity() && lastYVel == p.getYVelocity() )
+                    idle = true;
+                else if( lastRot == p.getRotation() )
                     idle = true;
             }
             if( shipNum > 0 && idle ) {
                 idleTicks++;
                 if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 3)
                     if( idleinsafe )
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not move out of safe.");
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not move out of safe or say something in public chat.");
                     else
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you don't move.");
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you don't move away from your current location or say something in public chat.");
                 if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
                     if( idleinsafe )
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of safe.");
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of safe or say something in public chat.");
                     else
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you don't move.");
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you don't move away from your current location or say something in public chat.");
                 else if( idleTicks >= IDLE_TICKS_BEFORE_DOCK )
                     cmdDock(name, "");
             } else
                 idleTicks = 0;
             lastX = p.getXTileLocation();
             lastY = p.getYTileLocation();
+            lastXVel = p.getXVelocity();
+            lastYVel = p.getYVelocity();
+            lastRot = p.getRotation();
+        }
+
+        /**
+         * Resets the idle counter.  Called whenever a player speaks or makes a kill.
+         */
+        public void resetIdle() {
+            idleTicks = 0;
         }
 
         /**
          * Shares a portion of the RP "profits" earned in the last minute with support ships,
          * and to a lesser degree, with weasels.  Levis and especially weasels do not receive
-         * as large a share of profit sharing as do sharks, terrs and tactical ops.
+         * as large a share of profit sharing as do sharks, terrs and tactical ops.  Players
+         * who are idle for more than 2 minutes do not receive profit-sharing.
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
-            if( isSupportShip() || shipNum == 6 ) {
+            if( (isSupportShip() || shipNum == 6) && idleTicks < 12 ) {
                 float sharingPercent;
                 float calcRank = (float)rank;
                 if( shipNum == 4 )
@@ -7834,27 +7869,13 @@ public class distensionbot extends SubspaceBot {
      * Lanc   - 14    (unlock @ 10)
      * WB     - 15    (start)
      * Weasel - 15    (unlock by successive kills)
+     * Jav    - 15.2  (unlock @ 15)
      * Spider - 16    (unlock @ 5)
      * Levi   - 16    (unlock @ 20)
-     * Jav    - 16    (unlock @ 15)
      *
      * Prize format: Name, Prize#, Cost([]), Rank([]), # upgrades
      */
     public void setupPrices() {
-        /*
-         *  Some now invalid data.
-         *  Cost     Level      Pt/kill     Kills req/upg
-            15000~    10        48          312 (1562)
-            7500~      9        43          174 (872)
-            3600~      8        38          94 (473)
-            1920       7        33          58 (290)
-            960        6        28          34 (170)
-            480        5        23          20 (100)
-            240        4        18          13 (65)
-            120        3        13          9.2 (46)
-            60         2        8           7.5 (37.5)
-            30         1        3           10 (50)
-         */
 
         // Ship 0 -- dummy (for ease of access)
         ShipProfile ship = new ShipProfile( -1, -1 );
@@ -7934,7 +7955,7 @@ public class distensionbot extends SubspaceBot {
         // 60: L3 Guns
         // 70: Rocket 3
         // 80: L3 Bombs
-        ship = new ShipProfile( RANK_REQ_SHIP2, 16f );
+        ship = new ShipProfile( RANK_REQ_SHIP2, 15.2f );
         upg = new ShipUpgrade( "Balancing Streams        [ROT]", Tools.Prize.ROTATION, new int[]{8,9,9,9,10,10,11,12,13,15}, 0, 10 );       // 20 x10
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Fuel Economizer          [THR]", Tools.Prize.THRUST, new int[]{4,5,6,7,7,8,8,9,9,12,15,20}, 0, 12 );        //  1 x12
@@ -7988,10 +8009,10 @@ public class distensionbot extends SubspaceBot {
         // 33: +15% Energy Tank 3
         // 35: +5% Super 3
         // 38: Anti
-        // 40: L2 Guns
+        // 41: Priority Rearm
         // 45: +5% Super 4
         // 47: Decoy 3
-        // 50: Priority Rearm
+        // 50: L2 Guns
         // 55: +5% Super 5
         // 60: +15% Energy Tank 4
         ship = new ShipProfile( RANK_REQ_SHIP3, 16f );
@@ -8031,7 +8052,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warp Field Stabilizer", Tools.Prize.ANTIWARP, 35, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 21, 50, 1 );
+        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 21, 41, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
@@ -8098,7 +8119,7 @@ public class distensionbot extends SubspaceBot {
         // 9:  Priority respawn
         // 13: Profit-sharing 1
         // 16: Multi (slightly more forward than regular)
-        // 21: Burst 2
+        // 21: Burst 2 (HIGH cost)
         // 23: Profit-sharing 2
         // 25: Escape Pod 1
         // 29: Portal 2
@@ -8146,12 +8167,12 @@ public class distensionbot extends SubspaceBot {
         int p5a2[] = { 7, 29, 48, 60, 70 };
         upg = new ShipUpgrade( "Wormhole Creation Kit", Tools.Prize.PORTAL, p5a1, p5a2, 5 );        // DEFINE
         ship.addUpgrade( upg );
-        int p5b1[] = { 6, 17, 58, 70, 90, 100 };
+        int p5b1[] = { 6, 45, 58, 70, 90, 100 };
         int p5b2[] = { 2, 21, 46, 55, 65, 80  };
         upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2, 6 );       // DEFINE
         ship.addUpgrade( upg );
         int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
-        upg = new ShipUpgrade( "+5% Regeneration", ABILITY_TERR_REGEN, 12, p5c1, 10 );
+        upg = new ShipUpgrade( "+6% Regeneration", ABILITY_TERR_REGEN, 12, p5c1, 10 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{12,13,14,15,20}, new int[]{25,35,45,57,75}, 5 );
         ship.addUpgrade( upg );
@@ -8231,11 +8252,12 @@ public class distensionbot extends SubspaceBot {
         // 24: XRadar
         // 26: Bombing special ability
         // 30: +20% Leeching 2
-        // 38: +1 Guns (other gun costs 6 but is available from start; these are free)
+        // 38: L3 Guns
         // 40: +20% Leeching 3
         // 45: The Firebloom
         // 50: +20% Leeching 4
         // 55: Prox
+        // 65: L2 Bombs
         // 69: Shrap (10 levels)
         // 70: +20% Leeching 5
         // 80: Decoy
@@ -8264,7 +8286,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "The Firebloom", Tools.Prize.BURST, 32, 45, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Lancaster Special!", Tools.Prize.BOMBS, 21, 26, 1 );
+        upg = new ShipUpgrade( "Lancaster Special!", Tools.Prize.BOMBS, new int[]{21,80}, new int[]{26,65}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 42, 55, 1 );
         ship.addUpgrade( upg );
@@ -8292,6 +8314,7 @@ public class distensionbot extends SubspaceBot {
         // 45: L2 Bombs
         // 48: +10% Repel Regen 2
         // 50: Repel 5
+        // 54: L2 Guns
         // 55: +10% Repel Regen 3
         // 60: Repel 6
         // 65: Shrap 3
@@ -8313,7 +8336,7 @@ public class distensionbot extends SubspaceBot {
         int p8b2[] = { 3, 5, 10, 20, 30, 40, 50, 75 };
         upg = new ShipUpgrade( "Projectile Slip Plates   [NRG]", Tools.Prize.ENERGY, p8b1, p8b2, 8 );       //  75 x8
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, 10, 12, 1 );
+        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, new int[]{10,45}, new int[]{12,55}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, 35, 45, 1 );
         ship.addUpgrade( upg );
