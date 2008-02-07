@@ -22,6 +22,10 @@ import twcore.core.util.Tools;
  */
 public final class prodem extends MultiModule {
 
+	private static final int UNLOCKED = 0;
+	private static final int LOCKED = 1;	
+	public int lockState = 0;
+	
     TimerTask		timerUpdate;
     TimerTask		startGame;
 
@@ -45,7 +49,6 @@ public final class prodem extends MultiModule {
     //4 - lowest score
     int[] records = { 0, 0, 0, 0, 10000, 0, 0 };
     private int m_lateFreq;
-    private final static int INITIAL_LATE_FREQ = 500;
 
 
     ///*** Constructor ///***
@@ -92,6 +95,11 @@ public void handleEvent( Message event ) {
                 botPlayerIn( name, message );
             }
         }
+        else if( event.getMessageType() == Message.ARENA_MESSAGE  && gameProgress != -1) {
+        	if((message.equals("Arena LOCKED") && lockState == UNLOCKED) || (message.equals("Arena UNLOCKED") && lockState ==  LOCKED)){
+        		m_botAction.toggleLocked();
+        	}
+        }
     }
 
     ///*** Starts the game. ///***
@@ -101,12 +109,14 @@ public void handleEvent( Message event ) {
         }
         gameProgress = 0;
         lastMessage = 30;
-        m_lateFreq = INITIAL_LATE_FREQ;
 
         //Locks and setships.
+        lockState = LOCKED;
         m_botAction.toggleLocked();
         m_botAction.scoreResetAll();
         m_botAction.changeAllShips(8);
+        
+        
 
         records[0] = 0;
         records[1] = 0;
@@ -116,9 +126,20 @@ public void handleEvent( Message event ) {
         records[5] = 0;
         records[6] = 0;
 
+        //Modded by milosh - 2.7.08 - Allows for better late entry alternatives
+        int freq = 0;
+        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
+        if( it == null ) botStop(m_botAction.getBotName());
+        while( it.hasNext() ){
+        	Player p = it.next();
+        	m_botAction.setFreq(p.getPlayerID(), freq);
+        	freq++;
+        }
+        m_lateFreq = freq;
+        
         //Stores players information.
         Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
-        if( i == null ) return;
+        if( i == null ) botStop(m_botAction.getBotName());
         while( i.hasNext() ){
             Player tempP = (Player)i.next();
             String name = tempP.getPlayerName();
@@ -131,7 +152,7 @@ public void handleEvent( Message event ) {
                     gameProgress = 1;
                     m_botAction.createRandomTeams(1);
                     m_botAction.sendArenaMessage( "ProDem begins!", 104 );
-                    m_botAction.sendArenaMessage( "Lagout or want in just pm me with !prolag -" + m_botAction.getBotName() );
+                    m_botAction.sendArenaMessage( "If you lagout or just want in PM me with !prolag -" + m_botAction.getBotName() );
                 }
 
             }
@@ -152,6 +173,7 @@ public void handleEvent( Message event ) {
             for(int h=0;h>7;h++)
                 records[h] = 0;
             records[4] = 10000;
+            lockState = UNLOCKED;
             m_botAction.toggleLocked();
             m_botAction.sendArenaMessage( "Game has been stopped.", 103 );
         }
@@ -301,6 +323,7 @@ public void handleEvent( Message event ) {
         for(int h=0;h>7;h++)
             records[h] = 0;
         records[4] = 10000;
+        lockState = UNLOCKED;
         m_botAction.toggleLocked();
     }
 
