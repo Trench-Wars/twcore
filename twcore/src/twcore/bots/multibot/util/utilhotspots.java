@@ -17,7 +17,6 @@ import twcore.core.util.ModuleEventRequester;
  *Modified the hotspots module with a better UI and fixed
  *the timer task errors. Should be working properly.
  */
-
 public class utilhotspots extends MultiUtil {
 
 	OperatorList opList;
@@ -33,7 +32,6 @@ public class utilhotspots extends MultiUtil {
     /**
      * initializes.
      */
-
     public void init() {
     	recentContacts = new ArrayList<String>();
     	opList = m_botAction.getOperatorList();
@@ -47,7 +45,6 @@ public class utilhotspots extends MultiUtil {
     /**
      * requests events.
      */
-
     public void requestEvents( ModuleEventRequester modEventReq ) {
     	modEventReq.request(this, EventRequester.PLAYER_POSITION );
     }
@@ -55,7 +52,6 @@ public class utilhotspots extends MultiUtil {
     /**
      * Handles messages
      */
-
     public void handleEvent( Message event ){
 
         String message = event.getMessage();
@@ -72,7 +68,6 @@ public class utilhotspots extends MultiUtil {
      * @param sender is the user of the bot.
      * @param message is the command.
      */
-
     public void handleCommand( String sender, String message ) {
     	String msg = message;
     	message = message.toLowerCase();
@@ -105,7 +100,6 @@ public class utilhotspots extends MultiUtil {
     /**
      * Handles player positions
      */
-
     public void handleEvent( PlayerPosition event ) {
         String name = m_botAction.getPlayerName(event.getPlayerID());
         if(name == null || recentContacts.contains(name))return;
@@ -128,7 +122,6 @@ public class utilhotspots extends MultiUtil {
     /**
      * initializes timer task.
      */
-
     public void watch()	{
     	changeTask = new TimerTask() {
             public void run() {
@@ -150,7 +143,6 @@ public class utilhotspots extends MultiUtil {
      * Lists spots.
      * @param sender is the user of the bot
      */
-
     public void do_ListSpot(String sender)	{
     	Iterator<HotSpot> it = hotSpots.iterator();
     	if(!it.hasNext()) {m_botAction.sendPrivateMessage(sender,"No spots loaded!");return;}
@@ -165,8 +157,7 @@ public class utilhotspots extends MultiUtil {
      * Adds a message to a spot
      * @param sender is the user of the bot
      * @param message is the index of the spot and the message to add
-     */
-    
+     */   
     public void do_addMessage( String sender, String message ) {
     	String spot = message.substring(0, 1);
     	if(message.indexOf(" ") == -1)return;
@@ -184,31 +175,68 @@ public class utilhotspots extends MultiUtil {
     		m_botAction.sendPrivateMessage( sender, "The given HotSpot does not exist.");
     		return;
     	}
-    	if((msg.startsWith("*warn") ||
-    		msg.startsWith("*shutup") ||
-    	    msg.startsWith("*kill") ||
-    	    msg.startsWith("*mirror") ||
-    	    msg.startsWith("*sendto") ||
-    	    msg.startsWith("*ufo") ||
-    	    msg.startsWith("*putfile") ||
-    	    msg.startsWith("*getfile") ||
-    	    msg.startsWith("*sysop") ||
-    	    msg.startsWith("*smoderator") ||
-    	    msg.startsWith("*moderator") ||
-    	    msg.startsWith("*permit") ||
-    	    msg.startsWith("*revoke") ||
-    	    msg.startsWith("*points") ||
-    	    msg.startsWith("*bandwidth") ||
-    	    msg.startsWith("*lowbandwidth") ||
-    	    msg.startsWith("*thor") ||
-    	    msg.startsWith("*super")) &&
-    	    !opList.isSmod(sender)){
-    		m_botAction.sendSmartPrivateMessage( sender, "That command is restricted. There is really no reason to use it with a hot spot.");
-    		return;
-    	}
+    	if(msg.startsWith("*")){
+			if(!isAllowed(msg) && !opList.isSmod(sender)){
+				m_botAction.sendSmartPrivateMessage( sender, "Command not added; Restricted or unknown.");
+				return;
+			}
+		}
     	hotSpots.elementAt(index).addMessage(msg);
     	m_botAction.sendSmartPrivateMessage( sender, "Message added to HotSpot at index " + index );
     }
+    
+    /**
+	 * A white-list of allowed custom commands.
+	 * @param s - The string
+	 * @return true if the string is allowed. else false.
+	 */
+	public boolean isAllowed(String s){
+		if(s.startsWith("*setship")   ||
+		   s.startsWith("*setfreq")   ||
+		   s.startsWith("*warpto")    ||
+		   s.equals("*scorereset")    ||
+		   s.equals("*spec")          ||
+		   s.equals("*prize #4")      ||//Stealth
+		   s.equals("*prize #5")      ||//Cloak
+		   s.equals("*prize #6")      ||//X-radar
+		   s.equals("*prize #7")      ||//Warp
+		   s.equals("*prize #13")     ||//Full charge
+		   s.equals("*prize #14")     ||//Engine shutdown
+		   s.equals("*prize #15")     ||//Multi-fire
+		   s.equals("*prize #17")     ||//Super
+		   s.equals("*prize #18")     ||//Shields
+		   s.equals("*prize #19")     ||//Shrapnel
+		   s.equals("*prize #20")     ||//Anti-warp
+		   s.equals("*prize #21")     ||//Repel
+		   s.equals("*prize #22")     ||//Burst
+		   s.equals("*prize #23")     ||//Decoy
+		   s.equals("*prize #24")     ||//Thor
+		   s.equals("*prize #25")     ||//Multi-prize
+		   s.equals("*prize #26")     ||//Brick
+		   s.equals("*prize #27")     ||//Rocket
+		   s.equals("*prize #28")     ||//Portal
+		   s.equals("*prize #-4")     ||//Negative Stealth
+		   s.equals("*prize #-5")     ||//Negative Cloak
+		   s.equals("*prize #-6")     ||//Negative X-radar
+		   s.equals("*prize #-7")     ||//Negative Warp
+		   s.equals("*prize #-13")    ||//Negative Full charge
+		   s.equals("*prize #-14")    ||//Negative Engine shutdown
+		   s.equals("*prize #-15")    ||//Negative Multi-fire
+		   s.equals("*prize #-17")    ||//Negative Super
+		   s.equals("*prize #-18")    ||//Negative Shields
+		   s.equals("*prize #-19")    ||//Negative Shrapnel
+		   s.equals("*prize #-20")    ||//Negative Anti-warp
+		   s.equals("*prize #-21")    ||//Negative Repel
+		   s.equals("*prize #-22")    ||//Negative Burst
+		   s.equals("*prize #-23")    ||//Negative Decoy
+		   s.equals("*prize #-24")    ||//Negative Thor
+		   s.equals("*prize #-25")    ||//Negative Multi-prize
+		   s.equals("*prize #-26")    ||//Negative Brick
+		   s.equals("*prize #-27")    ||//Negative Rocket
+		   s.equals("*prize #-28"))     //Negative Portal
+		return true;
+		else return false;
+	}
     
     /**
      * Removes a message from a spot
@@ -244,8 +272,7 @@ public class utilhotspots extends MultiUtil {
      * Lists the messages of a spot
      * @param sender is the user of the bot
      * @param message is the index of the spot
-     */
-    
+     */  
     public void do_listMessages( String sender, String message ) {
     	int index;
     	try {
@@ -278,15 +305,14 @@ public class utilhotspots extends MultiUtil {
      * @param sender is the user of the bot.
      * @param message is the hotspot.
      */
-
     public void do_addHotSpot( String sender, String message ) {
 
         String pieces[] = message.split( " " );
-        if( pieces.length != 3 ) return;//Changed from 5 to 3 - milosh 2.9.08
+        if( pieces.length < 3 || pieces.length == 4 || pieces.length > 6) return;
 
-        int values[] = new int[3];//Changed from 5 to 3 - milosh 2.9.08
+        int values[] = new int[pieces.length];
         try {
-            for( int i = 0; i < 3; i++ )//Changed from 5 to 3 - milosh 2.9.08
+            for( int i = 0; i < pieces.length; i++ )
                 values[i] = Integer.parseInt( pieces[i] );
         } catch (Exception e) {
             m_botAction.sendPrivateMessage( sender, "Input error.  Check and try again." );
@@ -322,7 +348,6 @@ public class utilhotspots extends MultiUtil {
      * @param sender is the user of the bot
      * @param message is the command
      */
-
     public void do_switchTime( String sender, String message ) {
         int time = switchTime;
         try {
@@ -344,6 +369,11 @@ public class utilhotspots extends MultiUtil {
         m_botAction.sendPrivateMessage( sender, "Switch time set to " + time );
     }
 
+    /**
+     * Changes the amount of time a user must wait to get a response from a hotspot after an initial response.
+     * @param sender is the user of the bot
+     * @param message is the command
+     */
     public void do_repeatTime( String sender, String message ) {
     	int time = repeatTime;
         try {
@@ -364,7 +394,6 @@ public class utilhotspots extends MultiUtil {
     /**
      * Returns help message
      */
-
     public String[] getHelpMessages() {
         String help[] = {
                 "HotSpot Module          - Enter one coordinate, warp to another; maybe get a prize.'",
@@ -389,6 +418,9 @@ public class utilhotspots extends MultiUtil {
         m_botAction.resetReliablePositionUpdating();
     }
     
+    /**
+     * A timer object created so that players sitting on a hotspot will not cause packet flooding.
+     */
     private class ContactTimer {
     	private Timer clock;
     	private TimerTask task;
@@ -412,7 +444,6 @@ public class utilhotspots extends MultiUtil {
 /**
  *Hot spot class that holds all related values
  */
-
 class HotSpot {
 
     int x;
@@ -420,6 +451,10 @@ class HotSpot {
     int r;
     ArrayList<String> messages;
 
+    /**
+     * Creates a new hotspot with the array of values. You can still use 5/6 values for warping/prizing, but
+     * only 3 values are needed to create a working hotspot.
+     */
     public HotSpot( int values[] ) {
     	if(values.length == 3){
             x = values[0];
@@ -441,18 +476,27 @@ class HotSpot {
     	}
     }
     
+    /**
+     * Add a message/command a player will receive when coming into contact with this spot.
+     */
     public void addMessage( String message ){
     	if(messages == null)
     		messages = new ArrayList<String>();
     	messages.add(message);
     }
     
+    /**
+     * Get the message at a specified index. If there is none return null.
+     */
     public String getMessage( int index ){
     	try{
-    	return messages.get(index);
-    	}catch(Exception e){return null;}
+    		return messages.get(index);
+    	}catch(Exception e){return null;}//throws ArrayIndexOutOfBounds
     }
     
+    /**
+     * Remove a message/command a player will receive when coming into contact with this spot.
+     */
     public void removeMessage( int index ){
     	try{
     		messages.remove(index);
@@ -461,12 +505,17 @@ class HotSpot {
     	} catch(Exception e){}
     }
     
+    /**
+     * Get the ArrayList of messages for this spot.
+     */
     public ArrayList<String> getMessages(){
     	return messages;
     }
     
+    /**
+     * Return true if the given X,Y is touching this spot. Else return false.
+     */
     public boolean inside( int playerX, int playerY ) {
-
         double dist = Math.sqrt( Math.pow( x*16 - playerX , 2 ) + Math.pow( y*16 - playerY , 2 ) );
         if( Math.round(dist) <= r*16 ) return true;
         else return false;
