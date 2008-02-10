@@ -267,22 +267,30 @@ public class utilautopilot extends MultiUtil
      */
     public String[] getHelpMessages()
     {
-        String[] help = {
-                "Autopilot, by dugwyler - executes a task when enough players vote for it.",
+        String[] help = {                
+        		"!modinfo              - Displays information on module use.",
+                "!addtask <cmd1,cmd2,cmd3,etc>;<#VotesRequired>;<Description>.",
+                "!removetask <Task#>   - Removes task <Task#> as found in !list.",
+                "!listtasks            - Lists all tasks currently set up.",
+                "!info                 - (For players) Shows tasks & number of votes needed to run.",
+                "!autoon               - Starts player vote monitoring and task execution.",
+                "!autooff              - Stops player vote monitoring and task execution.",
+                "!help                 - displays this."
+        };
+        return help;
+    }
+    
+    public String[] getModInfoMessage(){
+    	String[] info = {
+    			"Autopilot, by dugwyler - executes a task when enough players vote for it.",
                 "This module sends commands to other loaded modules, allowing you to create",
                 "automatically-hosted arenas if desired.  Provide a list of commands the task",
                 "will execute (separated by commas) WITHOUT the !, number of votes required to",
                 "run the task, and the description players will see when they use !info.",
                 "Sample usage:   !add dolock,setship 2,spec 10;8;Starts a game of twisted.",
                 "(Use cmds -arena <msg> and -wait <seconds> to send arena msgs/have the bot wait).",
-                "!addtask <cmd1,cmd2,cmd3,etc>;<#VotesRequired>;<Description>     - See above.",
-                "!removetask <Task#>   - Removes task <Task#> as found in !list.",
-                "!listtasks            - Lists all tasks currently set up.",
-                "!info                 - (For players) Shows tasks & number of votes needed to run.",
-                "!autoon               - Starts player vote monitoring and task execution.",
-                "!autooff              - Stops player vote monitoring and task execution."
-        };
-        return help;
+    	};
+    	return info;
     }
 
     
