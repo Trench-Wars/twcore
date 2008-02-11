@@ -297,10 +297,10 @@ public class Tools {
      */
     public static boolean isBinary( String s ){
     	try {
+    		
             for( int i = 0; i < s.length(); i++ ){
-                if( s.charAt(i) != '0' && s.charAt(i) != '1'){
-                    return false;
-                }
+            	if(java.lang.Character.digit(s.charAt(i), 2) == -1)
+            		return false;
             }
             if( s.length() % 4 != 0)
             	return false;

@@ -1573,7 +1573,7 @@ public class BotAction
     {
         try
         {
-            setDoors((int) Byte.parseByte(eightBinaryDigits, 2));
+            setDoors((int) Short.parseShort(eightBinaryDigits, 2));
         }
         catch (NumberFormatException e)
         {
