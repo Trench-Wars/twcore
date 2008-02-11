@@ -11,7 +11,9 @@ import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
+import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 
 /**
  *Modified the hotspots module with a better UI and fixed
@@ -112,6 +114,7 @@ public class utilhotspots extends MultiUtil {
                     	Iterator<String> i = watch.getMessages().iterator();
                     	while( i.hasNext() ){
                     		String msg = i.next();
+                    		msg = replaceKeys(name, msg);
                     		m_botAction.sendUnfilteredPrivateMessage( event.getPlayerID(), msg );
                     	}
                     }
@@ -119,6 +122,48 @@ public class utilhotspots extends MultiUtil {
             }
     }
 
+    /**
+	 * Replaces escape keys when messaging a user who has used this command
+	 * @param name - The user accessing this command
+	 * @param message - The message/action to be sent to the user
+	 * @return A string with objects instead of escape keys
+	 */
+	public String replaceKeys(String name, String message){
+		Player p = m_botAction.getPlayer(name);
+		if(message.contains("&player"))
+			message = message.replace("&player", name);
+		if(p == null)return message;
+		if(message.contains("&freq")){
+			message = message.replace("&freq", p.getFrequency() + "");			
+		}
+		if(message.contains("&ship")){
+			message = message.replace("&ship", Tools.shipName(p.getShipType()));
+		}
+		if(message.contains("&shipslang")){
+			message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));
+		}
+		if(message.contains("&wins")){
+			message = message.replace("&wins", p.getWins() + "");
+		}
+		if(message.contains("&losses")){
+			message = message.replace("&losses", p.getLosses() + "");
+		}
+		if(message.contains("&bounty")){
+			message = message.replace("&bounty", p.getBounty() + "");
+		}
+		if(message.contains("&squad")){
+			message = message.replace("&squad", p.getSquadName());
+		}
+		if(message.contains("&x")){
+			message = message.replace("&x", p.getXLocation()/16 + "");
+		}
+		if(message.contains("&y")){
+			message = message.replace("&y", p.getYLocation()/16 + "");
+		}			
+		//TODO: Feel free to add more escape keys.
+		return message;
+	}
+    
     /**
      * initializes timer task.
      */

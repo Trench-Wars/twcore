@@ -289,6 +289,26 @@ public class Tools {
             return false;
         }
     }
+    
+    /**
+     * Returns true if a String is composed completely of 0 and 1 and its length is a multiple of 4.
+     * @param s String to determine if binary.
+     * @return True if String is binary. Else false.
+     */
+    public static boolean isBinary( String s ){
+    	try {
+            for( int i = 0; i < s.length(); i++ ){
+                if( s.charAt(i) != '0' && s.charAt(i) != '1'){
+                    return false;
+                }
+            }
+            if( s.length() % 4 != 0)
+            	return false;
+            return true;
+        } catch ( Exception e ) {
+            return false;
+        }
+    }
 
     /**
      * Add slashes to a String as is required for a database query. (buggy)

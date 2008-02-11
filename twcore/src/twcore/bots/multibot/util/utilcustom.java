@@ -10,6 +10,7 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
+import twcore.core.util.Tools;
 
 /**
  * @author milosh
@@ -349,7 +350,10 @@ public class utilcustom extends MultiUtil{
 				message = message.replace("&freq", p.getFrequency() + "");			
 			}
 			if(message.contains("&ship")){
-				message = message.replace("&ship", getShipNames(p.getShipType()));
+				message = message.replace("&ship", Tools.shipName(p.getShipType()));
+			}
+			if(message.contains("&shipslang")){
+				message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));
 			}
 			if(message.contains("&wins")){
 				message = message.replace("&wins", p.getWins() + "");
@@ -370,25 +374,6 @@ public class utilcustom extends MultiUtil{
 				message = message.replace("&y", p.getYLocation()/16 + "");
 			}			
 			//TODO: Feel free to add more escape keys.
-			return message;
-		}
-		
-		/**
-		 * Returns the name of a ship 0-spectator, 1-8 ships
-		 */
-		public String getShipNames(int ship){
-			String message = "-Unknown-";
-			switch(ship){
-			case 0: message =  "Spectator"; break;
-			case 1: message =  "Warbird"; break;
-			case 2: message =  "Javelin"; break;
-			case 3: message =  "Spider"; break;
-			case 4: message =  "Leviathan"; break;
-			case 5: message =  "Terrier"; break;
-			case 6: message =  "Weasel"; break;
-			case 7: message =  "Lancaster"; break;
-			case 8: message =  "Shark"; break;
-			}
 			return message;
 		}
 		

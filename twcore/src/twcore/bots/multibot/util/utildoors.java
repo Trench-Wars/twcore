@@ -42,11 +42,15 @@ public class utildoors extends MultiUtil {
 	public void doDoorCmd(String sender, String argString) {
 	    try {
 	    	int doorValue = Integer.parseInt(argString);
-	    	if (doorValue < -2 || doorValue > 255) {
-	    		throw new IllegalArgumentException("Invalid door value.");
+	    	if(Tools.isBinary(argString) && argString.length() == 8){
+	    		m_botAction.setDoors(argString);
+	    		m_botAction.sendSmartPrivateMessage(sender, "Doors set to " + argString + ".");
 	    	}
-	    	m_botAction.setDoors(doorValue);
-	    	m_botAction.sendSmartPrivateMessage(sender, "Doors set to " + doorValue + ".");
+	    	else if (doorValue > -2 && doorValue < 255) {
+	    		m_botAction.setDoors(doorValue);
+		    	m_botAction.sendSmartPrivateMessage(sender, "Doors set to " + doorValue + ".");	    		
+	    	}
+	    	else throw new IllegalArgumentException("Invalid door value.");	    	
 	    }
 	    catch(NumberFormatException e) {
 	    	throw new NumberFormatException("Please use the following format: !Door <Door Value>");
