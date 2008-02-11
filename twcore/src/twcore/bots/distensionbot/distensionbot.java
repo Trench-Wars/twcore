@@ -587,6 +587,8 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!!", acceptedMessages, this, "cmdEnergyTank" );
         m_commandInterpreter.registerCommand( "!emp", acceptedMessages, this, "cmdTargetedEMP" );
         m_commandInterpreter.registerCommand( "!manops", acceptedMessages, this, "cmdManOps" );
+        m_commandInterpreter.registerCommand( "!pilot", acceptedMessages, this, "cmdPilotDefunct" );
+        m_commandInterpreter.registerCommand( "!ship", acceptedMessages, this, "cmdPilotDefunct" );
         m_commandInterpreter.registerCommand( "!opshelp", acceptedMessages, this, "cmdOpsHelp" );
         m_commandInterpreter.registerCommand( "!opsmsg", acceptedMessages, this, "cmdOpsMsg" );
         m_commandInterpreter.registerCommand( "!opspm", acceptedMessages, this, "cmdOpsPM" );
@@ -1761,6 +1763,15 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdManOps( String name, String msg ) {
         cmdPilot( name, "9" );
+    }
+
+    /**
+     * For players that are used to !pilot/!ship.
+     * @param name
+     * @param msg
+     */
+    public void cmdPilotDefunct( String name, String msg ) {
+        throw new TWCoreException( "You do not need to use !pilot anymore to get into a ship.  Just hit ESC+#.  Check your !hangar to see which ships are available." );
     }
 
     /**
@@ -4334,7 +4345,9 @@ public class distensionbot extends SubspaceBot {
                     // Two armies now have players; start game, or continue if already started
                     if( !flagTimeStarted ) {
                         m_botAction.sendArenaMessage( "This sector is no longer safe: a war is brewing ...  All pilots, report for duty.  You have " + getTimeString(3 * INTERMISSION_SECS) + " to prepare for the assault.");
-                        m_botAction.scheduleTask( new IntermissionTask(), 3 * INTERMISSION_SECS );
+                        flagTimer = new FlagCountTask();    // Dummy, for displaying score.
+                        intermissionTimer = new IntermissionTask();
+                        m_botAction.scheduleTask( intermissionTimer, (3000 * INTERMISSION_SECS) );
                         m_roundNum = 0;
                         flagTimeStarted = true;
                     }
@@ -4523,7 +4536,7 @@ public class distensionbot extends SubspaceBot {
             desc = "Always first in line to rearm, plus full energy after rearm";
             break;
         case ABILITY_TERR_REGEN:
-            desc = "+6% chance of burst/portal every 30 seconds";
+            desc = "+10% chance of burst/portal every 30 seconds";
             break;
         case ABILITY_ENERGY_TANK:
             desc = "+10% chance of replenishing a reusable energy tank";
@@ -7058,12 +7071,12 @@ public class distensionbot extends SubspaceBot {
         // Start free play (delaying the intermission)
         int intermissionTime;
         if( gameOver ) {
-            intermissionTime = INTERMISSION_SECS * 10;
+            intermissionTime = INTERMISSION_SECS * 10000;
             m_roundNum = 1;
             m_freq0Score = 0;
             m_freq1Score = 0;
         } else {
-            intermissionTime = INTERMISSION_SECS * 5;
+            intermissionTime = INTERMISSION_SECS * 5000;
         }
 
         try {
@@ -7233,7 +7246,6 @@ public class distensionbot extends SubspaceBot {
         m_botAction.scheduleTask(scoreDisplay, 1000);       // Do score display
         m_botAction.scheduleTask(delaySetObj, 2000);        // Initialize score removal
         m_botAction.scheduleTask(scoreRemove, time-1000);   // Do score removal
-        m_botAction.scheduleTask(scoreRemove, time-1000);   // Do score removal
         m_botAction.showObject(2100);
 
     }
@@ -7285,7 +7297,7 @@ public class distensionbot extends SubspaceBot {
             this.time = time;
         }
         public void run() {
-            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString(time) + ".  Flags have no RP bonus during this time.", Tools.Sound.VICTORY_BELL );
+            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( time/1000 ) + ".  Flags have no RP bonus during this time.", Tools.Sound.VICTORY_BELL );
         }
     }
 
