@@ -103,17 +103,19 @@ public class utilcustom extends MultiUtil{
 	 */
 	public void do_listKeys(String name){
 		String msg[] = {
-				"+=============== Escape Keys ===============+",
-				"| &player         - The player's name.      |",
-				"| &freq           - The player's frequency. |",
-				"| &ship           - The player's ship.      |",
-				"| &squad          - The player's squad.     |",
-				"| &bounty         - The player's bounty.    |",
-				"| &x              - X Location(Tiles)       |",
-				"| &y              - Y Location(Tiles)       |",
-				"| &wins           - The player's wins.      |",
-				"| &losses         - The player's losses.    |",
-				"+===========================================+",
+				"+=================== Escape Keys ===================+",
+				"| &player         - The player's name.              |",
+				"| &freq           - The player's frequency.         |",
+				"| &ship           - The player's ship.              |",
+				"| &squad          - The player's squad.             |",
+				"| &bounty         - The player's bounty.            |",
+				"| &x              - X Location(Tiles)               |",
+				"| &y              - Y Location(Tiles)               |",
+				"| &wins           - The player's wins.              |",
+				"| &losses         - The player's losses.            |",
+				"| &!command&&   - Issues a command to the bot, but  |",
+				"|                    the player receives no message.|",
+				"+===================================================+",
 		};
 		m_botAction.smartPrivateMessageSpam(name, msg);
 	}
@@ -372,7 +374,20 @@ public class utilcustom extends MultiUtil{
 			}
 			if(message.contains("&y")){
 				message = message.replace("&y", p.getYLocation()/16 + "");
-			}			
+			}
+			if(message.contains("&!")){
+				while(true){
+					int beginIndex = message.indexOf("&!");
+					int endIndex = message.indexOf("&&");
+					if(endIndex != -1 && endIndex > beginIndex){
+						m_botAction.sendPrivateMessage(m_botAction.getBotName(), message.substring(beginIndex + 1, endIndex));
+						message = message.replaceFirst("&!", " ");
+						message = message.replaceFirst("&&", " ");
+					}
+					else break;
+				}
+				message = null;
+			}
 			//TODO: Feel free to add more escape keys.
 			return message;
 		}
@@ -386,7 +401,8 @@ public class utilcustom extends MultiUtil{
 			while( it.hasNext() ) {
 				String message = it.next();
 				message = replaceKeys(name, message);
-				m_botAction.sendUnfilteredPrivateMessage(name, message);
+				if(message != null)
+					m_botAction.sendUnfilteredPrivateMessage(name, message);
 			}
 			
 		}
