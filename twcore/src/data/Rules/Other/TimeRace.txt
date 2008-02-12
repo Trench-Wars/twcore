@@ -82,5 +82,5 @@ EnableLagLimits=0
 advertise=1
 zoner=8 v 8 basing is about to begin. type ?go %a -%n
 peopletoad=14
-advertDelay=1
+advertDelay=10
 # Number of minutes before another base advert is allowed
