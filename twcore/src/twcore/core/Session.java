@@ -187,7 +187,7 @@ public class Session extends Thread {
     }
 
     public void finalize(){
-        Tools.printLog( m_name + " is going away." );
+        Tools.printLog( m_name + " is going away. (Being garbage-collected; no references remain.)" );
     }
 
     public int getBotNumber(){
