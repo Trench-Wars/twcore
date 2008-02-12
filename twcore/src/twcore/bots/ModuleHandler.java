@@ -76,6 +76,7 @@ public class ModuleHandler
   {
     if(!moduleList.containsKey(moduleName))
       throw new IllegalArgumentException("ERROR: Module: " + moduleName + " is not loaded.");
+    moduleList.get(moduleName).cancel();
     moduleList.remove(moduleName);
   }
 
@@ -174,6 +175,15 @@ public class ModuleHandler
       // Very basic solution until we come up with something more permanent.  In the meantime,
       // if a bot is removed, it WILL block events from being handled.
     }
+  }
+  
+  /**
+   * Unloads all modules loaded on this ModuleHandler
+   */
+  public void unloadAllModules() {
+      for(String module:moduleList.keySet()) {
+          this.unloadModule(module);
+      }
   }
 
   /**
