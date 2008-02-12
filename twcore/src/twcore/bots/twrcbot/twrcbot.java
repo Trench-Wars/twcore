@@ -1,20 +1,14 @@
 package twcore.bots.twrcbot;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
-import java.util.TimerTask;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -22,23 +16,22 @@ import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.util.Tools;
 
 
-/** Bot for TWRC signups
- *  Also allows ops to update points
- *  New version shows people points data.
- *  @author Jacen Solo
- *  @version 1.7
+/** 
+ * Bot for TWRC signups
+ * 
+ * @author Jacen Solo, Maverick
+ * @version 2.0
  */
-public class twrcbot extends SubspaceBot
-{
-	HashSet<String> signups = new HashSet<String>();
+public class twrcbot extends SubspaceBot {
 	HashSet<String> twrcOps = new HashSet<String>();
-	File people = new File("people.txt");
-	File log = new File("log.txt");
-	boolean isRunning = true;
+	boolean isSignupsOpen = true;
 	BotSettings m_botSettings;
 	Calendar calendar;
+	
+	private final String sqlHost = "website"; 
 
 	/** Create the twrcbot, requests LoggedOn and Message events, and makes the 2 logs if necessary
 	 *  @param botAction - necessary thing, passed by BotQueue to give bot functionality
@@ -56,40 +49,29 @@ public class twrcbot extends SubspaceBot
 
 		events.request(EventRequester.LOGGED_ON);
 		events.request(EventRequester.MESSAGE);
-		try {
-			if(!people.exists())
-				people.createNewFile();
-			if(!log.exists())
-				log.createNewFile();
-		} catch(Exception e) {}
 		m_botSettings = m_botAction.getBotSettings();
 	}
 
 	/** Called when the bot gets logged in
 	 *  @param event - LoggedOn event doesn't do much, it's just there so the bot knows when it gets logged in
 	 */
-	public void handleEvent(LoggedOn event)
-	{
-		m_botAction.sendUnfilteredPublicMessage("?blogin bangme");
-		TimerTask t = new TimerTask() {
-			public void run() {
-				m_botAction.sendUnfilteredPublicMessage("?liftban #14791");
-			}
-		};
-		m_botAction.scheduleTask(t, 5000);
+	public void handleEvent(LoggedOn event) {
 		m_botAction.joinArena("twrc");
-		String allOps = m_botSettings.getString("TWRC Ops");
-		String ops[] = allOps.split(":");
-		for(int k = 0;k < ops.length;k++)
-			twrcOps.add(ops[k].toLowerCase());
-		try {
-			BufferedReader signedup = new BufferedReader(new FileReader(people));
-			String inLine;
-			while((inLine = signedup.readLine()) != null)
-			{
-				signups.add(inLine);
-			}
-		} catch(IOException e) {}
+		loadOperators();
+	}
+	
+	/**
+	 * Loads the operators from the twrcbot.cfg configuration file
+	 */
+	private void loadOperators() {
+	    // Get the operators from the configuration file
+        String allOps = m_botSettings.getString("TWRC Ops");
+        String ops[] = allOps.split(":");
+        twrcOps.clear();
+        
+        for(int k = 0;k < ops.length;k++) {
+            twrcOps.add(ops[k].toLowerCase());
+        }
 	}
 
 	/** Gets the person's name and message then passes info to handleCommand
@@ -113,11 +95,14 @@ public class twrcbot extends SubspaceBot
 	/** Inserts the player's name into the Racers table of the Racing database
 	 *  @param name - Name of the person signing up.
 	 */
-	public void sql(String name)
+	public void sqlSignup(String name)
 	{
 		try {
-			m_botAction.SQLQueryAndClose("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
-		} catch(Exception e) {}
+			m_botAction.SQLQueryAndClose(sqlHost, "INSERT INTO tblRacers (fldName, fldPoints) VALUES ( '"+Tools.addSlashes(name)+"', 0 ) ");
+		} catch(SQLException sqle) {
+		    m_botAction.sendSmartPrivateMessage(name, "Error encountered while saving signup to database. Please contact a TWRC Operator.");
+		    Tools.printStackTrace("SQLException encountered while performing sqlSignup() in TWRCBot", sqle);
+		}
 	}
 
 	/** Handles the different commands that can be sent to the bot
@@ -126,71 +111,71 @@ public class twrcbot extends SubspaceBot
 	 */
 	public void handleCommand(String name, String message)
 	{
+	    // Operator commands
 		if(m_botAction.getOperatorList().isSmod(name) || twrcOps.contains(name.toLowerCase()))
 		{
-			if(message.toLowerCase().startsWith("!on"))
+			if(message.toLowerCase().startsWith("!open"))
 			{
-				isRunning = true;
-				m_botAction.sendSmartPrivateMessage(name, "Bot Activated");
+			    if(isSignupsOpen) {
+			        m_botAction.sendSmartPrivateMessage(name, "Signups are already open.");
+			    } else {
+			        isSignupsOpen = true;
+			        m_botAction.sendSmartPrivateMessage(name, "Signups opened");
+			    }
 			}
-			else if(message.toLowerCase().startsWith("!off"))
+			else if(message.toLowerCase().startsWith("!close"))
 			{
-				isRunning = false;
-				m_botAction.sendSmartPrivateMessage(name, "Bot Deactivated");
-			}
-			else if(message.toLowerCase().startsWith("!arena "))
-			{
-				String pieces[] = message.split(" ", 2);
-				if(pieces[1].indexOf("%") == -1)
-					m_botAction.sendArenaMessage(pieces[1] + " -" + name);
-				else
-				{
-					String soundPieces[] = pieces[1].split("%", 2);
-					String soundPiece[] = soundPieces[1].split(" ", 2);
-					int soundCode = 2;
-					try {
-						soundCode = Integer.parseInt(soundPieces[0]);
-						if(soundCode == 12)
-							soundCode = 2;
-					} catch(Exception e) {}
-					m_botAction.sendArenaMessage(soundPieces[0] + soundPiece[1] + " -" + name);
-				}
+			    if(!isSignupsOpen) {
+			        m_botAction.sendSmartPrivateMessage(name, "Signups are already closed");
+			    } else {
+			        isSignupsOpen = false;
+			        m_botAction.sendSmartPrivateMessage(name, "Signups closed");
+			    }
 			}
 			else if(message.toLowerCase().startsWith("!player "))
 			{
 				String pieces[] = message.split(" ", 2);
-				m_botAction.sendPrivateMessage(name, "Current points of " + pieces[1] + " - " + getPoints(pieces[1]));
+				int points = getPoints(pieces[1]);
+				if(points > -1) {
+				    m_botAction.sendPrivateMessage(name, "Current points of " + pieces[1] + " : " + getPoints(pieces[1]));
+				} else if(points == -1) {
+				    m_botAction.sendPrivateMessage(name, "Player name not found : "+ pieces[1]);
+				} else if(points == -2) {
+				    m_botAction.sendPrivateMessage(name, "Unexpected error encountered while checking points of player : "+pieces[1]+". Please contact a member of TW Bot Development.");
+				}
 			}
 			else if(message.toLowerCase().startsWith("!update "))
 			{
 				String pieces[] = message.split(" ", 2);
 				String params[] = pieces[1].split(":");
-				if(params.length == 3)
+				if(params.length == 3 && Tools.isAllDigits(params[1]))
 					updatePlayer(name, params);
 				else
-					m_botAction.sendPrivateMessage(name, "Comon...you know the right way to do this");
+					m_botAction.sendPrivateMessage(name, "Incorrect command syntax");
 			}
-			else if(message.toLowerCase().startsWith("!clear"))
-			{
-				signups = new HashSet<String>();
-				updatePeopleFile();
+			else if(message.toLowerCase().startsWith("!reload")) {
+			    loadOperators();
+			    m_botAction.sendPrivateMessage(name, "Reload completed.");
 			}
-			else if(message.toLowerCase().startsWith("!die"))
-				m_botAction.die();
+			else if(message.toLowerCase().startsWith("!die")) {
+			    m_botAction.cancelTasks();
+			    m_botAction.die();
+			}
 		}
 
-		//reg people commands
-		if(message.toLowerCase().startsWith("!signup"))
-		{
-			if(!signups.contains(name.toLowerCase()) && isRunning)
-			{
+		// Public commands
+		if(message.toLowerCase().startsWith("!signup")) {
+		    
+		    int playerid = getID(name);
+		    
+			if(playerid == -1 && isSignupsOpen) {
 				m_botAction.sendPrivateMessage(name, "Sign up successfull! You may now participate in races.");
-				sql(name);
-				signups.add(name.toLowerCase());
-				updatePeopleFile();
-			}
-			else
-				m_botAction.sendPrivateMessage(name, "The bot is either deactivated or you have already signed up for TWRC, please contact Jacen Solo, Ice Storm, or SuperDAVE(postal) if you need assistance.");
+				sqlSignup(name);
+			} else if(!isSignupsOpen) {
+                m_botAction.sendPrivateMessage(name, "Signups are currently closed. Please contact a TWRC Operator if you need assistance.");
+            } else if(playerid > -1) {
+			    m_botAction.sendPrivateMessage(name, "You have already signed up for TWRC. Please contact a TWRC Operator if you need assistance.");
+			} 
 		}
 		else if(message.toLowerCase().startsWith("!who "))
 		{
@@ -208,28 +193,22 @@ public class twrcbot extends SubspaceBot
 			else
 				m_botAction.sendPrivateMessage(name, "No record of " + pieces[1] + " in the database.");
 		}
-		else if(message.toLowerCase().startsWith("!rank"))
-			m_botAction.sendPrivateMessage(name, "You are currently ranked #" + getRank(name) + " with " + getPoints(name) + " points.");
+		else if(message.toLowerCase().startsWith("!rank")) {
+		    int points = getPoints(name);
+		    if(points > -1) {
+		        m_botAction.sendPrivateMessage(name, "You are currently ranked #" + getRank(name) + " with " + getPoints(name) + " points.");
+		    } else if(points == -1) {
+		        m_botAction.sendPrivateMessage(name, "You haven't signed up for TWRC.");
+		    } else {
+		        m_botAction.sendPrivateMessage(name, "Unexpected error encountered. Contact a TWRC Operator for further assistance.");
+		    }
+		}
+		else if(message.toLowerCase().startsWith("!operators")) {
+		    m_botAction.sendPrivateMessage(name, "TWRC Operators: ");
+		    m_botAction.sendPrivateMessage(name, twrcOps.toString());
+		}
 		else if(message.toLowerCase().startsWith("!help"))
 			handleHelp(name);
-	}
-
-	/** Updates the people.txt file every time a person signs up to keep track of the people
-	 *  that have signed up.
-	 */
-	public void updatePeopleFile()
-	{
-		Iterator<String> it = signups.iterator();
-		try {
-			FileWriter out = new FileWriter(people, true);
-			while(it.hasNext())
-			{
-				String name = it.next();
-				out.write(name + "\n");
-				out.flush();
-			}
-			out.close();
-		} catch(IOException e) {}
 	}
 
 	/** Updates a players points.
@@ -238,46 +217,53 @@ public class twrcbot extends SubspaceBot
 	 */
 	public void updatePlayer(String name, String params[])
 	{
+	    String pName = params[0];
 		int points = Integer.parseInt(params[1]);
-		String pName = params[0];
+		int currentPoints = getPoints(pName);
+		
 		try {
-			int currentPoints = getPoints(pName);
-			writeLog(name + " changed " + params[0] + "'s points from " + currentPoints + " to " + (currentPoints + points) + ". Reason: " + params[2]);
-			currentPoints += points;
+			if(currentPoints < 0) {
+			    m_botAction.sendPrivateMessage(name, "Player not found.");
+			} else {
+			    currentPoints += points;
+			    
+			    m_botAction.SQLQueryAndClose(sqlHost, "UPDATE tblRacers SET fldPoints = "+currentPoints+" WHERE fldName = '"+Tools.addSlashes(pName)+"'");
+			    m_botAction.sendPrivateMessage(name, "Updated.");
+			}
+		} catch(Exception e) {
+		    e.printStackTrace();
+		}
 
-			m_botAction.SQLQueryAndClose("website", "UPDATE tblRacers SET fldPoints = "+currentPoints+" WHERE fldName = \'"+pName+"\'");
-			m_botAction.sendPrivateMessage(name, "Updated.");
-		} catch(Exception e) {e.printStackTrace();}
-		pointChange(pName, points, params[2]);
+		// Save into tblPointsData table
+		if(currentPoints > -1) {
+    		try {
+                m_botAction.SQLQueryAndClose(sqlHost, "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0, "+getID(pName)+", "+points+", '"+Tools.addSlashes(params[2])+"', '"+getTimeStamp()+"')");
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+		}
 	}
 
-	/** Returns the points that name has.
-	 *  @param name - name of the player that we are getting points of.
+	/** 
+	 * Returns the points that name has.
+	 * @param name - name of the player that we are getting points of.
+	 * @return the points of the player, -1 if not found, -2 if error encountered
 	 */
 	public int getPoints(String name)
 	{
 		try {
-			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldPoints FROM tblRacers WHERE fldName = \'"+name+"\'");
+			ResultSet results = m_botAction.SQLQuery(sqlHost, "SELECT fldPoints FROM tblRacers WHERE fldName = '"+Tools.addSlashes(name)+"'");
             int points = 0;
-			if(results.next())
+			if(results != null && results.next())
 				points = results.getInt("fldPoints");
+			else if(results == null || results.next() == false) {
+			    points = -1;
+			}
             m_botAction.SQLClose(results);
             return points;
-		} catch(Exception e) {return 0;}
-	}
-
-	/** Writes point changes to log.txt
-	 *  @param message - message to be written to the log.txt file
-	 */
-	public void writeLog(String message)
-	{
-		try {
-			FileWriter out = new FileWriter(log, true);
-			String outLine = message;
-			out.write(outLine + "\n");
-			out.flush();
-			out.close();
-		} catch(IOException e) {}
+		} catch(SQLException sqle) {
+		    return -2;
+		}
 	}
 
 	/** PM's the person with the Help message
@@ -287,16 +273,21 @@ public class twrcbot extends SubspaceBot
 	{
 		if(m_botAction.getOperatorList().isSmod(name) || twrcOps.contains(name.toLowerCase()))
 		{
-			m_botAction.sendPrivateMessage(name, "!on                     -Activates the bot.");
-			m_botAction.sendPrivateMessage(name, "!off                    -Deactivates the bot.");
-			m_botAction.sendPrivateMessage(name, "!delname <name>         -Removes the person from the people.txt file.");
+		    m_botAction.sendPrivateMessage(name, "--- Operator commands ---");
+		    m_botAction.sendPrivateMessage(name, "Signups currently: "+(isSignupsOpen?"OPEN":"CLOSED"));
+			m_botAction.sendPrivateMessage(name, "!open                   -Open signups.");
+			m_botAction.sendPrivateMessage(name, "!close                  -Close signups.");
 			m_botAction.sendPrivateMessage(name, "!update <name>:#:reason -Adds # points to <name>'s record.");
+			m_botAction.sendPrivateMessage(name, "!reload                 -Reloads the operators from the cfg file.");
 			m_botAction.sendPrivateMessage(name, "!die                    -Kills the bot.");
+			m_botAction.sendPrivateMessage(name, "---  Public commands  ---");
 		}
 
 		m_botAction.sendPrivateMessage(name, "!who <#>                -Returns the player with rank of <#>.");
 		m_botAction.sendPrivateMessage(name, "!rank <name>            -Gets <name>'s rank.");
-		m_botAction.sendPrivateMessage(name, "!signup                 -Signs you up for TWRC,");
+		if(isSignupsOpen)
+		m_botAction.sendPrivateMessage(name, "!signup                 -Signs you up for TWRC.");
+		m_botAction.sendPrivateMessage(name, "!operators              -Displays the TWRC Operators.");
 		m_botAction.sendPrivateMessage(name, "!help                   -Displays this message.");
 	}
 
@@ -331,7 +322,7 @@ public class twrcbot extends SubspaceBot
 		int k = 0;
 		boolean found = false;
 		try {
-			ResultSet result = m_botAction.SQLQuery("website", "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC");
+			ResultSet result = m_botAction.SQLQuery(sqlHost, "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC");
 			while(result.next())
 			{
 				k++;
@@ -354,32 +345,26 @@ public class twrcbot extends SubspaceBot
 			m_botAction.sendPrivateMessage(name, "Cannot find anyone with that rank.");
 	}
 
-	/** Inserts point change data into the tblPointsData sql table.
-	 *  @param player - Name of player whose points were changed.
-	 *  @param points - Change in points.
-	 *  @param reason - reason for change.
-	 */
-	public void pointChange(String player, int points, String reason)
-	{
-		try {
-			m_botAction.SQLQueryAndClose("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0, "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
-		} catch(Exception e) {e.printStackTrace();}
-	}
-
-	/** Returns the player's tblRacers fldID.
-	 *  @param name - Name of player.
-	 *  @return ID
+	/** 
+	 * Returns the player's tblRacers fldID.
+	 * @param name - Name of player.
+	 * @return the fldID of the name or -1 if not found
 	 */
 	public int getID(String name)
 	{
+	    int id = -1;
 		try {
-			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldID FROM tblRacers WHERE fldName = \'"+name+"\'");
-			results.next();
-            int id = results.getInt("fldID");
-            m_botAction.SQLClose(results);
-            return id;
-		} catch(Exception e) {e.printStackTrace();}
-		return 0;
+			ResultSet results = m_botAction.SQLQuery(sqlHost, "SELECT fldID FROM tblRacers WHERE fldName = '"+Tools.addSlashes(name)+"'");
+			
+			if(results != null && results.next()) {
+			    id = results.getInt("fldID");
+			}
+			m_botAction.SQLClose(results);
+		
+		} catch(SQLException sqle) {
+		    Tools.printStackTrace("Unexpected SQLException encountered during twrcbot.getID().", sqle);
+		}
+        return id;
 	}
 
 	/** Returns a timestamp for the database.
