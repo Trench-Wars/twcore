@@ -16,7 +16,7 @@ public class PrepareGame extends TimerTask {
 	
 	public void run() {
 		// Lock the arena
-		elimbot.lockArena();		
+		elimbot.lockArena();
 		
 		// Set everybody to the right ship
 		if(elimbot.ship != 0) {	// after a vote, only one ship is allowed
@@ -49,12 +49,15 @@ public class PrepareGame extends TimerTask {
 			 }
 		}
 		
+		// Make sure each player is alone on a freq
+		elimbot.m_botAction.createRandomTeams(1);
+		
 		// Registers the players for !lagout feature
 		Iterator<Player> playerIt = elimbot.m_botAction.getPlayingPlayerIterator();
 		
 		while(playerIt.hasNext()) {
 			Player p = (Player)playerIt.next();
-			elimbot.players.put(Integer.valueOf(p.getPlayerID()), Integer.valueOf(p.getShipType()));
+			elimbot.players.put(Integer.valueOf(p.getPlayerID()), p.getFrequency()+":"+p.getShipType()+":"+System.currentTimeMillis()+":0");
 		}
 
 		// Get ready arena message

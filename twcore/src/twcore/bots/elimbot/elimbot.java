@@ -44,10 +44,11 @@ public class elimbot extends SubspaceBot {
 	private PrepareGame prepareGame;
 	private StartGame startGame;
 	
-	public HashMap<Integer, Integer> players = new HashMap<Integer, Integer>();
+	public HashMap<Integer, String> players = new HashMap<Integer, String>();
 	// This HashMap registers the players by playerid and ship nr for use with !lagout command
 	// key = playerid
-	// value = ship nr.
+	// value = freq nr. ":" ship nr. ":" timestamp (ms time) ":" lagouts used
+	//            0      :     1      :         2             :      3
 	
 	/**
 	 * @param botAction
@@ -167,7 +168,10 @@ public class elimbot extends SubspaceBot {
 				this.die();
 			}
 			else if(event.getMessage().equalsIgnoreCase("!stop")) {
-				if(this.state != ElimState.STOPPED) {
+			    if(this.state == ElimState.IDLE) {
+			        m_botAction.sendPrivateMessage(event.getPlayerID(), "Bot operation halted.");
+			        stop();
+			    } else if(this.state != ElimState.STOPPED) {
 					m_botAction.sendArenaMessage("Game aborted by "+event.getMessager()+".");
 					stop();
 				} else {
@@ -182,15 +186,55 @@ public class elimbot extends SubspaceBot {
 					if(isEnoughPlayers()) 
 						step();
 					else
-						m_botAction.sendPrivateMessage(event.getPlayerID(), "Not enough players to start.");
+						m_botAction.sendPrivateMessage(event.getPlayerID(), "The bot has been started but there are not enough players to start a game.");
 				} else {
 					m_botAction.sendPrivateMessage(event.getPlayerID(), "The bot isn't stopped. Stop it first by using !stop.");
 				}
 			}
 			else if(event.getMessage().equalsIgnoreCase("!lagout" )) {
-				//if(config.isAllowLagouts() && player = spectator) {
-					// TODO: put back in
-				//}
+			    
+			    // Check if Elimination is running
+			    if( state != ElimState.RUNNING ) {
+			        return;
+			    }
+			    
+			    if( !config.isLagoutsAllowed() ) {
+			        m_botAction.sendPrivateMessage(event.getPlayerID(), "No lagouts allowed.");
+			        return;
+			    }
+			    
+			    // Other checks
+			    if(  ship == Tools.Ship.SPECTATOR &&              // player is a spectator
+			         players.containsKey(event.getPlayerID())     // and the player is still in the game
+			       ) {
+			        
+			        String[] playerinfo = players.get(event.getPlayerID()).split(":");
+			        int freq = Integer.parseInt(playerinfo[0]);
+			        int ship = Integer.parseInt(playerinfo[1]);
+			        int time = Integer.parseInt(playerinfo[2]);
+			        int lagouts = Integer.parseInt(playerinfo[3]);
+			        
+			        
+			        // Check lagout time
+			        if((System.currentTimeMillis() - time) > (config.getLagoutTime() * 60 * 1000)) {
+			            // Player has been away longer then the allowed lagout time
+			            m_botAction.sendPrivateMessage(event.getPlayerID(), "Your lagout time has expired, you're not allowed to be put back in.");
+			            return;
+			        }
+			        
+			        // Check lagout count
+			        if(lagouts > config.getLagouts()) {
+			            m_botAction.sendPrivateMessage(event.getPlayerID(), "You've used all your available lagouts, you're not allowed to be put back in.");
+			            return;
+			        }
+			        
+			        // Put player back in and increment his lagout count
+			        m_botAction.setShip(event.getPlayerID(), ship);
+			        m_botAction.setFreq(event.getPlayerID(), freq);
+			        m_botAction.setShip(event.getPlayerID(), ship);
+			        lagouts++;
+			        players.put(Integer.valueOf(event.getPlayerID()), freq+":"+ship+":"+time+":"+lagouts);
+			    }
 			}
 		}
 	}
@@ -247,8 +291,19 @@ public class elimbot extends SubspaceBot {
 
 	@Override
 	public void handleEvent(PlayerLeft event) {
-		// TODO: Start timertask of one minute to remove the player if he doesn't get back in before that time
-		// TODO: Keep track on number of lagouts that the player has used
+	    int player = event.getPlayerID();
+	    
+	    if(    state == ElimState.RUNNING &&           // If Elim is running
+	           ship != Tools.Ship.SPECTATOR &&         // and the player is not a spectator (when he changed to spectator, timestamp was already recorded)
+	           players.containsKey(player) &&          // and the player is still in the game
+	           config.isLagoutsAllowed()               // and lagouts are enabled
+	       ) {
+	        // Record the timestamp when this player lagged out
+	        String playerinfo = players.get(player);
+	        String[] pieces = playerinfo.split(":");
+	        pieces[2] = String.valueOf(System.currentTimeMillis());
+	        players.put(player, pieces[0] +":"+ pieces[1] +":"+ pieces[2] +":"+ pieces[3]);
+	    }
 	}
 	
 	@Override
@@ -263,13 +318,16 @@ public class elimbot extends SubspaceBot {
 		if(	state == ElimState.RUNNING && 			// If Elim is running
 			ship == Tools.Ship.SPECTATOR && 		// and a player changed to spectator
 			players.containsKey(player) &&			// and the player is still in the game
-			config.isAllowLagouts() 				// and lagouts are enabled
+			config.isLagoutsAllowed()    		    // and lagouts are enabled
 			) {
-
-			// TODO: Start timertask of one minute to remove the player if he doesn't get back in before that time
-			// TODO: Keep track on number of lagouts that the player has used
+		    
+		    // Record the timestamp when this player lagged out
+		    String playerinfo = players.get(player);
+		    String[] pieces = playerinfo.split(":");
+		    pieces[2] = String.valueOf(System.currentTimeMillis());
+		    players.put(player, pieces[0] +":"+ pieces[1] +":"+ pieces[2] +":"+ pieces[3]);
 			
-			m_botAction.sendPrivateMessage(player, "Type ::!lagout to get back in.");
+		    m_botAction.sendPrivateMessage(player, "Type ::!lagout to get back in.");
 		}
 	}
 	

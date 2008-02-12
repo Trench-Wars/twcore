@@ -18,5 +18,6 @@ public class StartGame extends TimerTask {
 		elimbot.m_botAction.scoreResetAll();
 		elimbot.m_botAction.shipResetAll();
 		elimbot.m_botAction.sendArenaMessage("Go Go Go!",104);
+		elimbot.m_botAction.scoreResetAll();
 	}
 }

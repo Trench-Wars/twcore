@@ -16,7 +16,8 @@ public class configuration {
 	
 	private int currentConfig = 1;
 	private int playerMin = 3;
-	private boolean allowLagouts = true;
+	private int lagouts = 0;
+	private int lagoutTime = 1;
 	
 	private boolean rulesShown = false;
 	
@@ -30,7 +31,8 @@ public class configuration {
 		arena = config.getString("arena");
 		chat = config.getString("chat");
 		playerMin = config.getInt("playermin");
-		allowLagouts = (config.getInt("lagouts") == 1);
+		lagouts = config.getInt("lagouts");
+		lagoutTime = config.getInt("lagoutTime");
 		
 		// Load the elim configurations
 		int i = 1;
@@ -111,11 +113,24 @@ public class configuration {
 	}
 
 	/**
-	 * @return the allowLagouts
+	 * @return the number of allowed lagouts or 0 if disabled
 	 */
-	public boolean isAllowLagouts() {
-		return allowLagouts;
+	public int getLagouts() {
+		return lagouts;
 	}
 	
+	/**
+	 * @return if lagouts are allowed or not 
+	 */
+	public boolean isLagoutsAllowed() {
+	    return lagouts>0;
+	}
+	
+	/**
+	 * @return the lagoutTime (the time a player is allowed to use !lagout to get back in the game)
+	 */
+	public int getLagoutTime() {
+	    return lagoutTime;
+	}
 	
 }
