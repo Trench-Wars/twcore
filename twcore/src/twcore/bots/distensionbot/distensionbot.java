@@ -1180,6 +1180,12 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() == event.getShipType() ) {
             if( p.ignoreShipChanges() )         // If we've been ignoring their shipchanges and they returned to
                 p.setIgnoreShipChanges(false);  // their old ship, mission complete.
+            else
+                // If someone does =freq, spec them.
+                if( p.getArmyID() != event.getFrequency() ) {
+                    m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Hey, what're you trying to pull?  If you want to !assist the other army, do it the right way!" );
+                    m_botAction.specWithoutLock( p.getArenaPlayerID() );
+                }
             return;
         }
 
@@ -1406,8 +1412,8 @@ public class distensionbot extends SubspaceBot {
                 points = (int)((float)points * flagMulti);
 
                 // Don't count streak if the player making the kill was not in base
-                if( ! ((killer.getYTileLocation() > TOP_FR  && killer.getYTileLocation() < TOP_LOW) ||
-                       (killer.getYTileLocation() > BOT_LOW && killer.getYTileLocation() < BOT_ROOF)) ) {
+                if( ! ((killer.getYTileLocation() > TOP_ROOF && killer.getYTileLocation() < TOP_LOW) ||
+                       (killer.getYTileLocation() > BOT_LOW  && killer.getYTileLocation() < BOT_ROOF)) ) {
                     killInBase = false;
                     addedToStreak = false;
                 }
@@ -5455,6 +5461,8 @@ public class distensionbot extends SubspaceBot {
                 case WINS_REQ_RANK_CADET_2ND_CLASS:
                 case WINS_REQ_RANK_CADET_1ST_CLASS:
                     printToTeam = false;
+                    msg = getPlayerRankString();
+                    break;
                 case WINS_REQ_RANK_ENSIGN:
                     m_botAction.sendPrivateMessage( arenaPlayerID, "You are now an Officer in " + getArmyName() + ", now accorded with all due privilege!" );
                 case WINS_REQ_RANK_2ND_LEIUTENANT:
@@ -5463,12 +5471,15 @@ public class distensionbot extends SubspaceBot {
                 case WINS_REQ_RANK_COMMANDER:
                 case WINS_REQ_RANK_CAPTAIN:
                 case WINS_REQ_RANK_FLEET_CAPTAIN:
+                    msg = getPlayerRankString();
+                    break;
                 case WINS_REQ_RANK_COMMODORE:
                     m_botAction.sendPrivateMessage( arenaPlayerID, "You are now a Flag Officer in " + getArmyName() + ", accorded with all due privilege!  Congratulations!" );
                 case WINS_REQ_RANK_REAR_ADMIRAL:
                 case WINS_REQ_RANK_VICE_ADMIRAL:
                 case WINS_REQ_RANK_ADMIRAL:
                 case WINS_REQ_RANK_FLEET_ADMIRAL:
+                    m_botAction.sendPrivateMessage( arenaPlayerID, "You are now the Fleet Admiral of " + getArmyName() + ", accorded with all due privilege!  Congratulations!" );
                     msg = getPlayerRankString();
             }
             if( !msg.equals("") ) {
@@ -7143,8 +7154,6 @@ public class distensionbot extends SubspaceBot {
                 if( avarice )
                     points /= 4;
                 Integer time = m_playerTimes.get( p.getName() );
-                if( DEBUG )
-                    m_botAction.sendSmartPrivateMessage("dugwyler", p.getName() + " had no time data attached to their name at round win." );
                 if( time != null ) {
                     float percentOnFreq = (float)(secs - time) / (float)secs;
                     int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
@@ -7187,6 +7196,9 @@ public class distensionbot extends SubspaceBot {
                     // Assisters do not receive credit for wins from their army, for obvious reasons
                     if( p.getNaturalArmyID() == p.getArmyID() )
                         p.addBattleWin();
+                } else {
+                    if( DEBUG )
+                        m_botAction.sendSmartPrivateMessage("dugwyler", p.getName() + " had no time data attached to their name at round win." );
                 }
             }
         }
@@ -7195,12 +7207,12 @@ public class distensionbot extends SubspaceBot {
         // Start free play (delaying the intermission)
         int intermissionTime;
         if( gameOver ) {
-            intermissionTime = INTERMISSION_SECS * 10000;
+            intermissionTime = INTERMISSION_SECS * 5000;
             m_roundNum = 1;
             m_freq0Score = 0;
             m_freq1Score = 0;
         } else {
-            intermissionTime = INTERMISSION_SECS * 5000;
+            intermissionTime = INTERMISSION_SECS * 3000;
         }
 
         try {
@@ -7272,15 +7284,9 @@ public class distensionbot extends SubspaceBot {
     public void setupPlayerTimes() {
         m_playerTimes.clear();
 
-        Iterator <Player>i = m_botAction.getPlayingPlayerIterator();
-        Player player;
-
-        try {
-            while( i.hasNext() ) {
-                player = (Player)i.next();
-                m_playerTimes.put( player.getPlayerName(), new Integer(0) );
-            }
-        } catch (Exception e) {
+        for( DistensionPlayer p : m_players.values() ) {
+            if( p.getShipNum() > 0 )
+                m_playerTimes.put( p.getName(), new Integer(0) );
         }
     }
 
