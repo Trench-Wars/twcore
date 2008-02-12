@@ -551,8 +551,8 @@ public class Tools {
         public static final int TOPSPEED = 12;
         public static final int FULLCHARGE = 13;
         public static final int ENERGY_DEPLETED = -13;          // Puts energy to 0
-        public static final int ENGINE_SHUTDOWN = 14;
-        public static final int ENGINE_SHUTDOWN_EXTENDED = -14; // Shuts down engines for longer
+        public static final int ENGINE_SHUTDOWN = 14;           // Shuts down engines for Prize:EngineShutdownTime
+        public static final int ENGINE_SHUTDOWN_EXTENDED = -14; // Shuts down engines for Prize:EngineShutdownTime * 3
         public static final int MULTIFIRE = 15;
         public static final int PROXIMITY = 16;
         public static final int SUPER = 17;
@@ -628,7 +628,7 @@ public class Tools {
         public static final int DAY    = 86400000;
         public static final int WEEK   = 604800000;
     }
-    
+
     /** Weapons - These are the <b>STANDARD</b> weapon speed settings in SSCU Trench Wars
      */
     public class Weapon {
@@ -640,7 +640,7 @@ public class Tools {
     	public static final double WEASEL_BULLET_SPEED = 800.0;
     	public static final double LANCASTER_BULLET_SPEED = 3650.0;
     	public static final double SHARK_BULLET_SPEED = 1.0;
-    	
+
     	public static final double WARBIRD_BOMB_SPEED = 4000.0;
     	public static final double JAVELIN_BOMB_SPEED = 2250.0;
     	public static final double SPIDER_BOMB_SPEED = 1.0;
@@ -649,7 +649,7 @@ public class Tools {
     	public static final double WEASEL_BOMB_SPEED = 30000.0;
     	public static final double LANCASTER_BOMB_SPEED = 1.0;
     	public static final double SHARK_BOMB_SPEED = 1.0;
-    	
+
     }
-    
+
 }
