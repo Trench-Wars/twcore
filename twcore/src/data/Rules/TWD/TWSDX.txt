@@ -1,6 +1,6 @@
 [General]
 name=TWSDX
-arena=twsdx6
+arena=twsdx
 # twsdx
 ship=3
 players=5
@@ -8,7 +8,7 @@ minplayers=1
 # 3
 deaths=-1
 score=-1
-time=500
+time=10
 rounds=3
 maxrounds=5
 aliascheck=0
