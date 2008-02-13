@@ -1,8 +1,6 @@
 package twcore.bots.racingbot;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -12,7 +10,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SimpleTimeZone;
@@ -29,9 +26,6 @@ public class RbTWRC extends RacingBotExtension
 {
 	String sqlHost = "website";
 	File log = new File("log.txt");
-	File people = new File("people.txt");
-	HashSet<String> signups = new HashSet<String>();
-	boolean enableSignup = false;
 	int racePlayers;
 	Calendar calendar;
 
@@ -49,40 +43,6 @@ public class RbTWRC extends RacingBotExtension
 		try {
 			if(!log.exists())
 				log.createNewFile();
-			if(!people.exists())
-				people.createNewFile();
-			updatePeopleFile();
-		} catch(Exception e) {}
-
-		try {
-			BufferedReader signedup = new BufferedReader(new FileReader(people));
-			String inLine;
-			while((inLine = signedup.readLine()) != null)
-			{
-				signups.add(inLine);
-			}
-		} catch(IOException e) {}
-	}
-
-	public void updatePeopleFile()
-	{
-		Iterator<String> it = signups.iterator();
-		try {
-			FileWriter out = new FileWriter(people, true);
-			while(it.hasNext())
-			{
-				String name = (String)it.next();
-				out.write(name + "\n");
-				out.flush();
-			}
-			out.close();
-		} catch(IOException e) {}
-	}
-
-	public void sql(String name)
-	{
-		try {
-		    m_botAction.SQLQueryAndClose("website", "INSERT INTO tblRacers (fldID, fldName, fldPoints) VALUES ( 0, \""+name+"\", 0 ) ");
 		} catch(Exception e) {}
 	}
 
@@ -96,18 +56,6 @@ public class RbTWRC extends RacingBotExtension
 			String message = event.getMessage();
 			if(m_bot.twrcOps.contains(name.toLowerCase()) || m_botAction.getOperatorList().isER(name))
 				handleCommand(name, message);
-			if(message.toLowerCase().startsWith("!signup"))
-			{
-				if(!signups.contains(name.toLowerCase()) && enableSignup)
-				{
-					m_botAction.sendPrivateMessage(name, "Sign up successfull! You may now participate in races.");
-					sql(name);
-					signups.add(name.toLowerCase());
-					updatePeopleFile();
-				}
-				else
-					m_botAction.sendPrivateMessage(name, "The bot is either deactivated or you have already signed up for TWRC, please contact Jacen Solo, Ice Storm, or SuperDAVE(postal) if you need assistance.");
-			}
 		}
 	}
 
@@ -117,28 +65,12 @@ public class RbTWRC extends RacingBotExtension
 	{
 		RbRace race = (RbRace)modules.get("Race");
 
-		if(message.toLowerCase().startsWith("!help twrc"))
-			handleHelp(name);
-		else if(message.toLowerCase().startsWith("!help"))
-			m_botAction.sendPrivateMessage(name, "twrc        - Module for TWRC to update points at end of race.");
-		else if(message.toLowerCase().startsWith("!spec "))
-		{
-			try {
-				String pieces[] = message.split(" ", 2);
-				m_botAction.spec(pieces[1]);
-			} catch(Exception e) {}
+		if(message.toLowerCase().startsWith("!help")) {
+		    m_botAction.sendPrivateMessage(name, "!normal           -Updates player standings after a normal race.");
+	        m_botAction.sendPrivateMessage(name, "!big              -Updates player standings after a major race.");
+	        m_botAction.sendPrivateMessage(name, "!marathon         -Updates player standings after a marathon.");
+	        m_botAction.sendPrivateMessage(name, "!help             -Sends you this message...");
 		}
-		else if(message.toLowerCase().startsWith("!arena "))
-		{
-			try {
-				String pieces[] = message.split(" ", 2);
-				m_botAction.sendArenaMessage(pieces[1] + " -" + name);
-			} catch(Exception e) {}
-		}
-//		else if(message.toLowerCase().startsWith("!enable"))
-//			enableSignup = true;
-//		else if(message.toLowerCase().startsWith("!disable"))
-//			enableSignup = false;
 		else if(!(race.updated))
 		{
 			if(message.toLowerCase().startsWith("!normal"))
@@ -160,17 +92,6 @@ public class RbTWRC extends RacingBotExtension
 				}
 			}
 		}
-	}
-
-	/** PM's the player with the module's help message.
-	 *  @param name - name of help message requester.
-	 */
-	public void handleHelp(String name)
-	{
-		m_botAction.sendPrivateMessage(name, "!normal           -Updates player standings after a normal race.");
-		m_botAction.sendPrivateMessage(name, "!big              -Updates player standings after a major race.");
-		m_botAction.sendPrivateMessage(name, "!marathon         -Updates player standings after a marathon.");
-		m_botAction.sendPrivateMessage(name, "!help             -Sends you this message...");
 	}
 
 	/** Updates all the databases for the last normal race.

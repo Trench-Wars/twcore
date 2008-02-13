@@ -34,144 +34,96 @@ public class RbRace extends RacingBotExtension {
 	}
 
 	public void handleEvent( Message event ) {
-		try {
-			String name = m_botAction.getPlayerName( event.getPlayerID() );
-			String message = event.getMessage().toLowerCase();
+		String name = m_botAction.getPlayerName( event.getPlayerID() );
+		String message = event.getMessage().toLowerCase();
 
-			if(m_botAction.getOperatorList().isModerator(name) || m_bot.twrcOps.contains(name.toLowerCase()))
-			{
-				if( message.equals( "yes" ) )
-					handleAnswer( true );
-				else if( message.equals( "no" ) )
-					handleAnswer( false );
-				else if( message.startsWith( "!help race" ) )
-					displayHelp( name );
-				else if( message.equals( "!help" ) )
-					m_botAction.sendPrivateMessage( name, "race        - Runs races, host free" );
-				else if( message.startsWith( "!loadarena" ) )
-					loadArena();
-				else if( message.startsWith( "!startrace " ) )
-					startRace( message, name );
-				else if( message.startsWith( "!tracklist" ) )
-					listTracks( name );
-				else if(message.startsWith("!setpits"))
-				{
-					m_botAction.sendPrivateMessage(name, "Grab all the pit flags now.");
-					settingPits = true;
-				}
-				else if(message.startsWith("!pitsset"))
-				{
-					m_botAction.sendPrivateMessage(name, "Pits are now set.");
-					settingPits = false;
-				}
-				else if(message.startsWith("!clearpits"))
-				{
-					pitFlags = new HashSet<Integer>();
-					m_botAction.sendPrivateMessage(name, "Pit flags cleared.");
-				}
-				else if( message.startsWith("!raceover"))
-					handleDone();
-				else if( message.startsWith("!fakeover"))
-					handleFake();
-			}
-			else if(m_botAction.getOperatorList().isER(name))
-			{
-				if( message.startsWith( "!loadarena" ) )
-					loadArena();
-				else if( message.startsWith( "!startrace " ) )
-					startRace( message, name );
-				else if( message.startsWith( "!tracklist" ) )
-					listTracks( name );
-				else if(message.startsWith("!setpits"))
-				{
-					m_botAction.sendPrivateMessage(name, "Grab all the pit flags now.");
-					settingPits = true;
-				}
-				else if(message.startsWith("!pitsset"))
-				{
-					m_botAction.sendPrivateMessage(name, "Pits are now set.");
-					settingPits = false;
-				}
-				else if(message.startsWith("!clearpits"))
-				{
-					pitFlags = new HashSet<Integer>();
-					m_botAction.sendPrivateMessage(name, "Pit flags cleared.");
-				}
-				else if( message.startsWith("!raceover"))
-					handleDone();
-			}
-			if(message.startsWith("!position "))
-			{
-				String pieces[] = message.split(" ", 2);
-				int pos = getPosition(pieces[1]);
-				if(pos == -1)
-					m_botAction.sendPrivateMessage(name, "That player was not found.");
-				else
-				{
-					String ending = "th";
-					if(pos == 1)
-						ending = "st";
-					if(pos == 2)
-						ending = "nd";
-					if(pos == 3)
-						ending = "rd";
-					m_botAction.sendPrivateMessage(name, pieces[1] + " is currently in " + pos + ending + ".");
-				}
-			}
-			else if(message.startsWith("!position"))
-			{
-				int pos = getPosition(name);
-				if(pos == -1)
-					m_botAction.sendPrivateMessage(name, "You were not found.");
-				else
-				{
-					String ending = "th";
-					if(pos == 1)
-						ending = "st";
-					if(pos == 2)
-						ending = "nd";
-					if(pos == 3)
-						ending = "rd";
-					m_botAction.sendPrivateMessage(name,  "You are currently in " + pos + ending + ".");
-				}
-			}
-		} catch(Exception e) {}
-	}
-
-	public void displayHelp( String name ) {
-		if(m_bot.twrcOps.contains(name.toLowerCase()) || m_botAction.getOperatorList().isModerator(name))
+		
+		if(message.startsWith("!position ")) {
+            String pieces[] = message.split(" ", 2);
+            int pos = getPosition(pieces[1]);
+            if(pos == -1)
+                m_botAction.sendPrivateMessage(name, "That player was not found.");
+            else
+            {
+                String ending = "th";
+                if(pos == 1)
+                    ending = "st";
+                if(pos == 2)
+                    ending = "nd";
+                if(pos == 3)
+                    ending = "rd";
+                m_botAction.sendPrivateMessage(name, pieces[1] + " is currently in " + pos + ending + ".");
+            }
+        }
+        else if(message.startsWith("!position"))
+        {
+            int pos = getPosition(name);
+            if(pos == -1)
+                m_botAction.sendPrivateMessage(name, "You were not found.");
+            else
+            {
+                String ending = "th";
+                if(pos == 1)
+                    ending = "st";
+                if(pos == 2)
+                    ending = "nd";
+                if(pos == 3)
+                    ending = "rd";
+                m_botAction.sendPrivateMessage(name,  "You are currently in " + pos + ending + ".");
+            }
+        } else if(message.startsWith("!help")) {
+            String help[] = {
+                "------------- Race Help Menu (Player+) --------------------------",
+                "| !position          - Shows your current race position         |",
+                "| !position <player> - Shows the position of <player>           |",
+                "----------------------------------------------------------------|"
+            };
+            m_botAction.privateMessageSpam( name, help );
+        }
+		
+		if(m_botAction.getOperatorList().isER(name) || m_bot.twrcOps.contains(name.toLowerCase()))
 		{
-			String help[] = {
-				"------------- Race Help Menu ------------------------------------",
-				"| !loadarena     - loads arena information                      |",
-				"| !startrace <#> - starts a race on the track identified by <#> |",
-				"| !tracklist     - displays available tracks for this map       |",
-				"| !setpits       - starts the process of setting pit flags      |",
-				"| !pitsset       - ends pit setting process                     |",
-				"| !clearpits     - clears flag ids from pit list                |",
-				"| !raceover      - ends the race                                |",
-				"----------------------------------------------------------------|"
-			};
-			m_botAction.privateMessageSpam( name, help );
+			if( message.startsWith( "!help" ) ) {
+	            String help[] = {
+	                "------------- Race Help Menu (ER+) ------------------------------",
+	                "| !loadarena     - loads arena information                      |",
+	                "| !startrace <#> - starts a race on the track identified by <#> |",
+	                "| !tracklist     - displays available tracks for this map       |",
+	                "| !setpits       - starts the process of setting pit flags      |",
+	                "| !pitsset       - ends pit setting process                     |",
+	                "| !clearpits     - clears flag ids from pit list                |",
+	                "| !raceover      - ends the race                                |",
+	                "| !fakeover      - ends the race without saving to database     |",
+	                "----------------------------------------------------------------|"
+	            };
+	            m_botAction.privateMessageSpam( name, help );
+			}
+			else if( message.startsWith( "!loadarena" ) )
+				loadArena();
+			else if( message.startsWith( "!startrace " ) )
+				startRace( message, name );
+			else if( message.startsWith( "!tracklist" ) )
+				listTracks( name );
+			else if(message.startsWith("!setpits"))
+			{
+				m_botAction.sendPrivateMessage(name, "Grab all the pit flags now.");
+				settingPits = true;
+			}
+			else if(message.startsWith("!pitsset"))
+			{
+				m_botAction.sendPrivateMessage(name, "Pits are now set.");
+				settingPits = false;
+			}
+			else if(message.startsWith("!clearpits"))
+			{
+				pitFlags.clear();
+				m_botAction.sendPrivateMessage(name, "Pit flags cleared.");
+			}
+			else if( message.startsWith("!raceover"))
+				handleDone();
+			else if( message.startsWith("!fakeover"))
+				handleFake();
 		}
-		else
-		{
-			String help[] = {
-				"------------- Race Help Menu ------------------------------------",
-				"| !loadarena     - loads arena information                      |",
-				"| !startrace <#> - starts a race on the track identified by <#> |",
-				"| !tracklist     - displays available tracks for this map       |",
-				"| !setpits       - starts the process of setting pit flags      |",
-				"| !pitsset       - ends pit setting process                     |",
-				"| !clearpits     - clears flag ids from pit list                |",
-				"| !raceover      - ends the race                                |",
-				"----------------------------------------------------------------|"
-			};
-			m_botAction.privateMessageSpam( name, help );
-		}
-	}
-
-	public void handleAnswer( boolean answer ) {
 	}
 
 	public void loadArena() {
@@ -388,8 +340,11 @@ public class RbRace extends RacingBotExtension {
 
 	public void handleDone()
 	{
-		m_botAction.sendArenaMessage("Race over! Winner is " + getTrack(currentTrack).winner + "!",5);
-		String winnee = getTrack(currentTrack).winner;
+	    Track thisTrack = getTrack(currentTrack);
+	    if(thisTrack == null) return;
+	    
+		m_botAction.sendArenaMessage("Race over! Winner is " + thisTrack.winner + "!",5);
+		String winnee = thisTrack.winner;
 		updated = false;
 		racing = 0;
 		m_botAction.sendUnfilteredPublicMessage("*objon 4");
@@ -403,6 +358,7 @@ public class RbRace extends RacingBotExtension {
 	public void handleFake()
 	{
 		Track thisTrack = getTrack(currentTrack);
+		if(thisTrack == null) return;
 		m_botAction.sendUnfilteredPublicMessage("*objon 4");
 		m_botAction.sendArenaMessage("Race over! Winner is " + getTrack(currentTrack).winner + "!",5);
 		racing = 0;
@@ -415,7 +371,11 @@ public class RbRace extends RacingBotExtension {
 
 	public int getPosition(String name)
 	{
-		ArrayList<ArrayList<String>> positions = getTrack(currentTrack).playerPositions;
+	    Track track = getTrack(currentTrack);
+	    if(track == null)
+	        return -1;
+	    
+		ArrayList<ArrayList<String>> positions = track.playerPositions;
 		int position = 1;
 
 		for(int k = positions.size() - 1;k >= 0;k--)

@@ -13,8 +13,6 @@ MySQL - 4.1.20-community-nt : Database - twrc
 
 /*Table structure for table `tblPointsData` */
 
-DROP TABLE IF EXISTS `tblPointsData`;
-
 CREATE TABLE `tblPointsData` (
   `fldID` int(30) NOT NULL auto_increment,
   `fldName` int(30) NOT NULL default '0',
@@ -28,8 +26,6 @@ CREATE TABLE `tblPointsData` (
 
 /*Table structure for table `tblRace` */
 
-DROP TABLE IF EXISTS `tblRace`;
-
 CREATE TABLE `tblRace` (
   `fnRaceID` int(11) NOT NULL auto_increment,
   `fcArena` varchar(128) NOT NULL default '',
@@ -41,8 +37,6 @@ CREATE TABLE `tblRace` (
 
 /*Table structure for table `tblRaceCheckPoint` */
 
-DROP TABLE IF EXISTS `tblRaceCheckPoint`;
-
 CREATE TABLE `tblRaceCheckPoint` (
   `fnTrackID` int(11) NOT NULL default '0',
   `fnCheckPoint` int(11) NOT NULL default '0',
@@ -53,8 +47,6 @@ CREATE TABLE `tblRaceCheckPoint` (
 /*Data for the table `tblRaceCheckPoint` */
 
 /*Table structure for table `tblRaceData` */
-
-DROP TABLE IF EXISTS `tblRaceData`;
 
 CREATE TABLE `tblRaceData` (
   `fldID` int(30) NOT NULL auto_increment,
@@ -77,8 +69,6 @@ insert  into `tblRaceData`(`fldID`,`fldDate`,`fldTrack`,`fldLaps`,`fldStarters`,
 
 /*Table structure for table `tblRaceNews` */
 
-DROP TABLE IF EXISTS `tblRaceNews`;
-
 CREATE TABLE `tblRaceNews` (
   `fldNewsID` int(10) NOT NULL auto_increment,
   `fldNewsTitle` varchar(30) NOT NULL default '',
@@ -94,8 +84,6 @@ insert  into `tblRaceNews`(`fldNewsID`,`fldNewsTitle`,`fldNews`,`fldPoster`,`fld
 
 /*Table structure for table `tblRacers` */
 
-DROP TABLE IF EXISTS `tblRacers`;
-
 CREATE TABLE `tblRacers` (
   `fldID` int(30) NOT NULL auto_increment,
   `fldName` varchar(20) NOT NULL default '',
@@ -107,23 +95,20 @@ CREATE TABLE `tblRacers` (
 
 /*Table structure for table `tblRaceTrack` */
 
-DROP TABLE IF EXISTS `tblRaceTrack`;
-
 CREATE TABLE `tblRaceTrack` (
+  `fnTrackID` int(11) NOT NULL auto_increment,
   `fnRaceID` int(11) NOT NULL default '0',
   `fnArenaTrackID` int(11) NOT NULL default '0',
   `fcTrackName` varchar(64) default NULL,
   `fcAllowedShips` varchar(16) default NULL,
   `fnXWarp` int(10) unsigned default '0',
   `fnYWarp` int(10) unsigned default '0',
-  PRIMARY KEY  (`fnRaceID`,`fnArenaTrackID`)
+  PRIMARY KEY  (`fnTrackID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /*Data for the table `tblRaceTrack` */
 
 /*Table structure for table `tblRaceWinners` */
-
-DROP TABLE IF EXISTS `tblRaceWinners`;
 
 CREATE TABLE `tblRaceWinners` (
   `arena` int(11) NOT NULL default '0',
