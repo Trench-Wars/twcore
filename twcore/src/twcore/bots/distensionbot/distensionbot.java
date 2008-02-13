@@ -29,6 +29,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.FrequencyChange;
 import twcore.core.events.TurretEvent;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
@@ -949,18 +950,15 @@ public class distensionbot extends SubspaceBot {
                 " - Suggestions and bugs: http://forums.trenchwars.org/showthread.php?t=31676",
                 " - Stats are up here courtesy of Foreign: http://www.trenchwars.org/distension",
                 ".",
-                "RECENT UPDATES  -  2/1/07",
-                " - Spider Energy Tank now +15% per level (previously 10%)",
+                "RECENT UPDATES  -  2/13/07",
+                " - IMPORTANT: Describing anything in the game as 'useless' will result in a BAN from the beta.",
                 " - Armies were randomized once again -- you may now have different teammates",
-                " - Lanc Vengeful B*stard replaced with Leecher: chance of full charge after kills",
-                " - Spider Refueler ability changed to Energy Tank; PM !! to receive full energy",
+                " - Added ranks such as Ensign, Captain, Admiral.  Will eventually let you give orders",
+                " - Shark Repel Regeneration now +25% per level (previously 10%)",
+                " - Spider Infinite Energy Stream now +10% per level (previously 5%)",
+                " - Spider Energy Tank now +25% per level (previously 10%/15%)",
                 " - You now receive a bonus for changing to Terr or Shark when ship is needed",
-                " - Every player now also starts with a Terr",
-                " - Shark weapons buff: 6 mines allowed; gun energy reduced; multi much improved",
                 " - Escape Pod added for Terr & WB: when you die, chance to respawn there immediately",
-                " - Levis are now a support ship; weasels are not, but receive small profitsharing",
-                " - !! Converted upgrade system from 1UP/rank to 10UP/rank.  See new costs...",
-                "   NOTE: All upgrades were refunded; you will need to buy all upgrades again!",
                 " - To encourage build experimentation, !scrap is FREE for the rest of beta."
         };
         m_botAction.privateMessageSpam( p.getArenaPlayerID(), beta );
@@ -1162,7 +1160,6 @@ public class distensionbot extends SubspaceBot {
             flagTimer.sectorClaiming( army.getID(), p.getPlayerName() );
     }
 
-
     /**
      * Load player data files if they change into a ship (spec if they don't own
      * the ship), and dock player if they spec.
@@ -1180,12 +1177,6 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() == event.getShipType() ) {
             if( p.ignoreShipChanges() )         // If we've been ignoring their shipchanges and they returned to
                 p.setIgnoreShipChanges(false);  // their old ship, mission complete.
-            else
-                // If someone does =freq, spec them.
-                if( p.getArmyID() != event.getFrequency() ) {
-                    m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Hey, what're you trying to pull?  If you want to !assist the other army, do it the right way!" );
-                    m_botAction.specWithoutLock( p.getArenaPlayerID() );
-                }
             return;
         }
 
@@ -1237,6 +1228,23 @@ public class distensionbot extends SubspaceBot {
 
         if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
             checkForAssistAdvert = true;
+    }
+
+    /**
+     * Check if someone used =#, and spec if they did.
+     */
+    public void handleEvent(FrequencyChange event) {
+        DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
+
+        if( p == null  ) {
+            if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
+                checkForAssistAdvert = true;
+            return;
+        }
+        if( p.getArmyID() != event.getFrequency() ) {
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Hey, what're you trying to pull?  If you want to !assist the other army, do it the right way!" );
+            m_botAction.specWithoutLock( p.getArenaPlayerID() );
+        }
     }
 
     /**
@@ -1932,6 +1940,11 @@ public class distensionbot extends SubspaceBot {
         }
         cmdProgress( name, null );
         p.addRankPoints(0); // If player has enough RP to level, rank them up.
+
+        // Make sure a player knows they can upgrade if they have no upgrades installed (such as after a refund)
+        if( p.getUpgradeLevel() == 0 && p.getUpgradePoints() >= 10 ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "TIP: *** You have no upgrades installed! ***  Use !armory to see your upgrade options, and !upgrade # to upgrade a specific part of your ship.", 1 );
+        }
     }
 
 
@@ -4585,13 +4598,13 @@ public class distensionbot extends SubspaceBot {
             desc = "+25% chance of replenishing a reusable energy tank";
             break;
         case ABILITY_TARGETED_EMP:
-            desc = "EMP ALL enemies (possible every 17.5 minutes in Terr)";
+            desc = "EMP ALL enemies (possible every 20 minutes in Terr)";
             break;
         case ABILITY_SUPER:
-            desc = "+5% chance of super every 30 seconds";
+            desc = "+10% chance of super every 30 seconds";
             break;
         case ABILITY_SHARK_REGEN:
-            desc = "+10% chance of repel every 30 seconds";
+            desc = "+25% chance of repel every 30 seconds";
             break;
         case ABILITY_PROFIT_SHARING:
             desc = "+1% of team's kill RP earned per level";
@@ -5157,14 +5170,14 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specificPrize( name, Tools.Prize.BURST );
                     prized = true;
                 }
-                // EMP ability; re-enable every 35 ticks (17.5 min)
-                if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 35 == 0 ) {
+                // EMP ability; re-enable every 40 ticks (20 min)
+                if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 40 == 0 ) {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "Targeted EMP recharged.  !emp to use.");
                     targetedEMP = true;
                 }
             }
             else if( shipNum == 3) {
-                // Energy tank ability; each level worth an additional 10%
+                // Energy tank ability; each level worth an additional 25%
                 if( !energyTank ) {
                     double etChance = Math.random() * 100.0;
                     if( ((double)purchasedUpgrades[10] * 25.0) > etChance ) {
@@ -5172,15 +5185,16 @@ public class distensionbot extends SubspaceBot {
                         energyTank = true;
                     }
                 }
-                // Energy stream ability; each level worth an additional 5%
-                double superChance = Math.random() * 20.0;
+                // Energy stream ability; each level worth an additional 10%
+                double superChance = Math.random() * 10.0;
                 if( (double)purchasedUpgrades[11] > superChance && !isRespawning ) {
                     m_botAction.specificPrize( name, Tools.Prize.SUPER );
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "INFINITE ENERGY STREAM NOW *** ACTIVE ***" );
                     prized = true;
                 }
             } else if( shipNum == 8) {
-                // Repel regen ability; each level worth an additional 10%
-                double repChance = Math.random() * 10.0;
+                // Repel regen ability; each level worth an additional 25%
+                double repChance = Math.random() * 4.0;
                 if( (double)purchasedUpgrades[9] > repChance && !isRespawning ) {
                     m_botAction.specificPrize( name, Tools.Prize.REPEL );
                     prized = true;
@@ -5865,14 +5879,27 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
                     m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
                     m_botAction.specificPrize( killerID, -Tools.Prize.FULLCHARGE );
-                } else if( vengeType >= 96.0 )
+                } else if( vengeType >= 96.0 ) {
                     m_botAction.specificPrize( killerID, Tools.Prize.WARP );
-                else if( vengeType >= 93.0 )
-                    m_botAction.specificPrize( killerID, -Tools.Prize.GUNS );
-                else if( vengeType >= 81.0 )
-                    m_botAction.specificPrize( killerID, -Tools.Prize.FULLCHARGE );
-                else
                     m_botAction.specificPrize( killerID, Tools.Prize.ENGINE_SHUTDOWN_EXTENDED );
+                } else if( vengeType >= 93.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.GUNS );
+                else if( vengeType >= 90.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ENGINE_SHUTDOWN_EXTENDED );
+                else if( vengeType >= 80.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.FULLCHARGE );
+                else if( vengeType >= 79.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.TOPSPEED );
+                else if( vengeType >= 78.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.THRUST );
+                else if( vengeType >= 77.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ROTATION );
+                else if( vengeType >= 76.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ENERGY );
+                else if( vengeType >= 75.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
+                else
+                    m_botAction.specificPrize( killerID, Tools.Prize.ENGINE_SHUTDOWN );
             }
 
         }
@@ -8243,7 +8270,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p3f1[] = { 13, 15, 17, 19, 20 };
         int p3f2[] = { 15, 25, 35, 45, 55 };
-        upg = new ShipUpgrade( "+5% Infinite Stream", ABILITY_SUPER, p3f1, p3f2, 5 );
+        upg = new ShipUpgrade( "+10% Infinite Energy Stream", ABILITY_SUPER, p3f1, p3f2, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warp Field Stabilizer", Tools.Prize.ANTIWARP, 35, 38, 1 );
         ship.addUpgrade( upg );
@@ -8539,7 +8566,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p8ca1[] = { 13, 18, 30 };
         int p8ca2[] = { 25, 48, 55 };
-        upg = new ShipUpgrade( "+10% Repulsor Regeneration", -6, p8ca1, p8ca2, 3 );
+        upg = new ShipUpgrade( "+25% Repulsor Regeneration", ABILITY_SHARK_REGEN, p8ca1, p8ca2, 3 );
         ship.addUpgrade( upg );
         int p8c1[] = { 6, 14, 17, 20, 30, 40, 50, 60 };
         int p8c2[] = { 4, 18, 30, 40, 50, 60, 70, 80 };
