@@ -112,10 +112,10 @@ public class RbTrackManager extends RacingBotExtension {
 
 		if( state == 0 ) return;
 
-		Iterator it = checkPointList.keySet().iterator();
+		Iterator<Integer> it = checkPointList.keySet().iterator();
 		int count = 0;
 		while( it.hasNext() ) {
-			Integer point = (Integer)it.next();
+			Integer point = it.next();
 			if( checkPointList.get(point).intValue() == checkPoint ) count++;
 		}
 
@@ -143,9 +143,9 @@ public class RbTrackManager extends RacingBotExtension {
 	public void resetLastPoint() {
 		m_botAction.resetFlagGame();
 
-		Iterator it = checkPointList.keySet().iterator();
+		Iterator<Integer> it = checkPointList.keySet().iterator();
 		while( it.hasNext() ) {
-			Integer point = (Integer)it.next();
+			Integer point = it.next();
 			if( checkPointList.get(point).intValue() == checkPoint ) it.remove();
 		}
 		m_botAction.sendPublicMessage( "Last checkpoint was not correct, please mark that checkpoint again." );
@@ -159,9 +159,9 @@ public class RbTrackManager extends RacingBotExtension {
 		int id = sql_getMaxTrackID();
 
 
-		Iterator it = checkPointList.keySet().iterator();
+		Iterator<Integer> it = checkPointList.keySet().iterator();
 		while( it.hasNext() ) {
-			int flagId = ((Integer)it.next()).intValue();
+			int flagId = it.next().intValue();
 			int checkPointId = checkPointList.get( new Integer( flagId ) ).intValue();
 			try {
 			    m_botAction.SQLQueryAndClose( m_sqlHost, "INSERT INTO tblRaceCheckPoint (fnTrackID, fnCheckPoint, fnFlagID) VALUES ("+id+", "+checkPointId+", "+flagId+")" );

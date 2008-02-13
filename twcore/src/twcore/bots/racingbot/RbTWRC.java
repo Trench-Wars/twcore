@@ -424,7 +424,7 @@ public class RbTWRC extends RacingBotExtension
 	public int getPoints(String name)
 	{
 		try {
-			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldPoints FROM tblRacers WHERE fldName = \'"+name+"\'");
+			ResultSet results = m_botAction.SQLQuery(m_sqlHost, "SELECT fldPoints FROM tblRacers WHERE fldName = \'"+name+"\'");
 			int points = 0;
 			if(results.next())
 			    points = results.getInt("fldPoints");
@@ -463,7 +463,7 @@ public class RbTWRC extends RacingBotExtension
 		String trackName = track.trackName;
 		int laps = race.laps;
 		try {
-		    m_botAction.SQLQueryAndClose("website", "INSERT INTO tblRaceData (fldID, fldDate, fldTrack, fldLaps, fldStarters, fldFinishers, fldType, fldFirst, fldSecond, fldThird, fldHost) VALUES (0, \""+getTimeStamp()+"\", \""+trackName+"\", "+laps+", "+racePlayers+", "+track.positions.size()+", \""+type+"\", \""+track.winner+"\", \""+track.second+"\", \""+track.third+"\", \""+host+"\") ");
+		    m_botAction.SQLQueryAndClose(m_sqlHost, "INSERT INTO tblRaceData (fldID, fldDate, fldTrack, fldLaps, fldStarters, fldFinishers, fldType, fldFirst, fldSecond, fldThird, fldHost) VALUES (0, \""+getTimeStamp()+"\", \""+trackName+"\", "+laps+", "+racePlayers+", "+track.positions.size()+", \""+type+"\", \""+track.winner+"\", \""+track.second+"\", \""+track.third+"\", \""+host+"\") ");
 		} catch(Exception e) {e.printStackTrace();}
 	}
 
@@ -475,7 +475,7 @@ public class RbTWRC extends RacingBotExtension
 	public void pointChange(String player, int points, String reason)
 	{
 		try {
-		    m_botAction.SQLQueryAndClose("website", "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0,  "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
+		    m_botAction.SQLQueryAndClose(m_sqlHost, "INSERT INTO tblPointsData (fldID, fldName, fldPoints, fldReason, fldTime) VALUES (0,  "+getID(player)+", "+points+", \""+reason+"\", \""+getTimeStamp()+"\")");
 		} catch(Exception e) {}
 	}
 
@@ -486,7 +486,7 @@ public class RbTWRC extends RacingBotExtension
 	public int getID(String name)
 	{
 		try {
-			ResultSet results = m_botAction.SQLQuery("website", "SELECT fldID FROM tblRacers WHERE fldName = \'"+name+"\'");
+			ResultSet results = m_botAction.SQLQuery(m_sqlHost, "SELECT fldID FROM tblRacers WHERE fldName = \'"+name+"\'");
 			results.next();
                         int id = results.getInt("fldID");
                         m_botAction.SQLClose( results );

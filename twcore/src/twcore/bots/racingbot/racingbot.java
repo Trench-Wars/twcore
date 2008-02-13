@@ -50,12 +50,12 @@ public class racingbot extends SubspaceBot {
 	File botRoot;
 	File coreRoot;
 
-	final String mySQLHost = "local";
+	public final String mySQLHost = "twrc";
 
 	public racingbot( BotAction botAction ) {
 		super( botAction );
 
-		Vector repository = new Vector();
+		Vector<File> repository = new Vector<File>();
         coreRoot = new File( botAction.getGeneralSettings().getString( "Core Location" ) + "/twcore/bots/racingbot/" );
 		m_loader = new AdaptiveClassLoader( repository, getClass().getClassLoader() );
 		modules = new HashMap<String, RacingBotExtension>();
@@ -79,16 +79,16 @@ public class racingbot extends SubspaceBot {
 
 	public void distributeEvent( SubspaceEvent event ){
 
-        Iterator i = modules.entrySet().iterator();
+        Iterator<Map.Entry<String, RacingBotExtension>> i = modules.entrySet().iterator();
         while( i.hasNext() ){
-            Map.Entry entry = (Map.Entry)i.next();
-            RacingBotExtension ext = (RacingBotExtension)entry.getValue();
+            Map.Entry<String, RacingBotExtension> entry = i.next();
+            RacingBotExtension ext = entry.getValue();
             ext.handleEvent( event );
         }
-        Iterator i2 = extensions.entrySet().iterator();
+        Iterator<Map.Entry<String, RBExtender>> i2 = extensions.entrySet().iterator();
         while( i2.hasNext() ){
-            Map.Entry entry = (Map.Entry)i2.next();
-            RBExtender ext = (RBExtender)entry.getValue();
+            Map.Entry<String, RBExtender> entry = i2.next();
+            RBExtender ext = entry.getValue();
             ext.handleEvent( event );
         }
     }
