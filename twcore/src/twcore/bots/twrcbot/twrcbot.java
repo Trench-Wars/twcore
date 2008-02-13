@@ -31,7 +31,7 @@ public class twrcbot extends SubspaceBot {
 	BotSettings m_botSettings;
 	Calendar calendar;
 	
-	private final String sqlHost = "website"; 
+	private final String sqlHost = "twrc"; 
 
 	/** Create the twrcbot, requests LoggedOn and Message events, and makes the 2 logs if necessary
 	 *  @param botAction - necessary thing, passed by BotQueue to give bot functionality
@@ -300,7 +300,7 @@ public class twrcbot extends SubspaceBot {
 		int k = 0;
 		HashMap<String, Integer> ranks = new HashMap<String, Integer>();
 		try {
-			ResultSet result = m_botAction.SQLQuery("website", "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC");
+			ResultSet result = m_botAction.SQLQuery(sqlHost, "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC");
 			while(result.next())
 			{
 				k++;
