@@ -10,31 +10,7 @@ import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
-import twcore.core.events.ArenaJoined;
-import twcore.core.events.BallPosition;
-import twcore.core.events.FileArrived;
-import twcore.core.events.FlagClaimed;
-import twcore.core.events.FlagDropped;
-import twcore.core.events.FlagPosition;
-import twcore.core.events.FlagReward;
-import twcore.core.events.FlagVictory;
-import twcore.core.events.FrequencyChange;
-import twcore.core.events.FrequencyShipChange;
-import twcore.core.events.LoggedOn;
-import twcore.core.events.Message;
-import twcore.core.events.PlayerDeath;
-import twcore.core.events.PlayerEntered;
-import twcore.core.events.PlayerLeft;
-import twcore.core.events.PlayerPosition;
-import twcore.core.events.Prize;
-import twcore.core.events.SQLResultEvent;
-import twcore.core.events.ScoreReset;
-import twcore.core.events.ScoreUpdate;
-import twcore.core.events.SoccerGoal;
-import twcore.core.events.SubspaceEvent;
-import twcore.core.events.TurfFlagUpdate;
-import twcore.core.events.WatchDamage;
-import twcore.core.events.WeaponFired;
+import twcore.core.events.*;
 
 public class racingbot extends SubspaceBot {
 
@@ -79,10 +55,10 @@ public class racingbot extends SubspaceBot {
 	public void handleEvent( Message event ){
         String name = m_botAction.getPlayerName( event.getPlayerID() );
 		String message = event.getMessage().toLowerCase();
-		
+
 		if(name == null) return;
-		
-		if( message.startsWith( "!go " ) && name != null && 
+
+		if( message.startsWith( "!go " ) && name != null &&
 		    (m_botAction.getOperatorList().isER(name) || twrcOps.contains(name.toLowerCase()))) {
 			String pieces[] = message.split(" ");
 			if( message.length() < 2 ) return;
@@ -92,11 +68,11 @@ public class racingbot extends SubspaceBot {
     	else if( message.startsWith( "!help" ) && name != null &&
     	        (m_botAction.getOperatorList().isER(name) || twrcOps.contains(name.toLowerCase()))) {
     		help( name, message.substring( 5 ));
-    		
+
     		if(message.substring(5).trim().length() == 0)
     		    distributeEvent( (SubspaceEvent)event );
     	}
-    	else if(message.startsWith("!die") && name != null && 
+    	else if(message.startsWith("!die") && name != null &&
     	        (m_botAction.getOperatorList().isER(name) || twrcOps.contains(name.toLowerCase()))) {
     	    m_botAction.cancelTasks();
     	    m_botAction.die();
@@ -135,11 +111,11 @@ public class racingbot extends SubspaceBot {
 
    	public void help( String name, String key ){
    	    key = key.trim();
-   	    
+
    	    if(key.startsWith("!")) {
    	        key = key.substring(1);
    	    }
-   	    
+
    	    if(key.startsWith("help")) {
    	        m_botAction.sendPrivateMessage(name, "!help [command]  :  Display available commands and what they do");
    	        m_botAction.sendPrivateMessage(name, "`");
@@ -156,7 +132,7 @@ public class racingbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "lvl Player: !leave");
    	    }
     }
-   	
+
    	private String accessLevel(int level) {
    	    switch(level) {
    	        case 9: return "Owner";
@@ -218,4 +194,6 @@ public class racingbot extends SubspaceBot {
         distributeEvent( (SubspaceEvent)event );}
     public void handleEvent( TurfFlagUpdate event ){
     	distributeEvent( (SubspaceEvent)event );}
+    public void handleEvent( PlayerBanner event ){
+        distributeEvent( (SubspaceEvent)event );}
 }
