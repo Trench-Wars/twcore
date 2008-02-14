@@ -15,7 +15,7 @@ import java.util.LinkedList;
  * Cluttered but somewhat useful toolkit of common operations.  Should be referenced
  * statically only.
  */
-public class Tools {
+public final class Tools {
     public static boolean debugging = true;
     public static String exceptionLogFilePath = null;
 
@@ -289,7 +289,7 @@ public class Tools {
             return false;
         }
     }
-    
+
     /**
      * Returns true if a String is composed completely of 0 and 1 and its length is a multiple of 4.
      * @param s String to determine if binary.
@@ -297,7 +297,7 @@ public class Tools {
      */
     public static boolean isBinary( String s ){
     	try {
-    		
+
             for( int i = 0; i < s.length(); i++ ){
             	if(java.lang.Character.digit(s.charAt(i), 2) == -1)
             		return false;
