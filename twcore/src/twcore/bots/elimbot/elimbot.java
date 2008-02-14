@@ -1,9 +1,12 @@
 package twcore.bots.elimbot;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.elimbot.config.configuration;
+import twcore.bots.elimbot.tasks.NewGame;
 import twcore.bots.elimbot.tasks.PrepareGame;
 import twcore.bots.elimbot.tasks.StartGame;
 import twcore.bots.elimbot.tasks.deathlimitVote;
@@ -11,6 +14,7 @@ import twcore.bots.elimbot.tasks.shipVote;
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
@@ -39,10 +43,19 @@ public class elimbot extends SubspaceBot {
 	public int ship = 0;
 	public int deathLimit;
 	
+	public long startTime;      // time in ms. when this game started
+	
+	// Zone configuration
+	private int zoneDelay = 10; // after how many minutes the bot can zone 
+	private long zoneTime;      // time in ms. when last zoner was done
+	private String zoneText = "New elimination game is starting. Type ?go %arena% to play";
+	
+	
 	private shipVote shipVote;
 	private deathlimitVote deathlimitVote;
 	private PrepareGame prepareGame;
 	private StartGame startGame;
+	private NewGame newGame;
 	
 	public HashMap<Integer, String> players = new HashMap<Integer, String>();
 	// This HashMap registers the players by playerid and ship nr for use with !lagout command
@@ -61,6 +74,7 @@ public class elimbot extends SubspaceBot {
 		
 		EventRequester events = m_botAction.getEventRequester();
 		events.request(EventRequester.LOGGED_ON);
+		events.request(EventRequester.ARENA_JOINED);
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.PLAYER_DEATH);
 		events.request(EventRequester.PLAYER_ENTERED);
@@ -81,6 +95,7 @@ public class elimbot extends SubspaceBot {
         m_botAction.cancelTask(this.deathlimitVote);
         m_botAction.cancelTask(this.prepareGame);
         m_botAction.cancelTask(this.startGame);
+        m_botAction.cancelTask(this.newGame);
         m_botAction.stopReliablePositionUpdating();
 	}
 
@@ -105,6 +120,10 @@ public class elimbot extends SubspaceBot {
 		
 		m_botAction.receiveAllPlayerDeaths();
 		m_botAction.setPlayerPositionUpdating(300);
+	}
+	@Override
+	public void handleEvent(ArenaJoined event) {
+	    this.zoneText = this.zoneText.replaceFirst("%arena%", m_botAction.getArenaName());
 	}
 
 	@Override
@@ -163,6 +182,32 @@ public class elimbot extends SubspaceBot {
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE) {
 			// TODO: Check if it's staff
 			// TODO: Make a !help
+		    
+		    if(event.getMessage().startsWith("!help")) {
+		        String name = m_botAction.getPlayerName(event.getPlayerID());
+		        if(name == null) return;
+		        
+		        String[] help = {       "+---------------------------------------------------------------+",
+		                                "|                     E l i m i n a t i o n                     |",
+		                                "|---------------------------------------------------------------|",
+		                                "| !lagout         - Return to the game if you have lagged out   |" };
+		        String[] staffHelp = {  "|----------------------- Staff commands ------------------------|" };
+		        String[] modHelp = {    "| !start          - Starts / resumes bot operation              |",
+		                                "| !stop           - Aborts current game / halts bot operation   |" };
+		        String[] smodHelp = {   "| !die            - Disconnects this bot                        |" };
+		        String[] endHelp = {    "+---------------------------------------------------------------+" };
+		        
+		        m_botAction.privateMessageSpam(event.getPlayerID(), help);
+		        
+		        if(m_botAction.getOperatorList().isModerator(name)) {
+		            m_botAction.privateMessageSpam(event.getPlayerID(), staffHelp);
+		            m_botAction.privateMessageSpam(event.getPlayerID(), modHelp);
+		        }
+		        if(m_botAction.getOperatorList().isSmod(name)) {
+		            m_botAction.privateMessageSpam(event.getPlayerID(), smodHelp);
+		        }
+		        m_botAction.privateMessageSpam(event.getPlayerID(), endHelp);
+		    }
 			if(event.getMessage().equalsIgnoreCase("!die")) {
 				m_botAction.sendChatMessage(2, "ElimBot being removed by "+event.getMessager());
 				this.die();
@@ -253,6 +298,7 @@ public class elimbot extends SubspaceBot {
 				m_botAction.sendArenaMessage(killed.getPlayerName()+ " " + squad + " ("+killed.getWins()+"-"+killed.getLosses()+") has been eliminated.");
 				m_botAction.specWithoutLock(killed.getPlayerID());
 				players.remove(Integer.valueOf(killed.getPlayerID())); 		// Remove from the !lagout players list
+				checkWin();
 			}
 		}
 	}
@@ -283,8 +329,16 @@ public class elimbot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(playername, "Welcome, we are playing "+config.getCurrentConfig().getFullname()+" to "+this.deathLimit+".");
 			m_botAction.sendPrivateMessage(playername, "There are "+this.players.size()+" players remaining.");
 		} else
+		if(state == ElimState.ENDING) {
+		    m_botAction.sendPrivateMessage(playername, "Welcome, we are starting a new game. Enter to play!");
+		} else
 		if(state == ElimState.STOPPED) {
 			// Bot has been !stop'ped, no message
+		}
+		
+		// If a player enters directly upon entering the arena, check if enough players to start
+		if(event.getShipType() != Tools.Ship.SPECTATOR && state == ElimState.IDLE) {
+	        if(isEnoughPlayers()) step();
 		}
 		
 	}
@@ -303,6 +357,8 @@ public class elimbot extends SubspaceBot {
 	        String[] pieces = playerinfo.split(":");
 	        pieces[2] = String.valueOf(System.currentTimeMillis());
 	        players.put(player, pieces[0] +":"+ pieces[1] +":"+ pieces[2] +":"+ pieces[3]);
+	        
+	        checkWin(); // if 2 players are left and 1 leaves
 	    }
 	}
 	
@@ -335,7 +391,11 @@ public class elimbot extends SubspaceBot {
 	 * Starts a vote or the elim game
 	 */
 	public void step() {
-		//zoneElim(); // Zone that elim game is starting
+	    
+	    if(this.state == ElimState.IDLE) {
+	        // Zone that elim game is starting
+	        zone();
+	    }
 
 		if(this.state == ElimState.IDLE && config.getCurrentConfig().isShipsVote()) {
 			// Start the vote for the ship
@@ -454,6 +514,56 @@ public class elimbot extends SubspaceBot {
 	}
 	
 	/**
+	 * Checks if there is one frequency left, thus a win situation
+	 */
+	private void checkWin() {
+	    if(this.state == ElimState.RUNNING && countTeams() == 1) {
+	        m_botAction.sendArenaMessage("GAME OVER",Tools.Sound.HALLELUJAH);
+	        
+	        Iterator<Player> winners = m_botAction.getPlayingPlayerIterator();
+
+	        while(winners.hasNext()) {
+	            Player winner = winners.next();
+	            
+	            String squad = "";
+	            if(winner.getSquadName().length()>0) {
+	                squad = "["+winner.getSquadName()+"]";
+	            }	                
+	            
+	            m_botAction.sendArenaMessage("Winner: "+winner.getPlayerName() + " " + squad + " ("+winner.getWins()+"-"+winner.getLosses()+")");
+	        }
+	            
+            m_botAction.sendArenaMessage("Game length: "+Tools.getTimeDiffString(this.startTime, false));
+            
+            // TODO: Save winners to database
+            // If successfull:
+            m_botAction.sendArenaMessage("Game saved to database. Visit http://www.trenchwars.org/elim to see statistics.");
+            
+            stop();
+            this.state = ElimState.ENDING;
+            m_botAction.sendPublicMessage("Next elimination game starts in 15 seconds");
+            newGame = new NewGame(this);
+            m_botAction.scheduleTask(newGame, (15 * 1000));
+            zone();
+	        
+	    }
+	}
+	
+	/**
+	 * Counts the number of teams of playing players (non-spectators)
+	 * @return
+	 */
+	private int countTeams() {
+	    Iterator<Player> players = m_botAction.getPlayingPlayerIterator();
+	    HashSet<Short> teams = new HashSet<Short>();
+	    
+	    while(players.hasNext()) {
+	        teams.add(players.next().getFrequency());
+	    }
+	    return teams.size();
+	}
+	
+	/**
 	 * Checks if enough players are in to start the game
 	 */
 	private boolean isEnoughPlayers() {
@@ -474,8 +584,8 @@ public class elimbot extends SubspaceBot {
 		if(config.isRulesShown() == false) {
 			String[] rules = 
 				{ 
-					"-----===[ Welcome to Elimination ]===-----"//, 
-					//"You can see your statistics on http://www.trenchwars.org/elim . Good luck and have fun!"
+					"-----===[ Welcome to Elimination ]===-----", 
+					"You can see your statistics on http://www.trenchwars.org/elim . Good luck and have fun!"
 				};
 			
 			for(String arena:rules) {
@@ -483,6 +593,18 @@ public class elimbot extends SubspaceBot {
 			}
 			config.setRulesShown(true);
 		}
+	}
+	
+	/**
+	 * Zones for elimination
+	 */
+	private void zone() {
+	    long difference = System.currentTimeMillis() - this.zoneTime;
+	    
+	    if((difference / 1000 / 60 ) > this.zoneDelay) {
+	        m_botAction.sendZoneMessage(this.zoneText);
+	        this.zoneTime = System.currentTimeMillis();
+	    }
 	}
 	
 	public void lockArena() {
