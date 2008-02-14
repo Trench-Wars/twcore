@@ -272,6 +272,8 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_TK = 203;                     // TK!
     private final int LVZ_TKD = 204;                    // TKd!
     private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
+    private final int LVZ_EMP = 206;                    // EMP ready graphic
+    private final int LVZ_ENERGY_TANK = 207;            // Energy Tank ready graphic
     private final int LVZ_TOPBASE_EMPTY = 251;          // Flag display
     private final int LVZ_TOPBASE_ARMY0 = 252;
     private final int LVZ_TOPBASE_ARMY1 = 253;
@@ -1177,6 +1179,12 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() == event.getShipType() ) {
             if( p.ignoreShipChanges() )         // If we've been ignoring their shipchanges and they returned to
                 p.setIgnoreShipChanges(false);  // their old ship, mission complete.
+            else {
+                if( p.getArmyID() != event.getFrequency() ) {
+                    m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Hey, what're you trying to pull?  If you want to !assist the other army, do it the right way!" );
+                    m_botAction.specWithoutLock( p.getArenaPlayerID() );
+                }
+            }
             return;
         }
 
@@ -1224,7 +1232,10 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_REARMING);
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_REARMING, false );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_EMP, false );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_ENERGY_TANK, false );
+        m_botAction.sendSetupObjectsForPlayer( p.getArenaPlayerID() );
 
         if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
             checkForAssistAdvert = true;
@@ -1347,9 +1358,9 @@ public class distensionbot extends SubspaceBot {
 
             // Loser is many levels above victor:
             //   Victor capped, but loser is humiliated with some point loss
-            if( rankDiff >= RANK_DIFF_HIGH ) {
+            if( rankDiff >= RANK_DIFF_MED ) {
 
-                points = victorRank + RANK_DIFF_HIGH;
+                points = victorRank + RANK_DIFF_MED;
                 isMaxReward = true;
 
                 // Support ships are not humiliated; assault are
@@ -2907,7 +2918,8 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
             }
         }
-        m_botAction.sendPrivateMessage( name, "Targetted EMP sent!  All enemies have been disabled." );
+        m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_EMP );
+        m_botAction.sendPrivateMessage( name, "Targetted EMP sent!  All enemies have been temporarily disabled." );
         m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an EMP PULSE on your army!" );
     }
 
@@ -3943,7 +3955,10 @@ public class distensionbot extends SubspaceBot {
         m_botAction.specAll();
         flagObjs.hideAllObjects();
         flagTimerObjs.hideAllObjects();
-        m_botAction.hideObject(LVZ_REARMING);
+        m_botAction.setupObject( LVZ_REARMING, false );
+        m_botAction.setupObject( LVZ_EMP, false );
+        m_botAction.setupObject( LVZ_ENERGY_TANK, false );
+        m_botAction.sendSetupObjects();
         // Dock Ops so they are put on the spec freq properly
         for( DistensionPlayer p : m_players.values() )
             if( p.getShipNum() == 9 )
@@ -5172,6 +5187,7 @@ public class distensionbot extends SubspaceBot {
                 }
                 // EMP ability; re-enable every 40 ticks (20 min)
                 if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 40 == 0 ) {
+                    m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_EMP );
                     m_botAction.sendPrivateMessage(arenaPlayerID, "Targeted EMP recharged.  !emp to use.");
                     targetedEMP = true;
                 }
@@ -5181,6 +5197,7 @@ public class distensionbot extends SubspaceBot {
                 if( !energyTank ) {
                     double etChance = Math.random() * 100.0;
                     if( ((double)purchasedUpgrades[10] * 25.0) > etChance ) {
+                        m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );
                         m_botAction.sendPrivateMessage(arenaPlayerID, "Energy Tank replenished.  !! to use.");
                         energyTank = true;
                     }
@@ -5923,6 +5940,7 @@ public class distensionbot extends SubspaceBot {
             if( energyTank == false ) {
                 m_botAction.sendPrivateMessage(arenaPlayerID, "You do not presently have an energy tank to use!" );
             } else {
+                m_botAction.hideObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.FULLCHARGE );
                 energyTank = false;
             }
