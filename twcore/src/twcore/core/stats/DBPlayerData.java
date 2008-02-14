@@ -100,7 +100,7 @@ public class DBPlayerData {
 
         try {
             ResultSet qryPlayerInfo = m_connection.SQLQuery(m_connName,
-            "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
+            "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashes(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
             if (qryPlayerInfo != null && qryPlayerInfo.next()) {
                 m_playerLoaded = true;
@@ -136,7 +136,7 @@ public class DBPlayerData {
 
         try {
             ResultSet qryPlayerExist = m_connection.SQLQuery(m_connName,
-            "SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashesToString(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
+            "SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"+Tools.addSlashes(m_fcUserName)+"' ORDER BY U.fdSignedUp ASC LIMIT 0,1");
             m_lastQuery = System.currentTimeMillis();
             if (qryPlayerExist != null && qryPlayerExist.next()) {
                 result = true;
@@ -175,7 +175,7 @@ public class DBPlayerData {
             m_connName = "website";
 
            try {
-        	   String query = "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(m_fcUserName)+"', NOW())";
+        	   String query = "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashes(m_fcUserName)+"', NOW())";
                m_connection.SQLQueryAndClose(m_connName, query );
                m_lastQuery = System.currentTimeMillis();
                return getPlayerData();
@@ -193,7 +193,7 @@ public class DBPlayerData {
 
         if (m_fnUserID != 0) {
             try {
-                m_connection.SQLQueryAndClose(m_connName, "INSERT INTO tblUserAccount(fnUserID, fcPassword) VALUES ("+m_fnUserID+",PASSWORD('"+Tools.addSlashesToString(fcPassword)+"'))");
+                m_connection.SQLQueryAndClose(m_connName, "INSERT INTO tblUserAccount(fnUserID, fcPassword) VALUES ("+m_fnUserID+",PASSWORD('"+Tools.addSlashes(fcPassword)+"'))");
                 m_lastQuery = System.currentTimeMillis();
                 m_fcPassword = fcPassword;
                 return true;
@@ -211,7 +211,7 @@ public class DBPlayerData {
 
         if (m_fnUserID != 0) {
             try {
-                m_connection.SQLQueryAndClose(m_connName, "UPDATE tblUserAccount SET fcPassword = PASSWORD('"+Tools.addSlashesToString(fcPassword)+"') WHERE fnUserID = "+m_fnUserID);
+                m_connection.SQLQueryAndClose(m_connName, "UPDATE tblUserAccount SET fcPassword = PASSWORD('"+Tools.addSlashes(fcPassword)+"') WHERE fnUserID = "+m_fnUserID);
                 m_lastQuery = System.currentTimeMillis();
                 m_fcPassword = fcPassword;
                 return true;
