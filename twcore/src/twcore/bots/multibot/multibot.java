@@ -121,7 +121,7 @@ public class multibot extends SubspaceBot {
                     m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
                     foundCmd = handleCommands(sender, message, messageType);
                 } else {
-                    if( m_owner.equals(sender) ) {
+                    if( m_owner.equals(sender) || sender.equals(m_botAction.getBotName()) ) {
                         m_lastUse = System.currentTimeMillis();
                         foundCmd = handleCommands(sender, message, messageType);
                     } else {
