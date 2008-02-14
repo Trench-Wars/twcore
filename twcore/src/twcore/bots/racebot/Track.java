@@ -1,4 +1,4 @@
-package twcore.bots.racingbot;
+package twcore.bots.racebot;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
