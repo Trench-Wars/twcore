@@ -1,9 +1,9 @@
 [General]
-name=Time Race
+name=Base
 arena=base,base2,base3
 ship=0
 players=8
-minplayers=0
+minplayers=4
 deaths=-1
 time=41
 rounds=1
