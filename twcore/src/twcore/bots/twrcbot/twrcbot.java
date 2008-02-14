@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
@@ -70,7 +69,7 @@ public class twrcbot extends SubspaceBot {
         twrcOps.clear();
         
         for(int k = 0;k < ops.length;k++) {
-            twrcOps.add(ops[k].toLowerCase());
+            twrcOps.add(ops[k]);
         }
 	}
 
@@ -112,7 +111,7 @@ public class twrcbot extends SubspaceBot {
 	public void handleCommand(String name, String message)
 	{
 	    // Operator commands
-		if(m_botAction.getOperatorList().isSmod(name) || twrcOps.contains(name.toLowerCase()))
+		if(m_botAction.getOperatorList().isSmod(name) || twrcOps.contains(name))
 		{
 			if(message.toLowerCase().startsWith("!open"))
 			{
@@ -176,36 +175,27 @@ public class twrcbot extends SubspaceBot {
             } else if(playerid > -1) {
 			    m_botAction.sendPrivateMessage(name, "You have already signed up for TWRC. Please contact a TWRC Operator if you need assistance.");
 			} 
-		}
-		else if(message.toLowerCase().startsWith("!who "))
-		{
-			String pieces[] = message.split(" ");
-			try {
-				int place = Integer.parseInt(pieces[1]);
-				who(name, place);
-			} catch(Exception e) {}
-		}
-		else if(message.toLowerCase().startsWith("!rank "))
-		{
-			String pieces[] = message.split(" ", 2);
-			if(getRank(pieces[1]) != 0)
-				m_botAction.sendPrivateMessage(name, pieces[1] + " is currently ranked #" + getRank(pieces[1]) + " with " + getPoints(pieces[1]) + " points.");
-			else
-				m_botAction.sendPrivateMessage(name, "No record of " + pieces[1] + " in the database.");
-		}
+		}		
 		else if(message.toLowerCase().startsWith("!rank")) {
-		    int points = getPoints(name);
-		    if(points > -1) {
-		        m_botAction.sendPrivateMessage(name, "You are currently ranked #" + getRank(name) + " with " + getPoints(name) + " points.");
-		    } else if(points == -1) {
-		        m_botAction.sendPrivateMessage(name, "You haven't signed up for TWRC.");
-		    } else {
+		    String params = message.substring(5).trim();
+		    try {
+		        doRank(name, params);
+		    } catch(SQLException sqle) {
 		        m_botAction.sendPrivateMessage(name, "Unexpected error encountered. Contact a TWRC Operator for further assistance.");
+		        Tools.printStackTrace("SQLException encountered on !rank of twrcbot",sqle);
 		    }
 		}
 		else if(message.toLowerCase().startsWith("!operators")) {
 		    m_botAction.sendPrivateMessage(name, "TWRC Operators: ");
-		    m_botAction.sendPrivateMessage(name, twrcOps.toString());
+		    
+		    String ops = "";
+		    for(String op:twrcOps) {
+		        if(ops.length() > 0)
+		            ops += ", ";
+		        ops += op;
+		    }
+		    
+		    m_botAction.sendPrivateMessage(name, ops);
 		}
 		else if(message.toLowerCase().startsWith("!help"))
 			handleHelp(name);
@@ -271,7 +261,7 @@ public class twrcbot extends SubspaceBot {
 	 */
 	public void handleHelp(String name)
 	{
-		if(m_botAction.getOperatorList().isSmod(name) || twrcOps.contains(name.toLowerCase()))
+		if(m_botAction.getOperatorList().isSmod(name) || twrcOps.contains(name))
 		{
 		    m_botAction.sendPrivateMessage(name, "--- Operator commands ---");
 		    m_botAction.sendPrivateMessage(name, "Signups currently: "+(isSignupsOpen?"OPEN":"CLOSED"));
@@ -283,7 +273,8 @@ public class twrcbot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(name, "---  Public commands  ---");
 		}
 
-		m_botAction.sendPrivateMessage(name, "!who <#>                -Returns the player with rank of <#>.");
+		m_botAction.sendPrivateMessage(name, "!rank                   -Shows top 5 ranking by points");
+		m_botAction.sendPrivateMessage(name, "!rank #                 -Shows top # ranking by points");
 		m_botAction.sendPrivateMessage(name, "!rank <name>            -Gets <name>'s rank.");
 		if(isSignupsOpen)
 		m_botAction.sendPrivateMessage(name, "!signup                 -Signs you up for TWRC.");
@@ -291,32 +282,68 @@ public class twrcbot extends SubspaceBot {
 		m_botAction.sendPrivateMessage(name, "!help                   -Displays this message.");
 	}
 
-	/** Returns the rank the specified player.
-	 *  @param name - Name of the player to get rank of.
-	 *  @return Player's rank.
+	/** 
+	 * Returns the rank the specified player.
+	 * @param name - Name of the player to get rank of.
+	 * @return Player's rank.
 	 */
-	public int getRank(String name)
-	{
-		int k = 0;
-		HashMap<String, Integer> ranks = new HashMap<String, Integer>();
-		try {
-			ResultSet result = m_botAction.SQLQuery(sqlHost, "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC");
-			while(result.next())
-			{
-				k++;
-				ranks.put(result.getString("fldName").toLowerCase(), new Integer(k));
-			}
-            m_botAction.SQLClose(result);
-		} catch(Exception e) {}
-		try {
-			return ranks.get(name.toLowerCase()).intValue();
-		} catch(Exception e) {return 0;}
+	public void doRank(String name, String parameters) throws SQLException {
+	    int count = 5;
+	    
+	    if(Tools.isAllDigits(parameters)) {
+	        try {
+	            count = Integer.parseInt(parameters);
+	        } catch(NumberFormatException nfe) { }
+	        
+	        if( count < 5)
+	            count = 5;
+	        if( count > 50)
+	            count = 50;
+	    } else {
+	        
+	        // !rank <playername> 
+	        
+	        ResultSet result = m_botAction.SQLQuery(sqlHost, "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC");
+	        int rank = 1;
+	        boolean found = false;
+	        
+	        while(result != null && result.next()) {
+	            if(result.getString(1).trim().equalsIgnoreCase(parameters)) {
+	                m_botAction.sendPrivateMessage(name,   Tools.formatString(" #"+rank, 6) + " " +
+	                                                       Tools.formatString(result.getString(1),23) + " " +
+	                                                       result.getString(2)+" pts.");
+	                found = true;
+	                break;
+	            }
+	            rank++;
+	        }
+	        
+	        m_botAction.SQLClose(result);
+	        
+	        if(!found) {
+	            m_botAction.sendPrivateMessage(name, "No record of " + parameters + " found.");
+	        }
+	        
+	        return;
+	    }
+	    
+	    // !rank [#]
+		ResultSet result = m_botAction.SQLQuery(sqlHost, "SELECT fldName, fldPoints FROM tblRacers ORDER BY fldPoints DESC LIMIT 0,"+count);
+		int rank = 1;
+		
+		while(result != null && result.next()) {
+		    m_botAction.sendPrivateMessage(name,   Tools.formatString(" #"+rank, 6) + " " +
+		                                           Tools.formatString(result.getString(1),23) + " " +
+		                                           result.getString(2)+" pts.");
+		    rank++;
+		}
+		m_botAction.SQLClose(result);
 	}
 
-	/** Finds the player with the requested rank and pm's the person w/ that name.
+	/* * Finds the player with the requested rank and pm's the person w/ that name.
 	 *  @param name - Name of person requesting rank.
 	 *  @param rank - Rank they want to know.
-	 */
+	 * /
 	public void who(String name, int rank)
 	{
 		int k = 0;
@@ -343,7 +370,7 @@ public class twrcbot extends SubspaceBot {
 		} catch(Exception e) {}
 		if(!found)
 			m_botAction.sendPrivateMessage(name, "Cannot find anyone with that rank.");
-	}
+	}*/
 
 	/** 
 	 * Returns the player's tblRacers fldID.
