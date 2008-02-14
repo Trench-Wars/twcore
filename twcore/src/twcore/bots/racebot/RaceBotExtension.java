@@ -30,18 +30,18 @@ import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 
-public abstract class RacingBotExtension {
+public abstract class RaceBotExtension {
 
     BotAction m_botAction;
     OperatorList m_opList;
     String m_sqlHost;
-	racingbot m_bot;
-	HashMap<String, RacingBotExtension> modules;
+	racebot m_bot;
+	HashMap<String, RaceBotExtension> modules;
 
-    public RacingBotExtension() {
+    public RaceBotExtension() {
     }
 
-    public void set( BotAction action, String sql, racingbot bot) {
+    public void set( BotAction action, String sql, racebot bot) {
     	m_botAction = action;
     	m_sqlHost = sql;
     	m_bot = bot;

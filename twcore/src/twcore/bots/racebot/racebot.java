@@ -12,9 +12,9 @@ import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.*;
 
-public class racingbot extends SubspaceBot {
+public class racebot extends SubspaceBot {
 
-	HashMap<String, RacingBotExtension> modules;
+	HashMap<String, RaceBotExtension> modules;
 	HashSet<String> twrcOps;
 	BotSettings m_botSettings;
 	OperatorList m_operatorList;
@@ -22,10 +22,10 @@ public class racingbot extends SubspaceBot {
 
 	public final String mySQLHost = "twrc";
 
-	public racingbot( BotAction botAction ) {
+	public racebot( BotAction botAction ) {
 		super( botAction );
 
-		modules = new HashMap<String, RacingBotExtension>();
+		modules = new HashMap<String, RaceBotExtension>();
 		twrcOps = new HashSet<String>();
 
         m_botAction.getEventRequester().requestAll();
@@ -43,10 +43,10 @@ public class racingbot extends SubspaceBot {
 
 	public void distributeEvent( SubspaceEvent event ){
 
-        Iterator<Map.Entry<String, RacingBotExtension>> i = modules.entrySet().iterator();
+        Iterator<Map.Entry<String, RaceBotExtension>> i = modules.entrySet().iterator();
         while( i.hasNext() ){
-            Map.Entry<String, RacingBotExtension> entry = i.next();
-            RacingBotExtension ext = entry.getValue();
+            Map.Entry<String, RaceBotExtension> entry = i.next();
+            RaceBotExtension ext = entry.getValue();
             ext.handleEvent( event );
         }
     }

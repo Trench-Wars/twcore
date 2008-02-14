@@ -22,7 +22,7 @@ import twcore.core.events.Message;
  *  @author Jacen Solo
  *  @version 2.3
  */
-public class RbTWRC extends RacingBotExtension
+public class RbTWRC extends RaceBotExtension
 {
 	String sqlHost = "website";
 	File log = new File("log.txt");

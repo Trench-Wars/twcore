@@ -9,7 +9,7 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
-public class RbTrackManager extends RacingBotExtension {
+public class RbTrackManager extends RaceBotExtension {
 
 
 	HashMap<Integer, Integer> checkPointList;

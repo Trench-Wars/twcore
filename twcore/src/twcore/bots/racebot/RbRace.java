@@ -12,7 +12,7 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
-public class RbRace extends RacingBotExtension {
+public class RbRace extends RaceBotExtension {
 
 	HashMap<Integer, Track> trackIDList;
 	HashMap<String, Track> trackNameList;
