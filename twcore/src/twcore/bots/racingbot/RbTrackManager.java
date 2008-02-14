@@ -33,10 +33,22 @@ public class RbTrackManager extends RacingBotExtension {
 					handleAnswer( true );
 				else if( message.equals( "no" ) )
 					handleAnswer( false );
-				else if( message.startsWith( "!help manager" ) )
-					displayHelp( name );
-				else if( message.equals( "!help" ) )
-					m_botAction.sendPrivateMessage( name, "manager     - Allows easy setup of tracks" );
+				else if( message.equals( "!help" ) ) {
+				    String help[] = {
+			            "------------- Track Manager Help Menu ---------------------------",
+			            "| !newtrack      - starts the process of setting up a new track |",
+			            "| !done          - used when done setting current checkpoint    |",
+			            "| !name <name>   - sets arena name to <name>                    |",
+			            "| !nametrack <id>:<name> - sets track <id> to <name>            |",
+			            "| !setships <id>:<ships> - sets ships for track <id>            |",
+			            "|                          seperate multiple ships by a space   |",
+			            "| !setwarp <id>  - sets the warp point for track <id> from      |",
+			            "|                  your current position                        |",
+			            "| !testwarp <id> - tests a warp point already setup             |",
+			            "----------------------------------------------------------------|"
+			        };
+			        m_botAction.privateMessageSpam( name, help );
+				}
 				else if( message.startsWith( "!newtrack" ) )
 					createTrack( message );
 				else if( message.startsWith( "!done" ) ) {
@@ -54,22 +66,6 @@ public class RbTrackManager extends RacingBotExtension {
 			}
 		} catch(Exception e) {}
 
-	}
-
-	public void displayHelp( String name ) {
-
-		String help[] = {
-			"------------- Track Manager Help Menu ---------------------------",
-			"| !newtrack      - starts the process of setting up a new track |",
-			"| !done          - used when done setting current checkpoint    |",
-			"| !name <name>   - sets arena name to <name>                    |",
-			"| !nametrack <id>:<name> - sets track <id> to <name>            |",
-			"| !setships <id>:<ships> - sets ships for track <id>            |",
-			"| !setwarp <id>  - sets the warp point for track <id>           |",
-			"| !testwarp <id> - tests a warp point already setup             |",
-			"----------------------------------------------------------------|"
-		};
-		m_botAction.privateMessageSpam( name, help );
 	}
 
 	public void handleAnswer( boolean answer ) {
@@ -186,7 +182,7 @@ public class RbTrackManager extends RacingBotExtension {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "INSERT INTO tblRace (fcArena, fcName) VALUES ('"+a+"', '"+a+"')" );
                         m_botAction.SQLClose( result );
 			m_botAction.sendPublicMessage( "Arena setup. To change the name of this arena later please use !name" );
-			m_botAction.sendPublicMessage( "You may setup tracks for this map using !newtrack" );
+			m_botAction.sendPublicMessage( "Please do !newtrack again to setup tracks for this arena." );
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
 			m_botAction.sendPublicMessage( "Unable to setup arena." );
@@ -348,10 +344,11 @@ public class RbTrackManager extends RacingBotExtension {
 
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT MAX(fnTrackID) AS id FROM `tblRaceTrack`" );
-                        int id = -1;
-			if( result.next() )
+            int id = -1;
+            if( result != null && result.next() )
 				id = result.getInt("id");
-                        m_botAction.SQLClose( result );
+                
+            m_botAction.SQLClose( result );
 			return id;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
