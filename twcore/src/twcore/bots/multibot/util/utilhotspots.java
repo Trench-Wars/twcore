@@ -1,8 +1,8 @@
 package twcore.bots.multibot.util;
 
 import java.util.Iterator;
+import java.util.HashMap;
 import java.util.ArrayList;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -16,26 +16,25 @@ import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 /**
- *Modified the hotspots module with a better UI and fixed
- *the timer task errors. Should be working properly.
+ *HotSpots 2.0 - milosh - 2.15.08
  */
 public class utilhotspots extends MultiUtil {
 
 	OperatorList opList;
-	ArrayList<String> recentContacts;
+	HashMap<String, Long> recentContacts;
     Vector <HotSpot>hotSpots;
     HotSpot watch;
     TimerTask changeTask;
     boolean watching;
-    int repeatTime = 3000;
+    int repeatTime = 200;
     
-    private int switchTime = 500;
+    private int switchTime = 200;
 
     /**
      * initializes.
      */
     public void init() {
-    	recentContacts = new ArrayList<String>();
+    	recentContacts = new HashMap<String, Long>();
     	opList = m_botAction.getOperatorList();
         hotSpots = new Vector<HotSpot>();
         // Turn off updating -- we will do it ourselves
@@ -75,6 +74,8 @@ public class utilhotspots extends MultiUtil {
     	message = message.toLowerCase();
         if( message.startsWith( "!addspot " ) )
         	do_addHotSpot( sender, message.substring( 9, message.length() ) );
+        if( message.startsWith( "!removespot "))
+        	do_removeHotSpot( sender, message.substring(12));
         if( message.startsWith( "!addmsg " ) )
         	do_addMessage( sender, msg.substring( 8 ));
         if( message.startsWith( "!removemsg " ) )
@@ -86,88 +87,55 @@ public class utilhotspots extends MultiUtil {
         if( message.startsWith( "!repeattime " ) )
             do_repeatTime( sender, message.substring( 12 ) );
         if (message.startsWith( "!listspots"))
-        	do_ListSpot(sender);
+        	do_listSpots(sender);
         if( message.startsWith( "!clearspots" ) )
             do_clearHotSpots( sender );
-        if( message.toLowerCase().startsWith( "!watch" ) ) {
-        	if (!watching)	{
-        		watch();
-        		m_botAction.sendPrivateMessage(sender, "Watching [ON]");
-            }
-        	else
-        		m_botAction.sendPrivateMessage(sender, "Already watching spots!");
-        }
+        if( message.equalsIgnoreCase( "!watch" ) )
+        	do_watch( sender );
+        if( message.equalsIgnoreCase("!stopwatching"))
+        	do_stopWatch( sender );
     }
 
     /**
      * Handles player positions
      */
     public void handleEvent( PlayerPosition event ) {
+    	int x = event.getXLocation() + ((event.getXVelocity()/160000) * 300);
+    	int y = event.getYLocation() + ((event.getYVelocity()/160000) * 300);
         String name = m_botAction.getPlayerName(event.getPlayerID());
-        if(name == null || recentContacts.contains(name))return;
-        new ContactTimer(name, repeatTime);
+        Player p = m_botAction.getPlayer(event.getPlayerID());
+        if(name == null || p == null || !watching)return;
+        if(recentContacts.containsKey(name)){
+        	if((System.currentTimeMillis() - recentContacts.get(name)) < repeatTime){
+        		return;
+        	}
+        }
+        recentContacts.put(name, System.currentTimeMillis());
             if( watch != null ) {
-                if( watch.inside( event.getXLocation(), event.getYLocation() )) {
+                if( watch.inside( x, y )) {
                 	//if( watch.needsWarp() )
                 		//m_botAction.warpTo( event.getPlayerID(), watch.getX2(), watch.getY2() );
                 	if( watch.getMessages() != null){
                     	Iterator<String> i = watch.getMessages().iterator();
                     	while( i.hasNext() ){
                     		String msg = i.next();
-                    		msg = replaceKeys(name, msg);
+                    		msg = Tools.replaceKeys(m_botAction, p, msg);
                     		m_botAction.sendUnfilteredPrivateMessage( event.getPlayerID(), msg );
                     	}
                     }
                 }
             }
     }
-
-    /**
-	 * Replaces escape keys when messaging a user who has used this command
-	 * @param name - The user accessing this command
-	 * @param message - The message/action to be sent to the user
-	 * @return A string with objects instead of escape keys
-	 */
-	public String replaceKeys(String name, String message){
-		Player p = m_botAction.getPlayer(name);
-		if(message.contains("&player"))
-			message = message.replace("&player", name);
-		if(p == null)return message;
-		if(message.contains("&freq")){
-			message = message.replace("&freq", p.getFrequency() + "");			
-		}
-		if(message.contains("&ship")){
-			message = message.replace("&ship", Tools.shipName(p.getShipType()));
-		}
-		if(message.contains("&shipslang")){
-			message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));
-		}
-		if(message.contains("&wins")){
-			message = message.replace("&wins", p.getWins() + "");
-		}
-		if(message.contains("&losses")){
-			message = message.replace("&losses", p.getLosses() + "");
-		}
-		if(message.contains("&bounty")){
-			message = message.replace("&bounty", p.getBounty() + "");
-		}
-		if(message.contains("&squad")){
-			message = message.replace("&squad", p.getSquadName());
-		}
-		if(message.contains("&x")){
-			message = message.replace("&x", p.getXLocation()/16 + "");
-		}
-		if(message.contains("&y")){
-			message = message.replace("&y", p.getYLocation()/16 + "");
-		}			
-		//TODO: Feel free to add more escape keys.
-		return message;
-	}
     
     /**
-     * initializes timer task.
+     * Starts watching hot spots
      */
-    public void watch()	{
+    public void do_watch(String name)	{
+    	if(watching){
+    		m_botAction.sendSmartPrivateMessage( name, "Already watching spots. Type !stopwatching to deactivate.");
+    		return;
+    	}
+    	m_botAction.sendSmartPrivateMessage( name, "HotSpots are now active.");
     	changeTask = new TimerTask() {
             public void run() {
                 try {
@@ -183,12 +151,25 @@ public class utilhotspots extends MultiUtil {
         m_botAction.scheduleTaskAtFixedRate( changeTask, 2000, switchTime );
         watching = true;
     }
+    
+    /**
+     * Stops watching hot spots
+     */
+    public void do_stopWatch(String name){
+    	if(!watching){
+    		m_botAction.sendSmartPrivateMessage( name, "I'm not currently watching any spots. Type !watch to active.");
+    		return;
+    	}
+    	m_botAction.sendSmartPrivateMessage( name, "HotSpots are no longer active.");
+    	changeTask.cancel();
+    	watching = false;
+    }
 
     /**
      * Lists spots.
      * @param sender is the user of the bot
      */
-    public void do_ListSpot(String sender)	{
+    public void do_listSpots(String sender)	{
     	Iterator<HotSpot> it = hotSpots.iterator();
     	if(!it.hasNext()) {m_botAction.sendPrivateMessage(sender,"No spots loaded!");return;}
     	while(it.hasNext())	{
@@ -199,15 +180,29 @@ public class utilhotspots extends MultiUtil {
     }
     
     /**
+     * Removes a hot spot.
+     * @param sender is the user of the bot
+     * @param message is the index of the spot
+     */
+    public void do_removeHotSpot(String sender, String message){
+    	try{
+    		int spot = Integer.parseInt(message);
+    		hotSpots.remove(spot);
+    		m_botAction.sendSmartPrivateMessage( sender, "The spot at index '" + spot + "' has been removed.");
+    	}catch(NumberFormatException e){
+    		m_botAction.sendSmartPrivateMessage( sender, "Impropert Format. Usage: !removespot <index>");
+    	}
+    }
+    
+    /**
      * Adds a message to a spot
      * @param sender is the user of the bot
      * @param message is the index of the spot and the message to add
      */   
-    public void do_addMessage( String sender, String message ) {
-    	String spot = message.substring(0, 1);
+    public void do_addMessage( String sender, String message ) {	
     	if(message.indexOf(" ") == -1)return;
-    	String msg = message.substring(message.indexOf(" "));
-    	
+    	String spot = message.substring(0, message.indexOf(" "));
+    	String msg = message.substring(message.indexOf(" ") + 1);
     	
     	int index;
     	try {
@@ -221,7 +216,7 @@ public class utilhotspots extends MultiUtil {
     		return;
     	}
     	if(msg.startsWith("*")){
-			if(!isAllowed(msg) && !opList.isSmod(sender)){
+			if(!Tools.isAllowed(msg) && !opList.isSmod(sender)){
 				m_botAction.sendSmartPrivateMessage( sender, "Command not added; Restricted or unknown.");
 				return;
 			}
@@ -229,59 +224,6 @@ public class utilhotspots extends MultiUtil {
     	hotSpots.elementAt(index).addMessage(msg);
     	m_botAction.sendSmartPrivateMessage( sender, "Message added to HotSpot at index " + index );
     }
-    
-    /**
-	 * A white-list of allowed custom commands.
-	 * @param s - The string
-	 * @return true if the string is allowed. else false.
-	 */
-	public boolean isAllowed(String s){
-		if(s.startsWith("*setship")   ||
-		   s.startsWith("*setfreq")   ||
-		   s.startsWith("*warpto")    ||
-		   s.equals("*scorereset")    ||
-		   s.equals("*spec")          ||
-		   s.equals("*prize #4")      ||//Stealth
-		   s.equals("*prize #5")      ||//Cloak
-		   s.equals("*prize #6")      ||//X-radar
-		   s.equals("*prize #7")      ||//Warp
-		   s.equals("*prize #13")     ||//Full charge
-		   s.equals("*prize #14")     ||//Engine shutdown
-		   s.equals("*prize #15")     ||//Multi-fire
-		   s.equals("*prize #17")     ||//Super
-		   s.equals("*prize #18")     ||//Shields
-		   s.equals("*prize #19")     ||//Shrapnel
-		   s.equals("*prize #20")     ||//Anti-warp
-		   s.equals("*prize #21")     ||//Repel
-		   s.equals("*prize #22")     ||//Burst
-		   s.equals("*prize #23")     ||//Decoy
-		   s.equals("*prize #24")     ||//Thor
-		   s.equals("*prize #25")     ||//Multi-prize
-		   s.equals("*prize #26")     ||//Brick
-		   s.equals("*prize #27")     ||//Rocket
-		   s.equals("*prize #28")     ||//Portal
-		   s.equals("*prize #-4")     ||//Negative Stealth
-		   s.equals("*prize #-5")     ||//Negative Cloak
-		   s.equals("*prize #-6")     ||//Negative X-radar
-		   s.equals("*prize #-7")     ||//Negative Warp
-		   s.equals("*prize #-13")    ||//Negative Full charge
-		   s.equals("*prize #-14")    ||//Negative Engine shutdown
-		   s.equals("*prize #-15")    ||//Negative Multi-fire
-		   s.equals("*prize #-17")    ||//Negative Super
-		   s.equals("*prize #-18")    ||//Negative Shields
-		   s.equals("*prize #-19")    ||//Negative Shrapnel
-		   s.equals("*prize #-20")    ||//Negative Anti-warp
-		   s.equals("*prize #-21")    ||//Negative Repel
-		   s.equals("*prize #-22")    ||//Negative Burst
-		   s.equals("*prize #-23")    ||//Negative Decoy
-		   s.equals("*prize #-24")    ||//Negative Thor
-		   s.equals("*prize #-25")    ||//Negative Multi-prize
-		   s.equals("*prize #-26")    ||//Negative Brick
-		   s.equals("*prize #-27")    ||//Negative Rocket
-		   s.equals("*prize #-28"))     //Negative Portal
-		return true;
-		else return false;
-	}
     
     /**
      * Removes a message from a spot
@@ -378,14 +320,12 @@ public class utilhotspots extends MultiUtil {
      */
     public void do_clearHotSpots( String name ) {
         hotSpots.clear();
-        if(changeTask != null) {
-	        changeTask.cancel();
+        if(watching){
+        	changeTask.cancel();
+        	watching = false;
         }
-        watching = false;
         watch = null;
-        if(name != null) {
-	        m_botAction.sendPrivateMessage( name, "All hotspots cleared." );
-        }
+	    m_botAction.sendPrivateMessage( name, "All hotspots cleared. No longer watching." );
     }
 
     /**
@@ -408,8 +348,9 @@ public class utilhotspots extends MultiUtil {
 
         switchTime = time;
         if(watching)	{
+        	watching = false;
         	changeTask.cancel();
-            watch();
+            do_watch( sender );
         }
         m_botAction.sendPrivateMessage( sender, "Switch time set to " + time );
     }
@@ -441,19 +382,21 @@ public class utilhotspots extends MultiUtil {
      */
     public String[] getHelpMessages() {
         String help[] = {
-                "HotSpot Module          - Enter one coordinate, warp to another; maybe get a prize.'",
-                "!addspot                - Adds a new hotspot.<x> <y> <radius>",// <destx> <desty>",
-                //"                        - Players will warp to the coord <destx>,<desty>",
-                //"                        - when they enter within <radius> of <warpx>,<warpy>.",
-                "!addmsg                 - Adds a message/command to send the player in contact with this spot",
-                "                        - <HotSpot index>:<message>",
-                "!removemsg              - Removes a message from a hotspot. <HotSpot index> <Message index>",
-                "!listmsg                - Lists all messages for the specified HotSpot. <HotSpot index>",
-                "!repeattime <ms>        - How long to pause between contact responses",
-                "!switchtime <ms>        - How long to watch each spot before moving to the next",
-                "!watch                  - Begin watching all hotspots.",
+                "HotSpot Module V2.0:",
+                "!addspot <x> <y> <r>    - Adds a new hotspot.<x> <y> <radius>",
+                "                        - Alternative Use: !addspot <x> <y> <r> <DestX> <DestY>",
+                "                        - Alternative Use: !addspot <x> <y> <r> <DestX> <DestY> <prize>",
+                "!removespot <index>     - Removes the HotSpot at <index>",
                 "!clearspots             - Remove all hotspots.",
-                "!listspots              - Lists your hotspots"
+                "!listspots              - Lists your hotspots",
+                "!addmsg <index> <text>  - Adds a message/command to send the player in contact with this spot",
+                "!removemsg <idx> <idx>  - Removes a message from a hotspot. <HotSpot index> <Message index>",
+                "!listmsg <index>        - Lists all messages for the specified HotSpot. <HotSpot index>",
+                "!repeattime <ms>        - Time after which a hotspot may refire on the same player.",
+                "!switchtime <ms>        - How long to watch each spot before moving to the next",
+                "!watch                  - Activates the module.",
+                "!stopwatching           - Stops watching hot spots."
+                
         };
         return help;
     }
@@ -462,28 +405,6 @@ public class utilhotspots extends MultiUtil {
         do_clearHotSpots(null);
         m_botAction.resetReliablePositionUpdating();
     }
-    
-    /**
-     * A timer object created so that players sitting on a hotspot will not cause packet flooding.
-     */
-    private class ContactTimer {
-    	private Timer clock;
-    	private TimerTask task;
-    	private String name;
-    	public ContactTimer(String playerName, int time){
-    		this.name = playerName;
-    		recentContacts.add(name);
-    		clock = new Timer();
-    		task = new TimerTask(){
-    			public void run(){
-    				if(recentContacts.contains(name))
-    					recentContacts.remove(name);
-    			}
-    		};
-    		clock.schedule(task, time);
-    	}
-    }
-    
 }
 
 /**

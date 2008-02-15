@@ -33,7 +33,7 @@ public class utilcustom extends MultiUtil{
 		  "!removeact <!cmd> <index>   - Removes action at <index> from <!cmd>",
 	      "!removecmd <!cmd>           - Removes a custom command and all its actions",
 	      "!listcmd                    - Shows a list of custom commands and their actions",
-	      "!describe <!cmd>            - Submits a description of <!cmd> that shows in help",
+	      "!describe <!cmd> <text>     - Submits a description of <!cmd> that shows in help",
 	      "!listkeys                   - Shows a list of available escape phrases"
 	      
 	    };
@@ -73,11 +73,13 @@ public class utilcustom extends MultiUtil{
 	
 	public void handleEvent(Message event){
 		String message = event.getMessage();
-		String name = m_botAction.getPlayerName(event.getPlayerID());		
+		String name = m_botAction.getPlayerName(event.getPlayerID());
+		Player p = m_botAction.getPlayer(event.getPlayerID());
+		if(name == null || p == null)return;
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE && opList.isER(name))
 				handleCommand(name, message);
-		if(commands.containsKey(message))
-			commands.get(message).message(name);
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE && commands.containsKey(message))
+			commands.get(message).message(p);
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("!help"))
 			do_customHelp(name);
 		
@@ -94,83 +96,7 @@ public class utilcustom extends MultiUtil{
 		if(cmd.startsWith("!describe "))
 			do_describe(name, cmd.substring(10));
 		if(cmd.equalsIgnoreCase("!listkeys"))
-			do_listKeys(name);
-	}
-	
-	/**
-	 * Displays a list of escape keys for use in custom commands and/or messages
-	 * @param name - The person requesting this list
-	 */
-	public void do_listKeys(String name){
-		String msg[] = {
-				"+=================== Escape Keys ===================+",
-				"| &player         - The player's name.              |",
-				"| &freq           - The player's frequency.         |",
-				"| &ship           - The player's ship.              |",
-				"| &squad          - The player's squad.             |",
-				"| &bounty         - The player's bounty.            |",
-				"| &x              - X Location(Tiles)               |",
-				"| &y              - Y Location(Tiles)               |",
-				"| &wins           - The player's wins.              |",
-				"| &losses         - The player's losses.            |",
-				"| &!command&&   - Issues a command to the bot, but  |",
-				"|                    the player receives no message.|",
-				"+===================================================+",
-		};
-		m_botAction.smartPrivateMessageSpam(name, msg);
-	}
-	
-	/**
-	 * A white-list of allowed custom commands.
-	 * @param s - The string
-	 * @return true if the string is allowed. else false.
-	 */
-	public boolean isAllowed(String s){
-		if(s.startsWith("*setship")   ||
-		   s.startsWith("*setfreq")   ||
-		   s.startsWith("*warpto")    ||
-		   s.equals("*scorereset")    ||
-		   s.equals("*spec")          ||
-		   s.equals("*prize #4")      ||//Stealth
-		   s.equals("*prize #5")      ||//Cloak
-		   s.equals("*prize #6")      ||//X-radar
-		   s.equals("*prize #7")      ||//Warp
-		   s.equals("*prize #13")     ||//Full charge
-		   s.equals("*prize #14")     ||//Engine shutdown
-		   s.equals("*prize #15")     ||//Multi-fire
-		   s.equals("*prize #17")     ||//Super
-		   s.equals("*prize #18")     ||//Shields
-		   s.equals("*prize #19")     ||//Shrapnel
-		   s.equals("*prize #20")     ||//Anti-warp
-		   s.equals("*prize #21")     ||//Repel
-		   s.equals("*prize #22")     ||//Burst
-		   s.equals("*prize #23")     ||//Decoy
-		   s.equals("*prize #24")     ||//Thor
-		   s.equals("*prize #25")     ||//Multi-prize
-		   s.equals("*prize #26")     ||//Brick
-		   s.equals("*prize #27")     ||//Rocket
-		   s.equals("*prize #28")     ||//Portal
-		   s.equals("*prize #-4")     ||//Negative Stealth
-		   s.equals("*prize #-5")     ||//Negative Cloak
-		   s.equals("*prize #-6")     ||//Negative X-radar
-		   s.equals("*prize #-7")     ||//Negative Warp
-		   s.equals("*prize #-13")    ||//Negative Full charge
-		   s.equals("*prize #-14")    ||//Negative Engine shutdown
-		   s.equals("*prize #-15")    ||//Negative Multi-fire
-		   s.equals("*prize #-17")    ||//Negative Super
-		   s.equals("*prize #-18")    ||//Negative Shields
-		   s.equals("*prize #-19")    ||//Negative Shrapnel
-		   s.equals("*prize #-20")    ||//Negative Anti-warp
-		   s.equals("*prize #-21")    ||//Negative Repel
-		   s.equals("*prize #-22")    ||//Negative Burst
-		   s.equals("*prize #-23")    ||//Negative Decoy
-		   s.equals("*prize #-24")    ||//Negative Thor
-		   s.equals("*prize #-25")    ||//Negative Multi-prize
-		   s.equals("*prize #-26")    ||//Negative Brick
-		   s.equals("*prize #-27")    ||//Negative Rocket
-		   s.equals("*prize #-28"))     //Negative Portal
-		return true;
-		else return false;
+			m_botAction.smartPrivateMessageSpam(name, Tools.getKeysMessage());
 	}
 	
 	/**
@@ -206,7 +132,7 @@ public class utilcustom extends MultiUtil{
 		String command = message.substring(0, index);
 		String msg = message.substring(index + 1);
 		if(msg.startsWith("*")){
-			if(!isAllowed(msg) && !opList.isSmod(name)){
+			if(!Tools.isAllowed(msg) && !opList.isSmod(name)){
 				m_botAction.sendSmartPrivateMessage( name, "Command not added; Restricted or unknown.");
 				return;
 			}
@@ -338,71 +264,16 @@ public class utilcustom extends MultiUtil{
 		}
 		
 		/**
-		 * Replaces escape keys when messaging a user who has used this command
-		 * @param name - The user accessing this command
-		 * @param message - The message/action to be sent to the user
-		 * @return A string with objects instead of escape keys
-		 */
-		public String replaceKeys(String name, String message){
-			Player p = m_botAction.getPlayer(name);
-			if(message.contains("&player"))
-				message = message.replace("&player", name);
-			if(p == null)return message;
-			if(message.contains("&freq")){
-				message = message.replace("&freq", p.getFrequency() + "");			
-			}
-			if(message.contains("&ship")){
-				message = message.replace("&ship", Tools.shipName(p.getShipType()));
-			}
-			if(message.contains("&shipslang")){
-				message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));
-			}
-			if(message.contains("&wins")){
-				message = message.replace("&wins", p.getWins() + "");
-			}
-			if(message.contains("&losses")){
-				message = message.replace("&losses", p.getLosses() + "");
-			}
-			if(message.contains("&bounty")){
-				message = message.replace("&bounty", p.getBounty() + "");
-			}
-			if(message.contains("&squad")){
-				message = message.replace("&squad", p.getSquadName());
-			}
-			if(message.contains("&x")){
-				message = message.replace("&x", p.getXLocation()/16 + "");
-			}
-			if(message.contains("&y")){
-				message = message.replace("&y", p.getYLocation()/16 + "");
-			}
-			if(message.contains("&!")){
-				while(true){
-					int beginIndex = message.indexOf("&!");
-					int endIndex = message.indexOf("&&");
-					if(endIndex != -1 && endIndex > beginIndex){
-						m_botAction.sendPrivateMessage(m_botAction.getBotName(), message.substring(beginIndex + 1, endIndex));
-						message = message.replaceFirst("&!", " ");
-						message = message.replaceFirst("&&", " ");
-					}
-					else break;
-				}
-				message = null;
-			}
-			//TODO: Feel free to add more escape keys.
-			return message;
-		}
-		
-		/**
 		 * Sends all messages/actions listed in this command to the user.
 		 * @param name - the user.
 		 */
-		public void message(String name){
+		public void message(Player p){
 			Iterator<String> it = messages.iterator();
 			while( it.hasNext() ) {
 				String message = it.next();
-				message = replaceKeys(name, message);
+				message = Tools.replaceKeys(m_botAction,p,message);
 				if(message != null)
-					m_botAction.sendUnfilteredPrivateMessage(name, message);
+					m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
 			}
 			
 		}

@@ -11,6 +11,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 
+import twcore.core.BotAction;
+import twcore.core.game.Player;
+
 /**
  * Cluttered but somewhat useful toolkit of common operations.  Should be referenced
  * statically only.
@@ -532,7 +535,130 @@ public final class Tools {
         return response;
     }
 
-
+    /**
+	 * A white-list of allowed custom commands.
+	 * @param s - The string
+	 * @return true if the string is allowed. else false.
+	 */
+	public static boolean isAllowed(String s){
+		if(s.startsWith("*setship")   ||
+		   s.startsWith("*setfreq")   ||
+		   s.startsWith("*warpto")    ||
+		   s.equals("*scorereset")    ||
+		   s.equals("*shipreset")     ||
+		   s.equals("*spec")          ||
+		   s.equals("*prize #4")      ||//Stealth
+		   s.equals("*prize #5")      ||//Cloak
+		   s.equals("*prize #6")      ||//X-radar
+		   s.equals("*prize #7")      ||//Warp
+		   s.equals("*prize #13")     ||//Full charge
+		   s.equals("*prize #14")     ||//Engine shutdown
+		   s.equals("*prize #15")     ||//Multi-fire
+		   s.equals("*prize #17")     ||//Super
+		   s.equals("*prize #18")     ||//Shields
+		   s.equals("*prize #19")     ||//Shrapnel
+		   s.equals("*prize #20")     ||//Anti-warp
+		   s.equals("*prize #21")     ||//Repel
+		   s.equals("*prize #22")     ||//Burst
+		   s.equals("*prize #23")     ||//Decoy
+		   s.equals("*prize #24")     ||//Thor
+		   s.equals("*prize #25")     ||//Multi-prize
+		   s.equals("*prize #26")     ||//Brick
+		   s.equals("*prize #27")     ||//Rocket
+		   s.equals("*prize #28")     ||//Portal
+		   s.equals("*prize #-4")     ||//Negative Stealth
+		   s.equals("*prize #-5")     ||//Negative Cloak
+		   s.equals("*prize #-6")     ||//Negative X-radar
+		   s.equals("*prize #-7")     ||//Negative Warp
+		   s.equals("*prize #-13")    ||//Negative Full charge
+		   s.equals("*prize #-14")    ||//Negative Engine shutdown
+		   s.equals("*prize #-15")    ||//Negative Multi-fire
+		   s.equals("*prize #-17")    ||//Negative Super
+		   s.equals("*prize #-18")    ||//Negative Shields
+		   s.equals("*prize #-19")    ||//Negative Shrapnel
+		   s.equals("*prize #-20")    ||//Negative Anti-warp
+		   s.equals("*prize #-21")    ||//Negative Repel
+		   s.equals("*prize #-22")    ||//Negative Burst
+		   s.equals("*prize #-23")    ||//Negative Decoy
+		   s.equals("*prize #-24")    ||//Negative Thor
+		   s.equals("*prize #-25")    ||//Negative Multi-prize
+		   s.equals("*prize #-26")    ||//Negative Brick
+		   s.equals("*prize #-27")    ||//Negative Rocket
+		   s.equals("*prize #-28"))     //Negative Portal
+		return true;
+		else return false;
+	}
+	
+	/**
+	 * Replaces key phrases for modules using custom unfiltered
+	 * private messages.
+	 * @see twcore.bots.multibot.utils.utilcustom and utilhotspots
+	 * @param bot - The BotAction object for the module using this method.
+	 * @param p - The Player object of the user receiving the message
+	 * @param message - The original message to be changed
+	 * @return - The changed message. Can return null.
+	 */
+	public static String replaceKeys(BotAction bot, Player p, String message){
+		if(message.contains("&player"))
+			message = message.replace("&player", p.getPlayerName());
+		if(message.contains("&freq"))
+			message = message.replace("&freq", p.getFrequency() + "");		
+		if(message.contains("&ship"))
+			message = message.replace("&ship", Tools.shipName(p.getShipType()));		
+		if(message.contains("&shipslang"))
+			message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));		
+		if(message.contains("&wins"))
+			message = message.replace("&wins", p.getWins() + "");		
+		if(message.contains("&losses"))
+			message = message.replace("&losses", p.getLosses() + "");		
+		if(message.contains("&bounty"))
+			message = message.replace("&bounty", p.getBounty() + "");		
+		if(message.contains("&squad"))
+			message = message.replace("&squad", p.getSquadName());		
+		if(message.contains("&x"))
+			message = message.replace("&x", p.getXLocation()/16 + "");		
+		if(message.contains("&y"))
+			message = message.replace("&y", p.getYLocation()/16 + "");
+		if(message.contains("&!")){
+			while(true){
+				int beginIndex = message.indexOf("&!");
+				int endIndex = message.indexOf("&&");
+				if(endIndex != -1 && endIndex > beginIndex){
+					bot.sendPrivateMessage(bot.getBotName(), message.substring(beginIndex + 1, endIndex));
+					message = message.replaceFirst("&!", " ");
+					message = message.replaceFirst("&&", " ");
+				}
+				else break;
+			}
+			message = null;
+		}
+		//TODO: Feel free to add more escape keys.
+		return message;
+	}
+	
+	/**
+	 * Gets a help message of all replacement keys
+	 * @see twcore.core.util.Tools.replaceKeys()
+	 * @return - A help message displaying key types.
+	 */
+	public static String[] getKeysMessage(){
+		String msg[] = {
+			"+=================== Escape Keys ===================+",
+			"| &player         - The player's name.              |",
+			"| &freq           - The player's frequency.         |",
+			"| &ship           - The player's ship.              |",
+			"| &squad          - The player's squad.             |",
+			"| &bounty         - The player's bounty.            |",
+			"| &x              - X Location(Tiles)               |",
+			"| &y              - Y Location(Tiles)               |",
+			"| &wins           - The player's wins.              |",
+			"| &losses         - The player's losses.            |",
+			"| &!command&&   - Issues a command to the bot, but  |",
+			"|                    the player receives no message.|",
+			"+===================================================+",
+		};
+		return msg;
+	}
     // *** ENUMS ***
 
     // Prizes
