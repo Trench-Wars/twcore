@@ -1,9 +1,12 @@
 package twcore.bots.eventbot;
 
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 import twcore.core.BotAction;
@@ -30,14 +33,14 @@ public class eventbot extends SubspaceBot {
     private final String SUBSCRIBE_BWJS = "bwjs";
     
     //This vector stores all the requests
-    private HashMap<String,EventRequest> requests = new HashMap<String,EventRequest>(64);
+    private Map<String,EventRequest> requests = Collections.synchronizedMap(new HashMap<String,EventRequest>(64));
     			// <playername, EventRequest>
     
     // Contains the names of all the players not allowed to use !request - stored in the eventbot.cfg file
-    private HashSet<BannedPlayer> bannedPlayers = new HashSet<BannedPlayer>();
+    private Set<BannedPlayer> bannedPlayers = Collections.synchronizedSet(new HashSet<BannedPlayer>());
     
     // Contains the names of staff member subscribed to event requests
-    private HashMap<String, String> subscribers = new HashMap<String, String>(16);
+    private Map<String, String> subscribers = Collections.synchronizedMap(new HashMap<String, String>(16));
     //              <playername, "all">
     //              <playername, "bwjs">
     
@@ -344,13 +347,15 @@ public class eventbot extends SubspaceBot {
     	this.removeExpiredRequests();
     	
     	// Create the event with count mapping
-    	for(EventRequest request:requests.values()) {
-    		if(rank.containsKey(request.getEvent())) {
-    			rank.put(request.getEvent(), rank.get(request.getEvent())+1);
-    		} else {
-    			rank.put(request.getEvent(), new Integer(1));
-    			rankPosition.add(request.getEvent());
-    		}
+    	synchronized(requests) {
+        	for(EventRequest request:requests.values()) {
+        		if(rank.containsKey(request.getEvent())) {
+        			rank.put(request.getEvent(), rank.get(request.getEvent())+1);
+        		} else {
+        			rank.put(request.getEvent(), new Integer(1));
+        			rankPosition.add(request.getEvent());
+        		}
+        	}
     	}
 
     	
@@ -532,24 +537,27 @@ public class eventbot extends SubspaceBot {
 
 	    	
 	    	// Sort the list by date first
-	    	Vector<BannedPlayer> bannedSorted = new Vector<BannedPlayer>();
-    	    for(BannedPlayer player:bannedPlayers) {
-    	        if(!bannedSorted.contains(player)) {
-    	            if(bannedSorted.size() == 0) {
-    	                bannedSorted.add(player);
-    	            } else {
-        	            for(int c = 0 ; c < bannedSorted.size(); c++) {
-        	                if(bannedSorted.get(c).date.after(player.date)) {
-        	                    bannedSorted.add(c, player);
-        	                    break;
-        	                } else if(c+1 == bannedSorted.size()) {
-        	                    bannedSorted.add(player);
-        	                    break;
-        	                }
+	        Vector<BannedPlayer> bannedSorted = new Vector<BannedPlayer>();
+	        
+	        synchronized(bannedPlayers) {
+        	    for(BannedPlayer player:bannedPlayers) {
+        	        if(!bannedSorted.contains(player)) {
+        	            if(bannedSorted.size() == 0) {
+        	                bannedSorted.add(player);
+        	            } else {
+            	            for(int c = 0 ; c < bannedSorted.size(); c++) {
+            	                if(bannedSorted.get(c).date.after(player.date)) {
+            	                    bannedSorted.add(c, player);
+            	                    break;
+            	                } else if(c+1 == bannedSorted.size()) {
+            	                    bannedSorted.add(player);
+            	                    break;
+            	                }
+            	            }
         	            }
-    	            }
-    	        }
-    	    }
+        	        }
+        	    }
+	        }
 	    	
 	    	if(bannedSorted.size() > count) {
 	    	    start = bannedSorted.size() - count;
@@ -621,13 +629,15 @@ public class eventbot extends SubspaceBot {
     	Vector<String> rankPosition = new Vector<String>();
     	
     	// Create the event with count mapping
-    	for(EventRequest request:requests.values()) {
-    		if(rank.containsKey(request.getEvent())) {
-    			rank.put(request.getEvent(), rank.get(request.getEvent())+1);
-    		} else {
-    			rank.put(request.getEvent(), new Integer(1));
-    			rankPosition.add(request.getEvent());
-    		}
+    	synchronized(requests) {
+        	for(EventRequest request:requests.values()) {
+        		if(rank.containsKey(request.getEvent())) {
+        			rank.put(request.getEvent(), rank.get(request.getEvent())+1);
+        		} else {
+        			rank.put(request.getEvent(), new Integer(1));
+        			rankPosition.add(request.getEvent());
+        		}
+        	}
     	}
 
     	
@@ -655,15 +665,17 @@ public class eventbot extends SubspaceBot {
      */
     private void removeExpiredRequests() {
     	
-    	for(String playername:requests.keySet()) {
-    		EventRequest eventReq = requests.get(playername);
-    		long now = new Date().getTime();
-    		long hour = 1000*60*60;
-    		
-    		if((now - eventReq.getDate().getTime()) > hour) {
-    			requests.remove(playername);
-    		}
-    	}	
+        synchronized(requests) {
+        	for(String playername:requests.keySet()) {
+        		EventRequest eventReq = requests.get(playername);
+        		long now = new Date().getTime();
+        		long hour = 1000*60*60;
+        		
+        		if((now - eventReq.getDate().getTime()) > hour) {
+        			requests.remove(playername);
+        		}
+        	}	
+        }
     }
     
     /**
@@ -675,9 +687,11 @@ public class eventbot extends SubspaceBot {
     private HashSet<EventRequest> getEventRequests(String event) {
     	HashSet<EventRequest> events = new HashSet<EventRequest>();
     	
-    	for(EventRequest er:requests.values()) {
-    		if(er.getEvent().equalsIgnoreCase(event))
-    			events.add(er);
+    	synchronized(requests) {
+        	for(EventRequest er:requests.values()) {
+        		if(er.getEvent().equalsIgnoreCase(event))
+        			events.add(er);
+        	}
     	}
     	return events;
     }
@@ -692,17 +706,19 @@ public class eventbot extends SubspaceBot {
         int nr = 0;
         String banLine = m_botSettings.getString("bannedPlayer0");
         
-        while(banLine != null) {
-            if(banLine.trim().length() > 0) {
-                String[] pieces = banLine.split(":");
-                if(pieces.length == 3) {
-                    long date = Long.valueOf(pieces[0]).longValue();
-                    this.bannedPlayers.add(new BannedPlayer(pieces[2],pieces[1],new Date(date)));
+        synchronized(bannedPlayers) {
+            while(banLine != null) {
+                if(banLine.trim().length() > 0) {
+                    String[] pieces = banLine.split(":");
+                    if(pieces.length == 3) {
+                        long date = Long.valueOf(pieces[0]).longValue();
+                        this.bannedPlayers.add(new BannedPlayer(pieces[2],pieces[1],new Date(date)));
+                    }
                 }
+                
+                nr++;
+                banLine = m_botSettings.getString("bannedPlayer"+nr);
             }
-            
-            nr++;
-            banLine = m_botSettings.getString("bannedPlayer"+nr);
         }
     }
     
@@ -725,8 +741,10 @@ public class eventbot extends SubspaceBot {
     	}
     	
     	// Put all bans to configuration file
-    	for(BannedPlayer player:bannedPlayers) {
-    	    m_botSettings.put("bannedPlayer"+(nr++), player.getDateTime()+":"+player.bannedby+":"+player.name);
+    	synchronized(bannedPlayers) {
+        	for(BannedPlayer player:bannedPlayers) {
+        	    m_botSettings.put("bannedPlayer"+(nr++), player.getDateTime()+":"+player.bannedby+":"+player.name);
+        	}
     	}
     	
     	m_botSettings.save();
@@ -737,10 +755,12 @@ public class eventbot extends SubspaceBot {
      * @param name
      */
     private void removeBannedPlayer(String name) {
-        for(BannedPlayer p:bannedPlayers) {
-            if(p.name.equals(name)) {
-                bannedPlayers.remove(p);
-                break;
+        synchronized(bannedPlayers) {
+            for(BannedPlayer p:bannedPlayers) {
+                if(p.name.equals(name)) {
+                    bannedPlayers.remove(p);
+                    break;
+                }
             }
         }
     }
@@ -753,10 +773,13 @@ public class eventbot extends SubspaceBot {
      */
     private boolean isBannedPlayer(String name) {
         boolean result = false;
-        for(BannedPlayer p:bannedPlayers) {
-            if(p.name.equalsIgnoreCase(name)) {
-                result = true;
-                break;
+        
+        synchronized(bannedPlayers) {
+            for(BannedPlayer p:bannedPlayers) {
+                if(p.name.equalsIgnoreCase(name)) {
+                    result = true;
+                    break;
+                }
             }
         }
         return result;
@@ -769,16 +792,18 @@ public class eventbot extends SubspaceBot {
      * @param request
      */
     private void notifySubscribed(String subscriptionType, EventRequest request) {
-        for(String name:subscribers.keySet()) {
-            if(subscribers.get(name).equals(subscriptionType)) {
-                if(subscriptionType.equals(SUBSCRIBE_ALL)) {
-                    String comments = "";
-                    
-                    if(comments.length() > 0)   comments = "("+comments+") ";
-                    m_botAction.sendRemotePrivateMessage(name, " "+request.getRequester()+" requested event '"+request.getEvent()+"' "+comments+"(rank: "+getEventRank(request.getEvent())+")");
+        synchronized(subscribers) {
+            for(String name:subscribers.keySet()) {
+                if(subscribers.get(name).equals(subscriptionType)) {
+                    if(subscriptionType.equals(SUBSCRIBE_ALL)) {
+                        String comments = "";
+                        
+                        if(comments.length() > 0)   comments = "("+comments+") ";
+                        m_botAction.sendRemotePrivateMessage(name, " "+request.getRequester()+" requested event '"+request.getEvent()+"' "+comments+"(rank: "+getEventRank(request.getEvent())+")");
+                    }
+                    else if(subscriptionType.equals(SUBSCRIBE_BWJS))
+                        m_botAction.sendRemotePrivateMessage(name, "Please start a new game in "+request.getEvent()+". (Requested by "+name+")");
                 }
-                else if(subscriptionType.equals(SUBSCRIBE_BWJS))
-                    m_botAction.sendRemotePrivateMessage(name, "Please start a new game in "+request.getEvent()+". (Requested by "+name+")");
             }
         }
     }
