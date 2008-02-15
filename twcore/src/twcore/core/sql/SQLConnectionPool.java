@@ -32,6 +32,9 @@ public class SQLConnectionPool implements Runnable {
     private HashMap<String, Connection>  busyConnections;            // Connections currently querying
     private boolean connectionPending = false;  // True if a connection is being made
     private int     currentBackground = 0;      // Total number of background queries
+    
+    private final String DEFAULT_UNIQUE_ID = "0";
+    
 
     /**
      * Creates a new connection pool.  A number of connections are made equal
@@ -156,7 +159,7 @@ public class SQLConnectionPool implements Runnable {
      * @throws SQLException
      */
     public Connection getConnection() throws SQLException {
-        return this.getConnection("0");
+        return this.getConnection(DEFAULT_UNIQUE_ID);
     }
 
     /**
@@ -213,11 +216,17 @@ public class SQLConnectionPool implements Runnable {
      * that a new connection is now available.
      * @param connection The connection to free
      */
+    public synchronized void free( String uniqueID, Connection connection ) {
+        if(busyConnections.containsKey(uniqueID)) {
+            busyConnections.remove(uniqueID);
+            availableConnections.addElement(connection);
+            // Wake up threads that are waiting for a connection
+            notifyAll();
+        }
+    }
+    
     public synchronized void free( Connection connection ) {
-        busyConnections.remove(connection);
-        availableConnections.addElement(connection);
-        // Wake up threads that are waiting for a connection
-        notifyAll();
+        this.free( DEFAULT_UNIQUE_ID, connection);
     }
 
     /**

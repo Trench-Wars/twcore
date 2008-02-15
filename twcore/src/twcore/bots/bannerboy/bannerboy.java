@@ -92,10 +92,10 @@ public class bannerboy extends SubspaceBot {
 	}
 	
 	public void handleDisconnect() {
-	    m_botAction.closePreparedStatement(m_sqlHost, this.psCheckSeen);
-	    m_botAction.closePreparedStatement(m_sqlHost, this.psGetBannerID);
-	    m_botAction.closePreparedStatement(m_sqlHost, this.psSaveBanner);
-	    m_botAction.closePreparedStatement(m_sqlHost, this.psSeenBanner);
+	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psCheckSeen);
+	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psGetBannerID);
+	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psSaveBanner);
+	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psSeenBanner);
 	    m_botAction.cancelTasks();
 	}
 

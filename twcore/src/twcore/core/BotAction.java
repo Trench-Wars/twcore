@@ -2826,9 +2826,10 @@ public class BotAction
      * This will become a connection leak!
      *
      * @param connectionName The connection name as specified in sql.cfg.
+     * @param uniqueID The uniqueID used to create the Prepared Statement
      * @param p The PreparedStatement to be closed
      */
-    public void closePreparedStatement(String connectionName, PreparedStatement p) {
+    public void closePreparedStatement(String connectionName, String uniqueID, PreparedStatement p) {
     	if(p != null) {
 	    	Connection conn = null;
 	    	try {
@@ -2840,7 +2841,7 @@ public class BotAction
 	    	} catch(SQLException sqle) {}
 
 	    	if(conn != null) {
-	    		getCoreData().getSQLManager().freeConnection(connectionName, conn);
+	    		getCoreData().getSQLManager().freeConnection(connectionName, uniqueID, conn);
 	    	}
     	}
 

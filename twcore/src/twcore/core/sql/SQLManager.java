@@ -214,21 +214,21 @@ public class SQLManager extends Thread {
     }
     
     /**
-     * Frees specified Connection for specified connectionpool.
+     * Frees specified Connection for specified connectionpool using specified unique ID.
      * This should be used when closing a PreparedStatement as it locks a connection on creation.
      * 
      * @param connectionName Name of the connection as defined in sql.cfg
+     * @param uniqueID The unique ID used to create the Prepared Statement
      * @param conn Connection used when creating a PreparedStatement
      */
-    public void freeConnection(String connectionName, Connection conn) {
+    public void freeConnection(String connectionName, String uniqueID, Connection conn) {
     	if( !operational ) {
     		Tools.printLog( "Unable to free Connection; SQL System is not operational");
     	} else {
     		if(pools.containsKey( connectionName )) {
-    			pools.get( connectionName ).free(conn);
+    			pools.get( connectionName ).free(uniqueID, conn);
     		}
     	}
-    	
     }
 
     /**
