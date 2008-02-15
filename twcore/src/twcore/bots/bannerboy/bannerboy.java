@@ -267,17 +267,17 @@ public class bannerboy extends SubspaceBot {
 	}
 
 	public void handleEvent( LoggedOn event ) {
-	    
+	    m_botAction.joinArena( m_botAction.getGeneralSettings().getString("Arena") );
+        m_botAction.sendUnfilteredPublicMessage("?chat="+m_botAction.getGeneralSettings().getString("Chat Name"));
+
 	    if(psGetBannerID == null || psSaveBanner == null || psSeenBanner == null || psCheckSeen == null) {
             //Something went wrong, we can't continue
+	        m_botAction.sendChatMessage("Error while creating PreparedStatements, disconnecting...");
             handleDisconnect();
             m_botAction.die("Error while creating PreparedStatements");
             return;
         }
         
-		m_botAction.joinArena( "baseelim" );
-		m_botAction.sendUnfilteredPublicMessage("?chat="+m_botAction.getGeneralSettings().getString("Chat Name"));
-
 		TimerTask changeArenas = new TimerTask() {
 			public void run() {
 				m_botAction.requestArenaList();
