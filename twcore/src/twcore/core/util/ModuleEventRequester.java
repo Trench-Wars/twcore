@@ -30,6 +30,7 @@ public class ModuleEventRequester {
         for(int i = 0; i < EventRequester.TOTAL_NUMBER; i++ )
             requested.add( new Vector<Object>() );        
         eventReq.request(EventRequester.MESSAGE);  // Default, must always be requested
+        eventReq.request(EventRequester.KOTH_RESET);
     }
     
     /**

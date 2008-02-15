@@ -23,6 +23,7 @@ import twcore.core.events.ArenaList;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.KotHReset;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
@@ -203,6 +204,7 @@ public class purepubbot extends SubspaceBot
         eventRequester.request(EventRequester.LOGGED_ON);
         eventRequester.request(EventRequester.ARENA_LIST);
         eventRequester.request(EventRequester.ARENA_JOINED);
+        eventRequester.request(EventRequester.KOTH_RESET);
     }
 
 
@@ -464,7 +466,18 @@ public class purepubbot extends SubspaceBot
         playerTimes.remove( playerName );
         checkFreqSizes();
     }
-
+    
+    /**
+     * Handles restarting of the KOTH game
+     * 
+     * @param event is the event to handle.
+     */
+    public void handleEvent(KotHReset event) {
+        if(event.isEnabled() && event.getPlayerID()==-1) {
+            // Make the bot ignore the KOTH game (send that he's out immediately after restarting the game)
+            m_botAction.endKOTH();
+        }
+    }
     
     /**
      * If flag time mode is running, register with the flag time game that the

@@ -13,6 +13,7 @@ import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaList;
+import twcore.core.events.KotHReset;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
@@ -317,6 +318,18 @@ public class pubarrogant extends SubspaceBot
     {
     }
   }
+  
+  /**
+   * Handles restarting of the KOTH game
+   * 
+   * @param event is the event to handle.
+   */
+  public void handleEvent(KotHReset event) {
+      if(event.isEnabled() && event.getPlayerID()==-1) {
+          // Make the bot ignore the KOTH game (send that he's out immediately after restarting the game)
+          m_botAction.endKOTH();
+      }
+  }
 
   /**
    * This method requests the events that the bot will use.
@@ -328,6 +341,7 @@ public class pubarrogant extends SubspaceBot
 
     eventRequester.request(EventRequester.MESSAGE);
     eventRequester.request(EventRequester.ARENA_LIST);
+    eventRequester.request(EventRequester.KOTH_RESET);
   }
 
   /**

@@ -10,6 +10,7 @@ import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaList;
+import twcore.core.events.KotHReset;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerBanner;
@@ -49,6 +50,7 @@ public class bannerboy extends SubspaceBot {
 		req.request( EventRequester.PLAYER_BANNER );
 		req.request( EventRequester.MESSAGE );
 		req.request( EventRequester.ARENA_LIST );
+		req.request( EventRequester.KOTH_RESET );
 
 		m_toCheck = new Vector<BannerCheck>();
 		m_talk = false;
@@ -301,6 +303,18 @@ public class bannerboy extends SubspaceBot {
 		};
 		m_botAction.scheduleTaskAtFixedRate( checkBanners, 2000, 3000 );
 	}
+	
+	/**
+     * Handles restarting of the KOTH game
+     * 
+     * @param event is the event to handle.
+     */
+    public void handleEvent(KotHReset event) {
+        if(event.isEnabled() && event.getPlayerID()==-1) {
+            // Make the bot ignore the KOTH game (send that he's out immediately after restarting the game)
+            m_botAction.endKOTH();
+        }
+    }
 }
 
 	class BannerCheck {
