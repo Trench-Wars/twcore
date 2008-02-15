@@ -191,6 +191,8 @@ public class utilhotspots extends MultiUtil {
     		m_botAction.sendSmartPrivateMessage( sender, "The spot at index '" + spot + "' has been removed.");
     	}catch(NumberFormatException e){
     		m_botAction.sendSmartPrivateMessage( sender, "Impropert Format. Usage: !removespot <index>");
+    	}catch(ArrayIndexOutOfBoundsException e){
+    		m_botAction.sendSmartPrivateMessage( sender, "Index not found. Use !listspots to see indices");
     	}
     }
     
