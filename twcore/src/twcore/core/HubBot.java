@@ -553,7 +553,7 @@ public class HubBot extends SubspaceBot {
      */
     public void handleSQLStatus( String messager, String message ) {
         if( m_botAction.getOperatorList().isModerator( messager ) ){
-            m_botAction.privateMessageSpam( messager, m_botAction.getCoreData().getSQLManager().getPoolStatus() );
+            m_botAction.smartPrivateMessageSpam( messager, m_botAction.getCoreData().getSQLManager().getPoolStatus() );
         } else {
             m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !sqlstatus." );
         }
