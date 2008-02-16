@@ -131,6 +131,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.getOperatorList().parseFile( m_botAction.getDataFile( "moderate.txt" ), OperatorList.MODERATOR_LEVEL );
             m_botAction.getOperatorList().changeAllMatches( "<ZH>", OperatorList.ZH_LEVEL );
             m_botAction.getOperatorList().changeAllMatches( "<ER>", OperatorList.ER_LEVEL );
+            loadAccessConfiguration();  // Reload access from configuration files to make ZHs or ERs on conf. files the proper level again
         } else if( fileName.compareTo( "smod.txt" ) == 0 ){
             m_botAction.getOperatorList().parseFile( m_botAction.getDataFile( "smod.txt" ), OperatorList.SMOD_LEVEL );
         } else if( fileName.compareTo( "sysop.txt" ) == 0 ){
@@ -144,13 +145,17 @@ public class HubBot extends SubspaceBot {
      */
     public void LoadAccessLists(){
         m_botAction.getOperatorList().clearList();
+        loadAccessConfiguration();
+        m_botAction.sendUnfilteredPublicMessage( "*getmodlist" );
+        m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
+        m_botAction.sendUnfilteredPublicMessage( "*getfile sysop.txt" );
+    }
+    
+    private void loadAccessConfiguration() {
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "owners.cfg" ), OperatorList.OWNER_LEVEL );
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "outsider.cfg" ), OperatorList.OUTSIDER_LEVEL );
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "develop.cfg" ), OperatorList.DEV_LEVEL );
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "highmod.cfg" ), OperatorList.HIGHMOD_LEVEL );
-        m_botAction.sendUnfilteredPublicMessage( "*getmodlist" );
-        m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
-        m_botAction.sendUnfilteredPublicMessage( "*getfile sysop.txt" );
     }
 
     /**
