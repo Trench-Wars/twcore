@@ -608,11 +608,11 @@ public final class Tools {
 		while(message.contains("&randomfreq"))
 			message = message.replaceFirst("&randomfreq", Integer.toString(rand.nextInt( 9998 )));
 		if(message.contains("&ship"))
-			message = message.replace("&ship", Tools.shipName(p.getShipType()));	
+			message = message.replace("&ship", shipName(p.getShipType()));	
 		while(message.contains("&randomship"))
 			message = message.replaceFirst("&randomship", Integer.toString((rand.nextInt( 7 )) + 1));		
 		if(message.contains("&shipslang"))
-			message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));		
+			message = message.replace("&shipslang", shipNameSlang(p.getShipType()));		
 		if(message.contains("&wins"))
 			message = message.replace("&wins", Integer.toString(p.getWins()));		
 		if(message.contains("&losses"))
@@ -660,12 +660,12 @@ public final class Tools {
 			"| &randomship     - A random number(1-8)            |",
 			"| &squad          - The player's squad.             |",
 			"| &bounty         - The player's bounty.            |",
-			"| &x              - X Location(Tiles)               |",
-			"| &y              - Y Location(Tiles)               |",
+			"| &x              - Last SEEN X Location(Tiles)     |",
+			"| &y              - Last SEEN Y Location(Tiles)     |",
 			"| &randomtile     - A random number(1-1022)         |",
 			"| &wins           - The player's wins.              |",
 			"| &losses         - The player's losses.            |",
-			"| &!command&&   - Issues a command to the bot, but  |",
+			"| &!command&&     - Issues a command to the bot, but|",
 			"|                    the player receives no message.|",
 			"+===================================================+",
 		};
