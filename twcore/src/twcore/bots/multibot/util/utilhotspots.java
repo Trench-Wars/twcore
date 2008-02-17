@@ -135,6 +135,10 @@ public class utilhotspots extends MultiUtil {
     		m_botAction.sendSmartPrivateMessage( name, "Already watching spots. Type !stopwatching to deactivate.");
     		return;
     	}
+    	if(hotSpots.size() == 0){
+    		m_botAction.sendSmartPrivateMessage( name, "There are no spots to watch. Use the !addspot command to create one.");
+    		return;
+    	}
     	m_botAction.sendSmartPrivateMessage( name, "HotSpots are now active.");
     	changeTask = new TimerTask() {
             public void run() {
@@ -143,7 +147,8 @@ public class utilhotspots extends MultiUtil {
                     hotSpots.removeElementAt(0);
                     hotSpots.addElement( watch );
                 } catch (Exception e) {
-                	m_botAction.sendPublicMessage("Concurrent Error!");
+                	this.cancel();
+                	Tools.printStackTrace(e);
                 }
                 m_botAction.moveToTile(watch.getX(), watch.getY());
             }
