@@ -100,6 +100,7 @@ public class RbTrackManager extends RaceBotExtension {
 
 		checkPoint = 1;
 		state = 2;
+		m_botAction.resetFlagGame();
 		m_botAction.sendPublicMessage( "Please mark the start/finish checkpoint." );
 		m_botAction.sendPublicMessage( "When done marking points use !done" );
 	}
@@ -116,7 +117,8 @@ public class RbTrackManager extends RaceBotExtension {
 		}
 
 		if( count == 0 ) {
-			m_botAction.sendPublicMessage( "No points were marked. End track? yes/no" );
+			m_botAction.sendPublicMessage( "No points were marked. Total number of checkpoints: "+(checkPoint-1) );
+			m_botAction.sendPublicMessage( "End track? yes/no");
 			action = "endtrack";
 			state = 1;
 			return;
@@ -164,7 +166,7 @@ public class RbTrackManager extends RaceBotExtension {
 			} catch (Exception e) { Tools.printStackTrace(e); }
 		}
 
-		m_botAction.sendPublicMessage( "Track stored #" + (sql_getNextArenaTrackID()-1) );
+		m_botAction.sendPublicMessage( "Track stored. Track ID = " + (sql_getNextArenaTrackID()-1) );
 		m_botAction.sendPublicMessage( "To name this track use: !nametrack <id>:<name>" );
 		checkPointList.clear();
 
