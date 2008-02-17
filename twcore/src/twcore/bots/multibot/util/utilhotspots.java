@@ -192,8 +192,12 @@ public class utilhotspots extends MultiUtil {
     public void do_removeHotSpot(String sender, String message){
     	try{
     		int spot = Integer.parseInt(message);
-    		hotSpots.remove(spot);
+    		hotSpots.remove(spot);    		
     		m_botAction.sendSmartPrivateMessage( sender, "The spot at index '" + spot + "' has been removed.");
+    		if(hotSpots.size() == 0 && watching){
+    			changeTask.cancel();
+    			m_botAction.sendSmartPrivateMessage( sender, "There are no more hotspots to watch. I'm taking a much deserved break.");
+    		}
     	}catch(NumberFormatException e){
     		m_botAction.sendSmartPrivateMessage( sender, "Impropert Format. Usage: !removespot <index>");
     	}catch(ArrayIndexOutOfBoundsException e){
