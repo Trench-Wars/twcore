@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.Random;
 
 import twcore.core.BotAction;
 import twcore.core.game.Player;
@@ -599,26 +600,33 @@ public final class Tools {
 	 * @return - The changed message. Can return null.
 	 */
 	public static String replaceKeys(BotAction bot, Player p, String message){
+		Random rand = new Random();
 		if(message.contains("&player"))
 			message = message.replace("&player", p.getPlayerName());
 		if(message.contains("&freq"))
-			message = message.replace("&freq", p.getFrequency() + "");		
+			message = message.replace("&freq", Integer.toString(p.getFrequency()));	
+		while(message.contains("&randomfreq"))
+			message = message.replaceFirst("&randomfreq", Integer.toString(rand.nextInt( 9998 )));
 		if(message.contains("&ship"))
-			message = message.replace("&ship", Tools.shipName(p.getShipType()));		
+			message = message.replace("&ship", Tools.shipName(p.getShipType()));	
+		while(message.contains("&randomship"))
+			message = message.replaceFirst("&randomship", Integer.toString((rand.nextInt( 7 )) + 1));		
 		if(message.contains("&shipslang"))
 			message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));		
 		if(message.contains("&wins"))
-			message = message.replace("&wins", p.getWins() + "");		
+			message = message.replace("&wins", Integer.toString(p.getWins()));		
 		if(message.contains("&losses"))
-			message = message.replace("&losses", p.getLosses() + "");		
+			message = message.replace("&losses", Integer.toString(p.getLosses()));		
 		if(message.contains("&bounty"))
-			message = message.replace("&bounty", p.getBounty() + "");		
+			message = message.replace("&bounty", Integer.toString(p.getBounty()));		
 		if(message.contains("&squad"))
 			message = message.replace("&squad", p.getSquadName());		
 		if(message.contains("&x"))
-			message = message.replace("&x", p.getXLocation()/16 + "");		
+			message = message.replace("&x", Integer.toString(p.getXLocation()/16));		
 		if(message.contains("&y"))
-			message = message.replace("&y", p.getYLocation()/16 + "");
+			message = message.replace("&y", Integer.toString(p.getYLocation()/16));
+		while(message.contains("&randomtile"))
+			message = message.replaceFirst("&randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
 		if(message.contains("&!")){
 			while(true){
 				int beginIndex = message.indexOf("&!");
@@ -646,11 +654,15 @@ public final class Tools {
 			"+=================== Escape Keys ===================+",
 			"| &player         - The player's name.              |",
 			"| &freq           - The player's frequency.         |",
+			"| &randomfreq     - A random number(0 - 9998)       |",
 			"| &ship           - The player's ship.              |",
+			"| &shipslang      - Player's ship in vernacular.    |",
+			"| &randomship     - A random number(1-8)            |",
 			"| &squad          - The player's squad.             |",
 			"| &bounty         - The player's bounty.            |",
 			"| &x              - X Location(Tiles)               |",
 			"| &y              - Y Location(Tiles)               |",
+			"| &randomtile     - A random number(1-1022)         |",
 			"| &wins           - The player's wins.              |",
 			"| &losses         - The player's losses.            |",
 			"| &!command&&   - Issues a command to the bot, but  |",
