@@ -115,7 +115,7 @@ public class multibot extends SubspaceBot {
             } else if( message.equalsIgnoreCase("!help") && !isER ) {
                 m_botAction.sendSmartPrivateMessage(sender, "Hi, I'm a bot that helps host Trench Wars games!  Send !where to see who is hosting me, where at, and what they're hosting." );
             } else if( isER ) {
-                if( m_owner == null ) {
+                if( m_owner == null && !sender.equals(m_botAction.getBotName())) {
                     m_owner = sender;
                     m_lastUse = System.currentTimeMillis();
                     m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
