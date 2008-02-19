@@ -32,12 +32,13 @@ import twcore.core.util.ModuleEventRequester;
  * optional, so to add a message with no sound just leave that part out.
  *
  * Here is the help menu,
- * !AddMsg <Msg>,<Sound>,<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
- * !AddSpecMsg <Msg>,<Sound>,<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
- * !AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
+ * !AddMsg <Msg>:<Sound>:<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
+ * !AddSpecMsg <Msg>:<Sound>:<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
+ * !AddGreetMsg <Msg>:<Sound>                -- Greets a player with <Msg> when they enter the arena.",
  * !MsgList                                  -- Displays all of the current message tasks.",
+ * !ListKeys                                 -- Displays a list of all available escape keys.",
  * !MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
- * !MsgTarget <Person>,<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
+ * !MsgTarget <Person>:<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
  * !ClearTargets                             -- Clears all message target data.",
  * !MsgsOff                                  -- Turns all of the messages off."
  *
@@ -48,7 +49,10 @@ import twcore.core.util.ModuleEventRequester;
  * June 20, 2003
  *
  * Updates:
- * June 29, 2003 - Changed the delimeter to a comma.
+ * June 29, 2003 - Changed the delimiter to a comma.
+ * February 19, 2008 - Changed the delimiter to a colon. - milosh
+ *                   - Added the ability to use commands/escape keys in GREET_TYPE messages.
+ *                   - Added a !ListKeys command that displays all escape keys.
  */
 public class utilmessages extends MultiUtil
 {
@@ -81,11 +85,12 @@ public class utilmessages extends MultiUtil
   {
     String[] message =
     {
-        "!AddMsg <Msg>,<Sound>,<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
-        "!AddSpecMsg <Msg>,<Sound>,<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
-        "!AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
-        "!AddTargetMsg <Person>,<Msg>              -- Adds <Msg> to be PM'd when <Person> is killed.",
+        "!AddMsg <Msg>:<Sound>:<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
+        "!AddSpecMsg <Msg>:<Sound>:<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
+        "!AddGreetMsg <Msg>:<Sound>                -- Greets a player with <Msg> when they enter the arena.",
+        "!AddTargetMsg <Person>:<Msg>              -- Adds <Msg> to be PM'd when <Person> is killed.",
         "!MsgList                                  -- Displays all of the current message tasks.",
+        "!ListKeys                                 -- Displays a list of all available escape keys.",
         "!MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
         "!ClearTargets                             -- Clears all message target data.",
         "!MsgsOff                                  -- Turns all of the messages off."
@@ -102,11 +107,11 @@ public class utilmessages extends MultiUtil
 
   public void doAddMsgCmd(String sender, String argString)
   {
-    StringTokenizer argTokens = new StringTokenizer(argString, ",");
+    StringTokenizer argTokens = new StringTokenizer(argString, ":");
     int numArgs = argTokens.countTokens();
 
     if(numArgs < 2 || numArgs > 3)
-      throw new IllegalArgumentException("Please use the following format: !AddMsg <Msg>,<Sound>,<Interval>");
+      throw new IllegalArgumentException("Please use the following format: !AddMsg <Msg>:<Sound>:<Interval>");
     try
     {
       String message = argTokens.nextToken();
@@ -122,7 +127,7 @@ public class utilmessages extends MultiUtil
     }
     catch(NumberFormatException e)
     {
-      throw new NumberFormatException("Please use the following format: !AddMsg <Msg>,<Sound>,<Interval>");
+      throw new NumberFormatException("Please use the following format: !AddMsg <Msg>:<Sound>:<Interval>");
     }
   }
 
@@ -135,11 +140,11 @@ public class utilmessages extends MultiUtil
 
   public void doAddSpecMsgCmd(String sender, String argString)
   {
-    StringTokenizer argTokens = new StringTokenizer(argString, ",");
+    StringTokenizer argTokens = new StringTokenizer(argString, ":");
     int numArgs = argTokens.countTokens();
 
     if(numArgs < 2 || numArgs > 3)
-      throw new IllegalArgumentException("Please use the following format: !AddSpecMsg <Msg>,<Sound>,<Interval>");
+      throw new IllegalArgumentException("Please use the following format: !AddSpecMsg <Msg>:<Sound>:<Interval>");
     try
     {
       String message = argTokens.nextToken();
@@ -155,7 +160,7 @@ public class utilmessages extends MultiUtil
     }
     catch(NumberFormatException e)
     {
-      throw new NumberFormatException("Please use the following format: !AddSpecMsg <Msg>,<Sound>,<Interval>");
+      throw new NumberFormatException("Please use the following format: !AddSpecMsg <Msg>:<Sound>:<Interval>");
     }
   }
 
@@ -168,11 +173,11 @@ public class utilmessages extends MultiUtil
 
   public void doAddGreetMsgCmd(String sender, String argString)
   {
-    StringTokenizer argTokens = new StringTokenizer(argString, ",");
+    StringTokenizer argTokens = new StringTokenizer(argString, ":");
     int numArgs = argTokens.countTokens();
 
     if(numArgs < 1 || numArgs > 2)
-      throw new IllegalArgumentException("Please use the following format: !AddGreetMsg <Msg>,<Sound>");
+      throw new IllegalArgumentException("Please use the following format: !AddGreetMsg <Msg>:<Sound>");
     try
     {
       String message = argTokens.nextToken();
@@ -188,7 +193,7 @@ public class utilmessages extends MultiUtil
     }
     catch(NumberFormatException e)
     {
-      throw new NumberFormatException("Please use the following format: !AddGreetMsg <Msg>,<Sound>");
+      throw new NumberFormatException("Please use the following format: !AddGreetMsg <Msg>:<Sound>");
     }
   }
 
@@ -199,11 +204,11 @@ public class utilmessages extends MultiUtil
    * @param argString are the arguments being supplied.
    */
   public void doAddTargetMsgCmd( String sender, String argString ) {
-      StringTokenizer argTokens = new StringTokenizer(argString, ",");
+      StringTokenizer argTokens = new StringTokenizer(argString, ":");
       int numArgs = argTokens.countTokens();
 
       if(numArgs != 2)
-        throw new IllegalArgumentException("Please use the following format: !AddTargetMsg <Person>,<Msg>");
+        throw new IllegalArgumentException("Please use the following format: !AddTargetMsg <Person>:<Msg>");
       try
       {
         String name = argTokens.nextToken();
@@ -221,7 +226,7 @@ public class utilmessages extends MultiUtil
       }
       catch(NumberFormatException e)
       {
-        throw new NumberFormatException("Please use the following format: !AddTargetMsg <Person>,<Msg>");
+        throw new NumberFormatException("Please use the following format: !AddTargetMsg <Person>:<Msg>");
       }
   }
 
@@ -316,6 +321,8 @@ public class utilmessages extends MultiUtil
         doAddTargetMsgCmd( sender, command.substring(14));
       if(lowerCommand.equalsIgnoreCase("!msglist"))
         doMsgListCmd(sender);
+      if(lowerCommand.equalsIgnoreCase("!listkeys"))
+    	m_botAction.smartPrivateMessageSpam(sender, Tools.getKeysMessage());
       if(lowerCommand.startsWith("!msgdel "))
         doMsgDelCmd(sender, command.substring(8));
       if(lowerCommand.equalsIgnoreCase("!msgsoff"))
@@ -442,7 +449,7 @@ public class utilmessages extends MultiUtil
     public MsgTask(String message, int soundCode )
     {
       if(soundCode < 0 || soundCode > 999)
-        throw new IllegalArgumentException("Invalid sound code.");      
+        throw new IllegalArgumentException("Invalid sound code.");
       this.message = message;
       this.soundCode = soundCode;
       taskType = GREET_TYPE;
