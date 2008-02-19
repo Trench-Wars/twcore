@@ -26,6 +26,8 @@ public class RbRace extends RaceBotExtension {
 
 	boolean settingPits = false;
 	boolean updated = true;
+	
+	boolean arenaLocked = false;
 
 	public RbRace() {
 		trackIDList = new HashMap<Integer, Track>();
@@ -36,7 +38,21 @@ public class RbRace extends RaceBotExtension {
 	public void handleEvent( Message event ) {
 		String name = m_botAction.getPlayerName( event.getPlayerID() );
 		String message = event.getMessage().toLowerCase();
-
+		
+		
+		// Check for reliable arena locking
+		if(event.getMessageType() == Message.ARENA_MESSAGE) {
+            if(event.getMessage().equals("Arena LOCKED")) {
+                if(this.arenaLocked == false) {
+                    m_botAction.toggleLocked();
+                }
+            }
+            if(event.getMessage().equals("Arena UNLOCKED")) {
+                if(this.arenaLocked == true) {
+                    m_botAction.toggleLocked();
+                }
+            }
+		}
 		
 		if(message.startsWith("!position ")) {
             String pieces[] = message.split(" ", 2);
@@ -85,21 +101,22 @@ public class RbRace extends RaceBotExtension {
 		{
 			if( message.startsWith( "!help" ) ) {
 	            String help[] = {
-	                "------------- Race Help Menu (ER+) ------------------------------",
-	                "| !loadarena     - loads arena information                      |",
-	                "| !startrace <#> - starts a race on the track identified by <#> |",
-	                "| !tracklist     - displays available tracks for this map       |",
-	                "| !setpits       - starts the process of setting pit flags      |",
-	                "| !pitsset       - ends pit setting process                     |",
-	                "| !clearpits     - clears flag ids from pit list                |",
-	                "| !raceover      - ends the race                                |",
-	                "| !fakeover      - ends the race without saving to database     |",
-	                "----------------------------------------------------------------|"
+	                "------------- Race Help Menu (ER+) ----------------------------------",
+	                "| !loadarena               - loads arena information                |",
+	                "| !startrace <id#> <laps#> - starts a race on the track <id#>       |",
+	                "|                            for <laps#>                            |",
+	                "| !tracklist               - displays available tracks for this map |",
+	                "| !setpits                 - starts the process of setting pit flags|",
+	                "| !pitsset                 - ends pit setting process               |",
+	                "| !clearpits               - clears flag ids from pit list          |",
+	                "| !raceover                - ends the race                          |",
+	                "| !fakeover                - ends the race without saving results   |",
+	                "--------------------------------------------------------------------|"
 	            };
 	            m_botAction.privateMessageSpam( name, help );
 			}
 			else if( message.startsWith( "!loadarena" ) )
-				loadArena();
+				loadArena( name, true);
 			else if( message.startsWith( "!startrace " ) )
 				startRace( message, name );
 			else if( message.startsWith( "!tracklist" ) )
@@ -126,14 +143,15 @@ public class RbRace extends RaceBotExtension {
 		}
 	}
 
-	public void loadArena() {
+	public void loadArena(String name, boolean respond) {
 
 		trackIDList.clear();
 		trackNameList.clear();
 
 		int arenaId = getArenaID();
 		if( arenaId < 0 ) {
-			m_botAction.sendPublicMessage( "This arena has not been setup for racing." );
+		    if(respond)
+		        m_botAction.sendPrivateMessage( name, "This arena has not been setup for racing." );
 			return;
 		}
 		try {
@@ -143,9 +161,11 @@ public class RbRace extends RaceBotExtension {
 				loadTrack( result );
 
 			}
-                        m_botAction.SQLClose( result );
+            m_botAction.SQLClose( result );
 		} catch (Exception e) { Tools.printStackTrace(e); }
-		m_botAction.sendPublicMessage("Bot ready for use.");
+		
+		if(respond)
+		    m_botAction.sendPrivateMessage(name, "Bot ready for use.");
 	}
 
 	public void startRace( String message, String name ) {
@@ -163,7 +183,7 @@ public class RbRace extends RaceBotExtension {
 		}
 
 		if( !trackIDList.containsKey( new Integer( trackId ) ) ) {
-			m_botAction.sendPrivateMessage( name, "Unable to start race, race does not exist." );
+			m_botAction.sendPrivateMessage( name, "Unable to start race, track does not exist." );
 			return;
 		}
 
@@ -183,6 +203,8 @@ public class RbRace extends RaceBotExtension {
 		TimerTask lockArena = new TimerTask() {
 			public void run() {
 				m_botAction.toggleLocked();
+				arenaLocked = true;
+				
 				Track thisTrack = getTrack( currentTrack );
 				ArrayList<String> zeroLap = new ArrayList<String>();
 				Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
@@ -285,7 +307,11 @@ public class RbRace extends RaceBotExtension {
 		while( it.hasNext() ) {
 			int i = ((Integer)it.next()).intValue();
 			Track n = trackIDList.get( new Integer( i ) );
-			m_botAction.sendPublicMessage( n.getName()+"  "+i);
+			m_botAction.sendPrivateMessage(name, "ID  NAME");
+			m_botAction.sendPrivateMessage(name, "--------------------");
+			
+			m_botAction.sendPrivateMessage(name, Tools.formatString(String.valueOf(i), 4) + 
+			                                     n.getName());
 		}
 	}
 
@@ -343,16 +369,27 @@ public class RbRace extends RaceBotExtension {
 	    Track thisTrack = getTrack(currentTrack);
 	    if(thisTrack == null) return;
 	    
-		m_botAction.sendArenaMessage("Race over! Winner is " + thisTrack.winner + "!",5);
-		String winnee = thisTrack.winner;
-		updated = false;
-		racing = 0;
-		m_botAction.sendUnfilteredPublicMessage("*objon 4");
-		try {
-			String query = "INSERT INTO tblRaceWinners (arena, trackWon, name ) VALUES("+getArenaID() +", "+currentTrack+", '"+winnee+"')";
-			m_botAction.SQLQueryAndClose(m_sqlHost, query);
-		} catch(Exception e) {}
+	    // Game Over LVZ
+	    m_botAction.sendUnfilteredPublicMessage("*objon 4");
+	    racing = 0;
+	    
+	    if(thisTrack.winner == null || thisTrack.winner.trim().length() == 0) {
+	        m_botAction.sendArenaMessage("Race over! No winner!",5);
+	        m_botAction.sendArenaMessage("Results not saved to database (no winner).");
+	    } else {
+    		m_botAction.sendArenaMessage("Race over! Winner is " + thisTrack.winner + "!",5);
+    		updated = false;
+    		
+    		try {
+    			String query = "INSERT INTO tblRaceWinners (arena, trackWon, name ) VALUES("+getArenaID() +", "+currentTrack+", '"+thisTrack.winner+"')";
+    			m_botAction.SQLQueryAndClose(m_sqlHost, query);
+    		} catch(Exception e) {}
+	    }
+	    
+		// Unlock arena
 		m_botAction.toggleLocked();
+		arenaLocked = false;
+		m_botAction.cancelTasks();
 	}
 
 	public void handleFake()
@@ -360,13 +397,24 @@ public class RbRace extends RaceBotExtension {
 		Track thisTrack = getTrack(currentTrack);
 		if(thisTrack == null) return;
 		m_botAction.sendUnfilteredPublicMessage("*objon 4");
-		m_botAction.sendArenaMessage("Race over! Winner is " + getTrack(currentTrack).winner + "!",5);
+		
+		if(thisTrack.winner == null || thisTrack.winner.trim().length() == 0) {
+            m_botAction.sendArenaMessage("Race over! No winner!",5);
+		} else {
+		    m_botAction.sendArenaMessage("Race over! Winner is " + getTrack(currentTrack).winner + "!",5);
+		}
 		racing = 0;
+		
+		// Unlock arena
 		m_botAction.toggleLocked();
+		arenaLocked = false;
+		m_botAction.cancelTasks();
+		
 		thisTrack.lapLeaders = new HashMap<String, Integer>();
 		thisTrack.positions = new HashMap<Integer, String>();
-		loadArena();
+		loadArena(null, false);     // reload arena but no response
 		currentTrack = -1;
+		
 	}
 
 	public int getPosition(String name)

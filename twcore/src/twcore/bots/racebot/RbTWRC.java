@@ -168,7 +168,7 @@ public class RbTWRC extends RaceBotExtension
 		writeLog("");
 		writeLog("");
 		race.currentTrack = -1;
-		race.loadArena();
+		race.loadArena(null, false);
 	}
 
 	/** Updates all the databases for the last race if it was a big/major race.
@@ -245,7 +245,7 @@ public class RbTWRC extends RaceBotExtension
 		writeLog("");
 		writeLog("");
 		race.currentTrack = -1;
-		race.loadArena();
+		race.loadArena(null, false);
 	}
 
 	/** Updates all of the databases for the last race if it was a marathon
@@ -321,7 +321,7 @@ public class RbTWRC extends RaceBotExtension
 		writeLog("");
 		writeLog("");
 		race.currentTrack = -1;
-		race.loadArena();
+		race.loadArena(null, false);
 	}
 
 	/** Writes point changes to log.txt

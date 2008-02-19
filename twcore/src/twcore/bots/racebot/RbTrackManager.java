@@ -1,6 +1,7 @@
 package twcore.bots.racebot;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -45,6 +46,7 @@ public class RbTrackManager extends RaceBotExtension {
 			            "| !setwarp <id>  - sets the warp point for track <id> from      |",
 			            "|                  your current position                        |",
 			            "| !testwarp <id> - tests a warp point already setup             |",
+			            "| !delete <id>   - removes entire track saved at <id>           |",
 			            "----------------------------------------------------------------|"
 			        };
 			        m_botAction.privateMessageSpam( name, help );
@@ -63,6 +65,8 @@ public class RbTrackManager extends RaceBotExtension {
 					setWarpPoint( message.substring( 9, message.length() ), name );
 				else if( message.startsWith( "!testwarp " ) )
 					testWarp( message.substring( 10, message.length() ), name );
+				else if( message.startsWith( "!delete "))
+				    deleteTrack( message.substring( 8), name );
 			}
 		} catch(Exception e) {}
 
@@ -263,7 +267,7 @@ public class RbTrackManager extends RaceBotExtension {
 		try { id = Integer.parseInt( message ); } catch (Exception e) {}
 
 		if( id < 0 ) {
-			m_botAction.sendPrivateMessage( name, "Unable to name track, track # out of bounds." );
+			m_botAction.sendPrivateMessage( name, "Syntax error. Please provide a correct number as track id." );
 			return;
 		}
 
@@ -281,17 +285,86 @@ public class RbTrackManager extends RaceBotExtension {
 		try { id = Integer.parseInt( message ); } catch (Exception e) {}
 
 		if( id < 0 ) {
-			m_botAction.sendPrivateMessage( name, "Unable to name track, track # out of bounds." );
+			m_botAction.sendPrivateMessage( name, "Syntax error. Please provide a correct number as track id." );
 			return;
 		}
 
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT fnXWarp, fnYWarp FROM tblRaceTrack WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+sql_getArenaID());
-			if( result.next() )
-				m_botAction.warpTo( name, result.getInt("fnXWarp"), result.getInt("fnYWarp") );
-                        m_botAction.SQLClose( result );
-		} catch (Exception e) {}
+			if( result != null && result.next() ) {
+			    int warpX = result.getInt("fnXWarp");
+			    int warpY = result.getInt("fnYWarp");
+			    if(warpX == 0 || warpY == 0)
+			        m_botAction.sendPrivateMessage( name , "No warp points or misconfigured for track #"+id);
+			    else {
+			        m_botAction.warpTo( name, warpX, warpY );
+			        m_botAction.sendPrivateMessage( name, "Warped to "+warpX+","+warpY+"");
+			    }
+			} else {
+			    m_botAction.sendPrivateMessage( name , "No warp points or misconfigured for track #"+id);
+			}
+            m_botAction.SQLClose( result );
+            
+		} catch (SQLException sqle) {
+		    m_botAction.sendPrivateMessage(name, "Unexpected error occured during retrieving warp points for track #"+id+". Please contact a member of TW Bot Development Team.");		    
+		}
+	}
+	
+	public void deleteTrack( String parameters, String name ) {
+	    int id = -1;
+	    int trackID = -1;
+	    try {
+	        id = Integer.parseInt( parameters );
+	    } catch(NumberFormatException nfe) {
+	        m_botAction.sendPrivateMessage(name, "Syntax error, wrong track id specified. Please type ::!help for command syntax.");
+	        return;
+	    }
+	    
+	    if(id < 0) {
+	        m_botAction.sendPrivateMessage(name, "Syntax error, wrong track id specified. Please type ::!help for command syntax.");
+            return;
+	    }
+	    
+	    // get the raceID of the current arena
+	    int raceID = sql_getArenaID();
+	    if(raceID < 0) {
+	        m_botAction.sendPrivateMessage(name, "The current arena couldn't be found in the database. Are you sure this arena is setup for racing?");
+	        return;
+	    }
+	    
+	    // Check if the given track id exists
+	    ResultSet resultset = null;
+	    try {
+	        resultset = m_botAction.SQLQuery( m_sqlHost, "SELECT fnTrackID FROM tblRaceTrack WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+raceID+" LIMIT 0,1");
+	        if(resultset == null) {
+	            m_botAction.sendPrivateMessage(name, "The track id #"+id+" isn't found for this arena. Please specify a different track #id.");
+	            m_botAction.SQLClose(resultset);
+	            return;
+	        } else if(resultset.next()){
+	            trackID = resultset.getInt(1);
+	        } else {
+	            m_botAction.sendPrivateMessage(name, "The track id #"+id+" isn't found for this arena. Please specify a different track #id.");
+                m_botAction.SQLClose(resultset);
+                return;
+	        }
+	    } catch(SQLException sqle) {
+	        m_botAction.sendPrivateMessage(name, "Unexpected error occured on check if the track id exists. Please contact a member of the TW Bot Development team.");
+	        return;
+	    } finally {
+	        if(resultset != null)
+	            m_botAction.SQLClose(resultset);
+	    }
 
+	    try {
+	        m_botAction.SQLQueryAndClose( m_sqlHost, "DELETE FROM tblRaceTrack WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+raceID);
+	        m_botAction.SQLQueryAndClose( m_sqlHost, "DELETE FROM tblRaceCheckPoint WHERE fnTrackID = "+trackID);
+	        m_botAction.SQLQueryAndClose( m_sqlHost, "DELETE FROM tblRaceWinners WHERE trackWon = "+trackID);
+	    } catch(SQLException sqle) {
+	        m_botAction.sendPrivateMessage(name, "Unexpected error occured while deleting the track. Please contact a member of the TW Bot Development Team.");
+	        return;
+	    }
+	    
+	    m_botAction.sendPrivateMessage(name, "Track #"+id+" deleted, including checkpoints and winners.");
 	}
 
 	public void handleEvent( FlagClaimed event ) {
