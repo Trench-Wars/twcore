@@ -10,6 +10,7 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
+import twcore.core.util.Tools;
 import twcore.core.util.ModuleEventRequester;
 
 /**
@@ -178,6 +179,8 @@ public class utilmessages extends MultiUtil
       int soundCode = 0;
       if(numArgs == 2)
         soundCode = Integer.parseInt(argTokens.nextToken());
+      if(message.startsWith("*") && !Tools.isAllowed(message))
+    	  throw new IllegalArgumentException("Unknown or restricted command.");
       MsgTask msgTask = new MsgTask(message, soundCode);
 
       msgList.add(msgTask);
@@ -350,13 +353,18 @@ public class utilmessages extends MultiUtil
   public void handleEvent(PlayerEntered event)
   {
     MsgTask msgTask;
-    String playerName = event.getPlayerName();
-
+    String message = null;
+    Player p = m_botAction.getPlayer(event.getPlayerID());
+    if(p == null)return;
+    
     for(int index = 0; index < msgList.size(); index++)
     {
       msgTask = msgList.get(index);
-      if(msgTask.getType() == MsgTask.GREET_TYPE)
-        m_botAction.sendSmartPrivateMessage(playerName, msgTask.getMessage(), msgTask.getSoundCode());
+      if(msgTask.getType() == MsgTask.GREET_TYPE){
+    	message = Tools.replaceKeys(m_botAction, p, msgTask.getMessage());
+    	if(message != null)
+    		m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message, msgTask.getSoundCode());
+      }
     }
   }
 
@@ -434,7 +442,7 @@ public class utilmessages extends MultiUtil
     public MsgTask(String message, int soundCode )
     {
       if(soundCode < 0 || soundCode > 999)
-        throw new IllegalArgumentException("Invalid sound code.");
+        throw new IllegalArgumentException("Invalid sound code.");      
       this.message = message;
       this.soundCode = soundCode;
       taskType = GREET_TYPE;

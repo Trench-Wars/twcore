@@ -627,6 +627,8 @@ public final class Tools {
 			message = message.replace("&y", Integer.toString(p.getYLocation()/16));
 		while(message.contains("&randomtile"))
 			message = message.replaceFirst("&randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
+		if(message.contains("&botname"))
+			message = message.replace("&botname", bot.getBotName());
 		if(message.contains("&!")){
 			while(true){
 				int beginIndex = message.indexOf("&!");
@@ -653,6 +655,7 @@ public final class Tools {
 		String msg[] = {
 			"+=================== Escape Keys ===================+",
 			"| &player         - The player's name.              |",
+			"| &botname        - The bot's name.                 |",
 			"| &freq           - The player's frequency.         |",
 			"| &randomfreq     - A random number(0 - 9998)       |",
 			"| &ship           - The player's ship.              |",
