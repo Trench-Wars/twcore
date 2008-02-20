@@ -48,13 +48,12 @@ import twcore.core.util.Tools;
  * Lower priority (in order):
  * - !intro, !intro2, !intro3, etc.
  * - F1 Help -- item descriptions?  At least say which slot is which, if not providing info on the specials
- * - LVZ stuff: replacement sounds
  *
  * @author dugwyler
  */
 public class distensionbot extends SubspaceBot {
 
-    private final boolean DEBUG = true;                    // Debug mode.
+    private boolean DEBUG = true;                         // Debug mode.
     private final float DEBUG_MULTIPLIER = 3.8f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
@@ -345,8 +344,10 @@ public class distensionbot extends SubspaceBot {
         flagTimeStarted = false;
         stopFlagTime = false;
         beginDelayedShutdown = false;
-        m_specialAbilityPrizer = new SpecialAbilityTask();
-        m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 30000, 30000 );
+        if( m_botSettings.getInt("Debug") == 1 )
+            DEBUG = true;
+        else
+            DEBUG = false;
     }
 
 
@@ -378,16 +379,46 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setPlayerPositionUpdating( 400 );
         m_botAction.setLowPriorityPacketCap( 25 );
         m_botAction.specAll();
-        //m_botAction.toggleLocked();
         m_botAction.resetFlagGame();
+
+        if( DEBUG ) {
+            m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
+            if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
+                m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
+                m_botAction.sendArenaMessage("Distension BETA loaded.  Just enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
+            }
+            // Reset all times at each load
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
+            } catch (SQLException e ) {  }
+            m_botAction.scoreResetAll();
+            String sendmsg = m_botSettings.getString("InitialMsg");
+            if( sendmsg != null ) {
+                String msgs[] = sendmsg.split(";");
+                for( int i = 0; i<msgs.length; i++ )
+                    m_botAction.sendUnfilteredPublicMessage( msgs[i] );
+            }
+        }
+        setupTimerTasks();
+    }
+
+    /**
+     * Set up and schedule all regular repeating TimerTasks.
+     */
+    public void setupTimerTasks() {
+        m_specialAbilityPrizer = new SpecialAbilityTask();
+        m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 30000, 30000 );
+
         m_prizeQueue = new PrizeQueue();
         m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, UPGRADE_DELAY, UPGRADE_DELAY);
+
         entranceWaitTask = new TimerTask() {
             public void run() {
                 readyForPlay = true;
             }
         };
         m_botAction.scheduleTask( entranceWaitTask, 3000 );
+
         if( AUTOSAVE_DELAY != 0 ) {
             autoSaveTask = new TimerTask() {
                 public void run() {
@@ -396,6 +427,7 @@ public class distensionbot extends SubspaceBot {
             };
             m_botAction.scheduleTask( autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
         }
+
         if( IDLE_FREQUENCY_CHECK != 0 ) {
             idleSpecTask = new TimerTask() {
                 public void run() {
@@ -407,6 +439,7 @@ public class distensionbot extends SubspaceBot {
             };
             m_botAction.scheduleTask( idleSpecTask, IDLE_FREQUENCY_CHECK * 1000, IDLE_FREQUENCY_CHECK * 1000);
         }
+
         timeIncrementTask = new TimerTask() {
             public void run() {
                 for( DistensionPlayer p : m_players.values() )
@@ -414,6 +447,7 @@ public class distensionbot extends SubspaceBot {
             }
         };
         m_botAction.scheduleTask( timeIncrementTask, 60000, 60000 );
+
         profitSharingTask = new TimerTask() {
             public void run() {
                 int army0profits = m_armies.get(0).getProfits();
@@ -427,12 +461,14 @@ public class distensionbot extends SubspaceBot {
             }
         };
         m_botAction.scheduleTask( profitSharingTask, PROFIT_SHARING_FREQUENCY * 1000, PROFIT_SHARING_FREQUENCY * 1000 );
+
         m_scrapClearTask = new TimerTask() {
             public void run() {
                 m_scrappingPlayers.clear();
             }
         };
         m_botAction.scheduleTask( m_scrapClearTask, SCRAP_CLEARING_FREQUENCY * 1000, SCRAP_CLEARING_FREQUENCY * 1000 );
+
         // Do not advert/reward for rectifying imbalance in the first 1 min of a game
         lastAssistReward = System.currentTimeMillis();
         lastAssistAdvert = System.currentTimeMillis();
@@ -482,7 +518,7 @@ public class distensionbot extends SubspaceBot {
                             }
                         }
                     if( !helped ) {
-                        if( maxStrToAssist > RANK_0_STRENGTH )	// Only display if assisting is possible
+                        if( maxStrToAssist > RANK_0_STRENGTH )  // Only display if assisting is possible
                             m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: Pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                     }
                     // Check if teams are imbalanced in numbers, if not strength
@@ -520,17 +556,6 @@ public class distensionbot extends SubspaceBot {
             }
         };
         m_botAction.scheduleTask( assistAdvertTask, 20000, 20000 );
-
-        if( DEBUG ) {
-            m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
-            m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
-            m_botAction.sendArenaMessage("Distension BETA loaded.  Just enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
-            // Reset all times at each load
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
-            } catch (SQLException e ) {  }
-            m_botAction.scoreResetAll();
-        }
     }
 
 
@@ -1219,8 +1244,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage(p.getArenaPlayerID(), e.getMessage() );
                 }
             }
-            m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_EMP);
-            m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_ENERGY_TANK);
+            //m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_EMP);
+            //m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_ENERGY_TANK);
         }
 
         if( !readyForPlay )         // If bot has not fully started up,
@@ -1244,11 +1269,11 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_REARMING);
-        //m_botAction.setupObject( p.getArenaPlayerID(), LVZ_REARMING, false );
-        //m_botAction.setupObject( p.getArenaPlayerID(), LVZ_EMP, false );
-        //m_botAction.setupObject( p.getArenaPlayerID(), LVZ_ENERGY_TANK, false );
-        //m_botAction.sendSetupObjectsForPlayer( p.getArenaPlayerID() );
+        //m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_REARMING);
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_REARMING, false );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_EMP, false );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_ENERGY_TANK, false );
+        m_botAction.sendSetupObjectsForPlayer( p.getArenaPlayerID() );
 
         if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
             checkForAssistAdvert = true;
@@ -5485,8 +5510,8 @@ public class distensionbot extends SubspaceBot {
                 }
             }
             // Max points allowed to be added is number of points needed to rank up.
-            if( points + rankPoints > nextRank )
-                points = nextRank;
+            if( points > getPointsToNextRank() )
+                points = getPointsToNextRank();
 
             rankPoints += points;
             recentlyEarnedRP += points;
@@ -8188,8 +8213,8 @@ public class distensionbot extends SubspaceBot {
      * Lanc   - 14    (unlock @ 10)
      * WB     - 15    (start)
      * Weasel - 15    (unlock by successive kills)
+     * Spider - 15    (unlock @ 5)
      * Jav    - 15.2  (unlock @ 15)
-     * Spider - 16    (unlock @ 5)
      * Levi   - 16    (unlock @ 20)
      *
      * Prize format: Name, Prize#, Cost([]), Rank([]), # upgrades
@@ -8334,7 +8359,7 @@ public class distensionbot extends SubspaceBot {
         // 50: Decoy 3
         // 55: +5% Super 5
         // 60: +15% Energy Tank 4
-        ship = new ShipProfile( RANK_REQ_SHIP3, 16f );
+        ship = new ShipProfile( RANK_REQ_SHIP3, 15f );
         upg = new ShipUpgrade( "Central Realigner        [ROT]", Tools.Prize.ROTATION, new int[]{6,7,8,8,8,9,9,9,10}, 0, 9 );       // 20 x9
         ship.addUpgrade( upg );
         int p3a1[] = { 3, 5, 5, 6, 7,   8,  9, 10, 11, 12 };
