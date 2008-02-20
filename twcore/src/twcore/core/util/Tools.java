@@ -607,8 +607,10 @@ public final class Tools {
 			message = message.replace("&freq", Integer.toString(p.getFrequency()));	
 		while(message.contains("&randomfreq"))
 			message = message.replaceFirst("&randomfreq", Integer.toString(rand.nextInt( 9998 )));
-		if(message.contains("&ship"))
-			message = message.replace("&ship", shipName(p.getShipType()));	
+		if(message.contains("&shipname"))
+			message = message.replace("&shipname", shipName(p.getShipType()));
+		if(message.contains("&shipnum"))
+			message = message.replace("&shipnum", Integer.toString(p.getShipType()));
 		while(message.contains("&randomship"))
 			message = message.replaceFirst("&randomship", Integer.toString((rand.nextInt( 7 )) + 1));		
 		if(message.contains("&shipslang"))
@@ -618,22 +620,26 @@ public final class Tools {
 		if(message.contains("&losses"))
 			message = message.replace("&losses", Integer.toString(p.getLosses()));		
 		if(message.contains("&bounty"))
-			message = message.replace("&bounty", Integer.toString(p.getBounty()));		
+			message = message.replace("&bounty", Integer.toString(p.getBounty()));
+		if(message.contains("&id"))
+			message = message.replace("&id", Integer.toString(p.getPlayerID()));
+		if(message.contains("&ping"))
+			message = message.replace("&ping", Integer.toString(p.getPing() * 10));
 		if(message.contains("&squad"))
 			message = message.replace("&squad", p.getSquadName());		
 		if(message.contains("&x"))
-			message = message.replace("&x", Integer.toString(p.getXLocation()/16));		
+			message = message.replace("&x", Integer.toString(p.getXTileLocation()));		
 		if(message.contains("&y"))
-			message = message.replace("&y", Integer.toString(p.getYLocation()/16));
+			message = message.replace("&y", Integer.toString(p.getYTileLocation()));
 		while(message.contains("&randomtile"))
 			message = message.replaceFirst("&randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
 		if(message.contains("&botname"))
 			message = message.replace("&botname", bot.getBotName());
-		if(message.contains("&!")){
+		if(message.contains("&!") && message.contains("&&")){
 			while(true){
 				int beginIndex = message.indexOf("&!");
 				int endIndex = message.indexOf("&&");
-				if(endIndex != -1 && endIndex > beginIndex){
+				if(beginIndex != -1 && endIndex != -1 && endIndex > beginIndex){
 					bot.sendPrivateMessage(bot.getBotName(), message.substring(beginIndex + 1, endIndex));
 					message = message.replaceFirst("&!", " ");
 					message = message.replaceFirst("&&", " ");
@@ -655,10 +661,12 @@ public final class Tools {
 		String msg[] = {
 			"+=================== Escape Keys ===================+",
 			"| &player         - The player's name.              |",
+			"| &id             - The player's id(not userid)     |",
 			"| &botname        - The bot's name.                 |",
 			"| &freq           - The player's frequency.         |",
 			"| &randomfreq     - A random number(0 - 9998)       |",
-			"| &ship           - The player's ship.              |",
+			"| &shipname       - The player's ship.              |",
+			"| &shipnum        - The player's ship number.       |",
 			"| &shipslang      - Player's ship in vernacular.    |",
 			"| &randomship     - A random number(1-8)            |",
 			"| &squad          - The player's squad.             |",
@@ -668,6 +676,7 @@ public final class Tools {
 			"| &randomtile     - A random number(1-1022)         |",
 			"| &wins           - The player's wins.              |",
 			"| &losses         - The player's losses.            |",
+			"| &ping           - The player's ping in ms.        |",
 			"| &!command&&     - Issues a command to the bot, but|",
 			"|                    the player receives no message.|",
 			"+===================================================+",
