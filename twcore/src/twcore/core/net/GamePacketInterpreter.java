@@ -70,10 +70,11 @@ public class GamePacketInterpreter {
      * limiter.
      * @param msgsPerMin Number of messages to limit per minute; 0 to disable
      * @param botAction Reference to BotAction class
+     * @param staffImmunity True if staff are immune to the effects of message limiting fot this bot
      */
-    public void setMessageLimiter( int msgsPerMin, BotAction botAction ){
+    public void setMessageLimiter( int msgsPerMin, BotAction botAction, boolean staffImmunity ){
         if( msgsPerMin >= 1 ){
-            m_limiter = new MessageLimiter( botAction, m_subspaceBot, msgsPerMin );
+            m_limiter = new MessageLimiter( botAction, m_subspaceBot, msgsPerMin, staffImmunity );
         } else {
             m_limiter = null;
         }
@@ -563,10 +564,10 @@ public class GamePacketInterpreter {
             m_subspaceBot.handleEvent( new FlagDropped( message ) );
         }
     }
-    
+
     /**
      * Translates packet into appropriate event.
-     * 
+     *
      * @param message Packet data
      * @param alreadyDecrypted True if packet has already been decrypted
      */
@@ -575,13 +576,13 @@ public class GamePacketInterpreter {
         if(message.size() < 8) {
             return;
         }
-        
+
         if(!alreadyDecrypted) {
             m_ssEncryption.decrypt( message, message.size()-1, 1);
         }
-        
+
         // TODO: Update player tracker and player
-        
+
         if( m_requester.check( EventRequester.KOTH_RESET ) ) {
             m_subspaceBot.handleEvent( new KotHReset( message ) );
         }

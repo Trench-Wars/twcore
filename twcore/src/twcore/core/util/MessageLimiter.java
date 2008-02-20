@@ -19,6 +19,7 @@ public class MessageLimiter {
     private int         m_rate = 6;     // # msgs allowed per player per minute
     private long        lastCheckTime;  // Last time anyone sent a msg
     private long        time;           // Time allowed per message (from m_rate)
+    private boolean     m_staffImmune;  // True if staff are exempt from the limiter
 
     /**
      * Creates a new instance of MessageLimiter with the specified message
@@ -26,14 +27,16 @@ public class MessageLimiter {
      * @param botAction Bot utility class
      * @param bot Bot the limiter should apply to
      * @param rate Number of messages allowed from a person in one minute
+     * @param staffImmunity True if staff are not subject to message limitations
      */
-    public MessageLimiter( BotAction botAction, SubspaceBot bot, int rate ) {
+    public MessageLimiter( BotAction botAction, SubspaceBot bot, int rate, boolean staffImmunity ) {
         m_botAction = botAction;
         m_timeMap = new HashMap<String,Integer>();
         m_rate = rate + 1;
         m_bot = bot;
         lastCheckTime = System.currentTimeMillis();
         time = Math.round(1000d*60d/(double)m_rate);
+        m_staffImmune = staffImmunity;
     }
 
     /**
@@ -53,7 +56,7 @@ public class MessageLimiter {
             m_bot.handleEvent( event );
             return;
         }
-        if( m_botAction.getOperatorList().isZH( name ) ) {
+        if( m_botAction.getOperatorList().isZH( name ) && m_staffImmune ) {
             m_bot.handleEvent( event );
             return;
         }
