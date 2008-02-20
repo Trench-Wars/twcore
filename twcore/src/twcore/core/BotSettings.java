@@ -60,6 +60,13 @@ public class BotSettings {
                     if( !(firstChar == '#' || firstChar == '[' )){
                         equalsIndex = line.indexOf( '=' );
 
+                        // Allow # comments on the same line as data to make it easier to document CFGs
+                        int commentIndex = line.indexOf('#');
+                        if( commentIndex != -1 ) {
+                            line = line.substring(0,commentIndex);
+                            line.trim();
+                        }
+
                         if( equalsIndex != -1 ){
                             key = line.substring( 0, equalsIndex ).toLowerCase();
                             value = line.substring( equalsIndex + 1 );
@@ -106,10 +113,10 @@ public class BotSettings {
 
         m_data.put( keyName.toLowerCase(), new String( "" + data ) );
     }
-    
+
     /**
      * Removes specified key.
-     * 
+     *
      * @param keyName
      */
     public void remove( String keyName ) {
@@ -117,9 +124,11 @@ public class BotSettings {
     }
 
     /**
-     * Returns data associated with a specified field.
+     * Returns data associated with a specified field.  getInt attempts to
+     * parse the key as an Integer, and then return the associated data.
+     * If the key has no value or is not a valid key, a 0 is returned.
      * @param keyName Field to fetch from
-     * @return Data associated with the specified field
+     * @return Data associated with the specified field; 0 if not found
      */
     public int getInt( String keyName ){
         String      value = m_data.get( keyName.toLowerCase() );
@@ -148,7 +157,7 @@ public class BotSettings {
 
     /**
      * Returns data associated with a specified field.
-     * 
+     *
      * @param keyName Field to fetch from
      * @return Data associated with the specified field or NULL if not found
      */
@@ -211,11 +220,11 @@ public class BotSettings {
                         }
                     }
                 }
-                
+
                 if(line != null)
                     out.println(line);
             }
-            
+
             // Write any new key/values to the end of the .cfg file
             for(String newKey:m_data.keySet()) {
                 if(!existingKeys.contains(newKey.toLowerCase())) {
