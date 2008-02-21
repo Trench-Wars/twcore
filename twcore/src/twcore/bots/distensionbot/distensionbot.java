@@ -90,7 +90,7 @@ public class distensionbot extends SubspaceBot {
     // Specials
     private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
     private final int RANK_REQ_SHIP7 = 10;   // N/A (only has level for beta)
-    private final int RANK_REQ_SHIP9 = 82;   // All ships rank 10
+    private final int RANK_REQ_SHIP9 = 20;   // All ships rank 10
 
     // Required number of battles won to be promoted up the various ranks
     private final int WINS_REQ_RANK_CADET_4TH_CLASS = 1;
@@ -374,7 +374,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void init() {
         m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
-        m_botAction.setMessageLimit( 12 );
+        m_botAction.setMessageLimit( 12, false );
         m_botAction.setReliableKills( 1 );
         m_botAction.setPlayerPositionUpdating( 400 );
         m_botAction.setLowPriorityPacketCap( 25 );
@@ -930,8 +930,7 @@ public class distensionbot extends SubspaceBot {
         String[] intro1 = {
                 "         DISTENSION   -   Upgradeable Trench Wars Basing    -   by G. Dugwyler",
                 "Presently in beta.  Intro to come soon.  Type !beta for info on recent updates.",
-                "Join ?chat=distension for help, or see the forums.trenchwars.org thread for more info.",
-                ""
+                "Join ?chat=distension for help, or see the forums.trenchwars.org thread for more info."
         };
         m_botAction.privateMessageSpam(p.getArenaPlayerID(), intro1);
     }
@@ -1049,25 +1048,25 @@ public class distensionbot extends SubspaceBot {
         if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
             HashMap <Integer,Boolean>flags = new HashMap<Integer,Boolean>();
             switch( m_flagOwner[0] ) {
-            case -1:
-                flags.put(LVZ_TOPBASE_EMPTY, true);
-                break;
             case 0:
                 flags.put(LVZ_TOPBASE_ARMY0, true);
                 break;
             case 1:
                 flags.put(LVZ_TOPBASE_ARMY1, true);
                 break;
+            default:
+                flags.put(LVZ_TOPBASE_EMPTY, true);
+                break;
             }
             switch( m_flagOwner[1] ) {
-            case -1:
-                flags.put(LVZ_BOTBASE_EMPTY, true);
-                break;
             case 0:
                 flags.put(LVZ_BOTBASE_ARMY0, true);
                 break;
             case 1:
                 flags.put(LVZ_BOTBASE_ARMY1, true);
+                break;
+            default:
+                flags.put(LVZ_BOTBASE_EMPTY, true);
                 break;
             }
             if( flagTimer.getSecondsHeld() > 0 )
@@ -1883,8 +1882,8 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
-
-        if( p.getShipNum() == -1 )
+        int lastShipNum = p.getShipNum();
+        if( lastShipNum == -1 )
             throw new TWCoreException( "You'll need to !return to your army or !enlist in a new one before you go flying off." );
 
         int shipNum = 0;
@@ -1893,7 +1892,7 @@ public class distensionbot extends SubspaceBot {
         } catch ( Exception e ) {
             throw new TWCoreException( "Exactly which ship do you mean there?  Give me a number.  Maybe check the !hangar first." );
         }
-        if( p.getShipNum() == shipNum )
+        if( lastShipNum == shipNum )
             throw new TWCoreException( "You're already in that ship." );
         if( !p.shipIsAvailable( shipNum ) )
             throw new TWCoreException( "You don't own that ship.  Check your !hangar before you try flying something you don't have." );
@@ -1907,15 +1906,33 @@ public class distensionbot extends SubspaceBot {
                     throw new TWCoreException( "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
         }
 
-        if( p.getShipNum() > 0 ) {
-            String shipname = (p.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
+        if( lastShipNum > 0 ) {
+            String shipname = (lastShipNum == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP" );
             if( ! p.saveCurrentShipToDBNow() )
                 throw new TWCoreException( "PROBLEM SAVING SHIP BEFORE CHANGE -- Notify a member of staff immediately." );
-            if( p.getShipNum() == 9 )
+            if( lastShipNum == 9 )
                 m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " has left the Tactical Ops console." );
         } else {
             m_playerTimes.remove( name );
+        }
+
+        // Check for shark and terr balance -- do not overbalance with one or the other.
+        if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
+            int friendly = 0;
+            int enemy = 0;
+            for( DistensionPlayer p2 : m_players.values() ) {
+                if( p2.getShipNum() == shipNum )
+                    if( p2.getArmyID() == p.getArmyID() )
+                        friendly++;
+                    else
+                        enemy++;
+            }
+            // If we already have more than they do (2 more needed for terr), do not allow the change
+            if( shipNum == Tools.Ship.SHARK && friendly > enemy + 1 )
+                throw new TWCoreException( "Sorry, the other army doesn't have enough Sharks to allow you to Shark fairly!" );
+            if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 2 )
+                throw new TWCoreException( "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
         }
 
         p.setShipNum( shipNum );
@@ -1929,7 +1946,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " is now manning the Tactical Ops console." );
 
         // Simple fix to cause sharks and terrs to not lose MVP
-        if( shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.LEVIATHAN || shipNum == 9 ) {
+        if( (lastShipNum > 0) && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.LEVIATHAN || shipNum == 9) ) {
             int reward = 0;
             if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK) ) {
                 int ships = 0;
@@ -2144,7 +2161,10 @@ public class distensionbot extends SubspaceBot {
                 } else {
                     rank = shipRanks.get(i);
                     if( rank != null ) {
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank " + rank );
+                        if( i != 9 )
+                            m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank " + rank );
+                        else
+                            m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: ALL SHIPS at Rank " + rank + " + Officer");
                     } else {
                         m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank unknown" );
                     }
@@ -5482,9 +5502,28 @@ public class distensionbot extends SubspaceBot {
             }
             if ( rank >= RANK_REQ_SHIP9 ) {
                 if( shipsAvail[8] == false ) {
-                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to provide battle support in a Tactical Ops position.  A shuttle craft that will take you to your operations terminal is now in your !hangar.");
-                    //m_botAction.sendPrivateMessage(name, "SHARK: The Shark is piloted by our most clever and resourceful pilots.  Unsung heroes of the army, Sharks are both our main line of defense and leaders of every assault.  Advanced Sharks enjoy light gun capabilities and a cloaking device.");
-                    addShipToDB(9);
+                    boolean allShips = true;
+                    for( int i = 1; i<8; i++ )
+                        if( shipsAvail[i] == false )
+                            allShips = false;
+
+                    if( allShips && battlesWon >= WINS_REQ_RANK_ENSIGN ) {
+                        try {
+                            String query = "SELECT fnShipNum, fnRank FROM tblDistensionShip ship " +
+                            "WHERE ship.fnPlayerID='" + playerID + "'";
+                            ResultSet r = m_botAction.SQLQuery( m_database, query );
+                            boolean allShipsAtRank = true;
+                            while( r.next() && allShipsAtRank ) {
+                                if( r.getInt("fnShipNum") != shipNum && r.getInt("fnRank") < RANK_REQ_SHIP9 )
+                                    allShipsAtRank = false;
+                            }
+                            if( allShipsAtRank ) {
+                                m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to provide battle support in a Tactical Ops position!  A shuttle craft that will take you to your operations terminal is now in your !hangar.  Use !manops to enter it.");
+                                addShipToDB(9);
+                            }
+                        } catch(SQLException e) {
+                        }
+                    }
                 }
             }
         }
@@ -5687,8 +5726,6 @@ public class distensionbot extends SubspaceBot {
          * Puts player in the currently-set ship and sets them as having respawned.
          */
         public void putInCurrentShip() {
-            //if( shipNum != 9 )
-            //    m_botAction.setShip( name, shipNum );
             Player p = m_botAction.getPlayer(getArenaPlayerID());
             if( p.getFrequency() != getArmyID() )
                 m_botAction.setFreq( name, getArmyID() );
@@ -8210,6 +8247,7 @@ public class distensionbot extends SubspaceBot {
      * Order of speed of rank upgrades (high speed to low speed, lower # being faster ranks):
      * Terr   - 10.4  (start)
      * Shark  - 11    (unlock @ 2)
+     * Ops    - 12    (unlock w/ all ships @ 20 + officer status)
      * Lanc   - 14    (unlock @ 10)
      * WB     - 15    (start)
      * Weasel - 15    (unlock by successive kills)
@@ -8271,7 +8309,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warbird Reiterator", Tools.Prize.DECOY, 14, 24, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{21,31,50}, new int[]{36,60,80}, 3 );
+        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{10,30,50}, new int[]{36,60,80}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 34, 50, 1 );
         ship.addUpgrade( upg );
@@ -8462,28 +8500,26 @@ public class distensionbot extends SubspaceBot {
         // 7:  Portal 1
         // 9:  Priority respawn
         // 13: Profit-sharing 1
-        // 16: Multi (slightly more forward than regular)
-        // 21: Burst 2 (HIGH cost)
+        // 16: Portal 2
         // 23: Profit-sharing 2
         // 25: Escape Pod 1
-        // 29: Portal 2
+        // 29: Portal 3
+        // 30: Burst 2 (HIGH cost)
         // 33: Profit-sharing 3
         // 35: Escape Pod 2
         // 36: L2 Guns
+        // 40: Multi (slightly more forward than regular)
         // 40: (Can attach to other terrs)
+        // 42: Portal 4
         // 43: Profit-sharing 4
         // 45: Escape Pod 3
-        // 46: Burst 3
-        // 48: Portal 3
         // 50: Targeted EMP (negative full charge to all of the other team)
+        // 54: Portal 5
         // 53: Profit-sharing 5
-        // 55: Burst 4
         // 57: Escape Pod 4
-        // 60: Portal 4
-        // 65: Burst 5
-        // 70: Portal 5
+        // 70: Portal 6
         // 75: Escape Pod 5
-        // 80: Burst 6
+        // 80: Portal 7
         ship = new ShipProfile( 0, 10.4f );
         upg = new ShipUpgrade( "Correction Engine        [ROT]", Tools.Prize.ROTATION, 7, 0, 15 );         // 20 x15
         ship.addUpgrade( upg );
@@ -8497,9 +8533,9 @@ public class distensionbot extends SubspaceBot {
         int costs5b[] = { 10, 12, 13, 14, 15,  20, 23, 27, 30 };
         upg = new ShipUpgrade( "Hull Capacity            [NRG]", Tools.Prize.ENERGY, costs5b, 0, 9 );      // 75 x9
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Defense Systems", Tools.Prize.GUNS, 28, 36, 1 );
+        upg = new ShipUpgrade( "Upgraded Defense Systems", Tools.Prize.GUNS, 28, 36, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Multiple Cannons", Tools.Prize.MULTIFIRE, 14, 16, 1 );
+        upg = new ShipUpgrade( "Offensive Realignment", Tools.Prize.MULTIFIRE, 60, 40, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 5, 0, 1 );
         ship.addUpgrade( upg );
@@ -8507,12 +8543,12 @@ public class distensionbot extends SubspaceBot {
         int p5d2[] = { 13, 23, 33, 43, 53 };
         upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, p5d1, p5d2, 5 );
         ship.addUpgrade( upg );
-        int p5a1[] = {12, 25, 30 };
-        int p5a2[] = { 7, 29, 48 };
-        upg = new ShipUpgrade( "Wormhole Creation Kit", Tools.Prize.PORTAL, p5a1, p5a2, 3 );        // DEFINE
+        int p5a1[] = {12, 13, 14, 15, 16, 20, 30 };
+        int p5a2[] = { 7, 16, 29, 42, 54, 70, 80 };
+        upg = new ShipUpgrade( "Wormhole Creation Kit", Tools.Prize.PORTAL, p5a1, p5a2, 7 );        // DEFINE
         ship.addUpgrade( upg );
         int p5b1[] = { 6, 160 };
-        int p5b2[] = { 2, 21 };
+        int p5b2[] = { 2, 30 };
         upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2, 2 );       // DEFINE
         ship.addUpgrade( upg );
         int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
@@ -8640,28 +8676,24 @@ public class distensionbot extends SubspaceBot {
         // Very fast upg speed; rotation has small spread (+2start) and few upgrades; thrust starts 1 down
         //                      but has high max; energy starts high, has low level req initially, but
         //                      has high req later on (designed to give bomb capability early)
-        // (Starts with 1 repel, so that repel 1 is actually second)
-        //  4: Repel 1
+        // (Starts with 2 repels, so that repel 1 is actually third)
+        //  4: Repel upgrade 1 (3 total)
         // 10: Priority Rearmament
         // 12: Guns
-        // 15: Repel 2
         // 17: XRadar
         // 22: Shrap 1
-        // 25: Repel 3
+        // 20: +25% Repel Regen 1
         // 28: Multifire
-        // 30: +10% Repel Regen 1
+        // 34: Repel upgrade 2 (4 total)
         // 38: Cloak
-        // 40: Repel 4
+        // 40: +25% Repel Regen 2
         // 41: Shrap 2
         // 45: L2 Bombs
-        // 48: +10% Repel Regen 2
-        // 50: Repel 5
         // 54: L2 Guns
-        // 55: +10% Repel Regen 3
-        // 60: Repel 6
+        // 55: +25% Repel Regen 3
         // 65: Shrap 3
-        // 70: Repel 7
-        // 80: Repel 8
+        // 70: Repel upgrade 3 (5 total)
+        // 80: +25% Repel Regen 4
         ship = new ShipProfile( RANK_REQ_SHIP8, 11f );
         int p8a1[] = {  7,  8,  7,  8,  7,  8, 15 };
         int p8a2[] = { 10, 11, 12, 13, 14, 15, 16 };
@@ -8686,13 +8718,13 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 15, 17, 1 );
         ship.addUpgrade( upg );
-        int p8ca1[] = { 13, 18, 30 };
-        int p8ca2[] = { 25, 48, 55 };
+        int p8ca1[] = { 13, 25, 35, 55 };
+        int p8ca2[] = { 20, 40, 55, 80 };
         upg = new ShipUpgrade( "+25% Repulsor Regeneration", ABILITY_SHARK_REGEN, p8ca1, p8ca2, 3 );
         ship.addUpgrade( upg );
-        int p8c1[] = { 6, 14, 17, 20, 30, 40, 50, 60 };
-        int p8c2[] = { 4, 18, 30, 40, 50, 60, 70, 80 };
-        upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2, 8 );    // DEFINE
+        int p8c1[] = { 6, 70, 99 };
+        int p8c2[] = { 4, 34, 70 };
+        upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2, 3 );    // DEFINE
         ship.addUpgrade( upg );
         int p8d2[] = { 22, 41, 65 };
         upg = new ShipUpgrade( "Splintering Unit", Tools.Prize.SHRAPNEL, 11, p8d2, 3 );
@@ -8705,9 +8737,9 @@ public class distensionbot extends SubspaceBot {
 
         // TACTICAL OPS -- rank 25
         //  1: Comm 1 (normal msg)
+        //  2: Fast rearm 1
         //  2: Comm 2 (PM)
         //  4: Warp 1 (lower base)
-        //  5: Fast rearm 1
         //  7: Cover
         //  8: Profit Sharing 1
         //  9: Fast rearm 2
@@ -8734,16 +8766,16 @@ public class distensionbot extends SubspaceBot {
         // 52: Profit Sharing 5
         // 55: EMP Pulse
         // 60: Shields (all on team)
-        ship = new ShipProfile( RANK_REQ_SHIP9, 10f );
+        ship = new ShipProfile( RANK_REQ_SHIP9, 12f );
         upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,52}, 5 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, new int[]{5,7,9,10,11,13,15,20,25}, new int[]{0,3,5,11,15,20,25,35,45}, 9 );      //
+        upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, new int[]{8,10,10,10,11,13,15,20,25}, new int[]{1,5,10,15,20,25,35,45,55}, 9 );      //
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "+20% OP Regen Rate", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{9,20,30,40}, 4 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,7,20}, new int[]{1,3,18}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, new int[]{12,7,10}, new int[]{5,9,17}, 3 );
+        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, new int[]{12,7,10}, new int[]{2,9,17}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 20, 7, 1 );   // Consider another level offering longer cover
         ship.addUpgrade( upg );                                                 // via diff
