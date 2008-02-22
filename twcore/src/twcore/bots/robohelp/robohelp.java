@@ -1094,8 +1094,6 @@ public class robohelp extends SubspaceBot {
 	    					Tools.formatString((i+1)+")", 5)+
 	    					Tools.formatString(rank.get(i),20)+" "+
 	    					stats.get(rank.get(i)));
-	    		else
-	    			m_botAction.sendSmartPrivateMessage(name, " "+(i+1)+") ");
 	    	}
 		}
 
