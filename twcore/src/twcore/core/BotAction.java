@@ -2496,7 +2496,7 @@ public class BotAction
      */
     public void setupObject( int objID, boolean isVisible )
     {
-        m_packetGenerator.setupLVZObjectToggle(-1, objID, true);
+        m_packetGenerator.setupLVZObjectToggle(-1, objID, isVisible);
     }
 
     /**
