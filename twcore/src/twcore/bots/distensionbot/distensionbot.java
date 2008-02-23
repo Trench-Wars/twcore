@@ -1940,6 +1940,7 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
         }
 
+        p.setShipNum( shipNum );
         if( !p.getCurrentShipFromDB() ) {
             m_botAction.sendPrivateMessage( name, "Having trouble getting that ship for you.  Please contact a mod." );
             p.setShipNum( 0 );
@@ -2170,10 +2171,7 @@ public class distensionbot extends SubspaceBot {
                 } else {
                     rank = shipRanks.get(i);
                     if( rank != null ) {
-                        if( i != 9 )
-                            m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank " + rank );
-                        else
-                            m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: ALL SHIPS at Rank " + RANK_REQ_SHIP9 + " + Officer");
+                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank " + rank );
                     } else {
                         m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank unknown" );
                     }
@@ -2183,7 +2181,10 @@ public class distensionbot extends SubspaceBot {
                 if( pf.getRankUnlockedAt() == -1 )
                     m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "LOCKED" );
                 else
-                    m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAt() + " NEEDED"  );
+                    if( i != 9 )
+                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAt() + " NEEDED"  );
+                    else
+                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAt() + " NEEDED IN ALL SHIPS + Officer");
             }
         }
     }
