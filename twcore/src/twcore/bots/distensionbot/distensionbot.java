@@ -2933,6 +2933,7 @@ public class distensionbot extends SubspaceBot {
 
             p.setIgnoreShipChanges(true);
 
+            p.setShipNum( p.getLastShipNum() );
             if( !p.getCurrentShipFromDB() ) {
                 m_botAction.sendPrivateMessage( name, "Error getting back in with that ship!  Please contact a mod." );
                 p.setShipNum( 0 );
@@ -7074,9 +7075,14 @@ public class distensionbot extends SubspaceBot {
          * @return Cost of upgrading to next level of upgrade
          */
         public int getCostDefine( int currentLevel ) {
-            if( cost == -1 )
+            if( cost == -1 ) {
+                if( currentLevel >= costDefines.length ) {
+                    Tools.printLog( "Attempted to access level " + currentLevel + " for upgrade " + name + "." );
+                    m_botAction.sendArenaMessage("ERROR: Invalid level for upgrade " + name + ".  Notify dugwyler or staff immediately.");
+                    return -1;
+                }
                 return costDefines[ currentLevel ];
-            else
+            } else
                 return cost;
         }
     }
