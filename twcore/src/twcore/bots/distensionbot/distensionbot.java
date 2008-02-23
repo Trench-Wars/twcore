@@ -333,14 +333,20 @@ public class distensionbot extends SubspaceBot {
         setupPrices();
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
-            while( r.next() ) {
-                int id = r.getInt( "fnArmyID");
-                DistensionArmy army = new DistensionArmy(id);
-                m_armies.put(id, army );
+            if( r == null ) {
+                Tools.printLog( "Null ResultSet returned for query: 'SELECT fnArmyID FROM tblDistensionArmy' on connection '" + m_database + "'" );
+                cmdDie("","");
+            } else {
+                while( r.next() ) {
+                    int id = r.getInt( "fnArmyID");
+                    DistensionArmy army = new DistensionArmy(id);
+                    m_armies.put(id, army );
+                }
+                m_botAction.SQLClose(r);
             }
-            m_botAction.SQLClose(r);
         } catch (SQLException e) {
-            Tools.printLog("Error retrieving army data on startup.");
+            Tools.printStackTrace( "Error retrieving army data on startup!", e );
+            cmdDie("","");
         }
         flagTimeStarted = false;
         stopFlagTime = false;
@@ -1601,7 +1607,10 @@ public class distensionbot extends SubspaceBot {
                 return;
             }
             m_botAction.SQLClose(r);
-        } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); return; }
+        } catch (Exception e ) {
+            m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+            return;
+        }
 
         Integer armyNum;
         String pwd = "";
@@ -1692,7 +1701,8 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
                 m_botAction.SQLClose(r);
-            } catch (SQLException e ) {
+            } catch (Exception e ) {
+                Tools.printStackTrace( "Error getting ship data for !defect from DB.", e );
                 throw new TWCoreException( DB_PROB_MSG );
             }
             p.doDefect( army.getID() );
@@ -2140,7 +2150,11 @@ public class distensionbot extends SubspaceBot {
                     shipRanks.put( r.getInt("fnShipNum"), r.getInt("fnRank") );
                 m_botAction.SQLClose(r);
             }
-        } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+        } catch (Exception e ) {
+            Tools.printStackTrace( "Error getting ship ranks for !hangar from DB.", e );
+            m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+            return;
+        }
 
 
         ShipProfile pf;
@@ -4335,6 +4349,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "Army reconfiguration complete; all " + totalCount + " players reassigned.  Army 0: " + army0Count + " pilots; Army 1: " + army1Count + " pilots." );
             cmdSaveDie(name,"");
         } catch (SQLException e ) {
+            Tools.printStackTrace( "Error getting player data from DB for !db-randomarmies.", e );
             throw new TWCoreException( "DB command not successful." );
         }
     }
@@ -4956,9 +4971,15 @@ public class distensionbot extends SubspaceBot {
             try {
                 ResultSet r = m_botAction.SQLQuery( m_database, "INSERT INTO tblDistensionPlayer ( fcName , fnArmyID ) " +
                         "VALUES ('" + Tools.addSlashesToString( name ) + "', '" + armyID + "')" );
-                if( r != null && r.next() )
-                    playerID = r.getInt(1);
-                m_botAction.SQLClose(r);
+                if( r == null ) {
+                    Tools.printLog( "Null ResultSet returned for query to add player to DB on connection '" + m_database + "'" );
+                    m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                    return;
+                }
+                if( r.next() ) {
+                    playerID = r.getInt(1);     // Get index ID returned
+                    m_botAction.SQLClose(r);
+                }
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
         }
 
@@ -4970,6 +4991,11 @@ public class distensionbot extends SubspaceBot {
             try {
                 boolean success = false;
                 ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
+                if( r == null ) {
+                    Tools.printLog( "Null ResultSet returned for query: 'SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'' on connection '" + m_database + "'" );
+                    m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                    return false;
+                }
                 if( r.next() ) {
                     banned = r.getString( "fcBanned" ).equals( "y" );
                     if( banned == true )
@@ -4987,6 +5013,7 @@ public class distensionbot extends SubspaceBot {
                 return success;
             } catch (SQLException e ) {
                 Tools.printStackTrace("Problem fetching returning player: " + name, e);
+                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
                 return false;
             }
         }
@@ -4997,7 +5024,10 @@ public class distensionbot extends SubspaceBot {
         public void savePlayerDataToDB() {
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='" + timePlayed +"', fnBattlesWon='" + battlesWon + "' WHERE fnID='" + playerID + "'" );
-            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+            } catch (SQLException e ) {
+                Tools.printStackTrace("Problem saving player: " + name, e);
+                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+            }
         }
 
         /**
@@ -5023,7 +5053,10 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES (" + playerID + ", " + shipNumToAdd + ")" );
                 else
                     m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnRankPoints ) VALUES (" + playerID + ",  " + shipNumToAdd + ", " + startingRankPoints + ")" );
-            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+            } catch (SQLException e ) {
+                Tools.printStackTrace("Problem adding ship " + shipNumToAdd + " to DB for: " + name, e);
+                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+            }
         }
 
         /**
@@ -5037,7 +5070,10 @@ public class distensionbot extends SubspaceBot {
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToRemove + "='n' WHERE fnID='" + playerID + "'" );
                 m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionShip WHERE fnPlayerID='" + playerID + "' AND fnShipNum='" + shipNumToRemove + "'" );
-            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+            } catch (SQLException e ) {
+                Tools.printStackTrace("Problem removing ship " + shipNumToRemove + " from DB for: " + name, e);
+                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+            }
         }
 
         /**
@@ -5102,8 +5138,11 @@ public class distensionbot extends SubspaceBot {
                 "WHERE ship.fnPlayerID='" + playerID + "' AND ship.fnShipNum='" + shipNum + "'";
 
                 ResultSet r = m_botAction.SQLQuery( m_database, query );
-                if( r == null )
+                if( r == null ) {
+                    Tools.printLog( "Null ResultSet returned for query: '" + query + "' on connection '" + m_database + "'" );
+                    m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
                     return false;
+                }
                 if( r.next() ) {
                     // Init rank level, rank points and upgrade points
                     rank = r.getInt( "fnRank" );
@@ -5149,6 +5188,8 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.SQLClose(r);
                 return shipDataSaved;
             } catch (SQLException e ) {
+                Tools.printStackTrace( "Error getting ship from DB.", e );
+                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
                 return false;
             }
         }
@@ -5532,6 +5573,11 @@ public class distensionbot extends SubspaceBot {
                             String query = "SELECT fnShipNum, fnRank FROM tblDistensionShip ship " +
                             "WHERE ship.fnPlayerID='" + playerID + "'";
                             ResultSet r = m_botAction.SQLQuery( m_database, query );
+                            if( r == null ) {
+                                Tools.printLog( "Null ResultSet returned for query: '" + query + "' on connection '" + m_database + "'" );
+                                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                                return;
+                            }
                             boolean allShipsAtRank = true;
                             while( r.next() && allShipsAtRank ) {
                                 if( r.getInt("fnShipNum") != shipNum && r.getInt("fnRank") < RANK_REQ_SHIP9 )
@@ -5543,6 +5589,8 @@ public class distensionbot extends SubspaceBot {
                             }
                             m_botAction.SQLClose(r);
                         } catch(SQLException e) {
+                            Tools.printStackTrace( "Error getting ships from DB for adding Tactical Ops.", e );
+                            m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
                         }
                     }
                 }
@@ -5821,6 +5869,10 @@ public class distensionbot extends SubspaceBot {
 
                     try {
                         ResultSet r = m_botAction.SQLQuery( m_database, query );
+                        if( r == null ) {
+                            Tools.printLog("Null ResultSet returned for retrieval of ship 6 (for adding) on player ID " + playerID );
+                            return false;
+                        }
                         if( r.next() ) {
                             m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fnID='" + playerID + "'" );
                             m_botAction.sendPrivateMessage(name, "For 20 successive kills, your Weasel has been returned to the hangar!");
@@ -5831,7 +5883,11 @@ public class distensionbot extends SubspaceBot {
                         }
                         m_botAction.SQLClose(r);
                         return true;
-                    } catch (SQLException e ) { return false; }
+                    } catch (SQLException e ) {
+                        Tools.printStackTrace( "Error getting ships from DB for adding Weasel.", e );
+                        m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                        return false;
+                    }
                 } else {
                     award = 5;
                     if( rank > 1 )
@@ -6155,7 +6211,10 @@ public class distensionbot extends SubspaceBot {
             sendKillMessages = !sendKillMessages;
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcSendKillMsg='" + (sendKillMessages?'y':'n') +"' WHERE fnID='" + playerID + "'" );
-            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+            } catch (SQLException e ) {
+                Tools.printStackTrace( "Error getting ships from DB for adding Tactical Ops.", e );
+                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+            }
             return sendKillMessages;
         }
 
@@ -6666,6 +6725,10 @@ public class distensionbot extends SubspaceBot {
             flagsOwned = 0;
             try {
                 ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fcArmyName, fnNumPilots, fcDefaultArmy, fcPrivateArmy, fcPassword FROM tblDistensionArmy WHERE fnArmyID='"+ armyID + "'" );
+                if( r == null ) {
+                    Tools.printLog("Null ResultSet returned for army data retrieval, ID: '" + armyID + "'");
+                    return;
+                }
                 if( r.next() ) {
                     armyName = r.getString( "fcArmyName" );
                     pilotsTotal = r.getInt( "fnNumPilots" );
