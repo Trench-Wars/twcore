@@ -57,7 +57,7 @@ public class BotSettings {
             while( (line = in.readLine()) != null ){
                 if( line.length() != 0 ){
                     char firstChar = line.trim().charAt( 0 );
-                    if( !(firstChar == '#' || firstChar == '[' )){
+                    if( !(firstChar == '#' || firstChar == '[' || firstChar == '/' )){
                         equalsIndex = line.indexOf( '=' );
 
                         // Allow // comments on the same line as data to make it easier to document CFGs
