@@ -1,7 +1,7 @@
 [General]
 name=Javelin Dueling
 specialaccess=Rule:Force of Nature:Hydride:Sweeper:Geio:fieryfire:fireballz
-arena=javduel,twjd4,javduel3
+arena=javduel,javduel2,javduel3
 ship=2
 players=5
 minplayers=4
