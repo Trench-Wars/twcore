@@ -593,6 +593,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!la", acceptedMessages, this, "cmdLagout" );
         m_commandInterpreter.registerCommand( "!mh", acceptedMessages, this, "cmdModHelp" );
         m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
+        m_commandInterpreter.registerCommand( "!p", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!sca", acceptedMessages, this, "cmdScrapAll" );
@@ -1350,6 +1351,9 @@ public class distensionbot extends SubspaceBot {
         boolean isRepeatKillHard = false;
         boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
         boolean endedStreak = false;
+        int loserRank = Math.max( 1, loser.getRank() );
+        int victorRank = Math.max( 1, victor.getRank() );
+        int rankDiff = loserRank - victorRank;
 
         // IF TK: TKer loses points equal to half their level, and they are notified
         // of it if they have not yet been notified this match.  Successive kills are
@@ -1361,12 +1365,12 @@ public class distensionbot extends SubspaceBot {
                 div = 8.0f;
             else {
                 if( loser.isSupportShip() )
-                    div = 1.0f;
+                    div = 1.5f;
                 else
-                    div = 2.0f;
+                    div = 2.5f;
             }
             // If lowbies get TKd, it shouldn't hurt as much, because ... well, it's easy to TK them.
-            if( loser.getRank() < 10 )
+            if( rankDiff <= -RANK_DIFF_MED )
                 div *= 1.5f;
             int loss = Math.round((float)victor.getRank() / div);
             if( DEBUG )
@@ -1387,9 +1391,6 @@ public class distensionbot extends SubspaceBot {
             if( killerarmy == null || killedarmy == null )
                 return;
             int points;
-            int loserRank = Math.max( 1, loser.getRank() );
-            int victorRank = Math.max( 1, victor.getRank() );
-            int rankDiff = loserRank - victorRank;
 
             // Loser is many levels above victor:
             //   Victor capped, but loser is humiliated with some point loss
@@ -2252,6 +2253,23 @@ public class distensionbot extends SubspaceBot {
             cmdProgress( name, msg, null );
         else
             cmdProgress( name, msg, mod );
+        // Display command rank progress info, w/ separate display for cadets enrolled in the academy.
+        if( p.getBattlesWon() < WINS_REQ_RANK_ENSIGN ) {
+            if( p.getBattlesWon() < WINS_REQ_RANK_CADET_4TH_CLASS ) {
+                m_botAction.sendPrivateMessage( theName, "Enrolled in the Officer's Academy.  Estimated you will graduate to the next class after " + p.getWinsRequiredForNextCommandRank() + " more battles won.");
+            } else {
+                m_botAction.sendPrivateMessage( theName, "Enrolled in the Officer's Academy.  Estimated you will graduate to the next class after " + p.getWinsRequiredForNextCommandRank() + " more battles won.");
+            }
+        } else {
+            if( p.getBattlesWon() < WINS_REQ_RANK_COMMODORE )
+                m_botAction.sendPrivateMessage( theName, "You are an Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battles won." );
+            else {
+                if( p.getBattlesWon() >= WINS_REQ_RANK_FLEET_ADMIRAL )
+                    m_botAction.sendPrivateMessage( theName, "You are the Fleet Admiral, the highest and most honorable rank of all." );
+                else
+                    m_botAction.sendPrivateMessage( theName, "You are a Flag Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battles won." );
+            }
+        }
     }
 
 
@@ -5726,6 +5744,46 @@ public class distensionbot extends SubspaceBot {
             if( battlesWon >= WINS_REQ_RANK_CADET_4TH_CLASS )
                 return "Cadet 4th Class";
             return "Recruit";
+        }
+
+
+        /**
+         * @return Number of wins required for next command rank
+         */
+        public int getWinsRequiredForNextCommandRank() {
+            if( battlesWon >= WINS_REQ_RANK_FLEET_ADMIRAL )
+                return -1;
+            if( battlesWon >= WINS_REQ_RANK_ADMIRAL )
+                return WINS_REQ_RANK_FLEET_ADMIRAL - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_VICE_ADMIRAL )
+                return WINS_REQ_RANK_ADMIRAL - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_REAR_ADMIRAL )
+                return WINS_REQ_RANK_VICE_ADMIRAL - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_COMMODORE )
+                return WINS_REQ_RANK_REAR_ADMIRAL - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_FLEET_CAPTAIN )
+                return WINS_REQ_RANK_COMMODORE - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_CAPTAIN )
+                return WINS_REQ_RANK_FLEET_CAPTAIN - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_COMMANDER )
+                return WINS_REQ_RANK_CAPTAIN - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_LEIUTENANT_COMMANDER )
+                return WINS_REQ_RANK_COMMANDER - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_LEIUTENANT )
+                return WINS_REQ_RANK_LEIUTENANT_COMMANDER - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_2ND_LEIUTENANT )
+                return WINS_REQ_RANK_LEIUTENANT - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_ENSIGN )
+                return WINS_REQ_RANK_2ND_LEIUTENANT - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_CADET_1ST_CLASS )
+                return WINS_REQ_RANK_ENSIGN - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_CADET_2ND_CLASS )
+                return WINS_REQ_RANK_CADET_1ST_CLASS - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_CADET_3RD_CLASS )
+                return WINS_REQ_RANK_CADET_2ND_CLASS - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_CADET_4TH_CLASS )
+                return WINS_REQ_RANK_CADET_3RD_CLASS - battlesWon;
+            return WINS_REQ_RANK_CADET_4TH_CLASS - battlesWon;
 
         }
 
@@ -6603,6 +6661,13 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * @return Total number of battles won (with 50%+ participation).
+         */
+        public int getBattlesWon() {
+            return battlesWon;
+        }
+
+        /**
          * @return Whether or not player should respawn quickly.
          */
         public boolean isFastRespawn() {
@@ -7464,8 +7529,9 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
                         modPoints += bonus;
                         p.addRankPoints(modPoints);
-                        // Assisters do not receive credit for wins from their army, for obvious reasons
-                        if( p.getNaturalArmyID() == p.getArmyID() )
+                        // Assisters do not receive credit for wins from their army, for obvious reasons.
+                        // Also need 50% participation or more for the win to count properly.
+                        if( p.getNaturalArmyID() == p.getArmyID() && percentOnFreq >= .5 )
                             p.addBattleWin();
                     } else {
                         if( DEBUG )
@@ -7523,10 +7589,6 @@ public class distensionbot extends SubspaceBot {
             m_freq1Score = 0;
             flagTimeStarted = false;
             return;
-        } else {
-            freePlayTimer = new FreePlayTask();
-            freePlayTimer.setTime(intermissionTime);
-            m_botAction.scheduleTask( freePlayTimer, 15000 );
         }
 
 
@@ -7535,6 +7597,10 @@ public class distensionbot extends SubspaceBot {
             cmdSaveData(m_botAction.getBotName(), "");
             intermissionTime = 5000;
         } else {
+            freePlayTimer = new FreePlayTask();
+            freePlayTimer.setTime(intermissionTime);
+            m_botAction.scheduleTask( freePlayTimer, 15000 );
+
             doScores(15000);
 
             // Swap out players waiting to enter
@@ -8224,7 +8290,7 @@ public class distensionbot extends SubspaceBot {
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
-                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE DECISIVE BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the battle.", Tools.Sound.GOGOGO );
+                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE DECISIVE BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the battle.", 255 );
                     resetAllFlagData();
                     setupPlayerTimes();
                     warpPlayers();
