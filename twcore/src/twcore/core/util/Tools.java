@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.TimeZone;
 
 import twcore.core.BotAction;
 import twcore.core.game.Player;
@@ -601,10 +602,16 @@ public final class Tools {
 	 */
 	public static String replaceKeys(BotAction bot, Player p, String message){
 		Random rand = new Random();
+		Date today = Calendar.getInstance().getTime();
+		TimeZone tz = TimeZone.getDefault();
 		if(message.contains("&player"))
 			message = message.replace("&player", p.getPlayerName());
 		if(message.contains("&freq"))
-			message = message.replace("&freq", Integer.toString(p.getFrequency()));	
+			message = message.replace("&freq", Integer.toString(p.getFrequency()));
+		if(message.contains("&date"))
+			message = message.replace("&date", SimpleDateFormat.getDateInstance( SimpleDateFormat.SHORT ).format(today));
+		if(message.contains("&time"))
+			message = message.replace("&time", SimpleDateFormat.getTimeInstance().format(today) + " (" + tz.getDisplayName(true, TimeZone.SHORT) + ")");
 		while(message.contains("&randomfreq"))
 			message = message.replaceFirst("&randomfreq", Integer.toString(rand.nextInt( 9998 )));
 		if(message.contains("&shipname"))
@@ -677,6 +684,8 @@ public final class Tools {
 			"| &wins           - The player's wins.              |",
 			"| &losses         - The player's losses.            |",
 			"| &ping           - The player's ping in ms.        |",
+			"| &date           - The current date.               |",
+			"| &time           - The current time.               |",
 			"| &!command&&     - Issues a command to the bot, but|",
 			"|                    the player receives no message.|",
 			"+===================================================+",

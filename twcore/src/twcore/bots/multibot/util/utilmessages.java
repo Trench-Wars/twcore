@@ -52,7 +52,6 @@ import twcore.core.util.ModuleEventRequester;
  * June 29, 2003 - Changed the delimiter to a comma.
  * February 19, 2008 - Changed the delimiter to a colon. - milosh
  *                   - Added the ability to use commands/escape keys in GREET_TYPE messages.
- *                   - Added a !ListKeys command that displays all escape keys.
  */
 public class utilmessages extends MultiUtil
 {
@@ -90,7 +89,7 @@ public class utilmessages extends MultiUtil
         "!AddGreetMsg <Msg>:<Sound>                -- Greets a player with <Msg> when they enter the arena.",
         "!AddTargetMsg <Person>:<Msg>              -- Adds <Msg> to be PM'd when <Person> is killed.",
         "!MsgList                                  -- Displays all of the current message tasks.",
-        "!ListKeys                                 -- Displays a list of all available escape keys.",
+        "!KeyList                                  -- Displays available escape keys.",
         "!MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
         "!ClearTargets                             -- Clears all message target data.",
         "!MsgsOff                                  -- Turns all of the messages off."
@@ -321,8 +320,8 @@ public class utilmessages extends MultiUtil
         doAddTargetMsgCmd( sender, command.substring(14));
       if(lowerCommand.equalsIgnoreCase("!msglist"))
         doMsgListCmd(sender);
-      if(lowerCommand.equalsIgnoreCase("!listkeys"))
-    	m_botAction.smartPrivateMessageSpam(sender, Tools.getKeysMessage());
+      if(lowerCommand.equalsIgnoreCase("!keylist"))
+    	  m_botAction.smartPrivateMessageSpam(sender, Tools.getKeysMessage());
       if(lowerCommand.startsWith("!msgdel "))
         doMsgDelCmd(sender, command.substring(8));
       if(lowerCommand.equalsIgnoreCase("!msgsoff"))
