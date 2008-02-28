@@ -277,6 +277,7 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
     private final int LVZ_EMP = 206;                    // EMP ready graphic
     private final int LVZ_ENERGY_TANK = 207;            // Energy Tank ready graphic
+    private final int LVZ_SUPER = 208;                  // Super!
     private final int LVZ_TOPBASE_EMPTY = 251;          // Flag display
     private final int LVZ_TOPBASE_ARMY0 = 252;
     private final int LVZ_TOPBASE_ARMY1 = 253;
@@ -297,7 +298,9 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_OPS_COVER_TOP_FIRST = 320;
     private final int LVZ_OPS_COVER_BOT_FIRST = 330;
 
-
+    // SOUND DEFINES
+    private final int SOUND_START_ROUND = 255;
+    private final int SOUND_END_IS_NIGH = 254;
 
 
 
@@ -5358,7 +5361,7 @@ public class distensionbot extends SubspaceBot {
                 double superChance = Math.random() * 10.0;
                 if( (double)purchasedUpgrades[11] > superChance && !isRespawning ) {
                     m_botAction.specificPrize( name, Tools.Prize.SUPER );
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "INFINITE ENERGY STREAM NOW *** ACTIVE ***" );
+                    m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_SUPER );
                     prized = true;
                 }
             } else if( shipNum == 8) {
@@ -8290,7 +8293,7 @@ public class distensionbot extends SubspaceBot {
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
-                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE DECISIVE BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the battle.", 255 );
+                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE DECISIVE BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the battle.", SOUND_START_ROUND );
                     resetAllFlagData();
                     setupPlayerTimes();
                     warpPlayers();
@@ -8374,7 +8377,7 @@ public class distensionbot extends SubspaceBot {
                     checkForAssistAdvert = true;    // ... and advert.
                 }
             } else if( flagSecsReq - secondsHeld == 10 ) {
-                m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " will win the battle in 10 seconds . . ." );
+                m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " will win the battle in 10 seconds . . .", SOUND_END_IS_NIGH );
             }
         }
 
