@@ -189,6 +189,7 @@ public class GamePacketInterpreter {
             case 0x10:
                 handleFileArrived( array, alreadyDecrypted );
                 break;
+            // 0x11 - NOP?: Unhandled
             case 0x12:
                 handleFlagPosition( array, alreadyDecrypted );
                 break;
@@ -198,11 +199,11 @@ public class GamePacketInterpreter {
             case 0x14:
                 handleFlagVictory( array, alreadyDecrypted );
                 break;
-            // 0x15 - Destroy Turret Link: Unhandled
+            // 0x15 - Destroy Turret Link (player hits F7 to detach anyone attached): Unhandled
             case 0x16:
                 handleFlagDropped( array, alreadyDecrypted );
                 break;
-            // 0x17 - Unknown (probably NOP): Unhandled
+            // 0x17 - NOP?: Unhandled
             // 0x18 - Synchronization Request: Unhandled (This is why bot must be a sysop)
             //        On Sync request, send 0x1A - Security checksum
             case 0x19:
