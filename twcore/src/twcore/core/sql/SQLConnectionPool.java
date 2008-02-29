@@ -5,7 +5,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -29,7 +31,8 @@ public class SQLConnectionPool implements Runnable {
                                                 // False - throw SQLException if no
                                                 //         connection is available
     private Vector<Connection>  availableConnections;       // Connections not in use
-    private HashMap<String, Connection>  busyConnections;            // Connections currently querying
+    private Map<String, Connection>  busyConnections;            // Connections currently querying
+
     private boolean connectionPending = false;  // True if a connection is being made
     private int     currentBackground = 0;      // Total number of background queries
     
@@ -63,7 +66,7 @@ public class SQLConnectionPool implements Runnable {
             initialConnections = maxConnections;
         }
         availableConnections = new Vector<Connection>(initialConnections);
-        busyConnections = new HashMap<String, Connection>();
+        busyConnections = Collections.synchronizedMap(new HashMap<String, Connection>());
         for(int i=0; i<initialConnections; i++) {
             availableConnections.addElement(makeNewConnection());
         }
@@ -203,6 +206,7 @@ public class SQLConnectionPool implements Runnable {
     private Connection makeNewConnection() throws SQLException {
         try {
             Class.forName(driver);
+            DriverManager.setLoginTimeout(10);
             Connection conn = DriverManager.getConnection( dburl );
             return( conn );
         } catch(ClassNotFoundException cnfe) {
@@ -266,7 +270,7 @@ public class SQLConnectionPool implements Runnable {
      * Closes all of the connections in the given HashMap.
      * @param connections Vector containing connections to close
      */
-    private void closeBusyConnections(HashMap<String,Connection> connections) {
+    private void closeBusyConnections(Map<String,Connection> connections) {
         try {
             for(Connection conn:connections.values()) {
                 if (!conn.isClosed()) {
