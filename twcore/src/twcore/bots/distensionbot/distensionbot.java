@@ -79,8 +79,7 @@ public class distensionbot extends SubspaceBot {
     private final float HIGH_RANK_FACTOR = 1.25f;          // Factor for rank increases (lvl 50+)
     private final float STUPIDLY_HIGH_RANK_FACTOR = 1.7f;  // Factor for rank increases (lvl 70+)
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
-    private final int RANK_DIFF_HIGH = 30;                 // for humiliation and low-rank RP caps
-    private final int RANK_DIFF_VHIGH = 40;
+    private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
     private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
 
@@ -1352,7 +1351,6 @@ public class distensionbot extends SubspaceBot {
                 isBTeK = true;
         }
         boolean isMaxReward = false;
-        boolean isMinReward = false;
         boolean isRepeatKillLight = false;
         boolean isRepeatKillHard = false;
         boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
@@ -1420,21 +1418,6 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.sendPrivateMessage(loser.getArenaPlayerID(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getRank() + ")");
                     }
                 }
-
-                // Loser is 20 or more levels below victor: victor gets fewer points
-            } else if( rankDiff <= -RANK_DIFF_MED ) {
-                isMinReward = true;
-                if( rankDiff <= -RANK_DIFF_HIGHEST )
-                    points = 1;
-                else if( rankDiff <= -RANK_DIFF_VHIGH )
-                    points = loserRank / 3;
-                else if( rankDiff <= -RANK_DIFF_HIGH )
-                    points = loserRank / 2;
-                else
-                    points = (int)(loserRank / 1.5f);
-
-                // Normal kill:
-                //   Victor earns the rank of the loser in points.  Level 0 players are worth 1 point.
             } else {
                 points = loser.getRank();
             }
@@ -1542,9 +1525,7 @@ public class distensionbot extends SubspaceBot {
             if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                 points = Math.round((float)points * DEBUG_MULTIPLIER);
             String msg = "+" + points + " RP: " + loser.getName() + "(" + loser.getRank() + ")";
-            if( isMinReward )
-                msg += " [Low rank cap]";
-            else if( isMaxReward )
+            if( isMaxReward )
                 msg += " [High rank cap]";
             if( isRepeatKillLight )
                 msg += " [Repeat: -50%]";
@@ -1913,6 +1894,7 @@ public class distensionbot extends SubspaceBot {
         if( p.isRespawning() ) {
             m_prizeQueue.removePlayer(p);
             p.isRespawning = false;
+            m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_REARMING );
         }
 
         // Check if Tactical Ops position is available
@@ -2946,7 +2928,7 @@ public class distensionbot extends SubspaceBot {
         if( p == null )
             return;
         if( p.getShipNum() == -1 ) {
-            m_botAction.sendPrivateMessage( name, "You must !return first... attempting to !return you automatically." );
+            m_botAction.sendPrivateMessage( name, "You must !return before you !lagout.  Attempting to !return you automatically.  NOTE: If you were DC'd, you will not be able to !lagout." );
             cmdReturn( name, msg );
             return;
         }
@@ -5266,6 +5248,8 @@ public class distensionbot extends SubspaceBot {
          * Performs necessary actions to spawn the player, if ready.
          */
         public boolean doSpawn() {
+            if( !isRespawning )
+                return true;
             if( specialRespawn ) {
                 specialRespawn = false;
                 isRespawning = false;
@@ -5274,8 +5258,6 @@ public class distensionbot extends SubspaceBot {
             }
             if( spawnTicks > 0 )
                 return false;
-            if( !isRespawning )
-                return true;
             isRespawning = false;
             m_prizeQueue.resumeSpawningAfterDelay( prizeUpgrades( true ) );
             return true;
@@ -5859,6 +5841,7 @@ public class distensionbot extends SubspaceBot {
             }
             this.shipNum = shipNum;
             isRespawning = false;
+            m_prizeQueue.removePlayer(p);
             successiveKills = 0;
             recentlyEarnedRP = 0;
             currentOP = 0;
@@ -7332,6 +7315,7 @@ public class distensionbot extends SubspaceBot {
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
         m_botAction.sendArenaMessage( "FREE PLAY has ended.  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+        m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go #distension to play." );
         if( m_roundNum == 1 )
             m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + flagMinutesRequired + " minute" + (flagMinutesRequired == 1 ? "" : "s") + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
         m_botAction.cancelTask(startTimer);
