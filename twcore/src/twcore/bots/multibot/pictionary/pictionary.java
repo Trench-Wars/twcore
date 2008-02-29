@@ -32,7 +32,7 @@ public class pictionary extends MultiModule {
 	private static final int ANSWER_GIVEN = 4;
 
 	Random m_rnd;
-	String mySQLHost = "local";
+	String mySQLHost = "website";
 	TimerTask timerQuestion, timerHint, timerAnswer, timerNext, warn,
 			forcePass;
 
