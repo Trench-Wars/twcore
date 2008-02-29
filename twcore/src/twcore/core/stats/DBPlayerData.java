@@ -188,6 +188,7 @@ public class DBPlayerData {
 
 
     public boolean createPlayerAccountData(String fcPassword) {
+        // FIXME: Seriously, wtf, why would you hack the connection name here
         if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
             m_connName = "website";
 
@@ -206,6 +207,7 @@ public class DBPlayerData {
 
 
     public boolean updatePlayerAccountData(String fcPassword) {
+        // FIXME: Seriously, wtf, why would you hack the connection name here
         if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
             m_connName = "website";
 
