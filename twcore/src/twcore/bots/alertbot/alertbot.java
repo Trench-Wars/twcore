@@ -38,6 +38,8 @@ public class alertbot extends SubspaceBot {
 	
 	boolean alertToChat = true;
 	
+	String sqlHost = "local";
+	
     private static Pattern failPattern = Pattern.compile("(?!)"); // will never match anything
     private static Pattern acceptable = Pattern.compile("^!(?:on|off|help)$",Pattern.CASE_INSENSITIVE);
     private static Pattern replaceMessage = Pattern.compile("(?<!\\\\)(\\\\\\\\)*\\$arena"); // setup in case someone wants \$arena to show up
@@ -141,7 +143,7 @@ public class alertbot extends SubspaceBot {
 	                m_botAction.sendChatMessage(3, startMessage);
                 }
                 try {
-                    ResultSet set = m_botAction.SQLQuery("server","select name from alerts where id="+alertBotTypeID+" and date > NOW() order by date desc limit 100");
+                    ResultSet set = m_botAction.SQLQuery(sqlHost,"select name from alerts where id="+alertBotTypeID+" and date > NOW() order by date desc limit 100");
                     if (set == null) return;
                     while ( set.next() ) {
                         m_botAction.sendSmartPrivateMessage( set.getString("name"), startMessage );
@@ -168,7 +170,7 @@ public class alertbot extends SubspaceBot {
         if(message.equalsIgnoreCase("!on")){
             try {
                 // let's be paranoid
-                ResultSet set = m_botAction.SQLQuery("server","REPLACE INTO alerts (id,name,date) values("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
+                ResultSet set = m_botAction.SQLQuery(sqlHost,"REPLACE INTO alerts (id,name,date) values("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts activated for " + botType + "." );
                 if (set != null) m_botAction.SQLClose( set );
             } catch (SQLException e) {
@@ -179,7 +181,7 @@ public class alertbot extends SubspaceBot {
         }
         else if ( message.equalsIgnoreCase("!off") ) {
             try {
-                ResultSet set = m_botAction.SQLQuery("server","delete from alerts where id="+alertBotTypeID+" and name=\""+Tools.addSlashesToString(name)+"\"");
+                ResultSet set = m_botAction.SQLQuery(sqlHost,"delete from alerts where id="+alertBotTypeID+" and name=\""+Tools.addSlashesToString(name)+"\"");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts deactivated for " + botType + "." );
                 if (set != null) m_botAction.SQLClose( set );
             } catch (SQLException e) {
