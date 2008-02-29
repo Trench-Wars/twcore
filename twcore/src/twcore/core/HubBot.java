@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.TimerTask;
 
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.FileArrived;
@@ -22,6 +23,12 @@ public class HubBot extends SubspaceBot {
     private ThreadGroup         m_kingGroup;            // Thread grouping the
                                                         // hub belongs to
     private CommandInterpreter  m_commandInterpreter;   // Handles commands
+
+    private TimerTask           m_smartShutdownTask;    // Periodically disconnects idle bots before shutdown
+    private int                 m_smartShutdownRate = 10 * 1000;    // How often to check for idle bots, in ms
+
+    private TimerTask           m_billerDownTask;       // Periodically displays biller down message
+    private int                 m_billerDownRate = 5 * 60 * 1000;   // How often to display biller down msg, in ms
 
     private long 				spawnutime;				// Stores the unix timestamp when the bot gets spawned for !uptime use
 
@@ -68,7 +75,12 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand" );
+        m_commandInterpreter.registerCommand( "!billerdown", acceptedMessages, this, "handleBillerDownCommand" );
+        m_commandInterpreter.registerCommand( "!recycleserver", acceptedMessages, this, "handleRecycleCommand" );
         m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand" );
+        m_commandInterpreter.registerCommand( "!smartshutdown", acceptedMessages, this, "handleSmartShutdownCommand" );
+        m_commandInterpreter.registerCommand( "!shutdownidlebots", acceptedMessages, this, "handleShutdownIdleBotsCommand" );
+        m_commandInterpreter.registerCommand( "!shutdownallbots", acceptedMessages, this, "handleShutdownAllBotsCommand" );
         m_commandInterpreter.registerCommand( "!sqlstatus", acceptedMessages, this, "handleSQLStatus" );
 
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
@@ -150,7 +162,7 @@ public class HubBot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile sysop.txt" );
     }
-    
+
     private void loadAccessConfiguration() {
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "owners.cfg" ), OperatorList.OWNER_LEVEL );
         m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "outsider.cfg" ), OperatorList.OUTSIDER_LEVEL );
@@ -427,7 +439,78 @@ public class HubBot extends SubspaceBot {
     }
 
     /**
-     * Shuts down the core.
+     * Shuts down the core immediately.
+     * @param messager Name of the player who sent the command
+     * @param message is irrelevant
+     */
+    public void handleBillerDownCommand( String messager, String message ){
+        if( !m_botAction.getOperatorList().isModerator( messager ) ) {
+            if( !message.equals("off") && !message.equals(m_botAction.getGeneralSettings().getNonNullString("BillerDownPassword"))) {
+                m_botAction.sendSmartPrivateMessage( messager, "Invalid password." );
+                m_botAction.sendChatMessage( 1, messager + " provided an invalid password for sending out the biller down message.");
+                return;
+            }
+        } else {
+            if( !m_botAction.getOperatorList().isZH(message) ) {
+                m_botAction.sendChatMessage( 1, messager + " tried to send out the biller down message.");
+            }
+        }
+
+        if( message.equals("off") ) {
+            if( m_billerDownTask == null ) {
+                m_botAction.sendSmartPrivateMessage( messager, "There is no biller down zone message currently being sent out." );
+                return;
+            }
+            try {
+                if( m_botAction.cancelTask(m_billerDownTask) == false )
+                    m_billerDownTask.cancel();
+            } catch (Exception e) {
+                m_botAction.sendSmartPrivateMessage( messager, "Disable failed.  Try again in a few moments." );
+                return;
+            }
+            m_billerDownTask = null;
+            m_botAction.sendSmartPrivateMessage( messager, "Biller down zone message disabled.  '!billerdown <password>' to turn back on." );
+            m_botAction.sendChatMessage( "Biller down zone message disabled by " + messager + ".  '!billerdown <password>' to turn back on." );
+            return;
+        }
+
+        if( m_billerDownTask != null ) {
+            m_botAction.sendSmartPrivateMessage( messager, "Message is already being sent out.  Use '!billerdown off' to disable." );
+            return;
+        }
+
+        m_botAction.sendSmartPrivateMessage( messager, "Sending out the biller down zone message approximately every " + (m_billerDownRate / 60000.0) + " minutes.  '!billerdown off' to disable." );
+        m_botAction.sendChatMessage( "Biller down zone message initiated by " + messager + ".  Message sent out every " + (m_billerDownRate / 60000.0) + "minutes.  '!billerdown off' to disable." );
+        Tools.printLog( "Biller down zone message initiated by " + messager + "." );
+
+        m_billerDownTask = new TimerTask() {
+            public void run() {
+                m_botAction.sendZoneMessage( "NOTICE: The TW billing server is temporarily down.  ?chat channels and some commands are disabled, and entering players will have ^ before their name.  Please be patient while normal service is restored. -TWStaff", Tools.Sound.BEEP1 );
+            }
+        };
+        m_botAction.scheduleTask(m_billerDownTask, m_billerDownRate);
+    }
+
+    /**
+     * Recycles the server if the player has the correct password.
+     * @param messager Name of the player who sent the command
+     * @param message is irrelevant
+     */
+    public void handleRecycleCommand( String messager, String message ){
+        if( m_botAction.getOperatorList().isSmod( messager ) ) {
+            if( !message.equals(m_botAction.getGeneralSettings().getNonNullString("RecyclePassword"))) {
+                m_botAction.sendSmartPrivateMessage( messager, "Invalid password." );
+                m_botAction.sendChatMessage( 1, messager + " provided an invalid password for recycling the server.");
+                return;
+            }
+            m_botAction.sendZoneMessage( "NOTICE: Server recycling all users to regain full functionality ... please log in again in a few moments. -TWStaff", Tools.Sound.BEEP1 );
+            m_botAction.sendUnfilteredPublicMessage("*recycle");
+
+        }
+    }
+
+    /**
+     * Shuts down the core immediately.
      * @param messager Name of the player who sent the command
      * @param message is irrelevant
      */
@@ -455,6 +538,76 @@ public class HubBot extends SubspaceBot {
     }
 
     /**
+     * Shuts down the core gradually by disconnecting bots when they are no longer in use.
+     * @param messager Name of the player who sent the command
+     * @param message is irrelevant
+     */
+    public void handleSmartShutdownCommand( String messager, String message ){
+        if( m_botAction.getOperatorList().isSysop( messager ) || m_botAction.getOperatorList().isDeveloperExact( messager ) ) {
+            m_botAction.sendSmartPrivateMessage( messager, "Beginning gradual shutdown of the core ..." );
+            m_botAction.sendChatMessage( 1, "--- SMART CORE SHUTDOWN initiated by " + messager + " ---" );
+            m_botAction.sendChatMessage( 1, "   (Bots will be disconnected as they become idle.)" );
+            System.out.println();
+            System.out.println( "=== Smart shutdown initiated ===" );
+            Tools.printLog( "Beginning smart shutdown by " + messager + ".");
+
+            m_smartShutdownTask = new TimerTask() {
+                public void run() {
+                    if( m_botQueue.shutdownIdleBots() ) {
+                        String upString = Tools.getTimeDiffString( spawnutime, true);
+                        Tools.printLog( "Total uptime: " + upString );
+                        m_botAction.sendChatMessage( 1, "--- Smart Shutdown complete.  Uptime: " + upString + " ---" );
+                        this.cancel();
+                        try {
+                            Thread.sleep(3000);
+                        } catch( InterruptedException e ){
+                        }
+                        m_botAction.die();
+                    }
+                }
+            };
+            m_botAction.scheduleTask(m_smartShutdownTask, 100, m_smartShutdownRate );
+
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to do a smart shut down on the core.");
+        }
+    }
+
+    /**
+     * Shuts down any idle bots, without continuing to check for when busy bots become idle.
+     * @param messager Name of the player who sent the command
+     * @param message is irrelevant
+     */
+    public void handleShutdownIdleBotsCommand( String messager, String message ){
+        if( m_botAction.getOperatorList().isSysop( messager ) || m_botAction.getOperatorList().isDeveloperExact( messager ) ) {
+            m_botAction.sendSmartPrivateMessage( messager, "Shutting down all idle bots ..." );
+            m_botAction.sendChatMessage( 1, "Idle bot shutdown initiated by " + messager + ".  All idle bots will be removed." );
+            Tools.printLog( "Idle bot shutdown by " + messager + ".");
+
+            m_botQueue.shutdownIdleBots();
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to shut down all idle bots.");
+        }
+    }
+
+    /**
+     * Shuts down any idle bots, without continuing to check for when busy bots become idle.
+     * @param messager Name of the player who sent the command
+     * @param message is irrelevant
+     */
+    public void handleShutdownAllBotsCommand( String messager, String message ){
+        if( m_botAction.getOperatorList().isSysop( messager ) || m_botAction.getOperatorList().isDeveloperExact( messager ) ) {
+            m_botAction.sendSmartPrivateMessage( messager, "Shutting down all bots ..." );
+            m_botAction.sendChatMessage( 1, "Full bot shutdown initiated by " + messager + ".  All bots will be removed, but the Hub will be left online." );
+            Tools.printLog( "Full bot shutdown by " + messager + ".");
+
+            m_botQueue.shutdownAllBots();
+        } else {
+            m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to shut down all bots.");
+        }
+    }
+
+    /**
      * Sends an appropriate help message based on access privileges.
      * @param messager Name of the player who sent the command
      * @param message Text of the message
@@ -465,6 +618,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "!help              - Displays this message." );
             m_botAction.sendSmartPrivateMessage( messager, "!spawn <bot type>  - spawns a new bot." );
             m_botAction.sendSmartPrivateMessage( messager, "!waitinglist       - Displays the waiting list." );
+            m_botAction.sendSmartPrivateMessage( messager, "!billerdown <pwd>  - Sends periodic biller down msd.  Mod+ doesn't need password.");
         }
 
         if( m_botAction.getOperatorList().isModerator( messager ) ){
@@ -481,15 +635,22 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isSmod( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
             m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
+            m_botAction.sendSmartPrivateMessage( messager, "!recycleserver <pwd>  - Recycles the server, if provided correct password.");
         }
 
         if( m_botAction.getOperatorList().isSysop( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
+            m_botAction.sendSmartPrivateMessage( messager, "!smartshutdown     - Shuts down all bots as they become idle, then shuts down the core." );
             m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdownidlebots  - Kills all idle bots, leaving any running bots and the hub online." );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdownallbots   - Kills all bots, leaving the hub online." );
         }
 
         if( m_botAction.getOperatorList().isDeveloperExact( messager ) ){
+            m_botAction.sendSmartPrivateMessage( messager, "!smartshutdown     - Shuts down all bots as they become idle, then shuts down the core." );
             m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdownidlebots  - Kills all idle bots, leaving any running bots and the hub online." );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdownallbots   - Kills all bots, leaving the hub online." );
         }
     }
 

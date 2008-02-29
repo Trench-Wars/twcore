@@ -283,7 +283,7 @@ public abstract class SubspaceBot {
     public void handleEvent( SoccerGoal event ) {
         Tools.printLog( m_botAction.getBotName() + ": SoccerGoal event not handled; ignored" );
     }
-    
+
     /**
      * Request this event from EventRequester and override this method in your bot to
      * handle this event (packet).  If you request this event and do not handle it,
@@ -406,6 +406,18 @@ public abstract class SubspaceBot {
      * after the bot dies, that they be closed using this method.
      */
     public void handleDisconnect(){
+    }
+
+    /**
+     * Called regularly on every bot when !smartshutdown is executed to determine whether or
+     * not the bot can be disconnected.  If returning true, it is assumed the bot is not in
+     * the middle of any critical behavior, such as running a game, and can be safely DC'd.
+     * The smart shutdown will use this method to determine whether it can disconnect a bot,
+     * and will wait until all bots have returned true before shutting down the core.
+     * @return True if the bot is not running a game or function and can be disconnected
+     */
+    public boolean isIdle() {
+        return true;
     }
 
 }

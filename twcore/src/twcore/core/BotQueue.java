@@ -267,23 +267,39 @@ public class BotQueue extends Thread {
      * Shuts down (removes) all bots.
      */
     void shutdownAllBots() {
-        ChildBot c;
         LinkedList<String> names = new LinkedList<String>();
-
-        Iterator<ChildBot> i = m_botStable.values().iterator();
-        while( i.hasNext() ) {
-            c = (ChildBot)i.next();
+        for( ChildBot c : m_botStable.values() ) {
             if( c != null ) {
                 names.add( c.getBot().getBotName() );
             }
         }
-        Iterator<String> j = names.iterator();
-        while( j.hasNext() ) {
-            String name = j.next();
+        for( String name : names ) {
             removeBot( name, "core shutdown" );
             m_botAction.sendChatMessage( 1, name + " logged off." );
         }
         m_botTypes.clear();
+    }
+
+    /**
+     * Shuts down (removes) all idle bots.
+     */
+    boolean shutdownIdleBots() {
+        boolean allBotsIdle = true;
+        LinkedList<String> names = new LinkedList<String>();
+
+        for( ChildBot c : m_botStable.values() ) {
+            if( c != null ) {
+                if( c.getBot().getSubspaceBot().isIdle() )
+                    names.add( c.getBot().getBotName() );
+                else
+                    allBotsIdle = false;
+            }
+        }
+        for( String name : names ) {
+            removeBot( name, "idle bot shutdown" );
+            m_botAction.sendChatMessage( 1, name + " logged off." );
+        }
+        return allBotsIdle;
     }
 
     /**
