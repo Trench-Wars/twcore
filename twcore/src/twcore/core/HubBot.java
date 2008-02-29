@@ -618,7 +618,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "!help              - Displays this message." );
             m_botAction.sendSmartPrivateMessage( messager, "!spawn <bot type>  - spawns a new bot." );
             m_botAction.sendSmartPrivateMessage( messager, "!waitinglist       - Displays the waiting list." );
-            m_botAction.sendSmartPrivateMessage( messager, "!billerdown <pwd>  - Sends periodic biller down msd.  Mod+ doesn't need password.");
+            m_botAction.sendSmartPrivateMessage( messager, "!billerdown <pwd>  - Sends periodic biller down msg.  Mod+ doesn't need password.");
         }
 
         if( m_botAction.getOperatorList().isModerator( messager ) ){
@@ -635,7 +635,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isSmod( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!updateaccess      - Rereads the mod, smod, and sysop file so that all access levels are updated." );
             m_botAction.sendSmartPrivateMessage( messager, "!listoperators     - Lists all registered operators for this bot.");
-            m_botAction.sendSmartPrivateMessage( messager, "!recycleserver <pwd>  - Recycles the server, if provided correct password.");
+            m_botAction.sendSmartPrivateMessage( messager, "!recycleserver <pwd>  - Recycles the server, if provided correct password.  Use after biller down.");
         }
 
         if( m_botAction.getOperatorList().isSysop( messager ) ){
