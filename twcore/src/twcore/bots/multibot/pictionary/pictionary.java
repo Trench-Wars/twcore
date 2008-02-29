@@ -68,7 +68,7 @@ public class pictionary extends MultiModule {
 			"!gametype      -- Toggles between player pick or bot pick.",
 			"!cancel        -- Cancels this game of Pictionary.",
 			"!showanswer    -- Shows you the answer(You can't win that round).",
-			"!displayrules	-- Shows the rules in *arena messages." };
+			"!displayrules  -- Shows the rules in *arena messages." };
 	String[] regrules = {
 			"Rules: Racism and pornography are strictly forbidden. The bot will designate",
 			"an artist. Players attempt to guess what the artist is drawing before the time",
@@ -95,7 +95,9 @@ public class pictionary extends MultiModule {
 	public String[] getModHelpMessage() {return opmsg;}
 	public void requestEvents(ModuleEventRequester events) {}
 	public boolean isUnloadable() {return true;}
-	public void cancel() {}
+	public void cancel(){
+		try{m_botAction.cancelTasks();}catch(Exception e){}
+	}
 
 	public void handleEvent(Message event){
 		String message = event.getMessage();
@@ -120,7 +122,7 @@ public class pictionary extends MultiModule {
 		else if(msg.startsWith("!start "))
 			doStartGame(name, msg.substring(7));
 		else if(msg.equalsIgnoreCase("!cancel"))
-			doCancelGame(name);
+			doCancelGame();
 		else if(msg.equalsIgnoreCase("!showanswer"))
 			doShowAnswer(name);
 		else if(msg.equalsIgnoreCase("!gameType"))
@@ -285,10 +287,11 @@ public class pictionary extends MultiModule {
 	/** * Cancels the game, stores results. ** */
 	/** ************************************************************* */
 
-	public void doCancelGame(String name) {
+	public void doCancelGame() {
 		if (gameProgress != NO_GAME_IN_PROGRESS){
 			gameProgress = NO_GAME_IN_PROGRESS;
 			m_botAction.sendArenaMessage(m_prec + "This game of Pictionary has been canceled.");
+			try{m_botAction.cancelTasks();}catch(Exception e){}
 			m_botAction.specAll();
 		}
 	}
@@ -315,10 +318,7 @@ public class pictionary extends MultiModule {
 			m_botAction.sendArenaMessage(passing + " passes to " + curArtist + ".");
 			cantPlay.clear();
 			cantPlay.add(curArtist);
-			try {
-				m_botAction.cancelTasks();
-			} catch (Exception e) {
-			}
+			try{m_botAction.cancelTasks();}catch(Exception e){}
 			grabWord();
 			if (!custGame)
 				doReadyCheck();
@@ -349,7 +349,7 @@ public class pictionary extends MultiModule {
 				pickPlayer();
 		} else {
 			m_botAction.sendArenaMessage(m_prec + "There are not enough players to procede.");
-			doCancelGame(m_botAction.getBotName());
+			doCancelGame();
 		}
 
 	}
@@ -359,10 +359,7 @@ public class pictionary extends MultiModule {
 	/** ************************************************************* */
 	public void doReadyCheck() {
 		if (ready) {
-			try {
-				m_botAction.cancelTasks();
-			} catch (Exception e) {
-			}
+			try{m_botAction.cancelTasks();}catch(Exception e){}
 			ready = false;
 			doDraw();
 		} else {
@@ -395,9 +392,7 @@ public class pictionary extends MultiModule {
 				grabWord();
 				custGame = true;
 			}
-			try {
-				m_botAction.cancelTasks();
-			} catch (Exception e) {}
+			try{m_botAction.cancelTasks();}catch(Exception e){}
 			doReadyCheck();
 	}
 
@@ -476,7 +471,7 @@ public class pictionary extends MultiModule {
 			try {
 				ResultSet qryWordData;
 				qryWordData = m_botAction.SQLQuery(mySQLHost,
-						"SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=9 ORDER BY RAND("
+						"SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + m_mintimesused + " ORDER BY RAND("
 								+ m_rnd.nextInt() + ") LIMIT 1");
 				if (qryWordData.next()) {
 					t_word = qryWordData.getString("Word").toLowerCase();
@@ -487,9 +482,13 @@ public class pictionary extends MultiModule {
 								+ " words: First word begins with '"
 								+ t_word.substring(0, 1) + "'.";
 					int ID = qryWordData.getInt("WordID");
-					m_botAction.SQLQuery(mySQLHost,
+					m_botAction.SQLQueryAndClose(mySQLHost,
 							"UPDATE tblPict_Words SET TimesUsed = TimesUsed + 1 WHERE WordID = "
 									+ ID);
+				}
+				else {
+					doCancelGame();
+					throw new Exception("Error retrieving a word from the database.");
 				}
 				m_botAction.SQLClose(qryWordData);
 			} catch (Exception e) {
@@ -593,7 +592,7 @@ public class pictionary extends MultiModule {
 					}
 					if (gameProgress != NO_GAME_IN_PROGRESS) {
 						gameProgress = ANSWER_GIVEN;
-						m_botAction.cancelTasks();
+						try{m_botAction.cancelTasks();}catch(Exception e){}
 						TimerTask adm = new TimerTask() {
 							public void run() {
 								startNextRound();
@@ -700,15 +699,13 @@ public class pictionary extends MultiModule {
 	/** ************************************************************* */
 	public void getMinTimesUsed() {
 		try {
-			ResultSet qryMinTimesUsed = m_botAction
-					.SQLQuery(mySQLHost,
-							"SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblScramble_Nerd");
+			ResultSet qryMinTimesUsed = m_botAction.SQLQuery(mySQLHost,
+							"SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblPict_Words");
 			if (qryMinTimesUsed.next()) {
 				int minUsed = qryMinTimesUsed.getInt("MinTimesUsed");
-				m_mintimesused = minUsed;
-				m_botAction.SQLClose(qryMinTimesUsed);
+				m_mintimesused = minUsed;		
 			}
-
+			m_botAction.SQLClose(qryMinTimesUsed);
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
 			m_mintimesused = -1;
@@ -721,8 +718,7 @@ public class pictionary extends MultiModule {
 	public void getTopTen() {
 		topTen = new Vector<String>();
 		try {
-			ResultSet result = m_botAction
-					.SQLQuery(
+			ResultSet result = m_botAction.SQLQuery(
 							mySQLHost,
 							"SELECT fcUserName, fnPoints, fnPlayed, fnWon, fnPossible, fnRating FROM tblPict_UserStats WHERE fnPossible >= 100 ORDER BY fnRating DESC LIMIT 10");
 			while (result != null && result.next())
@@ -736,6 +732,7 @@ public class pictionary extends MultiModule {
 						+ "Rating: " + result.getInt("fnRating"));
 			m_botAction.SQLClose(result);
 		} catch (Exception e) {
+			Tools.printStackTrace(e);
 		}
 	}
 
@@ -749,16 +746,14 @@ public class pictionary extends MultiModule {
 			if (won)
 				wonAdd = 1;
 
-			ResultSet qryHasScrambleRecord = m_botAction
-					.SQLQuery(
+			ResultSet qryHasPictRecord = m_botAction.SQLQuery(
 							mySQLHost,
 							"SELECT fcUserName, fnPlayed, fnWon, fnPoints, fnPossible FROM tblPict_UserStats WHERE fcUserName = \""
 									+ username + "\"");
-			if (!qryHasScrambleRecord.next()) {
+			if (!qryHasPictRecord.next()) {
 				double rating = ((points + .0) / toWin * 750.0)
 						* (1.0 + (wonAdd / 3.0));
-				m_botAction
-						.SQLQueryAndClose(
+				m_botAction.SQLQueryAndClose(
 								mySQLHost,
 								"INSERT INTO tblPict_UserStats(fcUserName, fnPlayed, fnWon, fnPoints, fnPossible, fnRating) VALUES (\""
 										+ username
@@ -772,10 +767,10 @@ public class pictionary extends MultiModule {
 										+ rating
 										+ ")");
 			} else {
-				double played = qryHasScrambleRecord.getInt("fnPlayed") + 1.0;
-				double wins = qryHasScrambleRecord.getInt("fnWon") + wonAdd;
-				double pts = qryHasScrambleRecord.getInt("fnPoints") + points;
-				double pos = qryHasScrambleRecord.getInt("fnPossible") + toWin;
+				double played = qryHasPictRecord.getInt("fnPlayed") + 1.0;
+				double wins = qryHasPictRecord.getInt("fnWon") + wonAdd;
+				double pts = qryHasPictRecord.getInt("fnPoints") + points;
+				double pos = qryHasPictRecord.getInt("fnPossible") + toWin;
 				double rating = (pts / pos * 750.0)
 						* (1.0 + (wins / played / 3.0));
 				m_botAction.SQLQueryAndClose(mySQLHost,
@@ -785,7 +780,7 @@ public class pictionary extends MultiModule {
 								+ ", fnRating = " + rating
 								+ " WHERE fcUserName = \"" + username + "\"");
 			}
-			m_botAction.SQLClose(qryHasScrambleRecord);
+			m_botAction.SQLClose(qryHasPictRecord);
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
 		}
@@ -797,8 +792,7 @@ public class pictionary extends MultiModule {
 	public String getPlayerStats(String username) {
 		try {
 
-			ResultSet result = m_botAction
-					.SQLQuery(
+			ResultSet result = m_botAction.SQLQuery(
 							mySQLHost,
 							"SELECT fnPoints, fnWon, fnPlayed, fnPossible, fnRating FROM tblPict_UserStats WHERE fcUserName = \""
 									+ username + "\"");
@@ -935,7 +929,7 @@ public class pictionary extends MultiModule {
 		playerMap.clear();
 		getTopTen();
 		toWin = 10;
-		m_botAction.cancelTasks();
+		try{m_botAction.cancelTasks();}catch(Exception e){}
 		m_botAction.specAll();
 	}
 
