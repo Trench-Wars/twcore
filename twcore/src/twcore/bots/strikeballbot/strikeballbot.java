@@ -135,6 +135,9 @@ public class strikeballbot extends SubspaceBot {
         m_maxTeamSize = m_botSettings.getInt("MaxPlayers");
     }
 
+    public boolean isIdle() {
+        return !(m_gameState == STATE_PLAYING);
+    }
 
 
     /** Request only the events the bot needs.

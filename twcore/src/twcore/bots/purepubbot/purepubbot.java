@@ -77,23 +77,23 @@ public class purepubbot extends SubspaceBot
     private static final int NUM_WARP_POINTS_PER_SIDE = 6; // Total number of warp points
                                                            // per side of FR
     private static final int MAX_FLAGTIME_ROUNDS = 5;   // Max # rounds (odd numbers only)
-    
+
     private static final int KEEP_MVP_FREQSIZE_DIFF = 2;// Max # difference in size of freqs required
                                                         //   for a player to keep MVP/get bonus on switching.
     private static final int MSG_AT_FREQSIZE_DIFF = 4;  // Max # difference in size of freqs before
                                                         //   bot requests players even frequencies.
                                                         //   Value of -1 disables this feature.
     private static final int NICEGUY_BOUNTY_AWARD = 25; // Bounty given to those that even freqs/ships
-    
+
     private static final int TERR_QUOTA = 2;            // "Ideal" number of ships.  Used in order to
     private static final int SHARK_QUOTA = 2;           // allow players to change to needed ships
     private static final int SPIDER_QUOTA = 3;          // w/o losing MVP status.
-    private static final int JAV_TOOMANY = 3;           // Point at which !team complains that there 
+    private static final int JAV_TOOMANY = 3;           // Point at which !team complains that there
     private static final int WB_TOOMANY = 4;            // are too many of a given ship.  Used to
     private static final int WEASEL_TOOMANY = 3;        // better evaluate the ideal team.
     private static final int TERR_TOOMANY = 4;
-    
-    private static final int TOP_FR = 248;              // Coords forming boxes in which players 
+
+    private static final int TOP_FR = 248;              // Coords forming boxes in which players
     private static final int BOTTOM_FR = 292;           // may be located: FR, mid and lower.  Spawn
     private static final int LEFT_FR = 478;             // and roof are defined by single Y coords
     private static final int RIGHT_FR = 546;            // and are checked after other boxes to determine
@@ -123,11 +123,11 @@ public class purepubbot extends SubspaceBot
     private FlagCountTask flagTimer;                    // Flag time main class
     private StartRoundTask startTimer;                  // TimerTask to start round
     private IntermissionTask intermissionTimer;         // TimerTask for round intermission
-    
+
     private AuxLvzTask scoreDisplay;					// Displays score lvz
     private AuxLvzTask scoreRemove;						// Removes score lvz
     private AuxLvzConflict delaySetObj;					// Schedules a task after an amount of time
-   
+
     private TimerTask entranceWaitTask;
     private int flagMinutesRequired;                    // Flag minutes required to win
     private int freq0Score, freq1Score;                 // # rounds won
@@ -188,6 +188,11 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask( entranceWaitTask, 3000 );
     }
 
+    public boolean isIdle() {
+        if( flagTimer != null && flagTimer.isRunning() )
+            return false;
+        return true;
+    }
 
     /**
      * Requests all of the appropriate events.
@@ -312,7 +317,7 @@ public class purepubbot extends SubspaceBot
                 } else {
                     String pname = p.getPlayerName();
                     boolean authd = authorizedChangePlayers.remove( pname );
-                    // If player is switching to the smaller team, they maintain any MVP status 
+                    // If player is switching to the smaller team, they maintain any MVP status
                     if( teamsUneven && freq == freqSizeInfo[1] ) {
                         boolean freq0cont = freq0List.contains(pname);
                         boolean freq1cont = freq1List.contains(pname);
@@ -337,7 +342,7 @@ public class purepubbot extends SubspaceBot
             }
         } catch (Exception e) {
         }
-        
+
         if(started) {
             checkPlayer(playerID);
             if(!privFreqs) {
@@ -366,7 +371,7 @@ public class purepubbot extends SubspaceBot
             if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
                 String pname = p.getPlayerName();
                 boolean authd = authorizedChangePlayers.remove( pname );
-                // If player is switching to the smaller team, they maintain any MVP status 
+                // If player is switching to the smaller team, they maintain any MVP status
                 if( teamsUneven && freq == freqSizeInfo[1] ) {
                     boolean freq0cont = freq0List.contains(pname);
                     boolean freq1cont = freq1List.contains(pname);
@@ -389,8 +394,8 @@ public class purepubbot extends SubspaceBot
                             doWarpCmd(pname);
             }
         } catch (Exception e) {
-        }        
-        
+        }
+
         if(started) {
             checkPlayer(playerID);
             if(!privFreqs) {
@@ -466,10 +471,10 @@ public class purepubbot extends SubspaceBot
         playerTimes.remove( playerName );
         checkFreqSizes();
     }
-    
+
     /**
      * Handles restarting of the KOTH game
-     * 
+     *
      * @param event is the event to handle.
      */
     public void handleEvent(KotHReset event) {
@@ -478,7 +483,7 @@ public class purepubbot extends SubspaceBot
             m_botAction.endKOTH();
         }
     }
-    
+
     /**
      * If flag time mode is running, register with the flag time game that the
      * flag has been claimed.
@@ -512,14 +517,14 @@ public class purepubbot extends SubspaceBot
         String sender = getSender(event);
         int messageType = event.getMessageType();
         String message = event.getMessage().trim();
-        
+
         if( message == null || !message.startsWith("!") || sender == null )
             return;
-        
+
         message = message.toLowerCase();
         if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.PUBLIC_MESSAGE ) )
-            handlePublicCommand(sender, message);        
-        if ( opList.isHighmod(sender) || sender.equals(m_botAction.getBotName()) )        
+            handlePublicCommand(sender, message);
+        if ( opList.isHighmod(sender) || sender.equals(m_botAction.getBotName()) )
             if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )
                 handleModCommand(sender, message);
     }
@@ -552,7 +557,7 @@ public class purepubbot extends SubspaceBot
             else if(command.startsWith("!ship "))
                 doShipCmd(sender, command.substring(6));
             else if(command.equals("!clearmines"))
-                doClearMinesCmd(sender);            
+                doClearMinesCmd(sender);
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
@@ -592,7 +597,7 @@ public class purepubbot extends SubspaceBot
         }
     }
 
-    
+
     /**
      * Moves the bot from one arena to another.  The bot must not be
      * started for it to move.
@@ -709,13 +714,13 @@ public class purepubbot extends SubspaceBot
         else
             if( autoWarp )
                 m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  You will be warped into flagroom at round start (type !warp to change). -" + m_botAction.getBotName() );
-            else 
+            else
                 m_botAction.sendArenaMessage( "Round 1 begins in 60 seconds.  PM me with !warp to warp into flagroom at round start. -" + m_botAction.getBotName() );
 
         flagTimeStarted = true;
         freq0Score = 0;
         freq1Score = 0;
-        
+
         m_botAction.scheduleTask( new StartRoundTask(), 60000 );
     }
 
@@ -909,7 +914,7 @@ public class purepubbot extends SubspaceBot
         for(int i = 1; i < 9; i++ ) {
             int num = team.get(i).size();
             String text = num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 );
-            
+
             if(         i == Tools.Ship.SPIDER && num < SPIDER_QUOTA ||
                         i == Tools.Ship.TERRIER && num < TERR_QUOTA ||
                         i == Tools.Ship.SHARK && num < SHARK_QUOTA )
@@ -927,14 +932,14 @@ public class purepubbot extends SubspaceBot
             }
             m_botAction.sendPrivateMessage(sender, text);
         }
-        
+
         // Begin team analysis
         m_botAction.sendPrivateMessage(sender, "Total " + players + " players.  Team needs (+ above shows a need; - shows excess):");
         int terrsNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
         int sharksNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
         int spidersNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size();
         boolean needs = false;
-        
+
         // If team is small, only need to ensure we have at least 1 terr and 1 shark
         if( players < 10 ) {
             if( terrsNeeded != TERR_QUOTA )
@@ -943,7 +948,7 @@ public class purepubbot extends SubspaceBot
                 sharksNeeded = 0;
             spidersNeeded = 0;
         }
-      
+
         if( terrsNeeded == TERR_QUOTA ) {
             m_botAction.sendPrivateMessage(sender, "NO TERRIER!  A terr (ship 5) is needed ASAP.");
             needs = true;
@@ -983,7 +988,7 @@ public class purepubbot extends SubspaceBot
             needs = true;
         }
         if( tooMany != "" ) {
-            m_botAction.sendPrivateMessage(sender, "Team has too many of the following:   " + tooMany );            
+            m_botAction.sendPrivateMessage(sender, "Team has too many of the following:   " + tooMany );
         } else if( !needs ) {
             m_botAction.sendPrivateMessage(sender, "Your team appears to be well-balanced!");
             return;
@@ -991,15 +996,15 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendPrivateMessage(sender, "->  Use !ship <ship#> to change ships & keep MVP.  <-");
     }
 
-    
+
     /**
      * Places the player in a particular ship, if the ship is needed on the freq and
-     * the player is not already in a   
+     * the player is not already in a
      * @param sender Player sending
      * @param argString Ship to change to
      */
     public void doShipCmd(String sender, String argString ) {
-        
+
         String[] args = argString.split(" ");
         if( args.length != 1 )
             throw new RuntimeException("Usage: !ship <ship#>, where <ship#> is the number of the ship to change to.");
@@ -1010,7 +1015,7 @@ public class purepubbot extends SubspaceBot
         } catch (Exception e) {
             throw new RuntimeException("Usage: !ship <ship#>, where <ship#> is the number of the ship to change to.");
         }
-        
+
         Player p = m_botAction.getPlayer(sender);
         if( p == null )
             throw new RuntimeException("Can't find you.  Please report this to staff.");
@@ -1026,9 +1031,9 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException("This command only works for changing to a ship necessary for the team (Spider:3, Terr:5, or Shark:8).  Use !team to see which ships are needed.");
         if( ship == p.getShipType() )
             throw new RuntimeException("You're already in that ship.");
-        
+
         ArrayList<Vector<String>> team = getTeamData( p.getFrequency() );
-        int numOfShipNeeded;        
+        int numOfShipNeeded;
         switch (p.getShipType()) {
         case 5:
             numOfShipNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();
@@ -1045,15 +1050,15 @@ public class purepubbot extends SubspaceBot
             // If you're a spider, you can still change to terr or shark
             break;
         }
-        
+
         switch (ship) {
         case 3: numOfShipNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size(); break;
         case 5: numOfShipNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size(); break;
         default: numOfShipNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size();
-        }        
+        }
         if( numOfShipNeeded <= 0 )
             throw new RuntimeException("More "+ Tools.shipName(ship) + "s are not currently needed.  Use !team to see which ships are needed.");
-        
+
         authorizedChangePlayers.add( p.getPlayerName() );
         int bounty = p.getBounty();
         m_botAction.setShip( p.getPlayerID(), ship );
@@ -1064,9 +1069,9 @@ public class purepubbot extends SubspaceBot
 
     /**
      * Clears all of player's mines, and restores any MVP status, but only once per round.
-     * @param sender Sender of command 
+     * @param sender Sender of command
      */
-    public void doClearMinesCmd(String sender ) {                        
+    public void doClearMinesCmd(String sender ) {
         Player p = m_botAction.getPlayer(sender);
         if( p == null )
             throw new RuntimeException("Can't find you.  Please report this to staff.");
@@ -1092,8 +1097,8 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendPrivateMessage( sender, "Your mines have been reset without changing MVP status.  You may only do this once per round." );
         }
     }
-    
-    
+
+
     /**
      * Shows terriers on the team and their last observed locations.
      */
@@ -1113,8 +1118,8 @@ public class purepubbot extends SubspaceBot
                 m_botAction.sendPrivateMessage( sender, Tools.formatString(terr.getPlayerName(), 25) + getPlayerLocation(terr, false) );
         }
     }
-    
-    
+
+
     /**
      * Shows last seen location of a given individual.
      */
@@ -1123,7 +1128,7 @@ public class purepubbot extends SubspaceBot
         if( p == null )
             throw new RuntimeException("Can't find you.  Please report this to staff.");
         if( p.getShipType() == 0 && !isStaff )
-            throw new RuntimeException("You must be in a ship for this command to work.");        
+            throw new RuntimeException("You must be in a ship for this command to work.");
         Player p2;
         p2 = m_botAction.getPlayer( argString );
         if( p2 == null )
@@ -1133,19 +1138,19 @@ public class purepubbot extends SubspaceBot
         if( p.getFrequency() != p2.getFrequency() && !isStaff )
             throw new RuntimeException(p2.getPlayerName() + " is not on your team!");
         m_botAction.sendPrivateMessage( sender, p2.getPlayerName() + " last seen: " + getPlayerLocation( p2, isStaff ));
-    }    
-    
-    
+    }
+
+
     /**
      * Based on provided coords, returns location of player as a String.
-     * @return Last location recorded of player, as a String  
+     * @return Last location recorded of player, as a String
      */
     public String getPlayerLocation( Player p, boolean isStaff ) {
         int x = p.getXLocation() / 16;
         int y = p.getYLocation() / 16;
         String exact = "";
         if( isStaff )
-            exact = "  (" + x + "," + y + ")";  
+            exact = "  (" + x + "," + y + ")";
         if( x==0 && y==0 )
             return "Not yet spotted" + exact;
         if( y >= TOP_FR  &&  y <= BOTTOM_FR  &&  x >= LEFT_FR  &&  x <= RIGHT_FR )
@@ -1161,7 +1166,7 @@ public class purepubbot extends SubspaceBot
         return "Outside base" + exact;
     }
 
-    
+
     /**
      * Collects names of players on a freq into a Vector ArrayList by ship.
      * @param freq Frequency to collect info on
@@ -1228,7 +1233,7 @@ public class purepubbot extends SubspaceBot
                 "!clearmines             -- Clears all mines you have laid, keeping MVP status.",
                 "!restrictions           -- Lists all current ship restrictions."
 
-                
+
         };
 
         if( opList.isHighmod( sender ) )
@@ -1442,7 +1447,7 @@ public class purepubbot extends SubspaceBot
         int diff = java.lang.Math.abs( freq0 - freq1 );
         if( diff == freqSizeInfo[0] )
             return;
-        freqSizeInfo[0] = diff;  
+        freqSizeInfo[0] = diff;
         if( freqSizeInfo[0] >= MSG_AT_FREQSIZE_DIFF ) {
             if( freq0 > freq1 ) {
                 m_botAction.sendOpposingTeamMessageByFrequency(0, "Teams unbalanced: " + freq0 + "v" + freq1 + ".  Volunteers requested; type =1 to switch to freq 1.  (Keep MVP status + earn " + NICEGUY_BOUNTY_AWARD + " bounty.)" );
@@ -1847,7 +1852,7 @@ public class purepubbot extends SubspaceBot
             m_botAction.cancelTask(intermissionTimer);
         } catch (Exception e ) {
         }
-        
+
         doScores(intermissionTime);
         intermissionTimer = new IntermissionTask();
         m_botAction.scheduleTask( intermissionTimer, intermissionTime );
@@ -1896,7 +1901,7 @@ public class purepubbot extends SubspaceBot
      */
     private void warpPlayers() {
         Iterator<?> i;
-   
+
         if( strictFlagTime )
             i = m_botAction.getPlayingPlayerIterator();
         else
@@ -2028,11 +2033,11 @@ public class purepubbot extends SubspaceBot
     {
         return yCoord + (int) Math.round(randRadius * Math.cos(randRadians));
     }
-    
+
     /**
      * Shows and hides scores (used at intermission only).
      * @param time Time after which the score should be removed
-     */    
+     */
     private void doScores(int time) {
         int[] objs1 = {2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)};
         boolean[] objs1Display = {true,true,true};
@@ -2046,7 +2051,7 @@ public class purepubbot extends SubspaceBot
     	m_botAction.scheduleTask(delaySetObj, 2000);		// Initialize score removal
     	m_botAction.scheduleTask(scoreRemove, time-1000);	// Do score removal
     	m_botAction.showObject(2100);
-    	
+
     }
 
 
@@ -2096,10 +2101,10 @@ public class purepubbot extends SubspaceBot
             m_botAction.showObject(1000); //Shows intermission lvz
         }
     }
-    
+
     /**
      * Used to turn on/off a set of LVZ objects at a particular time.
-     */    
+     */
     private class AuxLvzTask extends TimerTask {
         public int[] objNums;
         public boolean[] showObj;
@@ -2145,7 +2150,7 @@ public class purepubbot extends SubspaceBot
      */
     private class AuxLvzConflict extends TimerTask	{
         public AuxLvzTask myTask;
-        
+
         /**
          * @param task AuxLvzTask to init on run
          */
@@ -2422,7 +2427,7 @@ public class purepubbot extends SubspaceBot
             secondsHeld++;
 
             do_updateTimer();
-            
+
             int flagSecsReq = flagMinutesRequired * 60;
             if( secondsHeld >= flagSecsReq ) {
                 endGame();

@@ -64,6 +64,9 @@ public final class radiobot extends SubspaceBot {
         m_timeToClearZone = m_timeStarted + SIX_HOURS;
     }
 
+    public boolean isIdle() {
+        return !m_someoneHosting;
+    }
 
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena("radio");

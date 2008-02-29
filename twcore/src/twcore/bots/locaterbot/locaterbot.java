@@ -6,6 +6,7 @@ import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import twcore.core.util.Tools;
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
@@ -16,7 +17,7 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.stats.DBPlayerData;
 
 /**
- * Locates physical location of players on the Earth by their IP addresses.  
+ * Locates physical location of players on the Earth by their IP addresses.
  * @author Austin
  */
 public class locaterbot extends SubspaceBot {
@@ -41,7 +42,7 @@ public class locaterbot extends SubspaceBot {
 
 	public void handleEvent( LoggedOn _event ) {
 
-		m_botAction.joinArena( "#robopark" );
+		m_botAction.joinArena( m_botAction.getBotSettings().getString( "InitialArena" ) );
 
 		TimerTask changeArenas = new TimerTask() {
 			public void run() {
@@ -121,7 +122,7 @@ public class locaterbot extends SubspaceBot {
 			}
                         m_botAction.SQLClose( result );
 		} catch (SQLException e) {
-			m_botAction.sendSmartPrivateMessage( "2dragons", e.getMessage() );
+			Tools.printStackTrace(e);
 		}
 	}
 
@@ -135,6 +136,7 @@ public class locaterbot extends SubspaceBot {
 			if( !result.next() ) exists = false;
                         m_botAction.SQLClose( result );
 		} catch (SQLException e) {
+            Tools.printStackTrace(e);
 		}
 
 		return exists;
@@ -146,7 +148,7 @@ public class locaterbot extends SubspaceBot {
 		try {
 		    m_botAction.SQLQueryAndClose( m_sqlHost, qry );
 		} catch (SQLException e) {
-			e.printStackTrace();
+            Tools.printStackTrace(e);
 		}
 	}
 

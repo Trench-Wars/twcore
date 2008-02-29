@@ -120,6 +120,10 @@ public class twlbot extends SubspaceBot
 		m_botAction.getEventRequester().requestAll();
 	}
 
+    public boolean isIdle() {
+        return !locked;
+    }
+
 	private void registerCommands()
 	{
         int acceptedMessages;

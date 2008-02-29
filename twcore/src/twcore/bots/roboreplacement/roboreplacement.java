@@ -78,6 +78,11 @@ public class roboreplacement extends SubspaceBot
         m_botSettings = m_botAction.getBotSettings();
     }
 
+    public boolean isIdle() {
+        return !isRunning;
+    }
+
+
     /*Called when the bot logs in.
      *
      *Gets all the bot settings required from the cfg file then starts the matches.

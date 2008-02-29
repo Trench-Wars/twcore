@@ -176,6 +176,13 @@ public class f1bot extends SubspaceBot {
     	m_botAction.moveToTile(585, 469);
     }
 
+    public boolean isIdle() {
+        if( game_status == GAME_STARTED )
+            return false;
+        else
+            return true;
+    }
+
 
 
     // ---------------------------------------------------------------------------------------------------

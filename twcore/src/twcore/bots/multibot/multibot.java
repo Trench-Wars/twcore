@@ -93,6 +93,12 @@ public class multibot extends SubspaceBot {
 
     }
 
+    public boolean isIdle() {
+        if( m_eventModule == null || !m_eventModule.isUnloadable() )
+            return false;
+        return true;
+    }
+
     /**
      * This method handles a message event. The bot checks to see first if the
      * msg sender owns the bot; if not, commands are not accepted.
@@ -1061,7 +1067,7 @@ public class multibot extends SubspaceBot {
     public void handleEvent(InterProcessEvent event) {
         handleEvent((SubspaceEvent) event);
     }
-    
+
     public void handleEvent(KotHReset event) {
         if(event.isEnabled() && event.getPlayerID()==-1) {
             // Make the bot ignore the KOTH game (send that he's out immediately after restarting the game)
