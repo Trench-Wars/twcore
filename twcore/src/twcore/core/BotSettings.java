@@ -172,6 +172,23 @@ public class BotSettings {
     }
 
     /**
+     * Returns data associated with a specified field.  If the String is not found,
+     * an empty string is returned rather than a null String.
+     *
+     * @param keyName Field to fetch from
+     * @return Data associated with the specified field, or an empty String if not found
+     */
+    public String getNonNullString( String keyName ){
+        String      value = m_data.get( keyName.toLowerCase() );
+
+        if( value != null ){
+            return new String( value );
+        } else {
+            return "";
+        }
+    }
+
+    /**
      * Returns data associated with a specified field.
      * @param keyName Field to fetch from
      * @return Data associated with the specified field
