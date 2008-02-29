@@ -233,7 +233,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
     }
 
     public boolean isIdle() {
-        if ( (m_state.isMidGame() || m_state.isMidGameFinal()) ) {
+        if ( m_state.isMidGame() || m_state.isMidGameFinal() )
             return false;
         return true;
     }
