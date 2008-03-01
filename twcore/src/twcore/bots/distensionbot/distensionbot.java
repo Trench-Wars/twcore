@@ -5841,7 +5841,7 @@ public class distensionbot extends SubspaceBot {
             }
             this.shipNum = shipNum;
             isRespawning = false;
-            m_prizeQueue.removePlayer(p);
+            //m_prizeQueue.removePlayer(p);
             successiveKills = 0;
             recentlyEarnedRP = 0;
             currentOP = 0;
