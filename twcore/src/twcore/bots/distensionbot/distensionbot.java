@@ -1892,7 +1892,6 @@ public class distensionbot extends SubspaceBot {
         if( !p.shipIsAvailable( shipNum ) )
             throw new TWCoreException( "You don't own that ship.  Check your !hangar before you try flying something you don't have." );
         if( p.isRespawning() ) {
-            m_prizeQueue.removePlayer(p);
             p.isRespawning = false;
             m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_REARMING );
         }
@@ -5248,14 +5247,14 @@ public class distensionbot extends SubspaceBot {
          * Performs necessary actions to spawn the player, if ready.
          */
         public boolean doSpawn() {
-            if( !isRespawning )
-                return true;
             if( specialRespawn ) {
                 specialRespawn = false;
                 isRespawning = false;
                 m_prizeQueue.resumeSpawningAfterDelay( prizeUpgrades( false ) );
                 return true;
             }
+            if( !isRespawning )
+                return true;
             if( spawnTicks > 0 )
                 return false;
             isRespawning = false;
@@ -5841,7 +5840,6 @@ public class distensionbot extends SubspaceBot {
             }
             this.shipNum = shipNum;
             isRespawning = false;
-            //m_prizeQueue.removePlayer(p);
             successiveKills = 0;
             recentlyEarnedRP = 0;
             currentOP = 0;
