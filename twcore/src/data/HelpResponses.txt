@@ -39,7 +39,7 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Decoy +How -Buy|To use a decoy press <F5>.  In public arenas, all of the ships can equip and use decoys.
 &Burst +What|When used, a burst sends several bouncing bullets flying outwards from your ship.  The burst will not damage enemies until after it has bounced once and will disappear after a certain time.  The icon on the right side of your screen depicting a blue star indicates the number of bursts that your ship currently has.  In public arenas, only the Terrier (Ship 5) can equip bursts.
 &Burst +How -Buy|To use a burst press <Shift> and <Del> at the same time.  In public arenas, only the Terrier (Ship 5) can equip and use bursts.
-&Brick +How -Buy|To use a decoy press <F4>.  In public arenas, all of the ships can equip and use decoys.
+&Brick +How -Buy|To use a brick press <F4>.
 &Thor +What|When used, a thor shoots a powerful bomb from your ship.  This bomb will go through walls and asteroids and will disappear after a certain time.  The icon on the right side of your screen depicting a hammer over a blue background indicates the number of thors that your ship currently has.  In public arenas, no ships can equip thors.
 &Thor +How -Buy|To use a thor, press <F6>  In public arenas, no ships can equip or use thors.
 &Cloak +What|When activated, cloak prevents you from being seen on screen, but not on radar.  Using cloak also drains some of your energy.  In public arenas, only the Weasel (Ship 6) is equipped with cloak.
