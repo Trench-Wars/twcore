@@ -71,6 +71,7 @@ public class distensionbot extends SubspaceBot {
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
     private final int WARP_POINT_CHECK_FREQUENCY = 15;     // # seconds between checking warp points for players
     private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
+    private final int PILOTS_REQ_EACH_ARMY = 3;            // # players needed on each army for game to start
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
     private final float EARLY_RANK_FACTOR = 1.6f;          // Factor for rank increases (lvl 1-9)
@@ -121,12 +122,12 @@ public class distensionbot extends SubspaceBot {
     private final int REARM_AREA_BOTTOM_Y = 824;
     private final int REARM_SAFE_TOP_Y = 192;                   // Y coords of safe parts of rearm areas
     private final int REARM_SAFE_BOTTOM_Y = 832;
-    private final int BASE_CENTER_0_Y_COORD = 463;
-    private final int BASE_CENTER_1_Y_COORD = 559;
+    private final int BASE_CENTER_0_Y_COORD = 426;
+    private final int BASE_CENTER_1_Y_COORD = 597;
     //private final int BASE_CENTER_0_Y_COORD = 335;
     //private final int BASE_CENTER_1_Y_COORD = 688;
-    private final int WARP_CENTER_0_Y_COORD = 445;
-    private final int WARP_CENTER_1_Y_COORD = 578;
+    private final int WARP_CENTER_0_Y_COORD = 455;
+    private final int WARP_CENTER_1_Y_COORD = 568;
 
     // Coords used for !terr and !whereis
     private final int TOP_SAFE = 242;
@@ -4545,11 +4546,11 @@ public class distensionbot extends SubspaceBot {
         boolean foundOne = false;
         while( i.hasNext() ) {
             DistensionArmy army = i.next();
-            if( army.getPilotsInGame() > 0 ) {
+            if( army.getPilotsInGame() >= PILOTS_REQ_EACH_ARMY ) {
                 if( !foundOne )
                     foundOne = true;
                 else {
-                    // Two armies now have players; start game, or continue if already started
+                    // Two armies now have enough players; start game, or continue if already started
                     if( !flagTimeStarted ) {
                         m_botAction.sendArenaMessage( "This sector is no longer safe: a war is brewing ...  All pilots, report for duty.  You have " + getTimeString(3 * INTERMISSION_SECS) + " to prepare for the assault.");
                         flagTimer = new FlagCountTask();    // Dummy, for displaying score.
@@ -4575,17 +4576,17 @@ public class distensionbot extends SubspaceBot {
         boolean foundOne = false;
         while( i.hasNext() ) {
             DistensionArmy army = i.next();
-            if( army.getPilotsInGame() > 0 ) {
+            if( army.getPilotsInGame() >= PILOTS_REQ_EACH_ARMY ) {
                 if( !foundOne )
                     foundOne = true;
                 else {
-                    // Two armies have players; do not stop game
+                    // Two armies have enough players; do not stop game
                     return;
                 }
             }
         }
         stopFlagTime = true;
-        if( !foundOne ) {
+        if( m_armies.get(0).getPilotsInGame() == 0 && m_armies.get(1).getPilotsInGame() == 0 ) {
             resetAllFlagData();
         }
     }
