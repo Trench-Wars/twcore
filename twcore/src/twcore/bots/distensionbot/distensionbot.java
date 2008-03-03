@@ -54,7 +54,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                         // Debug mode.
-    private final float DEBUG_MULTIPLIER = 4.0f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 4.1f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -65,8 +65,7 @@ public class distensionbot extends SubspaceBot {
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 18;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
-    private final int LAGOUT_VALID_SECONDS = 120;          // # seconds since lagout in which you can use !lagout
-//  private final int LAGOUT_WAIT_SECONDS = 30;            // # seconds a player must wait to be placed back in the game
+    private final int LAGOUT_VALID_SECONDS = 60;           // # seconds since lagout in which you can use !lagout
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
@@ -121,8 +120,12 @@ public class distensionbot extends SubspaceBot {
     private final int REARM_AREA_BOTTOM_Y = 824;
     private final int REARM_SAFE_TOP_Y = 192;                   // Y coords of safe parts of rearm areas
     private final int REARM_SAFE_BOTTOM_Y = 832;
-    private final int BASE_CENTER_0_Y_COORD = 335;
-    private final int BASE_CENTER_1_Y_COORD = 688;
+    private final int BASE_CENTER_0_Y_COORD = 463;
+    private final int BASE_CENTER_1_Y_COORD = 559;
+    //private final int BASE_CENTER_0_Y_COORD = 335;
+    //private final int BASE_CENTER_1_Y_COORD = 688;
+    private final int WARP_CENTER_0_Y_COORD = 445;
+    private final int WARP_CENTER_1_Y_COORD = 578;
 
     // Coords used for !terr and !whereis
     private final int TOP_SAFE = 242;
@@ -147,11 +150,12 @@ public class distensionbot extends SubspaceBot {
 
     private PrizeQueue m_prizeQueue;                        // Queuing system for prizes (so as not to crash bot)
     private SpecialAbilityTask m_specialAbilityPrizer;      // Prizer for special abilities (run once every 30s)
-    private TimerTask entranceWaitTask;                     // For when bot first enters the arena
-    private TimerTask autoSaveTask;                         // For autosaving player data frequently
-    private TimerTask idleSpecTask;                         // For docking idlers
-    private TimerTask profitSharingTask;                    // For sharing profits with terrs
+    private TimerTask m_entranceWaitTask;                   // For when bot first enters the arena
+    private TimerTask m_autoSaveTask;                       // For autosaving player data frequently
+    private TimerTask m_idleSpecTask;                       // For docking idlers
+    private TimerTask m_profitSharingTask;                  // For sharing profits with terrs
     private TimerTask m_scrapClearTask;                     // Clears remembered scraps
+    private TimerTask m_warpPointTask;                      // Checks for special warp points
 
     private boolean beginDelayedShutdown;                   // True if, at round end, a shutdown should be initiated
     private boolean readyForPlay = false;                   // True if bot has entered arena and is ready to go
@@ -423,24 +427,24 @@ public class distensionbot extends SubspaceBot {
         m_prizeQueue = new PrizeQueue();
         m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, UPGRADE_DELAY, UPGRADE_DELAY);
 
-        entranceWaitTask = new TimerTask() {
+        m_entranceWaitTask = new TimerTask() {
             public void run() {
                 readyForPlay = true;
             }
         };
-        m_botAction.scheduleTask( entranceWaitTask, 3000 );
+        m_botAction.scheduleTask( m_entranceWaitTask, 3000 );
 
         if( AUTOSAVE_DELAY != 0 ) {
-            autoSaveTask = new TimerTask() {
+            m_autoSaveTask = new TimerTask() {
                 public void run() {
                     cmdSaveData( ":autosave:", null );
                 }
             };
-            m_botAction.scheduleTask( autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
+            m_botAction.scheduleTask( m_autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
         }
 
         if( IDLE_FREQUENCY_CHECK != 0 ) {
-            idleSpecTask = new TimerTask() {
+            m_idleSpecTask = new TimerTask() {
                 public void run() {
                     // Check for idlers, but only while round is going.
                     if( flagTimer != null && flagTimer.isRunning() )
@@ -448,7 +452,7 @@ public class distensionbot extends SubspaceBot {
                             p.checkIdleStatus();
                 }
             };
-            m_botAction.scheduleTask( idleSpecTask, IDLE_FREQUENCY_CHECK * 1000, IDLE_FREQUENCY_CHECK * 1000);
+            m_botAction.scheduleTask( m_idleSpecTask, IDLE_FREQUENCY_CHECK * 1000, IDLE_FREQUENCY_CHECK * 1000);
         }
 
         timeIncrementTask = new TimerTask() {
@@ -459,7 +463,7 @@ public class distensionbot extends SubspaceBot {
         };
         m_botAction.scheduleTask( timeIncrementTask, 60000, 60000 );
 
-        profitSharingTask = new TimerTask() {
+        m_profitSharingTask = new TimerTask() {
             public void run() {
                 int army0profits = m_armies.get(0).getProfits();
                 int army1profits = m_armies.get(1).getProfits();
@@ -471,7 +475,7 @@ public class distensionbot extends SubspaceBot {
                         p.shareProfits(army1profits);
             }
         };
-        m_botAction.scheduleTask( profitSharingTask, PROFIT_SHARING_FREQUENCY * 1000, PROFIT_SHARING_FREQUENCY * 1000 );
+        m_botAction.scheduleTask( m_profitSharingTask, PROFIT_SHARING_FREQUENCY * 1000, PROFIT_SHARING_FREQUENCY * 1000 );
 
         m_scrapClearTask = new TimerTask() {
             public void run() {
@@ -479,6 +483,31 @@ public class distensionbot extends SubspaceBot {
             }
         };
         m_botAction.scheduleTask( m_scrapClearTask, SCRAP_CLEARING_FREQUENCY * 1000, SCRAP_CLEARING_FREQUENCY * 1000 );
+
+        m_scrapClearTask = new TimerTask() {
+            public void run() {
+                m_scrappingPlayers.clear();
+            }
+        };
+        m_botAction.scheduleTask( m_scrapClearTask, SCRAP_CLEARING_FREQUENCY * 1000, SCRAP_CLEARING_FREQUENCY * 1000 );
+
+        // Check various warp points, and warp those in them
+        m_warpPointTask = new TimerTask() {
+            public void run() {
+                for( Player p : m_botAction.getPlayingPlayers() ) {
+                    if( p.getXTileLocation() >= 511 && p.getXTileLocation() <= 513 ) {
+                        if( p.getYTileLocation() >= WARP_CENTER_0_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_CENTER_0_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_1_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_CENTER_1_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_CENTER_1_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_0_Y_COORD );
+                        }
+                    }
+                }
+            }
+        };
+        m_botAction.scheduleTask( m_warpPointTask, 10000, 10000 );
 
         // Do not advert/reward for rectifying imbalance in the first 1 min of a game
         lastAssistReward = System.currentTimeMillis();
@@ -7676,14 +7705,34 @@ public class distensionbot extends SubspaceBot {
 
     /**
      * Warps all players at round start, if they are not presently spawning.
+     * Attempts to ensure that at least one Terrier is warped into home base
+     * to capture the initial flag and provide an anchor point.
      */
     private void warpPlayers() {
         Iterator <DistensionPlayer>i = m_players.values().iterator();
         DistensionPlayer p;
+        boolean terrInTopBase = false, terrInBotBase = false;
         while( i.hasNext() ) {
             p = i.next();
             if( p != null && p.getShipNum() > 0 && !p.isRespawning() ) {
-                p.doWarp( true );
+                // Warp all Terriers to base
+                if( p.getShipNum() == 5 ) {
+                    if( p.getArmyID() % 2 == 0 ) {
+                        if( terrInTopBase == false ) {
+                            m_botAction.warpTo(p.getArenaPlayerID(), 512, OPS_TOP_WARP4_Y );
+                            terrInTopBase = true;
+                        } else
+                            p.doWarp( true );
+                    } else {
+                        if( terrInBotBase == false ) {
+                            m_botAction.warpTo(p.getArenaPlayerID(), 512, OPS_BOT_WARP4_Y );
+                            terrInBotBase = true;
+                        } else
+                            p.doWarp( true );
+                    }
+                } else if( p.getShipNum() != 9 ) {
+                    p.doWarp( true );
+                }
             }
         }
     }
