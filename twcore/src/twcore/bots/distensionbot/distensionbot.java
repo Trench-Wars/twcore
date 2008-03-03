@@ -69,6 +69,7 @@ public class distensionbot extends SubspaceBot {
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
+    private final int WARP_POINT_CHECK_FREQUENCY = 15;     // # seconds between checking warp points for players
     private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
@@ -248,7 +249,7 @@ public class distensionbot extends SubspaceBot {
 
     // DATA FOR FLAG TIMER
     private static final int SCORE_REQUIRED_FOR_WIN = 3; // Max # rounds (odd numbers only)
-    private static final int SECTOR_CHANGE_SECONDS = 10; // Seconds it takes to secure hold or break one
+    private static final int SECTOR_CHANGE_SECONDS = 6; // Seconds it takes to secure hold or break one
     private static final int INTERMISSION_SECS = 60;    // Seconds between end of free play & start of next battle
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
@@ -484,13 +485,6 @@ public class distensionbot extends SubspaceBot {
         };
         m_botAction.scheduleTask( m_scrapClearTask, SCRAP_CLEARING_FREQUENCY * 1000, SCRAP_CLEARING_FREQUENCY * 1000 );
 
-        m_scrapClearTask = new TimerTask() {
-            public void run() {
-                m_scrappingPlayers.clear();
-            }
-        };
-        m_botAction.scheduleTask( m_scrapClearTask, SCRAP_CLEARING_FREQUENCY * 1000, SCRAP_CLEARING_FREQUENCY * 1000 );
-
         // Check various warp points, and warp those in them
         m_warpPointTask = new TimerTask() {
             public void run() {
@@ -507,7 +501,7 @@ public class distensionbot extends SubspaceBot {
                 }
             }
         };
-        m_botAction.scheduleTask( m_warpPointTask, 10000, 10000 );
+        m_botAction.scheduleTask( m_warpPointTask, WARP_POINT_CHECK_FREQUENCY * 1000, WARP_POINT_CHECK_FREQUENCY * 1000 );
 
         // Do not advert/reward for rectifying imbalance in the first 1 min of a game
         lastAssistReward = System.currentTimeMillis();
@@ -1028,15 +1022,11 @@ public class distensionbot extends SubspaceBot {
                 " - Data is saved, but will be cleared at release (coming soon)",
                 " - Top 3 players (combined earned RP) awarded bonus points in public release",
                 " - For every bug reported, points will be awarded (?message dugwyler)",
-                " - Suggestions and bugs: http://forums.trenchwars.org/showthread.php?t=31676",
                 " - Stats are up here courtesy of Foreign: http://www.trenchwars.org/distension",
                 ".",
                 "RECENT UPDATES  -  2/22/07",
-                " - IMPORTANT: Describing anything in the game as 'useless' will result in a BAN from the beta.",
-                " - Armies were randomized once again -- you may now have different teammates",
-                " - Added ranks such as Ensign, Captain, Admiral.  Will eventually let you give orders",
-                " - Shark Repel Regen and Spider Super & Energy Tank % rates increased",
-                " - To encourage build experimentation, !scrap is FREE for the rest of beta."
+                " - Changes are becoming too numerous to update here.  See this thread instead:",
+                "          http://forums.trenchwars.org/showthread.php?t=31676",
         };
         m_botAction.privateMessageSpam( p.getArenaPlayerID(), beta );
     }
@@ -2002,19 +1992,17 @@ public class distensionbot extends SubspaceBot {
                     lastTerrSharkReward = System.currentTimeMillis();
                 }
             }
-            if( flagTimer != null && flagTimer.isRunning() ) {
-                if( flagTimer.getHoldingFreq() == p.getArmyID() && flagTimer.getSecondsHeld() > 0 && reward == 0 ) {
-                    // If player is changing to a support ship while their freq is securing a hold,
-                    // they're probably just doing it to steal the points; don't keep MVP
-                    m_botAction.sendPrivateMessage( name, "You changed to a support ship, but your participation has still been reset, as your army presently has a sector hold!" );
-                    m_playerTimes.remove( name );
-                } else {
-                    if( reward == 0 ) // Only display msg if they didn't receive a similar one for being badly needed
-                        m_botAction.sendPrivateMessage( name, "For switching to a support ship, your participation counter has not been reset." );
-                }
+        }
+        if( flagTimer != null && flagTimer.isRunning() ) {
+            if( flagTimer.getHoldingFreq() == p.getArmyID() && flagTimer.getSecondsHeld() > 0 ) {
+                // If player is changing ships while their freq is securing a hold,
+                // they may just be doing it to scoop round-end points; don't keep MVP
+                m_botAction.sendPrivateMessage( name, "For changing ships while your army has a sector hold, your participation counter has been reset." );
+                m_playerTimes.remove( name );
             }
-        } else
-            m_playerTimes.remove( name );
+            if( m_playerTimes.get( name ) == null )
+                m_playerTimes.put( name, new Integer( flagTimer.getTotalSecs() ) );
+        }
 
         for( DistensionArmy a : m_armies.values() )
             a.recalculateFigures();
@@ -2024,10 +2012,6 @@ public class distensionbot extends SubspaceBot {
         //m_lagShips.remove( name );
         if( shipNum != 9 )
             p.setLagoutAllowed(true);
-        if( flagTimer != null && flagTimer.isRunning() ) {
-            if( m_playerTimes.get( name ) == null )
-                m_playerTimes.put( name, new Integer( flagTimer.getTotalSecs() ) );
-        }
         if( !flagTimeStarted || stopFlagTime ) {
             checkFlagTimeStart();
         }
@@ -4768,7 +4752,7 @@ public class distensionbot extends SubspaceBot {
             desc = "EMP ALL enemies (possible every 20 minutes in Terr)";
             break;
         case ABILITY_SUPER:
-            desc = "+10% chance of super every 30 seconds";
+            desc = "+9% chance of super every 30 seconds";
             break;
         case ABILITY_SHARK_REGEN:
             desc = "+25% chance of repel every 30 seconds";
@@ -5384,8 +5368,8 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
                 // Energy stream ability; each level worth an additional 10%
-                double superChance = Math.random() * 10.0;
-                if( (double)purchasedUpgrades[11] > superChance && !isRespawning ) {
+                double superChance = Math.random() * 100.0;
+                if( (double)purchasedUpgrades[11] * 9.0 > superChance && !isRespawning ) {
                     m_botAction.specificPrize( name, Tools.Prize.SUPER );
                     m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_SUPER );
                     prized = true;
@@ -5658,6 +5642,9 @@ public class distensionbot extends SubspaceBot {
             if( points > 0 ) {
                 if( DEBUG )
                     points = (int)((float)points * DEBUG_MULTIPLIER);
+                // Allow only 25% of a rank to be earned from any point increase.
+                if( points > (nextRank - rankStart) / 4 )
+                    points = (nextRank - rankStart) / 4;
                 if( !sendKillMessages ) {
                     bonusBuildup += points / 100;
                     while( bonusBuildup > 1.0 ) {
@@ -6087,15 +6074,12 @@ public class distensionbot extends SubspaceBot {
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
-            if( (isSupportShip() || shipNum == 6) && idleTicks < 12 ) {
+            if( isSupportShip() && idleTicks < 12 ) {
                 float sharingPercent;
                 float calcRank = (float)rank;
-                if( shipNum == 4 )
-                    if( rank > 10 )
-                        calcRank = 10.0f;
                 if( shipNum == 6 )
-                    if( rank > 8 )
-                        calcRank = 8.0f;
+                    if( rank > 12 )
+                        calcRank = 12.0f;
                 if( shipNum == 5 || shipNum == 8 || shipNum == 9 )
                     if( rank > 40 )
                         calcRank = 40.0f;
@@ -6602,10 +6586,10 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return True if player is a support ship (5 or 8)
+         * @return True if player is a support ship (5, 6, 8 or 9)
          */
         public boolean isSupportShip() {
-            return (shipNum == 5 || shipNum == 8 || shipNum == 9 || shipNum == 4 );
+            return (shipNum == 5 || shipNum == 8 || shipNum == 9 || shipNum == 6 );
         }
 
         /**
@@ -7765,7 +7749,7 @@ public class distensionbot extends SubspaceBot {
         while( i.hasNext() ) {
             p = i.next();
             p.numLagouts = 0;
-            if( (p.isSupportShip() && p.getShipNum() != 9) || p.getShipNum() == 6 ) {
+            if( (p.isSupportShip() && p.getShipNum() != 9) ) {
                 p.setIgnoreShipChanges(true);
                 m_botAction.setShip( p.getArenaPlayerID(), 1 );
                 m_botAction.setShip( p.getArenaPlayerID(), p.getShipNum() );
@@ -8628,6 +8612,7 @@ public class distensionbot extends SubspaceBot {
         // 50: Decoy 3
         // 55: +5% Super 5
         // 60: +15% Energy Tank 4
+        // 75: L3 Guns
         ship = new ShipProfile( RANK_REQ_SHIP3, 15f );
         upg = new ShipUpgrade( "Central Realigner        [ROT]", Tools.Prize.ROTATION, new int[]{6,7,8,8,8,9,9,9,10}, 0, 9 );       // 20 x9
         ship.addUpgrade( upg );
@@ -8647,7 +8632,7 @@ public class distensionbot extends SubspaceBot {
         int energyLevels3[] = { 0, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
         upg = new ShipUpgrade( "Molecular Shield         [NRG]", Tools.Prize.ENERGY, costs3, energyLevels3, 12 ); // 70 x12
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Rapid Disintigrator", Tools.Prize.GUNS, 40, 47, 1 );
+        upg = new ShipUpgrade( "Rapid Disintigrator", Tools.Prize.GUNS, new int[]{40,190}, new int[]{47,75}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Bombing ability disabled)", Tools.Prize.BOMBS, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -8661,7 +8646,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p3f1[] = { 13, 15, 17, 19, 20 };
         int p3f2[] = { 15, 25, 35, 45, 55 };
-        upg = new ShipUpgrade( "+10% Infinite Energy Stream", ABILITY_SUPER, p3f1, p3f2, 5 );
+        upg = new ShipUpgrade( "+9% Infinite Energy Stream", ABILITY_SUPER, p3f1, p3f2, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warp Field Stabilizer", Tools.Prize.ANTIWARP, 23, 38, 1 );
         ship.addUpgrade( upg );
