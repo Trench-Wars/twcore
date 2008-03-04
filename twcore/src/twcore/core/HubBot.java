@@ -486,7 +486,7 @@ public class HubBot extends SubspaceBot {
 
         m_billerDownTask = new TimerTask() {
             public void run() {
-                m_botAction.sendZoneMessage( "NOTICE: The TW billing server is temporarily down.  ?chat channels and some commands are disabled, and entering players will have ^ before their name.  Please be patient while normal service is restored. -TWStaff", Tools.Sound.BEEP1 );
+                m_botAction.sendZoneMessage( "NOTICE: The billing server (player database) is temporarily down (beyond our control).  ?commands (?chat etc) are disabled and entering players will have ^ before their name.  Please be patient until normal service is restored.", Tools.Sound.BEEP1 );
             }
         };
         // Send first after one second (also confirming !billerdown command, while the rest every 5 minutes)
