@@ -54,12 +54,12 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                         // Debug mode.
-    private final float DEBUG_MULTIPLIER = 4.1f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 4.2f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between a long list of spammed messages
-    private final int PRIZE_SPAM_DELAY = 15;               // Delay in ms between prizes for individual players
+    private final int PRIZE_SPAM_DELAY = 10;               // Delay in ms between prizes for individual players
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
@@ -124,10 +124,25 @@ public class distensionbot extends SubspaceBot {
     private final int REARM_SAFE_BOTTOM_Y = 832;
     private final int BASE_CENTER_0_Y_COORD = 426;
     private final int BASE_CENTER_1_Y_COORD = 597;
+    // Old base warp coords (inside base)
     //private final int BASE_CENTER_0_Y_COORD = 335;
     //private final int BASE_CENTER_1_Y_COORD = 688;
+
+    // Wormhole warp points
     private final int WARP_CENTER_0_Y_COORD = 455;
     private final int WARP_CENTER_1_Y_COORD = 568;
+    private final int WARP_TO_ROOF_0_Y_COORD = 477;
+    private final int WARP_TO_ROOF_1_Y_COORD = 545;
+    private final int WARP_FROM_ROOF_0_Y_COORD = 254;
+    private final int WARP_FROM_ROOF_1_Y_COORD = 770;
+    private final int WARP_LOWER_LEFT_X_COORD = 426;
+    private final int WARP_LOWER_RIGHT_X_COORD = 598;
+    private final int WARP_LOWER_0_Y_COORD = 377;
+    private final int WARP_LOWER_1_Y_COORD = 646;
+    private final int WARP_MID_LEFT_X_COORD = 452;
+    private final int WARP_MID_RIGHT_X_COORD = 572;
+    private final int WARP_MID_0_Y_COORD = 316;
+    private final int WARP_MID_1_Y_COORD = 707;
 
     // Coords used for !terr and !whereis
     private final int TOP_SAFE = 242;
@@ -196,6 +211,8 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_VENGEFUL_BASTARD = -8;
     public final int ABILITY_ESCAPE_POD = -9;
     public final int ABILITY_LEECHING = -10;
+    public final int ABILITY_JUMPSPACE = -11;
+    public final int ABILITY_THOR = -12;
 
     // TACTICAL OPS DATA
     public final int DEFAULT_MAX_OP = 0;                    // Max OP points when not upgraded
@@ -233,18 +250,18 @@ public class distensionbot extends SubspaceBot {
 
 
     // TACTICAL OPS ABILITY PRIZE #s
-    public final int OPS_INCREASE_MAX_OP = -11;
-    public final int OPS_REGEN_RATE = -12;
-    public final int OPS_COMMUNICATIONS = -13;
-    public final int OPS_WARP = -14;
-    public final int OPS_FAST_TEAM_REARM = -15;
-    public final int OPS_COVER = -16;
-    public final int OPS_DOOR_CONTROL = -17;
-    public final int OPS_SECLUSION = -18;
-    public final int OPS_MINEFIELD = -19;
-    public final int OPS_SHROUD = -10;
-    public final int OPS_FLASH = -21;
-    public final int OPS_TEAM_SHIELDS = -22;
+    public final int OPS_INCREASE_MAX_OP = -21;
+    public final int OPS_REGEN_RATE = -22;
+    public final int OPS_COMMUNICATIONS = -23;
+    public final int OPS_WARP = -24;
+    public final int OPS_FAST_TEAM_REARM = -25;
+    public final int OPS_COVER = -26;
+    public final int OPS_DOOR_CONTROL = -27;
+    public final int OPS_SECLUSION = -28;
+    public final int OPS_MINEFIELD = -29;
+    public final int OPS_SHROUD = -30;
+    public final int OPS_FLASH = -31;
+    public final int OPS_TEAM_SHIELDS = -32;
 
 
 
@@ -490,6 +507,7 @@ public class distensionbot extends SubspaceBot {
         m_warpPointTask = new TimerTask() {
             public void run() {
                 for( Player p : m_botAction.getPlayingPlayers() ) {
+                    // Warps from and to: center blocks; center bar to roof
                     if( p.getXTileLocation() >= 511 && p.getXTileLocation() <= 513 ) {
                         if( p.getYTileLocation() >= WARP_CENTER_0_Y_COORD - 1 &&
                                 p.getYTileLocation() <= WARP_CENTER_0_Y_COORD + 1 ) {
@@ -497,8 +515,58 @@ public class distensionbot extends SubspaceBot {
                         } else if( p.getYTileLocation() >= WARP_CENTER_1_Y_COORD - 1 &&
                                 p.getYTileLocation() <= WARP_CENTER_1_Y_COORD + 1 ) {
                             m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_0_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_TO_ROOF_0_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_TO_ROOF_0_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_0_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_TO_ROOF_1_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_TO_ROOF_1_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_1_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_FROM_ROOF_0_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_FROM_ROOF_0_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_0_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_FROM_ROOF_1_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_FROM_ROOF_1_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_1_Y_COORD );
+                        }
+                    // Warps from and to: lower shoulders to mid shoulders
+                    } else if( p.getXTileLocation() >= WARP_LOWER_LEFT_X_COORD - 1
+                            && p.getXTileLocation() <= WARP_LOWER_LEFT_X_COORD + 1 ) {
+                        if( p.getYTileLocation() >= WARP_LOWER_0_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_LOWER_0_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_1_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_LOWER_1_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_LOWER_1_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_0_Y_COORD );
+                        }
+                    } else if( p.getXTileLocation() >= WARP_LOWER_RIGHT_X_COORD - 1
+                            && p.getXTileLocation() <= WARP_LOWER_RIGHT_X_COORD + 1 ) {
+                        if( p.getYTileLocation() >= WARP_LOWER_0_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_LOWER_0_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_1_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_LOWER_1_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_LOWER_1_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_0_Y_COORD );
+                        }
+                    } else if( p.getXTileLocation() >= WARP_MID_LEFT_X_COORD - 1
+                            && p.getXTileLocation() <= WARP_MID_LEFT_X_COORD + 1 ) {
+                        if( p.getYTileLocation() >= WARP_MID_0_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_MID_0_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_1_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_MID_1_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_MID_1_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_0_Y_COORD );
+                        }
+                    } else if( p.getXTileLocation() >= WARP_MID_RIGHT_X_COORD - 1
+                            && p.getXTileLocation() <= WARP_MID_RIGHT_X_COORD + 1 ) {
+                        if( p.getYTileLocation() >= WARP_MID_0_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_MID_0_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_1_Y_COORD );
+                        } else if( p.getYTileLocation() >= WARP_MID_1_Y_COORD - 1 &&
+                                p.getYTileLocation() <= WARP_MID_1_Y_COORD + 1 ) {
+                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_0_Y_COORD );
                         }
                     }
+
                 }
             }
         };
@@ -680,6 +748,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!battleinfo", acceptedMessages, this, "cmdBattleInfo" );
         m_commandInterpreter.registerCommand( "!!", acceptedMessages, this, "cmdEnergyTank" );
         m_commandInterpreter.registerCommand( "!emp", acceptedMessages, this, "cmdTargetedEMP" );
+        m_commandInterpreter.registerCommand( ">>>", acceptedMessages, this, "cmdJumpSpace" );
         m_commandInterpreter.registerCommand( "!manops", acceptedMessages, this, "cmdManOps" );
         m_commandInterpreter.registerCommand( "!pilot", acceptedMessages, this, "cmdPilotDefunct" );
         m_commandInterpreter.registerCommand( "!ship", acceptedMessages, this, "cmdPilotDefunct" );
@@ -1945,6 +2014,8 @@ public class distensionbot extends SubspaceBot {
                     else
                         enemy++;
             }
+            if( shipNum == Tools.Ship.SHARK && friendly > 2 )
+                throw new TWCoreException( "Sorry, only two Sharks are allowed per army." );
             // If we already have more than they do (2 more needed for terr), do not allow the change
             if( shipNum == Tools.Ship.SHARK && friendly > enemy + 1 )
                 throw new TWCoreException( "Sorry, the other army doesn't have enough Sharks to allow you to Shark fairly!" );
@@ -1963,9 +2034,9 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " is now manning the Tactical Ops console." );
 
         // Simple fix to cause sharks and terrs to not lose MVP
-        if( (lastShipNum > 0) && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.LEVIATHAN || shipNum == 9) ) {
+        if( (lastShipNum > 0) && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) ) {
             int reward = 0;
-            if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK) ) {
+            if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
                 int ships = 0;
                 for( DistensionPlayer p2 : m_players.values() ) {
                     if( p2.getShipNum() == shipNum )
@@ -1977,19 +2048,19 @@ public class distensionbot extends SubspaceBot {
                 if( shipNum == Tools.Ship.TERRIER ) {
                     if( ships == 0 && pilots > 3 ) {
                         reward = rank * 5;
-                        m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when one was badly needed; your participation counter is also not reset." );
+                        m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when one was badly needed." );
                     } else if( ships == 1 && pilots > 9 ){
                         reward = rank * 3;
-                        m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when a second one was needed; your participation counter is also not reset." );
+                        m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when a second one was needed." );
                     }
                 } else {
                     if( ships == 0 && pilots > 7 ) {
                         reward = rank * 3;
-                        m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Shark when one was needed; your participation counter is also not reset." );
+                        m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Shark when one was needed." );
                     }
                 }
                 if( reward > 0 ) {
-                    p.addRankPoints(reward);
+                    p.addRankPoints(reward, false);
                     lastTerrSharkReward = System.currentTimeMillis();
                 }
             }
@@ -2017,7 +2088,7 @@ public class distensionbot extends SubspaceBot {
             checkFlagTimeStart();
         }
         cmdProgress( name, null );
-        p.addRankPoints(0); // If player has enough RP to level, rank them up.
+        p.addRankPoints(0,false); // If player has enough RP to level, rank them up.
 
         // Make sure a player knows they can upgrade if they have no upgrades installed (such as after a refund)
         if( p.getUpgradeLevel() == 0 && p.getUpgradePoints() >= 10 ) {
@@ -2839,7 +2910,7 @@ public class distensionbot extends SubspaceBot {
                     } else {
                         m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
                     }
-                    p.addRankPoints(reward);
+                    p.addRankPoints(reward,false);
                 }
                 p.setAssist( armyToAssist );
                 m_botAction.setFreq(name, armyToAssist );
@@ -3046,9 +3117,56 @@ public class distensionbot extends SubspaceBot {
             }
         }
         m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_EMP );
-        m_botAction.sendPrivateMessage( name, "Targetted EMP sent!  All enemies have been temporarily disabled." );
-        m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an EMP PULSE on your army!" );
+        m_botAction.sendPrivateMessage( name, "EMP discharged!  All enemies have been temporarily disabled." );
+        m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on your army!" );
     }
+
+    /**
+     * Uses Targeted EMP ability, if available.
+     * @param name
+     * @param msg
+     */
+    public void cmdJumpSpace( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        // Get fresh data ASAP
+        m_botAction.spectatePlayer(p.getArenaPlayerID());
+        if( p.getShipNum() != Tools.Ship.JAVELIN )
+            throw new TWCoreException( "Only Javelins possess the JumpSpace ability." );
+        if( p.getRank() < 15 )
+            throw new TWCoreException( "You do not yet have access to the JumpSpace Drive.  It will become available when you reach rank 15." );
+        if( !p.useJumpSpace() )
+            throw new TWCoreException( "JumpSpace is not yet charged." );
+        Player pdata = m_botAction.getPlayer(p.getArenaPlayerID());
+
+        // upgfactor: 0.5 to 2.0, representing amount by which velocity will affect jump location.
+        // Estimating velocity to be between 1 and ~3000 based on present CFG, with
+        // top velocity w/o speed upgrades or afterburner being 900.
+        // Divided by 200:  x0.5) 900 = 2.25; 3000 = 7.5   x2.0) 900 = 9; 3000 = 30
+        float upgfactor = (float)(p.getPurchasedUpgrade(9) + 1) / 2.0f;
+        int x = pdata.getXTileLocation();
+        int y = pdata.getYTileLocation();
+        int jumpx = x + Math.round( ((float)pdata.getXVelocity() / 200.0f ) * upgfactor );
+        int jumpy = y + Math.round( ((float)pdata.getYVelocity() / 200.0f ) * upgfactor );
+        if( DEBUG )
+            m_botAction.sendPrivateMessage("dugwyler", "Jump.  ("+ x + "," + y + ") -> (" + jumpx + "," + jumpy + ")" +
+                    "  Vel:" + pdata.getXVelocity() + "," + pdata.getYVelocity() + "  Factor=" + upgfactor + "  " +
+                    "XAdd=" + Math.round( ((float)pdata.getXVelocity() / 200.0f ) * upgfactor ) +
+                    "YAdd=" + Math.round( ((float)pdata.getYVelocity() / 200.0f ) * upgfactor ) );
+
+        // Search for Naughtiness (those going outside arena limits)
+        final int arenaRadius = 4192;
+        // Formula for getting the distance from the center borrowed from 2dragons' fallout module.
+        double dist = Math.sqrt( Math.pow(( 8192 - jumpx ), 2) + Math.pow(( 8192 - jumpy ), 2) );
+        if( dist >= arenaRadius ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Naughty!", Tools.Sound.BURP );
+            return;
+        }
+        m_botAction.warpTo( p.getArenaPlayerID(), jumpx, jumpy );
+    }
+
+
 
 
     // ***** TACTICAL OPS COMMANDS *****
@@ -4422,7 +4540,7 @@ public class distensionbot extends SubspaceBot {
 
         m_botAction.sendPrivateMessage( name, "Granted " + (int)points + "RP to " + args[0] + ".", 1 );
         m_botAction.sendPrivateMessage( args[0], "You have been granted " + points + "RP by " + name + ".", 1 );
-        player.addRankPoints( (int)points );
+        player.addRankPoints( (int)points, false );
     }
 
 
@@ -4770,6 +4888,9 @@ public class distensionbot extends SubspaceBot {
         case ABILITY_LEECHING:
             desc = "+20% chance of full charge after every kill";
             break;
+        case ABILITY_JUMPSPACE:
+            desc = "Spacial Jump improvements (+regen, -cooldown)";
+            break;
         }
         return desc;
     }
@@ -4810,7 +4931,7 @@ public class distensionbot extends SubspaceBot {
 
     /**
      * Prizes a player up using a delay, turns off an LVZ (the rearm), and
-     * warps the player when done prizing.
+     * warps the player when done prizing.  ***No longer used.***
      * @param arenaID ID of person to prize
      * @param msgs Array of Strings to spam
      * @param delay Delay, in ms, to wait in between messages
@@ -4926,6 +5047,7 @@ public class distensionbot extends SubspaceBot {
         private int       idlesInBase;          // # idle checks in which a player has been in base
         private boolean   energyTank;           // True if player has an energy tank available
         private boolean   targetedEMP;          // True if player has targeted EMP available
+        private boolean   jumpSpace;            // True if player has JumpSpace available
         private int       vengefulBastard;      // Levels of Vengeful Bastard ability
         private int       escapePod;            // Levels of Escape Pod ability
         private int       leeching;             // Levels of Leeching ability
@@ -4991,6 +5113,7 @@ public class distensionbot extends SubspaceBot {
             allowLagout = true;
             energyTank = false;
             targetedEMP = false;
+            jumpSpace = false;
             ignoreShipChanges = false;
         }
 
@@ -5201,6 +5324,7 @@ public class distensionbot extends SubspaceBot {
                 leeching = 0;
                 energyTank = false;
                 targetedEMP = false;
+                jumpSpace = false;
                 if( shipNum == 9 )
                     maxOP = DEFAULT_MAX_OP;
                 // Setup special (aka unusual) abilities
@@ -5351,8 +5475,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specificPrize( name, Tools.Prize.BURST );
                     prized = true;
                 }
-                // EMP ability; re-enable every 40 ticks (20 min)
-                if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 40 == 0 ) {
+                // EMP ability; re-enable every 30 ticks (15 min)
+                if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 30 == 0 ) {
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_EMP );
                     m_botAction.sendPrivateMessage(arenaPlayerID, "Targeted EMP recharged.  !emp to use.");
                     targetedEMP = true;
@@ -5381,6 +5505,28 @@ public class distensionbot extends SubspaceBot {
                 if( (double)purchasedUpgrades[9] > repChance && !isRespawning ) {
                     m_botAction.specificPrize( name, Tools.Prize.REPEL );
                     prized = true;
+                }
+            } else if( shipNum == 1) {
+                // Thor ability (every 5 minutes)
+                if( purchasedUpgrades[11] > 0 && tick % 10 == 0 ) {
+                    m_botAction.specificPrize( name, Tools.Prize.THOR );
+                    prized = true;
+                }
+            } else if( shipNum == 2) {
+                // JumpSpace ability (free at rank 15, but doesn't work well)
+                int neededTick;
+                switch( purchasedUpgrades[9] ) {
+                    case 1: neededTick = 15; break;
+                    case 2: neededTick = 10; break;
+                    case 3: neededTick = 8; break;
+                    default: neededTick = 20; break;
+                }
+                if( purchasedUpgrades[9] == 0 && tick % neededTick == 0 ) {
+                    if( !jumpSpace ) {
+                        m_botAction.sendPrivateMessage( arenaPlayerID, "JumpSpace Drive ready.  PM >>> to use." );
+                        jumpSpace = true;
+                        prized = true;
+                    }
                 }
             } else if( shipNum == 9 ) {
                 // Allow another Comm every minute, up to max allowed
@@ -5637,15 +5783,26 @@ public class distensionbot extends SubspaceBot {
          * @return True if player ranked up by adding these points
          */
         public boolean addRankPoints( int points ) {
+            return addRankPoints( points, true );
+        }
+
+        /**
+         * Adds # rank points to total rank point amt.
+         * @param points Amt to add
+         * @return True if player ranked up by adding these points
+         */
+        public boolean addRankPoints( int points, boolean limit ) {
             if( shipNum < 1 )
                 return false;
             boolean rankedUp = false;
             if( points > 0 ) {
                 if( DEBUG )
                     points = (int)((float)points * DEBUG_MULTIPLIER);
-                // Allow only 25% of a rank to be earned from any point increase.
-                if( points > (nextRank - rankStart) / 4 )
-                    points = (nextRank - rankStart) / 4;
+                if( limit ) {
+                    // Allow only 25% of a rank to be earned from any point increase.
+                    if( points > (nextRank - rankStart) / 4 )
+                        points = (nextRank - rankStart) / 4;
+                }
                 if( !sendKillMessages ) {
                     bonusBuildup += points / 100;
                     while( bonusBuildup > 1.0 ) {
@@ -5654,9 +5811,11 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             }
-            // Max points allowed to be added is number of points needed to rank up.
-            if( points > getPointsToNextRank() )
-                points = getPointsToNextRank();
+            if( limit ) {
+                // Max points allowed to be added is number of points needed to rank up.
+                if( points > getPointsToNextRank() )
+                    points = getPointsToNextRank();
+            }
 
             rankPoints += points;
             recentlyEarnedRP += points;
@@ -5813,13 +5972,7 @@ public class distensionbot extends SubspaceBot {
             if( purchasedUpgrades[upgrade] + amt < 0 )
                 return;
             purchasedUpgrades[upgrade] += amt;
-            if( (shipNum == 3 && (purchasedUpgrades[10] > 0 || purchasedUpgrades[11] > 0)) ||
-                    (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
-                    (shipNum == 8 && (purchasedUpgrades[9] > 0) ) ||
-                    (shipNum == 9) )
-                m_specialAbilityPrizer.addPlayer(this);
-            else
-                m_specialAbilityPrizer.removePlayer(this);
+            setupSpecialAbilities();
             if( shipNum == 6 && upgrade == 6 )
                 vengefulBastard = purchasedUpgrades[6];
             if( (shipNum == 1 || shipNum == 5) && upgrade == 12 )
@@ -5842,7 +5995,6 @@ public class distensionbot extends SubspaceBot {
                 rankStart = -1;
                 nextRank = -1;
                 upgPoints = -1;
-                warpInBase = false;
                 if( this.shipNum > 0 && this.shipNum != 9 ) {
                     m_botAction.specWithoutLock( name );
                     lastShipNum = this.shipNum;     // Record for lagout
@@ -5880,9 +6032,18 @@ public class distensionbot extends SubspaceBot {
             isRespawning = false;
             resetProgressBar();
             initProgressBar();
+            setupSpecialAbilities();
+        }
+
+        /**
+         * Setup special abilities according to what has been upgraded.
+         */
+        public void setupSpecialAbilities() {
             if( (shipNum == 3 && (purchasedUpgrades[10] > 0 || purchasedUpgrades[11] > 0)) ||
                     (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
                     (shipNum == 8 && (purchasedUpgrades[9] > 0) ) ||
+                    (shipNum == 2 && ((purchasedUpgrades[9] > 0) || rank >= 15) ) ||
+                    (shipNum == 1 && (purchasedUpgrades[11] > 0) ) ||
                     (shipNum == 9) )
                 m_specialAbilityPrizer.addPlayer(this);
             else
@@ -5984,7 +6145,7 @@ public class distensionbot extends SubspaceBot {
             }
             if( award > 0 ) {
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_STREAK);
-                addRankPoints(award);
+                addRankPoints(award, false);
             }
             return false;
         }
@@ -6227,6 +6388,16 @@ public class distensionbot extends SubspaceBot {
             boolean canemp = targetedEMP;
             targetedEMP = false;
             return canemp;
+        }
+
+        /**
+         * Checks if the player has JumpSpace available; if so, makes it unavailable and returns true.
+         * @return True if JumpSpace is available
+         */
+        public boolean useJumpSpace() {
+            boolean canjump = jumpSpace;
+            jumpSpace = false;
+            return canjump;
         }
 
         // BASIC SETTERS
@@ -7553,7 +7724,7 @@ public class distensionbot extends SubspaceBot {
                         }
                         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
                         modPoints += bonus;
-                        p.addRankPoints(modPoints);
+                        p.addRankPoints(modPoints,false);
                         // Assisters do not receive credit for wins from their army, for obvious reasons.
                         // Also need 50% participation or more for the win to count properly.
                         if( p.getNaturalArmyID() == p.getArmyID() && percentOnFreq >= .5 )
@@ -7577,7 +7748,7 @@ public class distensionbot extends SubspaceBot {
                             float percentOnFreq = (float)(secs - time) / (float)secs;
                             int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You lost the battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation).");
-                            p.addRankPoints(modPoints);
+                            p.addRankPoints(modPoints,false);
                         }
                     }
                 }
@@ -8465,8 +8636,8 @@ public class distensionbot extends SubspaceBot {
      * Shark  - 11    (unlock @ 2)
      * Ops    - 12    (unlock w/ all ships @ 20 + officer status)
      * Lanc   - 14    (unlock @ 10)
+     * Weasel - 14    (unlock by successive kills)
      * WB     - 15    (start)
-     * Weasel - 15    (unlock by successive kills)
      * Spider - 15    (unlock @ 5)
      * Jav    - 15.2  (unlock @ 15)
      * Levi   - 16    (unlock @ 20)
@@ -8527,7 +8698,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{10,30,50}, new int[]{36,60,80}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Matter-to-Antimatter Converter", Tools.Prize.THOR, 34, 50, 1 );
+        upg = new ShipUpgrade( "Matter-to-Antimatter Converter", ABILITY_THOR, 34, 50, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{25,35,45}, new int[]{30,55,70}, 3 );
         ship.addUpgrade( upg );
@@ -8543,12 +8714,13 @@ public class distensionbot extends SubspaceBot {
         // 24: XRadar
         // 26: Multi
         // 26: L2 Guns
-        // 28: Decoy 1
+        // 28: JumpSpace 1
         // 30: Shrap (3 more levels)
         // 35: Rocket 2
+        // 37: JumpSpace 2
         // 40: L2 Bombs
         // 45: Priority Rearm
-        // 50: Decoy 2
+        // 50: JumpSpace 3
         // 55: Shrap (7 more levels)
         // 60: L3 Guns
         // 70: Rocket 3
@@ -8580,9 +8752,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Detection System", Tools.Prize.XRADAR, 21, 24, 1 );
         ship.addUpgrade( upg );
-        int p2d1[] = { 8,  35 };
-        int p2d2[] = { 28, 50 };
-        upg = new ShipUpgrade( "Javelin Reiterator", Tools.Prize.DECOY, p2d1, p2d2, 2 );
+        upg = new ShipUpgrade( "JumpSpace Drive Upgrade", ABILITY_JUMPSPACE, new int[]{20,10,10}, new int[]{28,37,50}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Fuel Supply", Tools.Prize.ROCKET, new int[]{20,35,70}, new int[]{18,22,30}, 3 );
         ship.addUpgrade( upg );
@@ -8797,7 +8967,7 @@ public class distensionbot extends SubspaceBot {
         // 50: Brick
         // 55: 10% Vengeful Bastard 5
         // 60: Rocket 3
-        ship = new ShipProfile( RANK_REQ_SHIP6, 15f );
+        ship = new ShipProfile( RANK_REQ_SHIP6, 14f );
         int p6a1a[] = {15, 9,  8,  7,  7,  6, 5 };
         int p6a2a[] = { 3, 8, 10, 15, 20, 30, 1 };
         upg = new ShipUpgrade( "Orbital Force Unit       [ROT]", Tools.Prize.ROTATION, p6a1a, p6a2a, 7 );       // 20 x7
