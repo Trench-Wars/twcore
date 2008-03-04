@@ -468,6 +468,7 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage( messager, "Disable failed.  Try again in a few moments." );
                 return;
             }
+            m_botAction.cancelTask(m_billerDownTask);
             m_billerDownTask = null;
             m_botAction.sendSmartPrivateMessage( messager, "Biller down zone message disabled.  '!billerdown <password>' to turn back on." );
             m_botAction.sendChatMessage( "Biller down zone message disabled by " + messager + ".  '!billerdown <password>' to turn back on." );
@@ -488,7 +489,8 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendZoneMessage( "NOTICE: The TW billing server is temporarily down.  ?chat channels and some commands are disabled, and entering players will have ^ before their name.  Please be patient while normal service is restored. -TWStaff", Tools.Sound.BEEP1 );
             }
         };
-        m_botAction.scheduleTask(m_billerDownTask, m_billerDownRate);
+        // Send first after one second (also confirming !billerdown command, while the rest every 5 minutes)
+        m_botAction.scheduleTaskAtFixedRate(m_billerDownTask, 1000, m_billerDownRate);
     }
 
     /**
