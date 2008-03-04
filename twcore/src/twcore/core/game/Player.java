@@ -712,7 +712,7 @@ public class Player {
     /**
      * @return Number of flags the player is carrying
      */
-    public short getflagsCarried(){
+    public short getFlagsCarried(){
 
         return m_flagsCarried;
     }
