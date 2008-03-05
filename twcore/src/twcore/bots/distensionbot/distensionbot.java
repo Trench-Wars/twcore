@@ -1140,6 +1140,12 @@ public class distensionbot extends SubspaceBot {
         String name = event.getPlayerName();
         if( name == null )
             return;
+        if( name.startsWith("^") ) {
+            // Biller down ... OH SHI--
+            m_botAction.sendArenaMessage("BILLING SERVER DOWN: Automatic shutdown initiated!", Tools.Sound.LISTEN_TO_ME );
+            cmdSaveDie("DistensionBot","");
+            return;
+        }
         m_players.remove( name );
         Player player = m_botAction.getPlayer(event.getPlayerID());
         if( player != null ) {
@@ -1700,6 +1706,8 @@ public class distensionbot extends SubspaceBot {
         // (Extra char padding ensures no-one can imitate, in case "name" String only shows 19 total)
         if( name.length() > 18 )
             throw new TWCoreException( "Whoa there, is that a name you have, or a novel?  You need something short and snappy.  Hell, I'd reckon that anything 19 letters or more just won't cut it.  Come back when you have a better name.");
+        if( name.startsWith("^") )
+            throw new TWCoreException( "The billing server is down.  Distension is now shutting down to prevent record corruption...");
 
         DistensionPlayer p = m_players.get( name );
         if( p == null ) {
@@ -2545,10 +2553,13 @@ public class distensionbot extends SubspaceBot {
                         prized = false;
                 }
         }
+
+        // Get the    [ROT] crap out.
+        String[] upgparse = upgrade.getName().split("  ", 2);
         if( upgrade.getMaxLevel() == 1 ) {
-            m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] installed.  -" + cost + "UP from army allowance." + (prized?"":"  You will receive this upgrade at next rearm.") );
+            m_botAction.sendPrivateMessage( name, upgparse[0] + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] installed.  -" + cost + "UP from army allowance." + (prized?"":"  You will receive this upgrade at next rearm.") );
         } else {
-            m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] upgraded to Level " + (currentUpgradeLevel + 1) + ".  -" + cost + "UP from army allowance." + (prized?"":"  You will receive this upgrade at next rearm.") );
+            m_botAction.sendPrivateMessage( name, upgparse[0] + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] upgraded to Level " + (currentUpgradeLevel + 1) + ".  -" + cost + "UP from army allowance." + (prized?"":"  You will receive this upgrade at next rearm.") );
         }
         if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS || upgrade.getPrizeNum() == Tools.Prize.MULTIFIRE )
             m_botAction.sendPrivateMessage( name, "--- IMPORTANT NOTE !! ---: Your new weapon may require too much energy for you to use.  If this is the case, !scrap " + (upgradeNum + 1) + " to return to your old weapon free of charge.");
@@ -3193,6 +3204,17 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Naughty!", Tools.Sound.BURP );
             return;
         }
+
+        // Levels 0, 1 and 2 all have negative effects.  3 has none.
+        switch( p.getPurchasedUpgrade(9) ) {
+            case 0:
+                m_botAction.specificPrize( p.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
+            case 1:
+                m_botAction.specificPrize( p.getArenaPlayerID(), -Tools.Prize.RECHARGE );
+            case 2:
+                m_botAction.specificPrize( p.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
+        }
+
         m_botAction.warpTo( p.getArenaPlayerID(), jumpx, jumpy );
     }
 
@@ -4921,6 +4943,43 @@ public class distensionbot extends SubspaceBot {
         case ABILITY_JUMPSPACE:
             desc = "Spacial Jump improvements (+regen, -cooldown)";
             break;
+        case ABILITY_THOR:
+            desc = "Thor recharged every 5 minutes";
+            break;
+        // OPS
+        case OPS_INCREASE_MAX_OP:
+            desc = "Larger Op Point reserve";
+            break;
+        case OPS_REGEN_RATE:
+            desc = "Improved OP regeneration speed";
+            break;
+        case OPS_WARP:
+            desc = "Warp teammates to locations";
+            break;
+        case OPS_FAST_TEAM_REARM:
+            desc = "Priority rearm for all teammates";
+            break;
+        case OPS_COVER:
+            desc = "Drop cover in home base";
+            break;
+        case OPS_DOOR_CONTROL:
+            desc = "Control gates in bases";
+            break;
+        case OPS_SECLUSION:
+            desc = "Seclude enemy in sphere";
+            break;
+        case OPS_MINEFIELD:
+            desc = "Deploy an artificial minefield";
+            break;
+        case OPS_SHROUD:
+            desc = "Cover enemy in cone of darkness";
+            break;
+        case OPS_FLASH:
+            desc = "Totally blind enemy for short time";
+            break;
+        case OPS_TEAM_SHIELDS:
+            desc = "Provide shields for all teammates";
+            break;
         }
         return desc;
     }
@@ -5542,6 +5601,7 @@ public class distensionbot extends SubspaceBot {
             } else if( shipNum == 1) {
                 // Thor ability (every 5 minutes)
                 if( purchasedUpgrades[11] > 0 && tick % 10 == 0 ) {
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "Thor's Hammer replenished." );
                     m_botAction.specificPrize( name, Tools.Prize.THOR );
                     prized = true;
                 }
@@ -7812,13 +7872,14 @@ public class distensionbot extends SubspaceBot {
                         } else {
                             victoryMsg += "!";
                         }
-                        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
-                        modPoints += bonus;
-                        p.addRankPoints(modPoints,false);
                         // Assisters do not receive credit for wins from their army, for obvious reasons.
                         // Also need 50% participation or more for the win to count properly.
                         if( p.getNaturalArmyID() == p.getArmyID() && percentOnFreq >= .5 )
                             p.addBattleWin();
+
+                        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
+                        modPoints += bonus;
+                        p.addRankPoints(modPoints,false);
                     } else {
                         if( DEBUG )
                             m_botAction.sendSmartPrivateMessage("dugwyler", p.getName() + " had no time data attached to their name at round win." );
