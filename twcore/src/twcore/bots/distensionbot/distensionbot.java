@@ -69,7 +69,8 @@ public class distensionbot extends SubspaceBot {
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
-    private final int WARP_POINT_CHECK_FREQUENCY = 15;     // # seconds between checking warp points for players
+    private final int WARP_POINT_CHECK_FREQUENCY = 10;     // # seconds between checking warp points for players
+    private final int VENGEFUL_VALID_SECONDS = 5;          // # seconds after V.B. fire in which VB gets RP bonus
     private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
     private final int PILOTS_REQ_EACH_ARMY = 3;            // # players needed on each army for game to start
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
@@ -419,7 +420,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
                 m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
-                m_botAction.sendArenaMessage("Distension BETA loaded.  Just enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
+                m_botAction.sendArenaMessage("Distension BETA loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
             }
             // Reset all times at each load
             try {
@@ -1298,7 +1299,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        if( p.getShipNum() == event.getShipType() ) {
+        if( p.getShipNum() == event.getShipType() || p.getShipNum() == 9 && event.getShipType() == 0 ) {
             if( p.ignoreShipChanges() )         // If we've been ignoring their shipchanges and they returned to
                 p.setIgnoreShipChanges(false);  // their old ship, mission complete.
             else {
@@ -1439,6 +1440,7 @@ public class distensionbot extends SubspaceBot {
             if( p.getYTileLocation() <= TOP_FR || p.getYTileLocation() >= BOT_FR )
                 isBTeK = true;
         }
+        boolean isVictorWeasel = victor.getShipNum() == 6;
         boolean isMaxReward = false;
         boolean isRepeatKillLight = false;
         boolean isRepeatKillHard = false;
@@ -1581,9 +1583,15 @@ public class distensionbot extends SubspaceBot {
 
             if( isTeK ) {
                 if( isBTeK )
-                    points = Math.round((float)points * 1.50f);
+                    if( isVictorWeasel )
+                        points = Math.round((float)points * 2.0f);
+                    else
+                        points = Math.round((float)points * 1.50f);
                 else
-                    points = Math.round((float)points * 1.10f);
+                    if( isVictorWeasel )
+                        points = Math.round((float)points * 1.20f);
+                    else
+                        points = Math.round((float)points * 1.10f);
             }
 
             if( endedStreak )
@@ -1603,7 +1611,24 @@ public class distensionbot extends SubspaceBot {
             victor.getArmy().addSharedProfit( points );
 
             // Determine whether or not vengeance is to be inflicted
-            loser.checkVengefulBastard( victor.getArenaPlayerID() );
+            boolean revenged = loser.checkVengefulBastard( victor.getArenaPlayerID() );
+            if( revenged ) {
+                if( victor.wantsKillMsg() ) {
+                    m_botAction.sendPrivateMessage(victor.getArenaPlayerID(), loser.getName() + " is a VENGEFUL BASTARD!" );
+                }
+                victor.setVenge( loser.getName() );
+            }
+            String venger = loser.checkVenge();
+            if( venger != null ) {
+                DistensionPlayer pveng = m_players.get(venger);
+                if( pveng != null ) {
+                    int vengRP = points / 2;
+                    pveng.addRankPoints( vengRP );
+                    if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
+                        vengRP = Math.round((float)vengRP * DEBUG_MULTIPLIER);
+                    m_botAction.sendPrivateMessage( pveng.getArenaPlayerID(), "Vengeful Bastard assist on " + loser.getName() + ": +" + vengRP + " RP" );
+                }
+            }
             // Determine if the victor's Leeching should fire (full charge prized after a kill)
             victor.checkLeeching();
             victor.resetIdle();
@@ -1622,9 +1647,15 @@ public class distensionbot extends SubspaceBot {
                 msg += " [Multi-Repeat: 1 RP]";
             if( isTeK )
                 if( isBTeK )
-                    msg += " [BTerr: +50%]";
+                    if( isVictorWeasel )
+                        msg += " [BTerr: DOUBLE]";
+                    else
+                        msg += " [BTerr: +50%]";
                 else
-                    msg += " [Terr: +10%]";
+                    if( isVictorWeasel )
+                        msg += " [Terr: +20%]";
+                    else
+                        msg += " [Terr: +10%]";
             if( flagMulti == 1.5f )
                 msg += " [Both flags: +50% RP]";
             if( flagMulti == 0.5f )
@@ -1933,7 +1964,7 @@ public class distensionbot extends SubspaceBot {
             cmdDock(name,"");
         }
 
-        m_botAction.sendPrivateMessage( name, p.getName().toUpperCase() + " leaving hangars of " + p.getArmyName().toUpperCase() + ".  Your flight timer has stopped." );
+        m_botAction.sendPrivateMessage( name, p.getName().toUpperCase() + " leaving hangars of " + p.getArmyName().toUpperCase() + ".  Time played today: " + p.getMinutesPlayed() + " min." );
         p.setShipNum( -1 );
         p.savePlayerDataToDB();
     }
@@ -2131,7 +2162,7 @@ public class distensionbot extends SubspaceBot {
         checkFlagTimeStop();
         if( p.saveCurrentShipToDBNow() ) {
             String shipname = (p.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status logged to our records.  Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP.  You are now docked.");
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status saved; you are now docked.  " + p.getRecentlyEarnedRP() + " RP earned in " + shipname + ".  Time played today: " + p.getMinutesPlayed() + " min.  !leave to stop timer." );
             p.setIgnoreShipChanges(false);
             p.setShipNum( 0 );
         } else {
@@ -2349,7 +2380,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage( theName, "You are a Flag Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battles won." );
             }
         }
-        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You have played for " + p.getMinutesPlayed() + " minutes today." );
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Time played today: " + p.getMinutesPlayed() + " minutes.   Current Streak: " + p.getSuccessiveKills() + " kills." );
     }
 
 
@@ -2835,7 +2866,6 @@ public class distensionbot extends SubspaceBot {
         armySizeWeight = assistArmyStr / currentArmyStr;
         assistArmyWeightAfterChange = (currentArmyStr - p.getStrength()) / (assistArmyStr + p.getStrength());
 
-
         if( p.getNaturalArmyID() == armyToAssist ) {
             if( !p.isAssisting() ) {
                 m_botAction.sendPrivateMessage( name, "You aren't assisting any army presently.  Use !assist armyID# to assist an army in need." );
@@ -3158,7 +3188,7 @@ public class distensionbot extends SubspaceBot {
         // Search for Naughtiness (those going outside arena limits)
         final int arenaRadius = 4192;
         // Formula for getting the distance from the center borrowed from 2dragons' fallout module.
-        double dist = Math.sqrt( Math.pow(( 8192 - jumpx ), 2) + Math.pow(( 8192 - jumpy ), 2) );
+        double dist = Math.sqrt( Math.pow(( 8192 - (jumpx * 16) ), 2) + Math.pow(( 8192 - (jumpy * 16) ), 2) );
         if( dist >= arenaRadius ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Naughty!", Tools.Sound.BURP );
             return;
@@ -5051,6 +5081,8 @@ public class distensionbot extends SubspaceBot {
         private int       vengefulBastard;      // Levels of Vengeful Bastard ability
         private int       escapePod;            // Levels of Escape Pod ability
         private int       leeching;             // Levels of Leeching ability
+        private long      lastVengeTime;        // Timestamp of last time Vengeful Bastard fired on player
+        private String    lastVenger;           // Name of player that last fired Vengeful Bastard on player
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
         private boolean   banned;               // True if banned from playing
@@ -5097,6 +5129,7 @@ public class distensionbot extends SubspaceBot {
             vengefulBastard = 0;
             escapePod = 0;
             leeching = 0;
+            lastVengeTime = 0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[9];
             for( int i = 0; i < 9; i++ )
@@ -5516,18 +5549,19 @@ public class distensionbot extends SubspaceBot {
                 // JumpSpace ability (free at rank 15, but doesn't work well)
                 int neededTick;
                 switch( purchasedUpgrades[9] ) {
-                    case 1: neededTick = 15; break;
-                    case 2: neededTick = 10; break;
-                    case 3: neededTick = 8; break;
-                    default: neededTick = 20; break;
+                    case 1: neededTick = 15; break;     // 7.5min
+                    case 2: neededTick = 10; break;     // 5m
+                    case 3: neededTick = 8; break;      // 4m
+                    default: neededTick = 20; break;    // 10m
                 }
-                if( purchasedUpgrades[9] == 0 && tick % neededTick == 0 ) {
+                if( tick % neededTick == 0 ) {
                     if( !jumpSpace ) {
                         m_botAction.sendPrivateMessage( arenaPlayerID, "JumpSpace Drive ready.  PM >>> to use." );
                         jumpSpace = true;
                         prized = true;
                     }
                 }
+
             } else if( shipNum == 9 ) {
                 // Allow another Comm every minute, up to max allowed
                 if( tick % 3 == 0 ) {
@@ -5661,7 +5695,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Advances the player to the next rank.
+         * Advances the player a certain number of ranks, default 1.
          * @param multiRanks Number of ranks to gain.  Default is 1
          */
         public void doAdvanceRank( int numRanks ) {
@@ -5681,6 +5715,12 @@ public class distensionbot extends SubspaceBot {
             if( rank >= 25 || rank == 10 || rank == 15 || rank == 20 ) {
                 String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
                 m_botAction.sendArenaMessage( name.toUpperCase() + " of " + getArmyName() + " has been promoted to RANK " + rank + " in the " + shipname + "!", 1 );
+            }
+
+            // Add JumpSpace ability for Javs at rank 15
+            if( shipNum == 2 && rank == 15 ) {
+                m_botAction.sendPrivateMessage(name, "As a rank 15 Javelin, you have unlocked the JumpSpace Drive.  It will be recharged shortly; PM >>> to use." );
+                m_specialAbilityPrizer.addPlayer(this);
             }
 
             if( nextRank - rankPoints > 0 ) {
@@ -6083,21 +6123,33 @@ public class distensionbot extends SubspaceBot {
          */
         public boolean addSuccessiveKill( ) {
             successiveKills++;
+            if( successiveKills % 5 != 0 )
+                return false;
 
             int award = 0;
+            boolean isWeasel = (shipNum == Tools.Ship.WEASEL);
             if( successiveKills == 5 ) {
-                award = 2;
+                if( isWeasel )
+                    award = 3;
+                else
+                    award = 2;
                 if( rank > 1 )
                     award = rank * 2;
 
                 m_botAction.sendPrivateMessage(name, "Streak!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 19 );
             } else if( successiveKills == 10 ) {
-                award = 3;
+                if( isWeasel )
+                    award = 4;
+                else
+                    award = 3;
                 if( rank > 1 )
                     award = rank * 3;
                 m_botAction.sendPrivateMessage(name, "ON FIRE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 20 );
             } else if( successiveKills == 15 ) {
-                award = 4;
+                if( isWeasel )
+                    award = 6;
+                else
+                    award = 4;
                 if( rank > 1 )
                     award = rank * 4;
                 m_botAction.sendPrivateMessage(name, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
@@ -6127,21 +6179,30 @@ public class distensionbot extends SubspaceBot {
                         return false;
                     }
                 } else {
-                    award = 5;
+                    if( isWeasel )
+                        award = 8;
+                    else
+                        award = 5;
                     if( rank > 1 )
                         award = rank * 5;
                     m_botAction.sendPrivateMessage(name, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
                 }
             } else if( successiveKills == 50 ) {
-                award = 10;
+                if( isWeasel )
+                    award = 20;
+                else
+                    award = 10;
                 if( rank > 1 )
                     award = rank * 10;
                 m_botAction.sendPrivateMessage(name, "YOU'RE PROBABLY CHEATING!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.SCREAM );
-            } else if( successiveKills == 99 ) {
-                award = 15;
+            } else if( successiveKills == 100 ) {
+                if( isWeasel )
+                    award = 30;
+                else
+                    award = 15;
                 if( rank > 1 )
                     award = rank * 15;
-                m_botAction.sendPrivateMessage(name, "99 KILLS -- ... ORGASMIC !!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );
+                m_botAction.sendPrivateMessage(name, "100 KILLS -- ... ORGASMIC !!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );
             }
             if( award > 0 ) {
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_STREAK);
@@ -6316,10 +6377,11 @@ public class distensionbot extends SubspaceBot {
          * Checks if the Vengeful Bastard ability should fire, and if so, fires
          * it on the ID of the player provided.
          * @param killerID ID of player who killed the vengeful bastard
+         * @return True if vengeful bastard fired
          */
-        public void checkVengefulBastard( int killerID ) {
+        public boolean checkVengefulBastard( int killerID ) {
             if( vengefulBastard <= 0 )
-                return;
+                return false;
             double vengeChance = Math.random() * 100.0;
             if( (double)(vengefulBastard * 15) > vengeChance ) {
                 double vengeType = Math.random() * 100.0;
@@ -6349,10 +6411,38 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specificPrize( killerID, -Tools.Prize.ENERGY );
                 else if( vengeType >= 75.0 )
                     m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
+                else if( vengeType >= 70.0 )
+                    m_botAction.showObjectForPlayer( killerID, LVZ_OPS_BLIND1 );
+                else if( vengeType >= 65.0 )
+                    m_botAction.showObjectForPlayer( killerID, LVZ_OPS_SHROUD_SM );
+                else if( vengeType >= 50.0 )
+                    m_botAction.showObjectForPlayer( killerID, LVZ_OPS_SPHERE );
                 else
                     m_botAction.specificPrize( killerID, Tools.Prize.ENGINE_SHUTDOWN );
+                return true;
             }
+            return false;
+        }
 
+        /**
+         * Sets the last person to fire vengeful bastard on this player, with timestamp.
+         * If the player is killed directly after the VB firing, the vengeful bastard
+         * earns RP from the kill.
+         */
+        public void setVenge( String playerName ) {
+            lastVenger = playerName;
+            lastVengeTime = System.currentTimeMillis();
+        }
+
+        /**
+         * Checks if vengeful bastard was fired on the player recently.
+         * @return
+         */
+        public String checkVenge() {
+            if( lastVenger != null )
+                if( lastVengeTime + (VENGEFUL_VALID_SECONDS * 1000) < System.currentTimeMillis() )
+                    lastVenger = null;
+            return lastVenger;
         }
 
         /**
