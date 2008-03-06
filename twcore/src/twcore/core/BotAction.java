@@ -2208,6 +2208,31 @@ public class BotAction
     }
 
     /**
+     * Sets the bot to spectate the specified player immediately, in front of all
+     * other packets.  Use this method only when you need extremely fresh position
+     * data on a specific player and know exactly what you are doing.  (This method
+     * sacrifices some efficiency for speed.)
+     * @param playerID Ident of the player to spectate. (-1 to stop spectating)
+     * @see #stopSpectatingPlayer()
+     */
+    public void spectatePlayerImmediately(int playerID)
+    {
+        m_packetGenerator.sendImmediateSpectatePacket((short) playerID);
+    }
+
+    /**
+     * Sets the bot to spectate the specified player immediately, in front of all
+     * other packets.  Use this method only when you need extremely fresh position
+     * data on a specific player and know exactly what you are doing.  (This method
+     * sacrifices some efficiency for speed.)
+     * @param playerName Name of the player to spectate.
+     */
+    public void spectatePlayerImmediately(String playerName)
+    {
+        m_packetGenerator.sendImmediateSpectatePacket((short) m_arenaTracker.getPlayerID(playerName));
+    }
+
+    /**
      * Ceases spectating the player the bot is currently spectating on, if any.
      */
     public void stopSpectatingPlayer()

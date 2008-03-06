@@ -645,6 +645,23 @@ public class GamePacketGenerator {
     }
 
     /**
+     * Sends instant spectate packet, for when fresh data on a specific player
+     * is absolutely required.
+     * @param playerID ID of player to immediately spectate
+     */
+    public void sendImmediateSpectatePacket( short playerID ) {
+        ByteArray   bytearray = new ByteArray( 3 );
+        bytearray.addByte( 0x08 );  // Type byte
+        if( playerID == -1 ) {
+            bytearray.addByte( 0xFF );  // All high bits = stop spectating
+            bytearray.addByte( 0xFF );
+        } else
+            bytearray.addLittleEndianShort( playerID );
+
+        composeHighPriorityPacket( bytearray, 3 );
+    }
+
+    /**
      * Sends a request to pick up the flag of the specified ID.
      * @param flagID ID of flag to pick up
      */
@@ -888,10 +905,10 @@ public class GamePacketGenerator {
         objPacket.addLittleEndianShort( (short) (objVisible ? (objID & 0x7FFF) : (objID | 0x8000)) );
         composePacket( objPacket );
     }
-    
+
     /**
      * Sends a signal to the server that this client is no longer in the King of the Hill game.
-     * (In Continuum this only happens when you die or the timer runs out.) 
+     * (In Continuum this only happens when you die or the timer runs out.)
      */
     public void sendEndKoTH() {
         ByteArray objPacket = new ByteArray( 1 );
