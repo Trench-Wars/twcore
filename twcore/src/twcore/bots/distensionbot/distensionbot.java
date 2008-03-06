@@ -70,7 +70,7 @@ public class distensionbot extends SubspaceBot {
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
     private final int WARP_POINT_CHECK_FREQUENCY = 10;     // # seconds between checking warp points for players
-    private final int VENGEFUL_VALID_SECONDS = 5;          // # seconds after V.B. fire in which VB gets RP bonus
+    private final int VENGEFUL_VALID_SECONDS = 9;          // # seconds after V.B. fire in which VB gets RP bonus
     private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
     private final int PILOTS_REQ_EACH_ARMY = 3;            // # players needed on each army for game to start
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
@@ -3171,8 +3171,7 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
-        // Get fresh data ASAP
-        m_botAction.spectatePlayer(p.getArenaPlayerID());
+        m_botAction.spectatePlayerImmediately( p.getArenaPlayerID() );
         if( p.getShipNum() != Tools.Ship.JAVELIN )
             throw new TWCoreException( "Only Javelins possess the JumpSpace ability." );
         if( p.getRank() < 15 )
@@ -3205,14 +3204,14 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        // Levels 0, 1 and 2 all have negative effects.  3 has none.
+        // Levels 0, 1 and 2 all have negative (and cumulative) effects.  3 has none.
         switch( p.getPurchasedUpgrade(9) ) {
             case 0:
-                m_botAction.specificPrize( p.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
-            case 1:
-                m_botAction.specificPrize( p.getArenaPlayerID(), -Tools.Prize.RECHARGE );
-            case 2:
                 m_botAction.specificPrize( p.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
+            case 1:
+                m_botAction.specificPrize( p.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
+            case 2:
+                m_botAction.specificPrize( p.getArenaPlayerID(), -Tools.Prize.RECHARGE );
         }
 
         m_botAction.warpTo( p.getArenaPlayerID(), jumpx, jumpy );
