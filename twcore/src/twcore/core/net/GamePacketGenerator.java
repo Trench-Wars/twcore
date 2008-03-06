@@ -658,7 +658,7 @@ public class GamePacketGenerator {
         } else
             bytearray.addLittleEndianShort( playerID );
 
-        composeHighPriorityPacket( bytearray, 3 );
+        m_outboundQueue.forceInstantSend( new DatagramPacket( bytearray.getByteArray(), 3 ) );
     }
 
     /**

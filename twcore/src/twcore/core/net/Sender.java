@@ -68,6 +68,22 @@ public class Sender extends Thread {
     }
 
     /**
+     * Forces the instant sending of a packet, ignoring the present
+     * packet queue.
+     * @param packet
+     */
+    public void forceInstantSend( DatagramPacket packet ){
+        if( m_socket.isConnected() == true && !interrupted() ) {
+            try {
+                m_socket.send( packet );
+                m_packetsSent++;
+            } catch( Exception e ){
+                m_socket.disconnect();
+            }
+        }
+    }
+
+    /**
      * Checks the queue for packets waiting to be sent, and sends any that are
      * in waiting.
      */
