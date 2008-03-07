@@ -13,6 +13,7 @@ import java.util.Vector;
 import java.util.TimerTask;
 import java.util.LinkedList;
 import java.util.Random;
+import java.lang.reflect.Field;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -782,6 +783,9 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeplayer", acceptedMessages, this, "cmdDBWipePlayer", OperatorList.HIGHMOD_LEVEL );  // Not published in !help
         m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!debug-getint", acceptedMessages, this, "cmdGetInt", OperatorList.DEV_LEVEL );
+        m_commandInterpreter.registerCommand( "!debug-getbool", acceptedMessages, this, "cmdGetBool", OperatorList.DEV_LEVEL );
+        m_commandInterpreter.registerCommand( "!debug-setvar", acceptedMessages, this, "cmdSetVar", OperatorList.DEV_LEVEL );
 
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleArenaMessage" );
@@ -1379,13 +1383,17 @@ public class distensionbot extends SubspaceBot {
     public void handleEvent(FrequencyChange event) {
         DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
 
-        if( p == null  ) {
+        if( p == null ) {
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
                 checkForAssistAdvert = true;
+            if( DEBUG )
+                m_botAction.sendPrivateMessage("dugwyler", event.getPlayerID() + " had null playerget in freqchange event." );
             return;
         }
-        if( p.ignoreShipChanges() )         // If we've been ignoring their shipchanges and they returned to
+        if( p.ignoreShipChanges() ) {       // If we've been ignoring their shipchanges and they returned to
             p.setIgnoreShipChanges(false);  // their old ship, mission complete.
+            return;
+        }
 
         if( p.getArmyID() != event.getFrequency() ) {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Hey, what're you trying to pull?  If you want to !assist the other army, do it the right way!" );
@@ -2029,6 +2037,9 @@ public class distensionbot extends SubspaceBot {
             for( DistensionPlayer p2 : m_players.values() )
                 if( p2.getShipNum() == 9 && p2.getArmyID() == p.getArmyID() )
                     throw new TWCoreException( "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
+            // Let Tac Ops change to spec
+            if( lastShipNum > 0 )
+                p.setIgnoreShipChanges(true);
         }
 
         if( lastShipNum > 0 ) {
@@ -3190,10 +3201,10 @@ public class distensionbot extends SubspaceBot {
         int jumpx = x + Math.round( ((float)pdata.getXVelocity() / 200.0f ) * upgfactor );
         int jumpy = y + Math.round( ((float)pdata.getYVelocity() / 200.0f ) * upgfactor );
         if( DEBUG )
-            m_botAction.sendPrivateMessage("dugwyler", "Jump.  ("+ x + "," + y + ") -> (" + jumpx + "," + jumpy + ")" +
+            m_botAction.sendPrivateMessage("dugwyler", "Jump: " + name + "  ("+ x + "," + y + ") -> (" + jumpx + "," + jumpy + ")" +
                     "  Vel:" + pdata.getXVelocity() + "," + pdata.getYVelocity() + "  Factor=" + upgfactor + "  " +
                     "XAdd=" + Math.round( ((float)pdata.getXVelocity() / 200.0f ) * upgfactor ) +
-                    "YAdd=" + Math.round( ((float)pdata.getYVelocity() / 200.0f ) * upgfactor ) );
+                    " YAdd=" + Math.round( ((float)pdata.getYVelocity() / 200.0f ) * upgfactor ) );
 
         // Search for Naughtiness (those going outside arena limits)
         final int arenaRadius = 4192;
@@ -4603,18 +4614,18 @@ public class distensionbot extends SubspaceBot {
     public void cmdMsgBeta( String name, String msg ) {
         if( !DEBUG )
             throw new TWCoreException( "This command disabled during normal operation." );
+        int players = 0;
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fcName FROM tblDistensionPlayer WHERE 1" );
-            int players = 0;
             while( r.next() ) {
                 m_msgBetaPlayers.add(r.getString("fcName"));
                 players++;
             }
-            m_botAction.sendPrivateMessage( name, players + " players added to notify list." );
             m_botAction.SQLClose(r);
         } catch (SQLException e) {
             m_botAction.sendSmartPrivateMessage( "dugwyler", e.getMessage() );
         }
+        m_botAction.sendPrivateMessage( name, players + " players added to notify list." );
 
         TimerTask msgTask = new TimerTask() {
             public void run() {
@@ -4627,6 +4638,69 @@ public class distensionbot extends SubspaceBot {
         m_botAction.scheduleTask(msgTask, 1000, 100);
     }
 
+    // HARDCORE COMMANDS (DEBUG)
+
+    /**
+     * Sets a variable.
+     * @param name
+     * @param msg
+     */
+    public void cmdSetVar( String name, String msg ) {
+        if( !DEBUG ) return;
+        String[] args = msg.split(":");
+        if( args.length != 3 )
+            throw new TWCoreException( "Improper format.  !debug-setvar player:var:value" );
+
+        DistensionPlayer p = m_players.get( args[0] );
+        if( p == null )
+            throw new TWCoreException("Player not found.");
+
+        if( !p.setVar(args[1],args[2]) )
+            throw new TWCoreException("Set failed.");
+        m_botAction.sendSmartPrivateMessage( name, "Set " + args[1] + " to " + args[2] + " on " + args[0] );
+    }
+
+    /**
+     * Gets an int variable.
+     * @param name
+     * @param msg
+     */
+    public void cmdGetInt( String name, String msg ) {
+        if( !DEBUG ) return;
+        String[] args = msg.split(":");
+        if( args.length != 2 )
+            throw new TWCoreException( "Improper format.  !debug-getint player:var" );
+
+        DistensionPlayer p = m_players.get( args[0] );
+        if( p == null )
+            throw new TWCoreException("Player not found.");
+
+        Integer i = p.getInt(args[1]);
+        if( i == null )
+            throw new TWCoreException( "Var not found." );
+        m_botAction.sendSmartPrivateMessage( name, args[1] + "=" + i + " on " + args[0] );
+    }
+
+    /**
+     * Gets a boolean variable.
+     * @param name
+     * @param msg
+     */
+    public void cmdGetBool( String name, String msg ) {
+        if( !DEBUG ) return;
+        String[] args = msg.split(":");
+        if( args.length != 2 )
+            throw new TWCoreException( "Improper format.  !debug-getbool player:var" );
+
+        DistensionPlayer p = m_players.get( args[0] );
+        if( p == null )
+            throw new TWCoreException("Player not found.");
+
+        Boolean b = p.getBoolean(args[1]);
+        if( b == null )
+            throw new TWCoreException( "Var not found." );
+        m_botAction.sendSmartPrivateMessage( name, args[1] + "=" + (b?"true":"false") + " on " + args[0] );
+    }
 
     // ***** COMMAND ASSISTANCE METHODS
 
@@ -5206,6 +5280,59 @@ public class distensionbot extends SubspaceBot {
             targetedEMP = false;
             jumpSpace = false;
             ignoreShipChanges = false;
+        }
+
+
+        // Nasty access
+
+        /**
+         * Manually gets the value of an int variable in the class.
+         * @param varname Name of variable
+         * @return Value of variable
+         */
+        public Integer getInt( String varname ) {
+            try {
+                Field f = this.getClass().getDeclaredField(varname);
+                if( f == null )
+                    return null;
+                return f.getInt(this);
+            } catch( Exception e ) {
+                return null;
+            }
+        }
+
+        /**
+         * Manually gets the value of a boolean variable in the class.
+         * @param varname Name of variable
+         * @return Value of variable
+         */
+        public Boolean getBoolean( String varname ) {
+            try {
+                Field f = this.getClass().getDeclaredField(varname);
+                if( f == null )
+                    return null;
+                return f.getBoolean(this);
+            } catch( Exception e ) {
+                return null;
+            }
+        }
+
+        /**
+         * Manually sets a variable in the class.
+         */
+        public boolean setVar( String varname, Object value ) {
+            try {
+                Field f = this.getClass().getDeclaredField(varname);
+                if( f == null )
+                    return false;
+                if( value instanceof Boolean )
+                    f.setBoolean(this, (Boolean)value);
+                else if( value instanceof Integer )
+                    f.setInt(this, (Integer)value);
+            } catch( Exception e ) {
+                return false;
+            }
+            return true;
         }
 
 
