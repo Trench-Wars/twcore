@@ -3,6 +3,7 @@ package twcore.bots.racebot;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import twcore.core.events.FlagClaimed;
@@ -18,22 +19,29 @@ public class RbTrackManager extends RaceBotExtension {
 
 	int    checkPoint;
 	int    state;
+	        // 2 = createTrack (marking checkpoints)
+	        // 1 = endCheckpoint (flags were marked, waiting confirmation)
+	        // 0 = no actions pending
+	
+	int    trackID = -1;    // used for remembering for what track <id> the user is registering pits flag
+	HashSet<Integer> pitFlags; 
 
 	public RbTrackManager() {
 		checkPointList = new HashMap<Integer, Integer>();
+		pitFlags = new HashSet<Integer>();
 	}
 
 	public void handleEvent( Message event ) {
 		try {
 			String name = m_botAction.getPlayerName( event.getPlayerID() );
 
-			if(m_botAction.getOperatorList().isModerator(name) || m_bot.twrcOps.contains(name.toLowerCase()))
+			if(m_botAction.getOperatorList().isSmod(name) || m_bot.twrcOps.contains(name.toLowerCase()))
 			{
 				String message = event.getMessage().toLowerCase();
 				if( message.equals( "yes" ) )
-					handleAnswer( true );
+					handleAnswer( name, true );
 				else if( message.equals( "no" ) )
-					handleAnswer( false );
+					handleAnswer( name, false );
 				else if( message.equals( "!help" ) ) {
 				    String help[] = {
 			            "------------- Track Manager Help Menu ---------------------------",
@@ -46,6 +54,8 @@ public class RbTrackManager extends RaceBotExtension {
 			            "| !setwarp <id>  - sets the warp point for track <id> from      |",
 			            "|                  your current position                        |",
 			            "| !testwarp <id> - tests a warp point already setup             |",
+			            "| !setpits <id>  - sets the pits flags for track <id>           |",
+			            "| !donepits      - saves the pits flags after !setpits <id>     |",
 			            "| !delete <id>   - removes entire track saved at <id>           |",
 			            "----------------------------------------------------------------|"
 			        };
@@ -53,9 +63,7 @@ public class RbTrackManager extends RaceBotExtension {
 				}
 				else if( message.startsWith( "!newtrack" ) )
 					createTrack( message );
-				else if( message.startsWith( "!done" ) ) {
-					endCheckPoint();
-				} else if( message.startsWith( "!name " ) )
+				else if( message.startsWith( "!name " ) )
 					setArenaName( event.getMessage().substring( 6, message.length() ) );
 				else if( message.startsWith( "!nametrack " ) )
 					setTrackName( event.getMessage().substring( 11, message.length() ), name );
@@ -67,22 +75,47 @@ public class RbTrackManager extends RaceBotExtension {
 					testWarp( message.substring( 10, message.length() ), name );
 				else if( message.startsWith( "!delete "))
 				    deleteTrack( message.substring( 8), name );
+				else if( message.startsWith( "!setpits "))
+				    setPits( message.substring(9), name );
+				else if( message.startsWith( "!donepits"))
+				    donePits( name );
+				else if( message.startsWith( "!done" ) )
+                    endCheckPoint();
 			}
 		} catch(Exception e) {}
 
 	}
 
-	public void handleAnswer( boolean answer ) {
+	public void handleAnswer( String sender, boolean yes ) {
 
 		if( action.equals( "arena" ) )
-			if( answer ) createArena();
-			else m_botAction.sendPublicMessage( "k" );
+			if( yes ) createArena();
+			else m_botAction.sendPrivateMessage( sender, "k" );
 		else if( action.equals( "setpoint" ) )
-			if( answer ) newCheckPoint();
+			if( yes ) newCheckPoint();
 			else resetLastPoint();
 		else if( action.equals( "endtrack" ) )
-			if( answer ) endTrack();
+			if( yes ) endTrack();
 			else resetLastPoint();
+		else if( action.equals( "abortpitflags" ) )
+		    if( yes ) {
+		        pitFlags.clear(); 
+		        trackID = -1;
+		        m_botAction.sendPrivateMessage( sender, "k" );
+		    } else {
+		        pitFlags.clear();
+		        m_botAction.resetFlagGame();
+		        m_botAction.sendPrivateMessage(sender, "Capture the flags for the pits. PM !donepits when done.");
+		    }
+		else if( action.equals( "pitflags" ) )
+		    if( yes ) {
+		        savePits( sender );
+		    } else {
+		        pitFlags.clear();
+		        m_botAction.resetFlagGame();
+		        m_botAction.sendPrivateMessage(sender, "Capture the flags for the pits. PM !donepits when done.");
+		    }
+		        
 		action = "";
 
 	}
@@ -106,6 +139,7 @@ public class RbTrackManager extends RaceBotExtension {
 		state = 2;
 		m_botAction.resetFlagGame();
 		m_botAction.sendPublicMessage( "Please mark the start/finish checkpoint." );
+		m_botAction.sendPublicMessage( "NOTE: If the pits flags are parallel to the start/finish checkpoint, mark these aswell.");
 		m_botAction.sendPublicMessage( "When done marking points use !done" );
 	}
 
@@ -311,7 +345,7 @@ public class RbTrackManager extends RaceBotExtension {
 	}
 	
 	public void deleteTrack( String parameters, String name ) {
-	    int id = -1;
+		int id = -1;
 	    int trackID = -1;
 	    try {
 	        id = Integer.parseInt( parameters );
@@ -333,32 +367,17 @@ public class RbTrackManager extends RaceBotExtension {
 	    }
 	    
 	    // Check if the given track id exists
-	    ResultSet resultset = null;
-	    try {
-	        resultset = m_botAction.SQLQuery( m_sqlHost, "SELECT fnTrackID FROM tblRaceTrack WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+raceID+" LIMIT 0,1");
-	        if(resultset == null) {
-	            m_botAction.sendPrivateMessage(name, "The track id #"+id+" isn't found for this arena. Please specify a different track #id.");
-	            m_botAction.SQLClose(resultset);
-	            return;
-	        } else if(resultset.next()){
-	            trackID = resultset.getInt(1);
-	        } else {
-	            m_botAction.sendPrivateMessage(name, "The track id #"+id+" isn't found for this arena. Please specify a different track #id.");
-                m_botAction.SQLClose(resultset);
-                return;
-	        }
-	    } catch(SQLException sqle) {
-	        m_botAction.sendPrivateMessage(name, "Unexpected error occured on check if the track id exists. Please contact a member of the TW Bot Development team.");
+	    trackID = sql_getTrackID(raceID, id);
+	    if(trackID == -1) {
+	        m_botAction.sendPrivateMessage(name, "The track id #"+id+" isn't found for this arena. Please specify a different track #id.");
 	        return;
-	    } finally {
-	        if(resultset != null)
-	            m_botAction.SQLClose(resultset);
 	    }
 
 	    try {
 	        m_botAction.SQLQueryAndClose( m_sqlHost, "DELETE FROM tblRaceTrack WHERE fnArenaTrackID = "+id+" AND fnRaceID = "+raceID);
 	        m_botAction.SQLQueryAndClose( m_sqlHost, "DELETE FROM tblRaceCheckPoint WHERE fnTrackID = "+trackID);
 	        m_botAction.SQLQueryAndClose( m_sqlHost, "DELETE FROM tblRaceWinners WHERE trackWon = "+trackID);
+	        m_botAction.SQLQueryAndClose( m_sqlHost, "DELETE FROM tblRacePits WHERE fnTrackID = "+trackID);
 	    } catch(SQLException sqle) {
 	        m_botAction.sendPrivateMessage(name, "Unexpected error occured while deleting the track. Please contact a member of the TW Bot Development Team.");
 	        return;
@@ -366,11 +385,80 @@ public class RbTrackManager extends RaceBotExtension {
 	    
 	    m_botAction.sendPrivateMessage(name, "Track #"+id+" deleted, including checkpoints and winners.");
 	}
+	
+	public void setPits( String params, String sender ) {
+	    String id = params.trim();
+	    int arenaTrackID = -1;
+	    pitFlags.clear();
+	    trackID = -1;
+	    
+	    if(id.length() == 0 || !Tools.isAllDigits(id)) {
+	        m_botAction.sendPrivateMessage(sender, "Please specify a track <id>. Type ::!help for more information.");
+	        return;
+	    }
+	    
+	    try {
+	        arenaTrackID = Integer.parseInt(id);
+	    } catch(NumberFormatException nfe) {
+	        m_botAction.sendPrivateMessage(sender, "Syntax error encountered on the specified track <id>. Please specify a valid track <id>.");
+	        return;
+	    }
+	    
+	    // get the raceID of the current arena
+        int arenaID = sql_getArenaID();
+        if(arenaID < 0) {
+            m_botAction.sendPrivateMessage(sender, "The current arena couldn't be found in the database. Are you sure this arena is setup for racing?");
+            return;
+        }
+	    
+	    // Check if the specified track ID exists.
+        trackID = sql_getTrackID(arenaID, arenaTrackID);
+        if(trackID == -1) {
+            m_botAction.sendPrivateMessage(sender, "The track id #"+id+" isn't found for this arena. Please specify a different track #id.");
+            return;
+        }
+        
+        m_botAction.resetFlagGame();
+        m_botAction.sendPrivateMessage(sender, "Capture the flags (flags to give FC) for the pits. PM !donepits when done.");
+	}
+	
+	public void donePits( String sender ) {
+	    if(trackID == -1) {
+	        m_botAction.sendPrivateMessage( sender, "PM !setpits <id> first before doing !donepits. PM !help for more information.");
+	        return;
+	    }
+	    if(pitFlags.size() == 0) {
+	        m_botAction.sendPrivateMessage( sender, "No flags were marked.");
+	        m_botAction.sendPrivateMessage( sender, "Abort setting pit flags? yes/no");
+	        action = "abortpitflags";
+	    } else {
+	        m_botAction.sendPrivateMessage( sender, "Flags: "+pitFlags.size()+" marked.");
+	        m_botAction.sendPrivateMessage( sender, "Is this correct? yes/no");
+	        action = "pitflags";
+	    }
+	}
+	
+	public void savePits( String sender ) {
+	    
+	    for(Integer flag:pitFlags) {
+	        try {
+                m_botAction.SQLQueryAndClose( m_sqlHost, "INSERT INTO tblRacePits (fnTrackID, fnFlagID) VALUES ("+trackID+", "+flag+")" );
+            } catch (Exception e) { Tools.printStackTrace(e); }
+	    }
+
+	    m_botAction.sendPublicMessage( "Pit flags stored." );
+        pitFlags.clear(); 
+        trackID = -1;
+	}
 
 	public void handleEvent( FlagClaimed event ) {
 
-		if( state < 2 ) return;
-		checkPointList.put( new Integer( event.getFlagID() ), new Integer( checkPoint ) );
+		if( state >= 2) {
+		    checkPointList.put( new Integer( event.getFlagID() ), new Integer( checkPoint ) );
+		}
+		if( trackID > -1) {
+		    pitFlags.add( new Integer( event.getFlagID() ) );
+		}
 	}
 
 	/*****************************
@@ -445,6 +533,32 @@ public class RbTrackManager extends RaceBotExtension {
 			return -1;
 		}
 
+	}
+
+	/**
+	 * Returns the database track ID of the specified race ID and specified track ID.
+	 * 
+	 * @param raceID
+	 * @param arenaID
+	 * @return
+	 */
+	public int sql_getTrackID(int raceID, int arenaID) {
+	    ResultSet resultset = null;
+	    int trackID = -1;
+	    
+        try {
+            resultset = m_botAction.SQLQuery( m_sqlHost, "SELECT fnTrackID FROM tblRaceTrack WHERE fnArenaTrackID = "+arenaID+" AND fnRaceID = "+raceID+" LIMIT 0,1");
+            if(resultset != null && resultset.next()) {
+                trackID = resultset.getInt(1);
+            }
+        } catch(SQLException sqle) {
+            Tools.printLog("Unexpected error occured on check if the track id exists.");
+            Tools.printStackTrace(sqle);
+        } finally {
+            m_botAction.SQLClose(resultset);
+        }
+        
+        return trackID;
 	}
 
 }

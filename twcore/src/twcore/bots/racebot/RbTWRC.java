@@ -54,7 +54,7 @@ public class RbTWRC extends RaceBotExtension
 		{
 			String name = m_botAction.getPlayerName(event.getPlayerID());
 			String message = event.getMessage();
-			if(m_bot.twrcOps.contains(name.toLowerCase()) || m_botAction.getOperatorList().isER(name))
+			if(m_bot.twrcOps.contains(name.toLowerCase()) || m_botAction.getOperatorList().isSmod(name))
 				handleCommand(name, message);
 		}
 	}

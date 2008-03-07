@@ -1,8 +1,10 @@
 package twcore.bots.racebot;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import twcore.core.BotAction;
 import twcore.core.events.FlagClaimed;
@@ -12,6 +14,7 @@ public class Track {
 
 	BotAction m_botAction;
 	HashMap<Integer, Integer> checkPoints;
+	HashSet<Integer> pitFlags;
 	HashMap<Integer, RacePlayer> playerMap;
 	HashMap<Integer, String> positions;
 	HashMap<String, Integer> lapLeaders;
@@ -33,6 +36,7 @@ public class Track {
 	public Track( ResultSet result, BotAction botAction ) {
 		m_botAction = botAction;
 		checkPoints = new HashMap<Integer, Integer>();
+		pitFlags = new HashSet<Integer>();
 		playerMap   = new HashMap<Integer, RacePlayer>();
 		positions = new HashMap<Integer, String>();
 		lapLeaders = new HashMap<String, Integer>();
@@ -55,16 +59,34 @@ public class Track {
 			while( result.next() ) {
 				int checkPoint = result.getInt( "fnCheckPoint" );
 				int flagId = result.getInt( "fnFlagID" );
-				checkPoints.put( new Integer( flagId ), new Integer( checkPoint ) );
+				checkPoints.put( flagId, checkPoint );
 				if( checkPoint > lastPoint ) lastPoint = checkPoint;
 			}
 		} catch (Exception e) { Tools.printStackTrace(e); }
 	}
+	
+	public void loadPits( ResultSet result ) {
+	    if(result != null) {
+	        try {
+    	        while( result.next() ) {
+    	            pitFlags.add(result.getInt("fnFlagID"));
+    	        }
+	        } catch(SQLException sqle) {
+	            
+	        }
+	    }
+	}
 
 	public boolean check( FlagClaimed event, int lapsToWin ) {
-
 		int checkPoint = -1;
 		int playerId = event.getPlayerID();
+		
+		// Check for pit flags
+		if(pitFlags.contains(Integer.valueOf(event.getFlagID()))) {
+		    m_botAction.sendUnfilteredPrivateMessage(playerId, "*prize #13");
+		}
+		
+		// Get the checkpoint id
 		try {
 			checkPoint = checkPoints.get( new Integer( event.getFlagID() ) ).intValue();
 		} catch (Exception e) {}

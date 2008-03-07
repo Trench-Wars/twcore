@@ -4,13 +4,38 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TimerTask;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
-import twcore.core.events.*;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.BallPosition;
+import twcore.core.events.FileArrived;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FlagDropped;
+import twcore.core.events.FlagPosition;
+import twcore.core.events.FlagReward;
+import twcore.core.events.FlagVictory;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerBanner;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.Prize;
+import twcore.core.events.SQLResultEvent;
+import twcore.core.events.ScoreReset;
+import twcore.core.events.ScoreUpdate;
+import twcore.core.events.SoccerGoal;
+import twcore.core.events.SubspaceEvent;
+import twcore.core.events.TurfFlagUpdate;
+import twcore.core.events.WatchDamage;
+import twcore.core.events.WeaponFired;
+import twcore.core.util.Tools;
 
 public class racebot extends SubspaceBot {
 
@@ -18,7 +43,6 @@ public class racebot extends SubspaceBot {
 	HashSet<String> twrcOps;
 	BotSettings m_botSettings;
 	OperatorList m_operatorList;
-	TimerTask resetFlags;
 
 	public final String mySQLHost = "twrc";
 
@@ -29,17 +53,29 @@ public class racebot extends SubspaceBot {
 		twrcOps = new HashSet<String>();
 
         m_botAction.getEventRequester().requestAll();
-        m_botSettings = m_botAction.getBotSettings();
         m_operatorList = m_botAction.getOperatorList();
 	}
 
 	public void handleEvent( LoggedOn event ) {
-		String allOps = m_botSettings.getString("TWRC Ops");
-		String ops[] = allOps.split(":");
-		for(int k = 0;k < ops.length;k++)
-			twrcOps.add(ops[k].toLowerCase());
-		m_botAction.joinArena("twrc");
+	    loadOperators();
+	    m_botSettings = m_botAction.getBotSettings();
+		m_botAction.joinArena(m_botSettings.getString("InitialArena"));
 	}
+	
+	/**
+     * Loads the operators from the twrcbot.cfg configuration file
+     */
+    private void loadOperators() {
+        // Get the operators from the twrcbot configuration file
+        BotSettings twrcbotSettings = m_botAction.getCoreData().getBotConfig("twrcbot");
+        String allOps = twrcbotSettings.getString("TWRC Ops");
+        String ops[] = allOps.split(":");
+        twrcOps.clear();
+        
+        for(int k = 0;k < ops.length;k++) {
+            twrcOps.add(ops[k]);
+        }
+    }
 
 	public void distributeEvent( SubspaceEvent event ){
 
@@ -57,31 +93,48 @@ public class racebot extends SubspaceBot {
 		String message = event.getMessage().toLowerCase();
 
 		if(name == null) return;
+		
+		// Operator / Staff commands
+		if(m_operatorList.isSmod(name) || twrcOps.contains(name)) {
+		    if( message.startsWith( "!go " ) ) {
+	            String pieces[] = message.split(" ");
+	            if( message.length() < 2 ) return;
+	            if( Tools.isAllDigits(pieces[1])) return;
+	            modules.clear();
+	            m_botAction.joinArena( pieces[1] );
+	        }
+		    else if(message.startsWith("!die") ) {
+	            m_botAction.cancelTasks();
+	            m_botAction.die();
+	        }
+		    else if(message.startsWith("!reload") ) {
+	            loadOperators();
+	            m_botAction.sendPrivateMessage(name, "Reload completed.");
+	        }
+		} 
+		
+		// Player commands
+	    if( message.startsWith( "!help" ) ) {
+            help( name, message.substring( 5 ));
+        }
+	    else if(message.startsWith("!operators")) {
+            m_botAction.sendPrivateMessage(name, "TWRC Operators: ");
+            
+            String ops = "";
+            for(String op:twrcOps) {
+                if(ops.length() > 0)
+                    ops += ", ";
+                ops += op;
+            }
+            
+            m_botAction.sendPrivateMessage(name, ops);
+        }
+	    else if(message.startsWith("!leave")) {
+            m_botAction.specWithoutLock(name);
+        }
 
-		if( message.startsWith( "!go " ) && name != null &&
-		    (m_botAction.getOperatorList().isER(name) || twrcOps.contains(name.toLowerCase()))) {
-			String pieces[] = message.split(" ");
-			if( message.length() < 2 ) return;
-        	modules.clear();
-			m_botAction.joinArena( pieces[1] );
-    	}
-    	else if( message.startsWith( "!help" ) && name != null &&
-    	        (m_botAction.getOperatorList().isER(name) || twrcOps.contains(name.toLowerCase()))) {
-    		help( name, message.substring( 5 ));
-
-    		if(message.substring(5).trim().length() == 0)
-    		    distributeEvent( (SubspaceEvent)event );
-    	}
-    	else if(message.startsWith("!die") && name != null &&
-    	        (m_botAction.getOperatorList().isER(name) || twrcOps.contains(name.toLowerCase()))) {
-    	    m_botAction.cancelTasks();
-    	    m_botAction.die();
-    	}
-    	else if(message.startsWith("!leave")) {
-    	    m_botAction.specWithoutLock(name);
-    	} else {
-    	    distributeEvent( (SubspaceEvent)event );
-    	}
+		// Distribute message to modules
+    	distributeEvent( (SubspaceEvent)event );
 	}
 
     public void handleEvent( ArenaJoined event ){
@@ -124,12 +177,20 @@ public class racebot extends SubspaceBot {
    	        m_botAction.sendPrivateMessage(name, "!go <arena>  :  Make the bot move to the specified <arena>");
    	    } else if(key.startsWith("die")) {
    	        m_botAction.sendPrivateMessage(name, "!die   :   Disconnect this bot");
+   	    } else if(key.startsWith("reload")) {
+   	        m_botAction.sendPrivateMessage(name, "!reload :  Reloads the TWRC Operators from TWRCBot configuration.");
    	    } else if(key.startsWith("leave")) {
    	        m_botAction.sendPrivateMessage(name, "!leave  :  Puts you into spectator");
+   	    } else if(key.startsWith("operators")) {
+   	        m_botAction.sendPrivateMessage(name, "!operators : Returns the current TWRC Operators");
    	    } else {
-            m_botAction.sendPrivateMessage(name, "RacingBot "+accessLevel(m_operatorList.getAccessLevel(name))+" commandlist  (Send ::!help <topic> for more info)");
-            m_botAction.sendPrivateMessage(name, "lvl ER:     !help  !go  !die");
-            m_botAction.sendPrivateMessage(name, "lvl Player: !leave");
+   	        boolean operator = twrcOps.contains(name);
+   	        String showOp = operator ? " (TWRC Op)" : "";
+   	        
+            m_botAction.sendPrivateMessage(name, "RacingBot "+accessLevel(m_operatorList.getAccessLevel(name))+showOp+" commandlist  (Send ::!help <command> for more info)");
+            if(operator || m_operatorList.isSmod(name))
+            m_botAction.sendPrivateMessage(name, "lvl Operator:  !go  !die  !reload");
+            m_botAction.sendPrivateMessage(name, "lvl Player:    !help  !operators  !leave");
    	    }
     }
 

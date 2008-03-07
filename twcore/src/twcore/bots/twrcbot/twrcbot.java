@@ -48,7 +48,6 @@ public class twrcbot extends SubspaceBot {
 
 		events.request(EventRequester.LOGGED_ON);
 		events.request(EventRequester.MESSAGE);
-		m_botSettings = m_botAction.getBotSettings();
 	}
 
 	/** Called when the bot gets logged in
@@ -64,6 +63,7 @@ public class twrcbot extends SubspaceBot {
 	 */
 	private void loadOperators() {
 	    // Get the operators from the configuration file
+	    m_botSettings = m_botAction.getBotSettings();
         String allOps = m_botSettings.getString("TWRC Ops");
         String ops[] = allOps.split(":");
         twrcOps.clear();
@@ -71,6 +71,23 @@ public class twrcbot extends SubspaceBot {
         for(int k = 0;k < ops.length;k++) {
             twrcOps.add(ops[k]);
         }
+	}
+	
+	private void saveOperators() {
+	    // Save the operators to the configuration file
+	    m_botSettings = m_botAction.getBotSettings();
+	    
+	    String allOps = "";
+	    for(String op:twrcOps) {
+	        if(allOps.length() == 0) {
+	            allOps += op;
+	        } else {
+	            allOps += ":" + op;
+	        }
+	    }
+	    
+	    m_botSettings.put("TWRC Ops", allOps);
+	    m_botSettings.save();
 	}
 
 	/** Gets the person's name and message then passes info to handleCommand
@@ -155,6 +172,47 @@ public class twrcbot extends SubspaceBot {
 			else if(message.toLowerCase().startsWith("!reload")) {
 			    loadOperators();
 			    m_botAction.sendPrivateMessage(name, "Reload completed.");
+			}
+			else if(message.toLowerCase().startsWith("!addop ")) {
+			    String newoperator = message.split(" ",2)[1];
+			    
+			    if(twrcOps.contains(newoperator)) {
+			        m_botAction.sendPrivateMessage(name, "Operator '"+newoperator+"' already exists.");
+			        return;
+			    }
+			    if(newoperator != null && newoperator.length() > 0) {
+			        twrcOps.add(newoperator);
+			        saveOperators();
+			        m_botAction.sendPrivateMessage(name, "Operator '"+newoperator+"' added.");
+			    } else {
+			        m_botAction.sendPrivateMessage(name, "Command syntax error. Please specify a correct name.");
+			    }
+			}
+			else if(message.toLowerCase().startsWith("!removeop ")) {
+			    String deloperator = message.split(" ",2)[1];
+			    
+			    if(deloperator == null || deloperator.length() == 0) {
+			        m_botAction.sendPrivateMessage(name, "Command syntax error. Please specify a correct name.");
+			        return;
+			    }
+			    
+		        if(deloperator.equalsIgnoreCase(name)) {
+		            m_botAction.sendPrivateMessage(name, "You can't remove yourself.");
+		            return;
+		        }
+		        if(!m_botAction.getOperatorList().isZH(name) && m_botAction.getOperatorList().isZH(deloperator)) {
+		            m_botAction.sendPrivateMessage(name, "You can't remove staff members from Operator status.");
+		            return;
+		        }
+		        
+		        boolean removed = twrcOps.remove(deloperator);
+		        
+		        if(removed) {
+		            saveOperators();
+		            m_botAction.sendPrivateMessage(name, "Operator '"+deloperator+"' removed.");
+		        } else {
+		            m_botAction.sendPrivateMessage(name, "Operator '"+deloperator+"' couldn't be found. Removal cancelled.");
+		        }
 			}
 			else if(message.toLowerCase().startsWith("!die")) {
 			    m_botAction.cancelTasks();
@@ -268,8 +326,11 @@ public class twrcbot extends SubspaceBot {
 			m_botAction.sendPrivateMessage(name, "!open                   -Open signups.");
 			m_botAction.sendPrivateMessage(name, "!close                  -Close signups.");
 			m_botAction.sendPrivateMessage(name, "!update <name>:#:reason -Adds # points to <name>'s record.");
-			m_botAction.sendPrivateMessage(name, "!reload                 -Reloads the operators from the cfg file.");
 			m_botAction.sendPrivateMessage(name, "!die                    -Kills the bot.");
+			m_botAction.sendPrivateMessage(name, "--- Operator management commands ---");
+			m_botAction.sendPrivateMessage(name, "!reload                 -Reloads the operators from the cfg file.");
+			m_botAction.sendPrivateMessage(name, "!addop <name>           -Adds <name> as TWRC operator");
+			m_botAction.sendPrivateMessage(name, "!removeop <name>        -Removes <name> as TWRC operator");
 			m_botAction.sendPrivateMessage(name, "---  Public commands  ---");
 		}
 

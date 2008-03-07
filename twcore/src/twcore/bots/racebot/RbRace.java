@@ -3,7 +3,6 @@ package twcore.bots.racebot;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.TimerTask;
 
@@ -16,7 +15,6 @@ public class RbRace extends RaceBotExtension {
 
 	HashMap<Integer, Track> trackIDList;
 	HashMap<String, Track> trackNameList;
-	HashSet<Integer> pitFlags;
 
 	int racing = 0;
 	int laps = 0;
@@ -24,7 +22,6 @@ public class RbRace extends RaceBotExtension {
 	int pitExit[] = new int[2];
 	long lastReset = 0;
 
-	boolean settingPits = false;
 	boolean updated = true;
 	
 	boolean arenaLocked = false;
@@ -32,13 +29,11 @@ public class RbRace extends RaceBotExtension {
 	public RbRace() {
 		trackIDList = new HashMap<Integer, Track>();
 		trackNameList = new HashMap<String, Track>();
-		pitFlags = new HashSet<Integer>();
 	}
 
 	public void handleEvent( Message event ) {
 		String name = m_botAction.getPlayerName( event.getPlayerID() );
 		String message = event.getMessage().toLowerCase();
-		
 		
 		// Check for reliable arena locking
 		if(event.getMessageType() == Message.ARENA_MESSAGE) {
@@ -97,7 +92,7 @@ public class RbRace extends RaceBotExtension {
             m_botAction.privateMessageSpam( name, help );
         }
 		
-		if(m_botAction.getOperatorList().isER(name) || m_bot.twrcOps.contains(name.toLowerCase()))
+		if(m_botAction.getOperatorList().isSmod(name) || m_bot.twrcOps.contains(name.toLowerCase()))
 		{
 			if( message.startsWith( "!help" ) ) {
 	            String help[] = {
@@ -106,9 +101,6 @@ public class RbRace extends RaceBotExtension {
 	                "| !startrace <id#> <laps#> - starts a race on the track <id#>       |",
 	                "|                            for <laps#>                            |",
 	                "| !tracklist               - displays available tracks for this map |",
-	                "| !setpits                 - starts the process of setting pit flags|",
-	                "| !pitsset                 - ends pit setting process               |",
-	                "| !clearpits               - clears flag ids from pit list          |",
 	                "| !raceover                - ends the race                          |",
 	                "| !fakeover                - ends the race without saving results   |",
 	                "--------------------------------------------------------------------|"
@@ -121,21 +113,6 @@ public class RbRace extends RaceBotExtension {
 				startRace( message, name );
 			else if( message.startsWith( "!tracklist" ) )
 				listTracks( name );
-			else if(message.startsWith("!setpits"))
-			{
-				m_botAction.sendPrivateMessage(name, "Grab all the pit flags now.");
-				settingPits = true;
-			}
-			else if(message.startsWith("!pitsset"))
-			{
-				m_botAction.sendPrivateMessage(name, "Pits are now set.");
-				settingPits = false;
-			}
-			else if(message.startsWith("!clearpits"))
-			{
-				pitFlags.clear();
-				m_botAction.sendPrivateMessage(name, "Pit flags cleared.");
-			}
 			else if( message.startsWith("!raceover"))
 				handleDone();
 			else if( message.startsWith("!fakeover"))
@@ -233,6 +210,7 @@ public class RbRace extends RaceBotExtension {
 
 		TimerTask announceLine = new TimerTask() {
 			public void run() {
+			    m_botAction.resetFlagGame();
 				m_botAction.sendArenaMessage( "Get ready, the race begins in 10 seconds.", 3 );
 				m_botAction.sendUnfilteredPublicMessage("*objon 1");
 			}
@@ -250,7 +228,6 @@ public class RbRace extends RaceBotExtension {
 		TimerTask three = new TimerTask() {
 			public void run() {
 				m_botAction.sendArenaMessage( "3" );
-				m_botAction.resetFlagGame();
 			}
 		};
 		m_botAction.scheduleTask( three, 37000 );
@@ -258,7 +235,7 @@ public class RbRace extends RaceBotExtension {
 		TimerTask two = new TimerTask() {
 			public void run() {
 				m_botAction.sendArenaMessage( "2" );
-				m_botAction.resetFlagGame();
+				m_botAction.getShip().setShip(0);
 			}
 		};
 		m_botAction.scheduleTask( two, 38000 );
@@ -266,7 +243,6 @@ public class RbRace extends RaceBotExtension {
 		TimerTask one = new TimerTask() {
 			public void run() {
 				m_botAction.sendArenaMessage( "1" );
-				m_botAction.resetFlagGame();
 			}
 		};
 		m_botAction.scheduleTask( one, 39000 );
@@ -276,7 +252,6 @@ public class RbRace extends RaceBotExtension {
 				m_botAction.sendArenaMessage( "GOOOO GOOOO GOOOO!!!", 104 );
 				m_botAction.sendUnfilteredPublicMessage("*objon 3");
 				racing = 2;
-				m_botAction.resetFlagGame();
 				m_botAction.setDoors(0);
 			}
 		};
@@ -297,7 +272,12 @@ public class RbRace extends RaceBotExtension {
 
 			ResultSet tList = m_botAction.SQLQuery( m_sqlHost, "SELECT * FROM tblRaceCheckPoint WHERE fnTrackID = "+uId );
 			thisTrack.loadCheckPoints( tList );
-                        m_botAction.SQLClose( tList );
+			m_botAction.SQLClose( tList );
+			
+			ResultSet pList = m_botAction.SQLQuery( m_sqlHost, "SELECT * FROM tblRacePits WHERE fnTrackID = "+uId );
+			thisTrack.loadPits( pList );
+			m_botAction.SQLClose( pList );
+            
 
 		} catch (Exception e) { Tools.printStackTrace(e); }
 	}
@@ -336,32 +316,19 @@ public class RbRace extends RaceBotExtension {
 
 
 	public void handleEvent( FlagClaimed event ) {
+	    
+		if( racing < 2 ) return;
 
-		if(settingPits)
-			pitFlags.add(new Integer(event.getFlagID()));
+		// Claim flag by bot (instead of flagreset)
+		short botid = m_botAction.getPlayer(m_botAction.getBotName()).getPlayerID();
 
-		if( racing == 0 ) return;
-
-		if( System.currentTimeMillis() - lastReset > 2000 ) {
-			m_botAction.resetFlagGame();
-			lastReset = System.currentTimeMillis();
+		if(botid != event.getPlayerID()) {
+		    m_botAction.grabFlag(event.getFlagID());
+		    
+    		Track thisTrack = getTrack( currentTrack );
+    		if( !thisTrack.check( event, laps ) )
+    		    racing = 0;
 		}
-
-		if( racing == 1 ) return;
-
-		if(pitFlags.contains(new Integer(event.getFlagID())))
-			handlePit(m_botAction.getPlayerName(event.getPlayerID()));
-
-		try {
-		Track thisTrack = getTrack( currentTrack );
-		if( !thisTrack.check( event, laps ) )
-			racing = 0;
-		} catch (Exception e) { System.out.println(e); }
-	}
-
-	public void handlePit(String name)
-	{
-		m_botAction.sendUnfilteredPrivateMessage(name, "*prize #13");
 	}
 
 	public void handleDone()
@@ -390,6 +357,8 @@ public class RbRace extends RaceBotExtension {
 		m_botAction.toggleLocked();
 		arenaLocked = false;
 		m_botAction.cancelTasks();
+		m_botAction.setDoors(0);
+		m_botAction.getShip().setShip(8);
 	}
 
 	public void handleFake()
@@ -409,6 +378,8 @@ public class RbRace extends RaceBotExtension {
 		m_botAction.toggleLocked();
 		arenaLocked = false;
 		m_botAction.cancelTasks();
+		m_botAction.setDoors(0);
+		m_botAction.getShip().setShip(8);
 		
 		thisTrack.lapLeaders = new HashMap<String, Integer>();
 		thisTrack.positions = new HashMap<Integer, String>();
