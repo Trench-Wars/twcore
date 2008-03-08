@@ -100,6 +100,7 @@ public void handleEvent(PlayerDeath event){
 	if(hfKilled.getHuntPlayer(event.getKilleeID()).getLosses() == deaths){
 		mvpPlayers.add(hfKilled.getHuntPlayer(killed));
 		m_botAction.sendArenaMessage(killed + " is out! (" + hfKilled.getHuntPlayer(killed).getPoints() + " point(s))");
+		m_botAction.specWithoutLock(killed);
 		hfKilled.remove(event.getKilleeID());
 		if(killed.equals(hfKilled.getHunterFreq().getPrey())){
 			hfKilled.getHunterFreq().setPrey();
@@ -287,6 +288,7 @@ public void end(HuntFreq h){
 	if(h.size() == 1)m_botAction.sendArenaMessage("Winner: " + h.toString());
 	else if(h.size() > 1) m_botAction.sendArenaMessage("Frequency " + h.getFreq() + " wins! Survivors: " + h.toString());
 	m_botAction.sendArenaMessage(getMVP());
+	m_botAction.toggleLocked();
 	freqs.clear();
 	mvpPlayers.clear();
 	isRunning = false;
