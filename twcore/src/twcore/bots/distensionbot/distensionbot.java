@@ -48,7 +48,7 @@ import twcore.core.util.Tools;
  *
  * Lower priority (in order):
  * - !intro, !intro2, !intro3, etc.
- * - F1 Help -- item descriptions?  At least say which slot is which, if not providing info on the specials
+ * - F1 Help -- item descriptions?
  *
  * @author dugwyler
  */
@@ -401,6 +401,7 @@ public class distensionbot extends SubspaceBot {
         req.request(EventRequester.LOGGED_ON);
         req.request(EventRequester.FLAG_CLAIMED);
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        req.request(EventRequester.FREQUENCY_CHANGE);
         req.request(EventRequester.TURRET_EVENT);
     }
 
@@ -418,7 +419,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.resetFlagGame();
 
         if( DEBUG ) {
-            m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
+            //m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
                 m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
                 m_botAction.sendArenaMessage("Distension BETA loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
@@ -2139,6 +2140,7 @@ public class distensionbot extends SubspaceBot {
         }
         cmdProgress( name, null );
         p.addRankPoints(0,false); // If player has enough RP to level, rank them up.
+        p.setIgnoreShipChanges(false);
 
         // Make sure a player knows they can upgrade if they have no upgrades installed (such as after a refund)
         if( p.getUpgradeLevel() == 0 && p.getUpgradePoints() >= 10 ) {
@@ -4647,7 +4649,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdSetVar( String name, String msg ) {
         if( !DEBUG ) return;
-        String[] args = msg.split(":");
+        String[] args = msg.toLowerCase().split(":");
         if( args.length != 3 )
             throw new TWCoreException( "Improper format.  !debug-setvar player:var:value" );
 
@@ -4655,9 +4657,26 @@ public class distensionbot extends SubspaceBot {
         if( p == null )
             throw new TWCoreException("Player not found.");
 
-        if( !p.setVar(args[1],args[2]) )
-            throw new TWCoreException("Set failed.");
-        m_botAction.sendSmartPrivateMessage( name, "Set " + args[1] + " to " + args[2] + " on " + args[0] );
+        try {
+            // Parse first as int
+            Integer value = Integer.parseInt( args[2] );
+            if( !p.setVar(args[1],value) )
+                throw new TWCoreException("Set failed for setting " + args[1] + " to " + value + "." );
+            m_botAction.sendSmartPrivateMessage( name, "Set " + args[1] + " to " + args[2] + " on " + args[0] );
+        } catch (NumberFormatException e) {
+            // Fails?  Try boolean
+            Boolean value = null;
+            if( args[2].startsWith("t") )
+                value = true;
+            else if( args[2].startsWith("f") )
+                value = false;
+            if( value == null )
+                throw new TWCoreException("Unable to parse value '" + args[2] + "' as either an int or bool.");
+            if( !p.setVar(args[1],value) )
+                throw new TWCoreException("Set failed for setting " + args[1] + " to " + value + "." );
+            m_botAction.sendSmartPrivateMessage( name, "Set " + args[1] + " to " + args[2] + " on " + args[0] );
+        }
+
     }
 
     /**
@@ -7395,7 +7414,7 @@ public class distensionbot extends SubspaceBot {
     }
 
 
-    // ***** GENERIC INTERNAL DATA CLASSES (for static info defined in price setup)
+    // ***** GENERIC INTERNAL DATA CLASSES
 
     /**
      * Generic (not player specific) class used for holding basic info on a ship --
