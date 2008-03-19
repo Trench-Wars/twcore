@@ -68,7 +68,7 @@ import twcore.core.util.ipc.IPCMessage;
 public class messagebot extends SubspaceBot
 {
 	HashMap <String,Channel>channels;
-	HashMap defaultChannel;
+	//HashMap defaultChannel;
 	HashSet <String>ops;
 	HashMap <Integer,NewsArticle>news;
 	ArrayList <Integer>newsIDs;
@@ -89,7 +89,7 @@ public class messagebot extends SubspaceBot
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.LOGGED_ON);
 		channels = new HashMap<String,Channel>();
-		defaultChannel = new HashMap();
+		//defaultChannel = new HashMap();
 		ops = new HashSet<String>();
 		news = new HashMap<Integer,NewsArticle>();
 		newsIDs = new ArrayList<Integer>();
@@ -770,7 +770,7 @@ public class messagebot extends SubspaceBot
                     Tools.addSlashesToString(name) + "' AND fnRead = 0" );
                 while(results.next())
                     messageIDs.add(results.getInt("fnID"));
-                Iterator it = messageIDs.iterator();
+                Iterator<Integer> it = messageIDs.iterator();
                 if( !it.hasNext() ) {
                     m_botAction.sendSmartPrivateMessage(name, "You have no new messages.");
                     return;
@@ -808,7 +808,7 @@ public class messagebot extends SubspaceBot
 				while(results.next()) {
 					messageIDs.add(results.getInt("fnID"));
 				}
-				Iterator it = messageIDs.iterator();
+				Iterator<Integer> it = messageIDs.iterator();
 				while(it.hasNext()) {
 					int id = (Integer)it.next();
 					readMessage(name, ""+id);
@@ -1089,7 +1089,7 @@ public class messagebot extends SubspaceBot
                                         m_botAction.SQLClose(m_botAction.SQLQuery("local", query2));
 				} catch(Exception e) { Tools.printStackTrace( e ); }
 
-				Iterator it = peopleToTell.iterator();
+				Iterator<String> it = peopleToTell.iterator();
 				while(it.hasNext()) {
 					String player = (String)it.next();
 					m_botAction.sendSmartPrivateMessage(player, "You have received a new message. PM me with !messages to read it.");
@@ -1386,7 +1386,7 @@ public class messagebot extends SubspaceBot
     			while((nextName = getnames.readLine()) != null)
     				nameList.add(nextName);
     			file.getInputStream().close();
-    			Iterator it = nameList.iterator();
+    			Iterator<String> it = nameList.iterator();
     			while(it.hasNext()) {
     				String addName = (String)it.next();
 					ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblChannelUser WHERE fcName = '"
@@ -1569,7 +1569,7 @@ class Channel
 	 */
 	public void messageChannel(String name, String message)
 	{
-		Iterator it = members.keySet().iterator();
+		Iterator<String> it = members.keySet().iterator();
 
 		while(it.hasNext())
 		{
@@ -1828,7 +1828,7 @@ class Channel
 	 */
 	public void listMembers(String name)
 	{
-		Iterator it = members.keySet().iterator();
+		Iterator<String> it = members.keySet().iterator();
 		String message = "";
 		m_bA.sendSmartPrivateMessage(name, "List of players on " + channelName + ": ");
         if( !it.hasNext() ) {
@@ -1864,7 +1864,7 @@ class Channel
 	 */
 	public void listBanned(String name)
 	{
-		Iterator it = banned.iterator();
+		Iterator<String> it = banned.iterator();
 		String message = "";
 		m_bA.sendSmartPrivateMessage(name, "List of players banned from " + channelName + ": ");
 		for(int k = 0;it.hasNext();)
