@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import twcore.core.util.Tools;
 import twcore.core.BotAction;
@@ -25,7 +24,6 @@ public class locaterbot extends SubspaceBot {
 	//mySQL database to use
 	private String m_sqlHost = "local";
 
-	Vector m_playerIPList;
 
 	public locaterbot( BotAction _botAction ) {
 
@@ -37,7 +35,6 @@ public class locaterbot extends SubspaceBot {
 		req.request( EventRequester.PLAYER_ENTERED );
 		req.request( EventRequester.ARENA_LIST );
 
-		m_playerIPList = new Vector();
 	}
 
 	public void handleEvent( LoggedOn _event ) {
@@ -80,7 +77,7 @@ public class locaterbot extends SubspaceBot {
 		        String[] pieces = message.split("  ");
 		        String thisName = pieces[3].substring(10);
 		        String thisIP = pieces[0].substring(3);
-		        String thisID = pieces[5].substring(10);
+		        //String thisID = pieces[5].substring(10);
 
 		        long ip = translateIP( thisIP );
 		        storePlayerLocation( thisName, ip );
