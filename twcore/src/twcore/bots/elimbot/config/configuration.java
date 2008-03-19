@@ -7,7 +7,7 @@ import twcore.core.BotSettings;
 
 public class configuration {
 	
-	private BotAction m_botAction;
+	public BotAction m_botAction;
 	private BotSettings config;
 	
 	private HashMap<String, fileConfiguration> configurations = new HashMap<String, fileConfiguration>();
