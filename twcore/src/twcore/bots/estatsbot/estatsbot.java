@@ -19,19 +19,19 @@ import twcore.core.util.Tools;
 public class estatsbot extends SubspaceBot {
 
 	HashMap<String, ElimPlayer> players;
-	HashMap lastPlayers;
+	HashMap<String, ElimPlayer> lastPlayers;
 	boolean gameRunning = false;
 	ElimGame thisGame = null;
 	ElimGame lastGame = null;
 	String ref;
-	Iterator playerRatingIt;
+	Iterator<String> playerRatingIt;
 	String getRating;
 	boolean ratingBefore = false;
 
 	public estatsbot(BotAction botAction) {
 		super(botAction);
 		players = new HashMap<String, ElimPlayer>();
-		lastPlayers = new HashMap();
+		lastPlayers = new HashMap<String, ElimPlayer>();
 		EventRequester events = m_botAction.getEventRequester();
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.PLAYER_DEATH);
@@ -168,9 +168,9 @@ public class estatsbot extends SubspaceBot {
 
 	public void startGame() {
 		try {
-			lastPlayers = (HashMap)players.clone();
+			lastPlayers = new HashMap<String,ElimPlayer>(players);
 			players.clear();
-			Iterator it = m_botAction.getPlayingPlayerIterator();
+			Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
 			while(it.hasNext()) {
 				String name = ((Player)it.next()).getPlayerName();
 				players.put(name.toLowerCase(), new ElimPlayer(name));
@@ -203,7 +203,7 @@ public class estatsbot extends SubspaceBot {
 			int gID = results.getInt("fnGameID");
 			int isElim = 0;
 			if(!lastGame.isElim) isElim = 1;
-			Iterator it = lastPlayers.values().iterator();
+			Iterator<ElimPlayer> it = lastPlayers.values().iterator();
 			while(it.hasNext()) {
 				ElimPlayer ep = (ElimPlayer)it.next();
                 if( ep != null ) {
