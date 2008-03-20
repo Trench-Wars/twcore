@@ -9047,9 +9047,9 @@ public class distensionbot extends SubspaceBot {
         int energyLevels2[] = { 2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 55, 70 };
         upg = new ShipUpgrade( "Reinforced Plating       [NRG]", Tools.Prize.ENERGY, costs2b, energyLevels2, 12 );  // 73 x12
         ship.addUpgrade( upg );
-        int p2b1[] = {12, 28, 55 };
-        int p2b2[] = { 9, 26, 60 };
-        upg = new ShipUpgrade( "Rear Defense System", Tools.Prize.GUNS, p2b1, p2b2, 3 );
+        int p2b1[] = { 28, 55 };
+        int p2b2[] = { 26, 60 };
+        upg = new ShipUpgrade( "Rear Defense System", Tools.Prize.GUNS, p2b1, p2b2, 2 );
         ship.addUpgrade( upg );
         int p2c1[] = { 50,200 };
         int p2c2[] = { 40, 80 };
