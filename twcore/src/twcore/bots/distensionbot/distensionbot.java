@@ -4408,6 +4408,8 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdInfo( String name, String msg ) {
+        if( m_players.get(msg) == null )
+            throw new TWCoreException( "Player '" + msg + "' not found.  Note that you must use exact case." );
         cmdStatus( msg, null, name );
     }
 
@@ -4426,7 +4428,16 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( args[0] + " found in arena.  Player must leave arena in order to use this command." );
 
         try {
-            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcName='" + args[1] + "' WHERE fcName='" + Tools.addSlashesToString( args[0] ) + "'" );
+            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( args[1] ) + "'" );
+            if( r != null && r.next() )
+                throw new TWCoreException( "'" + args[1] + "' already exists in the DB (probably already enlisted)!  Use !db-wipeplayer to remove from the DB first before using this command." );
+
+        } catch (SQLException e ) {
+            throw new TWCoreException( "DB command not successful." );
+        }
+
+        try {
+            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcName='" + Tools.addSlashesToString(args[1]) + "' WHERE fcName='" + Tools.addSlashesToString( args[0] ) + "'" );
         } catch (SQLException e ) {
             throw new TWCoreException( "DB command not successful." );
         }
