@@ -55,7 +55,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                         // Debug mode.
-    private final float DEBUG_MULTIPLIER = 4.2f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 4.3f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -71,7 +71,7 @@ public class distensionbot extends SubspaceBot {
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
     private final int WARP_POINT_CHECK_FREQUENCY = 10;     // # seconds between checking warp points for players
-    private final int VENGEFUL_VALID_SECONDS = 9;          // # seconds after V.B. fire in which VB gets RP bonus
+    private final int VENGEFUL_VALID_SECONDS = 10;          // # seconds after V.B. fire in which VB gets RP bonus
     private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
     private final int PILOTS_REQ_EACH_ARMY = 3;            // # players needed on each army for game to start
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
@@ -84,7 +84,7 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
-    private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int RANK_0_STRENGTH = 25;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
 
     private final int RANK_REQ_SHIP2 = 6;    // 15
     private final int RANK_REQ_SHIP3 = 4;    //  5
@@ -1641,7 +1641,8 @@ public class distensionbot extends SubspaceBot {
                     pveng.addRankPoints( vengRP );
                     if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                         vengRP = Math.round((float)vengRP * DEBUG_MULTIPLIER);
-                    m_botAction.sendPrivateMessage( pveng.getArenaPlayerID(), "Vengeful Bastard assist on " + loser.getName() + ": +" + vengRP + " RP" );
+                    if( pveng.wantsKillMsg() )
+                        m_botAction.sendPrivateMessage( pveng.getArenaPlayerID(), "Vengeful Bastard assist on " + loser.getName() + ": +" + vengRP + " RP" );
                 }
             }
             // Determine if the victor's Leeching should fire (full charge prized after a kill)
@@ -6515,7 +6516,7 @@ public class distensionbot extends SubspaceBot {
         public void shareProfits( int profits ) {
             if( isSupportShip() && idleTicks < 12 ) {
                 float sharingPercent;
-                float calcRank = (float)rank;
+                float calcRank = Math.max(1.0f, (float)rank);
                 if( shipNum == 6 )
                     if( rank > 12 )
                         calcRank = 12.0f;
@@ -8810,7 +8811,7 @@ public class distensionbot extends SubspaceBot {
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
-                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE DECISIVE BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + " consecutive minute" + (flagMinutesRequired == 1 ? "" : "s") + " to win the battle.", SOUND_START_ROUND );
+                    m_botAction.sendArenaMessage( ( roundNum == SCORE_REQUIRED_FOR_WIN ? "THE DECISIVE BATTLE" : "BATTLE " + roundNum) + " HAS BEGUN!  Capture both flags for " + flagMinutesRequired + (flagMinutesRequired == 1 ? "minute" : "consecutive minutes") + " to win the battle.", SOUND_START_ROUND );
                     resetAllFlagData();
                     setupPlayerTimes();
                     warpPlayers();
