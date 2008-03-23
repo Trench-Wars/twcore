@@ -1,8 +1,10 @@
 package twcore.bots.purepubbot;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -11,7 +13,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
-import java.util.ArrayList;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -147,6 +148,12 @@ public class purepubbot extends SubspaceBot
     private int warpPtsLeftY[]  = { 255, 260, 267, 274, 279, 263 };
     private int warpPtsRightX[] = { 537, 519, 522, 525, 529, 533 };
     private int warpPtsRightY[] = { 255, 260, 267, 274, 263, 279 };
+    
+    // April fools map warp points
+    private int warpPtsLeftX_April1[]  = { 487, 505, 502, 499, 491, 495 };
+    private int warpPtsLeftY_April1[]  = { 255, 260, 267, 274, 279, 263 };
+    private int warpPtsRightX_April1[] = { 537, 519, 522, 525, 529, 533 };
+    private int warpPtsRightY_April1[] = { 255, 260, 267, 274, 263, 279 };
 
     // Warp coords for safes (for use in strict flag time mode)
     private static final int SAFE_LEFT_X = 306;
@@ -1900,6 +1907,18 @@ public class purepubbot extends SubspaceBot
      * Ensures !warpers on freqs are warped all to 'their' side, but not predictably.
      */
     private void warpPlayers() {
+        // FIXME: Small hack to use different warp coordinates with april fools map
+        GregorianCalendar now = new GregorianCalendar();
+        GregorianCalendar april1 = new GregorianCalendar(2008,GregorianCalendar.APRIL,1,0,0,0);
+        GregorianCalendar april2 = new GregorianCalendar(2008,GregorianCalendar.APRIL,2,0,0,0);
+        
+        if(now.after(april1) && now.before(april2)) {
+            warpPtsLeftX = warpPtsLeftX_April1;
+            warpPtsLeftY = warpPtsLeftY_April1;
+            warpPtsRightX = warpPtsRightX_April1;
+            warpPtsRightY = warpPtsRightY_April1;
+        }
+        
         Iterator<?> i;
 
         if( strictFlagTime )
