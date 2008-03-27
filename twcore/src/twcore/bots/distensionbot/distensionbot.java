@@ -56,7 +56,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                         // Debug mode.
-    private final float DEBUG_MULTIPLIER = 4.4f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 4.5f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 14;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -67,6 +67,7 @@ public class distensionbot extends SubspaceBot {
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 18;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
+    private final int OPS_IDLE_TICKS_BEFORE_DOCK = 30;     // # IDLE_FREQUENCY_CHECKS in idle before Ops is docked
     private final int LAGOUT_VALID_SECONDS = 60;           // # seconds since lagout in which you can use !lagout
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
@@ -579,7 +580,6 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_0_Y_COORD );
                         }
                     }
-
                 }
             }
         };
@@ -1223,6 +1223,11 @@ public class distensionbot extends SubspaceBot {
         if( pInternal == null ) {
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
+            Tools.printLog("Unable to find player leaving -- did not save!");
+            if( DEBUG ) {
+                m_botAction.sendArenaMessage( "Unable to find player leaving -- did not save!  Notify staff immediately." );
+                m_botAction.sendUnfilteredPublicMessage("?message dugwyler:Unable to find player leaving!  Did not save.");
+            }
             return;
         }
         String name = pInternal.getPlayerName();
@@ -1231,6 +1236,11 @@ public class distensionbot extends SubspaceBot {
         if( player == null ) {
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
+            Tools.printLog("Unable to find player leaving -- did not save '" + name + "'!");
+            if( DEBUG ) {
+                m_botAction.sendArenaMessage( "Unable to find player leaving -- did not save '" + name + "'!  Notify staff immediately." );
+                m_botAction.sendUnfilteredPublicMessage("?message dugwyler:Unable to find player leaving!  Did not save '" + name + "'!");
+            }
             return;
         }
         if( player.getShipNum() > 0 ) {
@@ -1385,7 +1395,7 @@ public class distensionbot extends SubspaceBot {
         if( event.getShipType() == 0 ) {
             if( p.getShipNum() == 9 && p.ignoreShipChanges() ) {
                 p.setIgnoreShipChanges(false);
-                doDock(p);
+                doDock( p );
             } else if( p.getShipNum() > 0 && p.getShipNum() != 9 ) {
                 doDock( p );
                 if( flagTimer != null && flagTimer.isRunning() ) {
@@ -2441,18 +2451,18 @@ public class distensionbot extends SubspaceBot {
         // Display command rank progress info, w/ separate display for cadets enrolled in the academy.
         if( p.getBattlesWon() < WINS_REQ_RANK_ENSIGN ) {
             if( p.getBattlesWon() < WINS_REQ_RANK_CADET_4TH_CLASS ) {
-                m_botAction.sendPrivateMessage( theName, "Enrolled in the Officer's Academy.  Estimated you will graduate to the next class after " + p.getWinsRequiredForNextCommandRank() + " more battles won.");
+                m_botAction.sendPrivateMessage( theName, "You are a recruit candidate for the Officer's Academy.  Estimated you will be accepted to the Academy after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.");
             } else {
-                m_botAction.sendPrivateMessage( theName, "Enrolled in the Officer's Academy.  Estimated you will graduate to the next class after " + p.getWinsRequiredForNextCommandRank() + " more battles won.");
+                m_botAction.sendPrivateMessage( theName, "Enrolled in the Officer's Academy.  Estimated you will graduate to the next class after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.");
             }
         } else {
             if( p.getBattlesWon() < WINS_REQ_RANK_COMMODORE )
-                m_botAction.sendPrivateMessage( theName, "You are an Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battles won." );
+                m_botAction.sendPrivateMessage( theName, "You are an Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won." );
             else {
                 if( p.getBattlesWon() >= WINS_REQ_RANK_FLEET_ADMIRAL )
                     m_botAction.sendPrivateMessage( theName, "You are the Fleet Admiral, the highest and most honorable rank of all." );
                 else
-                    m_botAction.sendPrivateMessage( theName, "You are a Flag Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battles won." );
+                    m_botAction.sendPrivateMessage( theName, "You are a Flag Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won." );
             }
         }
         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Time played today: " + p.getMinutesPlayed() + " minutes.   Current Streak: " + p.getSuccessiveKills() + " kills." );
@@ -2979,8 +2989,9 @@ public class distensionbot extends SubspaceBot {
                 if( msg.equals(":auto:") )
                     m_botAction.sendPrivateMessage( name, "To maintain balance, you have been returned to " + p.getArmyName() + ".");
                 else {
-                    if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                        // Kill participation if return assist was not all that needed
+                    if( armySizeWeight >= 1.0f ||
+                            (m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() && flagTimer != null && flagTimer.isRunning()) ) {
+                        // Kill participation if return assist was not all that needed, and
                         m_playerTimes.remove( name );
                         m_playerTimes.put( name, new Integer( flagTimer.getTotalSecs() ) );
                         m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ", but your participation has been reset.");
@@ -3004,6 +3015,20 @@ public class distensionbot extends SubspaceBot {
                     lastAssistReward = System.currentTimeMillis();
                     int reward = p.getRank();
                     if( reward == 0 ) reward = 1;
+
+                    // Increased bonuses for higher ranks, as it takes more to make a dent in
+                    // their to-rank amounts
+                    if( reward >= 70 )
+                        reward *= 10;
+                    else if( reward >= 60 )
+                        reward *= 8;
+                    else if( reward >= 50 )
+                        reward *= 5;
+                    else if( reward >= 40 )
+                        reward *= 3;
+                    else if( reward >= 30 )
+                        reward *= 2;
+
                     if( armySizeWeight < .5 )
                         reward = p.getRank() * 6;
                     else if( armySizeWeight < .6 )
@@ -3013,10 +3038,15 @@ public class distensionbot extends SubspaceBot {
                     else if( armySizeWeight < .8 )
                         reward = p.getRank() * 3;
                     if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() && flagTimer != null && flagTimer.isRunning() ) {
-                        reward *= 2;
-                        m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, you also receive a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
+                        if( flagTimer.getSecondsHeld() >= 35 ) {
+                            reward *= 2;
+                            m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
+                        } else {
+                            reward *= 3.5;
+                            m_botAction.sendPrivateMessage( name, "SAINT BONUS!  For assisting this army in their most desperate hour, their HQ rewards you a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
+                        }
                     } else {
-                        m_botAction.sendPrivateMessage( name, "For your noble assistance, you also receive a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
+                        m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + (DEBUG ? (int)(reward * DEBUG_MULTIPLIER) : reward ) + " RP bonus.", 1 );
                     }
                     p.addRankPoints(reward,false);
                 }
@@ -3135,8 +3165,6 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "Sorry, it's been too long.  You'll have to pilot the normal way." );
             if( p.isAtMaxLagouts() )
                 throw new TWCoreException( "Sorry, you may only lagout " + LAGOUTS_ALLOWED + " times per round." );
-            if( p.getLastShipNum() < 1 )
-                throw new TWCoreException( "Sorry, I have no record of you having lagged out (you may not use !lagout after a disconnect)." );
 
             p.setIgnoreShipChanges(true);
 
@@ -3244,25 +3272,7 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Only Javelins possess the JumpSpace ability." );
         if( p.getRank() < 15 )
             throw new TWCoreException( "You do not yet have access to the JumpSpace Drive.  It will become available when you reach rank 15." );
-        if( !p.useJumpSpace() )
-            throw new TWCoreException( "JumpSpace is not yet charged." );
-        if( msg.equals("") )
-            throw new TWCoreException( "You must provide one of the following Jump directions: N, S, E, W, NW, SW, SE, NE  (Ex: >>> SE)" );
 
-        Player pdata = m_botAction.getPlayer(p.getArenaPlayerID());
-
-        // upgfactor: 0.5 to 2.0, representing amount by which velocity will affect jump location.
-        // Estimating velocity to be between 1 and ~3000 based on present CFG, with
-        // top velocity w/o speed upgrades or afterburner being 900.
-        // Divided by 200:  x0.5) 900 = 2.25; 3000 = 7.5   x2.0) 900 = 9; 3000 = 30
-        //float upgfactor = (float)(p.getPurchasedUpgrade(9) + 1) / 2.0f;
-        //int jumpx = x + Math.round( ((float)pdata.getXVelocity() / 200.0f ) * upgfactor );
-        //int jumpy = y + Math.round( ((float)pdata.getYVelocity() / 200.0f ) * upgfactor );
-
-        // New method: flat amount
-        int upgfactor = (p.getPurchasedUpgrade(9) + 1) * 8;
-        int x = pdata.getXTileLocation();
-        int y = pdata.getYTileLocation();
         int modx = 0;
         int mody = 0;
 
@@ -3286,8 +3296,30 @@ public class distensionbot extends SubspaceBot {
         } else if( msg.equals("SW") ) {
             mody = 1;
             modx = -1;
-        } else
-            throw new TWCoreException( "You must provide one of the following Jump directions: N, S, E, W, NW, SW, SE, NE  (Ex: >>> SE)" );
+        } else {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Evasive Jump initiated!  (Provide a direction to jump to a specific location, i.e.: >>> NW)" );
+            // Provide random values between -1 and 1 to give a random direction
+            mody = (int)Math.round( ((Math.random() * 3.0f) - 1.5f) );
+            mody = (int)Math.round( ((Math.random() * 3.0f) - 1.5f) );
+        }
+
+        Player pdata = m_botAction.getPlayer(p.getArenaPlayerID());
+
+        if( !p.useJumpSpace() )
+            throw new TWCoreException( "JumpSpace is not yet charged." );
+
+        // upgfactor: 0.5 to 2.0, representing amount by which velocity will affect jump location.
+        // Estimating velocity to be between 1 and ~3000 based on present CFG, with
+        // top velocity w/o speed upgrades or afterburner being 900.
+        // Divided by 200:  x0.5) 900 = 2.25; 3000 = 7.5   x2.0) 900 = 9; 3000 = 30
+        //float upgfactor = (float)(p.getPurchasedUpgrade(9) + 1) / 2.0f;
+        //int jumpx = x + Math.round( ((float)pdata.getXVelocity() / 200.0f ) * upgfactor );
+        //int jumpy = y + Math.round( ((float)pdata.getYVelocity() / 200.0f ) * upgfactor );
+
+        // New method: flat amount
+        int upgfactor = (p.getPurchasedUpgrade(9) + 1) * 8;
+        int x = pdata.getXTileLocation();
+        int y = pdata.getYTileLocation();
 
         // Add direction
         int jumpx = x + (modx * upgfactor);
@@ -6431,6 +6463,7 @@ public class distensionbot extends SubspaceBot {
                     lastShipNum = this.shipNum;     // Record for lagout
                 } else {
                     lastShipNum = -1;               // Ensure lagout is not possible
+                    setLagoutAllowed(false);
                 }
                 turnOffProgressBar();
             }
@@ -6632,10 +6665,11 @@ public class distensionbot extends SubspaceBot {
             // OPS: Always idle; they must use commands to reset idle counter
             if( shipNum == 9 ) {
                 idleTicks++;
-                if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 2)
+                if( idleTicks == OPS_IDLE_TICKS_BEFORE_DOCK - 2)
                     m_botAction.sendOpposingTeamMessageByFrequency(getArmyID(), "OPS appears idle; will be removed from console in 20 seconds.");
-                else if( idleTicks >= IDLE_TICKS_BEFORE_DOCK ) {
+                else if( idleTicks >= OPS_IDLE_TICKS_BEFORE_DOCK ) {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You have been docked for being idle at the Tactical Ops console." );
+                    setLagoutAllowed(false);
                     cmdDock(name, "");
                 }
             }
@@ -6976,7 +7010,10 @@ public class distensionbot extends SubspaceBot {
          * @param allowed True if lagout allowed
          */
         public void setLagoutAllowed( boolean allowed ) {
-            allowLagout = allowed;
+            if( shipNum == 9 )
+                allowLagout = false;
+            else
+                allowLagout = allowed;
         }
 
         /**
@@ -7313,7 +7350,7 @@ public class distensionbot extends SubspaceBot {
          * @return True if player can use !lagout.
          */
         public boolean canUseLagout() {
-            return allowLagout;
+            return allowLagout && lastShipNum > 0;
         }
 
         /**
