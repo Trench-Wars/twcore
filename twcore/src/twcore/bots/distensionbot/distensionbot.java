@@ -2465,6 +2465,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage( theName, "You are a Flag Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won." );
             }
         }
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Total battles won with 50% or more participation: " + p.getWinsRequiredForNextCommandRank() );
         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Time played today: " + p.getMinutesPlayed() + " minutes.   Current Streak: " + p.getSuccessiveKills() + " kills." );
     }
 
@@ -8251,9 +8252,8 @@ public class distensionbot extends SubspaceBot {
                         } else {
                             victoryMsg += "!";
                         }
-                        // Assisters do not receive credit for wins from their army, for obvious reasons.
-                        // Also need 50% participation or more for the win to count properly.
-                        if( p.getNaturalArmyID() == p.getArmyID() && percentOnFreq >= .5 )
+                        // Need 50% participation or more for the win to count properly.
+                        if( percentOnFreq >= .5 )
                             p.addBattleWin();
 
                         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
