@@ -258,7 +258,11 @@ public class twbotstepelim extends TWBotExtension {
 	 */
 	public String[] getHelpMessages() {
 		// TODO Auto-generated method stub
-		return null;
+		String[] stepElimHelp = {
+				"!start                             - Starts Step-Elim with shiptype 1",
+	            "!start <x>                         - Starts Step-Elim with shiptype <x>"
+	        };
+	        return stepElimHelp;
 	}
 
 	/* (non-Javadoc)
