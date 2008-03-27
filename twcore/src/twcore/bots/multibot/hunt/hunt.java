@@ -232,21 +232,26 @@ public void doStartCmd(String name){
     		}
     }
     Iterator<HuntFreq> it = freqs.iterator();
-    if(!it.hasNext()){
-    	m_botAction.sendSmartPrivateMessage( name, "Couldn't find enough playing frequencies");
-    	doStopCmd(name);//If everyone is on the same frequency... The game can't be played.
-    	return;
-    }
     while(it.hasNext()){
     	HuntFreq f = it.next();
     	if(f.size() < 1){
     		it.remove();//If there are frequencies without any players(only spectators) remove them. (Spectators in other frequencies are unimportant as they don't exist in the HuntFreq)
     	}
     }
-    if(freqs.size() < 2){
-    	m_botAction.sendSmartPrivateMessage( name, "Couldn't find enough playing frequencies");
-    	doStopCmd(name);//If everyone is on the same frequency after removing ones with only spectators... The game can't be played.
-    	return;
+    if(freqs.size() == 1){
+    	freqs.clear();
+    	Iterator<Player> ppi = m_botAction.getPlayingPlayerIterator();
+    	int z = 0;
+    	while ( ppi.hasNext() ){
+    		freqs.add(z, new HuntFreq(z, z));
+    		freqs.elementAt(z).add(new HuntPlayer(ppi.next()));
+    		z++;
+    	}
+    	if(freqs.size() < 2){
+    		m_botAction.sendSmartPrivateMessage( name, "Not enough players.");
+        	doStopCmd(name);
+        	return;
+    	}
     }
     updateIndices();
     Iterator<HuntFreq> it2 = freqs.iterator();
