@@ -441,7 +441,7 @@ public class Arena {
         frequencyList.put( new Integer( message.getPlayerID() ), player );
 
         if( player.getShipType() != 0 )
-            addPlayerToTracker( new Integer( message.getPlayerID() ) );
+            addPlayerToFrontOfTracker( new Integer( message.getPlayerID() ) );
         else
             removePlayerFromTracker( new Integer( message.getPlayerID() ) );
     }
@@ -478,7 +478,7 @@ public class Arena {
         frequencyList.put( new Integer( message.getPlayerID() ), player );
 
         if( player.getShipType() != 0 )
-            addPlayerToTracker( new Integer( message.getPlayerID() ) );
+            addPlayerToFrontOfTracker( new Integer( message.getPlayerID() ) );
         else
             removePlayerFromTracker( new Integer( message.getPlayerID() ) );
     }
@@ -688,7 +688,7 @@ public class Arena {
      * Adds a playing player into the tracker queue to be spectated by the bot
      * and receive position packets from.  Can be used to force the player to
      * the back of the queue.
-     * (Called by PlayerEntered, FrequencyChange, FrequencyShipChange, PlayerDeath)
+     * (Called by PlayerEntered and PlayerDeath)
      * @param playerID Unique ID of player to add to the tracking system
      */
     public void addPlayerToTracker( Integer playerID ) {
@@ -697,6 +697,21 @@ public class Arena {
 	        m_tracker.remove( playerID );
 	        m_tracker.add( playerID );
 		}
+    }
+
+    /**
+     * Adds a playing player to the front of the tracker queue to be spectated
+     * by the bot and receive position packets from.  Used after a player's position
+     * needs an immediate update.
+     * (Called by FrequencyChange and FrequencyShipChange)
+     * @param playerID Unique ID of player to add to the tracking system
+     */
+    public void addPlayerToFrontOfTracker( Integer playerID ) {
+
+        synchronized(m_tracker) {
+            m_tracker.remove( playerID );
+            m_tracker.add( playerID, 0 );
+        }
     }
 
     /**

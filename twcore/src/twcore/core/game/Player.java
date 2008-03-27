@@ -28,7 +28,7 @@ import twcore.core.util.Tools.Weapon;
  * This brings the <i>additional<i> problem of player ID being represented in a single byte,
  * or 256 possible values, with ID re-use being possible -- this means that ID is also not
  * a reliable method of identification; it is useless if the player is not in the arena, and
- * it is not static in any sense.    
+ * it is not static in any sense.
  */
 public class Player {
 
@@ -60,7 +60,7 @@ public class Player {
     private short   m_timeStamp;        // Timestamp of the last position packet
     private short   m_identTurretee;    // Player ID of player this player is attached to
     private LinkedList<Integer> m_turrets;       // List of player IDs (Integer) that are attached
-    
+
     private boolean m_stealthOn;        // Status of Stealth
     private boolean m_cloakOn;          // Status of Cloaking
     private boolean m_xradarOn;         // Status of X-Radar
@@ -70,7 +70,7 @@ public class Player {
     private boolean m_ufoOn;            // Status of UFO mode
 
     // The following data is generally considered unreliably tracked.  Only if the arena settings
-    // have ExtraPositionData set will this information be sent. 
+    // have ExtraPositionData set will this information be sent.
 
     private boolean m_shields;          // True if player has shields
     private boolean m_super;            // True if player has super
@@ -350,6 +350,20 @@ public class Player {
     }
 
     /**
+     * HACK: This method is run after a player has been warped in order to manually
+     * update their position.  Should cause bots that use hotspot checking to warp
+     * players to not warp them multiple times due to stale position data.
+     * @param xTileLoc X coordinate (in tiles) where the player was warped
+     * @param yTileLoc Y coordinate (in tiles) where the player was warped
+     */
+    public void updatePlayerPositionManuallyAfterWarp( int xTileLoc, int yTileLoc ) {
+        m_xLocation = (short)(xTileLoc * 16);
+        m_yLocation = (short)(yTileLoc * 16);
+        m_xVelocity = 0;
+        m_yVelocity = 0;
+    }
+
+    /**
      * Called automatically by Arena (bot does not need to update).
      *
      * Sets this player as being attached to the player whose ID corresponds to
@@ -461,7 +475,7 @@ public class Player {
     public int getWeaponType(){
         return m_weaponType;
     }
-    
+
     /**
 	 * Gets the player's <b>most recently updated</b> Weapon fired's speed
      * <p>
@@ -494,7 +508,7 @@ public class Player {
     	}
     	return speed;
     }
-    
+
     /**
      * Gets the player's <b>most recently updated</b> X location, in pixels (0...16384)
      * <p>
@@ -739,7 +753,7 @@ public class Player {
 
     /**
      * Returns the score as tracked by TWCore.  TWCore does <b>NOT</b> currently track
-     * score properly -- this is provided as a working approximation only. 
+     * score properly -- this is provided as a working approximation only.
      * @return Overall point score of the player
      */
     public int getScore(){

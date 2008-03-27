@@ -1145,6 +1145,10 @@ public class BotAction
     public void warpTo(int playerID, int xTiles, int yTiles)
     {
         sendUnfilteredPrivateMessage(playerID, "*warpto " + xTiles + " " + yTiles);
+        Player p = getPlayer(playerID);
+        if( p != null )
+            p.updatePlayerPositionManuallyAfterWarp( xTiles, yTiles );
+        spectatePlayer( playerID );
     }
 
     /**
@@ -1158,22 +1162,30 @@ public class BotAction
     public void warpTo(String playerName, int xTiles, int yTiles)
     {
         sendUnfilteredPrivateMessage(playerName, "*warpto " + xTiles + " " + yTiles);
+        Player p = getPlayer(playerName);
+        if( p != null )
+            p.updatePlayerPositionManuallyAfterWarp( xTiles, yTiles );
+        spectatePlayer(p.getPlayerID());
     }
 
     /**
-     * Warps player to a random location as defined in the CFG.
+     * Warps player to a random location as defined in the CFG, and then sets to
+     * spectate on them in order to update their position.
      * @param playerID PlayerID of the player to be warped.
      */
     public void warpRandomly( int playerID ) {
         specificPrize(playerID, Tools.Prize.WARP);
+        spectatePlayer( playerID );
     }
 
     /**
-     * Warps player to a random location as defined in the CFG.
+     * Warps player to a random location as defined in the CFG, and then sets to
+     * spectate on them in order to update their position.
      * @param playerName The name of the player.
      */
     public void warpRandomly( String playerName ) {
         specificPrize(playerName, Tools.Prize.WARP);
+        spectatePlayer( playerName );
     }
 
     /**
