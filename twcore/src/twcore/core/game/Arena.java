@@ -710,7 +710,7 @@ public class Arena {
 
         synchronized(m_tracker) {
             m_tracker.remove( playerID );
-            m_tracker.add( playerID, 0 );
+            m_tracker.add( 0, playerID );
         }
     }
 
