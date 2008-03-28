@@ -55,6 +55,7 @@ public class Session extends Thread {
     public static int INVALID_CLASS = (-1);
 
     public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup ){
+        super(name+"-Session");
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
         m_roboClass = roboClass;
@@ -63,7 +64,7 @@ public class Session extends Thread {
         m_state = STARTING;
         m_password = password;
         m_botNumber = botNum;
-        m_timer = new Timer();
+        m_timer = new Timer(name+"-Timer");
         m_chatLog = null;
         m_ipAddress = m_coreData.getServerName();
         m_serverPort = m_coreData.getServerPort();
@@ -71,6 +72,7 @@ public class Session extends Thread {
     }
 
     public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup, String altIP, int altPort, String altSysop ){
+        super(name+"-Session");
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
         m_roboClass = roboClass;
@@ -79,7 +81,7 @@ public class Session extends Thread {
         m_state = STARTING;
         m_password = password;
         m_botNumber = botNum;
-        m_timer = new Timer();
+        m_timer = new Timer(name+"-Timer");
         m_chatLog = null;
         m_ipAddress = altIP;
         m_sysopPassword = altSysop;
@@ -238,6 +240,7 @@ public class Session extends Thread {
         // Experimental fast disconnect mode destroys the socket immediately.
         if( m_coreData.getGeneralSettings().getInt("FastDisconnect") == 1 ) {
             m_group.interrupt();
+            m_socket.disconnect();
             m_socket.close();
         // Standard behavior: 30 second shutdown procedure
         } else {
@@ -257,6 +260,7 @@ public class Session extends Thread {
             }
 
             m_socket.disconnect();
+            m_socket.close();
         }
         Tools.printLog( m_name + " (" + classname + ") disconnected gracefully." );
         this.interrupt();
@@ -264,6 +268,7 @@ public class Session extends Thread {
         if( m_timer != null ){
             m_timer.cancel();
             m_timer = null;
+            m_botAction = null;
         }
     }
 
@@ -359,6 +364,7 @@ public class Session extends Thread {
             // Tools.printLog( "Session destroyed, all threads recovered for " + m_name );
             return;
         } catch( Exception e ){
+            e.printStackTrace();
             disconnect( "unhandled exception" );
             Tools.printStackTrace( e );
         }

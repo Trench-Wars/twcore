@@ -62,6 +62,7 @@ public class SQLManager extends Thread {
      * @param configFile Properly formatted CFG file containing SQL system data
      */
     public SQLManager( File configFile ) {
+        super("SQLManager");
         pools = new HashMap<String,SQLConnectionPool>();
         queues = new HashMap<String,SQLBackgroundQueue>();
         sqlcfg = new BotSettings( configFile );

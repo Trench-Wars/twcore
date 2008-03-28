@@ -25,7 +25,7 @@ public class Sender extends Thread {
      * @param socket Connection to the outside world
      */
     public Sender( ThreadGroup group, DatagramSocket socket ){
-        super( group, "Sender" );
+        super( group, group.getName()+"-Sender" );
         m_socket = socket;
         m_packetsSent = 0;
         m_packets = Collections.synchronizedList( new LinkedList<DatagramPacket>() );

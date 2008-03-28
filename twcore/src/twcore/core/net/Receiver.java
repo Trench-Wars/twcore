@@ -27,7 +27,7 @@ public class Receiver extends Thread {
      * @param socket Connection to the outside world
      */
     public Receiver( ThreadGroup group, DatagramSocket socket ){
-        super( group, "Receiver" );
+        super( group, group.getName()+"-Receiver" );
         m_socket = socket;
         m_packetsReceived = 0;
         m_packets = Collections.synchronizedList( new LinkedList<DatagramPacket>() );

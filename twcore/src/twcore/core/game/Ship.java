@@ -70,7 +70,7 @@ public final class Ship extends Thread {
      * @param gen For generating appropriate position packets
      */
     public Ship(ThreadGroup group, GamePacketGenerator gen, Arena arenaTracker) {
-        super(group, "Ship");
+        super(group, group.getName()+"-Ship");
         m_gen = gen;
         m_arenaTracker = arenaTracker;
         m_mAge = m_pAge = System.currentTimeMillis();
