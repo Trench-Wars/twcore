@@ -802,6 +802,22 @@ public class GamePacketGenerator {
 
         composePacket( data );
     }
+    
+    /**
+     * Allows bot to be able to drop bricks.
+     * @param xLocation
+     * @param yLocation
+     */
+    public void sendDropBrick( int xLocation, int yLocation ){
+        ByteArray      data;
+
+        data = new ByteArray( 5 );
+        data.addByte( 0x1C );  // Type byte
+        data.addLittleEndianShort( (short)xLocation );
+        data.addLittleEndianShort( (short)yLocation );
+
+        composePacket( data );
+    }
 
     /**
      * Adds an LVZ object ID state (whether to turn it on or off) to the object queue.

@@ -167,6 +167,24 @@ public final class Ship extends Thread {
         m_gen.sendPositionPacket( direction, xVel, y, togglables, x, yVel, bounty, energy, (short)weapon );
         m_pAge = (int)System.currentTimeMillis();
     }
+    
+    /**
+     * Drops a brick at the bots current location.
+     */
+    public void dropBrick(){
+    	m_gen.sendDropBrick(this.x/16, this.y/16);
+    	m_pAge = (int)System.currentTimeMillis();
+    }
+    
+    /**
+     * Drops a brick at a specified location.
+     * @param xLocation - X Location in tiles.
+     * @param yLocation - Y Location in tiles.
+     */
+    public void dropBrick( int xLocation, int yLocation){
+    	m_gen.sendDropBrick(xLocation, yLocation);
+    	m_pAge = (int)System.currentTimeMillis();
+    }
 
     /**
      * Sets various ship-related fields (not all are movement-related), and then sends
