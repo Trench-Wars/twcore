@@ -19,6 +19,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.InterProcessEvent;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.OperatorList;
 import twcore.core.game.Player;
@@ -37,7 +38,8 @@ public class pracbot extends SubspaceBot {
 	
     private BotSettings m_botSettings;
     private OperatorList opList;
-    private String turret = null;
+    private int turret = -1;
+    private String master;
 	LinkedList<Projectile> fired = new LinkedList<Projectile>();
 	Vector<RepeatFireTimer> repeatFireTimers = new Vector<RepeatFireTimer>();
     
@@ -47,15 +49,18 @@ public class pracbot extends SubspaceBot {
 	String[] helpmsg = {
 		"PracBot Commands:",
 		"!setship #			-- puts the bot into ship number #",
+		"!setfreq #         -- operates like *setfreq",
 		"!warpto # #		-- operates like *warpto",
 		"!face #			-- changes the bot's direction (0-39)",
 		"!aim               -- toggles auto-aiming",
-		"!fire #			-- fires a weapon. (Most common: 1 and 3)",
+		"!fire #			-- fires a weapon. (Most common: 1 and 97)",
 		"!repeatfire # #    -- repeats fire - (weapon):(ms repeat)",
 	    "!rfire # #         -- shortcut for !repeatfire # #",
 		"!listfire          -- displays a list of all firing tasks",
 		"!stopfire #        -- stops firing task of index #",
 		"!stopfire          -- stops all firing tasks.",
+		"!brick             -- drops a brick where the bot is.",
+		"!brick # #         -- drops a brick at x, y.",
 		"!attach #          -- attach to fuzzy player name",
 		"!unattach          -- don't understand? this bot isn't for you",
 		"!setaccuracy #     -- set difficulty(0-5) 0 being the highest",
@@ -83,7 +88,27 @@ public class pracbot extends SubspaceBot {
     public void handleEvent(LoggedOn event) {
     	opList = m_botAction.getOperatorList();       
     	m_botAction.joinArena(m_botSettings.getString("Arena"));
-    	m_botAction.ipcSubscribe("tutorialbots");
+    	m_botAction.ipcSubscribe("tutorbots");
+    	m_botAction.ipcSendMessage("tutorbots", "open", null, m_botAction.getBotName());
+    }
+    
+    public void handleEvent(InterProcessEvent event){
+    	IPCMessage ipc = (IPCMessage)event.getObject();
+    	String msg = ipc.getMessage();
+    	if(msg.equalsIgnoreCase("master") && master == null){
+    		m_botAction.ipcSendMessage("tutorbots", "slave", ipc.getSender(), m_botAction.getBotName());
+    	}
+    	else if(msg.equalsIgnoreCase("confirm") && master == null){
+    		master = ipc.getSender();
+    	}
+    	else if(msg.equalsIgnoreCase("free") && master != null){
+    		if (master.equals(ipc.getSender()))
+    			master = null;
+    	}
+    	else if(msg.startsWith("command:") && master != null){
+    		if (ipc.getSender().equals(master))
+    			handleCommand(ipc.getSender(), msg.substring(8));
+    	}
     }
     
     public void requestEvents() {
@@ -98,19 +123,18 @@ public class pracbot extends SubspaceBot {
     }
 
     public void handleEvent(PlayerLeft event){
-    	if(m_botAction.getPlayerName(event.getPlayerID()).equals(turret))doUnAttachCmd();
+    	if(event.getPlayerID() == turret)doUnAttachCmd();
     }
     
     public void handleEvent(FrequencyShipChange event){
-    	if(m_botAction.getPlayerName(event.getPlayerID()).equals(turret) && event.getShipType() == 0)doUnAttachCmd();
+    	if(event.getPlayerID() == turret && event.getShipType() == 0)doUnAttachCmd();
     }
     
     public void handleEvent(PlayerDeath event) {
-    	if(turret == null)return;
-    	String killed = m_botAction.getPlayerName(event.getKilleeID());
+    	if(turret == -1)return;
     	String killer = m_botAction.getPlayerName(event.getKillerID());
     	//TODO: Check to make sure the killer isn't a bot.
-    	if(turret.equalsIgnoreCase(killed)){
+    	if(turret == event.getKilleeID()){
     		doUnAttachCmd();
     		doAttachCmd(killer);
     	}
@@ -118,9 +142,9 @@ public class pracbot extends SubspaceBot {
     
     public void handleEvent(WeaponFired event) {
     	if(m_botAction.getShip().getShip() == 8)return;
-    	if(turret != null) return;
+    	if(turret != -1) return;
     	Player p = m_botAction.getPlayer(event.getPlayerID());
-        if(p == null || (p.getFrequency() == botFreq) || event.getWeaponType() > 8 || event.isType(5) || event.isType(6) || event.isType(7))return;
+        if(p == null || (p.getFrequency() == m_botAction.getShip().getAge()) || event.getWeaponType() > 8 || event.isType(5) || event.isType(6) || event.isType(7))return;
         double pSpeed = p.getWeaponSpeed();
 		double bearing = Math.PI * 2 * (double)event.getRotation() / 40.0;
 		fired.add(new Projectile(p.getPlayerName(), event.getXLocation() + (short)(10.0 * Math.sin(bearing)), event.getYLocation() - (short)(10.0 * Math.cos(bearing)), event.getXVelocity() + (short)(pSpeed * Math.sin(bearing)), event.getYVelocity() - (short)(pSpeed * Math.cos(bearing)), event.getWeaponType(), event.getWeaponLevel()));
@@ -128,33 +152,17 @@ public class pracbot extends SubspaceBot {
     
     public void handleEvent(PlayerPosition event) {
     	if(m_botAction.getShip().getShip() == 8)return;
-    	try{
     	Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null || !isAiming || (p.getFrequency() == botFreq))return;
-        double diffY, diffX, distanceInTiles, angle;
+        double diffY, diffX, angle;
     	diffY = (event.getYLocation() + (event.getYVelocity() * REACTION_TIME)) - botY;
     	diffX = (event.getXLocation() + (event.getXVelocity() * REACTION_TIME)) - botX;
-    	distanceInTiles = (Math.sqrt(Math.pow(diffY, 2) + Math.pow(diffX, 2))) / 16;
     	angle = (180 - (Math.atan2(diffX, diffY)*180/Math.PI)) * SS_CONSTANT;
-    	doFaceCmd(m_botAction.getBotName(), "" + angle);
-    	Iterator<RepeatFireTimer> i = repeatFireTimers.iterator();    	
-    	if(distanceInTiles < 40){
-    		while (i.hasNext()){
-        		RepeatFireTimer r = i.next();
-        		r.stopSlowStop();
-        	}
-    	}
-    	else{
-    		while (i.hasNext()){
-    			RepeatFireTimer r = i.next();
-    			r.slowStop();
-    		}
-    	}    	
-    	}catch(Exception e){}
+    	doFaceCmd(m_botAction.getBotName(), Double.toString(angle));
     }
     
     public void update(){
-     	if(turret == null){
+     	if(turret == -1){
      		ListIterator<Projectile> it = fired.listIterator();
      		while (it.hasNext()) {
      			Projectile b = (Projectile) it.next();     			
@@ -167,8 +175,6 @@ public class pracbot extends SubspaceBot {
      					};
      					isSpawning = true;
      					m_botAction.scheduleTask(spawned, SPAWN_TIME);
-     					IPCMessage ipcMessage = new IPCMessage("hit:" + b.getOwner() + ":" + botX + ":" + botY);
-     					m_botAction.ipcTransmit("tutorialbots", ipcMessage);
      					m_botAction.sendDeath(m_botAction.getPlayerID(b.getOwner()), 0);
      					Iterator<RepeatFireTimer> i = repeatFireTimers.iterator();
      					while(i.hasNext())i.next().pause(); 				
@@ -198,54 +204,70 @@ public class pracbot extends SubspaceBot {
     	if(name == null) name = "-anonymous-";
     	if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
     		if(opList.isER(name)){
-    			if(msg.startsWith("!setship "))
-    				doSetShipCmd(name,msg.substring(9));
-    			else if(msg.startsWith("!warpto "))
-    				doWarpToCmd(name,msg.substring(8));
-    			else if(msg.startsWith("!face "))
-    				doFaceCmd(name,msg.substring(6));
-    			else if(msg.startsWith("!fire "))
-    				doFireCmd(msg.substring(6));
-    			else if(msg.startsWith("!repeatfire "))
-    				doRepeatFireCmd(name, msg.substring(12));
-    			else if(msg.startsWith("!rfire "))
-    				doRepeatFireCmd(name, msg.substring(7));
-    			else if(msg.equalsIgnoreCase("!listfire"))
-    				doFireListCmd(name);
-    			else if(msg.startsWith("!stopfire "))
-    				doStopRepeatFireCmd(msg.substring(10));
-    			else if(msg.equalsIgnoreCase("!stopfire"))
-    				doStopRepeatFireCmd(null);
-    			else if(msg.equalsIgnoreCase("!aim"))
-    				doAimCmd();
-    			else if(msg.startsWith("!attach "))
-    				doAttachCmd(msg.substring(8));
-    			else if(msg.equalsIgnoreCase("!unattach"))
-    				doUnAttachCmd();
-    			else if(msg.startsWith("!setaccuracy "))
-    				doSetAccuracyCmd(msg.substring(13));
-    			else if(msg.startsWith("!move "))
-    				doMoveCmd(name,msg.substring(6));
-    			else if(msg.startsWith("!go "))
-    				doGoCmd(name, msg.substring(4).trim());
-    			else if (msg.equalsIgnoreCase("!die"))
-                    doDieCmd(name);
-    			else if (msg.equalsIgnoreCase("!spec"))
-    				doSpecCmd(name);
-    			else if (msg.equalsIgnoreCase("!help"))
-    				m_botAction.smartPrivateMessageSpam( name, helpmsg ); 
-    			/*
-    			if(msg.equalsIgnoreCase("!blah"))
-    				doBlahCmd();
-    			if(msg.equalsIgnoreCase("!blah"))
-    				doBlahCmd();
-    			if(msg.equalsIgnoreCase("!blah"))
-    				doBlahCmd();
-    			if(msg.equalsIgnoreCase("!blah"))
-    				doBlahCmd();
-    			*/
+    			if (opList.isSmod(name) && msg.equalsIgnoreCase("!die"))
+    	            doDieCmd(name);
+    			else if(master == null)
+    				handleCommand(name, msg);
+    			else
+    				m_botAction.sendSmartPrivateMessage( name, "I cannot be controlled. My master is " + master);
     		}
     	}
+    }
+    
+    public void handleCommand(String name, String msg){
+    	if(msg.startsWith("!setship "))
+			doSetShipCmd(name,msg.substring(9));
+    	else if(msg.startsWith("!setfreq "))
+    		doSetFreqCmd(name,msg.substring(9));
+		else if(msg.startsWith("!warpto "))
+			doWarpToCmd(name,msg.substring(8));
+		else if(msg.startsWith("!face "))
+			doFaceCmd(name,msg.substring(6));
+		else if(msg.startsWith("!fire "))
+			doFireCmd(msg.substring(6));
+		else if(msg.startsWith("!repeatfire "))
+			doRepeatFireCmd(name, msg.substring(12));
+		else if(msg.startsWith("!rfire "))
+			doRepeatFireCmd(name, msg.substring(7));
+		else if(msg.equalsIgnoreCase("!listfire"))
+			doFireListCmd(name);
+		else if(msg.startsWith("!stopfire "))
+			doStopRepeatFireCmd(msg.substring(10));
+		else if(msg.equalsIgnoreCase("!stopfire"))
+			doStopRepeatFireCmd(null);
+		else if(msg.startsWith("!brick "))
+			doDropBrickCmd(msg.substring(7));
+		else if(msg.equalsIgnoreCase("!brick"))
+			doDropBrickWhereBotIsCmd();
+		else if(msg.equalsIgnoreCase("!aim"))
+			doAimCmd();
+		else if(msg.startsWith("!attach "))
+			doAttachCmd(msg.substring(8));
+		else if(msg.equalsIgnoreCase("!unattach"))
+			doUnAttachCmd();
+		else if(msg.startsWith("!setaccuracy "))
+			doSetAccuracyCmd(msg.substring(13));
+		else if(msg.startsWith("!move "))
+			doMoveCmd(name,msg.substring(6));
+		else if(msg.startsWith("!go "))
+			doGoCmd(name, msg.substring(4).trim());	
+		else if(msg.equalsIgnoreCase("!die"))
+			doDieCmd(name);
+		else if (msg.equalsIgnoreCase("!spec"))
+			doSpecCmd(name);
+		else if (msg.equalsIgnoreCase("!help"))
+			m_botAction.smartPrivateMessageSpam( name, helpmsg );
+			
+		/*
+		if(msg.equalsIgnoreCase("!blah"))
+			doBlahCmd();
+		if(msg.equalsIgnoreCase("!blah"))
+			doBlahCmd();
+		if(msg.equalsIgnoreCase("!blah"))
+			doBlahCmd();
+		if(msg.equalsIgnoreCase("!blah"))
+			doBlahCmd();
+		*/
     }
     
     public void doAttachCmd(String msg){
@@ -257,13 +279,13 @@ public class pracbot extends SubspaceBot {
     	m_botAction.getShip().setFreq(p.getFrequency());
     	botFreq = p.getFrequency();
     	m_botAction.getShip().attach(m_botAction.getPlayerID(name));
-    	turret = name;
+    	turret = m_botAction.getPlayerID(name);
     }
     
     public void doUnAttachCmd(){
-    	if(turret == null)return;
+    	if(turret == -1)return;
     	m_botAction.getShip().unattach();
-    	turret = null;
+    	turret = -1;
     }
     
     public void doAimCmd(){
@@ -272,6 +294,8 @@ public class pracbot extends SubspaceBot {
     
     private void doDieCmd(String sender) {
         m_botAction.sendSmartPrivateMessage(sender, "Logging Off.");
+        if(master != null)
+        	m_botAction.ipcSendMessage("tutorbots", "disconnecting" , master, m_botAction.getBotName());
         m_botAction.scheduleTask(new DieTask(), 500);
     }
     
@@ -296,28 +320,30 @@ public class pracbot extends SubspaceBot {
     }
     
     public void doSetShipCmd(String name, String message){
-    	if(message.trim().length() == 1){
-    		try{
-    			int ship = Integer.parseInt(message);
-    			if(ship <= 9 && ship >= 1){
-    				m_botAction.getShip().setShip(ship-1);
-    				botX = m_botAction.getShip().getX();
-    				botY = m_botAction.getShip().getY();
-    				botFreq = 0;
-    				m_botAction.getShip().setFreq(0);
-    				m_botAction.scheduleTaskAtFixedRate(updateIt, 100, 100);
-    			}
-    		}catch(Exception e){}    		
-    	}
-    	else
-    		m_botAction.sendSmartPrivateMessage( name, "Incorrect command usage.");
+    	try{
+    		int ship = Integer.parseInt(message.trim());
+    		if(ship <= 9 && ship >= 1){
+    			m_botAction.getShip().setShip(ship-1);
+    			botX = m_botAction.getShip().getX();
+    			botY = m_botAction.getShip().getY();
+    			m_botAction.getShip().setFreq(0);
+    			m_botAction.scheduleTaskAtFixedRate(updateIt, 100, 100);
+    		}
+    	}catch(Exception e){}    		
+    }
+    
+    public void doSetFreqCmd(String name, String message){
+    	try{
+    		int freq = Integer.parseInt(message.trim());
+    		m_botAction.getShip().setFreq(freq);
+    		botFreq = freq;
+    	}catch(Exception e){}
     }
     
     public void doSpecCmd(String name){
     	if(m_botAction.getShip().getShip() == 8)return;
-    	m_botAction.cancelTask(updateIt);
-    	String myName = m_botAction.getBotName();
-    	m_botAction.spec(myName); m_botAction.spec(myName);
+    	try{m_botAction.cancelTask(updateIt);}catch(Exception e){}
+    	m_botAction.getShip().setShip(8);
     }
     public void doWarpToCmd(String name, String message){
     	if(m_botAction.getShip().getShip() == 8)return;
@@ -337,6 +363,18 @@ public class pracbot extends SubspaceBot {
 			int l = Math.round(degree);		
 			m_botAction.getShip().setRotation(l);
 		}catch(Exception e){}
+	}
+	public void doDropBrickCmd(String message){
+		if(m_botAction.getShip().getShip() == 8)return;
+		try{
+			String[] msg = message.split(" ");
+			int x = Integer.parseInt(msg[0]);
+			int y = Integer.parseInt(msg[1]);
+			m_botAction.getShip().dropBrick(x, y);
+		}catch(Exception e){}
+	}
+	public void doDropBrickWhereBotIsCmd(){
+		m_botAction.getShip().dropBrick();
 	}
 	public void doFireCmd(String msg){
 		if(m_botAction.getShip().getShip() == 8)return;
@@ -443,8 +481,7 @@ private class RepeatFireTimer{
 	private int SPAWN_TIME = 5005;
 	public int weapon, delayms, repeatms;
 	public boolean isRunning = true, isSlowlyStopping = false;
-	public Timer clock = new Timer();
-	TimerTask repeat;
+	TimerTask repeat = null;
 	TimerTask slowly;
 	
 	public RepeatFireTimer(int wep, int delayms, int repeatms){
@@ -454,13 +491,14 @@ private class RepeatFireTimer{
 		repeatFireTimers.add(this);
 		repeat = new TimerTask(){
 			public void run(){
-				doFireCmd(weapon + "");
+				doFireCmd(Integer.toString(weapon));
 			}
 		};
-		clock.scheduleAtFixedRate(this.repeat, this.delayms, this.repeatms);
+		m_botAction.scheduleTaskAtFixedRate(this.repeat, this.delayms, this.repeatms);
 	}
 	public void cancel(){
-		this.clock.cancel();
+		if(repeat != null)
+			repeat.cancel();
 		isRunning = false;
 	}
 	public void pause(){
@@ -468,10 +506,10 @@ private class RepeatFireTimer{
 		repeat.cancel();
 		repeat = new TimerTask(){
 			public void run(){
-				doFireCmd(weapon + "");
+				doFireCmd(Integer.toString(weapon));
 			}
 		};
-		clock.scheduleAtFixedRate(this.repeat, this.SPAWN_TIME, this.repeatms);		
+		m_botAction.scheduleTaskAtFixedRate(this.repeat, this.SPAWN_TIME, this.repeatms);		
 	}
 	
 	public void stop(){
@@ -480,34 +518,7 @@ private class RepeatFireTimer{
 			isRunning = false;
 		}
 	}
-	public void resume(){
-		if(isRunning)return;
-		repeat = new TimerTask(){
-			public void run(){
-				doFireCmd(weapon + "");
-			}
-		};
-		clock.scheduleAtFixedRate(this.repeat, 0, this.repeatms);
-		isRunning = true;
-	}
-	public void slowStop(){
-		if(isSlowlyStopping)return;
-		slowly = new TimerTask(){
-			public void run(){
-				repeat.cancel();
-				isRunning = false;
-			}
-		};
-		clock.schedule(slowly, 1000);
-		isSlowlyStopping = true;
-	}
-	public void stopSlowStop(){
-		if(isSlowlyStopping){
-			slowly.cancel();
-			if(!isRunning)resume();
-			isSlowlyStopping = false;
-		}
-	}
+	
 	public String toString(){
 		String s = (repeatFireTimers.indexOf(this)+1) + ") Firing weapon(" + weapon + ") every " + repeatms + " ms." ;		
 		return s;
