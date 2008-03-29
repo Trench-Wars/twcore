@@ -13,28 +13,25 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
-
 /**
  * Step-Elim
  * 
  * Make-over of the stepelim twbotmodule (created by Austin)
  * @author fantus
- * 
- * TODO:
- * - create two modes, one where deaths are carried along
- * - set number of teams, max number of teams is number of players in.
- * 
  */
 public class stepelim extends MultiModule {
-    
-    private boolean isRunning = false;          //whether the game is running or not
-    private boolean isBetweenRounds = true;     //whether it is between a round or not
-    private int shipType = 1;                   //type of ship being used
-    private int deathLimit = 2;                 //death limit
-    private HashSet<String> teamOne;            //team one playerlist
-    private HashSet<String> teamTwo;            //team two playerlist
-    private HashSet<String> freqOne;            //freq one playerlist
-    private HashSet<String> freqTwo;            //freq two playerlist
+    private boolean isRunning = false;
+    private boolean firstRound = true;
+    private boolean isBetweenRounds = false;
+    private boolean keepDeaths = false;
+    private boolean evenTeams = false;
+    private boolean isUneven = false;
+    private int shipType = 1;
+    private int deathLimit = 2;
+    private HashSet<String> teamOne;
+    private HashSet<String> teamTwo;
+    private HashSet<String> freqOne;
+    private HashSet<String> freqTwo;
     
     /**
      * Initialize the module
@@ -73,9 +70,11 @@ public class stepelim extends MultiModule {
     public void handleEvent(Message event) {
         String message = event.getMessage();
         if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
-            String name = m_botAction.getPlayerName( event.getPlayerID());
+            String name = m_botAction.getPlayerName(event.getPlayerID());
             if (opList.isER(name))
-                handleCommand(name, message);            
+                handleCommand(name, message, event.getPlayerID());
+            else if (isBetweenRounds && isUneven)
+                makeEven(event.getPlayerID());
         }
     }
     
@@ -86,27 +85,21 @@ public class stepelim extends MultiModule {
      * @param name      the name of the player who issued the command
      * @param message   the command the player issued
      */
-    public void handleCommand( String name, String message) {
+    public void handleCommand( String name, String message, short playerID) {
         if (message.toLowerCase().equals("!start"))
             startGame(name, "1");
         else if (message.toLowerCase().startsWith("!start")) 
             startGame(name, message.substring(7));
         else if (message.toLowerCase().equals("!stop"))
             stopGame(name);
-        else if (message.toLowerCase().startsWith("!deathlimit")) {
-            if (!isRunning) {
-                try {
-                    deathLimit = Integer.parseInt(message.substring(12));
-                    m_botAction.sendSmartPrivateMessage(name, "Death limit set to " + 
-                            deathLimit + ".");
-                } catch(Exception e) {}
-            }
-            else {
-                m_botAction.sendSmartPrivateMessage(name, "Error: Can only set " +
-                		"death limit when the game is not runnning.");
-                m_botAction.sendSmartPrivateMessage(name, "Use !stop first.");
-            }       
-        }
+        else if (message.toLowerCase().startsWith("!deathlimit"))
+            setDeathLimit(name, message);
+        else if (message.toLowerCase().equals("!eventeams")) 
+            setEvenTeams(name);
+        else if (message.toLowerCase().equals("!keepdeaths"))
+            setKeepDeaths(name);
+        else if (isBetweenRounds && isUneven)
+            makeEven(playerID);
     }
     
     /**
@@ -121,13 +114,19 @@ public class stepelim extends MultiModule {
                         
             if(killed.getLosses() >= deathLimit) {
                 String killedName = killed.getPlayerName();
-                m_botAction.spec(killedName);
-                m_botAction.spec(killedName);
-                m_botAction.sendArenaMessage(killedName + " is out! (" + killed.getWins() 
-                        + "-" + killed.getLosses() + ")");
+                int freq = killed.getFrequency();
+                m_botAction.specWithoutLock(killedName);
+                //set the player to his own teamfreq, only when keepDeaths is not set
+                //A bit of team bonding here :)
+                if (!keepDeaths)
+                    m_botAction.setFreq(killed.getPlayerID(), freq);
+                m_botAction.sendArenaMessage(killedName + " is out! (" + killed.getWins() + "-" 
+                        + killed.getLosses() + ")");
                 
                 //check if it is the last round. If so the message to stick around does not need to be send.
-                if ((killed.getFrequency() == 0 && teamOne.size() != 2) || (killed.getFrequency() == 1 && teamTwo.size() != 2)) {
+                if (((killed.getFrequency() == 0 && teamOne.size() > 1) ||
+                    (killed.getFrequency() == 1 && teamTwo.size() > 1)) &&
+                    !keepDeaths) {
                     m_botAction.sendSmartPrivateMessage(killedName, "Stick around, if your " +
                             "team wins you'll get to play in the next round! But do not leave " +
                             "the arena or you will be removed from the playing list!");
@@ -143,14 +142,16 @@ public class stepelim extends MultiModule {
      * @param event the FrequencyShipChange event that fired
      */
     public void handleEvent(FrequencyShipChange event) {
-        if (isRunning && !isBetweenRounds) {
+        if (isRunning) {
             Player player = m_botAction.getPlayer(event.getPlayerID());
             String playerName = player.getPlayerName();
-            freqOne.remove(playerName);
-            freqTwo.remove(playerName);
-            
-            // Check if a round has ended.
-            checkEndRound();
+            //This allows players to enter when evenTeams is set and the bot is asking for an extra player
+            if (!player.isShip(shipType)) {
+                freqOne.remove(playerName);
+                freqTwo.remove(playerName);
+                // Check if a round has come to an end.
+                checkEndRound();
+            }
         }
     }
     
@@ -177,58 +178,104 @@ public class stepelim extends MultiModule {
     
     /**
      * This method starts a game of Step-Elim.
+     * 
      * @param name the name of the player who issued the !start command
      * @param param the shiptype which will be played in
      */
     private void startGame(String name, String param) {
-        if (!isRunning && m_botAction.getNumPlayers() < 4) {
-            m_botAction.sendSmartPrivateMessage(name, "There are not enough players to" +
-            		" begin this event.");
+        //First do a few checks if the game should get started.
+        if (!isRunning && m_botAction.getNumPlayers() < 2) {
+            m_botAction.sendSmartPrivateMessage(name, "There are not enough players to begin this event.");
         } else if (!isRunning) {
-            //Lets get this starting
+            //Start the Game
             isRunning = true;
             
-            //Determine the shiptype for this round
+            //Determine shiptype
             try {
                 shipType = Integer.parseInt(param);
-            } catch(Exception e) {}
+            } catch (Exception e) {}
             if (shipType <1 || shipType > 8)
+                //Just default to 1
                 shipType = 1;
             
-            m_botAction.sendSmartPrivateMessage( name, "A round of step-elim is starting now." +
-            		" I will lock the arena." );
-            m_botAction.sendArenaMessage( "Step-Elim is starting. Players are eliminated after " +
-                    + deathLimit + " deaths. When a team has won it will be split up and game will start" +
-            		" over until 1 person stands.", 2 );
-            m_botAction.sendArenaMessage( "The arena will be locked in 20 seconds." );
+            m_botAction.sendSmartPrivateMessage(name,
+                    "A round of Step-Elim is starting now! I will lock the arena after the 20 second warning.");
+            m_botAction.sendArenaMessage("Step-Elim is starting! Players are eliminated after " +
+                    deathLimit + " deaths. When a team has won it will be split up and the game will start " +
+                    		"over until 1 person stands.", 2);
             
-            TimerTask tenSecondWarning = new TimerTask() {
+            if (keepDeaths)
+                m_botAction.sendArenaMessage("NOTICE: " + name + " activated keep deaths mode! " +
+                		"This means that you will not get a scorereset after each round!");
+            
+            m_botAction.sendArenaMessage("The arena will be locked in 20 seconds.");
+            
+            TimerTask waitTwentySeconds = new TimerTask() {
                 public void run() {
-                    //Lock the arena, set everyone to the appropriate ship, and random the teams
                     m_botAction.toggleLocked();
                     m_botAction.changeAllShips(shipType);
-                    m_botAction.createNumberOfTeams(2);
-                    m_botAction.sendArenaMessage("The game will begin in 10 seconds... Get ready!", 2);
+                    beginRound();
                 }
             };
-            m_botAction.scheduleTask(tenSecondWarning, 20000);
-            
-            TimerTask beginGame = new TimerTask() {
-                public void run() {
-                    fillTeams();
-                    m_botAction.scoreResetAll();
-                    isBetweenRounds = false;
-                    m_botAction.sendArenaMessage("GO GO GO!!!", 104);
-                }
-            };
-            m_botAction.scheduleTask(beginGame, 30000);
-        
-            
-        } else {
-            m_botAction.sendSmartPrivateMessage( name, "A game is already in progress." );
-        }
+            m_botAction.scheduleTask(waitTwentySeconds, (20 * 1000));
+        } else
+            m_botAction.sendSmartPrivateMessage(name, "A game is already in progress.");
     }
     
+    private void preRound(HashSet<String> team) {
+        Iterator<String> it = team.iterator();
+        String name;
+        while(it.hasNext()) {
+            name = it.next();
+            m_botAction.setShip(name, shipType);
+            m_botAction.setFreq(name, 0);
+        }
+        beginRound();
+    }
+    
+    /**
+     * This method starts a new round.
+     */
+    private void beginRound() {
+        isUneven = false;
+        isBetweenRounds = true;
+        
+        //Players must not kill each other before a round started.
+        m_botAction.changeAllInShipToFreq(shipType, 0);
+        if (evenTeams) {
+            if ((m_botAction.getNumPlayers() % 2) != 0)
+                isUneven = true;
+            if (isUneven && !firstRound) {
+                m_botAction.sendArenaMessage("The teams are uneven, " +
+                		"the first to pm me, " + m_botAction.getBotName() + 
+                		",  will get to play to even the teams!!!", 3);
+                return; //Escape, wait for a player to enter the game to make it even again
+            }
+        }
+        
+        //Game is ready to go
+        m_botAction.sendArenaMessage("Next round will start in 10 seconds...", 2);
+        
+        TimerTask preRun = new TimerTask() {
+            public void run() {
+                m_botAction.createNumberOfTeams(2);
+            }
+        };
+        m_botAction.scheduleTask(preRun, (9 * 1000));
+        
+        TimerTask tenSecondWarning = new TimerTask() {
+            public void run() {
+                setTeams();
+                isBetweenRounds = false;
+                if (!keepDeaths || firstRound)
+                    m_botAction.scoreResetAll();
+                m_botAction.sendArenaMessage("GO GO GO!!!", 104);
+            }
+        };
+        m_botAction.scheduleTask(tenSecondWarning, (10 * 1000));
+        firstRound = false;
+    }
+
     /**
      * This method stops a game of Step-Elim. If no game is currently in
      * progress, it will return an error message.
@@ -238,11 +285,16 @@ public class stepelim extends MultiModule {
     private void stopGame(String name) {
         if (isRunning) {
             isRunning = false;
-            isBetweenRounds = true;
+            isBetweenRounds = false;
+            firstRound = true;
+            keepDeaths = false;
+            evenTeams = false;
+            isUneven = false;
+            shipType = 1;
+            deathLimit = 2;
             m_botAction.sendPrivateMessage(name, "Step-Elim mode stopped.");
             m_botAction.specAll();
-            m_botAction.sendArenaMessage("This game of Step-Elim has been" +
-            		" obliterated by " + name + ".", 13);
+            m_botAction.sendArenaMessage("This game of Step-Elim has been obliterated by " + name + ".", 13);
             m_botAction.toggleLocked();
             cancel();
         } else {
@@ -251,9 +303,9 @@ public class stepelim extends MultiModule {
     }
     
     /**
-     * This method fills up the team and freq sets at the start of each round
+     * This method sets the teams and freq sets up at the start of each round
      */
-    private void fillTeams() {
+    private void setTeams() {
         teamOne.clear();
         teamTwo.clear();
         freqOne.clear();
@@ -278,54 +330,38 @@ public class stepelim extends MultiModule {
      * it will start a new round or end the game.
      */
     private void checkEndRound() {
-        if(freqTwo.isEmpty()) {
-            //teamOne has won the round
+        if (freqOne.isEmpty() || freqTwo.isEmpty()) {
+            int winningfreq = 0;
+            //End of a round
             isBetweenRounds = true;
-            m_botAction.sendArenaMessage("Freq 0 has won the round!", 20);
-            if (teamOne.size() != 1) 
-                beginNextRound(teamOne);
+            
+            if (freqOne.isEmpty())
+                winningfreq = 1;
             else
-                endGame(teamOne);
-        } else if (freqOne.isEmpty()) {
-            //teamTwo has won the round
-            isBetweenRounds = true;
-            m_botAction.sendArenaMessage("Freq 1 has won the round!", 21);
-            if (teamTwo.size() != 1) 
-                beginNextRound(teamTwo);
-            else
-                endGame(teamTwo);
+                winningfreq = 0;
+            
+            m_botAction.sendArenaMessage("Freq " + winningfreq + " has won the round!", 20);
+            
+            TimerTask endRound = new TimerTask() {
+                public void run() {
+                    if (freqOne.isEmpty()) {
+                        if (teamTwo.size() != 1) 
+                            preRound(teamTwo);
+                        else
+                            endGame(teamTwo);
+                    }
+                    else {
+                        if (teamOne.size() != 1) 
+                            preRound(teamOne);
+                        else
+                            endGame(teamOne);
+                    }
+                }
+            };
+            
+            //Wait 3 seconds between the announcement of the round winner and the next round start or end game
+            m_botAction.scheduleTask( endRound, 3000);
         }
-    }
-    
-    /**
-     * This method starts a new round
-     * 
-     * @param team the winning team of the last round
-     */
-    private void beginNextRound(HashSet<String> team) {
-        Iterator<String> it = team.iterator();
-        while(it.hasNext()) {
-            m_botAction.setShip(it.next(), shipType);
-        }
-        
-        m_botAction.sendArenaMessage("The next round begins in 10 seconds... Get ready!");
-                
-        TimerTask preStart = new TimerTask() {
-            public void run() {
-                m_botAction.createNumberOfTeams(2);
-            }
-        };
-        m_botAction.scheduleTask( preStart, 9000);
-        
-        TimerTask tenSecondWarning = new TimerTask() {
-            public void run() {
-                fillTeams();
-                isBetweenRounds = false;
-                m_botAction.scoreResetAll();
-                m_botAction.sendArenaMessage( "Go Go Go!!!", 104 );
-            }
-        };
-        m_botAction.scheduleTask( tenSecondWarning, 10000);
     }
     
     /**
@@ -334,12 +370,105 @@ public class stepelim extends MultiModule {
      * @param name the name of the winner of the game
      */
     private void endGame(HashSet<String> name) {
-    	Iterator<String> it = name.iterator();
+        Iterator<String> it = name.iterator();
         m_botAction.sendArenaMessage( "--= " + it.next() + " has won Step-Elim!!! =--", 5 );
         isRunning = false;
-        isBetweenRounds = true;
+        isBetweenRounds = false;
+        firstRound = true;
+        keepDeaths = false;
+        evenTeams = false;
+        isUneven = false;
+        shipType = 1;
+        deathLimit = 2;
         m_botAction.toggleLocked();  
         cancel();      
+    }
+    
+    /**
+     * This method toggles deathlimit after a check if the game is already running. 
+     * 
+     * @param name the name of the player who issued the !deathlimit command 
+     * @param message the command the player issued
+     */
+    private void setDeathLimit(String name, String message) {
+        if (!isRunning) {
+            try {
+                deathLimit = Integer.parseInt(message.substring(12));
+                m_botAction.sendSmartPrivateMessage(name, "Death limit set to " + deathLimit + ".");
+            } catch(Exception e) {}
+        }
+        else
+            m_botAction.sendSmartPrivateMessage(name, 
+                    "Error: Can only set death limit when the game is not runnning. Use !stop first.");
+    }
+    
+    /**
+     * This method toggles eventeams after a check whether the game is already running.
+     * 
+     * @param name the name of the player who issued the !eventeams command
+     */
+    private void setEvenTeams(String name) {
+        if (!isRunning) {
+            evenTeams = !evenTeams;
+            if (evenTeams)
+                m_botAction.sendSmartPrivateMessage(name,
+                        "Eventeams is toggled on! When teams are uneven the first player who messasges me get " +
+                        "added.");
+            else
+                m_botAction.sendSmartPrivateMessage(name,
+                        "Eventeams is toggled off! The game will just continue when teams are uneven. (Default)");
+        }
+        else
+            m_botAction.sendSmartPrivateMessage(name, 
+                    "Error: Can only toggle eventeams while not running. Use !stop first.");
+    }
+    
+    /**
+     * This method toggles keepdeaths after a check whether the game is already running.
+     * 
+     * @param name the name of the player who issued the !keepdeaths command
+     */
+    private void setKeepDeaths (String name) {
+        if (!isRunning) {
+            keepDeaths = !keepDeaths;
+            if (keepDeaths)
+                m_botAction.sendSmartPrivateMessage(name, 
+                        "Keepdeaths is toggled on! Players will keep their deaths during the whole game.");
+            else
+                m_botAction.sendSmartPrivateMessage(name,
+                        "Keepdeaths is toggled off! Players will get a scorereset each round. (Default)");
+        }
+        else
+            m_botAction.sendSmartPrivateMessage(name, 
+                    "Error: Can only toggle keepdeaths while not running. Use !stop first.");
+    }
+    
+    /**
+     * This method adds a player to the player list, and goes back to beginRound.
+     * First it does a little check if the extra player is not already in the game to 
+     * prevent cheating.
+     * 
+     * @param name the name of the player who private messaged me first
+     */
+    private void makeEven(short playerID) {
+        Player player = m_botAction.getPlayer(playerID);
+        String name = m_botAction.getPlayerName(playerID);
+        //Check if player is a spectator
+        if(player.isShip(0)) {
+            m_botAction.setShip(name, shipType);
+            m_botAction.setFreq(name, 0);
+            m_botAction.scoreReset(name);
+        }
+        else
+            return; //wait for the next player to message me
+        isUneven = false;
+        //wait a second to let the player enter the game
+        TimerTask waitForPlayer = new TimerTask() {
+          public void run() {
+              beginRound();
+          }
+        };
+        m_botAction.scheduleTask(waitForPlayer, 1000);
     }
 
     /**
@@ -350,10 +479,14 @@ public class stepelim extends MultiModule {
      */
     public String[] getModHelpMessage() {
         String[] stepElimHelp = {
-                "!start                     -- Starts a game of Step-Elim with shiptype 1",
-                "!start <shiptype>          -- Starts a game of Step-Elim with the specified shiptype.",
-                "!deathlimit <#>            -- Sets death limit. (default is 2)", 
-                "!stop                      -- Stops a game of Step-Elim."
+                "!start               -- Starts a game of Step-Elim with shiptype 1",
+                "!start <shiptype>    -- Starts a game of Step-Elim with the specified shiptype.",
+                "!deathlimit <#>      -- Sets death limit. (default is 2)",
+                "!eventeams           -- Toggles whether to evenout the teams after each round.",
+                "                        First one that pm's the bot gets added to make the teams even again.",
+                "                        (default is off)",
+                "!keepdeaths          -- Toggles whether to have scoreresets between rounds or not. (default is off)",
+                "!stop                -- Stops a game of Step-Elim."
         };
         return stepElimHelp;
     }
@@ -365,5 +498,6 @@ public class stepelim extends MultiModule {
     public void cancel() {
         m_botAction.cancelTasks();
     }
+
     
 }
