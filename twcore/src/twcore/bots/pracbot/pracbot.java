@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
-import java.util.Timer;
 import java.util.Vector;
 import java.util.Iterator;
 
@@ -34,7 +33,7 @@ public class pracbot extends SubspaceBot {
 
 	private static final double SS_CONSTANT = 0.1111111;
 	private static final int SPAWN_TIME = 5005;
-	private  double REACTION_TIME = 0.075;
+	private double REACTION_TIME = 0.075;
 	
     private BotSettings m_botSettings;
     private OperatorList opList;
@@ -162,6 +161,8 @@ public class pracbot extends SubspaceBot {
     }
     
     public void update(){
+    	botX = m_botAction.getShip().getX();
+ 		botY = m_botAction.getShip().getY();
      	if(turret == -1){
      		ListIterator<Projectile> it = fired.listIterator();
      		while (it.hasNext()) {
@@ -189,8 +190,6 @@ public class pracbot extends SubspaceBot {
      	else{
      		Player p = m_botAction.getPlayer(turret);
      		if(p == null)return;
-     		botX = p.getXLocation();
-			botY = p.getYLocation();
 			int xVel = p.getXVelocity();
 			int yVel = p.getYVelocity();
 			m_botAction.getShip().move(botX, botY, xVel, yVel);
