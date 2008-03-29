@@ -103,7 +103,8 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!warn", acceptedMessages, this, "handleWarn" );
         m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell" );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan" );
-//      m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
+        m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
+        m_commandInterpreter.registerCommand( "!wiki",  acceptedMessages, this, "handleWikipedia" );
         m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "handleStatus" );
         m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary" );
         m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
@@ -202,10 +203,6 @@ public class robohelp extends SubspaceBot {
         }
     }
 
-    /*public void handleGoogle( String name, String message ){
-        m_botAction.sendChatMessage( "Google search results for " + message + ": " + doGoogleSearch( message ) );
-    }*/
-
     /**
      * Forms an appropriate query to dictionary.reference.com.
      * @param name Name of individual querying
@@ -231,6 +228,28 @@ public class robohelp extends SubspaceBot {
      */
     public void handleJavadocs( String name, String message ) {
         m_botAction.sendChatMessage( "Javadocs entry:  http://javadocs.org/" + message );
+    }
+    
+    /**
+     * Forms an appropriate query to google.com
+     * @param name Name of individual querying
+     * @param message Query
+     */
+    public void handleGoogle( String name, String message ) {
+    	m_botAction.sendChatMessage( "Google search: http://www.google.com/search?hl=en&q=" + message + "&btng=Google+Search");
+    }
+    
+    /*public void handleGoogle( String name, String message ){
+    m_botAction.sendChatMessage( "Google search results for " + message + ": " + doGoogleSearch( message ) );
+}*/
+    
+    /**
+     * Forms an appropriate query to wikipedia.org
+     * @param name Name of individual querying
+     * @param message Query
+     */
+    public void handleWikipedia( String name, String message ) {
+    	m_botAction.sendChatMessage( "Wikipedia search: http://en.wikipedia.org/wiki/" + message);
     }
 
 /*    public String doGoogleSearch( String searchString ){
@@ -1191,6 +1210,8 @@ public class robohelp extends SubspaceBot {
             " !dictionary word                          - Returns a link for a definition of the word.",
             " !thesaurus word                           - Returns a link for a thesaurus entry for the word.",
             " !javadocs term                            - Returns a link for a javadocs lookup of the term.",
+            " !google word                              - Returns a link for a google search of the word.",
+            " !wiki word                                - Returns a link for a wikipedia search of the word.",
             "`     ",
             "PM commands:",
             " !lookup <keyword>                         - Tells you the response when the specified key word",
