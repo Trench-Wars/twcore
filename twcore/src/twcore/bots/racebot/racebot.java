@@ -76,6 +76,19 @@ public class racebot extends SubspaceBot {
             twrcOps.add(ops[k]);
         }
     }
+    
+    protected boolean isOperator(String name) {
+        boolean isOperator = false;
+        
+        for(String operator:twrcOps) {
+            if(operator.equalsIgnoreCase(name)) {
+                isOperator = true;
+                break;
+            }
+        }
+        
+        return isOperator;
+    }
 
 	public void distributeEvent( SubspaceEvent event ){
 

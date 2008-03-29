@@ -35,7 +35,7 @@ public class RbTrackManager extends RaceBotExtension {
 		try {
 			String name = m_botAction.getPlayerName( event.getPlayerID() );
 
-			if(m_botAction.getOperatorList().isSmod(name) || m_bot.twrcOps.contains(name.toLowerCase()))
+			if(m_botAction.getOperatorList().isSmod(name) || m_bot.isOperator(name))
 			{
 				String message = event.getMessage().toLowerCase();
 				if( message.equals( "yes" ) )

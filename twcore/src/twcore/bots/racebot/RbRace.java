@@ -92,7 +92,7 @@ public class RbRace extends RaceBotExtension {
             m_botAction.privateMessageSpam( name, help );
         }
 		
-		if(m_botAction.getOperatorList().isSmod(name) || m_bot.twrcOps.contains(name.toLowerCase()))
+		if(m_botAction.getOperatorList().isSmod(name) || m_bot.isOperator(name))
 		{
 			if( message.startsWith( "!help" ) ) {
 	            String help[] = {
