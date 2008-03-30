@@ -476,10 +476,13 @@ public class utilwarp extends MultiUtil
    * @param sender Host who wants desperately to know own position
    */
   public void doWhereCmd(String sender) {
+	  m_botAction.spectatePlayer(sender);
       Player p = m_botAction.getPlayer( sender );
       if( p != null ) {
           m_botAction.sendSmartPrivateMessage( sender, "You are at: (" + new Integer(p.getXLocation() / 16) + "," + new Integer(p.getYLocation() / 16) + ")" );
       }
+      m_botAction.stopSpectatingPlayer();
+      m_botAction.moveToTile(512, 512);
   }
 
   public void doWarp(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup)
