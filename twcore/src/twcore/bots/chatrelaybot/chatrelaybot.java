@@ -1,4 +1,4 @@
-package twcore.bots.chatbot;
+package twcore.bots.chatrelaybot;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
