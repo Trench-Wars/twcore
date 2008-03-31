@@ -152,6 +152,11 @@ public class stepelim extends MultiModule {
                 // Check if a round has come to an end.
                 checkEndRound();
             }
+            //When teams must be even, it is also ok if someone goes to spectator mode
+            if (isBetweenRounds && evenTeams && isUneven) {
+                isUneven = false;
+                beginRound();
+            }
         }
     }
     
@@ -222,6 +227,11 @@ public class stepelim extends MultiModule {
             m_botAction.sendSmartPrivateMessage(name, "A game is already in progress.");
     }
     
+    /**
+     * This method makes sure that everyone who was in the winning team gets in again.
+     * 
+     * @param team the winning team of the last round
+     */
     private void preRound(HashSet<String> team) {
         Iterator<String> it = team.iterator();
         String name;
@@ -248,7 +258,7 @@ public class stepelim extends MultiModule {
             if (isUneven && !firstRound) {
                 m_botAction.sendArenaMessage("The teams are uneven, " +
                 		"the first to pm me, " + m_botAction.getBotName() + 
-                		",  will get to play to even the teams!!!", 3);
+                		",  will get to play to even the teams!!! (Or someone has to specatate)", 3);
                 return; //Escape, wait for a player to enter the game to make it even again
             }
         }
