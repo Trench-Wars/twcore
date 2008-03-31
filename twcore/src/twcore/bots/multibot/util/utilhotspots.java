@@ -1,5 +1,6 @@
 package twcore.bots.multibot.util;
 
+import java.sql.ResultSet;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ public class utilhotspots extends MultiUtil {
     TimerTask changeTask;
     boolean watching;
     int repeatTime = 200;
+    
+    String database = "local";
     
     private int switchTime = 200;
 
@@ -96,6 +99,8 @@ public class utilhotspots extends MultiUtil {
         	do_stopWatch( sender );
         if( message.equalsIgnoreCase("!listspotkeys"))
         	m_botAction.smartPrivateMessageSpam(sender, Tools.getKeysMessage());
+        if( message.equalsIgnoreCase("!loadspots"))
+        	do_loadSpots( sender );
     }
 
     /**
@@ -221,7 +226,7 @@ public class utilhotspots extends MultiUtil {
     	try {
     		index = Integer.parseInt( spot );
     	} catch( Exception e ) {
-    		m_botAction.sendPrivateMessage( sender, "Input error.  Check and try again." );
+    		m_botAction.sendPrivateMessage( sender, "Input error. Check and try again." );
             return;
     	}
     	if(index >= hotSpots.size() || index < 0){
@@ -253,7 +258,7 @@ public class utilhotspots extends MultiUtil {
              for( int i = 0; i < 2; i++ )
                  values[i] = Integer.parseInt( pieces[i] );
          } catch (Exception e) {
-             m_botAction.sendPrivateMessage( sender, "Input error.  Check and try again." );
+             m_botAction.sendPrivateMessage( sender, "Input error. Check and try again." );
              return;
          }
          if(values[0] >= hotSpots.size() || values[0] < 0){
@@ -278,7 +283,7 @@ public class utilhotspots extends MultiUtil {
     	try {
     		index = Integer.parseInt(message);
     	} catch( Exception e ) {
-    		m_botAction.sendPrivateMessage( sender, "Input error.  Check and try again." );
+    		m_botAction.sendPrivateMessage( sender, "Input error. Check and try again." );
             return;
     	}
     	if(index >= hotSpots.size() || index < 0){
@@ -315,7 +320,7 @@ public class utilhotspots extends MultiUtil {
             for( int i = 0; i < pieces.length; i++ )
                 values[i] = Integer.parseInt( pieces[i] );
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage( sender, "Input error.  Check and try again." );
+            m_botAction.sendPrivateMessage( sender, "Input error. Check and try again." );
             return;
         }
 
@@ -325,6 +330,40 @@ public class utilhotspots extends MultiUtil {
 		}
         hotSpots.add(newSpot);
         m_botAction.sendPrivateMessage( sender, "Hotspot added." );
+    }
+    
+    /**
+     * Loads spots for the arena from database.
+     * @param sender is the user of the bot.
+     */
+    public void do_loadSpots( String sender ) {
+    	try{
+    		ResultSet resultSet = m_botAction.SQLQuery(database,
+    		      "SELECT HS.* "+
+    		      "FROM tblArena A, tblSetupHotspot HS "+
+    		      "WHERE A.fnArenaID = HS.fnArenaID " +
+    		      "AND A.fcArenaName = '" + m_botAction.getArenaName() + "'");
+    		if(resultSet == null)
+    			throw new Exception("Null ResultSet.");
+    		int count = 0;
+    	    while(resultSet.next())
+    	    {
+    	      int x = resultSet.getInt("fnXCoord");
+    	      int y = resultSet.getInt("fnYCoord");
+    	      int r = resultSet.getInt("fnRadius");
+    	      int x2 = resultSet.getInt("fnX2Coord");
+    	      int y2 = resultSet.getInt("fnY2Coord");
+    	      do_addHotSpot("", x + " " + y + " " + r + " " + x2 + " " + y2);
+    	      count++;
+    	    }
+    	    m_botAction.SQLClose( resultSet );
+    	    if(count == 0)
+    	    	m_botAction.sendSmartPrivateMessage(sender, "No hotspots are registered for this arena.");
+    	    else
+    	    	m_botAction.sendSmartPrivateMessage(sender, "HotSpots for this arena have been loaded.");
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
     }
 
     /**
@@ -351,11 +390,11 @@ public class utilhotspots extends MultiUtil {
         try {
             time = Integer.parseInt( message );
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage( sender, "Input error.  Need a number!" );
+            m_botAction.sendPrivateMessage( sender, "Input error. I need a number!" );
             return;
         }
         if( time < 200 ) {
-            m_botAction.sendPrivateMessage( sender, "Time can not be less than 200ms." );
+            m_botAction.sendPrivateMessage( sender, "Time cannot be less than 200ms." );
             return;
         }
 
@@ -378,11 +417,11 @@ public class utilhotspots extends MultiUtil {
         try {
             time = Integer.parseInt( message );
         } catch (Exception e) {
-            m_botAction.sendPrivateMessage( sender, "Input error.  Need a number!" );
+            m_botAction.sendPrivateMessage( sender, "Input error. I need a number!" );
             return;
         }
         if( time < 200 ) {
-            m_botAction.sendPrivateMessage( sender, "Time can not be less than 200ms." );
+            m_botAction.sendPrivateMessage( sender, "Time cannot be less than 200ms." );
             return;
         }
 
