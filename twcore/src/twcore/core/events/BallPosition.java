@@ -28,6 +28,7 @@ public class BallPosition extends SubspaceEvent {
     private short m_yVelocity; // Y velocity of the ball
     private short m_playerID;  // ID of the player who picked up/has the ball
     private int m_timeStamp;   // Time stamp of the ball
+    private int m_carrier;      // Person carrying the ball
 
     /**
 	 * Creates a new instance of BallPosition; this is called by
@@ -42,6 +43,10 @@ public class BallPosition extends SubspaceEvent {
         m_yVelocity = array.readLittleEndianShort( 8 );
         m_playerID = array.readLittleEndianShort( 10 );
         m_timeStamp = array.readInt( 12 );
+        if(m_timeStamp == 0)
+        	m_carrier = m_playerID;
+        else
+        	m_carrier = -1;
     }
 
     /**
@@ -85,7 +90,7 @@ public class BallPosition extends SubspaceEvent {
     }
 
     /**
-     * Gets the ID of the player who picked up the ball, if a player currently has the ball.
+     * Gets the ID of the last player that touched the ball.
      * @return PlayerID
      */
     public short getPlayerID() {
@@ -98,5 +103,13 @@ public class BallPosition extends SubspaceEvent {
      */
     public int getTimeStamp() {
         return m_timeStamp;
+    }
+    
+    /**
+     * Gets the ID of the person carrying the ball.
+     * @return -1 if the ball is not being carried.
+     */
+    public int getCarrier() {
+    	return m_carrier;
     }
 }
