@@ -9,14 +9,14 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.ipc.IPCMessage;
 
-public class chatbot extends SubspaceBot {
+public class chatrelaybot extends SubspaceBot {
 
 	private static final String CHAT_COMMAND = "!active";
 	private String requester;    
     private BotSettings m_botSettings;
     
     /** Creates a new instance of ultrabot */
-    public chatbot(BotAction botAction) {
+    public chatrelaybot(BotAction botAction) {
         super(botAction);
         requestEvents();
         m_botSettings = m_botAction.getBotSettings();
