@@ -1683,6 +1683,11 @@ public class distensionbot extends SubspaceBot {
             }
             victor.getArmy().addSharedProfit( points );
 
+            // Weasel kills destroy escape pods
+            if( victor.getShipNum() == Tools.Ship.WEASEL ) {
+                loser.escapePodFired = true;
+            }
+
             // Determine whether or not vengeance is to be inflicted
             boolean revenged = loser.checkVengefulBastard( victor.getArenaPlayerID() );
             if( revenged ) {
@@ -6332,9 +6337,10 @@ public class distensionbot extends SubspaceBot {
                 case WINS_REQ_RANK_REAR_ADMIRAL:
                 case WINS_REQ_RANK_VICE_ADMIRAL:
                 case WINS_REQ_RANK_ADMIRAL:
+                    msg = getPlayerRankString();
+                    break;
                 case WINS_REQ_RANK_FLEET_ADMIRAL:
                     m_botAction.sendPrivateMessage( arenaPlayerID, "You are now the Fleet Admiral of " + getArmyName() + ", accorded with all due privilege!  Congratulations!" );
-                    msg = getPlayerRankString();
             }
             if( !msg.equals("") ) {
                 if( printToTeam )
@@ -6838,17 +6844,27 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.specificPrize( killerID, -Tools.Prize.ENGINE_SHUTDOWN_EXTENDED );
                 else if( vengeType >= 80.0 )
                     m_botAction.specificPrize( killerID, -Tools.Prize.FULLCHARGE );
-                else if( vengeType >= 79.0 )
+                else if( vengeType >= 79.0 ) {
                     m_botAction.specificPrize( killerID, -Tools.Prize.TOPSPEED );
-                else if( vengeType >= 78.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.TOPSPEED );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.TOPSPEED );
+                } else if( vengeType >= 78.0 ) {
                     m_botAction.specificPrize( killerID, -Tools.Prize.THRUST );
-                else if( vengeType >= 77.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.THRUST );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.THRUST );
+                } else if( vengeType >= 77.0 ) {
                     m_botAction.specificPrize( killerID, -Tools.Prize.ROTATION );
-                else if( vengeType >= 76.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ROTATION );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ROTATION );
+                } else if( vengeType >= 76.0 ) {
                     m_botAction.specificPrize( killerID, -Tools.Prize.ENERGY );
-                else if( vengeType >= 75.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ENERGY );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.ENERGY );
+                } else if( vengeType >= 75.0 ) {
                     m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
-                else if( vengeType >= 70.0 )
+                    m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
+                    m_botAction.specificPrize( killerID, -Tools.Prize.RECHARGE );
+                } else if( vengeType >= 70.0 )
                     m_botAction.showObjectForPlayer( killerID, LVZ_OPS_BLIND1 );
                 else if( vengeType >= 65.0 )
                     m_botAction.showObjectForPlayer( killerID, LVZ_OPS_SHROUD_SM );
@@ -6873,13 +6889,19 @@ public class distensionbot extends SubspaceBot {
 
         /**
          * Checks if vengeful bastard was fired on the player recently.
-         * @return
+         * Only fire once.
+         * @return Name of VB if within the time limit; null if not
          */
         public String checkVenge() {
-            if( lastVenger != null )
-                if( lastVengeTime + (VENGEFUL_VALID_SECONDS * 1000) < System.currentTimeMillis() )
-                    lastVenger = null;
-            return lastVenger;
+            if( lastVenger != null ) {
+                String lastTemp = null;
+                if( lastVengeTime + (VENGEFUL_VALID_SECONDS * 1000) > System.currentTimeMillis() )
+                    lastTemp = lastVenger;
+                lastVenger = null;
+                return lastTemp;
+            } else {
+                return null;
+            }
         }
 
         /**
