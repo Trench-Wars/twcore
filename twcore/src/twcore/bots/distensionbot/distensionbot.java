@@ -290,7 +290,7 @@ public class distensionbot extends SubspaceBot {
     private int m_freq0Score, m_freq1Score;             // # rounds won
     private int m_roundNum = 0;							// Current round
     private int flagSecondsRequiredDoubleFlag = 60;               // Flag seconds required to win
-    private int flagSecondsRequiredSingleFlag = 150;    // Flag seconds required to win with 1 flag
+    private int flagSecondsRequiredSingleFlag = 180;    // Flag seconds required to win with 1 flag
     private HashMap <String,Integer>m_playerTimes;      // Roundtime of player on freq
     private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
     //private HashMap <String,Integer>m_lagShips;         // Ships of players who were DC'd, for !lagout use
@@ -393,7 +393,6 @@ public class distensionbot extends SubspaceBot {
         flagTimeStarted = false;
         stopFlagTime = false;
         m_singleFlagMode = true;
-        m_botAction.setDoors( 240 ); // All bottom doors closed
         m_beginDelayedShutdown = false;
         if( m_botSettings.getInt("Debug") == 1 )
             DEBUG = true;
@@ -433,6 +432,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setLowPriorityPacketCap( 25 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
+        m_botAction.setDoors( 240 ); // All bottom doors closed
 
         if( DEBUG ) {
             //m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
@@ -2532,7 +2532,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage( theName, "You are a Flag Officer.  Estimated promotion after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won." );
             }
         }
-        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Total battles won with 50% or more participation: " + p.getWinsRequiredForNextCommandRank() );
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Total battles won with 50% or more participation: " + p.getBattlesWon() );
         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Time played today: " + p.getMinutesPlayed() + " minutes.   Current Streak: " + p.getSuccessiveKills() + " kills." );
     }
 
@@ -5096,7 +5096,8 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendArenaMessage( "This sector is no longer safe: a war is brewing ...  All pilots, report for duty.  You have " + getTimeString(3 * INTERMISSION_SECS) + " to prepare for the assault.");
                         flagTimer = new FlagCountTask();    // Dummy, for displaying score.
                         intermissionTimer = new IntermissionTask();
-                        m_botAction.scheduleTask( intermissionTimer, (3000 * INTERMISSION_SECS) );
+                        m_botAction.scheduleTask( intermissionTimer, (2900 * INTERMISSION_SECS) );
+                        m_botAction.setTimer(3);
                         m_roundNum = 0;
                         flagTimeStarted = true;
                     }
@@ -5142,7 +5143,7 @@ public class distensionbot extends SubspaceBot {
         m_flagOwner[0] = -1;
         m_flagOwner[1] = -1;
         flagObjs.showObject(LVZ_TOPBASE_EMPTY);
-        if( m_singleFlagMode )
+        if( !m_singleFlagMode )
             flagObjs.showObject(LVZ_BOTBASE_EMPTY);
         m_botAction.manuallySetObjects( flagObjs.getObjects() );
     }
@@ -8403,14 +8404,15 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendArenaMessage( "Lead Defense: " + topBreaker + " [" + topBreaks + " breaks]  ...  Lead Assault: " + topHolder + " [" + topHolds + " holds]" );
 
         // Start free play (delaying the intermission)
+        // Take away one second so that when we set the timer, it doesn't look odd
         int intermissionTime;
         if( gameOver ) {
-            intermissionTime = INTERMISSION_SECS * 5000;
+            intermissionTime = (INTERMISSION_SECS * 5000) - 1000;
             m_roundNum = 1;
             m_freq0Score = 0;
             m_freq1Score = 0;
         } else {
-            intermissionTime = INTERMISSION_SECS * 3000;
+            intermissionTime = (INTERMISSION_SECS * 3000) - 1000;
         }
 
         try {
@@ -8470,6 +8472,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "No suitable slot could be found for you this battle.  Please continue waiting and you will be placed in as soon as possible." );
             }
         }
+        if( intermissionTime >= 60000 )
+            m_botAction.setTimer( (intermissionTime + 1000) / 60 );
         intermissionTimer = new IntermissionTask();
         m_botAction.scheduleTask( intermissionTimer, intermissionTime );
     }
@@ -8636,6 +8640,7 @@ public class distensionbot extends SubspaceBot {
          * Starts the intermission/rule display when scheduled.
          */
         public void run() {
+            m_botAction.setTimer(0);
             doIntermission();
             m_botAction.showObject(LVZ_INTERMISSION); //Shows intermission lvz
         }
