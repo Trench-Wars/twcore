@@ -39,7 +39,7 @@ import twcore.core.game.Player;
  *of sysop but have a higher access on the bot. More info can
  *be found in the java documentation.
  *
- * @author Ice-demon / Ayano
+ * @author Ice-demon / Ayano / fantus
  */
 public class logbot extends SubspaceBot {
     OperatorList m_opList;
@@ -60,6 +60,10 @@ public class logbot extends SubspaceBot {
     String hubBot;
     String entity;
     String home;
+    String m_bounceDestination;               // "Destination" of a bounce for sendtoCmd (:kill: to send a *kill)
+    String m_zoneIP;                          // IP of the default zone to use in sendtoCmd
+    String m_zonePort;                        // Port of the default zone to use in sendtoCmd
+    String sendtoCmd;
     int maxBots;
     boolean logging;
     boolean realTimeLogging;
@@ -86,10 +90,13 @@ public class logbot extends SubspaceBot {
         data = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "Data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "definitions.dat");
         data.getParentFile().mkdirs();
         logging = false;
-        realTimeLogging = false;
         hubBot = m_botAction.getBotSettings().getString("HubBot");
         home = m_botAction.getBotSettings().getString("Home");
         maxBots = m_botAction.getBotSettings().getInt("Max Bots");
+        m_zoneIP = m_botAction.getGeneralSettings().getString( "Server" );
+        m_zonePort = m_botAction.getGeneralSettings().getString( "Port" );
+        m_bounceDestination = m_zoneIP + "," + m_zonePort;
+        sendtoCmd = m_botAction.getBotSettings().getString("sendtoCmd");
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_ENTERED );
@@ -960,6 +967,7 @@ public class logbot extends SubspaceBot {
      */
     
     public void sendKillBot (String violators)	{
+        m_botAction.sendSmartPrivateMessage(entity,"!action " + m_bounceDestination);
     	m_botAction.sendSmartPrivateMessage(entity,"!kill " + violators);
     	waitReply = new TimerTask()	{
 	  		public void run()	//UNUSED
@@ -975,6 +983,7 @@ public class logbot extends SubspaceBot {
      */
     
     public void sendBounceBot (String arenas)	{
+        m_botAction.sendSmartPrivateMessage(entity,"!action " + m_bounceDestination);
     	m_botAction.sendSmartPrivateMessage(entity,"!bounce " + arenas);
     	waitReply = new TimerTask()	{
 	  		public void run()	
@@ -1047,9 +1056,14 @@ public class logbot extends SubspaceBot {
         if( invitedPlayers.contains( event.getPlayerName().toLowerCase())) return;
         
         m_botAction.sendPrivateMessage( event.getPlayerName(), bouncemessage );
-        m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
+        if ( m_bounceDestination.equals( ":kill:" ) ) { 
+            m_botAction.sendUnfilteredPrivateMessage(event.getPlayerName(),"*kill");
+            m_botAction.sendChatMessage(1, event.getPlayerName() + " went into my guarded arena without asking permission, and was mysteriously disconnected from the server." );
+        } else { 
+            m_botAction.sendUnfilteredPrivateMessage(event.getPlayerName(), sendtoCmd + " " + m_bounceDestination);
+            m_botAction.sendChatMessage(1, event.getPlayerName() + " went into my guarded arena without asking permission, and was mysteriously relocated on the server." );
+        }
         m_botAction.sendPublicMessage( event.getPlayerName() + " entered without permission." );
-        m_botAction.sendChatMessage(1, event.getPlayerName() + " went into my guarded arena without asking permission, and was mysteriously disconnected from the server." );
         logEvent( event.getPlayerName() + " entered "+ m_botAction.getArenaName() +" illegally!" );
     }
 
@@ -1095,9 +1109,11 @@ public class logbot extends SubspaceBot {
         m_opList = m_botAction.getOperatorList();
         logEvent( "Logged in as " + (enslaved? "Slave" : "Master") );
         //Lets check if it is the master first (edited by fantus)
-        if (!enslaved)
+        if (!enslaved) {
+            realTimeLogging = true;
             //edited by milosh. request of riistar.
             doStartLog(m_botAction.getBotName());
+        }
     }
     
     /**
@@ -1190,7 +1206,9 @@ public class logbot extends SubspaceBot {
     		m_botAction.scheduleTask(new killTask(message.substring(6)), 100);
     	else if( message.startsWith( "!bounce " ))
     		m_botAction.scheduleTask(new bounceTask(message.substring(7)), 100);
-    	else if( message.startsWith( "back" ))
+    	else if (message.startsWith( "!action "))
+    	    m_bounceDestination = message.substring(8);
+        else if( message.startsWith( "back" ))
     		waitReply.cancel();
     	else if( message.startsWith("here?"))
     		m_botAction.sendSmartPrivateMessage(entity, "back");
@@ -1292,7 +1310,30 @@ public class logbot extends SubspaceBot {
         else if( message.startsWith( "!listop" ))	
         	doListOp(sender);
         else if( message.startsWith( "!die" ))	
-        	doDie(sender);   
+        	doDie(sender);
+        else if( message.startsWith( "!action move " )){
+            if( message.length() > 13 ) {
+                String dest = message.substring( 13 );
+                if( dest != null && !dest.equals("") ) {
+                    m_bounceDestination = m_zoneIP + "," + m_zonePort + "," + dest;
+                    m_botAction.sendSmartPrivateMessage( sender, "Bounced players will be sent to " + dest + "."  );
+                }
+            }
+        } else if( message.startsWith( "!action move" )){
+            m_bounceDestination = m_zoneIP + "," + m_zonePort;
+            m_botAction.sendSmartPrivateMessage( sender, "Bounced players will be sent to pub." );
+        } else if( message.startsWith( "!action zonemove " )){
+            if( message.length() > 17 ) {
+                String dest = message.substring( 17 );
+                if( dest != null && !dest.equals("") ) {
+                    m_bounceDestination = dest;
+                    m_botAction.sendSmartPrivateMessage( sender, "Bounced players will be sent to: " + dest + " (validity of information unverified -- make sure this is correct)"  );
+                }
+            }
+        } else if( message.startsWith( "!action kill" )){
+            m_bounceDestination = ":kill:";
+            m_botAction.sendSmartPrivateMessage( sender, "Bounced players will be *kill'd off the server." );
+        }
 
     }
     
@@ -1326,6 +1367,15 @@ public class logbot extends SubspaceBot {
             	m_botAction.sendSmartPrivateMessage(sender, "!StopLog                                  -- Stops the logging functionality.");
             	m_botAction.sendSmartPrivateMessage(sender, "!help                                     -- Displays this.");
         	}
+    	}
+    	if (m_opList.isOwner(sender)) {
+    	    m_botAction.sendSmartPrivateMessage(sender, "!action <move|zonemove|kill>              -- Determines bounce action:");
+            m_botAction.sendSmartPrivateMessage(sender, "         move                                Bounces to pub on this zone");
+            m_botAction.sendSmartPrivateMessage(sender, "         move <arena>                        Bounces to <arena> on this zone");
+            m_botAction.sendSmartPrivateMessage(sender, "              zonemove <IP,Port>             Bounces to pub of zone @ <IP,Port>");
+            m_botAction.sendSmartPrivateMessage(sender, "              zonemove <IP,Port,Arena>       Bounces to <Arena> of zone @ <IP,Port>");
+            m_botAction.sendSmartPrivateMessage(sender, "                       kill                  Sends *kill (not recommended)");
+            m_botAction.sendSmartPrivateMessage(sender, "                                             [Default action is: move to pub on this zone]");
     	}
     }
     
@@ -1372,7 +1422,11 @@ public class logbot extends SubspaceBot {
                     		String playerName = it.next().getPlayerName();
                     		if (playerName.equals(violator))	{
                     			m_botAction.sendSmartPrivateMessage( playerName, "You are attempting to alter a restricted file!");
-                    			m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
+                    			if ( m_bounceDestination.equals( ":kill:" ) ) {
+                                    m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
+                                } else {
+                                    m_botAction.sendUnfilteredPrivateMessage(playerName, sendtoCmd + " " + m_bounceDestination);
+                                }
                     		}
                     	}
             		}
@@ -1434,8 +1488,13 @@ public class logbot extends SubspaceBot {
                     		String playerName = ((Player)it.next()).getPlayerName();
                     		if (!subAllowed.contains(playerName.toLowerCase()))	{
                     			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena!");
-                    			m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
-                    			logEvent ( "Intruder " + playerName + " was kicked from " + arena );
+                    			if ( m_bounceDestination.equals( ":kill:" ) ) {
+                    			    m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
+                    			    logEvent ( "Intruder " + playerName + " was kicked from " + arena + ". (DC'd)");
+                    			} else {
+                    			    m_botAction.sendUnfilteredPrivateMessage(playerName, sendtoCmd + " " + m_bounceDestination);
+                    			    logEvent ( "Intruder " + playerName + " was kicked from " + arena + ". (relocated)");
+                    			}
                     			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena and disappeared!" );
                     		}
                     	}
