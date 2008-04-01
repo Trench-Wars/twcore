@@ -60,6 +60,7 @@ public class logbot extends SubspaceBot {
     String hubBot;
     String entity;
     String home;
+    int maxBots;
     boolean logging;
     boolean realTimeLogging;
     boolean enslaved;
@@ -88,6 +89,7 @@ public class logbot extends SubspaceBot {
         realTimeLogging = false;
         hubBot = m_botAction.getBotSettings().getString("HubBot");
         home = m_botAction.getBotSettings().getString("Home");
+        maxBots = m_botAction.getBotSettings().getInt("Max Bots");
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
         events.request( EventRequester.PLAYER_ENTERED );
@@ -95,6 +97,9 @@ public class logbot extends SubspaceBot {
         events.request( EventRequester.ARENA_LIST );
         invitedPlayers.add( m_botAction.getBotName().toLowerCase() );
         invitedPlayers.add( hubBot.toLowerCase() );
+        //Slaves are our friends! (Edited by fantus)
+        for (int i = 2; i <= maxBots; i++)
+            invitedPlayers.add( m_botAction.getBotSettings().getString("Name" + i).toLowerCase() );
     }
 
     /**
@@ -1089,8 +1094,10 @@ public class logbot extends SubspaceBot {
         waiting = true;
         m_opList = m_botAction.getOperatorList();
         logEvent( "Logged in as " + (enslaved? "Slave" : "Master") );
-        //edited by milosh. request of riistar.
-        doStartLog(m_botAction.getBotName());
+        //Lets check if it is the master first (edited by fantus)
+        if (!enslaved)
+            //edited by milosh. request of riistar.
+            doStartLog(m_botAction.getBotName());
     }
     
     /**
