@@ -290,7 +290,7 @@ public class distensionbot extends SubspaceBot {
     private int m_freq0Score, m_freq1Score;             // # rounds won
     private int m_roundNum = 0;							// Current round
     private int flagSecondsRequiredDoubleFlag = 60;               // Flag seconds required to win
-    private int flagSecondsRequiredSingleFlag = 120;    // Flag seconds required to win with 1 flag
+    private int flagSecondsRequiredSingleFlag = 150;    // Flag seconds required to win with 1 flag
     private HashMap <String,Integer>m_playerTimes;      // Roundtime of player on freq
     private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
     //private HashMap <String,Integer>m_lagShips;         // Ships of players who were DC'd, for !lagout use
@@ -393,6 +393,7 @@ public class distensionbot extends SubspaceBot {
         flagTimeStarted = false;
         stopFlagTime = false;
         m_singleFlagMode = true;
+        m_botAction.setDoors( 240 ); // All bottom doors closed
         m_beginDelayedShutdown = false;
         if( m_botSettings.getInt("Debug") == 1 )
             DEBUG = true;
@@ -1297,11 +1298,10 @@ public class distensionbot extends SubspaceBot {
             DistensionArmy oldOwnerArmy = m_armies.get( new Integer( oldOwnerID ) );
             if( oldOwnerArmy != null ) {
                 if( m_singleFlagMode ) {
-                    // Ignore bottom flag and only check top flag / ID 0
+                    // Ignore bottom flag and only check top flag / ID 0.
+                    // Also, do not deal with sector breaks in single flag mode
                     if( flagID == 0 ) {
                         if( flagTimeRunning ) {
-                            if( oldOwnerArmy.getNumFlagsOwned() == 1 )
-                                holdBreaking = true;
                             if( oldOwnerID == 0 )
                                 flagObjs.hideObject(LVZ_TOPBASE_ARMY0);
                             else
@@ -1660,17 +1660,22 @@ public class distensionbot extends SubspaceBot {
             // Flags don't matter while the flag timer is running.
             if( flagTimer != null && flagTimer.isRunning() ) {
                 flagMulti = killerarmy.getNumFlagsOwned();
-                if( flagMulti == 0f ) {
-                    if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                        flagMulti = 0.5f;
-                    } else {
-                        // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
-                        flagMulti = 1;
+                if( m_singleFlagMode ) {
+                    if( flagMulti == 1.0f )
+                        flagMulti = 1.1f;
+                } else {
+                    if( flagMulti == 0f ) {
+                        if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
+                            flagMulti = 0.5f;
+                        } else {
+                            // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
+                            flagMulti = 1;
+                        }
+                    } else if( flagMulti == 2.0f ) {
+                        flagMulti = 1.5f;
                     }
-                } else if( flagMulti == 2f ) {
-                    flagMulti = 1.5f;
+                    points = (int)((float)points * flagMulti);
                 }
-                points = (int)((float)points * flagMulti);
 
                 if( flagTimer != null && flagTimer.isRunning() ) {
                     // Don't count streak if the player making the kill was not in base & round is going
@@ -1789,9 +1794,11 @@ public class distensionbot extends SubspaceBot {
                     else
                         msg += " [Terr: +10%]";
             if( flagMulti == 1.5f )
-                msg += " [Both flags: +50% RP]";
-            if( flagMulti == 0.5f )
+                msg += " [Both flags: +50%]";
+            else if( flagMulti == 0.5f )
                 msg += " [No flags: -50%]";
+            else if( flagMulti == 1.1f )
+                msg += " [Flag held: +10%]";
             if( endedStreak )
                 msg += " [Ended streak: +50%]";
             if( !killInBase )
@@ -5135,7 +5142,8 @@ public class distensionbot extends SubspaceBot {
         m_flagOwner[0] = -1;
         m_flagOwner[1] = -1;
         flagObjs.showObject(LVZ_TOPBASE_EMPTY);
-        flagObjs.showObject(LVZ_BOTBASE_EMPTY);
+        if( m_singleFlagMode )
+            flagObjs.showObject(LVZ_BOTBASE_EMPTY);
         m_botAction.manuallySetObjects( flagObjs.getObjects() );
     }
 
@@ -6112,10 +6120,14 @@ public class distensionbot extends SubspaceBot {
             } else {
                 Random r = new Random();
                 x = 512 + (r.nextInt(SPAWN_X_SPREAD) - (SPAWN_X_SPREAD / 2));
-                if( base == 0 )
+                if( !m_singleFlagMode ) {
+                    if( base == 0 )
+                        y = SPAWN_BASE_0_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
+                    else
+                        y = SPAWN_BASE_1_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
+                } else {
                     y = SPAWN_BASE_0_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
-                else
-                    y = SPAWN_BASE_1_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
+                }
             }
             m_botAction.warpTo(arenaPlayerID, x, y);
         }
@@ -8114,11 +8126,14 @@ public class distensionbot extends SubspaceBot {
             if( p.getShipNum() > 0 )
                 players++;
         if( m_singleFlagMode ) {
-            if( players >= PLAYERS_FOR_2_FLAGS )
+            if( players >= PLAYERS_FOR_2_FLAGS ) {
                 m_singleFlagMode = false;
+                m_botAction.setDoors( 0 ); // All doors open
+            }
         } else {
             if( players < PLAYERS_FOR_2_FLAGS ) {
                 m_singleFlagMode = true;
+                m_botAction.setDoors( 240 ); // All bottom doors closed
                 for( DistensionPlayer p : m_players.values() )
                     if( p.getShipNum() == 9 ) {
                         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Only one base is now in contention; the Tactical Ops console will not be required for the next battle." );
@@ -8800,7 +8815,8 @@ public class distensionbot extends SubspaceBot {
                     return;
                 } else
                     return; // If this army already holds, and no claim is being broken,
-                // then this is a false notify; ignore.
+                            // then this is an unnecessary notify (probably securing army is
+                            // continuing to secure) -- just ignore
             }
 
             // Start securing
@@ -8846,7 +8862,7 @@ public class distensionbot extends SubspaceBot {
                 return;
 
             // Failed sector securing; give it back to the old army but realize that
-            // it's not a sector break
+            // it's not a sector break (unless in single flag mode)
             if( claimBeingEstablished ) {
                 claimBeingEstablished = false;
                 claimBeingBroken = false;
@@ -8869,6 +8885,8 @@ public class distensionbot extends SubspaceBot {
         /**
          * Called when a hold over the sector has been broken (when an army who was holding the
          * sector no longer holds it).
+         *
+         * With single-flag mode, this also entails a sector break.
          */
         public void doSectorBreak() {
             int remain = flagSecondsRequired - secondsHeld;
@@ -9146,7 +9164,7 @@ public class distensionbot extends SubspaceBot {
                     if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
                         battle = "THE DECISIVE " + battle;
 
-                    m_botAction.sendArenaMessage( battle + " HAS BEGUN!  Capture both flags for " + getTimeString( flagSecondsRequired ) + " to win the battle.", SOUND_START_ROUND );
+                    m_botAction.sendArenaMessage( battle + " HAS BEGUN!  Capture " + (m_singleFlagMode ? "top flag" : "both flags" ) + " for " + getTimeString( flagSecondsRequired ) + " to win the battle.", SOUND_START_ROUND );
                     resetAllFlagData();
                     setupPlayerTimes();
                     warpPlayers();
