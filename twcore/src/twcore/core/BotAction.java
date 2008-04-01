@@ -1163,9 +1163,10 @@ public class BotAction
     {
         sendUnfilteredPrivateMessage(playerName, "*warpto " + xTiles + " " + yTiles);
         Player p = getPlayer(playerName);
-        if( p != null )
+        if( p != null ) {
             p.updatePlayerPositionManuallyAfterWarp( xTiles, yTiles );
-        spectatePlayer(p.getPlayerID());
+            spectatePlayer(p.getPlayerID());
+        }
     }
 
     /**
@@ -1185,7 +1186,9 @@ public class BotAction
      */
     public void warpRandomly( String playerName ) {
         specificPrize(playerName, Tools.Prize.WARP);
-        spectatePlayer( playerName );
+        int id = getPlayerID( playerName );
+        if( id != -1 )
+            spectatePlayer( id );
     }
 
     /**
