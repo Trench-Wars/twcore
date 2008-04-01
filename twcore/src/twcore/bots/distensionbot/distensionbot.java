@@ -377,7 +377,7 @@ public class distensionbot extends SubspaceBot {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
             if( r == null ) {
                 Tools.printLog( "Null ResultSet returned for query: 'SELECT fnArmyID FROM tblDistensionArmy' on connection '" + m_database + "'" );
-                cmdDie("","");
+                cmdDie(m_botAction.getBotName(), "now");
             } else {
                 while( r.next() ) {
                     int id = r.getInt( "fnArmyID");
@@ -388,7 +388,7 @@ public class distensionbot extends SubspaceBot {
             }
         } catch (SQLException e) {
             Tools.printStackTrace( "Error retrieving army data on startup!", e );
-            cmdDie("","");
+            cmdDie(m_botAction.getBotName(), "now");
         }
         flagTimeStarted = false;
         stopFlagTime = false;
@@ -830,7 +830,7 @@ public class distensionbot extends SubspaceBot {
                 Tools.printLog("Unauthorized load of Distension BETA.");
                 m_botAction.sendArenaMessage("Unauthorized load of Distension BETA; shutting down.");
                 m_botAction.sendChatMessage("Unauthorized load of Distension BETA; shutting down.");
-                cmdDie(name, message);
+                cmdDie(m_botAction.getBotName(), "now");
             }
     }
 
@@ -1935,13 +1935,13 @@ public class distensionbot extends SubspaceBot {
             if( army == null )
                 throw new TWCoreException( "Can't find the army to which you want to defect!  May want to contact a mod about this one ..." );
             try {
-                String query = "SELECT fnPlayerID, fnShipNum, fnRank FROM tblDistensionShip WHERE fnPlayerID='" + p.getID() + "'";
+                String query = "SELECT fnPlayerID, fnShipNum, fnRank FROM tblDistensionShip WHERE fnPlayerID='" + p.getDatabaseID() + "'";
                 ResultSet r = m_botAction.SQLQuery( m_database, query );
                 if( r != null ) {
                     while( r.next() ) {
                         int ship = r.getInt("fnShipNum");
                         m_botAction.SQLQueryAndClose(m_database, "UPDATE tblDistensionShip SET fnRankPoints='" + m_shipGeneralData.get(ship).getNextRankCost(r.getInt("fnRank") - 2) + "'"+
-                                " WHERE fnShipNum='" + ship + "' AND fnPlayerID='" + p.getID() + "'");
+                                " WHERE fnShipNum='" + ship + "' AND fnPlayerID='" + p.getDatabaseID() + "'");
                     }
                 }
                 m_botAction.SQLClose(r);
@@ -2397,7 +2397,7 @@ public class distensionbot extends SubspaceBot {
 
         HashMap <Integer,Integer>shipRanks = new HashMap<Integer,Integer>();
         try {
-            String query = "SELECT fnShipNum, fnRank FROM tblDistensionShip WHERE fnPlayerID='" + p.getID() + "'";
+            String query = "SELECT fnShipNum, fnRank FROM tblDistensionShip WHERE fnPlayerID='" + p.getDatabaseID() + "'";
             ResultSet r = m_botAction.SQLQuery( m_database, query );
             if( r != null ) {
                 while( r.next() )
@@ -5468,7 +5468,7 @@ public class distensionbot extends SubspaceBot {
     private class DistensionPlayer {
         private String name;    // Playername
         private int arenaPlayerID;    // ID as understood by Arena
-        private int playerID;   // PlayerID as found in DB (not as in Arena); -1 if not logged in
+        private int dbPlayerID;   // PlayerID as found in DB (not as in Arena); -1 if not logged in
         private int timePlayed; // Time, in minutes, played today;            -1 if not logged in
         private int shipNum;    // Current ship: 1-8, 0 if docked/spectating; -1 if not logged in
         private int lastShipNum;// Last ship used (for lagouts);              -1 if not logged in
@@ -5523,7 +5523,7 @@ public class distensionbot extends SubspaceBot {
         public DistensionPlayer( String name ) {
             this.name = name;
             arenaPlayerID = m_botAction.getPlayerID(name);
-            playerID = -1;
+            dbPlayerID = -1;
             timePlayed = -1;
             shipNum = -1;
             lastShipNum = -1;
@@ -5640,14 +5640,14 @@ public class distensionbot extends SubspaceBot {
                         "VALUES ('" + Tools.addSlashesToString( name ) + "', '" + armyID + "')" );
                 if( r == null ) {
                     Tools.printLog( "Null ResultSet returned for query to add player to DB on connection '" + m_database + "'" );
-                    m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                    m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                     return;
                 }
                 if( r.next() ) {
-                    playerID = r.getInt(1);     // Get index ID returned
+                    dbPlayerID = r.getInt(1);     // Get index ID returned
                     m_botAction.SQLClose(r);
                 }
-            } catch (SQLException e ) { m_botAction.sendPrivateMessage( name, DB_PROB_MSG ); }
+            } catch (SQLException e ) { m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG ); }
         }
 
         /**
@@ -5660,14 +5660,14 @@ public class distensionbot extends SubspaceBot {
                 ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
                 if( r == null ) {
                     Tools.printLog( "Null ResultSet returned for query: 'SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'' on connection '" + m_database + "'" );
-                    m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                    m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                     return false;
                 }
                 if( r.next() ) {
                     banned = r.getString( "fcBanned" ).equals( "y" );
                     if( banned == true )
                         return false;
-                    playerID = r.getInt("fnID");
+                    dbPlayerID = r.getInt("fnID");
                     armyID = r.getInt( "fnArmyID" );
                     timePlayed = r.getInt( "fnTime" );
                     battlesWon = r.getInt( "fnBattlesWon" );
@@ -5680,7 +5680,7 @@ public class distensionbot extends SubspaceBot {
                 return success;
             } catch (SQLException e ) {
                 Tools.printStackTrace("Problem fetching returning player: " + name, e);
-                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                 return false;
             }
         }
@@ -5690,10 +5690,10 @@ public class distensionbot extends SubspaceBot {
          */
         public void savePlayerDataToDB() {
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='" + timePlayed +"', fnBattlesWon='" + battlesWon + "' WHERE fnID='" + playerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='" + timePlayed +"', fnBattlesWon='" + battlesWon + "' WHERE fnID='" + dbPlayerID + "'" );
             } catch (SQLException e ) {
                 Tools.printStackTrace("Problem saving player: " + name, e);
-                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
             }
         }
 
@@ -5715,14 +5715,14 @@ public class distensionbot extends SubspaceBot {
                 return;
             shipsAvail[ shipNumToAdd - 1 ] = true;
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fnID='" + playerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fnID='" + dbPlayerID + "'" );
                 if( startingRankPoints == 0 )
-                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES (" + playerID + ", " + shipNumToAdd + ")" );
+                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum ) VALUES (" + dbPlayerID + ", " + shipNumToAdd + ")" );
                 else
-                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnRankPoints ) VALUES (" + playerID + ",  " + shipNumToAdd + ", " + startingRankPoints + ")" );
+                    m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnRankPoints ) VALUES (" + dbPlayerID + ",  " + shipNumToAdd + ", " + startingRankPoints + ")" );
             } catch (SQLException e ) {
                 Tools.printStackTrace("Problem adding ship " + shipNumToAdd + " to DB for: " + name, e);
-                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
             }
         }
 
@@ -5735,11 +5735,11 @@ public class distensionbot extends SubspaceBot {
                 return;
             shipsAvail[ shipNumToRemove - 1 ] = false;
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToRemove + "='n' WHERE fnID='" + playerID + "'" );
-                m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionShip WHERE fnPlayerID='" + playerID + "' AND fnShipNum='" + shipNumToRemove + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToRemove + "='n' WHERE fnID='" + dbPlayerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionShip WHERE fnPlayerID='" + dbPlayerID + "' AND fnShipNum='" + shipNumToRemove + "'" );
             } catch (SQLException e ) {
                 Tools.printStackTrace("Problem removing ship " + shipNumToRemove + " from DB for: " + name, e);
-                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
             }
         }
 
@@ -5778,7 +5778,7 @@ public class distensionbot extends SubspaceBot {
             for( int i = 1; i < NUM_UPGRADES; i++ )
                 query +=   ", ship.fnStat" + (i + 1) + "=" + purchasedUpgrades[i];
 
-            query +=       " WHERE ship.fnPlayerID='" + playerID + "' AND ship.fnShipNum='" + shipNum + "'";
+            query +=       " WHERE ship.fnPlayerID='" + dbPlayerID + "' AND ship.fnShipNum='" + shipNum + "'";
             shipDataSaved = true;
             if( saveNow ) {
                 try {
@@ -5802,12 +5802,12 @@ public class distensionbot extends SubspaceBot {
                 return false;
             try {
                 String query = "SELECT * FROM tblDistensionShip ship " +
-                "WHERE ship.fnPlayerID='" + playerID + "' AND ship.fnShipNum='" + shipNum + "'";
+                "WHERE ship.fnPlayerID='" + dbPlayerID + "' AND ship.fnShipNum='" + shipNum + "'";
 
                 ResultSet r = m_botAction.SQLQuery( m_database, query );
                 if( r == null ) {
                     Tools.printLog( "Null ResultSet returned for query: '" + query + "' on connection '" + m_database + "'" );
-                    m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                    m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                     return false;
                 }
                 if( r.next() ) {
@@ -5858,7 +5858,7 @@ public class distensionbot extends SubspaceBot {
                 return shipDataSaved;
             } catch (SQLException e ) {
                 Tools.printStackTrace( "Error getting ship from DB.", e );
-                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                 return false;
             }
         }
@@ -5881,7 +5881,7 @@ public class distensionbot extends SubspaceBot {
                     // Check for the escape pod, and set respawn as special if it works (does not warp)
                     double podChance = Math.random() * 10.0;
                     if( escapePod >= podChance ) {
-                        m_botAction.shipReset(name);
+                        m_botAction.shipReset(arenaPlayerID);
                         specialRespawn = true;
                         escapePodFired = true;
                         spawnTicks = 0;
@@ -5890,7 +5890,7 @@ public class distensionbot extends SubspaceBot {
                 }
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_REARMING);
                 doRearmAreaWarp();
-                m_botAction.shipReset(name);
+                m_botAction.shipReset(arenaPlayerID);
             }
         }
 
@@ -5984,11 +5984,11 @@ public class distensionbot extends SubspaceBot {
                 double portChance = Math.random() * 100.0;
                 double burstChance = Math.random() * 100.0;
                 if( ((double)purchasedUpgrades[11] * 10.0) > portChance && !isRespawning ) {
-                    m_botAction.specificPrize( name, Tools.Prize.PORTAL );
+                    m_botAction.specificPrize( arenaPlayerID, Tools.Prize.PORTAL );
                     prized = true;
                 }
                 if( ((double)purchasedUpgrades[11] * 10.0) > burstChance && !isRespawning ) {
-                    m_botAction.specificPrize( name, Tools.Prize.BURST );
+                    m_botAction.specificPrize( arenaPlayerID, Tools.Prize.BURST );
                     prized = true;
                 }
                 // EMP ability; re-enable every 30 ticks (15 min)
@@ -6011,7 +6011,7 @@ public class distensionbot extends SubspaceBot {
                 // Energy stream ability; each level worth an additional 10%
                 double superChance = Math.random() * 100.0;
                 if( (double)purchasedUpgrades[11] * 9.0 > superChance && !isRespawning ) {
-                    m_botAction.specificPrize( name, Tools.Prize.SUPER );
+                    m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SUPER );
                     m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_SUPER );
                     prized = true;
                 }
@@ -6019,14 +6019,14 @@ public class distensionbot extends SubspaceBot {
                 // Repel regen ability; each level worth an additional 25%
                 double repChance = Math.random() * 4.0;
                 if( (double)purchasedUpgrades[9] > repChance && !isRespawning ) {
-                    m_botAction.specificPrize( name, Tools.Prize.REPEL );
+                    m_botAction.specificPrize( arenaPlayerID, Tools.Prize.REPEL );
                     prized = true;
                 }
             } else if( shipNum == 1) {
                 // Thor ability (every 5 minutes)
                 if( purchasedUpgrades[11] > 0 && tick % 10 == 0 ) {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "Thor's Hammer replenished." );
-                    m_botAction.specificPrize( name, Tools.Prize.THOR );
+                    m_botAction.specificPrize( arenaPlayerID, Tools.Prize.THOR );
                     prized = true;
                 }
             } else if( shipNum == 2) {
@@ -6117,7 +6117,7 @@ public class distensionbot extends SubspaceBot {
                 else
                     y = SPAWN_BASE_1_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
             }
-            m_botAction.warpTo(name, x, y);
+            m_botAction.warpTo(arenaPlayerID, x, y);
         }
 
         /**
@@ -6156,9 +6156,9 @@ public class distensionbot extends SubspaceBot {
             int xmod = (int)(Math.random() * 4) - 2;
             int ymod = (int)(Math.random() * 4) - 2;
             if( base == 0 )
-                m_botAction.warpTo(name, 512 + xmod, REARM_AREA_TOP_Y + ymod);
+                m_botAction.warpTo(arenaPlayerID, 512 + xmod, REARM_AREA_TOP_Y + ymod);
             else
-                m_botAction.warpTo(name, 512 + xmod, REARM_AREA_BOTTOM_Y + ymod);
+                m_botAction.warpTo(arenaPlayerID, 512 + xmod, REARM_AREA_BOTTOM_Y + ymod);
         }
 
         /**
@@ -6167,9 +6167,9 @@ public class distensionbot extends SubspaceBot {
         public void doRearmSafeWarp() {
             int base = getArmyID() % 2;
             if( base == 0 )
-                m_botAction.warpTo(name, 512, REARM_SAFE_TOP_Y );
+                m_botAction.warpTo(arenaPlayerID, 512, REARM_SAFE_TOP_Y );
             else
-                m_botAction.warpTo(name, 512, REARM_SAFE_BOTTOM_Y );
+                m_botAction.warpTo(arenaPlayerID, 512, REARM_SAFE_BOTTOM_Y );
         }
 
         /**
@@ -6185,9 +6185,9 @@ public class distensionbot extends SubspaceBot {
          */
         public void doAdvanceRank( int numRanks ) {
             if( rank >= 80 ) {
-                m_botAction.sendPrivateMessage(name, "-=(  FINAL RANK ATTAINED  )=-" );
+                m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  FINAL RANK ATTAINED  )=-" );
                 String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-                m_botAction.sendPrivateMessage(name, "YOU ARE NOW A MASTER " + shipname.toUpperCase() + ".  ALL WILL FOREVER REMEMBER THE NAME OF " + name.toUpperCase() + " ... CONGRATULATIONS!!!", Tools.Sound.VICTORY_BELL );
+                m_botAction.sendPrivateMessage(arenaPlayerID, "YOU ARE NOW A MASTER " + shipname.toUpperCase() + ".  ALL WILL FOREVER REMEMBER THE NAME OF " + name.toUpperCase() + " ... CONGRATULATIONS!!!", Tools.Sound.VICTORY_BELL );
                 m_botAction.sendArenaMessage( name.toUpperCase() + " has become a MASTER " + shipname.toUpperCase() + ".  SALUTE THIS LIVING LEGEND!!", Tools.Sound.PLAY_MUSIC_ONCE );
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
                 nextRank = 999999999;
@@ -6204,18 +6204,18 @@ public class distensionbot extends SubspaceBot {
 
             // Add JumpSpace ability for Javs at rank 15
             if( shipNum == 2 && rank == 15 ) {
-                m_botAction.sendPrivateMessage(name, "As a rank 15 Javelin, you have unlocked the JumpSpace Drive.  It will be recharged shortly; PM >>> to use." );
+                m_botAction.sendPrivateMessage(arenaPlayerID, "As a rank 15 Javelin, you have unlocked the JumpSpace Drive.  It will be recharged shortly; PM >>> to use." );
                 m_specialAbilityPrizer.addPlayer(this);
             }
 
             if( nextRank - rankPoints > 0 ) {
                 String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
                 if( numRanks > 1 )
-                    m_botAction.sendPrivateMessage(name, "-=(  " + numRanks + " RANKS UP !!  )=-  You are now a RANK " + rank + " " + shipname + ".  Next rank in " + ( nextRank - rankPoints )+ " RP.", Tools.Sound.VICTORY_BELL );
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  " + numRanks + " RANKS UP !!  )=-  You are now a RANK " + rank + " " + shipname + ".  Next rank in " + ( nextRank - rankPoints )+ " RP.", Tools.Sound.VICTORY_BELL );
                 else
-                    m_botAction.sendPrivateMessage(name, "-=(  RANK UP!  )=-  You are now a RANK " + rank + " " + shipname + " pilot.  Next rank in " + ( nextRank - rankPoints )+ " RP.", Tools.Sound.VICTORY_BELL );
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  RANK UP!  )=-  You are now a RANK " + rank + " " + shipname + " pilot.  Next rank in " + ( nextRank - rankPoints )+ " RP.", Tools.Sound.VICTORY_BELL );
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
-                m_botAction.sendPrivateMessage(name, "Gained +" + numRanks + "0 UP for any !upgrade available in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
+                m_botAction.sendPrivateMessage(arenaPlayerID, "Gained +" + numRanks + "0 UP for any !upgrade available in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
             } else {
                 // Advanced more than one rank; refire the method
                 doAdvanceRank( numRanks + 1 );
@@ -6226,43 +6226,43 @@ public class distensionbot extends SubspaceBot {
 
             if( rank >= RANK_REQ_SHIP2 ) {
                 if( shipsAvail[1] == false ) {
-                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Javelin.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(name, "JAVELIN: The Javelin is a difficult ship to pilot, but one of the most potentially dangerous.  Users of the original Javelin model will feel right at home.  Our Javelins are extremely upgradeable, devastating other craft in high ranks.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Javelin.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "JAVELIN: The Javelin is a difficult ship to pilot, but one of the most potentially dangerous.  Users of the original Javelin model will feel right at home.  Our Javelins are extremely upgradeable, devastating other craft in high ranks.");
                     addShipToDB(2);
                 }
             }
             if ( rank >= RANK_REQ_SHIP3 ) {
                 if( shipsAvail[2] == false ) {
-                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Spider.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(name, "SPIDER: The Spider is the mainstay support gunner of every army and the most critical element of base defense.  Upgraded spiders receive regular refuelings, wormhole plugging capabilities, and 10-second post-rearmament energy streams.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Spider.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "SPIDER: The Spider is the mainstay support gunner of every army and the most critical element of base defense.  Upgraded spiders receive regular refuelings, wormhole plugging capabilities, and 10-second post-rearmament energy streams.");
                     addShipToDB(3);
                 }
             }
             if ( rank >= RANK_REQ_SHIP4 ) {
                 if( shipsAvail[3] == false ) {
-                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the experimental Leviathan.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(name, "LEVIATHAN: The Leviathan is an experimental craft, as yet untested.  It is unmaneuvarable but capable of great speeds -- in reverse.  Its guns are formidable, its bombs can cripple an entire base, but it is a difficult ship to master.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the experimental Leviathan.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "LEVIATHAN: The Leviathan is an experimental craft, as yet untested.  It is unmaneuvarable but capable of great speeds -- in reverse.  Its guns are formidable, its bombs can cripple an entire base, but it is a difficult ship to master.");
                     addShipToDB(4);
                 }
             }
             // BETA ONLY
             if ( rank >= RANK_REQ_SHIP6 ) {
                 if( shipsAvail[5] == false ) {
-                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Weasel.  One has been requisitioned for your use, and is now waiting in your !hangar.  (UNLOCKED BY RANK IN BETA ONLY)");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Weasel.  One has been requisitioned for your use, and is now waiting in your !hangar.  (UNLOCKED BY RANK IN BETA ONLY)");
                     addShipToDB(6);
                 }
             }
             if ( rank >= RANK_REQ_SHIP7 ) {
                 if( shipsAvail[6] == false ) {
-                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Lancaster.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(name, "LANCASTER: The Lancaster is an unusual ship with a host of surprises onboard.  Pilots can upgrade its most basic components rapidly.  The Firebloom and the Lanc's evasive-bombing capability make this a fantastic choice for advanced pilots.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Lancaster.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "LANCASTER: The Lancaster is an unusual ship with a host of surprises onboard.  Pilots can upgrade its most basic components rapidly.  The Firebloom and the Lanc's evasive-bombing capability make this a fantastic choice for advanced pilots.");
                     addShipToDB(7);
                 }
             }
             if ( rank >= RANK_REQ_SHIP8 ) {
                 if( shipsAvail[7] == false ) {
-                    m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to fly the Shark.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(name, "SHARK: The Shark is piloted by our most clever and resourceful pilots.  Unsung heroes of the army, Sharks are both our main line of defense and leaders of every assault.  Advanced Sharks enjoy light gun capabilities and a cloaking device.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Shark.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "SHARK: The Shark is piloted by our most clever and resourceful pilots.  Unsung heroes of the army, Sharks are both our main line of defense and leaders of every assault.  Advanced Sharks enjoy light gun capabilities and a cloaking device.");
                     addShipToDB(8);
                 }
             }
@@ -6276,11 +6276,11 @@ public class distensionbot extends SubspaceBot {
                     if( allShips && battlesWon >= WINS_REQ_RANK_ENSIGN ) {
                         try {
                             String query = "SELECT fnShipNum, fnRank FROM tblDistensionShip ship " +
-                            "WHERE ship.fnPlayerID='" + playerID + "'";
+                            "WHERE ship.fnPlayerID='" + dbPlayerID + "'";
                             ResultSet r = m_botAction.SQLQuery( m_database, query );
                             if( r == null ) {
                                 Tools.printLog( "Null ResultSet returned for query: '" + query + "' on connection '" + m_database + "'" );
-                                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                                 return;
                             }
                             boolean allShipsAtRank = true;
@@ -6289,13 +6289,13 @@ public class distensionbot extends SubspaceBot {
                                     allShipsAtRank = false;
                             }
                             if( allShipsAtRank ) {
-                                m_botAction.sendPrivateMessage(name, "You have proven yourself a capable enough to provide battle support in a Tactical Ops position!  A shuttle craft that will take you to your operations terminal is now in your !hangar.  Use !manops to enter it.");
+                                m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to provide battle support in a Tactical Ops position!  A shuttle craft that will take you to your operations terminal is now in your !hangar.  Use !manops to enter it.");
                                 addShipToDB(9);
                             }
                             m_botAction.SQLClose(r);
                         } catch(SQLException e) {
                             Tools.printStackTrace( "Error getting ships from DB for adding Tactical Ops.", e );
-                            m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                            m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                         }
                     }
                 }
@@ -6522,7 +6522,7 @@ public class distensionbot extends SubspaceBot {
                 nextRank = -1;
                 upgPoints = -1;
                 if( this.shipNum > 0 && this.shipNum != 9 ) {
-                    m_botAction.specWithoutLock( name );
+                    m_botAction.specWithoutLock( arenaPlayerID );
                     lastShipNum = this.shipNum;     // Record for lagout
                 } else {
                     lastShipNum = -1;               // Ensure lagout is not possible
@@ -6584,10 +6584,10 @@ public class distensionbot extends SubspaceBot {
         public void ban() {
             banned = true;
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fnID='" + playerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fnID='" + dbPlayerID + "'" );
                 saveCurrentShipToDB();
                 m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer play Distension." );
-                m_botAction.sendUnfilteredPrivateMessage( name, "*kill" );
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*kill" );
             } catch (SQLException e ) {
                 Tools.printLog( "Error banning player " + name );
             }
@@ -6598,7 +6598,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void unban() {
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fnID='" + playerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fnID='" + dbPlayerID + "'" );
                 m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
                 banned = false;
             } catch (SQLException e ) {
@@ -6624,7 +6624,7 @@ public class distensionbot extends SubspaceBot {
                 if( rank > 1 )
                     award = rank * 2;
 
-                m_botAction.sendPrivateMessage(name, "Streak!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 19 );
+                m_botAction.sendPrivateMessage( arenaPlayerID, "Streak!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 19 );
             } else if( successiveKills == 10 ) {
                 if( isWeasel )
                     award = 4;
@@ -6632,7 +6632,7 @@ public class distensionbot extends SubspaceBot {
                     award = 3;
                 if( rank > 1 )
                     award = rank * 3;
-                m_botAction.sendPrivateMessage(name, "ON FIRE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 20 );
+                m_botAction.sendPrivateMessage( arenaPlayerID, "ON FIRE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", 20 );
             } else if( successiveKills == 15 ) {
                 if( isWeasel )
                     award = 6;
@@ -6640,30 +6640,30 @@ public class distensionbot extends SubspaceBot {
                     award = 4;
                 if( rank > 1 )
                     award = rank * 4;
-                m_botAction.sendPrivateMessage(name, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
+                m_botAction.sendPrivateMessage( arenaPlayerID, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
             } else if( successiveKills == 20 ) {
                 if( shipsAvail[5] == false ) {
-                    String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + playerID + "' AND ship.fnShipNum='6'";
+                    String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + dbPlayerID + "' AND ship.fnShipNum='6'";
 
                     try {
                         ResultSet r = m_botAction.SQLQuery( m_database, query );
                         if( r == null ) {
-                            Tools.printLog("Null ResultSet returned for retrieval of ship 6 (for adding) on player ID " + playerID );
+                            Tools.printLog("Null ResultSet returned for retrieval of ship 6 (for adding) on player ID " + dbPlayerID );
                             return false;
                         }
                         if( r.next() ) {
-                            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fnID='" + playerID + "'" );
-                            m_botAction.sendPrivateMessage(name, "For 20 successive kills, your Weasel has been returned to the hangar!");
+                            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fnID='" + dbPlayerID + "'" );
+                            m_botAction.sendPrivateMessage( arenaPlayerID, "For 20 successive kills, your Weasel has been returned to the hangar!");
                         } else {
-                            m_botAction.sendPrivateMessage(name, "AWARD FOR MASTERFUL DOGFIGHTING.  You are quite the pilot, and have proven yourself capable of joining our stealth operations.  The Weasel is now available in your !hangar." );
-                            m_botAction.sendPrivateMessage(name, "WEASEL: The Weasel heads Covert Operations, providing scout reconnaissance to the rest of the army.  Its small size and cloaking allows it a freedom no others have.  Our newest Weasels now have the ability to cut off pursuit instantly!");
+                            m_botAction.sendPrivateMessage( arenaPlayerID, "AWARD FOR MASTERFUL DOGFIGHTING.  You are quite the pilot, and have proven yourself capable of joining our stealth operations.  The Weasel is now available in your !hangar." );
+                            m_botAction.sendPrivateMessage( arenaPlayerID, "WEASEL: The Weasel heads Covert Operations, providing scout reconnaissance to the rest of the army.  Its small size and cloaking allows it a freedom no others have.  Our newest Weasels now have the ability to cut off pursuit instantly!");
                             addShipToDB(6);
                         }
                         m_botAction.SQLClose(r);
                         return true;
                     } catch (SQLException e ) {
                         Tools.printStackTrace( "Error getting ships from DB for adding Weasel.", e );
-                        m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                        m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                         return false;
                     }
                 } else {
@@ -6673,7 +6673,7 @@ public class distensionbot extends SubspaceBot {
                         award = 5;
                     if( rank > 1 )
                         award = rank * 5;
-                    m_botAction.sendPrivateMessage(name, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
+                    m_botAction.sendPrivateMessage( arenaPlayerID, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
                 }
             } else if( successiveKills == 50 ) {
                 if( isWeasel )
@@ -6709,11 +6709,11 @@ public class distensionbot extends SubspaceBot {
             setArmy( armyID );
             getArmy().adjustPilotsTotal(1);
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID=" + armyID + " WHERE fnID='" + playerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID=" + armyID + " WHERE fnID='" + dbPlayerID + "'" );
             } catch (SQLException e) {
-                m_botAction.sendPrivateMessage( name, "ERROR CHANGING ARMY!  Report to a mod immediately!" );
+                m_botAction.sendPrivateMessage( arenaPlayerID, "ERROR CHANGING ARMY!  Report to a mod immediately!" );
             }
-            m_botAction.sendPrivateMessage( name, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
+            m_botAction.sendPrivateMessage( arenaPlayerID, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
             m_botAction.sendOpposingTeamMessageByFrequency(oldarmy.getID(), "TRAITOR!  Villainous dog!  " + name.toUpperCase() + " has betrayed us all for " + getArmyName().toUpperCase() + " !!  Spare not this worm a gruesome death ...");
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Glory be to " + getArmyName().toUpperCase() + "!  " + name.toUpperCase() + " has joined our ranks!  Welcome this brave new pilot.");
             if( shipNum > 0 )
@@ -7060,10 +7060,10 @@ public class distensionbot extends SubspaceBot {
         public boolean sendKillMessages() {
             sendKillMessages = !sendKillMessages;
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcSendKillMsg='" + (sendKillMessages?'y':'n') +"' WHERE fnID='" + playerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcSendKillMsg='" + (sendKillMessages?'y':'n') +"' WHERE fnID='" + dbPlayerID + "'" );
             } catch (SQLException e ) {
                 Tools.printStackTrace( "Error getting ships from DB for adding Tactical Ops.", e );
-                m_botAction.sendPrivateMessage( name, DB_PROB_MSG );
+                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
             }
             return sendKillMessages;
         }
@@ -7147,8 +7147,8 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return Returns the ID as found in the DB (not as found in Arena).
          */
-        public int getID() {
-            return playerID;
+        public int getDatabaseID() {
+            return dbPlayerID;
         }
 
         /**
