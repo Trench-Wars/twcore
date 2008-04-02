@@ -323,13 +323,42 @@ public class utilhotspots extends MultiUtil {
             m_botAction.sendPrivateMessage( sender, "Input error. Check and try again." );
             return;
         }
-
-		HotSpot newSpot = new HotSpot(values);
-		if(watch == null) {
-			watch = newSpot;
-		}
-        hotSpots.add(newSpot);
-        m_botAction.sendPrivateMessage( sender, "Hotspot added." );
+        int index = get_hotSpotIndex(values[0], values[1], values[2]);
+        if(index == -1){
+        	HotSpot newSpot = new HotSpot(values);
+        	if(watch == null) {
+        		watch = newSpot;
+        	}
+        	hotSpots.add(newSpot);
+        	m_botAction.sendPrivateMessage( sender, "Hotspot added." );
+        } else {
+        	if(values.length == 3){
+        		m_botAction.sendSmartPrivateMessage( sender, "Hotspot already exists at index " + index + ".");
+        		return;
+        	}
+        	if(values.length >= 5)
+        		hotSpots.elementAt(index).addMessage("*warpto " + values[3] + " " + values[4]);
+        	if(values.length == 6)
+        		hotSpots.elementAt(index).addMessage("*prize #" + values[5]);
+        	m_botAction.sendSmartPrivateMessage( sender, "Changes added to existing hotspot at index " + index + ".");
+        }
+    }
+    
+    /**
+     * Gets the index of the hotspot.
+     * @param x - X coordinate of spot
+     * @param y - Y coordinate of spot
+     * @param r - Radius of spot
+     * @return index. -1 if spot does not exist
+     */
+    public int get_hotSpotIndex(int x, int y, int r){
+    	Iterator<HotSpot> i = hotSpots.iterator();
+    	while( i.hasNext() ){
+    		HotSpot hs = i.next();
+    		if( hs.getX() == x && hs.getY() == y && hs.getR() == r )
+    			return hotSpots.indexOf(hs);
+    	}
+    	return -1;
     }
     
     /**
@@ -340,27 +369,29 @@ public class utilhotspots extends MultiUtil {
     	try{
     		ResultSet resultSet = m_botAction.SQLQuery(database,
     		      "SELECT HS.* "+
-    		      "FROM tblArena A, tblSetupHotspot HS "+
+    		      "FROM tblArena A, tblSetupHotspots HS "+
     		      "WHERE A.fnArenaID = HS.fnArenaID " +
     		      "AND A.fcArenaName = '" + m_botAction.getArenaName() + "'");
-    		if(resultSet == null)
-    			throw new Exception("Null ResultSet.");
     		int count = 0;
     	    while(resultSet.next())
     	    {
-    	      int x = resultSet.getInt("fnXCoord");
-    	      int y = resultSet.getInt("fnYCoord");
-    	      int r = resultSet.getInt("fnRadius");
-    	      int x2 = resultSet.getInt("fnX2Coord");
-    	      int y2 = resultSet.getInt("fnY2Coord");
-    	      do_addHotSpot("", x + " " + y + " " + r + " " + x2 + " " + y2);
-    	      count++;
+    	      int x = resultSet.getInt("fnX");
+    	      int y = resultSet.getInt("fnY");
+    	      int r = resultSet.getInt("fnR");
+    	      String message = resultSet.getString("fcMessage");
+    	      int index = get_hotSpotIndex(x,y,r);
+    	      if(index == -1){
+    	    	  do_addHotSpot("", x + " " + y + " " + r);
+    	    	  count++;
+    	      }
+    	      hotSpots.elementAt(get_hotSpotIndex(x, y, r)).addMessage(message);
     	    }
     	    m_botAction.SQLClose( resultSet );
     	    if(count == 0)
     	    	m_botAction.sendSmartPrivateMessage(sender, "No hotspots are registered for this arena.");
     	    else
-    	    	m_botAction.sendSmartPrivateMessage(sender, "HotSpots for this arena have been loaded.");
+    	    	m_botAction.sendSmartPrivateMessage(sender, count + " hotspots for this arena have been loaded.");
+    	    	
     	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
@@ -475,24 +506,15 @@ class HotSpot {
      * only 3 values are needed to create a working hotspot.
      */
     public HotSpot( int values[] ) {
-    	if(values.length == 3){
+    	if(values.length >= 3){
             x = values[0];
             y = values[1];
             r = values[2];
     	}
-    	else if(values.length == 5){
-    		x = values[0];
-            y = values[1];
-            r = values[2];
-            addMessage("*warpto " + values[3] + " " + values[4]);
-    	}
-    	else if(values.length == 6){
-    		x = values[0];
-            y = values[1];
-            r = values[2];
-            addMessage("*warpto " + values[3] + " " + values[4]);
+    	if(values.length >= 5)
+    		addMessage("*warpto " + values[3] + " " + values[4]);
+    	if(values.length == 6)
             addMessage("*prize #" + values[5]);
-    	}
     }
     
     /**
@@ -546,6 +568,7 @@ class HotSpot {
 
     public int getX() { return x; }
     public int getY() { return y; }
+    public int getR() { return r; }
     //public int getX2() { return x2; }
     //public int getY2() { return y2; }
 }
