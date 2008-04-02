@@ -4,6 +4,7 @@ import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.lang.StringBuilder;
+import java.sql.ResultSet;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
@@ -20,6 +21,8 @@ public class utilcustom extends MultiUtil{
 	OperatorList opList;
 	TreeMap<String, CustomCommand> commands;
 	
+	String database = "local";
+	
 	public void init() {
 		opList = m_botAction.getOperatorList();
 		commands = new TreeMap<String, CustomCommand>();
@@ -35,6 +38,7 @@ public class utilcustom extends MultiUtil{
 	      "!removecmd <!cmd>           - Removes a custom command and all its actions",
 	      "!listcmd                    - Shows a list of custom commands and their actions",
 	      "!describe <!cmd> <text>     - Submits a description of <!cmd> that shows in help",
+	      "!loadcmds                   - Loads registered commands for this arena.",
 	      "!listkeys                   - Shows a list of available escape phrases"
 	      
 	    };
@@ -96,6 +100,8 @@ public class utilcustom extends MultiUtil{
 			do_listCmd(name);
 		if(cmd.startsWith("!describe "))
 			do_describe(name, cmd.substring(10));
+		if(cmd.equalsIgnoreCase("!loadcmds"))
+			do_loadCommands(name);
 		if(cmd.equalsIgnoreCase("!listkeys"))
 			m_botAction.smartPrivateMessageSpam(name, Tools.getKeysMessage());
 	}
@@ -142,6 +148,36 @@ public class utilcustom extends MultiUtil{
 			commands.put(command, new CustomCommand(command));
 		commands.get(command).addMessage(msg);
 		m_botAction.sendSmartPrivateMessage( name, "Action added.");
+	}
+	
+	/**
+	 * Loads commands for the bot's current arena from database.
+	 * @param name - user of the bot
+	 */
+	public void do_loadCommands(String name) {
+		try{
+    		ResultSet resultSet = m_botAction.SQLQuery(database,
+    		      "SELECT CMD.* "+
+    		      "FROM tblArena A, tblSetupCommands CMD "+
+    		      "WHERE A.fnArenaID = CMD.fnArenaID " +
+    		      "AND A.fcArenaName = '" + m_botAction.getArenaName() + "'");
+    		int count = 0;
+    	    while(resultSet.next())
+    	    {
+    	      String command = resultSet.getString("fcCommand");
+    	      String message = resultSet.getString("fcMessage");
+    	      do_addAction("", command + " " + message);
+    	      count++;
+    	    }
+    	    m_botAction.SQLClose( resultSet );
+    	    if(count == 0)
+    	    	m_botAction.sendSmartPrivateMessage(name, "No commands are registered for this arena.");
+    	    else
+    	    	m_botAction.sendSmartPrivateMessage(name, "Commands for this arena have been loaded.");
+    	    	
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
 	}
 	
 	/**
