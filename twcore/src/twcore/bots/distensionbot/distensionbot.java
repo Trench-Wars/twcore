@@ -281,7 +281,7 @@ public class distensionbot extends SubspaceBot {
 
     // DATA FOR FLAG TIMER
     private static final int SCORE_REQUIRED_FOR_WIN = 3; // Max # rounds (odd numbers only)
-    private static final int SECTOR_CHANGE_SECONDS = 6; // Seconds it takes to secure hold or break one
+    private static final int SECTOR_CHANGE_SECONDS = 4; // Seconds it takes to secure hold or break one
     private static final int INTERMISSION_SECS = 60;    // Seconds between end of free play & start of next battle
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
@@ -5937,7 +5937,7 @@ public class distensionbot extends SubspaceBot {
                 // Terrs without escape pod, above rank 30 and dying in an FR have chance
                 // of activating Last Breath ability.
                 if( escapePod <= 0 ) {
-                    if( rank >= 30 ) {
+                    if( shipNum == 5 && rank >= 30 ) {
                         Player p = m_botAction.getPlayer( arenaPlayerID );
                         if( p==null ) return;
                         int base = -1;
@@ -8280,6 +8280,9 @@ public class distensionbot extends SubspaceBot {
             }
         } else {
             m_botAction.sendArenaMessage( "END BATTLE: " + m_armies.get(winningArmyID).getName() + " gains control of the sector after " + getTimeString( flagTimer.getTotalSecs() ), Tools.Sound.HALLELUJAH );
+            if( DEBUG )
+                m_botAction.sendArenaMessage( "DEBUG: Unexpected Army ID:" + winningArmyID, Tools.Sound.HALLELUJAH );
+            return;
         }
 
         float winnerStrCurrent;
@@ -8467,14 +8470,14 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             } else {
-                // For long battles, losers receive about 33% of the award of the winners.
+                // For long battles, losers receive about 50% of the award of the winners.
                 if( minsToWin >= 15 ) {
                     if( p.getShipNum() > 0 ) {
                         playerRank = p.getRank();
                         if( playerRank == 0 )
                             playerRank = 1;
                         points = totalPoints * ((float)playerRank / (float)totalLvls);
-                        points /= 3;
+                        points /= 2;
                         Integer time = m_playerTimes.get( p.getName() );
                         if( time != null ) {
                             float percentOnFreq = (float)(secs - time) / (float)secs;
@@ -8903,10 +8906,13 @@ public class distensionbot extends SubspaceBot {
                     breakingArmyID = -1;
                     breakSeconds = 0;
                     return;
-                } else
+                } else {
+                    claimBeingEstablished = false;
+                    securingArmyID = -1;
+                    securingSeconds = 0;
                     return; // If this army already holds, and no claim is being broken,
-                            // then this is an unnecessary notify (probably securing army is
-                            // continuing to secure) -- just ignore
+                            // either it's an unnecessary 2flag notify, or we're in
+                }
             }
 
             // Start securing
