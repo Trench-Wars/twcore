@@ -41,7 +41,6 @@ public class pictionary extends MultiModule {
 	ArrayList<String> cantPlay = new ArrayList<String>();
 	ArrayList<String> notPlaying = new ArrayList<String>();
 	int gameProgress = -1, toWin = 5, pictNumber = 1, curLeader = 0;
-	int m_mintimesused = -1, vote;
 	int minPlayers, XSpot, YSpot;
 
 	int m_timeQuestion, m_timeHint, m_timeAnswer, admireArt;
@@ -56,6 +55,7 @@ public class pictionary extends MultiModule {
 			"!rules         -- displays the rules.",
 			"!lagout        -- puts you back in the game if you're drawing.",
 			"!pass          -- gives your drawing turn to a random player.",
+			"!reset         -- resets your mines if drawing.",
 			"!score         -- displays the current scores.",
 			"!repeat        -- will repeat the hint or answer.",
 			"!stats         -- will display your statistics.",
@@ -68,7 +68,17 @@ public class pictionary extends MultiModule {
 			"!gametype      -- Toggles between player pick or bot pick.",
 			"!cancel        -- Cancels this game of Pictionary.",
 			"!showanswer    -- Shows you the answer(You can't win that round).",
-			"!displayrules  -- Shows the rules in *arena messages." };
+			"!displayrules  -- Shows the rules in *arena messages.",
+			"!reset         -- Resets the current artist's mines.",
+			"!pass          -- gives your drawing turn to a random player.",
+			"!score         -- displays the current scores.",
+			"!repeat        -- will repeat the hint or answer.",
+			"!stats         -- will display your statistics.",
+			"!stats <name>  -- displays <name>'s statistics.",
+			"!topten        -- displays top ten player stats.",
+			"!help          -- displays this."
+	};
+	
 	String[] regrules = {
 			"Rules: Racism and pornography are strictly forbidden. The bot will designate",
 			"an artist. Players attempt to guess what the artist is drawing before the time",
@@ -262,9 +272,12 @@ public class pictionary extends MultiModule {
 				pickPlayer();
 				cantPlay.clear();
 				cantPlay.add(curArtist);
-				grabWord();
-				if (!custGame)
+				if (custGame)
+					m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
+				else{
+					grabWord();
 					doReadyCheck();
+				}
 
 			} else {
 				m_botAction.sendArenaMessage(
@@ -320,8 +333,12 @@ public class pictionary extends MultiModule {
 			cantPlay.add(curArtist);
 			try{m_botAction.cancelTasks();}catch(Exception e){}
 			grabWord();
-			if (!custGame)
+			if (custGame)
+				m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
+			else{
+				grabWord();
 				doReadyCheck();
+			}
 	}
 
 	/**
@@ -375,7 +392,7 @@ public class pictionary extends MultiModule {
 				}
 			};
 			if (custGame) {
-				m_botAction.sendSmartPrivateMessage(curArtist,"Word set. Private message me with !ready to begin.");
+				m_botAction.sendSmartPrivateMessage(curArtist,"Word set. Private message me with !ready to begin or choose a different word.");
 				m_botAction.scheduleTask(warn, 15000);
 			} else {
 				m_botAction.sendSmartPrivateMessage(curArtist, "You've been chosen to draw. Please private message me with !ready to begin or !pass to pass.");
@@ -387,11 +404,8 @@ public class pictionary extends MultiModule {
 	public void doReady(String name) {
 		if(!name.equals(curArtist))return;
 			ready = true;
-			if (t_word.equals(lastWord)) {
-				custGame = false;
+			if (t_word.equals(lastWord))
 				grabWord();
-				custGame = true;
-			}
 			try{m_botAction.cancelTasks();}catch(Exception e){}
 			doReadyCheck();
 	}
@@ -465,13 +479,10 @@ public class pictionary extends MultiModule {
 	/** * Gets a word from the database. ** */
 	/** ************************************************************* */
 	public void grabWord() {
-		if (m_mintimesused == -1)
-			getMinTimesUsed();
-		if (!custGame) {
 			try {
 				ResultSet qryWordData;
 				qryWordData = m_botAction.SQLQuery(mySQLHost,
-						"SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + m_mintimesused + " ORDER BY RAND("
+						"SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + getMinTimesUsed() + " ORDER BY RAND("
 								+ m_rnd.nextInt() + ") LIMIT 1");
 				if (qryWordData.next()) {
 					t_word = qryWordData.getString("Word").toLowerCase();
@@ -481,35 +492,17 @@ public class pictionary extends MultiModule {
 						t_definition = t_word.trim().split(" ").length
 								+ " words: First word begins with '"
 								+ t_word.substring(0, 1) + "'.";
+					else
+						t_definition = "Begins with " + t_word.substring(0,1) + ".";
 					int ID = qryWordData.getInt("WordID");
 					m_botAction.SQLQueryAndClose(mySQLHost,
 							"UPDATE tblPict_Words SET TimesUsed = TimesUsed + 1 WHERE WordID = "
 									+ ID);
 				}
-				else {
-					doCancelGame();
-					throw new Exception("Error retrieving a word from the database.");
-				}
 				m_botAction.SQLClose(qryWordData);
 			} catch (Exception e) {
 				Tools.printStackTrace(e);
 			}
-		} else {
-			warn = new TimerTask() {
-				public void run() {
-					m_botAction.sendSmartPrivateMessage(curArtist, "Private message me with what you're drawing or your turn will be forfeited.");
-					forcePass = new TimerTask() {
-						public void run() {
-							doPass(m_botAction.getBotName());
-						}
-					};
-					m_botAction.scheduleTask(forcePass, 15000);
-				}
-			};			
-			m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
-			m_botAction.scheduleTask(warn, 15000);
-		}
-
 	}
 
 	/** ************************************************************* */
@@ -697,18 +690,19 @@ public class pictionary extends MultiModule {
 	/** ************************************************************* */
 	/** * Gets minimum times used for questions. ** */
 	/** ************************************************************* */
-	public void getMinTimesUsed() {
+	public int getMinTimesUsed() {
 		try {
+			int minUsed = -1;
 			ResultSet qryMinTimesUsed = m_botAction.SQLQuery(mySQLHost,
 							"SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblPict_Words");
 			if (qryMinTimesUsed.next()) {
-				int minUsed = qryMinTimesUsed.getInt("MinTimesUsed");
-				m_mintimesused = minUsed;		
+				minUsed = qryMinTimesUsed.getInt("MinTimesUsed");		
 			}
 			m_botAction.SQLClose(qryMinTimesUsed);
+			return minUsed;
 		} catch (Exception e) {
 			Tools.printStackTrace(e);
-			m_mintimesused = -1;
+			return -1;
 		}
 	}
 
@@ -901,8 +895,13 @@ public class pictionary extends MultiModule {
 				curArtist = theWinner;
 			cantPlay.clear();
 			cantPlay.add(curArtist);
-			grabWord();
-			doReadyCheck();
+			if(custGame)
+				m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
+			else{
+				grabWord();
+				doReadyCheck();
+			}
+			
 		}
 	}
 
