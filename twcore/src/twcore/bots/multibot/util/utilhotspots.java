@@ -29,7 +29,7 @@ public class utilhotspots extends MultiUtil {
     boolean watching;
     int repeatTime = 200;
     
-    String database = "local";
+    String database = "website";
     
     private int switchTime = 200;
 

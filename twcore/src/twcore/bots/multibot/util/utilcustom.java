@@ -21,7 +21,7 @@ public class utilcustom extends MultiUtil{
 	OperatorList opList;
 	TreeMap<String, CustomCommand> commands;
 	
-	String database = "local";
+	String database = "website";
 	
 	public void init() {
 		opList = m_botAction.getOperatorList();
