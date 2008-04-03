@@ -39,7 +39,6 @@ public class scramble extends MultiModule {
     Vector<String>  topTen;
     ArrayList<String> cantPlay = new ArrayList<String>();
     int             gameProgress = -1, toWin = 10, scrambleNumber = 1, curLeader = 0;
-    int             m_mintimesused = -1;
 
     int             m_timeQuestion = 2000, m_timeHint = 15000, m_timeAnswer = 15000, m_timeNext = 5000;
     
@@ -578,11 +577,10 @@ public class scramble extends MultiModule {
     /*** Gets a word from the database.                           ***/
     /****************************************************************/
     public void grabWord(){
-        if (m_mintimesused == -1) getMinTimesUsed();
         if (difficulty) {
         	try {
         		ResultSet qryWordData;
-                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word FROM tblScramble_Norm WHERE TimesUsed=9 ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
+                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word FROM tblScramble_Norm WHERE TimesUsed="+getMinTimesUsed()+" ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
                 	if ( qryWordData.next() ) {
                 		t_word = qryWordData.getString("Word");
                 		if (t_word.length() < 4){
@@ -600,7 +598,7 @@ public class scramble extends MultiModule {
         else {
         	try {
         		ResultSet qryWordData;
-                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word, WordDef FROM tblScramble_Nerd WHERE TimesUsed=9 ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
+                	qryWordData = m_botAction.SQLQuery( mySQLHost, "SELECT WordID, Word, WordDef FROM tblScramble_Nerd WHERE TimesUsed="+getMinTimesUsed()+" ORDER BY RAND("+m_rnd.nextInt()+") LIMIT 1");
                 	if ( qryWordData.next() ) {
                 		t_definition = "'" + qryWordData.getString("WordDef") + "'";
                 		t_word = qryWordData.getString("Word");
@@ -618,18 +616,22 @@ public class scramble extends MultiModule {
     /****************************************************************/
     /*** Gets minimum times used for questions.                   ***/
     /****************************************************************/
-    public void getMinTimesUsed() {
+    public int getMinTimesUsed() {
         try {
-            ResultSet qryMinTimesUsed = m_botAction.SQLQuery( mySQLHost, "SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblScramble_Nerd");
+        	ResultSet qryMinTimesUsed;
+        	if(difficulty)
+            	qryMinTimesUsed = m_botAction.SQLQuery( mySQLHost, "SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblScramble_Norm");
+        	else
+        		qryMinTimesUsed = m_botAction.SQLQuery(mySQLHost, "SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblScramble_Nerd");
             if ( qryMinTimesUsed.next() ) {
-            int minUsed = qryMinTimesUsed.getInt("MinTimesUsed");
-            m_mintimesused = minUsed;
+            int minUsed = qryMinTimesUsed.getInt("MinTimesUsed");        
             m_botAction.SQLClose( qryMinTimesUsed );
-            }
+            return minUsed;
+            } return -1;
             
         } catch (Exception e) {
             Tools.printStackTrace(e);
-            m_mintimesused = -1;
+            return -1;
         }
     }
 
