@@ -107,9 +107,6 @@ public class eventbot extends SubspaceBot {
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("arena"));
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ));
-        
-        // Only 1 messages per minute allowed for non-staff.
-        m_botAction.setMessageLimit(2);
     }
     
     /*****************************************************************************
@@ -201,11 +198,11 @@ public class eventbot extends SubspaceBot {
     		return;
     	}
     	
-    	/* Staff shouldn't make !requests
+    	// Staff shouldn't make !requests
     	if(m_botAction.getOperatorList().isZH(name)) {
     		m_botAction.sendSmartPrivateMessage(name, "I'm sorry but staff can't make !requests.");
     		return;
-    	}*/
+    	}
     	
     	// Player cancels his request
     	if(message.equals("-")) {
