@@ -8911,7 +8911,7 @@ public class distensionbot extends SubspaceBot {
                     securingArmyID = -1;
                     securingSeconds = 0;
                     return; // If this army already holds, and no claim is being broken,
-                            // either it's an unnecessary 2flag notify, or we're in
+                            // either it's an unnecessary 2flag notify, or we're in 1flag, continuing
                 }
             }
 
@@ -8976,6 +8976,9 @@ public class distensionbot extends SubspaceBot {
                 claimBeingBroken = true;
                 breakSeconds = 0;
             }
+
+            if( m_singleFlagMode && DEBUG )
+                m_botAction.sendArenaMessage( "ERROR!  Single flag mode found firing hold break!" );
         }
 
         /**
@@ -9046,11 +9049,11 @@ public class distensionbot extends SubspaceBot {
          * and flag-owning visual info.
          */
         public void endBattle() {
+            isRunning = false;
             flagTimerObjs.hideAllObjects();
             flagObjs.hideAllObjects();
             m_botAction.setObjects();
             m_botAction.manuallySetObjects( flagObjs.getObjects() );
-            isRunning = false;
         }
 
         /**
@@ -9173,7 +9176,7 @@ public class distensionbot extends SubspaceBot {
             }
             if( sectorHoldingArmyID == -1 )
                 return "BATTLE " + m_roundNum + " Stats:  No army holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
-            return "BATTLE " + m_roundNum + " Stats: " + m_armies.get(sectorHoldingArmyID).getName() + " has held the sector for " + getTimeString(secondsHeld) + ", needs " + getTimeString( flagSecondsRequired - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+            return "BATTLE " + m_roundNum + " Stats: " + m_armies.get(sectorHoldingArmyID).getName() + "(" + sectorHoldingArmyID + ") has held the sector for " + getTimeString(secondsHeld) + ", needs " + getTimeString( flagSecondsRequired - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
         }
 
         /**
