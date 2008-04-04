@@ -1,13 +1,32 @@
 package twcore.bots.multibot.boggle;
 
+/**
+ * This class holds (X, Y) coordinates for Boggle.
+ */
 public class BoggleXY {
-    	int x, y;
-
-    	public BoggleXY(int x,int y) {
-    		this.x = x;
-    		this.y = y;
-    	}
-    	
-    	public Integer getX() {return x;}
-    	public Integer getY() {return y;}
+    public int x, y;
+    
+    /**
+     * The BoggleXY constructor.
+     * @param x - The X Coordinate
+     * @param y - The Y Coordinate
+     */
+    public BoggleXY(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
+    
+    /**
+     * Returns the X Coordinate
+     */
+    public int getX() {
+        return x;
+    }
+    
+    /**
+     * Returns the Y Coordinate
+     */
+    public int getY() {
+        return y;
+    }
+}
