@@ -329,7 +329,7 @@ public class Arena {
      * @return Number of players on freq
      */
     public int getFreqSize( int freq ) {
-        Map m = m_frequencyList.get((Integer)freq);
+        Map<Integer,Player> m = m_frequencyList.get((Integer)freq);
         if (m != null)
             return m.size();
         else
@@ -489,7 +489,7 @@ public class Arena {
      */
     public void processEvent( PlayerLeft message ){
         int             oldFrequency;
-        Map             frequencyList;
+        Map<Integer,Player> frequencyList;
         Player          player;
 
         player = m_playerList.get( new Integer( message.getPlayerID() ) );
@@ -499,7 +499,7 @@ public class Arena {
 
         oldFrequency = player.getFrequency();
 
-        frequencyList = (Map)m_frequencyList.get( new Integer( oldFrequency ) );
+        frequencyList = (Map<Integer,Player>)m_frequencyList.get( new Integer( oldFrequency ) );
         frequencyList.remove( new Integer( message.getPlayerID() ) );
 
         m_playerIDList.remove( player.getPlayerName().toLowerCase() );

@@ -183,10 +183,10 @@ public final class radiobot extends SubspaceBot {
         } else if(message.startsWith("!who")) {
         	handled = true;
             m_botAction.sendPrivateMessage(id, "Radio hosts who are logged in:");
-            Iterator i = m_loggedInList.iterator();
+            Iterator<String> i = m_loggedInList.iterator();
             String who;
             while(i.hasNext()) {
-            	who = (String)i.next();
+            	who = i.next();
                 m_botAction.sendPrivateMessage(id, who + (who.equals(m_currentHost) ? " (current host)" : ""));
             }
 
@@ -605,9 +605,9 @@ public final class radiobot extends SubspaceBot {
             m_botAction.sendArenaMessage("The poll has ended! Question: " + poll[0]);
 
             int[] counters = new int[range+1];
-            Iterator iterator = votes.values().iterator();
+            Iterator<Integer> iterator = votes.values().iterator();
             while(iterator.hasNext()) {
-                counters[((Integer)iterator.next()).intValue()]++;
+                counters[iterator.next().intValue()]++;
             }
             for(int i = 1; i < counters.length; i++) {
                 m_botAction.sendArenaMessage(i + ". " + poll[i] + ": "

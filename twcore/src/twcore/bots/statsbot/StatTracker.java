@@ -74,7 +74,7 @@ public class StatTracker {
 
 		//iterate through the players in game and add them to the tracking mechanism
 		//watchdamage will be on for new players
-		Iterator playing = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> playing = m_botAction.getPlayingPlayerIterator();
 
 		while( playing.hasNext() ) {
 
@@ -91,7 +91,7 @@ public class StatTracker {
 			m_trackingStats = TRACKING_OFF;
 
 			//stop watchdamage
-			Iterator playList = m_players.keySet().iterator();
+			Iterator<String> playList = m_players.keySet().iterator();
 			while( playList.hasNext() ) {
 
 				String name = (String)playList.next();
@@ -111,7 +111,7 @@ public class StatTracker {
 
 	public void spamStats() {
 
-		Iterator playList = m_players.values().iterator();
+		Iterator<PlayerStatistics> playList = m_players.values().iterator();
 		while( playList.hasNext() ) {
 
 			PlayerStatistics stats = (PlayerStatistics)playList.next();

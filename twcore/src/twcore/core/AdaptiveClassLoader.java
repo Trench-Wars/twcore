@@ -160,7 +160,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      * <p>
      * It may be empty when only system classes are controlled.
      */
-    private Vector repository;
+    private Vector<File> repository;
 
     /**
      * Private class used to maintain information about the classes that
@@ -171,7 +171,7 @@ public class AdaptiveClassLoader extends ClassLoader {
         /**
          * The actual loaded class
          */
-        Class loadedClass;
+        Class<?> loadedClass;
 
         /**
          * The file from which this class was loaded; or null if
@@ -206,7 +206,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      *         in the vector are not a file instance or the file is not
      *         a valid directory or a zip/jar file.
      */
-    public AdaptiveClassLoader(Vector classRepository)
+    public AdaptiveClassLoader(Vector<File> classRepository)
         throws IllegalArgumentException
     {
         this(classRepository, null);
@@ -226,7 +226,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      *         in the vector are not a file instance or the file is not
      *         a valid directory or a zip/jar file.
      */
-    public AdaptiveClassLoader(Vector classRepository, ClassLoader chainedClassLoader)
+    public AdaptiveClassLoader(Vector<File> classRepository, ClassLoader chainedClassLoader)
         throws IllegalArgumentException
     {
         myParentClassLoader = chainedClassLoader;
@@ -235,25 +235,15 @@ public class AdaptiveClassLoader extends ClassLoader {
         cache = new Hashtable<String, ClassCacheEntry>();
 
         // Verify that all the repository are valid.
-        Enumeration e = classRepository.elements();
+        Enumeration<File> e = classRepository.elements();
         while(e.hasMoreElements()) {
-            Object o = e.nextElement();
-            File file;
+            File file = e.nextElement();
             File[] files;
-            int i;
-
-            // Check to see if element is a File instance.
-            try {
-                file = (File) o;
-            } catch (ClassCastException objectIsNotFile) {
-                throw new IllegalArgumentException("Object " + o
-                    + "is not a valid \"File\" instance");
-            }
 
             files=SimpleFileFilter.fileOrFiles(file);
             if (files!=null)
             {
-                for (i=0;i<files.length;i++)
+                for (int i=0;i<files.length;i++)
                 {
                     file=files[i];
                     // Check to see if we have proper access.
@@ -345,7 +335,7 @@ public class AdaptiveClassLoader extends ClassLoader {
     public synchronized boolean shouldReload() {
 
         // Check whether any class has changed
-        Enumeration e = cache.elements();
+        Enumeration<ClassCacheEntry> e = cache.elements();
         while (e.hasMoreElements()) {
             ClassCacheEntry entry = (ClassCacheEntry) e.nextElement();
 
@@ -415,7 +405,7 @@ public class AdaptiveClassLoader extends ClassLoader {
         throws ClassNotFoundException
     {
         // The class object that will be returned.
-        Class c = null;
+        Class<?> c = null;
 
         // Use the cached value, if this class is already loaded into
         // this classloader.
@@ -444,7 +434,7 @@ public class AdaptiveClassLoader extends ClassLoader {
         }
 
         // Try to load it from each repository
-        Enumeration repEnum = repository.elements();
+        Enumeration<File> repEnum = repository.elements();
         StringBuffer repoList = new StringBuffer();
 
         // Cache entry.
@@ -503,12 +493,11 @@ public class AdaptiveClassLoader extends ClassLoader {
      * @exception  NoClassDefFoundError  if the class loader cannot
      *             find a definition for the class.
      */
-    private Class loadSystemClass(String name, boolean resolve)
-        throws NoClassDefFoundError, ClassNotFoundException
+    private Class<?> loadSystemClass(String name, boolean resolve) throws NoClassDefFoundError, ClassNotFoundException
     {
         if(myParentClassLoader != null)
             return myParentClassLoader.loadClass(name);
-        Class c = findSystemClass(name);
+        Class<?> c = findSystemClass(name);
         // Throws if not found.
 
         // Add cache entry
@@ -666,7 +655,7 @@ public class AdaptiveClassLoader extends ClassLoader {
 
         if (s == null) {
             // Try to find it from every repository
-            Enumeration repEnum = repository.elements();
+            Enumeration<File> repEnum = repository.elements();
             while (repEnum.hasMoreElements()) {
                 File file = (File) repEnum.nextElement();
                 if (file.isDirectory()) {
@@ -776,7 +765,7 @@ public class AdaptiveClassLoader extends ClassLoader {
         }
 
         // We got here so we have to look for the resource in our list of repository elements
-        Enumeration repEnum = repository.elements();
+        Enumeration<File> repEnum = repository.elements();
         while (repEnum.hasMoreElements()) {
             File file = (File) repEnum.nextElement();
             // Construct a file://-URL if the repository is a directory

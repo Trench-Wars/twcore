@@ -532,10 +532,10 @@ public class lagHandler
 
         state = 0;
 
-        ListIterator i = m_lagRequest.listIterator();
+        ListIterator<lagRequest> i = m_lagRequest.listIterator();
         while (i.hasNext())
         {
-            lagRequest t = (lagRequest) i.next();
+            lagRequest t = i.next();
 
             i.remove();
             startLagRequest(t.getPlayerName(), t.getRequester());

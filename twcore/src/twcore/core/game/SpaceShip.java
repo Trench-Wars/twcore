@@ -124,15 +124,15 @@ public class SpaceShip extends Thread
 	}
 
 	public void checkHits() {
-		ListIterator it = fired_projectiles.listIterator();
+		ListIterator<Projectile> it = fired_projectiles.listIterator();
 		while (it.hasNext()) {
-			Projectile b = (Projectile) it.next();
+			Projectile b = it.next();
 
 			if (b.isHitting(x, y)) {
 
 		        try
 			    {
-				    Class       parameterTypes[] = { b.getClass() };
+				    Class parameterTypes[] = { b.getClass() };
 					Object      lagReportA[] = { b };
 					m_bot.getClass().getMethod(m_methodName, parameterTypes).invoke(m_bot, lagReportA);
 		        }

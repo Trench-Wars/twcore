@@ -10,7 +10,7 @@ public class TimedHashSet<E> implements Set<E>
 {
   public static final int PERMANANT_OBJECT = -1;
   private TimedAction timedAction;
-  private HashMap<E, EntryTimerTask> entries;
+  private HashMap<E, EntryTimerTask<E>> entries;
   private Timer timer;
 
   /**
@@ -21,7 +21,7 @@ public class TimedHashSet<E> implements Set<E>
   public TimedHashSet(TimedAction timedAction)
   {
     this.timedAction = timedAction;
-    entries = new HashMap<E, EntryTimerTask>();
+    entries = new HashMap<E, EntryTimerTask<E>>();
     timer = new Timer();
   }
 
@@ -82,7 +82,7 @@ public class TimedHashSet<E> implements Set<E>
    */
   public Object[] toArray()
   {
-    Set set = entries.keySet();
+    Set<E> set = entries.keySet();
     return set.toArray();
   }
 
@@ -140,7 +140,7 @@ public class TimedHashSet<E> implements Set<E>
    */
   public boolean remove(Object o)
   {
-    EntryTimerTask entryTimerTask = entries.remove(o);
+    EntryTimerTask<E> entryTimerTask = entries.remove(o);
 
     if(entryTimerTask == null)
       return false;
@@ -234,11 +234,9 @@ public class TimedHashSet<E> implements Set<E>
    */
   public void clear()
   {
-    Set s = entries.keySet();
-    Iterator iterator = s.iterator();
-
-    while(iterator.hasNext())
-      remove(iterator.next());
+      for(E e:entries.keySet()){
+          remove(e);
+      }
   }
 
   /**
@@ -250,7 +248,7 @@ public class TimedHashSet<E> implements Set<E>
    */
   public long getLifetime(E o)
   {
-    EntryTimerTask entryTimerTask = entries.get(o);
+    EntryTimerTask<E> entryTimerTask = entries.get(o);
 
     if(entryTimerTask == null)
       throw new IllegalArgumentException("Object not found in set.");
@@ -266,7 +264,7 @@ public class TimedHashSet<E> implements Set<E>
    */
   public long getTimeRemaining(E o)
   {
-    EntryTimerTask entryTimerTask = entries.get(o);
+    EntryTimerTask<E> entryTimerTask = entries.get(o);
 
     if(entryTimerTask == null)
       throw new IllegalArgumentException("Object not found in set.");
@@ -282,7 +280,7 @@ public class TimedHashSet<E> implements Set<E>
    */
   public String getTimeRemainingString(E o)
   {
-    EntryTimerTask entryTimerTask = entries.get(o);
+    EntryTimerTask<E> entryTimerTask = entries.get(o);
 
     if(entryTimerTask == null)
       throw new IllegalArgumentException("Object not found in set.");
@@ -299,7 +297,7 @@ public class TimedHashSet<E> implements Set<E>
    */
   public long getTimeElapsed(E o)
   {
-    EntryTimerTask entryTimerTask = entries.get(o);
+    EntryTimerTask<E> entryTimerTask = entries.get(o);
 
     if(entryTimerTask == null)
       throw new IllegalArgumentException("Object not found in set.");
@@ -316,7 +314,7 @@ public class TimedHashSet<E> implements Set<E>
    * @author Cpt.Guano!
    * @version 1.0
    */
-  private class EntryTimerTask<E> extends DetailedTimerTask
+  private class EntryTimerTask<T> extends DetailedTimerTask
   {
     private E o;
     private long startTime;

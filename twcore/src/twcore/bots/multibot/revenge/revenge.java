@@ -249,10 +249,10 @@ public class revenge extends MultiModule
                      */
 
                     int playerCount = getPlayerCount();
-                    Iterator it = m_botAction.getPlayingPlayerIterator();
+                    Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
                     while ( it.hasNext() )
                     {
-                        Player p = (Player)it.next();
+                        Player p = it.next();
                         playerMap.put( p.getPlayerName(), new RevengePlayer(
                                 p.getPlayerName(), playerCount ) );
                     }
@@ -580,12 +580,12 @@ public class revenge extends MultiModule
     {
         int freq = -1;
         int playerCount = 1;
-        Iterator it = m_botAction.getPlayingPlayerIterator();
+        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         if (it == null)
             return 0;
         while ( it.hasNext() )
         {
-            Player p = (Player)it.next();
+            Player p = it.next();
             if ( freq == -1 )
                 freq = p.getFrequency();
             if ( p.getFrequency() != freq )
@@ -603,14 +603,14 @@ public class revenge extends MultiModule
     {
         int bestScore = 0;
         String playerName = "";
-        Iterator it = m_botAction.getPlayerIterator();
+        Iterator<Player> it = m_botAction.getPlayerIterator();
         while ( it.hasNext() )
         {
-            RevengePlayer p = (RevengePlayer)it.next();
+            Player p = it.next();
             if ( p.getScore() > bestScore )
             {
                 bestScore = p.getScore();
-                playerName = p.getName();
+                playerName = p.getPlayerName();
             }
         }
         return playerName;

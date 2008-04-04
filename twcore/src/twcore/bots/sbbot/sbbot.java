@@ -237,11 +237,11 @@ public class sbbot extends SSEventForwarder {
         }
     }
 
-    private class ArenaMessenger extends BotCommandListener {
+    /*private class ArenaMessenger extends BotCommandListener {
         public void notify(BotCommandType type, BotCommandEvent event) {
 
         }
-    }
+    }*/
 
     private void registerCommands() {
         int mtype = twcore.core.events.Message.PRIVATE_MESSAGE;

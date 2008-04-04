@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
 public class ShortMap<V> implements Map<Integer, V> {
 
 	private final static int	TABLE_LEN = 256;
-	private final Entry[]		m_table = new Entry[TABLE_LEN];
+	private final Entry<V>[]	m_table = new Entry[TABLE_LEN];
 	private int					m_size = 0;
 	private Set<Map.Entry<Integer, V>>	m_entrySet = null;
 	private Set<Integer>		m_keySet = null;
@@ -60,7 +60,7 @@ public class ShortMap<V> implements Map<Integer, V> {
 
 	public synchronized boolean containsValue(Object value) {
 		for(int i = 0; i < TABLE_LEN; i++) {
-			for(Entry e = m_table[i]; e != null; e = e.m_next) {
+			for(Entry<V> e = m_table[i]; e != null; e = e.m_next) {
 				if(value == e.m_value || (value != null && value.equals(e.m_value))) {
 					return true;
 				}

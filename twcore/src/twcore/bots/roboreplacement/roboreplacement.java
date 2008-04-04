@@ -45,7 +45,7 @@ public class roboreplacement extends SubspaceBot
     HashMap<Integer, Integer> kills = new HashMap<Integer, Integer>();   //key is ID of the person, value is the person's number of kills
     HashMap<Integer, Integer> lastDeaths = new HashMap<Integer, Integer>();
 
-    Vector topTen; //Vector of people with the top ten ratings
+    Vector<String> topTen; //Vector of people with the top ten ratings
 
     BotSettings m_botSettings; //BotSettings object for the .cfg file
 
@@ -138,7 +138,7 @@ public class roboreplacement extends SubspaceBot
             players.remove(new Integer(event.getPlayerID()));
         if(players.size() == 1 && isRunning)
         {
-            Iterator i = players.iterator();
+            Iterator<Integer> i = players.iterator();
             int pID = ((Integer)i.next()).intValue();
             m_botAction.sendArenaMessage(m_botAction.getPlayerName(pID) + " has won!", 5);
             handleGameOver(pID);
@@ -302,8 +302,8 @@ public class roboreplacement extends SubspaceBot
 
         if(players.size() == 1 && isRunning) //handles the game over if there is only one person left.
         {
-            Iterator i = players.iterator();
-            int pID = ((Integer)i.next()).intValue();
+            Iterator<Integer> i = players.iterator();
+            int pID = i.next().intValue();
             m_botAction.sendArenaMessage("GAME OVER: Winner " + m_botAction.getPlayerName(pID), 5);
             handleGameOver(pID);
             m_botAction.toggleLocked();
@@ -319,33 +319,27 @@ public class roboreplacement extends SubspaceBot
         {
             public void run()
             {
-                int numPlayers = 0;
-                Iterator it = m_botAction.getPlayingPlayerIterator();
-                while(it.hasNext()) //gets the number of players in the game
-                {
-                    it.next();
-                    numPlayers++;
-                }
+                int numPlayers = m_botAction.getPlayingPlayers().size();
                 if(numPlayers <= 1)
                 {
                     m_botAction.sendArenaMessage("This game has been cancelled because there are not enough players!", 5);
                     m_botAction.sendUnfilteredPublicMessage("*lock");
                     return;
                 }
-                Iterator i = m_botAction.getPlayingPlayerIterator();
+                Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
                 while(i.hasNext()) //adds players to the players hashset
                 {
-                    Player p = (Player)i.next();
+                    Player p = i.next();
                     players.add(new Integer(p.getPlayerID()));
                 }
 
                 m_botAction.toggleLocked(); //locks the arena
                 if(elimShip == 9) //checks if it is an anyship elim, if it is it checks everyone to make sure they are in a valid ship for elim type
                 {
-                    Iterator it2 = m_botAction.getPlayingPlayerIterator();
+                    Iterator<Player> it2 = m_botAction.getPlayingPlayerIterator();
                     while(it2.hasNext())
                     {
-                        Player p = (Player)it2.next();
+                        Player p = it2.next();
                         if(!allowedShips.contains(new Integer(p.getShipType()))) //sets person to default (first entered) elim ship type if they are in an illegal ship
                             m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), "*setship " + allowedShips.get(0).intValue());
                     }
@@ -469,8 +463,8 @@ public class roboreplacement extends SubspaceBot
     public void handleGameOver(int winnerID) //ends game and uploads the game's data to the database
     {
         try {
-            Set set = deaths.keySet();
-            Iterator it = set.iterator();
+            Set<Integer> set = deaths.keySet();
+            Iterator<Integer> it = set.iterator();
             while(it.hasNext())
             {
                 String username = m_botAction.getPlayerName(((Integer)it.next()).intValue());
@@ -545,7 +539,7 @@ public class roboreplacement extends SubspaceBot
 
     public void getTopTen() //gets the top ten people and puts them in the vector topTen
     {
-        topTen = new Vector();
+        topTen = new Vector<String>();
         /*try {
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fcUserName, fnWon, fnPlayed, fnWon, fnDeaths, fnRating FROM tblElimTwoStats"+num+" ORDER BY fnRating DESC LIMIT 10");
             while(result.next())

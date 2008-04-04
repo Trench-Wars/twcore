@@ -411,10 +411,10 @@ public class robohelp extends SubspaceBot {
         }
 
         m_botAction.sendSmartPrivateMessage( name, "Events hosted within the last " + span + " hour(s): " );
-        Set set = events.keySet();
-        Iterator i = set.iterator();
+        Set<String> set = events.keySet();
+        Iterator<String> i = set.iterator();
         while (i.hasNext()) {
-            String curEvent = (String)i.next();
+            String curEvent = i.next();
             EventData d = events.get( curEvent );
             m_botAction.sendSmartPrivateMessage( name, trimFill( curEvent ) + d.getDups() );
         }

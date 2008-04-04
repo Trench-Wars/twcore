@@ -106,9 +106,9 @@ public class Objset {
     public void hideAllObjects() {
         m_unsetObjects.clear();
         synchronized (m_objects) {
-            Iterator it = m_objects.keySet().iterator();
+            Iterator<Integer> it = m_objects.keySet().iterator();
             while( it.hasNext() ) {
-                int x = ((Integer)it.next()).intValue();
+                int x = it.next().intValue();
                 Boolean status = m_objects.get( new Integer( x ) );
                 if( status != null && status == true )
                     m_unsetObjects.put( new Integer( x ), false );
@@ -130,9 +130,9 @@ public class Objset {
 
         playerUnset.clear();
         synchronized (playerObj) {
-            Iterator it = playerObj.keySet().iterator();
+            Iterator<Integer> it = playerObj.keySet().iterator();
             while( it.hasNext() ) {
-                int x = ((Integer)it.next()).intValue();
+                int x = it.next().intValue();
                 Boolean status = playerObj.get( new Integer( x ) );
                 if( status != null && status == true )
                     playerUnset.put( new Integer( x ), false );
@@ -162,9 +162,9 @@ public class Objset {
     public boolean objectShown( int playerId, int object ) {
         if( playerId < 0 ) return false;
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return false;
-        Map playerObj = (Map)m_privateObjects.get( new Integer( playerId ) );
-        String status = (String)playerObj.get( new Integer( object ) );
-        if( status != null && status.equals("+") ) return true;
+        Map<Integer,Boolean> playerObj = m_privateObjects.get( new Integer( playerId ) );
+        boolean status = playerObj.get( new Integer( object ) );
+        if( status ) return true;
         else return false;
     }
 
@@ -184,7 +184,7 @@ public class Objset {
     public boolean toSet( int playerId ) {
         if( playerId < 0 ) return false;
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) ) return false;
-        Map playerObj = (Map)m_privateUnsetObjects.get( new Integer( playerId ) );
+        Map<Integer,Boolean> playerObj = m_privateUnsetObjects.get( new Integer( playerId ) );
         return !playerObj.isEmpty();
     }
 

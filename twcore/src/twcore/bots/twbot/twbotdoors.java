@@ -174,27 +174,4 @@ public class twbotdoors extends TWBotExtension
   public void cancel()
   {
   }
-
-  private class DoorTask extends TimerTask
-  {
-    public static final int MIN_DOOR = 1;
-    public static final int MAX_DOOR = 8;
-    public static final double MIN_TIME = 0.1;
-
-    private int doorNumber;
-    private double onTime;
-    private double offTime;
-
-    public DoorTask(int doorNumber, double onTime, double offTime)
-    {
-      if(doorNumber < MIN_DOOR || doorNumber > MAX_DOOR)
-        throw new IllegalArgumentException("Invalid door number.  Must be from 1 to 8.");
-      if(onTime < MIN_TIME || offTime < MIN_TIME)
-        throw new IllegalArgumentException("Invalid time specified.");
-    }
-
-    public void run()
-    {
-    }
-  }
 }
