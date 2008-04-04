@@ -116,6 +116,7 @@ public class distensionbot extends SubspaceBot {
     private final int WINS_REQ_RANK_FLEET_ADMIRAL = 1000;
 
 
+    // COORDS
 
     // Spawn, safe, and basewarp coords
     private final int SPAWN_BASE_0_Y_COORD = 456;               // Y coord around which base 0 owners (top) spawn
@@ -167,6 +168,43 @@ public class distensionbot extends SubspaceBot {
     private final int BOT_TUBE_NAV = 637;
     private final int BOT_MID_NAV =  678;
     private final int BOT_FR_NAV =   728;
+
+    // Ops !warp coords
+    public final int OPS_TOP_WARP1_X = 512; // mid
+    public final int OPS_TOP_WARP1_Y = 374;
+    public final int OPS_TOP_WARP2_X = 450; // left
+    public final int OPS_TOP_WARP2_Y = 314;
+    public final int OPS_TOP_WARP3_X = 574; // right
+    public final int OPS_TOP_WARP3_Y = 314;
+    public final int OPS_TOP_WARP4_X = 512; // before fr
+    public final int OPS_TOP_WARP4_Y = 327;
+    public final int OPS_TOP_WARP5_X = 512; // roof
+    public final int OPS_TOP_WARP5_Y = 265;
+    public final int OPS_TOP_WARP6_X = 512; // fr
+    public final int OPS_TOP_WARP6_Y = 302;
+    public final int OPS_BOT_WARP1_X = 512; // mid
+    public final int OPS_BOT_WARP1_Y = 649;
+    public final int OPS_BOT_WARP2_X = 450; // left
+    public final int OPS_BOT_WARP2_Y = 709;
+    public final int OPS_BOT_WARP3_X = 574; // right
+    public final int OPS_BOT_WARP3_Y = 709;
+    public final int OPS_BOT_WARP4_X = 512; // before fr
+    public final int OPS_BOT_WARP4_Y = 696;
+    public final int OPS_BOT_WARP5_X = 512; // roof
+    public final int OPS_BOT_WARP5_Y = 758;
+    public final int OPS_BOT_WARP6_X = 512; // fr
+    public final int OPS_BOT_WARP6_Y = 721;
+
+    // 1-flag earwarp
+    public final int LEFT_EAR_X = 0;
+    public final int LEFT_EAR_Y = 0;
+    public final int RIGHT_EAR_X = 0;
+    public final int RIGHT_EAR_Y = 0;
+
+
+
+
+    // MEMBERS
 
     private String m_database;                              // DB to connect to
     private BotSettings m_botSettings;
@@ -238,30 +276,6 @@ public class distensionbot extends SubspaceBot {
     public TimerTask m_army0_fastRearmTask;
     public TimerTask m_army1_fastRearmTask;
     public TimerTask m_doorOffTask;
-    public final int OPS_TOP_WARP1_X = 512; // mid
-    public final int OPS_TOP_WARP1_Y = 374;
-    public final int OPS_TOP_WARP2_X = 450; // left
-    public final int OPS_TOP_WARP2_Y = 314;
-    public final int OPS_TOP_WARP3_X = 574; // right
-    public final int OPS_TOP_WARP3_Y = 314;
-    public final int OPS_TOP_WARP4_X = 512; // before fr
-    public final int OPS_TOP_WARP4_Y = 327;
-    public final int OPS_TOP_WARP5_X = 512; // roof
-    public final int OPS_TOP_WARP5_Y = 265;
-    public final int OPS_TOP_WARP6_X = 512; // fr
-    public final int OPS_TOP_WARP6_Y = 302;
-    public final int OPS_BOT_WARP1_X = 512; // mid
-    public final int OPS_BOT_WARP1_Y = 649;
-    public final int OPS_BOT_WARP2_X = 450; // left
-    public final int OPS_BOT_WARP2_Y = 709;
-    public final int OPS_BOT_WARP3_X = 574; // right
-    public final int OPS_BOT_WARP3_Y = 709;
-    public final int OPS_BOT_WARP4_X = 512; // before fr
-    public final int OPS_BOT_WARP4_Y = 696;
-    public final int OPS_BOT_WARP5_X = 512; // roof
-    public final int OPS_BOT_WARP5_Y = 758;
-    public final int OPS_BOT_WARP6_X = 512; // fr
-    public final int OPS_BOT_WARP6_Y = 721;
 
     // TACTICAL OPS ABILITY PRIZE #s
     public final int OPS_INCREASE_MAX_OP = -21;
@@ -804,7 +818,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "cmdBan", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "cmdUnban", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!savedata", acceptedMessages, this, "cmdSaveData", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "cmdDie", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!diewithoutsave", acceptedMessages, this, "cmdDie", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!savedie", acceptedMessages, this, "cmdSaveDie", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!shutdowninfo", acceptedMessages, this, "cmdShutdownInfo", OperatorList.HIGHMOD_LEVEL );
@@ -978,7 +992,7 @@ public class distensionbot extends SubspaceBot {
                 "| !shutdowninfo         |  Shows time until shutdown",
                 "| !savedata             |  Saves all player data to database",
                 "| !savedie              |  Saves all player data and runs a delayed !die",
-                "| !die                  |  Kills DistensionBot -- use !savedie instead!",
+                "| !diewithoutsave       |  Kills DistensionBot -- use !savedie instead!",
                 "|______________________/",
                 "    DB COMMANDS",
                 "  !db-changename <oldname>:<newname>   - Changes name from oldname to newname.",
@@ -6182,15 +6196,29 @@ public class distensionbot extends SubspaceBot {
             int base;
             base = getArmyID() % 2;
             // At round start of 2 flag game, warp to special spawn
-            if( roundStart && warpInBase && !m_singleFlagMode ) {
-                int xmod = (int)(Math.random() * 10) - 5;
-                int ymod = (int)(Math.random() * 10) - 5;
-                x = 512 + xmod;
-                if( base == 0 )
-                    y = BASE_CENTER_0_Y_COORD;
-                else
-                    y = BASE_CENTER_1_Y_COORD;
-                y += ymod;
+            if( roundStart ) {
+                if( !m_singleFlagMode ) {
+                    if( warpInBase ) {
+                        int xmod = (int)(Math.random() * 10) - 5;
+                        int ymod = (int)(Math.random() * 10) - 5;
+                        x = 512 + xmod;
+                        if( base == 0 )
+                            y = BASE_CENTER_0_Y_COORD;
+                        else
+                            y = BASE_CENTER_1_Y_COORD;
+                        y += ymod;
+                    }
+                } else {
+                    if( base == 0 ) {
+                        x = LEFT_EAR_X;
+                        y = LEFT_EAR_Y;
+                    } else {
+                        x = RIGHT_EAR_X;
+                        y = RIGHT_EAR_Y;
+                    }
+                    y += (int)(Math.random() * 4) - 2;
+                    x += (int)(Math.random() * 4) - 2;
+                }
             } else {
                 Random r = new Random();
                 x = 512 + (r.nextInt(SPAWN_X_SPREAD) - (SPAWN_X_SPREAD / 2));
