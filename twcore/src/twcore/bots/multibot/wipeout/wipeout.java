@@ -65,16 +65,22 @@ public class wipeout extends MultiModule{
 	}
 
 	public void handleEvent(PlayerLeft event){
+	    if(!isRunning)return;
 	    String name = m_botAction.getPlayerName(event.getPlayerID());
 	    if(name == null)return;
 	    players.remove(name);
+	    if(players.size() == 1)
+            handleWin(players.toString().replace("]", "").trim());
 	}
 	
 	public void handleEvent(FrequencyShipChange event){
+	    if(!isRunning)return;
 	    String name = m_botAction.getPlayerName(event.getPlayerID());
         if(name == null)return;
         if(event.getShipType() == 0)
             players.remove(name);
+        if(players.size() == 1)
+            handleWin(players.toString().replace("]", "").trim());
 	}
 	
 	public void handleCommand(String name, String message)
@@ -125,7 +131,7 @@ public class wipeout extends MultiModule{
 	public void spec()
 	{		
 		if(gotKill.isEmpty()){
-		    if(needsMsg)
+		    if(needsMsg && isRunning)
 		        m_botAction.sendArenaMessage("No one got a kill, time extended.");
 			return;
 		}
