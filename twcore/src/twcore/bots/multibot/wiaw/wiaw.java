@@ -28,7 +28,7 @@ public class wiaw extends MultiModule {
     
     public Vector<String> topTen;
     
-    public String mySQLHost = "local";//TODO:change to website
+    public String mySQLHost = "website";
     public String t_word, t_definition;
     public Random m_rnd;
     
