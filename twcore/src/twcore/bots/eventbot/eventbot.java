@@ -793,7 +793,7 @@ public class eventbot extends SubspaceBot {
                     m_botAction.sendRemotePrivateMessage(name, " "+request.getRequester()+" requested event '"+request.getEvent()+"' "+comments+"(rank: "+getEventRank(request.getEvent())+")");
                 }
                 else if(subscriptionType.equals(SUBSCRIBE_BWJS))
-                    m_botAction.sendRemotePrivateMessage(name, "Please start a new game in "+request.getEvent()+". (Requested by "+name+")");
+                    m_botAction.sendRemotePrivateMessage(name, "Please start a new game in "+request.getEvent()+". (Requested by "+request.getRequester()+")");
             }
         }
     }
