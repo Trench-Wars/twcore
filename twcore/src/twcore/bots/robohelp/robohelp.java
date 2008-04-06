@@ -209,7 +209,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleDictionary( String name, String message ) {
-        m_botAction.sendChatMessage( "Dictionary definition:  http://dictionary.reference.com/search?q=" + message );
+        m_botAction.sendChatMessage( "Dictionary definition:  http://dictionary.reference.com/search?q=" + message.replaceAll("\\s", "%20") );
     }
 
     /**
@@ -218,7 +218,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleThesaurus( String name, String message ) {
-        m_botAction.sendChatMessage( "Thesaurus entry:  http://thesaurus.reference.com/search?q=" + message );
+        m_botAction.sendChatMessage( "Thesaurus entry:  http://thesaurus.reference.com/search?q=" + message.replaceAll("\\s", "%20") );
     }
 
     /**
@@ -227,7 +227,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleJavadocs( String name, String message ) {
-        m_botAction.sendChatMessage( "Javadocs entry:  http://javadocs.org/" + message );
+        m_botAction.sendChatMessage( "Javadocs entry:  http://javadocs.org/" + message.replaceAll("\\s", "%20") );
     }
     
     /**
@@ -236,7 +236,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleGoogle( String name, String message ) {
-    	m_botAction.sendChatMessage( "Google search: http://www.google.com/search?hl=en&q=" + message + "&btng=Google+Search");
+    	m_botAction.sendChatMessage( "Google search: http://www.google.com/search?q=" + message.replaceAll("\\s", "%20"));
     }
     
     /*public void handleGoogle( String name, String message ){
@@ -249,7 +249,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleWikipedia( String name, String message ) {
-    	m_botAction.sendChatMessage( "Wikipedia search: http://en.wikipedia.org/wiki/" + message);
+    	m_botAction.sendChatMessage( "Wikipedia search: http://en.wikipedia.org/wiki/" + message.replaceAll("\\s", "%20"));
     }
 
 /*    public String doGoogleSearch( String searchString ){
