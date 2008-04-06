@@ -28,7 +28,7 @@ public class wiaw extends MultiModule {
     
     public Vector<String> topTen;
     
-    public String mySQLHost = "website";
+    public String mySQLHost = "local";
     public String t_word, t_definition;
     public Random m_rnd;
     
@@ -97,7 +97,7 @@ public class wiaw extends MultiModule {
         String sender = m_botAction.getPlayerName(event.getPlayerID());
         if (messageType == Message.ARENA_MESSAGE && message.equals("NOTICE: Game over") && gameProgress == WORD_DISPLAYED)
             doRoundStats();
-        else
+        else if(messageType == Message.PRIVATE_MESSAGE)
             handleCommands(sender, message);
     }
     

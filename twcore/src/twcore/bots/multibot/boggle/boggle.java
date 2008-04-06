@@ -95,7 +95,7 @@ public class boggle extends MultiModule {
         String sender = m_botAction.getPlayerName(event.getPlayerID());
         if (messageType == Message.ARENA_MESSAGE && message.equals("NOTICE: Game over") && gameProgress == BOARD_DISPLAYED)
             doRoundStats();
-        else
+        else if(messageType == Message.PRIVATE_MESSAGE)
             handleCommands(sender, message);
     }
     
