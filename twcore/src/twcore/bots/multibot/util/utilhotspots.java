@@ -15,6 +15,7 @@ import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
+import twcore.core.util.CodeCompiler;
 
 /**
  * HotSpots 2.0 - milosh - 2.15.08
@@ -101,7 +102,7 @@ public class utilhotspots extends MultiUtil {
         if (message.equalsIgnoreCase("!stopwatching"))
             do_stopWatch(sender);
         if (message.equalsIgnoreCase("!listspotkeys"))
-            m_botAction.smartPrivateMessageSpam(sender, Tools.getKeysMessage());
+            m_botAction.smartPrivateMessageSpam(sender, CodeCompiler.getKeysMessage());
         if (message.equalsIgnoreCase("!loadspots"))
             do_loadSpots(sender);
     }
@@ -131,7 +132,7 @@ public class utilhotspots extends MultiUtil {
                     Iterator<String> i = watch.getMessages().iterator();
                     while (i.hasNext()) {
                         String msg = i.next();
-                        msg = Tools.replaceKeys(m_botAction, p, msg);
+                        msg = CodeCompiler.replaceKeys(m_botAction, p, msg);
                         m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), msg);
                     }
                 }
@@ -251,7 +252,7 @@ public class utilhotspots extends MultiUtil {
             return;
         }
         if (msg.startsWith("*")) {
-            if (!Tools.isAllowed(msg) && !opList.isSmod(sender)) {
+            if (!CodeCompiler.isAllowed(msg) && !opList.isSmod(sender)) {
                 m_botAction.sendSmartPrivateMessage(sender, "Command not added; Restricted or unknown.");
                 return;
             }

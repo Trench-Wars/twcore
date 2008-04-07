@@ -11,6 +11,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
+import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
 
 /**
@@ -183,7 +184,7 @@ public class utilmessages extends MultiUtil
       int soundCode = 0;
       if(numArgs == 2)
         soundCode = Integer.parseInt(argTokens.nextToken());
-      if(message.startsWith("*") && !Tools.isAllowed(message))
+      if(message.startsWith("*") && !CodeCompiler.isAllowed(message))
     	  throw new IllegalArgumentException("Unknown or restricted command.");
       MsgTask msgTask = new MsgTask(message, soundCode);
 
@@ -321,7 +322,7 @@ public class utilmessages extends MultiUtil
       if(lowerCommand.equalsIgnoreCase("!msglist"))
         doMsgListCmd(sender);
       if(lowerCommand.equalsIgnoreCase("!keylist"))
-    	  m_botAction.smartPrivateMessageSpam(sender, Tools.getKeysMessage());
+    	  m_botAction.smartPrivateMessageSpam(sender, CodeCompiler.getKeysMessage());
       if(lowerCommand.startsWith("!msgdel "))
         doMsgDelCmd(sender, command.substring(8));
       if(lowerCommand.equalsIgnoreCase("!msgsoff"))
@@ -367,7 +368,7 @@ public class utilmessages extends MultiUtil
     {
       msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE){
-    	message = Tools.replaceKeys(m_botAction, p, msgTask.getMessage());
+    	message = CodeCompiler.replaceKeys(m_botAction, p, msgTask.getMessage());
     	if(message != null)
     		m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message, msgTask.getSoundCode());
       }

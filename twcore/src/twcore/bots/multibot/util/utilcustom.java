@@ -12,6 +12,7 @@ import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.util.Tools;
+import twcore.core.util.CodeCompiler;
 
 /**
  * @author milosh
@@ -119,7 +120,7 @@ public class utilcustom extends MultiUtil {
         if (cmd.equalsIgnoreCase("!loadcmds"))
             do_loadCommands(name);
         if (cmd.equalsIgnoreCase("!listkeys"))
-            m_botAction.smartPrivateMessageSpam(name, Tools.getKeysMessage());
+            m_botAction.smartPrivateMessageSpam(name, CodeCompiler.getKeysMessage());
     }
     
     /**
@@ -155,7 +156,7 @@ public class utilcustom extends MultiUtil {
         String command = message.substring(0, index);
         String msg = message.substring(index + 1);
         if (msg.startsWith("*")) {
-            if (!Tools.isAllowed(msg) && !opList.isSmod(name)) {
+            if (!CodeCompiler.isAllowed(msg) && !opList.isSmod(name)) {
                 m_botAction.sendSmartPrivateMessage(name, "Command not added; Restricted or unknown.");
                 return;
             }
@@ -333,7 +334,7 @@ public class utilcustom extends MultiUtil {
             Iterator<String> it = messages.iterator();
             while (it.hasNext()) {
                 String message = it.next();
-                message = Tools.replaceKeys(m_botAction, p, message);
+                message = CodeCompiler.replaceKeys(m_botAction, p, message);
                 if (message != null)
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
             }
