@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.WeakHashMap;
 import java.util.HashMap;
+import java.util.Random;
 
 import twcore.core.command.TempSettingsManager;
 import twcore.core.game.Arena;
@@ -1167,6 +1168,40 @@ public class BotAction
             p.updatePlayerPositionManuallyAfterWarp( xTiles, yTiles );
             spectatePlayer(p.getPlayerID());
         }
+    }
+    
+    /**
+     * Warps a player to the given tile coordinates with a radius.
+     * @param playerID PlayerID of the player to be warped
+     * @param xTiles X coordinate (1 to 1024)
+     * @param yTiles Y coordinate (1 to 1024)
+     * @param radius Radius from (xTiles, yTiles) player can be warped
+     */
+    public void warpTo(int playerID, int xTiles, int yTiles, int radius){
+        Random ran = new Random();
+        int x = 0, y = 0;
+        while(Math.sqrt( Math.pow(y-yTiles, 2) + Math.pow(x-xTiles,2)) > radius){
+            x = ran.nextInt( (radius*2) + 1 ) + (xTiles - radius);
+            y = ran.nextInt( (radius*2) + 1 ) + (yTiles - radius);
+        }
+        warpTo(playerID, x, y);        
+    }
+    
+    /**
+     * Warps a player to the given tile coordinates with a radius.
+     * @param playerName The name of the player.
+     * @param xTiles X coordinate (1 to 1024)
+     * @param yTiles Y coordinate (1 to 1024)
+     * @param radius Radius from (xTiles, yTiles) player can be warped
+     */
+    public void warpTo(String playerName, int xTiles, int yTiles, int radius){
+        Random ran = new Random();
+        int x = 0, y = 0;
+        while(Math.sqrt( Math.pow(y-yTiles, 2) + Math.pow(x-xTiles,2)) > radius){
+            x = ran.nextInt( (radius*2) + 1 ) + (xTiles - radius);
+            y = ran.nextInt( (radius*2) + 1 ) + (yTiles - radius);
+        }
+        warpTo(playerName, x, y);
     }
 
     /**
