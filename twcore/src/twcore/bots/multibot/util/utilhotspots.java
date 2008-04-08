@@ -101,8 +101,6 @@ public class utilhotspots extends MultiUtil {
             do_watch(sender);
         if (message.equalsIgnoreCase("!stopwatching"))
             do_stopWatch(sender);
-        if (message.equalsIgnoreCase("!listspotkeys"))
-            m_botAction.smartPrivateMessageSpam(sender, CodeCompiler.getKeysMessage());
         if (message.equalsIgnoreCase("!loadspots"))
             do_loadSpots(sender);
     }
@@ -133,7 +131,8 @@ public class utilhotspots extends MultiUtil {
                     while (i.hasNext()) {
                         String msg = i.next();
                         msg = CodeCompiler.replaceKeys(m_botAction, p, msg);
-                        m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), msg);
+                        if(msg != null)
+                            m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), msg);
                     }
                 }
             }
@@ -514,7 +513,6 @@ public class utilhotspots extends MultiUtil {
                 "!removespot <index>     - Removes the HotSpot at <index>",
                 "!clearspots             - Remove all hotspots.",
                 "!listspots              - Lists your hotspots",
-                "!listspotkeys           - Returns a menu of available escape keys.",
                 "!addmsg <index> <text>  - Adds a message/command to send the player in contact with this spot",
                 "!removemsg <idx> <idx>  - Removes a message from a hotspot. <HotSpot index> <Message index>",
                 "!listmsg <index>        - Lists all messages for the specified HotSpot. <HotSpot index>",

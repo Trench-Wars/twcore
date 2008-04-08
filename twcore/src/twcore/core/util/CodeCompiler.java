@@ -33,56 +33,56 @@ public final class CodeCompiler {
         Random rand = new Random();
         Date today = Calendar.getInstance().getTime();
         TimeZone tz = TimeZone.getDefault();
-        if(message.contains("&name"))
-            message = message.replace("&name", p.getPlayerName());
-        if(message.contains("&frequency"))
-            message = message.replace("&frequency", Integer.toString(p.getFrequency()));
-        if(message.contains("&date"))
-            message = message.replace("&date", SimpleDateFormat.getDateInstance( SimpleDateFormat.SHORT ).format(today));
-        if(message.contains("&time"))
-            message = message.replace("&time", SimpleDateFormat.getTimeInstance().format(today) + " (" + tz.getDisplayName(true, TimeZone.SHORT) + ")");
-        while(message.contains("&randomfreq"))
-            message = message.replaceFirst("&randomfreq", Integer.toString(rand.nextInt( 9998 )));
-        if(message.contains("&shipname"))
-            message = message.replace("&shipname", Tools.shipName(p.getShipType()));
-        if(message.contains("&shipnum"))
-            message = message.replace("&shipnum", Integer.toString(p.getShipType()));
-        while(message.contains("&randomship"))
-            message = message.replaceFirst("&randomship", Integer.toString((rand.nextInt( 7 )) + 1));       
-        if(message.contains("&shipslang"))
-            message = message.replace("&shipslang", Tools.shipNameSlang(p.getShipType()));        
-        if(message.contains("&wins"))
-            message = message.replace("&wins", Integer.toString(p.getWins()));      
-        if(message.contains("&losses"))
-            message = message.replace("&losses", Integer.toString(p.getLosses()));      
-        if(message.contains("&bounty"))
-            message = message.replace("&bounty", Integer.toString(p.getBounty()));
-        if(message.contains("&id"))
-            message = message.replace("&id", Integer.toString(p.getPlayerID()));
-        if(message.contains("&ping"))
-            message = message.replace("&ping", Integer.toString(p.getPing() * 10));
-        if(message.contains("&squad"))
-            message = message.replace("&squad", p.getSquadName());      
-        if(message.contains("&x")){
+        if(message.contains("@name"))
+            message = message.replace("@name", p.getPlayerName());
+        if(message.contains("@frequency"))
+            message = message.replace("@frequency", Integer.toString(p.getFrequency()));
+        if(message.contains("@date"))
+            message = message.replace("@date", SimpleDateFormat.getDateInstance( SimpleDateFormat.SHORT ).format(today));
+        if(message.contains("@time"))
+            message = message.replace("@time", SimpleDateFormat.getTimeInstance().format(today) + " (" + tz.getDisplayName(true, TimeZone.SHORT) + ")");
+        while(message.contains("@randomfreq"))
+            message = message.replaceFirst("@randomfreq", Integer.toString(rand.nextInt( 9998 )));
+        if(message.contains("@shipname"))
+            message = message.replace("@shipname", Tools.shipName(p.getShipType()));
+        if(message.contains("@shipnum"))
+            message = message.replace("@shipnum", Integer.toString(p.getShipType()));
+        while(message.contains("@randomship"))
+            message = message.replaceFirst("@randomship", Integer.toString((rand.nextInt( 7 )) + 1));       
+        if(message.contains("@shipslang"))
+            message = message.replace("@shipslang", Tools.shipNameSlang(p.getShipType()));        
+        if(message.contains("@wins"))
+            message = message.replace("@wins", Integer.toString(p.getWins()));      
+        if(message.contains("@losses"))
+            message = message.replace("@losses", Integer.toString(p.getLosses()));      
+        if(message.contains("@bounty"))
+            message = message.replace("@bounty", Integer.toString(p.getBounty()));
+        if(message.contains("@id"))
+            message = message.replace("@id", Integer.toString(p.getPlayerID()));
+        if(message.contains("@ping"))
+            message = message.replace("@ping", Integer.toString(p.getPing() * 10));
+        if(message.contains("@squad"))
+            message = message.replace("@squad", p.getSquadName());      
+        if(message.contains("@x")){
             bot.spectatePlayer(p.getPlayerID());
-            message = message.replace("&x", Integer.toString(p.getXTileLocation()));
+            message = message.replace("@x", Integer.toString(p.getXTileLocation()));
             bot.stopSpectatingPlayer();
         }
-        if(message.contains("&y")){
+        if(message.contains("@y")){
             bot.spectatePlayer(p.getPlayerID());
-            message = message.replace("&y", Integer.toString(p.getYTileLocation()));
+            message = message.replace("@y", Integer.toString(p.getYTileLocation()));
             bot.stopSpectatingPlayer();
         }
-        while(message.contains("&randomtile"))
-            message = message.replaceFirst("&randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
-        if(message.contains("&botname"))
-            message = message.replace("&botname", bot.getBotName());
-        if(message.contains("&arenasize"))
-            message = message.replace("&arenasize", Integer.toString(bot.getArenaSize()));
-        if(message.contains("&playingplayers"))
-            message = message.replace("&playingplayers", Integer.toString(bot.getPlayingPlayers().size()));      
-        if(message.contains("&freqsize(") && message.indexOf(")", message.indexOf("&freqsize(")) != -1){
-            int beginIndex = message.indexOf("&freqsize(");
+        while(message.contains("@randomtile"))
+            message = message.replaceFirst("@randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
+        if(message.contains("@botname"))
+            message = message.replace("@botname", bot.getBotName());
+        if(message.contains("@arenasize"))
+            message = message.replace("@arenasize", Integer.toString(bot.getArenaSize()));
+        if(message.contains("@playingplayers"))
+            message = message.replace("@playingplayers", Integer.toString(bot.getPlayingPlayers().size()));      
+        if(message.contains("@freqsize(") && message.indexOf(")", message.indexOf("@freqsize(")) != -1){
+            int beginIndex = message.indexOf("@freqsize(");
             int endIndex = message.indexOf(")", beginIndex);
             try{
                 int x = Integer.parseInt(message.substring(beginIndex + 10, endIndex));
@@ -92,8 +92,8 @@ public final class CodeCompiler {
                 message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
             }
         }
-        if(message.contains("&pfreqsize(") && message.indexOf(")", message.indexOf("&pfreqsize(")) != -1){
-            int beginIndex = message.indexOf("&pfreqsize(");
+        if(message.contains("@pfreqsize(") && message.indexOf(")", message.indexOf("@pfreqsize(")) != -1){
+            int beginIndex = message.indexOf("@pfreqsize(");
             int endIndex = message.indexOf(")", beginIndex);
             try{
                 int x = Integer.parseInt(message.substring(beginIndex + 11, endIndex));
@@ -112,14 +112,14 @@ public final class CodeCompiler {
                 return "Syntax error. Please notify host.";
             }
         }
-        if(message.contains("&!") && message.contains("&&")){
+        if(message != null && message.contains("@!") && message.contains("@@")){
             while(true){
-                int beginIndex = message.indexOf("&!");
-                int endIndex = message.indexOf("&&");
+                int beginIndex = message.indexOf("@!");
+                int endIndex = message.indexOf("@@");
                 if(beginIndex != -1 && endIndex != -1 && endIndex > beginIndex){
                     bot.sendPrivateMessage(bot.getBotName(), message.substring(beginIndex + 1, endIndex));
-                    message = message.replaceFirst("&!", " ");
-                    message = message.replaceFirst("&&", " ");
+                    message = message.replaceFirst("@!", " ");
+                    message = message.replaceFirst("@@", " ");
                 }
                 else break;
             }
@@ -151,10 +151,10 @@ public final class CodeCompiler {
      * @return - True if the condition is found to be true. Else false.
      */
     private static boolean doIfStatements(String s) {
-        s = s.substring(1, s.indexOf("}")).trim();
-        if (s.replace(" ", "").equals("") || s.replace(" ", "").equalsIgnoreCase("ELSE"))
+        s = s.substring(s.indexOf("{") + 1, s.indexOf("}")).trim();
+        if (s.replace(" ", "").equals("") || s.replace(" ", "").equalsIgnoreCase("()"))
             return true;
-        String temp = s.substring(s.indexOf("("), s.lastIndexOf(")") + 1);
+        String temp = "(" + s + ")";
         int i = 0;
         while (!(temp.trim().equalsIgnoreCase("TRUE") || temp.trim().equalsIgnoreCase("FALSE"))) {
             String lastSmallStatement = temp.substring(temp.lastIndexOf("("), temp.indexOf(")", temp.lastIndexOf("(")) + 1);
@@ -316,30 +316,30 @@ public final class CodeCompiler {
     public static String[] getKeysMessage(){
         String msg[] = {
             "+=================== Escape Keys ===================+",
-            "| &name           - The player's name.              |",
-            "| &wins           - The player's wins.              |",
-            "| &losses         - The player's losses.            |",
-            "| &frequency      - The player's frequency.         |",
-            "| &id             - The player's id(not userid)     |",
-            "| &botname        - The bot's name.                 |",
-            "| &shipnum        - The player's ship number.       |",
-            "| &shipname       - The player's ship.              |",
-            "| &shipslang      - Player's ship in vernacular.    |",
-            "| &arenasize      - Number of players in arena.     |",
-            "| &playingplayers - Number of players in a ship.    |",
-            "| &freqsize(#)    - Number of players on freq #.    |",
-            "| &pfreqsize(#)   - Num. of players in ship. Freq # |",
-            "| &squad          - The player's squad.             |",
-            "| &bounty         - The player's bounty.            |",
-            "| &x              - X Location(Tiles)               |",
-            "| &y              - Y Location(Tiles)               |",
-            "| &randomfreq     - A random number(0 - 9998)       |",        
-            "| &randomship     - A random number(1-8)            |",            
-            "| &randomtile     - A random number(1-1022)         |",           
-            "| &ping           - The player's ping in ms.        |",
-            "| &date           - The current date.               |",
-            "| &time           - The current time.               |",
-            "| &!command&&     - Issues a command to the bot, but|",
+            "| @name           - The player's name.              |",
+            "| @wins           - The player's wins.              |",
+            "| @losses         - The player's losses.            |",
+            "| @frequency      - The player's frequency.         |",
+            "| @id             - The player's id(not userid)     |",
+            "| @botname        - The bot's name.                 |",
+            "| @shipnum        - The player's ship number.       |",
+            "| @shipname       - The player's ship.              |",
+            "| @shipslang      - Player's ship in vernacular.    |",
+            "| @arenasize      - Number of players in arena.     |",
+            "| @playingplayers - Number of players in a ship.    |",
+            "| @freqsize(#)    - Number of players on freq #.    |",
+            "| @pfreqsize(#)   - Num. of players in ship. Freq # |",
+            "| @squad          - The player's squad.             |",
+            "| @bounty         - The player's bounty.            |",
+            "| @x              - X Location(Tiles)               |",
+            "| @y              - Y Location(Tiles)               |",
+            "| @randomfreq     - A random number(0 - 9998)       |",        
+            "| @randomship     - A random number(1-8)            |",            
+            "| @randomtile     - A random number(1-1022)         |",           
+            "| @ping           - The player's ping in ms.        |",
+            "| @date           - The current date.               |",
+            "| @time           - The current time.               |",
+            "| @!command@@     - Issues a command to the bot, but|",
             "|                    the player receives no message.|",
             "+===================================================+",
         };
@@ -352,6 +352,7 @@ public final class CodeCompiler {
      * @return true if the string is allowed. else false.
      */
     public static boolean isAllowed(String s){
+        if(s == null)return false;
         if(s.startsWith("*setship")   ||
            s.startsWith("*setfreq")   ||
            s.startsWith("*warpto")    ||

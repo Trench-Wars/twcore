@@ -10,7 +10,6 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
-import twcore.core.util.Tools;
 import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
 
@@ -90,7 +89,6 @@ public class utilmessages extends MultiUtil
         "!AddGreetMsg <Msg>:<Sound>                -- Greets a player with <Msg> when they enter the arena.",
         "!AddTargetMsg <Person>:<Msg>              -- Adds <Msg> to be PM'd when <Person> is killed.",
         "!MsgList                                  -- Displays all of the current message tasks.",
-        "!KeyList                                  -- Displays available escape keys.",
         "!MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
         "!ClearTargets                             -- Clears all message target data.",
         "!MsgsOff                                  -- Turns all of the messages off."
@@ -321,8 +319,6 @@ public class utilmessages extends MultiUtil
         doAddTargetMsgCmd( sender, command.substring(14));
       if(lowerCommand.equalsIgnoreCase("!msglist"))
         doMsgListCmd(sender);
-      if(lowerCommand.equalsIgnoreCase("!keylist"))
-    	  m_botAction.smartPrivateMessageSpam(sender, CodeCompiler.getKeysMessage());
       if(lowerCommand.startsWith("!msgdel "))
         doMsgDelCmd(sender, command.substring(8));
       if(lowerCommand.equalsIgnoreCase("!msgsoff"))

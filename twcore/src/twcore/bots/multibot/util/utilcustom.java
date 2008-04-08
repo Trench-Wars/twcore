@@ -44,8 +44,7 @@ public class utilcustom extends MultiUtil {
                 "!removecmd <!cmd>           - Removes a custom command and all its actions",
                 "!listcmd                    - Shows a list of custom commands and their actions",
                 "!describe <!cmd> <text>     - Submits a description of <!cmd> that shows in help",
-                "!loadcmds                   - Loads registered commands for this arena.",
-                "!listkeys                   - Shows a list of available escape phrases"   
+                "!loadcmds                   - Loads registered commands for this arena."  
         };        
         return message;
     }
@@ -118,9 +117,7 @@ public class utilcustom extends MultiUtil {
         if (cmd.startsWith("!describe "))
             do_describe(name, cmd.substring(10));
         if (cmd.equalsIgnoreCase("!loadcmds"))
-            do_loadCommands(name);
-        if (cmd.equalsIgnoreCase("!listkeys"))
-            m_botAction.smartPrivateMessageSpam(name, CodeCompiler.getKeysMessage());
+            do_loadCommands(name);         
     }
     
     /**
