@@ -2265,6 +2265,21 @@ public class BotAction
     }
 
     /**
+     * Gets the number of flags a frequency is carrying.
+     * @param freq - The frequency number.
+     * @return - The number of flags carried.
+     */
+    public int getFlagsOnFreq(int freq){
+        int flags = 0;
+        Iterator<Player> i = getFreqPlayerIterator(freq);
+        while( i.hasNext() ){
+            Player p = i.next();
+            flags += p.getFlagsCarried();
+        }
+        return flags;
+    }
+    
+    /**
      * Drops all flags the bot is carrying.
      */
     public void dropFlags()

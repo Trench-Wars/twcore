@@ -80,7 +80,11 @@ public final class CodeCompiler {
         if(message.contains("@arenasize"))
             message = message.replace("@arenasize", Integer.toString(bot.getArenaSize()));
         if(message.contains("@playingplayers"))
-            message = message.replace("@playingplayers", Integer.toString(bot.getPlayingPlayers().size()));      
+            message = message.replace("@playingplayers", Integer.toString(bot.getPlayingPlayers().size()));
+        if(message.contains("@flags"))
+            message = message.replace("@flags", Integer.toString(p.getFlagsCarried()));
+        if(message.contains("@teamflags"))
+            message = message.replace("@teamflags", Integer.toString(bot.getFlagsOnFreq(p.getFrequency())));
         if(message.contains("@freqsize(") && message.indexOf(")", message.indexOf("@freqsize(")) != -1){
             int beginIndex = message.indexOf("@freqsize(");
             int endIndex = message.indexOf(")", beginIndex);
