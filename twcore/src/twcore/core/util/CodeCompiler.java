@@ -107,7 +107,10 @@ public final class CodeCompiler {
                 message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
             }
         }
-        message = doMathStatements(message);  
+        while (message.contains("[") && message.contains("]")) {
+            String lastSmallStatement = message.substring(message.lastIndexOf("["), message.indexOf("]", message.lastIndexOf("[")) + 1);
+            message = message.replace(lastSmallStatement, compileMathStatement(lastSmallStatement.trim()));
+        }  
         if(message.trim().startsWith("{")){
             try{
                 message = CodeCompiler.compile(message);
@@ -223,19 +226,6 @@ public final class CodeCompiler {
             } catch (Exception e) {}
         }
         return "FALSE";
-    }
-    
-    /**
-     * This method solves all math statements from inside out.
-     * @param s - The message
-     * @return - The message with math statements replaced by results.
-     */
-    private static String doMathStatements(String temp) {
-        while (temp.contains("[") && temp.contains("]")) {
-            String lastSmallStatement = temp.substring(temp.lastIndexOf("["), temp.indexOf("]", temp.lastIndexOf("[")) + 1);
-            temp = temp.replace(lastSmallStatement, compileMathStatement(lastSmallStatement.trim()));
-        }
-        return temp;
     }
     
     private static String compileMathStatement(String s){
@@ -356,7 +346,6 @@ public final class CodeCompiler {
      * @return true if the string is allowed. else false.
      */
     public static boolean isAllowed(String s){
-        if(s == null)return false;
         if(s.startsWith("*setship")   ||
            s.startsWith("*setfreq")   ||
            s.startsWith("*warpto")    ||

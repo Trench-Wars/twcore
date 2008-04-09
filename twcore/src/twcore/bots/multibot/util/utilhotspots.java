@@ -131,7 +131,9 @@ public class utilhotspots extends MultiUtil {
                     while (i.hasNext()) {
                         String msg = i.next();
                         msg = CodeCompiler.replaceKeys(m_botAction, p, msg);
-                        if(msg != null && CodeCompiler.isAllowed(msg))
+                        if(msg.startsWith("*") && !CodeCompiler.isAllowed(msg))
+                            msg = null;
+                        if(msg != null)
                             m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), msg);
                     }
                 }

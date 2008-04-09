@@ -326,7 +326,9 @@ public class utilcustom extends MultiUtil {
             while (it.hasNext()) {
                 String message = it.next();
                 message = CodeCompiler.replaceKeys(m_botAction, p, message);
-                if (message != null && CodeCompiler.isAllowed(message))
+                if(message.startsWith("*") && !CodeCompiler.isAllowed(message))
+                    message = null;
+                if (message != null)
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
             }
             
