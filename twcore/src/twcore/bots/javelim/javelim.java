@@ -1525,21 +1525,33 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
             return;
         }
         for(KimPlayer kp : m_allPlayers.values()) {
-            m_botAction.SQLBackgroundQuery(m_connectionName, null
+            try{
+            m_botAction.SQLQueryAndClose(m_connectionName
                 , "INSERT INTO tblJavelim (fcName,fnGames,fnKills,fnDeaths) "
                 + "VALUES ('" + Tools.addSlashes(kp.m_name) + "',1," + kp.m_kills + "," + kp.m_deaths + ") "
-                + "ON DUPLICATE KEY UPDATE fnGames=fnGames+1,fnKills=fnKills+VALUES(fnKills),fnDeaths=fnDeaths+VALUES(fnDeaths)");
+                + "ON DUPLICATE KEY UPDATE fnGames = fnGames + 1, fnKills = fnKills + VALUES(fnKills), fnDeaths = fnDeaths + VALUES(fnDeaths)");
+            }catch(SQLException e){
+                Tools.printStackTrace(e);
+            }
         }
 
         if(m_mvp != null) {
-            m_botAction.SQLBackgroundQuery(m_connectionName, null
-                , "UPDATE tblJavelim SET fnMVPs=fnMVPs+1 WHERE fcName='" + Tools.addSlashes(m_mvp.m_name) + "'");
+            try{
+            m_botAction.SQLQueryAndClose(m_connectionName
+                , "UPDATE tblJavelim SET fnMVPs = fnMVPs + 1 WHERE fcName='" + Tools.addSlashes(m_mvp.m_name) + "'");
+            }catch(SQLException e){
+                Tools.printStackTrace(e);
+            }
         }
 
         if(m_winner != null && m_winner.size() != 0) {
             for(KimPlayer kp : m_winner) {
-                m_botAction.SQLBackgroundQuery(m_connectionName, null
-                    , "UPDATE tblJavelim SET fnWins=fnWins+1 WHERE fcName='" + Tools.addSlashes(kp.m_name) + "'");
+                try{
+                m_botAction.SQLQueryAndClose(m_connectionName
+                    , "UPDATE tblJavelim SET fnWins= fnWins + 1 WHERE fcName='" + Tools.addSlashes(kp.m_name) + "'");
+                }catch(SQLException e){
+                    Tools.printStackTrace(e);
+                }
             }
         }
     }

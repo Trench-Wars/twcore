@@ -11,6 +11,7 @@ import twcore.core.util.Tools;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
+import java.sql.SQLException;
 
 final class Poll {
 
@@ -114,10 +115,14 @@ final class Poll {
             m_botAction.sendArenaMessage("Voted for winner: " + names.toString());
 
             if(connectionName != null) {
-                m_botAction.SQLBackgroundQuery(connectionName, null
+                try{
+                m_botAction.SQLQueryAndClose(connectionName
                     , "INSERT INTO tblJavelim (fcName,fnPredictions) "
                     + "VALUES " + Tools.addSlashes(namesForSQL.toString()) + " "
                     + "ON DUPLICATE KEY UPDATE fnPredictions=fnPredictions+1");
+                }catch(SQLException e){
+                    Tools.printStackTrace(e);
+                }
             }
         }
     }
