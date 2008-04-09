@@ -182,8 +182,6 @@ public class utilmessages extends MultiUtil
       int soundCode = 0;
       if(numArgs == 2)
         soundCode = Integer.parseInt(argTokens.nextToken());
-      if(message.startsWith("*") && !CodeCompiler.isAllowed(message))
-    	  throw new IllegalArgumentException("Unknown or restricted command.");
       MsgTask msgTask = new MsgTask(message, soundCode);
 
       msgList.add(msgTask);
@@ -365,7 +363,7 @@ public class utilmessages extends MultiUtil
       msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE){
     	message = CodeCompiler.replaceKeys(m_botAction, p, msgTask.getMessage());
-    	if(message != null)
+    	if(message != null && CodeCompiler.isAllowed(message))
     		m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message, msgTask.getSoundCode());
       }
     }

@@ -10,7 +10,6 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
 import twcore.core.util.Tools;
-import twcore.core.util.CodeCompiler;
 
 /**
  * twbotstandard.java - a general utility module for event refs, haphazardly-arranged.
@@ -40,8 +39,6 @@ public class utilstandard extends MultiUtil {
             "!setship <freq> <ship>  - Changes everyone on <freq> to <ship>",
             "!setfreq <freq>         - Changes everyone to <freq>",
             "!setfreq <ship> <freq>  - Changes everyone in <ship> to <freq> (-<ship> for 'other than')",
-            "!masspm <message>       - Private messages everyone in the arena with <message>",
-            "!listkeys               - Displays a list of available escape keys",
             "!merge <freq1> <freq2>  - Changes everyone on <freq1> to <freq2>",
             "!teamsspec <numTeams>   - Makes requested # of teams, specs all, & keeps freqs.   *",
             "!specfreq <freq>        - Specs everyone on <freq>, but keeps them on their freq. *",
@@ -125,17 +122,6 @@ public class utilstandard extends MultiUtil {
                     m_botAction.setAlltoFreq( freq );
                 }
             }catch( Exception e ){}
-        } else if( message.startsWith("!masspm ")){
-            String msg = message.substring(8);            
-            Iterator<Player> i = m_botAction.getPlayerIterator();
-            while( i.hasNext() ){
-                Player p = i.next();
-                String s = CodeCompiler.replaceKeys(m_botAction, p, msg);
-                if(s != null && (CodeCompiler.isAllowed(s) || m_opList.isSmod(name)))
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s);
-            }
-        } else if(message.equalsIgnoreCase("!listkeys")){
-            m_botAction.smartPrivateMessageSpam(name, CodeCompiler.getKeysMessage());            
         } else if( message.startsWith( "!merge ")) {
             String[] parameters = Tools.stringChopper( message.substring( 7 ).trim(), ' ' );
             try{

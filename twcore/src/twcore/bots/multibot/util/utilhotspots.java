@@ -131,7 +131,7 @@ public class utilhotspots extends MultiUtil {
                     while (i.hasNext()) {
                         String msg = i.next();
                         msg = CodeCompiler.replaceKeys(m_botAction, p, msg);
-                        if(msg != null)
+                        if(msg != null && CodeCompiler.isAllowed(msg))
                             m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), msg);
                     }
                 }
@@ -249,12 +249,6 @@ public class utilhotspots extends MultiUtil {
         if (index >= hotSpots.size() || index < 0) {
             m_botAction.sendPrivateMessage(sender, "The given HotSpot does not exist.");
             return;
-        }
-        if (msg.startsWith("*")) {
-            if (!CodeCompiler.isAllowed(msg) && !opList.isSmod(sender)) {
-                m_botAction.sendSmartPrivateMessage(sender, "Command not added; Restricted or unknown.");
-                return;
-            }
         }
         hotSpots.elementAt(index).addMessage(msg);
         m_botAction.sendSmartPrivateMessage(sender, "Message added to HotSpot at index " + index);

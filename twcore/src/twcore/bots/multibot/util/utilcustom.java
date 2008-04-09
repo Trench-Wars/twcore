@@ -152,12 +152,6 @@ public class utilcustom extends MultiUtil {
         }
         String command = message.substring(0, index);
         String msg = message.substring(index + 1);
-        if (msg.startsWith("*")) {
-            if (!CodeCompiler.isAllowed(msg) && !opList.isSmod(name)) {
-                m_botAction.sendSmartPrivateMessage(name, "Command not added; Restricted or unknown.");
-                return;
-            }
-        }
         if (!commands.containsKey(command))
             commands.put(command, new CustomCommand(command));
         commands.get(command).addMessage(msg);
@@ -332,7 +326,7 @@ public class utilcustom extends MultiUtil {
             while (it.hasNext()) {
                 String message = it.next();
                 message = CodeCompiler.replaceKeys(m_botAction, p, message);
-                if (message != null)
+                if (message != null && CodeCompiler.isAllowed(message))
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
             }
             

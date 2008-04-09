@@ -48,14 +48,10 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.Vector;
-import java.util.TimerTask;
-import java.util.ArrayList;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
-import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
-import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
 
 public class utilwarp extends MultiUtil {
@@ -72,15 +68,9 @@ public class utilwarp extends MultiUtil {
     public static final int MIN_COORD = 1;
     public static final int MAX_COORD = 1022;
     
-    public static final int SPAWN_TIME = 5005;
-    
-    private ArrayList<String> spawnTasks;
-    
     private static final String database = "website";
     
-    public void init() {
-        spawnTasks = new ArrayList<String>();
-    }
+    public void init() {}
     
     public void requestEvents(ModuleEventRequester modEventReq) {}
     
@@ -89,10 +79,6 @@ public class utilwarp extends MultiUtil {
                 "!Warpto <X>:<Y>:<Radius>                  -- Warps everyone to <X>, <Y> within a distance of <Radius>.",
                 "!WarpFreq <Freq>:<X>:<Y>:<Radius>         -- Warps freq <Freq> to <X>, <Y> within a distance of <Radius>.",
                 "!WarpShip <Ship>:<X>:<Y>:<Radius>         -- Warps ship <Ship> to <X>, <Y> within a distance of <Radius>.",
-                "!Spawn <Message>                          -- Adds a spawn message <Message>",
-                "!SpawnList                                -- Shows a list of all spawn tasks.",
-                "!SpawnDel <Index>                         -- Deletes the spawn task at index <Index>",
-                "!SpawnOff                                 -- Removes all spawn tasks.",
                 "!SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>.",
                 "!SetupWarpList                            -- Displays the setup warp information.",
                 "!Whereami                                 -- Shows your current coords."
@@ -157,82 +143,6 @@ public class utilwarp extends MultiUtil {
         } catch (NumberFormatException e) {
             throw new NumberFormatException("Please use the following format: !WarpShip <Ship>:<X>:<Y>:<Radius>.");
         }
-    }
-    
-    /**
-     * This handles the player death event and spawns if needed.
-     * 
-     * @param event
-     *            is the player death event.
-     */
-    public void handleEvent(PlayerDeath event) {
-        if (spawnTasks.size() > 0) {
-            new SpawnTimer(m_botAction.getPlayer(event.getKilleeID()));
-        }
-    }
-    
-    /**
-     * This method displays a list of all of the spawn tasks.
-     * 
-     * @param sender
-     *            is the person that messaged the bot.
-     */
-    public void doSpawnListCmd(String sender) {
-        int numTasks = spawnTasks.size();
-        
-        if (numTasks == 0)
-            m_botAction.sendSmartPrivateMessage(sender, "There are currently no spawn tasks.");
-        else {
-            for (int index = 0; index < numTasks; index++) {
-                m_botAction.sendSmartPrivateMessage(sender, "Task " + index + ") " + spawnTasks.get(index));
-            }
-        }
-    }
-    
-    /**
-     * This method removes a spawn task.
-     * 
-     * @param sender
-     *            is the person that messaged the bot.
-     * @param argString
-     *            is the spawn task number that is to be removed.
-     */
-    public void doSpawnDelCmd(String sender, String argString) {
-        try {
-            int taskNumber = Integer.parseInt(argString);
-            spawnTasks.remove(taskNumber);
-            m_botAction.sendSmartPrivateMessage(sender, "Task at index " + taskNumber + " removed.");
-        } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(sender, "Please use the following format: !SpawnDel <Index>.");
-        }
-    }
-    
-    /**
-     * This method clears all of the spawn tasks.
-     */
-    public void doSpawnOffCmd(String sender) {
-        if (!spawnTasks.isEmpty()) {
-            spawnTasks.clear();
-            m_botAction.sendSmartPrivateMessage(sender, "All spawn tasks have been cleared.");
-        } else {
-            m_botAction.sendSmartPrivateMessage(sender, "There are no spawn tasks to remove.");
-        }
-    }
-    
-    /**
-     * This method spawns all players at a specified location.
-     * 
-     * @param sender
-     *            is the person operating the bot.
-     * @param argString
-     *            is the string of the arguments.
-     */
-    public void doSpawnCmd(String sender, String argString) {
-        if (CodeCompiler.isAllowed(argString) || m_opList.isSmod(sender)) {
-            spawnTasks.add(argString);
-            m_botAction.sendSmartPrivateMessage(sender, "Spawn task added.");
-        } else
-            m_botAction.sendSmartPrivateMessage(sender, "Message not added; Restricted or unknown");
     }
     
     public void doSetupWarpListCmd(String sender) {
@@ -354,14 +264,6 @@ public class utilwarp extends MultiUtil {
                 doWarpFreqCmd(sender, message.substring(10));
             else if (command.startsWith("!warpship "))
                 doWarpShipCmd(sender, message.substring(10));
-            else if (command.startsWith("!spawn "))
-                doSpawnCmd(sender, message.substring(7));
-            else if (command.equalsIgnoreCase("!spawnlist"))
-                doSpawnListCmd(sender);
-            else if (command.startsWith("!spawndel "))
-                doSpawnDelCmd(sender, message.substring(10));
-            else if (command.equalsIgnoreCase("!spawnoff"))
-                doSpawnOffCmd(sender);
             else if (command.equalsIgnoreCase("!setupwarp"))
                 doSetupWarpCmd(sender, "");
             else if (command.startsWith("!setupwarp "))
@@ -509,25 +411,5 @@ public class utilwarp extends MultiUtil {
         for (int index = 0; index < length - string.length(); index++)
             returnString.append(" ");
         return returnString.toString();
-    }
-    
-    private class SpawnTimer {
-        Player p;
-        private TimerTask runIt = new TimerTask() {
-            public void run() {
-                Iterator<String> i = spawnTasks.iterator();
-                while (i.hasNext()) {
-                    String s = i.next();
-                    s = CodeCompiler.replaceKeys(m_botAction, p, s);
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s);
-                }
-                
-            }
-        };
-        
-        public SpawnTimer(Player p) {
-            this.p = p;
-            m_botAction.scheduleTask(runIt, SPAWN_TIME);
-        }
     }
 }
