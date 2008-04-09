@@ -1,191 +1,272 @@
 package twcore.bots.multibot.payback;
 
-import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
-import static twcore.core.EventRequester.PLAYER_DEATH;
-import static twcore.core.EventRequester.PLAYER_LEFT;
-
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.TreeMap;
 import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.BotAction;
+import twcore.core.EventRequester;
+import twcore.core.OperatorList;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.events.FrequencyShipChange;
+import twcore.core.util.Tools;
+import twcore.core.game.Player;
+
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.FrequencyShipChange;
 
-/** 
- * Payback module.
- * 
- * Author: Ikrit
- *
- *  Version: 1.0
- */
-public class payback extends MultiModule
-{
-    HashMap <String,PaybackTask>payback;
-    HashMap <String,HashSet<String>>beingTracked;
-
-    int time = 30;
-
-    boolean started = false;
-
-    public void init() {
-        payback = new HashMap<String,PaybackTask>();
-        beingTracked = new HashMap<String,HashSet<String>>();
+public class payback extends MultiModule {
+    
+    public OperatorList opList;
+    
+    public TreeMap<String, PaybackPlayer> playerMap = new TreeMap<String, PaybackPlayer>();
+    public boolean isRunning = false;
+    public int m_time = 30, m_frequency = 0;
+    public TimerTask update;
+    
+    public String[] helpmsg = {
+            "+----------------------Payback-----------------------+",
+            "| !start -- Starts the game.                         |",
+            "| !stop  -- Stops the game.                          |",
+            "| !time # -- Changes the amount of time a player has |",
+            "|             to avenge himself to #.                |",
+            "+----------------------------------------------------+"
+    };
+    
+    public String[] rulesmsg = {
+            "+----------------Rules of Payback----------------+",
+            "| Revenge is sweet. If you're killed you have a  |",
+            "| limited amount of time to avenge yourself! The |",
+            "| last man standing wins.                        |",
+            "+------------------------------------------------+"
+    };
+    public void init(){
+        opList = m_botAction.getOperatorList();
     }
-
-    public void requestEvents(ModuleEventRequester events)
-    {
-        events.request(this, PLAYER_DEATH);
-        events.request(this, PLAYER_LEFT);
-        events.request(this, FREQUENCY_SHIP_CHANGE);
+    public void requestEvents(ModuleEventRequester req){
+        req.request(this, EventRequester.PLAYER_LEFT);
+        req.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+        req.request(this, EventRequester.PLAYER_DEATH);
     }
-
-    public void handleEvent(PlayerDeath event) {
-        if(!started) return;
-
-        String killee = m_botAction.getPlayerName(event.getKilleeID()).toLowerCase();
-        String killer = m_botAction.getPlayerName(event.getKillerID()).toLowerCase();
-
-        if(payback.containsKey(killee + killer)) {
-            PaybackTask pb = (PaybackTask)payback.get(killee + killer);
-            m_botAction.cancelTask(pb);
-            payback.remove(killee + killer);
-            m_botAction.sendPrivateMessage(killer, "You have avenged your death and may continue to play.");
-        } else {
-            PaybackTask pb = new PaybackTask(killee, m_botAction);
-            payback.put(killer + killee, pb);
-            if(beingTracked.containsKey(killer)) {
-                HashSet <String>killed = beingTracked.get(killer);
-                killed.add(killee);
-                beingTracked.put(killer, killed);
-            } else {
-                HashSet <String>killed = new HashSet<String>();
-                killed.add(killee);
-                beingTracked.put(killer, killed);
-            }
-            m_botAction.scheduleTask(pb, time * 1000);
-            m_botAction.sendPrivateMessage(killee, "How can you continue to play after that? Avenge your death or be spec'd!");
-        }
-    }
-
-    public void handleEvent(PlayerLeft event) {
-        if(!started) return;
-
-        String player = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
-        if(beingTracked.containsKey(player)) {
-            Iterator<String> it = beingTracked.get(player).iterator();
-            while(it.hasNext()) {
-                String avenger = it.next();
-                if(payback.containsKey(player + avenger)) {
-                    PaybackTask pb = (PaybackTask)payback.get(player + avenger);
-                    m_botAction.cancelTask(pb);
-                    payback.remove(player + avenger);
-                    m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");
-                }
-            }
-        }
-    }
-
-    public void handleEvent(FrequencyShipChange event) {
-        if(!started) return;
-
-        if(event.getShipType() == 0) {
-            String player = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
-            if(beingTracked.containsKey(player)) {
-                Iterator<String> it = beingTracked.get(player).iterator();
-                while(it.hasNext()) {
-                    String avenger = (String)it.next();
-                    if(payback.containsKey(player + avenger)) {
-                        PaybackTask pb = (PaybackTask)payback.get(player + avenger);
-                        m_botAction.cancelTask(pb);
-                        payback.remove(player + avenger);
-                        m_botAction.sendPrivateMessage(avenger, player + " has run away like a coward, consider your death avenged.");
-                    }
-                }
-            }
-        }
-    }
-
-    public void handleEvent(Message event) {
+    
+    public void handleEvent(Message event){
         String message = event.getMessage();
-        if(event.getMessageType() == Message.PRIVATE_MESSAGE)
-        {
-            String name = m_botAction.getPlayerName(event.getPlayerID());
-            if(opList.isER(name))
-                handleCommand(name, message);
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        int messageType = event.getMessageType();
+        
+        if(messageType == Message.PRIVATE_MESSAGE && opList.isER(name))
+            handleCommands(name, message);
+        if(messageType == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("!lagout"))
+            doLagOut(name);
+        if(messageType == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("!rules"))
+            m_botAction.privateMessageSpam(name, rulesmsg);
+    }
+    
+    public void handleCommands(String name, String msg){
+        if(msg.equalsIgnoreCase("!start"))
+            doStartGame(name);
+        else if(msg.equalsIgnoreCase("!stop"))
+            doStopGame(name);
+        else if(msg.startsWith("!settime "))
+            doSetTime(name, msg.substring(9));
+        else if(msg.equalsIgnoreCase("!displayrules"))
+            m_botAction.arenaMessageSpam(rulesmsg);
+    }
+    
+    public void handleEvent(PlayerLeft event){
+        if(!isRunning)return;
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        if(playerMap.containsKey(name)){
+            doRemovePlayer(name);
+            m_botAction.sendArenaMessage(name + " is out!");
+            if(playerMap.size() == 1){
+                doEndGame(playerMap.firstKey());
+            }
         }
     }
-
-    public void handleCommand(String name, String message) {
-        if(message.toLowerCase().startsWith("!start")) {
-            m_botAction.sendArenaMessage("Payback started, GO!", 104);
-            started = true;
-            cancel();
-        } else if(message.toLowerCase().startsWith("!stop")) {
-            m_botAction.sendArenaMessage("Payback stopped!", 13);
-            cancel();
-        } else if(message.toLowerCase().startsWith("!time ")) {
-            time = 30;
-            try {
-                time = Integer.parseInt(message.split(" ", 2)[1]);
-            } catch(Exception e) {}
+    
+    public void handleEvent(FrequencyShipChange event){
+        if(!isRunning)return;
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        if(!playerMap.containsKey(name))
+            playerMap.put(name, new PaybackPlayer(name));
+        if(event.getShipType() == 0){
+            doRemovePlayer(name);
+            m_botAction.sendArenaMessage(name + " is out!");
+            if(playerMap.size() == 1){
+                doEndGame(playerMap.firstKey());
+            }
         }
     }
-
-    public String[] getModHelpMessage() {
-        String helps[] = {
-                "Payback.  [Quickly kill anyone who kills you -- or be spec'd!]",
-                "!start        - Starts payback.",
-                "!stop         - Stops payback.",
-                "!time #       - Sets time a player has to kill anyone who kills them," +
-                "                in seconds, before they are spec'd."
+    
+    public void handleEvent(PlayerDeath event){
+        if(!isRunning)return;
+        String killerName = m_botAction.getPlayerName(event.getKillerID());
+        String killedName = m_botAction.getPlayerName(event.getKilleeID());
+        PaybackPlayer killer = playerMap.get(killerName);
+        PaybackPlayer killed = playerMap.get(killedName);
+        if(killer.needsRevengeOn(killedName)){
+            killer.gotRevengeOn(killedName);
+            m_botAction.sendSmartPrivateMessage( killerName, "You got revenge on " + killedName + "!");
+            m_botAction.sendSmartPrivateMessage( killedName, killerName + " got revenge on you!");
+        }
+        else if(!killed.needsRevengeOn(killerName)){
+            killed.addPayBack(killerName, System.currentTimeMillis());
+            m_botAction.sendSmartPrivateMessage( killerName, "You've committed murder! " + killedName + " has " + m_time + " seconds to get you back!");
+            m_botAction.sendSmartPrivateMessage( killedName, killerName + " killed you! You have " + m_time + " seconds to pay back the favor!");
+        }
+        else if(killed.needsRevengeOn(killerName)){
+            m_botAction.sendSmartPrivateMessage( killedName, "Stop letting that sucker get you! Avenge yourself!");
+        }
+    }
+    
+    public void doLagOut(String name){
+        Player p = m_botAction.getPlayer(name);
+        if(p == null)return;
+        if(playerMap.containsKey(name) && p.getShipType() == 0){
+            m_botAction.setShip(name, 1);
+            m_botAction.setFreq(name, m_frequency);
+            m_frequency++;
+        }
+    }
+    
+    public void doStartGame(String name){
+        if(isRunning){
+            m_botAction.sendSmartPrivateMessage( name, "The game has already been started!");
+            return;
+        }
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+        while( i.hasNext() ){
+            Player p = i.next();
+            playerMap.put(p.getPlayerName(), new PaybackPlayer(p.getPlayerName()));
+            m_botAction.setFreq(p.getPlayerName(), m_frequency);
+            m_frequency++;
+        }
+        update = new TimerTask(){
+            public void run(){
+                Iterator<PaybackPlayer> i = playerMap.values().iterator();
+                while( i.hasNext() ){
+                    PaybackPlayer p = i.next();
+                    if(p.hasOutstandingPaybacks()){
+                        m_botAction.sendSmartPrivateMessage( p.getName(), "You failed to avenge yourself! Better luck next time.");
+                        m_botAction.specWithoutLock(p.getName());
+                    }
+                    else
+                        p.giveWarnings();
+                }
+                if(playerMap.size() == 1)
+                    doEndGame(playerMap.firstKey());
+            }
         };
-
-        return helps;
+        m_botAction.scheduleTaskAtFixedRate(update, 1000, 1000);
+        m_botAction.scoreResetAll();
+        m_botAction.shipResetAll();
+        m_botAction.sendArenaMessage("Payback has begun!", Tools.Sound.GOGOGO);
+        isRunning = true;
     }
-
-    public void cancel() {
-        Iterator<PaybackTask> it = payback.values().iterator();
-        while(it.hasNext()) {
-            PaybackTask pb = it.next();
-            if(!pb.isCancelled())
-                m_botAction.cancelTask(pb);
+    
+    public void doStopGame(String name){
+        if(!isRunning){
+            m_botAction.sendSmartPrivateMessage( name, "There isn't a game in progress!");
+            return;
         }
-
-        payback.clear();
-        beingTracked.clear();
+        m_botAction.sendArenaMessage("Game stopped. -" + name);
+        m_botAction.toggleLocked();
+        cancel();
     }
-
-    public boolean isUnloadable() {
-        return true;
+    
+    public void doEndGame(String name){
+        m_botAction.sendArenaMessage(name + " has won the game!", Tools.Sound.HALLELUJAH);
+        m_botAction.toggleLocked();
+        cancel();
     }
-
-}
-
-class PaybackTask extends TimerTask {
-
-    String player;
-    BotAction m_botAction;
-    boolean cancelled = false;
-
-    public PaybackTask(String name, BotAction ba) {
-        player = name;
-        m_botAction = ba;
+    
+    public void doRemovePlayer(String name){
+        playerMap.remove(name);
+        Iterator<PaybackPlayer> i = playerMap.values().iterator();
+        while( i.hasNext() ){
+            PaybackPlayer p = i.next();
+            if(p.needsRevengeOn(name))
+                p.gotRevengeOn(name);
+        }
     }
-
-    public void run() {
-        m_botAction.spec(player);
-        m_botAction.spec(player);
-        m_botAction.sendPrivateMessage(player, "You're supposed to kill your killer... not sit around and eat grasshoppers in left field.");
-        cancelled = true;
+    
+    public void doSetTime(String name, String msg){
+        if(isRunning){
+            m_botAction.sendSmartPrivateMessage( name, "Please modify the time before the start of the game.");
+            return;
+        }
+        try{
+            int time = Integer.parseInt(msg);          
+            if(m_time >= 15){
+                m_time = time;
+                m_botAction.sendSmartPrivateMessage( name, "Time set to " + time + " seconds.");
+            }
+            else{
+               m_time = 15;
+               m_botAction.sendSmartPrivateMessage( name, "Time can be set to a minimum of 15 seconds. Time set to 15 seconds.");
+            }
+                
+        }catch(NumberFormatException e){
+            m_botAction.sendSmartPrivateMessage( name, "You must submit a number!");
+        }
     }
-
-    public boolean isCancelled() {
-        return cancelled;
+    
+    public String[] getModHelpMessage(){ return helpmsg; }
+    public boolean isUnloadable(){return true; }
+    public void cancel(){
+        playerMap.clear();
+        m_time = 30;
+        m_frequency = 0;
+        isRunning = false;
+        try{
+            m_botAction.cancelTask(update);
+        }catch(Exception e){}
+    }
+    
+    private class PaybackPlayer {
+        private TreeMap<String, Long> paybackList = new TreeMap<String, Long>();
+        private String name;
+        private PaybackPlayer(String name){ this.name = name;}
+        
+        private void addPayBack(String name, long time){
+            paybackList.put(name, time);
+        }
+        
+        private boolean hasOutstandingPaybacks(){
+            Iterator<Long> i = paybackList.values().iterator();
+            while( i.hasNext() ){
+                long x = i.next();
+                if(System.currentTimeMillis() - x > m_time * 1000)
+                    return true;
+            }
+            return false;
+        }
+        
+        private void giveWarnings(){
+            Iterator<Long> i = paybackList.values().iterator();
+            while( i.hasNext() ){
+                long x = i.next();
+                long t = ((m_time*1000) - (System.currentTimeMillis() - x));
+                if( t < 10500 && t > 9500)
+                    m_botAction.sendSmartPrivateMessage( name, "You have 10 seconds to avenge yourself!");                 
+            }
+        }
+        
+        private boolean needsRevengeOn(String name){
+            if(paybackList.containsKey(name))
+                return true;
+            else return false;
+        }
+        
+        private void gotRevengeOn(String name){
+            paybackList.remove(name);
+        }
+        
+        private String getName(){
+            return name;
+        }
+        
     }
 }
