@@ -302,10 +302,14 @@ public class distensionbot extends SubspaceBot {
     private boolean m_singleFlagMode;                   // True if flag mode is working on just a single flag
     private static final int PLAYERS_FOR_2_FLAGS = 25;  // Minimum # players required to activate 2 flags
 
+    private int m_flagRules = 0;                        // 0: Use original rules (pub-style timer)
+                                                        // 1: Use hybrid rules (tug-a-war)
     private int m_freq0Score, m_freq1Score;             // # rounds won
     private int m_roundNum = 0;							// Current round
     private int flagSecondsRequiredDoubleFlag = 60;     // Flag seconds required to win
     private int flagSecondsRequiredSingleFlag = 120;    // Flag seconds required to win with 1 flag
+    private int flagSecondsHybridFactor = 5;            // Factor by which flag seconds required to win
+                                                        //    increase when using hybrid mode
     private HashMap <String,Integer>m_playerTimes;      // Roundtime of player on freq
     private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
     //private HashMap <String,Integer>m_lagShips;         // Ships of players who were DC'd, for !lagout use
@@ -5156,7 +5160,7 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendArenaMessage( "This sector is no longer safe: a war is brewing ...  All pilots, report for duty.  You have " + getTimeString(3 * INTERMISSION_SECS) + " to prepare for the assault.");
                         flagTimer = new FlagCountTask();    // Dummy, for displaying score.
                         intermissionTimer = new IntermissionTask();
-                        m_botAction.scheduleTask( intermissionTimer, (2900 * INTERMISSION_SECS) );
+                        m_botAction.scheduleTask( intermissionTimer, (2950 * INTERMISSION_SECS) );
                         m_botAction.setTimer(3);
                         m_roundNum = 0;
                         flagTimeStarted = true;
@@ -8279,11 +8283,28 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
+        // Toggle rules every other round.
+        // TODO: Decide on which is best, or a better way to switch.  Maybe all "clinching" rounds
+        // are done in a certain way?  Or switch off each war?
+        if( m_flagRules == 0 )
+            m_flagRules = 1;
+        else
+            m_flagRules = 0;
+
         if( m_roundNum == 1 )
             if( m_singleFlagMode )
-                m_botAction.sendArenaMessage( "To win the battle, hold the single top flag for " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+                if( m_flagRules == 0 ) {
+                    m_botAction.sendArenaMessage( "OBJECTIVE: Hold the single top flag for an unbroken " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+                } else {
+                    m_botAction.sendArenaMessage( "OBJECTIVE: Hold the single top flag for a total " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+                }
             else
-                m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+                if( m_flagRules == 0 ) {
+                    m_botAction.sendArenaMessage( "OBJECTIVE: Hold both flags for an unbroken " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+                } else {
+                    m_botAction.sendArenaMessage( "OBJECTIVE: Hold both flags for a total " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+
+                }
         m_botAction.cancelTask(startTimer);
 
         startTimer = new StartRoundTask();
@@ -8901,7 +8922,7 @@ public class distensionbot extends SubspaceBot {
      * Upon reaching the time needed to win, it fires the end of the round.
      */
     private class FlagCountTask extends TimerTask {
-        int sectorHoldingArmyID, breakingArmyID, securingArmyID;
+        int sectorHoldingArmyID, breakingArmyID, securingArmyID, advantageArmyID;
         int flagSecondsRequired, secondsHeld, totalSecs, breakSeconds, securingSeconds, preTimeCount;
         String breakerName = "";
         String securerName = "";
@@ -8919,6 +8940,7 @@ public class distensionbot extends SubspaceBot {
             sectorHoldingArmyID = -1;
             breakingArmyID = -1;
             securingArmyID = -1;
+            advantageArmyID = -1;
             flagSecondsRequired = getActualTimeNeededForFlagWin();
             secondsHeld = 0;
             totalSecs = 0;
@@ -8977,8 +8999,9 @@ public class distensionbot extends SubspaceBot {
          */
         public void doSectorHold() {
             sectorHoldingArmyID = securingArmyID;
+            if( m_flagRules == 0 )
+                secondsHeld = 0;
             m_botAction.showObject(LVZ_FLAG_CLAIMED); // Shows flag claimed lvz
-            secondsHeld = 0;
             claimBeingBroken = false;
             claimBeingEstablished = false;
             securingSeconds = 0;
@@ -9058,7 +9081,8 @@ public class distensionbot extends SubspaceBot {
             breakSeconds = 0;
             breakingArmyID = -1;
             sectorHoldingArmyID = -1;
-            secondsHeld = 0;
+            if( m_flagRules == 0 )
+                secondsHeld = 0;
             flagObjs.hideObject(LVZ_SECTOR_HOLD);
             m_botAction.manuallySetObjects( flagObjs.getObjects() );
             do_updateTimer();
@@ -9222,9 +9246,18 @@ public class distensionbot extends SubspaceBot {
                 else
                     return "We are currently in between battles (battle " + m_roundNum + " starting soon).  Score:  " + getScoreDisplay();
             }
-            if( sectorHoldingArmyID == -1 )
-                return "BATTLE " + m_roundNum + " Stats:  No army holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
-            return "BATTLE " + m_roundNum + " Stats: " + m_armies.get(sectorHoldingArmyID).getName() + "(" + sectorHoldingArmyID + ") has held the sector for " + getTimeString(secondsHeld) + ", needs " + getTimeString( flagSecondsRequired - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+
+            if( m_flagRules == 0 ) {
+                if( sectorHoldingArmyID == -1 )
+                    return "BATTLE " + m_roundNum + " Stats: NO-ONE holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+                return "BATTLE " + m_roundNum + " Stats: " + m_armies.get(sectorHoldingArmyID).getName() + "(" + sectorHoldingArmyID + ") has held the sector for " + getTimeString(secondsHeld) + ", needs " + getTimeString( flagSecondsRequired - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+            } else {
+                String advantage = ( advantageArmyID == -1 ? "NO-ONE" : m_armies.get(advantageArmyID).getName() );
+                String holder = ( sectorHoldingArmyID == -1 ? "NO-ONE" : m_armies.get(sectorHoldingArmyID).getName() );
+                if( advantage.equals( holder ) )
+                    return "BATTLE " + m_roundNum + " Stats: " + holder + " has advantage and holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+                return "BATTLE " + m_roundNum + " Stats: " + advantage + " has advantage; " + holder + " holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+            }
         }
 
         /**
@@ -9315,7 +9348,10 @@ public class distensionbot extends SubspaceBot {
                     if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
                         battle = "THE DECISIVE " + battle;
 
-                    m_botAction.sendArenaMessage( battle + " HAS BEGUN!  Capture " + (m_singleFlagMode ? "top flag" : "both flags" ) + " for " + getTimeString( flagSecondsRequired ) + " to win the battle.", SOUND_START_ROUND );
+                    if( m_flagRules == 0 )
+                        m_botAction.sendArenaMessage( battle + " HAS BEGUN!  Capture " + (m_singleFlagMode ? "top flag" : "both flags" ) + " for an unbroken " + getTimeString( flagSecondsRequired ) + " to win the battle.", SOUND_START_ROUND );
+                    else
+                        m_botAction.sendArenaMessage( battle + " HAS BEGUN!  Capture " + (m_singleFlagMode ? "top flag" : "both flags" ) + " for a total of " + getTimeString( flagSecondsRequired ) + " to win the battle.", SOUND_START_ROUND );
                     resetAllFlagData();
                     setupPlayerTimes();
                     warpPlayers();
@@ -9350,17 +9386,14 @@ public class distensionbot extends SubspaceBot {
                 // For the first second the claim is being broken, add 3 seconds back on to the clock.
                 // For every additional second, 1 second is added back on to the clock.
                 // (This means an unsuccessful break is not a waste.)
-                // Also, if a break reverts the clock back to the full hold time, it instantly breaks,
-                // regardless of time spent breaking.
-                if( breakSeconds == 1 )
-                    secondsHeld -= 3;
-                else
-                    secondsHeld -= 1;
-                if( secondsHeld < 0 ) {
-                    secondsHeld = 0;
-                    doSectorBreak();
-                    return;
+                if( breakingArmyID != advantageArmyID ) {
+                    if( breakSeconds == 1 )
+                        secondsHeld -= 3;
+                    else
+                        secondsHeld -= 1;
                 }
+                if( secondsHeld < 0 )
+                    secondsHeld = 0;
                 do_updateTimer();
                 return;
             }
@@ -9376,7 +9409,20 @@ public class distensionbot extends SubspaceBot {
             if( sectorHoldingArmyID == -1 )
                 return;
 
-            secondsHeld++;
+
+            // If the army holding the sector does not have advantage, we SUBTRACT time,
+            //  as the time belongs to the holding army
+            if( sectorHoldingArmyID != advantageArmyID ) {
+                secondsHeld -= 3;
+                // If it reduces the time to 0, now the holding army has advantage
+                if( secondsHeld <= 0 ) {
+                    secondsHeld = 0;
+                    advantageArmyID = sectorHoldingArmyID;
+                    m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " now has the sector advantage.", 1 );
+                }
+            } else {
+                secondsHeld++;
+            }
 
             do_updateTimer();
 
