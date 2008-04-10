@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -411,13 +410,15 @@ public class robohelp extends SubspaceBot {
         }
 
         m_botAction.sendSmartPrivateMessage( name, "Events hosted within the last " + span + " hour(s): " );
-        Set<String> set = events.keySet();
-        Iterator<String> i = set.iterator();
+        int numHosted = 0;
+        Iterator<String> i = events.keySet().iterator();
         while (i.hasNext()) {
             String curEvent = i.next();
             EventData d = events.get( curEvent );
             m_botAction.sendSmartPrivateMessage( name, trimFill( curEvent ) + d.getDups() );
+            numHosted += d.getDups();
         }
+        m_botAction.sendSmartPrivateMessage( name, "----- Total: " + numHosted + "-----");
     }
 
     public String trimFill( String line ) {
