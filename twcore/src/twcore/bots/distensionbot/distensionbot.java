@@ -196,10 +196,10 @@ public class distensionbot extends SubspaceBot {
     public final int OPS_BOT_WARP6_Y = 721;
 
     // 1-flag earwarp
-    public final int LEFT_EAR_X = 0;
-    public final int LEFT_EAR_Y = 0;
-    public final int RIGHT_EAR_X = 0;
-    public final int RIGHT_EAR_Y = 0;
+    public final int LEFT_EAR_X = 474;
+    public final int LEFT_EAR_Y = 278;
+    public final int RIGHT_EAR_X = 550;
+    public final int RIGHT_EAR_Y = 278;
 
 
 
@@ -1432,7 +1432,7 @@ public class distensionbot extends SubspaceBot {
                     if( p.getShipNum() == 9 ) {
                         m_botAction.setFreq( p.getArenaPlayerID(), p.getArmyID() );
                     } else {
-                        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Hey, what're you trying to pull?  If you want to !assist the other army, do it the right way!" );
+                        //m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Hey, what're you trying to pull?  If you want to !assist the other army, do it the right way!" );
                         m_botAction.specWithoutLock( p.getArenaPlayerID() );
                     }
                 }
@@ -2778,11 +2778,11 @@ public class distensionbot extends SubspaceBot {
         }
         upgradeNum--;  // Fix number to correspond with internal numbering scheme
         if( upgradeNum < 0 || upgradeNum >= NUM_UPGRADES )
-            throw new TWCoreException( "Exactly which do you mean there?  Maybe check the !armory first.  #" + upgradeNum + " doesn't work for me." );
+            throw new TWCoreException( "Exactly which do you mean there?  Maybe check the !armory first.  #" + (upgradeNum + 1) + " doesn't work for me." );
         ShipUpgrade upgrade = m_shipGeneralData.get( shipNum ).getUpgrade( upgradeNum );
         int currentUpgradeLevel = p.getPurchasedUpgrade( upgradeNum );
         if( upgrade == null || currentUpgradeLevel == -1 )
-            throw new TWCoreException( "Exactly which do you mean there?  Maybe check the !armory first.  #" + upgradeNum + " doesn't work for me." );
+            throw new TWCoreException( "Exactly which do you mean there?  Maybe check the !armory first.  #" + (upgradeNum + 1) + " doesn't work for me." );
         if( currentUpgradeLevel <= 0 )
             throw new TWCoreException( "You haven't exactly upgraded that, now have you?" );
 
@@ -5059,6 +5059,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendSmartPrivateMessage( name, args[1] + "=" + (b?"true":"false") + " on " + args[0] );
     }
 
+
     // ***** COMMAND ASSISTANCE METHODS
 
     /**
@@ -5190,6 +5191,28 @@ public class distensionbot extends SubspaceBot {
         if( m_armies.get(0).getPilotsInGame() == 0 && m_armies.get(1).getPilotsInGame() == 0 ) {
             resetAllFlagData();
         }
+    }
+
+    /**
+     * Based on number of players in the arena and whether the game is using one or
+     * two flags, return the time required for a flag win.
+     * @return
+     */
+    public int getActualTimeNeededForFlagWin() {
+        int timeNeeded;
+        int players = m_botAction.getNumPlaying();
+        if( m_singleFlagMode ) {
+            timeNeeded = flagSecondsRequiredSingleFlag;
+            if( players >= 20 )
+                timeNeeded -= 15;
+        } else {
+            timeNeeded = flagSecondsRequiredDoubleFlag;
+            if( players >= 35 )
+                timeNeeded -= 10;
+            if( players >= 40 )
+                timeNeeded -= 5;
+        }
+        return timeNeeded;
     }
 
     /**
@@ -8258,9 +8281,9 @@ public class distensionbot extends SubspaceBot {
 
         if( m_roundNum == 1 )
             if( m_singleFlagMode )
-                m_botAction.sendArenaMessage( "To win the battle, hold the single top flag for " + getTimeString( flagSecondsRequiredSingleFlag ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+                m_botAction.sendArenaMessage( "To win the battle, hold the single top flag for " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
             else
-                m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + getTimeString( flagSecondsRequiredDoubleFlag ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
+                m_botAction.sendArenaMessage( "To win the battle, hold both flags for " + getTimeString( getActualTimeNeededForFlagWin() ) + ".  Winning " + SCORE_REQUIRED_FOR_WIN + " battles more than the enemy will win the war." );
         m_botAction.cancelTask(startTimer);
 
         startTimer = new StartRoundTask();
@@ -8896,10 +8919,7 @@ public class distensionbot extends SubspaceBot {
             sectorHoldingArmyID = -1;
             breakingArmyID = -1;
             securingArmyID = -1;
-            if( m_singleFlagMode )
-                flagSecondsRequired = flagSecondsRequiredSingleFlag;
-            else
-                flagSecondsRequired = flagSecondsRequiredDoubleFlag;
+            flagSecondsRequired = getActualTimeNeededForFlagWin();
             secondsHeld = 0;
             totalSecs = 0;
             breakSeconds = 0;
