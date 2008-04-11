@@ -148,7 +148,7 @@ public class utilevents extends MultiUtil {
         while( i.hasNext() ){
             Player p = i.next();
             message = CodeCompiler.replaceKeys(m_botAction, p, message);
-            if(message.startsWith("*") && !CodeCompiler.isAllowed(message) && !opList.isSmod(name))
+            if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message) && !opList.isSmod(name))
                 message = null;
             if(message != null);
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
@@ -427,7 +427,7 @@ public class utilevents extends MultiUtil {
             while( i.hasNext() ){
                 String s = i.next();
                 s = CodeCompiler.replaceKeys(m_botAction, p, s);
-                if(s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
+                if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                     s = null;
                 if(s != null)
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
@@ -441,7 +441,7 @@ public class utilevents extends MultiUtil {
             while( i.hasNext() ){
                 String s = i.next();
                 s = CodeCompiler.replaceKeys(m_botAction, p, s);
-                if(s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
+                if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                     s = null;
                 if(s != null)
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
@@ -462,7 +462,7 @@ public class utilevents extends MultiUtil {
         while( i.hasNext() ){
             String s = i.next();
             s = CodeCompiler.replaceKeys(m_botAction, killer, s);
-            if(s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
+            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
             if(s != null)
                 m_botAction.sendUnfilteredPrivateMessage(killer.getPlayerID(), s);
@@ -480,7 +480,7 @@ public class utilevents extends MultiUtil {
         while( i.hasNext() ){
             String s = i.next();
             s = CodeCompiler.replaceKeys(m_botAction, p, s);
-            if(s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
+            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
             if( s != null)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
@@ -497,7 +497,7 @@ public class utilevents extends MultiUtil {
         while( i.hasNext() ){
             String s = i.next();
             s = CodeCompiler.replaceKeys(m_botAction, p, s);
-            if(s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
+            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
             if( s != null)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
@@ -514,7 +514,7 @@ public class utilevents extends MultiUtil {
         while( i.hasNext() ){
             String s = i.next();
             s = CodeCompiler.replaceKeys(m_botAction, p, s);
-            if(s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
+            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
             if( s != null)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
@@ -531,7 +531,7 @@ public class utilevents extends MultiUtil {
                 while (i.hasNext()) {
                     String s = i.next();
                     s = CodeCompiler.replaceKeys(m_botAction, p, s);
-                    if(s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
+                    if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                         s = null;
                     if(s != null)
                         m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s);

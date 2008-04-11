@@ -363,7 +363,7 @@ public class utilmessages extends MultiUtil
       msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE){
     	message = CodeCompiler.replaceKeys(m_botAction, p, msgTask.getMessage());
-    	if(message.startsWith("*") && !CodeCompiler.isAllowed(message))
+    	if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message))
             message = null;
     	if(message != null)
     		m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message, msgTask.getSoundCode());
