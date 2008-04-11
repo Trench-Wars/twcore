@@ -56,7 +56,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                         // Debug mode.
-    private final float DEBUG_MULTIPLIER = 4.6f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 4.7f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 15;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -72,7 +72,7 @@ public class distensionbot extends SubspaceBot {
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
-    private final int WARP_POINT_CHECK_FREQUENCY = 5;      // # seconds between checking warp points for players
+    private final int WARP_POINT_CHECK_FREQUENCY = 7;      // # seconds between checking warp points for players
     private final int VENGEFUL_VALID_SECONDS = 12;         // # seconds after V.B. fire in which VB gets RP bonus
     private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
     private final int PILOTS_REQ_EACH_ARMY = 3;            // # players needed on each army for game to start
@@ -265,6 +265,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_LEECHING = -10;
     public final int ABILITY_JUMPSPACE = -11;
     public final int ABILITY_THOR = -12;
+    public final int ABILITY_MASTER_DRIVE = -13;
 
 
     // TACTICAL OPS DATA
@@ -1716,9 +1717,12 @@ public class distensionbot extends SubspaceBot {
             // Track successive kills for weasel unlock & streaks
             if( addedToStreak ) {   // Streaks only count on players close to your lvl & when in base
                 if( victor.addSuccessiveKill() ) {
-                    // If player earned weasel off this kill, check if loser/killed player has weasel ...
+                    // TODO: If player earned weasel off this kill, check if loser/killed player has weasel ...
                     // and remove it if they do!
                 }
+                // Check if M.A.S.T.E.R. Drive should fire (every 5 successive kills, has a chance)
+                if( victor.checkMasterDrive() && victor.wantsKillMsg() )
+                    m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "--=( ***   M.A.S.T.E.R. Drive ENABLED   *** )=--" );
             }
 
             if( killedarmy.getPilotsInGame() != 1 ) {
@@ -5397,13 +5401,16 @@ public class distensionbot extends SubspaceBot {
             desc = "+10% chance of respawning in the exact spot you died";
             break;
         case ABILITY_LEECHING:
-            desc = "+20% chance of full charge after every kill";
+            desc = "+15% chance of full charge after every kill";
             break;
         case ABILITY_JUMPSPACE:
             desc = "Spacial Jump improvements (+regen, -cooldown)";
             break;
         case ABILITY_THOR:
             desc = "Thor recharged every 5 minutes";
+            break;
+        case ABILITY_MASTER_DRIVE:
+            desc = "Chance of Super/Shields every streak of 5";
             break;
         // OPS
         case OPS_INCREASE_MAX_OP:
@@ -5600,6 +5607,7 @@ public class distensionbot extends SubspaceBot {
         private int       escapePod;            // Levels of Escape Pod ability
         private boolean   escapePodFired;       // Whether or not escape pod has already fired this death
         private int       leeching;             // Levels of Leeching ability
+        private int       masterDrive;          // Levels of M.A.S.T.E.R. Drive
         private long      lastVengeTime;        // Timestamp of last time Vengeful Bastard fired on player
         private String    lastVenger;           // Name of player that last fired Vengeful Bastard on player
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
@@ -5650,6 +5658,7 @@ public class distensionbot extends SubspaceBot {
             escapePod = 0;
             escapePodFired = false;
             leeching = 0;
+            masterDrive = 0;
             lastVengeTime = 0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[9];
@@ -5949,6 +5958,8 @@ public class distensionbot extends SubspaceBot {
                         escapePod = purchasedUpgrades[i];
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_LEECHING )
                         leeching = purchasedUpgrades[i];
+                    else if( upgrades.get( i ).getPrizeNum() == ABILITY_MASTER_DRIVE )
+                        masterDrive = purchasedUpgrades[i];
                 }
 
                 m_botAction.SQLClose(r);
@@ -6649,6 +6660,8 @@ public class distensionbot extends SubspaceBot {
                 escapePod = purchasedUpgrades[12];
             if( shipNum == 7 && upgrade == 6 )
                 leeching = purchasedUpgrades[6];
+            if( shipNum == 1 && upgrade == 10 )
+                masterDrive = purchasedUpgrades[10];
             if( shipNum == 9 && upgrade == 1 )
                 maxOP = purchasedUpgrades[1] + DEFAULT_MAX_OP;
             shipDataSaved = false;
@@ -7110,9 +7123,28 @@ public class distensionbot extends SubspaceBot {
         public void checkLeeching() {
             if( leeching <= 0 )
                 return;
-            double leechChance = Math.random() * 5.0;
-            if( (double)leeching > leechChance )
+            double leechChance = Math.random() * 100.0;
+            if( (double)leeching * 15.0 > leechChance )
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.FULLCHARGE );
+        }
+
+        /**
+         * Checks if the Master Drive ability should fire; gives super and/or shields.
+         */
+        public boolean checkMasterDrive() {
+            if( masterDrive <= 0 || successiveKills % 5 != 0 )
+                return false;
+            double masterChance1 = Math.random() * 100.0;
+            double masterChance2 = Math.random() * 100.0;
+            boolean fired = false;
+            if( (double)masterDrive * 15.0 > masterChance1 ) {
+                m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SUPER );
+                fired = true;
+            } if( (double)masterDrive * 15.0 > masterChance2 ) {
+                m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SHIELDS );
+                fired = true;
+            }
+            return fired;
         }
 
         /**
@@ -9411,7 +9443,7 @@ public class distensionbot extends SubspaceBot {
 
 
             // If the army holding the sector does not have advantage, we SUBTRACT time,
-            //  as the time belongs to the holding army
+            //  as the time belongs to the holding army, and don't do standard timer checks.
             if( sectorHoldingArmyID != advantageArmyID ) {
                 secondsHeld -= 3;
                 // If it reduces the time to 0, now the holding army has advantage
@@ -9420,15 +9452,18 @@ public class distensionbot extends SubspaceBot {
                     advantageArmyID = sectorHoldingArmyID;
                     m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " now has the sector advantage.", 1 );
                 }
+                do_updateTimer();
+                return;
             } else {
                 secondsHeld++;
+                do_updateTimer();
             }
-
-            do_updateTimer();
 
             if( secondsHeld >= flagSecondsRequired ) {
                 endBattle();
                 doEndRound();
+            } else if( flagSecondsRequired - secondsHeld == 60 && m_flagRules == 1 ) {
+                m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " will win the battle in 60 seconds." );
             } else if( flagSecondsRequired - secondsHeld == 30 ) {
                 m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " will win the battle in 30 seconds." );
                 float winnerStrCurrent;
@@ -9519,18 +9554,26 @@ public class distensionbot extends SubspaceBot {
         // WARBIRD -- starting ship
         // Med upg speed; rotation starts +1, energy has smaller spread, smaller max, & starts v. low
         // 4:  L2 Guns
+        // 10: M.A.S.T.E.R. Drive 1
         // 17: Multi
-        // 24: Decoy
-        // 30: Escape Pod 1
+        // 20: Escape Pod 1
+        // 22: Decoy
+        // 25: M.A.S.T.E.R. Drive 2
+        // 30: Escape Pod 2
         // 31: L3 Guns
-        // 36: Mines (+ expensive bomb) L1
+        // 34: M.A.S.T.E.R. Drive 3
+        // 36: Mines L1
         // 40: XRadar
+        // 42: Escape Pod 3
         // 45: Priority Rearm
+        // 47: M.A.S.T.E.R. Drive 4
         // 50: Thor
-        // 55: Escape Pod 2
-        // 60: Mines (+ expensive bomb) L2
-        // 70: Escape Pod 3
-        // 80: Mines (+ expensive bomb) L3
+        // 55: Escape Pod 4
+        // 60: Mines L2
+        // 65: M.A.S.T.E.R. Drive 5
+        // 70: Escape Pod 5
+        // 75: Escape Pod 6
+        // 80: Mines L3
         ship = new ShipProfile( 0, 15f );
         //                                                    | <--- this mark and beyond is not seen for upg names
         upg = new ShipUpgrade( "Side Thrusters           [ROT]", Tools.Prize.ROTATION, new int[]{7,7,7,8,8,9,10,12}, 0, 8 );           // 20 x8
@@ -9552,19 +9595,19 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "High-Impact Cannon", Tools.Prize.GUNS, 12, 31, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Bombs only as special)", Tools.Prize.BOMBS, 0, 0, -1 );
+        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{10,20,30}, new int[]{36,60,80}, 3 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Beam-Splitter", Tools.Prize.MULTIFIRE, 19, 17, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 35, 40, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Warbird Reiterator", Tools.Prize.DECOY, 14, 24, 1 );
+        upg = new ShipUpgrade( "Warbird Reiterator", Tools.Prize.DECOY, 14, 22, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{10,30,50}, new int[]{36,60,80}, 3 );
+        upg = new ShipUpgrade( "M.A.S.T.E.R. Drive Upgrade", ABILITY_MASTER_DRIVE, new int[]{10,12,14,16,20}, new int[]{10,25,34,47,65}, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Matter-to-Antimatter Converter", ABILITY_THOR, 34, 50, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{25,35,45}, new int[]{30,55,70}, 3 );
+        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{15,20,25,30,35,40}, new int[]{20,30,42,55,70,75}, 6 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 20, 45, 1 );
         ship.addUpgrade( upg );
@@ -9917,7 +9960,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Modernized Projector", Tools.Prize.GUNS, 20, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+20% Leeching", ABILITY_LEECHING, new int[]{15,18,20,22,30}, new int[]{15,30,40,50,70}, 5 );
+        upg = new ShipUpgrade( "+15% Leeching", ABILITY_LEECHING, new int[]{15,18,20,22,30}, new int[]{15,30,40,50,70}, 5 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Magnified Output Force", Tools.Prize.MULTIFIRE, 23, 20, 1 );
         ship.addUpgrade( upg );
