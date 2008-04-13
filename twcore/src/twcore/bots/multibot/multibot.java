@@ -1090,14 +1090,6 @@ public class multibot extends SubspaceBot {
     public void handleEvent(PlayerBanner event) {
         handleEvent((SubspaceEvent) event);
     }
-
-    public void handleEvent(MapInfo event) {
-    	m_botAction.sendRemotePrivateMessage("milosh <ER>", "Success1 File name = " + event.getFileName());
-    }
-    
-    public void handleEvent(MapFile event) {
-    	m_botAction.sendRemotePrivateMessage("milosh <ER>", "Success2 File name = " + event.getFileName());
-    }
     
     private class DieTask extends TimerTask {
         String m_initiator;
@@ -1110,6 +1102,5 @@ public class multibot extends SubspaceBot {
         public void run() {
             m_botAction.die( "!die initiated by " + m_initiator );
         }
-    }
-    
+    }    
 }
