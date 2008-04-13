@@ -143,11 +143,11 @@ public class utilevents extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doMassPm(String name, String message){
+    public void doMassPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() ){
             Player p = i.next();
-            message = CodeCompiler.replaceKeys(m_botAction, p, message);
+            String message = CodeCompiler.replaceKeys(m_botAction, p, msg);
             if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message) && !opList.isSmod(name))
                 message = null;
             if(message != null);
