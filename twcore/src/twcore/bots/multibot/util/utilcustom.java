@@ -39,7 +39,7 @@ public class utilcustom extends MultiUtil {
         String[] message = {
                 "!addaction <!cmd> <action>  - Adds another <action> to command <!command>",
                 "                            - If <!command> does not exist it is created.",
-                "                              Note: Not all *commands are allowed as <action> (except SMod+)",
+                "                              Note: Not all *commands are allowed as <action>",
                 "!removeact <!cmd> <index>   - Removes action at <index> from <!cmd>",
                 "!removecmd <!cmd>           - Removes a custom command and all its actions",
                 "!listcmd                    - Shows a list of custom commands and their actions",
