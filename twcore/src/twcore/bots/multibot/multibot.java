@@ -464,7 +464,7 @@ public class multibot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(sender, "Unlocked; all modules unloaded.  (Use !unlockwith to keep modules loaded when unlocking.)" );
             doUnloadAllCmd(sender, true);
         } else {
-            m_botAction.sendSmartPrivateMessage(sender, "Unlocked.  All !loaded modules remain with me.  Use !gowith to move with the modules loaded." );
+            m_botAction.sendSmartPrivateMessage(sender, "Unlocked.  All !loaded modules remain with me.  Use !go to move with the modules loaded." );
         }
         m_isLocked = false;
     }
@@ -1091,6 +1091,14 @@ public class multibot extends SubspaceBot {
         handleEvent((SubspaceEvent) event);
     }
 
+    public void handleEvent(MapInfo event) {
+    	m_botAction.sendRemotePrivateMessage("milosh <ER>", "Success1 File name = " + event.getFileName());
+    }
+    
+    public void handleEvent(MapFile event) {
+    	m_botAction.sendRemotePrivateMessage("milosh <ER>", "Success2 File name = " + event.getFileName());
+    }
+    
     private class DieTask extends TimerTask {
         String m_initiator;
 
@@ -1103,4 +1111,5 @@ public class multibot extends SubspaceBot {
             m_botAction.die( "!die initiated by " + m_initiator );
         }
     }
+    
 }
