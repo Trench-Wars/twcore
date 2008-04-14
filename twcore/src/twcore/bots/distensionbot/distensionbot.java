@@ -7152,7 +7152,7 @@ public class distensionbot extends SubspaceBot {
                 fired = true;
             }
             if( fired && sendKillMessages )
-                m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "--=( ***   M.A.S.T.E.R. Drive ENABLED   *** )=--" );
+                m_botAction.sendPrivateMessage( arenaPlayerID, "--=( ***   M.A.S.T.E.R. Drive ENABLED   *** )=--" );
         }
 
         /**
