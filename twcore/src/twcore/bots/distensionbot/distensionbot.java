@@ -309,8 +309,10 @@ public class distensionbot extends SubspaceBot {
     private int m_roundNum = 0;							// Current round
     private int flagSecondsRequiredDoubleFlag = 60;     // Flag seconds required to win
     private int flagSecondsRequiredSingleFlag = 120;    // Flag seconds required to win with 1 flag
-    private int flagSecondsHybridFactor = 5;            // Factor by which flag seconds required to win
+    private float flagSecondsHybridFactor = 2;          // Factor by which flag seconds required to win
                                                         //    increase when using hybrid mode
+    private int flagHybridReversionRate;                // How many seconds per second held by a team presently
+                                                        //    not holding advantage are taken off the clock
     private HashMap <String,Integer>m_playerTimes;      // Roundtime of player on freq
     private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
     //private HashMap <String,Integer>m_lagShips;         // Ships of players who were DC'd, for !lagout use
@@ -1466,12 +1468,10 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage(p.getArenaPlayerID(), e.getMessage() );
                 }
             }
-            //m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_EMP);
-            //m_botAction.hideObjectForPlayer(p.getArenaPlayerID(), LVZ_ENERGY_TANK);
         }
 
         if( !m_readyForPlay )         // If bot has not fully started up,
-            return;                 // don't operate normally here.
+            return;                   // don't operate normally here.
         if( event.getShipType() == 0 ) {
             if( p.getShipNum() == 9 && p.ignoreShipChanges() ) {
                 p.setIgnoreShipChanges(false);
@@ -1625,7 +1625,7 @@ public class distensionbot extends SubspaceBot {
                 loss = Math.round((float)loss * DEBUG_MULTIPLIER);
             victor.addRankPoints( -loss );
             // Teammate dying on a Shark or WB's mines does not clear streak
-            if( killer.getShipType() != Tools.Ship.SHARK || killer.getShipType() != Tools.Ship.WARBIRD )
+            if( killer.getShipType() != Tools.Ship.SHARK && killer.getShipType() != Tools.Ship.WARBIRD )
                 victor.clearSuccessiveKills();
             if( loss > 0 && victor.wantsKillMsg() )
                 m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
@@ -1721,8 +1721,7 @@ public class distensionbot extends SubspaceBot {
                     // and remove it if they do!
                 }
                 // Check if M.A.S.T.E.R. Drive should fire (every 5 successive kills, has a chance)
-                if( victor.checkMasterDrive() && victor.wantsKillMsg() )
-                    m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "--=( ***   M.A.S.T.E.R. Drive ENABLED   *** )=--" );
+                victor.checkMasterDrive();
             }
 
             if( killedarmy.getPilotsInGame() != 1 ) {
@@ -2578,8 +2577,11 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
-        if( p.getShipNum() == 9 )
+        if( p.getShipNum() == 9 ) {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
+            p.resetIdle();
+        }
+
     }
 
 
@@ -5220,6 +5222,8 @@ public class distensionbot extends SubspaceBot {
             if( players >= 40 )
                 timeNeeded -= 5;
         }
+        if( m_flagRules == 1 )
+            return (int)(timeNeeded * flagSecondsHybridFactor);
         return timeNeeded;
     }
 
@@ -6686,10 +6690,11 @@ public class distensionbot extends SubspaceBot {
                     setLagoutAllowed(false);
                 }
                 turnOffProgressBar();
-            }
-            if( this.shipNum == 0 )
-                turnOnProgressBar();
-            else if( shipNum == 9 ) {
+            } else
+                if( this.shipNum == 0 )
+                    turnOnProgressBar();
+
+            if( shipNum == 9 ) {
                 setLagoutAllowed(false);
                 m_botAction.specWithoutLock( getArenaPlayerID() );
                 m_botAction.setFreq( arenaPlayerID, getArmyID() );
@@ -6891,6 +6896,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You have been docked for being idle at the Tactical Ops console." );
                     setLagoutAllowed(false);
                     doDock(this);
+                    return;
                 }
             }
             Player p = m_botAction.getPlayer(arenaPlayerID);
@@ -7131,20 +7137,22 @@ public class distensionbot extends SubspaceBot {
         /**
          * Checks if the Master Drive ability should fire; gives super and/or shields.
          */
-        public boolean checkMasterDrive() {
-            if( masterDrive <= 0 || successiveKills % 5 != 0 )
-                return false;
+        public void checkMasterDrive() {
+            if( masterDrive <= 0 || successiveKills < 5 )
+                return;
             double masterChance1 = Math.random() * 100.0;
             double masterChance2 = Math.random() * 100.0;
             boolean fired = false;
-            if( (double)masterDrive * 15.0 > masterChance1 ) {
+            int masterMod = masterDrive * (successiveKills - 1);
+            if( (double)masterMod > masterChance1 ) {
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SUPER );
                 fired = true;
-            } if( (double)masterDrive * 15.0 > masterChance2 ) {
+            } if( (double)masterMod > masterChance2 ) {
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SHIELDS );
                 fired = true;
             }
-            return fired;
+            if( fired && sendKillMessages )
+                m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "--=( ***   M.A.S.T.E.R. Drive ENABLED   *** )=--" );
         }
 
         /**
@@ -8665,7 +8673,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
         if( intermissionTime >= 60000 )
-            m_botAction.setTimer( (intermissionTime + 1000) / 60 );
+            m_botAction.setTimer( (intermissionTime + 1000) / 60000 );
         intermissionTimer = new IntermissionTask();
         m_botAction.scheduleTask( intermissionTimer, intermissionTime );
     }
@@ -9282,13 +9290,16 @@ public class distensionbot extends SubspaceBot {
             if( m_flagRules == 0 ) {
                 if( sectorHoldingArmyID == -1 )
                     return "BATTLE " + m_roundNum + " Stats: NO-ONE holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
-                return "BATTLE " + m_roundNum + " Stats: " + m_armies.get(sectorHoldingArmyID).getName() + "(" + sectorHoldingArmyID + ") has held the sector for " + getTimeString(secondsHeld) + ", needs " + getTimeString( flagSecondsRequired - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+                return "BATTLE " + m_roundNum + " Stats: " + m_armies.get(sectorHoldingArmyID).getName() + "(" + sectorHoldingArmyID + ") has held the sector for " + getTimeString(secondsHeld) +
+                  ", needs " + getTimeString( flagSecondsRequired - secondsHeld ) + " more.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
             } else {
                 String advantage = ( advantageArmyID == -1 ? "NO-ONE" : m_armies.get(advantageArmyID).getName() );
                 String holder = ( sectorHoldingArmyID == -1 ? "NO-ONE" : m_armies.get(sectorHoldingArmyID).getName() );
                 if( advantage.equals( holder ) )
-                    return "BATTLE " + m_roundNum + " Stats: " + holder + " has advantage and holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
-                return "BATTLE " + m_roundNum + " Stats: " + advantage + " has advantage; " + holder + " holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+                    return "BATTLE " + m_roundNum + " Stats: " + holder + " has advantage of " + getTimeString(secondsHeld) + ", holds the sector, and needs " + getTimeString( flagSecondsRequired - secondsHeld ) + " to win." +
+                      "  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
+                return "BATTLE " + m_roundNum + " Stats: " + advantage + " has advantage of " + getTimeString(secondsHeld) + "; " +
+                  holder + " holds the sector.  [Time: " + getTimeString( totalSecs ) + "]  Score:  " + getScoreDisplay();
             }
         }
 
@@ -9420,7 +9431,7 @@ public class distensionbot extends SubspaceBot {
                 // (This means an unsuccessful break is not a waste.)
                 if( breakingArmyID != advantageArmyID ) {
                     if( breakSeconds == 1 )
-                        secondsHeld -= 3;
+                        secondsHeld -= flagHybridReversionRate;
                     else
                         secondsHeld -= 1;
                 }
@@ -9444,13 +9455,13 @@ public class distensionbot extends SubspaceBot {
 
             // If the army holding the sector does not have advantage, we SUBTRACT time,
             //  as the time belongs to the holding army, and don't do standard timer checks.
-            if( sectorHoldingArmyID != advantageArmyID ) {
+            if( sectorHoldingArmyID != advantageArmyID && m_flagRules == 1 ) {
                 secondsHeld -= 3;
                 // If it reduces the time to 0, now the holding army has advantage
                 if( secondsHeld <= 0 ) {
                     secondsHeld = 0;
                     advantageArmyID = sectorHoldingArmyID;
-                    m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " now has the sector advantage.", 1 );
+                    m_botAction.sendArenaMessage( m_armies.get(sectorHoldingArmyID).getName() + " now has the sector advantage!", 1 );
                 }
                 do_updateTimer();
                 return;
@@ -9494,6 +9505,10 @@ public class distensionbot extends SubspaceBot {
          * Runs the LVZ-based timer.
          */
         private void do_updateTimer() {
+            // Never wipe timer in hybrid flag mode, even when no army holds both flags
+            if( m_flagRules == 1 && sectorHoldingArmyID == -1 )
+                return;
+
             flagTimerObjs.hideAllObjects();
             if( sectorHoldingArmyID == -1 ) {
                 m_botAction.setObjects();
