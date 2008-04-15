@@ -150,7 +150,7 @@ public class utilevents extends MultiUtil {
             String message = CodeCompiler.replaceKeys(m_botAction, p, msg);
             if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message) && !opList.isSmod(name))
                 message = null;
-            if(message != null);
+            if(message != null)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
         }
     }
