@@ -261,8 +261,17 @@ public class bannerboy extends SubspaceBot {
 			     else         m_botAction.sendSmartPrivateMessage( player, "Talk off" );
 			 }
 		}
+		else if(!m_botAction.getOperatorList().isSmod(player) && message.equalsIgnoreCase("!help")){
+		    String[] helpmsg = {
+		            "Hello, I'm a bot that collects banner information from players. I store all of the ",
+		            "information I find at http://www.trenchwars.org/SSBE. If you would like me to store",
+		            "your banner on the site simply stay in the same arena as me and I'll be happy to do",
+		            "so. Have fun in Trench Wars!"
+		    };
+		    m_botAction.smartPrivateMessageSpam(player, helpmsg);
+		}
 		else {
-		    m_botAction.sendChatMessage(player + "> "+event.getMessage());
+		    m_botAction.sendChatMessage(player + "> "+message);
 		}
 	}
 
