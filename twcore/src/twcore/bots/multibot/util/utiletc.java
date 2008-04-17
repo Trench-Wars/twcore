@@ -42,6 +42,8 @@ public class utiletc extends MultiUtil {
     int ourX = 0, ourY = 0;
     Random generator = new Random();
 
+    String database = "website";
+    
     public void init() {
     }
 
@@ -173,7 +175,7 @@ public class utiletc extends MultiUtil {
 
     public void do_listDonations( String name, String message ) {
         try {
-            ResultSet result = m_botAction.SQLQuery( "website", "SELECT * FROM tblDonation ORDER BY fnDonationID DESC LIMIT 10" );
+            ResultSet result = m_botAction.SQLQuery( database, "SELECT * FROM tblDonation ORDER BY fnDonationID DESC LIMIT 10" );
             while( result.next() ) {
                 int donationId =  result.getInt( "fnDonationID" );
                 String userName = sql_getUserName( result.getInt( "fnUserID" ) );
@@ -195,10 +197,10 @@ public class utiletc extends MultiUtil {
         try {
             int id = sql_getPlayerId( pieces[0] );
             if( id == -1 ) {
-                m_botAction.SQLQueryAndClose( "website", "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(pieces[0])+"', NOW())");
+                m_botAction.SQLQueryAndClose( database, "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"+Tools.addSlashesToString(pieces[0])+"', NOW())");
                 id = sql_getPlayerId( pieces[0] );
             }
-            m_botAction.SQLQueryAndClose( "website", "INSERT INTO tblDonation (fnUserID, fnAmount, fdDonated) VALUES ('"+id+"', '"+pieces[1]+"', '"+time+"')" );
+            m_botAction.SQLQueryAndClose( database, "INSERT INTO tblDonation (fnUserID, fnAmount, fdDonated) VALUES ('"+id+"', '"+pieces[1]+"', '"+time+"')" );
             m_botAction.sendSmartPrivateMessage( name, "Donation Added:  " + pieces[0] + "    $" + pieces[1] );
         } catch (Exception e) {
             m_botAction.sendSmartPrivateMessage( name, "Unable to add donation entry.");
@@ -210,14 +212,14 @@ public class utiletc extends MultiUtil {
     public void do_removeDonation( String name, String message ) {
         try {
             int i = Integer.parseInt( message );
-            m_botAction.SQLQueryAndClose( "website", "DELETE FROM tblDonation WHERE fnDonationID = "+i );
+            m_botAction.SQLQueryAndClose( database, "DELETE FROM tblDonation WHERE fnDonationID = "+i );
             m_botAction.sendSmartPrivateMessage( name, "Donation #" + i +" + deleted." );
         } catch (Exception e) { m_botAction.sendSmartPrivateMessage( name, "Unable to remove donation" ); }
     }
 
     public String sql_getUserName( int id ) {
         try {
-            ResultSet result = m_botAction.SQLQuery( "website", "SELECT fcUserName FROM tblUser WHERE fnUserID = '"+id+"'" );
+            ResultSet result = m_botAction.SQLQuery( database, "SELECT fcUserName FROM tblUser WHERE fnUserID = '"+id+"'" );
             String username = "Unknown"; 
             if( result.next() )
                 username = result.getString( "fcUserName" );
@@ -228,7 +230,7 @@ public class utiletc extends MultiUtil {
 
     public int sql_getPlayerId( String player ) {
         try {
-            ResultSet result = m_botAction.SQLQuery( "website", "SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(player)+"'" );
+            ResultSet result = m_botAction.SQLQuery( database, "SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(player)+"'" );
             int id = -1;
             if( result.next() )
                 id = result.getInt( "fnUserID" );

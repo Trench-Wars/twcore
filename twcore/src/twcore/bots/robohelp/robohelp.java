@@ -765,7 +765,7 @@ public class robohelp extends SubspaceBot {
                         String date = new java.sql.Date( System.currentTimeMillis() ).toString();
                         String[] data = { name.toLowerCase().trim(), new String( warntime + ": Warning to " + name + " from Robohelp for advert abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
 
-                        m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
+                        m_botAction.SQLInsertInto( mySQLHost, "tblWarnings", paramNames, data );
 
                      } else {
 
@@ -781,7 +781,7 @@ public class robohelp extends SubspaceBot {
                         String date = new java.sql.Date( System.currentTimeMillis() ).toString();
                         String[] data = { name.toLowerCase().trim(), new String( warntime + ": Warning to " + name + " from Robohelp for help/cheater abuse.  !warn ordered by " + playerName ), playerName.toLowerCase().trim(), date };
 
-                        m_botAction.SQLInsertInto( "local", "tblWarnings", paramNames, data );
+                        m_botAction.SQLInsertInto( mySQLHost, "tblWarnings", paramNames, data );
                      }
                 }
             }

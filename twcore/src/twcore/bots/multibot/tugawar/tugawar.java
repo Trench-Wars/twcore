@@ -38,6 +38,8 @@ public class tugawar extends MultiModule {
     int			deathLimit = 1;
     /* Boomball variables */
     int[] 		areas = { 0, 0, 0, 0, 0, 0 };
+    
+    String database = "website";
 
     public void init() {
     }
@@ -73,12 +75,12 @@ public class tugawar extends MultiModule {
     public void doSQLQuery() {
         try {
             int k = 0;
-            ResultSet results = m_botAction.SQLQuery("website", "SELECT * FROM tblCall");
+            ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblCall");
             while(results.next()) {
                 String name = results.getString("fcUserName");
                 int id = results.getInt("fnCallID");
                 if(!opList.isZH(name)) {
-                    m_botAction.SQLQueryAndClose("website", "DELETE FROM tblCall WHERE fnCallID = "+id);
+                    m_botAction.SQLQueryAndClose(database, "DELETE FROM tblCall WHERE fnCallID = "+id);
                     k++;
                 }
             }

@@ -78,6 +78,7 @@ public class messagebot extends SubspaceBot
 	public static final String IPCCHANNEL = "messages";
 	boolean bug = false;
 	boolean newsAlerts = false;
+	public String database = "local";//If you change this you must also change line ~1426
 
 	/** Constructor, requests Message and Login events.
 	 *  Also prepares bot for use.
@@ -120,7 +121,7 @@ public class messagebot extends SubspaceBot
 	{
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name)+"' and fnRead = 0";
 		try {
-			ResultSet results = m_botAction.SQLQuery("local", query);
+			ResultSet results = m_botAction.SQLQuery(database, query);
 			boolean found = false;
 			while(results.next() && !found)
 			{
@@ -211,7 +212,7 @@ public class messagebot extends SubspaceBot
 
     	String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES('"+Tools.addSlashesToString(message.toLowerCase())+"', '"+Tools.addSlashesToString(name.toLowerCase())+"', 0)";
     	try {
-    		m_botAction.SQLClose(m_botAction.SQLQuery("local", query));
+    		m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
     	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     }
 
@@ -234,8 +235,8 @@ public class messagebot extends SubspaceBot
     		String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(channel) + "'";
     		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(channel) + "'";
     		try {
-    			m_botAction.SQLClose(m_botAction.SQLQuery("local", query));
-                        m_botAction.SQLClose(m_botAction.SQLQuery("local", query2));
+    			m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
+                        m_botAction.SQLClose(m_botAction.SQLQuery(database, query2));
     		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
     		c.messageChannel(name, "Channel " + channel + " deleted.");
@@ -605,7 +606,7 @@ public class messagebot extends SubspaceBot
     {
     	String query = "SELECT * FROM tblChannelUser WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
     	try {
-    		ResultSet results = m_botAction.SQLQuery("local", query);
+    		ResultSet results = m_botAction.SQLQuery(database, query);
     		while(results.next())
     		{
     			String channel = results.getString("fcChannel");
@@ -717,7 +718,7 @@ public class messagebot extends SubspaceBot
 
 			String query = "SELECT * FROM tblChannel";
 			try {
-				ResultSet results = m_botAction.SQLQuery("local", query);
+				ResultSet results = m_botAction.SQLQuery(database, query);
 
 				while(results.next())
 				{
@@ -738,7 +739,7 @@ public class messagebot extends SubspaceBot
 
 			query = "SELECT * FROM tblBotNews ORDER BY fnID DESC";
 			try {
-				ResultSet results = m_botAction.SQLQuery("local", query);
+				ResultSet results = m_botAction.SQLQuery(database, query);
 				while(results.next()) {
 					String name = results.getString("fcName");
 					String content = results.getString("fcNews");
@@ -766,7 +767,7 @@ public class messagebot extends SubspaceBot
         if( message == "" ) {
             try {
                 HashSet <Integer>messageIDs = new HashSet<Integer>();
-                ResultSet results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcName = '" +
+                ResultSet results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcName = '" +
                     Tools.addSlashesToString(name) + "' AND fnRead = 0" );
                 while(results.next())
                     messageIDs.add(results.getInt("fnID"));
@@ -795,14 +796,14 @@ public class messagebot extends SubspaceBot
                         else if(pieces[1].toLowerCase().startsWith("r"))
                             addAnd = " AND fnRead = 1";
                     }
-                    results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
+                    results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
                             + Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'"+addAnd);
                 } else {
                     if( message.toLowerCase().startsWith("a"))
                         addAnd = "";
                     else if( message.toLowerCase().startsWith("r"))
                         addAnd = " AND fnRead = 1";
-                    results = m_botAction.SQLQuery("local", "SELECT fnID FROM tblMessageSystem WHERE fcName = '" + 
+                    results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcName = '" + 
                             Tools.addSlashesToString(name) + "'"+addAnd);
                 }
 				while(results.next()) {
@@ -831,7 +832,7 @@ public class messagebot extends SubspaceBot
 		}
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try{
-			ResultSet results = m_botAction.SQLQuery("local", query);
+			ResultSet results = m_botAction.SQLQuery(database, query);
 			if(results.next())
 			{
 				message = results.getString("fcMessage");
@@ -840,7 +841,7 @@ public class messagebot extends SubspaceBot
 				m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
 
 				query = "UPDATE tblMessageSystem SET fnRead = 1 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
-				m_botAction.SQLQuery("local", query);
+				m_botAction.SQLQuery(database, query);
 			}
 			else
 			{
@@ -869,7 +870,7 @@ public class messagebot extends SubspaceBot
 		}
 		String query = "UPDATE tblMessageSystem SET fnRead = 0 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try {
-                        m_botAction.SQLClose(m_botAction.SQLQuery("local", query));
+                        m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
 			m_botAction.sendSmartPrivateMessage(name, "Message marked as unread.");
 		} catch(SQLException e) {
 			Tools.printStackTrace( e );
@@ -903,7 +904,7 @@ public class messagebot extends SubspaceBot
 			query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		}
 		try {
-                        m_botAction.SQLClose(m_botAction.SQLQuery("local", query));
+                        m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
 			m_botAction.sendSmartPrivateMessage(name, "Message(s) deleted.");
 		} catch(Exception e) {
 			m_botAction.sendSmartPrivateMessage(name, "Message(s) unable to be deleted.");
@@ -920,7 +921,7 @@ public class messagebot extends SubspaceBot
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
 		m_botAction.sendSmartPrivateMessage(name, "You have the following messages: ");
 		try {
-			ResultSet results = m_botAction.SQLQuery("local", query);
+			ResultSet results = m_botAction.SQLQuery(database, query);
 			while(results.next())
 			{
 				String thisMessage = "Message #" + String.valueOf(results.getInt("fnID")) + ". From: " + results.getString("fcSender")+". Status: ";
@@ -949,7 +950,7 @@ public class messagebot extends SubspaceBot
 	 {
 	 	String query = "SELECT * FROM tblMessageSystem WHERE fnID = " + messageNumber;
 	 	try {
-	 		ResultSet results = m_botAction.SQLQuery("local", query);
+	 		ResultSet results = m_botAction.SQLQuery(database, query);
 
             if( results == null || !results.next() ) {
                 m_botAction.SQLClose(results);
@@ -1059,8 +1060,8 @@ public class messagebot extends SubspaceBot
 			//	String query = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 31 DAY)) AND fnRead = 0";
 			//	String query2 = "DELETE FROM tblMessageSystem WHERE (fdTimeStamp < DATE_SUB(NOW(), INTERVAL 15 DAY)) AND fnRead = 1";
 			//	try {
-			//		m_botAction.SQLQuery("local", query);
-			//		m_botAction.SQLQuery("local", query2);
+			//		m_botAction.SQLQuery(database, query);
+			//		m_botAction.SQLQuery(database, query2);
 			//		System.out.println("Deleting messages.");
 			//	} catch(SQLException e) { Tools.printStackTrace( e ); }
 			}
@@ -1075,7 +1076,7 @@ public class messagebot extends SubspaceBot
 				String query = "SELECT * FROM tblMessageToBot ORDER BY fnID ASC";
 				String query2 = "DELETE FROM tblMessageToBot";
 				try {
-					ResultSet results = m_botAction.SQLQuery("local", query);
+					ResultSet results = m_botAction.SQLQuery(database, query);
 					if(results == null) return;
 					while(results.next()) {
 						String event = results.getString("fcSyncData");
@@ -1086,7 +1087,7 @@ public class messagebot extends SubspaceBot
 							accessUpdateFromWebsite(pieces[2], pieces[1], Integer.parseInt(pieces[3]));
 					}
                                         m_botAction.SQLClose(results);
-                                        m_botAction.SQLClose(m_botAction.SQLQuery("local", query2));
+                                        m_botAction.SQLClose(m_botAction.SQLQuery(database, query2));
 				} catch(Exception e) { Tools.printStackTrace( e ); }
 
 				Iterator<String> it = peopleToTell.iterator();
@@ -1135,8 +1136,8 @@ public class messagebot extends SubspaceBot
      	query += "'"+Tools.addSlashesToString(contents)+"', NOW(), '"+Tools.addSlashesToString(url) +"')";
      	String query2 = "SELECT fnID, fdTime FROM tblBotNews WHERE fcName = '"+Tools.addSlashesToString(writer)+"' ORDER BY fnID DESC";
      	try {
-     		m_botAction.SQLQuery("local", query);
-     		ResultSet results = m_botAction.SQLQuery("local", query2);
+     		m_botAction.SQLQuery(database, query);
+     		ResultSet results = m_botAction.SQLQuery(database, query2);
      		if(results.next()) {
 	     		date = results.getString("fdTime");
 	     		id = results.getInt("fnID");
@@ -1168,7 +1169,7 @@ public class messagebot extends SubspaceBot
      	if(news.remove(id) != null) {
      		String query = "DELETE FROM tblBotNews WHERE fnID = " + id;
      		try {
-     		    m_botAction.SQLClose(m_botAction.SQLQuery("local", query));
+     		    m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
      		} catch(Exception e) {
                     m_botAction.sendSmartPrivateMessage(name, "Delete failed.");
                     return;
@@ -1271,7 +1272,7 @@ public class messagebot extends SubspaceBot
      public void ignorePlayer(String name, String player) {
      	try {
      		if(!isIgnored(name, player)) {
-     		        m_botAction.SQLClose(m_botAction.SQLQuery("local", "INSERT INTO tblMessageBotIgnore (fcIgnorer, fcIgnoree) VALUES('"+Tools.addSlashesToString(name)+"', '"+Tools.addSlashesToString(player)+"');"));
+     		        m_botAction.SQLClose(m_botAction.SQLQuery(database, "INSERT INTO tblMessageBotIgnore (fcIgnorer, fcIgnoree) VALUES('"+Tools.addSlashesToString(name)+"', '"+Tools.addSlashesToString(player)+"');"));
 	     		m_botAction.sendSmartPrivateMessage(name, player + " ignored.");
 	     	} else {
 	     		m_botAction.sendSmartPrivateMessage(name, player + " is already ignored.");
@@ -1282,7 +1283,7 @@ public class messagebot extends SubspaceBot
      public void unignorePlayer(String name, String player) {
      	try {
      		if(isIgnored(name, player)) {
-     		        m_botAction.SQLClose(m_botAction.SQLQuery("local", "DELETE FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"';"));
+     		        m_botAction.SQLClose(m_botAction.SQLQuery(database, "DELETE FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"';"));
      			m_botAction.sendSmartPrivateMessage(name, player + " unignored.");
      		} else {
      			m_botAction.sendSmartPrivateMessage(name, player + " is not currently ignored.");
@@ -1292,7 +1293,7 @@ public class messagebot extends SubspaceBot
 
      public void whoIsIgnored(String name, String blank) {
      	try {
-     		ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"'");
+     		ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"'");
      		String ignored = "";
      		while(results.next()) {
      			ignored += results.getString("fcIgnoree");
@@ -1310,7 +1311,7 @@ public class messagebot extends SubspaceBot
 
      public boolean isIgnored(String name, String player) {
      	try {
-     		ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"'");
+     		ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageBotIgnore WHERE fcIgnorer = '"+Tools.addSlashesToString(name)+"' AND fcIgnoree = '"+Tools.addSlashesToString(player)+"'");
      		if(results.next()) {
      		        m_botAction.SQLClose(results);
      			return true;
@@ -1334,20 +1335,20 @@ public class messagebot extends SubspaceBot
      		String query1 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 7 DAY)";
      		String query2 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"' AND fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 1 DAY)";
      		String query3 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"'";
-     		ResultSet results = m_botAction.SQLQuery("local", query1);
+     		ResultSet results = m_botAction.SQLQuery(database, query1);
      		int msgsSent = 0;
      		if(results.next()) {
      			msgsSent = results.getInt("msgs");
      		}
      		int plrMsgsRcvdFrmName = 0;
                 m_botAction.SQLClose(results);
-     		results = m_botAction.SQLQuery("local", query2);
+     		results = m_botAction.SQLQuery(database, query2);
      		if(results.next()) {
      			plrMsgsRcvdFrmName = results.getInt("msgs");
      		}
                 m_botAction.SQLClose(results);
      		int plrMsgsRcvd = 0;
-     		results = m_botAction.SQLQuery("local", query3);
+     		results = m_botAction.SQLQuery(database, query3);
      		if(results.next()) {
      			plrMsgsRcvd = results.getInt("msgs");
      		}
@@ -1364,7 +1365,7 @@ public class messagebot extends SubspaceBot
      		} else if(isIgnored(player, name)) {
      			return;
      		} else {
-     			m_botAction.SQLClose(m_botAction.SQLQuery("local", "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES(0, '"+Tools.addSlashesToString(player)+"', '"+Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(name)+"', 0, NOW())"));
+     			m_botAction.SQLClose(m_botAction.SQLQuery(database, "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES(0, '"+Tools.addSlashesToString(player)+"', '"+Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(name)+"', 0, NOW())"));
      			m_botAction.sendSmartPrivateMessage(name, "Message sent.");
      		}
      	} catch(Exception e) {}
@@ -1389,11 +1390,11 @@ public class messagebot extends SubspaceBot
     			Iterator<String> it = nameList.iterator();
     			while(it.hasNext()) {
     				String addName = (String)it.next();
-					ResultSet results = m_botAction.SQLQuery("local", "SELECT * FROM tblChannelUser WHERE fcName = '"
+					ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblChannelUser WHERE fcName = '"
 						+ Tools.addSlashesToString(addName)+"' AND fcChannel = '"
 						+ Tools.addSlashesToString(pieces[0])+"'");
 					if(!results.next()) {
-                                                m_botAction.SQLClose(m_botAction.SQLQuery("local", "INSERT INTO tblChannelUser (fcName, fcChannel, fnLevel) VALUES ('"
+                                                m_botAction.SQLClose(m_botAction.SQLQuery(database, "INSERT INTO tblChannelUser (fcName, fcChannel, fnLevel) VALUES ('"
 							+ Tools.addSlashesToString(addName)+"', '"+Tools.addSlashesToString(pieces[0])+"', 1)"));
 					}
                                         m_botAction.SQLClose(results);
@@ -1422,6 +1423,7 @@ class Channel
 	HashMap <String,Integer>members;
 	HashSet <String>banned;
 	boolean isOpen;
+	String database = "local";
 
 	/** Constructs the new channel.
 	 */
@@ -1485,7 +1487,7 @@ class Channel
 			updateSQL(owner.toLowerCase(), 1);
 			updateSQL(player.toLowerCase(), 3);
 			try {
-                                m_bA.SQLClose(m_bA.SQLQuery("local", "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
+                                m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
 			} catch(Exception e) { Tools.printStackTrace( e ); }
 			owner = player;
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
@@ -1544,7 +1546,7 @@ class Channel
 	public void makePrivate(String name)
 	{
 		try {
-                        m_bA.SQLClose(m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
+                        m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now private channel.");
 		isOpen = false;
@@ -1556,7 +1558,7 @@ class Channel
 	public void makePublic(String name)
 	{
 		try {
-                        m_bA.SQLClose(m_bA.SQLQuery("local", "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
+                        m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now public channel.");
 		isOpen = true;
@@ -1767,7 +1769,7 @@ class Channel
 
 
 		try {
-			ResultSet results = m_bA.SQLQuery("local", query);
+			ResultSet results = m_bA.SQLQuery(database, query);
 			if(results.next())
 			{
 				if(level != -5) {
@@ -1777,13 +1779,13 @@ class Channel
 					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase())+"'";
 					members.remove(player.toLowerCase());
 				}
-                                m_bA.SQLClose(m_bA.SQLQuery("local", query));
+                                m_bA.SQLClose(m_bA.SQLQuery(database, query));
 			}
 			else
 			{
 				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES ('" + Tools.addSlashesToString(channelName) + "', '" + Tools.addSlashesToString(player.toLowerCase()) + "', " + level + ")";
 				members.put(player.toLowerCase(), new Integer(level));
-                                m_bA.SQLClose(m_bA.SQLQuery("local", query));
+                                m_bA.SQLClose(m_bA.SQLQuery(database, query));
 			}
                         m_bA.SQLClose(results);
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
@@ -1799,7 +1801,7 @@ class Channel
 	{
 		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(channelName)+"', 0, NOW())";
 		try {
-                        m_bA.SQLClose(m_bA.SQLQuery("local", query));
+                        m_bA.SQLClose(m_bA.SQLQuery(database, query));
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 
@@ -1810,7 +1812,7 @@ class Channel
 		String query = "SELECT * FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(channelName.toLowerCase())+"'";
 
 		try {
-			ResultSet results = m_bA.SQLQuery("local", query);
+			ResultSet results = m_bA.SQLQuery(database, query);
 			while(results.next())
 			{
 				String name = results.getString("fcName");

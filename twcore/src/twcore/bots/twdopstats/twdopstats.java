@@ -100,7 +100,7 @@ public class twdopstats extends SubspaceBot {
      */
     private void loadTWDOps() {
     	String query = "SELECT tblUser.fcUsername FROM `tblUserRank`, `tblUser` WHERE `fnRankID` = '14' AND tblUser.fnUserID = tblUserRank.fnUserID";
-    	m_botAction.SQLBackgroundQuery("local", "TWDOpsUpdate", query);
+    	m_botAction.SQLBackgroundQuery(mySQLHost, "TWDOpsUpdate", query);
     }
     
     /**
