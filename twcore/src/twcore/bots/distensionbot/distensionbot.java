@@ -46,6 +46,8 @@ import twcore.core.util.Tools;
  *
  * Add:
  * - MAP: Add LVZ displaying rules
+ * - LVZ for sudden death and hybrid flag mode
+ *
  *
  * Lower priority (in order):
  * - !intro, !intro2, !intro3, etc.
@@ -74,7 +76,8 @@ public class distensionbot extends SubspaceBot {
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
     private final int WARP_POINT_CHECK_FREQUENCY = 7;      // # seconds between checking warp points for players
     private final int VENGEFUL_VALID_SECONDS = 12;         // # seconds after V.B. fire in which VB gets RP bonus
-    private final int STREAK_RANK_PROXIMITY = 20;          // Max rank difference for a kill to count toward a streak
+    private final int STREAK_RANK_PROXIMITY_DIVISOR = 2;   // Divisor for rank to determine streak rank prox (50 / 2 = 25 rank prox)
+    private final int STREAK_RANK_PROXIMITY_MINIMUM = 10;  // Min streak rank proximity allowed
     private final int PILOTS_REQ_EACH_ARMY = 3;            // # players needed on each army for game to start
     private final float SUPPORT_RATE = 1.5f;               // Multiplier for support's cut of end round bonus
     private final String DB_PROB_MSG = "That last one didn't go through.  Database problem, it looks like.  Please send a ?help message ASAP.";
@@ -103,9 +106,9 @@ public class distensionbot extends SubspaceBot {
     private final int WINS_REQ_RANK_CADET_2ND_CLASS = 7;
     private final int WINS_REQ_RANK_CADET_1ST_CLASS = 13;
     private final int WINS_REQ_RANK_ENSIGN = 20;
-    private final int WINS_REQ_RANK_2ND_LEIUTENANT = 30;
-    private final int WINS_REQ_RANK_LEIUTENANT = 45;
-    private final int WINS_REQ_RANK_LEIUTENANT_COMMANDER = 70;
+    private final int WINS_REQ_RANK_2ND_LIEUTENANT = 30;
+    private final int WINS_REQ_RANK_LIEUTENANT = 45;
+    private final int WINS_REQ_RANK_LIEUTENANT_COMMANDER = 70;
     private final int WINS_REQ_RANK_COMMANDER = 100;
     private final int WINS_REQ_RANK_CAPTAIN = 145;
     private final int WINS_REQ_RANK_FLEET_CAPTAIN = 200;
@@ -295,13 +298,14 @@ public class distensionbot extends SubspaceBot {
 
 
     // DATA FOR FLAG TIMER
-    private static final int SCORE_REQUIRED_FOR_WIN = 3; // Max # rounds (odd numbers only)
+    private static final int SCORE_REQUIRED_FOR_WIN = 3;// Max # rounds (odd numbers only)
     private static final int SECTOR_CHANGE_SECONDS = 4; // Seconds it takes to secure hold or break one
     private static final int INTERMISSION_SECS = 60;    // Seconds between end of free play & start of next battle
+    private static final int PLAYERS_FOR_2_FLAGS = 25;  // Minimum # players required to activate 2 flags\
+    private static final int SUDDEN_DEATH_MINUTES = 50; // Minutes after which round ends with a truce
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
     private boolean m_singleFlagMode;                   // True if flag mode is working on just a single flag
-    private static final int PLAYERS_FOR_2_FLAGS = 25;  // Minimum # players required to activate 2 flags
 
     private int m_flagRules = 0;                        // 0: Use original rules (pub-style timer)
                                                         // 1: Use hybrid rules (tug-a-war)
@@ -1680,7 +1684,8 @@ public class distensionbot extends SubspaceBot {
 
             points = Math.round(((float)points * armySizeWeight));
 
-            boolean addedToStreak = rankDiff > -STREAK_RANK_PROXIMITY;
+            int prox = Math.max(STREAK_RANK_PROXIMITY_MINIMUM, (victorRank / STREAK_RANK_PROXIMITY_DIVISOR));
+            boolean addedToStreak = rankDiff > prox;
             boolean killInBase = true;
 
             float flagMulti = -1;
@@ -2732,8 +2737,10 @@ public class distensionbot extends SubspaceBot {
         Integer scrapped = m_scrappingPlayers.get(name);
         if( scrapped != null && scrapped == upgradeNum )
             throw new TWCoreException( "You just took that off, and now you want me to put it back on, just like that?  What am I, a machine?" );
+        if( p.modifyUpgrade( upgradeNum, 1 ) == false )
+            throw new TWCoreException( "ERROR modifying upgrade " + upgradeNum + ".  Notify a mod immediately." );
+
         p.addUpgPoints( -cost );
-        p.modifyUpgrade( upgradeNum, 1 );
         boolean prized = true;
         if( upgrade.getPrizeNum() == ABILITY_PRIORITY_REARM )
             p.setFastRespawn(true);
@@ -2797,8 +2804,9 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You haven't exactly upgraded that, now have you?" );
 
         int cost = upgrade.getCostDefine( currentUpgradeLevel - 1);
+        if( p.modifyUpgrade( upgradeNum, -1 ) == false )
+            throw new TWCoreException( "ERROR modifying upgrade " + upgradeNum + ".  Notify a mod immediately." );
         p.addUpgPoints( cost );
-        p.modifyUpgrade( upgradeNum, -1 );
         if( upgrade.getPrizeNum() == ABILITY_PRIORITY_REARM )
             p.setFastRespawn(false);
         else if( upgrade.getPrizeNum() > 0 )
@@ -2905,6 +2913,8 @@ public class distensionbot extends SubspaceBot {
             while( p.getPurchasedUpgrade( i ) > 0 ) {
                 pointsReturned += upgrade.getCostDefine( p.getPurchasedUpgrade( i ) - 1);
                 p.modifyUpgrade( i, -1 );
+                if( p.modifyUpgrade( i, -1 ) == false )
+                    m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "ERROR modifying upgrade " + i + ".  Notify a mod immediately." );
                 if( upgrade.getPrizeNum() == ABILITY_PRIORITY_REARM )
                     p.setFastRespawn(false);
                 else if( upgrade.getPrizeNum() > 0 )
@@ -5627,6 +5637,7 @@ public class distensionbot extends SubspaceBot {
         private boolean   allowLagout;          // True if !lagout should be allowed
         private boolean   ignoreShipChanges;    // True if all ship changes should be ignored until old ship is entered
         private boolean   rankedUpFromLastKill; // True if player ranked up from the last kill
+        private TimerTask personalTask = null;  // Personal TimerTask for various uses
 
         public DistensionPlayer( String name ) {
             this.name = name;
@@ -6539,9 +6550,9 @@ public class distensionbot extends SubspaceBot {
                     break;
                 case WINS_REQ_RANK_ENSIGN:
                     m_botAction.sendPrivateMessage( arenaPlayerID, "You are now an Officer in " + getArmyName() + ", now accorded with all due privilege!" );
-                case WINS_REQ_RANK_2ND_LEIUTENANT:
-                case WINS_REQ_RANK_LEIUTENANT:
-                case WINS_REQ_RANK_LEIUTENANT_COMMANDER:
+                case WINS_REQ_RANK_2ND_LIEUTENANT:
+                case WINS_REQ_RANK_LIEUTENANT:
+                case WINS_REQ_RANK_LIEUTENANT_COMMANDER:
                 case WINS_REQ_RANK_COMMANDER:
                 case WINS_REQ_RANK_CAPTAIN:
                 case WINS_REQ_RANK_FLEET_CAPTAIN:
@@ -6588,12 +6599,12 @@ public class distensionbot extends SubspaceBot {
                 return "Captain";
             if( battlesWon >= WINS_REQ_RANK_COMMANDER )
                 return "Commander";
-            if( battlesWon >= WINS_REQ_RANK_LEIUTENANT_COMMANDER )
-                return "Leiutenant Commander";
-            if( battlesWon >= WINS_REQ_RANK_LEIUTENANT )
-                return "Leiutenant";
-            if( battlesWon >= WINS_REQ_RANK_2ND_LEIUTENANT )
-                return "2nd Leiutenant";
+            if( battlesWon >= WINS_REQ_RANK_LIEUTENANT_COMMANDER )
+                return "Lieutenant Commander";
+            if( battlesWon >= WINS_REQ_RANK_LIEUTENANT )
+                return "Lieutenant";
+            if( battlesWon >= WINS_REQ_RANK_2ND_LIEUTENANT )
+                return "2nd Lieutenant";
             if( battlesWon >= WINS_REQ_RANK_ENSIGN )
                 return "Ensign";
             if( battlesWon >= WINS_REQ_RANK_CADET_1ST_CLASS )
@@ -6628,14 +6639,14 @@ public class distensionbot extends SubspaceBot {
                 return WINS_REQ_RANK_FLEET_CAPTAIN - battlesWon;
             if( battlesWon >= WINS_REQ_RANK_COMMANDER )
                 return WINS_REQ_RANK_CAPTAIN - battlesWon;
-            if( battlesWon >= WINS_REQ_RANK_LEIUTENANT_COMMANDER )
+            if( battlesWon >= WINS_REQ_RANK_LIEUTENANT_COMMANDER )
                 return WINS_REQ_RANK_COMMANDER - battlesWon;
-            if( battlesWon >= WINS_REQ_RANK_LEIUTENANT )
-                return WINS_REQ_RANK_LEIUTENANT_COMMANDER - battlesWon;
-            if( battlesWon >= WINS_REQ_RANK_2ND_LEIUTENANT )
-                return WINS_REQ_RANK_LEIUTENANT - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_LIEUTENANT )
+                return WINS_REQ_RANK_LIEUTENANT_COMMANDER - battlesWon;
+            if( battlesWon >= WINS_REQ_RANK_2ND_LIEUTENANT )
+                return WINS_REQ_RANK_LIEUTENANT - battlesWon;
             if( battlesWon >= WINS_REQ_RANK_ENSIGN )
-                return WINS_REQ_RANK_2ND_LEIUTENANT - battlesWon;
+                return WINS_REQ_RANK_2ND_LIEUTENANT - battlesWon;
             if( battlesWon >= WINS_REQ_RANK_CADET_1ST_CLASS )
                 return WINS_REQ_RANK_ENSIGN - battlesWon;
             if( battlesWon >= WINS_REQ_RANK_CADET_2ND_CLASS )
@@ -6651,11 +6662,11 @@ public class distensionbot extends SubspaceBot {
         /**
          * Modifies the value of a particular upgrade.
          */
-        public void modifyUpgrade( int upgrade, int amt ) {
+        public boolean modifyUpgrade( int upgrade, int amt ) {
             if( upgrade < 0 || upgrade > NUM_UPGRADES)
-                return;
+                return false;
             if( purchasedUpgrades[upgrade] + amt < 0 )
-                return;
+                return false;
             purchasedUpgrades[upgrade] += amt;
             setupSpecialAbilities();
             if( shipNum == 6 && upgrade == 6 )
@@ -6669,6 +6680,7 @@ public class distensionbot extends SubspaceBot {
             if( shipNum == 9 && upgrade == 1 )
                 maxOP = purchasedUpgrades[1] + DEFAULT_MAX_OP;
             shipDataSaved = false;
+            return true;
         }
 
         /**
@@ -8143,8 +8155,8 @@ public class distensionbot extends SubspaceBot {
      * Prize queuer, for preventing bot lockups.
      */
     private class PrizeQueue extends TimerTask {
-        LinkedList <DistensionPlayer>priorityPlayers = new LinkedList<DistensionPlayer>();
-        LinkedList <DistensionPlayer>players = new LinkedList<DistensionPlayer>();
+        List <DistensionPlayer>priorityPlayers = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
+        List <DistensionPlayer>players         = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
         int runs = 0;       // # times queue has run since last spawn tick
         int delayTillNextSpawn = 0;
 
@@ -8154,7 +8166,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void addPlayer( DistensionPlayer p ) {
             if( !players.contains(p) )
-                players.addLast(p);
+                players.add(p);
         }
 
         /**
@@ -8164,7 +8176,7 @@ public class distensionbot extends SubspaceBot {
          */
         public void addHighPriorityPlayer( DistensionPlayer p ) {
             if( !priorityPlayers.contains(p) )
-                priorityPlayers.addLast(p);
+                priorityPlayers.add(p);
         }
 
         /**
@@ -8195,27 +8207,31 @@ public class distensionbot extends SubspaceBot {
             }
             if( !priorityPlayers.isEmpty() ) {
                 if( doTick )
-                    for( DistensionPlayer p : priorityPlayers )
-                        p.doSpawnTick();
+                    synchronized( priorityPlayers ) {
+                        for( DistensionPlayer p : priorityPlayers )
+                            p.doSpawnTick();
+                    }
                 // If another player is not in the process of being prized, attempt to spawn
                 if( delayTillNextSpawn <= 0 ) {
-                    DistensionPlayer currentPlayer = priorityPlayers.peek();
+                    DistensionPlayer currentPlayer = priorityPlayers.get(0);
                     spawned = currentPlayer.doSpawn();
                     if( spawned )
-                        priorityPlayers.removeFirst();
+                        priorityPlayers.remove(0);
                 }
             }
             if( players.isEmpty() )
                 return;
             if( doTick )
-                for( DistensionPlayer p : players )
-                    p.doSpawnTick();
+                synchronized( players ) {
+                    for( DistensionPlayer p : players )
+                        p.doSpawnTick();
+                }
             if( spawned )   // If high priority player was spawned, do not try to spawn normal player
                 return;
             if( delayTillNextSpawn <= 0 ) {
-                DistensionPlayer currentPlayer = players.peek();
+                DistensionPlayer currentPlayer = players.get(0);
                 if( currentPlayer.doSpawn() )
-                    players.removeFirst();
+                    players.remove(0);
             }
         }
     }
@@ -8603,6 +8619,164 @@ public class distensionbot extends SubspaceBot {
         }
         m_botAction.sendArenaMessage( "Lead Defense: " + topBreaker + " [" + topBreaks + " breaks]  ...  Lead Assault: " + topHolder + " [" + topHolds + " holds]" );
 
+        endRoundCleanup( gameOver );
+    }
+
+
+    /**
+     * Ends a battle as a stalemate.
+     * After, sets up an intermission, followed by a new battle.
+     */
+    private void doEndRoundAsStalemate( ) {
+        if( !flagTimeStarted || flagTimer == null )
+            return;
+
+        int secs             = flagTimer.getTotalSecs();
+        int minsToWin        = flagTimer.getTotalSecs() / 60;
+        HashMap <Integer,Integer>armyStrengths = flagTimer.getArmyStrengthSnapshots();
+
+        int strengthAvg0 = 1;
+        int strengthAvg1 = 1;
+        m_botAction.sendArenaMessage( "END BATTLE: STALEMATE!  The armies have called a truce after " + getTimeString(secs) + ".", Tools.Sound.HALLELUJAH );
+
+        float strCurrent0;
+        float strCurrent1;
+        strCurrent0 = m_armies.get(0).getTotalStrength();
+        strCurrent1 = m_armies.get(1).getTotalStrength();
+        if( strCurrent0 <= 0 ) strCurrent0 = 1;
+        if( strCurrent1 <= 0 ) strCurrent1 = 1;
+
+        strengthAvg0 = armyStrengths.get( 0 ) / minsToWin;
+        strengthAvg1 += armyStrengths.get( 1 ) / minsToWin;
+
+        if( strengthAvg0 == 0 )
+            strengthAvg0 = 1;
+        if( strengthAvg1 == 0 )
+            strengthAvg1 = 1;
+
+        // Points to be divided up by army
+        float totalPoints = (float)(minsToWin * 0.4f) * ((strengthAvg0 + strengthAvg1) / 2);
+        float totalLvlSupport = 0;
+        float totalLvlAttack = 0;
+        float numSupport = 0;
+        float numAttack = 0;
+        Iterator <DistensionPlayer>i = m_players.values().iterator();
+
+        while( i.hasNext() ) {
+            DistensionPlayer p = i.next();
+            Integer time = m_playerTimes.get( p.getName() );
+            float percentOnFreq = 0;
+            if( time != null )
+                percentOnFreq = (float)(secs - time) / (float)secs;
+            if( p.isSupportShip() ) {
+                totalLvlSupport += ((float)p.getRank() * percentOnFreq );
+                numSupport++;
+            } else {
+                totalLvlAttack += ((float)p.getRank() * percentOnFreq );
+                numAttack++;
+            }
+        }
+        if( totalLvlSupport < 1.0f) totalLvlSupport = 1.0f;
+        if( totalLvlAttack < 1.0f) totalLvlAttack = 1.0f;
+        float percentSupport = numSupport / ( numSupport + numAttack );
+        float percentAttack;
+        // If support makes up 40% or less of the team, support cut is percentage * support rate
+        int supportPoints;
+        int attackPoints;
+        if( percentSupport < 0.5f ) {
+            percentSupport = percentSupport * SUPPORT_RATE;
+        } else {
+            if( percentSupport != 1.0f ) {
+                // >=40% support (without everyone being support) means support gets capped max of 40% * support rate
+                percentSupport = 0.5f * SUPPORT_RATE;
+            }
+        }
+        supportPoints = Math.round( totalPoints * percentSupport );
+        percentAttack = 1.0f - percentSupport;
+        attackPoints = Math.round( totalPoints * percentAttack );
+
+        // For display purposes only
+        float attack, support, combo;
+        attack = attackPoints;
+        support = supportPoints;
+        combo = attackPoints + supportPoints;
+        if( DEBUG ) {
+            attack *= DEBUG_MULTIPLIER;
+            support *= DEBUG_MULTIPLIER;
+            combo *= DEBUG_MULTIPLIER;
+        }
+
+        m_botAction.sendArenaMessage( "Stalemate Award (split evenly): " + (int)combo + "RP  ...  Avg " + (int)(support / numSupport) + "RP for " + (int)numSupport + " on support (" + (int)(percentSupport * 100.0f) +
+                "%); avg " + (int)(attack / numAttack) + "RP for " + (int)numAttack + " on attack (" + (int)(percentAttack * 100.0f) + "%)" );
+
+        i = m_players.values().iterator();
+        int playerRank = 0;
+        String topHolder = "N/A", topBreaker = "N/A";
+        int topHolds = 0, topBreaks = 0;
+        float points = 0;
+        while( i.hasNext() ) {
+            DistensionPlayer p = i.next();
+            if( p.getShipNum() > 0 ) {
+                playerRank = p.getRank();
+                if( playerRank == 0 )
+                    playerRank = 1;
+                if( p.isSupportShip() )
+                    points = (float)supportPoints * ((float)playerRank / totalLvlSupport);
+                else
+                    points = (float)attackPoints * ((float)playerRank / totalLvlAttack);
+                Integer time = m_playerTimes.get( p.getName() );
+                if( time != null ) {
+                    float percentOnFreq = (float)(secs - time) / (float)secs;
+                    int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
+                    String victoryMsg;
+                    victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP for your efforts (" + (int)(percentOnFreq * 100) + "% participation)";
+                    int holds = flagTimer.getSectorHolds( p.getName() );
+                    int breaks = flagTimer.getSectorBreaks( p.getName() );
+                    if( holds == topHolds && topHolds > 0 )
+                        topHolder += ", " + p.getName();
+                    else if( holds > topHolds ) {
+                        topHolds = holds;
+                        topHolder = p.getName();
+                    }
+                    if( breaks == topBreaks && topBreaks > 0 )
+                        topBreaker += ", " + p.getName();
+                    else if( breaks > topBreaks ) {
+                        topBreaks = breaks;
+                        topBreaker = p.getName();
+                    }
+
+                    int bonus = Math.max( 1, (holds * ( playerRank / 2 ) + breaks * (playerRank / 3)) );
+                    int totalDisplay = (int)(DEBUG ? (bonus + modPoints) * DEBUG_MULTIPLIER : bonus + modPoints );
+                    if( holds != 0 && breaks != 0 ) {
+                        victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds and " + breaks +" sector breaks = " + totalDisplay + " RP!" ;
+                    } else if( holds != 0 ) {
+                        victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds = " + totalDisplay + "RP!";
+                    } else if( breaks != 0 ) {
+                        victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + breaks +" sector breaks = " + totalDisplay + "RP!";
+                    } else {
+                        victoryMsg += "!";
+                    }
+
+                    m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
+                    modPoints += bonus;
+                    p.addRankPoints(modPoints, false);
+                } else {
+                    if( DEBUG )
+                        m_botAction.sendSmartPrivateMessage("dugwyler", p.getName() + " had no time data attached to their name at round win." );
+                }
+            }
+        }
+        m_botAction.sendArenaMessage( "Lead Defense: " + topBreaker + " [" + topBreaks + " breaks]  ...  Lead Assault: " + topHolder + " [" + topHolds + " holds]" );
+
+        endRoundCleanup( false );
+    }
+
+
+    /**
+     * Performs tasks necessary to clean up before breaking to intermission.
+     * @param gameOver True if the war has ended (someone won)
+     */
+    public void endRoundCleanup( boolean gameOver ) {
         // Start free play (delaying the intermission)
         // Take away one second so that when we set the timer, it doesn't look odd
         int intermissionTime;
@@ -8631,7 +8805,6 @@ public class distensionbot extends SubspaceBot {
             flagTimeStarted = false;
             return;
         }
-
 
         if( m_beginDelayedShutdown ) {
             m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  Thank you for testing!" );
@@ -9418,6 +9591,15 @@ public class distensionbot extends SubspaceBot {
             if( (totalSecs % (5 * 60)) == 0 && ( flagSecondsRequired - secondsHeld > 30) ) {
                 m_botAction.sendArenaMessage( getTimeInfo() );
                 recordMajorStrengthSnapshot();
+            }
+
+            if( totalSecs == (SUDDEN_DEATH_MINUTES - 5) * 60 ) {
+                m_botAction.sendArenaMessage( "-=(  WARNING!  )=-  Battle will end in STALEMATE in 5 minutes!!", 2 );
+            }
+
+            if( totalSecs >= SUDDEN_DEATH_MINUTES * 60 ) {
+                endBattle();
+                doEndRoundAsStalemate();
             }
 
             if( claimBeingBroken ) {
