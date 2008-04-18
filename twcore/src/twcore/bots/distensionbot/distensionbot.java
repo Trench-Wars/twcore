@@ -313,9 +313,9 @@ public class distensionbot extends SubspaceBot {
     private int m_roundNum = 0;							// Current round
     private int flagSecondsRequiredDoubleFlag = 60;     // Flag seconds required to win
     private int flagSecondsRequiredSingleFlag = 120;    // Flag seconds required to win with 1 flag
-    private float flagSecondsHybridFactor = 2;          // Factor by which flag seconds required to win
+    private float flagSecondsHybridFactor = 2.5f;       // Factor by which flag seconds required to win
                                                         //    increase when using hybrid mode
-    private int flagHybridReversionRate;                // How many seconds per second held by a team presently
+    private int flagHybridReversionRate = 3;            // How many seconds per second held by a team presently
                                                         //    not holding advantage are taken off the clock
     private HashMap <String,Integer>m_playerTimes;      // Roundtime of player on freq
     private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
@@ -9613,7 +9613,7 @@ public class distensionbot extends SubspaceBot {
                 // (This means an unsuccessful break is not a waste.)
                 if( breakingArmyID != advantageArmyID ) {
                     if( breakSeconds == 1 )
-                        secondsHeld -= flagHybridReversionRate;
+                        secondsHeld -= 3;
                     else
                         secondsHeld -= 1;
                 }
@@ -9638,7 +9638,7 @@ public class distensionbot extends SubspaceBot {
             // If the army holding the sector does not have advantage, we SUBTRACT time,
             //  as the time belongs to the holding army, and don't do standard timer checks.
             if( sectorHoldingArmyID != advantageArmyID && m_flagRules == 1 ) {
-                secondsHeld -= 3;
+                secondsHeld -= flagHybridReversionRate;
                 // If it reduces the time to 0, now the holding army has advantage
                 if( secondsHeld <= 0 ) {
                     secondsHeld = 0;
@@ -10073,8 +10073,8 @@ public class distensionbot extends SubspaceBot {
         // 23: Cloak
         // 29: Portal
         // 30: 10% Vengeful Bastard 3
-        // 35: L3 Guns
-        // 40: Stealth
+        // 33: Stealth
+        // 38: L3 Guns
         // 42: Decoy
         // 45: 10% Vengeful Bastard 4
         // 46: Rocket 2
@@ -10100,9 +10100,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p6a1e[] = { 15,16,17, 18, 19, 20, 30, 20, 20, 24, 27, 50, 60, 75 };
         int p6a2e[] = {  3, 5, 8, 10, 15, 20, 30, 40, 50, 55, 60, 65, 70, 75 };
-        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, p6a1e, p6a2e, 14 );        //  50 x14
+        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, p6a1e, p6a2e, 14 );        //  60 x14
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, 32, 35, 1 );
+        upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, 32, 38, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "+15% Vengeful B*stard", ABILITY_VENGEFUL_BASTARD, new int[]{9,12,15,20}, new int[]{10,20,30,55}, 4 );
         ship.addUpgrade( upg );
@@ -10112,7 +10112,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Escape Tunnel", Tools.Prize.PORTAL, 33, 29, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Radar Scrambler", Tools.Prize.STEALTH, 40, 40, 1 );
+        upg = new ShipUpgrade( "Radar Scrambler", Tools.Prize.STEALTH, 40, 33, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Light-Bending Unit", Tools.Prize.CLOAK, 25, 23, 1 );
         ship.addUpgrade( upg );
