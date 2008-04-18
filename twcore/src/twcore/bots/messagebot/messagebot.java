@@ -78,7 +78,7 @@ public class messagebot extends SubspaceBot
 	public static final String IPCCHANNEL = "messages";
 	boolean bug = false;
 	boolean newsAlerts = false;
-	public String database = "local";//If you change this you must also change line ~1426
+	public String database = "website";//If you change this you must also change line ~1426
 
 	/** Constructor, requests Message and Login events.
 	 *  Also prepares bot for use.
@@ -1423,7 +1423,7 @@ class Channel
 	HashMap <String,Integer>members;
 	HashSet <String>banned;
 	boolean isOpen;
-	String database = "local";
+	String database = "website";
 
 	/** Constructs the new channel.
 	 */

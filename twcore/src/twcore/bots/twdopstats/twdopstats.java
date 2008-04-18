@@ -26,7 +26,7 @@ import twcore.core.events.SQLResultEvent;
 public class twdopstats extends SubspaceBot {
 
 	private EventRequester events; 
-	private final String mySQLHost = "local";
+	private final String mySQLHost = "website";
 	
     private Vector<EventData> callList = new Vector<EventData>();
 	

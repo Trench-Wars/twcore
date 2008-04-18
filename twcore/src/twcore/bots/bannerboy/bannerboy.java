@@ -25,7 +25,7 @@ import twcore.core.util.Tools;
 public class bannerboy extends SubspaceBot {
 
 	//mySQL database to use
-	private String m_sqlHost = "local";
+	private String m_sqlHost = "website";
 
 	//Keep track of the time since last personal banner change
 	private long m_lastBannerSet = 0;
