@@ -1685,7 +1685,7 @@ public class distensionbot extends SubspaceBot {
             points = Math.round(((float)points * armySizeWeight));
 
             int prox = Math.max(STREAK_RANK_PROXIMITY_MINIMUM, (victorRank / STREAK_RANK_PROXIMITY_DIVISOR));
-            boolean addedToStreak = rankDiff > prox;
+            boolean addedToStreak = rankDiff <= prox;
             boolean killInBase = true;
 
             float flagMulti = -1;
