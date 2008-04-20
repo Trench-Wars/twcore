@@ -12,6 +12,7 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 
 /**
  * Messages module for TWBot.
@@ -365,8 +366,15 @@ public class utilmessages extends MultiUtil
     	message = CodeCompiler.replaceKeys(m_botAction, p, msgTask.getMessage());
     	if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message))
             message = null;
-    	if(message != null)
+    	if(message != null && message.indexOf('%') == -1)
     		m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message, msgTask.getSoundCode());
+        else if(message != null && message.indexOf('%') != -1){
+            int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
+            if(sound != -1)
+                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
+            else
+                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
+        }
       }
     }
   }

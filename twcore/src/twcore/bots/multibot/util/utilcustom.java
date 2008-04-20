@@ -328,8 +328,15 @@ public class utilcustom extends MultiUtil {
                 message = CodeCompiler.replaceKeys(m_botAction, p, message);
                 if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message))
                     message = null;
-                if (message != null)
+                if (message != null && message.indexOf('%') == -1)
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
+                else if(message != null && message.indexOf('%') != -1){
+                    int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
+                    if(sound != -1)
+                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
+                    else
+                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
+                }
             }
             
         }

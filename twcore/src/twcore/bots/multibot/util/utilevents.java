@@ -16,6 +16,7 @@ import twcore.core.game.Player;
 import twcore.core.EventRequester;
 import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 import twcore.core.OperatorList;
 
 /**
@@ -150,8 +151,15 @@ public class utilevents extends MultiUtil {
             String message = CodeCompiler.replaceKeys(m_botAction, p, msg);
             if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message) && !opList.isSmod(name))
                 message = null;
-            if(message != null)
+            if(message != null && message.indexOf('%') == -1)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
+            else if(message != null && message.indexOf('%') != -1){
+                int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
+                if(sound != -1)
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
+                else
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
+            }
         }
     }
     
@@ -429,8 +437,15 @@ public class utilevents extends MultiUtil {
                 s = CodeCompiler.replaceKeys(m_botAction, p, s);
                 if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                     s = null;
-                if(s != null)
+                if(s != null && s.indexOf('%') == -1)
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
+                else if(s != null && s.indexOf('%') != -1){
+                    int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
+                    if(sound != -1)
+                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
+                    else
+                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
+                }
             } 
             
         }
@@ -443,8 +458,15 @@ public class utilevents extends MultiUtil {
                 s = CodeCompiler.replaceKeys(m_botAction, p, s);
                 if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                     s = null;
-                if(s != null)
+                if(s != null && s.indexOf('%') == -1)
                     m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
+                else if(s != null && s.indexOf('%') != -1){
+                    int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
+                    if(sound != -1)
+                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
+                    else
+                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
+                }
             }
         }
         b.updateLastCarrier(playerID);
@@ -464,8 +486,16 @@ public class utilevents extends MultiUtil {
             s = CodeCompiler.replaceKeys(m_botAction, killer, s);
             if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
-            if(s != null)
+            if(s != null && s.indexOf('%') == -1)
                 m_botAction.sendUnfilteredPrivateMessage(killer.getPlayerID(), s);
+            else if(s != null && s.indexOf('%') != -1){
+                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
+                if(sound != -1)
+                    m_botAction.sendUnfilteredPrivateMessage(killer.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
+                else
+                    m_botAction.sendUnfilteredPrivateMessage(killer.getPlayerName(), s.substring(0, s.indexOf('%')));
+            }
+            
         }
         new SpawnTimer(killed);
     }
@@ -482,8 +512,15 @@ public class utilevents extends MultiUtil {
             s = CodeCompiler.replaceKeys(m_botAction, p, s);
             if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
-            if( s != null)
+            if( s != null && s.indexOf('%') == -1)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
+            else if(s != null && s.indexOf('%') != -1){
+                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
+                if(sound != -1)
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
+                else
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
+            }
         }
     }
     
@@ -499,8 +536,15 @@ public class utilevents extends MultiUtil {
             s = CodeCompiler.replaceKeys(m_botAction, p, s);
             if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
-            if( s != null)
+            if( s != null && s.indexOf('%') == -1)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
+            else if(s != null && s.indexOf('%') != -1){
+                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
+                if(sound != -1)
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
+                else
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
+            }
         }
     }
     
@@ -516,8 +560,15 @@ public class utilevents extends MultiUtil {
             s = CodeCompiler.replaceKeys(m_botAction, p, s);
             if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                 s = null;
-            if( s != null)
+            if( s != null && s.indexOf('%') == -1)
                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
+            else if(s != null && s.indexOf('%') != -1){
+                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
+                if(sound != -1)
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
+                else
+                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
+            }
         }
     }
     
@@ -533,8 +584,15 @@ public class utilevents extends MultiUtil {
                     s = CodeCompiler.replaceKeys(m_botAction, p, s);
                     if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
                         s = null;
-                    if(s != null)
+                    if(s != null && s.indexOf('%') == -1)
                         m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s);
+                    else if(s != null && s.indexOf('%') != -1){
+                        int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
+                        if(sound != -1)
+                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
+                        else
+                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
+                    }
                 }
                 
             }

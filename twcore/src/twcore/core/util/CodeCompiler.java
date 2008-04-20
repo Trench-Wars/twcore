@@ -57,12 +57,20 @@ public final class CodeCompiler {
             message = message.replace("@losses", Integer.toString(p.getLosses()));      
         if(message.contains("@bounty"))
             message = message.replace("@bounty", Integer.toString(p.getBounty()));
+        while(message.contains("@randomsound")){
+            int[] allowedSounds = { 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 102, 103, 104 };
+            message = message.replaceFirst("@randomsound", Integer.toString(allowedSounds[rand.nextInt(allowedSounds.length)]));
+        }
         if(message.contains("@id"))
             message = message.replace("@id", Integer.toString(p.getPlayerID()));
         if(message.contains("@ping"))
             message = message.replace("@ping", Integer.toString(p.getPing() * 10));
-        if(message.contains("@squad"))
-            message = message.replace("@squad", p.getSquadName());      
+        if(message.contains("@squad")){
+            if(p.getSquadName().equals(""))
+                message = message.replace("@squad", "null");
+            else
+                message = message.replace("@squad", p.getSquadName());
+        }
         if(message.contains("@x")){
             bot.spectatePlayer(p.getPlayerID());
             message = message.replace("@x", Integer.toString(p.getXTileLocation()));
@@ -107,10 +115,15 @@ public final class CodeCompiler {
                 message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
             }
         }
+        message = message.replace("\\[", "$OPEN_BRACKET$");
+        message = message.replace("\\]", "$CLOSE_BRACKET$");
         while (message.contains("[") && message.contains("]")) {
             String lastSmallStatement = message.substring(message.lastIndexOf("["), message.indexOf("]", message.lastIndexOf("[")) + 1);
             message = message.replace(lastSmallStatement, compileMathStatement(lastSmallStatement.trim()));
-        }  
+        }
+        message = message.replace("$OPEN_BRACKET$", "[");
+        message = message.replace("$CLOSE_BRACKET$", "]");
+        
         if(message.trim().startsWith("{")){
             try{
                 message = CodeCompiler.compile(message);
@@ -329,7 +342,8 @@ public final class CodeCompiler {
             "| @y              - Y Location(Tiles)               |",
             "| @randomfreq     - A random number(0 - 9998)       |",        
             "| @randomship     - A random number(1-8)            |",            
-            "| @randomtile     - A random number(1-1022)         |",           
+            "| @randomtile     - A random number(1-1022)         |",
+            "| @randomsound    - A random ALLOWED sound number.  |",
             "| @ping           - The player's ping in ms.        |",
             "| @date           - The current date.               |",
             "| @time           - The current time.               |",

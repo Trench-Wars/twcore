@@ -133,8 +133,15 @@ public class utilhotspots extends MultiUtil {
                         msg = CodeCompiler.replaceKeys(m_botAction, p, msg);
                         if(msg != null && msg.startsWith("*") && !CodeCompiler.isAllowed(msg))
                             msg = null;
-                        if(msg != null)
+                        if(msg != null && msg.indexOf('%') == -1)
                             m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), msg);
+                        else if(msg != null && msg.indexOf('%') != -1){
+                            int sound = Tools.Sound.isAllowedSound( msg.substring(msg.indexOf('%') + 1) );
+                            if(sound != -1)
+                                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), msg.substring(0, msg.indexOf('%')), sound);
+                            else
+                                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), msg.substring(0, msg.indexOf('%')));
+                        }
                     }
                 }
             }

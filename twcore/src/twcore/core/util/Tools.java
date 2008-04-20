@@ -535,7 +535,7 @@ public final class Tools {
     // *** ENUMS ***
 
     // Prizes
-    public class Prize {
+    public static class Prize {
         public static final int RECHARGE = 1;
         public static final int ENERGY = 2;
         public static final int ROTATION = 3;
@@ -569,7 +569,7 @@ public final class Tools {
     }
 
     // Sounds
-    public class Sound {
+    public static class Sound {
         public static final int BEEP1 = 1;
         public static final int BEEP2 = 2;
         public static final int NOT_DEALING_WITH_ATT = 3;
@@ -602,10 +602,41 @@ public final class Tools {
         public static final int VICTORY_BELL = 103;
         public static final int GOAL = 104;
         public static final int GOGOGO = 104; // Just in case :P
+        
+        /**
+         * Disabled sounds( 6, 12, 26, 100, 101 )
+         * @param sound The sound to check
+         * @return Whether or not the sound is allowed
+         */
+        public static boolean isAllowedSound(int sound){
+            if(sound < 1 || (sound > 25 && sound < 102) || sound > 104)
+                return false;
+            else if(sound == REAGAN || sound == ORGASM_DO_NOT_USE)
+                return false;
+            else return true;
+        }
+        
+        /**
+         * Disabled sounds( 6, 12, 26, 100, 101 )
+         * @param soundString The sound to check
+         * @return -1 if the sound is not allowed. Else return the sound number.
+         */
+        public static int isAllowedSound(String soundString){
+            try{
+                int sound = Integer.parseInt(soundString);
+                if(sound < 1 || (sound > 25 && sound < 102) || sound > 104)
+                    return -1;
+                else if(sound == REAGAN || sound == ORGASM_DO_NOT_USE)
+                    return -1;
+                else return sound;
+            }catch(NumberFormatException e){
+                return -1;
+            }
+        }
     }
 
     // Ships (not to be confused with numbering system used in Ship, which is for internal/packet use only)
-    public class Ship {
+    public static class Ship {
         public static final int SPECTATOR = 0;
         public static final int WARBIRD = 1;
         public static final int JAVELIN = 2;
@@ -620,7 +651,7 @@ public final class Tools {
     // Time defines for conversion to milliseconds.  If this is to be found somewhere else
     // more handy, that can be used instead -- merely saw a static reference to the number
     // representing "one day" in StaffBot and thought it was a little sloppy.
-    public class TimeInMillis {
+    public static class TimeInMillis {
         public static final int SECOND = 1000;
         public static final int MINUTE = 60000;
         public static final int HOUR   = 3600000;
@@ -630,7 +661,7 @@ public final class Tools {
 
     /** Weapons - These are the <b>STANDARD</b> weapon speed settings in SSCU Trench Wars
      */
-    public class Weapon {
+    public static class Weapon {
     	public static final double WARBIRD_BULLET_SPEED = 5000.0;
     	public static final double JAVELIN_BULLET_SPEED = -900.0;
     	public static final double SPIDER_BULLET_SPEED = 4000.0;
