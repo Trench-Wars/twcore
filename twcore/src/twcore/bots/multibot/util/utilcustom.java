@@ -323,22 +323,8 @@ public class utilcustom extends MultiUtil {
          */
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
-            while (it.hasNext()) {
-                String message = it.next();
-                message = CodeCompiler.replaceKeys(m_botAction, p, message);
-                if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message))
-                    message = null;
-                if (message != null && message.indexOf('%') == -1)
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
-                else if(message != null && message.indexOf('%') != -1){
-                    int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-                    if(sound != -1)
-                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
-                    else
-                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
-                }
-            }
-            
+            while (it.hasNext())
+                CodeCompiler.handleTWScript(m_botAction, p, it.next());
         }
     }
     

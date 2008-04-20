@@ -128,21 +128,8 @@ public class utilhotspots extends MultiUtil {
                 // watch.getY2() );
                 if (watch.getMessages() != null) {
                     Iterator<String> i = watch.getMessages().iterator();
-                    while (i.hasNext()) {
-                        String msg = i.next();
-                        msg = CodeCompiler.replaceKeys(m_botAction, p, msg);
-                        if(msg != null && msg.startsWith("*") && !CodeCompiler.isAllowed(msg))
-                            msg = null;
-                        if(msg != null && msg.indexOf('%') == -1)
-                            m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), msg);
-                        else if(msg != null && msg.indexOf('%') != -1){
-                            int sound = Tools.Sound.isAllowedSound( msg.substring(msg.indexOf('%') + 1) );
-                            if(sound != -1)
-                                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), msg.substring(0, msg.indexOf('%')), sound);
-                            else
-                                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), msg.substring(0, msg.indexOf('%')));
-                        }
-                    }
+                    while( i.hasNext() )
+                        CodeCompiler.handleTWScript(m_botAction, p, i.next());
                 }
             }
         }

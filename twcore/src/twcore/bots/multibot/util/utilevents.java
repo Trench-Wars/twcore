@@ -146,21 +146,8 @@ public class utilevents extends MultiUtil {
      */
     public void doMassPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
-        while( i.hasNext() ){
-            Player p = i.next();
-            String message = CodeCompiler.replaceKeys(m_botAction, p, msg);
-            if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message) && !opList.isSmod(name))
-                message = null;
-            if(message != null && message.indexOf('%') == -1)
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
-            else if(message != null && message.indexOf('%') != -1){
-                int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-                if(sound != -1)
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
-                else
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
-            }
-        }
+        while( i.hasNext() )
+            CodeCompiler.handleTWScript(m_botAction, i.next(), msg);
     }
     
     /**
@@ -432,42 +419,16 @@ public class utilevents extends MultiUtil {
         if(carrier == -1 && carrier < b.getCurrentCarrier()){
             Player p = m_botAction.getPlayer(b.getCurrentCarrier());
             Iterator<String> i = bFiredMsgs.iterator();
-            while( i.hasNext() ){
-                String s = i.next();
-                s = CodeCompiler.replaceKeys(m_botAction, p, s);
-                if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
-                    s = null;
-                if(s != null && s.indexOf('%') == -1)
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
-                else if(s != null && s.indexOf('%') != -1){
-                    int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
-                    if(sound != -1)
-                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
-                    else
-                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
-                }
-            } 
+            while( i.hasNext() )
+                CodeCompiler.handleTWScript(m_botAction, p, i.next());
             
         }
         //Ball Caught
         else if(b.getCurrentCarrier() == -1 && b.getCurrentCarrier() < carrier){
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
-            while( i.hasNext() ){
-                String s = i.next();
-                s = CodeCompiler.replaceKeys(m_botAction, p, s);
-                if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
-                    s = null;
-                if(s != null && s.indexOf('%') == -1)
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
-                else if(s != null && s.indexOf('%') != -1){
-                    int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
-                    if(sound != -1)
-                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
-                    else
-                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
-                }
-            }
+            while( i.hasNext() )
+                CodeCompiler.handleTWScript(m_botAction, p, i.next());
         }
         b.updateLastCarrier(playerID);
         b.updateCurrentCarrier(carrier);
@@ -481,22 +442,9 @@ public class utilevents extends MultiUtil {
         Player killer = m_botAction.getPlayer(event.getKillerID());
         if(killed == null || killer == null)return;
         Iterator<String> i = killMsgs.iterator();
-        while( i.hasNext() ){
-            String s = i.next();
-            s = CodeCompiler.replaceKeys(m_botAction, killer, s);
-            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
-                s = null;
-            if(s != null && s.indexOf('%') == -1)
-                m_botAction.sendUnfilteredPrivateMessage(killer.getPlayerID(), s);
-            else if(s != null && s.indexOf('%') != -1){
-                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
-                if(sound != -1)
-                    m_botAction.sendUnfilteredPrivateMessage(killer.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
-                else
-                    m_botAction.sendUnfilteredPrivateMessage(killer.getPlayerName(), s.substring(0, s.indexOf('%')));
-            }
-            
-        }
+        while( i.hasNext() )
+            CodeCompiler.handleTWScript(m_botAction, killer, i.next());
+
         new SpawnTimer(killed);
     }
     
@@ -507,21 +455,8 @@ public class utilevents extends MultiUtil {
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
         Iterator<String> i = weapMsgs.iterator();
-        while( i.hasNext() ){
-            String s = i.next();
-            s = CodeCompiler.replaceKeys(m_botAction, p, s);
-            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
-                s = null;
-            if( s != null && s.indexOf('%') == -1)
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
-            else if(s != null && s.indexOf('%') != -1){
-                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
-                if(sound != -1)
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
-                else
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
-            }
-        }
+        while( i.hasNext() )
+            CodeCompiler.handleTWScript(m_botAction, p, i.next());
     }
     
     /**
@@ -531,21 +466,8 @@ public class utilevents extends MultiUtil {
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
         Iterator<String> i = fClaimMsgs.iterator();
-        while( i.hasNext() ){
-            String s = i.next();
-            s = CodeCompiler.replaceKeys(m_botAction, p, s);
-            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
-                s = null;
-            if( s != null && s.indexOf('%') == -1)
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
-            else if(s != null && s.indexOf('%') != -1){
-                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
-                if(sound != -1)
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
-                else
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
-            }
-        }
+        while( i.hasNext() )
+            CodeCompiler.handleTWScript(m_botAction, p, i.next());
     }
     
     /**
@@ -555,21 +477,8 @@ public class utilevents extends MultiUtil {
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
         Iterator<String> i = fDropMsgs.iterator();
-        while( i.hasNext() ){
-            String s = i.next();
-            s = CodeCompiler.replaceKeys(m_botAction, p, s);
-            if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
-                s = null;
-            if( s != null && s.indexOf('%') == -1)
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerID(), s);
-            else if(s != null && s.indexOf('%') != -1){
-                int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
-                if(sound != -1)
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
-                else
-                    m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
-            }
-        }
+        while( i.hasNext() )
+            CodeCompiler.handleTWScript(m_botAction, p, i.next());
     }
     
     public void cancel() {}    
@@ -579,21 +488,8 @@ public class utilevents extends MultiUtil {
         private TimerTask runIt = new TimerTask() {
             public void run() {
                 Iterator<String> i = spawnMsgs.iterator();
-                while (i.hasNext()) {
-                    String s = i.next();
-                    s = CodeCompiler.replaceKeys(m_botAction, p, s);
-                    if(s != null && s.startsWith("*") && !CodeCompiler.isAllowed(s) && !SMOD_OVERRIDE)
-                        s = null;
-                    if(s != null && s.indexOf('%') == -1)
-                        m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s);
-                    else if(s != null && s.indexOf('%') != -1){
-                        int sound = Tools.Sound.isAllowedSound( s.substring(s.indexOf('%') + 1) );
-                        if(sound != -1)
-                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')), sound);
-                        else
-                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), s.substring(0, s.indexOf('%')));
-                    }
-                }
+                while( i.hasNext() )
+                    CodeCompiler.handleTWScript(m_botAction, p, i.next());
                 
             }
         };

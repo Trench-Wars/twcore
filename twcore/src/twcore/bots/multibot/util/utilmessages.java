@@ -12,7 +12,6 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.util.Tools;
 
 /**
  * Messages module for TWBot.
@@ -355,27 +354,13 @@ public class utilmessages extends MultiUtil
   public void handleEvent(PlayerEntered event)
   {
     MsgTask msgTask;
-    String message = null;
     Player p = m_botAction.getPlayer(event.getPlayerID());
     if(p == null)return;
     
-    for(int index = 0; index < msgList.size(); index++)
-    {
+    for(int index = 0; index < msgList.size(); index++){
       msgTask = msgList.get(index);
-      if(msgTask.getType() == MsgTask.GREET_TYPE){
-    	message = CodeCompiler.replaceKeys(m_botAction, p, msgTask.getMessage());
-    	if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message))
-            message = null;
-    	if(message != null && message.indexOf('%') == -1)
-    		m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message, msgTask.getSoundCode());
-        else if(message != null && message.indexOf('%') != -1){
-            int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-            if(sound != -1)
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
-            else
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
-        }
-      }
+      if(msgTask.getType() == MsgTask.GREET_TYPE)
+    	CodeCompiler.handleTWScript(m_botAction, p, msgTask.getMessage());
     }
   }
 

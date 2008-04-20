@@ -17,8 +17,21 @@ import twcore.core.game.Player;
  * @author milosh
  */
 public final class CodeCompiler {
-    private CodeCompiler() {}
     
+    public static void handleTWScript(BotAction bot, Player p, String message){
+        message = CodeCompiler.replaceKeys(bot, p, message);
+        if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message))
+            message = null;
+        if (message != null && message.indexOf('%') == -1)
+            bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
+        else if(message != null && message.indexOf('%') != -1){
+            int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
+            if(sound != -1)
+                bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
+            else
+                bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
+        }
+    }
     
     /**
      * Replaces key phrases for modules using custom unfiltered
