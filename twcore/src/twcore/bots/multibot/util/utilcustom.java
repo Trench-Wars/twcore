@@ -324,7 +324,7 @@ public class utilcustom extends MultiUtil {
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
             while (it.hasNext())
-                CodeCompiler.handleTWScript(m_botAction, p, it.next());
+                CodeCompiler.handlePrivateTWScript(m_botAction, p, it.next());
         }
     }
     

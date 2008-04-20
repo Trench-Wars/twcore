@@ -16,7 +16,6 @@ import twcore.core.game.Player;
 import twcore.core.EventRequester;
 import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.util.Tools;
 import twcore.core.OperatorList;
 
 /**
@@ -64,6 +63,7 @@ public class utilevents extends MultiUtil {
         String[] message = {
                 "+---------------------- Events Utility ----------------------+",
                 "| !masspm <msg>     -- Sends a PM to everyone in the arena.  |",
+                "| !pub <msg>        -- Sends a public message.               |",
                 "| !killmsg <msg>    -- Adds a kill message.                  |",
                 "| !spawnmsg <msg>   -- Adds a spawn message.                 |",
                 "| !weapmsg <msg>    -- Adds a weapon fired message.          |",
@@ -98,6 +98,8 @@ public class utilevents extends MultiUtil {
     public void handleCommand(String name, String msg) {
         if(msg.startsWith("!masspm "))
             doMassPm(name, msg.substring(8));
+        else if(msg.startsWith("!pub "))
+            doPub(name, msg.substring(5));
         else if(msg.startsWith("!killmsg "))
             doKillMsg(name, msg.substring(9));
         else if(msg.startsWith("!spawnmsg "))
@@ -120,8 +122,10 @@ public class utilevents extends MultiUtil {
             doClearMsg(name, msg.substring(10));
         else if(msg.equalsIgnoreCase("!clearallmsg"))
             doClearAllMsg(name);
-        else if(msg.equalsIgnoreCase("!listkeys"))
-            m_botAction.privateMessageSpam(name, CodeCompiler.getKeysMessage());
+        else if(msg.equalsIgnoreCase("!privatekeys"))
+            m_botAction.privateMessageSpam(name, CodeCompiler.getPrivateKeysMessage());
+        else if(msg.equalsIgnoreCase("!publickeys"))
+            m_botAction.privateMessageSpam(name, CodeCompiler.getPublicKeysMessage());
         else if(msg.equalsIgnoreCase("!smodlogin"))
             doSmodOverride(name);
     }
@@ -147,7 +151,16 @@ public class utilevents extends MultiUtil {
     public void doMassPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, i.next(), msg);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), msg);
+    }
+    
+    /**
+     * Sends an unfiltered public message to the arena.
+     * @param name - The user of the bot
+     * @param message - The message to send
+     */
+    public void doPub(String name, String message){
+        CodeCompiler.handlePublicTWScript(m_botAction, message);
     }
     
     /**
@@ -420,7 +433,7 @@ public class utilevents extends MultiUtil {
             Player p = m_botAction.getPlayer(b.getCurrentCarrier());
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handleTWScript(m_botAction, p, i.next());
+                CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
             
         }
         //Ball Caught
@@ -428,7 +441,7 @@ public class utilevents extends MultiUtil {
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handleTWScript(m_botAction, p, i.next());
+                CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
         }
         b.updateLastCarrier(playerID);
         b.updateCurrentCarrier(carrier);
@@ -443,7 +456,7 @@ public class utilevents extends MultiUtil {
         if(killed == null || killer == null)return;
         Iterator<String> i = killMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, killer, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, killer, i.next());
 
         new SpawnTimer(killed);
     }
@@ -456,7 +469,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = weapMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, p, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
     }
     
     /**
@@ -467,7 +480,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fClaimMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, p, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
     }
     
     /**
@@ -478,7 +491,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fDropMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, p, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
     }
     
     public void cancel() {}    
@@ -489,7 +502,7 @@ public class utilevents extends MultiUtil {
             public void run() {
                 Iterator<String> i = spawnMsgs.iterator();
                 while( i.hasNext() )
-                    CodeCompiler.handleTWScript(m_botAction, p, i.next());
+                    CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
                 
             }
         };

@@ -18,9 +18,24 @@ import twcore.core.game.Player;
  */
 public final class CodeCompiler {
     
-    public static void handleTWScript(BotAction bot, Player p, String message){
-        message = CodeCompiler.replaceKeys(bot, p, message);
-        if(message != null && message.startsWith("*") && !CodeCompiler.isAllowed(message))
+    public static void handlePublicTWScript(BotAction bot, String message){
+        message = replacePublicKeys(bot, message);
+        if(message != null && (!isAllowedPublicCommand(message) || !message.startsWith("*")))
+            message = null;
+        if (message != null && message.indexOf('%') == -1)
+            bot.sendUnfilteredPublicMessage(message);
+        else if(message != null && message.indexOf('%') != -1){
+            int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
+            if(sound != -1)
+                bot.sendUnfilteredPublicMessage(message.substring(0, message.indexOf('%')), sound);
+            else
+                bot.sendUnfilteredPublicMessage(message.substring(0, message.indexOf('%')));
+        }
+    }
+    
+    public static void handlePrivateTWScript(BotAction bot, Player p, String message){
+        message = replacePrivateKeys(bot, p, message);
+        if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message))
             message = null;
         if (message != null && message.indexOf('%') == -1)
             bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
@@ -35,6 +50,79 @@ public final class CodeCompiler {
     
     /**
      * Replaces key phrases for modules using custom unfiltered
+     * public messages.
+     * @see twcore.bots.multibot.utils.utilcustom and utilhotspots
+     * @param bot - The BotAction object for the module using this method.
+     * @param p - The Player object of the user receiving the message
+     * @param message - The original message to be changed
+     * @return - The changed message. Can return null.
+     */
+    public static String replacePublicKeys(BotAction bot, String message){
+        Random rand = new Random();
+        Date today = Calendar.getInstance().getTime();
+        TimeZone tz = TimeZone.getDefault();
+        if(message.contains("@date"))
+            message = message.replace("@date", SimpleDateFormat.getDateInstance( SimpleDateFormat.SHORT ).format(today));
+        if(message.contains("@time"))
+            message = message.replace("@time", SimpleDateFormat.getTimeInstance().format(today) + " (" + tz.getDisplayName(true, TimeZone.SHORT) + ")");
+        while(message.contains("@randomfreq"))
+            message = message.replaceFirst("@randomfreq", Integer.toString(rand.nextInt( 9998 )));
+        while(message.contains("@randomship"))
+            message = message.replaceFirst("@randomship", Integer.toString((rand.nextInt( 7 )) + 1));
+        while(message.contains("@randomsound"))
+            message = message.replaceFirst("@randomsound", Integer.toString(Tools.Sound.allowedSounds[rand.nextInt(Tools.Sound.allowedSounds.length)]));
+        while(message.contains("@randomtile"))
+            message = message.replaceFirst("@randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
+        if(message.contains("@botname"))
+            message = message.replace("@botname", bot.getBotName());
+        if(message.contains("@arenasize"))
+            message = message.replace("@arenasize", Integer.toString(bot.getArenaSize()));
+        if(message.contains("@playingplayers"))
+            message = message.replace("@playingplayers", Integer.toString(bot.getPlayingPlayers().size()));
+        if(message.contains("@freqsize(") && message.indexOf(")", message.indexOf("@freqsize(")) != -1){
+            int beginIndex = message.indexOf("@freqsize(");
+            int endIndex = message.indexOf(")", beginIndex);
+            try{
+                int x = Integer.parseInt(message.substring(beginIndex + 10, endIndex));
+                x = bot.getFrequencySize(x);
+                message = message.replace(message.substring(beginIndex, endIndex + 1), Integer.toString(x));
+            }catch(Exception e){
+                message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
+            }
+        }
+        if(message.contains("@pfreqsize(") && message.indexOf(")", message.indexOf("@pfreqsize(")) != -1){
+            int beginIndex = message.indexOf("@pfreqsize(");
+            int endIndex = message.indexOf(")", beginIndex);
+            try{
+                int x = Integer.parseInt(message.substring(beginIndex + 11, endIndex));
+                x = bot.getPlayingFrequencySize(x);
+                message = message.replace(message.substring(beginIndex, endIndex + 1), Integer.toString(x));
+            }catch(Exception e){
+                message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
+            }
+        }
+        message = message.replace("\\[", "$OPEN_BRACKET$");
+        message = message.replace("\\]", "$CLOSE_BRACKET$");
+        while (message.contains("[") && message.contains("]")) {
+            String lastSmallStatement = message.substring(message.lastIndexOf("["), message.indexOf("]", message.lastIndexOf("[")) + 1);
+            message = message.replace(lastSmallStatement, compileMathStatement(lastSmallStatement.trim()));
+        }
+        message = message.replace("$OPEN_BRACKET$", "[");
+        message = message.replace("$CLOSE_BRACKET$", "]");
+        
+        if(message.trim().startsWith("{")){
+            try{
+                message = compile(message);
+            }catch(Exception e){
+                Tools.printStackTrace(e);
+                return "Syntax error. Please notify host.";
+            }
+        }
+        return message;
+    }
+    
+    /**
+     * Replaces key phrases for modules using custom unfiltered
      * private messages.
      * @see twcore.bots.multibot.utils.utilcustom and utilhotspots
      * @param bot - The BotAction object for the module using this method.
@@ -42,7 +130,7 @@ public final class CodeCompiler {
      * @param message - The original message to be changed
      * @return - The changed message. Can return null.
      */
-    public static String replaceKeys(BotAction bot, Player p, String message){
+    public static String replacePrivateKeys(BotAction bot, Player p, String message){
         Random rand = new Random();
         Date today = Calendar.getInstance().getTime();
         TimeZone tz = TimeZone.getDefault();
@@ -139,7 +227,7 @@ public final class CodeCompiler {
         
         if(message.trim().startsWith("{")){
             try{
-                message = CodeCompiler.compile(message);
+                message = compile(message);
             }catch(Exception e){
                 Tools.printStackTrace(e);
                 return "Syntax error. Please notify host.";
@@ -163,7 +251,7 @@ public final class CodeCompiler {
         
     /**
      * This method cycles through each {condition}; If a condition is found to
-     * be true its message is returned.
+     * be true its message is returned. Can return null.
      * 
      * @param message -
      *            The command to be compiled
@@ -172,7 +260,7 @@ public final class CodeCompiler {
     public static String compile(String message) throws ArrayIndexOutOfBoundsException, NullPointerException{
         String[] ifStatements = message.split(";");
         for (int i = 0; i < ifStatements.length; i++) {
-            if (doIfStatements(ifStatements[i]))
+            if (doConditionalStatements(ifStatements[i]))
                 return ifStatements[i].substring(ifStatements[i].indexOf("}") + 1);
         }
         return null;
@@ -183,7 +271,7 @@ public final class CodeCompiler {
      * @param s - The condition
      * @return - True if the condition is found to be true. Else false.
      */
-    private static boolean doIfStatements(String s) {
+    private static boolean doConditionalStatements(String s) {
         s = s.substring(s.indexOf("{") + 1, s.indexOf("}")).trim();
         if (s.replace(" ", "").equals("") || s.replace(" ", "").equalsIgnoreCase("()"))
             return true;
@@ -191,7 +279,7 @@ public final class CodeCompiler {
         int i = 0;
         while (!(temp.trim().equalsIgnoreCase("TRUE") || temp.trim().equalsIgnoreCase("FALSE"))) {
             String lastSmallStatement = temp.substring(temp.lastIndexOf("("), temp.indexOf(")", temp.lastIndexOf("(")) + 1);
-            temp = temp.replace(lastSmallStatement, compileStatement(lastSmallStatement.trim()));
+            temp = temp.replace(lastSmallStatement, compileConditionalStatement(lastSmallStatement.trim()));
             i++;
             if (i == 30) {
                 temp = "Syntax error: Danger of stack overflow. Please notify host.";
@@ -209,7 +297,7 @@ public final class CodeCompiler {
      * @param s - The single parenthetical statement
      * @return - TRUE or FALSE
      */
-    private static String compileStatement(String s) {
+    private static String compileConditionalStatement(String s) {
         s = s.substring(1, s.indexOf(")")).trim();
         if (s.trim().equalsIgnoreCase("TRUE") || s.trim().equalsIgnoreCase("FALSE"))
             return s;
@@ -333,46 +421,65 @@ public final class CodeCompiler {
      * @see twcore.core.util.CodeCompiler.replaceKeys()
      * @return - A help message displaying key types.
      */
-    public static String[] getKeysMessage(){
+    public static String[] getPrivateKeysMessage(){
         String msg[] = {
-            "+=================== Escape Keys ===================+",
-            "| @name           - The player's name.              |",
-            "| @wins           - The player's wins.              |",
-            "| @losses         - The player's losses.            |",
-            "| @frequency      - The player's frequency.         |",
-            "| @id             - The player's id(not userid)     |",
-            "| @botname        - The bot's name.                 |",
-            "| @shipnum        - The player's ship number.       |",
-            "| @shipname       - The player's ship.              |",
-            "| @shipslang      - Player's ship in vernacular.    |",
-            "| @arenasize      - Number of players in arena.     |",
-            "| @playingplayers - Number of players in a ship.    |",
-            "| @freqsize(#)    - Number of players on freq #.    |",
-            "| @pfreqsize(#)   - Num. of players in ship. Freq # |",
-            "| @squad          - The player's squad.             |",
-            "| @bounty         - The player's bounty.            |",
-            "| @x              - X Location(Tiles)               |",
-            "| @y              - Y Location(Tiles)               |",
-            "| @randomfreq     - A random number(0 - 9998)       |",        
-            "| @randomship     - A random number(1-8)            |",            
-            "| @randomtile     - A random number(1-1022)         |",
-            "| @randomsound    - A random ALLOWED sound number.  |",
-            "| @ping           - The player's ping in ms.        |",
-            "| @date           - The current date.               |",
-            "| @time           - The current time.               |",
-            "| @!command@@     - Issues a command to the bot, but|",
-            "|                    the player receives no message.|",
-            "+===================================================+",
-        };
-        return msg;
+                "+=============== Private Escape Keys ===============+",
+                "| @name           - The player's name.              |",
+                "| @wins           - The player's wins.              |",
+                "| @losses         - The player's losses.            |",
+                "| @frequency      - The player's frequency.         |",
+                "| @id             - The player's id(not userid)     |",
+                "| @botname        - The bot's name.                 |",
+                "| @shipnum        - The player's ship number.       |",
+                "| @shipname       - The player's ship.              |",
+                "| @shipslang      - Player's ship in vernacular.    |",
+                "| @arenasize      - Number of players in arena.     |",
+                "| @playingplayers - Number of players in a ship.    |",
+                "| @freqsize(#)    - Number of players on freq #.    |",
+                "| @pfreqsize(#)   - Num. of players in ship. Freq # |",
+                "| @squad          - The player's squad.             |",
+                "| @bounty         - The player's bounty.            |",
+                "| @x              - X Location(Tiles)               |",
+                "| @y              - Y Location(Tiles)               |",
+                "| @randomfreq     - A random number(0 - 9998)       |",        
+                "| @randomship     - A random number(1-8)            |",            
+                "| @randomtile     - A random number(1-1022)         |",
+                "| @randomsound    - A random ALLOWED sound number.  |",
+                "| @ping           - The player's ping in ms.        |",
+                "| @date           - The current date.               |",
+                "| @time           - The current time.               |",
+                "| @!command@@     - Issues a command to the bot, but|",
+                "|                    the player receives no message.|",
+                "+===================================================+",
+            };
+            return msg;
+    }
+    
+    public static String[] getPublicKeysMessage(){
+        String msg[] = {
+                "+================ Public Escape Keys ===============+",
+                "| @botname        - The bot's name.                 |",
+                "| @arenasize      - Number of players in arena.     |",
+                "| @playingplayers - Number of players in a ship.    |",
+                "| @freqsize(#)    - Number of players on freq #.    |",
+                "| @pfreqsize(#)   - Num. of players in ship. Freq # |",
+                "| @randomfreq     - A random number(0 - 9998)       |",        
+                "| @randomship     - A random number(1-8)            |",            
+                "| @randomtile     - A random number(1-1022)         |",
+                "| @randomsound    - A random ALLOWED sound number.  |",
+                "| @date           - The current date.               |",
+                "| @time           - The current time.               |",
+                "+===================================================+",
+            };
+            return msg;
     }
     
     /**
-     * A white-list of allowed custom commands.
+     * A white-list of allowed private commands.
      * @param s - The string
      * @return true if the string is allowed. else false.
      */
-    public static boolean isAllowed(String s){
+    public static boolean isAllowedPrivateCommand(String s){
         if(s.startsWith("*setship")   ||
            s.startsWith("*setfreq")   ||
            s.startsWith("*warpto")    ||
@@ -417,7 +524,31 @@ public final class CodeCompiler {
            s.equals("*prize #-26")    ||//Negative Brick
            s.equals("*prize #-27")    ||//Negative Rocket
            s.equals("*prize #-28"))     //Negative Portal
-        return true;
+            return true;
+        else return false;
+    }
+    
+    /**
+     * A white-list of allowed public commands.
+     * @param s - The string
+     * @return true if the string is allowed. else false.
+     */
+    public static boolean isAllowedPublicCommand(String s){
+        if(s.startsWith("*arena ") ||
+           s.startsWith("*timer ") ||
+           s.equals("*shipreset")  ||
+           s.equals("*scorereset") ||
+           s.equals("*flagreset")  ||
+           s.equals("*timereset")  ||
+           s.equals("*lock")       ||
+           s.equals("*lockspec")   ||
+           s.equals("*lockteam")   ||
+           s.equals("*lockprivate")||
+           s.equals("*lockpublic") ||
+           s.equals("*lockchat")   ||
+           s.equals("*lockall")    ||
+           s.equals("*specall"))
+           return true;
         else return false;
     }
     

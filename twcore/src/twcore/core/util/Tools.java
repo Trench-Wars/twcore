@@ -602,7 +602,8 @@ public final class Tools {
         public static final int VICTORY_BELL = 103;
         public static final int GOAL = 104;
         public static final int GOGOGO = 104; // Just in case :P
-        
+        public static final int[] allowedSounds = { 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 102, 103, 104 };
+        public static final int[] restrictedSounds = { 6, 12, 26, 100, 101 };
         /**
          * Disabled sounds( 6, 12, 26, 100, 101 )
          * @param sound The sound to check

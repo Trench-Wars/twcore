@@ -129,7 +129,7 @@ public class utilhotspots extends MultiUtil {
                 if (watch.getMessages() != null) {
                     Iterator<String> i = watch.getMessages().iterator();
                     while( i.hasNext() )
-                        CodeCompiler.handleTWScript(m_botAction, p, i.next());
+                        CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
                 }
             }
         }

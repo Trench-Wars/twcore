@@ -360,7 +360,7 @@ public class utilmessages extends MultiUtil
     for(int index = 0; index < msgList.size(); index++){
       msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE)
-    	CodeCompiler.handleTWScript(m_botAction, p, msgTask.getMessage());
+    	CodeCompiler.handlePrivateTWScript(m_botAction, p, msgTask.getMessage());
     }
   }
 
