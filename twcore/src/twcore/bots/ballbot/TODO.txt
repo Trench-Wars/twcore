@@ -1,9 +1,0 @@
-
- TODO:
- 
-State.FACE_OFF + OnShot() -> State.SPOT_BALL_FOR_FACE_OFF
-Penalties for DC/BDC
-SinBin list
-!rules rules of hockey
-Commentary in a special chat channel
-Check divide by zeros
