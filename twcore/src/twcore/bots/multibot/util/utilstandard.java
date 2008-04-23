@@ -41,7 +41,7 @@ public class utilstandard extends MultiUtil {
             "!setfreq <ship> <freq>  - Changes everyone in <ship> to <freq> (-<ship> for 'other than')",
             "!merge <freq1> <freq2>  - Changes everyone on <freq1> to <freq2>",
             "!teamsspec <numTeams>   - Makes requested # of teams, specs all, & keeps freqs.   *",
-            "!specfreq <freq>        - Specs everyone on <freq>, but keeps them on their freq. *",
+            "!speckeepfreq <freq>        - Specs everyone on <freq>, but keeps them on their freq. *",
             "!specallkeepfreqs       - Specs everyone, but keeps them on their freq.           *",
             "!restore                - Setship/setfreq to prior state anyone spec'd by these.  ^",
             "!clearinfo              - Clear all information stored about player freqs & ships."
@@ -135,7 +135,7 @@ public class utilstandard extends MultiUtil {
         } else if( message.startsWith( "!specallkeepfreqs" )){
             storePlayerInfo( -1 );
             m_botAction.specAllAndKeepFreqs();
-        } else if( message.startsWith( "!specfreq " )){
+        } else if( message.startsWith( "!speckeepfreq " )){
             try {
                 int i = Integer.parseInt( message.substring(10).trim() );
                 storePlayerInfo( i );
