@@ -536,73 +536,75 @@ public final class Tools {
 
     // Prizes
     public static class Prize {
-        public static final int RECHARGE = 1;
-        public static final int ENERGY = 2;
-        public static final int ROTATION = 3;
-        public static final int STEALTH = 4;
-        public static final int CLOAK = 5;
-        public static final int XRADAR = 6;
-        public static final int WARP = 7;
-        public static final int GUNS = 8;
-        public static final int BOMBS = 9;
-        public static final int BOUNCING_BULLETS = 10;
-        public static final int THRUST = 11;
-        public static final int TOPSPEED = 12;
-        public static final int FULLCHARGE = 13;
-        public static final int ENERGY_DEPLETED = -13;          // Puts energy to 0
-        public static final int ENGINE_SHUTDOWN = 14;           // Shuts down engines for Prize:EngineShutdownTime
-        public static final int ENGINE_SHUTDOWN_EXTENDED = -14; // Shuts down engines for Prize:EngineShutdownTime * 3
-        public static final int MULTIFIRE = 15;
-        public static final int PROXIMITY = 16;
-        public static final int SUPER = 17;
-        public static final int SHIELDS = 18;
-        public static final int SHRAPNEL = 19;
-        public static final int ANTIWARP = 20;
-        public static final int REPEL = 21;
-        public static final int BURST = 22;
-        public static final int DECOY = 23;
-        public static final int THOR = 24;
-        public static final int MULTIPRIZE = 25;
-        public static final int BRICK = 26;
-        public static final int ROCKET = 27;
-        public static final int PORTAL = 28;
+        /**1*/  public static final int RECHARGE = 1;
+        /**2*/  public static final int ENERGY = 2;
+        /**3*/  public static final int ROTATION = 3;
+        /**4*/  public static final int STEALTH = 4;
+        /**5*/  public static final int CLOAK = 5;
+        /**6*/  public static final int XRADAR = 6;
+        /**7*/  public static final int WARP = 7;
+        /**8*/  public static final int GUNS = 8;
+        /**9*/  public static final int BOMBS = 9;
+        /**10*/ public static final int BOUNCING_BULLETS = 10;
+        /**11*/ public static final int THRUST = 11;
+        /**12*/ public static final int TOPSPEED = 12;
+        /**13*/ public static final int FULLCHARGE = 13;
+        /**-13*/public static final int ENERGY_DEPLETED = -13;          // Puts energy to 0        
+        /**14*/ public static final int ENGINE_SHUTDOWN = 14;           // Shuts down engines for Prize:EngineShutdownTime
+        /**-14*/public static final int ENGINE_SHUTDOWN_EXTENDED = -14; // Shuts down engines for Prize:EngineShutdownTime * 3
+        /**15*/ public static final int MULTIFIRE = 15;
+        /**16*/ public static final int PROXIMITY = 16;
+        /**17*/ public static final int SUPER = 17;
+        /**18*/ public static final int SHIELDS = 18;
+        /**19*/ public static final int SHRAPNEL = 19;
+        /**20*/ public static final int ANTIWARP = 20;
+        /**21*/ public static final int REPEL = 21;
+        /**22*/ public static final int BURST = 22;
+        /**23*/ public static final int DECOY = 23;
+        /**24*/ public static final int THOR = 24;
+        /**25*/ public static final int MULTIPRIZE = 25;
+        /**26*/ public static final int BRICK = 26;
+        /**27*/ public static final int ROCKET = 27;
+        /**28*/ public static final int PORTAL = 28;
     }
 
     // Sounds
     public static class Sound {
-        public static final int BEEP1 = 1;
-        public static final int BEEP2 = 2;
-        public static final int NOT_DEALING_WITH_ATT = 3;
-        public static final int VIOLENT_CONTENT = 4;
-        public static final int HALLELUJAH = 5;
-        public static final int REAGAN = 6;
-        public static final int INCONCEIVABLE = 7;
-        public static final int WINSTON_CHURCHILL = 8;
-        public static final int LISTEN_TO_ME = 9;
-        public static final int CRYING = 10;
-        public static final int BURP = 11;
-        public static final int ORGASM_DO_NOT_USE = 12;
-        public static final int SCREAM = 13;
-        public static final int FART1 = 14;
-        public static final int FART2 = 15;
-        public static final int PHONE_RING = 16;
-        public static final int UNDER_ATTACK = 17;
-        public static final int GIBBERISH = 18;
-        public static final int CROWD_OOO = 19;
-        public static final int CROWD_GEE = 20;
-        public static final int CROWD_OHH = 21;
-        public static final int CROWD_AWW = 22;
-        public static final int GAME_SUCKS = 23;
-        public static final int SHEEP = 24;
-        public static final int CANT_LOG_IN = 25;
-        public static final int BEEP3 = 26;
-        public static final int START_MUSIC = 100;
-        public static final int STOP_MUSIC = 101;
-        public static final int PLAY_MUSIC_ONCE = 102;
-        public static final int VICTORY_BELL = 103;
-        public static final int GOAL = 104;
-        public static final int GOGOGO = 104; // Just in case :P
+        /**1*/  public static final int BEEP1 = 1;
+        /**2*/  public static final int BEEP2 = 2;
+        /**3*/  public static final int NOT_DEALING_WITH_ATT = 3;
+        /**4*/  public static final int VIOLENT_CONTENT = 4;
+        /**5*/  public static final int HALLELUJAH = 5;
+        /**6*/  public static final int REAGAN = 6;
+        /**7*/  public static final int INCONCEIVABLE = 7;
+        /**8*/  public static final int WINSTON_CHURCHILL = 8;
+        /**9*/  public static final int LISTEN_TO_ME = 9;
+        /**10*/ public static final int CRYING = 10;
+        /**11*/ public static final int BURP = 11;
+        /**12*/ public static final int ORGASM_DO_NOT_USE = 12;
+        /**13*/ public static final int SCREAM = 13;
+        /**14*/ public static final int FART1 = 14;
+        /**15*/ public static final int FART2 = 15;
+        /**16*/ public static final int PHONE_RING = 16;
+        /**17*/ public static final int UNDER_ATTACK = 17;
+        /**18*/ public static final int GIBBERISH = 18;
+        /**19*/ public static final int CROWD_OOO = 19;
+        /**20*/ public static final int CROWD_GEE = 20;
+        /**21*/ public static final int CROWD_OHH = 21;
+        /**22*/ public static final int CROWD_AWW = 22;
+        /**23*/ public static final int GAME_SUCKS = 23;
+        /**24*/ public static final int SHEEP = 24;
+        /**25*/ public static final int CANT_LOG_IN = 25;
+        /**26*/ public static final int BEEP3 = 26;
+        /**100*/public static final int START_MUSIC = 100;
+        /**101*/public static final int STOP_MUSIC = 101;
+        /**102*/public static final int PLAY_MUSIC_ONCE = 102;
+        /**103*/public static final int VICTORY_BELL = 103;
+        /**104*/public static final int GOAL = 104;
+        /**104*/public static final int GOGOGO = 104; // Just in case :P
+        /**1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 102, 103, 104*/
         public static final int[] allowedSounds = { 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 102, 103, 104 };
+        /**6, 12, 26, 100, 101*/
         public static final int[] restrictedSounds = { 6, 12, 26, 100, 101 };
         /**
          * Disabled sounds( 6, 12, 26, 100, 101 )
@@ -638,48 +640,48 @@ public final class Tools {
 
     // Ships (not to be confused with numbering system used in Ship, which is for internal/packet use only)
     public static class Ship {
-        public static final int SPECTATOR = 0;
-        public static final int WARBIRD = 1;
-        public static final int JAVELIN = 2;
-        public static final int SPIDER = 3;
-        public static final int LEVIATHAN = 4;
-        public static final int TERRIER = 5;
-        public static final int WEASEL = 6;
-        public static final int LANCASTER = 7;
-        public static final int SHARK = 8;
+        /**0*/public static final int SPECTATOR = 0;
+        /**1*/public static final int WARBIRD = 1;
+        /**2*/public static final int JAVELIN = 2;
+        /**3*/public static final int SPIDER = 3;
+        /**4*/public static final int LEVIATHAN = 4;
+        /**5*/public static final int TERRIER = 5;
+        /**6*/public static final int WEASEL = 6;
+        /**7*/public static final int LANCASTER = 7;
+        /**8*/public static final int SHARK = 8;
     }
 
     // Time defines for conversion to milliseconds.  If this is to be found somewhere else
     // more handy, that can be used instead -- merely saw a static reference to the number
     // representing "one day" in StaffBot and thought it was a little sloppy.
     public static class TimeInMillis {
-        public static final int SECOND = 1000;
-        public static final int MINUTE = 60000;
-        public static final int HOUR   = 3600000;
-        public static final int DAY    = 86400000;
-        public static final int WEEK   = 604800000;
+        /**1000*/     public static final int SECOND = 1000;
+        /**60000*/    public static final int MINUTE = 60000;
+        /**3600000*/  public static final int HOUR   = 3600000;
+        /**86400000*/ public static final int DAY    = 86400000;
+        /**604800000*/public static final int WEEK   = 604800000;
     }
 
     /** Weapons - These are the <b>STANDARD</b> weapon speed settings in SSCU Trench Wars
      */
     public static class Weapon {
-    	public static final double WARBIRD_BULLET_SPEED = 5000.0;
-    	public static final double JAVELIN_BULLET_SPEED = -900.0;
-    	public static final double SPIDER_BULLET_SPEED = 4000.0;
-    	public static final double LEVIATHAN_BULLET_SPEED = 1000.0;
-    	public static final double TERRIER_BULLET_SPEED = 1300.0;
-    	public static final double WEASEL_BULLET_SPEED = 800.0;
-    	public static final double LANCASTER_BULLET_SPEED = 3650.0;
-    	public static final double SHARK_BULLET_SPEED = 1.0;
+        /**5000.0*/ public static final double WARBIRD_BULLET_SPEED = 5000.0;
+    	/**-900.0*/ public static final double JAVELIN_BULLET_SPEED = -900.0;
+    	/**4000.0*/ public static final double SPIDER_BULLET_SPEED = 4000.0;
+    	/**1000.0*/ public static final double LEVIATHAN_BULLET_SPEED = 1000.0;
+    	/**1300.0*/ public static final double TERRIER_BULLET_SPEED = 1300.0;
+    	/**800.0*/  public static final double WEASEL_BULLET_SPEED = 800.0;
+    	/**3650.0*/ public static final double LANCASTER_BULLET_SPEED = 3650.0;
+    	/**1.0*/    public static final double SHARK_BULLET_SPEED = 1.0;
 
-    	public static final double WARBIRD_BOMB_SPEED = 4000.0;
-    	public static final double JAVELIN_BOMB_SPEED = 2250.0;
-    	public static final double SPIDER_BOMB_SPEED = 1.0;
-    	public static final double LEVIATHAN_BOMB_SPEED = 4000.0;
-    	public static final double TERRIER_BOMB_SPEED = 1.0;
-    	public static final double WEASEL_BOMB_SPEED = 30000.0;
-    	public static final double LANCASTER_BOMB_SPEED = 1.0;
-    	public static final double SHARK_BOMB_SPEED = 1.0;
+    	/**4000.0*/ public static final double WARBIRD_BOMB_SPEED = 4000.0;
+    	/**2250.0*/ public static final double JAVELIN_BOMB_SPEED = 2250.0;
+    	/**1.0*/    public static final double SPIDER_BOMB_SPEED = 1.0;
+    	/**4000.0*/ public static final double LEVIATHAN_BOMB_SPEED = 4000.0;
+    	/**1.0*/    public static final double TERRIER_BOMB_SPEED = 1.0;
+    	/**30000.0*/public static final double WEASEL_BOMB_SPEED = 30000.0;
+    	/**1.0*/    public static final double LANCASTER_BOMB_SPEED = 1.0;
+    	/**1.0*/    public static final double SHARK_BOMB_SPEED = 1.0;
 
     }
 
