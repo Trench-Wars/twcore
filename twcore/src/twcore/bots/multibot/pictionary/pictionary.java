@@ -315,7 +315,7 @@ public class pictionary extends MultiModule {
             m_botAction.specAll();
             m_botAction.arenaMessageSpam(displayrules);
             
-            if (m_botAction.getArenaSize() >= minPlayers) {
+            if (m_botAction.getArenaSize() > minPlayers) {
                 m_botAction.sendArenaMessage(m_prec + "A game of Pictionary is starting | Win by getting " + toWin + " pts!", 22);
                 m_botAction.sendArenaMessage(m_prec + "Type your guesses in public chat.");
                 m_botAction.sendArenaMessage(m_prec + "PM !notplaying to " + m_botAction.getBotName() + " if you don't want to play.");
@@ -534,11 +534,9 @@ public class pictionary extends MultiModule {
     public void grabWord() {
         try {
             ResultSet qryWordData;
-            qryWordData = m_botAction.SQLQuery(mySQLHost, "SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + getMinTimesUsed() + " ORDER BY RAND(" + m_rnd.nextInt() + ") LIMIT 1");
+            qryWordData = m_botAction.SQLQuery(mySQLHost, "SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + getMinTimesUsed() + " AND CHAR_LENGTH(Word) > 4 ORDER BY RAND(" + m_rnd.nextInt() + ") LIMIT 1");
             if (qryWordData.next()) {
                 t_word = qryWordData.getString("Word").toLowerCase();
-                if (t_word.length() < 4)
-                    grabWord();
                 if (t_word.trim().split(" ").length > 1)
                     t_definition = t_word.trim().split(" ").length + " words: First word begins with '" + t_word.substring(0, 1) + "'.";
                 else
@@ -724,9 +722,8 @@ public class pictionary extends MultiModule {
         try {
             int minUsed = -1;
             ResultSet qryMinTimesUsed = m_botAction.SQLQuery(mySQLHost, "SELECT MIN(TimesUsed) AS MinTimesUsed FROM tblPict_Words");
-            if (qryMinTimesUsed.next()) {
+            if (qryMinTimesUsed.next())
                 minUsed = qryMinTimesUsed.getInt("MinTimesUsed");
-            }
             m_botAction.SQLClose(qryMinTimesUsed);
             return minUsed;
         } catch (Exception e) {
