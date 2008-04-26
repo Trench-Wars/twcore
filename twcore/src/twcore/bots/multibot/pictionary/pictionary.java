@@ -46,7 +46,7 @@ public class pictionary extends MultiModule {
     public double giveTime, answerSpeed;
     public boolean custGame = false, ready = false, isVoting = false;
     
-    public String m_prec = "-- ", gameType = "Bot's Pick.", game = "default";
+    public String m_prec = "-- ", gameType = "Bot's Pick.";
     public String t_definition, t_word = " ", curArtist = " ", theWinner, lastWord = " ";
     
     public String[] helpmsg = {
@@ -381,7 +381,6 @@ public class pictionary extends MultiModule {
         try {
             m_botAction.cancelTasks();
         } catch (Exception e) {}
-        grabWord();
         if (custGame)
             m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
         else {
@@ -480,8 +479,7 @@ public class pictionary extends MultiModule {
                     gameProgress = DRAWING;
                     // Date d = new Date();
                     giveTime = new java.util.Date().getTime();
-                    m_botAction.sendArenaMessage(m_prec + "GO GO GO!!!", 104);
-                    lastWord = t_word;
+                    m_botAction.sendArenaMessage(m_prec + "GO GO GO!!!", 104);                    
                     displayHint();
                 }
             }
@@ -517,7 +515,7 @@ public class pictionary extends MultiModule {
                 if (gameProgress == HINT_GIVEN) {
                     gameProgress = ANSWER_GIVEN;
                     m_botAction.sendArenaMessage(m_prec + "No one has given the correct answer of '" + t_word + "'", 103);
-                    
+                    lastWord = t_word;
                     doCheckScores();
                     theWinner = m_botAction.getBotName();
                     startNextRound();
@@ -623,6 +621,7 @@ public class pictionary extends MultiModule {
                     }
                     if (gameProgress != NO_GAME_IN_PROGRESS) {
                         gameProgress = ANSWER_GIVEN;
+                        lastWord = t_word;
                         try {
                             m_botAction.cancelTasks();
                         } catch (Exception e) {}
