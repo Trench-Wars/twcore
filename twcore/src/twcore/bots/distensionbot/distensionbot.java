@@ -74,7 +74,7 @@ public class distensionbot extends SubspaceBot {
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
-    private final int WARP_POINT_CHECK_FREQUENCY = 7;      // # seconds between checking warp points for players
+    private final int WARP_POINT_CHECK_FREQUENCY = 9;      // # seconds between checking warp points for players
     private final int VENGEFUL_VALID_SECONDS = 12;         // # seconds after V.B. fire in which VB gets RP bonus
     private final int STREAK_RANK_PROXIMITY_DIVISOR = 2;   // Divisor for rank to determine streak rank prox (50 / 2 = 25 rank prox)
     private final int STREAK_RANK_PROXIMITY_MINIMUM = 10;  // Min streak rank proximity allowed
@@ -272,8 +272,8 @@ public class distensionbot extends SubspaceBot {
 
 
     // TACTICAL OPS DATA
-    public final int DEFAULT_MAX_OP = 0;                    // Max OP points when not upgraded
-    public final int DEFAULT_OP_REGEN = 2;                  // Default % chance OP regen (2 = 20%)
+    public final int DEFAULT_MAX_OP = 2;                    // Max OP points when not upgraded
+    public final int DEFAULT_OP_REGEN = 1;                  // Default # OP regenerated every minute
     public final int DEFAULT_OP_MAX_COMMS = 3;              // Max # communications Ops can save up
     public boolean m_army0_fastRearm = false;
     public boolean m_army1_fastRearm = false;
@@ -1033,32 +1033,33 @@ public class distensionbot extends SubspaceBot {
 
         if( msg.equals("") ) {
             String[] helps = {
-                    ".----------------------------",
-                    "| OBSERVATION        Cost    | Snaps view to a location based on the number.",
-                    "|  ,#                  0     |  1: HomeFR  11: HomeMid  12: HomeTube  13:HomeRearm",
-                    "|                            |  2: NME FR  21: NME Mid  12: NME Tube   3: Center",
-                    "| COMMUNICATIONS             |",
-                    "|  !opsradar           1  .r |  Shows approx. location of all pilots, + Terr info",
-                    "|  !opsmsg <#>         1  .m |  Msg army.  See !opshelp msg (!oh msg) for avail. msgs",
-                    "|  !opsPM <name>:<#>   1  .pm|  Msg specific players.  See !opshelp msg (or .h msg)",
-                    "|  !opssab             2  .sm|  Sabotage msg to enemy.  See !opshelp msg (or .h msg)",
-                    "| ACTIONS                    |",
-                    "|  !opsrearm           1  .re|  Fast rearm/slow enemy rearm for: (L1)15s/(L2)25s",
-                    "|  !opsdoor <#>    1/2/3  .d |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
-                    "|                            |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
-                    "|  !opswarp <name>:<#>    .w |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
-                    "|                  2/3/4     |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
-                    "|  !opscover <#>       1  .c |  Deploy cover in home base.   1:MidLeft  2:MidRight",
-                    "|                            |       3:Before FR    4:Flag   5:Tube     6:Entrance",
-                    "|  !opsmine <#>        2  .mi|  False minefield @ home base. 1:FR Entrance  2:In FR",
-                    "|                            |       3:Midbase   4:TubeTop   5:Inside/Mid Tube",
-                    "|  !opsorb <name>    1/3  .o |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
-                    "|  !opsdark <name>   2/5  .da|  Cone of darkness.    (L2)<all> = All NME in base",
-                    "|                            |   L3: Shroud (larger).  L4: Shroud <all>",
-                    "|  !opsblind <#>   2/3/4  .b |  Blind all NME in base.  <#> specifies which level",
-                    "|  !opsshield <name> 2/5  .s |  Shield <name>.  (L2)<all> = All friendlies in base",
-                    "|  !opsemp             6  .e |  EMP all enemies to 0 energy and shut down engines",
-                    "|____________________________/",
+                    ".--------------------------",
+                    "|OBSERVATION        Cost   | Snaps view to a location based on the number.",
+                    "| ,#                  0    |  1: HomeFR  11: HomeMid  12: HomeTube  13:HomeRearm",
+                    "|                          |  2: NME FR  21: NME Mid  22: NME Tube   3: Center",
+                    "|COMMUNICATIONS            |",
+                    "| !opsradar           1 .r |  Shows approx. location of all pilots, + Terr info",
+                    "| !opsmsg <#>         1 .m |  Msg army.  See !opshelp msg (!oh msg) for avail. msgs",
+                    "| !opsPM <nm>:<#>     1 .pm|  Msg specific players.  See !opshelp msg (or .h msg)",
+                    "| !opssab             2 .sm|  Sabotage msg to enemy.  See !opshelp msg (or .h msg)",
+                    "|ACTIONS                   |",
+                    "| !opsrearm           2 .re|  Fast rearm/slow enemy rearm for 20 seconds/level",
+                    "| !opsdoor <#>    4/6/8 .d |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
+                    "|                          |    Enemy doors:(L3)  5:Sides  6:Tube  7:FR  8:Flag",
+                    "| !opswarp <nm>:<#>     .w |  Warps <name> to...  1:Tube   2:LeftMid  3:RightMid",
+                    "|                 2/4/10   |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
+                    "| !opscover <#>       1 .c |  Deploy cover in home base.   1:MidLeft  2:MidRight",
+                    "|                          |       3:Before FR    4:Flag   5:Tube     6:Entrance",
+// TODO: Implement in LVZ.  Pain in the ass.
+//                    "| !opsmine <#>        2 .mi|  False minefield @ home base. 1:FR Entrance  2:In FR",
+//                    "|                          |       3:Midbase   4:TubeTop   5:Inside/Mid Tube",
+                    "| !opsorb <nm>      2/6 .o |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
+                    "| !opsdark <nm>     3/8 .da|  Cone of darkness.    (L2)<all> = All NME in base",
+                    "|                          |      L3: Larger cone.  L4: Larger cone, all NME.",
+                    "| !opsblind <#>  7/9/11 .b |  Blind all NME in base.  <#> specifies which level",
+                    "| !opsemp            15 .e |  EMP all enemies to 0 energy and shut down engines",
+                    "| !opsshield <nm>  8/20 .s |  Shield <name>.  (L2)<all> = All friendlies in base",
+                    "|__________________________/",
             };
             m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         } else if( msg.equalsIgnoreCase("msg") ) {
@@ -3952,16 +3953,16 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Already using a fast rearm -- we can't rearm any faster!" );
         if( p.getPurchasedUpgrade(4) < 1 )
             throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
-        if( p.getCurrentOP() < 1 )
-            throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-        p.adjustOP(-1);
+        if( p.getCurrentOP() < 2 )
+            throw new TWCoreException( "Insufficient OP; need 2.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
+        p.adjustOP(-2);
         int time;
         if( p.getPurchasedUpgrade(4) == 1 )
-            time = 15000;
+            time = 20 * Tools.TimeInMillis.SECOND;
         else if ( p.getPurchasedUpgrade(4) == 2 )
-            time = 35000;
+            time = 40 * Tools.TimeInMillis.SECOND;
         else
-            time = 60000;
+            time = 60 * Tools.TimeInMillis.SECOND;
 
         if( p.getArmyID() == 0 ) {
             if( m_army0_fastRearmTask != null ) {
@@ -4020,17 +4021,17 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Please specify a door # between 1 and 8.  Use !opshelp for more info." );
         if( (upgLevel == 1 && doorNum > 2) ||
             (upgLevel <= 2 && doorNum > 4) )
-            throw new TWCoreException( "You are not able to control that door at your level of clearance.  Consider spending more points on door operations training." );
-        if( (p.getCurrentOP() < 1) ||
-            (p.getCurrentOP() < 2 && doorNum > 2) ||
-            (p.getCurrentOP() < 3 && doorNum > 4) )
-            throw new TWCoreException( "You do not have the proper amount of OP to set that door.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible.  !opshelp for costs of each door." );
+            throw new TWCoreException( "You are not able to control that door at your level of clearance.  Consider spending more points on door operations training, if available." );
+        if( (p.getCurrentOP() < 4) ||
+            (p.getCurrentOP() < 6 && doorNum > 2) ||
+            (p.getCurrentOP() < 8 && doorNum > 4) )
+            throw new TWCoreException( "Insufficient OP.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
         if( doorNum > 4 )
-            p.adjustOP(-3);
+            p.adjustOP(-8);
         else if( doorNum > 2 )
-            p.adjustOP(-2);
+            p.adjustOP(-6);
         else
-            p.adjustOP(-1);
+            p.adjustOP(-4);
         int time;
         switch( p.getPurchasedUpgrade(6) ) {
             case 1:
@@ -4122,7 +4123,7 @@ public class distensionbot extends SubspaceBot {
         if( coverNum < 1 || coverNum > 6 )
             throw new TWCoreException( "Please specify a number between 1 and 6.  Use !opshelp for more info." );
         if( p.getCurrentOP() < 1 )
-            throw new TWCoreException( "You need 1 OP to deploy cover.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            throw new TWCoreException( "Insufficient OP; need 1.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
         p.adjustOP(-1);
 
         String coverName;
@@ -4196,14 +4197,14 @@ public class distensionbot extends SubspaceBot {
         if( (upgLevel == 1 && warpPoint > 3) ||
             (upgLevel <= 2 && warpPoint > 5) )
                 throw new TWCoreException( "You are not able to warp to that point at your level of clearance.  Consider spending more points on warp operations training." );
-        if( (p.getCurrentOP() < 1) ||
-            (p.getCurrentOP() < 2 && warpPoint > 3) ||
-            (p.getCurrentOP() < 3 && warpPoint == 6) )
-                throw new TWCoreException( "You do not have the proper amount of OP to warp to that point.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible.  !opshelp for costs of each warp point." );
+        if( (p.getCurrentOP() < 2) ||
+            (p.getCurrentOP() < 4 && warpPoint > 3) ||
+            (p.getCurrentOP() < 10 && warpPoint == 6) )
+                throw new TWCoreException( "Insufficient OP.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
         if( warpPoint == 6 )
-            p.adjustOP(-4);
+            p.adjustOP(-10);
         else if( warpPoint > 3 )
-            p.adjustOP(-3);
+            p.adjustOP(-4);
         else
             p.adjustOP(-2);
         if( freq % 2 == 0 ) {
@@ -4278,10 +4279,10 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( msg.equals("all") ) {
-            if( p.getCurrentOP() < 3 )
-                throw new TWCoreException( "You need 3 OP to use this ability on all players in base.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-            else
-                p.adjustOP(-3);
+            if( p.getCurrentOP() < 6 )
+                throw new TWCoreException( "Insufficient OP; need 6.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
+
+            p.adjustOP(-6);
 
             int freq = p.getArmyID();
             for( DistensionPlayer p3 : m_players.values() ) {
@@ -4300,10 +4301,10 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS placed SPHERE OF SECLUSION over all your army's pilots in " + (freq % 2 == 0 ? "TOP BASE!" : "BOTTOM BASE!") );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS covered all enemies in " + (freq % 2 == 0 ? "TOP BASE" : "BOTTOM BASE") + " with SPHERE OF SECLUSION!" );
         } else {
-            if( p.getCurrentOP() < 1 )
-                throw new TWCoreException( "You need 1 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
+            if( p.getCurrentOP() < 2 )
+                throw new TWCoreException( "Insufficient OP; need 2.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
             else
-                p.adjustOP(-1);
+                p.adjustOP(-2);
             m_botAction.showObjectForPlayer( p2.getPlayerID(), LVZ_OPS_SPHERE );
             m_botAction.sendPrivateMessage(p2.getPlayerID(), "ENEMY OPS has covered you with the SPHERE OF SECLUSION!" );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS covered " + p2.getPlayerName() + " with SPHERE OF SECLUSION." );
@@ -4347,11 +4348,10 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( msg.equals("all") ) {
-            if( p.getCurrentOP() < 5 )
-                throw new TWCoreException( "You need 5 OP to use this ability on all players in base.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-            else
-                p.adjustOP(-5);
+            if( p.getCurrentOP() < 8 )
+                throw new TWCoreException( "Insufficient OP; need 8.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
 
+            p.adjustOP(-8);
             int lvzNum = p.getPurchasedUpgrade(10) > 3 ? LVZ_OPS_SHROUD_LG : LVZ_OPS_SHROUD_SM;
             int freq = p.getArmyID();
             for( DistensionPlayer p3 : m_players.values() ) {
@@ -4369,10 +4369,9 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), "ENEMY OPS placed SHROUD OF DARKNESS over all your army's pilots in " + (freq % 2 == 0 ? "TOP BASE!" : "BOTTOM BASE!") );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS covered all enemies in " + (freq % 2 == 0 ? "TOP BASE" : "BOTTOM BASE") + " with SHROUD OF DARKNESS!" );
         } else {
-            if( p.getCurrentOP() < 2 )
-                throw new TWCoreException( "You need 2 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-            else
-                p.adjustOP(-2);
+            if( p.getCurrentOP() < 3 )
+                throw new TWCoreException( "Insufficient OP; need 3.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
+            p.adjustOP(-3);
             int lvzNum = p.getPurchasedUpgrade(10) > 2 ? LVZ_OPS_SHROUD_LG : LVZ_OPS_SHROUD_SM;
             m_botAction.showObjectForPlayer( p2.getPlayerID(), lvzNum );
             m_botAction.sendPrivateMessage(p2.getPlayerID(), "ENEMY OPS has covered you with the SHROUD OF DARKNESS!" );
@@ -4412,10 +4411,11 @@ public class distensionbot extends SubspaceBot {
         if( blindLevel > p.getPurchasedUpgrade(11) )
             throw new TWCoreException( "You are not yet able to use the field of blindness at that level -- first you must install the appropriate !upgrade." );
 
-        if( p.getCurrentOP() < 1 + blindLevel )
-            throw new TWCoreException( "You need " + (2 + blindLevel) + " OP to use a level " + blindLevel + " blindness.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-        else
-            p.adjustOP(-(1 + blindLevel));
+        int cost = 5 + blindLevel * 2;
+        if( p.getCurrentOP() < cost )
+            throw new TWCoreException( "Insufficient OP; need " + cost + ".  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
+
+        p.adjustOP(-cost);
 
         int lvzNum;
         String desc;
@@ -4477,10 +4477,9 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( msg.equals("all") ) {
-            if( p.getCurrentOP() < 5 )
-                throw new TWCoreException( "You need 5 OP to use this ability on all players in base.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-            else
-                p.adjustOP(-5);
+            if( p.getCurrentOP() < 20 )
+                throw new TWCoreException( "Insufficient OP; need 20.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
+            p.adjustOP(-20);
 
             int freq = p.getArmyID();
             for( DistensionPlayer p3 : m_players.values() ) {
@@ -4498,10 +4497,9 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS provided PROTECTIVE SHIELDING for all friendly pilots in " + (freq % 2 == 0 ? "TOP BASE!" : "BOTTOM BASE!") );
 
         } else {
-            if( p.getCurrentOP() < 3 )
-                throw new TWCoreException( "You need 3 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-            else
-                p.adjustOP(-3);
+            if( p.getCurrentOP() < 8 )
+                throw new TWCoreException( "Insufficient OP; need 8.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
+            p.adjustOP(-8);
             m_botAction.specificPrize( p2.getPlayerID(), Tools.Prize.SHIELDS );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS provided PROTECTIVE SHIELDING for " + p2.getPlayerName() + "." );
         }
@@ -4523,10 +4521,9 @@ public class distensionbot extends SubspaceBot {
         if( upgLevel < 1 )
             throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
 
-        if( p.getCurrentOP() < 6 )
-            throw new TWCoreException( "You need 6 OP to use this ability.  Check !status to see your current amount.  !upgrade max OP/OP regen rate if possible." );
-        else
-            p.adjustOP(-6);
+        if( p.getCurrentOP() < 15 )
+            throw new TWCoreException( "Insufficient OP; need 15.  Current: [" + p.getCurrentOP() + "/" + p.getMaxOP() + "]" );
+        p.adjustOP(-15);
 
         int freq = p.getArmyID();
         for( DistensionPlayer p3 : m_players.values() ) {
@@ -5428,10 +5425,10 @@ public class distensionbot extends SubspaceBot {
             break;
         // OPS
         case OPS_INCREASE_MAX_OP:
-            desc = "Larger Op Point reserve";
+            desc = "Larger Tactical Ops Point reserve";
             break;
         case OPS_REGEN_RATE:
-            desc = "Improved OP regeneration speed";
+            desc = "Regenerate +1 OP per cycle";
             break;
         case OPS_WARP:
             desc = "Warp teammates to locations";
@@ -5955,6 +5952,7 @@ public class distensionbot extends SubspaceBot {
                 escapePod = 0;
                 escapePodFired = false;
                 leeching = 0;
+                masterDrive = 0;
                 energyTank = false;
                 targetedEMP = false;
                 jumpSpace = false;
@@ -5966,7 +5964,7 @@ public class distensionbot extends SubspaceBot {
                     if( upgrades.get( i ).getPrizeNum() == ABILITY_PRIORITY_REARM && purchasedUpgrades[i] > 0 )
                         fastRespawn = true;
                     else if( upgrades.get( i ).getPrizeNum() == OPS_INCREASE_MAX_OP )
-                        maxOP += purchasedUpgrades[i];
+                        maxOP += (purchasedUpgrades[i] * 2);
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_VENGEFUL_BASTARD )
                         vengefulBastard = purchasedUpgrades[i];
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_ESCAPE_POD )
@@ -6205,11 +6203,13 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 // Regenerate OP
-                double regenOPChance = Math.random() * 10.0;
-                if( (double)(purchasedUpgrades[2] * 2) + DEFAULT_OP_REGEN > regenOPChance ) {
+                if( tick % 2 == 0 ) {
+                    int increase = purchasedUpgrades[2] + DEFAULT_OP_REGEN;
                     if( currentOP < maxOP ) {
-                        m_botAction.sendPrivateMessage( arenaPlayerID, "+1 OP" );
-                        currentOP++;
+                        if( currentOP + increase > maxOP )
+                            increase = maxOP - currentOP;
+                        m_botAction.sendPrivateMessage( arenaPlayerID, "+" + increase + " OP  ( " + currentOP + " / " + maxOP + " )" );
+                        currentOP += increase;
                     }
                 }
 
@@ -6293,7 +6293,10 @@ public class distensionbot extends SubspaceBot {
         public void doSetupRespawn() {
             isRespawning = true;
             if( isFastRespawn() ) {
-                m_prizeQueue.addHighPriorityPlayer( this );
+                if( fastRespawn )   // Standard priority rearmers always get to the head
+                    m_prizeQueue.addHighPriorityPlayer( this );
+                else                // Other rearmers just get ahead of the other army
+                    m_prizeQueue.addPriorityRearmPlayer( this );
             } else {
                 m_prizeQueue.addPlayer( this );
             }
@@ -7155,7 +7158,7 @@ public class distensionbot extends SubspaceBot {
             double masterChance1 = Math.random() * 100.0;
             double masterChance2 = Math.random() * 100.0;
             boolean fired = false;
-            int masterMod = masterDrive * (successiveKills - 1);
+            int masterMod = Math.min(50, (masterDrive * (successiveKills - 1)));  // Cap at 50%
             if( (double)masterMod > masterChance1 ) {
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SUPER );
                 fired = true;
@@ -8177,6 +8180,18 @@ public class distensionbot extends SubspaceBot {
         public void addHighPriorityPlayer( DistensionPlayer p ) {
             if( !priorityPlayers.contains(p) )
                 priorityPlayers.add(p);
+        }
+
+        /**
+         * Adds a player to the prizing queue when priority rearm is enabled on their
+         * army.  Only Terrs are forced to the head of the queue.
+         * @param p Player to add
+         */
+        public void addPriorityRearmPlayer( DistensionPlayer p ) {
+            if( !priorityPlayers.contains(p) ) {
+                int index = priorityPlayers.size();
+                priorityPlayers.add(index, p);
+            }
         }
 
         /**
@@ -10276,9 +10291,9 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP9, 12f );
         upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,52}, 5 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+1 Max OP Points", OPS_INCREASE_MAX_OP, new int[]{8,10,10,10,11,13,15,20,25}, new int[]{1,5,10,15,20,25,35,45,55}, 9 );      //
+        upg = new ShipUpgrade( "+2 Maximum OP Reserve", OPS_INCREASE_MAX_OP, new int[]{8,10,10,10,11,13,15,20,25}, new int[]{1,5,10,15,20,25,35,45,55}, 9 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+20% OP Regen Rate", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{9,20,30,40}, 4 );
+        upg = new ShipUpgrade( "+1 OP Regen", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{9,20,30,40}, 4 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,7,20}, new int[]{1,3,18}, 3 );
         ship.addUpgrade( upg );
