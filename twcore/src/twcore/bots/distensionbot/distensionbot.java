@@ -403,7 +403,7 @@ public class distensionbot extends SubspaceBot {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
             if( r == null ) {
                 Tools.printLog( "Null ResultSet returned for query: 'SELECT fnArmyID FROM tblDistensionArmy' on connection '" + m_database + "'" );
-                cmdDie(m_botAction.getBotName(), "now");
+                cmdDie("DistensionInternal", "now");
             } else {
                 while( r.next() ) {
                     int id = r.getInt( "fnArmyID");
@@ -414,7 +414,7 @@ public class distensionbot extends SubspaceBot {
             }
         } catch (SQLException e) {
             Tools.printStackTrace( "Error retrieving army data on startup!", e );
-            cmdDie(m_botAction.getBotName(), "now");
+            cmdDie("DistensionInternal", "now");
         }
         flagTimeStarted = false;
         stopFlagTime = false;
@@ -456,7 +456,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setMessageLimit( 12, false );
         m_botAction.setReliableKills( 1 );
         m_botAction.setPlayerPositionUpdating( 400 );
-        m_botAction.setLowPriorityPacketCap( 25 );
+        m_botAction.setLowPriorityPacketCap( 23 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
         m_botAction.setDoors( 240 ); // All bottom doors closed
@@ -2194,6 +2194,7 @@ public class distensionbot extends SubspaceBot {
             p.isRespawning = false;
             m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_REARMING );
         }
+        m_prizeQueue.removePlayer(p);
 
         // Check if Tactical Ops position is available
         if( shipNum == 9 ) {
@@ -2912,8 +2913,7 @@ public class distensionbot extends SubspaceBot {
         for( int i = startingUpg; i < endingUpg + 1; i++ ) {
             ShipUpgrade upgrade = m_shipGeneralData.get( p.getShipNum() ).getUpgrade( i );
             while( p.getPurchasedUpgrade( i ) > 0 ) {
-                pointsReturned += upgrade.getCostDefine( p.getPurchasedUpgrade( i ) - 1);
-                p.modifyUpgrade( i, -1 );
+                pointsReturned += upgrade.getCostDefine( p.getPurchasedUpgrade( i ) - 1 );
                 if( p.modifyUpgrade( i, -1 ) == false )
                     m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "ERROR modifying upgrade " + i + ".  Notify a mod immediately." );
                 if( upgrade.getPrizeNum() == ABILITY_PRIORITY_REARM )
