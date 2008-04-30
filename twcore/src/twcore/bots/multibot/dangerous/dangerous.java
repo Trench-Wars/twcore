@@ -455,7 +455,7 @@ public class dangerous extends MultiModule {
             Player p = m_botAction.getPlayer( event.getPlayerID() );
 
             if( p != null ) {
-                if( m_botAction.getNumPlayers() <= 1 ) {
+                if( m_botAction.getNumPlayers() == 1 ) {
                     declareWinner();
                 } else {
                     PlayerInfo player = m_players.get( p.getPlayerName() );
@@ -481,7 +481,7 @@ public class dangerous extends MultiModule {
             if( p != null ) {
                 if( p.getShipType() == 0 ) {
 
-                    if( m_botAction.getNumPlayers() <= 1 ) {
+                    if( m_botAction.getNumPlayers() == 1 ) {
                         declareWinner();
                     } else {
                         PlayerInfo player = m_players.get( p.getPlayerName() );
