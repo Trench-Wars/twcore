@@ -363,8 +363,14 @@ public class messagebot extends SubspaceBot
     	}
 
     	Channel c = channels.get(channel);
-    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
-    		c.messageChannel(name, pieces[1]);
+    	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())){
+    	    if(pieces[1].length() > 200){
+    	        m_botAction.sendSmartPrivateMessage( name, "That message is too long to send. Please create a message of 200 characters or less.");
+    	        return;
+    	    }
+    	    else
+    	        c.messageChannel(name, pieces[1]);
+    	}
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
