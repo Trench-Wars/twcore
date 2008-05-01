@@ -10,10 +10,10 @@
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `tbladvert`
+-- Table structure for table `tblAdvert`
 -- 
 
-CREATE TABLE `tbladvert` (
+CREATE TABLE `tblAdvert` (
   `fnAdvertID` int(11) NOT NULL auto_increment,
   `fcUserName` varchar(30) NOT NULL default '',
   `fcEventName` varchar(50) NOT NULL default '',
@@ -25,10 +25,10 @@ CREATE TABLE `tbladvert` (
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `tblcall`
+-- Table structure for table `tblCall`
 -- 
 
-CREATE TABLE `tblcall` (
+CREATE TABLE `tblCall` (
   `fnCallID` int(11) unsigned NOT NULL auto_increment,
   `fcUserName` varchar(30) NOT NULL default '',
   `fnCount` int(11) NOT NULL default '0',
@@ -41,10 +41,10 @@ CREATE TABLE `tblcall` (
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `tblwarnings`
+-- Table structure for table `tblWarnings`
 -- 
 
-CREATE TABLE `tblwarnings` (
+CREATE TABLE `tblWarnings` (
   `name` varchar(30) NOT NULL default '',
   `warning` varchar(255) NOT NULL default '',
   `timeofwarning` date NOT NULL default '0000-00-00',
