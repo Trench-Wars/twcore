@@ -42,6 +42,7 @@ public class enigma extends MultiModule {
     int					checkDoors = 0, checkEvents = 0, checkMessages = 0, lastEvent;
     int					curTime = 0;
     boolean 			gameProgress = false, eventProgress = false, startProgress = false;
+    boolean				allowLagout = true;
 
 
 
@@ -89,10 +90,13 @@ public class enigma extends MultiModule {
         m_commandInterpreter.registerCommand( "!stop", 		acceptedMessages, this, "doStopGame" );
         m_commandInterpreter.registerCommand( "!reset", 	acceptedMessages, this, "doResetGame" );
         m_commandInterpreter.registerCommand( "!come", 		acceptedMessages, this, "doComeArena");
+        m_commandInterpreter.registerCommand( "!lagouton",  acceptedMessages, this, "doLagoutOn");
+        m_commandInterpreter.registerCommand( "!lagoutoff", acceptedMessages, this, "doLagoutOff");
         m_commandInterpreter.registerCommand( "!lagout", 	acceptedMessages, this, "doLagout" );
         m_commandInterpreter.registerCommand( "!whatis", 	acceptedMessages, this, "doWhatIs" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doShowHelp" );
     }
+
 
     /****************************************************************/
     /*** Starts a game of Enigma.                                 ***/
@@ -271,52 +275,40 @@ public class enigma extends MultiModule {
     /*** Shows help menu for players/staff                        ***/
     /****************************************************************/
     public void doShowHelp( String playerName, String message ) {
-        final String[] helpStaff = {
-            "|---------------------------------------------------------------|",
-            "|  Commands directed privately:                                 |",
-            "|  !start          - Begins a game of enigma.                   |",
-            "|  !stop <name>    - Stops a game of enigma w/<name> as winner. |",
-            "|  !cancel         - Cancels a game of enigma.                  |",
-            "|  !reset          - Resets the arena in case of bot lagout/etc.|",
-            "|  !whatis         - Answers: what is Enigma?                   |",
-            "|  !lagout         - Want in? Type this to me to play!!!        |",
-            "|---------------------------------------------------------------|"
-        };
-        final String[] helpStaff2 = {
-            "|---------------------------------------------------------------|",
-            "|  Commands directed privately:                                 |",
-            "|  !start          - Begins a game of enigma.                   |",
-            "|  !stop <name>    - Stops a game of enigma w/<name> as winner. |",
-            "|  !cancel         - Cancels a game of enigma.                  |",
-            "|  !reset          - Resets the arena in case of bot lagout/etc.|",
-            "|  !come           - Moves the bot in case you'd need this ???  |",
-            "|  !whatis         - Answers: what is Enigma?                   |",
-            "|  !lagout         - Want in? Type this to me to play!!!        |",
-            "|---------------------------------------------------------------|"
-        };
-
-        final String[] helpPlayer = {
-            "|---------------------------------------------------------------|",
-            "|  Commands directed privately:                                 |",
-            "|  !whatis         - Answers: what is Enigma?                   |",
-            "|  !lagout         - Want in? Type this to me to play!!!        |",
-            "|---------------------------------------------------------------|"
-        };
-
-        if( m_botAction.getOperatorList().isSmod( playerName ) )
-            m_botAction.remotePrivateMessageSpam( playerName, helpStaff2 );
-        else if( m_botAction.getOperatorList().isER( playerName ) )
-            m_botAction.remotePrivateMessageSpam( playerName, helpStaff );
-        else
-            m_botAction.remotePrivateMessageSpam( playerName, helpPlayer );
+        if (m_botAction.getOperatorList().isER(playerName)) {
+            m_botAction.remotePrivateMessageSpam(playerName,getModHelpMessage());
+        } else {
+            m_botAction.remotePrivateMessageSpam(playerName,getPlayerHelpMessage());
+        }
     }
 
     public  String[] getModHelpMessage() {
-    	String[] message =
-    	{
-	        ""
+    	String[] message = {
+    		"|---------------------------------------------------------------|",
+    		"|  Commands directed privately:                                 |",
+    		"|  !start          - Begins a game of enigma.                   |",
+    		"|  !stop <name>    - Stops a game of enigma w/<name> as winner. |",
+    		"|  !cancel         - Cancels a game of enigma.                  |",
+    		"|  !reset          - Resets the arena in case of bot lagout/etc.|",
+    		"|  !come           - Moves the bot in case you'd need this ???  |",
+    		"|  !whatis         - Answers: what is Enigma?                   |",
+    		"|  !lagout         - Want in? Type this to me to play!!!        |",
+    		"|  !lagouton       - Toggles the !lagout feature ON             |",
+    		"|  !lagoutoff      - Toggles the !lagout feature OFF            |",
+    		"|---------------------------------------------------------------|"
 	    };
         return message;
+    }
+
+    public String[] getPlayerHelpMessage() {
+    	String[] help = {
+   	        "|---------------------------------------------------------------|",
+   	        "|  Commands directed privately:                                 |",
+   	        "|  !whatis         - Answers: what is Enigma?                   |",
+   	        "|  !lagout         - Want in? Type this to me to play!!!        |",
+   	        "|---------------------------------------------------------------|"
+	    };
+        return help;
     }
 
     public boolean isUnloadable() {
@@ -334,19 +326,43 @@ public class enigma extends MultiModule {
     /*** Places a player in the game.                             ***/
     /****************************************************************/
     public void doLagout( String name, String message ) {
-        if(gameProgress) {
-            m_botAction.setShip(name, 1);
-            m_botAction.setFreq(name, 0);
+    	if (allowLagout) {
+    		if(gameProgress) {
+    			m_botAction.setShip(name, 1);
+    			m_botAction.setFreq(name, 0);
+    		} else {
+    			m_botAction.sendPrivateMessage( name, "The game hasn't started, just jump in, I'm very busy preparing.");
+    		}
+    	} else {
+    		m_botAction.sendPrivateMessage(name, "The !lagout feature has been disabled by the host.");
+    	}
+    }
+
+    /****************************************************************/
+    /*** Toggles the !lagout feature ON                           ***/
+    /****************************************************************/
+    public void doLagoutOn(String name, String message) {
+        if (m_botAction.getOperatorList().isER(name)) {
+        	allowLagout = true;
+        	m_botAction.sendPrivateMessage(name, "The !lagout feature is now ON.");
         }
-        else
-            m_botAction.sendPrivateMessage( name, "The game hasn't started, just jump in, I'm very busy preparing.");
+    }
+
+    /****************************************************************/
+    /*** Toggles the !lagout feature OFF                          ***/
+    /****************************************************************/
+    public void doLagoutOff(String name, String message) {
+        if (m_botAction.getOperatorList().isER(name)) {
+        	allowLagout = false;
+        	m_botAction.sendPrivateMessage(name, "The !lagout feature is now OFF.");
+        }
     }
 
     /****************************************************************/
     /*** Moves the bot.                                           ***/
     /****************************************************************/
     public void doComeArena(String name, String message) {
-        if( m_botAction.getOperatorList().isSmod( name ))
+        if( m_botAction.getOperatorList().isER( name ))
             m_botAction.joinArena(message);
     }
 
