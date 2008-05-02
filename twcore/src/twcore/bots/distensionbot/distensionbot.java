@@ -269,6 +269,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_JUMPSPACE = -11;
     public final int ABILITY_THOR = -12;
     public final int ABILITY_MASTER_DRIVE = -13;
+    public final int ABILITY_PRISMATIC_ARRAY = -14;
 
 
     // TACTICAL OPS DATA
@@ -804,6 +805,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!!", acceptedMessages, this, "cmdEnergyTank" );
         m_commandInterpreter.registerCommand( "!emp", acceptedMessages, this, "cmdTargetedEMP" );
         m_commandInterpreter.registerCommand( ">>>", acceptedMessages, this, "cmdJumpSpace" );
+        m_commandInterpreter.registerCommand( "---", acceptedMessages, this, "cmdPrismaticArray" );
         m_commandInterpreter.registerCommand( "!manops", acceptedMessages, this, "cmdManOps" );
         m_commandInterpreter.registerCommand( "!pilot", acceptedMessages, this, "cmdPilotDefunct" );
         m_commandInterpreter.registerCommand( "!ship", acceptedMessages, this, "cmdPilotDefunct" );
@@ -3484,6 +3486,23 @@ public class distensionbot extends SubspaceBot {
         m_botAction.warpTo( p.getArenaPlayerID(), jumpx, jumpy );
     }
 
+    /**
+     * Uses Prismatic Array ability, if available.
+     * @param name
+     * @param msg
+     */
+    public void cmdPrismaticArray( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() == -1 )
+            throw new TWCoreException( "You must !return first." );
+        if( p.getShipNum() == 0 )
+            throw new TWCoreException( "You must pilot your ship first." );
+        if( p.getShipNum() != Tools.Ship.WEASEL )
+            throw new TWCoreException( "Only Weasels possess the Prismatic Array ability." );
+        p.usePrismaticArray();
+    }
 
 
 
@@ -5423,6 +5442,9 @@ public class distensionbot extends SubspaceBot {
         case ABILITY_MASTER_DRIVE:
             desc = "Chance of Super/Shields every streak of 5";
             break;
+        case ABILITY_PRISMATIC_ARRAY:
+            desc = "+15% chance to refuel prismatic decoy array";
+            break;
         // OPS
         case OPS_INCREASE_MAX_OP:
             desc = "Larger Tactical Ops Point reserve";
@@ -5614,6 +5636,7 @@ public class distensionbot extends SubspaceBot {
         private boolean   energyTank;           // True if player has an energy tank available
         private boolean   targetedEMP;          // True if player has targeted EMP available
         private boolean   jumpSpace;            // True if player has JumpSpace available
+        private boolean   prismatic;            // True if player has Prismatic Array available
         private int       vengefulBastard;      // Levels of Vengeful Bastard ability
         private int       escapePod;            // Levels of Escape Pod ability
         private boolean   escapePodFired;       // Whether or not escape pod has already fired this death
@@ -5689,6 +5712,7 @@ public class distensionbot extends SubspaceBot {
             energyTank = false;
             targetedEMP = false;
             jumpSpace = false;
+            prismatic = false;
             ignoreShipChanges = false;
             rankedUpFromLastKill = false;
         }
@@ -5956,6 +5980,7 @@ public class distensionbot extends SubspaceBot {
                 energyTank = false;
                 targetedEMP = false;
                 jumpSpace = false;
+                prismatic = false;
                 if( shipNum == 9 )
                     maxOP = DEFAULT_MAX_OP;
                 // Setup special (aka unusual) abilities
@@ -6190,6 +6215,16 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage( arenaPlayerID, "JumpSpace Drive ready.  PM >>> to use." );
                         jumpSpace = true;
                         prized = true;
+                    }
+                }
+            } else if( shipNum == 6) {
+                // Prismatic Array ability; creates decoy array when used
+                if( !prismatic ) {
+                    double pmChance = Math.random() * 100.0;
+                    if( ((double)purchasedUpgrades[15] * 15.0) > pmChance ) {
+                        //m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );  Make LVZ for this.
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "Prismatic Array replenished.  --- to use.");
+                        prismatic = true;
                     }
                 }
 
@@ -6749,6 +6784,7 @@ public class distensionbot extends SubspaceBot {
                     (shipNum == 8 && (purchasedUpgrades[9] > 0) ) ||
                     (shipNum == 2 && ((purchasedUpgrades[9] > 0) || rank >= 15) ) ||
                     (shipNum == 1 && (purchasedUpgrades[11] > 0) ) ||
+                    (shipNum == 6 && (purchasedUpgrades[15] > 0) ) ||
                     (shipNum == 9) )
                 m_specialAbilityPrizer.addPlayer(this);
             else
@@ -7202,6 +7238,45 @@ public class distensionbot extends SubspaceBot {
             boolean canjump = jumpSpace;
             jumpSpace = false;
             return canjump;
+        }
+
+        /**
+         * Checks if the player has an available Prismatic Array, and if so, uses it to
+         * prize a number of decoys based on their level of upgrade (2 + level of upgrade).
+         * The decoys are then deprized shortly afterward.
+         */
+        public void usePrismaticArray() {
+            if( prismatic == false ) {
+                m_botAction.sendPrivateMessage(arenaPlayerID, "You do not presently have a Prismatic Array to use!" );
+            } else {
+                if( personalTask != null ) {
+                    try {
+                        personalTask.cancel();
+                    } catch( Exception e ) {
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "Sorry, you must wait a moment before using this ability." );
+                        return;
+                    }
+                }
+                int level = purchasedUpgrades[15];
+                int delay;
+                if( level == 3 )
+                    delay = 10000;
+                else if( level == 2 )
+                    delay = 7000;
+                else
+                    delay = 4000;
+                //m_botAction.hideObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );
+                for( int i = 0; i < level + 2; i++ )
+                    m_botAction.specificPrize( arenaPlayerID, Tools.Prize.DECOY );
+                prismatic = false;
+                personalTask = new TimerTask() {
+                    public void run() {
+                        for( int i = 0; i < purchasedUpgrades[15] + 2; i++ )
+                            m_botAction.specificPrize( arenaPlayerID, -Tools.Prize.DECOY );
+                    }
+                };
+                m_botAction.scheduleTask(personalTask, delay);
+            }
         }
 
         // BASIC SETTERS
@@ -10086,14 +10161,17 @@ public class distensionbot extends SubspaceBot {
         // 18: Multifire
         // 20: 10% Vengeful Bastard 2
         // 23: Cloak
+        // 26: Prismatic Array 1
         // 29: Portal
         // 30: 10% Vengeful Bastard 3
         // 33: Stealth
+        // 35: Prismatic Array 2
         // 38: L3 Guns
         // 42: Decoy
         // 45: 10% Vengeful Bastard 4
         // 46: Rocket 2
         // 50: Brick
+        // 54: Prismatic Array 3
         // 55: 10% Vengeful Bastard 5
         // 60: Rocket 3
         ship = new ShipProfile( RANK_REQ_SHIP6, 14f );
@@ -10137,7 +10215,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Movement Inhibitor", Tools.Prize.BRICK, 39, 50, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Prismatic Array", ABILITY_PRISMATIC_ARRAY, new int[]{15,14,13}, new int[]{26,35,54}, 3 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
