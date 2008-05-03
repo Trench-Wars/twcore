@@ -89,7 +89,6 @@ public class enigma extends MultiModule {
         m_commandInterpreter.registerCommand( "!cancel", 	acceptedMessages, this, "doCancelGame" );
         m_commandInterpreter.registerCommand( "!stop", 		acceptedMessages, this, "doStopGame" );
         m_commandInterpreter.registerCommand( "!reset", 	acceptedMessages, this, "doResetGame" );
-        m_commandInterpreter.registerCommand( "!come", 		acceptedMessages, this, "doComeArena");
         m_commandInterpreter.registerCommand( "!lagouton",  acceptedMessages, this, "doLagoutOn");
         m_commandInterpreter.registerCommand( "!lagoutoff", acceptedMessages, this, "doLagoutOff");
         m_commandInterpreter.registerCommand( "!lagout", 	acceptedMessages, this, "doLagout" );
@@ -357,15 +356,6 @@ public class enigma extends MultiModule {
         	m_botAction.sendPrivateMessage(name, "The !lagout feature is now OFF.");
         }
     }
-
-    /****************************************************************/
-    /*** Moves the bot.                                           ***/
-    /****************************************************************/
-    public void doComeArena(String name, String message) {
-        if( m_botAction.getOperatorList().isER( name ))
-            m_botAction.joinArena(message);
-    }
-
 
     /****************************************************************/
     /*** Runs the timer tasks every second                        ***/
