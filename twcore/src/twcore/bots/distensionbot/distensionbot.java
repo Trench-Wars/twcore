@@ -270,6 +270,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_THOR = -12;
     public final int ABILITY_MASTER_DRIVE = -13;
     public final int ABILITY_PRISMATIC_ARRAY = -14;
+    public final int ABILITY_FIREBLOOM = -15;
 
 
     // TACTICAL OPS DATA
@@ -5446,6 +5447,9 @@ public class distensionbot extends SubspaceBot {
         case ABILITY_PRISMATIC_ARRAY:
             desc = "+15% chance to refuel prismatic decoy array";
             break;
+        case ABILITY_FIREBLOOM:
+            desc = "Expedient rearming of Firebloom burst";
+            break;
         // OPS
         case OPS_INCREASE_MAX_OP:
             desc = "Larger Tactical Ops Point reserve";
@@ -5643,6 +5647,8 @@ public class distensionbot extends SubspaceBot {
         private boolean   escapePodFired;       // Whether or not escape pod has already fired this death
         private int       leeching;             // Levels of Leeching ability
         private int       masterDrive;          // Levels of M.A.S.T.E.R. Drive
+        private int       firebloom;            // Levels of Firebloom
+        private long      opsAFKNotifyTime;     // Timestamp of Ops being notified of AFK
         private long      lastVengeTime;        // Timestamp of last time Vengeful Bastard fired on player
         private String    lastVenger;           // Name of player that last fired Vengeful Bastard on player
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
@@ -5695,6 +5701,8 @@ public class distensionbot extends SubspaceBot {
             escapePodFired = false;
             leeching = 0;
             masterDrive = 0;
+            firebloom = 0;
+            opsAFKNotifyTime = 0;
             lastVengeTime = 0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[9];
@@ -5978,6 +5986,7 @@ public class distensionbot extends SubspaceBot {
                 escapePodFired = false;
                 leeching = 0;
                 masterDrive = 0;
+                firebloom = 0;
                 energyTank = false;
                 targetedEMP = false;
                 jumpSpace = false;
@@ -6131,10 +6140,11 @@ public class distensionbot extends SubspaceBot {
             }
             if( isFastRespawn() )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.FULLCHARGE );
+            if( firebloom == 3 )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BURST );
             if( warp )
                 doWarp(false);
             m_botAction.hideObjectForPlayer(arenaPlayerID, LVZ_REARMING);
-            //prizeSpam( arenaPlayerID, prizing, warp );
             return totalPrized * PRIZE_SPAM_DELAY;
         }
 
@@ -6203,6 +6213,17 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "Thor's Hammer replenished." );
                     m_botAction.specificPrize( arenaPlayerID, Tools.Prize.THOR );
                     prized = true;
+                }
+            } else if( shipNum == 7 ) {
+                // Firebloom ability.
+                // Every 4 minutes with lvl1, every 2 minutes with lvl2, spawn with at lvl3
+                if( firebloom > 0 ) {
+                    if( (firebloom == 1 && tick % 8 == 0) ||
+                        (firebloom == 2 && tick % 4 == 0) ) {
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "Firebloom replenished." );
+                        m_botAction.specificPrize( arenaPlayerID, Tools.Prize.BURST );
+                        prized = true;
+                    }
                 }
             } else if( shipNum == 2) {
                 // JumpSpace ability (free at rank 15, but doesn't work well)
@@ -6718,6 +6739,8 @@ public class distensionbot extends SubspaceBot {
                 leeching = purchasedUpgrades[6];
             if( shipNum == 1 && upgrade == 10 )
                 masterDrive = purchasedUpgrades[10];
+            if( shipNum == 7 && upgrade == 10 )
+                firebloom = purchasedUpgrades[10];
             if( shipNum == 9 && upgrade == 1 )
                 maxOP = (purchasedUpgrades[1] * 2) + DEFAULT_MAX_OP;
             shipDataSaved = false;
@@ -6788,6 +6811,7 @@ public class distensionbot extends SubspaceBot {
                     (shipNum == 2 && ((purchasedUpgrades[9] > 0) || rank >= 15) ) ||
                     (shipNum == 1 && (purchasedUpgrades[11] > 0) ) ||
                     (shipNum == 6 && (purchasedUpgrades[14] > 0) ) ||
+                    (shipNum == 7 && (purchasedUpgrades[10] > 0 && purchasedUpgrades[10] < 3)) ||
                     (shipNum == 9) )
                 m_specialAbilityPrizer.addPlayer(this);
             else
@@ -6964,9 +6988,13 @@ public class distensionbot extends SubspaceBot {
             // OPS: Always idle; they must use commands to reset idle counter
             if( shipNum == 9 ) {
                 idleTicks++;
-                if( idleTicks == OPS_IDLE_TICKS_BEFORE_DOCK - 2)
-                    m_botAction.sendOpposingTeamMessageByFrequency(getArmyID(), "OPS appears idle; will be removed from console in 20 seconds.");
-                else if( idleTicks >= OPS_IDLE_TICKS_BEFORE_DOCK ) {
+                if( idleTicks == OPS_IDLE_TICKS_BEFORE_DOCK - 3) {
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not use an Ops command or say something in public chat.");
+                    opsAFKNotifyTime = System.currentTimeMillis();
+                } else if( idleTicks == OPS_IDLE_TICKS_BEFORE_DOCK - 1) {
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 1) + " seconds if you do not use an Ops command or say something in public chat.");
+                    opsAFKNotifyTime = System.currentTimeMillis();
+                } else if( idleTicks >= OPS_IDLE_TICKS_BEFORE_DOCK ) {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You have been docked for being idle at the Tactical Ops console." );
                     setLagoutAllowed(false);
                     doDock(this);
@@ -7021,7 +7049,15 @@ public class distensionbot extends SubspaceBot {
          * Resets the idle counter.  Called whenever a player speaks or makes a kill.
          */
         public void resetIdle() {
-            idleTicks = 0;
+            if( shipNum == 9 ) {
+                if( System.currentTimeMillis() > opsAFKNotifyTime + 500 ) {
+                    // Idle only counts if >500ms since bot notified player (not ?away automated)
+                    idleTicks = 0;
+                }
+                opsAFKNotifyTime = 0;
+            } else {
+                idleTicks = 0;
+            }
         }
 
         /**
@@ -10256,10 +10292,12 @@ public class distensionbot extends SubspaceBot {
         // 30: +20% Leeching 2
         // 38: L3 Guns
         // 40: +20% Leeching 3
-        // 45: The Firebloom
+        // 45: Firebloom 1
         // 50: +20% Leeching 4
+        // 52: Firebloom 2
         // 55: Prox
-        // 65: L2 Bombs
+        // 60: L2 Bombs
+        // 65: Firebloom 3
         // 69: Shrap (10 levels)
         // 70: +20% Leeching 5
         // 80: Decoy
@@ -10286,9 +10324,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Lancaster Reiterator", Tools.Prize.DECOY, 50, 80, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "The Firebloom", Tools.Prize.BURST, 32, 45, 1 );
+        upg = new ShipUpgrade( "The Firebloom", ABILITY_FIREBLOOM, new int[]{32,15,50}, new int[]{45,52,65}, 3 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Lancaster Special!", Tools.Prize.BOMBS, new int[]{21,80}, new int[]{26,65}, 2 );
+        upg = new ShipUpgrade( "Lancaster Special!", Tools.Prize.BOMBS, new int[]{21,80}, new int[]{26,60}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 42, 55, 1 );
         ship.addUpgrade( upg );
