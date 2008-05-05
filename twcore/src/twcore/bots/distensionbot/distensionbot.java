@@ -10004,9 +10004,7 @@ public class distensionbot extends SubspaceBot {
         int p2b2[] = { 26, 60 };
         upg = new ShipUpgrade( "Rear Defense System", Tools.Prize.GUNS, p2b1, p2b2, 2 );
         ship.addUpgrade( upg );
-        int p2c1[] = { 50 };
-        int p2c2[] = { 40 };
-        upg = new ShipUpgrade( "Mortar Explosive Enhancement", Tools.Prize.BOMBS, p2c1, p2c2, 2 );
+        upg = new ShipUpgrade( "Mortar Explosive Enhancement", Tools.Prize.BOMBS, 50, 40, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Modified Defense Cannon", Tools.Prize.MULTIFIRE, 18, 23, 1 );
         ship.addUpgrade( upg );
