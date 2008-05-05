@@ -51,8 +51,6 @@ public class robohelp extends SubspaceBot {
     CommandInterpreter  m_commandInterpreter;
     String              lastHelpRequestName = null;
 
-    boolean             backupAdvertiser = false;
-
     final String        mySQLHost = "local";
     Vector<EventData>   eventList = new Vector<EventData>();
     TreeMap<String, EventData> events = new TreeMap<String, EventData>();
@@ -90,9 +88,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload" );
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
 
-        m_commandInterpreter.registerCommand( "!backupadv", acceptedMessages, this, "handleEnableBackup" );
-        m_commandInterpreter.registerCommand( "!adv", acceptedMessages, this, "handleAdv" );
-        m_commandInterpreter.registerCommand( "!time", acceptedMessages, this, "handleTime" );
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted" );
         m_commandInterpreter.registerCommand( "!saychat", acceptedMessages, this, "handleSayChat" );
         
@@ -117,75 +112,12 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "Ban", acceptedMessages, this, "handleBanNumber" );
     }
 
-    AdvertisementThread advertisementThread;
-
-    class AdvertisementThread extends Thread{
-        String advertisement;
-        String name;
-        long lastAdvTime = System.currentTimeMillis();// - 600000;
-
-        public void setNameandMsg( String newName, String message ){
-            message = message.trim();
-            if( message.length() == 0 ){
-            } else if( name == null ){
-                name = newName;
-                advertisement = message;
-                m_botAction.sendRemotePrivateMessage( name, "Advertisement set to: " + message );
-            } else if( name.equals( newName )){
-                name = newName;
-                advertisement = message;
-                m_botAction.sendRemotePrivateMessage( name, "Advertisement changed to: " + message );
-            } else {
-                m_botAction.sendRemotePrivateMessage( name, "Sorry, but " + name + " has this ad." );
-            }
-            m_botAction.sendRemotePrivateMessage( name, timeToNext() );
-        }
-
-        public String timeToNext(){
-            //10 minutes - difference betweeen current time and previous time
-            long difference = TIME_BETWEEN_ADS - (System.currentTimeMillis() - lastAdvTime);
-            int minutes = (int)Math.floor( difference / 60000 );
-            int seconds = Math.round( (difference % 60000)/1000 );
-            return "There are " + minutes + " minutes, " + seconds + " seconds until the next advertisement is free";
-        }
-
-        public void run(){
-            while( backupAdvertiser ){
-                if( name != null && advertisement != null ){
-                    m_botAction.sendZoneMessage( advertisement + " -" + name, 2 );
-                    m_botAction.sendChatMessage( "The next advertisement is free." );
-                    advertisement = null;
-                    name = null;
-                    lastAdvTime = System.currentTimeMillis();
-                }
-                try{
-                    Thread.sleep( TIME_BETWEEN_ADS ); //10 minutes
-                } catch( Exception e ){
-                }
-            }
-        }
-
-    }
-
     public void handleSayChat( String name, String message ) {
         if(!opList.isSmod( name )) {
 	  return;
 	  } else {
           m_botAction.sendChatMessage( 1, message );
 	}
-    }
-
-    public void handleEnableBackup( String name, String message ){
-        if( !opList.isSmod( name )) return;
-        if( backupAdvertiser ){
-            backupAdvertiser = false;
-            m_botAction.sendRemotePrivateMessage( name, "Backup Advertisements Disabled" );
-        } else {
-            backupAdvertiser = true;
-            advertisementThread = new AdvertisementThread();
-            advertisementThread.start();
-            m_botAction.sendRemotePrivateMessage( name, "Backup Advertisements Enabled" );
-        }
     }
 
     public void handleStatus( String name, String message ){
@@ -280,18 +212,6 @@ public class robohelp extends SubspaceBot {
                 m_lastBanner = null;
             }
         }
-    }
-
-    public void handleAdv( String name, String message ){
-        if( advertisementThread == null ) return;
-        if( !opList.isER( name ) || !backupAdvertiser ) return;
-        advertisementThread.setNameandMsg( name, message );
-    }
-
-    public void handleTime( String name, String message ){
-        if( advertisementThread == null ) return;
-        if( !opList.isER( name ) || !backupAdvertiser ) return;
-        m_botAction.sendRemotePrivateMessage( name, advertisementThread.timeToNext() );
     }
 
     public void populateSearch(){
@@ -1231,22 +1151,6 @@ public class robohelp extends SubspaceBot {
         };
         if( m_botAction.getOperatorList().isZH( playerName ) ){
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
-        }
-        
-        String[] ERHelpText = {
-            " !adv                                      - Sets the text for the advertisement system",
-            " !time                                     - Returns the time left before the next zone"
-        };
-        if( m_botAction.getOperatorList().isER( playerName )) {
-        	m_botAction.remotePrivateMessageSpam( playerName, ERHelpText );
-        }
-        
-        String[] SmodHelpText = {
-            " !backupadv                                - Starts/stops the advertisement system",
-            "                                             (periodically zones a preset message)"
-        };
-        if( m_botAction.getOperatorList().isSmod( playerName )) {
-        	m_botAction.remotePrivateMessageSpam( playerName, SmodHelpText );
         }
         
         String [] OwnerHelpText = {
