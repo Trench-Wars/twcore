@@ -87,7 +87,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen" );
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload" );
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
-
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted" );
         m_commandInterpreter.registerCommand( "!saychat", acceptedMessages, this, "handleSayChat" );
         
@@ -1149,17 +1148,20 @@ public class robohelp extends SubspaceBot {
             " !mystats <month>-<year> [above arguments] - Returns the top/call count from specified",
             "                                             month-year. F.ex: !mystats 08-2007 mod 50"
         };
-        if( m_botAction.getOperatorList().isZH( playerName ) ){
+        if( m_botAction.getOperatorList().isZH( playerName ) )
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
-        }
         
-        String [] OwnerHelpText = {
-            " !reload                                   - Reloads the HelpResponses database from file",
-            " !saychat <messages>                       - Makes the bot say the <message> in the staff chat"
+        String[] SmodHelpText = {
+                " !saychat <messages>                       - Makes the bot say the <message> in the staff chat"
         };
-        if( m_botAction.getOperatorList().isOwner( playerName )) {
+        if( m_botAction.getOperatorList().isSmod( playerName ))
+            m_botAction.remotePrivateMessageSpam( playerName, SmodHelpText );
+        
+        String[] OwnerHelpText = {
+            " !reload                                   - Reloads the HelpResponses database from file",            
+        };
+        if( m_botAction.getOperatorList().isOwner( playerName ))
         	m_botAction.remotePrivateMessageSpam( playerName, OwnerHelpText );
-        }
     }
 
     private int indexNotOf(String string, char target, int fromIndex)
