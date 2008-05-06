@@ -5638,6 +5638,7 @@ public class distensionbot extends SubspaceBot {
         private int       lastYVel;             // Last Y velocity
         private int       lastRot;              // Last rotation
         private int       idlesInBase;          // # idle checks in which a player has been in base
+        private int       bonusPrize;           // # of prize to additionally prize at next spawn
         private boolean   energyTank;           // True if player has an energy tank available
         private boolean   targetedEMP;          // True if player has targeted EMP available
         private boolean   jumpSpace;            // True if player has JumpSpace available
@@ -5696,6 +5697,7 @@ public class distensionbot extends SubspaceBot {
             lastYVel = 0;
             lastRot = 0;
             idlesInBase = 0;
+            bonusPrize = 0;
             vengefulBastard = 0;
             escapePod = 0;
             escapePodFired = false;
@@ -5987,6 +5989,7 @@ public class distensionbot extends SubspaceBot {
                 leeching = 0;
                 masterDrive = 0;
                 firebloom = 0;
+                bonusPrize = 0;
                 energyTank = false;
                 targetedEMP = false;
                 jumpSpace = false;
@@ -6140,6 +6143,10 @@ public class distensionbot extends SubspaceBot {
             }
             if( isFastRespawn() )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.FULLCHARGE );
+            if( bonusPrize != 0 ) {
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + bonusPrize );
+                bonusPrize = 0;
+            }
             if( firebloom == 3 )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BURST );
             if( warp )
@@ -6210,8 +6217,8 @@ public class distensionbot extends SubspaceBot {
             } else if( shipNum == 1) {
                 // Thor ability (every 5 minutes)
                 if( purchasedUpgrades[11] > 0 && tick % 10 == 0 ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "Thor's Hammer replenished." );
-                    m_botAction.specificPrize( arenaPlayerID, Tools.Prize.THOR );
+                    m_botAction.sendPrivateMessage(arenaPlayerID, "Thor's Hammer available at next rearm." );
+                    bonusPrize = Tools.Prize.THOR;
                     prized = true;
                 }
             } else if( shipNum == 7 ) {
@@ -6220,8 +6227,8 @@ public class distensionbot extends SubspaceBot {
                 if( firebloom > 0 ) {
                     if( (firebloom == 1 && tick % 8 == 0) ||
                         (firebloom == 2 && tick % 4 == 0) ) {
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "Firebloom replenished." );
-                        m_botAction.specificPrize( arenaPlayerID, Tools.Prize.BURST );
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "Firebloom available at next rearm." );
+                        bonusPrize = Tools.Prize.BURST;
                         prized = true;
                     }
                 }
