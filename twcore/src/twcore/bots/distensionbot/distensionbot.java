@@ -117,7 +117,8 @@ public class distensionbot extends SubspaceBot {
     private final int WINS_REQ_RANK_VICE_ADMIRAL = 410;
     private final int WINS_REQ_RANK_ADMIRAL = 500;
     private final int WINS_REQ_RANK_FLEET_ADMIRAL = 1000;
-
+    private final int WINS_REQ_OFFICER = WINS_REQ_RANK_ENSIGN;          // Officer is Ensign+
+    private final int WINS_REQ_FLAG_OFFICER = WINS_REQ_RANK_COMMODORE;  // Flag Officer is Commodore+
 
     // COORDS
 
@@ -271,6 +272,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_MASTER_DRIVE = -13;
     public final int ABILITY_PRISMATIC_ARRAY = -14;
     public final int ABILITY_FIREBLOOM = -15;
+    public final int ABILITY_SUMMONING_AUTH = -16;
 
 
     // TACTICAL OPS DATA
@@ -740,6 +742,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!sca", acceptedMessages, this, "cmdScrapAll" );
+        m_commandInterpreter.registerCommand( "!su", acceptedMessages, this, "cmdSummon" );
         m_commandInterpreter.registerCommand( "!t", acceptedMessages, this, "cmdTerr" );
         m_commandInterpreter.registerCommand( "!tm", acceptedMessages, this, "cmdTeam" );
         m_commandInterpreter.registerCommand( "!u", acceptedMessages, this, "cmdUpgrade" );
@@ -803,6 +806,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!lagout", acceptedMessages, this, "cmdLagout" );
         m_commandInterpreter.registerCommand( "!killmsg", acceptedMessages, this, "cmdKillMsg" );
         m_commandInterpreter.registerCommand( "!battleinfo", acceptedMessages, this, "cmdBattleInfo" );
+        m_commandInterpreter.registerCommand( "!summon", acceptedMessages, this, "cmdSummon" );
         m_commandInterpreter.registerCommand( "!!", acceptedMessages, this, "cmdEnergyTank" );
         m_commandInterpreter.registerCommand( "!emp", acceptedMessages, this, "cmdTargetedEMP" );
         m_commandInterpreter.registerCommand( ">>>", acceptedMessages, this, "cmdJumpSpace" );
@@ -919,6 +923,8 @@ public class distensionbot extends SubspaceBot {
             "| !armies           !ar |  View size and strength of armies",
             "| !battleinfo       !bi |  Display current battle status",
             "| !clearmines       !cm |  Clear all mines, if in a mine-laying ship",
+            "| !summon (Terr)    !su |  Summons others to you.  !summon s for sharks.",
+            "| !summon (others)  !su |  Toggles allowing summoning by Terriers",
             "|______________________/"
             };
             m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
@@ -3346,6 +3352,66 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
+     * Toggles summoning if not a Terr, and summons players if in a Terr.
+     * @param name
+     * @param msg
+     */
+    public void cmdSummon( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        if( p.getShipNum() != 5 ) {
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Allow Terrier Summoning: " + (p.toggleSummon() ? "[ENABLED]" : "[DISABLED]") );
+            return;
+        }
+
+        // Doing a Terr summon: Officers and Flag Officers get extras for this
+        if( flagTimer == null || !flagTimer.isRunning() )
+            throw new TWCoreException( "There is no need to issue a summon order while not in battle!" );
+
+        int permissions = p.getPurchasedUpgrade(14);
+        if( p.getBattlesWon() >= WINS_REQ_OFFICER )
+            permissions++;
+        if( p.getBattlesWon() >= WINS_REQ_FLAG_OFFICER )
+            permissions++;
+        if( permissions == 0 )
+            throw new TWCoreException( "You do not yet have summoning order permissions.  You may upgrade them, and will also have additional permissions on reaching Officer and Flag Officer." );
+
+        if( !p.useSummon( permissions ) )
+            throw new TWCoreException( "You may not yet issue another summon order." );
+
+        boolean summonOnlySharks = false;
+        if( msg.equalsIgnoreCase("s") ) {
+            if( permissions < 2 )
+                throw new TWCoreException( "You do not yet have the appropriate permissions to summon Sharks." );
+            summonOnlySharks = true;
+        }
+
+        Player playerObj = m_botAction.getPlayer(p.getArenaPlayerID());
+        if( playerObj == null )
+            return;
+
+        for( DistensionPlayer target : m_players.values() ) {
+            if( target.getArmyID() == p.getArmyID() ) {
+                Player targetObj = m_botAction.getPlayer(target.getArenaPlayerID());
+                if( targetObj != null &&
+                        targetObj.getYTileLocation() > TOP_FR &&
+                        targetObj.getYTileLocation() < BOT_FR ) {
+                    if( (summonOnlySharks && target.getShipNum() != Tools.Ship.SHARK) ||
+                        (summonOnlySharks && target.getShipNum() == Tools.Ship.SHARK) ) {
+                        if( !target.isRespawning() || permissions == 3 ) {
+                            if( target.doesAllowSummon() ) {
+                                m_botAction.warpTo( targetObj.getPlayerID(), playerObj.getXTileLocation(), playerObj.getYTileLocation() );
+                                target.respawnImmediately();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Uses energy tank ability, if available.
      * @param name
      * @param msg
@@ -3388,12 +3454,12 @@ public class distensionbot extends SubspaceBot {
             }
         }
         m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_EMP );
-        m_botAction.sendPrivateMessage( name, "EMP discharged!  All enemies have been temporarily disabled." );
+        m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on the enemy!" );
         m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on your army!" );
     }
 
     /**
-     * Uses Targeted EMP ability, if available.
+     * Uses JumpSpace ability, if available.
      * @param name
      * @param msg
      */
@@ -5450,6 +5516,9 @@ public class distensionbot extends SubspaceBot {
         case ABILITY_FIREBLOOM:
             desc = "Expedient rearming of Firebloom burst";
             break;
+        case ABILITY_SUMMONING_AUTH:
+            desc = "Increased order permissions using !summon";
+            break;
         // OPS
         case OPS_INCREASE_MAX_OP:
             desc = "Larger Tactical Ops Point reserve";
@@ -5651,6 +5720,7 @@ public class distensionbot extends SubspaceBot {
         private int       firebloom;            // Levels of Firebloom
         private long      opsAFKNotifyTime;     // Timestamp of Ops being notified of AFK
         private long      lastVengeTime;        // Timestamp of last time Vengeful Bastard fired on player
+        private long      lastSummonTime;       // Timestamp of last time summon was used
         private String    lastVenger;           // Name of player that last fired Vengeful Bastard on player
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
@@ -5665,6 +5735,7 @@ public class distensionbot extends SubspaceBot {
         private boolean   allowLagout;          // True if !lagout should be allowed
         private boolean   ignoreShipChanges;    // True if all ship changes should be ignored until old ship is entered
         private boolean   rankedUpFromLastKill; // True if player ranked up from the last kill
+        private boolean   allowSummon;          // True if the player will allow themselves to be summoned
         private TimerTask personalTask = null;  // Personal TimerTask for various uses
 
         public DistensionPlayer( String name ) {
@@ -5706,6 +5777,7 @@ public class distensionbot extends SubspaceBot {
             firebloom = 0;
             opsAFKNotifyTime = 0;
             lastVengeTime = 0;
+            lastSummonTime = 0;
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[9];
             for( int i = 0; i < 9; i++ )
@@ -5726,6 +5798,7 @@ public class distensionbot extends SubspaceBot {
             prismatic = false;
             ignoreShipChanges = false;
             rankedUpFromLastKill = false;
+            allowSummon = true;
         }
 
 
@@ -6156,6 +6229,126 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * Sets up player for respawning.
+         */
+        public void doSetupRespawn() {
+            isRespawning = true;
+            if( isFastRespawn() ) {
+                if( fastRespawn )   // Standard priority rearmers always get to the head
+                    m_prizeQueue.addHighPriorityPlayer( this );
+                else                // Other rearmers just get ahead of the other army
+                    m_prizeQueue.addPriorityRearmPlayer( this );
+            } else {
+                m_prizeQueue.addPlayer( this );
+            }
+            spawnTicks = TICKS_BEFORE_SPAWN;
+        }
+
+        /**
+         * Sets up player for "respawning" at round start in order to wipe ports
+         * and mines.  Does not use spawn ticks, so is considerably faster, prizing
+         * players essentially at the normal spawn rate.
+         */
+        public void doSetupSpecialRespawn() {
+            specialRespawn = true;
+            if( isFastRespawn() ) {
+                m_prizeQueue.addHighPriorityPlayer( this );
+            } else {
+                m_prizeQueue.addPlayer( this );
+            }
+            spawnTicks = 0;
+        }
+
+        /**
+         * Removes player from all respawn queues and respawns them immediately.
+         */
+        public void respawnImmediately() {
+            if( isRespawning || specialRespawn ) {
+                m_prizeQueue.removePlayer(this);
+                isRespawning = false;
+                specialRespawn = false;
+                escapePodFired = true;
+                spawnTicks = 0;
+                m_botAction.shipReset( arenaPlayerID );
+                this.prizeUpgradesNow();
+            }
+        }
+
+        /**
+         * Warps player to the appropriate spawning location (near a specific base).
+         * Used after prizing.
+         * @param roundStart True if the round is starting (ignore settings)
+         */
+        public void doWarp( boolean roundStart ) {
+            if( waitInSpawn && !roundStart )
+                return;
+            int x = 0, y = 0;
+            int base;
+            base = getArmyID() % 2;
+            // At round start of 2 flag game, warp to special spawn
+            if( roundStart ) {
+                if( !m_singleFlagMode ) {
+                    if( warpInBase ) {
+                        int xmod = (int)(Math.random() * 10) - 5;
+                        int ymod = (int)(Math.random() * 10) - 5;
+                        x = 512 + xmod;
+                        if( base == 0 )
+                            y = BASE_CENTER_0_Y_COORD;
+                        else
+                            y = BASE_CENTER_1_Y_COORD;
+                        y += ymod;
+                    }
+                } else {
+                    if( base == 0 ) {
+                        x = LEFT_EAR_X;
+                        y = LEFT_EAR_Y;
+                    } else {
+                        x = RIGHT_EAR_X;
+                        y = RIGHT_EAR_Y;
+                    }
+                    y += (int)(Math.random() * 4) - 2;
+                    x += (int)(Math.random() * 4) - 2;
+                }
+            } else {
+                Random r = new Random();
+                x = 512 + (r.nextInt(SPAWN_X_SPREAD) - (SPAWN_X_SPREAD / 2));
+                if( !m_singleFlagMode ) {
+                    if( base == 0 )
+                        y = SPAWN_BASE_0_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
+                    else
+                        y = SPAWN_BASE_1_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
+                } else {
+                    y = SPAWN_BASE_0_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
+                }
+            }
+            m_botAction.warpTo(arenaPlayerID, x, y);
+        }
+
+        /**
+         * Warps player to the rearm area, no strings attached.
+         */
+        public void doRearmAreaWarp() {
+            int base = getArmyID() % 2;
+            int xmod = (int)(Math.random() * 4) - 2;
+            int ymod = (int)(Math.random() * 4) - 2;
+            if( base == 0 )
+                m_botAction.warpTo(arenaPlayerID, 512 + xmod, REARM_AREA_TOP_Y + ymod);
+            else
+                m_botAction.warpTo(arenaPlayerID, 512 + xmod, REARM_AREA_BOTTOM_Y + ymod);
+        }
+
+        /**
+         * Warps player to the safety part of the rearm area, to reset various
+         */
+        public void doRearmSafeWarp() {
+            int base = getArmyID() % 2;
+            if( base == 0 )
+                m_botAction.warpTo(arenaPlayerID, 512, REARM_SAFE_TOP_Y );
+            else
+                m_botAction.warpTo(arenaPlayerID, 512, REARM_SAFE_BOTTOM_Y );
+        }
+
+        /**
          * Prizes any special abilities that are reprized every 30 seconds.  This should only
          * be called if a player actually has one of these special abilities.
          *
@@ -6303,110 +6496,6 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_PRIZEDUP );
         }
 
-        /**
-         * Warps player to the appropriate spawning location (near a specific base).
-         * Used after prizing.
-         * @param roundStart True if the round is starting (ignore settings)
-         */
-        public void doWarp( boolean roundStart ) {
-            if( waitInSpawn && !roundStart )
-                return;
-            int x = 0, y = 0;
-            int base;
-            base = getArmyID() % 2;
-            // At round start of 2 flag game, warp to special spawn
-            if( roundStart ) {
-                if( !m_singleFlagMode ) {
-                    if( warpInBase ) {
-                        int xmod = (int)(Math.random() * 10) - 5;
-                        int ymod = (int)(Math.random() * 10) - 5;
-                        x = 512 + xmod;
-                        if( base == 0 )
-                            y = BASE_CENTER_0_Y_COORD;
-                        else
-                            y = BASE_CENTER_1_Y_COORD;
-                        y += ymod;
-                    }
-                } else {
-                    if( base == 0 ) {
-                        x = LEFT_EAR_X;
-                        y = LEFT_EAR_Y;
-                    } else {
-                        x = RIGHT_EAR_X;
-                        y = RIGHT_EAR_Y;
-                    }
-                    y += (int)(Math.random() * 4) - 2;
-                    x += (int)(Math.random() * 4) - 2;
-                }
-            } else {
-                Random r = new Random();
-                x = 512 + (r.nextInt(SPAWN_X_SPREAD) - (SPAWN_X_SPREAD / 2));
-                if( !m_singleFlagMode ) {
-                    if( base == 0 )
-                        y = SPAWN_BASE_0_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
-                    else
-                        y = SPAWN_BASE_1_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
-                } else {
-                    y = SPAWN_BASE_0_Y_COORD + (r.nextInt(SPAWN_Y_SPREAD) - (SPAWN_Y_SPREAD / 2));
-                }
-            }
-            m_botAction.warpTo(arenaPlayerID, x, y);
-        }
-
-        /**
-         * Sets up player for respawning.
-         */
-        public void doSetupRespawn() {
-            isRespawning = true;
-            if( isFastRespawn() ) {
-                if( fastRespawn )   // Standard priority rearmers always get to the head
-                    m_prizeQueue.addHighPriorityPlayer( this );
-                else                // Other rearmers just get ahead of the other army
-                    m_prizeQueue.addPriorityRearmPlayer( this );
-            } else {
-                m_prizeQueue.addPlayer( this );
-            }
-            spawnTicks = TICKS_BEFORE_SPAWN;
-        }
-
-        /**
-         * Sets up player for "respawning" at round start in order to wipe ports
-         * and mines.  Does not use spawn ticks, so is considerably faster, prizing
-         * players essentially at the normal spawn rate.
-         */
-        public void doSetupSpecialRespawn() {
-            specialRespawn = true;
-            if( isFastRespawn() ) {
-                m_prizeQueue.addHighPriorityPlayer( this );
-            } else {
-                m_prizeQueue.addPlayer( this );
-            }
-            spawnTicks = 0;
-        }
-
-        /**
-         * Warps player to the rearm area, no strings attached.
-         */
-        public void doRearmAreaWarp() {
-            int base = getArmyID() % 2;
-            int xmod = (int)(Math.random() * 4) - 2;
-            int ymod = (int)(Math.random() * 4) - 2;
-            if( base == 0 )
-                m_botAction.warpTo(arenaPlayerID, 512 + xmod, REARM_AREA_TOP_Y + ymod);
-            else
-                m_botAction.warpTo(arenaPlayerID, 512 + xmod, REARM_AREA_BOTTOM_Y + ymod);
-        }
-
-        /**
-         * Warps player to the safety part of the rearm area, to reset various
-         */
-        public void doRearmSafeWarp() {
-            int base = getArmyID() % 2;
-            if( base == 0 )
-                m_botAction.warpTo(arenaPlayerID, 512, REARM_SAFE_TOP_Y );
-            else
-                m_botAction.warpTo(arenaPlayerID, 512, REARM_SAFE_BOTTOM_Y );
-        }
 
         /**
          * Advances the player to the next rank.  Wrapper.
@@ -7345,6 +7434,24 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
+        /**
+         * Uses Terrier summon ability.
+         * @return Status of summoning allowance.
+         */
+        public boolean useSummon( int permissions ) {
+            int time = 5000;
+            if( permissions == 2 )
+                time = 3000;
+            else if( permissions == 2 )
+                time = 1000;
+            if( System.currentTimeMillis() > lastSummonTime + time ) {
+                lastSummonTime = System.currentTimeMillis();
+                return true;
+            }
+            return false;
+        }
+
+
         // BASIC SETTERS
 
         /**
@@ -7474,6 +7581,16 @@ public class distensionbot extends SubspaceBot {
         public void incrementLagouts() {
             numLagouts++;
         }
+
+        /**
+         * Toggles between allowing and not allowing summoning.
+         * @return Status of summoning allowance.
+         */
+        public boolean toggleSummon() {
+            allowSummon = !allowSummon;
+            return allowSummon;
+        }
+
 
         // GETTERS
 
@@ -7831,6 +7948,13 @@ public class distensionbot extends SubspaceBot {
          */
         public boolean isAtMaxLagouts() {
             return numLagouts >= LAGOUTS_ALLOWED;
+        }
+
+        /**
+         * @return True if player allows Terrs to !summon them
+         */
+        public boolean doesAllowSummon() {
+            return allowSummon;
         }
 
 
@@ -10159,6 +10283,7 @@ public class distensionbot extends SubspaceBot {
         // 9:  Priority respawn
         // 13: Profit-sharing 1
         // 16: Portal 2
+        // 20: Summoning Upgrade
         // 23: Profit-sharing 2
         // 25: Escape Pod 1
         // 29: Portal 3
@@ -10216,7 +10341,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Targeted EMP", ABILITY_TARGETED_EMP, 40, 50, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Improved Summoning Authorization", ABILITY_SUMMONING_AUTH, 10, 20, 1 );
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
