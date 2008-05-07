@@ -46,7 +46,9 @@ import twcore.core.util.Tools;
  *
  * Add:
  * - MAP: Add LVZ displaying rules
+ * - Prismatic array LVZ
  * - LVZ for sudden death and hybrid flag mode
+ * - LVZ for ship unlocks
  *
  *
  * Lower priority (in order):
@@ -281,8 +283,8 @@ public class distensionbot extends SubspaceBot {
     public final int DEFAULT_OP_MAX_COMMS = 3;              // Max # communications Ops can save up
     public boolean m_army0_fastRearm = false;
     public boolean m_army1_fastRearm = false;
-    public TimerTask m_army0_fastRearmTask;
-    public TimerTask m_army1_fastRearmTask;
+    public RearmTask m_army0_fastRearmTask;
+    public RearmTask m_army1_fastRearmTask;
     public TimerTask m_doorOffTask;
 
     // TACTICAL OPS ABILITY PRIZE #s
@@ -346,6 +348,7 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
     private final int LVZ_EMP = 206;                    // EMP ready graphic
     private final int LVZ_ENERGY_TANK = 207;            // Energy Tank ready graphic
+    private final int LVZ_JUMPSPACE = 209;              // JumpSpace ready graphic
     private final int LVZ_SUPER = 208;                  // Super!
     private final int LVZ_TOPBASE_EMPTY = 251;          // Flag display
     private final int LVZ_TOPBASE_ARMY0 = 252;
@@ -358,12 +361,14 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_INTERMISSION = 1000;          // Green intermission "highlight around" gfx
     private final int LVZ_ROUND_COUNTDOWN = 2300;       // Countdown before round start
     private final int LVZ_FLAG_CLAIMED = 2400;          // Flag claimed "brightening"
+
     private final int LVZ_OPS_SPHERE = 300;             // OPS special ability LVZ
     private final int LVZ_OPS_BLIND1 = 301;
     private final int LVZ_OPS_BLIND2 = 302;
     private final int LVZ_OPS_BLIND3 = 303;
     private final int LVZ_OPS_SHROUD_SM = 304;
     private final int LVZ_OPS_SHROUD_LG = 305;
+    private final int LVZ_OPS_FAST_REARM = 306;
     private final int LVZ_OPS_COVER_TOP_FIRST = 320;
     private final int LVZ_OPS_COVER_BOT_FIRST = 330;
 
@@ -1509,6 +1514,8 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_REARMING, false );
         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_EMP, false );
         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_ENERGY_TANK, false );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_JUMPSPACE, false );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_OPS_FAST_REARM, false );
         m_botAction.sendSetupObjectsForPlayer( p.getArenaPlayerID() );
 
         if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
@@ -3377,8 +3384,9 @@ public class distensionbot extends SubspaceBot {
         if( permissions == 0 )
             throw new TWCoreException( "You do not yet have summoning order permissions.  You may upgrade them, and will also have additional permissions on reaching Officer and Flag Officer." );
 
-        if( !p.useSummon( permissions ) )
-            throw new TWCoreException( "You may not yet issue another summon order." );
+        int timeUntilNext = p.timeUntilNextSummon( permissions );
+        if( timeUntilNext > 0 )
+            throw new TWCoreException( "You may not issue a summon order for another " + getTimeString( timeUntilNext ) + "." );
 
         boolean summonOnlySharks = false;
         if( msg.equalsIgnoreCase("s") ) {
@@ -3387,27 +3395,35 @@ public class distensionbot extends SubspaceBot {
             summonOnlySharks = true;
         }
 
-        Player playerObj = m_botAction.getPlayer(p.getArenaPlayerID());
+        Player playerObj = m_botAction.getPlayer( p.getArenaPlayerID() );
         if( playerObj == null )
             return;
 
+        int targets = 0;
         for( DistensionPlayer target : m_players.values() ) {
             if( target.getArmyID() == p.getArmyID() ) {
-                Player targetObj = m_botAction.getPlayer(target.getArenaPlayerID());
+                Player targetObj = m_botAction.getPlayer( target.getArenaPlayerID() );
                 if( targetObj != null &&
                         targetObj.getYTileLocation() > TOP_FR &&
                         targetObj.getYTileLocation() < BOT_FR ) {
-                    if( (summonOnlySharks && target.getShipNum() != Tools.Ship.SHARK) ||
+                    if( (!summonOnlySharks && target.getShipNum() != Tools.Ship.SHARK) ||
                         (summonOnlySharks && target.getShipNum() == Tools.Ship.SHARK) ) {
                         if( !target.isRespawning() || permissions == 3 ) {
                             if( target.doesAllowSummon() ) {
                                 m_botAction.warpTo( targetObj.getPlayerID(), playerObj.getXTileLocation(), playerObj.getYTileLocation() );
                                 target.respawnImmediately();
+                                targets++;
                             }
                         }
                     }
                 }
             }
+        }
+        if( targets == 0 ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "No " + (summonOnlySharks ? "Sharks" : "assault pilots") + " available; summon order not issued." );
+        } else {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), targets + (summonOnlySharks ? " Shark" : " assault pilot") + (targets > 1 ? "s":"") +
+                    " summoned.  Next summon in " + getTimeString( p.useSummon(permissions) ) + "." );
         }
     }
 
@@ -3550,8 +3566,8 @@ public class distensionbot extends SubspaceBot {
             case 2:
                 m_botAction.specificPrize( p.getArenaPlayerID(), -Tools.Prize.RECHARGE );
         }
-
         m_botAction.warpTo( p.getArenaPlayerID(), jumpx, jumpy );
+        m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_JUMPSPACE );
     }
 
     /**
@@ -4057,11 +4073,9 @@ public class distensionbot extends SubspaceBot {
                     m_army0_fastRearmTask.cancel();
                 } catch (Exception e) {}
             }
-            m_army0_fastRearmTask = new TimerTask() {
-                public void run() {
-                    m_army0_fastRearm = false;
-                }
-            };
+            m_army0_fastRearmTask = new RearmTask();
+            m_army0_fastRearmTask.setID( p.getArenaPlayerID() );
+            m_army0_fastRearmTask.setTeam(0);
             m_botAction.scheduleTask( m_army0_fastRearmTask, time );
             m_army0_fastRearm = true;
         } else {
@@ -4070,15 +4084,14 @@ public class distensionbot extends SubspaceBot {
                     m_army1_fastRearmTask.cancel();
                 } catch (Exception e) {}
             }
-            m_army1_fastRearmTask = new TimerTask() {
-                public void run() {
-                    m_army1_fastRearm = false;
-                }
-            };
+            m_army1_fastRearmTask = new RearmTask();
+            m_army1_fastRearmTask.setID( p.getArenaPlayerID() );
+            m_army1_fastRearmTask.setTeam(1);
             m_botAction.scheduleTask( m_army1_fastRearmTask, time );
             m_army1_fastRearm = true;
         }
         m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), "OPS used FAST REARM: Enabled for the next " + (time / 1000) + " seconds." );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_OPS_FAST_REARM, true );
         p.resetIdle();      // Ops can only reset idle by using ops cmds and talking in pub
     }
 
@@ -4684,6 +4697,8 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setupObject( LVZ_REARMING, false );
         m_botAction.setupObject( LVZ_EMP, false );
         m_botAction.setupObject( LVZ_ENERGY_TANK, false );
+        m_botAction.setupObject( LVZ_JUMPSPACE, false );
+        m_botAction.setupObject( LVZ_OPS_FAST_REARM, false );
         m_botAction.sendSetupObjects();
         m_botAction.setDoors(0);
         // Dock Ops so they are put on the spec freq properly
@@ -4767,6 +4782,8 @@ public class distensionbot extends SubspaceBot {
             }
         }
         m_botAction.sendPrivateMessage( name, "Shutting down at the next end of round occuring after " + minToShutdown + " minutes." );
+        if( DEBUG )
+            m_botAction.setTimer( minToShutdown );
         m_shutdownTimeMillis = System.currentTimeMillis() + (minToShutdown * Tools.TimeInMillis.MINUTE);
     }
 
@@ -5261,7 +5278,8 @@ public class distensionbot extends SubspaceBot {
                         flagTimer = new FlagCountTask();    // Dummy, for displaying score.
                         intermissionTimer = new IntermissionTask();
                         m_botAction.scheduleTask( intermissionTimer, (2950 * INTERMISSION_SECS) );
-                        m_botAction.setTimer(3);
+                        if( !DEBUG )
+                            m_botAction.setTimer(3);
                         m_roundNum = 0;
                         flagTimeStarted = true;
                     }
@@ -5475,7 +5493,7 @@ public class distensionbot extends SubspaceBot {
             desc = "Always first in line to rearm, plus full energy after rearm";
             break;
         case ABILITY_TERR_REGEN:
-            desc = "+8% burst/+10% portal chance every 30 seconds";
+            desc = "+7% burst/+9% portal chance every 30 seconds";
             break;
         case ABILITY_ENERGY_TANK:
             desc = "+25% chance of replenishing a reusable energy tank";
@@ -6368,11 +6386,11 @@ public class distensionbot extends SubspaceBot {
                 //                       (+8% for each, up to a total of 80%)
                 double portChance = Math.random() * 100.0;
                 double burstChance = Math.random() * 100.0;
-                if( ((double)purchasedUpgrades[11] * 10.0) > portChance && !isRespawning ) {
+                if( ((double)purchasedUpgrades[11] * 9.0) > portChance && !isRespawning ) {
                     m_botAction.specificPrize( arenaPlayerID, Tools.Prize.PORTAL );
                     prized = true;
                 }
-                if( ((double)purchasedUpgrades[11] * 8.0) > burstChance && !isRespawning ) {
+                if( ((double)purchasedUpgrades[11] * 7.0) > burstChance && !isRespawning ) {
                     m_botAction.specificPrize( arenaPlayerID, Tools.Prize.BURST );
                     prized = true;
                 }
@@ -6436,6 +6454,7 @@ public class distensionbot extends SubspaceBot {
                 }
                 if( tick % neededTick == 0 ) {
                     if( !jumpSpace ) {
+                        m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_JUMPSPACE );
                         m_botAction.sendPrivateMessage( arenaPlayerID, "JumpSpace Drive ready.  PM >>> to use." );
                         jumpSpace = true;
                         prized = true;
@@ -7435,20 +7454,36 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Uses Terrier summon ability.
-         * @return Status of summoning allowance.
+         * @return Seconds until Terrier can use summon ability next; 0 if available now.
          */
-        public boolean useSummon( int permissions ) {
-            int time = 5000;
+        public int timeUntilNextSummon( int permissions ) {
+            int waitTime = getSummonDelay( permissions );
+            int timeToNext = (int)((lastSummonTime + waitTime) - System.currentTimeMillis());
+            if( timeToNext < 0 )
+                return 0;
+            return (timeToNext / 1000);
+        }
+
+        /**
+         * Uses Terrier summon ability.
+         * @return Seconds remaining until next summon can be used.
+         */
+        public int useSummon( int permissions ) {
+            lastSummonTime = System.currentTimeMillis();
+            return (getSummonDelay( permissions ) / 1000);
+        }
+
+        /**
+         * @param permissions Permissions of Terr
+         * @return Time to wait between summons
+         */
+        public int getSummonDelay( int permissions ) {
+            int waitTime = 5 * Tools.TimeInMillis.MINUTE;
             if( permissions == 2 )
-                time = 3000;
-            else if( permissions == 2 )
-                time = 1000;
-            if( System.currentTimeMillis() > lastSummonTime + time ) {
-                lastSummonTime = System.currentTimeMillis();
-                return true;
-            }
-            return false;
+                waitTime = 3 * Tools.TimeInMillis.MINUTE;
+            else if( permissions == 3 )
+                waitTime = 1 * Tools.TimeInMillis.MINUTE;
+            return waitTime;
         }
 
 
@@ -8547,6 +8582,23 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
+    private class RearmTask extends TimerTask {
+        int id;
+        int team;
+
+        public void setID( int id ) { this.id = id; }
+        public void setTeam( int team ) { this.team = team; }
+
+        public void run() {
+            m_botAction.setupObject( id, LVZ_OPS_FAST_REARM, false );
+            if( team == 0 )
+                m_army0_fastRearm = false;
+            else
+                m_army1_fastRearm = false;
+        }
+    }
+
+
 
 
     // ***** FLAG TIMER METHODS
@@ -9130,7 +9182,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "No suitable slot could be found for you this battle.  Please continue waiting and you will be placed in as soon as possible." );
             }
         }
-        if( intermissionTime >= 60000 )
+        if( intermissionTime >= 60000 && !DEBUG )
             m_botAction.setTimer( (intermissionTime + 1000) / 60000 );
         intermissionTimer = new IntermissionTask();
         m_botAction.scheduleTask( intermissionTimer, intermissionTime );
@@ -9298,7 +9350,8 @@ public class distensionbot extends SubspaceBot {
          * Starts the intermission/rule display when scheduled.
          */
         public void run() {
-            m_botAction.setTimer(0);
+            if( !DEBUG )
+                m_botAction.setTimer(0);
             doIntermission();
             m_botAction.showObject(LVZ_INTERMISSION); //Shows intermission lvz
         }
