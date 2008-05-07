@@ -3384,7 +3384,7 @@ public class distensionbot extends SubspaceBot {
         if( permissions == 0 )
             throw new TWCoreException( "You do not yet have summoning order permissions.  You may upgrade them, and will also have additional permissions on reaching Officer and Flag Officer." );
 
-        int timeUntilNext = p.timeUntilNextSummon( permissions );
+        long timeUntilNext = p.timeUntilNextSummon( permissions );
         if( timeUntilNext > 0 )
             throw new TWCoreException( "You may not issue a summon order for another " + getTimeString( timeUntilNext ) + "." );
 
@@ -5795,7 +5795,7 @@ public class distensionbot extends SubspaceBot {
             firebloom = 0;
             opsAFKNotifyTime = 0;
             lastVengeTime = 0;
-            lastSummonTime = 0;
+            lastSummonTime = System.currentTimeMillis();
             purchasedUpgrades = new int[NUM_UPGRADES];
             shipsAvail = new boolean[9];
             for( int i = 0; i < 9; i++ )
@@ -7456,9 +7456,9 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return Seconds until Terrier can use summon ability next; 0 if available now.
          */
-        public int timeUntilNextSummon( int permissions ) {
+        public long timeUntilNextSummon( int permissions ) {
             int waitTime = getSummonDelay( permissions );
-            int timeToNext = (int)((lastSummonTime + waitTime) - System.currentTimeMillis());
+            long timeToNext = ((lastSummonTime + waitTime) - System.currentTimeMillis());
             if( timeToNext < 0 )
                 return 0;
             return (timeToNext / 1000);
@@ -9218,6 +9218,20 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
+    /**
+     * Formats an integer time as a String.
+     * @param time Time in seconds.
+     * @return Formatted string in 0:00 format.
+     */
+    public String getTimeString( long time ) {
+        if( time <= 0 ) {
+            return "0:00";
+        } else {
+            long minutes = time / 60;
+            long seconds = time % 60;
+            return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        }
+    }
 
     /**
      * Warps all players at round start, if they are not presently spawning.
@@ -9363,7 +9377,7 @@ public class distensionbot extends SubspaceBot {
             this.time = time;
         }
         public void run() {
-            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( time/1000 ) + ".  Flags have no RP bonus during this time.", Tools.Sound.VICTORY_BELL );
+            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time + 1000) /1000 ) + ".  Flags have no RP bonus during this time.", Tools.Sound.VICTORY_BELL );
         }
     }
 
