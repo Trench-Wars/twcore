@@ -4091,7 +4091,7 @@ public class distensionbot extends SubspaceBot {
             m_army1_fastRearm = true;
         }
         m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), "OPS used FAST REARM: Enabled for the next " + (time / 1000) + " seconds." );
-        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_OPS_FAST_REARM, true );
+        m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_OPS_FAST_REARM );
         p.resetIdle();      // Ops can only reset idle by using ops cmds and talking in pub
     }
 
@@ -8590,7 +8590,7 @@ public class distensionbot extends SubspaceBot {
         public void setTeam( int team ) { this.team = team; }
 
         public void run() {
-            m_botAction.setupObject( id, LVZ_OPS_FAST_REARM, false );
+            m_botAction.hideObjectForPlayer( id, LVZ_OPS_FAST_REARM );
             if( team == 0 )
                 m_army0_fastRearm = false;
             else
