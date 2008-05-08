@@ -3401,7 +3401,7 @@ public class distensionbot extends SubspaceBot {
 
         int targets = 0;
         for( DistensionPlayer target : m_players.values() ) {
-            if( target.getArmyID() == p.getArmyID() ) {
+            if( target.getArmyID() == p.getArmyID() && target.getShipNum() != 5 && target.getShipNum() != 9 ) {
                 Player targetObj = m_botAction.getPlayer( target.getArenaPlayerID() );
                 if( targetObj != null &&
                         targetObj.getYTileLocation() > TOP_FR &&
@@ -8965,6 +8965,8 @@ public class distensionbot extends SubspaceBot {
 
         int secs             = flagTimer.getTotalSecs();
         int minsToWin        = flagTimer.getTotalSecs() / 60;
+        int freq0Time        = flagTimer.getFreq0TotalSecs();
+        int freq1Time        = flagTimer.getFreq1TotalSecs();
         HashMap <Integer,Integer>armyStrengths = flagTimer.getArmyStrengthSnapshots();
 
         int strengthAvg0 = 1;
@@ -8987,7 +8989,7 @@ public class distensionbot extends SubspaceBot {
             strengthAvg1 = 1;
 
         // Points to be divided up by army
-        float totalPoints = (float)(minsToWin * 0.4f) * ((strengthAvg0 + strengthAvg1) / 2);
+        float totalPoints = (float)(minsToWin * 0.5f) * (strengthAvg0 + strengthAvg1);
         float totalLvlSupport = 0;
         float totalLvlAttack = 0;
         float numSupport = 0;
@@ -9038,8 +9040,11 @@ public class distensionbot extends SubspaceBot {
             combo *= DEBUG_MULTIPLIER;
         }
 
-        m_botAction.sendArenaMessage( "Stalemate Award (split evenly): " + (int)combo + "RP  ...  Avg " + (int)(support / numSupport) + "RP for " + (int)numSupport + " on support (" + (int)(percentSupport * 100.0f) +
-                "%); avg " + (int)(attack / numAttack) + "RP for " + (int)numAttack + " on attack (" + (int)(percentAttack * 100.0f) + "%)" );
+        // Figure out percentage to award
+        float freq0Cut = freq0Time / ( freq0Time + freq1Time );
+        float freq1Cut = 1.0f - freq0Cut;
+
+        m_botAction.sendArenaMessage( "Stalemate Award: " + (int)combo + "RP  ...  Split: " + (freq0Cut * 100) + "% to army 0, " + (freq1Cut * 100) + "% to army 1.");
 
         i = m_players.values().iterator();
         int playerRank = 0;
@@ -9056,6 +9061,10 @@ public class distensionbot extends SubspaceBot {
                     points = (float)supportPoints * ((float)playerRank / totalLvlSupport);
                 else
                     points = (float)attackPoints * ((float)playerRank / totalLvlAttack);
+                if( p.getArmyID() == 0 )
+                    points = ((float)points * freq0Cut);
+                else
+                    points = ((float)points * freq1Cut);
                 Integer time = m_playerTimes.get( p.getName() );
                 if( time != null ) {
                     float percentOnFreq = (float)(secs - time) / (float)secs;
@@ -9489,6 +9498,7 @@ public class distensionbot extends SubspaceBot {
     private class FlagCountTask extends TimerTask {
         int sectorHoldingArmyID, breakingArmyID, securingArmyID, advantageArmyID;
         int flagSecondsRequired, secondsHeld, totalSecs, breakSeconds, securingSeconds, preTimeCount;
+        int freq0TotalSeconds, freq1TotalSeconds;
         String breakerName = "";
         String securerName = "";
         boolean isStarted, isRunning, claimBeingBroken, claimBeingEstablished;
@@ -9511,6 +9521,8 @@ public class distensionbot extends SubspaceBot {
             totalSecs = 0;
             breakSeconds = 0;
             securingSeconds = 0;
+            freq0TotalSeconds = 0;
+            freq1TotalSeconds = 0;
             isStarted = false;
             isRunning = false;
             claimBeingBroken = false;
@@ -9836,6 +9848,20 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * @return Total seconds freq 0 held all necessary flags this round
+         */
+        public int getFreq0TotalSecs() {
+            return freq0TotalSeconds;
+        }
+
+        /**
+         * @return Total seconds freq 1 held all necessary flags this round
+         */
+        public int getFreq1TotalSecs() {
+            return freq1TotalSeconds;
+        }
+
+        /**
          * @return Total number of seconds flag has been held
          */
         public int getSecondsHeld() {
@@ -10001,6 +10027,10 @@ public class distensionbot extends SubspaceBot {
                 return;
             } else {
                 secondsHeld++;
+                if( sectorHoldingArmyID == 0 )
+                    freq0TotalSeconds++;
+                else if( sectorHoldingArmyID == 1 )
+                    freq1TotalSeconds++;
                 do_updateTimer();
             }
 
