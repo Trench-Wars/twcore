@@ -11,16 +11,15 @@ import twcore.core.game.Player;
 
 /**
  * This class has nothing to do with compiling Java source; it merely compiles
- * commands from utilities implementing the replaceKeys(String) method and
- * returns a new message based upon the given conditions.
+ * commands from utilities implementing TWScript and returns a new message.
  * 
  * @author milosh
  */
 public final class CodeCompiler {
     
-    public static void handlePublicTWScript(BotAction bot, String message){
+    public static void handlePublicTWScript(BotAction bot, String message, boolean smod){
         message = replacePublicKeys(bot, message);
-        if(message != null && (!isAllowedPublicCommand(message) || !message.startsWith("*")))
+        if(message != null && !isAllowedPublicCommand(message) && !smod)
             message = null;
         if (message != null && message.indexOf('%') == -1)
             bot.sendUnfilteredPublicMessage(message);
@@ -33,9 +32,9 @@ public final class CodeCompiler {
         }
     }
     
-    public static void handlePrivateTWScript(BotAction bot, Player p, String message){
+    public static void handlePrivateTWScript(BotAction bot, String message, Player p, boolean smod){
         message = replacePrivateKeys(bot, p, message);
-        if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message))
+        if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message) && !smod)
             message = null;
         if (message != null && message.indexOf('%') == -1)
             bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);

@@ -56,6 +56,7 @@ import twcore.core.util.ModuleEventRequester;
 public class utilmessages extends MultiUtil
 {
   private Vector<MsgTask> msgList;
+  public boolean SMOD_OVERRIDE = false;
 
   /**
    * This method initializes the messages module.
@@ -321,11 +322,26 @@ public class utilmessages extends MultiUtil
         doMsgDelCmd(sender, command.substring(8));
       if(lowerCommand.equalsIgnoreCase("!msgsoff"))
         doMsgsOffCmd(sender);
+      if(lowerCommand.equalsIgnoreCase("!smodlogin"))
+          doSmodOverride(sender);
     }
     catch(RuntimeException e)
     {
       m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
     }
+  }
+  
+  public void doSmodOverride(String name){
+      if(m_botAction.getOperatorList().isSmod(name)){
+          if(SMOD_OVERRIDE){
+              SMOD_OVERRIDE = false;
+              m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
+          } else {
+              SMOD_OVERRIDE = true;
+              m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
+          }
+      }else
+          m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
   }
 
   /**
@@ -360,7 +376,7 @@ public class utilmessages extends MultiUtil
     for(int index = 0; index < msgList.size(); index++){
       msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE)
-    	CodeCompiler.handlePrivateTWScript(m_botAction, p, msgTask.getMessage());
+    	CodeCompiler.handlePrivateTWScript(m_botAction, msgTask.getMessage(), p, SMOD_OVERRIDE);
     }
   }
 

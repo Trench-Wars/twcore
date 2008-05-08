@@ -23,6 +23,7 @@ public class utilcustom extends MultiUtil {
     public TreeMap<String, CustomCommand> commands;
     
     public String database = "website";
+    public boolean SMOD_OVERRIDE = false;
     
     /**
      * Initializes.
@@ -117,7 +118,22 @@ public class utilcustom extends MultiUtil {
         if (cmd.startsWith("!describe "))
             do_describe(name, cmd.substring(10));
         if (cmd.equalsIgnoreCase("!loadcmds"))
-            do_loadCommands(name);         
+            do_loadCommands(name);
+        if (cmd.equalsIgnoreCase("!smodlogin"))
+            do_smodOverride(name);
+    }
+    
+    public void do_smodOverride(String name){
+        if(opList.isSmod(name)){
+            if(SMOD_OVERRIDE){
+                SMOD_OVERRIDE = false;
+                m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
+            } else {
+                SMOD_OVERRIDE = true;
+                m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
+            }
+        }else
+            m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
     }
     
     /**
@@ -324,7 +340,7 @@ public class utilcustom extends MultiUtil {
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
             while (it.hasNext())
-                CodeCompiler.handlePrivateTWScript(m_botAction, p, it.next());
+                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, SMOD_OVERRIDE);
         }
     }
     

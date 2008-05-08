@@ -134,10 +134,10 @@ public class utilevents extends MultiUtil {
         if(opList.isSmod(name)){
             if(SMOD_OVERRIDE){
                 SMOD_OVERRIDE = false;
-                m_botAction.sendSmartPrivateMessage( name, "SMod override deactivated.");
+                m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
             } else {
                 SMOD_OVERRIDE = true;
-                m_botAction.sendSmartPrivateMessage( name, "SMod override activated.");
+                m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
             }
         }else
             m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
@@ -151,7 +151,7 @@ public class utilevents extends MultiUtil {
     public void doMassPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), msg);
+            CodeCompiler.handlePrivateTWScript(m_botAction, msg, i.next(), SMOD_OVERRIDE);
     }
     
     /**
@@ -160,7 +160,7 @@ public class utilevents extends MultiUtil {
      * @param message - The message to send
      */
     public void doPub(String name, String message){
-        CodeCompiler.handlePublicTWScript(m_botAction, message);
+        CodeCompiler.handlePublicTWScript(m_botAction, message, SMOD_OVERRIDE);
     }
     
     /**
@@ -433,7 +433,7 @@ public class utilevents extends MultiUtil {
             Player p = m_botAction.getPlayer(b.getCurrentCarrier());
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
             
         }
         //Ball Caught
@@ -441,7 +441,7 @@ public class utilevents extends MultiUtil {
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
         }
         b.updateLastCarrier(playerID);
         b.updateCurrentCarrier(carrier);
@@ -456,7 +456,7 @@ public class utilevents extends MultiUtil {
         if(killed == null || killer == null)return;
         Iterator<String> i = killMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, killer, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), killer, SMOD_OVERRIDE);
 
         new SpawnTimer(killed);
     }
@@ -469,7 +469,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = weapMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
     }
     
     /**
@@ -480,7 +480,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fClaimMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
     }
     
     /**
@@ -491,7 +491,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fDropMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
     }
     
     public void cancel() {}    
@@ -502,7 +502,7 @@ public class utilevents extends MultiUtil {
             public void run() {
                 Iterator<String> i = spawnMsgs.iterator();
                 while( i.hasNext() )
-                    CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
+                    CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
                 
             }
         };

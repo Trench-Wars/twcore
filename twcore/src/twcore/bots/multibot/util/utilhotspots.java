@@ -26,7 +26,8 @@ public class utilhotspots extends MultiUtil {
         
     public Vector<HotSpot> hotSpots;
     public HotSpot watch;
-    public boolean watching;    
+    public boolean watching;
+    public boolean SMOD_OVERRIDE = false;
     public TimerTask changeTask;
     public HashMap<String, Long> recentContacts;
     
@@ -103,6 +104,21 @@ public class utilhotspots extends MultiUtil {
             do_stopWatch(sender);
         if (message.equalsIgnoreCase("!loadspots"))
             do_loadSpots(sender);
+        if (message.equalsIgnoreCase("!smodlogin"))
+            do_smodOverride(sender);
+    }
+    
+    public void do_smodOverride(String name){
+        if(opList.isSmod(name)){
+            if(SMOD_OVERRIDE){
+                SMOD_OVERRIDE = false;
+                m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
+            } else {
+                SMOD_OVERRIDE = true;
+                m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
+            }
+        }else
+            m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
     }
     
     /**
@@ -129,7 +145,7 @@ public class utilhotspots extends MultiUtil {
                 if (watch.getMessages() != null) {
                     Iterator<String> i = watch.getMessages().iterator();
                     while( i.hasNext() )
-                        CodeCompiler.handlePrivateTWScript(m_botAction, p, i.next());
+                        CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
                 }
             }
         }
