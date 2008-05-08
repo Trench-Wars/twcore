@@ -972,6 +972,7 @@ public class distensionbot extends SubspaceBot {
                     "| !armory           !a  |  View ship upgrades available in the armory",
                     "| !upgrade <upg>    !u  |  Upgrade your ship with <upg> from the armory",
                     "| !upginfo <upg>    !ui |  Shows any available information about <upg>",
+                    "| !upginfo <upg>:<ship> |  Shows info on <upg> for <ship>, if you own it.",
                     "| !scrap <upg>      !sc |  Trade in <upg>.  *** Restarts ship at current rank!",
                     "| !scrapall <#/S/M/E/*> |  Scrap all of ...   *: ALL upg        #: Given upg",
                     "|                   !sca|    S: Special upgs  M: Maneuver upgs  E: En/chg upgs",
@@ -1132,14 +1133,29 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null || p.getShipNum() == -1 )
             throw new TWCoreException( "Sorry, I don't recognize you.  If you !return to your army, maybe I can help." );
-        int ship = p.getShipNum();
 
-        if( ship < 1 )
-            throw new TWCoreException( "Sorry.  You'll need to be in a ship or I can't tell you a damn thing." );
+        int ship = 0;
+
+        String[] msgs = msg.split(":");
+        if( msgs.length == 1 )
+            ship = p.getShipNum();
+        else {
+            try {
+                ship = Integer.parseInt( msgs[1] );
+            } catch (NumberFormatException e) {
+                throw new TWCoreException( "Sorry, but if you're providing a ship number I need to be able to read it...  Uh, try !ui upg#:ship# ..." );
+            }
+        }
+
+        if( ship < 1 || ship > 9 )
+            throw new TWCoreException( "Sorry, only info is available on ships 1 through 9 ..." );
+
+        if( !p.shipIsAvailable( ship ) )
+            throw new TWCoreException( "You don't seem to own that ship ... can't help you there!" );
 
         Integer upgNum = 0;
         try {
-            upgNum = Integer.parseInt(msg);
+            upgNum = Integer.parseInt(msgs[0]);
         } catch (NumberFormatException e) {
             throw new TWCoreException( "What upgrade do you want info on?  Do I look like a mind-reader?  Check the !armory before you start asking ..." );
         }
@@ -1702,7 +1718,7 @@ public class distensionbot extends SubspaceBot {
             points = Math.round(((float)points * armySizeWeight));
 
             int prox = Math.max(STREAK_RANK_PROXIMITY_MINIMUM, (victorRank / STREAK_RANK_PROXIMITY_DIVISOR));
-            boolean addedToStreak = rankDiff <= prox;
+            boolean addedToStreak = -rankDiff <= prox;
             boolean killInBase = true;
 
             float flagMulti = -1;
@@ -6156,13 +6172,10 @@ public class distensionbot extends SubspaceBot {
                         }
                     }
                 } else if( !escapePodFired ) {
-                    // Check for the escape pod, and set respawn as special if it works (does not warp)
+                    // Check for the escape pod, and if it should fire, respawn instantly.
                     double podChance = Math.random() * 10.0;
                     if( escapePod >= podChance ) {
-                        m_botAction.shipReset(arenaPlayerID);
-                        specialRespawn = true;
-                        escapePodFired = true;
-                        spawnTicks = 0;
+                        respawnImmediately();
                         return;
                     }
                 }
