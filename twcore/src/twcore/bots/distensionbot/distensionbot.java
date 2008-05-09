@@ -13,6 +13,7 @@ import java.util.Vector;
 import java.util.TimerTask;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.lang.reflect.Field;
 
 import twcore.core.BotAction;
@@ -7126,8 +7127,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You have been docked for being idle at the Tactical Ops console." );
                     setLagoutAllowed(false);
                     doDock(this);
-                    return;
                 }
+                return;
             }
             Player p = m_botAction.getPlayer(arenaPlayerID);
             if( p == null ) return;
@@ -8471,8 +8472,11 @@ public class distensionbot extends SubspaceBot {
      * Prize queuer, for preventing bot lockups.
      */
     private class PrizeQueue extends TimerTask {
-        List <DistensionPlayer>priorityPlayers = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
-        List <DistensionPlayer>players         = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
+        //List <DistensionPlayer>priorityPlayers = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
+        //List <DistensionPlayer>players         = Collections.synchronizedList( new LinkedList<DistensionPlayer>() );
+        ConcurrentLinkedQueue <DistensionPlayer>priorityPlayers = new ConcurrentLinkedQueue<DistensionPlayer>();
+        ConcurrentLinkedQueue <DistensionPlayer>fastRearmPlayers = new ConcurrentLinkedQueue<DistensionPlayer>();
+        ConcurrentLinkedQueue <DistensionPlayer>players = new ConcurrentLinkedQueue<DistensionPlayer>();
         int runs = 0;       // # times queue has run since last spawn tick
         int delayTillNextSpawn = 0;
 
@@ -8486,8 +8490,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Adds a player to the head of the prizing queue.  For terrs and sharks
-         * with the ability.
+         * Adds a player to the high-priority queue.
          * @param p Player to add
          */
         public synchronized void addHighPriorityPlayer( DistensionPlayer p ) {
@@ -8497,13 +8500,12 @@ public class distensionbot extends SubspaceBot {
 
         /**
          * Adds a player to the prizing queue when priority rearm is enabled on their
-         * army.  Only Terrs are forced to the head of the queue.
+         * army.
          * @param p Player to add
          */
         public synchronized void addPriorityRearmPlayer( DistensionPlayer p ) {
-            if( !priorityPlayers.contains(p) ) {
-                int index = priorityPlayers.size();
-                priorityPlayers.add(index, p);
+            if( !fastRearmPlayers.contains(p) ) {
+                fastRearmPlayers.add(p);
             }
         }
 
@@ -8513,6 +8515,7 @@ public class distensionbot extends SubspaceBot {
          */
         public synchronized void removePlayer( DistensionPlayer p ) {
             priorityPlayers.remove(p);
+            fastRearmPlayers.remove(p);
             players.remove(p);
         }
 
@@ -8539,10 +8542,23 @@ public class distensionbot extends SubspaceBot {
                         p.doSpawnTick();
                 // If another player is not in the process of being prized, attempt to spawn
                 if( delayTillNextSpawn <= 0 ) {
-                    DistensionPlayer currentPlayer = priorityPlayers.get(0);
+                    DistensionPlayer currentPlayer = priorityPlayers.peek();
                     spawned = currentPlayer.doSpawn();
                     if( spawned )
-                        priorityPlayers.remove(0);
+                        priorityPlayers.remove();
+                }
+            }
+            if( !fastRearmPlayers.isEmpty() ) {
+                if( doTick )
+                    for( DistensionPlayer p : fastRearmPlayers )
+                        p.doSpawnTick();
+                if( !spawned ) {   // If high priority player was spawned, do not try to spawn fast rearm player
+                    if( delayTillNextSpawn <= 0 ) {
+                        DistensionPlayer currentPlayer = fastRearmPlayers.peek();
+                        spawned = currentPlayer.doSpawn();
+                        if( spawned )
+                            fastRearmPlayers.remove();
+                    }
                 }
             }
             if( players.isEmpty() )
@@ -8550,12 +8566,12 @@ public class distensionbot extends SubspaceBot {
             if( doTick )
                 for( DistensionPlayer p : players )
                     p.doSpawnTick();
-            if( spawned )   // If high priority player was spawned, do not try to spawn normal player
+            if( spawned )   // If either fast rearm or high priority player was spawned, do not try to spawn normal player
                 return;
             if( delayTillNextSpawn <= 0 ) {
-                DistensionPlayer currentPlayer = players.get(0);
+                DistensionPlayer currentPlayer = players.peek();
                 if( currentPlayer.doSpawn() )
-                    players.remove(0);
+                    players.remove();
             }
         }
     }
