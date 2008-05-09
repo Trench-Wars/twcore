@@ -193,8 +193,8 @@ public class utilcustom extends MultiUtil {
                 String command = resultSet.getString("fcCommand");
                 String message = resultSet.getString("fcMessage");
                 String description = resultSet.getString("fcDescription");
-                do_addAction("", command + " " + message);
-                do_describe("", command + " " + description);
+                do_addAction(m_botAction.getBotName(), command + " " + message);
+                do_describe(m_botAction.getBotName(), command + " " + description);
                 count++;
             }
             m_botAction.SQLClose(resultSet);
