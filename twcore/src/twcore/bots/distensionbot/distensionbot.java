@@ -8543,9 +8543,11 @@ public class distensionbot extends SubspaceBot {
                 // If another player is not in the process of being prized, attempt to spawn
                 if( delayTillNextSpawn <= 0 ) {
                     DistensionPlayer currentPlayer = priorityPlayers.peek();
-                    spawned = currentPlayer.doSpawn();
-                    if( spawned )
-                        priorityPlayers.remove();
+                    if( currentPlayer != null ) {
+                        spawned = currentPlayer.doSpawn();
+                        if( spawned )
+                            priorityPlayers.remove();
+                    }
                 }
             }
             if( !fastRearmPlayers.isEmpty() ) {
@@ -8555,9 +8557,11 @@ public class distensionbot extends SubspaceBot {
                 if( !spawned ) {   // If high priority player was spawned, do not try to spawn fast rearm player
                     if( delayTillNextSpawn <= 0 ) {
                         DistensionPlayer currentPlayer = fastRearmPlayers.peek();
-                        spawned = currentPlayer.doSpawn();
-                        if( spawned )
-                            fastRearmPlayers.remove();
+                        if( currentPlayer != null ) {
+                            spawned = currentPlayer.doSpawn();
+                            if( spawned )
+                                fastRearmPlayers.remove();
+                        }
                     }
                 }
             }
@@ -8570,7 +8574,7 @@ public class distensionbot extends SubspaceBot {
                 return;
             if( delayTillNextSpawn <= 0 ) {
                 DistensionPlayer currentPlayer = players.peek();
-                if( currentPlayer.doSpawn() )
+                if( currentPlayer != null && currentPlayer.doSpawn() )
                     players.remove();
             }
         }
