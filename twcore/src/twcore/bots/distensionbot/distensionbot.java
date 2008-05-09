@@ -60,7 +60,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                         // Debug mode.
-    private final float DEBUG_MULTIPLIER = 4.7f;          // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 4.8f;          // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 15;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -8480,11 +8480,9 @@ public class distensionbot extends SubspaceBot {
          * Adds a player to the end of the prizing queue.
          * @param p Player to add
          */
-        public void addPlayer( DistensionPlayer p ) {
-            synchronized( players ) {
-                if( !players.contains(p) )
-                    players.add(p);
-            }
+        public synchronized void addPlayer( DistensionPlayer p ) {
+            if( !players.contains(p) )
+                players.add(p);
         }
 
         /**
@@ -8492,11 +8490,9 @@ public class distensionbot extends SubspaceBot {
          * with the ability.
          * @param p Player to add
          */
-        public void addHighPriorityPlayer( DistensionPlayer p ) {
-            synchronized( priorityPlayers ) {
-                if( !priorityPlayers.contains(p) )
-                    priorityPlayers.add(p);
-            }
+        public synchronized void addHighPriorityPlayer( DistensionPlayer p ) {
+            if( !priorityPlayers.contains(p) )
+                priorityPlayers.add(p);
         }
 
         /**
@@ -8504,12 +8500,10 @@ public class distensionbot extends SubspaceBot {
          * army.  Only Terrs are forced to the head of the queue.
          * @param p Player to add
          */
-        public void addPriorityRearmPlayer( DistensionPlayer p ) {
-            synchronized( priorityPlayers ) {
-                if( !priorityPlayers.contains(p) ) {
-                    int index = priorityPlayers.size();
-                    priorityPlayers.add(index, p);
-                }
+        public synchronized void addPriorityRearmPlayer( DistensionPlayer p ) {
+            if( !priorityPlayers.contains(p) ) {
+                int index = priorityPlayers.size();
+                priorityPlayers.add(index, p);
             }
         }
 
@@ -8517,13 +8511,9 @@ public class distensionbot extends SubspaceBot {
          * Removes a player from queue (special use only).
          * @param p Player to remove
          */
-        public void removePlayer( DistensionPlayer p ) {
-            synchronized( priorityPlayers ) {
-                priorityPlayers.remove(p);
-            }
-            synchronized( priorityPlayers ) {
-                players.remove(p);
-            }
+        public synchronized void removePlayer( DistensionPlayer p ) {
+            priorityPlayers.remove(p);
+            players.remove(p);
         }
 
         /**
@@ -8534,7 +8524,7 @@ public class distensionbot extends SubspaceBot {
             delayTillNextSpawn = delay;
         }
 
-        public void run() {
+        public synchronized void run() {
             boolean spawned = false;
             boolean doTick = false;
             delayTillNextSpawn -= UPGRADE_DELAY;
@@ -8545,35 +8535,27 @@ public class distensionbot extends SubspaceBot {
             }
             if( !priorityPlayers.isEmpty() ) {
                 if( doTick )
-                    synchronized( priorityPlayers ) {
-                        for( DistensionPlayer p : priorityPlayers )
-                            p.doSpawnTick();
-                    }
+                    for( DistensionPlayer p : priorityPlayers )
+                        p.doSpawnTick();
                 // If another player is not in the process of being prized, attempt to spawn
                 if( delayTillNextSpawn <= 0 ) {
-                    synchronized( priorityPlayers ) {
-                        DistensionPlayer currentPlayer = priorityPlayers.get(0);
-                        spawned = currentPlayer.doSpawn();
-                        if( spawned )
-                            priorityPlayers.remove(0);
-                    }
+                    DistensionPlayer currentPlayer = priorityPlayers.get(0);
+                    spawned = currentPlayer.doSpawn();
+                    if( spawned )
+                        priorityPlayers.remove(0);
                 }
             }
             if( players.isEmpty() )
                 return;
             if( doTick )
-                synchronized( players ) {
-                    for( DistensionPlayer p : players )
-                        p.doSpawnTick();
-                }
+                for( DistensionPlayer p : players )
+                    p.doSpawnTick();
             if( spawned )   // If high priority player was spawned, do not try to spawn normal player
                 return;
             if( delayTillNextSpawn <= 0 ) {
-                synchronized( players ) {
-                    DistensionPlayer currentPlayer = players.get(0);
-                    if( currentPlayer.doSpawn() )
-                        players.remove(0);
-                }
+                DistensionPlayer currentPlayer = players.get(0);
+                if( currentPlayer.doSpawn() )
+                    players.remove(0);
             }
         }
     }
