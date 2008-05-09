@@ -8481,8 +8481,10 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to add
          */
         public void addPlayer( DistensionPlayer p ) {
-            if( !players.contains(p) )
-                players.add(p);
+            synchronized( players ) {
+                if( !players.contains(p) )
+                    players.add(p);
+            }
         }
 
         /**
@@ -8491,8 +8493,10 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to add
          */
         public void addHighPriorityPlayer( DistensionPlayer p ) {
-            if( !priorityPlayers.contains(p) )
-                priorityPlayers.add(p);
+            synchronized( priorityPlayers ) {
+                if( !priorityPlayers.contains(p) )
+                    priorityPlayers.add(p);
+            }
         }
 
         /**
@@ -8501,9 +8505,11 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to add
          */
         public void addPriorityRearmPlayer( DistensionPlayer p ) {
-            if( !priorityPlayers.contains(p) ) {
-                int index = priorityPlayers.size();
-                priorityPlayers.add(index, p);
+            synchronized( priorityPlayers ) {
+                if( !priorityPlayers.contains(p) ) {
+                    int index = priorityPlayers.size();
+                    priorityPlayers.add(index, p);
+                }
             }
         }
 
@@ -8512,8 +8518,12 @@ public class distensionbot extends SubspaceBot {
          * @param p Player to remove
          */
         public void removePlayer( DistensionPlayer p ) {
-            players.remove(p);
-            priorityPlayers.remove(p);
+            synchronized( priorityPlayers ) {
+                priorityPlayers.remove(p);
+            }
+            synchronized( priorityPlayers ) {
+                players.remove(p);
+            }
         }
 
         /**
@@ -8541,10 +8551,12 @@ public class distensionbot extends SubspaceBot {
                     }
                 // If another player is not in the process of being prized, attempt to spawn
                 if( delayTillNextSpawn <= 0 ) {
-                    DistensionPlayer currentPlayer = priorityPlayers.get(0);
-                    spawned = currentPlayer.doSpawn();
-                    if( spawned )
-                        priorityPlayers.remove(0);
+                    synchronized( priorityPlayers ) {
+                        DistensionPlayer currentPlayer = priorityPlayers.get(0);
+                        spawned = currentPlayer.doSpawn();
+                        if( spawned )
+                            priorityPlayers.remove(0);
+                    }
                 }
             }
             if( players.isEmpty() )
@@ -8557,9 +8569,11 @@ public class distensionbot extends SubspaceBot {
             if( spawned )   // If high priority player was spawned, do not try to spawn normal player
                 return;
             if( delayTillNextSpawn <= 0 ) {
-                DistensionPlayer currentPlayer = players.get(0);
-                if( currentPlayer.doSpawn() )
-                    players.remove(0);
+                synchronized( players ) {
+                    DistensionPlayer currentPlayer = players.get(0);
+                    if( currentPlayer.doSpawn() )
+                        players.remove(0);
+                }
             }
         }
     }
