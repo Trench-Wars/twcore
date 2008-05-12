@@ -22,7 +22,7 @@ import twcore.core.util.Tools;
  * @author D1st0rt
  * @version 06.06.21
  */
-class utilwarprand extends MultiUtil
+public class utilwarprand extends MultiUtil
 {
 	/** The regions on the map. */
 	private MapRegions regions;
