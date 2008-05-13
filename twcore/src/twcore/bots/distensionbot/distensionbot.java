@@ -1366,18 +1366,21 @@ public class distensionbot extends SubspaceBot {
                     // Ignore bottom flag and only check top flag / ID 0.
                     // Also, do not deal with sector breaks in single flag mode
                     if( flagID == 0 ) {
+                        /*
                         if( flagTimeRunning ) {
                             if( oldOwnerID == 0 )
                                 flagObjs.hideObject(LVZ_TOPBASE_ARMY0);
                             else
                                 flagObjs.hideObject(LVZ_TOPBASE_ARMY1);
                         }
+                        */
                         oldOwnerArmy.adjustFlags( -1 );
                     }
                 } else {
                     if( flagTimeRunning ) {
                         if( oldOwnerArmy.getNumFlagsOwned() == 2 )
                             holdBreaking = true;
+                        /*
                         if( flagID == 0 )
                             if( oldOwnerID == 0 )
                                 flagObjs.hideObject(LVZ_TOPBASE_ARMY0);
@@ -1388,6 +1391,7 @@ public class distensionbot extends SubspaceBot {
                                 flagObjs.hideObject(LVZ_BOTBASE_ARMY0);
                             else
                                 flagObjs.hideObject(LVZ_BOTBASE_ARMY1);
+                        */
                     }
                     oldOwnerArmy.adjustFlags( -1 );
                 }
@@ -1404,6 +1408,7 @@ public class distensionbot extends SubspaceBot {
                         flagObjs.hideObject(LVZ_BOTBASE_EMPTY);
                 }
             }
+            m_botAction.manuallySetObjects( flagObjs.getObjects() );
         }
 
         DistensionArmy newOwnerArmy = m_armies.get( new Integer( p.getFrequency() ) );
@@ -1412,16 +1417,19 @@ public class distensionbot extends SubspaceBot {
                 if( flagID == 0 ) {
                     newOwnerArmy.adjustFlags( 1 );
                     if( flagTimeRunning ) {
+                        /*
                         if( newOwnerArmy.getID() == 0 )
                             flagObjs.showObject(LVZ_TOPBASE_ARMY0);
                         else
                             flagObjs.showObject(LVZ_TOPBASE_ARMY1);
+                        */
                         holdSecuring = true;
                     }
                 }
             } else {
                 newOwnerArmy.adjustFlags( 1 );
                 if( flagTimeRunning ) {
+                    /*
                     if( flagID == 0 )
                         if( newOwnerArmy.getID() == 0 )
                             flagObjs.showObject(LVZ_TOPBASE_ARMY0);
@@ -1432,6 +1440,7 @@ public class distensionbot extends SubspaceBot {
                             flagObjs.showObject(LVZ_BOTBASE_ARMY0);
                         else
                             flagObjs.showObject(LVZ_BOTBASE_ARMY1);
+                    */
                     if( newOwnerArmy.getNumFlagsOwned() == 2 )
                         holdSecuring = true;
                 }
@@ -1624,19 +1633,6 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer victor = m_players.get( killer.getPlayerName() );
         if( victor == null )
             return;
-        boolean isTeK = (loser.getShipNum() == Tools.Ship.TERRIER);
-        boolean isBTeK = false;
-        if( isTeK ) {
-            Player p = m_botAction.getPlayer( loser.getArenaPlayerID() );
-            if( p.getYTileLocation() <= TOP_FR || p.getYTileLocation() >= BOT_FR )
-                isBTeK = true;
-        }
-        boolean isVictorWeasel = victor.getShipNum() == 6;
-        boolean isMaxReward = false;
-        boolean isRepeatKillLight = false;
-        boolean isRepeatKillHard = false;
-        boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
-        boolean endedStreak = false;
         int loserRank = Math.max( 1, loser.getRank() );
         int victorRank = Math.max( 1, victor.getRank() );
         int rankDiff = loserRank - victorRank;
@@ -1647,7 +1643,7 @@ public class distensionbot extends SubspaceBot {
         if( killed.getFrequency() == killer.getFrequency() ) {
             float div;
             // Sharks get off a little easier for TKs
-            if( killer.getShipType() == Tools.Ship.SHARK || loser.getShipNum() == Tools.Ship.WARBIRD )
+            if( victor.getShipNum() == Tools.Ship.SHARK )
                 div = 8.0f;
             else {
                 if( loser.isSupportShip() )
@@ -1669,227 +1665,266 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
             m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
             m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
-        } else {
-            endedStreak = loser.clearSuccessiveKills();
-            // Otherwise: Add points via level scheme
-            DistensionArmy killerarmy = m_armies.get( new Integer(killer.getFrequency()) );
-            DistensionArmy killedarmy = m_armies.get( new Integer(killed.getFrequency()) );
-            if( killerarmy == null || killedarmy == null )
-                return;
-            int points;
-
-            // Loser is many levels above victor:
-            //   Victor capped, but loser is humiliated with some point loss
-            if( rankDiff >= RANK_DIFF_MED ) {
-
-                points = victorRank + RANK_DIFF_MED;
-                isMaxReward = true;
-
-                // Support ships are not humiliated; assault are
-                if( ! loser.isSupportShip() ) {
-                    int loss = 0;
-                    if( rankDiff >= RANK_DIFF_HIGHEST )
-                        loss = points;
-                    else if( rankDiff >= RANK_DIFF_VHIGH )
-                        loss = (points / 2);
-                    else
-                        loss = (points / 3);
-                    if( points > 0 ) {
-                        loser.addRankPoints( -loss );
-                        if( loser.wantsKillMsg() )
-                            m_botAction.sendPrivateMessage(loser.getArenaPlayerID(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getRank() + ")");
-                    }
-                }
-            } else {
-                points = loser.getRank();
-            }
-
-            // Points adjusted based on size of victor's army v. loser's
-            float armySizeWeight;
-            float killedArmyStr = killedarmy.getTotalStrength();
-            float killerArmyStr = killerarmy.getTotalStrength();
-            if( killedArmyStr <= 0 ) killedArmyStr = 1;
-            if( killerArmyStr <= 0 ) killerArmyStr = 1;
-            armySizeWeight = killedArmyStr / killerArmyStr;
-            if( armySizeWeight > 3.0f )
-                armySizeWeight = 3.0f;
-            else if( armySizeWeight < 0.2f )
-                armySizeWeight = 0.2f;
-
-            points = Math.round(((float)points * armySizeWeight));
-
-            int prox = Math.max(STREAK_RANK_PROXIMITY_MINIMUM, (victorRank / STREAK_RANK_PROXIMITY_DIVISOR));
-            boolean addedToStreak = -rankDiff <= prox;
-            boolean killInBase = true;
-
-            float flagMulti = -1;
-            // Flags don't matter while the flag timer is running.
-            if( flagTimer != null && flagTimer.isRunning() ) {
-                flagMulti = killerarmy.getNumFlagsOwned();
-                if( m_singleFlagMode ) {
-                    if( flagMulti == 1.0f )
-                        flagMulti = 1.1f;
-                } else {
-                    if( flagMulti == 0f ) {
-                        if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                            flagMulti = 0.5f;
-                        } else {
-                            // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
-                            flagMulti = 1;
-                        }
-                    } else if( flagMulti == 2.0f ) {
-                        flagMulti = 1.5f;
-                    }
-                    points = (int)((float)points * flagMulti);
-                }
-
-                if( flagTimer != null && flagTimer.isRunning() ) {
-                    // Don't count streak if the player making the kill was not in base & round is going
-                    if( ! ((killer.getYTileLocation() > TOP_ROOF && killer.getYTileLocation() < TOP_LOW) ||
-                            (killer.getYTileLocation() > BOT_LOW  && killer.getYTileLocation() < BOT_ROOF)) ) {
-                        killInBase = false;
-                        addedToStreak = false;
-                    }
-                }
-            }
-
-            // Track successive kills for weasel unlock & streaks
-            if( addedToStreak ) {   // Streaks only count on players close to your lvl & when in base
-                if( victor.addSuccessiveKill() ) {
-                    // TODO: If player earned weasel off this kill, check if loser/killed player has weasel ...
-                    // and remove it if they do!
-                }
-                // Check if M.A.S.T.E.R. Drive should fire (every 5 successive kills, has a chance)
-                victor.checkMasterDrive();
-            }
-
-            if( killedarmy.getPilotsInGame() != 1 ) {
-                switch( victor.getRepeatKillAmount( event.getKilleeID() ) ) {
-                    case 3:
-                        points /= 2;
-                        isRepeatKillLight = true;
-                        if( victor.wantsKillMsg() )
-                            m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "For repeatedly killing " + loser.getName() + " you earn only half the normal amount of RP." );
-                        break;
-                    case 4:
-                        points = 1;
-                        isRepeatKillHard = true;
-                        if( victor.wantsKillMsg() )
-                            m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
-                        break;
-                }
-            }
-
-            if( isTeK ) {
-                if( isBTeK )
-                    if( isVictorWeasel )
-                        points = Math.round((float)points * 2.0f);
-                    else
-                        points = Math.round((float)points * 1.50f);
-                else
-                    if( isVictorWeasel )
-                        points = Math.round((float)points * 1.20f);
-                    else
-                        points = Math.round((float)points * 1.10f);
-            }
-
-            if( endedStreak )
-                points = Math.round((float)points * 1.50f);
-
-            if( ! killInBase )
-                points -= Math.round((float)points * 0.2f);
-
-            if( points < 1 )
-                points = 1;
-
-
-            int actualEarnedPoints = victor.addRankPoints( points );
-
-            // Check if player ranked up from the kill
-            if( victor.didRankUpFromLastKill() ) {
-                // ... and taunt loser if he/she did
-                if( loser.wantsKillMsg() )
-                    m_botAction.sendPrivateMessage( loser.getArenaPlayerID(), "INSULT TO INJURY: " + victor.getName() + " just ranked up from your kill!", Tools.Sound.CRYING );
-            }
-            victor.getArmy().addSharedProfit( points );
-
-            // Weasel kills destroy escape pods
-            if( victor.getShipNum() == Tools.Ship.WEASEL ) {
-                loser.escapePodFired = true;
-            }
-
-            // Determine whether or not vengeance is to be inflicted
-            boolean revenged = loser.checkVengefulBastard( victor.getArenaPlayerID() );
-            if( revenged ) {
-                if( victor.wantsKillMsg() ) {
-                    m_botAction.sendPrivateMessage(victor.getArenaPlayerID(), loser.getName() + " is a VENGEFUL BASTARD!" );
-                }
-                victor.setVenge( loser.getName() );
-            }
-            String venger = loser.checkVenge();
-            if( venger != null ) {
-                DistensionPlayer pveng = m_players.get(venger);
-                if( pveng != null && pveng.getArenaPlayerID() != victor.getArenaPlayerID() ) {
-                    int vengRP = (int)(points / 1.5);
-                    pveng.addRankPoints( vengRP );
-                    if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
-                        vengRP = Math.round((float)vengRP * DEBUG_MULTIPLIER);
-                    if( pveng.wantsKillMsg() )
-                        m_botAction.sendPrivateMessage( pveng.getArenaPlayerID(), "Vengeful Bastard assist on " + loser.getName() + ": +" + vengRP + " RP" );
-                }
-            }
-            // Determine if the victor's Leeching should fire (full charge prized after a kill)
-            victor.checkLeeching();
-            victor.resetIdle();
-
-            if( ! victor.wantsKillMsg() )
-                return;
-
-            points = actualEarnedPoints; // For DISPLAY purposes only.
-            String msg = "+" + points + " RP: " + loser.getName() + "(" + loser.getRank() + ")";
-            if( isMaxReward )
-                msg += " [High rank cap]";
-            if( isRepeatKillLight )
-                msg += " [Repeat: -50%]";
-            else if( isRepeatKillHard )
-                msg += " [Multi-Repeat: 1 RP]";
-            if( isTeK )
-                if( isBTeK )
-                    if( isVictorWeasel )
-                        msg += " [BTerr: DOUBLE]";
-                    else
-                        msg += " [BTerr: +50%]";
-                else
-                    if( isVictorWeasel )
-                        msg += " [Terr: +20%]";
-                    else
-                        msg += " [Terr: +10%]";
-            if( flagMulti == 1.5f )
-                msg += " [Both flags: +50%]";
-            else if( flagMulti == 0.5f )
-                msg += " [No flags: -50%]";
-            else if( flagMulti == 1.1f )
-                msg += " [Flag held: +10%]";
-            if( endedStreak )
-                msg += " [Ended streak: +50%]";
-            if( !killInBase )
-                msg += " [Outside base: -20%]";
-            if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
-                msg += " [x" + DEBUG_MULTIPLIER + " beta]";
-            if( isFirstKill )
-                msg += " (!killmsg turns off this msg & gives +1% kill bonus)";
-            int suc = victor.getSuccessiveKills();
-            if( suc > 1 ) {
-                msg += "  Streak: " + suc;
-                if( !addedToStreak ) {
-                    if( killInBase )
-                        msg+= "[low rank/no inc.]";
-                    else
-                        msg+= "[outside base/no inc.]";
-                }
-            }
-            m_botAction.sendPrivateMessage(victor.getName(), msg);
+            return;
         }
+
+        DistensionArmy victorArmy = m_armies.get( new Integer(killer.getFrequency()) );
+        DistensionArmy loserArmy  = m_armies.get( new Integer(killed.getFrequency()) );
+        if( victorArmy == null || loserArmy == null )
+            return;
+
+        boolean isTeK = (loser.getShipNum() == Tools.Ship.TERRIER);
+        boolean isBTeK = false;
+        if( isTeK ) {
+            Player p = m_botAction.getPlayer( loser.getArenaPlayerID() );
+            if( p.getYTileLocation() <= TOP_FR || p.getYTileLocation() >= BOT_FR )
+                isBTeK = true;
+        }
+        int victorShip = victor.getShipNum();
+        boolean isVictorWeasel = victorShip == 6;
+        boolean isMaxReward = false;
+        boolean isRepeatKillLight = false;
+        boolean isRepeatKillHard = false;
+        boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
+        boolean endedStreak = false;
+        boolean flyingSolo = (victorArmy.getPilotsOfShip(victorShip) == 1) && (victorArmy.getPilotsInGame() >= 14 );
+        boolean shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > 0.25f );
+        boolean shipExtremeExcess = false;
+        if( shipExcess )
+            shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > 0.4f;
+
+        endedStreak = loser.clearSuccessiveKills();
+        // Otherwise: Add points via level scheme
+        int points;
+
+        // Loser is many levels above victor:
+        //   Victor capped, but loser is humiliated with some point loss
+        if( rankDiff >= RANK_DIFF_MED ) {
+
+            points = victorRank + RANK_DIFF_MED;
+            isMaxReward = true;
+
+            // Support ships are not humiliated; assault are
+            if( ! loser.isSupportShip() ) {
+                int loss = 0;
+                if( rankDiff >= RANK_DIFF_HIGHEST )
+                    loss = points;
+                else if( rankDiff >= RANK_DIFF_VHIGH )
+                    loss = (points / 2);
+                else
+                    loss = (points / 3);
+                if( points > 0 ) {
+                    loser.addRankPoints( -loss );
+                    if( loser.wantsKillMsg() )
+                        m_botAction.sendPrivateMessage(loser.getArenaPlayerID(), "HUMILIATION!  -" + loss + "RP for being killed by " + victor.getName() + "(" + victor.getRank() + ")");
+                }
+            }
+        } else {
+            points = loser.getRank();
+        }
+
+        // Points adjusted based on size of victor's army v. loser's
+        float armySizeWeight;
+        float killedArmyStr = loserArmy.getTotalStrength();
+        float killerArmyStr = victorArmy.getTotalStrength();
+        if( killedArmyStr <= 0 ) killedArmyStr = 1;
+        if( killerArmyStr <= 0 ) killerArmyStr = 1;
+        armySizeWeight = killedArmyStr / killerArmyStr;
+        if( armySizeWeight > 3.0f )
+            armySizeWeight = 3.0f;
+        else if( armySizeWeight < 0.2f )
+            armySizeWeight = 0.2f;
+
+        points = Math.round(((float)points * armySizeWeight));
+
+        int prox = Math.max(STREAK_RANK_PROXIMITY_MINIMUM, (victorRank / STREAK_RANK_PROXIMITY_DIVISOR));
+        boolean addedToStreak = -rankDiff <= prox;
+        boolean killInBase = true;
+
+        float flagMulti = -1;
+        // Flags don't matter while the flag timer is running.
+        if( flagTimer != null && flagTimer.isRunning() ) {
+            flagMulti = victorArmy.getNumFlagsOwned();
+            if( m_singleFlagMode ) {
+                if( flagMulti == 1.0f )
+                    flagMulti = 1.1f;
+            } else {
+                if( flagMulti == 0f ) {
+                    if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
+                        flagMulti = 0.5f;
+                    } else {
+                        // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
+                        flagMulti = 1;
+                    }
+                } else if( flagMulti == 2.0f ) {
+                    flagMulti = 1.5f;
+                }
+                points = (int)((float)points * flagMulti);
+            }
+
+            if( flagTimer != null && flagTimer.isRunning() ) {
+                // Don't count streak if the player making the kill was not in base & round is going
+                if( ! ((killer.getYTileLocation() > TOP_ROOF && killer.getYTileLocation() < TOP_LOW) ||
+                        (killer.getYTileLocation() > BOT_LOW  && killer.getYTileLocation() < BOT_ROOF)) ) {
+                    killInBase = false;
+                    addedToStreak = false;
+                }
+            }
+        }
+
+        // Track successive kills for weasel unlock & streaks
+        if( addedToStreak ) {   // Streaks only count on players close to your lvl & when in base
+            if( victor.addSuccessiveKill() ) {
+                // TODO: If player earned weasel off this kill, check if loser/killed player has weasel ...
+                // and remove it if they do!
+            }
+            // Check if M.A.S.T.E.R. Drive should fire (every 5 successive kills, has a chance)
+            victor.checkMasterDrive();
+        }
+
+        if( loserArmy.getPilotsInGame() != 1 ) {
+            switch( victor.getRepeatKillAmount( event.getKilleeID() ) ) {
+                case 3:
+                    points /= 2;
+                    isRepeatKillLight = true;
+                    if( victor.wantsKillMsg() )
+                        m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "For repeatedly killing " + loser.getName() + " you earn only half the normal amount of RP." );
+                    break;
+                case 4:
+                    points = 1;
+                    isRepeatKillHard = true;
+                    if( victor.wantsKillMsg() )
+                        m_botAction.sendPrivateMessage( victor.getArenaPlayerID(), "For repeatedly killing " + loser.getName() + " you earn only 1 RP." );
+                    break;
+            }
+        }
+
+        if( isTeK ) {
+            if( isBTeK )
+                if( isVictorWeasel )
+                    points = Math.round((float)points * 2.0f);
+                else
+                    points = Math.round((float)points * 1.50f);
+            else
+                if( isVictorWeasel )
+                    points = Math.round((float)points * 1.25f);
+                else
+                    points = Math.round((float)points * 1.10f);
+        }
+
+        if( endedStreak )
+            points = Math.round((float)points * 1.50f);
+
+        if( ! killInBase )
+            points -= Math.round((float)points * 0.2f);
+
+        if( flyingSolo )
+            points = Math.round((float)points * 1.10f);
+        else if( shipExcess ) {
+            if( shipExtremeExcess )
+                points -= Math.round((float)points * 0.5f);
+            else
+                points -= Math.round((float)points * 0.1f);
+        }
+
+        if( points < 1 )
+            points = 1;
+
+        int actualEarnedPoints = victor.addRankPoints( points );
+
+        // Check if player ranked up from the kill
+        if( victor.didRankUpFromLastKill() ) {
+            // ... and taunt loser if he/she did
+            if( loser.wantsKillMsg() )
+                m_botAction.sendPrivateMessage( loser.getArenaPlayerID(), "INSULT TO INJURY: " + victor.getName() + " just ranked up from your kill!", Tools.Sound.CRYING );
+        }
+        victor.getArmy().addSharedProfit( points );
+
+        // Weasel kills destroy escape pods
+        if( victorShip == Tools.Ship.WEASEL ) {
+            loser.escapePodFired = true;
+        }
+
+        // Determine whether or not vengeance is to be inflicted
+        boolean revenged = loser.checkVengefulBastard( victor.getArenaPlayerID() );
+        if( revenged ) {
+            if( victor.wantsKillMsg() ) {
+                m_botAction.sendPrivateMessage(victor.getArenaPlayerID(), loser.getName() + " is a VENGEFUL BASTARD!" );
+            }
+            victor.setVenge( loser.getName() );
+        }
+        String venger = loser.checkVenge();
+        if( venger != null ) {
+            DistensionPlayer pveng = m_players.get(venger);
+            if( pveng != null && pveng.getArenaPlayerID() != victor.getArenaPlayerID() ) {
+                int vengRP = (int)(points / 1.5);
+                pveng.addRankPoints( vengRP );
+                if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
+                    vengRP = Math.round((float)vengRP * DEBUG_MULTIPLIER);
+                if( pveng.wantsKillMsg() )
+                    m_botAction.sendPrivateMessage( pveng.getArenaPlayerID(), "Vengeful Bastard assist on " + loser.getName() + ": +" + vengRP + " RP" );
+            }
+        }
+        // Determine if the victor's Leeching should fire (full charge prized after a kill)
+        victor.checkLeeching();
+        victor.resetIdle();
+
+        if( ! victor.wantsKillMsg() )
+            return;
+
+        points = actualEarnedPoints; // For DISPLAY purposes only.
+        String msg = "+" + points + " RP: " + loser.getName() + "(" + loser.getRank() + ")";
+        if( isMaxReward )
+            msg += " [High rank cap]";
+        if( isRepeatKillLight )
+            msg += " [Repeat: -50%]";
+        else if( isRepeatKillHard )
+            msg += " [Multi-Repeat: 1 RP]";
+        if( isTeK )
+            if( isBTeK )
+                if( isVictorWeasel )
+                    msg += " [BTerr: DOUBLE]";
+                else
+                    msg += " [BTerr: +50%]";
+            else
+                if( isVictorWeasel )
+                    msg += " [Terr: +25%]";
+                else
+                    msg += " [Terr: +10%]";
+        if( flagMulti == 1.5f )
+            msg += " [Both flags: +50%]";
+        else if( flagMulti == 0.5f )
+            msg += " [No flags: -50%]";
+        else if( flagMulti == 1.1f )
+            msg += " [Flag held: +10%]";
+        if( endedStreak )
+            msg += " [Ended streak: +50%]";
+        if( !killInBase )
+            msg += " [Outside base: -20%]";
+        if( flyingSolo )
+            msg += " [Solo " + Tools.shipNameSlang(victorShip) + ": +10%]";
+        if( shipExcess ) {
+            if( shipExtremeExcess ) {
+                msg += " [PALL OF " + Tools.shipNameSlang(victorShip).toUpperCase() + "S: -50%]";
+            } else {
+                msg += " [Swarm of " + Tools.shipNameSlang(victorShip) + "s: -10%]";
+            }
+        }
+        if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
+            msg += " [x" + DEBUG_MULTIPLIER + " beta]";
+        if( isFirstKill )
+            msg += " (!killmsg turns off this msg & gives +1% kill bonus)";
+        int suc = victor.getSuccessiveKills();
+        if( suc > 1 ) {
+            msg += "  Streak: " + suc;
+            if( !addedToStreak ) {
+                if( killInBase )
+                    msg+= "[low rank/no inc.]";
+                else
+                    msg+= "[outside base/no inc.]";
+            }
+        }
+        m_botAction.sendPrivateMessage(victor.getName(), msg);
     }
 
 
@@ -5726,6 +5761,10 @@ public class distensionbot extends SubspaceBot {
         private int battlesWon; // Total number of battles player has won;    -1 if not logged in
         private int successiveKills;            // # successive kills (for unlocking weasel)
         private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
+        private int       currentRechargeLevel; // Current level of recharge
+        private int       currentEnergyLevel;   // Current level of energy
+        private int       shipType;             // Type of ship.  0=Pre-choice/Scout(default)
+                                                //                1=Tank 2=Artillery 3=SpecOps 4=Science
         private boolean[] shipsAvail;           // Marks which ships are available
         private int[]     lastIDsKilled = { -1, -1, -1, -1 };  // ID of last player killed (feeding protection)
         private int       spawnTicks;           // # queue "ticks" until spawn
@@ -5791,6 +5830,8 @@ public class distensionbot extends SubspaceBot {
             maxOP = 0;
             currentComms = 0;
             successiveKills = 0;
+            currentRechargeLevel = 0;
+            currentEnergyLevel = 0;
             spawnTicks = 0;
             idleTicks = 0;
             assistArmyID = -1;
@@ -6090,6 +6131,7 @@ public class distensionbot extends SubspaceBot {
                     shipDataSaved = false;
                 }
 
+                calculateRechargeAndEnergyLevels();
                 fastRespawn = (shipNum == 5);  // Terrs always have priority rearm
                 vengefulBastard = 0;
                 escapePod = 0;
@@ -6246,6 +6288,11 @@ public class distensionbot extends SubspaceBot {
                         }
                     }
             }
+            for( int i=0; i<currentEnergyLevel; i++ )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.ENERGY );
+            for( int i=0; i<currentRechargeLevel; i++ )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.RECHARGE );
+
             if( isFastRespawn() )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.FULLCHARGE );
             if( bonusPrize != 0 ) {
@@ -7260,6 +7307,47 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         *
+         *
+         */
+        public void calculateRechargeAndEnergyLevels() {
+            currentEnergyLevel = 0;
+            currentRechargeLevel = 0;
+            if( DEBUG ) // Remove when ready.
+                return;
+
+            if( shipType == 4 )
+                return;
+
+            // Ranks shared by all
+            int[] defaultEnergyRanks = { 2, 6, 10, 15 };
+            int[] defaultChgRanks =    { 1, 4,  8, 12 };
+
+            for( int i=0; i<defaultEnergyRanks.length; i++ )
+                if( defaultEnergyRanks[i] >= rank )
+                    currentEnergyLevel++;
+            for( int i=0; i<defaultChgRanks.length; i++ )
+                if( defaultChgRanks[i] >= rank )
+                    currentRechargeLevel++;
+
+            // Chosen ship type yet?
+            if( rank <= 15 )
+                return;
+
+            int workingRank = rank - 15;
+
+            if( shipType == 0 ) {
+
+            } else if( shipType == 1 ) {
+
+            } else if( shipType == 2 ) {
+
+            } else if( shipType == 3 ) {
+
+            }
+        }
+
+        /**
          * Checks for attaching in a Lanc, disabling the bomb ability when they
          * attach and re-enabling it when they detach.
          * @param attaching True if ship is attaching; false if detaching
@@ -7448,11 +7536,11 @@ public class distensionbot extends SubspaceBot {
                 int level = purchasedUpgrades[14];
                 int delay;
                 if( level == 3 )
-                    delay = 10000;
+                    delay = 12000;
                 else if( level == 2 )
-                    delay = 8000;
+                    delay = 10000;
                 else
-                    delay = 6000;
+                    delay = 8000;
                 //m_botAction.hideObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );
                 for( int i = 0; i < level + 2; i++ )
                     m_botAction.specificPrize( arenaPlayerID, Tools.Prize.DECOY );
@@ -8090,6 +8178,7 @@ public class distensionbot extends SubspaceBot {
         int totalStrength;              // Combined levels of all pilots of the army
         int flagsOwned;                 // # flags currently owned
         int pilotsInGame;               // # pilots playing right now
+        int[] pilotCounts = {0,0,0,0,0,0,0,0,0};  // # pilots of each type
         int pilotsTotal;                // # pilots in entire army
         int highestNumPilotsThisShare;  // Highest # pilots this profit-sharing cycle
         boolean isDefault;              // True if army is available by default (not user-created)
@@ -8157,9 +8246,12 @@ public class distensionbot extends SubspaceBot {
         public void recalculateFigures() {
             int pilots = 0;
             int strength = 0;
+            for( int i=0; i<9; i++ )
+                pilotCounts[i] = 0;
             for( DistensionPlayer p : m_players.values() ) {
                 if( p.getArmyID() == armyID && p.getShipNum() > 0 ) {
                     pilots++;
+                    pilotCounts[p.getShipNum()-1]++;
                     strength += p.getStrength();
                 }
             }
@@ -8226,6 +8318,14 @@ public class distensionbot extends SubspaceBot {
 
         public int getPilotsTotal() {
             return pilotsTotal;
+        }
+
+        public int getPilotsOfShip( int shipNum ) {
+            return pilotCounts[shipNum-1];
+        }
+
+        public float getPercentageOfTeamInShip( int shipNum ) {
+            return ((float)pilotCounts[shipNum-1] / (float)pilotsInGame);
         }
 
         public String getPassword() {
@@ -8823,35 +8923,50 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Make sure to give a reasonable amount of points even if it's a short match
-        if( minsToWin < 12 )
-            minsToWin = 12;
+        if( minsToWin < 10 )
+            minsToWin = 10;
         // Cap at 50 to keep extreme bonuses down
         if( minsToWin > 50 )
             minsToWin = 50;
 
-        // Points to be divided up by army
-        float totalPoints = (float)(minsToWin * 0.5f) * (float)opposingStrengthAvg * armyDiffWeight;
         float totalLvlSupport = 0;
         float totalLvlAttack = 0;
         float numSupport = 0;
         float numAttack = 0;
+        int bonusRanksForPointAllocation = 0;
+        float adjustedRank = 0;
         Iterator <DistensionPlayer>i = m_players.values().iterator();
         while( i.hasNext() ) {
             DistensionPlayer p = i.next();
             if( p.getArmyID() == winningArmyID ) {
                 Integer time = m_playerTimes.get( p.getName() );
                 float percentOnFreq = 0;
+                adjustedRank = ((float)p.getRank() * percentOnFreq );
+                if( adjustedRank > 70 )
+                    bonusRanksForPointAllocation += 50;
+                else if( adjustedRank > 60 )
+                    bonusRanksForPointAllocation += 40;
+                else if( adjustedRank > 50 )
+                    bonusRanksForPointAllocation += 30;
+                else if( adjustedRank > 40 )
+                    bonusRanksForPointAllocation += 20;
+                else if( adjustedRank > 30 )
+                    bonusRanksForPointAllocation += 10;
                 if( time != null )
                     percentOnFreq = (float)(secs - time) / (float)secs;
                 if( p.isSupportShip() ) {
-                    totalLvlSupport += ((float)p.getRank() * percentOnFreq );
+                    totalLvlSupport += adjustedRank;
                     numSupport++;
                 } else {
-                    totalLvlAttack += ((float)p.getRank() * percentOnFreq );
+                    totalLvlAttack += adjustedRank;
                     numAttack++;
                 }
             }
         }
+
+        // Points to be divided up by army
+        float totalPoints = (float)(minsToWin * 0.4f) * ((float)(opposingStrengthAvg + bonusRanksForPointAllocation)) * armyDiffWeight;
+
         if( totalLvlSupport < 1.0f) totalLvlSupport = 1.0f;
         if( totalLvlAttack < 1.0f) totalLvlAttack = 1.0f;
         float percentSupport = numSupport / ( numSupport + numAttack );
@@ -8905,6 +9020,16 @@ public class distensionbot extends SubspaceBot {
                     playerRank = p.getRank();
                     if( playerRank == 0 )
                         playerRank = 1;
+                    if( playerRank > 70 )
+                        playerRank += 50;
+                    else if( playerRank > 60 )
+                        playerRank += 40;
+                    else if( playerRank > 50 )
+                        playerRank += 30;
+                    else if( playerRank > 40 )
+                        playerRank += 20;
+                    else if( playerRank > 30 )
+                        playerRank += 10;
                     if( p.isSupportShip() )
                         points = (float)supportPoints * ((float)playerRank / totalLvlSupport);
                     else
@@ -8959,7 +9084,7 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             } else {
-                // For long battles, losers receive about 50% of the award of the winners.
+                // For long battles, losers receive about half of the award of the winners.
                 if( minsToWin >= 15 ) {
                     if( p.getShipNum() > 0 ) {
                         playerRank = p.getRank();
@@ -9017,28 +9142,43 @@ public class distensionbot extends SubspaceBot {
         if( strengthAvg1 == 0 )
             strengthAvg1 = 1;
 
-        // Points to be divided up by army
-        float totalPoints = (float)(minsToWin * 0.5f) * (strengthAvg0 + strengthAvg1);
         float totalLvlSupport = 0;
         float totalLvlAttack = 0;
         float numSupport = 0;
         float numAttack = 0;
+        int bonusRanksForPointAllocation = 0;
+        float adjustedRank = 0;
         Iterator <DistensionPlayer>i = m_players.values().iterator();
 
         while( i.hasNext() ) {
             DistensionPlayer p = i.next();
             Integer time = m_playerTimes.get( p.getName() );
             float percentOnFreq = 0;
+            adjustedRank = ((float)p.getRank() * percentOnFreq );
+            if( adjustedRank > 70 )
+                bonusRanksForPointAllocation += 50;
+            else if( adjustedRank > 60 )
+                bonusRanksForPointAllocation += 40;
+            else if( adjustedRank > 50 )
+                bonusRanksForPointAllocation += 30;
+            else if( adjustedRank > 40 )
+                bonusRanksForPointAllocation += 20;
+            else if( adjustedRank > 30 )
+                bonusRanksForPointAllocation += 10;
             if( time != null )
                 percentOnFreq = (float)(secs - time) / (float)secs;
             if( p.isSupportShip() ) {
-                totalLvlSupport += ((float)p.getRank() * percentOnFreq );
+                totalLvlSupport += adjustedRank;
                 numSupport++;
             } else {
-                totalLvlAttack += ((float)p.getRank() * percentOnFreq );
+                totalLvlAttack += adjustedRank;
                 numAttack++;
             }
         }
+
+        // Points to be divided up by all
+        float totalPoints = (float)(minsToWin * 0.4f) * (strengthAvg0 + strengthAvg1 + bonusRanksForPointAllocation);
+
         if( totalLvlSupport < 1.0f) totalLvlSupport = 1.0f;
         if( totalLvlAttack < 1.0f) totalLvlAttack = 1.0f;
         float percentSupport = numSupport / ( numSupport + numAttack );
@@ -9071,6 +9211,10 @@ public class distensionbot extends SubspaceBot {
 
         // Figure out percentage to award
         float freq0Cut = freq0Time / ( freq0Time + freq1Time );
+        if( freq0Cut > 70 )
+            freq0Cut = 70;
+        if( freq0Cut < 30 )
+            freq0Cut = 30;
         float freq1Cut = 1.0f - freq0Cut;
 
         m_botAction.sendArenaMessage( "Stalemate Award: " + (int)combo + "RP  ...  Split: " + (freq0Cut * 100) + "% to army 0, " + (freq1Cut * 100) + "% to army 1.");
@@ -9086,6 +9230,16 @@ public class distensionbot extends SubspaceBot {
                 playerRank = p.getRank();
                 if( playerRank == 0 )
                     playerRank = 1;
+                if( playerRank > 70 )
+                    playerRank += 50;
+                else if( playerRank > 60 )
+                    playerRank += 40;
+                else if( playerRank > 50 )
+                    playerRank += 30;
+                else if( playerRank > 40 )
+                    playerRank += 20;
+                else if( playerRank > 30 )
+                    playerRank += 10;
                 if( p.isSupportShip() )
                     points = (float)supportPoints * ((float)playerRank / totalLvlSupport);
                 else
@@ -9528,6 +9682,7 @@ public class distensionbot extends SubspaceBot {
         int sectorHoldingArmyID, breakingArmyID, securingArmyID, advantageArmyID;
         int flagSecondsRequired, secondsHeld, totalSecs, breakSeconds, securingSeconds, preTimeCount;
         int freq0TotalSeconds, freq1TotalSeconds;
+        int[] flagsHeld = {-1, -1};
         String breakerName = "";
         String securerName = "";
         boolean isStarted, isRunning, claimBeingBroken, claimBeingEstablished;
@@ -9986,6 +10141,28 @@ public class distensionbot extends SubspaceBot {
 
             if( isRunning == false )
                 return;
+
+
+            // Flag LVZ updates
+            if( flagsHeld[0] != m_flagOwner[0] ) {
+                if( flagsHeld[0] == 0 ) {
+                    flagObjs.hideObject(LVZ_TOPBASE_ARMY0);
+                    flagObjs.showObject(LVZ_TOPBASE_ARMY1);
+                } else {
+                    flagObjs.hideObject(LVZ_TOPBASE_ARMY1);
+                    flagObjs.showObject(LVZ_TOPBASE_ARMY0);
+                }
+            }
+            if( flagsHeld[1] != m_flagOwner[1] ) {
+                if( flagsHeld[1] == 0 ) {
+                    flagObjs.hideObject(LVZ_BOTBASE_ARMY0);
+                    flagObjs.showObject(LVZ_BOTBASE_ARMY1);
+                } else {
+                    flagObjs.hideObject(LVZ_BOTBASE_ARMY1);
+                    flagObjs.showObject(LVZ_BOTBASE_ARMY0);
+                }
+            }
+            m_botAction.manuallySetObjects(flagObjs.getObjects());
 
             totalSecs++;
 
