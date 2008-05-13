@@ -8941,6 +8941,8 @@ public class distensionbot extends SubspaceBot {
             if( p.getArmyID() == winningArmyID ) {
                 Integer time = m_playerTimes.get( p.getName() );
                 float percentOnFreq = 0;
+                if( time != null )
+                    percentOnFreq = (float)(secs - time) / (float)secs;
                 adjustedRank = ((float)p.getRank() * percentOnFreq );
                 if( adjustedRank > 70 )
                     bonusRanksForPointAllocation += 50;
@@ -8952,8 +8954,6 @@ public class distensionbot extends SubspaceBot {
                     bonusRanksForPointAllocation += 20;
                 else if( adjustedRank > 30 )
                     bonusRanksForPointAllocation += 10;
-                if( time != null )
-                    percentOnFreq = (float)(secs - time) / (float)secs;
                 if( p.isSupportShip() ) {
                     totalLvlSupport += adjustedRank;
                     numSupport++;
@@ -9155,6 +9155,8 @@ public class distensionbot extends SubspaceBot {
             Integer time = m_playerTimes.get( p.getName() );
             float percentOnFreq = 0;
             adjustedRank = ((float)p.getRank() * percentOnFreq );
+            if( time != null )
+                percentOnFreq = (float)(secs - time) / (float)secs;
             if( adjustedRank > 70 )
                 bonusRanksForPointAllocation += 50;
             else if( adjustedRank > 60 )
@@ -9165,8 +9167,6 @@ public class distensionbot extends SubspaceBot {
                 bonusRanksForPointAllocation += 20;
             else if( adjustedRank > 30 )
                 bonusRanksForPointAllocation += 10;
-            if( time != null )
-                percentOnFreq = (float)(secs - time) / (float)secs;
             if( p.isSupportShip() ) {
                 totalLvlSupport += adjustedRank;
                 numSupport++;
