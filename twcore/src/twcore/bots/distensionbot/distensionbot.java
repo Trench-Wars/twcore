@@ -77,7 +77,7 @@ public class distensionbot extends SubspaceBot {
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
-    private final int WARP_POINT_CHECK_FREQUENCY = 9;      // # seconds between checking warp points for players
+    private final int WARP_POINT_CHECK_FREQUENCY = 5;      // # seconds between checking warp points for players
     private final int VENGEFUL_VALID_SECONDS = 12;         // # seconds after V.B. fire in which VB gets RP bonus
     private final int STREAK_RANK_PROXIMITY_DIVISOR = 2;   // Divisor for rank to determine streak rank prox (50 / 2 = 25 rank prox)
     private final int STREAK_RANK_PROXIMITY_MINIMUM = 10;  // Min streak rank proximity allowed
@@ -239,6 +239,7 @@ public class distensionbot extends SubspaceBot {
     private List <String>m_mineClearedPlayers;              // Players who have already cleared mines this battle
     private Map <String,Integer>m_scrappingPlayers;         // Players who have scrapped recently, and what they scrapped
     private LinkedList <String>m_msgBetaPlayers;            // Players to send beta msg to
+    private LinkedList <String>m_ignoreWarpPlayers;         // Players who have just warped and should be ignored
     private HashMap <String,Integer>m_defectors;            // Players wishing to defect who need to confirm defection
     private long m_lastSave;                                // Last time data was saved
 
@@ -349,8 +350,12 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
     private final int LVZ_EMP = 206;                    // EMP ready graphic
     private final int LVZ_ENERGY_TANK = 207;            // Energy Tank ready graphic
+    private final int LVZ_SUPER = 208;                  // Super! fired graphic
     private final int LVZ_JUMPSPACE = 209;              // JumpSpace ready graphic
-    private final int LVZ_SUPER = 208;                  // Super!
+    private final int LVZ_MASTER_DRIVE = 210;           // M.A.S.T.E.R. Drive fired graphic
+    private final int LVZ_THOR = 211;                   // Thor at next respawn
+    private final int LVZ_PRISMATIC = 212;              // Prismatic Array ready graphic
+    private final int LVZ_FIREBLOOM = 213;              // Firebloom at next respawn
     private final int LVZ_TOPBASE_EMPTY = 251;          // Flag display
     private final int LVZ_TOPBASE_ARMY0 = 252;
     private final int LVZ_TOPBASE_ARMY1 = 253;
@@ -372,6 +377,13 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_OPS_FAST_REARM = 306;
     private final int LVZ_OPS_COVER_TOP_FIRST = 320;
     private final int LVZ_OPS_COVER_BOT_FIRST = 330;
+
+    // MENU/INTRO GFX
+    private final int LVZ_MENU_WELCOME_NEW_ENLISTEE = 350;
+    private final int LVZ_MENU_BASIC_INTRO = 351;
+    private final int LVZ_MENU_INTERMEDIATE_INTRO = 352;
+    private final int LVZ_MENU_MAP_INTRO = 353;
+    private final int LVZ_MENU_PROG_AND_TIMER_INTRO = 354;
 
     // SOUND DEFINES
     private final int SOUND_START_ROUND = 255;
@@ -403,6 +415,7 @@ public class distensionbot extends SubspaceBot {
         m_mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         m_scrappingPlayers = Collections.synchronizedMap( new HashMap<String,Integer>() );
         m_msgBetaPlayers = new LinkedList<String>();
+        m_ignoreWarpPlayers = new LinkedList<String>();
         m_defectors = new HashMap<String,Integer>();
         m_waitingToEnter = new LinkedList<DistensionPlayer>();
         flagTimerObjs = m_botAction.getObjectSet();
@@ -463,7 +476,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void init() {
         m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
-        m_botAction.setMessageLimit( 12, false );
+        m_botAction.setMessageLimit( 15, false );
         m_botAction.setReliableKills( 1 );
         m_botAction.setPlayerPositionUpdating( 400 );
         m_botAction.setLowPriorityPacketCap( 23 );
@@ -564,63 +577,67 @@ public class distensionbot extends SubspaceBot {
             public void run() {
                 for( Player p : m_botAction.getPlayingPlayers() ) {
                     // Warps from and to: center blocks; center bar to roof
-                    if( p.getXTileLocation() >= 511 && p.getXTileLocation() <= 513 ) {
-                        if( p.getYTileLocation() >= WARP_CENTER_0_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_CENTER_0_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_1_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_CENTER_1_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_CENTER_1_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_0_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_TO_ROOF_0_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_TO_ROOF_0_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_0_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_TO_ROOF_1_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_TO_ROOF_1_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_1_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_FROM_ROOF_0_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_FROM_ROOF_0_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_0_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_FROM_ROOF_1_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_FROM_ROOF_1_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_1_Y_COORD );
+                    if( !m_ignoreWarpPlayers.remove( p.getPlayerName() ) ) { // Only warp nonrecent warpers
+                        boolean warped = false;
+                        int x = p.getXTileLocation();
+                        int y = p.getYTileLocation();
+                        if( x >= 511 && x <= 513 ) {
+                            if( y >= WARP_CENTER_0_Y_COORD - 1 && y <= WARP_CENTER_0_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_1_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_CENTER_1_Y_COORD - 1 && y <= WARP_CENTER_1_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_0_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_TO_ROOF_0_Y_COORD - 1 && y <= WARP_TO_ROOF_0_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_0_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_TO_ROOF_1_Y_COORD - 1 && y <= WARP_TO_ROOF_1_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_1_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_FROM_ROOF_0_Y_COORD - 1 && y <= WARP_FROM_ROOF_0_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_0_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_FROM_ROOF_1_Y_COORD - 1 && y <= WARP_FROM_ROOF_1_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_1_Y_COORD );
+                                warped = true;
+                            }
+                            // Warps from and to: lower shoulders to mid shoulders
+                        } else if( x >= WARP_LOWER_LEFT_X_COORD - 1 && x <= WARP_LOWER_LEFT_X_COORD + 1 ) {
+                            if( y >= WARP_LOWER_0_Y_COORD - 1 && y <= WARP_LOWER_0_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_1_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_LOWER_1_Y_COORD - 1 && y <= WARP_LOWER_1_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_0_Y_COORD );
+                                warped = true;
+                            }
+                        } else if( x >= WARP_LOWER_RIGHT_X_COORD - 1 && x <= WARP_LOWER_RIGHT_X_COORD + 1 ) {
+                            if( y >= WARP_LOWER_0_Y_COORD - 1 && y <= WARP_LOWER_0_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_1_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_LOWER_1_Y_COORD - 1 && y <= WARP_LOWER_1_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_0_Y_COORD );
+                                warped = true;
+                            }
+                        } else if( x >= WARP_MID_LEFT_X_COORD - 1 && x <= WARP_MID_LEFT_X_COORD + 1 ) {
+                            if( y >= WARP_MID_0_Y_COORD - 1 && y <= WARP_MID_0_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_1_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_MID_1_Y_COORD - 1 && y <= WARP_MID_1_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_0_Y_COORD );
+                                warped = true;
+                            }
+                        } else if( x >= WARP_MID_RIGHT_X_COORD - 1 && x <= WARP_MID_RIGHT_X_COORD + 1 ) {
+                            if( y >= WARP_MID_0_Y_COORD - 1 && y <= WARP_MID_0_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_1_Y_COORD );
+                                warped = true;
+                            } else if( y >= WARP_MID_1_Y_COORD - 1 && y <= WARP_MID_1_Y_COORD + 1 ) {
+                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_0_Y_COORD );
+                                warped = true;
+                            }
                         }
-                    // Warps from and to: lower shoulders to mid shoulders
-                    } else if( p.getXTileLocation() >= WARP_LOWER_LEFT_X_COORD - 1
-                            && p.getXTileLocation() <= WARP_LOWER_LEFT_X_COORD + 1 ) {
-                        if( p.getYTileLocation() >= WARP_LOWER_0_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_LOWER_0_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_1_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_LOWER_1_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_LOWER_1_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_0_Y_COORD );
-                        }
-                    } else if( p.getXTileLocation() >= WARP_LOWER_RIGHT_X_COORD - 1
-                            && p.getXTileLocation() <= WARP_LOWER_RIGHT_X_COORD + 1 ) {
-                        if( p.getYTileLocation() >= WARP_LOWER_0_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_LOWER_0_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_1_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_LOWER_1_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_LOWER_1_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_0_Y_COORD );
-                        }
-                    } else if( p.getXTileLocation() >= WARP_MID_LEFT_X_COORD - 1
-                            && p.getXTileLocation() <= WARP_MID_LEFT_X_COORD + 1 ) {
-                        if( p.getYTileLocation() >= WARP_MID_0_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_MID_0_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_1_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_MID_1_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_MID_1_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_0_Y_COORD );
-                        }
-                    } else if( p.getXTileLocation() >= WARP_MID_RIGHT_X_COORD - 1
-                            && p.getXTileLocation() <= WARP_MID_RIGHT_X_COORD + 1 ) {
-                        if( p.getYTileLocation() >= WARP_MID_0_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_MID_0_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_1_Y_COORD );
-                        } else if( p.getYTileLocation() >= WARP_MID_1_Y_COORD - 1 &&
-                                p.getYTileLocation() <= WARP_MID_1_Y_COORD + 1 ) {
-                            m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_0_Y_COORD );
-                        }
+                        // Add warpers to a list and ignore them on our next pass through to prevent doublewarping.
+                        if( warped )
+                            m_ignoreWarpPlayers.add( p.getPlayerName() );
                     }
                 }
             }
@@ -919,7 +936,7 @@ public class distensionbot extends SubspaceBot {
         if( msg.equals("2") ) {
             String[] helps = {
             ".-----------------------",
-            "| !intro                |  An introduction to Distension.",
+            "| !intro                |  A guided on-screen introduction to Distension.",
             "| !warp             !w  |  Toggle waiting in spawn vs. being autowarped out",
             "| !basewarp         !bw |  Toggle warping into base vs. spawn at round start",
             "| !killmsg          !k  |  Toggle kill messages on and off (+1% RP for off)",
@@ -1396,19 +1413,6 @@ public class distensionbot extends SubspaceBot {
                     oldOwnerArmy.adjustFlags( -1 );
                 }
             }
-        } else {
-            if( flagTimeRunning ) {
-                if( m_singleFlagMode ) {
-                    if( flagID == 0 )
-                        flagObjs.hideObject(LVZ_TOPBASE_EMPTY);
-                } else {
-                    if( flagID == 0 )
-                        flagObjs.hideObject(LVZ_TOPBASE_EMPTY);
-                    else
-                        flagObjs.hideObject(LVZ_BOTBASE_EMPTY);
-                }
-            }
-            m_botAction.manuallySetObjects( flagObjs.getObjects() );
         }
 
         DistensionArmy newOwnerArmy = m_armies.get( new Integer( p.getFrequency() ) );
@@ -1542,6 +1546,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_ENERGY_TANK, false );
         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_JUMPSPACE, false );
         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_OPS_FAST_REARM, false );
+        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_PRISMATIC, false );
         m_botAction.sendSetupObjectsForPlayer( p.getArenaPlayerID() );
 
         if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
@@ -2020,6 +2025,7 @@ public class distensionbot extends SubspaceBot {
             p.addShipToDB( 1 );
             p.addShipToDB( 5 );
         }
+        m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_MENU_WELCOME_NEW_ENLISTEE );
         if( DEBUG ) {
             m_botAction.sendPrivateMessage( name, "Welcome to the beta test!  PM !help for commands, and !beta for updates.  Join ?chat=distension for questions and to stay up on tests.  (NOTE: you may now be PM'd when new tests start.)" );
         }
@@ -2298,11 +2304,11 @@ public class distensionbot extends SubspaceBot {
                     else
                         enemy++;
             }
-            if( shipNum == Tools.Ship.SHARK && friendly > 2 )
-                throw new TWCoreException( "Sorry, only two Sharks are allowed per army." );
             // If we already have more than they do (2 more needed for terr), do not allow the change
             if( shipNum == Tools.Ship.SHARK && friendly > enemy + 1 )
-                throw new TWCoreException( "Sorry, the other army doesn't have enough Sharks to allow you to Shark fairly!" );
+                throw new TWCoreException( "Sorry, the other army doesn't have enough Sharks flying to make you also Sharking any fair!" );
+            if( shipNum == Tools.Ship.SHARK && friendly > 3 )
+                throw new TWCoreException( "Sorry, only three Sharks are allowed per army." );
             if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 2 )
                 throw new TWCoreException( "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
         }
@@ -2360,6 +2366,9 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage( name, "For changing ships while your army has had a sector hold for more than 20 seconds, your participation counter has been reset." );
                         m_playerTimes.remove( name );
                     }
+                } else {
+                    m_botAction.sendPrivateMessage( name, "For changing into an assault ship while your army has a sector hold, your participation counter has been reset." );
+                    m_playerTimes.remove( name );
                 }
             }
             if( m_playerTimes.get( name ) == null )
@@ -4750,6 +4759,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setupObject( LVZ_EMP, false );
         m_botAction.setupObject( LVZ_ENERGY_TANK, false );
         m_botAction.setupObject( LVZ_JUMPSPACE, false );
+        m_botAction.setupObject( LVZ_PRISMATIC, false );
         m_botAction.setupObject( LVZ_OPS_FAST_REARM, false );
         m_botAction.sendSetupObjects();
         m_botAction.setDoors(0);
@@ -6163,6 +6173,8 @@ public class distensionbot extends SubspaceBot {
                         leeching = purchasedUpgrades[i];
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_MASTER_DRIVE )
                         masterDrive = purchasedUpgrades[i];
+                    else if( upgrades.get( i ).getPrizeNum() == ABILITY_FIREBLOOM )
+                        firebloom = purchasedUpgrades[i];
                 }
 
                 m_botAction.SQLClose(r);
@@ -6489,7 +6501,8 @@ public class distensionbot extends SubspaceBot {
             } else if( shipNum == 1) {
                 // Thor ability (every 5 minutes)
                 if( purchasedUpgrades[11] > 0 && tick % 10 == 0 ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "Thor's Hammer available at next rearm." );
+                    //m_botAction.sendPrivateMessage(arenaPlayerID, "Thor's Hammer available at next rearm." );
+                    m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_THOR );
                     bonusPrize = Tools.Prize.THOR;
                     prized = true;
                 }
@@ -6499,7 +6512,8 @@ public class distensionbot extends SubspaceBot {
                 if( firebloom > 0 ) {
                     if( (firebloom == 1 && tick % 8 == 0) ||
                         (firebloom == 2 && tick % 4 == 0) ) {
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "Firebloom available at next rearm." );
+                        //m_botAction.sendPrivateMessage(arenaPlayerID, "Firebloom available at next rearm." );
+                        m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_FIREBLOOM );
                         bonusPrize = Tools.Prize.BURST;
                         prized = true;
                     }
@@ -6510,8 +6524,8 @@ public class distensionbot extends SubspaceBot {
                 switch( purchasedUpgrades[9] ) {
                     case 1: neededTick = 15; break;     // 7.5min
                     case 2: neededTick = 10; break;     // 5m
-                    case 3: neededTick = 8; break;      // 4m
-                    default: neededTick = 20; break;    // 10m
+                    case 3: neededTick = 5; break;      // 2.5m
+                    default: neededTick = 20; break;    // 10m (for only freebie version)
                 }
                 if( tick % neededTick == 0 ) {
                     if( !jumpSpace ) {
@@ -6526,7 +6540,7 @@ public class distensionbot extends SubspaceBot {
                 if( !prismatic ) {
                     double pmChance = Math.random() * 100.0;
                     if( ((double)purchasedUpgrades[14] * 15.0) > pmChance ) {
-                        //m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );  Make LVZ for this.
+                        m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_PRISMATIC );
                         m_botAction.sendPrivateMessage(arenaPlayerID, "Prismatic Array replenished.  --- to use.");
                         prismatic = true;
                     }
@@ -7478,8 +7492,9 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SHIELDS );
                 fired = true;
             }
-            if( fired && sendKillMessages )
-                m_botAction.sendPrivateMessage( arenaPlayerID, "--=( ***   M.A.S.T.E.R. Drive ENABLED   *** )=--" );
+            if( fired )
+                m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_MASTER_DRIVE );
+                //m_botAction.sendPrivateMessage( arenaPlayerID, "--=( ***   M.A.S.T.E.R. Drive ENABLED   *** )=--" );
         }
 
         /**
@@ -7545,6 +7560,7 @@ public class distensionbot extends SubspaceBot {
                 for( int i = 0; i < level + 2; i++ )
                     m_botAction.specificPrize( arenaPlayerID, Tools.Prize.DECOY );
                 prismatic = false;
+                m_botAction.hideObjectForPlayer( arenaPlayerID, LVZ_PRISMATIC );
                 personalTask = new TimerTask() {
                     public void run() {
                         for( int i = 0; i < purchasedUpgrades[14] + 2; i++ )
@@ -8321,10 +8337,14 @@ public class distensionbot extends SubspaceBot {
         }
 
         public int getPilotsOfShip( int shipNum ) {
+            if( shipNum < 0 && shipNum > 9 )
+                return 0;
             return pilotCounts[shipNum-1];
         }
 
         public float getPercentageOfTeamInShip( int shipNum ) {
+            if( shipNum < 0 && shipNum > 9 )
+                return 0.0f;
             return ((float)pilotCounts[shipNum-1] / (float)pilotsInGame);
         }
 
@@ -10145,22 +10165,37 @@ public class distensionbot extends SubspaceBot {
 
             // Flag LVZ updates
             if( flagsHeld[0] != m_flagOwner[0] ) {
-                if( flagsHeld[0] == 0 ) {
+                if( flagsHeld[0] == -1 ) {
+                    flagObjs.hideObject(LVZ_TOPBASE_EMPTY);
+                    if( m_flagOwner[0] == 0 ) {
+                        flagObjs.showObject(LVZ_TOPBASE_ARMY0);
+                    } else {
+                        flagObjs.showObject(LVZ_TOPBASE_ARMY1);
+                    }
+                } else if( flagsHeld[0] == 0 ) {
                     flagObjs.hideObject(LVZ_TOPBASE_ARMY0);
                     flagObjs.showObject(LVZ_TOPBASE_ARMY1);
-                } else {
+                } else if( flagsHeld[0] == 1 ) {
                     flagObjs.hideObject(LVZ_TOPBASE_ARMY1);
                     flagObjs.showObject(LVZ_TOPBASE_ARMY0);
                 }
+                flagsHeld[0] = m_flagOwner[0];
             }
             if( flagsHeld[1] != m_flagOwner[1] ) {
-                if( flagsHeld[1] == 0 ) {
+                if( flagsHeld[1] == -1 ) {
+                    flagObjs.hideObject(LVZ_BOTBASE_EMPTY);
+                    if( m_flagOwner[1] == 0 )
+                        flagObjs.showObject(LVZ_BOTBASE_ARMY0);
+                    else
+                        flagObjs.showObject(LVZ_BOTBASE_ARMY1);
+                } else if( flagsHeld[1] == 0 ) {
                     flagObjs.hideObject(LVZ_BOTBASE_ARMY0);
                     flagObjs.showObject(LVZ_BOTBASE_ARMY1);
-                } else {
+                } else if( flagsHeld[1] == 1 ) {
                     flagObjs.hideObject(LVZ_BOTBASE_ARMY1);
                     flagObjs.showObject(LVZ_BOTBASE_ARMY0);
                 }
+                flagsHeld[1] = m_flagOwner[1];
             }
             m_botAction.manuallySetObjects(flagObjs.getObjects());
 
