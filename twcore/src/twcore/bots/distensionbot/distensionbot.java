@@ -1702,10 +1702,10 @@ public class distensionbot extends SubspaceBot {
         boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
         boolean endedStreak = false;
         boolean flyingSolo = (victorArmy.getPilotsOfShip(victorShip) == 1) && (victorArmy.getPilotsInGame() >= 14 );
-        boolean shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > 0.25f );
+        boolean shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > 0.30f );
         boolean shipExtremeExcess = false;
         if( shipExcess )
-            shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > 0.4f;
+            shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > 0.45f;
 
         endedStreak = loser.clearSuccessiveKills();
         // Otherwise: Add points via level scheme
@@ -2194,13 +2194,11 @@ public class distensionbot extends SubspaceBot {
                 cmdLeave(leavingPlayer.getName(), "");
                 m_botAction.sendPrivateMessage( leavingPlayer.getName(), "Another player wishes to enter the game; you have been removed to allow them to play." );
             } else {
-                if( p.getMinutesPlayed() >= highestTime ) {
-                    m_botAction.sendPrivateMessage( name, "Sorry, the battle is at maximum capacity and you've flown more today than anyone else here.  Try again later." );
-                } else {
-                    m_botAction.sendPrivateMessage( name, "Pilot limit reached: " + MAX_PLAYERS + ".  You are in the queue to replace the pilot who has flown the longest at the end of the battle." );
-                    m_waitingToEnter.add(p);
-                }
-                return;
+                if( p.getMinutesPlayed() >= highestTime )
+                    throw new TWCoreException( "Sorry, the battle is at maximum capacity and you've flown more today than anyone else here.  Try again later." );
+
+                m_waitingToEnter.add(p);
+                throw new TWCoreException( "Pilot limit reached: " + MAX_PLAYERS + ".  You are in the queue to replace the pilot who has flown the longest at the end of the battle." );
             }
         }
 
@@ -2715,7 +2713,10 @@ public class distensionbot extends SubspaceBot {
         }
         String progString = Tools.formatString("", progChars, "=" );
         progString = Tools.formatString(progString, 20 );
-        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext + "  (" + p.getPointsToNextRank() + " to Rank " + (p.getRank() + 1) + ")    [" + progString + "]  " + percent + "%  UP: " + p.getUpgradePoints() );
+        String streakMsg = (p.getSuccessiveKills() > 1 ? "STREAK: " + p.getSuccessiveKills() : "" );
+        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext +
+                "  (" + p.getPointsToNextRank() + " to Rank " + (p.getRank() + 1) + ")    [" + progString + "]  "
+                + percent + "%  UP: " + p.getUpgradePoints() + "  " + streakMsg );
     }
 
 
@@ -3468,6 +3469,12 @@ public class distensionbot extends SubspaceBot {
         Player playerObj = m_botAction.getPlayer( p.getArenaPlayerID() );
         if( playerObj == null )
             return;
+
+        // Don't allow evil summoning.  To do: check x location as well.
+        if( playerObj.getYTileLocation() < TOP_ROOF || playerObj.getYTileLocation() > BOT_ROOF ) {
+            p.useSummon(permissions);
+            throw new TWCoreException( "That's not a very nice place to try to summon your friends." );
+        }
 
         int targets = 0;
         for( DistensionPlayer target : m_players.values() ) {
@@ -9159,8 +9166,8 @@ public class distensionbot extends SubspaceBot {
 
         int secs             = flagTimer.getTotalSecs();
         int minsToWin        = flagTimer.getTotalSecs() / 60;
-        int freq0Time        = flagTimer.getFreq0TotalSecs();
-        int freq1Time        = flagTimer.getFreq1TotalSecs();
+        int freq0Time        = Math.max( 1, flagTimer.getFreq0TotalSecs() );
+        int freq1Time        = Math.max( 1, flagTimer.getFreq1TotalSecs() );
         HashMap <Integer,Integer>armyStrengths = flagTimer.getArmyStrengthSnapshots();
 
         int strengthAvg0 = 1;
@@ -9250,11 +9257,11 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Figure out percentage to award
-        float freq0Cut = freq0Time / ( freq0Time + freq1Time );
-        if( freq0Cut > 70 )
-            freq0Cut = 70;
-        if( freq0Cut < 30 )
-            freq0Cut = 30;
+        float freq0Cut = ((float)freq0Time / (float)( freq0Time + freq1Time ));
+        if( freq0Cut > 0.70f )
+            freq0Cut = 0.70f;
+        else if( freq0Cut < 0.30f )
+            freq0Cut = 0.30f;
         float freq1Cut = 1.0f - freq0Cut;
 
         m_botAction.sendArenaMessage( "Stalemate Award: " + (int)combo + "RP  ...  Split: " + (freq0Cut * 100) + "% to army 0, " + (freq1Cut * 100) + "% to army 1.");
