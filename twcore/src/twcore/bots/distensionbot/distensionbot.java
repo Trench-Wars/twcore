@@ -1123,8 +1123,7 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
-     * Provides a brief introduction to the game for a player.  This should support
-     * the A1 LVZ help, and the F1 help.
+     * Provides a brief introduction to the game for a player.
      * @param name
      * @param msg
      */
@@ -1133,12 +1132,22 @@ public class distensionbot extends SubspaceBot {
         if( p == null ) {
             return;
         }
-        String[] intro1 = {
-                "         DISTENSION   -   Upgradeable Trench Wars Basing    -   by G. Dugwyler",
-                "Presently in beta.  Intro to come soon.  Type !beta for info on recent updates.",
-                "Join ?chat=distension for help, or see the forums.trenchwars.org thread for more info."
-        };
-        m_botAction.privateMessageSpam(p.getArenaPlayerID(), intro1);
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "The guided introduction will now play.  This will take about 2 minutes." );
+        m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_MENU_BASIC_INTRO);
+        try {
+            IntroTask i1 = new IntroTask();
+            i1.setPID(p.getArenaPlayerID());
+            i1.setObjID(LVZ_MENU_PROG_AND_TIMER_INTRO);
+            m_botAction.scheduleTask(i1, 40000 );
+            IntroTask i2 = new IntroTask();
+            i2.setPID(p.getArenaPlayerID());
+            i2.setObjID(LVZ_MENU_MAP_INTRO);
+            m_botAction.scheduleTask(i2, 60000 );
+            IntroTask i3 = new IntroTask();
+            i3.setPID(p.getArenaPlayerID());
+            i3.setObjID(LVZ_MENU_INTERMEDIATE_INTRO);
+            m_botAction.scheduleTask(i3, 800000 );
+        } catch( Exception e ) {}
     }
 
 
@@ -8747,6 +8756,17 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
+    private class IntroTask extends TimerTask {
+        int pid;
+        int objid;
+
+        public void setPID( int id ) { pid = id; }
+        public void setObjID( int id ) { objid = id; }
+
+        public void run() {
+            m_botAction.showObjectForPlayer( pid, objid );
+        }
+    }
 
 
 
