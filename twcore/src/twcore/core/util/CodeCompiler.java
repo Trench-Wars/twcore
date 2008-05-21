@@ -479,11 +479,11 @@ public final class CodeCompiler {
      * @return true if the string is allowed. else false.
      */
     public static boolean isAllowedPrivateCommand(String s){
-        if(s.startsWith("*setship")   ||
-           s.startsWith("*setfreq")   ||
-           s.startsWith("*warpto")    ||
-           s.startsWith("*objon")     ||
-           s.startsWith("*objoff")    ||
+        if(s.startsWith("*setship ")   ||
+           s.startsWith("*setfreq ")   ||
+           s.startsWith("*warpto ")    ||
+           s.startsWith("*objon ")     ||
+           s.startsWith("*objoff ")    ||
            s.equals("*scorereset")    ||
            s.equals("*shipreset")     ||
            s.equals("*spec")          ||
@@ -537,6 +537,8 @@ public final class CodeCompiler {
     public static boolean isAllowedPublicCommand(String s){
         if(s.startsWith("*arena ") ||
            s.startsWith("*timer ") ||
+           s.startsWith("*objon ") ||
+           s.startsWith("*objoff ")||
            s.equals("*shipreset")  ||
            s.equals("*scorereset") ||
            s.equals("*flagreset")  ||
