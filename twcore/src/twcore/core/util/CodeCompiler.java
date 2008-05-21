@@ -482,6 +482,8 @@ public final class CodeCompiler {
         if(s.startsWith("*setship")   ||
            s.startsWith("*setfreq")   ||
            s.startsWith("*warpto")    ||
+           s.startsWith("*objon")     ||
+           s.startsWith("*objoff")    ||
            s.equals("*scorereset")    ||
            s.equals("*shipreset")     ||
            s.equals("*spec")          ||
