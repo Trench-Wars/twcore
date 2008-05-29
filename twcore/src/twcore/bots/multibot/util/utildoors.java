@@ -27,7 +27,7 @@ public class utildoors extends MultiUtil {
 	public String[] getHelpMessages() {
 	    String[] message =
 	    {
-	        "!Door <Door Value>              -- Sets the doors to a certain value.",
+	        "!DoorMode <Door Value>           -- Sets the doors to a certain value.",
 	        "!DoorOn Door# Door# ... Door#   -- Closes all doors specified (can use !DoorOn All)",
 	        "!DoorOff Door# Door# ... Door#  -- Opens all doors specified. (can use !DoorOff All)",
 	        "!AddDoor <On> <Off> Door# Door# -- Adds recurring door task",
@@ -40,20 +40,22 @@ public class utildoors extends MultiUtil {
 	}
 
 	public void doDoorCmd(String sender, String argString) {
-	    try {
-	    	int doorValue = Integer.parseInt(argString);
-	    	if(Tools.isBinary(argString) && argString.length() == 8){
-	    		m_botAction.setDoors(argString);
-	    		m_botAction.sendSmartPrivateMessage(sender, "Doors set to " + argString + ".");
-	    	}
-	    	else if (doorValue >= -2 && doorValue <= 255) {
-	    		m_botAction.setDoors(doorValue);
-		    	m_botAction.sendSmartPrivateMessage(sender, "Doors set to " + doorValue + ".");	    		
-	    	}	    	
-	    }
-	    catch(NumberFormatException e) {
-	    	throw new NumberFormatException("Please use the following format: !Door <Door Value>");
-	    }
+        if (Tools.isBinary(argString) && argString.length() == 8){
+            m_botAction.setDoors(argString);
+            m_botAction.sendSmartPrivateMessage(sender, "Doors set to " + argString + ".");
+        } else {
+            try {
+                int doorValue = Integer.parseInt(argString);
+                if (doorValue >= -2 && doorValue <= 255) {
+                    m_botAction.setDoors(doorValue);
+                    m_botAction.sendSmartPrivateMessage(sender, "Doors set to " + doorValue + ".");             
+                } else {
+                    m_botAction.sendSmartPrivateMessage(sender,"Please use the following format: !DoorMode <Door Value>.  Door Value must be -2 to 255 or an 8-digit binary string (eg: 10110111)");
+                }
+            } catch (NumberFormatException e) {
+                m_botAction.sendSmartPrivateMessage(sender,"Use !DoorMode <Door Value>.  Door Value must be -2 to 255 or an 8-digit binary string (eg: 10110111)");
+            }
+        }
 	}
 	
 	public int closeDoor(int doorState, int doorNumber) {
@@ -213,7 +215,7 @@ public class utildoors extends MultiUtil {
 
 	public void handleCommand(String sender, String command) {
 		updateDoorState();
-		if (command.startsWith("!door ")) {doDoorCmd(sender, command.substring(6));}
+		if (command.startsWith("!doormode ")) {doDoorCmd(sender, command.substring(10));}
 		if (command.startsWith("!dooron ")) {doDoorOnCmd(sender, command.substring(8));}
 		if (command.startsWith("!dooroff ")) {doDoorOffCmd(sender, command.substring(9));}
 		if (command.startsWith("!adddoor ")) {doAddCmd(sender, command.substring(9));}
