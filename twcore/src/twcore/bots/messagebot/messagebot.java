@@ -6,7 +6,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -932,7 +931,7 @@ public class messagebot extends SubspaceBot
 	 */
 	public void myMessages(String name, String message)
 	{
-		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
+		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' ORDER BY fnRead DESC";
 		m_botAction.sendSmartPrivateMessage(name, "You have the following messages: ");
 		try {
 			ResultSet results = m_botAction.SQLQuery(database, query);
