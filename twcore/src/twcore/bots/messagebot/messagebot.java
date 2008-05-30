@@ -6,12 +6,15 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
@@ -647,7 +650,7 @@ public class messagebot extends SubspaceBot
             m_botAction.sendSmartPrivateMessage(name, "    !read a                        -Reads all read & unread messages.");
             m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>               -Reads all unread messages on <channel>.");
             m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>:r             -Reads all old/read messages on <channel>.");
-            m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>:a             -Reads all messages on <channel>.");            
+            m_botAction.sendSmartPrivateMessage(name, "    !read #<channel>:a             -Reads all messages on <channel>.");
             m_botAction.sendSmartPrivateMessage(name, "    !unread <num>                  -Sets message <num> as unread.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !delete <num>                  -Deletes message <num>.");
             m_botAction.sendSmartPrivateMessage(name, "    !delete read                   -Deletes messages already read.");
@@ -784,13 +787,13 @@ public class messagebot extends SubspaceBot
                 }
                 while(it.hasNext())
                     readMessage(name, "" + (Integer)it.next());
-                m_botAction.SQLClose(results);            
+                m_botAction.SQLClose(results);
             } catch(SQLException e) {}
             return;
         }
 		if(!isAllDigits(message)) {
 			try {
-				HashSet <Integer>messageIDs = new HashSet<Integer>();                
+				HashSet <Integer>messageIDs = new HashSet<Integer>();
 				String addAnd = " AND fnRead = 0";
                 ResultSet results;
                 if( message.startsWith("#") && message.length() > 1 ) {
@@ -809,7 +812,7 @@ public class messagebot extends SubspaceBot
                         addAnd = "";
                     else if( message.toLowerCase().startsWith("r"))
                         addAnd = " AND fnRead = 1";
-                    results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcName = '" + 
+                    results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcName = '" +
                             Tools.addSlashesToString(name) + "'"+addAnd);
                 }
 				while(results.next()) {
@@ -839,15 +842,20 @@ public class messagebot extends SubspaceBot
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
 		try{
 			ResultSet results = m_botAction.SQLQuery(database, query);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MMM d h:mma");
 			if(results.next())
 			{
-				message = results.getString("fcMessage");
-				String timestamp = results.getString("fdTimeStamp");
+                message = results.getString("fcMessage");
+                //String timestamp = results.getString("fdTimeStamp");
 
-				m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
+                String time = dateFormat.format( new Date( results.getTimestamp("fdTimeStamp").getTime() ) );
 
-				query = "UPDATE tblMessageSystem SET fnRead = 1 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
-				m_botAction.SQLQuery(database, query);
+                //m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
+                String channel = results.getString("fcSender");
+                m_botAction.sendSmartPrivateMessage(name, time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + message);
+
+                query = "UPDATE tblMessageSystem SET fnRead = 1 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
+                m_botAction.SQLQuery(database, query);
 			}
 			else
 			{
@@ -895,7 +903,7 @@ public class messagebot extends SubspaceBot
 		if(message.equalsIgnoreCase("all")) {
 			query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"'";
         } else if(message.equalsIgnoreCase("read")) {
-            query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnRead = 1";            
+            query = "DELETE FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnRead = 1";
         } else {
 			try{
 				messageNumber = Integer.parseInt(message);
@@ -930,13 +938,15 @@ public class messagebot extends SubspaceBot
 			ResultSet results = m_botAction.SQLQuery(database, query);
 			while(results.next())
 			{
-				String thisMessage = "Message #" + String.valueOf(results.getInt("fnID")) + ". From: " + results.getString("fcSender")+". Status: ";
-				if(results.getInt("fnRead") == 1)
-					thisMessage += " Read";
-				else
-					thisMessage += " Unread";
+			    String thisMessage = "Message #" + String.valueOf(results.getInt("fnID")) +
+			    "  From: " + Tools.formatString(results.getString("fcSender"), 20 ) +
+			    "  Read: [";
+			    if(results.getInt("fnRead") == 1)
+			        thisMessage += "X]";
+			    else
+			        thisMessage += " ]";
 
-				m_botAction.sendSmartPrivateMessage(name, thisMessage);
+			    m_botAction.sendSmartPrivateMessage(name, thisMessage);
 			}
                         m_botAction.SQLClose(results);
 		} catch(Exception e) {
