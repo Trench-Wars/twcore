@@ -263,7 +263,7 @@ public class distensionbot extends SubspaceBot {
     public final int SHIPTYPE_SCOUT_DEFAULT = 0;
     public final int SHIPTYPE_ADVANCED_SCOUT = 1;
     public final int SHIPTYPE_ARTILLERY = 2;
-    public final int SHIPTYPE_TANK = 3;
+    public final int SHIPTYPE_WARSHIP = 3;
     public final int SHIPTYPE_SCIENCE_VESSEL = 4;
     public final int SHIPTYPE_Z_CLASS = 5;
 
@@ -2769,40 +2769,43 @@ public class distensionbot extends SubspaceBot {
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
             printCost = true;
             currentUpgrade = upgrades.get( i );
-            if( currentUpgrade.getMaxLevel() != -1 ) {
-                printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 38);
-                if( currentUpgrade.getMaxLevel() == 0 ) {
-                    printmsg += "N/A";
-                    printCost = false;
-                } else if( currentUpgrade.getMaxLevel() == 1 ) {
-                    if( purchasedUpgrades[i] == 1 ) {
-                        printmsg += "(INSTALLED)";
+            if( (currentUpgrade.getPrizeNum() != Tools.Prize.RECHARGE &&
+                 currentUpgrade.getPrizeNum() != Tools.Prize.ENERGY ) || p.getShipType() == SHIPTYPE_Z_CLASS ) {
+                if( currentUpgrade.getMaxLevel() != -1 ) {
+                    printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 38);
+                    if( currentUpgrade.getMaxLevel() == 0 ) {
+                        printmsg += "N/A";
                         printCost = false;
+                    } else if( currentUpgrade.getMaxLevel() == 1 ) {
+                        if( purchasedUpgrades[i] == 1 ) {
+                            printmsg += "(INSTALLED)";
+                            printCost = false;
+                        } else {
+                            printmsg += "(NOT INSTALLED)   ";
+                        }
                     } else {
-                        printmsg += "(NOT INSTALLED)   ";
+                        printmsg += Tools.formatString("( " + (purchasedUpgrades[i] < 10 ? " " : "") + purchasedUpgrades[i] + " / " +
+                                (currentUpgrade.getMaxLevel() < 10 ? " " : "") + currentUpgrade.getMaxLevel() + " )", 18);
+                        if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i]) {
+                            printmsg += "[MAX]";
+                            printCost = false;
+                        }
                     }
-                } else {
-                    printmsg += Tools.formatString("( " + (purchasedUpgrades[i] < 10 ? " " : "") + purchasedUpgrades[i] + " / " +
-                            (currentUpgrade.getMaxLevel() < 10 ? " " : "") + currentUpgrade.getMaxLevel() + " )", 18);
-                    if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i]) {
-                        printmsg += "[MAX]";
-                        printCost = false;
+                    if( printCost ) {
+                        int cost = currentUpgrade.getCostDefine( purchasedUpgrades[i] );
+                        int diff = cost - p.getUpgradePoints();
+                        printmsg += Tools.formatString( "" + cost, 11 );
+                        int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
+                        if( req <= p.getRank() ) {
+                            if( diff <= 0 )
+                                printmsg += "AVAIL!";
+                            else
+                                printmsg += diff + " more UP" + (diff == 1 ? "" : "s");
+                        } else
+                            printmsg += "Rank " + (req < 10 ? " " : "") + req;
                     }
+                    display.add(printmsg);
                 }
-                if( printCost ) {
-                    int cost = currentUpgrade.getCostDefine( purchasedUpgrades[i] );
-                    int diff = cost - p.getUpgradePoints();
-                    printmsg += Tools.formatString( "" + cost, 11 );
-                    int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
-                    if( req <= p.getRank() ) {
-                        if( diff <= 0 )
-                            printmsg += "AVAIL!";
-                        else
-                            printmsg += diff + " more UP" + (diff == 1 ? "" : "s");
-                    } else
-                        printmsg += "Rank " + (req < 10 ? " " : "") + req;
-                }
-                display.add(printmsg);
             }
         }
         display.add( "RANK: " + p.getRank() + "  UPGRADES: " + p.getUpgradeLevel() + "  UP: " + p.getUpgradePoints()
@@ -2838,6 +2841,11 @@ public class distensionbot extends SubspaceBot {
         int currentUpgradeLevel = p.getPurchasedUpgrade( upgradeNum );
         if( upgrade == null || currentUpgradeLevel == -1 )
             throw new TWCoreException( "Exactly which do you mean there?  Maybe check the !armory first.  #" + (upgradeNum + 1) + " doesn't work for me." );
+
+        if( (upgrade.getPrizeNum() == Tools.Prize.RECHARGE ||
+                upgrade.getPrizeNum() == Tools.Prize.ENERGY ) && p.getShipType() != SHIPTYPE_Z_CLASS )
+            throw new TWCoreException( "Your ship receives recharge and energy fittings automatically -- you don't need to upgrade them!" );
+
         if( currentUpgradeLevel >= upgrade.getMaxLevel() )
             throw new TWCoreException(  "You've upgraded that one as much as you can." );
         int req = upgrade.getRankRequired( currentUpgradeLevel );
@@ -3034,7 +3042,7 @@ public class distensionbot extends SubspaceBot {
         String[] args = msg.split(":");
         boolean realDeal = false;
         if( args.length == 2 )
-            if( args[1] == "YES" )
+            if( args[1].equals( "YES" ) )
                 realDeal = true;
 
         int typeToChangeTo = -1;
@@ -3067,7 +3075,10 @@ public class distensionbot extends SubspaceBot {
                 if( cost > 0 ) {
                     m_botAction.sendPrivateMessage( p.getArenaPlayerID(), specmsg + "  You waited plenty long to do it.  " + costmsg + "  " + confirmmsg );
                 } else {
-                    m_botAction.sendPrivateMessage( p.getArenaPlayerID(), specmsg + "  This'll be your first time?  It's before rank " + distensionbot.ShipTypeProfile.rankForPaidTypeChoice + ", so no charge.  "+ confirmmsg );
+                    if( DEBUG )
+                        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), specmsg + "  This'll be your first time?  Don't worry, no charge for beta testers.  "+ confirmmsg );
+                    else
+                        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), specmsg + "  This'll be your first time?  It's before rank " + distensionbot.ShipTypeProfile.rankForPaidTypeChoice + ", so no charge.  "+ confirmmsg );
                 }
             } else {
                 if( cost > 0 ) {
