@@ -514,7 +514,8 @@ public class distensionbot extends SubspaceBot {
         if( DEBUG ) {
             //m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
-                m_botAction.sendChatMessage("Distension BETA initialized.  ?go #distension");
+                m_botAction.sendChatMessage("Distension BETA initialized with new ship-type enhancements.  ?go #distension");
+                m_botAction.sendChatMessage("All ships set to rank 40 and will need to be refitted with upgrades.  Use !shiptypes to view available ship types, and !specialize to choose one.");
                 m_botAction.sendArenaMessage("Distension BETA loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
             }
             // Reset all times at each load
@@ -792,6 +793,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!sca", acceptedMessages, this, "cmdScrapAll" );
+        m_commandInterpreter.registerCommand( "!st", acceptedMessages, this, "cmdShipTypes" );
         m_commandInterpreter.registerCommand( "!su", acceptedMessages, this, "cmdSummon" );
         m_commandInterpreter.registerCommand( "!t", acceptedMessages, this, "cmdTerr" );
         m_commandInterpreter.registerCommand( "!tm", acceptedMessages, this, "cmdTeam" );
@@ -965,7 +967,9 @@ public class distensionbot extends SubspaceBot {
         if( msg.equals("2") ) {
             String[] helps = {
             ".-----------------------",
-            "| !intro                |  A guided on-screen introduction to Distension.",
+            "| !intro                |  A guided on-screen introduction to Distension",
+            "| !specialize <ship>    |  Specialize into a specific ship type",
+            "| !shiptypes        !st |  List ship types into which you may specialize",
             "| !warp             !w  |  Toggle waiting in spawn vs. being autowarped out",
             "| !basewarp         !bw |  Toggle warping into base vs. spawn at round start",
             "| !killmsg          !k  |  Toggle kill messages on and off (+1% RP for off)",
@@ -975,7 +979,7 @@ public class distensionbot extends SubspaceBot {
             "| !armies           !ar |  View size and strength of armies",
             "| !battleinfo       !bi |  Display current battle status",
             "| !clearmines       !cm |  Clear all mines, if in a mine-laying ship",
-            "| !summon (Terr)    !su |  Summons others to you.  !summon s for sharks.",
+            "| !summon (Terr)    !su |  Summons others to you.  !summon s for sharks",
             "| !summon (others)  !su |  Toggles allowing summoning by Terriers",
             "|______________________/"
             };
@@ -987,10 +991,10 @@ public class distensionbot extends SubspaceBot {
             String[] helps = {
                     "    CIVILIAN CONSOLE  ",
                     ".-----------------------",
+                    "| !intro                |  An introduction to Distension",
                     "| !enlist           !e  |  Enlist in the army that needs your services most",
                     "| !armies           !ar |  View all public armies and their IDs",
                     "| !enlist <army#>   !e  |  Enlist specifically in <army#>",
-                    "| !intro                |  An introduction to Distension",
                     "| !return           ~   |  Return to your current position in the war",
                     "| !battleinfo       !bi |  Display current battle status",
                     "|______________________/"
@@ -3115,6 +3119,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Take their RP, take their upgrades, take their UP.  Thank you, ma'am.
+        p.deprizeDefaultUpgrades();
         p.setShipType( typeToChangeTo );
         p.rankPoints -= cost;
         massScrap(p, 0, NUM_UPGRADES - 1 );
@@ -3123,7 +3128,7 @@ public class distensionbot extends SubspaceBot {
 
         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You have specialized to " + sp.getTypeName().toUpperCase() + "!" );
         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + cost + "RP  (5% of current)  You now have " + p.getUpgradePoints() + " UP to spend." );
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your new ship build will go into effect at your next rearmament."  );
+        p.prizeDefaultUpgrades();
     }
 
 
@@ -3147,7 +3152,7 @@ public class distensionbot extends SubspaceBot {
             ShipTypeProfile sp = m_shipTypeGeneralData.get(i);
             String typeName = Tools.formatString( sp.getTypeName(), 15 );
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), i + ": " + typeName + " - " + sp.getLineDesc() );
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "   NRG Rate: " + sp.getEnRateDesc() + "  CHG Rate: " + sp.getChgRateDesc() + "  UP/RANK: " + sp.getUPperRank() + "  (Total " + sp.getTotalUPforRank(p.getRank()) + " after change)" );
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "   NRG Rate: " + sp.getEnRateDesc() + "   CHG Rate: " + sp.getChgRateDesc() + "  UP/RANK: " + sp.getUPperRank() + "  (Total " + sp.getTotalUPforRank(p.getRank()) + " after change)" );
         }
     }
 
@@ -6302,6 +6307,7 @@ public class distensionbot extends SubspaceBot {
             String query = "UPDATE tblDistensionShip ship SET ";
 
             query +=       "ship.fnRank=" + rank + "," +
+            "ship.fnShipType=" + shipType + "," +
             "ship.fnRankPoints=" + rankPoints + "," +
             "ship.fnUpgradePoints=" + upgPoints + "," +
             "ship.fnStat1=" + purchasedUpgrades[0];
@@ -6520,10 +6526,7 @@ public class distensionbot extends SubspaceBot {
                         }
                     }
             }
-            for( int i=0; i<currentEnergyLevel; i++ )
-                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.ENERGY );
-            for( int i=0; i<currentRechargeLevel; i++ )
-                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.RECHARGE );
+            prizeDefaultUpgrades();
 
             if( isFastRespawn() )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.FULLCHARGE );
@@ -6537,6 +6540,26 @@ public class distensionbot extends SubspaceBot {
                 doWarp(false);
             m_botAction.hideObjectForPlayer(arenaPlayerID, LVZ_REARMING);
             return totalPrized * PRIZE_SPAM_DELAY;
+        }
+
+        /**
+         * Prizes the default/ranked up upgrades.
+         */
+        public void prizeDefaultUpgrades() {
+            for( int i=0; i<currentEnergyLevel; i++ )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.ENERGY );
+            for( int i=0; i<currentRechargeLevel; i++ )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.RECHARGE );
+        }
+
+        /**
+         * Deprizes the default/ranked up upgrades.
+         */
+        public void deprizeDefaultUpgrades() {
+            for( int i=0; i<currentEnergyLevel; i++ )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#-" + Tools.Prize.ENERGY );
+            for( int i=0; i<currentRechargeLevel; i++ )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#-" + Tools.Prize.RECHARGE );
         }
 
         /**
