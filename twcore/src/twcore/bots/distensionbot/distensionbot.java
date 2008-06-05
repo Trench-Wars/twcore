@@ -2066,24 +2066,27 @@ public class distensionbot extends SubspaceBot {
         army.adjustPilotsTotal(1);
         m_botAction.sendPrivateMessage( name, "Welcome aboard.  If you need an !intro to the game, I'll !help you out.  Or if you just want some action, jump in your new Warbird or Terrier." );
 
-        // Get new players competetive.  Remove at release.
         if( DEBUG )
-            bonus = 300000;
+            bonus = 0;
         if( bonus > 0 ) {
             m_botAction.sendPrivateMessage( name, "Your contract also entitles you to a " + bonus + " RP signing bonus!  Congratulations." );
             p.addShipToDB( 1, bonus );
             p.addShipToDB( 5, bonus );
-            if( DEBUG ) {
-                p.addShipToDB( 2, bonus );
-                p.addShipToDB( 3, bonus );
-                p.addShipToDB( 4, bonus );
-                p.addShipToDB( 6, bonus );
-                p.addShipToDB( 7, bonus );
-                p.addShipToDB( 8, bonus );
-            }
         } else {
-            p.addShipToDB( 1 );
-            p.addShipToDB( 5 );
+            // Get new players competetive.  Remove at release.
+            if( DEBUG ) {
+                p.addShipToDBAtDebugRank(1, 365576, 39 );
+                p.addShipToDBAtDebugRank(2, 370449, 39 );
+                p.addShipToDBAtDebugRank(3, 365576, 39 );
+                p.addShipToDBAtDebugRank(4, 389947, 39 );
+                p.addShipToDBAtDebugRank(5, 258332, 39 );
+                p.addShipToDBAtDebugRank(6, 341201, 39 );
+                p.addShipToDBAtDebugRank(7, 341201, 39 );
+                p.addShipToDBAtDebugRank(8, 268083, 39 );
+            } else {
+                p.addShipToDB( 1 );
+                p.addShipToDB( 5 );
+            }
         }
         m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_MENU_WELCOME_NEW_ENLISTEE );
         if( DEBUG ) {
@@ -2444,8 +2447,8 @@ public class distensionbot extends SubspaceBot {
         if( !flagTimeStarted || stopFlagTime ) {
             checkFlagTimeStart();
         }
-        cmdProgress( name, null );
         p.addRankPoints(0,false); // If player has enough RP to level, rank them up.
+        cmdProgress( name, null );
         p.setIgnoreShipChanges(false);
 
         // Make sure a player knows they can upgrade if they have no upgrades installed (such as after a refund)
@@ -2754,13 +2757,16 @@ public class distensionbot extends SubspaceBot {
         else if( shipNum == 0 )
             throw new TWCoreException( "You must be in-ship to see your progress toward the next rank." );
 
+        if( p.getPointsToNextRank() <= 0 )
+            p.addRankPoints(0, false);  // Rank up if they need it (safety catch)
+        
         double pointsSince = p.getPointsSinceLastRank();
         double pointsNext = p.getNextRankPointsProgressive();
         int progChars = 0;
         int percent = 0;
-        if( pointsSince > 0 ) {
-            progChars = (int)(( pointsSince / pointsNext ) * 20);
-            percent = (int)(( pointsSince / pointsNext ) * 100 );
+        if( pointsSince > 0 && pointsNext > 0 ) {
+            progChars = Math.max( 20, Math.max( 0, (int)(( pointsSince / pointsNext ) * 20) ) );
+            percent = Math.max( 100, Math.max( 0, (int)(( pointsSince / pointsNext ) * 100 ) ) );
         }
         String progString = Tools.formatString("", progChars, "=" );
         progString = Tools.formatString(progString, 20 );
@@ -6262,6 +6268,19 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
+        public void addShipToDBAtDebugRank( int shipNumToAdd, int startingRankPoints, int startingRank ) {
+            if( shipNumToAdd < 1 || shipNumToAdd > 9 )
+                return;
+            shipsAvail[ shipNumToAdd - 1 ] = true;
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip" + shipNumToAdd + "='y' WHERE fnID='" + dbPlayerID + "'" );
+                m_botAction.SQLQueryAndClose( m_database, "INSERT INTO tblDistensionShip ( fnPlayerID , fnShipNum , fnRankPoints, fnRank, fnUpgradePoints ) VALUES (" + dbPlayerID + ",  " + shipNumToAdd + ", " + startingRankPoints + ", " + startingRank + ", " + startingRank * 10 + ")" );
+            } catch (SQLException e ) {
+                Tools.printStackTrace("Problem adding ship " + shipNumToAdd + " to DB for: " + name, e);
+                m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
+            }
+        }
+
         /**
          * Removes a ship as being available on a player's record, and wipes all ship data.
          * @param shipNum Ship # to remove
@@ -9290,6 +9309,7 @@ public class distensionbot extends SubspaceBot {
         Vector <String>endRoundSpam = new Vector<String>();
         int spamLength = 80;
 
+        String victory;
         if( winningArmyID == 0 || winningArmyID == 1 ) {
             if( winningArmyID == 0 )
                 if( m_freq1Score > m_freq0Score )
@@ -9302,23 +9322,35 @@ public class distensionbot extends SubspaceBot {
                 else
                     m_freq1Score++;
 
+            // Test display:
+            // ,------------------------------------------------------------------------.
+            // |  END OF WAR: GRAND VICTORY for PEOPLE'S REPUBLIC OF MISANTHROPY (1) !!  \
+            // .==============================================================================.
+            // | Total                                                                        |
+
+            // 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+
             if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN || m_freq1Score >= SCORE_REQUIRED_FOR_WIN ) {
-                m_botAction.sendArenaMessage( Tools.centerString( "END OF WAR: " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ") is victorious!!", spamLength ), Tools.Sound.HALLELUJAH );
+                victory = "|  END OF WAR: GRAND VICTORY for " + m_armies.get(winningArmyID).getName().toUpperCase() + " (" + winningArmyID + ") !!  \\";
+                //m_botAction.sendArenaMessage( Tools.centerString( "END OF WAR: " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ") is victorious!!", spamLength ), Tools.Sound.HALLELUJAH );
                 //endRoundSpam.add( Tools.centerString( "END OF WAR: " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ") is victorious!!", spamLength) );
                 //m_botAction.sendArenaMessage( "THE CONFLICT IS OVER!!  " + m_armies.get(winningArmyID).getName() + " has laid total claim to the sector after " + m_roundNum + " battles.", Tools.Sound.HALLELUJAH );
                 //m_botAction.sendArenaMessage( "---(   Double points awarded for winning the war!   )---" );
                 gameOver = true;
             } else {
-                m_botAction.sendArenaMessage( Tools.centerString( "END OF BATTLE " + m_roundNum + ": " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ") is victorious.", spamLength), Tools.Sound.HALLELUJAH );
+                victory = "|  END OF BATTLE " + m_roundNum + ": Victory for " + m_armies.get(winningArmyID).getName().toUpperCase() + " (" + winningArmyID + ")  \\";
+                //m_botAction.sendArenaMessage( Tools.centerString( "END OF BATTLE " + m_roundNum + ": Victory goes to " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ")", spamLength), Tools.Sound.HALLELUJAH );
                 //endRoundSpam.add( Tools.centerString("END OF BATTLE " + m_roundNum + ": " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ") is victorious.", spamLength) );
                 //m_botAction.sendArenaMessage( "BATTLE " + m_roundNum + " ENDED: " + m_armies.get(winningArmyID).getName() + " gains control of the sector after " + getTimeString( flagTimer.getTotalSecs() ) +
                 //".  Score:  " + flagTimer.getScoreDisplay(), Tools.Sound.HALLELUJAH );
             }
         } else {
-            endRoundSpam.add( Tools.centerString("END OF BATTLE " + m_roundNum + ": " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ") is victorious.", spamLength) );
             m_botAction.sendArenaMessage( "... Unexpected Winner Army ID:" + winningArmyID );
             return;
         }
+
+        m_botAction.sendArenaMessage( ("," + Tools.formatString("", victory.length() - 3, "-") + "."), Tools.Sound.HALLELUJAH );
+        endRoundSpam.add( victory );
         endRoundSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
 
         float winnerStrCurrent;
@@ -9594,7 +9626,7 @@ public class distensionbot extends SubspaceBot {
                             float percentOnFreq = (float)(secs - time) / (float)secs;
                             int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                             msgRecipients.add(p.getArenaPlayerID());
-                            msgs.add( "You lost the battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
+                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
                             //m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You lost the battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation).");
                             p.addRankPoints(modPoints,false);
                         }
@@ -9623,12 +9655,16 @@ public class distensionbot extends SubspaceBot {
             numReq = SCORE_REQUIRED_FOR_WIN - m_freq0Score;
         else
             numReq = SCORE_REQUIRED_FOR_WIN - m_freq1Score;
-        endRoundSpam.add( Tools.centerString( "WAR STATUS", 30) +
+
+
+        endRoundSpam.add( "Round time: " + getTimeString( flagTimer.getTotalSecs() ) + Tools.rightString( "WAR STATUS   " + flagTimer.getScoreDisplay() + "   " + numReq + " MORE NEEDED FOR WIN", spamLength - 1 ) );
+        /*
+        endRoundSpam.add( "." + Tools.centerString( "WAR STATUS", 29 ) +
                           Tools.centerString( flagTimer.getScoreDisplay(), 20 ) +
-                          Tools.centerString( numReq + " MORE NEEDED FOR WIN", 30) );
+                          Tools.centerString( numReq + " MORE NEEDED FOR WIN", 29) + "." );
         //endRoundSpam.add( Tools.centerString("END OF BATTLE " + m_roundNum + ": " + m_armies.get(winningArmyID).getName() + " (" + winningArmyID + ") is victorious.", spamLength) );
         //m_botAction.sendArenaMessage( "BATTLE " + m_roundNum + " ENDED: " + m_armies.get(winningArmyID).getName() + " gains control of the sector after " + getTimeString( flagTimer.getTotalSecs() ) +
-        //".  Score:  " + flagTimer.getScoreDisplay(), Tools.Sound.HALLELUJAH );
+        //".  Score:  " + flagTimer.getScoreDisplay(), Tools.Sound.HALLELUJAH ); */
 
         for( int i=0; i < endRoundSpam.size(); i++ )
             m_botAction.sendArenaMessage( endRoundSpam.get(i) );
