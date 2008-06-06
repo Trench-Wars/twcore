@@ -1741,10 +1741,15 @@ public class distensionbot extends SubspaceBot {
         boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
         boolean endedStreak = false;
         boolean flyingSolo = (victorArmy.getPilotsOfShip(victorShip) == 1) && (victorArmy.getPilotsInGame() >= 14 );
-        boolean shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > 0.30f );
+        boolean shipExcess = false;
         boolean shipExtremeExcess = false;
-        if( shipExcess )
-            shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > 0.45f;
+        if( victorArmy.getPilotsInGame() >= 8 ) {
+            shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > 0.30f );
+            if( shipExcess )
+                shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > 0.45f;
+        }
+
+
 
         endedStreak = loser.clearSuccessiveKills();
         // Otherwise: Add points via level scheme
@@ -2452,7 +2457,7 @@ public class distensionbot extends SubspaceBot {
         p.setIgnoreShipChanges(false);
 
         // Make sure a player knows they can upgrade if they have no upgrades installed (such as after a refund)
-        if( p.getUpgradeLevel() == 0 && p.getUpgradePoints() >= 10 ) {
+        if( p.getPurchasedUpgradeLevel() == 0 && p.getUpgradePoints() >= 10 ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "TIP: *** You have no upgrades installed! ***  Use !armory to see your upgrade options, and !upgrade # to upgrade a specific part of your ship.", 1 );
         }
     }
@@ -2656,43 +2661,111 @@ public class distensionbot extends SubspaceBot {
         if( shipNum == -1 )
             throw new TWCoreException( "I don't know who you are yet.  Please !return to your army, or !enlist if you have none." );
 
+
         if( shipNum == 0 ) {
             m_botAction.sendPrivateMessage( theName, p.getPlayerRankString() + " " + p.getName().toUpperCase() + " of " + p.getArmyName() + ": DOCKED.  [Your data is saved; safe to leave arena.]" );
-        } else {
-            String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-            m_botAction.sendPrivateMessage( theName, p.getPlayerRankString() + " " + p.getName().toUpperCase() + " of " + p.getArmyName().toUpperCase() + ":  " + shipname.toUpperCase() +
-                    " - RANK " + p.getRank() );
-
-            m_botAction.sendPrivateMessage( theName, "Total " + p.getRankPoints() + " RP earned; " + p.getRecentlyEarnedRP() + " RP earned this session." );
-            m_botAction.sendPrivateMessage( theName,  p.getUpgradeLevel() + " upgrades installed.  " + p.getUpgradePoints() + " UP available for further upgrades." );
-            if( flagTimer != null && flagTimer.isRunning() ) {
-                float secs = flagTimer.getTotalSecs();
-                Integer inttime = m_playerTimes.get( p.getName() );
-                if( inttime != null ) {
-                    float time = inttime;
-                    float percentOnFreq = (secs - time) / secs;
-                    m_botAction.sendPrivateMessage( theName,  "Current total participation this round: " + (int)(percentOnFreq * 100) + "%" );
-                }
-            }
-            if( p.isSupportShip() ) {
-                float sharingPercent;
-                float calcRank = (float)p.getRank();
-                if( shipNum == 4 )
-                    if( calcRank > 10.0f )
-                        calcRank = 10.0f;
-                if( shipNum == 6 )
-                    if( calcRank > 8.0f )
-                        calcRank = 8.0f;
-                sharingPercent = calcRank / 10.0f;
-                m_botAction.sendPrivateMessage( theName, "Profit sharing: " + sharingPercent + "%" );
-            }
-            if( shipNum == 9 )
-                m_botAction.sendPrivateMessage( theName, "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
-            if( mod == null )
-                cmdProgress( name, msg, null );
-            else
-                cmdProgress( name, msg, mod );
+            return;
         }
+        // Test display:
+        // 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+        // ,----------------------------------------------------------------.
+        // |  Fleet Captain JACK HUNTINGTON    Javelin Artillery - RANK 50   \
+        // .=========================================================================.
+        // | Pilot for People's Republic of Misanthropy.             Army wins:  50  |
+        // | Total RP: 400000
+        Vector <String>statusSpam = new Vector<String>();
+        int spamLength = 76;
+
+        String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
+
+        String nameString = "|  " + p.getPlayerRankString() + " " + p.getName().toUpperCase() + "   " + shipname
+                + p.getShipTypeName() + " - RANK " + p.getRank() + "  \\";
+        if( p.getPointsToNextRank() <= 0 )
+            p.addRankPoints(0, false);  // Rank up if they need it (safety catch)
+        double pointsSince = p.getPointsSinceLastRank();
+        double pointsNext = p.getNextRankPointsProgressive();
+        int progChars = 0;
+        int percent = 0;
+        if( pointsSince > 0 && pointsNext > 0 ) {
+            progChars = Math.min( 20, Math.max( 0, (int)(( pointsSince / pointsNext ) * 20) ) );
+            percent = Math.min( 100, Math.max( 0, (int)(( pointsSince / pointsNext ) * 100 ) ) );
+        }
+        String progString = Tools.formatString("", progChars, "=" );
+        progString = Tools.formatString(progString, 20 );
+
+        String partString = "N/A";
+        if( flagTimer != null && flagTimer.isRunning() ) {
+            float secs = flagTimer.getTotalSecs();
+            Integer inttime = m_playerTimes.get( p.getName() );
+            if( inttime != null ) {
+                float time = inttime;
+                float percentOnFreq = (secs - time) / secs;
+                partString = (int)(percentOnFreq * 100) + "%";
+            }
+        }
+
+        statusSpam.add("," + Tools.formatString("", nameString.length() - 3, "-") + ".");
+        statusSpam.add( nameString );
+        statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
+        statusSpam.add( "| " + Tools.formatString("Pilot for " + p.getArmyName() + ".", 48) +
+                               Tools.rightString("Army wins:  " + p.getBattlesWon() + "  |", spamLength - 48 ) );
+        statusSpam.add( Tools.formatString("|      Total RP:  " + p.getRankPoints(), spamLength / 2) +
+                        Tools.formatString("     Session RP:  " + p.getRecentlyEarnedRP(), (spamLength / 2) -1 ) + "|" );
+        statusSpam.add( Tools.formatString("|          ( " + (int)pointsSince + " / " + (int)pointsNext + " )", spamLength / 2) +
+                        Tools.formatString("     RP to next:  " + p.getPointsToNextRank(), (spamLength / 2) -1 ) + "|" );
+        statusSpam.add(                    "| " + Tools.centerString(progString, ((spamLength / 2) - 2)) +
+                        Tools.formatString("       Progress:  " + percent + "% to Rank " + (p.getRank() + 1), (spamLength / 2) -1 ) + "|" );
+        statusSpam.add( Tools.formatString("|      Upgrades:  " + p.getUpgradeLevel(), spamLength / 2) +
+                        Tools.formatString("             UP:  " + p.getUpgradePoints(), (spamLength / 2) -1 ) + "|" );
+        statusSpam.add( Tools.formatString("|       AutoNRG:  " + p.getEnergyLevel(), spamLength / 2) +
+                        Tools.formatString("        AutoCHG:  " + p.getRechargeLevel(), (spamLength / 2) -1 ) + "|" );
+        statusSpam.add( Tools.formatString("|        Streak:  " + p.getSuccessiveKills(), spamLength / 2) +
+                        Tools.formatString("     Played " + p.getMinutesPlayed() + " min today", (spamLength / 2) -1 ) + "|" );
+        statusSpam.add( Tools.formatString("| ProfitSharing:  " + p.getSuccessiveKills(), spamLength / 2) +
+                        Tools.formatString("  Participation:  " + partString, (spamLength / 2) -1 ) + "|" );
+        if( shipNum == 9 ) {
+            m_botAction.sendPrivateMessage( theName, "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
+        statusSpam.add( Tools.formatString("|            OP: ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )", spamLength / 2) +
+                        Tools.formatString("     Comm auths: ( " + p.getCurrentComms() + " / 3 )", (spamLength / 2) -1 ) + "|" );
+        }
+        if( p.getBattlesWon() >= WINS_REQ_RANK_FLEET_ADMIRAL )
+            statusSpam.add( "|" + Tools.centerString("You are the Fleet Admiral, the highest and most honorable rank of all.", spamLength - 2) + "|" );
+        else
+            statusSpam.add( Tools.formatString( "| Promotion estimated after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.", spamLength) );
+        statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
+
+        /*
+        m_botAction.sendPrivateMessage( theName, p.getPlayerRankString() + " " + p.getName().toUpperCase() + " of " + p.getArmyName() + ":  " + shipname
+                + p.getShipTypeName() + " - RANK " + p.getRank() );
+
+        m_botAction.sendPrivateMessage( theName, "Total " + p.getRankPoints() + " RP earned; " + p.getRecentlyEarnedRP() + " RP earned this session." );
+        m_botAction.sendPrivateMessage( theName,  p.getUpgradeLevel() + " upgrades installed.  " + p.getUpgradePoints() + " UP available for further upgrades." );
+        if( flagTimer != null && flagTimer.isRunning() ) {
+            float secs = flagTimer.getTotalSecs();
+            Integer inttime = m_playerTimes.get( p.getName() );
+            if( inttime != null ) {
+                float time = inttime;
+                float percentOnFreq = (secs - time) / secs;
+                m_botAction.sendPrivateMessage( theName,  "Current total participation this round: " + (int)(percentOnFreq * 100) + "%" );
+            }
+        }
+        if( p.isSupportShip() ) {
+            float sharingPercent;
+            float calcRank = (float)p.getRank();
+            if( shipNum == 4 )
+                if( calcRank > 10.0f )
+                    calcRank = 10.0f;
+            if( shipNum == 6 )
+                if( calcRank > 8.0f )
+                    calcRank = 8.0f;
+            sharingPercent = calcRank / 10.0f;
+            m_botAction.sendPrivateMessage( theName, "Profit sharing: " + sharingPercent + "%" );
+        }
+        if( shipNum == 9 )
+            m_botAction.sendPrivateMessage( theName, "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
+        cmdProgress( name, msg, mod );
+
         // Display command rank progress info, w/ separate display for cadets enrolled in the academy.
         if( p.getBattlesWon() < WINS_REQ_RANK_ENSIGN ) {
             if( p.getBattlesWon() < WINS_REQ_RANK_CADET_4TH_CLASS ) {
@@ -2710,6 +2783,10 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Time played today: " + p.getMinutesPlayed() + " minutes.   Current Streak: " + p.getSuccessiveKills() + " kills." );
         if( shipNum == 9 )
             m_botAction.sendPrivateMessage( theName, "Use !opsstatus (shortcut: ..) to see only OP points and comm auths." );
+        */
+        for( int i=0; i < statusSpam.size(); i++ )
+            m_botAction.sendPrivateMessage( theName, statusSpam.get(i) );
+
     }
 
 
@@ -2759,20 +2836,21 @@ public class distensionbot extends SubspaceBot {
 
         if( p.getPointsToNextRank() <= 0 )
             p.addRankPoints(0, false);  // Rank up if they need it (safety catch)
-        
+
         double pointsSince = p.getPointsSinceLastRank();
         double pointsNext = p.getNextRankPointsProgressive();
         int progChars = 0;
         int percent = 0;
         if( pointsSince > 0 && pointsNext > 0 ) {
-            progChars = Math.max( 20, Math.max( 0, (int)(( pointsSince / pointsNext ) * 20) ) );
-            percent = Math.max( 100, Math.max( 0, (int)(( pointsSince / pointsNext ) * 100 ) ) );
+            progChars = Math.min( 20, Math.max( 0, (int)(( pointsSince / pointsNext ) * 20) ) );
+            percent = Math.min( 100, Math.max( 0, (int)(( pointsSince / pointsNext ) * 100 ) ) );
         }
         String progString = Tools.formatString("", progChars, "=" );
         progString = Tools.formatString(progString, 20 );
         String streakMsg = (p.getSuccessiveKills() > 1 ? "STREAK: " + p.getSuccessiveKills() : "" );
-        m_botAction.sendPrivateMessage( name, "Progress:  " + (int)pointsSince + " / " + (int)pointsNext +
-                "  (" + p.getPointsToNextRank() + " to Rank " + (p.getRank() + 1) + ")    [" + progString + "]  "
+        String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
+        m_botAction.sendPrivateMessage( name, "R" + p.getRank() + " " + shipname + p.getShipTypeName() + "  " + (int)pointsSince + " / " + (int)pointsNext +
+                "  (" + p.getPointsToNextRank() + " to R" + (p.getRank() + 1) + ")    [" + progString + "]  "
                 + percent + "%  UP: " + p.getUpgradePoints() + "  " + streakMsg );
     }
 
@@ -2797,15 +2875,24 @@ public class distensionbot extends SubspaceBot {
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = p.getPurchasedUpgrades();
         String printmsg;
-        boolean printCost;
-        //String[] display = new String[NUM_UPGRADES + 1];
+        boolean printCost, isAutomatic;
         LinkedList <String>display = new LinkedList<String>();
         for( int i = 0; i < NUM_UPGRADES; i++ ) {
-            printCost = true;
             currentUpgrade = upgrades.get( i );
-            if( (currentUpgrade.getPrizeNum() != Tools.Prize.RECHARGE &&
-                 currentUpgrade.getPrizeNum() != Tools.Prize.ENERGY ) || p.getShipType() == SHIPTYPE_Z_CLASS ) {
-                if( currentUpgrade.getMaxLevel() != -1 ) {
+            isAutomatic = (!(p.getShipType() == SHIPTYPE_Z_CLASS) &&
+                          (currentUpgrade.getPrizeNum() == Tools.Prize.ENERGY ||
+                           currentUpgrade.getPrizeNum() == Tools.Prize.RECHARGE));
+            if( currentUpgrade.getMaxLevel() != -1 ) {
+                if( isAutomatic ) {
+                    if( currentUpgrade.getPrizeNum() == Tools.Prize.ENERGY ) {
+                        printmsg = "--- " + Tools.formatString( "Energy          [Auto-Install]", 38);
+                        printmsg += "(" + Tools.centerString( "" + p.getEnergyLevel(), 9 ) + ")";
+                    } else {
+                        printmsg = "--- " + Tools.formatString( "Recharge        [Auto-Install]", 38);
+                        printmsg += "(" + Tools.centerString( "" + p.getRechargeLevel(), 9 ) + ")";
+                    }
+                } else {
+                    printCost = true;
                     printmsg = (i+1 < 10 ? " " : "") + (i + 1) + ": " + Tools.formatString( currentUpgrade.getName(), 38);
                     if( currentUpgrade.getMaxLevel() == 0 ) {
                         printmsg += "N/A";
@@ -2838,8 +2925,8 @@ public class distensionbot extends SubspaceBot {
                         } else
                             printmsg += "Rank " + (req < 10 ? " " : "") + req;
                     }
-                    display.add(printmsg);
                 }
+                display.add(printmsg);
             }
         }
         display.add( "RANK: " + p.getRank() + "  UPGRADES: " + p.getUpgradeLevel() + "  UP: " + p.getUpgradePoints()
@@ -2913,9 +3000,9 @@ public class distensionbot extends SubspaceBot {
         // Get the    [ROT] crap out.
         String[] upgparse = upgrade.getName().split("  ", 2);
         if( upgrade.getMaxLevel() == 1 ) {
-            m_botAction.sendPrivateMessage( name, upgparse[0] + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] installed.  -" + cost + "UP from army allowance." + (prized?"":"  You will receive this upgrade at next rearm.") );
+            m_botAction.sendPrivateMessage( name, upgparse[0] + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] installed.  -" + cost + "UP (" + p.getUpgradePoints() + " remaining)" + (prized?"":"  You will receive this upgrade at next rearm.") );
         } else {
-            m_botAction.sendPrivateMessage( name, upgparse[0] + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] upgraded to Level " + (currentUpgradeLevel + 1) + ".  -" + cost + "UP from army allowance." + (prized?"":"  You will receive this upgrade at next rearm.") );
+            m_botAction.sendPrivateMessage( name, upgparse[0] + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] upgraded to Level " + (currentUpgradeLevel + 1) + ".  -" + cost + "UP (" + p.getUpgradePoints() + " remaining)" + (prized?"":"  You will receive this upgrade at next rearm.") );
         }
         if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS || upgrade.getPrizeNum() == Tools.Prize.MULTIFIRE )
             m_botAction.sendPrivateMessage( name, "--- IMPORTANT NOTE !! ---: Your new weapon may require too much energy for you to use.  If this is the case, !scrap " + (upgradeNum + 1) + " to return to your old weapon free of charge.");
@@ -3063,6 +3150,11 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
+        if( msg.equals("") ) {
+            cmdShipTypes(name, msg);
+            return;
+        }
+
         if( p.getShipNum() < 1 )
             throw new TWCoreException( "You'll need to be in a ship in order to specialize, you jerkoff." );
         if( p.getShipNum() == 9 )
@@ -3076,7 +3168,7 @@ public class distensionbot extends SubspaceBot {
         String[] args = msg.split(":");
         boolean realDeal = false;
         if( args.length == 2 )
-            if( args[1].equals( "YES" ) )
+            if( args[1].equalsIgnoreCase( "yes" ) )
                 realDeal = true;
 
         int typeToChangeTo = -1;
@@ -6868,8 +6960,8 @@ public class distensionbot extends SubspaceBot {
             if( rank >= 80 ) {
                 m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  FINAL RANK ATTAINED  )=-" );
                 String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-                m_botAction.sendPrivateMessage(arenaPlayerID, "YOU ARE NOW A MASTER " + shipname.toUpperCase() + ".  ALL WILL FOREVER REMEMBER THE NAME OF " + name.toUpperCase() + " ... CONGRATULATIONS!!!", Tools.Sound.VICTORY_BELL );
-                m_botAction.sendArenaMessage( name.toUpperCase() + " has become a MASTER " + shipname.toUpperCase() + ".  SALUTE THIS LIVING LEGEND!!", Tools.Sound.PLAY_MUSIC_ONCE );
+                m_botAction.sendPrivateMessage(arenaPlayerID, "YOU ARE NOW A MASTER OF THE " + shipname.toUpperCase() + ".  ALL WILL FOREVER REMEMBER THE NAME OF " + name.toUpperCase() + " ... CONGRATULATIONS!!!", Tools.Sound.VICTORY_BELL );
+                m_botAction.sendArenaMessage( name.toUpperCase() + " has become a MASTER OF THE " + shipname.toUpperCase() + ".  SALUTE THIS LIVING LEGEND!!", Tools.Sound.PLAY_MUSIC_ONCE );
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
                 nextRank = 999999999;
                 return;
@@ -6902,7 +6994,7 @@ public class distensionbot extends SubspaceBot {
                 else
                     m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  RANK UP!  )=-  You are now a RANK " + rank + " " + shipname + " pilot.  Next rank in " + ( nextRank - rankPoints )+ " RP.", Tools.Sound.VICTORY_BELL );
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
-                m_botAction.sendPrivateMessage(arenaPlayerID, "Gained +" + numRanks + "0 UP for any !upgrade available in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
+                m_botAction.sendPrivateMessage(arenaPlayerID, "Gained +" + (sp.getUPperRank() * numRanks) + " UP for any !upgrade available in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
             } else {
                 // Advanced more than one rank; refire the method
                 doAdvanceRank( numRanks + 1 );
@@ -7302,7 +7394,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
                 banned = false;
             } catch (SQLException e ) {
-                Tools.printLog( "Error banning player " + name );
+                Tools.printLog( "Error unbanning player " + name );
             }
         }
 
@@ -8080,9 +8172,21 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return Returns upgrade level of ship (combined levels of all upgrades).
+         * @return Returns upgrade level of ship (combined levels of all upgrades, including auto).
          */
         public int getUpgradeLevel() {
+            int upgLevel = 0;
+            for( int i = 0; i < NUM_UPGRADES; i++ )
+                upgLevel += purchasedUpgrades[i];
+            upgLevel += currentEnergyLevel;
+            upgLevel += currentRechargeLevel;
+            return upgLevel;
+        }
+
+        /**
+         * @return Returns upgrade level of ship (combined levels of all upgrades, excluding auto).
+         */
+        public int getPurchasedUpgradeLevel() {
             int upgLevel = 0;
             for( int i = 0; i < NUM_UPGRADES; i++ )
                 upgLevel += purchasedUpgrades[i];
@@ -8400,6 +8504,19 @@ public class distensionbot extends SubspaceBot {
             return allowSummon;
         }
 
+        /**
+         * @return Levels of automatic recharge
+         */
+        public int getRechargeLevel() {
+            return currentRechargeLevel;
+        }
+
+        /**
+         * @return Levels of automatic energy
+         */
+        public int getEnergyLevel() {
+            return currentEnergyLevel;
+        }
 
         // PROGRESS BAR
         public void checkProgress() {
@@ -9349,7 +9466,7 @@ public class distensionbot extends SubspaceBot {
             return;
         }
 
-        m_botAction.sendArenaMessage( ("," + Tools.formatString("", victory.length() - 3, "-") + "."), Tools.Sound.HALLELUJAH );
+        endRoundSpam.add("," + Tools.formatString("", victory.length() - 3, "-") + ".");
         endRoundSpam.add( victory );
         endRoundSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
 
@@ -9649,6 +9766,7 @@ public class distensionbot extends SubspaceBot {
                           Tools.formatString(    "Best Ratio: " + topRatioer + " [" + ratioString + "]", (spamLength / 2) - 1 ) + "|" );
         endRoundSpam.add( Tools.formatString( "|  Best Streak: " + topStreaker + " [" + topStreak + "]", spamLength / 2 ) +
                           Tools.formatString(    "RP: " + topRPEarner + " [" + topRPEarned + "]", (spamLength / 2) - 1 ) + "|" );
+        endRoundSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
 
         int numReq;
         if( m_freq0Score > 0 )
@@ -9656,8 +9774,6 @@ public class distensionbot extends SubspaceBot {
         else
             numReq = SCORE_REQUIRED_FOR_WIN - m_freq1Score;
 
-
-        endRoundSpam.add( "Round time: " + getTimeString( flagTimer.getTotalSecs() ) + Tools.rightString( "WAR STATUS   " + flagTimer.getScoreDisplay() + "   " + numReq + " MORE NEEDED FOR WIN", spamLength - 1 ) );
         /*
         endRoundSpam.add( "." + Tools.centerString( "WAR STATUS", 29 ) +
                           Tools.centerString( flagTimer.getScoreDisplay(), 20 ) +
@@ -9668,6 +9784,8 @@ public class distensionbot extends SubspaceBot {
 
         for( int i=0; i < endRoundSpam.size(); i++ )
             m_botAction.sendArenaMessage( endRoundSpam.get(i) );
+        String roundTime = "Round time: " + getTimeString( flagTimer.getTotalSecs() );
+        m_botAction.sendArenaMessage( roundTime + Tools.rightString( "WAR STATUS   " + flagTimer.getScoreDisplay() + "   " + numReq + " MORE NEEDED FOR WIN", (spamLength - 1 - roundTime.length()) ), Tools.Sound.HALLELUJAH );
         spamManyPlayers(msgRecipients, msgs);       // Send out award msgs after the endround spam
         endRoundCleanup( gameOver );
     }
@@ -11381,7 +11499,8 @@ public class distensionbot extends SubspaceBot {
         // 54: L2 Guns
         // 65: Shrap 3
         // 70: Repel upgrade 3 (5 total)
-        // 80: +25% Repel Regen 4
+        // 75: +25% Repel Regen 4
+        // 80: L3 Bombs
         ship = new ShipProfile( RANK_REQ_SHIP8, 11f );
         int p8a1[] = {  4,  5,  5,  6,  7,  8, 10 };
         int p8a2[] = {  5, 11, 12, 13, 14, 15, 16 };
@@ -11400,14 +11519,14 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, new int[]{10,45}, new int[]{12,55}, 2 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, 35, 45, 1 );
+        upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, new int[]{35,100}, new int[]{45,80}, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Spreadshot", Tools.Prize.MULTIFIRE, 24, 28, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 15, 17, 1 );
         ship.addUpgrade( upg );
         int p8ca1[] = { 13, 15, 20, 55 };
-        int p8ca2[] = { 20, 30, 50, 80 };
+        int p8ca2[] = { 20, 30, 50, 75 };
         upg = new ShipUpgrade( "+25% Repulsor Regeneration", ABILITY_SHARK_REGEN, p8ca1, p8ca2, 4 );
         ship.addUpgrade( upg );
         int p8c1[] = { 6, 70, 99 };
