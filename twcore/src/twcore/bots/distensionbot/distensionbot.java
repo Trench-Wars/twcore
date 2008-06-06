@@ -2679,7 +2679,7 @@ public class distensionbot extends SubspaceBot {
 
         String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
 
-        String nameString = "|  " + p.getPlayerRankString() + " " + p.getName().toUpperCase() + "   " + shipname
+        String nameString = "|  " + p.getPlayerRankString() + " " + p.getName().toUpperCase() + "   " + shipname + " "
                 + p.getShipTypeName() + " - RANK " + p.getRank() + "  \\";
         if( p.getPointsToNextRank() <= 0 )
             p.addRankPoints(0, false);  // Rank up if they need it (safety catch)
@@ -2704,17 +2704,28 @@ public class distensionbot extends SubspaceBot {
                 partString = (int)(percentOnFreq * 100) + "%";
             }
         }
+        float sharingPercent = 0;
+        if( p.isSupportShip() ) {
+            float calcRank = (float)p.getRank();
+            if( shipNum == 4 )
+                if( calcRank > 10.0f )
+                    calcRank = 10.0f;
+            if( shipNum == 6 )
+                if( calcRank > 8.0f )
+                    calcRank = 8.0f;
+            sharingPercent = calcRank / 10.0f;
+        }
 
         statusSpam.add("," + Tools.formatString("", nameString.length() - 3, "-") + ".");
         statusSpam.add( nameString );
         statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
         statusSpam.add( "| " + Tools.formatString("Pilot for " + p.getArmyName() + ".", 48) +
-                               Tools.rightString("Army wins:  " + p.getBattlesWon() + "  |", spamLength - 48 ) );
+                               Tools.rightString("Army wins:  " + p.getBattlesWon() + "  |", spamLength - 50 ) );
         statusSpam.add( Tools.formatString("|      Total RP:  " + p.getRankPoints(), spamLength / 2) +
                         Tools.formatString("     Session RP:  " + p.getRecentlyEarnedRP(), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|          ( " + (int)pointsSince + " / " + (int)pointsNext + " )", spamLength / 2) +
                         Tools.formatString("     RP to next:  " + p.getPointsToNextRank(), (spamLength / 2) -1 ) + "|" );
-        statusSpam.add(                    "| " + Tools.centerString(progString, ((spamLength / 2) - 2)) +
+        statusSpam.add(                    "| " + Tools.centerString("[" + progString + "]", ((spamLength / 2) - 2)) +
                         Tools.formatString("       Progress:  " + percent + "% to Rank " + (p.getRank() + 1), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|      Upgrades:  " + p.getUpgradeLevel(), spamLength / 2) +
                         Tools.formatString("             UP:  " + p.getUpgradePoints(), (spamLength / 2) -1 ) + "|" );
@@ -2722,7 +2733,7 @@ public class distensionbot extends SubspaceBot {
                         Tools.formatString("        AutoCHG:  " + p.getRechargeLevel(), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|        Streak:  " + p.getSuccessiveKills(), spamLength / 2) +
                         Tools.formatString("     Played " + p.getMinutesPlayed() + " min today", (spamLength / 2) -1 ) + "|" );
-        statusSpam.add( Tools.formatString("| ProfitSharing:  " + p.getSuccessiveKills(), spamLength / 2) +
+        statusSpam.add( Tools.formatString("| ProfitSharing:  " + sharingPercent + "%", spamLength / 2) +
                         Tools.formatString("  Participation:  " + partString, (spamLength / 2) -1 ) + "|" );
         if( shipNum == 9 ) {
             m_botAction.sendPrivateMessage( theName, "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
@@ -2732,7 +2743,7 @@ public class distensionbot extends SubspaceBot {
         if( p.getBattlesWon() >= WINS_REQ_RANK_FLEET_ADMIRAL )
             statusSpam.add( "|" + Tools.centerString("You are the Fleet Admiral, the highest and most honorable rank of all.", spamLength - 2) + "|" );
         else
-            statusSpam.add( Tools.formatString( "| Promotion estimated after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.", spamLength) );
+            statusSpam.add( Tools.formatString( "| Promotion estimated after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.", spamLength) + "|");
         statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
 
         /*
@@ -8152,7 +8163,7 @@ public class distensionbot extends SubspaceBot {
          * @return Type of ship in which player has specialized (0 for no specialization yet).
          */
         public String getShipTypeName() {
-            if( shipNum >= 0 && shipNum < m_shipTypeGeneralData.size() )
+            if( shipNum >= 0 && shipType < m_shipTypeGeneralData.size() )
                 return m_shipTypeGeneralData.get(shipType).getTypeName();
             return "Mystery";
         }
@@ -11519,7 +11530,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, new int[]{10,45}, new int[]{12,55}, 2 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, new int[]{35,100}, new int[]{45,80}, 1 );
+        upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, new int[]{35,100}, new int[]{45,80}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Spreadshot", Tools.Prize.MULTIFIRE, 24, 28, 1 );
         ship.addUpgrade( upg );
