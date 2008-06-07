@@ -1689,6 +1689,20 @@ public class BotAction
     {
         sendUnfilteredPublicMessage("*thor " + thorAdjust);
     }
+    
+    /**
+     * Uses the *locate command to locate a player inside this server (NOT cross-zone). 
+     * The response is given in an arena message in the form of: 
+     * [player] - [arena]
+     * 
+     * An advantage of this command in comparison to ?find is that this command can be used as many times as 
+     * necessary without the possibility of getting kicked for ?command spamming (simply because it isn't a - biller - ?command). 
+     * 
+     * @param player The playername to find.
+     */
+    public void locatePlayer(String player) {
+        sendUnfilteredPublicMessage("*locate "+player);
+    }
 
 
     // ***** COMPLEX OPERATIONS *****
