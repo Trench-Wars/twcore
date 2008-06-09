@@ -28,11 +28,12 @@ public class DBPlayerData {
 
     String m_fcIP = "";
     int m_fnMID = 0;
-    int m_fnStatus = 0;         // 0 - unregistered; 1 - enabled for play; 2 - disabled 
+    int m_fnStatus = 0;         // 0 - unregistered; 1 - enabled for play; 2 - disabled
+    int m_rank = -1;
 
     long m_lastQuery = 0;
 
-    /** 
+    /**
      * Creates a new instance of DBPlayerData
      */
     public DBPlayerData(BotAction conn, String connName) {
@@ -45,7 +46,7 @@ public class DBPlayerData {
      * <br/>
      * WARNING: The 3rd parameter can take any length playername. If you specify a 23 long playername (from *info f.ex)
      * 			it will be saved as a 23 long playername. If you try to lookup the name by using the name from the playerlist
-     * 			through m_botAction.getPlayerName() then this name will be max 19 characters long and thus not equal. 
+     * 			through m_botAction.getPlayerName() then this name will be max 19 characters long and thus not equal.
      * @param conn
      * @param connName
      * @param fcPlayerName
@@ -246,20 +247,42 @@ public class DBPlayerData {
 
     public boolean hasRank(int rankNr) {
         if (m_fnUserID != 0) {
-            boolean result = false;
-            try {
-                ResultSet qryHasPlayerRank = m_connection.SQLQuery(m_connName, "SELECT fnUserID FROM tblUserRank WHERE fnUserID = "+m_fnUserID+" AND fnRankID =" + rankNr);
-                m_lastQuery = System.currentTimeMillis();
-                if (qryHasPlayerRank.next()) result = true;
-                m_connection.SQLClose( qryHasPlayerRank );
-                return result;
-            } catch (Exception e) {
-            };
-        };
+            if( m_rank == -1 ) {    // If -1, rank has not been fetched; fetch it and save it
+                try {
+                    ResultSet qryHasPlayerRank = m_connection.SQLQuery(m_connName, "SELECT fnRankID FROM tblUserRank WHERE fnUserID = "+m_fnUserID+" AND fnRankID >=" + rankNr + " ORDER BY fnRankID DESC");
+                    m_lastQuery = System.currentTimeMillis();
+                    if( qryHasPlayerRank != null && qryHasPlayerRank.next() ) {
+                        m_rank = qryHasPlayerRank.getInt("fnRankID");
+                    }
+                    m_connection.SQLClose( qryHasPlayerRank );
+                } catch (Exception e) {
+                }
+            }
+            return (m_rank == rankNr);
+        }
         return false;
     }
 
-
+    /**
+     * @return True if player is at least of rank assistant.
+     */
+    public boolean isRankAssistantMinimum() {
+        if (m_fnUserID != 0) {
+            if( m_rank == -1 ) {    // If -1, rank has not been fetched; fetch it and save it
+                try {
+                    ResultSet qryHasPlayerRank = m_connection.SQLQuery(m_connName, "SELECT fnRankID FROM tblUserRank WHERE fnUserID = "+m_fnUserID+" AND fnRankID >= 3 ORDER BY fnRankID DESC");
+                    m_lastQuery = System.currentTimeMillis();
+                    if( qryHasPlayerRank != null && qryHasPlayerRank.next() ) {
+                        m_rank = qryHasPlayerRank.getInt("fnRankID");
+                    }
+                    m_connection.SQLClose( qryHasPlayerRank );
+                } catch (Exception e) {
+                }
+            }
+            return (m_rank >= 3);
+        }
+        return false;
+    }
 
     public boolean giveRank(int rankNr) {
         if (m_connection.getCoreData().getGeneralSettings().getString("Server").equals("localhost"))
@@ -346,7 +369,7 @@ public class DBPlayerData {
             String query2 = "SELECT fnAliasID FROM tblAliasSuppression WHERE fnMID = '"+mid+"'";
             ResultSet r2 = m_connection.SQLQuery( m_aliasConnName, query2 );
             if( r2.next() ) result = true;
-            m_connection.SQLClose( r2 );            
+            m_connection.SQLClose( r2 );
             return result;
         } catch (Exception e) {
             return true;
@@ -394,7 +417,7 @@ public class DBPlayerData {
         if( m_fnStatus == 1 ) return true;
         else return false;
     }
-    
+
     public boolean hasBeenDisabled() {
         if( m_fnStatus == 2 ) return true;
         else return false;
