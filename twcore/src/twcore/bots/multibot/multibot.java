@@ -1073,6 +1073,7 @@ public class multibot extends SubspaceBot {
             // Make the bot ignore the KOTH game (send that he's out immediately after restarting the game)
             m_botAction.endKOTH();
         }
+        handleEvent((SubspaceEvent) event);
     }
 
     public void handleEvent(TurretEvent event) {
