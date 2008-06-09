@@ -51,10 +51,16 @@ public class speed extends MultiModule {
 	}
 
 	public String[] getModHelpMessage() {
-		String[] message = {
-			""
-		};
-		return message;
+        String opmsg[] = {
+                "| Host Commands:                                             |",
+                "|   !start                     - Starts the event            |",
+                "|   !stop                      - Stops the event             |",
+                "|   !settings                  - Displays game settings and  |",
+                "|                                how to modify them          |",
+                "|   !spamrules                 - *arena messages the rules   |",
+                "+------------------------------------------------------------+"
+        };
+		return opmsg;
 	}
 
 	public void requestEvents(ModuleEventRequester eventRequester) {
@@ -86,7 +92,7 @@ public class speed extends MultiModule {
 	public void do_help(String name, String message) {
 		String[] out = {
 			"+------------------------------------------------------------+",
-			"| SpeedBot v.0.9                             - author Sika  |",
+			"| SpeedBot v.0.9                              - author Sika  |",
 			"+------------------------------------------------------------+",
 			"| Speed objectives:                                          |",
 			"|   There is a bomb planted in your spaceship. It explodes   |",
@@ -98,19 +104,6 @@ public class speed extends MultiModule {
 			"+------------------------------------------------------------+"
 		};
 		m_botAction.privateMessageSpam(name, out);
-
-		if (opList.isER(name)) {
-			String[] out2 = {
-				"| Host Commands:                                             |",
-				"|   !start                     - Starts the event            |",
-				"|   !stop                      - Stops the event             |",
-				"|   !settings                  - Displays game settings and  |",
-				"|                                how to modify them          |",
-				"|   !spamrules                 - *arena messages the rules   |",
-				"+------------------------------------------------------------+"
-			};
-			m_botAction.privateMessageSpam(name, out2);
-		}
 	}
 
 	public void do_start(String name, String message) {
