@@ -58,10 +58,10 @@ import twcore.core.util.Tools;
  */
 public class distensionbot extends SubspaceBot {
 
-    private boolean DEBUG = true;                         // Debug mode.
-    private final float DEBUG_MULTIPLIER = 9f;          // Amount of RP to give extra in debug mode
+    private boolean DEBUG = true;                          // Debug mode.
+    private final float DEBUG_MULTIPLIER = 9.1f;             // Amount of RP to give extra in debug mode
 
-    private final int NUM_UPGRADES = 15;                   // Number of upgrade slots allotted per ship
+    private final int NUM_UPGRADES = 18;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between a long list of spammed messages
     private final int PRIZE_SPAM_DELAY = 10;               // Delay in ms between prizes for individual players
@@ -2688,11 +2688,11 @@ public class distensionbot extends SubspaceBot {
         int progChars = 0;
         int percent = 0;
         if( pointsSince > 0 && pointsNext > 0 ) {
-            progChars = Math.min( 20, Math.max( 0, (int)(( pointsSince / pointsNext ) * 20) ) );
+            progChars = Math.min( 10, Math.max( 0, (int)(( pointsSince / pointsNext ) * 10) ) );
             percent = Math.min( 100, Math.max( 0, (int)(( pointsSince / pointsNext ) * 100 ) ) );
         }
         String progString = Tools.formatString("", progChars, "=" );
-        progString = Tools.formatString(progString, 20 );
+        progString = Tools.formatString(progString, 10 );
 
         String partString = "N/A";
         if( flagTimer != null && flagTimer.isRunning() ) {
@@ -2715,6 +2715,14 @@ public class distensionbot extends SubspaceBot {
                     calcRank = 8.0f;
             sharingPercent = calcRank / 10.0f;
         }
+        int chgranks = p.getShipTypeProfile().ranksUntilNextRecharge(p.getRank());
+        String chgmsg = "";
+        if( chgranks != -1 )
+            chgmsg += "(+1 in " + chgranks + " rank" + ( chgranks == 1 ? "" : "s" ) + ")";
+        int nrgranks = p.getShipTypeProfile().ranksUntilNextEnergy(p.getRank());
+        String nrgmsg = "";
+        if( nrgranks != -1 )
+            nrgmsg += "(+1 in " + nrgranks + " rank" + ( nrgranks == 1 ? "" : "s" ) + ")";
 
         statusSpam.add("," + Tools.formatString("", nameString.length() - 3, "-") + ".");
         statusSpam.add( nameString );
@@ -2723,20 +2731,21 @@ public class distensionbot extends SubspaceBot {
                                Tools.rightString("Army wins:  " + p.getBattlesWon() + "  |", spamLength - 50 ) );
         statusSpam.add( Tools.formatString("|      Total RP:  " + p.getRankPoints(), spamLength / 2) +
                         Tools.formatString("     Session RP:  " + p.getRecentlyEarnedRP(), (spamLength / 2) -1 ) + "|" );
-        statusSpam.add( Tools.formatString("|          ( " + (int)pointsSince + " / " + (int)pointsNext + " )", spamLength / 2) +
+        statusSpam.add( Tools.formatString("|      Progress:  ( " + (int)pointsSince + " / " + (int)pointsNext + " )", spamLength / 2) +
                         Tools.formatString("     RP to next:  " + p.getPointsToNextRank(), (spamLength / 2) -1 ) + "|" );
-        statusSpam.add(                    "| " + Tools.centerString("[" + progString + "]", ((spamLength / 2) - 2)) +
-                        Tools.formatString("       Progress:  " + percent + "% to Rank " + (p.getRank() + 1), (spamLength / 2) -1 ) + "|" );
+        statusSpam.add( Tools.formatString("|                 " + "[" + progString + "]", (spamLength / 2) - 1 ) +
+                        Tools.formatString("                  " + percent + "% to Rank " + (p.getRank() + 1), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|      Upgrades:  " + p.getUpgradeLevel(), spamLength / 2) +
                         Tools.formatString("             UP:  " + p.getUpgradePoints(), (spamLength / 2) -1 ) + "|" );
-        statusSpam.add( Tools.formatString("|       AutoNRG:  " + p.getEnergyLevel(), spamLength / 2) +
-                        Tools.formatString("        AutoCHG:  " + p.getRechargeLevel(), (spamLength / 2) -1 ) + "|" );
+        if( p.getShipType() != SHIPTYPE_Z_CLASS ) {
+        statusSpam.add( Tools.formatString("|   Auto-Energy:  " + p.getEnergyLevel(), spamLength / 2) +
+                        Tools.formatString("  Auto-Recharge:  " + p.getRechargeLevel(), (spamLength / 2) -1 ) + "|" );
+        }
         statusSpam.add( Tools.formatString("|        Streak:  " + p.getSuccessiveKills(), spamLength / 2) +
-                        Tools.formatString("     Played " + p.getMinutesPlayed() + " min today", (spamLength / 2) -1 ) + "|" );
+                        Tools.formatString("   Played today:" + p.getMinutesPlayed() + " min", (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("| ProfitSharing:  " + sharingPercent + "%", spamLength / 2) +
                         Tools.formatString("  Participation:  " + partString, (spamLength / 2) -1 ) + "|" );
         if( shipNum == 9 ) {
-            m_botAction.sendPrivateMessage( theName, "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
         statusSpam.add( Tools.formatString("|            OP: ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )", spamLength / 2) +
                         Tools.formatString("     Comm auths: ( " + p.getCurrentComms() + " / 3 )", (spamLength / 2) -1 ) + "|" );
         }
@@ -2897,10 +2906,16 @@ public class distensionbot extends SubspaceBot {
                 if( isAutomatic ) {
                     if( currentUpgrade.getPrizeNum() == Tools.Prize.ENERGY ) {
                         printmsg = "--- " + Tools.formatString( "Energy          [Auto-Install]", 38);
-                        printmsg += "(" + Tools.centerString( "" + p.getEnergyLevel(), 9 ) + ")";
+                        printmsg += Tools.formatString( "(" + Tools.centerString( "" + p.getEnergyLevel(), 9 ) + ")", 18);
+                        int ranks = p.getShipTypeProfile().ranksUntilNextEnergy(p.getRank());
+                        if( ranks != -1 )
+                            printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
                     } else {
                         printmsg = "--- " + Tools.formatString( "Recharge        [Auto-Install]", 38);
-                        printmsg += "(" + Tools.centerString( "" + p.getRechargeLevel(), 9 ) + ")";
+                        printmsg += Tools.formatString( "(" + Tools.centerString( "" + p.getRechargeLevel(), 9 ) + ")", 18);
+                        int ranks = p.getShipTypeProfile().ranksUntilNextRecharge(p.getRank());
+                        if( ranks != -1 )
+                            printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
                     }
                 } else {
                     printCost = true;
@@ -5124,6 +5139,8 @@ public class distensionbot extends SubspaceBot {
         TimerTask delayedShutdownTask = new TimerTask() {
             public void run() {
                 m_beginDelayedShutdown = true;
+                if( DEBUG )
+                    m_botAction.sendArenaMessage("--- DELAYED SHUTDOWN INITIATED ---  The beta test will stop at the next end of round.  Thank you for testing.", Tools.Sound.VICTORY_BELL );
             }
         };
         try {
@@ -8994,6 +9011,33 @@ public class distensionbot extends SubspaceBot {
             return false;
         }
 
+        /**
+         * @param rank Rank of player
+         * @return Number of ranks until next recharge upgrade
+         */
+        public int ranksUntilNextRecharge( int rank ) {
+            if( manualUpgrades )
+                return -1;
+            for( int i=0; i<rechargeRanks.length; i++ )
+                if( rechargeRanks[i] > rank )
+                    return rechargeRanks[i] - rank;
+            return -1;
+        }
+
+        /**
+         * @param rank Rank of player
+         * @return Number of ranks until next energy upgrade
+         */
+        public int ranksUntilNextEnergy( int rank ) {
+            if( manualUpgrades )
+                return -1;
+            for( int i=0; i<energyRanks.length; i++ )
+                if( energyRanks[i] > rank )
+                    return energyRanks[i] - rank;
+            return -1;
+        }
+
+
         public void setDescs( String enRateDesc, String chgRateDesc, String lineDesc ) {
             this.enRateDesc = enRateDesc;
             this.chgRateDesc = chgRateDesc;
@@ -11118,6 +11162,12 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
         // JAVELIN -- rank 15
@@ -11173,6 +11223,12 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Splintering Mortar 2", Tools.Prize.SHRAPNEL, new int[]{11,11,11,12,13,14,15,16}, new int[]{30,40,50,55,0,0,0,0}, 8 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 21, 45, 1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -11239,6 +11295,12 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
         // LEVIATHAN -- rank 20
@@ -11292,6 +11354,12 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 60, 60, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Splintering Mortar", Tools.Prize.SHRAPNEL, 45, 70, 1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -11366,6 +11434,12 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Improved Summoning Authorization", ABILITY_SUMMONING_AUTH, 10, 20, 1 );
         ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
         // WEASEL -- Unlocked by 20(tweak?) successive kills w/o dying
@@ -11434,6 +11508,12 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Prismatic Array", ABILITY_PRISMATIC_ARRAY, new int[]{15,14,13}, new int[]{26,35,54}, 3 );
         ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
         // LANCASTER -- special unlock  (10 for beta)
@@ -11484,6 +11564,12 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 42, 55, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Shrapnel", Tools.Prize.SHRAPNEL, 15, 69, 10 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -11553,6 +11639,12 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
 
         // TACTICAL OPS -- rank 25
@@ -11614,6 +11706,12 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, new int[]{24,50}, new int[]{40,60}, 2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 40, 55, 1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        ship.addUpgrade( upg );
+        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
