@@ -3,19 +3,22 @@ package twcore.bots.multibot.util;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
+import java.util.LinkedList;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
+import twcore.core.game.Player;
 
 /**
  * Generates a poll.
- * 
+ *
  * @author  Harvey Yau
  */
 public class utilpoll extends MultiUtil {
     private Poll currentPoll = null;
+    private LinkedList<Integer> allowedFreqs = new LinkedList<Integer>();
 
     /** Creates a new instance of twbotpoll */
     public void init() {
@@ -26,7 +29,7 @@ public class utilpoll extends MultiUtil {
      */
     public void requestEvents( ModuleEventRequester modEventReq ) {
     }
-    
+
     public void cancel() {
 
     }
@@ -73,13 +76,31 @@ public class utilpoll extends MultiUtil {
                 currentPoll.endPoll();
                 currentPoll = null;
             }
+        } else if( message.startsWith( "!allowfreq ") ) {
+            try {
+                int allowed;
+                allowed = Integer.parseInt( message.substring(11) );
+                allowedFreqs.add( allowed );
+                m_botAction.sendPrivateMessage( id, "Freq " + allowed + " is now allowed to vote.  !clearallowed to re-enable voting for all players." );
+            } catch (NumberFormatException e) {
+                m_botAction.sendPrivateMessage( id, "Unable to parse '" + message.substring(11) + "' as a freq number!" );
+            }
+        } else if( message.startsWith( "!clearallowed") ) {
+            if( allowedFreqs.size() == 0 ) {
+                m_botAction.sendPrivateMessage( id, "All freqs are already allowed to vote!" );
+            } else {
+                allowedFreqs.clear();
+                m_botAction.sendPrivateMessage( id, "All freqs are now allowed to vote." );
+            }
         }
     }
 
     public String[] getHelpMessages() {
         String[] helps = {
             "------ Commands for the poll module -------",
-            "!poll <Topic>:<answer1>:<answer2> (and on and on) - Starts a poll.",
+            "!poll <Topic>:<answer1>:<answer2> (and on and on)  - Starts a poll.",
+            "!allowfreq <freq>   - Adds <freq> to voting allow list.  Default is all.",
+            "!clearallowed       - Removes all freqs from allow list (all can vote).",
             "!endpoll - Ends the poll and tallies the results."
         };
         return helps;
@@ -101,12 +122,27 @@ public class utilpoll extends MultiUtil {
             }
             m_botAction.sendArenaMessage(
             "Private message your answers to " + m_botAction.getBotName() );
+            if( allowedFreqs.size() > 0 ) {
+                String allowedMsg = "NOTE, only the following frequencies may vote: ";
+                for( Integer i : allowedFreqs )
+                    allowedMsg += " " + i + " ";
+                m_botAction.sendArenaMessage( allowedMsg );
+            }
         }
 
         public void handlePollCount( String name, String message ){
             try{
                 if( !Tools.isAllDigits( message )){
                     return;
+                }
+                if( allowedFreqs.size() > 0 ) {
+                    Player p = m_botAction.getPlayer(name);
+                    if( p == null )
+                        return;
+                    if( !allowedFreqs.contains( p.getFrequency() ) ) {
+                        m_botAction.sendPrivateMessage( p.getPlayerID(), "Sorry, players on your frequency are not allowed to vote in this poll!" );
+                        return;
+                    }
                 }
                 int vote;
                 try{
