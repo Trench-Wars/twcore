@@ -788,6 +788,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!l", acceptedMessages, this, "cmdLeave" );
         m_commandInterpreter.registerCommand( "!la", acceptedMessages, this, "cmdLagout" );
         m_commandInterpreter.registerCommand( "!mh", acceptedMessages, this, "cmdModHelp" );
+        m_commandInterpreter.registerCommand( "!mu", acceptedMessages, this, "cmdMassUpgrade" );
         m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
         m_commandInterpreter.registerCommand( "!p", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
@@ -844,6 +845,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory" );
         m_commandInterpreter.registerCommand( "!armoury", acceptedMessages, this, "cmdArmory" ); // For those that can't spell
         m_commandInterpreter.registerCommand( "!upgrade", acceptedMessages, this, "cmdUpgrade" );
+        m_commandInterpreter.registerCommand( "!massupg", acceptedMessages, this, "cmdMassUpgrade" );
         m_commandInterpreter.registerCommand( "!scrap", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!scrapall", acceptedMessages, this, "cmdScrapAll" );
         m_commandInterpreter.registerCommand( "!specialize", acceptedMessages, this, "cmdSpecialize" );
@@ -1022,6 +1024,7 @@ public class distensionbot extends SubspaceBot {
                     "| !status           !s  |  View current ship's level and upgrades",
                     "| !armory           !a  |  View ship upgrades available in the armory",
                     "| !upgrade <upg>    !u  |  Upgrade your ship with <upg> from the armory",
+                    "| !massupg <upg>:<#>!mu |  Multi-upgrade; upgrades <upg> <#> times",
                     "| !upginfo <upg>    !ui |  Shows any available information about <upg>",
                     "| !upginfo <upg>:<ship> |  Shows info on <upg> for <ship>, if you own it.",
                     "| !scrap <upg>      !sc |  Trade in <upg>.  *** Restarts ship at current rank!",
@@ -2869,7 +2872,7 @@ public class distensionbot extends SubspaceBot {
         progString = Tools.formatString(progString, 20 );
         String streakMsg = (p.getSuccessiveKills() > 1 ? "STREAK: " + p.getSuccessiveKills() : "" );
         String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-        m_botAction.sendPrivateMessage( name, "R" + p.getRank() + " " + shipname + p.getShipTypeName() + "  " + (int)pointsSince + " / " + (int)pointsNext +
+        m_botAction.sendPrivateMessage( name, "R" + p.getRank() + " " + shipname + " " + p.getShipTypeName() + "  " + (int)pointsSince + " / " + (int)pointsNext +
                 "  (" + p.getPointsToNextRank() + " to R" + (p.getRank() + 1) + ")    [" + progString + "]  "
                 + percent + "%  UP: " + p.getUpgradePoints() + "  " + streakMsg );
     }
@@ -3032,6 +3035,40 @@ public class distensionbot extends SubspaceBot {
         }
         if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS || upgrade.getPrizeNum() == Tools.Prize.MULTIFIRE )
             m_botAction.sendPrivateMessage( name, "--- IMPORTANT NOTE !! ---: Your new weapon may require too much energy for you to use.  If this is the case, !scrap " + (upgradeNum + 1) + " to return to your old weapon free of charge.");
+    }
+
+
+    /**
+     * Runs many !upgrade commands at once.
+     * @param name
+     * @param msg
+     */
+    public void cmdMassUpgrade( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            return;
+        int shipNum = p.getShipNum();
+        if( shipNum == -1 )
+            throw new TWCoreException( "You'll need to !return to your army or !enlist in a new one before upgrading a ship." );
+        else if( shipNum == 0 )
+            throw new TWCoreException( "If you want to upgrade a ship, you'll need to pilot one first." );
+        String[] args = msg.split(":");
+        if( args.length != 2 )
+            throw new TWCoreException( "This is how you do it:  !massupg 5:6  (to upgrade #5 a total of 6 times)" );
+        int times = 0;
+        int upgradeNum = 0;
+        try {
+            upgradeNum = Integer.parseInt( args[0] );
+            times = Integer.parseInt( args[1] );
+        } catch ( Exception e ) {
+            throw new TWCoreException( "This is how you do it:  !massupg 5:6  (to upgrade #5 a total of 6 times)" );
+        }
+        if( times < 1 )
+            throw new TWCoreException( "That's not very many times to upgrade, now is it?" );
+        if( times > 5 )
+            throw new TWCoreException( "Sorry, 5 times is the most you can do there." );
+        for( int i=0; i<times; i++ )
+            cmdUpgrade( name, ""+upgradeNum );
     }
 
 
@@ -9840,7 +9877,10 @@ public class distensionbot extends SubspaceBot {
         for( int i=0; i < endRoundSpam.size(); i++ )
             m_botAction.sendArenaMessage( endRoundSpam.get(i) );
         String roundTime = "Round time: " + getTimeString( flagTimer.getTotalSecs() );
-        m_botAction.sendArenaMessage( roundTime + Tools.rightString( "WAR STATUS   " + flagTimer.getScoreDisplay() + "   " + numReq + " MORE NEEDED FOR WIN", (spamLength - 1 - roundTime.length()) ), Tools.Sound.HALLELUJAH );
+        if( !gameOver )
+            m_botAction.sendArenaMessage( roundTime + Tools.rightString( "WAR STATUS   " + flagTimer.getScoreDisplay() + "   " + numReq + " MORE NEEDED FOR WIN", (spamLength - 1 - roundTime.length()) ), Tools.Sound.HALLELUJAH );
+        else
+            m_botAction.sendArenaMessage( roundTime + Tools.rightString( "END OF WAR STATUS   " + flagTimer.getScoreDisplay() + "   ", (spamLength - 1 - roundTime.length()) ), Tools.Sound.HALLELUJAH );
         spamManyPlayers(msgRecipients, msgs);       // Send out award msgs after the endround spam
         endRoundCleanup( gameOver );
     }
