@@ -261,11 +261,11 @@ public class distensionbot extends SubspaceBot {
 
     // SHIP TYPE NUMBER DEFINES
     public final int SHIPTYPE_SCOUT_DEFAULT = 0;
-    public final int SHIPTYPE_ADVANCED_SCOUT = 1;
-    public final int SHIPTYPE_ARTILLERY = 2;
-    public final int SHIPTYPE_WARSHIP = 3;
-    public final int SHIPTYPE_SCIENCE_VESSEL = 4;
-    public final int SHIPTYPE_Z_CLASS = 5;
+    //public final int SHIPTYPE_ADVANCED_SCOUT = 1;
+    public final int SHIPTYPE_ARTILLERY = 1;
+    public final int SHIPTYPE_WARSHIP = 2;
+    public final int SHIPTYPE_SCIENCE_VESSEL = 3;
+    public final int SHIPTYPE_Z_CLASS = 4;
 
     // SPECIAL ABILITY PRIZE #s
     public final int ABILITY_PRIORITY_REARM = -1;
@@ -2718,11 +2718,12 @@ public class distensionbot extends SubspaceBot {
                     calcRank = 8.0f;
             sharingPercent = calcRank / 10.0f;
         }
-        int chgranks = p.getShipTypeProfile().ranksUntilNextRecharge(p.getRank());
+        ShipTypeProfile sp = p.getShipTypeProfile();
+        int chgranks = sp.ranksUntilNextRecharge(p.getRank());
         String chgmsg = "";
         if( chgranks != -1 )
             chgmsg += "(+1 in " + chgranks + " rank" + ( chgranks == 1 ? "" : "s" ) + ")";
-        int nrgranks = p.getShipTypeProfile().ranksUntilNextEnergy(p.getRank());
+        int nrgranks = sp.ranksUntilNextEnergy(p.getRank());
         String nrgmsg = "";
         if( nrgranks != -1 )
             nrgmsg += "(+1 in " + nrgranks + " rank" + ( nrgranks == 1 ? "" : "s" ) + ")";
@@ -2741,8 +2742,8 @@ public class distensionbot extends SubspaceBot {
         statusSpam.add( Tools.formatString("|      Upgrades:  " + p.getUpgradeLevel(), spamLength / 2) +
                         Tools.formatString("             UP:  " + p.getUpgradePoints(), (spamLength / 2) -1 ) + "|" );
         if( p.getShipType() != SHIPTYPE_Z_CLASS ) {
-        statusSpam.add( Tools.formatString("|   Auto-Energy:  " + p.getEnergyLevel(), spamLength / 2) +
-                        Tools.formatString("  Auto-Recharge:  " + p.getRechargeLevel(), (spamLength / 2) -1 ) + "|" );
+        statusSpam.add( Tools.formatString("|   Auto-Energy:  " + "(" + p.getEnergyLevel() + "/" + sp.getMaxEnergyUpgs() + ")", spamLength / 2) +
+                        Tools.formatString("  Auto-Recharge:  " + "(" + p.getRechargeLevel() + "/" + sp.getMaxRechargeUpgs() + ")", (spamLength / 2) -1 ) + "|" );
         }
         statusSpam.add( Tools.formatString("|        Streak:  " + p.getSuccessiveKills(), spamLength / 2) +
                         Tools.formatString("   Played today:" + p.getMinutesPlayed() + " min", (spamLength / 2) -1 ) + "|" );
@@ -2907,18 +2908,21 @@ public class distensionbot extends SubspaceBot {
                            currentUpgrade.getPrizeNum() == Tools.Prize.RECHARGE));
             if( currentUpgrade.getMaxLevel() != -1 ) {
                 if( isAutomatic ) {
+                    ShipTypeProfile sp = p.getShipTypeProfile();
                     if( currentUpgrade.getPrizeNum() == Tools.Prize.ENERGY ) {
                         printmsg = "--- " + Tools.formatString( "Energy          [Auto-Install]", 38);
-                        printmsg += Tools.formatString( "(" + Tools.centerString( "" + p.getEnergyLevel(), 9 ) + ")", 18);
-                        int ranks = p.getShipTypeProfile().ranksUntilNextEnergy(p.getRank());
+                        printmsg += Tools.formatString("( " + ( p.getEnergyLevel() < 10 ? " " : "") + p.getEnergyLevel() + " / " +
+                                (sp.getMaxEnergyUpgs() < 10 ? " " : "") + sp.getMaxEnergyUpgs() + " )", 18);
+                        int ranks = sp.ranksUntilNextEnergy(p.getRank());
                         if( ranks != -1 )
-                            printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
+                            printmsg += "           +1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
                     } else {
                         printmsg = "--- " + Tools.formatString( "Recharge        [Auto-Install]", 38);
-                        printmsg += Tools.formatString( "(" + Tools.centerString( "" + p.getRechargeLevel(), 9 ) + ")", 18);
+                        printmsg += Tools.formatString("( " + ( p.getRechargeLevel() < 10 ? " " : "") + p.getRechargeLevel() + " / " +
+                                (sp.getMaxRechargeUpgs() < 10 ? " " : "") + sp.getMaxRechargeUpgs() + " )", 18);
                         int ranks = p.getShipTypeProfile().ranksUntilNextRecharge(p.getRank());
                         if( ranks != -1 )
-                            printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
+                            printmsg += "           +1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
                     }
                 } else {
                     printCost = true;
@@ -9085,6 +9089,14 @@ public class distensionbot extends SubspaceBot {
             this.maxRankForChange = rank;
         }
 
+        public int getMaxEnergyUpgs() {
+            return energyRanks.length;
+        }
+
+        public int getMaxRechargeUpgs() {
+            return rechargeRanks.length;
+        }
+
         public String getEnRateDesc() {
             return enRateDesc;
         }
@@ -9121,43 +9133,32 @@ public class distensionbot extends SubspaceBot {
             this.numUpgrades = numUpgrades;
         }
 
-        public ShipUpgrade( String name, int prizeNum, int[] costDefines, int rankRequired, int numUpgrades ) {
-            if( numUpgrades != costDefines.length ) {
-                Tools.printLog("ERROR: Upgrade '" + name + "' # of upgrades does not match cost define" );
-                return;
-            }
+        public ShipUpgrade( String name, int prizeNum, int[] costDefines, int rankRequired ) {
             this.name = name;
             this.prizeNum = prizeNum;
             this.cost = -1;
             this.costDefines = costDefines;
             this.rankRequired = rankRequired;
-            this.numUpgrades = numUpgrades;
+            this.numUpgrades = costDefines.length;
         }
 
-        public ShipUpgrade( String name, int prizeNum, int cost, int[] rankDefines, int numUpgrades ) {
-            if( numUpgrades != rankDefines.length ) {
-                Tools.printLog("ERROR: Upgrade '" + name + "' # of upgrades does not match rank define" );
-                return;
-            }
+        public ShipUpgrade( String name, int prizeNum, int cost, int[] rankDefines ) {
             this.name = name;
             this.prizeNum = prizeNum;
             this.cost = cost;
             this.rankRequired = -1;
             this.rankDefines = rankDefines;
-            this.numUpgrades = numUpgrades;
+            this.numUpgrades = rankDefines.length;
         }
 
-        public ShipUpgrade( String name, int prizeNum, int[] costDefines, int[] rankDefines, int numUpgrades ) {
-            if( numUpgrades != costDefines.length ) {
-                Tools.printLog("ERROR: Upgrade '" + name + "' # of upgrades does not match cost define" );
-                return;
-            } else if( numUpgrades != rankDefines.length ) {
-                Tools.printLog("ERROR: Upgrade '" + name + "' # of upgrades does not match rank define" );
+        public ShipUpgrade( String name, int prizeNum, int[] costDefines, int[] rankDefines ) {
+            if( rankDefines.length != costDefines.length ) {
+                Tools.printLog("ERROR: Upgrade '" + name + "' -- # of costs and number of rank defines do not match" );
                 return;
             }
             this.name = name;
             this.prizeNum = prizeNum;
-            this.numUpgrades = numUpgrades;
+            this.numUpgrades = rankDefines.length;
             this.costDefines = costDefines;
             this.rankDefines = rankDefines;
             this.cost = -1;
@@ -11132,11 +11133,15 @@ public class distensionbot extends SubspaceBot {
         ShipProfile ship = new ShipProfile( -1, -1 );
         m_shipGeneralData.add( ship );
 
-        // Based on costing a bit over 300UP for level 10 in energy and recharge
-        int[] commonRechargeCosts = { 10, 11, 12, 13, 14,  15, 17, 19, 20, 23,  25, 28, 30, 40, 50 };
-        int[] commonRechargeRanks = {  0,  5,  8, 10, 15,  20, 25, 30, 37, 45,  50, 55, 60, 65, 75 };
-        int[] commonEnergyCosts   = { 10, 11, 12, 13, 14,  15, 16, 18, 20, 22,  24, 27, 30, 40, 50 };
-        int[] commonEnergyRanks   = {  0,  5,  9, 11, 16,  22, 27, 32, 39, 48,  53, 58, 63, 68, 80 };
+        // Based on costing a bit over 300UP for level 15 in energy and recharge
+        //int[] commonRechargeCosts = { 10, 11, 12, 13, 14,  15, 17, 19, 20, 23,  25, 28, 30, 40, 50 };
+        //int[] commonRechargeRanks = {  0,  5,  8, 10, 15,  20, 25, 30, 37, 45,  50, 55, 60, 65, 75 };
+        //int[] commonEnergyCosts   = { 10, 11, 12, 13, 14,  15, 16, 18, 20, 22,  24, 27, 30, 40, 50 };
+        //int[] commonEnergyRanks   = {  0,  5,  9, 11, 16,  22, 27, 32, 39, 48,  53, 58, 63, 68, 80 };
+        int[] commonRechargeCosts = {  6,  6,  7,  8,  8,   9, 10, 10, 11, 12,  13, 14, 15, 16, 17,   20, 22, 24, 26, 28,   30, 50 };
+        int[] commonRechargeRanks = {  0,  0,  0, 10,  0,   0,  0, 20,  0,  0,   0,  0,  0, 30,  0,   40,  0, 50,  0,  0,    0, 60 };
+        int[] commonEnergyCosts =   {  6,  7,  7,  8,  9,   9, 10, 11, 11, 12,  13, 14, 15, 16, 17,   20, 22, 24, 26, 28,   30, 50 };
+        int[] commonEnergyRanks   = {  0,  0,  0, 10,  0,   0,  0, 20, 39, 48,   0,  0,  0, 30,  0,    0,  0, 50,  0,  0,    0, 60 };
 
         ShipUpgrade upg;
 
@@ -11165,26 +11170,26 @@ public class distensionbot extends SubspaceBot {
         // 80: Mines L3
         ship = new ShipProfile( 0, 15f );
         //                                                    | <--- this mark and beyond is not seen for upg names
-        upg = new ShipUpgrade( "Side Thrusters           [ROT]", Tools.Prize.ROTATION, new int[]{5,5,5,6,7,8,10,12}, 0, 8 );           // 20 x8
+        upg = new ShipUpgrade( "Side Thrusters           [ROT]", Tools.Prize.ROTATION, new int[]{5,5,5,6,7,8,10,12}, 0 );           // 20 x8
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Density Reduction Unit   [THR]", Tools.Prize.THRUST, new int[]{8,8,9,9,9,10, 10, 11, 11,12,12,13,13,14,14,15}, 0, 16 );            // 1  x16
+        upg = new ShipUpgrade( "Density Reduction Unit   [THR]", Tools.Prize.THRUST, new int[]{8,8,9,9,9,10, 10, 11, 11,12,12,13,13,14,14,15}, 0 );            // 1  x16
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Drag Balancer            [SPD]", Tools.Prize.TOPSPEED, new int[]{7,8,9,9,10,10,11,11,12,12,13,14,15,16}, 0, 14 );          // 200 x14
+        upg = new ShipUpgrade( "Drag Balancer            [SPD]", Tools.Prize.TOPSPEED, new int[]{7,8,9,9,10,10,11,11,12,12,13,14,15,16}, 0 );          // 200 x14
         ship.addUpgrade( upg );
         //int costs1[] =          { 10,11, 12,13, 16,  19,25,37, 50,60 };
         //int rechargeLevels1[] = { 0,  0, 10, 0, 20,  25, 0, 0, 40, 0 };
-        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );     // 150 x10
+        upg = new ShipUpgrade( "Regeneration Drives      [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );     // 150 x10
         ship.addUpgrade( upg );
         //                          L2Mult            L3             L3 Multi
         //                      1150    1300    1450     1600    1750
         //         1000      1075   1225    1375    1525     1675     1825
         //int costs1b[] =       {10,10,11, 13, 15,  21, 28, 35, 45, 50,  60 };
         //int energyLevels1[] = { 0, 3, 5,  7, 15,  20, 25, 30, 35, 40,  45 };
-        upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 );    // 75 x11
+        upg = new ShipUpgrade( "Microfiber Armor         [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks );    // 75 x11
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "High-Impact Cannon", Tools.Prize.GUNS, 12, 31, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{10,20,30}, new int[]{36,60,80}, 3 );
+        upg = new ShipUpgrade( "Energy Concentrator", Tools.Prize.BOMBS, new int[]{10,20,30}, new int[]{36,60,80} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Beam-Splitter", Tools.Prize.MULTIFIRE, 19, 17, 1 );
         ship.addUpgrade( upg );
@@ -11192,11 +11197,11 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warbird Reiterator", Tools.Prize.DECOY, 14, 22, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "M.A.S.T.E.R. Drive Upgrade", ABILITY_MASTER_DRIVE, new int[]{10,12,14,16,20}, new int[]{10,25,34,47,65}, 5 );
+        upg = new ShipUpgrade( "M.A.S.T.E.R. Drive Upgrade", ABILITY_MASTER_DRIVE, new int[]{10,12,14,16,20}, new int[]{10,25,34,47,65} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Matter-to-Antimatter Converter", ABILITY_THOR, 34, 50, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{15,20,25,30,35,40}, new int[]{20,30,42,55,70,75}, 6 );
+        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{15,20,25,30,35,40}, new int[]{20,30,42,55,70,75} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 20, 45, 1 );
         ship.addUpgrade( upg );
@@ -11230,23 +11235,23 @@ public class distensionbot extends SubspaceBot {
         // 70: Rocket 3
         // 80: L3 Bombs
         ship = new ShipProfile( RANK_REQ_SHIP2, 15.2f );
-        upg = new ShipUpgrade( "Balancing Streams        [ROT]", Tools.Prize.ROTATION, new int[]{5,5,6,6, 7, 7, 8, 8, 9,10}, 0, 10 );       // 20 x10
+        upg = new ShipUpgrade( "Balancing Streams        [ROT]", Tools.Prize.ROTATION, new int[]{5,5,6,6, 7, 7, 8, 8, 9,10}, 0 );       // 20 x10
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Fuel Economizer          [THR]", Tools.Prize.THRUST, new int[]{7,7,8,8,9,9,10,10,11,12,15,20}, 0, 12 );        //  1 x12
+        upg = new ShipUpgrade( "Fuel Economizer          [THR]", Tools.Prize.THRUST, new int[]{7,7,8,8,9,9,10,10,11,12,15,20}, 0 );        //  1 x12
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Engine Reoptimization    [SPD]", Tools.Prize.TOPSPEED, new int[]{7,8,9,9,10,10,11,11,12,15}, 0, 10 );       // 200 x10
+        upg = new ShipUpgrade( "Engine Reoptimization    [SPD]", Tools.Prize.TOPSPEED, new int[]{7,8,9,9,10,10,11,11,12,15}, 0 );       // 200 x10
         ship.addUpgrade( upg );
         //int costs2a[] = {10,11,11,12,12,  27,13,14,15,20,  34, 68,100 };
         //int p2a2[] =    { 0, 0, 0, 0, 0,  15, 0,25,35,45,  55, 70, 80 };
-        upg = new ShipUpgrade( "Tactical Engineering     [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );         // 75 x13
+        upg = new ShipUpgrade( "Tactical Engineering     [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );         // 75 x13
         ship.addUpgrade( upg );
         //int costs2b[] =       { 9,10, 11, 13, 13,  24, 15, 16, 16, 19,  27,100 };
         //int energyLevels2[] = { 2, 5, 10, 15, 20,  25, 30, 35, 40, 45,  55, 70 };
-        upg = new ShipUpgrade( "Reinforced Plating       [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 );  // 73 x12
+        upg = new ShipUpgrade( "Reinforced Plating       [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks );  // 73 x12
         ship.addUpgrade( upg );
         int p2b1[] = { 28, 55 };
         int p2b2[] = { 26, 60 };
-        upg = new ShipUpgrade( "Rear Defense System", Tools.Prize.GUNS, p2b1, p2b2, 2 );
+        upg = new ShipUpgrade( "Rear Defense System", Tools.Prize.GUNS, p2b1, p2b2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Mortar Explosive Enhancement", Tools.Prize.BOMBS, 50, 40, 1 );
         ship.addUpgrade( upg );
@@ -11254,13 +11259,13 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Detection System", Tools.Prize.XRADAR, 21, 24, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "JumpSpace Drive Upgrade", ABILITY_JUMPSPACE, new int[]{20,10,10}, new int[]{28,37,50}, 3 );
+        upg = new ShipUpgrade( "JumpSpace Drive Upgrade", ABILITY_JUMPSPACE, new int[]{20,10,10}, new int[]{28,37,50} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Fuel Supply", Tools.Prize.ROCKET, new int[]{20,35,70}, new int[]{18,22,30}, 3 );
+        upg = new ShipUpgrade( "Emergency Fuel Supply", Tools.Prize.ROCKET, new int[]{20,35,70}, new int[]{18,22,30} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Splintering Mortar 1", Tools.Prize.SHRAPNEL, 9, 15, 2 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Splintering Mortar 2", Tools.Prize.SHRAPNEL, new int[]{11,11,11,12,13,14,15,16}, new int[]{30,40,50,55,0,0,0,0}, 8 );
+        upg = new ShipUpgrade( "Splintering Mortar 2", Tools.Prize.SHRAPNEL, new int[]{11,11,11,12,13,14,15,16}, new int[]{30,40,50,55,0,0,0,0} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 21, 45, 1 );
         ship.addUpgrade( upg );
@@ -11295,25 +11300,25 @@ public class distensionbot extends SubspaceBot {
         // 60: +15% Energy Tank 4
         // 75: L3 Guns
         ship = new ShipProfile( RANK_REQ_SHIP3, 15f );
-        upg = new ShipUpgrade( "Central Realigner        [ROT]", Tools.Prize.ROTATION, new int[]{4,4,5,5,6,7,7,8,10}, 0, 9 );       // 20 x9
+        upg = new ShipUpgrade( "Central Realigner        [ROT]", Tools.Prize.ROTATION, new int[]{4,4,5,5,6,7,7,8,10}, 0 );       // 20 x9
         ship.addUpgrade( upg );
         int p3a1[] = { 3, 5, 5, 6, 7,   8,  9, 10, 11, 12 };
         int p3a2[] = { 0, 5, 6, 7, 8,  10, 15, 25, 35, 45 };
-        upg = new ShipUpgrade( "Sling Drive              [THR]", Tools.Prize.THRUST, p3a1, p3a2, 10 );     //   1 x10
+        upg = new ShipUpgrade( "Sling Drive              [THR]", Tools.Prize.THRUST, p3a1, p3a2 );     //   1 x10
         ship.addUpgrade( upg );
         int p3b1[] = { 4, 4, 5, 6, 7, 8,   9,  9, 10, 11, 12, 14 };
         int p3b2[] = { 0, 2, 3, 4, 5, 6,  10, 15, 25, 35, 45, 50 };
-        upg = new ShipUpgrade( "Spacial Filtering        [SPD]", Tools.Prize.TOPSPEED, p3b1, p3b2, 12 );   // 250 x12
+        upg = new ShipUpgrade( "Spacial Filtering        [SPD]", Tools.Prize.TOPSPEED, p3b1, p3b2 );   // 250 x12
         ship.addUpgrade( upg );
         //int p3c1[] = {10,10,11,13,15, 17,19, 20,20,22,  24,27,28,29,34,39,43,50,60,80 };
         //int p3c2[] = { 0, 0, 0, 0, 0,  0, 0, 25, 0, 0,  50,50,50,60,60,70,70,80,80,80 };
-        upg = new ShipUpgrade( "Recompensator            [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );     // 115 x20
+        upg = new ShipUpgrade( "Recompensator            [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );     // 115 x20
         ship.addUpgrade( upg );
         //int costs3[] =        {11,11,12,13,14,   15,16,17,19,25, 29,44 };
         //int energyLevels3[] = { 0, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
-        upg = new ShipUpgrade( "Molecular Shield         [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 ); // 70 x12
+        upg = new ShipUpgrade( "Molecular Shield         [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks ); // 70 x12
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Rapid Disintigrator", Tools.Prize.GUNS, new int[]{40,190}, new int[]{47,75}, 2 );
+        upg = new ShipUpgrade( "Rapid Disintigrator", Tools.Prize.GUNS, new int[]{40,190}, new int[]{47,75} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Bombing ability disabled)", Tools.Prize.BOMBS, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -11321,13 +11326,13 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Radar Unit", Tools.Prize.XRADAR, 25, 30, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, new int[]{9,15,23}, new int[]{18,29,47}, 3 );
+        upg = new ShipUpgrade( "Spider Reiterator", Tools.Prize.DECOY, new int[]{9,15,23}, new int[]{18,29,47} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+25% Energy Tank", ABILITY_ENERGY_TANK, new int[]{12,17,22,30}, new int[]{9,20,33,60}, 4 );
+        upg = new ShipUpgrade( "+25% Energy Tank", ABILITY_ENERGY_TANK, new int[]{12,17,22,30}, new int[]{9,20,33,60} );
         ship.addUpgrade( upg );
         int p3f1[] = { 13, 15, 17, 19, 20 };
         int p3f2[] = { 15, 25, 35, 45, 55 };
-        upg = new ShipUpgrade( "+9% Infinite Energy Stream", ABILITY_SUPER, p3f1, p3f2, 5 );
+        upg = new ShipUpgrade( "+9% Infinite Energy Stream", ABILITY_SUPER, p3f1, p3f2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Warp Field Stabilizer", Tools.Prize.ANTIWARP, 23, 38, 1 );
         ship.addUpgrade( upg );
@@ -11360,26 +11365,26 @@ public class distensionbot extends SubspaceBot {
         // 60: Prox
         // 70: Shrapnel
         ship = new ShipProfile( RANK_REQ_SHIP4, 16f );
-        upg = new ShipUpgrade( "Gravitational Modifier   [ROT]", Tools.Prize.ROTATION, new int[]{9,5,6,9,10,10,11,12}, 0, 8 );       // 20 x8
+        upg = new ShipUpgrade( "Gravitational Modifier   [ROT]", Tools.Prize.ROTATION, new int[]{9,5,6,9,10,10,11,12}, 0 );       // 20 x8
         ship.addUpgrade( upg );
         int p4a1[] = {20, 30, 40, 50, 60 };
         int p4a2[] = { 8, 20, 40, 50, 60 };
-        upg = new ShipUpgrade( "Force Thrusters          [THR]", Tools.Prize.THRUST, p4a1, p4a2, 5 );     // 4 x5
+        upg = new ShipUpgrade( "Force Thrusters          [THR]", Tools.Prize.THRUST, p4a1, p4a2 );     // 4 x5
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Collection Drive         [SPD]", Tools.Prize.TOPSPEED, 15, 0, 7 );        //1000 x7
         ship.addUpgrade( upg );
         //int costs4[] = { 9, 10, 12, 14, 15,  16, 18, 20, 22, 27,  30, 35 };
-        upg = new ShipUpgrade( "Power Recirculator       [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );   // 70 x12
+        upg = new ShipUpgrade( "Power Recirculator       [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );   // 70 x12
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Carbon-Forced Armor      [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 );         // 60 x20
+        upg = new ShipUpgrade( "Carbon-Forced Armor      [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks );         // 60 x20
         ship.addUpgrade( upg );
         int p4b1[] = { 40 };
         int p4b2[] = { 35 };
-        upg = new ShipUpgrade( "Spill Guns", Tools.Prize.GUNS, p4b1, p4b2, 1 );         // DEFINE
+        upg = new ShipUpgrade( "Spill Guns", Tools.Prize.GUNS, p4b1, p4b2 );         // DEFINE
         ship.addUpgrade( upg );
         int p4c1[] = { 7, 20, 55 };
         int p4c2[] = { 4, 13, 48 };
-        upg = new ShipUpgrade( "Chronos(TM) Disruptor", Tools.Prize.BOMBS, p4c1, p4c2, 3 );        // DEFINE
+        upg = new ShipUpgrade( "Chronos(TM) Disruptor", Tools.Prize.BOMBS, p4c1, p4c2 );        // DEFINE
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Sidekick Cannons", Tools.Prize.MULTIFIRE, 16, 30, 1 );
         ship.addUpgrade( upg );
@@ -11442,10 +11447,10 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Microspiral Drive        [SPD]", Tools.Prize.TOPSPEED, 8, 0, 16 );         // 325 x16
         ship.addUpgrade( upg );
         //int costs5a[] = { 10, 13, 15, 18, 22,  26, 35, 40, 45, 50 };
-        upg = new ShipUpgrade( "Hull Reconstructor       [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );   // 90 x10
+        upg = new ShipUpgrade( "Hull Reconstructor       [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );   // 90 x10
         ship.addUpgrade( upg );
         //int costs5b[] = { 10, 12, 13, 14, 15,  20, 23, 27, 30 };
-        upg = new ShipUpgrade( "Hull Capacity            [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 );      // 75 x9
+        upg = new ShipUpgrade( "Hull Capacity            [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks );      // 75 x9
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Upgraded Defense Systems", Tools.Prize.GUNS, 28, 36, 1 );
         ship.addUpgrade( upg );
@@ -11455,20 +11460,20 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p5d1[] = {  8, 10, 16, 20, 25 };
         int p5d2[] = { 13, 23, 33, 43, 53 };
-        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, p5d1, p5d2, 5 );
+        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, p5d1, p5d2 );
         ship.addUpgrade( upg );
         int p5a1[] = {12, 13, 14, 30 };
         int p5a2[] = { 7, 16, 29, 60 };
-        upg = new ShipUpgrade( "Wormhole Creation Kit", Tools.Prize.PORTAL, p5a1, p5a2, 4 );        // DEFINE
+        upg = new ShipUpgrade( "Wormhole Creation Kit", Tools.Prize.PORTAL, p5a1, p5a2 );        // DEFINE
         ship.addUpgrade( upg );
         int p5b1[] = { 6, 160 };
         int p5b2[] = { 2, 30 };
-        upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2, 2 );       // DEFINE
+        upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2 );       // DEFINE
         ship.addUpgrade( upg );
         int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
-        upg = new ShipUpgrade( "+9% Regeneration", ABILITY_TERR_REGEN, 12, p5c1, 10 );
+        upg = new ShipUpgrade( "+9% Regeneration", ABILITY_TERR_REGEN, 12, p5c1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{12,13,14,15,20}, new int[]{25,35,45,57,75}, 5 );
+        upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{12,13,14,15,20}, new int[]{25,35,45,57,75} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Targeted EMP", ABILITY_TARGETED_EMP, 40, 50, 1 );
         ship.addUpgrade( upg );
@@ -11508,27 +11513,27 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP6, 14f );
         int p6a1a[] = { 8, 6,  5,  4,  4,  3, 1 };
         int p6a2a[] = { 3, 8, 10, 15, 20, 30, 1 };
-        upg = new ShipUpgrade( "Orbital Force Unit       [ROT]", Tools.Prize.ROTATION, p6a1a, p6a2a, 7 );       // 20 x7
+        upg = new ShipUpgrade( "Orbital Force Unit       [ROT]", Tools.Prize.ROTATION, p6a1a, p6a2a );       // 20 x7
         ship.addUpgrade( upg );
         int p6a1b[] = { 15,10,  9,  8, 8, 7, 6, 5, 5, 5,  10, 5, 4, 3, 1 };
         int p6a2b[] = { 3,  8, 10, 20, 1, 1, 1, 1, 1, 1,   1, 1, 1, 1, 1 };
-        upg = new ShipUpgrade( "Gravity Shifter          [THR]", Tools.Prize.THRUST, p6a1b, p6a2b, 15 );         // 1 x8
+        upg = new ShipUpgrade( "Gravity Shifter          [THR]", Tools.Prize.THRUST, p6a1b, p6a2b );         // 1 x8
         ship.addUpgrade( upg );
         int p6a1c[] = { 15, 9,  9,  8,  7, 6, 6, 5, 5, 5,  10, 5, 4, 3, 1 };
         int p6a2c[] = { 3,  8, 10, 15, 20, 1, 1, 1, 1, 1,   1, 1, 1, 1, 1 };
-        upg = new ShipUpgrade( "Time Distorter           [SPD]", Tools.Prize.TOPSPEED, p6a1c, p6a2c, 15 );      // 150 x10
+        upg = new ShipUpgrade( "Time Distorter           [SPD]", Tools.Prize.TOPSPEED, p6a1c, p6a2c );      // 150 x10
         ship.addUpgrade( upg );
         //int p6a1d[] = { 15,14,13, 12, 14,  18, 24, 29, 33, 40 };
         //int p6a2d[] = { 5, 8, 10, 15, 20,  30, 40, 50, 60, 70 };
-        upg = new ShipUpgrade( "Influx Recapitulator     [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );      //  75 x10
+        upg = new ShipUpgrade( "Influx Recapitulator     [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );      //  75 x10
         ship.addUpgrade( upg );
         //int p6a1e[] = { 15,16,17, 18, 19,  20, 30, 20, 20, 24,  27, 50, 60, 75 };
         //int p6a2e[] = {  3, 5, 8, 10, 15,  20, 30, 40, 50, 55,  60, 65, 70, 75 };
-        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 );        //  60 x14
+        upg = new ShipUpgrade( "Cerebral Shielding       [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks );        //  60 x14
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Low Propulsion Cannons", Tools.Prize.GUNS, 32, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+15% Vengeful B*stard", ABILITY_VENGEFUL_BASTARD, new int[]{9,12,15,20}, new int[]{10,20,30,55}, 4 );
+        upg = new ShipUpgrade( "+15% Vengeful B*stard", ABILITY_VENGEFUL_BASTARD, new int[]{9,12,15,20}, new int[]{10,20,30,55} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Cannon Distributor", Tools.Prize.MULTIFIRE, 19, 18, 1 );
         ship.addUpgrade( upg );
@@ -11542,11 +11547,11 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p6c1[] = {12, 21, 30 };
         int p6c2[] = { 9, 46, 60 };
-        upg = new ShipUpgrade( "Assault Boosters", Tools.Prize.ROCKET, p6c1, p6c2, 3 );
+        upg = new ShipUpgrade( "Assault Boosters", Tools.Prize.ROCKET, p6c1, p6c2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Movement Inhibitor", Tools.Prize.BRICK, 39, 50, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Prismatic Array", ABILITY_PRISMATIC_ARRAY, new int[]{15,14,13}, new int[]{26,35,54}, 3 );
+        upg = new ShipUpgrade( "Prismatic Array", ABILITY_PRISMATIC_ARRAY, new int[]{15,14,13}, new int[]{26,35,54} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -11577,19 +11582,19 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( 10, 14f );       // Level 10 unlock: beta only
         upg = new ShipUpgrade( "Directive Realigner      [ROT]", Tools.Prize.ROTATION, 5, 0, 5 );        //  20 x5
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "InitiaTek Burst Engine   [THR]", Tools.Prize.THRUST,   new int[]{8,8,9,9,10, 10,10,11,11,12,  13,13,13}, 0, 13 );         //   1 x10
+        upg = new ShipUpgrade( "InitiaTek Burst Engine   [THR]", Tools.Prize.THRUST,   new int[]{8,8,9,9,10, 10,10,11,11,12,  13,13,13}, 0 );         //   1 x10
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Streamlining Unit        [SPD]", Tools.Prize.TOPSPEED, new int[]{7,7,8,8,9,  10,10,10,11,11,  12,12,13}, 0, 13 );        // 150 x10
+        upg = new ShipUpgrade( "Streamlining Unit        [SPD]", Tools.Prize.TOPSPEED, new int[]{7,7,8,8,9,  10,10,10,11,11,  12,12,13}, 0 );        // 150 x10
         ship.addUpgrade( upg );
         //int costs7[] = { 11, 12, 15, 16, 21, 22, 29, 35 };
-        upg = new ShipUpgrade( "Pneumatic Refiltrator    [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );        // 125 x8
+        upg = new ShipUpgrade( "Pneumatic Refiltrator    [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );        // 125 x8
         ship.addUpgrade( upg );
         //int p7a1[] = { 0, 0, 5, 10, 15, 20, 25, 30 };
-        upg = new ShipUpgrade( "Interlocked Deflector    [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 );       //  75 x8
+        upg = new ShipUpgrade( "Interlocked Deflector    [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks );       //  75 x8
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Modernized Projector", Tools.Prize.GUNS, 20, 38, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+15% Leeching", ABILITY_LEECHING, new int[]{15,18,20,22,30}, new int[]{15,30,40,50,70}, 5 );
+        upg = new ShipUpgrade( "+15% Leeching", ABILITY_LEECHING, new int[]{15,18,20,22,30}, new int[]{15,30,40,50,70} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Magnified Output Force", Tools.Prize.MULTIFIRE, 23, 20, 1 );
         ship.addUpgrade( upg );
@@ -11597,9 +11602,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Lancaster Reiterator", Tools.Prize.DECOY, 50, 80, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "The Firebloom", ABILITY_FIREBLOOM, new int[]{32,15,50}, new int[]{45,52,65}, 3 );
+        upg = new ShipUpgrade( "The Firebloom", ABILITY_FIREBLOOM, new int[]{32,15,50}, new int[]{45,52,65} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Lancaster Special!", Tools.Prize.BOMBS, new int[]{21,80}, new int[]{26,60}, 2 );
+        upg = new ShipUpgrade( "Lancaster Special!", Tools.Prize.BOMBS, new int[]{21,80}, new int[]{26,60} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 42, 55, 1 );
         ship.addUpgrade( upg );
@@ -11641,22 +11646,22 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP8, 11f );
         int p8a1[] = {  4,  5,  5,  6,  7,  8, 10 };
         int p8a2[] = {  5, 11, 12, 13, 14, 15, 16 };
-        upg = new ShipUpgrade( "Runningside Correctors   [ROT]", Tools.Prize.ROTATION, p8a1, p8a2, 7 );     // 20 x7
+        upg = new ShipUpgrade( "Runningside Correctors   [ROT]", Tools.Prize.ROTATION, p8a1, p8a2 );     // 20 x7
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Spitfire Thrusters       [THR]", Tools.Prize.THRUST,   new int[]{6,7,8,9,10, 10,11,11,11,11, 12,13}, 0, 12 );            // 1  x12
+        upg = new ShipUpgrade( "Spitfire Thrusters       [THR]", Tools.Prize.THRUST,   new int[]{6,7,8,9,10, 10,11,11,11,11, 12,13}, 0 );            // 1  x12
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Space-Force Emulsifier   [SPD]", Tools.Prize.TOPSPEED, new int[]{8,8,9,9,10, 11,11,12,12,11, 12,13}, 0, 12 );          // 200 x12
+        upg = new ShipUpgrade( "Space-Force Emulsifier   [SPD]", Tools.Prize.TOPSPEED, new int[]{8,8,9,9,10, 11,11,12,12,11, 12,13}, 0 );          // 200 x12
         ship.addUpgrade( upg );
         //int costs8[] = {10,11,11,12,15, 18,21,23,25,29, 55 };
-        upg = new ShipUpgrade( "Light Charging Mechanism [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks, 15 );     //  75 x11
+        upg = new ShipUpgrade( "Light Charging Mechanism [CHG]", Tools.Prize.RECHARGE, commonRechargeCosts, commonRechargeRanks );     //  75 x11
         ship.addUpgrade( upg );
         //int p8b1[] = {10,10, 12, 14, 16, 20, 30, 80 };
         //int p8b2[] = { 3, 5, 10, 20, 30, 40, 50, 75 };
-        upg = new ShipUpgrade( "Projectile Slip Plates   [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks, 15 );       //  75 x8
+        upg = new ShipUpgrade( "Projectile Slip Plates   [NRG]", Tools.Prize.ENERGY, commonEnergyCosts, commonEnergyRanks );       //  75 x8
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, new int[]{10,45}, new int[]{12,55}, 2 );
+        upg = new ShipUpgrade( "Emergency Defense Cannon", Tools.Prize.GUNS, new int[]{10,45}, new int[]{12,55} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, new int[]{35,100}, new int[]{45,80}, 2 );
+        upg = new ShipUpgrade( "Plasma-Infused Weaponry", Tools.Prize.BOMBS, new int[]{35,100}, new int[]{45,80} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Spreadshot", Tools.Prize.MULTIFIRE, 24, 28, 1 );
         ship.addUpgrade( upg );
@@ -11664,14 +11669,14 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         int p8ca1[] = { 13, 15, 20, 55 };
         int p8ca2[] = { 20, 30, 50, 75 };
-        upg = new ShipUpgrade( "+25% Repulsor Regeneration", ABILITY_SHARK_REGEN, p8ca1, p8ca2, 4 );
+        upg = new ShipUpgrade( "+25% Repulsor Regeneration", ABILITY_SHARK_REGEN, p8ca1, p8ca2 );
         ship.addUpgrade( upg );
         int p8c1[] = { 6, 70, 99 };
         int p8c2[] = { 4, 34, 70 };
-        upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2, 3 );    // DEFINE
+        upg = new ShipUpgrade( "Gravitational Repulsor", Tools.Prize.REPEL, p8c1, p8c2 );    // DEFINE
         ship.addUpgrade( upg );
         int p8d2[] = { 22, 41, 65 };
-        upg = new ShipUpgrade( "Splintering Unit", Tools.Prize.SHRAPNEL, 11, p8d2, 3 );
+        upg = new ShipUpgrade( "Splintering Unit", Tools.Prize.SHRAPNEL, 11, p8d2 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Nonexistence Device", Tools.Prize.CLOAK, 55, 38, 1 );
         ship.addUpgrade( upg );
@@ -11719,31 +11724,31 @@ public class distensionbot extends SubspaceBot {
         // 55: EMP Pulse
         // 60: Shields (all on team)
         ship = new ShipProfile( RANK_REQ_SHIP9, 13f );
-        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,52}, 5 );
+        upg = new ShipUpgrade( "+1% Profit Sharing", ABILITY_PROFIT_SHARING, new int[]{10,10,12,14,18}, new int[]{8,16,23,37,52} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+2 Maximum OP Reserve", OPS_INCREASE_MAX_OP, new int[]{8,10,10,10,11,13,15,20,25}, new int[]{1,5,10,15,20,25,35,45,55}, 9 );
+        upg = new ShipUpgrade( "+2 Maximum OP Reserve", OPS_INCREASE_MAX_OP, new int[]{8,10,10,10,11,13,15,20,25}, new int[]{1,5,10,15,20,25,35,45,55} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "+1 OP Regen", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{9,20,30,40}, 4 );
+        upg = new ShipUpgrade( "+1 OP Regen", OPS_REGEN_RATE, new int[]{8,10,15,20}, new int[]{9,20,30,40} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,7,20}, new int[]{1,3,18}, 3 );
+        upg = new ShipUpgrade( "Communications Systems", OPS_COMMUNICATIONS, new int[]{7,7,20}, new int[]{1,3,18} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, new int[]{12,7,10}, new int[]{2,9,17}, 3 );
+        upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, new int[]{12,7,10}, new int[]{2,9,17} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 20, 7, 1 );   // Consider another level offering longer cover
         ship.addUpgrade( upg );                                                 // via diff
-        upg = new ShipUpgrade( "Security Door Systems", OPS_DOOR_CONTROL, new int[]{13,15,21}, new int[]{10,19,31}, 3 );
+        upg = new ShipUpgrade( "Security Door Systems", OPS_DOOR_CONTROL, new int[]{13,15,21}, new int[]{10,19,31} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, new int[]{7,15,25}, new int[]{4,21,31}, 3 );
+        upg = new ShipUpgrade( "Rapid Wormhole Induction", OPS_WARP, new int[]{7,15,25}, new int[]{4,21,31} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{12,20}, 2 );
+        upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{12,20} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, 0, 0, -1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Shroud of Darkness", OPS_SHROUD, new int[]{11,20,12,22}, new int[]{15,22,30,46}, 4 );
+        upg = new ShipUpgrade( "Shroud of Darkness", OPS_SHROUD, new int[]{11,20,12,22}, new int[]{15,22,30,46} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, new int[]{10,15,18}, new int[]{25,33,50}, 3 );
+        upg = new ShipUpgrade( "Full Sensor Disable", OPS_FLASH, new int[]{10,15,18}, new int[]{25,33,50} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, new int[]{24,50}, new int[]{40,60}, 2 );
+        upg = new ShipUpgrade( "Defensive Shields", OPS_TEAM_SHIELDS, new int[]{24,50}, new int[]{40,60} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "EMP Pulse", ABILITY_TARGETED_EMP, 40, 55, 1 );
         ship.addUpgrade( upg );
@@ -11768,61 +11773,68 @@ public class distensionbot extends SubspaceBot {
         //final int[] defaultEnergyRanks = {   2, 5, 10 };
         //final int[] defaultChgRanks =    { 1,  3, 8 };
 
-        // Scout -- Default ship type; the scout tops out early and is not all that useful past rank 30
-        //          or so.  However keeping it up until about that point and then taking the hit for
-        //          the ship type change outside of the allowed ranks may still be beneficial ...
-        //          12 upgrades over 70 ranks (at rank 80) 6 nrg / 6 chg
-        int[] type0EnergyRanks = {   15,  20,  28,30,    50,    70 };
-        int[] type0ChargeRanks = { 12,  18, 25,   30, 40,   60     };
-        ShipTypeProfile shipType = new ShipTypeProfile( "Scout", type0ChargeRanks, type0EnergyRanks, 10, false );
-        shipType.setDescs( "LOW  ", "LOW  ", "Default, balanced.  Good for early ranks" );
+        // Scout (default) receives 17 upgrades by rank 50 -- 9 nrg / 8 chg (last 30: 7 / 6)
+        //int[] type0EnergyRanks = {   15, 20, 30, 40, 50, 60,  70,75, 80 };
+        //int[] type0ChargeRanks = { 12, 18, 25, 35, 45, 55, 65,   75, 80 };
+        int[] type0EnergyRanks =   {   13, 18, 22, 25, 30, 35,  40, 45, 50,   52, 58, 62, 67, 73, 77, 80 };
+        int[] type0ChargeRanks =   { 12, 15, 20,     28, 33, 37,  42,   50,     55, 60, 65, 70, 75,   80 };
+        ShipTypeProfile shipType = new ShipTypeProfile( "Scout", type0ChargeRanks, type0EnergyRanks, 7, false );
+        shipType.setDescs( "MED  ", "MED  ", "Balanced between energy, recharge and UP; well-rounded" );
         m_shipTypeGeneralData.add( shipType );
 
+
+        /* DEFUNCT
         // Advanced Scout receives 14 upgrades over 60 ranks (at rank 70) -- 7 nrg / 7 chg
         int[] type1EnergyRanks = {   15, 20, 30, 40, 50, 60,  70,75, 80 };
         int[] type1ChargeRanks = { 12, 18, 25, 35, 45, 55, 65,   75, 80 };
         shipType = new ShipTypeProfile( "Advanced Scout", type1ChargeRanks, type1EnergyRanks, 8, false );
         shipType.setDescs( "MED  ", "MED  ", "Balanced; a more durable version of the Scout" );
         m_shipTypeGeneralData.add( shipType );
+        */
 
-        // Artillery receives 14 upgrades over 50 ranks (at rank 60) -- 6 nrg / 8 chg
-        int[] type2EnergyRanks = {   15, 20,    30, 40, 50, 60,    70,  80,80 };
-        int[] type2ChargeRanks = { 12, 18, 23,27, 35, 45,55,60,  65, 75,80,80 };
-        shipType = new ShipTypeProfile( "Artillery", type2ChargeRanks, type2EnergyRanks, 5, false );
+
+        // Artillery receives 23 upgrades by rank 50 -- 8 nrg / 15 chg (last 30: 6 / 11 )
+        //int[] type1EnergyRanks = {   15, 20,    30, 40, 50, 60,    70,  80,80 };
+        //int[] type1ChargeRanks = { 12, 18, 23,27, 35, 45,55,60,  65, 75,80,80 };
+        int[] type1EnergyRanks = {     15,    20,   25,     30,    35,    40, 45,    50,        55,    60,    65,    70,  75,    80  };
+        int[] type1ChargeRanks = {11,13, 17,19, 22,23, 25,28, 31,33, 37,39, 42,  47, 50,   52,54, 56,58, 62,64, 67,69,  72,  77, 80   };
+        shipType = new ShipTypeProfile( "Artillery", type1ChargeRanks, type1EnergyRanks, 5, false );
         shipType.setDescs( "LOW  ", "HIGH ", "Gunship designed for a punishing weapon stream" );
         m_shipTypeGeneralData.add( shipType );
 
-        // Tank receives 14 upgrades over 40 ranks (at rank 50) -- 9 nrg (4.4) / 5 chg (8)
-        int[] type3EnergyRanks = { 12, 18, 20, 25, 28,   32, 35, 45, 50,  55,60,65,70,75,80,80 };
-        int[] type3ChargeRanks = {   15,     22,      30,      40,   50,     60,   70,   80,80 };
-        shipType = new ShipTypeProfile( "Warship", type3ChargeRanks, type3EnergyRanks, 4, false );
-        shipType.setDescs( "VHIGH", "LOW  ", "Heavily-shielded tank made to take a beating" );
+        // Tank receives 24 upgrades by rank 50 -- 18 nrg / 6 chg (last 30: 14 / 5 )
+        //int[] type2EnergyRanks = { 12, 18, 20, 25, 28,   32, 35, 45, 50,  55,60,65,70,75,80,80 };
+        //int[] type2ChargeRanks = {   15,     22,      30,      40,   50,     60,   70,   80,80 };
+        int[] type2EnergyRanks = {11,13,14,  16,18,19,  22,24,  26,28, 32,34,36,38,  42,45, 47, 50,   51,53,54,  56,57,59, 62,64, 67,69, 72,75,77, 80 };
+        int[] type2ChargeRanks = {        15,        20,      25,    30,          40,           50,            55,       60,    65,    70,         80 };
+        shipType = new ShipTypeProfile( "Warship", type2ChargeRanks, type2EnergyRanks, 4, false );
+        shipType.setDescs( "VHIGH", "VLOW ", "Heavily-shielded tank made to take a beating" );
         m_shipTypeGeneralData.add( shipType );
 
-        // Science Vessel receives 12 upgrades over 60 ranks (at rank 70) -- 6 nrg / 6 chg
-        int[] type4EnergyRanks = { 15, 25, 35, 45, 55, 65   };
-        int[] type4ChargeRanks = {   20, 30, 40, 50, 60, 70 };
-        shipType = new ShipTypeProfile( "Science Vessel", type4ChargeRanks, type4EnergyRanks, 11, false );
+        // Science Vessel receives 12 upgrades by rank 50 --  7 nrg / 5 chg (last 30: 5 / 4 )
+        //int[] type3EnergyRanks = { 15, 25, 35, 45, 55, 65   };
+        //int[] type3ChargeRanks = {   20, 30, 40, 50, 60, 70 };
+        int[] type3EnergyRanks = { 12, 17, 23, 27, 35, 44, 50,   52, 57, 60,  70,   80 };
+        int[] type3ChargeRanks = {   15, 20,     30, 40,   50,     55,      65, 75, 80 };
+        shipType = new ShipTypeProfile( "Science Vessel", type3ChargeRanks, type3EnergyRanks, 10, false );
         shipType.setDescs( "LOW  ", "LOW  ", "Light craft that focuses on a large array of abilities" );
         m_shipTypeGeneralData.add( shipType );
 
+        // Z-Class pays their way manually
+        int[] type4EnergyRanks = {};
+        int[] type4ChargeRanks = {};
+        shipType = new ShipTypeProfile( "Z-Class", type4ChargeRanks, type4EnergyRanks, 10, true );
+        shipType.setDescs( "NONE ", "NONE ", "Manual NRG/CHG upgrades + free scrapping; highly adaptable" );
+        m_shipTypeGeneralData.add( shipType );
+
         /*  ONLY FOR PUBLIC RELEASE
-        // Dreadnought receives 22 upgrades over 70 ranks (at rank 80) -- 11 nrg / 11 chg
-        int[] type5EnergyRanks = { 15, 25, 35, 45, 55, 65   };
-        int[] type5ChargeRanks = {   20, 30, 40, 50, 60, 70 };
+        int[] type5EnergyRanks = { ? };
+        int[] type5ChargeRanks = { ? };
         shipType = new ShipTypeProfile( "Dreadnought", type5ChargeRanks, type5EnergyRanks, 8, false );
         shipType.setDescs( "V.LOW", "V.LOW", "Starts slowly, but is the most powerful of all" );
         shipType.setMaxRankForChange(20);
         m_shipTypeGeneralData.add( shipType );
         */
-
-        // Z-Class pays their way manually
-        int[] type6EnergyRanks = {};
-        int[] type6ChargeRanks = {};
-        shipType = new ShipTypeProfile( "Z-Class", type6ChargeRanks, type6EnergyRanks, 10, true );
-        shipType.setDescs( "NONE ", "NONE ", "Manual NRG/CHG upgrades & reduced scrap fee; highly adaptable" );
-        m_shipTypeGeneralData.add( shipType );
-
     }
 
 
