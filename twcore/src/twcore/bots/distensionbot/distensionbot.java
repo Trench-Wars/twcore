@@ -2746,7 +2746,7 @@ public class distensionbot extends SubspaceBot {
                         Tools.formatString("  Auto-Recharge:  " + "(" + p.getRechargeLevel() + "/" + sp.getMaxRechargeUpgs() + ")", (spamLength / 2) -1 ) + "|" );
         }
         statusSpam.add( Tools.formatString("|        Streak:  " + p.getSuccessiveKills(), spamLength / 2) +
-                        Tools.formatString("   Played today:" + p.getMinutesPlayed() + " min", (spamLength / 2) -1 ) + "|" );
+                        Tools.formatString("   Played today:  " + p.getMinutesPlayed() + " min", (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("| ProfitSharing:  " + sharingPercent + "%", spamLength / 2) +
                         Tools.formatString("  Participation:  " + partString, (spamLength / 2) -1 ) + "|" );
         if( shipNum == 9 ) {
@@ -3069,8 +3069,8 @@ public class distensionbot extends SubspaceBot {
         }
         if( times < 1 )
             throw new TWCoreException( "That's not very many times to upgrade, now is it?" );
-        if( times > 5 )
-            throw new TWCoreException( "Sorry, 5 times is the most you can do there." );
+        if( times > 8 )
+            throw new TWCoreException( "Sorry, 8 times is the most you can do there." );
         for( int i=0; i<times; i++ )
             cmdUpgrade( name, ""+upgradeNum );
     }
@@ -11141,7 +11141,7 @@ public class distensionbot extends SubspaceBot {
         int[] commonRechargeCosts = {  6,  6,  7,  8,  8,   9, 10, 10, 11, 12,  13, 14, 15, 16, 17,   20, 22, 24, 26, 28,   30, 50 };
         int[] commonRechargeRanks = {  0,  0,  0, 10,  0,   0,  0, 20,  0,  0,   0,  0,  0, 30,  0,   40,  0, 50,  0,  0,    0, 60 };
         int[] commonEnergyCosts =   {  6,  7,  7,  8,  9,   9, 10, 11, 11, 12,  13, 14, 15, 16, 17,   20, 22, 24, 26, 28,   30, 50 };
-        int[] commonEnergyRanks   = {  0,  0,  0, 10,  0,   0,  0, 20, 39, 48,   0,  0,  0, 30,  0,    0,  0, 50,  0,  0,    0, 60 };
+        int[] commonEnergyRanks   = {  0,  0,  0, 10,  0,   0,  0, 20,  0,  0,   0,  0,  0, 30,  0,    0,  0, 50,  0,  0,    0, 60 };
 
         ShipUpgrade upg;
 
@@ -11778,7 +11778,7 @@ public class distensionbot extends SubspaceBot {
         //int[] type0ChargeRanks = { 12, 18, 25, 35, 45, 55, 65,   75, 80 };
         int[] type0EnergyRanks =   {   13, 18, 22, 25, 30, 35,  40, 45, 50,   52, 58, 62, 67, 73, 77, 80 };
         int[] type0ChargeRanks =   { 12, 15, 20,     28, 33, 37,  42,   50,     55, 60, 65, 70, 75,   80 };
-        ShipTypeProfile shipType = new ShipTypeProfile( "Scout", type0ChargeRanks, type0EnergyRanks, 7, false );
+        ShipTypeProfile shipType = new ShipTypeProfile( "Scout", type0ChargeRanks, type0EnergyRanks, 8, false );
         shipType.setDescs( "MED  ", "MED  ", "Balanced between energy, recharge and UP; well-rounded" );
         m_shipTypeGeneralData.add( shipType );
 
