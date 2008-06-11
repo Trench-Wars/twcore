@@ -64,7 +64,7 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 18;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between a long list of spammed messages
-    private final int PRIZE_SPAM_DELAY = 10;               // Delay in ms between prizes for individual players
+    private final int PRIZE_SPAM_DELAY = 15;               // Delay in ms between prizes for individual players
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
@@ -506,7 +506,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setMessageLimit( 15, false );
         m_botAction.setReliableKills( 1 );
         m_botAction.setPlayerPositionUpdating( 400 );
-        m_botAction.setLowPriorityPacketCap( 23 );
+        m_botAction.setLowPriorityPacketCap( 20 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
         m_botAction.setDoors( 240 ); // All bottom doors closed
@@ -2915,14 +2915,14 @@ public class distensionbot extends SubspaceBot {
                                 (sp.getMaxEnergyUpgs() < 10 ? " " : "") + sp.getMaxEnergyUpgs() + " )", 18);
                         int ranks = sp.ranksUntilNextEnergy(p.getRank());
                         if( ranks != -1 )
-                            printmsg += "           +1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
+                            printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
                     } else {
                         printmsg = "--- " + Tools.formatString( "Recharge        [Auto-Install]", 38);
                         printmsg += Tools.formatString("( " + ( p.getRechargeLevel() < 10 ? " " : "") + p.getRechargeLevel() + " / " +
                                 (sp.getMaxRechargeUpgs() < 10 ? " " : "") + sp.getMaxRechargeUpgs() + " )", 18);
                         int ranks = p.getShipTypeProfile().ranksUntilNextRecharge(p.getRank());
                         if( ranks != -1 )
-                            printmsg += "           +1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
+                            printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
                     }
                 } else {
                     printCost = true;
@@ -3313,12 +3313,15 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Tactical Ops do not specialize, as you are not in a ship!  You've been a little too long at that console, I think..." );
 
         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "--- SHIP SPECIALIZATIONS ---" );
+
         for( int i=0; i<m_shipTypeGeneralData.size(); i++ ) {
             ShipTypeProfile sp = m_shipTypeGeneralData.get(i);
             String typeName = Tools.formatString( sp.getTypeName(), 15 );
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), i + ": " + typeName + " - " + sp.getLineDesc() );
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "   NRG Rate: " + sp.getEnRateDesc() + "   CHG Rate: " + sp.getChgRateDesc() + "  UP/RANK: " + sp.getUPperRank() + "  (Total " + sp.getTotalUPforRank(p.getRank()) + " after change)" );
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("=", 75) + "." );
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "|" + Tools.formatString( i + ": " + typeName + " - " + sp.getLineDesc(), 75) + "|" );
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "|" + Tools.formatString( "   NRG Rate: " + sp.getEnRateDesc() + "   CHG Rate: " + sp.getChgRateDesc() + "  UP/RANK: " + sp.getUPperRank() + "  (" + sp.getTotalUPforRank(p.getRank()) + "UP after change)", 75) + "|" );
         }
+        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("=", 75) + "." );
     }
 
 
@@ -9508,6 +9511,14 @@ public class distensionbot extends SubspaceBot {
         int winningArmyID    = flagTimer.getHoldingFreq();
         int secs             = flagTimer.getTotalSecs();
         int minsToWin        = flagTimer.getTotalSecs() / 60;
+        int freq0Time        = Math.max( 1, flagTimer.getFreq0TotalSecs() );
+        int freq1Time        = Math.max( 1, flagTimer.getFreq1TotalSecs() );
+        float winnerPercentage;
+
+        if( winningArmyID == 0 )
+            winnerPercentage = ( (float)freq0Time / (float)( freq0Time + freq1Time ));
+        else
+            winnerPercentage = ( (float)freq1Time / (float)( freq0Time + freq1Time ));
 
         int opposingStrengthAvg = 1;
         int friendlyStrengthAvg = 1;
@@ -9696,7 +9707,7 @@ public class distensionbot extends SubspaceBot {
                 Tools.formatString( (int)(percentSupport * 100.0f) + "% for " + (int)numSupport + " on support ", 23 ) +
                 Tools.formatString( "-> average " + (int)(support / numSupport) + " RP", 23 ) +      "|");
         endRoundSpam.add( "|  " +
-                Tools.formatString( (gameOver ? "            > x2 BONUS! <" : "" ), 30 ) +
+                Tools.formatString( "Hold percentage: " + (int)(winnerPercentage*100), 30 ) +
                 Tools.formatString( (int)(percentAttack * 100.0f) + "% for " + (int)numAttack + " on attack ", 23 ) +
                 Tools.formatString( "-> average " + (int)(attack / numAttack) + " RP", 23 ) +      "|");
 
@@ -9823,22 +9834,31 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             } else {
-                // For long battles, losers receive about half of the award of the winners.
+                // For long battles, losers receive about 1/3 of the award of the winners.
                 if( minsToWin >= 15 ) {
                     if( p.getShipNum() > 0 ) {
                         playerRank = p.getRank();
                         if( playerRank == 0 )
                             playerRank = 1;
                         points = totalPoints * ((float)playerRank / (float)totalLvls);
-                        points /= 2;
+                        if( winnerPercentage > 0.8f )
+                            points /= 4;
+                        else if( winnerPercentage > 0.7f )
+                            points /= 3;
+                        else if( winnerPercentage > 0.6f )
+                            points /= 3;
+                        else if( winnerPercentage > 0.5f )
+                            points /= 2;
+                        else    // They actually held more than the winning team -- give them a good bit.
+                            points = (float)points / 1.5f;
                         Integer time = m_playerTimes.get( p.getName() );
                         if( time != null ) {
                             float percentOnFreq = (float)(secs - time) / (float)secs;
                             int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                             msgRecipients.add(p.getArenaPlayerID());
-                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
+                            int pointsAdded = p.addRankPoints(modPoints,false);
+                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
                             //m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You lost the battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation).");
-                            p.addRankPoints(modPoints,false);
                         }
                     }
                 }
@@ -11356,13 +11376,22 @@ public class distensionbot extends SubspaceBot {
         // 8:  L2 Guns
         // 15: L2 Bombs
         // 20: XRadar
+        // 23: Priority Rearm
         // 25: Stealth
+        // 26: Shrap 1
         // 28: Portal
         // 30: Multi (close shotgun)
+        // 32: Shrap 2
         // 35: L3 Guns
+        // 38: Shrap 3
         // 40: Decoy
+        // 42: Shrap 4
+        // 46: Shrap 5
         // 48: L3 Bombs
+        // 53: Shrap 6
+        // 57: Shrap 7
         // 60: Prox
+        // 65: Shrap 8
         // 70: Shrapnel
         ship = new ShipProfile( RANK_REQ_SHIP4, 16f );
         upg = new ShipUpgrade( "Gravitational Modifier   [ROT]", Tools.Prize.ROTATION, new int[]{9,5,6,9,10,10,11,12}, 0 );       // 20 x8
@@ -11398,9 +11427,9 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Proximity Bomb Detonator", Tools.Prize.PROXIMITY, 60, 60, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Splintering Mortar", Tools.Prize.SHRAPNEL, 45, 70, 1 );
+        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 10, 23, 1 );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Splintering Mortar", Tools.Prize.SHRAPNEL, new int[]{5,6,7,8,10,10,12,15}, new int[]{26,32,38,42,46,53,57,65} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
@@ -11496,6 +11525,7 @@ public class distensionbot extends SubspaceBot {
         // 13: L2 Guns
         // 18: Multifire
         // 20: 10% Vengeful Bastard 2
+        // 21: Priority Rearm
         // 23: Cloak
         // 26: Prismatic Array 1
         // 29: Portal
@@ -11553,7 +11583,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Prismatic Array", ABILITY_PRISMATIC_ARRAY, new int[]{15,14,13}, new int[]{26,35,54} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
+        upg = new ShipUpgrade( "Priority Rearmament", ABILITY_PRIORITY_REARM, 15, 21, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "(Empty slot)", 0, 0, 0, -1 );
         ship.addUpgrade( upg );
