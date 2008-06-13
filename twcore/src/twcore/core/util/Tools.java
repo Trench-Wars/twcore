@@ -11,6 +11,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 
+import twcore.core.OperatorList;
+
 /**
  * Cluttered but somewhat useful toolkit of common operations.  Should be referenced
  * statically only.
@@ -270,6 +272,38 @@ public final class Tools {
             default:
                 return "UFO";
         }
+    }
+    
+    public static String staffName( int operatorLevel ) {
+    	switch( operatorLevel ) {
+    		case OperatorList.OWNER_LEVEL: return "Owner";
+    		case OperatorList.SYSOP_LEVEL: return "System Operator";
+    		case OperatorList.SMOD_LEVEL: return "Super Moderator";
+    		case OperatorList.DEV_LEVEL: return "Developer";
+    		case OperatorList.HIGHMOD_LEVEL: return "High Moderator";
+    		case OperatorList.MODERATOR_LEVEL: return "Moderator";
+    		case OperatorList.ER_LEVEL: return "Event Referee";
+    		case OperatorList.OUTSIDER_LEVEL: return "Outsider";
+    		case OperatorList.ZH_LEVEL: return "Zone Helper";
+    		case OperatorList.PLAYER_LEVEL: return "Player";
+    		default: return "Unknown";
+    	}
+    }
+    
+    public static String staffNameShort( int operatorLevel ) {
+    	switch( operatorLevel ) {
+			case OperatorList.OWNER_LEVEL: return "Owner";
+			case OperatorList.SYSOP_LEVEL: return "Sysop";
+			case OperatorList.SMOD_LEVEL: return "SMod";
+			case OperatorList.DEV_LEVEL: return "Dev";
+			case OperatorList.HIGHMOD_LEVEL: return "HMod";
+			case OperatorList.MODERATOR_LEVEL: return "Mod";
+			case OperatorList.ER_LEVEL: return "ER";
+			case OperatorList.OUTSIDER_LEVEL: return "Outs";
+			case OperatorList.ZH_LEVEL: return "ZH";
+			case OperatorList.PLAYER_LEVEL: return "Player";
+			default: return "?";
+		}
     }
 
     /**
