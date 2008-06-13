@@ -34,6 +34,7 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.TurretEvent;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Tools;
@@ -69,7 +70,7 @@ public class distensionbot extends SubspaceBot {
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
-    private final int IDLE_TICKS_BEFORE_DOCK = 18;         // # IDLE_FREQUENCY_CHECKS in idle before player is docked
+    private final int IDLE_TICKS_BEFORE_DOCK = 9;          // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int OPS_IDLE_TICKS_BEFORE_DOCK = 30;     // # IDLE_FREQUENCY_CHECKS in idle before Ops is docked
     private final int LAGOUT_VALID_SECONDS = 60;           // # seconds since lagout in which you can use !lagout
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
@@ -495,6 +496,7 @@ public class distensionbot extends SubspaceBot {
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(EventRequester.FREQUENCY_CHANGE);
         req.request(EventRequester.TURRET_EVENT);
+        req.request(EventRequester.SOCCER_GOAL);
     }
 
 
@@ -1648,6 +1650,42 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
+    /**
+     * Award cash and prizes to those making goals while a round is not running.
+     * @param event Event to handle.
+     */
+    public void handleEvent(SoccerGoal event) {
+        if( flagTimer != null && !flagTimer.isRunning() ) {
+            int armyID = event.getFrequency();
+            int players = 0;
+            int totalBonus = 0;
+            for( DistensionPlayer p : m_players.values() ) {
+                if( p.getArmyID() == armyID ) {
+                    players++;
+                    int rank = p.getRank();
+                    int bonus = 5;
+                    if( rank > 10 )
+                        bonus += 10;
+                    if( rank > 20 )
+                        bonus += 20;
+                    if( rank > 30 )
+                        bonus += 20;
+                    if( rank > 40 )
+                        bonus += 25;
+                    if( rank > 50 )
+                        bonus += 50;
+                    if( rank > 60 )
+                        bonus += 75;
+                    if( rank > 70 )
+                        bonus += 150;
+                    totalBonus += bonus;
+                    p.addRankPoints( bonus );
+                }
+            }
+            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "GOAL!  Total " + totalBonus + " RP awarded (avg " + (totalBonus / players) + ")");
+        }
+    }
+
 
     /**
      * DEATH HANDLING
@@ -1746,7 +1784,7 @@ public class distensionbot extends SubspaceBot {
         boolean flyingSolo = (victorArmy.getPilotsOfShip(victorShip) == 1) && (victorArmy.getPilotsInGame() >= 14 );
         boolean shipExcess = false;
         boolean shipExtremeExcess = false;
-        if( victorArmy.getPilotsInGame() >= 8 ) {
+        if( victorArmy.getPilotsInGame() >= 10 ) {
             shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > 0.30f );
             if( shipExcess )
                 shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > 0.45f;
@@ -2374,11 +2412,13 @@ public class distensionbot extends SubspaceBot {
                         enemy++;
             }
             // If we already have more than they do (2 more needed for terr), do not allow the change
-            if( shipNum == Tools.Ship.SHARK && friendly > enemy + 1 )
+            // Remember, in this calculation the player that just changed to shark is not included, so
+            // if our army already has more than the other army, the difference would be +2 after the change.
+            if( shipNum == Tools.Ship.SHARK && friendly > enemy )
                 throw new TWCoreException( "Sorry, the other army doesn't have enough Sharks flying to make you also Sharking any fair!" );
             if( shipNum == Tools.Ship.SHARK && friendly > 3 )
                 throw new TWCoreException( "Sorry, only three Sharks are allowed per army." );
-            if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 2 )
+            if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 1 )
                 throw new TWCoreException( "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
         }
 
@@ -3317,11 +3357,11 @@ public class distensionbot extends SubspaceBot {
         for( int i=0; i<m_shipTypeGeneralData.size(); i++ ) {
             ShipTypeProfile sp = m_shipTypeGeneralData.get(i);
             String typeName = Tools.formatString( sp.getTypeName(), 15 );
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("=", 75) + "." );
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("", 75, "=") + "." );
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "|" + Tools.formatString( i + ": " + typeName + " - " + sp.getLineDesc(), 75) + "|" );
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "|" + Tools.formatString( "   NRG Rate: " + sp.getEnRateDesc() + "   CHG Rate: " + sp.getChgRateDesc() + "  UP/RANK: " + sp.getUPperRank() + "  (" + sp.getTotalUPforRank(p.getRank()) + "UP after change)", 75) + "|" );
         }
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("=", 75) + "." );
+        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("", 75, "=") + "." );
     }
 
 
@@ -9445,6 +9485,7 @@ public class distensionbot extends SubspaceBot {
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
         m_botAction.sendArenaMessage( "FREE PLAY has ended.  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+        m_botAction.sendUnfilteredPublicMessage( "?set Soccer:BallCount=0" );
         m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go #distension to play." );
 
         // Between rounds, switch between one and two flags
@@ -9707,7 +9748,7 @@ public class distensionbot extends SubspaceBot {
                 Tools.formatString( (int)(percentSupport * 100.0f) + "% for " + (int)numSupport + " on support ", 23 ) +
                 Tools.formatString( "-> average " + (int)(support / numSupport) + " RP", 23 ) +      "|");
         endRoundSpam.add( "|  " +
-                Tools.formatString( "Hold percentage: " + (int)(winnerPercentage*100), 30 ) +
+                Tools.formatString( "Hold percentage: " + (int)(winnerPercentage*100) + "%", 30 ) +
                 Tools.formatString( (int)(percentAttack * 100.0f) + "% for " + (int)numAttack + " on attack ", 23 ) +
                 Tools.formatString( "-> average " + (int)(attack / numAttack) + " RP", 23 ) +      "|");
 
@@ -9758,7 +9799,7 @@ public class distensionbot extends SubspaceBot {
                         // MVP stat checks
                         int holds = flagTimer.getSectorHolds( p.getName() );
                         int breaks = flagTimer.getSectorBreaks( p.getName() );
-                        float ratio = p.genKills / (float)p.deaths;
+                        float ratio = p.genKills / (float)Math.max(1, p.deaths);
                         if( holds == topHolds && topHolds > 0 )
                             topHolder += ", " + p.getName();
                         else if( holds > topHolds ) {
@@ -10139,6 +10180,7 @@ public class distensionbot extends SubspaceBot {
             cmdSaveData(m_botAction.getBotName(), "");
             intermissionTime = 5000;
         } else {
+            m_botAction.sendUnfilteredPublicMessage( "?set Soccer:BallCount=1" );
             freePlayTimer = new FreePlayTask();
             freePlayTimer.setTime(intermissionTime);
             m_botAction.scheduleTask( freePlayTimer, 15000 );
@@ -10373,7 +10415,7 @@ public class distensionbot extends SubspaceBot {
             this.time = time;
         }
         public void run() {
-            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time + 1000) /1000 ) + ".  Flags have no RP bonus during this time.", Tools.Sound.VICTORY_BELL );
+            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time + 1000) /1000 ) + ".  Rules: Flags worth no points; goals earn RP.", Tools.Sound.VICTORY_BELL );
         }
     }
 
@@ -11161,7 +11203,7 @@ public class distensionbot extends SubspaceBot {
         int[] commonRechargeCosts = {  6,  6,  7,  8,  8,   9, 10, 10, 11, 12,  13, 14, 15, 16, 17,   20, 22, 24, 26, 28,   30, 50 };
         int[] commonRechargeRanks = {  0,  0,  0, 10,  0,   0,  0, 20,  0,  0,   0,  0,  0, 30,  0,   40,  0, 50,  0,  0,    0, 60 };
         int[] commonEnergyCosts =   {  6,  7,  7,  8,  9,   9, 10, 11, 11, 12,  13, 14, 15, 16, 17,   20, 22, 24, 26, 28,   30, 50 };
-        int[] commonEnergyRanks   = {  0,  0,  0, 10,  0,   0,  0, 20,  0,  0,   0,  0,  0, 30,  0,    0,  0, 50,  0,  0,    0, 60 };
+        int[] commonEnergyRanks   = {  0,  0,  0, 10,  0,   0,  0, 20,  0,  0,   0,  0,  0, 30,  0,    0,  0, 50,  0, 60,   70, 80 };
 
         ShipUpgrade upg;
 
