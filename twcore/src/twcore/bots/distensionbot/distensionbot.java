@@ -322,6 +322,7 @@ public class distensionbot extends SubspaceBot {
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
     private boolean m_singleFlagMode;                   // True if flag mode is working on just a single flag
+    private boolean m_canScoreGoals;                    // True if goals may be scored
 
     private int m_flagRules = 0;                        // 0: Use original rules (pub-style timer)
                                                         // 1: Use hybrid rules (tug-a-war)
@@ -470,6 +471,7 @@ public class distensionbot extends SubspaceBot {
         flagTimeStarted = false;
         stopFlagTime = false;
         m_singleFlagMode = true;
+        m_canScoreGoals = false;
         m_beginDelayedShutdown = false;
         m_shutdownTimeMillis = 0;
         if( m_botSettings.getInt("Debug") == 1 )
@@ -1655,8 +1657,8 @@ public class distensionbot extends SubspaceBot {
      * @param event Event to handle.
      */
     public void handleEvent(SoccerGoal event) {
-        if( flagTimer != null && !flagTimer.isRunning() ) {
-            int armyID = event.getFrequency();
+        int armyID = event.getFrequency();
+        if( m_canScoreGoals ) {
             int players = 0;
             int totalBonus = 0;
             for( DistensionPlayer p : m_players.values() ) {
@@ -1678,11 +1680,12 @@ public class distensionbot extends SubspaceBot {
                         bonus += 75;
                     if( rank > 70 )
                         bonus += 150;
-                    totalBonus += bonus;
-                    p.addRankPoints( bonus );
+                     totalBonus += p.addRankPoints( bonus );
                 }
             }
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "GOAL!  Total " + totalBonus + " RP awarded (avg " + (totalBonus / players) + ")");
+        } else {
+            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "No points scored for goals (goals not presently active)." );
         }
     }
 
@@ -9484,8 +9487,8 @@ public class distensionbot extends SubspaceBot {
         String warning = "";
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
+        m_canScoreGoals = false;
         m_botAction.sendArenaMessage( "FREE PLAY has ended.  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
-        m_botAction.sendUnfilteredPublicMessage( "?set Soccer:BallCount=0" );
         m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go #distension to play." );
 
         // Between rounds, switch between one and two flags
@@ -10180,7 +10183,6 @@ public class distensionbot extends SubspaceBot {
             cmdSaveData(m_botAction.getBotName(), "");
             intermissionTime = 5000;
         } else {
-            m_botAction.sendUnfilteredPublicMessage( "?set Soccer:BallCount=1" );
             freePlayTimer = new FreePlayTask();
             freePlayTimer.setTime(intermissionTime);
             m_botAction.scheduleTask( freePlayTimer, 15000 );
@@ -10415,6 +10417,8 @@ public class distensionbot extends SubspaceBot {
             this.time = time;
         }
         public void run() {
+            m_canScoreGoals = true;
+            m_botAction.warpAllRandomly();
             m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time + 1000) /1000 ) + ".  Rules: Flags worth no points; goals earn RP.", Tools.Sound.VICTORY_BELL );
         }
     }
