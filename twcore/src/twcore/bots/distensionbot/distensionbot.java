@@ -330,7 +330,7 @@ public class distensionbot extends SubspaceBot {
     private int m_roundNum = 0;							// Current round
     private int flagSecondsRequiredDoubleFlag = 60;     // Flag seconds required to win
     private int flagSecondsRequiredSingleFlag = 120;    // Flag seconds required to win with 1 flag
-    private float flagSecondsHybridFactor = 2.5f;       // Factor by which flag seconds required to win
+    private float flagSecondsHybridFactor = 2.0f;       // Factor by which flag seconds required to win
                                                         //    increase when using hybrid mode
     private int flagHybridReversionRate = 3;            // How many seconds per second held by a team presently
                                                         //    not holding advantage are taken off the clock
@@ -519,7 +519,6 @@ public class distensionbot extends SubspaceBot {
             //m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
                 m_botAction.sendChatMessage("Distension BETA initialized with new ship-type enhancements.  ?go #distension");
-                m_botAction.sendChatMessage("All ships set to rank 40 and will need to be refitted with upgrades.  Use !shiptypes to view available ship types, and !specialize to choose one.");
                 m_botAction.sendArenaMessage("Distension BETA loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
             }
             // Reset all times at each load
@@ -688,6 +687,8 @@ public class distensionbot extends SubspaceBot {
                 DistensionArmy army1 = m_armies.get(1);
                 int army0Terrs = 0;
                 int army1Terrs = 0;
+                boolean army0Shark = false;
+                boolean army1Shark = false;
                 float armyStr0 = army0.getTotalStrength();
                 float armyStr1 = army1.getTotalStrength();
                 if( armyStr1 == 0 ) armyStr1 = 1;
@@ -717,7 +718,7 @@ public class distensionbot extends SubspaceBot {
                     int maxStrToAssist = (int)Math.abs(armyStr0 - armyStr1) - 1;
                     for( DistensionPlayer p : m_players.values() )
                         if( !helped && p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
-                            if( p.getStrength() <= maxStrToAssist ) {
+                            if( p.getStrength() <= (maxStrToAssist - RANK_0_STRENGTH) ) {
                                 try {
                                     cmdAssist( p.getName(), ":auto:" );
                                     helped = true;
@@ -738,11 +739,18 @@ public class distensionbot extends SubspaceBot {
 
                 if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
                     for( DistensionPlayer p : m_players.values() ) {
-                        if( p.getShipNum() == Tools.Ship.TERRIER )
+                        if( p.getShipNum() == Tools.Ship.TERRIER ) {
                             if( p.getArmyID() == 0 )
                                 army0Terrs++;
                             else
                                 army1Terrs++;
+                        }
+                        if( p.getShipNum() == Tools.Ship.SHARK ) {
+                            if( p.getArmyID() == 0 )
+                                army0Shark = true;
+                            else
+                                army1Shark = true;
+                        }
                     }
                     if( army0Terrs < 2 ) {
                         if( army0Terrs == 1 && army0.getPilotsInGame() > 9 ) {
@@ -750,11 +758,19 @@ public class distensionbot extends SubspaceBot {
                         } else if( army0Terrs == 0 && army0.getPilotsInGame() > 3 ) {
                             m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
                         }
+                    }
+                    if( army1Terrs < 2 ) {
                         if( army1Terrs == 1 && army1.getPilotsInGame() > 9 ) {
                             m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
                         } else if( army1Terrs == 0 && army1.getPilotsInGame() > 3 ) {
                             m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
                         }
+                    }
+                    if( army0Shark ) {
+                        m_botAction.sendOpposingTeamMessageByFrequency( 0, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                    }
+                    if( army1Shark ) {
+                        m_botAction.sendOpposingTeamMessageByFrequency( 1, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
                     }
                 }
 
@@ -1186,7 +1202,7 @@ public class distensionbot extends SubspaceBot {
             IntroTask i3 = new IntroTask();
             i3.setPID(p.getArenaPlayerID());
             i3.setObjID(LVZ_MENU_INTERMEDIATE_INTRO);
-            m_botAction.scheduleTask(i3, 800000 );
+            m_botAction.scheduleTask(i3, 80000 );
         } catch( Exception e ) {}
     }
 
@@ -2473,7 +2489,7 @@ public class distensionbot extends SubspaceBot {
                 // they may just be doing it to scoop round-end points; don't keep MVP.
                 // However, let players switch to Sharks and Terrs if only 20 seconds have passed
                 // for the sector hold
-                if( p.getShipNum() == Tools.Ship.SHARK || p.getShipNum() == Tools.Ship.TERRIER ) {
+                if( p.isSupportShip() ) {
                     if( flagTimer.getSecondsHeld() > 20 ) {
                         m_botAction.sendPrivateMessage( name, "For changing ships while your army has had a sector hold for more than 20 seconds, your participation counter has been reset." );
                         m_playerTimes.remove( name );
@@ -3611,6 +3627,15 @@ public class distensionbot extends SubspaceBot {
                     int reward = p.getRank();
                     if( reward == 0 ) reward = 1;
 
+                    if( armySizeWeight < .5 )
+                        reward *= 6;
+                    else if( armySizeWeight < .6 )
+                        reward *= 5;
+                    else if( armySizeWeight < .7 )
+                        reward *= 4;
+                    else if( armySizeWeight < .8 )
+                        reward *= 3;
+
                     // Increased bonuses for higher ranks, as it takes more to make a dent in
                     // their to-rank amounts
                     if( reward >= 70 )
@@ -3618,20 +3643,12 @@ public class distensionbot extends SubspaceBot {
                     else if( reward >= 60 )
                         reward *= 8;
                     else if( reward >= 50 )
-                        reward *= 5;
+                        reward *= 6;
                     else if( reward >= 40 )
-                        reward *= 3;
+                        reward *= 5;
                     else if( reward >= 30 )
-                        reward *= 2;
+                        reward *= 4;
 
-                    if( armySizeWeight < .5 )
-                        reward = p.getRank() * 6;
-                    else if( armySizeWeight < .6 )
-                        reward = p.getRank() * 5;
-                    else if( armySizeWeight < .7 )
-                        reward = p.getRank() * 4;
-                    else if( armySizeWeight < .8 )
-                        reward = p.getRank() * 3;
                     reward = p.addRankPoints(reward,false); // Show actual amount added
                     if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
                             flagTimer != null && flagTimer.isRunning() &&
@@ -3786,6 +3803,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage( name, "No record of you in this battle ... starting your participation from scratch." );
             } else
                 m_botAction.sendPrivateMessage( name, "You have safely returned to your army." );
+            p.resetIdle();
             cmdProgress( name, null );
         } else {
             m_botAction.sendPrivateMessage( name, "No need to !lagout ... no battle's going!  Just hop right in." );
@@ -9487,8 +9505,7 @@ public class distensionbot extends SubspaceBot {
         String warning = "";
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
-        m_canScoreGoals = false;
-        m_botAction.sendArenaMessage( "FREE PLAY has ended.  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + " (goals active until then).  Score:  " + flagTimer.getScoreDisplay() + warning );
         m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go #distension to play." );
 
         // Between rounds, switch between one and two flags
@@ -10972,6 +10989,7 @@ public class distensionbot extends SubspaceBot {
                 if( preTimeCount >= 10 ) {
                     isStarted = true;
                     isRunning = true;
+                    m_canScoreGoals = false;
                     String battle = "BATTLE " + roundNum;
                     if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
                         battle = "THE DECISIVE " + battle;
