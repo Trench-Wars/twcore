@@ -337,6 +337,22 @@ public final class CodeCompiler {
                 if (a > b)
                     return "TRUE";
             } catch (Exception e) {}
+        } else if (s.contains("<=")) {
+            String[] temp = s.split("<=");
+            try {
+                int a = Integer.parseInt(temp[0].trim());
+                int b = Integer.parseInt(temp[1].trim());
+                if (a < b || a == b)
+                    return "TRUE";
+            } catch (Exception e) {}
+        } else if (s.contains(">=")) {
+            String[] temp = s.split(">=");
+            try {
+                int a = Integer.parseInt(temp[0].trim());
+                int b = Integer.parseInt(temp[1].trim());
+                if (a > b || a == b)
+                    return "TRUE";
+            } catch (Exception e) {}
         }
         return "FALSE";
     }

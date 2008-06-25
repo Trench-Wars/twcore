@@ -135,13 +135,13 @@ public class utilhotspots extends MultiUtil {
             if ((System.currentTimeMillis() - recentContacts.get(name)) < repeatTime) {
                 return;
             }
-        }
-        recentContacts.put(name, System.currentTimeMillis());
+        }        
         if (watch != null) {
             if (watch.inside(x, y)) {
                 // if( watch.needsWarp() )
                 // m_botAction.warpTo( event.getPlayerID(), watch.getX2(),
                 // watch.getY2() );
+            	recentContacts.put(name, System.currentTimeMillis());
                 if (watch.getMessages() != null) {
                     Iterator<String> i = watch.getMessages().iterator();
                     while( i.hasNext() )
@@ -186,7 +186,7 @@ public class utilhotspots extends MultiUtil {
      */
     public void do_stopWatch(String name) {
         if (!watching) {
-            m_botAction.sendSmartPrivateMessage(name, "I'm not currently watching any spots. Type !watch to active.");
+            m_botAction.sendSmartPrivateMessage(name, "I'm not currently watching any spots. Type !watch to activate.");
             return;
         }
         m_botAction.sendSmartPrivateMessage(name, "HotSpots are no longer active.");
