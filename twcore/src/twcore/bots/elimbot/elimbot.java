@@ -523,7 +523,8 @@ public class elimbot extends SubspaceBot {
 	 * Checks if there is one frequency left, thus a win situation
 	 */
 	private void checkWin() {
-	    if(this.state == ElimState.RUNNING && countTeams() == 1) {
+	    //if(this.state == ElimState.RUNNING && countTeams() == 1) {
+        if(this.state == ElimState.RUNNING && m_botAction.getNumPlayers() < 2) {
 	        m_botAction.sendArenaMessage("GAME OVER",Tools.Sound.HALLELUJAH);
 
 	        Iterator<Player> winners = m_botAction.getPlayingPlayerIterator();
@@ -543,11 +544,11 @@ public class elimbot extends SubspaceBot {
 
             // TODO: Save winners to database
             // If successfull:
-            m_botAction.sendArenaMessage("Game saved to database. Visit http://www.trenchwars.org/elim to see statistics.");
+            //m_botAction.sendArenaMessage("Game saved to database. Visit http://www.trenchwars.org/elim to see statistics.");
 
             stop();
             this.state = ElimState.ENDING;
-            m_botAction.sendPublicMessage("Next elimination game starts in 15 seconds");
+            m_botAction.sendPublicMessage("Next elimination game starts in 15 seconds ...");
             newGame = new NewGame(this);
             m_botAction.scheduleTask(newGame, (15 * 1000));
             zone();
