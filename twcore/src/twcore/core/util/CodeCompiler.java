@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.Iterator;
 
 import twcore.core.BotAction;
 import twcore.core.game.Player;
@@ -157,10 +158,8 @@ public final class CodeCompiler {
             message = message.replace("@losses", Integer.toString(p.getLosses()));      
         if(message.contains("@bounty"))
             message = message.replace("@bounty", Integer.toString(p.getBounty()));
-        while(message.contains("@randomsound")){
-            int[] allowedSounds = { 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 102, 103, 104 };
-            message = message.replaceFirst("@randomsound", Integer.toString(allowedSounds[rand.nextInt(allowedSounds.length)]));
-        }
+        while(message.contains("@randomsound"))
+            message = message.replaceFirst("@randomsound", Integer.toString(Tools.Sound.allowedSounds[rand.nextInt(Tools.Sound.allowedSounds.length)]));
         if(message.contains("@id"))
             message = message.replace("@id", Integer.toString(p.getPlayerID()));
         if(message.contains("@ping"))
@@ -213,6 +212,28 @@ public final class CodeCompiler {
                 message = message.replace(message.substring(beginIndex, endIndex + 1), Integer.toString(x));
             }catch(Exception e){
                 message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
+            }
+        }
+        if(message.contains("@shipsonfreq(") && message.indexOf(")", message.indexOf("@shipsonfreq(")) != -1){
+            int beginIndex = message.indexOf("@shipsonfreq(");
+            int endIndex = message.indexOf(")", beginIndex);
+            String temp = message.substring(beginIndex + 13, endIndex);
+            try{
+            	String[] nums = temp.split(",");
+            	for(int i = 0; i < nums.length; i++)
+            		nums[i] = nums[i].trim();
+                int shipType = Integer.parseInt(nums[0]);
+                int freq = Integer.parseInt(nums[1]);
+                int t = 0;
+                Iterator<Player> it = bot.getPlayingPlayerIterator();
+                while( it.hasNext() ){
+                	Player z = it.next();
+                	if(z.getShipType() == shipType && z.getFrequency() == freq)
+                		t++;
+                }
+                message = message.replace(message.substring(beginIndex, endIndex + 1), Integer.toString(t));
+            }catch(Exception e){
+            	message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
             }
         }
         message = message.replace("\\[", "$OPEN_BRACKET$");
@@ -438,53 +459,57 @@ public final class CodeCompiler {
      */
     public static String[] getPrivateKeysMessage(){
         String msg[] = {
-                "+=============== Private Escape Keys ===============+",
-                "| @name           - The player's name.              |",
-                "| @wins           - The player's wins.              |",
-                "| @losses         - The player's losses.            |",
-                "| @frequency      - The player's frequency.         |",
-                "| @id             - The player's id(not userid)     |",
-                "| @botname        - The bot's name.                 |",
-                "| @shipnum        - The player's ship number.       |",
-                "| @shipname       - The player's ship.              |",
-                "| @shipslang      - Player's ship in vernacular.    |",
-                "| @arenasize      - Number of players in arena.     |",
-                "| @playingplayers - Number of players in a ship.    |",
-                "| @freqsize(#)    - Number of players on freq #.    |",
-                "| @pfreqsize(#)   - Num. of players in ship. Freq # |",
-                "| @squad          - The player's squad.             |",
-                "| @bounty         - The player's bounty.            |",
-                "| @x              - X Location(Tiles)               |",
-                "| @y              - Y Location(Tiles)               |",
-                "| @randomfreq     - A random number(0 - 9998)       |",        
-                "| @randomship     - A random number(1-8)            |",            
-                "| @randomtile     - A random number(1-1022)         |",
-                "| @randomsound    - A random ALLOWED sound number.  |",
-                "| @ping           - The player's ping in ms.        |",
-                "| @date           - The current date.               |",
-                "| @time           - The current time.               |",
-                "| @!command@@     - Issues a command to the bot, but|",
-                "|                    the player receives no message.|",
-                "+===================================================+",
+                "+================ Private Escape Keys ================+",
+                "| @name             - The player's name.              |",
+                "| @wins             - The player's wins.              |",
+                "| @losses           - The player's losses.            |",
+                "| @frequency        - The player's frequency.         |",
+                "| @id               - The player's id(not userid)     |",
+                "| @botname          - The bot's name.                 |",
+                "| @shipnum          - The player's ship number.       |",
+                "| @shipname         - The player's ship.              |",
+                "| @shipslang        - Player's ship in vernacular.    |",
+                "| @arenasize        - Number of players in arena.     |",
+                "| @playingplayers   - Number of players in a ship.    |",
+                "| @freqsize(#)      - Number of players on freq       |",
+                "| @pfreqsize(#)     - Num. of players playing on freq |",
+                "| @shipsonfreq(#,#) - Num of players in a certain ship|",
+                "                        on freq. (ship type, freq #)  |",
+                "| @squad            - The player's squad.             |",
+                "| @bounty           - The player's bounty.            |",
+                "| @x                - X Location(Tiles)               |",
+                "| @y                - Y Location(Tiles)               |",
+                "| @randomfreq       - A random number(0 - 9998)       |",        
+                "| @randomship       - A random number(1-8)            |",            
+                "| @randomtile       - A random number(1-1022)         |",
+                "| @randomsound      - A random ALLOWED sound number.  |",
+                "| @ping             - The player's ping in ms.        |",
+                "| @date             - The current date.               |",
+                "| @time             - The current time.               |",
+                "| @!command@@       - Issues a command to the bot, but|",
+                "|                      the player receives no message.|",
+                "+=====================================================+",
             };
             return msg;
     }
     
     public static String[] getPublicKeysMessage(){
         String msg[] = {
-                "+================ Public Escape Keys ===============+",
-                "| @botname        - The bot's name.                 |",
-                "| @arenasize      - Number of players in arena.     |",
-                "| @playingplayers - Number of players in a ship.    |",
-                "| @freqsize(#)    - Number of players on freq #.    |",
-                "| @pfreqsize(#)   - Num. of players in ship. Freq # |",
-                "| @randomfreq     - A random number(0 - 9998)       |",        
-                "| @randomship     - A random number(1-8)            |",            
-                "| @randomtile     - A random number(1-1022)         |",
-                "| @randomsound    - A random ALLOWED sound number.  |",
-                "| @date           - The current date.               |",
-                "| @time           - The current time.               |",
-                "+===================================================+",
+                "+================= Public Escape Keys ================+",
+                "| @botname          - The bot's name.                 |",
+                "| @arenasize        - Number of players in arena.     |",
+                "| @playingplayers   - Number of players in a ship.    |",
+                "| @freqsize(#)      - Number of players on freq #.    |",
+                "| @pfreqsize(#)     - Num. of players in ship. Freq # |",
+                "| @shipsonfreq(#,#) - Num of players in a certain ship|",
+                "                        on freq. (ship type, freq #)  |",
+                "| @randomfreq       - A random number(0 - 9998)       |",        
+                "| @randomship       - A random number(1-8)            |",            
+                "| @randomtile       - A random number(1-1022)         |",
+                "| @randomsound      - A random ALLOWED sound number.  |",
+                "| @date             - The current date.               |",
+                "| @time             - The current time.               |",
+                "+=====================================================+",
             };
             return msg;
     }
