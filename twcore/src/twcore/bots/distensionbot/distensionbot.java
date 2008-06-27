@@ -60,7 +60,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                          // Debug mode.
-    private final float DEBUG_MULTIPLIER = 9.1f;             // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 9.2f;             // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 18;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -91,7 +91,7 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
-    private final int RANK_0_STRENGTH = 25;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int RANK_0_STRENGTH = 20;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
 
     private final int RANK_REQ_SHIP2 = 6;    // 15
     private final int RANK_REQ_SHIP3 = 4;    //  5
@@ -683,7 +683,7 @@ public class distensionbot extends SubspaceBot {
         lastTerrSharkReward = System.currentTimeMillis();
         assistAdvertTask = new TimerTask() {
             public void run() {
-                if( !checkForAssistAdvert )
+                if( !checkForAssistAdvert || m_refitMode )
                     return;
                 DistensionArmy army0 = m_armies.get(0);
                 DistensionArmy army1 = m_armies.get(1);
@@ -713,21 +713,63 @@ public class distensionbot extends SubspaceBot {
                     checkForAssistAdvert = false;
                     return;
                 }
+
+                for( DistensionPlayer p : m_players.values() ) {
+                    if( p.getShipNum() == Tools.Ship.TERRIER ) {
+                        if( p.getArmyID() == 0 )
+                            army0Terrs++;
+                        else
+                            army1Terrs++;
+                    }
+                    if( p.getShipNum() == Tools.Ship.SHARK ) {
+                        if( p.getArmyID() == 0 )
+                            army0Shark = true;
+                        else
+                            army1Shark = true;
+                    }
+                }
+
                 if( helpOutArmy != -1 ) {
                     // Attempt to return an assister who is needed back on freq;
                     // if none, advert an army imbalance.
-                    boolean helped = false;
                     int maxStrToAssist = (int)Math.abs(armyStr0 - armyStr1) - 1;
-                    for( DistensionPlayer p : m_players.values() )
-                        if( !helped && p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
+                    DistensionPlayer bestPlayer = null;
+                    for( DistensionPlayer p : m_players.values() ) {
+                        if( p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
                             if( p.getStrength() <= (maxStrToAssist - RANK_0_STRENGTH) ) {
-                                try {
-                                    cmdAssist( p.getName(), ":auto:" );
-                                    helped = true;
-                                } catch (TWCoreException e ) {}
+                                // Don't take the only Terr!
+                                if( p.getShipNum() != Tools.Ship.TERRIER ||
+                                        ( (helpOutArmy == 0 && (army0Terrs > (m_singleFlagMode?1:2) ) ) ||
+                                                (helpOutArmy == 1 && (army1Terrs > (m_singleFlagMode?1:2)) ) ) ) {
+                                    if( bestPlayer == null )
+                                        bestPlayer = p;
+                                    else {
+                                        // Non-Terrs are always more eligible
+                                        if( bestPlayer.getShipNum() == Tools.Ship.TERRIER ) {
+                                            if( p.getShipNum() != Tools.Ship.TERRIER ) {
+                                                bestPlayer = p;
+                                            } else {
+                                                // Choose the weakest of the two Terrs
+                                                if( p.getStrength() < bestPlayer.getStrength() )
+                                                    bestPlayer = p;
+                                            }
+                                        } else {
+                                            // Choose the weakest ship if they're both non-Terr
+                                            if( p.getStrength() < bestPlayer.getStrength() )
+                                                bestPlayer = p;
+                                        }
+                                    }
+                                }
                             }
                         }
-                    if( !helped ) {
+                    }
+                    try {
+                        cmdAssist( bestPlayer.getName(), ":auto:" );
+                    } catch (TWCoreException e ) {
+                        bestPlayer = null;
+                    }
+
+                    if( bestPlayer == null ) {
                         if( maxStrToAssist > RANK_0_STRENGTH )  // Only display if assisting is possible
                             m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: Pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                     }
@@ -740,20 +782,6 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
-                    for( DistensionPlayer p : m_players.values() ) {
-                        if( p.getShipNum() == Tools.Ship.TERRIER ) {
-                            if( p.getArmyID() == 0 )
-                                army0Terrs++;
-                            else
-                                army1Terrs++;
-                        }
-                        if( p.getShipNum() == Tools.Ship.SHARK ) {
-                            if( p.getArmyID() == 0 )
-                                army0Shark = true;
-                            else
-                                army1Shark = true;
-                        }
-                    }
                     if( army0Terrs < 2 ) {
                         if( army0Terrs == 1 && army0.getPilotsInGame() > 8 ) {
                             m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
@@ -873,6 +901,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!specialize", acceptedMessages, this, "cmdSpecialize" );
         m_commandInterpreter.registerCommand( "!shiptypes", acceptedMessages, this, "cmdShipTypes" );
         m_commandInterpreter.registerCommand( "!intro", acceptedMessages, this, "cmdIntro" );
+        m_commandInterpreter.registerCommand( "!hideintro", acceptedMessages, this, "cmdHideIntro" );
         m_commandInterpreter.registerCommand( "!warp", acceptedMessages, this, "cmdWarp" );
         m_commandInterpreter.registerCommand( "!basewarp", acceptedMessages, this, "cmdBaseWarp" );
         m_commandInterpreter.registerCommand( "!terr", acceptedMessages, this, "cmdTerr" );
@@ -1190,7 +1219,7 @@ public class distensionbot extends SubspaceBot {
         if( p == null ) {
             return;
         }
-        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "The guided introduction will now play.  This will take about 2 minutes." );
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "The guided introduction will now play.  This will take about 2 minutes.  Use !hideintro to hide any displayed intro screen, if you wish." );
         m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_MENU_BASIC_INTRO);
         try {
             IntroTask i1 = new IntroTask();
@@ -1208,6 +1237,23 @@ public class distensionbot extends SubspaceBot {
         } catch( Exception e ) {}
     }
 
+    /**
+     * Hides any of the screens displayed by !intro.
+     * @param name
+     * @param msg
+     */
+    public void cmdHideIntro( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null ) {
+            return;
+        }
+        m_botAction.setupObject(p.getArenaPlayerID(), LVZ_MENU_BASIC_INTRO, false);
+        m_botAction.setupObject(p.getArenaPlayerID(), LVZ_MENU_PROG_AND_TIMER_INTRO, false);
+        m_botAction.setupObject(p.getArenaPlayerID(), LVZ_MENU_MAP_INTRO, false);
+        m_botAction.setupObject(p.getArenaPlayerID(), LVZ_MENU_INTERMEDIATE_INTRO, false);
+        m_botAction.sendSetupObjectsForPlayer(p.getArenaPlayerID());
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "All presently-displayed intro screens have been hidden." );
+    }
 
     /**
      * Shows what prizes are associated with the basic upgrades.
@@ -1680,7 +1726,7 @@ public class distensionbot extends SubspaceBot {
             int players = 0;
             int totalBonus = 0;
             for( DistensionPlayer p : m_players.values() ) {
-                if( p.getArmyID() == armyID ) {
+                if( p.getArmyID() == armyID && p.getShipNum() > 0 ) {
                     players++;
                     int rank = p.getRank();
                     int bonus = 5;
@@ -1722,8 +1768,6 @@ public class distensionbot extends SubspaceBot {
      * @param event Event to handle.
      */
     public void handleEvent(PlayerDeath event) {
-        if( m_refitMode )
-            return;
         Player killer = m_botAction.getPlayer( event.getKillerID() );
         Player killed = m_botAction.getPlayer( event.getKilleeID() );
         if( killed == null )
@@ -1734,6 +1778,9 @@ public class distensionbot extends SubspaceBot {
         if( loser != null )
             loser.doSetupRespawn();
         else
+            return;
+
+        if( m_refitMode )
             return;
 
         if( killer == null ) {
@@ -1885,9 +1932,9 @@ public class distensionbot extends SubspaceBot {
             }
 
             if( flagTimer != null && flagTimer.isRunning() ) {
-                // Don't count streak if the player making the kill was not in base & round is going
-                if( ! ((killer.getYTileLocation() > TOP_ROOF && killer.getYTileLocation() < TOP_LOW) ||
-                        (killer.getYTileLocation() > BOT_LOW  && killer.getYTileLocation() < BOT_ROOF)) ) {
+                // Don't count streak if the killed player was not in base & round is going
+                if( ! ((killed.getYTileLocation() > TOP_ROOF && killed.getYTileLocation() < TOP_LOW) ||
+                        (killed.getYTileLocation() > BOT_LOW  && killed.getYTileLocation() < BOT_ROOF)) ) {
                     killInBase = false;
                     addedToStreak = false;
                 }
@@ -2402,29 +2449,20 @@ public class distensionbot extends SubspaceBot {
 
         // Check if Tactical Ops position is available
         if( shipNum == 9 ) {
-            if( m_singleFlagMode )
-                throw new TWCoreException( "Sorry, the Tactical Ops console is not active while only a single base is in contention." );
-            for( DistensionPlayer p2 : m_players.values() )
-                if( p2.getShipNum() == 9 && p2.getArmyID() == p.getArmyID() )
-                    throw new TWCoreException( "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
+            if( !m_refitMode ) {    // Let people change around Ops in refit mode
+                if( m_singleFlagMode )
+                    throw new TWCoreException( "Sorry, the Tactical Ops console is not active while only a single base is in contention." );
+                for( DistensionPlayer p2 : m_players.values() )
+                    if( p2.getShipNum() == 9 && p2.getArmyID() == p.getArmyID() )
+                        throw new TWCoreException( "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
+            }
             // Let Tac Ops change to spec
             if( lastShipNum > 0 )
                 p.setIgnoreShipChanges(true);
         }
 
-        if( lastShipNum > 0 ) {
-            String shipname = (lastShipNum == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP" );
-            if( ! p.saveCurrentShipToDBNow() )
-                throw new TWCoreException( "PROBLEM SAVING SHIP BEFORE CHANGE -- Notify a member of staff immediately." );
-            if( lastShipNum == 9 )
-                m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " has left the Tactical Ops console." );
-        } else {
-            m_playerTimes.remove( name );
-        }
-
         // Check for shark and terr balance -- do not overbalance with one or the other.
-        if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
+        if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER && !m_refitMode ) {
             int friendly = 0;
             int enemy = 0;
             for( DistensionPlayer p2 : m_players.values() ) {
@@ -2443,6 +2481,25 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "Sorry, only three Sharks are allowed per army." );
             if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 1 )
                 throw new TWCoreException( "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
+        }
+        if( lastShipNum > 0 ) {
+            String shipname = (lastShipNum == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Total earned in " + shipname + ": " + p.getRecentlyEarnedRP() + " RP" );
+            if( ! p.saveCurrentShipToDBNow() )
+                throw new TWCoreException( "PROBLEM SAVING SHIP BEFORE CHANGE -- Notify a member of staff immediately." );
+            if( lastShipNum == 9 )
+                m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " has left the Tactical Ops console." );
+        } else {
+            // Let those who specced before changing change into another ship and keep participation,
+            // if within the time limit for a lagout
+            Integer lagoutTime = m_lagouts.get( name );
+            if( flagTimer != null && flagTimer.isRunning() &&
+                    lagoutTime != null && lagoutTime + LAGOUT_VALID_SECONDS < flagTimer.getTotalSecs() ) {
+                m_lagouts.remove( name );
+                p.incrementLagouts();
+            } else {
+                m_playerTimes.remove( name );
+            }
         }
 
         p.setShipNum( shipNum );
@@ -2491,16 +2548,18 @@ public class distensionbot extends SubspaceBot {
             if( flagTimer.getHoldingFreq() == p.getArmyID() && flagTimer.getSecondsHeld() > 0 ) {
                 // If player is changing ships while their freq is securing a hold,
                 // they may just be doing it to scoop round-end points; don't keep MVP.
-                // However, let players switch to Sharks and Terrs if only 20 seconds have passed
+                // However, let players switch to support ships if only 20 seconds have passed
                 // for the sector hold
                 if( p.isSupportShip() ) {
-                    if( flagTimer.getSecondsHeld() > 20 ) {
-                        m_botAction.sendPrivateMessage( name, "For changing ships while your army has had a sector hold for more than 20 seconds, your participation counter has been reset." );
+                    if( flagTimer.getSecondsHeld() + 40 > flagTimer.getTimeNeededForWin() ) {
+                        m_botAction.sendPrivateMessage( name, "For changing ships while your army has a sector hold and is within 40 seconds of a win, your participation counter has been reset." );
                         m_playerTimes.remove( name );
                     }
                 } else {
-                    m_botAction.sendPrivateMessage( name, "For changing into an assault ship while your army has a sector hold, your participation counter has been reset." );
-                    m_playerTimes.remove( name );
+                    if( flagTimer.getSecondsHeld() + 60 > flagTimer.getTimeNeededForWin() ) {
+                        m_botAction.sendPrivateMessage( name, "For changing into an assault ship while your army has a sector hold and you are within 1 minute of a win, your participation counter has been reset." );
+                        m_playerTimes.remove( name );
+                    }
                 }
             }
             if( m_playerTimes.get( name ) == null )
@@ -2511,6 +2570,7 @@ public class distensionbot extends SubspaceBot {
             a.recalculateFigures();
         p.putInCurrentShip();
         p.prizeUpgradesNow();
+        p.resetIdle();
         m_lagouts.remove( name );
         m_waitingToEnter.remove(p);
         if( shipNum != 9 )
@@ -2800,7 +2860,7 @@ public class distensionbot extends SubspaceBot {
                         Tools.formatString("     Session RP:  " + p.getRecentlyEarnedRP(), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|      Progress:  ( " + (int)pointsSince + " / " + (int)pointsNext + " )", spamLength / 2) +
                         Tools.formatString("     RP to next:  " + p.getPointsToNextRank(), (spamLength / 2) -1 ) + "|" );
-        statusSpam.add( Tools.formatString("|                 " + "[" + progString + "]", (spamLength / 2) - 1 ) +
+        statusSpam.add( Tools.formatString("|                 " + "[" + progString + "]", (spamLength / 2) ) +
                         Tools.formatString("                  " + percent + "% to Rank " + (p.getRank() + 1), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|      Upgrades:  " + p.getUpgradeLevel(), spamLength / 2) +
                         Tools.formatString("             UP:  " + p.getUpgradePoints(), (spamLength / 2) -1 ) + "|" );
@@ -2819,7 +2879,7 @@ public class distensionbot extends SubspaceBot {
         if( p.getBattlesWon() >= WINS_REQ_RANK_FLEET_ADMIRAL )
             statusSpam.add( "|" + Tools.centerString("You are the Fleet Admiral, the highest and most honorable rank of all.", spamLength - 2) + "|" );
         else
-            statusSpam.add( Tools.formatString( "| Promotion estimated after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.", spamLength) + "|");
+            statusSpam.add( Tools.formatString( "| Promotion estimated after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.", spamLength -1) + "|");
         statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
 
         /*
@@ -3539,6 +3599,9 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() == -1 )
             throw new TWCoreException( "You must !return or !enlist in an army first." );
         boolean autoReturn = msg.equals(":auto:");
+        if( m_refitMode )
+            if( !autoReturn )
+                throw new TWCoreException( "Assisting is not necessary during refit mode.  However, your kindness and generosity have been duly noted.  In a log file." );
         if( p.isRespawning() )
             throw new TWCoreException( "Please wait until your current ship is rearmed before attempting to assist." );
         int armyToAssist = -1;
@@ -3603,7 +3666,7 @@ public class distensionbot extends SubspaceBot {
                     for( DistensionArmy a : m_armies.values() )
                         a.recalculateFigures();
                 }
-                if( msg.equals(":auto:") )
+                if( autoReturn )
                     m_botAction.sendPrivateMessage( name, "To maintain balance, you have been returned to " + p.getArmyName() + ".");
                 else {
                     if( armySizeWeight >= 1.0f ||
@@ -9497,13 +9560,14 @@ public class distensionbot extends SubspaceBot {
      * Displays rules and pauses for intermission.
      */
     private void doIntermission() {
-        if(!flagTimeStarted || stopFlagTime )
-            return;
-
         if( m_beginDelayedShutdown ) {
             cmdDie("", "shutdown");
             return;
         }
+
+        if(!flagTimeStarted || stopFlagTime )
+            return;
+
         String roundTitle = "";
 
         m_roundNum++;
@@ -10213,7 +10277,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.setTimer( 5 );
         } else {
             freePlayTimer = new FreePlayTask();
-            freePlayTimer.setTime(intermissionTime);
+            freePlayTimer.setTime( intermissionTime );
             m_botAction.scheduleTask( freePlayTimer, 15000 );
 
             doScores(15000);
@@ -10251,10 +10315,10 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "No suitable slot could be found for you this battle.  Please continue waiting and you will be placed in as soon as possible." );
             }
         }
-        if( intermissionTime >= 60000 && !DEBUG )
-            m_botAction.setTimer( (intermissionTime + 1000) / 60000 );
+        if( intermissionTime >= Tools.TimeInMillis.MINUTE && !DEBUG )
+            m_botAction.setTimer( (intermissionTime + Tools.TimeInMillis.SECOND) / Tools.TimeInMillis.MINUTE );
         intermissionTimer = new IntermissionTask();
-        m_botAction.scheduleTask( intermissionTimer, intermissionTime );
+        m_botAction.scheduleTask( intermissionTimer, intermissionTime + 15000 );
     }
 
 
