@@ -764,7 +764,8 @@ public class distensionbot extends SubspaceBot {
                         }
                     }
                     try {
-                        cmdAssist( bestPlayer.getName(), ":auto:" );
+                        if( bestPlayer != null )
+                            cmdAssist( bestPlayer.getName(), ":auto:" );
                     } catch (TWCoreException e ) {
                         bestPlayer = null;
                     }
@@ -3699,13 +3700,13 @@ public class distensionbot extends SubspaceBot {
                     if( reward == 0 ) reward = 1;
 
                     if( armySizeWeight < .5 )
-                        reward *= 6;
-                    else if( armySizeWeight < .6 )
-                        reward *= 5;
-                    else if( armySizeWeight < .7 )
                         reward *= 4;
-                    else if( armySizeWeight < .8 )
+                    else if( armySizeWeight < .6 )
                         reward *= 3;
+                    else if( armySizeWeight < .7 )
+                        reward *= 2;
+                    else if( armySizeWeight < .8 )
+                        reward *= 1.5;
 
                     // Increased bonuses for higher ranks, as it takes more to make a dent in
                     // their to-rank amounts
