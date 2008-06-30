@@ -28,9 +28,7 @@ public class configuration {
 	}
 
 	private void initialize() {
-        // Need to use config names as arenas rather than the arena define,
-        // as otherwise you can only run 1 bot!
-		//arena = config.getString("arena");
+		arena = config.getString("arena");
 		chat = config.getString("chat");
 		playerMin = config.getInt("playermin");
 		lagouts = config.getInt("lagouts");
@@ -41,7 +39,6 @@ public class configuration {
 
 		while(config.getString("config"+i) != null) {
 			String name = config.getString("config"+i);
-            arena = name;   // Each config can have its own arena
 
 			fileConfiguration elimConf = new fileConfiguration(i,name);
 			elimConf.setShips(config.getString(name+"-ships"));

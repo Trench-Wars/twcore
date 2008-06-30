@@ -520,7 +520,10 @@ public class elimbot extends SubspaceBot {
 	}
 
 	/**
-	 * Checks if there is one frequency left, thus a win situation
+	 * Checks if there is one frequency left, thus a win situation.
+     *
+     * Neither of these two win conditions are presently functioning.  Recommend
+     * review of other bots to determine their elim end-round conditions.
 	 */
 	private void checkWin() {
 	    //if(this.state == ElimState.RUNNING && countTeams() == 1) {
