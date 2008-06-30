@@ -220,6 +220,8 @@ public class BotQueue extends Thread {
      * @return True if removal succeeded
      */
     boolean removeBot( String name, String msg ){
+        if( name == null )
+            return false;
         ChildBot deadBot = m_botStable.remove( name );
         if( deadBot != null ){
             Session deadSesh = deadBot.getBot();
