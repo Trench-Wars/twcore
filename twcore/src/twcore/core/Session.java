@@ -225,7 +225,7 @@ public class Session extends Thread {
 
         m_state = NOT_RUNNING;
         String classname = m_subspaceBot.getClass().getSimpleName();
-        if( dcMsg.equals("") )
+        if( dcMsg == null || dcMsg.equals("") )
             Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
         else
             Tools.printLog( m_name + " (" + classname + ") is disconnecting: " + dcMsg );

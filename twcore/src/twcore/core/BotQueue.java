@@ -227,7 +227,10 @@ public class BotQueue extends Thread {
             Session deadSesh = deadBot.getBot();
             if( deadSesh != null ) {
                 deadSesh.getBotAction().cancelTasks();
-                deadSesh.disconnect( msg );
+                if( msg != null )
+                    deadSesh.disconnect( msg );
+                else
+                    deadSesh.disconnect( "" );
             }
             // Decrement count for this type of bot
             addToBotCount( deadBot.getClassName(), (-1) );
