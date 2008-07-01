@@ -91,7 +91,7 @@ public class roboreplacement extends SubspaceBot
     {
         String botNumber = m_botSettings.getString(m_botAction.getBotName());
         arena = m_botSettings.getString("Arena" + botNumber);
-        String[] pieces = m_botSettings.getString("AllowedShips" + botNumber).split(",", 2);
+        String[] pieces = m_botSettings.getString("AllowedShips" + botNumber).split(",");
         allowedShips.add(new Integer(pieces[0]));   // For anyship elim, the default ship
         for(int k = 0;k < pieces.length;k++)
         {
@@ -178,7 +178,7 @@ public class roboreplacement extends SubspaceBot
                         votes.put(new Integer(event.getPlayerID()), new Integer(Integer.parseInt(message)));
                         voters.add(new Integer(event.getPlayerID()));
                     }
-                    else if(shipVoting && Integer.parseInt(message) <= allowedShips.size()) //adds the vote to the votes HashMap
+                    else if(shipVoting && Integer.parseInt(message) < allowedShips.size()) //adds the vote to the votes HashMap
                     {
                         votes.put(new Integer(event.getPlayerID()), new Integer(Integer.parseInt(message)));
                         voters.add(new Integer(event.getPlayerID()));
@@ -393,7 +393,7 @@ public class roboreplacement extends SubspaceBot
 
         //creates the message for the ship voting
         String tempShip = "Vote on ship: ";
-        for(int k = 1;k <= allowedShips.size();k++)
+        for(int k = 1;k < allowedShips.size();k++)
             tempShip += k + "=" + ships[allowedShips.get(k).intValue()] + "  ";
         m_botAction.sendArenaMessage(tempShip);
 
