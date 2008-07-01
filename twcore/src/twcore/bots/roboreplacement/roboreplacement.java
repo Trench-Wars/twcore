@@ -124,7 +124,7 @@ public class roboreplacement extends SubspaceBot
             if(voting)
                 m_botAction.sendPrivateMessage(event.getPlayerID(), "Welcome to Elimination.  We are currently voting on the next game.");
             else
-                m_botAction.sendPrivateMessage(event.getPlayerID(), "Welcome to Elimination.  We are currently in a " + ships[elimShip] + " elim to " + elimDeaths + ". " + players.size() + " players in the game.");
+                m_botAction.sendPrivateMessage(event.getPlayerID(), "Welcome to Elimination.  We are currently in a " + ships[elimShip] + " elim to " + elimDeaths + ".  " + players.size() + " players in the game.");
             m_botAction.specWithoutLock(event.getPlayerID());
         } else {
             m_botAction.sendPrivateMessage(event.getPlayerID(), "Welcome to Elimination.  A game will start when 2 players enter.");
@@ -245,7 +245,7 @@ public class roboreplacement extends SubspaceBot
                 if(voting)
                     m_botAction.sendPrivateMessage(event.getPlayerID(), "We are currently voting on the next game.");
                 else
-                    m_botAction.sendPrivateMessage(event.getPlayerID(), "We are currently in a " + ships[elimShip] + " elim to " + elimDeaths + ". " + players.size() + " players in the game.");
+                    m_botAction.sendPrivateMessage(event.getPlayerID(), "We are currently in a " + ships[elimShip] + " elim to " + elimDeaths + ".  " + players.size() + " players in the game.");
             } else {
                 m_botAction.sendPrivateMessage(event.getPlayerID(), "Elimination has temporarily stopped.  A game will start when 2 players enter.");
             }
@@ -290,10 +290,12 @@ public class roboreplacement extends SubspaceBot
             if(p.getLosses() >= elimDeaths) //spec's the person if they have more deaths than allowed
             {
                 m_botAction.sendArenaMessage(m_botAction.getPlayerName(event.getKilleeID()) + " is out. " + p.getWins() + " wins, " + p.getLosses() + " deaths.");
-                if( p.getWins() > mvpKills )
+                if( p.getWins() > mvpKills ) {
                     mvp = p.getPlayerName();
-                else if( p.getWins() > mvpKills )
+                    mvpKills = p.getWins();
+                } else if( p.getWins() > mvpKills )
                     mvp += ", " + p.getPlayerName();
+
                 m_botAction.sendUnfilteredPrivateMessage(event.getKilleeID(), "*spec");
                 m_botAction.sendUnfilteredPrivateMessage(event.getKilleeID(), "*spec");
                 players.remove(new Integer(event.getKilleeID()));
@@ -505,7 +507,11 @@ public class roboreplacement extends SubspaceBot
         if( p == null ) {
             m_botAction.sendArenaMessage("GAME OVER: Winner ?!?", 5);
         } else {
-            m_botAction.sendArenaMessage("GAME OVER: Winner " + p.getPlayerName(), 5);
+            String squad = "";
+            if(p.getSquadName().length()>0) {
+                squad = " ["+p.getSquadName()+"]";
+            }
+            m_botAction.sendArenaMessage("GAME OVER: Winner " + p.getPlayerName() + squad, 5);
             saveGameStatsToDB( winnerID );
         }
         if( !mvp.equals("") )
