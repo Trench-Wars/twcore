@@ -60,7 +60,7 @@ import twcore.core.util.Tools;
 public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = true;                          // Debug mode.
-    private final float DEBUG_MULTIPLIER = 9.2f;             // Amount of RP to give extra in debug mode
+    private final float DEBUG_MULTIPLIER = 9.2f;           // Amount of RP to give extra in debug mode
 
     private final int NUM_UPGRADES = 18;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -444,9 +444,12 @@ public class distensionbot extends SubspaceBot {
             for( int i=0; i<3; i++ ) {
                 r = m_botAction.SQLQuery( m_database, "SELECT fnArmyID FROM tblDistensionArmy" );
                 if( r == null ) {
+                    synchronized(this) {
                     try {
                         this.wait(5000);
-                    } catch ( InterruptedException e ) {}
+                        this.notify();
+                    } catch ( Exception e ) {}
+                    }
                 } else
                     break;
             }
