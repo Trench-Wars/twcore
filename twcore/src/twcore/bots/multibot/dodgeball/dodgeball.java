@@ -3,8 +3,10 @@ package twcore.bots.multibot.dodgeball;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
+import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.events.BallPosition;
@@ -19,10 +21,18 @@ public class dodgeball extends MultiModule {
 	private int dodgetime = 3; //secs
 	private int ballCount = 1;
 	private int orgBallCount = -1;
-	private boolean running = false;
+	protected boolean running = false;
 	
 	private int previousCarrier = -1;
 	private long previousCarrierTime = -1;
+	private int ballMode = 0;
+	//				0  =>  ball not carried
+	//				1  =>  ball carried
+	
+	private ArrayList<Integer> players;
+	// List with PlayerIDs of players in the game
+	
+	private TimerTask checkWinner;
     
     private List<String> publicHelp = Arrays.asList(new String[]{
             "+-----------------------------------------------------------------+",
@@ -80,6 +90,7 @@ public class dodgeball extends MultiModule {
     @Override
     public void init() {
     	m_botAction.sendUnfilteredPublicMessage("?get Soccer:BallCount");
+    	checkWinner = new CheckWinner();
     }
 
     @Override
@@ -118,8 +129,18 @@ public class dodgeball extends MultiModule {
     				if(!running) {
     					m_botAction.sendPrivateMessage(playerID, "Dodgeball started. Players who are hit by a ball less than "+dodgetime+" seconds after firing will be eliminated.");
     					running = true;
+    					m_botAction.shipResetAll();
     				} else {
     					m_botAction.sendPrivateMessage(playerID, "Dodgeball is already started. PM !stop to stop dodgeball.");
+    				}
+    			}
+    			if(message.startsWith("!stop")) {
+    				if(running) {
+    					m_botAction.sendPrivateMessage(playerID, "Dodgeball stopped.");
+    					running = false;
+    					clear();
+    				} else {
+    					m_botAction.sendPrivateMessage(playerID, "Dodgeball hasn't started. PM !start to start dodgeball.");
     				}
     			}
     			
@@ -128,7 +149,8 @@ public class dodgeball extends MultiModule {
     				int argument = 3;
     				
     				if(arg1 == null || arg1.trim().length() == 0) {
-    					m_botAction.sendPrivateMessage(playerID, "Syntax error. Please specify number of seconds required for dodge time. Type ::!help for more information.");
+    					m_botAction.sendPrivateMessage(playerID, "Current dodgetime: "+dodgetime+" seconds.");
+    					m_botAction.sendPrivateMessage(playerID, "Please specify number of seconds to change the dodge time. Type ::!help for more information.");
     					return;
     				}
     				if(!Tools.isAllDigits(arg1)) {
@@ -148,7 +170,19 @@ public class dodgeball extends MultiModule {
     				m_botAction.sendPrivateMessage(playerID, "If game is already started, will take effect immediatly.");
     			}
     			
-    			if(message.startsWith("!setballcount")) {
+    			if(message.startsWith("!fixball")) {
+    				String arg1 = message.substring(8).trim();
+    				
+    				if(arg1 == null || arg1.length() == 0) {
+    					m_botAction.sendPrivateMessage(playerID, "Syntax error. Please specify the <x> and <y> coordinates where to fix all the balls. Type ::!help for more information.");
+    					return;
+    				}
+    				
+    				// FIXME
+    				
+    			}
+    			
+    			if(message.startsWith("!setballcount ")) {
     				String arg1 = message.substring(13).trim();
     				int argument = 1;
     				
@@ -202,36 +236,82 @@ public class dodgeball extends MultiModule {
      * @see twcore.bots.MultiModule#handleEvent(twcore.core.events.BallPosition)
      */
     @Override
-    public void handleEvent(BallPosition event) {
+    public void handleEvent(BallPosition ball) {
     	if(ballCount == 0)
     		return;
     	
     	if(running) {
-    		Player prevCarrier = null;
-    		Player currCarrier = null;
-    		int currentCarrier = event.getCarrier();
-    		    		
-    		if(previousCarrier != -1) {
-    			prevCarrier = m_botAction.getPlayer(previousCarrier);
-    			currCarrier = m_botAction.getPlayer(currentCarrier);
-    		}
     		
-    		// If this isn't the first carrier
-    		//    and this carrier is from a different frequency (opposing team)
-    		//    and the player has picked up the ball in the hot time
-    		// eliminate the player
-    		if(prevCarrier != null && prevCarrier.getFrequency() != currCarrier.getFrequency() && (System.currentTimeMillis() - previousCarrierTime) < (dodgetime*1000)) {
-    			m_botAction.specWithoutLock(currentCarrier);
-    			m_botAction.sendArenaMessage(currCarrier.getPlayerName()+" has been eliminated!");
-    			previousCarrier = -1;
+    		if(ball.getCarrier() != -1) { // A player has picked up the ball or is carrying it
+    			ballMode = 1;
+    			
+    			if((System.currentTimeMillis() - previousCarrierTime) > dodgetime) {
+    				// the player is out
+    				ballMode = 0;
+    				
+    				Player p = m_botAction.getPlayer(ball.getCarrier());
+    				Player prev = m_botAction.getPlayer(previousCarrier);
+    				if(p.getFrequency() != prev.getFrequency() && p.getPlayerID() != m_botAction.getPlayerID(m_botAction.getBotName())) {
+    					m_botAction.specWithoutLock(ball.getCarrier());
+    					m_botAction.sendArenaMessage(p.getPlayerName()+" has been eliminated by "+prev.getPlayerName()+"!");
+    				}
+    				
+    				m_botAction.scheduleTask(checkWinner, 1000);
+    			} else {
+    				previousCarrier = ball.getCarrier();
+    			}
+    		} else { // Ball has just been shot or hasn't got a carrier
+    			if(ballMode == 1) {	// ball has just been shot (it had a carrier)
+    				ballMode = 0;
+    				previousCarrierTime = System.currentTimeMillis();
+    			}
+    			
     		}
-    		
-    		previousCarrier = event.getCarrier();
-    		previousCarrierTime = System.currentTimeMillis();
     	}
     }
     
+    private void clear() {
+    	players.clear();
+    	previousCarrier = -1;
+    	previousCarrierTime = -1;
+    	ballMode = 0;
+    }
+    
+    private void moveBall(int ballID, int x, int y) {
+    	m_botAction.stopReliablePositionUpdating();			// makes the bot stop following people
+    	m_botAction.getShip().setShip(Tools.Ship.WARBIRD-1);// shipchange to ship 1
+    	// TODO: m_botAction.grabBall(ballID);						// grab the ball
+    	m_botAction.getShip().move(x*16, y*16);				// move to the coordinates
+    	m_botAction.getShip().sendPositionPacket();			// makes the bot actually go there
+    														// (action done)
+    	m_botAction.getShip().setShip(8);					// shipchange to spectator
+    	m_botAction.resetReliablePositionUpdating();		// follow players
+    }
 
     
+    
+    /**
+     * Essentially a TimerTask that stores info about each player.
+     *
+     */
+    private class CheckWinner extends TimerTask {
+
+        public CheckWinner() {}
+
+		@Override
+		public void run() {
+			if(players.size() == 1) {
+				running = false;
+				Player winner = m_botAction.getPlayer(players.get(0));
+				m_botAction.sendArenaMessage(winner.getPlayerName()+" WINS!", Tools.Sound.HALLELUJAH);
+				clear();
+				
+			} else if(players.size() == 0) {
+				running = false;
+				m_botAction.sendArenaMessage("There is no winner - dodgeball game ended", Tools.Sound.HALLELUJAH);
+				clear();
+			}
+		}
+    }
 
 }
