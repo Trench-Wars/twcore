@@ -2,15 +2,17 @@ package twcore.bots.multibot.dodgeball;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
-import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.events.BallPosition;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
@@ -23,14 +25,15 @@ public class dodgeball extends MultiModule {
 	private int orgBallCount = -1;
 	protected boolean running = false;
 	
-	private int previousCarrier = -1;
+	private short previousCarrier = -1;
 	private long previousCarrierTime = -1;
 	private int ballMode = 0;
 	//				0  =>  ball not carried
 	//				1  =>  ball carried
 	
-	private ArrayList<Integer> players;
+	private HashMap<Short,Integer> players = new HashMap<Short,Integer>();
 	// List with PlayerIDs of players in the game
+	// <PlayerID,number of eliminations>
 	
 	private TimerTask checkWinner;
     
@@ -50,6 +53,12 @@ public class dodgeball extends MultiModule {
     private List<String> staffHelp = Arrays.asList(new String[]{
             "|   !start                        - Starts a new game             |",
             "|   !stop                         - Stops the current game        |",
+            "|----------------- Player control (in-game only) -----------------|",
+            "|   !add <fuzzy-playername>       - Adds player to the game       |",
+            "|   !remove <fuzzy-playername>    - Removes player from the game  |",
+            "|   !remove-id <playerID>         - Removes player id from game   |",
+            "|   !list                         - Lists players in game         |",
+            "|------------------------- Game Settings -------------------------|",
             "|   !dodgetime [secs]             - Set [secs] of ball \"hot\" time |",
             "|                                   (default: 3 seconds)          |",
             "|   !fixball <x>,<y>              - Fixes all balls on <x>,<y> pos|",
@@ -62,6 +71,8 @@ public class dodgeball extends MultiModule {
     @Override
     public void requestEvents(ModuleEventRequester eventRequester) {
         eventRequester.request(this, EventRequester.BALL_POSITION);
+        eventRequester.request(this, EventRequester.PLAYER_LEFT);
+        eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
     }
 
     @Override
@@ -130,6 +141,12 @@ public class dodgeball extends MultiModule {
     					m_botAction.sendPrivateMessage(playerID, "Dodgeball started. Players who are hit by a ball less than "+dodgetime+" seconds after firing will be eliminated.");
     					running = true;
     					m_botAction.shipResetAll();
+    					
+    					// Fill list of players
+    					for(Player p:m_botAction.getPlayingPlayers()) {
+    						players.put(p.getPlayerID(), 0);
+    					}
+    					
     				} else {
     					m_botAction.sendPrivateMessage(playerID, "Dodgeball is already started. PM !stop to stop dodgeball.");
     				}
@@ -144,11 +161,92 @@ public class dodgeball extends MultiModule {
     				}
     			}
     			
+    			if(message.startsWith("!add")) {
+    				String arg1 = message.substring(4).trim();
+    				
+    				if(!running) {
+    					m_botAction.sendPrivateMessage(playerID, "The command !add can only be used when the game is started. Command aborted.");
+    					return;
+    				}
+    				
+    				if(arg1 == null || arg1.length() == 0) {
+    					m_botAction.sendPrivateMessage(playerID, "Syntax error. Please specify part of the playername to add to the game. Type ::!help for more information.");
+    					return;
+    				}
+    				
+    				Player selectedPlayer = m_botAction.getFuzzyPlayer(arg1);
+    				
+    				if(selectedPlayer == null) {
+    					m_botAction.sendPrivateMessage(playerID, "The specified player can't be found in this arena. Please specify part of the playername to add to the game. Type ::!help for more information.");
+    					return;
+    				}
+    				if(selectedPlayer.getShipType() == Tools.Ship.SPECTATOR) {
+    					m_botAction.sendPrivateMessage(playerID, "The player '"+selectedPlayer.getPlayerName()+"' is a spectator. Please specify a player that isn't a spectator. Type ::!help for more information.");
+    					return;
+    				}
+    				
+    				players.put(selectedPlayer.getPlayerID(), 0);
+    				m_botAction.sendPrivateMessage(playerID, "Player '"+selectedPlayer.getPlayerName()+"' added to the game.");
+    				checkWinner();
+    			}
+    			
+    			if(message.startsWith("!remove")) {
+    				String arg1 = message.substring(7).trim();
+    				
+    				if(!running) {
+    					m_botAction.sendPrivateMessage(playerID, "The command !remove can only be used when the game is started. Command aborted.");
+    					return;
+    				}
+    				
+    				if(arg1 == null || arg1.length() == 0) {
+    					m_botAction.sendPrivateMessage(playerID, "Syntax error. Please specify part of the playername to remove from the game. Type ::!help for more information.");
+    					return;
+    				}
+    				
+    				Player selectedPlayer = m_botAction.getFuzzyPlayer(arg1);
+    				
+    				if(selectedPlayer == null) {
+    					m_botAction.sendPrivateMessage(playerID, "The specified player can't be found in this arena. Use the !remove-id and the !list command to remove a specific player using a player ID.");
+    					return;
+    				}
+    				if(!players.containsKey(selectedPlayer.getPlayerID())) {
+    					m_botAction.sendPrivateMessage(playerID, "The specified player can't be found in the list of players playing the game. Use the !remove-id and the !list command to remove a specific player using a player ID.");
+    					return;
+    				}
+    				players.remove(selectedPlayer.getPlayerID());
+    				m_botAction.sendPrivateMessage(playerID, "Player '"+selectedPlayer.getPlayerName()+"' removed from the list of playing players.");
+    				checkWinner();
+    			}
+    			
+    			if(message.startsWith("!list")) {
+    				if(!running) {
+    					m_botAction.sendPrivateMessage(playerID, "The command !list can only be used when the game is started. Command aborted.");
+    					return;
+    				}
+    				
+    				List<String> list = Arrays.asList(new String[]{
+    						"ID   Name                       Ship      ",
+    						"---- -------------------------- ----------"
+    				});
+    				
+    				for(short id:players.keySet()) {
+    					Player p = m_botAction.getPlayer(id);
+    					list.add(
+    						Tools.formatString(String.valueOf(id), 4)+" "+
+    						Tools.formatString(p.getPlayerName(), 26)+" "+
+    						Tools.shipName(p.getShipType())
+    						);
+    				}
+    				
+    				m_botAction.privateMessageSpam(playerID, list);
+    				
+    			}
+    			
     			if(message.startsWith("!dodgetime")) {
     				String arg1 = message.substring(7).trim();
     				int argument = 3;
     				
-    				if(arg1 == null || arg1.trim().length() == 0) {
+    				if(arg1 == null || arg1.length() == 0) {
     					m_botAction.sendPrivateMessage(playerID, "Current dodgetime: "+dodgetime+" seconds.");
     					m_botAction.sendPrivateMessage(playerID, "Please specify number of seconds to change the dodge time. Type ::!help for more information.");
     					return;
@@ -186,7 +284,7 @@ public class dodgeball extends MultiModule {
     				String arg1 = message.substring(13).trim();
     				int argument = 1;
     				
-    				if(arg1 == null || arg1.trim().length() == 0) {
+    				if(arg1 == null || arg1.length() == 0) {
     					m_botAction.sendPrivateMessage(playerID, "Syntax error. Please specify number of balls to set. Type ::!help for more information");
     					return;
     				}
@@ -253,10 +351,12 @@ public class dodgeball extends MultiModule {
     				Player prev = m_botAction.getPlayer(previousCarrier);
     				if(p.getFrequency() != prev.getFrequency() && p.getPlayerID() != m_botAction.getPlayerID(m_botAction.getBotName())) {
     					m_botAction.specWithoutLock(ball.getCarrier());
-    					m_botAction.sendArenaMessage(p.getPlayerName()+" has been eliminated by "+prev.getPlayerName()+"!");
+    					m_botAction.sendArenaMessage(p.getPlayerName()+" ("+players.get(ball.getCarrier())+" kills) has been eliminated by "+prev.getPlayerName()+"!");
+    					players.remove(ball.getCarrier());
+    					players.put(previousCarrier, (players.get(previousCarrier) + 1));
     				}
     				
-    				m_botAction.scheduleTask(checkWinner, 1000);
+    				checkWinner();
     			} else {
     				previousCarrier = ball.getCarrier();
     			}
@@ -268,6 +368,23 @@ public class dodgeball extends MultiModule {
     			
     		}
     	}
+    }
+    
+    public void handleEvent(PlayerLeft event) {
+    	if(running)
+    		players.remove(event.getPlayerID());
+    }
+    
+    public void handleEvent(FrequencyShipChange event) {
+    	// if game has started and the new ship type is 0 (Spectator)
+    	if(running && event.getShipType() == Tools.Ship.SPECTATOR) {
+    		// remove player from game
+    		players.remove(event.getPlayerID());
+    	}
+    }
+    
+    private void checkWinner() {
+    	m_botAction.scheduleTask(checkWinner, 1000);
     }
     
     private void clear() {
@@ -302,8 +419,8 @@ public class dodgeball extends MultiModule {
 		public void run() {
 			if(players.size() == 1) {
 				running = false;
-				Player winner = m_botAction.getPlayer(players.get(0));
-				m_botAction.sendArenaMessage(winner.getPlayerName()+" WINS!", Tools.Sound.HALLELUJAH);
+				Player winner = m_botAction.getPlayer(players.keySet().iterator().next());
+				m_botAction.sendArenaMessage(winner.getPlayerName()+" WINS!  ("+players.get(winner.getPlayerID())+" kills)", Tools.Sound.HALLELUJAH);
 				clear();
 				
 			} else if(players.size() == 0) {
