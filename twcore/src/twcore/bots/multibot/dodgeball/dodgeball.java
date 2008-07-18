@@ -39,7 +39,7 @@ public class dodgeball extends MultiModule {
     
     private List<String> publicHelp = Arrays.asList(new String[]{
             "+-----------------------------------------------------------------+",
-            "| Dodgeball v0.1                               - author MMaverick |",
+            "| Dodgeball v"+super.getVersion()+"                               - author MMaverick |",
             "+-----------------------------------------------------------------+",
             "| Dodgeball objectives:                                           |",
             "|   Eliminate opponents by hitting them with the ball less then   |",
@@ -48,11 +48,12 @@ public class dodgeball extends MultiModule {
             "| Commands:                                                       |",
             "|   !help                         - Brings up this message        |",
             "+-----------------------------------------------------------------+"
-        });
+            });
     
     private List<String> staffHelp = Arrays.asList(new String[]{
             "|   !start                        - Starts a new game             |",
             "|   !stop                         - Stops the current game        |",
+            "|   !usage                        - How to host with this module  |",
             "|----------------- Player control (in-game only) -----------------|",
             "|   !add <fuzzy-playername>       - Adds player to the game       |",
             "|   !remove <fuzzy-playername>    - Removes player from the game  |",
@@ -128,7 +129,7 @@ public class dodgeball extends MultiModule {
     		OperatorList opList = m_botAction.getOperatorList();
     		
     		// Public commands
-    		if(!opList.isZH(name)) {
+    		if(!opList.isER(name)) {
 	    		m_botAction.privateMessageSpam(playerID, publicHelp);
     		}
     		// Staff commands
@@ -159,6 +160,31 @@ public class dodgeball extends MultiModule {
     				} else {
     					m_botAction.sendPrivateMessage(playerID, "Dodgeball hasn't started. PM !start to start dodgeball.");
     				}
+    			}
+    			
+    			if(message.startsWith("!usage")) {
+    				List<String> usage = Arrays.asList(new String[]{
+    			            "+------------------------------------------------------------------+",
+    			            "| Dodgeball v"+super.getVersion()+"                                - author MMaverick |",
+    			            "+------------------------------------------------------------------+",
+    			            "| Dodgeball objectives:                                            |",
+    			            "|   Eliminate opponents by hitting them with the ball less then    |",
+    			            "|   "+dodgetime+" seconds after firing the ball. The last one standing wins!   |",
+    			            "+------------------------------------------------------------------+",
+    			            "| When issuing the command !start, the dodgeball module stores all |",
+    			            "| players in a ship into memory. Dodgeball functionality is        |",
+    			            "| enabled aswell: When a player touches a ball that has been shot  |",
+    			            "| less then x seconds ago (default;3, set by !dodgetime) he is     |",
+    			            "| eliminated from the game. The player is put to spectator to make |",
+    			            "| him release the ball.                                            |",
+    			            "| The arena can be left unlocked during play as players are        |",
+    			            "| removed from the in-memory list when eliminated. Players must    |",
+    			            "| not be able to reach the play-area when getting back in though.  |",
+    			            "| When one or no player is left, the winner or the end of the game |",
+    			            "| is announced. The module stops itself automatically.             |",
+    			            "+------------------------------------------------------------------+"
+    				});
+    				m_botAction.privateMessageSpam(playerID, usage);
     			}
     			
     			if(message.startsWith("!add")) {
@@ -269,15 +295,43 @@ public class dodgeball extends MultiModule {
     			}
     			
     			if(message.startsWith("!fixball")) {
+    				// !fixball <x>,<y>              - Fixes all balls on <x>,<y> pos
+    	            // !fixball <id>,<x>,<y>         - Fixes ball <id> on <x>,<y> pos
     				String arg1 = message.substring(8).trim();
     				
-    				if(arg1 == null || arg1.length() == 0) {
+    				if(arg1 == null || arg1.length() == 0 || arg1.indexOf(',') == -1) {
     					m_botAction.sendPrivateMessage(playerID, "Syntax error. Please specify the <x> and <y> coordinates where to fix all the balls. Type ::!help for more information.");
     					return;
     				}
     				
-    				// FIXME
+    				String[] args = arg1.split(",");
+    				int id = -1;
+    				int x  = -1;
+    				int y  = -1;
     				
+    				if(args.length < 2 || args.length > 3 || Tools.isAllDigits(arg1.replace(",", "")) == false) {
+    					m_botAction.sendPrivateMessage(playerID, "Syntax error. Please specify the <x> and <y> coordinates where to fix all the balls. Type ::!help for more information.");
+    					return;
+    				}
+    				
+    				if(args.length == 2) {
+    					x = Integer.parseInt(args[0]);
+    					y = Integer.parseInt(args[1]);
+    					
+    					for(int i = 0 ; i < ballCount; i++) {
+    						m_botAction.sendPrivateMessage(playerID, "Moving ball #"+(i+1)+" to "+x+","+y);
+    						this.moveBall(i, x, y);
+    					}
+    					
+    				} else if(args.length == 3) {
+    					id = Integer.parseInt(args[0]);
+    					x = Integer.parseInt(args[1]);
+    					y = Integer.parseInt(args[2]);
+    					
+    					if(id > 0) id--;
+    					m_botAction.sendPrivateMessage(playerID, "Moving ball #"+(id+1)+" to "+x+","+y);
+    					this.moveBall(id, x, y);
+    				}
     			}
     			
     			if(message.startsWith("!setballcount ")) {
