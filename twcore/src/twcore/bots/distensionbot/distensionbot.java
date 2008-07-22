@@ -11318,7 +11318,7 @@ public class distensionbot extends SubspaceBot {
             }
             m_botAction.SQLClose( r );
         } catch (SQLException e) {
-            Tools.printLog( "SQL ERROR loading upgrade data." );
+            Tools.printLog( "SQL ERROR loading default upgrade data." );
             cmdDie("DistensionInternal", "now");
             return;
         }
@@ -11346,7 +11346,7 @@ public class distensionbot extends SubspaceBot {
                 }
                 m_botAction.SQLClose(r);
             } catch (SQLException e) {
-                Tools.printLog( "SQL ERROR loading upgrade data." );
+                Tools.printLog( "SQL ERROR loading primary upgrade data of ship " + shipNum );
                 cmdDie("DistensionInternal", "now");
                 return;
             }
@@ -11371,17 +11371,21 @@ public class distensionbot extends SubspaceBot {
             ranks = parseCSVStringToArray(rankString);
             prizeNum = parsePrizeStringToPrizeNum(prizeString);
         } catch( SQLException e ) {
-            Tools.printLog( "SQL ERROR loading upgrade data." );
+            Tools.printLog( "SQL ERROR loading specific upgrade data." );
             m_botAction.SQLClose(r);
             return null;
         }
 
-        if( prizeNum == 0 ) {
-            Tools.printLog( "Prizenum not properly parsed for Distension upgrade '" + desc + "'" );
-            return null;
+        if( prizeNum == -1 ) {
+            Tools.printLog( "Unable to read prize number on prize '" + desc "'" );
         }
+        if( prizeNum == 0 )
+            return new ShipUpgrade( desc, prizeNum, 0, 0, -1 );
+
         if( costs.length == 1 && ranks.length == 1 ) {
             return new ShipUpgrade( desc, prizeNum, costs[0], ranks[0], 1 );
+        } else if( costs.length == ranks.length) {
+            return new ShipUpgrade( desc, prizeNum, costs, ranks );
         } else if( costs.length == 1 && ranks.length > 1 ) {
             return new ShipUpgrade( desc, prizeNum, costs[0], ranks );
         } else if( costs.length > 1 && ranks.length == 1 ) {
@@ -11411,19 +11415,19 @@ public class distensionbot extends SubspaceBot {
             try {
                 Field f = this.getClass().getDeclaredField(prizeString);
                 if( f == null )
-                    return 0;
+                    return -1;
                 return f.getInt(this);
             } catch( Exception e ) {
-                return 0;
+                return -1;
             }
         } else {
             try {
                 Field f = Tools.Prize.class.getDeclaredField(prizeString);
                 if( f == null )
-                    return 0;
+                    return -1;
                 return f.getInt(this);
             } catch( Exception e ) {
-                return 0;
+                return -1;
             }
         }
 
