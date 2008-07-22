@@ -59,10 +59,10 @@ import twcore.core.util.Tools;
  */
 public class distensionbot extends SubspaceBot {
 
-    private boolean DEBUG = true;                          // Debug mode.
+    private boolean DEBUG = false;                         // Debug mode.  Generally for beta-testing.
     private final float DEBUG_MULTIPLIER = 9.2f;           // Amount of RP to give extra in debug mode
 
-    private final int NUM_UPGRADES = 18;                   // Number of upgrade slots allotted per ship
+    private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between a long list of spammed messages
     private final int PRIZE_SPAM_DELAY = 15;               // Delay in ms between prizes for individual players
@@ -434,7 +434,7 @@ public class distensionbot extends SubspaceBot {
         flagTimerObjs = m_botAction.getObjectSet();
         flagObjs = new Objset();
         playerObjs = new Objset();
-        setupPrices();
+        setupPricesFromDB();
         setupShipTypes();
         try {
             // Try to kick on the connection.  Distension has its own connection pool and DB,
@@ -3356,7 +3356,7 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() == 9 )
             throw new TWCoreException( "Tactical Ops do not specialize, as you are not in a ship!  You've been a little too long at that console, I think..." );
         if( p.getRank() < distensionbot.ShipTypeProfile.rankForTypeChoice )
-            throw new TWCoreException( "You may only specialize your ship after rank 10.  Patience." );
+            throw new TWCoreException( "You may only specialize your ship after rank " + distensionbot.ShipTypeProfile.rankForTypeChoice + ".  Patience." );
 
         int cost = 0;
         if( !DEBUG && ( p.isSpecialized() || p.getRank() > distensionbot.ShipTypeProfile.rankForPaidTypeChoice ) )
@@ -7236,17 +7236,19 @@ public class distensionbot extends SubspaceBot {
                 }
             }
             // BETA ONLY
-            if ( rank >= RANK_REQ_SHIP6 ) {
-                if( shipsAvail[5] == false ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Weasel.  One has been requisitioned for your use, and is now waiting in your !hangar.  (UNLOCKED BY RANK IN BETA ONLY)");
-                    addShipToDB(6);
+            if( DEBUG ) {
+                if ( rank >= RANK_REQ_SHIP6 ) {
+                    if( shipsAvail[5] == false ) {
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Weasel.  One has been requisitioned for your use, and is now waiting in your !hangar.  (UNLOCKED BY RANK IN BETA ONLY)");
+                        addShipToDB(6);
+                    }
                 }
-            }
-            if ( rank >= RANK_REQ_SHIP7 ) {
-                if( shipsAvail[6] == false ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Lancaster.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "LANCASTER: The Lancaster is an unusual ship with a host of surprises onboard.  Pilots can upgrade its most basic components rapidly.  The Firebloom and the Lanc's evasive-bombing capability make this a fantastic choice for advanced pilots.");
-                    addShipToDB(7);
+                if ( rank >= RANK_REQ_SHIP7 ) {
+                    if( shipsAvail[6] == false ) {
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Lancaster.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "LANCASTER: The Lancaster is an unusual ship with a host of surprises onboard.  Pilots can upgrade its most basic components rapidly.  The Firebloom and the Lanc's evasive-bombing capability make this a fantastic choice for advanced pilots.");
+                        addShipToDB(7);
+                    }
                 }
             }
             if ( rank >= RANK_REQ_SHIP8 ) {
@@ -11273,6 +11275,10 @@ public class distensionbot extends SubspaceBot {
 
 
     // ***** SHIP DATA
+
+    /**
+     * The new way.  Makes setupPrices() obsolete.
+     */
     public void setupPricesFromDB() {
         // Ship 0 -- dummy (for ease of access)
         ShipProfile ship = new ShipProfile( -1, -1 );
@@ -11286,7 +11292,7 @@ public class distensionbot extends SubspaceBot {
         m_shipGeneralData.add( ship );
         ship = new ShipProfile( RANK_REQ_SHIP4, 16f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( 0, 10.6f );
+        ship = new ShipProfile( 0, 10.7f );
         m_shipGeneralData.add( ship );
         ship = new ShipProfile( RANK_REQ_SHIP6, 14f );
         m_shipGeneralData.add( ship );
@@ -11297,6 +11303,57 @@ public class distensionbot extends SubspaceBot {
         ship = new ShipProfile( RANK_REQ_SHIP9, 13f );
         m_shipGeneralData.add( ship );
 
+        int upgNum;
+        LinkedList<ShipUpgrade> defaultUpgs = new LinkedList<ShipUpgrade>();
+        // Get default/generic upgrades shared between ships (shipnum=0)
+        try {
+            ResultSet r = m_botAction.SQLQuery(m_database, "SELECT * FROM tblDistensionUpgrade WHERE fnShipNum=0 ORDER BY fnUpgradeNum" );
+            while( r.next() ) {
+                ShipUpgrade su = parseUpgrade(r);
+                if( su == null ) {
+                    cmdDie("DistensionInternal", "now");
+                } else {
+                    defaultUpgs.add( su );
+                }
+            }
+            m_botAction.SQLClose( r );
+        } catch (SQLException e) {
+            Tools.printLog( "SQL ERROR loading upgrade data." );
+            cmdDie("DistensionInternal", "now");
+            return;
+        }
+
+        for( int shipNum=1; shipNum<10; shipNum++ ) {
+            ship = m_shipGeneralData.get(shipNum);
+            try {
+                // Get all upgrades
+                ResultSet r = m_botAction.SQLQuery(m_database, "SELECT * FROM tblDistensionUpgrade WHERE fnShipNum=" + shipNum + " ORDER BY fnUpgradeNum" );
+                while( r.next() ) {
+                    ShipUpgrade su = parseUpgrade(r);
+                    if( su == null ) {
+                        cmdDie("DistensionInternal", "now");
+                    } else {
+                        ship.addUpgrade( su );
+                    }
+
+                    upgNum      = r.getInt("fnUpgradeNum");
+                    // HACK: when at 3rd upgrade, insert "universal" upgrades for energy/chg
+                    if( upgNum == 3 && shipNum < 9 && defaultUpgs.size() > 0 ) {
+                        for( ShipUpgrade defsu : defaultUpgs ) {
+                            ship.addUpgrade( defsu );
+                        }
+                    }
+                }
+                m_botAction.SQLClose(r);
+            } catch (SQLException e) {
+                Tools.printLog( "SQL ERROR loading upgrade data." );
+                cmdDie("DistensionInternal", "now");
+                return;
+            }
+        }
+    }
+
+    public ShipUpgrade parseUpgrade( ResultSet r ) {
         String desc;
         String prizeString;
         int prizeNum;
@@ -11305,44 +11362,33 @@ public class distensionbot extends SubspaceBot {
         String rankString;
         int[] ranks;
 
-        for( int shipNum=1; shipNum<10; shipNum++ ) {
-            ship = m_shipGeneralData.get(shipNum);
-            try {
-                ResultSet r = m_botAction.SQLQuery(m_database, "SELECT * FROM tblDistensionUpgrade WHERE fnShipNum=" + shipNum + " ORDER BY fnUpgradeNum" );
-                while( r.next() ) {
-                    desc        = r.getString("fnDesc");
-                    prizeString = r.getString("fcPrize");
-                    costString  = r.getString("fcPointsReq");
-                    rankString  = r.getString("fcRankReq");
-                    costs = parseCSVStringToArray(costString);
-                    ranks = parseCSVStringToArray(rankString);
-                    prizeNum = parsePrizeStringToPrizeNum(prizeString);
-                    if( prizeNum == 0 ) {
-                        Tools.printLog( "Prizenum not properly parsed for Distension upgrade '" + desc + "'" );
-                        cmdDie("DistensionInternal", "now");
-                        return;
-                    }
-                    if( costs.length == 1 && ranks.length == 1 ) {
-                        ShipUpgrade upg = new ShipUpgrade( desc, prizeNum, costs[0], ranks[0], 1 );
-                        ship.addUpgrade( upg );
-                    } else if( costs.length == 1 && ranks.length > 1 ) {
-                        ShipUpgrade upg = new ShipUpgrade( desc, prizeNum, costs[0], ranks );
-                        ship.addUpgrade( upg );
-                    } else if( costs.length > 1 && ranks.length == 1 ) {
-                        ShipUpgrade upg = new ShipUpgrade( desc, prizeNum, costs, ranks[0] );
-                        ship.addUpgrade( upg );
-                    } else {
-                        Tools.printLog( "Bad cost/rank defines for Distension upgrade '" + desc + "' ...  costs=" + costs.length + " / ranks=" + ranks.length );
-                        cmdDie("DistensionInternal", "now");
-                        return;
-                    }
+        try {
+            desc        = r.getString("fcDesc");
+            prizeString = r.getString("fcPrize");
+            costString  = r.getString("fcPointsReq");
+            rankString  = r.getString("fcRankReq");
+            costs = parseCSVStringToArray(costString);
+            ranks = parseCSVStringToArray(rankString);
+            prizeNum = parsePrizeStringToPrizeNum(prizeString);
+        } catch( SQLException e ) {
+            Tools.printLog( "SQL ERROR loading upgrade data." );
+            m_botAction.SQLClose(r);
+            return null;
+        }
 
-                }
-            } catch (SQLException e) {
-                Tools.printLog( "SQL ERROR loading upgrade data." );
-                cmdDie("DistensionInternal", "now");
-                return;
-            }
+        if( prizeNum == 0 ) {
+            Tools.printLog( "Prizenum not properly parsed for Distension upgrade '" + desc + "'" );
+            return null;
+        }
+        if( costs.length == 1 && ranks.length == 1 ) {
+            return new ShipUpgrade( desc, prizeNum, costs[0], ranks[0], 1 );
+        } else if( costs.length == 1 && ranks.length > 1 ) {
+            return new ShipUpgrade( desc, prizeNum, costs[0], ranks );
+        } else if( costs.length > 1 && ranks.length == 1 ) {
+            return new ShipUpgrade( desc, prizeNum, costs, ranks[0] );
+        } else {
+            Tools.printLog( "Bad cost/rank defines for Distension upgrade '" + desc + "' ...  costs=" + costs.length + " / ranks=" + ranks.length );
+            return null;
         }
     }
 
@@ -11761,7 +11807,7 @@ public class distensionbot extends SubspaceBot {
         upg = new ShipUpgrade( "Rebounding Burst", Tools.Prize.BURST, p5b1, p5b2 );       // DEFINE
         ship.addUpgrade( upg );
         int p5c1[] = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 };
-        upg = new ShipUpgrade( "+9% Regeneration", ABILITY_TERR_REGEN, 12, p5c1 );
+        upg = new ShipUpgrade( "Improved Regeneration", ABILITY_TERR_REGEN, 12, p5c1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{12,13,14,15,20}, new int[]{25,35,45,57,75} );
         ship.addUpgrade( upg );
