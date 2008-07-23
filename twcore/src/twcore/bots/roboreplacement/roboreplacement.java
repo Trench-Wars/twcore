@@ -40,11 +40,11 @@ public class roboreplacement extends SubspaceBot
     int gameStatus = 0;         // 0=No game running; 1=Ship voting; 2=Death voting;
                                 // 3=Waiting until game start; 4=Playing; 5=End round, waiting for next vote
     final int STATUS_WAITINGFORPLAYERS = 0;
-    final int STATUS_SHIPVOTING = 0;
-    final int STATUS_DEATHVOTING = 0;
-    final int STATUS_AFTERVOTE = 0;
-    final int STATUS_PLAYING = 0;
-    final int STATUS_ENDGAME = 0;
+    final int STATUS_SHIPVOTING = 1;
+    final int STATUS_DEATHVOTING = 2;
+    final int STATUS_AFTERVOTE = 3;
+    final int STATUS_PLAYING = 4;
+    final int STATUS_ENDGAME = 5;
     // Old, very poor planning: kids, don't code like this at home.
     //boolean isRunning = false;  // True if game is running
     //boolean shipVoting = false; // True if ships are being voted on
@@ -439,7 +439,11 @@ public class roboreplacement extends SubspaceBot
             public void run() {
                 if( !checkPreGamePlayerStatus() )
                     return;
-                elimShip = allowedShips.get( countVotes(false) ).intValue(); //counts the votes and sets the elimShip to the proper thing
+                int shipNumInList = countVotes(false);
+                if( shipNumInList == -1 )
+                    elimShip = defaultShip;
+                else
+                    elimShip = allowedShips.get( countVotes(false) ).intValue();
                 m_botAction.sendArenaMessage("It will be " + ships[elimShip] + " elim. " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)") ); //announces the result of the vote and starts death voting
                 m_botAction.sendArenaMessage("Vote on deaths (1-10)");
                 gameStatus = STATUS_DEATHVOTING;
@@ -508,14 +512,12 @@ public class roboreplacement extends SubspaceBot
             }
         }
 
-        if( winner == -1 ) {
+        if( winner != -1 ) {
+            numVotes = voteTally[winner];
+        } else {
             if(votingForDeaths)
                 winner = 10;
-            else
-                winner = defaultShip;
             numVotes = -1;
-        } else {
-            numVotes = voteTally[winner];
         }
 
         votes.clear();
