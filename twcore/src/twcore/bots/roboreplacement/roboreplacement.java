@@ -19,8 +19,8 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
-import twcore.core.events.WeaponFired;
-import twcore.core.events.WatchDamage;
+//import twcore.core.events.WeaponFired;
+//import twcore.core.events.WatchDamage;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -60,7 +60,8 @@ public class roboreplacement extends SubspaceBot
     int voteTally[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //array for votes
     String mvp = "";
     int mvpKills = 0;
-    int numVotes;           // Keeps track of number of votes, for reporting purposes
+    int numVotes = 0;            // Keeps track of number of votes, for reporting purposes
+    int defaultShip = 0;
 
     String arena;                // name of the arena the bot is in
     String mySQLHost = "local";  // sql stuff
@@ -96,7 +97,8 @@ public class roboreplacement extends SubspaceBot
         String botNumber = m_botSettings.getString(m_botAction.getBotName());
         arena = m_botSettings.getString("Arena" + botNumber);
         String[] pieces = m_botSettings.getString("AllowedShips" + botNumber).split(",");
-        allowedShips.add(new Integer(pieces[0]));   // For anyship elim, the default ship
+        allowedShips.add(new Integer(pieces[0]));   // Placeholder
+        defaultShip = new Integer(pieces[0]);
         for(int k = 0;k < pieces.length;k++)
         {
             try {
@@ -388,7 +390,7 @@ public class roboreplacement extends SubspaceBot
                     {
                         Player p = it2.next();
                         if(!allowedShips.contains(new Integer(p.getShipType()))) //sets person to default (first entered) elim ship type if they are in an illegal ship
-                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), "*setship " + allowedShips.get(0).intValue());
+                            m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(), "*setship " + defaultShip );
                     }
                 }
                 else //if it is not an anyship elim it sets everyone to the correct ship then starts
@@ -507,7 +509,7 @@ public class roboreplacement extends SubspaceBot
             if(votingForDeaths)
                 winner = 10;
             else
-                winner = allowedShips.get(0);
+                winner = defaultShip;
             numVotes = -1;
         } else {
             numVotes = voteTally[winner];
