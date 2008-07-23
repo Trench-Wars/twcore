@@ -440,16 +440,16 @@ public class roboreplacement extends SubspaceBot
                 if( !checkPreGamePlayerStatus() )
                     return;
                 int shipNumInList = countVotes(false);
-                if( shipNumInList == -1 )
+                if( shipNumInList < 0 || shipNumInList >= allowedShips.size() )
                     elimShip = defaultShip;
                 else
-                    elimShip = allowedShips.get( countVotes(false) ).intValue();
+                    elimShip = allowedShips.get( shipNumInList ).intValue();
                 m_botAction.sendArenaMessage("It will be " + ships[elimShip] + " elim. " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)") ); //announces the result of the vote and starts death voting
                 m_botAction.sendArenaMessage("Vote on deaths (1-10)");
                 gameStatus = STATUS_DEATHVOTING;
             }
         };
-        m_botAction.scheduleTask(shipVote, 10 * 1000); //schedules the end of the vote
+        m_botAction.scheduleTask(shipVote, 20 * 1000); //schedules the end of the vote
 
         deathVoting = new TimerTask() {
             public void run() {
@@ -462,7 +462,7 @@ public class roboreplacement extends SubspaceBot
                 nextgame();
             }
         };
-        m_botAction.scheduleTask(deathVoting, 30 * 1000); //schedules the end of the death vote and calls nextgame() to start the elim game
+        m_botAction.scheduleTask(deathVoting, 20 * 1000); //schedules the end of the death vote and calls nextgame() to start the elim game
     }
 
 
