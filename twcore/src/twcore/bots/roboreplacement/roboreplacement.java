@@ -20,6 +20,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 /**
  * A replacement for RoboRef in elim, spawned as needed.
@@ -34,7 +35,7 @@ public class roboreplacement extends SubspaceBot
 
     boolean isRunning = false;  // True if game is running
     boolean zoneOn = true;      // True if the zoning feature is turned on
-    boolean zone = false;       // True if the bot should zone after this game
+    boolean zone = true;        // True if the bot should zone after this game
     boolean shipVoting = false; // True if ships are being voted on
     boolean deathsVote = false; // True if deaths are being voted on
     boolean voting = false;     // True if there is any voting going on (ships or deaths)
@@ -45,7 +46,6 @@ public class roboreplacement extends SubspaceBot
     HashMap<Integer, Integer> lastDeaths = new HashMap<Integer, Integer>();
 
     HashMap<Integer, Integer> votes = new HashMap<Integer, Integer>();   //key is ID of the person that voted, value is the person's vote
-    ArrayList<Integer> voters = new ArrayList<Integer>();                // Players that have voted this round
     ArrayList<Integer> allowedShips = new ArrayList<Integer>();          // Ships allowed in this type of elim
 
     Vector<String> topTen; //Vector of people with the top ten ratings
@@ -57,6 +57,7 @@ public class roboreplacement extends SubspaceBot
     int voteTally[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //array for votes
     String mvp = "";
     int mvpKills = 0;
+    int numVotes;           // Keeps track of number of votes, for reporting purposes
 
     String arena;                // name of the arena the bot is in
     String mySQLHost = "local";  // sql stuff
@@ -166,24 +167,34 @@ public class roboreplacement extends SubspaceBot
     public void handleEvent(Message event)
     {
         String message = event.getMessage();                           //Gets the message.
-        String name = m_botAction.getPlayerName(event.getPlayerID());  //Gets name of the person that sent the message.
+        int pid = event.getPlayerID();
+        String name = m_botAction.getPlayerName(pid);  //Gets name of the person that sent the message.
 
-        if(voting) //Checks to see if there is a vote going on.
+        if( voting ) //Checks to see if there is a vote going on.
         {
-            if(!(votes.containsKey(new Integer(event.getPlayerID())))) //Checks to make sure the person has not voted yet.
+            if( !votes.containsKey( pid ) ) //Checks to make sure the person has not voted yet.
             {
-                try {
-                    if(deathsVote && Integer.parseInt(message) < 11) //adds the vote to the votes HashMap
-                    {
-                        votes.put(new Integer(event.getPlayerID()), new Integer(Integer.parseInt(message)));
-                        voters.add(new Integer(event.getPlayerID()));
-                    }
-                    else if(shipVoting && Integer.parseInt(message) < allowedShips.size()) //adds the vote to the votes HashMap
-                    {
-                        votes.put(new Integer(event.getPlayerID()), new Integer(Integer.parseInt(message)));
-                        voters.add(new Integer(event.getPlayerID()));
-                    }
-                } catch(Exception e) {}
+                if( Tools.isAllDigits(message) ) {
+
+                    try {
+                        int vote = Integer.parseInt(message);
+                        if(deathsVote ) {
+                            if( vote < 11 ) {
+                                votes.put( pid, vote );
+                                m_botAction.sendPrivateMessage(name, "Vote added for " + vote + " deaths." );
+                            } else {
+                                m_botAction.sendPrivateMessage(name, "Number of deaths must be less than 10." );
+                            }
+                        } else if(shipVoting ) {
+                            if( vote > 0 && vote < allowedShips.size() ) { //adds the vote to the votes HashMap
+                                votes.put( pid, vote );
+                                m_botAction.sendPrivateMessage(name, "Vote added for " + ships[allowedShips.get(vote)] + " elim." );
+                            } else {
+                                m_botAction.sendPrivateMessage(name, "That is not an allowed number." );
+                            }
+                        }
+                    } catch(Exception e) {}
+                }
             }
         }
 
@@ -406,7 +417,7 @@ public class roboreplacement extends SubspaceBot
             {
 
                 elimShip = allowedShips.get(countVotes(false)).intValue(); //counts the votes and sets the elimShip to the proper thing
-                m_botAction.sendArenaMessage("It will be a " + ships[elimShip] + " elim."); //announces the result of the vote and starts death voting
+                m_botAction.sendArenaMessage("It will be " + ships[elimShip] + " elim. " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)") ); //announces the result of the vote and starts death voting
                 m_botAction.sendArenaMessage("Vote on deaths (1-10)");
                 shipVoting = false;
                 deathsVote = true;
@@ -423,7 +434,7 @@ public class roboreplacement extends SubspaceBot
                 voting = false;
                 deathsVote = false;
                 elimDeaths = countVotes(true); //tallies the votes
-                m_botAction.sendArenaMessage(ships[elimShip] + " elim to " + elimDeaths);
+                m_botAction.sendArenaMessage(ships[elimShip] + " elim to " + elimDeaths + "  " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)"));
                 m_botAction.sendArenaMessage("Enter if playing.  Game begins in 20 seconds ...");
                 nextgame();
             }
@@ -452,14 +463,12 @@ public class roboreplacement extends SubspaceBot
      */
     public int countVotes(boolean votingForDeaths) //counts the votes, if deathvotez is false it starts from 1, if it is true it starts from 10
     {
-        for(int k = 0;k < voters.size();k++)
-        {
-            try {
-                int vote = votes.get(voters.get(k)).intValue();
-                voters.remove(k);
-                voteTally[vote]++;
-            } catch(Exception e) {}
+
+        for( Integer voter : votes.keySet() ) {
+            int vote = votes.get( voter ).intValue();
+            voteTally[vote]++;
         }
+
         int winner = -1;
 
         for(int k = 1; k < 11; k++) {
@@ -481,10 +490,15 @@ public class roboreplacement extends SubspaceBot
             }
         }
 
-        if(votingForDeaths)
-            winner = 10;
-        else
-            winner = allowedShips.get(0);
+        if( winner == -1 ) {
+            if(votingForDeaths)
+                winner = 10;
+            else
+                winner = allowedShips.get(0);
+            numVotes = -1;
+        } else {
+            numVotes = voteTally[winner];
+        }
 
         votes.clear();
         resetTally();
