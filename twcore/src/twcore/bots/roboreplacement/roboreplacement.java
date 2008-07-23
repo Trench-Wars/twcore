@@ -107,7 +107,7 @@ public class roboreplacement extends SubspaceBot
         arena = m_botSettings.getString("Arena" + botNumber);
         String[] pieces = m_botSettings.getString("AllowedShips" + botNumber).split(",");
         allowedShips.add(new Integer(pieces[0]));   // Placeholder
-        defaultShip = new Integer(pieces[0]);
+        defaultShip = m_botSettings.getInt("DefaultShip" + botNumber);
         for(int k = 0;k < pieces.length;k++)
         {
             try {
@@ -163,17 +163,15 @@ public class roboreplacement extends SubspaceBot
             players.add(new Integer(event.getPlayerID()));
         if(players.contains(new Integer(event.getPlayerID())) && event.getShipType() == 0)
             players.remove(new Integer(event.getPlayerID()));
-        if(players.size() <= 1 )
-        {
+        if(players.size() <= 1 ) {
             if( gameStatus == STATUS_PLAYING && players.size() == 1 ) {
                 Iterator<Integer> i = players.iterator();
                 int pID = i.next().intValue();
                 doGameOver( pID );
             } else {
-                if( gameStatus < STATUS_PLAYING )
-                    checkPreGamePlayerStatus();
+                checkPreGamePlayerStatus();
             }
-        } else if(players.size() >= 2 && gameStatus == 0 || gameStatus == 5 ) {
+        } else if(players.size() >= 2 && gameStatus == STATUS_WAITINGFORPLAYERS || gameStatus == STATUS_ENDGAME ) {
             gameStatus = STATUS_SHIPVOTING;
             startVoting();
         } else {
@@ -421,6 +419,9 @@ public class roboreplacement extends SubspaceBot
 
     public void startVoting()
     {
+        if( !checkPreGamePlayerStatus() )
+            return;
+
         if(zone == true) //sends zoner for the game if it has been at least 15 minutes since the last zoner
         {
             zone = false;
@@ -434,20 +435,16 @@ public class roboreplacement extends SubspaceBot
             tempShip += k + "=" + ships[allowedShips.get(k).intValue()] + "  ";
         m_botAction.sendArenaMessage(tempShip);
 
-        if( !checkPreGamePlayerStatus() )
-            return;
-
         shipVote = new TimerTask() {
             public void run() {
                 if( !checkPreGamePlayerStatus() )
                     return;
-                elimShip = allowedShips.get(countVotes(false)).intValue(); //counts the votes and sets the elimShip to the proper thing
+                elimShip = allowedShips.get( countVotes(false) ).intValue(); //counts the votes and sets the elimShip to the proper thing
                 m_botAction.sendArenaMessage("It will be " + ships[elimShip] + " elim. " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)") ); //announces the result of the vote and starts death voting
                 m_botAction.sendArenaMessage("Vote on deaths (1-10)");
                 gameStatus = STATUS_DEATHVOTING;
             }
         };
-
         m_botAction.scheduleTask(shipVote, 10 * 1000); //schedules the end of the vote
 
         deathVoting = new TimerTask() {
@@ -461,7 +458,6 @@ public class roboreplacement extends SubspaceBot
                 nextgame();
             }
         };
-
         m_botAction.scheduleTask(deathVoting, 30 * 1000); //schedules the end of the death vote and calls nextgame() to start the elim game
     }
 
@@ -539,6 +535,8 @@ public class roboreplacement extends SubspaceBot
 
 
     public void doGameOver( int winnerID ) {
+        if( gameStatus != STATUS_PLAYING )
+            return;
         Player p = m_botAction.getPlayer(winnerID);
         if( p == null ) {
             m_botAction.sendArenaMessage("GAME OVER: Winner ?!?", 5);
@@ -695,7 +693,7 @@ public class roboreplacement extends SubspaceBot
     }
 
     public boolean checkPreGamePlayerStatus() {
-        if( gameStatus >= STATUS_PLAYING )
+        if( gameStatus >= STATUS_PLAYING || gameStatus == STATUS_WAITINGFORPLAYERS )
             return true;
         int numPlayers = m_botAction.getPlayingPlayers().size();
         if(numPlayers <= 1) {
