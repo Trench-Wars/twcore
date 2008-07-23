@@ -19,6 +19,8 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.WeaponFired;
+import twcore.core.events.WatchDamage;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -39,6 +41,7 @@ public class roboreplacement extends SubspaceBot
     boolean shipVoting = false; // True if ships are being voted on
     boolean deathsVote = false; // True if deaths are being voted on
     boolean voting = false;     // True if there is any voting going on (ships or deaths)
+    boolean locked = false;     // True if arena should be locked.  (Used for insurance.)
 
     HashSet<Integer> players = new HashSet<Integer>(); //contains ID's of all the players that started the game
     HashMap<Integer, Integer> deaths = new HashMap<Integer, Integer>();  //key is ID of the person, value is the person's number of deaths
@@ -132,6 +135,7 @@ public class roboreplacement extends SubspaceBot
         }
         if(players.contains(new Integer(event.getPlayerID())))
             players.remove(new Integer(event.getPlayerID()));
+        m_botAction.sendUnfilteredPrivateMessage( event.getPlayerID(), "*watchdamage" );
     }
 
     /**
@@ -151,6 +155,7 @@ public class roboreplacement extends SubspaceBot
 
         } else if(players.size() == 0 && isRunning) {
             m_botAction.sendArenaMessage("Game has been cancelled.  I win.", 1);
+            locked = false;
             m_botAction.toggleLocked();
             isRunning = false;
 
@@ -169,6 +174,13 @@ public class roboreplacement extends SubspaceBot
         String message = event.getMessage();                           //Gets the message.
         int pid = event.getPlayerID();
         String name = m_botAction.getPlayerName(pid);  //Gets name of the person that sent the message.
+
+        if( event.getMessageType() == Message.ARENA_MESSAGE ) {
+            if( message.equals( "Arena UNLOCKED" ) && locked == true )
+                m_botAction.toggleLocked();
+            else if( message.equals( "Arena LOCKED" ) && locked == false )
+                m_botAction.toggleLocked();
+        }
 
         if( voting ) //Checks to see if there is a vote going on.
         {
@@ -275,7 +287,7 @@ public class roboreplacement extends SubspaceBot
      */
     public void handleEvent(PlayerDeath event)
     {
-        if(isRunning && !(shipVoting || deathsVote)) //Makes sure the game is going.
+        if(isRunning && !(shipVoting || deathsVote)) // Makes sure the game is going.
         {
             Player p = m_botAction.getPlayer(event.getKilleeID());
             if(kills.containsKey(new Integer(event.getKillerID()))) //updates killer's kills
@@ -340,26 +352,26 @@ public class roboreplacement extends SubspaceBot
         // Cancel game if for some reason nobody is left.
         if( players.size() == 0 && isRunning ) {
             m_botAction.sendArenaMessage("Game has been cancelled.  I win.", 1);
+            locked = false;
             m_botAction.toggleLocked();
             isRunning = false;
         }
+        m_botAction.sendUnfilteredPrivateMessage( event.getPlayerID(), "*watchdamage" );
     }
 
     public void nextgame() //stuff individually commented
     {
         m_botAction.sendUnfilteredPublicMessage("*scorereset"); //resets score...
+        if( !checkPreGamePlayerStatus() )
+            return;
 
         TimerTask twotenSecs = new TimerTask()
         {
             public void run()
             {
-                int numPlayers = m_botAction.getPlayingPlayers().size();
-                if(numPlayers <= 1)
-                {
-                    m_botAction.sendArenaMessage("This game has been cancelled because there are not enough players!", 5);
-                    m_botAction.sendUnfilteredPublicMessage("*lock");
+                if( !checkPreGamePlayerStatus() )
                     return;
-                }
+
                 Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
                 while(i.hasNext()) //adds players to the players hashset
                 {
@@ -367,6 +379,7 @@ public class roboreplacement extends SubspaceBot
                     players.add(new Integer(p.getPlayerID()));
                 }
 
+                locked = true;
                 m_botAction.toggleLocked(); //locks the arena
                 if(elimShip == 9) //checks if it is an anyship elim, if it is it checks everyone to make sure they are in a valid ship for elim type
                 {
@@ -410,12 +423,13 @@ public class roboreplacement extends SubspaceBot
             tempShip += k + "=" + ships[allowedShips.get(k).intValue()] + "  ";
         m_botAction.sendArenaMessage(tempShip);
 
+        if( !checkPreGamePlayerStatus() )
+            return;
 
-        shipVote = new TimerTask()
-        {
-            public void run()
-            {
-
+        shipVote = new TimerTask() {
+            public void run() {
+                if( !checkPreGamePlayerStatus() )
+                    return;
                 elimShip = allowedShips.get(countVotes(false)).intValue(); //counts the votes and sets the elimShip to the proper thing
                 m_botAction.sendArenaMessage("It will be " + ships[elimShip] + " elim. " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)") ); //announces the result of the vote and starts death voting
                 m_botAction.sendArenaMessage("Vote on deaths (1-10)");
@@ -426,21 +440,20 @@ public class roboreplacement extends SubspaceBot
 
         m_botAction.scheduleTask(shipVote, 10 * 1000); //schedules the end of the vote
 
-        deathVoting = new TimerTask()
-        {
-            public void run()
-            {
-
+        deathVoting = new TimerTask() {
+            public void run() {
+                if( !checkPreGamePlayerStatus() )
+                    return;
                 voting = false;
                 deathsVote = false;
                 elimDeaths = countVotes(true); //tallies the votes
                 m_botAction.sendArenaMessage(ships[elimShip] + " elim to " + elimDeaths + "  " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)"));
-                m_botAction.sendArenaMessage("Enter if playing.  Game begins in 20 seconds ...");
+                m_botAction.sendArenaMessage("Enter if playing.  Game begins in 30 seconds ...");
                 nextgame();
             }
         };
 
-        m_botAction.scheduleTask(deathVoting, 20 * 1000); //schedules the end of the death vote and calls nextgame() to start the elim game
+        m_botAction.scheduleTask(deathVoting, 30 * 1000); //schedules the end of the death vote and calls nextgame() to start the elim game
     }
 
 
@@ -532,6 +545,7 @@ public class roboreplacement extends SubspaceBot
             m_botAction.sendArenaMessage( "MVP: " + mvp + " ... " + mvpKills + " kills" );
         mvp = "";
         mvpKills = 0;
+        locked = false;
         m_botAction.toggleLocked();
         isRunning = false;
     }
@@ -669,6 +683,21 @@ public class roboreplacement extends SubspaceBot
 	    		}
 	    	}
 	    }*/
+    }
+
+    public boolean checkPreGamePlayerStatus() {
+        int numPlayers = m_botAction.getPlayingPlayers().size();
+        if(numPlayers <= 1) {
+            m_botAction.sendArenaMessage("This game has been cancelled because there are not enough players!", Tools.Sound.CRYING);
+            isRunning = false;
+            voting = false;
+            shipVoting = false;
+            deathsVote = false;
+            locked = false;
+            m_botAction.toggleLocked();
+            return false;
+        }
+        return true;
     }
 
     public void cancel()
