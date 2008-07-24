@@ -124,7 +124,7 @@ public class roboreplacement extends SubspaceBot
 
 
     public void handleEvent( ArenaJoined event ) {
-        m_botAction.setPlayerPositionUpdating(250);
+        m_botAction.setPlayerPositionUpdating(200);
         m_botAction.sendArenaMessage( "Elimination Replacement Bot loaded. -" + m_botAction.getBotName(), Tools.Sound.BEEP3 );
         m_botAction.specAll();
     }
@@ -405,10 +405,10 @@ public class roboreplacement extends SubspaceBot
         int misses = fired - hits;
         int kills = p.getWins();
         int deaths = p.getLosses();
-        float ratio = Math.max(1, kills) / Math.max(1, deaths);
+        float ratio = ((float)Math.max(1, kills)) / ((float)Math.max(1, deaths));
         float percentHits;
         if( hits > 0 )
-            percentHits = Math.max(1, hits) / Math.max(1, fired);
+            percentHits = ((float)Math.max(1, hits)) / ((float)Math.max(1, fired));
         else
             percentHits = 0;
         java.text.NumberFormat ratioFormat = java.text.NumberFormat.getNumberInstance();
@@ -510,6 +510,8 @@ public class roboreplacement extends SubspaceBot
                 m_botAction.sendArenaMessage( ships[elimShip] + " Elim to " + elimDeaths + " has begun.  GO! GO! GO!!", 104);
                 m_botAction.sendUnfilteredPublicMessage("*scorereset");
                 lastDeaths.clear();
+                bulletsFired.clear();
+                bulletsHit.clear();
                 mvp = "";
                 mvpKills = 0;
                 gameStatus = STATUS_PLAYING;
@@ -666,6 +668,8 @@ public class roboreplacement extends SubspaceBot
         showScoreCard( winnerID, true );
         mvp = "";
         mvpKills = 0;
+        bulletsFired.clear();
+        bulletsHit.clear();
         locked = false;
         m_botAction.toggleLocked();
         gameStatus = STATUS_ENDGAME;
