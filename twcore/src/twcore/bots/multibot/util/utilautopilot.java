@@ -14,18 +14,18 @@ import twcore.core.util.ModuleEventRequester;
 
 /**
  * AutoPilot.  For the lazy mod.
- * 
+ *
  * Allows Mod+ to create lists of commands (tasks) that players can then vote on
  * to execute.  Useful for creating an automated event bot that can wait in an
- * arena for enough players to join. 
- * 
+ * arena for enough players to join.
+ *
  * @author dugwyler
  */
 public class utilautopilot extends MultiUtil
 {
     boolean isEnabled = false;      // Whether or not tasks are being processed.
     Vector <AutoTask>tasks = new Vector<AutoTask>();
-    
+
     /**
      * Constructor.
      */
@@ -39,7 +39,7 @@ public class utilautopilot extends MultiUtil
         modEventReq.request(this, EventRequester.PLAYER_ENTERED );
         modEventReq.request(this, EventRequester.PLAYER_LEFT );
     }
-    
+
     /**
      * Handle Messages.
      */
@@ -50,7 +50,7 @@ public class utilautopilot extends MultiUtil
         if( p == null ) return;
         String name = p.getPlayerName();
         String msg = event.getMessage();
-        if( m_opList.isModerator( name ) ) {
+        if( m_opList.isER( name ) ) {
             if( msg.startsWith("!autoon") ) {
                 cmdOn( name );
             } else if( msg.startsWith("!autooff") ) {
@@ -61,6 +61,8 @@ public class utilautopilot extends MultiUtil
                 cmdAdd( name, msg.substring(9) );
             } else if( msg.startsWith("!removetask ") ) {
                 cmdRemove( name, msg.substring(12) );
+            } else if( msg.startsWith("!modinfo") ) {
+                cmdModInfo( name );
             }
         }
         if( msg.startsWith("!info") ) {
@@ -69,8 +71,8 @@ public class utilautopilot extends MultiUtil
             cmdDefault( name, msg );
         }
     }
-    
-    
+
+
     /**
      * PMs players about Autopilot.
      */
@@ -79,7 +81,7 @@ public class utilautopilot extends MultiUtil
             m_botAction.sendPrivateMessage(event.getPlayerName(), "Autopilot is engaged.  PM !info to me to see how *YOU* can control me.  (Type :" + m_botAction.getBotName() + ":!info)" );
     }
 
-    
+
     /**
      * Removes votes of players who have left.
      */
@@ -88,7 +90,7 @@ public class utilautopilot extends MultiUtil
         if( tasks.size() == 0 ) return;
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if( p == null ) return;
-            
+
         for( int i = 0; i < tasks.size(); i++ ) {
             AutoTask c = tasks.get( i );
             if( c != null )
@@ -96,7 +98,7 @@ public class utilautopilot extends MultiUtil
         }
     }
 
-    
+
     /**
      * Adds a new task.
      * @param name Name of op
@@ -107,12 +109,12 @@ public class utilautopilot extends MultiUtil
         if( args.length != 3 ) {
             m_botAction.sendSmartPrivateMessage(name, "Incorrect number of arguments found.  Use ; to separate each.  Ex: !add !start;8;Starts the game." );
             return;
-        }        
+        }
 
         try {
             String command = args[0];
             int votesReq = Integer.parseInt(args[1]);
-            String display = args[2];            
+            String display = args[2];
             AutoTask c = new AutoTask( command, votesReq, display );
             tasks.add(c);
             m_botAction.sendSmartPrivateMessage( name, "Task added: "+ command );
@@ -122,11 +124,11 @@ public class utilautopilot extends MultiUtil
                 m_botAction.sendChatMessage( s );
             }
         } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(name, "Couldn't parse that.  Ex: !add dolock,setship 2,spec 10;8;Starts the game." );            
+            m_botAction.sendSmartPrivateMessage(name, "Couldn't parse that.  Ex: !add dolock,setship 2,spec 10;8;Starts the game." );
         }
     }
 
-    
+
     /**
      * Removes a command.
      * @param name Name of op
@@ -134,27 +136,27 @@ public class utilautopilot extends MultiUtil
      */
     public void cmdRemove( String name, String msg ) {
         try {
-            int num = Integer.parseInt(msg);            
+            int num = Integer.parseInt(msg);
             AutoTask c = tasks.remove( num - 1 );
             if( c != null ) {
                 m_botAction.sendSmartPrivateMessage(name, "Removed command: " + c.getCommand() + "  (" + c.getDisplay() + ")" );
             } else {
-                m_botAction.sendSmartPrivateMessage(name, "Couldn't find that number.  Use !list to verify." );                
+                m_botAction.sendSmartPrivateMessage(name, "Couldn't find that number.  Use !list to verify." );
             }
         } catch (Exception e ) {
             m_botAction.sendSmartPrivateMessage(name, "Couldn't parse that.  Do !list to verify your number.  Ex: !remove 1" );
         }
-                
+
     }
 
-    
+
     /**
      * Lists all commands.
      * @param name Name of op
      * @param msg Command parameters
      */
     public void cmdList( String name ) {
-        if( tasks.size() == 0 ) {            
+        if( tasks.size() == 0 ) {
             m_botAction.sendSmartPrivateMessage(name, "No commands entered yet." );
             return;
         }
@@ -165,7 +167,7 @@ public class utilautopilot extends MultiUtil
         }
     }
 
-    
+
     /**
      * Displays list of commands available to players.
      * @param name Name of player
@@ -176,24 +178,24 @@ public class utilautopilot extends MultiUtil
             m_botAction.sendSmartPrivateMessage(name, "Autopilot is not currently enabled.  Please hang up and try again later." );
             return;
         }
-                
+
         m_botAction.sendSmartPrivateMessage(name, "Autopilot - The automated event host controlled by players." );
         m_botAction.sendSmartPrivateMessage(name, "If you wish for the bot to run one of the following tasks, send the command" );
         m_botAction.sendSmartPrivateMessage(name, "next to it (!task#).  Your vote will be counted.  When enough votes have been" );
         m_botAction.sendSmartPrivateMessage(name, "reached, the task will run.  If you leave the arena all your votes are removed." );
-        
+
         m_botAction.sendSmartPrivateMessage(name, "List of tasks available to run:" );
         if( tasks.size() == 0 )
             m_botAction.sendSmartPrivateMessage(name, "No tasks have been entered yet." );
-        
+
         for( int i = 0; i < tasks.size(); i++ ) {
             AutoTask c = tasks.get( i );
             if( c != null )
                 m_botAction.sendSmartPrivateMessage(name, "!task" + (i + 1) + " (" + c.getVotes() + " of " + c.getVotesReq() + " votes needed)  " + c.getDisplay() );
-        }        
+        }
     }
 
-    
+
     /**
      * Default command.  Checks for players voting for tasks, and executes the
      * task if enough votes have been reached.
@@ -215,7 +217,7 @@ public class utilautopilot extends MultiUtil
                         if( cmds[i].startsWith("-arena")) {
                             String[] args = cmds[i].split(" ", 2);
                             if( args.length == 2 )
-                                m_botAction.sendArenaMessage( args[1] + " -" + m_botAction.getBotName() );                                
+                                m_botAction.sendArenaMessage( args[1] + " -" + m_botAction.getBotName() );
                         } else if( cmds[i].startsWith("-wait") ) {
                             String[] args = cmds[i].split(" ", 2);
                             if( args.length == 2 ) {
@@ -235,11 +237,11 @@ public class utilautopilot extends MultiUtil
                 }
             }
         } catch (Exception e ) {
-            m_botAction.sendSmartPrivateMessage(name, "Which task do you want to vote for?  Please try !info to verify this task still exists." );            
+            m_botAction.sendSmartPrivateMessage(name, "Which task do you want to vote for?  Please try !info to verify this task still exists." );
         }
     }
 
-    
+
     /**
      * Turns on Autopilot.
      * @param name Name of op
@@ -250,24 +252,32 @@ public class utilautopilot extends MultiUtil
         m_botAction.sendSmartPrivateMessage(name, "Autopilot engaged." );
     }
 
-    
+
     /**
      * Turns off Autopilot.
      * @param name Name of op
-     * @param msg Command parameters
      */
     public void cmdOff( String name ) {
         isEnabled = false;
         m_botAction.sendSmartPrivateMessage(name, "Autopilot disengaged." );
     }
 
-    
+
+    /**
+     * Sends mod info
+     * @param name
+     */
+    public void cmdModInfo( String name ) {
+        m_botAction.smartPrivateMessageSpam(name, getModInfoMessage());
+    }
+
+
     /**
      * Return help message.
      */
     public String[] getHelpMessages()
     {
-        String[] help = {                
+        String[] help = {
         		"!modinfo              - Displays information on module use.",
                 "!addtask <cmd1,cmd2,cmd3,etc>;<#VotesRequired>;<Description>.",
                 "!removetask <Task#>   - Removes task <Task#> as found in !list.",
@@ -279,7 +289,7 @@ public class utilautopilot extends MultiUtil
         };
         return help;
     }
-    
+
     public String[] getModInfoMessage(){
     	String[] info = {
     			"Autopilot, by dugwyler - executes a task when enough players vote for it.",
@@ -293,7 +303,7 @@ public class utilautopilot extends MultiUtil
     	return info;
     }
 
-    
+
     /**
      * NOP.
      */
@@ -301,7 +311,7 @@ public class utilautopilot extends MultiUtil
     {
     }
 
-    
+
     /**
      * Stores command data.
      */
@@ -311,7 +321,7 @@ public class utilautopilot extends MultiUtil
         int votes;
         String display;
         HashSet <String>voters;
-        
+
         public AutoTask( String cmd, int votesReq, String display ) {
             this.cmd = cmd;
             this.votesReq = votesReq;
@@ -319,7 +329,7 @@ public class utilautopilot extends MultiUtil
             voters = new HashSet<String>();
             votes = 0;
         }
-        
+
         public String doVote( String name ) {
             if( voters.contains(name) ) {
                 m_botAction.sendSmartPrivateMessage(name, "Removing your vote for: \"" + display + "\"" );
@@ -338,17 +348,17 @@ public class utilautopilot extends MultiUtil
                 return null;
             }
         }
-        
+
         public void removeVote( String name ) {
             if( voters.remove(name) )
                 if( votes > 0 )
                     votes--;
         }
-        
+
         public String getCommand() {
             return cmd;
         }
-        
+
         public int getVotesReq() {
             return votesReq;
         }
@@ -356,7 +366,7 @@ public class utilautopilot extends MultiUtil
         public int getVotes() {
             return votes;
         }
-        
+
         public String getDisplay() {
             return display;
         }
