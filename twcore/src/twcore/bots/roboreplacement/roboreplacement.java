@@ -350,7 +350,7 @@ public class roboreplacement extends SubspaceBot
                 players.remove(new Integer(killeeID));
                 showScoreCard( killeeID, true );
 
-                if( p.getWins() >= mvpKills ) {
+                if( p.getWins() >= mvpKills && p.getWins() > 1 ) {
                     boolean realMVP = true;
                     for( Player p2 : m_botAction.getPlayingPlayers() ) {
                         if( p2.getWins() > p.getWins() ) {
@@ -389,7 +389,7 @@ public class roboreplacement extends SubspaceBot
         Player p = m_botAction.getPlayer(id);
         if( p == null )
             return;
-
+        /*
         Integer hitsobj = bulletsHit.get(id);
         int hits;
         if( hitsobj == null )
@@ -402,21 +402,23 @@ public class roboreplacement extends SubspaceBot
             fired = 0;
         else
             fired = firedobj;
-        int misses = fired - hits;
+        int misses = Math.max(0, fired - hits);
+
+        float percentHits;
+        if( hits > 0 && fired > 0 )
+            percentHits = Math.max(100, ((float)Math.max(1, hits)) / ((float)Math.max(1, fired)));
+        else
+            percentHits = 0;
+        */
         int kills = p.getWins();
         int deaths = p.getLosses();
         float ratio = ((float)Math.max(1, kills)) / ((float)Math.max(1, deaths));
-        float percentHits;
-        if( hits > 0 )
-            percentHits = ((float)Math.max(1, hits)) / ((float)Math.max(1, fired));
-        else
-            percentHits = 0;
         java.text.NumberFormat ratioFormat = java.text.NumberFormat.getNumberInstance();
         ratioFormat.setMaximumFractionDigits(2);
         String ratioString = ratioFormat.format(ratio) + ":1";
         // [Final Scorecard]  10-2  (5.0:1 ratio)    Hits: 10   Misses: 490   Accuracy: 90%
-        m_botAction.sendPrivateMessage( id, "[" + (isFinal?"Final ":"Current ") + "Scorecard]  " + kills + "-" + deaths + "   (" + ratioString + ")    " +
-               "Hits: " + hits + "   Misses: " + misses + "   Accuracy: " + (int)(percentHits * 100.0f) + "%" );
+        m_botAction.sendPrivateMessage( id, "[" + (isFinal?"Final ":"Current ") + "Scorecard]  " + kills + "-" + deaths + "   (" + ratioString + ")" );
+               //"Hits: " + hits + "   Misses: " + misses + "   Accuracy: " + (int)(percentHits * 100.0f) + "%" );
     }
 
 
@@ -659,8 +661,7 @@ public class roboreplacement extends SubspaceBot
         if( p.getWins() > mvpKills ) {
             mvp = p.getPlayerName();
             mvpKills = p.getWins();
-        }
-        if( p.getWins() == mvpKills ) {
+        } else if( p.getWins() == mvpKills ) {
             mvp += ", " + p.getPlayerName();
         }
         if( !mvp.equals("") )
