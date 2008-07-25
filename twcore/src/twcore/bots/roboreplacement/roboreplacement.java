@@ -89,8 +89,10 @@ public class roboreplacement extends SubspaceBot
         events.request(EventRequester.PLAYER_LEFT);
         events.request(EventRequester.WEAPON_FIRED);
         events.request(EventRequester.WATCH_DAMAGE);
+        events.request(EventRequester.ARENA_JOINED);
         m_botSettings = m_botAction.getBotSettings();
     }
+
 
     /**
      * True only if a game is not presently going.
@@ -363,9 +365,9 @@ public class roboreplacement extends SubspaceBot
                             m_botAction.sendPrivateMessage(killeeID, "Though you lost, you're still tied for current MVP (with " + mvp + ") at " + mvpKills + " kills." );
                             mvp += " + " + p.getPlayerName();
                         } else {
-                            m_botAction.sendPrivateMessage(killeeID, "Though you lost, you're still the current MVP at " + mvpKills + " kills." );
                             mvp = p.getPlayerName();
                             mvpKills = p.getWins();
+                            m_botAction.sendPrivateMessage(killeeID, "Though you lost, you're still the current MVP at " + mvpKills + " kills." );
                         }
                     }
                 }
