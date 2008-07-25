@@ -19,7 +19,7 @@ import twcore.core.util.ModuleEventRequester;
  * @author Jacen Solo modded by milosh
  */
 public class wipeout extends MultiModule{
-	boolean isRunning = false, needsMsg = true;;
+	boolean isRunning = false, isSuddenDeath = false;;
 	int speed = 30;
 	double initialPlayers;
 	OperatorList opList;
@@ -57,11 +57,13 @@ public class wipeout extends MultiModule{
 				handleCommand(name, message);
 	}
 
-	public void handleEvent(PlayerDeath event)
-	{
+	public void handleEvent(PlayerDeath event){
+		if(isSuddenDeath)
+			m_botAction.specWithoutLock(m_botAction.getPlayerName(event.getKilleeID()));
 		String name = m_botAction.getPlayerName(event.getKillerID());
 		if(!gotKill.contains(name))
 			gotKill.add(name);
+
 	}
 
 	public void handleEvent(PlayerLeft event){
@@ -89,7 +91,7 @@ public class wipeout extends MultiModule{
 			handleStart(name, message.substring(7));
 		else if(message.equalsIgnoreCase("!start") && !isRunning)
 			handleStart(name, "30");
-		else if(message.equalsIgnoreCase("!stop") && isRunning)
+		else if(message.equalsIgnoreCase("!stop"))
 			handleStop(name);
 	}
 
@@ -109,6 +111,7 @@ public class wipeout extends MultiModule{
 		m_botAction.sendArenaMessage("Wipeout started by: " + name);
 		m_botAction.sendArenaMessage("You must get a kill every " + speed + " seconds or you're out! Time will decrease as the game progresses!");
 		m_botAction.sendArenaMessage("Game begins in 10 seconds.",1);
+		cancel();
 		setupTimerTasks();
 		m_botAction.scheduleTask(starter, 10 * 1000);
 	}
@@ -131,7 +134,7 @@ public class wipeout extends MultiModule{
 	public void spec()
 	{		
 		if(gotKill.isEmpty()){
-		    if(needsMsg && isRunning)
+		    if(isRunning)
 		        m_botAction.sendArenaMessage("No one got a kill, time extended.");
 			return;
 		}
@@ -142,15 +145,14 @@ public class wipeout extends MultiModule{
 			String name = it.next();
 			if(!gotKill.contains(name))
 			{
-				m_botAction.spec(name); m_botAction.spec(name);
+				m_botAction.specWithoutLock(name);
 				m_botAction.sendSmartPrivateMessage(name, "You've been wiped out!");
 				wipedOut.add(name);
 			}			
 		}
 		Iterator<String> i = wipedOut.iterator();
-		while(i.hasNext()){
+		while(i.hasNext())
 			players.remove(i.next());
-		}
 		if(players.size() == 1)
 			handleWin(players.toString().replace("]", "").trim());
 		gotKill.clear();
@@ -159,7 +161,7 @@ public class wipeout extends MultiModule{
 	public void cancel()
 	{
 		isRunning = false;
-		needsMsg = true;
+		isSuddenDeath = false;
 		players.clear();
 		gotKill.clear();
         m_botAction.cancelTasks();
@@ -204,13 +206,13 @@ public class wipeout extends MultiModule{
                 double plyrs = players.size();
                 double speedReduction = Math.round((1 - (plyrs / initialPlayers)) * speed);
                 speed -= speedReduction;
-                if(speed > 5)
+                if(speed > 5 && isRunning)
                     m_botAction.sendArenaMessage("WIPEOUT!!! You have " + speed + " seconds until the next wipeout!", 2);
-                else if (speed <= 5 && needsMsg && isRunning){
+                else if (speed <= 5 && !isSuddenDeath && isRunning){
                     m_botAction.sendArenaMessage("Sudden death! Be the first to get a kill!", 13);
-                    needsMsg = false;
+                    isSuddenDeath = true;
                 }
-                if(isRunning)
+                if(!isSuddenDeath && isRunning)
                     scheduleTasks();
             }
         };
