@@ -113,8 +113,8 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Sysops &Who|The sysops of SSCU Trench Wars are Pure_Luck and Kim.
 &Owner &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 &Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
-Abuse Abusing Abused Abuser|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
-&Staff &Complaint|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+Abuse Abusing Abused Abuser|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+&Staff &Complaint|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Please PM !request <event> to EventBot to submit your request for an event. (Type :EventBot:!request <event>) There is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
 &Host &Base|Base is an automated event. The MatchBot hosting base advertises automatically every 10 minutes if there aren't enough players in the arena. If you already have enough people, PM '!request base' to EventBot to have a staff member start the bot for you.
 &Host &Base2|Base is an automated event. The MatchBot hosting base advertises automatically every 10 minutes if there aren't enough players in the arena. If you already have enough people, PM '!request base' to EventBot to have a staff member start the bot for you.
