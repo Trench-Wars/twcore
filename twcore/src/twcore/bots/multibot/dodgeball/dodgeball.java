@@ -25,8 +25,9 @@ public class dodgeball extends MultiModule {
 	private int orgBallCount = -1;
 	protected boolean running = false;
 	
-	private short previousCarrier = -1;
-	private long previousCarrierTime = -1;
+	private HashMap<Integer,Ball> balls = new HashMap<Integer,Ball>();
+	//             <ball id,Ball>
+	
 	private int ballMode = 0;
 	//				0  =>  ball not carried
 	//				1  =>  ball carried
@@ -388,40 +389,49 @@ public class dodgeball extends MultiModule {
      * @see twcore.bots.MultiModule#handleEvent(twcore.core.events.BallPosition)
      */
     @Override
-    public void handleEvent(BallPosition ball) {
-    	if(ballCount == 0)
-    		return;
-    	
-    	if(running) {
-    		
-    		if(ball.getCarrier() != -1) { // A player has picked up the ball or is carrying it
-    			ballMode = 1;
-    			
-    			if((System.currentTimeMillis() - previousCarrierTime) > dodgetime) {
-    				// the player is out
-    				ballMode = 0;
-    				
-    				Player p = m_botAction.getPlayer(ball.getCarrier());
-    				Player prev = m_botAction.getPlayer(previousCarrier);
-    				if(p.getFrequency() != prev.getFrequency() && p.getPlayerID() != m_botAction.getPlayerID(m_botAction.getBotName())) {
-    					m_botAction.specWithoutLock(ball.getCarrier());
-    					m_botAction.sendArenaMessage(p.getPlayerName()+" ("+players.get(ball.getCarrier())+" kills) has been eliminated by "+prev.getPlayerName()+"!");
-    					players.remove(ball.getCarrier());
-    					players.put(previousCarrier, (players.get(previousCarrier) + 1));
-    				}
-    				
-    				checkWinner();
-    			} else {
-    				previousCarrier = ball.getCarrier();
-    			}
-    		} else { // Ball has just been shot or hasn't got a carrier
-    			if(ballMode == 1) {	// ball has just been shot (it had a carrier)
-    				ballMode = 0;
-    				previousCarrierTime = System.currentTimeMillis();
-    			}
-    			
-    		}
-    	}
+    public void handleEvent(BallPosition event) {
+        if(ballCount == 0)
+            return;
+        
+        Ball ball = null;
+        if(balls.get(event.getBallID()) == null) {
+            ball = new Ball(event.getBallID(), event.getCarrier(), (short)-1, -1);
+            balls.put(Integer.valueOf(event.getBallID()), ball);
+        } else {
+            ball = balls.get(event.getBallID());
+            ball.setCarrier(event.getCarrier());
+        }
+        
+        if(running) {
+            
+            if(ball.getCarrier() != -1) { // A player has picked up the ball or is carrying it
+                ballMode = 1;
+                
+                if((System.currentTimeMillis() - ball.getPreviousCarrierTime()) > dodgetime) {
+                    // the player is out
+                    ballMode = 0;
+                    
+                    Player p = m_botAction.getPlayer(event.getCarrier());
+                    Player prev = m_botAction.getPlayer(ball.getPreviousCarrier());
+                    if(p.getFrequency() != prev.getFrequency() && p.getPlayerID() != m_botAction.getPlayerID(m_botAction.getBotName())) {
+                        m_botAction.specWithoutLock(ball.getCarrier());
+                        m_botAction.sendArenaMessage(p.getPlayerName()+" ("+players.get(ball.getCarrier())+" kills) has been eliminated by "+prev.getPlayerName()+"!");
+                        players.remove(ball.getCarrier());
+                        players.put(ball.getPreviousCarrier(), (players.get(ball.getPreviousCarrier()) + 1));
+                    }
+                    
+                    checkWinner();
+                } else {
+                    ball.setPreviousCarrier(ball.getCarrier());
+                }
+            } else { // Ball has just been shot or hasn't got a carrier
+                if(ballMode == 1) { // ball has just been shot (it had a carrier)
+                    ballMode = 0;
+                    ball.setPreviousCarrierTime( System.currentTimeMillis() );
+                }
+                
+            }
+        }
     }
     
     public void handleEvent(PlayerLeft event) {
@@ -443,8 +453,7 @@ public class dodgeball extends MultiModule {
     
     private void clear() {
     	players.clear();
-    	previousCarrier = -1;
-    	previousCarrierTime = -1;
+    	balls.clear();
     	ballMode = 0;
     }
     
@@ -459,7 +468,6 @@ public class dodgeball extends MultiModule {
     	m_botAction.resetReliablePositionUpdating();		// follow players
     }
 
-    
     
     /**
      * Essentially a TimerTask that stores info about each player.
@@ -484,5 +492,30 @@ public class dodgeball extends MultiModule {
 			}
 		}
     }
+    
+    private class Ball {
+        private short id;
+        private short carrier;
+        private short previousCarrier;
+        private long previousCarrierTime;
+        
+        public Ball(short id, short carrier, short previousCarrier, long previousCarrierTime) {
+            this.id = id;
+            this.carrier = carrier;
+            this.previousCarrier = previousCarrier;
+            this.previousCarrierTime = previousCarrierTime;
+        }
+
+        public short getId() {                  return id;                  }
+        public short getCarrier() {             return carrier;             }
+        public short getPreviousCarrier() {     return previousCarrier;     }
+        public long  getPreviousCarrierTime() { return previousCarrierTime; }
+        
+        public void setCarrier(short carrier) {                         this.carrier = carrier;     }
+        public void setPreviousCarrier(short previousCarrier) {         this.previousCarrier = previousCarrier; }
+        public void setPreviousCarrierTime(long previousCarrierTime) {  this.previousCarrierTime = previousCarrierTime;  }
+        
+    }
+    
 
 }
