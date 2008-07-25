@@ -10,7 +10,6 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
-import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
 
 /**
@@ -32,13 +31,12 @@ import twcore.core.util.ModuleEventRequester;
  * optional, so to add a message with no sound just leave that part out.
  *
  * Here is the help menu,
- * !AddMsg <Msg>:<Sound>:<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
- * !AddSpecMsg <Msg>:<Sound>:<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
- * !AddGreetMsg <Msg>:<Sound>                -- Greets a player with <Msg> when they enter the arena.",
+ * !AddMsg <Msg>,<Sound>,<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
+ * !AddSpecMsg <Msg>,<Sound>,<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
+ * !AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
  * !MsgList                                  -- Displays all of the current message tasks.",
- * !ListKeys                                 -- Displays a list of all available escape keys.",
  * !MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
- * !MsgTarget <Person>:<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
+ * !MsgTarget <Person>,<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
  * !ClearTargets                             -- Clears all message target data.",
  * !MsgsOff                                  -- Turns all of the messages off."
  *
@@ -49,14 +47,11 @@ import twcore.core.util.ModuleEventRequester;
  * June 20, 2003
  *
  * Updates:
- * June 29, 2003 - Changed the delimiter to a comma.
- * February 19, 2008 - Changed the delimiter to a colon. - milosh
- *                   - Added the ability to use commands/escape keys in GREET_TYPE messages.
+ * June 29, 2003 - Changed the delimeter to a comma.
  */
 public class utilmessages extends MultiUtil
 {
   private Vector<MsgTask> msgList;
-  public boolean SMOD_OVERRIDE = false;
 
   /**
    * This method initializes the messages module.
@@ -85,10 +80,10 @@ public class utilmessages extends MultiUtil
   {
     String[] message =
     {
-        "!AddMsg <Msg>:<Sound>:<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
-        "!AddSpecMsg <Msg>:<Sound>:<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
-        "!AddGreetMsg <Msg>:<Sound>                -- Greets a player with <Msg> when they enter the arena.",
-        "!AddTargetMsg <Person>:<Msg>              -- Adds <Msg> to be PM'd when <Person> is killed.",
+        "!AddMsg <Msg>,<Sound>,<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
+        "!AddSpecMsg <Msg>,<Sound>,<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
+        "!AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
+        "!AddTargetMsg <Person>,<Msg>              -- Adds <Msg> to be PM'd when <Person> is killed.",
         "!MsgList                                  -- Displays all of the current message tasks.",
         "!MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
         "!ClearTargets                             -- Clears all message target data.",
@@ -106,11 +101,11 @@ public class utilmessages extends MultiUtil
 
   public void doAddMsgCmd(String sender, String argString)
   {
-    StringTokenizer argTokens = new StringTokenizer(argString, ":");
+    StringTokenizer argTokens = new StringTokenizer(argString, ",");
     int numArgs = argTokens.countTokens();
 
     if(numArgs < 2 || numArgs > 3)
-      throw new IllegalArgumentException("Please use the following format: !AddMsg <Msg>:<Sound>:<Interval>");
+      throw new IllegalArgumentException("Please use the following format: !AddMsg <Msg>,<Sound>,<Interval>");
     try
     {
       String message = argTokens.nextToken();
@@ -126,7 +121,7 @@ public class utilmessages extends MultiUtil
     }
     catch(NumberFormatException e)
     {
-      throw new NumberFormatException("Please use the following format: !AddMsg <Msg>:<Sound>:<Interval>");
+      throw new NumberFormatException("Please use the following format: !AddMsg <Msg>,<Sound>,<Interval>");
     }
   }
 
@@ -139,11 +134,11 @@ public class utilmessages extends MultiUtil
 
   public void doAddSpecMsgCmd(String sender, String argString)
   {
-    StringTokenizer argTokens = new StringTokenizer(argString, ":");
+    StringTokenizer argTokens = new StringTokenizer(argString, ",");
     int numArgs = argTokens.countTokens();
 
     if(numArgs < 2 || numArgs > 3)
-      throw new IllegalArgumentException("Please use the following format: !AddSpecMsg <Msg>:<Sound>:<Interval>");
+      throw new IllegalArgumentException("Please use the following format: !AddSpecMsg <Msg>,<Sound>,<Interval>");
     try
     {
       String message = argTokens.nextToken();
@@ -159,7 +154,7 @@ public class utilmessages extends MultiUtil
     }
     catch(NumberFormatException e)
     {
-      throw new NumberFormatException("Please use the following format: !AddSpecMsg <Msg>:<Sound>:<Interval>");
+      throw new NumberFormatException("Please use the following format: !AddSpecMsg <Msg>,<Sound>,<Interval>");
     }
   }
 
@@ -172,11 +167,11 @@ public class utilmessages extends MultiUtil
 
   public void doAddGreetMsgCmd(String sender, String argString)
   {
-    StringTokenizer argTokens = new StringTokenizer(argString, ":");
+    StringTokenizer argTokens = new StringTokenizer(argString, ",");
     int numArgs = argTokens.countTokens();
 
     if(numArgs < 1 || numArgs > 2)
-      throw new IllegalArgumentException("Please use the following format: !AddGreetMsg <Msg>:<Sound>");
+      throw new IllegalArgumentException("Please use the following format: !AddGreetMsg <Msg>,<Sound>");
     try
     {
       String message = argTokens.nextToken();
@@ -190,7 +185,7 @@ public class utilmessages extends MultiUtil
     }
     catch(NumberFormatException e)
     {
-      throw new NumberFormatException("Please use the following format: !AddGreetMsg <Msg>:<Sound>");
+      throw new NumberFormatException("Please use the following format: !AddGreetMsg <Msg>,<Sound>");
     }
   }
 
@@ -201,11 +196,11 @@ public class utilmessages extends MultiUtil
    * @param argString are the arguments being supplied.
    */
   public void doAddTargetMsgCmd( String sender, String argString ) {
-      StringTokenizer argTokens = new StringTokenizer(argString, ":");
+      StringTokenizer argTokens = new StringTokenizer(argString, ",");
       int numArgs = argTokens.countTokens();
 
       if(numArgs != 2)
-        throw new IllegalArgumentException("Please use the following format: !AddTargetMsg <Person>:<Msg>");
+        throw new IllegalArgumentException("Please use the following format: !AddTargetMsg <Person>,<Msg>");
       try
       {
         String name = argTokens.nextToken();
@@ -223,7 +218,7 @@ public class utilmessages extends MultiUtil
       }
       catch(NumberFormatException e)
       {
-        throw new NumberFormatException("Please use the following format: !AddTargetMsg <Person>:<Msg>");
+        throw new NumberFormatException("Please use the following format: !AddTargetMsg <Person>,<Msg>");
       }
   }
 
@@ -322,26 +317,11 @@ public class utilmessages extends MultiUtil
         doMsgDelCmd(sender, command.substring(8));
       if(lowerCommand.equalsIgnoreCase("!msgsoff"))
         doMsgsOffCmd(sender);
-      if(lowerCommand.equalsIgnoreCase("!smodlogin"))
-          doSmodOverride(sender);
     }
     catch(RuntimeException e)
     {
       m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
     }
-  }
-  
-  public void doSmodOverride(String name){
-      if(m_botAction.getOperatorList().isSmod(name)){
-          if(SMOD_OVERRIDE){
-              SMOD_OVERRIDE = false;
-              m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
-          } else {
-              SMOD_OVERRIDE = true;
-              m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
-          }
-      }else
-          m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
   }
 
   /**
@@ -370,13 +350,13 @@ public class utilmessages extends MultiUtil
   public void handleEvent(PlayerEntered event)
   {
     MsgTask msgTask;
-    Player p = m_botAction.getPlayer(event.getPlayerID());
-    if(p == null)return;
-    
-    for(int index = 0; index < msgList.size(); index++){
+    String playerName = event.getPlayerName();
+
+    for(int index = 0; index < msgList.size(); index++)
+    {
       msgTask = msgList.get(index);
       if(msgTask.getType() == MsgTask.GREET_TYPE)
-    	CodeCompiler.handlePrivateTWScript(m_botAction, msgTask.getMessage(), p, SMOD_OVERRIDE);
+        m_botAction.sendSmartPrivateMessage(playerName, msgTask.getMessage(), msgTask.getSoundCode());
     }
   }
 
