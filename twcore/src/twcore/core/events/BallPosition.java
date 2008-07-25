@@ -28,7 +28,7 @@ public class BallPosition extends SubspaceEvent {
     private short m_yVelocity; // Y velocity of the ball
     private short m_playerID;  // ID of the player who picked up/has the ball
     private int m_timeStamp;   // Time stamp of the ball
-    private int m_carrier;      // Person carrying the ball
+    private short m_carrier;      // Person carrying the ball
 
     /**
 	 * Creates a new instance of BallPosition; this is called by
@@ -109,7 +109,7 @@ public class BallPosition extends SubspaceEvent {
      * Gets the ID of the person carrying the ball.
      * @return -1 if the ball is not being carried.
      */
-    public int getCarrier() {
+    public short getCarrier() {
     	return m_carrier;
     }
 }
