@@ -11377,7 +11377,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( prizeNum == -1 ) {
-            Tools.printLog( "Unable to read prize number on prize '" + desc "'" );
+            Tools.printLog( "Unable to read prize number on prize '" + desc + "'" );
         }
         if( prizeNum == 0 )
             return new ShipUpgrade( desc, prizeNum, 0, 0, -1 );
