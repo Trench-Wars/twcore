@@ -89,7 +89,7 @@ public class bouncerbot extends SubspaceBot {
             if( m_opList.isSysopExact( event.getPlayerName() ) )
                 return;
         } else {
-            if( m_opList.isModerator( event.getPlayerName() ) )
+            if( m_opList.isZH( event.getPlayerName() ) )
                 return;
         }
         if( m_invitedPlayers.contains( event.getPlayerName().toLowerCase()))
@@ -208,7 +208,7 @@ public class bouncerbot extends SubspaceBot {
                     "!bounce           Toggles whether to bounce players           OFF",
                     "!chat             Toggles sending bounce msgs to SMod chat    OFF",
                     "!log              Toggles logging messages to chat            ON",
-                    "!all              Toggles bouncing everyone, vs. ER & below   OFF",
+                    "!all              Toggles bouncing everyone except for sysop  OFF",
                     "!action <move|zonemove|kill>     Determines bounce action:",
                     "         move                    Bounces to pub on this zone",
                     "         move <arena>            Bounces to <arena> on this zone",
