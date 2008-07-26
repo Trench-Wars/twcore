@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -32,43 +33,23 @@ import twcore.core.game.Player;
 
 /**
  *
- *This bot is intended for dev zone monitoring but now can be
- *safely applied in TW for log monitoring there as well. This
- *bot comprises of 3 access levels starting at sysop, op, and
- *owner. Note that ops do not need to be the staff equivalent
- *of sysop but have a higher access on the bot. More info can
- *be found in the java documentation.
+ *This bot is intended purely for dev zone monitoring.
+ *Early Code, extremely messy.
  *
- * @author Ice-demon / Ayano / fantus
+ * @author Ayano, fantus
  */
 public class logbot extends SubspaceBot {
-    OperatorList m_opList;
-    HashSet<String> invitedPlayers;
-    HashMap<String, File> incoming;
-    HashMap<String, Watched_Arena> guarded;
-    ArrayList<String> log;
-    ArrayList<String> ignorelog;
-    ArrayList<String> fileNames;
-    ArrayList<String> op;
-    String bouncemessage;
-    TimerTask logCheck;
-    TimerTask getLog;
-    TimerTask waitReply;
-    File subLog;
-    File data;
-    File botCfg;
-    String hubBot;
-    String entity;
-    String home;
-    String m_bounceDestination;               // "Destination" of a bounce for sendtoCmd (:kill: to send a *kill)
-    String m_zoneIP;                          // IP of the default zone to use in sendtoCmd
-    String m_zonePort;                        // Port of the default zone to use in sendtoCmd
-    String sendtoCmd;
-    int maxBots;
-    boolean logging;
-    boolean realTimeLogging;
-    boolean enslaved;
-    boolean waiting;
+    private OperatorList m_opList;
+    private HashSet<String> invitedPlayers;
+    private HashMap<String, File> incoming;
+    private HashMap<String, Watched_Arena> guarded;
+    private ArrayList<String> ignorelog, fileNames, op;
+    private String bouncemessage, hubBot, entity, home, chat,
+    		m_bounceDestination ,m_zoneIP ,m_zonePort ,sendtoCmd;
+    private TimerTask logCheck, ArenaCheck, getLog, waitReply;
+    private File subLog, arenaData, adminData, botCfg;
+    private int maxBots, auto;
+    private boolean logging, realTimeLogging, enslaved, waiting;
     
     /**
      * Initializes.
@@ -82,20 +63,22 @@ public class logbot extends SubspaceBot {
         incoming = new HashMap<String, File>();
         guarded = new HashMap<String, Watched_Arena>();
         bouncemessage = "Entering a private arena without being invited is against the rules.  Your insolence has been logged!";
-        log = new ArrayList<String>();
         fileNames = new ArrayList<String>();
         ignorelog = new ArrayList<String>();
         op = new ArrayList<String>();
         subLog = m_botAction.getDataFile("subgame.log");
-        data = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "Data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "definitions.dat");
-        data.getParentFile().mkdirs();
+        arenaData = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "Data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "arenaDef.dat");
+        adminData = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "Data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "adminDef.dat");
+        arenaData.getParentFile().mkdirs();
         logging = false;
         hubBot = m_botAction.getBotSettings().getString("HubBot");
         home = m_botAction.getBotSettings().getString("Home");
+        chat = m_botAction.getBotSettings().getString("Chat");
+        auto = Integer.parseInt(m_botAction.getBotSettings().getString("Auto Start"));
         maxBots = m_botAction.getBotSettings().getInt("Max Bots");
         m_zoneIP = m_botAction.getGeneralSettings().getString( "Server" );
         m_zonePort = m_botAction.getGeneralSettings().getString( "Port" );
-        m_bounceDestination = m_zoneIP + "," + m_zonePort;
+        m_bounceDestination = ":kill:";
         sendtoCmd = m_botAction.getBotSettings().getString("sendtoCmd");
         EventRequester events = m_botAction.getEventRequester();
         events.request( EventRequester.MESSAGE );
@@ -147,14 +130,16 @@ public class logbot extends SubspaceBot {
     	waitReply.cancel();
     	waitReply = new TimerTask()	{
 			public void run()	{
+				m_botAction.sendChatMessage(1,"Log monitoring deactivated: " +
+						entity + " has been lost. -" + getTimeStamp());
+				logCheck.cancel();ArenaCheck.cancel();getLog.cancel();
+				logEvent( "Could not replace slave! switching to standalone." );
 				waiting = false;
 				entity = null;
-				logCheck.cancel();
-				logEvent( "Could not replace slave! switching to standalone." );
 			}
 		};
 		waiting = true;
-		m_botAction.scheduleTask(waitReply, 6000);
+		m_botAction.scheduleTask(waitReply, 10000);
 		logEvent ( "Attempting to respawn lost Slave." );
     }
     
@@ -340,6 +325,19 @@ public class logbot extends SubspaceBot {
     }
     
     /**
+     * Gets a string date as the name for the log file by day/month/year
+     * ie: "Aug 25 2008.log"
+     * @return
+     */
+    
+    public String getLogName()	{ 	
+    	String logName = new SimpleDateFormat("MMM dd yyyy").format
+    	(Calendar.getInstance().getTime());
+    	return subLog.getParent() + File.separatorChar + 
+    	"Log Archives" + File.separatorChar + logName + ".log";
+    }
+    
+    /**
      * Places violations in a log file.
      * 
      * @param event is the violation to be recorded.
@@ -347,11 +345,9 @@ public class logbot extends SubspaceBot {
     
     public void logEvent( String event )	{
         try{
-            PrintWriter out = new PrintWriter( new FileWriter( m_botAction.getBotName() + ".log" ));
-            log.add( getTimeStamp() + " - \t" + event );
-            for( Iterator<String> i = log.iterator(); i.hasNext(); ){
-                out.println( (String)i.next() );
-            }
+            PrintWriter out = new PrintWriter( new FileWriter( m_botAction.getBotName() + ".log" ,true));
+            event = getTimeStamp() + " - \t" + event;
+            out.println( event );
             out.close();
             
         }catch(Exception e){
@@ -481,7 +477,7 @@ public class logbot extends SubspaceBot {
     
     public void doAddArena (String sender, String arena)	{
     	
-	    File arenacfg = new File(data.getParent() + File.separatorChar + arena + ".cfg");
+	    File arenacfg = new File(arenaData.getParent() + File.separatorChar + arena + ".cfg");
 	    if (guarded.containsKey(arena))
 	    	m_botAction.sendSmartPrivateMessage(sender, " is already monitored.");
 	    else	{
@@ -506,7 +502,7 @@ public class logbot extends SubspaceBot {
     
     public void doDelArena (String sender, String arena)	{
     	
-	    File arenacfg = new File(data.getParent() + File.separatorChar + arena + ".cfg");
+	    File arenacfg = new File(arenaData.getParent() + File.separatorChar + arena + ".cfg");
 	    if (!guarded.containsKey(arena))	{
 	    	m_botAction.sendSmartPrivateMessage(sender, arena + " is not monitored.");
 	    }
@@ -573,6 +569,7 @@ public class logbot extends SubspaceBot {
     public void doClearArenaInvites(String sender, String arena)	{
     	if (!guarded.containsKey(arena))	{
 	    	m_botAction.sendSmartPrivateMessage(sender, arena + " is not monitored.");
+	    	return;
 	    }
 	    else	{
 	    	if (!isArenaOwner(sender,arena))	{
@@ -673,6 +670,11 @@ public class logbot extends SubspaceBot {
     		logCheck = new TimerTask()	{
         		public void run()	{
         			m_botAction.sendUnfilteredPublicMessage("*log");
+        		}
+        		
+        	};
+        	ArenaCheck = new TimerTask()	{
+        		public void run()	{
         			m_botAction.requestArenaList();
         		}
         		
@@ -683,10 +685,12 @@ public class logbot extends SubspaceBot {
         		}
         		
         	};
-        	if(realTimeLogging) m_botAction.scheduleTask(logCheck, 2000, 30000);
+        	if(realTimeLogging)	m_botAction.scheduleTask(logCheck, 2000, 30000);
         	m_botAction.scheduleTask(getLog, 2000, 3600000);
+        	m_botAction.scheduleTask(ArenaCheck, 2000, 30000);
         	m_botAction.sendSmartPrivateMessage(sender, "Starting to check log");
-        	m_botAction.sendChatMessage(1,"Log monitoring activated - " + getTimeStamp());
+        	m_botAction.sendChatMessage(1,"Log monitoring activated by "+ sender +
+        			" - " + getTimeStamp());
         	logEvent ( "Logging started by " + sender );
         	logging = true;
     }
@@ -703,35 +707,13 @@ public class logbot extends SubspaceBot {
     		return;
     	}
     	logCheck.cancel();
+    	ArenaCheck.cancel();
     	getLog.cancel();
     	m_botAction.sendSmartPrivateMessage(sender, "Logging stopped!");
-    	m_botAction.sendChatMessage(1,"Log monitoring deactivated - " + getTimeStamp());
+    	m_botAction.sendChatMessage(1,"Log monitoring deactivated: " +
+    			"Stopped by "+ sender + " - " + getTimeStamp());
     	logEvent ( "Logging stopped by " + sender );
     	logging = false;
-    }
-    
-    /**
-     * Gets the name of the log from the earliest date on the log.
-     * 
-     * @returns the dated named for the log or null if an exception.
-     */
-    
-    public String getLogName()	{
-    	try	{
-    		BufferedReader  in = new BufferedReader( new FileReader( subLog ));
-        	String line;
-        	String target ="";
-        	while( (line = in.readLine()) != null )	{
-        		if (line.length() > 12)
-        			target = line;
-        	}
-        	in.close();
-        	return subLog.getParent() + File.separatorChar + "Log Archives" + File.separatorChar + target.substring(0, 10) + ".log";
-    	}
-    	catch(Exception e)	{
-        logEvent ( "Failed to read log file " + subLog.getName() + " " + e.getMessage() );
-        return null;
-    	}
     }
     
     /**
@@ -744,7 +726,7 @@ public class logbot extends SubspaceBot {
     public void WriteSubLog(String logName) {
     	try	{
     		File logFile = new File ( logName );
-    		String date = logFile.getName().substring( 0, logFile.getName().indexOf(".") );
+    		String date = logFile.getName().substring( 0, 6);
     		logFile.getParentFile().mkdirs();
     		String          line;
     		String			myName = m_botAction.getBotName();
@@ -754,12 +736,12 @@ public class logbot extends SubspaceBot {
 
             while( (line = in.readLine()) != null )	{
             	try	{
-            	if (line.startsWith(date) && !line.substring(line.indexOf("Ext:")+5).startsWith(myName))
+            	if (line.substring(4,10).startsWith(date) && !line.substring(line.indexOf("Ext:")+5).startsWith(myName))
             		out.println(line);
             	}
             	catch (Exception e)	{}
             }
-            m_botAction.sendChatMessage(1,"Log archive updated. -" + logFile.getName());
+            m_botAction.sendChatMessage(1,"Log archive updated. - " + logFile.getName());
             in.close();out.close();
     	}
     	catch(Exception e){
@@ -795,24 +777,33 @@ public class logbot extends SubspaceBot {
      * Saves monitored arenas.
      */
     
-    public void WriteDefinitions()	{	
+    public void WriteDefinitions()	{
+    	File arenaTemp = new File(arenaData.getParent() + File.separatorChar + "arenaDef.tmp");
+    	File adminTemp = new File(arenaData.getParent() + File.separatorChar + "adminDef.tmp");
+    	
     	try	{
-    	     DataOutputStream out = new DataOutputStream( new FileOutputStream( data ) );  
-    	     if (!fileNames.isEmpty())
-    	    	 out.writeUTF("#" + fileNames.toString());
-    	     if (!op.isEmpty())
-    	    	 out.writeUTF("@" + op.toString());
-    	     
-    	     Iterator<Watched_Arena> arenas = guarded.values().iterator();
-    	    	while (arenas.hasNext())	{
-    	    		Watched_Arena temp = arenas.next();
-    	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString() + "~" + op.toString() + "~" + fileNames.toString());
-    	    		out.writeUTF(line);
-    	    	}
-    	     out.close();
+    		DataOutputStream out = new DataOutputStream( new FileOutputStream( arenaTemp ) );
+   	     	DataOutputStream out2 = new DataOutputStream( new FileOutputStream( adminTemp ) );
+   	     
+   	     	Iterator<Watched_Arena> arenas = guarded.values().iterator();
+   	     	while (arenas.hasNext())	{
+   	    		Watched_Arena temp = arenas.next();
+   	    		logEvent(temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
+   	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
+   	    		out.writeUTF(line);
+   	     	}if (!fileNames.isEmpty())
+      	    	out2.writeUTF("@" + fileNames.toString());	
+   	    	if (!op.isEmpty())
+   	    		out2.writeUTF("$" + op.toString());
+   	    		out2.close();
+   	    		out.close();
+   	    		
+   	    		arenaData.delete();adminData.delete();
+   	    		arenaTemp.renameTo(arenaData);
+   	    		adminTemp.renameTo(adminData);
     	   }
     	   catch ( Exception e )	{
-    		   logEvent ( "Could not save definitions " + data.getPath() );
+    		   logEvent ( "Could not save some or any definitions " + arenaData.getParent() );
     	   }
     	
     }
@@ -830,14 +821,10 @@ public class logbot extends SubspaceBot {
     	ArrayList<String> ops;
     	ArrayList<String> files;
     	try {
-    		DataInputStream in = new DataInputStream( new FileInputStream( data ) );
-    		if ((line = in.readUTF()).startsWith("#"))
-    			{files = ParseString(TrimList(line));fileNames = files;}
-    		if ((line = in.readUTF()).startsWith("@"))
-    			{ops = ParseString(TrimList(line));op = ops;}
-    		
-        	while (in.available() != 0)	{
-        		line = in.readUTF();
+    		DataInputStream in = new DataInputStream( new FileInputStream( arenaData ) );
+    		DataInputStream in2 = new DataInputStream( new FileInputStream( adminData ) );
+    		while (in.available() != 0)	{
+    			line = in.readUTF();
         		name = line.substring(0, line.indexOf('~'));
         		owner = line.substring(name.length()+1, line.indexOf('['));
         		lvz = getLvzNames( TrimList(line.substring(line.indexOf(owner),line.indexOf(owner) + owner.length()-1)) );
@@ -845,12 +832,26 @@ public class logbot extends SubspaceBot {
         		Watched_Arena temp = new Watched_Arena(name,owner,lvz,guests);
         		guarded.put(name, temp);
         	}
+    		while (in2.available() != 0)	{
+    			line = in2.readUTF();
+    			logEvent ( line );
+    			if (line.startsWith("@"))	{
+    				files = ParseString(TrimList(line.substring(1)));
+    				fileNames = files;
+    			}else if (line.startsWith("$"))	{
+    				ops = ParseString(TrimList(line.substring(1)));
+    				op = ops;
+    			}}
+    		in2.close();
         	in.close();
     	}
     	catch (Exception e)	{
-    		logEvent ( "Could not read saved definitions, starting new definitions" );
+    		logEvent ( "Could not read some or any definitions, starting new definitions" );
+    		fileNames.clear();
+    		op.clear();
     		guarded.clear();
-    		data.delete();	
+    		arenaData.delete();
+    		adminData.delete();
     	}
     }
     
@@ -865,7 +866,7 @@ public class logbot extends SubspaceBot {
     	Iterator<String> it = guarded.keySet().iterator();
     	while (it.hasNext())	{
     		String arenacfg = it.next() + ".cfg";
-    		File temp = new File ( data.getParent() + File.separatorChar + arenacfg);
+    		File temp = new File ( arenaData.getParent() + File.separatorChar + arenacfg);
     		m_botAction.sendUnfilteredPublicMessage("*getfile " + arenacfg);
     		incoming.put(arenacfg, temp);
     	}
@@ -1011,7 +1012,7 @@ public class logbot extends SubspaceBot {
     	if(entity != null)
     		m_botAction.sendSmartPrivateMessage(entity, "!die");
     	WriteDefinitions();
-    	m_botAction.sendChatMessage(1,sender + " has told me to commit suicide -" + getTimeStamp());
+    	m_botAction.sendChatMessage(1,sender + " has told me to commit suicide - " + getTimeStamp());
     	logEvent( sender + " Has given me a a very sharp razor.");
     	m_botAction.scheduleTask(dieTask, 1000);
     }
@@ -1073,7 +1074,7 @@ public class logbot extends SubspaceBot {
     
     public void handleEvent( LoggedOn event )	{
     	m_botAction.joinArena(home);
-        m_botAction.sendUnfilteredPublicMessage("?chat=L0gch4t");
+        m_botAction.sendUnfilteredPublicMessage("?chat=" + chat);
         if (!isSlave())	{
     		enslaved = false;
     		ReadDefinitions();
@@ -1090,7 +1091,7 @@ public class logbot extends SubspaceBot {
     			}
     		};
     		m_botAction.scheduleTask(waitSpawn, 3000);
-    		m_botAction.scheduleTask(waitReply, 40000);
+    		m_botAction.scheduleTask(waitReply, 120000);
     	}
     	else	{
     		enslaved = true;
@@ -1109,16 +1110,19 @@ public class logbot extends SubspaceBot {
         m_opList = m_botAction.getOperatorList();
         logEvent( "Logged in as " + (enslaved? "Slave" : "Master") );
         //Lets check if it is the master first (edited by fantus)
-        if (!enslaved) {
-            realTimeLogging = true;
-            //edited by milosh. request of riistar.
-            doStartLog(m_botAction.getBotName());
-        }
+        if (!enslaved && entity != null && auto == 1)	{
+        	TimerTask DelayStart = new TimerTask()	{
+			public void run()	{
+				doStartLog("Auto-Start");
+			}};m_botAction.scheduleTask(DelayStart, 120000);}
+        
     }
     
     /**
      * Handles arena list events for processing by
-     * the security bot if real-time logging is active.
+     * the security bot. If there are no arenas to 
+     * check, it will check if security bot is still
+     * present.
      */
     
     public void handleEvent(ArenaList event)
@@ -1136,6 +1140,8 @@ public class logbot extends SubspaceBot {
       }
       if (commandstr != "")
     	  sendBounceBot(commandstr);
+      else
+    	  CheckSlave();
     }
     
     /**
@@ -1153,7 +1159,6 @@ public class logbot extends SubspaceBot {
     			ReadLog(logName);
     			WriteDefinitions();
     			UpdateArenas();
-    			CheckSlave();
     			}
     			catch (Exception e)	{
     				logEvent ("Failed to write log! (sublog not present?)");
@@ -1215,11 +1220,11 @@ public class logbot extends SubspaceBot {
     	else if ( message.startsWith( "slave" ))	{
     		m_botAction.sendSmartPrivateMessage(entity, "master");
     		waitReply.cancel();
-    		logEvent( "Slave acquired!" );
+    		logEvent( "Slave " + entity + " acquired!" );
     		}
     	else if ( message.startsWith( "master" ))	{
     		waitReply.cancel();
-    		logEvent( "Master allocated!" );
+    		logEvent( "Master " + entity + " allocated!" );
     	}
     }
     
@@ -1231,15 +1236,19 @@ public class logbot extends SubspaceBot {
      */
     
     public void handleStandAloneCommand( String sender, String message ) {
-    	if (entity == null && m_opList.isOwner( sender ))	{
-    		if( message.startsWith( "!invite " )) 
-                doInvite(sender,message.substring(8));
-            else if( message.startsWith( "!clearinvites" ))	
-            	doClearInvites(sender);
-            else if( message.startsWith( "!message " ))
-            	doBounceMessage(sender,message.substring(9));
-            else if( message.startsWith( "!go " ))
-            	doGo(sender, message.substring(4));
+    	if (m_opList.isOwner( sender ))	{
+    		if (entity == null)	{
+        		if( message.startsWith( "!invite " )) 
+                    doInvite(sender,message.substring(8));
+                else if( message.startsWith( "!clearinvites" ))	
+                	doClearInvites(sender);
+                else if( message.startsWith( "!message " ))
+                	doBounceMessage(sender,message.substring(9));
+                else if( message.startsWith( "!go " ))
+                	doGo(sender, message.substring(4));
+        	}
+    		if( message.startsWith( "!die" ))	
+            	doDie(sender);
     	}
     	if( message.startsWith( "!help" ))	
         	getHelpMessages(sender.toLowerCase());
@@ -1309,8 +1318,6 @@ public class logbot extends SubspaceBot {
         	doDelOp(sender, message.substring(7));
         else if( message.startsWith( "!listop" ))	
         	doListOp(sender);
-        else if( message.startsWith( "!die" ))	
-        	doDie(sender);
         else if( message.startsWith( "!action move " )){
             if( message.length() > 13 ) {
                 String dest = message.substring( 13 );
