@@ -351,7 +351,7 @@ public class logbot extends SubspaceBot {
         try{
             PrintWriter out = new PrintWriter( new FileWriter( 
             		m_botAction.getGeneralSettings().getString("Core Location") 
-            		+ File.separatorChar + "logs" + m_botAction.getBotName() + ".log" ,true));
+            		+ File.separatorChar + "logs" + File.separatorChar + m_botAction.getBotName() + ".log" ,true));
             event = getTimeStamp() + " - \t" + event;
             out.println( event );
             out.close();
