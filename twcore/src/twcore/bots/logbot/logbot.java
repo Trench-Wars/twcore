@@ -67,8 +67,8 @@ public class logbot extends SubspaceBot {
         ignorelog = new ArrayList<String>();
         op = new ArrayList<String>();
         subLog = m_botAction.getDataFile("subgame.log");
-        arenaData = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "Data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "arenaDef.dat");
-        adminData = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "Data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "adminDef.dat");
+        arenaData = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "arenaDef.dat");
+        adminData = new File (m_botAction.getGeneralSettings().getString("Core Location") + File.separatorChar + "data" + File.separatorChar + "Cfg Archive" + File.separatorChar + "adminDef.dat");
         arenaData.getParentFile().mkdirs();
         logging = false;
         hubBot = m_botAction.getBotSettings().getString("HubBot");
@@ -349,7 +349,9 @@ public class logbot extends SubspaceBot {
     
     public void logEvent( String event )	{
         try{
-            PrintWriter out = new PrintWriter( new FileWriter( m_botAction.getBotName() + ".log" ,true));
+            PrintWriter out = new PrintWriter( new FileWriter( 
+            		m_botAction.getGeneralSettings().getString("Core Location") 
+            		+ File.separatorChar + "logs" + m_botAction.getBotName() + ".log" ,true));
             event = getTimeStamp() + " - \t" + event;
             out.println( event );
             out.close();
