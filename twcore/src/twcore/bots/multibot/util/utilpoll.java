@@ -16,6 +16,7 @@ import twcore.core.game.Player;
  *
  * @author  Harvey Yau
  */
+
 public class utilpoll extends MultiUtil {
     private Poll currentPoll = null;
     private LinkedList<Integer> allowedFreqs = new LinkedList<Integer>();
@@ -33,6 +34,11 @@ public class utilpoll extends MultiUtil {
     public void cancel() {
 
     }
+    
+    /**
+     * Handles all messages and choices, contains execution code
+     * for each choice.
+     */
 
     public void handleEvent( Message event ){
         if( event.getMessageType() != Message.PRIVATE_MESSAGE ) return;
@@ -85,6 +91,8 @@ public class utilpoll extends MultiUtil {
             } catch (NumberFormatException e) {
                 m_botAction.sendPrivateMessage( id, "Unable to parse '" + message.substring(11) + "' as a freq number!" );
             }
+        } else if ( message.startsWith( "!repeat" ) )	{
+        	currentPoll.repeatPoll();
         } else if( message.startsWith( "!clearallowed") ) {
             if( allowedFreqs.size() == 0 ) {
                 m_botAction.sendPrivateMessage( id, "All freqs are already allowed to vote!" );
@@ -94,6 +102,10 @@ public class utilpoll extends MultiUtil {
             }
         }
     }
+    
+    /**
+     * Returns help messages.
+     */
 
     public String[] getHelpMessages() {
         String[] helps = {
@@ -101,10 +113,15 @@ public class utilpoll extends MultiUtil {
             "!poll <Topic>:<answer1>:<answer2> (and on and on)  - Starts a poll.",
             "!allowfreq <freq>   - Adds <freq> to voting allow list.  Default is all.",
             "!clearallowed       - Removes all freqs from allow list (all can vote).",
+            "!repeat             - Repeats the poll question and choices.",
             "!endpoll - Ends the poll and tallies the results."
         };
         return helps;
     }
+    
+    /**
+     * Poll Object that holds all poll related inquiries.
+     */
 
     public class Poll{
 
@@ -116,7 +133,7 @@ public class utilpoll extends MultiUtil {
             this.poll = poll;
             votes = new HashMap<String, Integer>();
             range = poll.length - 1;
-            m_botAction.sendArenaMessage( "Poll: " + poll[0] );
+            m_botAction.sendArenaMessage( "Poll: " + poll[0] , 2 );
             for( int i = 1; i < poll.length; i++ ){
                 m_botAction.sendArenaMessage( i + ": " + poll[i] );
             }
@@ -129,6 +146,12 @@ public class utilpoll extends MultiUtil {
                 m_botAction.sendArenaMessage( allowedMsg );
             }
         }
+        
+        /**
+         * Tallies up the votes
+         * @param name is the voting player
+         * @param message is the player's choice presumably
+         */
 
         public void handlePollCount( String name, String message ){
             try{
@@ -168,10 +191,27 @@ public class utilpoll extends MultiUtil {
                 m_botAction.sendArenaMessage( e.getClass().getName() );
             }
         }
+        
+        /**
+         * Repeats the poll question and choices.
+         */
+        
+        public void repeatPoll()	{
+        	m_botAction.sendArenaMessage( "Poll: " + poll[0] , 2 );
+            for( int i = 1; i < poll.length; i++ ){
+                m_botAction.sendArenaMessage( i + ": " + poll[i] );
+            }
+            m_botAction.sendArenaMessage(
+                    "Private message your answers to " + m_botAction.getBotName() );
+        }
+        
+        /**
+         * Ends the poll and displays the vote tallies
+         */
 
         public void endPoll(){
             m_botAction.sendArenaMessage( "The poll has ended! Question: "
-            + poll[0] );
+            + poll[0] , 22 );
 
             int[] counters = new int[range+1];
             Iterator<Integer> iterator = votes.values().iterator();
