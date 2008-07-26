@@ -600,17 +600,18 @@ public class utilflagwarppt extends MultiUtil {
 
     public void handlePlayerCommand( String sender, String message )	{
 		try 	{
-		Player player = m_botAction.getPlayer(sender);
-		if (player == null)
-			return;
-		Integer freq = new Integer (player.getFrequency());
-		if (freqs.containsKey(freq))	{
-			if (freqs.get(freq).containsWrpp(message.substring(6)))	{
-				WarpPlayer(sender, message.substring(6));
+			Player player = m_botAction.getPlayer(sender);
+			if (player == null)
+				return;
+			if (message.startsWith("!goto"));	{
+				Integer freq = new Integer (player.getFrequency());
+				if (freqs.containsKey(freq))	{
+					if (freqs.get(freq).containsWrpp(message.substring(6)))	{
+						WarpPlayer(sender, message.substring(6));
+					}
+				}
 			}
-		}
-		}
-		catch (Exception e) {m_botAction.sendPublicMessage("bad!");}
+		}catch (Exception e) {}
     }
 
 	/**
