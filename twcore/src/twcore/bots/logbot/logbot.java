@@ -46,10 +46,10 @@ public class logbot extends SubspaceBot {
     private ArrayList<String> ignorelog, fileNames, op;
     private String bouncemessage, hubBot, entity, home, chat,
     		m_bounceDestination ,m_zoneIP ,m_zonePort ,sendtoCmd;
-    private TimerTask logCheck, ArenaCheck, getLog, waitReply;
+    private TimerTask logCheck, ArenaCheck, getLog, waitReply, RespawnTask;
     private File subLog, arenaData, adminData, botCfg;
     private int maxBots, auto;
-    private boolean logging, realTimeLogging, enslaved, waiting;
+    private boolean logging, realTimeLogging, enslaved, waiting, resume;
     
     /**
      * Initializes.
@@ -117,7 +117,7 @@ public class logbot extends SubspaceBot {
     	try	{
     		return list.substring(list.indexOf("[")+1,list.indexOf("]"));
     	}
-    	catch (Exception e)	{return null;}
+    	catch (Exception e)	{return ("");}
     }
     
     /**
@@ -128,19 +128,23 @@ public class logbot extends SubspaceBot {
     	m_botAction.sendSmartPrivateMessage( hubBot, "!remove " + entity);
     	m_botAction.sendSmartPrivateMessage( hubBot, "!spawn logbot");
     	waitReply.cancel();
-    	waitReply = new TimerTask()	{
+    	ArenaCheck.cancel();
+    	RespawnTask = new TimerTask()	{
 			public void run()	{
 				m_botAction.sendChatMessage(1,"Log monitoring deactivated: " +
-						entity + " has been lost. -" + getTimeStamp());
-				logCheck.cancel();ArenaCheck.cancel();getLog.cancel();
+						"Respawn failed, " + entity + " has been lost. - " + getTimeStamp());
+				logCheck.cancel();getLog.cancel();
 				logEvent( "Could not replace slave! switching to standalone." );
-				waiting = false;
+				waiting = false;resume = false;
 				entity = null;
 			}
 		};
 		waiting = true;
-		m_botAction.scheduleTask(waitReply, 10000);
-		logEvent ( "Attempting to respawn lost Slave." );
+		resume = true;
+		m_botAction.scheduleTask(RespawnTask, 60000);
+		m_botAction.sendChatMessage(1,"Arena monitoring paused: Attempting to " +
+				"respawn " + entity + " - " + getTimeStamp());
+		logEvent ( "Attempting to respawn "+ entity);
     }
     
     /**
@@ -306,7 +310,7 @@ public class logbot extends SubspaceBot {
         	return parts;
     	}
     	catch (Exception e){
-    		return null;
+    		return new ArrayList<String>();
     	}
     }
     
@@ -480,6 +484,8 @@ public class logbot extends SubspaceBot {
 	    File arenacfg = new File(arenaData.getParent() + File.separatorChar + arena + ".cfg");
 	    if (guarded.containsKey(arena))
 	    	m_botAction.sendSmartPrivateMessage(sender, " is already monitored.");
+	    else if (!arena.startsWith("#"))
+	    		m_botAction.sendSmartPrivateMessage(sender, "Arena must be private to be monitored");
 	    else	{
 	    	String arenaFileName = arenacfg.getName();
 		    incoming.put(arenaFileName, arenacfg);
@@ -788,11 +794,10 @@ public class logbot extends SubspaceBot {
    	     	Iterator<Watched_Arena> arenas = guarded.values().iterator();
    	     	while (arenas.hasNext())	{
    	    		Watched_Arena temp = arenas.next();
-   	    		logEvent(temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
    	    		String line = (temp.myArena + "~" + temp.myOwner + temp.myLvz.toString() + "~" + temp.myGuests.toString());
    	    		out.writeUTF(line);
    	     	}if (!fileNames.isEmpty())
-      	    	out2.writeUTF("@" + fileNames.toString());	
+      	    	out2.writeUTF("@" + fileNames.toString());
    	    	if (!op.isEmpty())
    	    		out2.writeUTF("$" + op.toString());
    	    		out2.close();
@@ -814,7 +819,7 @@ public class logbot extends SubspaceBot {
     
     public void ReadDefinitions()	{
     	String line;
-    	String name;
+    	String arena;
     	String owner;
     	ArrayList<String> lvz;
     	ArrayList<String> guests;
@@ -825,16 +830,15 @@ public class logbot extends SubspaceBot {
     		DataInputStream in2 = new DataInputStream( new FileInputStream( adminData ) );
     		while (in.available() != 0)	{
     			line = in.readUTF();
-        		name = line.substring(0, line.indexOf('~'));
-        		owner = line.substring(name.length()+1, line.indexOf('['));
+        		arena = line.substring(0, line.indexOf('~'));
+        		owner = line.substring(arena.length()+1, line.indexOf('['));
         		lvz = getLvzNames( TrimList(line.substring(line.indexOf(owner),line.indexOf(owner) + owner.length()-1)) );
         		guests = ParseString( TrimList(line.substring(line.indexOf("]~")+2)) );
-        		Watched_Arena temp = new Watched_Arena(name,owner,lvz,guests);
-        		guarded.put(name, temp);
+        		Watched_Arena temp = new Watched_Arena(arena,owner,lvz,guests);
+        		guarded.put(arena, temp);
         	}
     		while (in2.available() != 0)	{
     			line = in2.readUTF();
-    			logEvent ( line );
     			if (line.startsWith("@"))	{
     				files = ParseString(TrimList(line.substring(1)));
     				fileNames = files;
@@ -1185,7 +1189,8 @@ public class logbot extends SubspaceBot {
     						guarded.put(arenaName, arenax);
     					}
     					else	{
-    						m_botAction.sendChatMessage(1, playerName + " tried to request for " + arena.myArena + " to be monitored when he/she is not the owner or the arena DNE.");
+    						m_botAction.sendChatMessage(1, playerName + " denied request for " + arena.myArena + " to be monitored as he/she is not the owner");
+    						m_botAction.sendChatMessage(1, playerName + " denied request to add " + arena + "as a monitored arena without ownership");
     						temp.delete();
     						guarded.remove(arenaName);
     					}
@@ -1219,10 +1224,19 @@ public class logbot extends SubspaceBot {
     		m_botAction.sendSmartPrivateMessage(entity, "back");
     	else if ( message.startsWith( "slave" ))	{
     		m_botAction.sendSmartPrivateMessage(entity, "master");
-    		waitReply.cancel();
+    		if (resume) 	{
+    			RespawnTask.cancel();
+    			ArenaCheck = new TimerTask()	{
+            		public void run()	{
+            			m_botAction.requestArenaList();
+            		}};
+    			m_botAction.scheduleTask(ArenaCheck, 2000, 30000);
+    			m_botAction.sendChatMessage(1, "Respawn of " + entity + " sucessful, " +
+    					"resuming arena monitoring operations.");
+    		}else
+    			waitReply.cancel();
     		logEvent( "Slave " + entity + " acquired!" );
-    		}
-    	else if ( message.startsWith( "master" ))	{
+    		}else if ( message.startsWith( "master" ))	{
     		waitReply.cancel();
     		logEvent( "Master " + entity + " allocated!" );
     	}
@@ -1351,20 +1365,21 @@ public class logbot extends SubspaceBot {
     
     public void getHelpMessages(String sender)
     {
-    	if (entity == null && m_opList.isOwner(sender))	{
-    		m_botAction.sendSmartPrivateMessage(sender, "!Invite <name>                            -- Invites <name> to " + m_botAction.getArenaName() + " .");
-            m_botAction.sendSmartPrivateMessage(sender, "!ClearInvites                             -- Clears all guests.");
-            m_botAction.sendSmartPrivateMessage(sender, "!Message <message>                        -- Sets the bounce message interlopers recieve.");
-            m_botAction.sendSmartPrivateMessage(sender, "!Go <arena>                               -- Sends the bot to <arena>.");
-    	}
-    	if (entity != null)	{
+    	if (entity == null)	{
+    		if(m_opList.isOwner(sender))	{
+    			m_botAction.sendSmartPrivateMessage(sender, "!Invite <name>                            -- Invites <name> to " + m_botAction.getArenaName() + " .");
+                m_botAction.sendSmartPrivateMessage(sender, "!ClearInvites                             -- Clears all guests.");
+                m_botAction.sendSmartPrivateMessage(sender, "!Message <message>                        -- Sets the bounce message interlopers recieve.");
+                m_botAction.sendSmartPrivateMessage(sender, "!Go <arena>                               -- Sends the bot to <arena>.");
+    		}else
+    			m_botAction.sendSmartPrivateMessage(sender, "Bot has been disabled: Contact a bot dever to restart");
+    	}if (entity != null)	{
     		if (!enslaved)	{
         		m_botAction.sendSmartPrivateMessage(sender, "!AddArena <arena>                         -- Monitors an arena and all related files.");
             	m_botAction.sendSmartPrivateMessage(sender, "!DelArena <arena>                         -- Stops monitoring an arena and all related files.");
             	m_botAction.sendSmartPrivateMessage(sender, "!ArenaInvite <arena>,<name>               -- Invites a a player to a monitored arena.");
             	m_botAction.sendSmartPrivateMessage(sender, "!ClearArenaInvites <arena>                -- Clears all Invites to a monitored arena.");
-        	}
-        	if (m_opList.isOwner(sender) || op.contains(sender))	{
+        	}if (m_opList.isOwner(sender) || op.contains(sender))	{
         		m_botAction.sendSmartPrivateMessage(sender, "!ListArenas                               -- Lists all monitored arenas.");
             	m_botAction.sendSmartPrivateMessage(sender, "!SetFiles <file1>,<file2>,ect...          -- Sets restricted files.");
             	m_botAction.sendSmartPrivateMessage(sender, "!ListFiles                                -- Lists curretly restricted files");
@@ -1374,15 +1389,14 @@ public class logbot extends SubspaceBot {
             	m_botAction.sendSmartPrivateMessage(sender, "!StopLog                                  -- Stops the logging functionality.");
             	m_botAction.sendSmartPrivateMessage(sender, "!help                                     -- Displays this.");
         	}
-    	}
-    	if (m_opList.isOwner(sender)) {
+    	}if (m_opList.isOwner(sender)) {
     	    m_botAction.sendSmartPrivateMessage(sender, "!action <move|zonemove|kill>              -- Determines bounce action:");
             m_botAction.sendSmartPrivateMessage(sender, "         move                                Bounces to pub on this zone");
             m_botAction.sendSmartPrivateMessage(sender, "         move <arena>                        Bounces to <arena> on this zone");
             m_botAction.sendSmartPrivateMessage(sender, "              zonemove <IP,Port>             Bounces to pub of zone @ <IP,Port>");
             m_botAction.sendSmartPrivateMessage(sender, "              zonemove <IP,Port,Arena>       Bounces to <Arena> of zone @ <IP,Port>");
             m_botAction.sendSmartPrivateMessage(sender, "                       kill                  Sends *kill (not recommended)");
-            m_botAction.sendSmartPrivateMessage(sender, "                                             [Default action is: move to pub on this zone]");
+            m_botAction.sendSmartPrivateMessage(sender, "                                             [Default action is: Kill on intrusion]");
     	}
     }
     
@@ -1502,7 +1516,7 @@ public class logbot extends SubspaceBot {
                     			    m_botAction.sendUnfilteredPrivateMessage(playerName, sendtoCmd + " " + m_bounceDestination);
                     			    logEvent ( "Intruder " + playerName + " was kicked from " + arena + ". (relocated)");
                     			}
-                    			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena and disappeared!" );
+                    			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena '"+ arena + "' and was removed." );
                     		}
                     	}
             		}
