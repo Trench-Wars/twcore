@@ -1192,7 +1192,7 @@ public class logbot extends SubspaceBot {
     					}
     					else	{
     						m_botAction.sendChatMessage(1, playerName + " denied request for " + arena.myArena + " to be monitored as he/she is not the owner");
-    						m_botAction.sendChatMessage(1, playerName + " denied request to add " + arena + "as a monitored arena without ownership");
+    						m_botAction.sendChatMessage(1, playerName + " denied request to add " + arena.myArena + "as a monitored arena without ownership");
     						temp.delete();
     						guarded.remove(arenaName);
     					}
@@ -1518,7 +1518,7 @@ public class logbot extends SubspaceBot {
                     			    m_botAction.sendUnfilteredPrivateMessage(playerName, sendtoCmd + " " + m_bounceDestination);
                     			    logEvent ( "Intruder " + playerName + " was kicked from " + arena + ". (relocated)");
                     			}
-                    			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena '"+ arena + "' and was removed." );
+                    			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena " + arena + " and was removed." );
                     		}
                     	}
             		}
