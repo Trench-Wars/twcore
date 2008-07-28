@@ -188,21 +188,21 @@ public class roboreplacement extends SubspaceBot
      */
     public void handleEvent(Message event) {
         String message = event.getMessage();
-        int pid = event.getPlayerID();
-        String name = m_botAction.getPlayerName(pid);
+	    int messageType = event.getMessageType();
+        String name = getSender(event);
 
-        if( event.getMessageType() == Message.ARENA_MESSAGE ) {
+        if( messageType == Message.ARENA_MESSAGE ) {
             if( message.equals( "Arena UNLOCKED" ) && locked == true )
                 m_botAction.toggleLocked();
             else if( message.equals( "Arena LOCKED" ) && locked == false )
                 m_botAction.toggleLocked();
         }
 
-        if( event.getMessageType() == Message.PUBLIC_MESSAGE &&
-                gameStatus == STATUS_DEATHVOTING || gameStatus == STATUS_SHIPVOTING ) {
+        else if( messageType == Message.PUBLIC_MESSAGE &&
+                (gameStatus == STATUS_DEATHVOTING || gameStatus == STATUS_SHIPVOTING) ) {
             if( Tools.isAllDigits(message) ) {
-                if( votes.containsKey( pid ) ) {
-                    votes.remove( pid );
+                if( votes.containsKey( event.getPlayerID() ) ) {
+                    votes.remove( event.getPlayerID() );
                     m_botAction.sendPrivateMessage(name, "Previous vote removed." );
                 }
 
@@ -210,14 +210,14 @@ public class roboreplacement extends SubspaceBot
                     int vote = Integer.parseInt(message);
                     if( gameStatus == STATUS_DEATHVOTING ) {
                         if( vote < 11 ) {
-                            votes.put( pid, vote );
+                            votes.put( new Integer(event.getPlayerID()), vote );
                             m_botAction.sendPrivateMessage(name, "Vote added for " + vote + " deaths." );
                         } else {
                             m_botAction.sendPrivateMessage(name, "Number of deaths must be less than 10." );
                         }
                     } else if( gameStatus == STATUS_SHIPVOTING ) {
                         if( vote > 0 && vote < allowedShips.size() ) { //adds the vote to the votes HashMap
-                            votes.put( pid, vote );
+                            votes.put( new Integer(event.getPlayerID()), vote );
                             m_botAction.sendPrivateMessage(name, "Vote added for " + ships[allowedShips.get(vote)] + " elim." );
                         } else {
                             m_botAction.sendPrivateMessage(name, "That is not an allowed number." );
@@ -227,11 +227,30 @@ public class roboreplacement extends SubspaceBot
             }
         }
 
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE )
+        else if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE )
         	handleCommands(name, message);
     }
 
+    /**
+     * This method returns the name of the player who sent a message, regardless
+     * of the message type. If there is no sender then null is returned.
+     *
+     * @param event
+     *            is the Message event to handle.
+     */
+    private String getSender(Message event) {
+        int messageType = event.getMessageType();
+        int playerID;
 
+        if (messageType == Message.ALERT_MESSAGE
+         || messageType == Message.CHAT_MESSAGE
+         || messageType == Message.REMOTE_PRIVATE_MESSAGE)
+            return event.getMessager();
+
+        playerID = event.getPlayerID();
+        return m_botAction.getPlayerName(playerID);
+    }
+    
     /**
      * Simple command handler.
      * @param name
@@ -300,16 +319,16 @@ public class roboreplacement extends SubspaceBot
         else if(message.toLowerCase().startsWith("!topten"))
             topTen(name);
         else if(message.toLowerCase().startsWith("!status")) {
-            m_botAction.sendPrivateMessage( name, getStatusMsg() );
+            m_botAction.sendSmartPrivateMessage( name, getStatusMsg() );
         }
         else if(message.toLowerCase().startsWith("!help"))
         {
             //m_botAction.sendSmartPrivateMessage(name, "!stats        - Gets your stats.");
             //m_botAction.sendSmartPrivateMessage(name, "!stats <name> - Gets <name>'s stats");
             //m_botAction.sendSmartPrivateMessage(name, "!topten       - Gets list of top ten players");
-            m_botAction.sendPrivateMessage(name, "!score        - Shows your current scorecard" );
-            m_botAction.sendPrivateMessage(name, "!status       - Displays current status of the game");
-            m_botAction.sendPrivateMessage(name, "!help         - Displays this message");
+            m_botAction.sendSmartPrivateMessage(name, "!score        - Shows your current scorecard" );
+            m_botAction.sendSmartPrivateMessage(name, "!status       - Displays current status of the game");
+            m_botAction.sendSmartPrivateMessage(name, "!help         - Displays this message");
         }
     }
 
