@@ -351,7 +351,7 @@ public class logbot extends SubspaceBot {
         try{
             PrintWriter out = new PrintWriter( new FileWriter( 
             		m_botAction.getGeneralSettings().getString("Core Location") 
-            		+ File.separatorChar + "logs" + File.separatorChar + m_botAction.getBotName() + ".log" ,true));
+            		+ File.separatorChar + "logs" + File.separatorChar + m_botAction.getBotName() + "(Prema-log).log" ,true));
             event = getTimeStamp() + " - \t" + event;
             out.println( event );
             out.close();
@@ -1510,7 +1510,7 @@ public class logbot extends SubspaceBot {
                     	while (it.hasNext())	{
                     		String playerName = ((Player)it.next()).getPlayerName();
                     		if (!subAllowed.contains(playerName.toLowerCase()))	{
-                    			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena!");
+                    			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena! Ask : " + owner + " and he may invite you.");
                     			if ( m_bounceDestination.equals( ":kill:" ) ) {
                     			    m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
                     			    logEvent ( "Intruder " + playerName + " was kicked from " + arena + ". (DC'd)");

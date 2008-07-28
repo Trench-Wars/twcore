@@ -1,9 +1,12 @@
 package twcore.bots.multibot.util;
 
 import twcore.bots.MultiUtil;
+import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 import twcore.core.events.Message;
+import twcore.core.events.BallPosition;
+import twcore.core.events.SoccerGoal;
 
 /**
  * Allows some aesthetic additions for soccer goals
@@ -27,6 +30,7 @@ public class utilgoal extends MultiUtil {
 	private static final int MAX_PRIZE = 28;
 	private static final int MIN_PRIZE = 1;
 	
+	private short ballcarrier; //Track the carrier
 	
 	private String goalmessage;
 	private int[] goalwarp = null;
@@ -34,8 +38,25 @@ public class utilgoal extends MultiUtil {
 				goalprize = 0,
 				goalsound = 0;
 	
+	/**
+	  * Initializes
+	  */
+	 
+	 public void init() {
+	    }
+	
+	/**
+	 * Requests events.
+	 */
+	
 	 public void requestEvents( ModuleEventRequester modEventReq ) {
+		 modEventReq.request(this, EventRequester.BALL_POSITION );
+		 modEventReq.request(this, EventRequester.SOCCER_GOAL );
 	 }
+	 
+	 /**
+	  * Handle's all messages.
+	  */
 	 
 	 public void handleEvent(Message event) {
 		 String playerName = m_botAction.getPlayerName(event.getPlayerID());
@@ -43,35 +64,47 @@ public class utilgoal extends MultiUtil {
 			if(event.getMessageType() == Message.PRIVATE_MESSAGE 
 					&& m_opList.isER(playerName))
 				handleCommand(playerName, message.toLowerCase());
-			else if(event.getMessageType() == Message.ARENA_MESSAGE)
-				handleArenaMessage(message);
 	 	}
 	 
-	 public void handleArenaMessage(String message)	{
+	 /**
+	  * Set the current ball carrier as ballcarrier
+	  * for future use to use when a goal is scored.
+	  */
+	 
+	 public void handleEvent(BallPosition event)	{
+		 if (event.getCarrier() != -1)
+			 ballcarrier = event.getCarrier();
+	 }
+	 
+	 /**
+	  * Upon a goal score, the scorer is given his/her
+	  * message, warp, objon and prize if any is set.
+	  */
+	 
+	 public void handleEvent(SoccerGoal event)	{
 		 String goalscorer;
-		 m_botAction.sendPublicMessage("I got an arena message! : -" + message + "-");
-		 if (message.startsWith("Enemy Goal!") || message.startsWith("Team Goal!"))	{
-			 goalscorer = getScorer(message);
-			 
-			 if (goalmessage != null)	{
-				 	if (goalsound !=0)
-				 		m_botAction.sendPrivateMessage(
-							 goalscorer, goalmessage, goalsound);
-				 	else
-				 		m_botAction.sendPrivateMessage(goalscorer, goalmessage);
-			 }	if (goalwarp != null)	{
-				 	if (goalwarp.length > 2)
-				 		m_botAction.warpTo(
-				 				goalscorer, goalwarp[0], goalwarp[1], goalwarp[2]);
-				 	else
-				 		m_botAction.warpTo(goalscorer, goalwarp[0], goalwarp[1]);
-			 }	if (goalobjon != -1)	{
-				 m_botAction.sendUnfilteredPrivateMessage(
-						 goalscorer, "*objon " + goalobjon);
-			 }	if (goalprize != 0)
-				 m_botAction.sendUnfilteredPrivateMessage(
-						 goalscorer, "*prize #" + goalprize);
-		 }
+		 try	{
+		 goalscorer = m_botAction.getPlayerName(ballcarrier);
+		 }	catch (Exception e){ return; }
+		 
+		 if (goalmessage != null)	{
+			 	if (goalsound !=0)
+			 		m_botAction.sendPrivateMessage(
+						 goalscorer, goalmessage, goalsound);
+			 	else
+			 		m_botAction.sendPrivateMessage(goalscorer, goalmessage);
+		 }	if (goalwarp != null)	{
+			 	if (goalwarp.length > 2)
+			 		m_botAction.warpTo(
+			 				goalscorer, goalwarp[0], goalwarp[1], goalwarp[2]);
+			 	else
+			 		m_botAction.warpTo(goalscorer, goalwarp[0], goalwarp[1]);
+		 }	if (goalobjon != -1)	{
+			 m_botAction.sendUnfilteredPrivateMessage(
+					 goalscorer, "*objon " + goalobjon);
+		 }	if (goalprize != 0)
+			 m_botAction.sendUnfilteredPrivateMessage(
+					 goalscorer, "*prize #" + goalprize);
 	 }
 	 
 	 /**
@@ -79,6 +112,7 @@ public class utilgoal extends MultiUtil {
 	   * @param prizeNum Prize to check
 	   * @return True if prize is not allowed
 	   */
+	 
 	  public boolean isRestricted(int prizeNum) {
 		  for(int i = 0; i < RESTRICTED_PRIZES.length; i++ )
 			  if( RESTRICTED_PRIZES[i] == prizeNum )
@@ -86,13 +120,12 @@ public class utilgoal extends MultiUtil {
 		  return false;
 	  }
 	  
-	  public String getScorer(String argString)	{
-		  String scorer = argString.substring(argString.indexOf("by")+3);
-		  if (scorer.indexOf("Reward") != -1)
-			  scorer = scorer.substring(0,scorer.indexOf("Reward")-2);
-		  return scorer;
-		  
-	  }
+	  /**
+	   * Sets the message for the goal scorer.
+	   * 
+	   * @param sender is the user of the bot.
+	   * @param argString is the message/argument.
+	   */
 	 
 	 public void doGoalMessage(String sender, String argString)	{
 		 if(argString.equals("~*"))	{
@@ -118,6 +151,13 @@ public class utilgoal extends MultiUtil {
 		 }
 	 }
 	 
+	 /**
+	  * Sets the warp coordinates for the goal scorer.
+	  * 
+	  * @param sender is the user of the bot.
+	  * @param argString is the message/argument.
+	  */
+	 
 	 public void doGoalWarp(String sender, String argString) {
 		 if (argString.equals("~*"))	{
 			 goalwarp = null;
@@ -139,6 +179,13 @@ public class utilgoal extends MultiUtil {
 		 }
 	 }
 	 
+	 /**
+	   * Sets the objon for the goal scorer.
+	   * 
+	   * @param sender is the user of the bot.
+	   * @param argString is the message/argument.
+	   */
+	 
 	 public void doGoalObjon(String sender, String argString)	{
 		 if ( argString.equals("~*") )	{
 			 m_botAction.sendPrivateMessage(sender, "Goal objon erased.");
@@ -152,6 +199,13 @@ public class utilgoal extends MultiUtil {
 					 goalobjon + "\"");
 		 	}
 	 }
+	 
+	 /**
+	   * Sets the prize for the goal scorer.
+	   * 
+	   * @param sender is the user of the bot.
+	   * @param argString is the message/argument.
+	   */
 	 
 	 public void doGoalPrize(String sender, String argString)	{
 		 if ( argString.equals("~*") )	{
@@ -179,6 +233,12 @@ public class utilgoal extends MultiUtil {
 		 }
 	 }
 	 
+	 /**
+	  * Relays all the set information back to the user.
+	  * 
+	  * @param sender is the user of the bot.
+	  */
+	 
 	 public void doGoalDetails(String sender)	{
 		 m_botAction.sendPrivateMessage(sender, "Goal message: \"" 
 				 + goalmessage + "\" " + (goalsound == 0 ? "" : " %" + goalsound));
@@ -190,6 +250,13 @@ public class utilgoal extends MultiUtil {
 		 m_botAction.sendPrivateMessage(sender, "Goal prize: " + 
 				 (goalprize == 0 ? "none" : goalprize));
 	 }
+	 
+	 /**
+	  * Handle's the user's commands.
+	  * 
+	  * @param sender is the user of the bot
+	  * @param message is the argument to be computed/stored
+	  */
 	 
 	 public void handleCommand(String sender,String message)	{
 		 try	{
@@ -211,8 +278,9 @@ public class utilgoal extends MultiUtil {
 		 }
 	 }
 	 
-	 public void init() {
-	    }
+	 /**
+	  * Returns help messages
+	  */
 	 
 	 
 	 public String[] getHelpMessages() {
