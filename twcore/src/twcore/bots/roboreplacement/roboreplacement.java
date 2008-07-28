@@ -227,9 +227,8 @@ public class roboreplacement extends SubspaceBot
             }
         }
 
-        if( event.getMessageType() != Message.PRIVATE_MESSAGE )
-            return;
-        handleCommands(name, message);
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE )
+        	handleCommands(name, message);
     }
 
 
