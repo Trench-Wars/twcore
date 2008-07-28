@@ -12,6 +12,7 @@ import twcore.core.command.TempSettingsManager;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.util.ModuleEventRequester;
+import java.util.HashMap;
 
 /**
  * Extended Safes Module (Based on twbotsafes by 2dragons)
@@ -20,7 +21,7 @@ import twcore.core.util.ModuleEventRequester;
  * as put them into spectator mode.
  *
  * @author D1st0rt
- * @version 06.06.01
+ * @version 08.07.27
  */
 public class utilsafes extends MultiUtil implements TSChangeListener
 {
@@ -30,11 +31,14 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	/** The status of the module's reactions to players flying over safes */
 	private boolean	m_active;
 
+	/** Keeps track of when a player entered safe for delays */
+	private HashMap<String, Long> m_entryTimes;
+
 	/** The help message to be sent to bot operators */
 	private final String helpMessage[] =
 	{
 		"+------------------Extended Safes Module---------------------+",
-		"|  Release 1.7 [06/01/06] - http://d1st0rt.sscentral.com     |",
+		"|  Release 1.8 [08/07/27] - http://d1st0rt.sscentral.com     |",
 		"+------------------------------------------------------------+",
 		"! !safeson  - Turn on safe watching                          |",
 		"| !safesoff - Turn off safe watching                         |",
@@ -48,6 +52,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		"| !set TargetFreq=0-9999, freq to change player to           |",
 		"| !set FreqChgMsg=\"text\", Arena message when freq changed    |",
 		"|      (Set the msg's to \"none\" for no message displayed)    |",
+		"| !set DelaySeconds=0-1000, How long to wait before acting   |",
 		"|                                                            |",
 		"| !get <Value>- Get the value for one of the above settings  |",
 		"+------------------------------------------------------------+"
@@ -56,7 +61,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 
 	// Cached game settings to increase speed
 	private boolean specPlayer = false, changeShip = false, changeFreq = false;
-	private int targetFreq = 1, targetShip = 3;
+	private int targetFreq = 1, targetShip = 3, delaySeconds = 0;
 	private String speccedMsg = "none", shipChgMsg = "none", freqChgMsg= "none";
 
 	/**
@@ -65,6 +70,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	public void init()
 	{
 		m_active = false;
+		m_entryTimes = new HashMap<String, Long>();
 		m_tsm = BotAction.getBotAction().getTSM();
 		m_tsm.setOperatorLevel(ER_LEVEL);
 		registerSettings();
@@ -112,6 +118,8 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 			targetFreq = (Integer)value;
 		else if(setting.equals("freqchgmsg"))
 			freqChgMsg = (String)value;
+		else if(setting.equals("delayseconds"))
+			delaySeconds = (Integer)value;
 	}
 
 	/**
@@ -123,11 +131,16 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.handleEvent(event);
 
 		String name = m_botAction.getPlayerName(event.getPlayerID());
-		if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name)) {
-			if(event.getMessage().equalsIgnoreCase("!safeson")) {
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name))
+		{
+			if(event.getMessage().equalsIgnoreCase("!safeson"))
+			{
 				c_Activate(name, true);
-			} else if(event.getMessage().equalsIgnoreCase("!safesoff")) {
+			}
+			else if(event.getMessage().equalsIgnoreCase("!safesoff"))
+			{
 				c_Activate(name, false);
+				m_entryTimes.clear();
 			}
 		}
 	}
@@ -138,32 +151,67 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	 */
 	public void handleEvent(PlayerPosition event)
 	{
-		if(m_active && event.isInSafe())
+		if(m_active)
 		{
 			String name = m_botAction.getPlayerName(event.getPlayerID());
-			int ship = m_botAction.getPlayer(event.getPlayerID()).getShipType();
-			int freq = m_botAction.getPlayer(event.getPlayerID()).getFrequency();
-
-			if(specPlayer)
+			if(event.isInSafe())
 			{
-				m_botAction.spec(event.getPlayerID());
-				m_botAction.spec(event.getPlayerID());
-				if(!speccedMsg.equalsIgnoreCase("none"))
-					m_botAction.sendArenaMessage(name + " " + speccedMsg);
+				int ship = m_botAction.getPlayer(event.getPlayerID()).getShipType();
+				int freq = m_botAction.getPlayer(event.getPlayerID()).getFrequency();
+				boolean delayExceeded = true;
+
+				if(delaySeconds > 0)
+				{
+					long currentTime = System.currentTimeMillis();
+					if(m_entryTimes.containsKey(name))
+					{
+						long entryTime = m_entryTimes.get(name);
+						int delta = (int)(currentTime - entryTime);
+						delta /= 1000;
+						if(delta < delaySeconds)
+						{
+							delayExceeded = false;
+						}
+						else
+						{
+							m_entryTimes.remove(name);
+						}
+					}
+					else
+					{
+						m_entryTimes.put(name, currentTime);
+						delayExceeded = false;
+					}
+				}
+
+				if(delayExceeded)
+				{
+					if(specPlayer)
+					{
+						m_botAction.spec(event.getPlayerID());
+						m_botAction.spec(event.getPlayerID());
+						if(!speccedMsg.equalsIgnoreCase("none"))
+							m_botAction.sendArenaMessage(name + " " + speccedMsg);
+					}
+
+					if(changeShip && ship != targetShip)
+					{
+						m_botAction.setShip(event.getPlayerID(), targetShip);
+						if(!shipChgMsg.equalsIgnoreCase("none"))
+							m_botAction.sendArenaMessage(name + " " + shipChgMsg);
+					}
+
+					if(changeFreq && freq != targetFreq)
+					{
+						m_botAction.setFreq(event.getPlayerID(), targetFreq);
+						if(!freqChgMsg.equalsIgnoreCase("none"))
+							m_botAction.sendArenaMessage(name + " " + freqChgMsg);
+					}
+				}
 			}
-
-			if(changeShip && ship != targetShip)
+			else if(delaySeconds > 0)
 			{
-				m_botAction.setShip(event.getPlayerID(), targetShip);
-				if(!shipChgMsg.equalsIgnoreCase("none"))
-					m_botAction.sendArenaMessage(name + " " + shipChgMsg);
-			}
-
-			if(changeFreq && freq != targetFreq)
-			{
-				m_botAction.setFreq(event.getPlayerID(), targetFreq);
-				if(!freqChgMsg.equalsIgnoreCase("none"))
-					m_botAction.sendArenaMessage(name + " " + freqChgMsg);
+				m_entryTimes.remove(name);
 			}
 		}
 	}
@@ -196,8 +244,11 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.addSetting(INT,     "TargetFreq", "1");
 		m_tsm.addSetting(STRING,  "FreqChgMsg", "none");
 
+		m_tsm.addSetting(INT,     "DelaySeconds", "0");
+
 		m_tsm.restrictSetting("TargetShip", 1, 8);
 		m_tsm.restrictSetting("TargetFreq", 0, 9999);
+		m_tsm.restrictSetting("DelaySeconds", 0, 1000);
 	}
 
 	public void cancel()
@@ -213,6 +264,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.removeSetting("FreqChgMsg");
 		m_tsm.removeSetting("TargetShip");
 		m_tsm.removeSetting("TargetFreq");
+		m_tsm.removeSetting("DelaySeconds");
         m_botAction.resetReliablePositionUpdating();
 	}
 }
