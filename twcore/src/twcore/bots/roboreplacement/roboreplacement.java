@@ -2,11 +2,11 @@ package twcore.bots.roboreplacement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+//import java.util.HashSet;
 import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
+//import java.util.concurrent.ConcurrentHashMap;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -19,8 +19,8 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
-import twcore.core.events.WeaponFired;
-import twcore.core.events.WatchDamage;
+//import twcore.core.events.WeaponFired;
+//import twcore.core.events.WatchDamage;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -47,16 +47,17 @@ public class roboreplacement extends SubspaceBot
     final int STATUS_ENDGAME = 5;
     boolean locked = false;     // True if arena should be locked.  (Used for insurance.)
 
-    HashSet<Integer> players = new HashSet<Integer>(); //contains ID's of all the players that started the game
-    HashMap<Integer, Integer> deaths = new HashMap<Integer, Integer>();  //key is ID of the person, value is the person's number of deaths
-    HashMap<Integer, Integer> kills = new HashMap<Integer, Integer>();   //key is ID of the person, value is the person's number of kills
-    HashMap<Integer, Integer> lastDeaths = new HashMap<Integer, Integer>(); // XXX: What's this used for?
+    //HashSet<Integer> players = new HashSet<Integer>(); //contains ID's of all the players that started the game
+    HashMap<Integer, ElimPlayer> players = new HashMap<Integer, ElimPlayer>();  // key=ID
+    //HashMap<Integer, Integer> deaths = new HashMap<Integer, Integer>();  //key is ID of the person, value is the person's number of deaths
+    //HashMap<Integer, Integer> kills = new HashMap<Integer, Integer>();   //key is ID of the person, value is the person's number of kills
+    //HashMap<Integer, Integer> lastDeaths = new HashMap<Integer, Integer>(); // XXX: What's this used for?
 
     HashMap<Integer, Integer> votes = new HashMap<Integer, Integer>();   //key is ID of the person that voted, value is the person's vote
     ArrayList<Integer> allowedShips = new ArrayList<Integer>();          // Ships allowed in this type of elim
 
-    ConcurrentHashMap<Integer, Integer> bulletsFired = new ConcurrentHashMap<Integer, Integer>();
-    ConcurrentHashMap<Integer, Integer> bulletsHit   = new ConcurrentHashMap<Integer, Integer>();
+    //ConcurrentHashMap<Integer, Integer> bulletsFired = new ConcurrentHashMap<Integer, Integer>();
+    //ConcurrentHashMap<Integer, Integer> bulletsHit   = new ConcurrentHashMap<Integer, Integer>();
 
     Vector<String> topTen; //Vector of people with the top ten ratings
 
@@ -87,8 +88,8 @@ public class roboreplacement extends SubspaceBot
         events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         events.request(EventRequester.PLAYER_ENTERED);
         events.request(EventRequester.PLAYER_LEFT);
-        events.request(EventRequester.WEAPON_FIRED);
-        events.request(EventRequester.WATCH_DAMAGE);
+        //events.request(EventRequester.WEAPON_FIRED);
+        //events.request(EventRequester.WATCH_DAMAGE);
         events.request(EventRequester.ARENA_JOINED);
         m_botSettings = m_botAction.getBotSettings();
     }
@@ -127,7 +128,7 @@ public class roboreplacement extends SubspaceBot
 
     public void handleEvent( ArenaJoined event ) {
         m_botAction.setPlayerPositionUpdating(200);
-        m_botAction.sendArenaMessage( "Elimination Replacement Bot loaded. -" + m_botAction.getBotName(), Tools.Sound.BEEP3 );
+        m_botAction.sendArenaMessage( "Elimination Bot loaded. -" + m_botAction.getBotName(), Tools.Sound.BEEP3 );
         m_botAction.specAll();
     }
 
@@ -142,6 +143,9 @@ public class roboreplacement extends SubspaceBot
         int pid = event.getPlayerID();
         m_botAction.sendPrivateMessage( pid, getStatusMsg() );
         players.remove( pid );
+        ElimPlayer p = new ElimPlayer(pid);
+        p.setPlayingStatus(false);
+        players.put( pid, p );
         m_botAction.sendUnfilteredPrivateMessage( pid, "*watchdamage" );
     }
 
@@ -163,31 +167,55 @@ public class roboreplacement extends SubspaceBot
      * Ends the game if a person spec's and only one player is left.
      */
     public void handleEvent(FrequencyShipChange event) {
-        if(!players.contains(new Integer(event.getPlayerID())) && event.getShipType() != 0)
-            players.add(new Integer(event.getPlayerID()));
-        if(players.contains(new Integer(event.getPlayerID())) && event.getShipType() == 0)
-            players.remove(new Integer(event.getPlayerID()));
-        if(players.size() <= 1 ) {
-            if( gameStatus == STATUS_PLAYING && players.size() == 1 ) {
-                Iterator<Integer> i = players.iterator();
-                int pID = i.next().intValue();
-                doGameOver( pID );
-            } else {
-                checkPreGamePlayerStatus();
+        int pid = event.getPlayerID();
+        ElimPlayer p = players.get(pid);
+
+        if( event.getShipType() != 0 ) {
+            if( p == null )
+                players.put( pid, new ElimPlayer(pid) );
+            else
+                p.setPlayingStatus(true);
+        }
+        if( p != null && event.getShipType() == 0 ) {
+            p.setPlayingStatus(false);
+            showScoreCard(p.getID(), true);
+        }
+
+        int numPlayersStillPlaying = 0;
+        ElimPlayer potentialWinner = null;
+        for( ElimPlayer p2 : players.values() )
+            if( p2.isPlaying() ) {
+                potentialWinner = p2;
+                numPlayersStillPlaying++;
             }
-        } else if(players.size() >= 2 && gameStatus == STATUS_WAITINGFORPLAYERS || gameStatus == STATUS_ENDGAME ) {
-            gameStatus = STATUS_SHIPVOTING;
+
+        if( gameStatus == STATUS_PLAYING ) {
+            if( numPlayersStillPlaying == 1 && potentialWinner != null ) {
+                doGameOver( potentialWinner.getID() );
+            }
+            // Cancel game if for some reason nobody is left.
+            if( numPlayersStillPlaying == 0 ) {
+                m_botAction.sendArenaMessage("Game has been cancelled.  I win.", 1);
+                locked = false;
+                m_botAction.toggleLocked();
+                gameStatus = STATUS_WAITINGFORPLAYERS;
+                clearAllPlayers();
+            }
+        } else if( numPlayersStillPlaying >= 2 &&
+                gameStatus == STATUS_WAITINGFORPLAYERS || gameStatus == STATUS_ENDGAME ) {
             startVoting();
         } else {
             checkPreGamePlayerStatus();
         }
     }
 
+
     /**
      * Poorly-written command handler.
      */
     public void handleEvent(Message event) {
         String message = event.getMessage();
+        int pid = event.getPlayerID();
 	    int messageType = event.getMessageType();
         String name = getSender(event);
 
@@ -201,8 +229,8 @@ public class roboreplacement extends SubspaceBot
         else if( messageType == Message.PUBLIC_MESSAGE &&
                 (gameStatus == STATUS_DEATHVOTING || gameStatus == STATUS_SHIPVOTING) ) {
             if( Tools.isAllDigits(message) ) {
-                if( votes.containsKey( event.getPlayerID() ) ) {
-                    votes.remove( event.getPlayerID() );
+                if( votes.containsKey( pid ) ) {
+                    votes.remove( pid );
                     m_botAction.sendPrivateMessage(name, "Previous vote removed." );
                 }
 
@@ -210,14 +238,14 @@ public class roboreplacement extends SubspaceBot
                     int vote = Integer.parseInt(message);
                     if( gameStatus == STATUS_DEATHVOTING ) {
                         if( vote < 11 ) {
-                            votes.put( new Integer(event.getPlayerID()), vote );
+                            votes.put( pid, vote );
                             m_botAction.sendPrivateMessage(name, "Vote added for " + vote + " deaths." );
                         } else {
                             m_botAction.sendPrivateMessage(name, "Number of deaths must be less than 10." );
                         }
                     } else if( gameStatus == STATUS_SHIPVOTING ) {
                         if( vote > 0 && vote < allowedShips.size() ) { //adds the vote to the votes HashMap
-                            votes.put( new Integer(event.getPlayerID()), vote );
+                            votes.put( pid, vote );
                             m_botAction.sendPrivateMessage(name, "Vote added for " + ships[allowedShips.get(vote)] + " elim." );
                         } else {
                             m_botAction.sendPrivateMessage(name, "That is not an allowed number." );
@@ -264,8 +292,8 @@ public class roboreplacement extends SubspaceBot
             {
                 m_botAction.sendSmartPrivateMessage(name, "Logging off...");
                 m_botAction.die();
-            }
-            if(message.toLowerCase().startsWith("!zoneoff") && zoneOn) {
+
+            } else if(message.toLowerCase().startsWith("!zoneoff") && zoneOn) {
                 if( !zoneOn ) {
                     m_botAction.sendSmartPrivateMessage(name, "Zoners already deactivated.");
                     return;
@@ -277,8 +305,8 @@ public class roboreplacement extends SubspaceBot
                 }
                 m_botAction.sendSmartPrivateMessage(name, "Zoners deactivated.");
                 zoneOn = false;
-            }
-            if(message.toLowerCase().startsWith("!zoneon") ) {
+
+            } else if(message.toLowerCase().startsWith("!zoneon") ) {
                 if( zoneOn ) {
                     m_botAction.sendSmartPrivateMessage(name, "Zoners already active.");
                     return;
@@ -293,13 +321,12 @@ public class roboreplacement extends SubspaceBot
                 }
                 m_botAction.sendSmartPrivateMessage(name, "Zoners active.");
                 zoneOn = true;
-            }
-            if(message.toLowerCase().startsWith("!help"))
+
+            } else if(message.toLowerCase().startsWith("!help"))
             {
                 m_botAction.sendSmartPrivateMessage(name, "!die          - Kills bot");
                 m_botAction.sendSmartPrivateMessage(name, "!zoneoff      - Stops the bot from zoning before a game");
                 m_botAction.sendSmartPrivateMessage(name, "!zoneon       - Allows the bot to zone before a game");
-                m_botAction.sendSmartPrivateMessage(name, "!status       - Displays current status of the game");
             }
         }
 
@@ -308,25 +335,32 @@ public class roboreplacement extends SubspaceBot
             Player p = m_botAction.getPlayer(name);
             if( p != null )
                 showScoreCard( p.getPlayerID(), false );
-        }
-        if(message.toLowerCase().startsWith("!stats "))
-        {
+        } else if(message.toLowerCase().startsWith("!score ")) {
+            String pieces[] = message.split(" ", 2);
+            if( pieces.length != 2 )
+                return;
+            Player showp = m_botAction.getPlayer(name);
+
+            Player p = m_botAction.getFuzzyPlayer( pieces[1] );
+            if( p != null && showp != null )
+                showScoreCard( p.getPlayerID(), showp.getPlayerID(), false );
+            else
+                m_botAction.sendPrivateMessage(name, "Can't find that player.");
+        } else if(message.toLowerCase().startsWith("!stats ")) {
             String pieces[] = message.split(" ", 2);
             m_botAction.sendSmartPrivateMessage(name, getPlayerStats(pieces[1]));
-        }
-        else if(message.toLowerCase().startsWith("!stats"))
+        } else if(message.toLowerCase().startsWith("!stats"))
             m_botAction.sendSmartPrivateMessage(name, getPlayerStats(name));
         else if(message.toLowerCase().startsWith("!topten"))
             topTen(name);
         else if(message.toLowerCase().startsWith("!status")) {
             m_botAction.sendSmartPrivateMessage( name, getStatusMsg() );
-        }
-        else if(message.toLowerCase().startsWith("!help"))
-        {
+        } else if(message.toLowerCase().startsWith("!help")) {
             //m_botAction.sendSmartPrivateMessage(name, "!stats        - Gets your stats.");
             //m_botAction.sendSmartPrivateMessage(name, "!stats <name> - Gets <name>'s stats");
             //m_botAction.sendSmartPrivateMessage(name, "!topten       - Gets list of top ten players");
             m_botAction.sendSmartPrivateMessage(name, "!score        - Shows your current scorecard" );
+            m_botAction.sendSmartPrivateMessage(name, "!score <name> - Shows <name>'s current scorecard" );
             m_botAction.sendSmartPrivateMessage(name, "!status       - Displays current status of the game");
             m_botAction.sendSmartPrivateMessage(name, "!help         - Displays this message");
         }
@@ -345,29 +379,18 @@ public class roboreplacement extends SubspaceBot
             Player p = m_botAction.getPlayer(killeeID);
             if( p == null )
                 return;
+            ElimPlayer killerP = players.get(killerID);
+            ElimPlayer killedP = players.get(killeeID);
+            if( killerP == null || killedP == null )
+                return;
 
-            if(kills.containsKey(new Integer(killerID))) {
-                int winz = kills.get(new Integer(killerID)).intValue() + 1;
-                kills.put(new Integer(killerID), new Integer(winz));
-            }
-            else
-                kills.put(new Integer(killerID), new Integer(1));
-            if(deaths.containsKey(new Integer(killeeID))) {
-                int lossez = deaths.get(new Integer(killeeID)).intValue() + 1;
-                deaths.put(new Integer(killeeID), new Integer(lossez));
-            }
-            else  //adds the killee to the deaths hashmap if they are not there yet
-                deaths.put(new Integer(killeeID), new Integer(1));
-
-            if(!kills.containsKey(new Integer(killeeID)))         //adds killee to kills hashmap to make sure the bot doesn't mess up on db entry
-                kills.put(new Integer(killeeID), new Integer(0));
-            if(!deaths.containsKey(new Integer(killerID)))        //adds killer to deaths hashmap to make sure the bot doesn't mess up on db entry
-                deaths.put(new Integer(killerID), new Integer(0));
+            killerP.incrementKills( killeeID );
+            killedP.incrementDeaths();
 
             if(p.getLosses() >= elimDeaths) {
                 m_botAction.sendArenaMessage(m_botAction.getPlayerName(killeeID) + " is out. " + p.getWins() + " wins, " + p.getLosses() + " deaths.");
                 m_botAction.specWithoutLock(killeeID);
-                players.remove(new Integer(killeeID));
+                killedP.setPlayingStatus(false);
                 showScoreCard( killeeID, true );
 
                 if( p.getWins() >= mvpKills && p.getWins() > 1 ) {
@@ -391,22 +414,34 @@ public class roboreplacement extends SubspaceBot
                 }
             }
 
-            if(players.size() == 1 ) {
-                doGameOver( killerID );
+            int numPlayersStillPlaying = 0;
+            for( ElimPlayer p2 : players.values() ) {
+                if( p2.isPlaying() ) {
+                    numPlayersStillPlaying++;
+                }
+            }
+            if( gameStatus == STATUS_PLAYING ) {
+                if( numPlayersStillPlaying == 1 ) {
+                    doGameOver( killerID );
+                }
             }
 
-            lastDeaths.put(new Integer(p.getPlayerID()), new Integer(((int)(System.currentTimeMillis() / 1000 % 30))));
+            //lastDeaths.put(new Integer(p.getPlayerID()), new Integer(((int)(System.currentTimeMillis() / 1000 % 30))));
         }
     }
 
+    public void showScoreCard( int id, boolean isFinal ) {
+        showScoreCard( id, id, isFinal );
+    }
 
     /**
      * Displays scorecard to player once they're done.
      * @param id
      * @param isFinal True if this is the final scorecard
      */
-    public void showScoreCard( int id, boolean isFinal ) {
-        Player p = m_botAction.getPlayer(id);
+    public void showScoreCard( int id, int printid, boolean isFinal ) {
+        //Player p = m_botAction.getPlayer(id);
+        ElimPlayer p = players.get(id);
         if( p == null )
             return;
         /*
@@ -430,50 +465,54 @@ public class roboreplacement extends SubspaceBot
         else
             percentHits = 0;
         */
-        int kills = p.getWins();
-        int deaths = p.getLosses();
+        int kills = p.getKills();
+        int deaths = p.getDeaths();
         float ratio = ((float)Math.max(1, kills)) / ((float)Math.max(1, deaths));
         java.text.NumberFormat ratioFormat = java.text.NumberFormat.getNumberInstance();
         ratioFormat.setMaximumFractionDigits(2);
         String ratioString = ratioFormat.format(ratio) + ":1";
         // [Final Scorecard]  10-2  (5.0:1 ratio)    Hits: 10   Misses: 490   Accuracy: 90%
-        m_botAction.sendPrivateMessage( id, "[" + (isFinal?"Final ":"Current ") + "Scorecard]  " + kills + "-" + deaths + "   (" + ratioString + ")" );
-               //"Hits: " + hits + "   Misses: " + misses + "   Accuracy: " + (int)(percentHits * 100.0f) + "%" );
+
+        String scorecard = "[" + ( printid == id ? "":(p.getName() + "'s ") ) +
+                           (isFinal?"Final ":"Current ") + "Scorecard]  " + kills + "-" + deaths + "   (" + ratioString + ")" +
+                           (!isFinal ? "Streak: " + p.getStreak() : "");
+                   //"Hits: " + hits + "   Misses: " + misses + "   Accuracy: " + (int)(percentHits * 100.0f) + "%" );
+        m_botAction.sendPrivateMessage( printid, scorecard );
     }
 
 
     public void handleEvent(PlayerLeft event)
     {
-        if(players.contains(new Integer(event.getPlayerID()))) //removes player from list of players
-            players.remove(new Integer(event.getPlayerID()));
+        int pid = event.getPlayerID();
+        players.remove( pid );
 
-        //makes sure db entry goes smoothly by putting the person on both HashMaps if he/she isn't on them yet
-        if(!deaths.containsKey(new Integer(event.getPlayerID())))
-            deaths.put(new Integer(event.getPlayerID()), new Integer(0));
-        if(!kills.containsKey(new Integer(event.getPlayerID())))
-            kills.put(new Integer(event.getPlayerID()), new Integer(0));
+        if( gameStatus == STATUS_PLAYING ) {
+            int numPlayersStillPlaying = 0;
+            ElimPlayer potentialWinner = null;
+            for( ElimPlayer p2 : players.values() )
+                if( p2.isPlaying() ) {
+                    potentialWinner = p2;
+                    numPlayersStillPlaying++;
+                }
 
-        if(players.size() == 1 && gameStatus == STATUS_PLAYING )
-        {
-            Iterator<Integer> i = players.iterator();
-            int pID = i.next().intValue();
-            doGameOver( pID );
+            if( numPlayersStillPlaying == 1 && potentialWinner != null ) {
+                doGameOver( potentialWinner.getID() );
+            }
+            // Cancel game if for some reason nobody is left.
+            if( numPlayersStillPlaying == 0 ) {
+                m_botAction.sendArenaMessage("Game has been cancelled.  I win.", 1);
+                locked = false;
+                m_botAction.toggleLocked();
+                gameStatus = STATUS_WAITINGFORPLAYERS;
+                clearAllPlayers();
+            }
         }
-        // Cancel game if for some reason nobody is left.
-        if( players.size() == 0 && gameStatus == STATUS_PLAYING ) {
-            m_botAction.sendArenaMessage("Game has been cancelled.  I win.", 1);
-            locked = false;
-            m_botAction.toggleLocked();
-            gameStatus = STATUS_WAITINGFORPLAYERS;
-        }
-        m_botAction.sendUnfilteredPrivateMessage( event.getPlayerID(), "*watchdamage" );
+        //m_botAction.sendUnfilteredPrivateMessage( event.getPlayerID(), "*watchdamage" );
         checkPreGamePlayerStatus();
     }
 
 
     /**
-     * Counts number of hits.
-     */
     public void handleEvent( WatchDamage event ) {
         int id = event.getAttacker();
         Integer hits = bulletsHit.get(id);
@@ -484,9 +523,6 @@ public class roboreplacement extends SubspaceBot
 
     }
 
-    /**
-     * Counts (approximate) number of bullets fired.
-     */
     public void handleEvent( WeaponFired event ) {
         int id = event.getPlayerID();
         Integer fired = bulletsFired.get(id);
@@ -495,6 +531,7 @@ public class roboreplacement extends SubspaceBot
         else
             bulletsFired.put(id, (fired+1));
     }
+    */
 
     /**
      * Begins the next game.
@@ -504,15 +541,13 @@ public class roboreplacement extends SubspaceBot
         if( !checkPreGamePlayerStatus() )
             return;
 
-        TimerTask startGame = new TimerTask() {
+        TimerTask prepGame = new TimerTask() {
             public void run() {
                 if( !checkPreGamePlayerStatus() )
                     return;
-
-                Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
-                while(i.hasNext()) {
-                    Player p = i.next();
-                    players.add(new Integer(p.getPlayerID()));
+                for( Player p : m_botAction.getPlayingPlayers() ) {
+                    if( !players.containsKey(p.getPlayerID()) )
+                        players.put( (int)p.getPlayerID(), new ElimPlayer(p.getPlayerID()) );
                 }
 
                 locked = true;
@@ -529,17 +564,27 @@ public class roboreplacement extends SubspaceBot
                     m_botAction.changeAllShips(elimShip);
 
                 m_botAction.createRandomTeams(1);
+                m_botAction.sendArenaMessage( "Next round begins in 15 seconds ...", 104);
+            }
+        };
+        m_botAction.scheduleTask(prepGame, 30 * 1000);
+
+        TimerTask startGame = new TimerTask() {
+            public void run() {
+                if( !checkPreGamePlayerStatus() )
+                    return;
+
                 m_botAction.sendArenaMessage( ships[elimShip] + " Elim to " + elimDeaths + " has begun.  GO! GO! GO!!", 104);
                 m_botAction.sendUnfilteredPublicMessage("*scorereset");
-                lastDeaths.clear();
-                bulletsFired.clear();
-                bulletsHit.clear();
+                //lastDeaths.clear();
+                //bulletsFired.clear();
+                //bulletsHit.clear();
                 mvp = "";
                 mvpKills = 0;
                 gameStatus = STATUS_PLAYING;
             }
         };
-        m_botAction.scheduleTask(startGame, 30 * 1000);
+        m_botAction.scheduleTask(startGame, 45 * 1000);
     }
 
 
@@ -584,7 +629,7 @@ public class roboreplacement extends SubspaceBot
                 gameStatus = STATUS_AFTERVOTE;
                 elimDeaths = countVotes(true); //tallies the votes
                 m_botAction.sendArenaMessage(ships[elimShip] + " elim to " + elimDeaths + "  " + (numVotes==-1 ? "(default)" : "(" + numVotes + " votes)"));
-                m_botAction.sendArenaMessage("Enter if playing.  Game begins in 30 seconds ...");
+                m_botAction.sendArenaMessage("Enter if playing.");
                 nextgame();
             }
         };
@@ -689,8 +734,8 @@ public class roboreplacement extends SubspaceBot
         showScoreCard( winnerID, true );
         mvp = "";
         mvpKills = 0;
-        bulletsFired.clear();
-        bulletsHit.clear();
+        //bulletsFired.clear();
+        //bulletsHit.clear();
         locked = false;
         m_botAction.toggleLocked();
         gameStatus = STATUS_ENDGAME;
@@ -855,5 +900,122 @@ public class roboreplacement extends SubspaceBot
 
     public void cancel()
     {
+    }
+
+
+    private void clearAllPlayers() {
+        for( ElimPlayer p : players.values() )
+            p.resetPlayer();
+    }
+
+    private class ElimPlayer {
+        int id;
+        String name;
+        int kills;
+        int deaths;
+        int streak;
+        int[] killedIDs = {-1,-1,-1};
+        double lastKillTime;
+        boolean isPlaying;
+
+        public ElimPlayer( int id ) {
+            this.id = id;
+            name = m_botAction.getPlayerName(id);
+            if( name == null )
+                name = "(Anonymous)";
+            kills = 0;
+            deaths = 0;
+            streak = 0;
+            lastKillTime = 0;
+            isPlaying = true;
+        }
+
+        public void resetPlayer() {
+            kills = 0;
+            deaths = 0;
+            streak = 0;
+            lastKillTime = 0;
+            isPlaying = true;
+            for( int i=0; i<killedIDs.length; i++ )
+                killedIDs[i] = -1;
+        }
+
+        public void setPlayingStatus( boolean status ) {
+            isPlaying = status;
+        }
+
+        public void incrementKills( int idKilled ) {
+            kills++;
+            killedIDs[2] = killedIDs[1];
+            killedIDs[1] = killedIDs[0];
+            killedIDs[0] = idKilled;
+
+            if( lastKillTime + 100 >= System.currentTimeMillis() )
+                m_botAction.sendArenaMessage( name + " - 2fer! (what a deal)" );
+            else if( lastKillTime + 4000 >= System.currentTimeMillis() )
+                m_botAction.sendArenaMessage( name + " - Double kill" );
+            else if( killedIDs[2] == killedIDs[1] && killedIDs[1] == killedIDs[0] && killedIDs[0] != -1 ) {
+                Player p = m_botAction.getPlayer(idKilled);
+                if( p != null ) {
+                    m_botAction.sendArenaMessage( name + " is dominating " + p.getPlayerName() + "!" );
+                    for( int i=0; i<killedIDs.length; i++ )
+                        killedIDs[i] = -1;
+                }
+            }
+
+            lastKillTime = System.currentTimeMillis();
+        }
+
+        public void incrementDeaths() {
+            deaths++;
+            streak = 0;
+            for( int i=0; i<killedIDs.length; i++ )
+                killedIDs[i] = -1;
+        }
+
+        public void incrementStreak() {
+            streak++;
+            String msg = "";
+            switch( streak ) {
+                case 4: msg = "On fire!"; break;
+                case 8: msg = "Owning!"; break;
+                case 15: msg = "MFing Vet!"; break;
+                case 25: msg = "Cheating!"; break;
+                case 50: msg = "WTF?!"; break;
+                case 100: msg = "Call a mod"; break;
+            }
+
+            if( !msg.equals("") ) {
+                m_botAction.sendArenaMessage( name + " - " + msg + " (" + streak + " kills)" );
+            }
+        }
+
+        public int getID() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public boolean isPlaying() {
+            return isPlaying;
+        }
+
+        public int getKills() {
+            return kills;
+        }
+
+        public int getDeaths() {
+            return deaths;
+        }
+
+        public int getStreak() {
+            return streak;
+        }
+
+        public double getLastKillTime() {
+            return lastKillTime;
+        }
     }
 }
