@@ -1235,6 +1235,7 @@ public class logbot extends SubspaceBot {
     			m_botAction.scheduleTask(ArenaCheck, 2000, 30000);
     			m_botAction.sendChatMessage(1, "Respawn of " + entity + " sucessful, " +
     					"resuming arena monitoring operations.");
+    			resume = false;
     		}else
     			waitReply.cancel();
     		logEvent( "Slave " + entity + " acquired!" );
@@ -1513,10 +1514,10 @@ public class logbot extends SubspaceBot {
                     			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena! Ask : " + owner + " and he may invite you.");
                     			if ( m_bounceDestination.equals( ":kill:" ) ) {
                     			    m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
-                    			    logEvent ( "Intruder " + playerName + " was kicked from " + arena + ". (DC'd)");
+                    			    logEvent ( "Intruder " + playerName + " was kicked from " + owner + "'s " + arena + ". (DC'd)");
                     			} else {
                     			    m_botAction.sendUnfilteredPrivateMessage(playerName, sendtoCmd + " " + m_bounceDestination);
-                    			    logEvent ( "Intruder " + playerName + " was kicked from " + arena + ". (relocated)");
+                    			    logEvent ( "Intruder " + playerName + " was kicked from " + owner + "'s " + arena + ". (relocated)");
                     			}
                     			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena " + arena + " and was removed." );
                     		}
