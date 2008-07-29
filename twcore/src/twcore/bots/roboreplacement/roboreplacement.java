@@ -470,7 +470,13 @@ public class roboreplacement extends SubspaceBot
         */
         int kills = p.getKills();
         int deaths = p.getDeaths();
-        float ratio = ((float)Math.max(1, kills)) / ((float)Math.max(1, deaths));
+        float ratio;
+        if( kills == 0 )
+            ratio = 0;
+        else if( deaths == 0 )
+            ratio = kills;
+        else
+            ratio = ((float)Math.max(1, kills)) / ((float)Math.max(1, deaths));
         java.text.NumberFormat ratioFormat = java.text.NumberFormat.getNumberInstance();
         ratioFormat.setMaximumFractionDigits(2);
         String ratioString = ratioFormat.format(ratio) + ":1";
@@ -567,17 +573,17 @@ public class roboreplacement extends SubspaceBot
                     m_botAction.changeAllShips(elimShip);
 
                 m_botAction.createRandomTeams(1);
-                m_botAction.sendArenaMessage( "Next round begins in 15 seconds ...", 104);
+                m_botAction.sendArenaMessage( "Next round begins in 15 seconds ...", Tools.Sound.BEEP2 );
             }
         };
-        m_botAction.scheduleTask(prepGame, 30 * 1000);
+        m_botAction.scheduleTask(prepGame, 25 * 1000);
 
         TimerTask startGame = new TimerTask() {
             public void run() {
                 if( !checkPreGamePlayerStatus() )
                     return;
 
-                m_botAction.sendArenaMessage( ships[elimShip] + " Elim to " + elimDeaths + " has begun.  GO! GO! GO!!", 104);
+                m_botAction.sendArenaMessage( ships[elimShip] + " Elim to " + elimDeaths + " has begun.  GO! GO! GO!!", Tools.Sound.GOGOGO);
                 m_botAction.sendUnfilteredPublicMessage("*scorereset");
                 //lastDeaths.clear();
                 //bulletsFired.clear();
@@ -587,7 +593,7 @@ public class roboreplacement extends SubspaceBot
                 gameStatus = STATUS_PLAYING;
             }
         };
-        m_botAction.scheduleTask(startGame, 45 * 1000);
+        m_botAction.scheduleTask(startGame, 40 * 1000);
     }
 
 
@@ -624,7 +630,7 @@ public class roboreplacement extends SubspaceBot
                 gameStatus = STATUS_DEATHVOTING;
             }
         };
-        m_botAction.scheduleTask(shipVote, 20 * 1000); //schedules the end of the vote
+        m_botAction.scheduleTask(shipVote, 25 * 1000); //schedules the end of the vote
 
         deathVoting = new TimerTask() {
             public void run() {
@@ -637,7 +643,7 @@ public class roboreplacement extends SubspaceBot
                 nextgame();
             }
         };
-        m_botAction.scheduleTask(deathVoting, 40 * 1000); //schedules the end of the death vote and calls nextgame() to start the elim game
+        m_botAction.scheduleTask(deathVoting, 50 * 1000); //schedules the end of the death vote and calls nextgame() to start the elim game
     }
 
 
