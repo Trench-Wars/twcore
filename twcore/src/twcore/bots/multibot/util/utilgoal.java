@@ -72,8 +72,10 @@ public class utilgoal extends MultiUtil {
 	  */
 	 
 	 public void handleEvent(BallPosition event)	{
+		 try	{
 		 if (event.getCarrier() != -1)
 			 ballcarrier = event.getCarrier();
+		 }	catch(Exception e){}
 	 }
 	 
 	 /**
