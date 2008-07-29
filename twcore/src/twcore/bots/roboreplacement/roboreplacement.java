@@ -177,8 +177,11 @@ public class roboreplacement extends SubspaceBot
                 p.setPlayingStatus(true);
         }
         if( p != null && event.getShipType() == 0 ) {
-            p.setPlayingStatus(false);
-            showScoreCard(p.getID(), true);
+            if( p.isPlaying() ) {
+                p.setPlayingStatus(false);
+                if( gameStatus == STATUS_PLAYING )
+                    showScoreCard(p.getID(), true);
+            }
         }
 
         int numPlayersStillPlaying = 0;
@@ -389,9 +392,9 @@ public class roboreplacement extends SubspaceBot
 
             if(p.getLosses() >= elimDeaths) {
                 m_botAction.sendArenaMessage(m_botAction.getPlayerName(killeeID) + " is out. " + p.getWins() + " wins, " + p.getLosses() + " deaths.");
-                m_botAction.specWithoutLock(killeeID);
                 killedP.setPlayingStatus(false);
                 showScoreCard( killeeID, true );
+                m_botAction.specWithoutLock(killeeID);
 
                 if( p.getWins() >= mvpKills && p.getWins() > 1 ) {
                     boolean realMVP = true;
