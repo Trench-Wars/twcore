@@ -278,7 +278,7 @@ public class roboreplacement extends SubspaceBot
         playerID = event.getPlayerID();
         return m_botAction.getPlayerName(playerID);
     }
-    
+
     /**
      * Simple command handler.
      * @param name
@@ -593,6 +593,7 @@ public class roboreplacement extends SubspaceBot
         if( !checkPreGamePlayerStatus() )
             return;
 
+        gameStatus = STATUS_SHIPVOTING;
         if(zone == true) //sends zoner for the game if it has been at least 15 minutes since the last zoner
         {
             zone = false;
@@ -953,7 +954,7 @@ public class roboreplacement extends SubspaceBot
             if( lastKillTime + 100 >= System.currentTimeMillis() )
                 m_botAction.sendArenaMessage( name + " - 2fer! (what a deal)" );
             else if( lastKillTime + 4000 >= System.currentTimeMillis() )
-                m_botAction.sendArenaMessage( name + " - Double kill" );
+                m_botAction.sendArenaMessage( name + " - Double kill!" );
             else if( killedIDs[2] == killedIDs[1] && killedIDs[1] == killedIDs[0] && killedIDs[0] != -1 ) {
                 Player p = m_botAction.getPlayer(idKilled);
                 if( p != null ) {
@@ -964,16 +965,7 @@ public class roboreplacement extends SubspaceBot
             }
 
             lastKillTime = System.currentTimeMillis();
-        }
 
-        public void incrementDeaths() {
-            deaths++;
-            streak = 0;
-            for( int i=0; i<killedIDs.length; i++ )
-                killedIDs[i] = -1;
-        }
-
-        public void incrementStreak() {
             streak++;
             String msg = "";
             switch( streak ) {
@@ -988,6 +980,13 @@ public class roboreplacement extends SubspaceBot
             if( !msg.equals("") ) {
                 m_botAction.sendArenaMessage( name + " - " + msg + " (" + streak + " kills)" );
             }
+        }
+
+        public void incrementDeaths() {
+            deaths++;
+            streak = 0;
+            for( int i=0; i<killedIDs.length; i++ )
+                killedIDs[i] = -1;
         }
 
         public int getID() {
