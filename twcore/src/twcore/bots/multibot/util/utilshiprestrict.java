@@ -189,18 +189,17 @@ public class utilshiprestrict extends MultiUtil {
 		StringTokenizer argTokens = getArgTokens(argString,",");
 	    int numArgs = argTokens.countTokens();
 	    try	{
-	    	StringBuilder strmsg = new StringBuilder("The following players are now exempt : ");
+	    	StringBuilder strmsg = new StringBuilder("The following players have been added to the exempt list : ");
 	    	for (int i=0;i<numArgs;i++)	{
 	    		String name = argTokens.nextToken();
-	    		if (IsValidPlayer(name))
-	    			if (!IsExempt(name))	{
+	    		if (IsValidPlayer(name))	{
+	    			if (!IsExempt(name))
 	    				Exmpt.add(name);
-	    				strmsg.append(name + ", ");
-	    			}
+	    			strmsg.append(name + ", ");
+	    		}
 	    	}
 	    	m_botAction.sendSmartPrivateMessage(sender, strmsg.toString());
-	    }
-	    catch(Exception e)	{
+	    }	catch(Exception e)	{
 	        m_botAction.sendSmartPrivateMessage(sender, "Please use vaild player names in the following syntax: !setExcepts <name1>,<name2>..ect");
 	      }
 	    }

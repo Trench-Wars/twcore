@@ -158,7 +158,7 @@ public class logbot extends SubspaceBot {
 	  		{RespawnSlave();}
 	      };
 	     waiting = true;
-	     m_botAction.scheduleTask(waitReply, 2000);
+	     m_botAction.scheduleTask(waitReply, 10000);
     }
     
     /**
@@ -443,7 +443,7 @@ public class logbot extends SubspaceBot {
 	    }
 	    String files = fileNames.toString();
 	    m_botAction.sendSmartPrivateMessage(sender, "Restricted files are now: " + files);
-	    logEvent ( sender + "- Restrictions changed: " + files );
+	    logEvent ( sender + " - Restrictions changed: " + files );
     }
     
     /**
@@ -469,7 +469,7 @@ public class logbot extends SubspaceBot {
     		{m_botAction.sendSmartPrivateMessage(sender,"There are no restricted files.");return;}
     	fileNames.clear();
     	m_botAction.sendSmartPrivateMessage(sender, "Restricted file list cleared");
-    	logEvent ( sender + "- Restrictions changed: " + fileNames.toString() );
+    	logEvent ( sender + " - Restrictions changed: Files cleared" );
     }
     
     /**
@@ -495,7 +495,7 @@ public class logbot extends SubspaceBot {
 		    guarded.put(arena, new Watched_Arena(arena,sender));
 		    m_botAction.sendSmartPrivateMessage(sender, arena + " and all related files are now monitored");
 		    
-		    logEvent ( sender + "- Arena monitoring changed: Arena added -" + arena );
+		    logEvent ( sender + " - Arena monitoring changed: Arena added - " + arena );
 	    }
     }
     
@@ -523,7 +523,7 @@ public class logbot extends SubspaceBot {
 	    	guarded.remove(arena);
 		    m_botAction.sendSmartPrivateMessage(sender, arena + " is no longer monitored");
 		    
-		    logEvent ( sender + "- Arena monitoring changed: arena removed -" + arena );
+		    logEvent ( sender + " - Arena monitoring changed: arena removed - " + arena );
 	    }
     }
     
@@ -713,6 +713,9 @@ public class logbot extends SubspaceBot {
     	if (!logging)	{
     		m_botAction.sendSmartPrivateMessage(sender, "Nothing is being logged!");
     		return;
+    	}	if (resume)	{
+    		RespawnTask.cancel();
+    		resume = false;
     	}
     	logCheck.cancel();
     	ArenaCheck.cancel();
@@ -1192,7 +1195,7 @@ public class logbot extends SubspaceBot {
     					}
     					else	{
     						m_botAction.sendChatMessage(1, playerName + " denied request for " + arena.myArena + " to be monitored as he/she is not the owner");
-    						m_botAction.sendChatMessage(1, playerName + " denied request to add " + arena.myArena + "as a monitored arena without ownership");
+    						logEvent( playerName + " denied request to add " + arena.myArena + "as a monitored arena without ownership" );
     						temp.delete();
     						guarded.remove(arenaName);
     					}
@@ -1514,12 +1517,12 @@ public class logbot extends SubspaceBot {
                     			m_botAction.sendSmartPrivateMessage( playerName, "You are not allowed in this arena! Ask : " + owner + " and he may invite you.");
                     			if ( m_bounceDestination.equals( ":kill:" ) ) {
                     			    m_botAction.sendUnfilteredPrivateMessage(playerName,"*kill");
-                    			    logEvent ( "Intruder " + playerName + " was kicked from " + owner + "'s " + arena + ". (DC'd)");
+                    			    logEvent ( "Intruder " + playerName + " was kicked from " + owner + "'s arena: " + arena + ". (DC'd)");
                     			} else {
                     			    m_botAction.sendUnfilteredPrivateMessage(playerName, sendtoCmd + " " + m_bounceDestination);
-                    			    logEvent ( "Intruder " + playerName + " was kicked from " + owner + "'s " + arena + ". (relocated)");
+                    			    logEvent ( "Intruder " + playerName + " was kicked from " + owner + "'s arena: " + arena + ". (relocated)");
                     			}
-                    			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena " + arena + " and was removed." );
+                    			m_botAction.sendChatMessage(1, playerName + " encroached on " + owner + "'s arena: " + arena + " and was removed." );
                     		}
                     	}
             		}

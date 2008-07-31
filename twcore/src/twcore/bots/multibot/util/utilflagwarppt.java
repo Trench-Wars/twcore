@@ -23,14 +23,17 @@ import twcore.core.util.ModuleEventRequester;
  */
 
 public class utilflagwarppt extends MultiUtil {
-	ArrayList<Integer> harvested;
-	Integer gdex;
-	HashMap<Integer,ArrayList<Integer>> groups;
-	HashMap<Integer,Holding_Freq> freqs;
-	HashMap<String,Warp_Point> points;
-	int explorer;
-	boolean exploring;
-	Random generator = new Random();
+	
+	public ArrayList<Integer> harvested;
+	public HashMap<Integer,ArrayList<Integer>> groups;
+	public HashMap<Integer,Holding_Freq> freqs;
+	public HashMap<String,Warp_Point> points;
+	public Integer gdex;
+	public int explorer;
+	public boolean exploring;
+	
+	public String claimedmsg = null;
+	public String contestedmsg = null;
 
 	public utilflagwarppt ()	{
 
@@ -337,7 +340,9 @@ public class utilflagwarppt extends MultiUtil {
 			while (wppts.hasNext())	{
 				Warp_Point currentwp = wppts.next();
 				m_botAction.sendPrivateMessage(sender,
-						currentwp.m_Name + " is currently held by " + currentwp.m_Holder);
+						currentwp.m_Name + " is currently held by " 
+						+ (currentwp.getHolder() ==-1 ?
+								"none" : currentwp.getHolder()) );
 			}
 		}
 	}
@@ -362,9 +367,59 @@ public class utilflagwarppt extends MultiUtil {
 			Integer flag = flags.next();
 			m_botAction.grabFlag(flag);
 		}
-
+		
+		freqs.clear();
+		Iterator<Warp_Point>wrppts = points.values().iterator();
+		while (wrppts.hasNext())	{
+			Warp_Point tmpwppt = wrppts.next();
+			tmpwppt.m_Holder = -1;
+		}
+		
 		m_botAction.getShip().setShip(8);
 		m_botAction.sendPrivateMessage(sender, "Flags released from all ownership.");
+	}
+	
+	/**
+	 * Adds a 'claimed' message for a warp point
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param argString is the message to be implemented.
+	 */
+	
+	public void doClaimedMsg( String sender, String argString )	{
+		if (argString.equals("~*"))
+			claimedmsg = null;
+		else	{
+			claimedmsg = argString;
+			m_botAction.sendPrivateMessage(sender, 
+					"Warp point claimed message is now : " + claimedmsg);
+		}
+			
+	}
+	
+	/**
+	 * Adds a 'contested' message for a warp point under duress
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param argString is the message to be implemented.
+	 */
+	
+	public void doContestedMsg( String sender, String argString )	{
+		if (argString.equals("~*"))
+			contestedmsg = null;
+		else	{
+			contestedmsg = argString;
+			m_botAction.sendPrivateMessage(sender, 
+					"Warp point contested message is now : " + contestedmsg);
+		}
+		
+	}
+	
+	public void doListMsgs( String sender )	{
+		m_botAction.sendPrivateMessage(sender, "Warp point gained message is: " 
+				+ (claimedmsg == null ? "none" : claimedmsg));
+		m_botAction.sendPrivateMessage(sender, "Warp point contested message is: " 
+				+ (contestedmsg == null ? "none" : contestedmsg));
 	}
 
 	/**
@@ -379,7 +434,8 @@ public class utilflagwarppt extends MultiUtil {
 		Iterator value = list.values().iterator();
 
 		while (key.hasNext())	{
-			m_botAction.sendPrivateMessage(sender,key.next().toString() + " -[|   " + value.next().toString() + "   |]");
+			m_botAction.sendPrivateMessage(sender,key.next().toString() 
+					+ " -[|   " + value.next().toString() + "   |]");
 		}
 	}
 
@@ -437,13 +493,38 @@ public class utilflagwarppt extends MultiUtil {
 					&& !freq.containsWrpp(wppt.m_Name))	{
 				freq.addWrpp(wppt.m_Name);
 				wppt.setHolder(freq.m_Freq);
+				WarpptMsg(freq.m_Freq,wppt.m_Name,claimedmsg);
 				notifyFreq(freq.m_Freq, wppt.m_Name,true);
 			}
 			else if (!wppt.hasFlags(freq.m_Flags)
 					&& freq.containsWrpp(wppt.m_Name))	{
+				wppt.setHolder(-1);
 				freq.removeWrpp(wppt.m_Name);
+				if ( wppt.m_Ids.size() > 1)
+					WarpptMsg(freq.m_Freq,wppt.m_Name,contestedmsg);
 				notifyFreq(freq.m_Freq, wppt.m_Name,false);
 			}
+	}
+	
+	private void WarpptMsg(int freq, String wpptName,String message)	{
+		int soundpos;
+		
+		if (message == null)
+			return;
+		
+		try {
+			if ((soundpos = message.indexOf('%')) != -1)
+				m_botAction.sendArenaMessage(
+						"Freq " + freq + " " 
+						+ message.substring(0, soundpos) + wpptName
+						,Integer.parseInt(message.substring(soundpos+1)));
+			else
+				m_botAction.sendArenaMessage("Freq " + freq + " " 
+						+ message + " " + wpptName);
+		} catch (Exception e) 	{
+			m_botAction.sendArenaMessage("EX Freq " + freq + " " 
+					+ message + " " + wpptName);
+		}
 	}
 
 	/**
@@ -451,12 +532,12 @@ public class utilflagwarppt extends MultiUtil {
 	 * a contested point.
 	 *
 	 * @param freq is the freq to be notified.
-	 * @param wppt is the warp point gained/lost.
+	 * @param wpptName is the name of the warp point gained/lost.
 	 * @param obtained determines wither the the notification is
 	 * a loss or a gain,
 	 */
 
-	private void notifyFreq (Integer freq, String wppt, boolean obtained)	{
+	private void notifyFreq (Integer freq, String wpptName, boolean obtained)	{
 		Iterator<Player> freqPlayers = m_botAction.getFreqPlayerIterator(freq.intValue());
 		if (freqPlayers == null)
 			return;
@@ -468,12 +549,12 @@ public class utilflagwarppt extends MultiUtil {
 					m_botAction.sendPrivateMessage(
 							currentp.getPlayerName(),
 							"Your freq has control of the flags for "
-							+ wppt + " pm me !goto " + wppt + " to go there.");
+							+ wpptName + " pm me !goto " + wpptName + " to go there.");
 				else
 					m_botAction.sendPrivateMessage(
 							currentp.getPlayerName(),
 							"Your freq has lost control of the flags for "
-							+ wppt + "!");
+							+ wpptName + "!");
 		}
 
 	}
@@ -522,6 +603,10 @@ public class utilflagwarppt extends MultiUtil {
 		Integer flagID = new Integer ( event.getFlagID() );
 		int playerID = event.getPlayerID();
 		Integer rawFreq = new Integer ( m_botAction.getPlayer(playerID).getFrequency() );
+		
+		if (m_botAction.getPlayerName(playerID)
+				.equalsIgnoreCase(m_botAction.getBotName()))
+				return;
 
 		if (exploring && playerID == explorer)	{
 			harvested.add(flagID);
@@ -577,6 +662,12 @@ public class utilflagwarppt extends MultiUtil {
         	doAddGroupPoint(sender,message.substring(15));
         else if( message.startsWith( "!addpoint " ))
         	doAddPoint(sender,message.substring(10));
+        else if( message.startsWith( "!claimedmsg " ))
+        	doClaimedMsg(sender,message.substring(12));
+        else if( message.startsWith( "!contestedmsg " ))
+        	doContestedMsg(sender,message.substring(14));
+        else if( message.startsWith( "!listmsg" ))
+        	doListMsgs(sender);
         else if( message.startsWith( "!listpoints" ))
         	doListPoints(sender);
         else if( message.startsWith( "!removepoint " ))
@@ -638,6 +729,9 @@ public class utilflagwarppt extends MultiUtil {
 			"!ListPoints         - Lists all set warppts.",
 			"!RemovePoint        - Removes a point.",
 			"!ClearPoints        - Clears all set points.",
+			"!ClaimedMsg <msg>     - Adds an arena message for claimed warp points.",
+			"!ContestedMsg <msg> - Adds an arena message for contested warp points.",
+			"!ListMsg            - Lists current claimed and contested messages if any.",
 			"!Held               - Lists who's currently holding each point; -1 if no freq holds it.",
 			"!ReleaseFlags       - Releases flag ownership from all freqs.",
 			"=FLAGWARPPT=======================================================================FLAGWPPT="
@@ -651,9 +745,9 @@ public class utilflagwarppt extends MultiUtil {
      */
 
 	private class Holding_Freq	{
-		Integer m_Freq;
-		ArrayList<Integer> m_Flags;
-		ArrayList<String> m_Wrpp;
+		public Integer m_Freq;
+		public ArrayList<Integer> m_Flags;
+		public ArrayList<String> m_Wrpp;
 
 		public Holding_Freq (Integer freq)	{
 			m_Freq = freq;
@@ -692,11 +786,13 @@ public class utilflagwarppt extends MultiUtil {
 	 */
 
 	private class Warp_Point {
-		Integer m_Holder = -1;
-		ArrayList<Integer> m_Ids;
-		String m_Name;
-		int m_X,m_Y,m_R;
-		public Warp_Point(ArrayList<Integer> ids, String name, int xcoord, int ycoord, int radius)	{
+		public Integer m_Holder = -1;
+		public ArrayList<Integer> m_Ids;
+		public String m_Name;
+		public int m_X,m_Y,m_R;
+		
+		public Warp_Point(ArrayList<Integer> ids, 
+				String name, int xcoord, int ycoord, int radius)	{
 			m_Ids = ids;
 			m_Name = name;
 			m_X = xcoord;
