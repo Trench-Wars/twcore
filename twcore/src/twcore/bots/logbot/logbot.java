@@ -85,10 +85,9 @@ public class logbot extends SubspaceBot {
         events.request( EventRequester.PLAYER_ENTERED );
         events.request( EventRequester.FILE_ARRIVED );
         events.request( EventRequester.ARENA_LIST );
-        invitedPlayers.add( m_botAction.getBotName().toLowerCase() );
         invitedPlayers.add( hubBot.toLowerCase() );
         //Slaves are our friends! (Edited by fantus)
-        for (int i = 2; i <= maxBots; i++)
+        for (int i = 1; i <= maxBots; i++)
             invitedPlayers.add( m_botAction.getBotSettings().getString("Name" + i).toLowerCase() );
     }
 
@@ -1018,9 +1017,10 @@ public class logbot extends SubspaceBot {
     	
     	if(logging)
     		doStopLog(sender);
-    	if(entity != null)
+    	if(entity != null)	{
     		m_botAction.sendSmartPrivateMessage(entity, "!die");
-    	WriteDefinitions();
+    		WriteDefinitions();
+    	}
     	m_botAction.sendChatMessage(1,sender + " has told me to commit suicide - " + getTimeStamp());
     	logEvent( sender + " Has given me a a very sharp razor.");
     	m_botAction.scheduleTask(dieTask, 1000);
@@ -1118,10 +1118,12 @@ public class logbot extends SubspaceBot {
         waiting = true;
         m_opList = m_botAction.getOperatorList();
         logEvent( "Logged in as " + (enslaved? "Slave" : "Master") );
-        //Lets check if it is the master first (edited by fantus)
+        
         if (!enslaved && entity != null && auto == 1)	{
         	TimerTask DelayStart = new TimerTask()	{
 			public void run()	{
+				if (entity == null)
+					return;
 				doStartLog("Auto-Start");
 			}};m_botAction.scheduleTask(DelayStart, 120000);}
         
@@ -1404,6 +1406,18 @@ public class logbot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(sender, "                       kill                  Sends *kill (not recommended)");
             m_botAction.sendSmartPrivateMessage(sender, "                                             [Default action is: Kill on intrusion]");
     	}
+    }
+    
+    public void cancel()	{
+    	try {
+    		waitReply.cancel();
+        	logCheck.cancel();
+        	getLog.cancel();
+        	ArenaCheck.cancel();
+    	} catch (Exception e){
+    		System.err.println(e.getStackTrace());
+    	}
+    	
     }
     
     /**
