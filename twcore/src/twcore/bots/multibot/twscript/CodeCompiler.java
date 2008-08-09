@@ -1,4 +1,4 @@
-package twcore.core.util;
+package twcore.bots.multibot.twscript;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -9,6 +9,8 @@ import java.util.Iterator;
 
 import twcore.core.BotAction;
 import twcore.core.game.Player;
+import twcore.core.util.Tools;
+import twcore.core.util.Tools.Sound;
 
 /**
  * This class has nothing to do with compiling Java source; it merely compiles
@@ -51,7 +53,7 @@ public final class CodeCompiler {
     /**
      * Replaces key phrases for modules using custom unfiltered
      * public messages.
-     * @see twcore.bots.multibot.utils.utilcustom and utilhotspots
+     * @see twcore.bots.multibot.utils.custom and utilhotspots
      * @param bot - The BotAction object for the module using this method.
      * @param p - The Player object of the user receiving the message
      * @param message - The original message to be changed
@@ -124,7 +126,7 @@ public final class CodeCompiler {
     /**
      * Replaces key phrases for modules using custom unfiltered
      * private messages.
-     * @see twcore.bots.multibot.utils.utilcustom and utilhotspots
+     * @see twcore.bots.multibot.utils.custom and utilhotspots
      * @param bot - The BotAction object for the module using this method.
      * @param p - The Player object of the user receiving the message
      * @param message - The original message to be changed

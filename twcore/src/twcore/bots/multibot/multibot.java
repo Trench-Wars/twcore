@@ -37,6 +37,7 @@ public class multibot extends SubspaceBot {
     private OperatorList m_opList;
     private MultiModule m_eventModule;
     private String m_initialArena;
+    private String coreRoot;
     private String m_modulePath;
     private String m_utilPath;
     private String m_botChat;
@@ -57,7 +58,7 @@ public class multibot extends SubspaceBot {
 
     public void handleEvent(LoggedOn event) {
         BotSettings botSettings = m_botAction.getBotSettings();
-        String coreRoot = m_botAction.getGeneralSettings().getString(
+        coreRoot = m_botAction.getGeneralSettings().getString(
         "Core Location");
 
         m_initialArena = botSettings.getString("initialarena");
@@ -260,7 +261,7 @@ public class multibot extends SubspaceBot {
             else
                 foundCommand = false;
         } catch (RuntimeException e) {
-            m_botAction.sendSmartPrivateMessage(sender, e.getMessage() );
+            Tools.printStackTrace(e);
         }
         return foundCommand;
     }
@@ -555,8 +556,10 @@ public class multibot extends SubspaceBot {
                 Class<?> classmulti = m_loader.loadClass(getParentClass() + "." + lowerName + "." + lowerName);
                 m_eventModule = (MultiModule)classmulti.newInstance();
                 m_eventModule.initialize(m_botAction, moduleSettings, m_modEventReq);
+                if(module.equals("twscript"))
+                	loadTWScript();
                 if( !quiet )
-                    m_botAction.sendPrivateMessage(name, "Loaded game: " + m_eventModule.getModuleName() );
+                    m_botAction.sendPrivateMessage(name, "Loaded module: " + m_eventModule.getModuleName() );
             } catch (InstantiationException ie) {
                 throw new RuntimeException("Unknown problem encountered while attempting to load the module (module: "+module+", error: "+ie.getMessage()+"). Please contact a member of TW Bot Development.");
             } catch (IllegalAccessException iae) {
@@ -567,7 +570,7 @@ public class multibot extends SubspaceBot {
                 //NullPointerException can be thrown if classmulti.newInstance() can't instantiate the class
                 throw new RuntimeException("Unable to load module '"+module+"' (NullPointerException). Please contact a member of TW Bot Development.");
             }
-        } else {
+        }else {
             // Not a game module; try util instead
             try {
                 if (m_loader.shouldReload())
@@ -613,6 +616,8 @@ public class multibot extends SubspaceBot {
             if (!m_eventModule.isUnloadable())
                 throw new IllegalArgumentException("Module can not be unloaded at this time.  Please hang up and try your call again later.");
             m_botAction.sendSmartPrivateMessage(name, "Unloaded game: " + m_eventModule.getModuleName());
+            if(m_eventModule.getClass().getSimpleName().toLowerCase().equals("twscript"))
+            	unloadTWScript();
             unloadEventModule();
         } else {
             m_botAction.sendPrivateMessage( name, "Utility or game '" + module + "' not loaded.  (NOTE: names are case-sensitive.)  Use !loaded to see a list of loaded modules.");
@@ -873,6 +878,55 @@ public class multibot extends SubspaceBot {
         setChat(m_botChat);
     }
 
+    /**
+     * Loads the TWScript utilities.
+     */
+    private void loadTWScript() {
+    	try{
+    		File f = new File(coreRoot + "/twcore/bots/multibot/twscript");
+    		String[] l = f.list();
+    		for(int i=0;i<l.length;i++){
+    			l[i] = l[i].replace(".class", "");
+    			for(int z=0;z<l[i].length();z++)
+    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$' || l[i].contains("twscript"))
+    					l[i] = "";
+    		}
+    		for(int i=0;i<l.length;i++){
+    			if(!l[i].equals("")){
+    				MultiUtil util = (MultiUtil) m_loader.loadClass("twcore.bots.multibot.twscript." + l[i]).newInstance();
+    				util.initialize(m_botAction, m_modEventReq);
+    				m_utils.put(l[i], util);
+    			}
+    		}
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
+    }
+    
+    /**
+     * Unloads the TWScript utilities.
+     */
+    private void unloadTWScript() {
+    	try{
+    		File f = new File(coreRoot + "/twcore/bots/multibot/twscript");
+    		String[] l = f.list();
+    		for(int i=0;i<l.length;i++){
+    			l[i] = l[i].replace(".class", "");
+    			for(int z=0;z<l[i].length();z++)
+    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$' || l[i].contains("twscript"))
+    					l[i] = "";
+    		}
+    		for(int i=0;i<l.length;i++){
+    			if(m_utils.containsKey(l[i])){
+    				MultiUtil removedutil = m_utils.remove(l[i]);
+    	            removedutil.cancel();
+    			}
+    		}
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
+    }
+    
     /**
      * This method returns the name of the player who sent a message, regardless
      * of the message type. If there is no sender then null is returned.

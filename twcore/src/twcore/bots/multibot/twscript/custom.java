@@ -1,4 +1,4 @@
-package twcore.bots.multibot.util;
+package twcore.bots.multibot.twscript;
 
 import java.util.TreeMap;
 import java.util.ArrayList;
@@ -12,18 +12,16 @@ import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.util.Tools;
-import twcore.core.util.CodeCompiler;
 
 /**
  * @author milosh
  */
-public class utilcustom extends MultiUtil {
+public class custom extends MultiUtil {
     
     public OperatorList opList;
     public TreeMap<String, CustomCommand> commands;
     
     public String database = "website";
-    public boolean SMOD_OVERRIDE = false;
     
     /**
      * Initializes.
@@ -119,21 +117,6 @@ public class utilcustom extends MultiUtil {
             do_describe(name, cmd.substring(10));
         if (cmd.equalsIgnoreCase("!loadcmds"))
             do_loadCommands(name);
-        if (cmd.equalsIgnoreCase("!smodlogin"))
-            do_smodOverride(name);
-    }
-    
-    public void do_smodOverride(String name){
-        if(opList.isSmod(name)){
-            if(SMOD_OVERRIDE){
-                SMOD_OVERRIDE = false;
-                m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
-            } else {
-                SMOD_OVERRIDE = true;
-                m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
-            }
-        }else
-            m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
     }
     
     /**
@@ -341,7 +324,7 @@ public class utilcustom extends MultiUtil {
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
             while (it.hasNext())
-                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, SMOD_OVERRIDE);
+                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, twscript.isSmod);
         }
     }
     

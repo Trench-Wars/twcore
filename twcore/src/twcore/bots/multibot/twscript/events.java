@@ -1,4 +1,4 @@
-package twcore.bots.multibot.util;
+package twcore.bots.multibot.twscript;
 
 import java.util.TreeMap;
 import java.util.Iterator;
@@ -9,24 +9,25 @@ import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.events.BallPosition;
 import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
 import twcore.core.events.WeaponFired;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.FlagDropped;
 import twcore.core.game.Player;
 import twcore.core.EventRequester;
-import twcore.core.util.CodeCompiler;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 
 /**
  * @author milosh
  */
-public class utilevents extends MultiUtil {
+public class events extends MultiUtil {
     
     public OperatorList opList;
     public static final int SPAWN_TIME = 5005;
     
     //The lists.
+    public ArrayList<String> greetMsgs = new ArrayList<String>();
     public ArrayList<String> killMsgs = new ArrayList<String>();
     public ArrayList<String> spawnMsgs = new ArrayList<String>();
     public ArrayList<String> weapMsgs = new ArrayList<String>();
@@ -34,9 +35,9 @@ public class utilevents extends MultiUtil {
     public ArrayList<String> fDropMsgs = new ArrayList<String>();
     public ArrayList<String> bClaimMsgs = new ArrayList<String>();
     public ArrayList<String> bFiredMsgs = new ArrayList<String>();
+    public ArrayList<String> timerMsgs = new ArrayList<String>();
     
     public TreeMap<Byte, Ball> ballMap = new TreeMap<Byte, Ball>();
-    public boolean SMOD_OVERRIDE = false;
     
     /**
      * Initializes.
@@ -54,6 +55,7 @@ public class utilevents extends MultiUtil {
         req.request(this, EventRequester.WEAPON_FIRED);
         req.request(this, EventRequester.FLAG_CLAIMED);
         req.request(this, EventRequester.FLAG_DROPPED);
+        req.request(this, EventRequester.PLAYER_ENTERED);
     }
     
     /**
@@ -64,6 +66,7 @@ public class utilevents extends MultiUtil {
                 "+---------------------- Events Utility ----------------------+",
                 "| !masspm <msg>     -- Sends a PM to everyone in the arena.  |",
                 "| !pub <msg>        -- Sends a public message.               |",
+                "| !greetmsg <msg>   -- Adds a greeting message.              |",
                 "| !killmsg <msg>    -- Adds a kill message.                  |",
                 "| !spawnmsg <msg>   -- Adds a spawn message.                 |",
                 "| !weapmsg <msg>    -- Adds a weapon fired message.          |",
@@ -71,6 +74,7 @@ public class utilevents extends MultiUtil {
                 "| !fdropmsg <msg>   -- Adds a flag dropped message.          |",
                 "| !bclaimmsg <msg>  -- Adds a ball claimed message.          |",
                 "| !bfiredmsg <msg>  -- Adds a ball fired message.            |",
+                "| !timermsg <msg>   -- Adds a timer message.                |",
                 "| !listmsg          -- Lists all messages.                   |",
                 "| !delmsg <#>:<#>   -- Deletes message at index (#, #).      |",
                 "| !clearmsg <#>     -- Deletes all messages of type <#>.     |",
@@ -89,7 +93,14 @@ public class utilevents extends MultiUtil {
         String name = m_botAction.getPlayerName(event.getPlayerID());
         int messageType = event.getMessageType();
         if(messageType == Message.PRIVATE_MESSAGE && opList.isER(name))
-            handleCommand(name, message);   
+            handleCommand(name, message);
+        else if(messageType == Message.ARENA_MESSAGE && message.equals("NOTICE: Game over")){
+            Player p = m_botAction.getPlayer(event.getPlayerID());
+            if(p == null)return;
+            Iterator<String> i = timerMsgs.iterator();
+            while( i.hasNext() )
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);        	
+        }
     }
     
     /**
@@ -100,6 +111,8 @@ public class utilevents extends MultiUtil {
             doMassPm(name, msg.substring(8));
         else if(msg.startsWith("!pub "))
             doPub(name, msg.substring(5));
+        else if(msg.startsWith("!greetmsg "))
+        	doGreetMsg(name, msg.substring(10));
         else if(msg.startsWith("!killmsg "))
             doKillMsg(name, msg.substring(9));
         else if(msg.startsWith("!spawnmsg "))
@@ -114,6 +127,8 @@ public class utilevents extends MultiUtil {
             doBallClaimedMsg(name, msg.substring(11));
         else if(msg.startsWith("!bfiredmsg "))
             doBallFiredMsg(name, msg.substring(11));
+        else if(msg.startsWith("!timermsg "))
+        	doTimerMsg(name, msg.substring(10));
         else if(msg.equalsIgnoreCase("!listmsg"))
             doListMsg(name);
         else if(msg.startsWith("!delmsg "))
@@ -126,23 +141,8 @@ public class utilevents extends MultiUtil {
             m_botAction.privateMessageSpam(name, CodeCompiler.getPrivateKeysMessage());
         else if(msg.equalsIgnoreCase("!publickeys"))
             m_botAction.privateMessageSpam(name, CodeCompiler.getPublicKeysMessage());
-        else if(msg.equalsIgnoreCase("!smodlogin"))
-            doSmodOverride(name);
     }
-    
-    public void doSmodOverride(String name){
-        if(opList.isSmod(name)){
-            if(SMOD_OVERRIDE){
-                SMOD_OVERRIDE = false;
-                m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
-            } else {
-                SMOD_OVERRIDE = true;
-                m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
-            }
-        }else
-            m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
-    }
-    
+
     /**
      * Sends an unfiltered private message to everyone in the arena.
      * @param name - The user of the bot
@@ -151,7 +151,7 @@ public class utilevents extends MultiUtil {
     public void doMassPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, msg, i.next(), SMOD_OVERRIDE);
+            CodeCompiler.handlePrivateTWScript(m_botAction, msg, i.next(), twscript.isSmod);
     }
     
     /**
@@ -160,7 +160,20 @@ public class utilevents extends MultiUtil {
      * @param message - The message to send
      */
     public void doPub(String name, String message){
-        CodeCompiler.handlePublicTWScript(m_botAction, message, SMOD_OVERRIDE);
+        CodeCompiler.handlePublicTWScript(m_botAction, message, twscript.isSmod);
+    }
+    
+    /**
+     * Adds a message for arena entrance events.
+     * @param name - The user of the bot
+     * @param message - The message to send
+     */
+    public void doGreetMsg(String name, String message){
+        if(message.length() < 220){
+            greetMsgs.add(message);
+            m_botAction.sendSmartPrivateMessage( name, "Greet message added.");
+        } else
+            m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
     /**
@@ -255,15 +268,40 @@ public class utilevents extends MultiUtil {
     }
     
     /**
+     * Adds a message for timer events.
+     * @param name - The user of the bot
+     * @param message - The message to send
+     */
+    public void doTimerMsg(String name, String message){
+        if(message.length() < 220){
+            timerMsgs.add(message);
+            m_botAction.sendSmartPrivateMessage( name, "Timer message added.");
+        } else
+            m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
+    }
+    
+    /**
      * Displays a list of active messages
      * @param name - The user
      */
     public void doListMsg(String name){
         m_botAction.sendSmartPrivateMessage( name, "+---------------------Message List----------------------");
-        if(killMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 0) Kill: NONE");
+        if(greetMsgs.isEmpty())
+            m_botAction.sendSmartPrivateMessage( name, "| 0) Greet: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 0) Kill: " + killMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 0) Greet: " + greetMsgs.size());
+            int index = 0;
+            Iterator<String> i = greetMsgs.iterator();
+            while( i.hasNext() ){
+                String s = i.next();
+                m_botAction.sendSmartPrivateMessage( name, "|     - " + index + ") " + s);
+                index++;
+            }    
+        }
+        if(killMsgs.isEmpty())
+            m_botAction.sendSmartPrivateMessage( name, "| 1) Kill: NONE");
+        else{
+            m_botAction.sendSmartPrivateMessage( name, "| 1) Kill: " + killMsgs.size());
             int index = 0;
             Iterator<String> i = killMsgs.iterator();
             while( i.hasNext() ){
@@ -273,9 +311,9 @@ public class utilevents extends MultiUtil {
             }    
         }
         if(spawnMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 1) Spawn: NONE");
+            m_botAction.sendSmartPrivateMessage( name, "| 2) Spawn: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 1) Spawn: " + spawnMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 2) Spawn: " + spawnMsgs.size());
             int index = 0;
             Iterator<String> i = spawnMsgs.iterator();
             while( i.hasNext() ){
@@ -285,9 +323,9 @@ public class utilevents extends MultiUtil {
             } 
         }
         if(weapMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 2) Weapon Fired: NONE");
+            m_botAction.sendSmartPrivateMessage( name, "| 3) Weapon Fired: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 2) Weapon Fired: " + weapMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 3) Weapon Fired: " + weapMsgs.size());
             int index = 0;
             Iterator<String> i = weapMsgs.iterator();
             while( i.hasNext() ){
@@ -297,9 +335,9 @@ public class utilevents extends MultiUtil {
             }
         }
         if(fClaimMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 3) Flag Claimed: NONE");
+            m_botAction.sendSmartPrivateMessage( name, "| 4) Flag Claimed: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 3) Flag Claimed: " + fClaimMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 4) Flag Claimed: " + fClaimMsgs.size());
             int index = 0;
             Iterator<String> i = fClaimMsgs.iterator();
             while( i.hasNext() ){
@@ -309,9 +347,9 @@ public class utilevents extends MultiUtil {
             }
         }
         if(fDropMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 4) Flag Dropped: NONE");
+            m_botAction.sendSmartPrivateMessage( name, "| 5) Flag Dropped: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 4) Flag Dropped: " + fDropMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 5) Flag Dropped: " + fDropMsgs.size());
             int index = 0;
             Iterator<String> i = fDropMsgs.iterator();
             while( i.hasNext() ){
@@ -321,9 +359,9 @@ public class utilevents extends MultiUtil {
             }
         }
         if(bClaimMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 5) Ball Claimed: NONE");
+            m_botAction.sendSmartPrivateMessage( name, "| 6) Ball Claimed: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 5) Ball Claimed: " + bClaimMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 6) Ball Claimed: " + bClaimMsgs.size());
             int index = 0;
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() ){
@@ -333,9 +371,9 @@ public class utilevents extends MultiUtil {
             }
         }
         if(bFiredMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 6) Ball Fired: NONE");
+            m_botAction.sendSmartPrivateMessage( name, "| 7) Ball Fired: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 6) Ball Fired: " + bFiredMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 7) Ball Fired: " + bFiredMsgs.size());
             int index = 0;
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() ){
@@ -343,6 +381,18 @@ public class utilevents extends MultiUtil {
                 m_botAction.sendSmartPrivateMessage( name, "|     - " + index + ") " + s);
                 index++;
             }
+        }
+        if(timerMsgs.isEmpty())
+            m_botAction.sendSmartPrivateMessage( name, "| 8) Timer: NONE");
+        else{
+            m_botAction.sendSmartPrivateMessage( name, "| 8) Timer: " + timerMsgs.size());
+            int index = 0;
+            Iterator<String> i = timerMsgs.iterator();
+            while( i.hasNext() ){
+                String s = i.next();
+                m_botAction.sendSmartPrivateMessage( name, "|     - " + index + ") " + s);
+                index++;
+            }    
         }
         m_botAction.sendSmartPrivateMessage( name, "+-------------------------------------------------------");
     }
@@ -359,13 +409,15 @@ public class utilevents extends MultiUtil {
             x = Integer.parseInt(msg[0]);
             y = Integer.parseInt(msg[1]);
             switch(x){
-                case 0: killMsgs.remove(y); break;
-                case 1: spawnMsgs.remove(y); break;
-                case 2: weapMsgs.remove(y); break;
-                case 3: fClaimMsgs.remove(y); break;
-                case 4: fDropMsgs.remove(y); break;
-                case 5: bClaimMsgs.remove(y); break;
-                case 6: bFiredMsgs.remove(y); break;
+            	case 0: greetMsgs.remove(y); break;
+                case 1: killMsgs.remove(y); break;
+                case 2: spawnMsgs.remove(y); break;
+                case 3: weapMsgs.remove(y); break;
+                case 4: fClaimMsgs.remove(y); break;
+                case 5: fDropMsgs.remove(y); break;
+                case 6: bClaimMsgs.remove(y); break;
+                case 7: bFiredMsgs.remove(y); break;
+                case 8: timerMsgs.remove(y); break;
                 default: throw new IndexOutOfBoundsException();
             }
             m_botAction.sendSmartPrivateMessage( name, "Removed message at index ( " + x +  ", " + y + " ).");
@@ -386,20 +438,22 @@ public class utilevents extends MultiUtil {
         try{
             x = Integer.parseInt(msg);
             switch(x){
-                case 0: killMsgs.clear(); break;
-                case 1: spawnMsgs.clear(); break;
-                case 2: weapMsgs.clear(); break;
-                case 3: fClaimMsgs.clear(); break;
-                case 4: fDropMsgs.clear(); break;
-                case 5: bClaimMsgs.clear(); break;
-                case 6: bFiredMsgs.clear(); break;
+            	case 0: greetMsgs.clear(); break;
+                case 1: killMsgs.clear(); break;
+                case 2: spawnMsgs.clear(); break;
+                case 3: weapMsgs.clear(); break;
+                case 4: fClaimMsgs.clear(); break;
+                case 5: fDropMsgs.clear(); break;
+                case 6: bClaimMsgs.clear(); break;
+                case 7: bFiredMsgs.clear(); break;
+                case 8: timerMsgs.clear(); break;
                 default: throw new IndexOutOfBoundsException();
             }
             m_botAction.sendSmartPrivateMessage( name, "Cleared all messages of type " + x + ".");
         }catch(NumberFormatException e){
             m_botAction.sendSmartPrivateMessage( name, "Correct usage: !clearmsg #");
         }catch(IndexOutOfBoundsException e){
-            m_botAction.sendSmartPrivateMessage( name, "Please select a number between 0 and 6.");
+            m_botAction.sendSmartPrivateMessage( name, "Please select a number between 0 and 8.");
         }
     }
     
@@ -408,6 +462,7 @@ public class utilevents extends MultiUtil {
      * @param name - The user
      */
     public void doClearAllMsg(String name){
+    	greetMsgs.clear();
         killMsgs.clear();
         spawnMsgs.clear();
         weapMsgs.clear();
@@ -415,9 +470,21 @@ public class utilevents extends MultiUtil {
         fDropMsgs.clear();
         bClaimMsgs.clear();
         bFiredMsgs.clear();
+        timerMsgs.clear();
         m_botAction.sendSmartPrivateMessage( name, "All messages cleared.");
     }
 
+    /**
+     * Handles PlayerEntered events.
+     */
+    public void handleEvent(PlayerEntered event){
+        Player p = m_botAction.getPlayer(event.getPlayerID());
+        if(p == null)return;
+        Iterator<String> i = greetMsgs.iterator();
+        while( i.hasNext() )
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);    	
+    }
+    
     /**
      * Handles PowerBall tracking
      */
@@ -433,7 +500,7 @@ public class utilevents extends MultiUtil {
             Player p = m_botAction.getPlayer(b.getCurrentCarrier());
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);
             
         }
         //Ball Caught
@@ -441,7 +508,7 @@ public class utilevents extends MultiUtil {
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);
         }
         b.updateLastCarrier(playerID);
         b.updateCurrentCarrier(carrier);
@@ -456,7 +523,7 @@ public class utilevents extends MultiUtil {
         if(killed == null || killer == null)return;
         Iterator<String> i = killMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), killer, SMOD_OVERRIDE);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), killer, twscript.isSmod);
 
         new SpawnTimer(killed);
     }
@@ -469,7 +536,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = weapMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);
     }
     
     /**
@@ -480,7 +547,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fClaimMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);
     }
     
     /**
@@ -491,7 +558,7 @@ public class utilevents extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fDropMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);
     }
     
     public void cancel() {}    
@@ -502,7 +569,7 @@ public class utilevents extends MultiUtil {
             public void run() {
                 Iterator<String> i = spawnMsgs.iterator();
                 while( i.hasNext() )
-                    CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, SMOD_OVERRIDE);
+                    CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);
                 
             }
         };
