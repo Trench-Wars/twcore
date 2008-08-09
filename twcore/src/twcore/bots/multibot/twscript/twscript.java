@@ -31,10 +31,14 @@ public class twscript extends MultiModule {
      */
     public String[] getModHelpMessage() {
         String[] message = {
-        		"--- variable commands ---",
-        		"!setup        -- sets up the arena",
-                "!listkeys     -- lists keys",
-                "!smodlogin    -- logs in smod"
+        		"+========================== TWSCRIPT ==========================+",
+        		"| !setup              - Loads the default setup for this arena.|",
+        		"| !mysetup            - Loads your personal setup.             |",
+        		"| !setup <name>       - Loads <name>'s personal setup.         |",
+        		"| !listkeys           - Lists private TWScript escape keys.    |",
+        		"| !listpubkeys        - Lists public TWScript escape keys.     |",
+        		"| !smodlogin          - Log in for SMods.                      |",
+        		"+==============================================================+"
         };        
         return message;
     }
@@ -64,6 +68,8 @@ public class twscript extends MultiModule {
     		doArenaSetup(name, name);
         if (cmd.equalsIgnoreCase("!listkeys"))
         	m_botAction.smartPrivateMessageSpam( name, CodeCompiler.getPrivateKeysMessage());
+        if (cmd.equalsIgnoreCase("!listpubkeys"))
+        	m_botAction.smartPrivateMessageSpam(name, CodeCompiler.getPublicKeysMessage());
         if (cmd.equalsIgnoreCase("!smodlogin"))
             do_smodOverride(name);
     }

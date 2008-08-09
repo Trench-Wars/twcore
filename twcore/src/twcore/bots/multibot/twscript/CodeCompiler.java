@@ -476,7 +476,7 @@ public final class CodeCompiler {
                 "| @freqsize(#)      - Number of players on freq       |",
                 "| @pfreqsize(#)     - Num. of players playing on freq |",
                 "| @shipsonfreq(#,#) - Num of players in a certain ship|",
-                "                        on freq. (ship type, freq #)  |",
+                "|                       on freq. (ship type, freq #)  |",
                 "| @squad            - The player's squad.             |",
                 "| @bounty           - The player's bounty.            |",
                 "| @x                - X Location(Tiles)               |",
