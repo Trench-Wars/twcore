@@ -261,7 +261,7 @@ public class multibot extends SubspaceBot {
             else
                 foundCommand = false;
         } catch (RuntimeException e) {
-            Tools.printStackTrace(e);
+            m_botAction.sendSmartPrivateMessage(sender, e.getMessage() );
         }
         return foundCommand;
     }
@@ -274,7 +274,7 @@ public class multibot extends SubspaceBot {
      * @param argString
      *            is the argument string.
      */
-    private void doGoCmd(String sender, String argString ) {
+    private void doGoCmd(String sender, String argString ) throws IllegalArgumentException {
         if( m_isLocked )
             throw new IllegalArgumentException("I am locked, sorry.  Use !unlock or !unlockwith before trying to move me.");
         String currentArena = m_botAction.getArenaName();
@@ -292,7 +292,7 @@ public class multibot extends SubspaceBot {
      * @param sender
      *            is the sender of the command.
      */
-    private void doComeCmd(String sender) {
+    private void doComeCmd(String sender) throws IllegalArgumentException {
         if( m_isLocked )
             throw new IllegalArgumentException("I am locked, sorry.  Use !unlock or !unlockwith before trying to move me.");
         m_botAction.sendSmartPrivateMessage(sender, "Coming...");
@@ -457,7 +457,7 @@ public class multibot extends SubspaceBot {
      * @param unlockWith
      *            True if unlock will not unload modules
      */
-    private void doUnlockCmd(String sender, boolean unlockWith ) {
+    private void doUnlockCmd(String sender, boolean unlockWith ) throws IllegalArgumentException {
         if( !unlockWith ) {
             if( eventModuleLoaded() && !m_eventModule.isUnloadable())
                 throw new IllegalArgumentException("The loaded game can not be unloaded at this time.  Please try again in a moment.");
@@ -525,7 +525,7 @@ public class multibot extends SubspaceBot {
      * @param quiet
      *            Whether or not to send a success msg when the module is loaded
      */
-    public void doLoadCmd(String name, String module, boolean quiet ) {
+    public void doLoadCmd(String name, String module, boolean quiet ) throws IllegalArgumentException {
         if( !m_isLocked )
             throw new RuntimeException("You must !lock me before you !load any modules.");
 
@@ -602,7 +602,7 @@ public class multibot extends SubspaceBot {
      * @param key
      *            Module or utility to unload
      */
-    public void doUnloadCmd(String name, String module) {
+    public void doUnloadCmd(String name, String module) throws IllegalArgumentException {
         if( module.equals("") ) {
             doUnloadAllCmd(name, false);
             return;
@@ -628,7 +628,7 @@ public class multibot extends SubspaceBot {
      * Unloads all utilities.
      * @param beQuiet True if the method should not PM the ER
      */
-    private void doUnloadAllCmd(String sender, boolean beQuiet ) {
+    private void doUnloadAllCmd(String sender, boolean beQuiet ) throws IllegalArgumentException {
         Iterator<MultiUtil> i = m_utils.values().iterator();
         while (i.hasNext())
             ((MultiUtil) i.next()).cancel();
