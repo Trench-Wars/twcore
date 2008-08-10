@@ -51,7 +51,7 @@ public class robohelp extends SubspaceBot {
     CommandInterpreter  m_commandInterpreter;
     String              lastHelpRequestName = null;
 
-    final String        mySQLHost = "local";
+    final String        mySQLHost = "wesbite";
     Vector<EventData>   eventList = new Vector<EventData>();
     TreeMap<String, EventData> events = new TreeMap<String, EventData>();
     Vector<EventData>   callList = new Vector<EventData>();
