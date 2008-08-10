@@ -38,7 +38,7 @@ public class alertbot extends SubspaceBot {
 	
 	boolean alertToChat = true;
 	
-	String sqlHost = "local";
+	String sqlHost = "website";
 	
     private static Pattern failPattern = Pattern.compile("(?!)"); // will never match anything
     private static Pattern acceptable = Pattern.compile("^!(?:on|off|help)$",Pattern.CASE_INSENSITIVE);

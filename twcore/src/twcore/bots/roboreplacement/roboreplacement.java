@@ -72,7 +72,7 @@ public class roboreplacement extends SubspaceBot
     int defaultShip = 0;
 
     String arena;                // name of the arena the bot is in
-    String mySQLHost = "local";  // sql stuff
+    String mySQLHost = "website";  // sql stuff
     String ships[] = {"", "Warbird", "Javelin", "Spider", "Leviathan", "Terrier", "Weasel", "Lancaster", "Shark", "Any Ship"}; //array list of ship type names
 
 
