@@ -324,7 +324,7 @@ public class custom extends MultiUtil {
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
             while (it.hasNext())
-                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, twscript.isSmod);
+                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, twscript.isSysop);
         }
     }
     

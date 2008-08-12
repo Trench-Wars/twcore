@@ -17,7 +17,7 @@ public class twscript extends MultiModule {
     
     public OperatorList opList;
     public String database = "website";
-    public static boolean isSmod = false;
+    public static boolean isSysop = false;
     
     /**
      * Initializes.
@@ -37,7 +37,7 @@ public class twscript extends MultiModule {
         		"| !setup <name>       - Loads <name>'s personal setup.         |",
         		"| !listkeys           - Lists private TWScript escape keys.    |",
         		"| !listpubkeys        - Lists public TWScript escape keys.     |",
-        		"| !smodlogin          - Log in for SMods.                      |",
+        		"| !sysoplogin          - Log in for Sysops.                    |",
         		"+==============================================================+"
         };        
         return message;
@@ -70,8 +70,8 @@ public class twscript extends MultiModule {
         	m_botAction.smartPrivateMessageSpam( name, CodeCompiler.getPrivateKeysMessage());
         if (cmd.equalsIgnoreCase("!listpubkeys"))
         	m_botAction.smartPrivateMessageSpam(name, CodeCompiler.getPublicKeysMessage());
-        if (cmd.equalsIgnoreCase("!smodlogin"))
-            do_smodOverride(name);
+        if (cmd.equalsIgnoreCase("!sysoplogin"))
+            do_sysopOverride(name);
     }
     
     public void doArenaSetup(String name, String message){
@@ -96,17 +96,17 @@ public class twscript extends MultiModule {
         }
     }
     
-    public void do_smodOverride(String name){
-        if(opList.isSmod(name)){
-            if(isSmod){
-                isSmod = false;
-                m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
+    public void do_sysopOverride(String name){
+        if(opList.isSysop(name)){
+            if(isSysop){
+                isSysop = false;
+                m_botAction.sendSmartPrivateMessage( name, "Sysop override deactivated.");
             } else {
-                isSmod = true;
-                m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
+                isSysop = true;
+                m_botAction.sendSmartPrivateMessage( name, "Sysop override activated.");
             }
         }else
-            m_botAction.sendSmartPrivateMessage( name, "Only Super-Moderators can use this command.");
+            m_botAction.sendSmartPrivateMessage( name, "Only System Operators can use this command.");
     }
     
     public void cancel() {

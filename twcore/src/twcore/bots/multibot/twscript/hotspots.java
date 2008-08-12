@@ -128,7 +128,7 @@ public class hotspots extends MultiUtil {
                 if (watch.getMessages() != null) {
                     Iterator<String> i = watch.getMessages().iterator();
                     while( i.hasNext() )
-                        CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSmod);
+                        CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);
                 }
             }
         }
