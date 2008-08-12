@@ -10,7 +10,6 @@ import java.util.Iterator;
 import twcore.core.BotAction;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
-import twcore.core.util.Tools.Sound;
 
 /**
  * This class has nothing to do with compiling Java source; it merely compiles
@@ -21,6 +20,7 @@ import twcore.core.util.Tools.Sound;
 public final class CodeCompiler {
     
     public static void handlePublicTWScript(BotAction bot, String message, boolean smod){
+    	try{
         message = replacePublicKeys(bot, message);
         if(message != null && !isAllowedPublicCommand(message) && !smod)
             message = null;
@@ -33,9 +33,13 @@ public final class CodeCompiler {
             else
                 bot.sendUnfilteredPublicMessage(message.substring(0, message.indexOf('%')));
         }
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
     }
     
     public static void handlePrivateTWScript(BotAction bot, String message, Player p, boolean smod){
+    	try{
         message = replacePrivateKeys(bot, p, message);
         if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message) && !smod)
             message = null;
@@ -48,6 +52,9 @@ public final class CodeCompiler {
             else
                 bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
         }
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
     }
     
     /**
@@ -294,6 +301,7 @@ public final class CodeCompiler {
      * @return - True if the condition is found to be true. Else false.
      */
     private static boolean doConditionalStatements(String s) {
+    	try{
         s = s.substring(s.indexOf("{") + 1, s.indexOf("}")).trim();
         if (s.replace(" ", "").equals("") || s.replace(" ", "").equalsIgnoreCase("()"))
             return true;
@@ -312,6 +320,10 @@ public final class CodeCompiler {
             return true;
         else
             return false;
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    		return false;
+    	}
     }
     
     /**
@@ -320,6 +332,7 @@ public final class CodeCompiler {
      * @return - TRUE or FALSE
      */
     private static String compileConditionalStatement(String s) {
+    	try{
         s = s.substring(1, s.indexOf(")")).trim();
         if (s.trim().equalsIgnoreCase("TRUE") || s.trim().equalsIgnoreCase("FALSE"))
             return s;
@@ -378,9 +391,14 @@ public final class CodeCompiler {
             } catch (Exception e) {}
         }
         return "FALSE";
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    		return "FALSE";
+    	}
     }
     
     private static String compileMathStatement(String s){
+    	try{
         s = s.substring(1, s.indexOf("]")).trim();
         if(false)return "-1";
         else if(s.contains("+")){
@@ -452,6 +470,10 @@ public final class CodeCompiler {
                 return "-1";
             }
         }
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    		return "-1";
+    	}
     }
     
     /**

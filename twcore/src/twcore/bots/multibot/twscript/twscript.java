@@ -37,7 +37,7 @@ public class twscript extends MultiModule {
         		"| !setup <name>       - Loads <name>'s personal setup.         |",
         		"| !listkeys           - Lists private TWScript escape keys.    |",
         		"| !listpubkeys        - Lists public TWScript escape keys.     |",
-        		"| !sysoplogin          - Log in for Sysops.                    |",
+        		"| !sysoplogin         - Log in for Sysops.                     |",
         		"+==============================================================+"
         };        
         return message;
