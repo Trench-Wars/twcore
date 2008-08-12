@@ -2,7 +2,7 @@ package twcore.bots.multibot.twscript;
 
 import java.sql.ResultSet;
 
-import twcore.bots.MultiModule;
+import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
@@ -12,7 +12,7 @@ import twcore.core.OperatorList;
 /**
  * @author milosh
  */
-public class twscript extends MultiModule {
+public class twscript extends MultiUtil {
     
     public OperatorList opList;
     public String database = "website";
@@ -28,7 +28,7 @@ public class twscript extends MultiModule {
     /**
      * Required method that returns this help menu.
      */
-    public String[] getModHelpMessage() {
+    public String[] getHelpMessages() {
         String[] message = {
         		"+========================== TWSCRIPT ==========================+",
         		"| !setup              - Loads the default setup for this arena.|",

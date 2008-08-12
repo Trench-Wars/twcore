@@ -538,7 +538,7 @@ public class multibot extends SubspaceBot {
         // Attempt event load
         String lowerName = module.toLowerCase();
         File directory = new File(m_modulePath, lowerName);
-        if (directory.isDirectory()) {
+        if (directory.isDirectory() && !module.equalsIgnoreCase("twscript")) {
             // If the name matches a directory, we're dealing with a game module...
             String[] fileNames = directory.list();
             if (!containsString(fileNames, lowerName + CLASS_EXTENSION))
@@ -558,9 +558,6 @@ public class multibot extends SubspaceBot {
                 m_eventModule.initialize(m_botAction, moduleSettings, m_modEventReq);
                 if( !quiet )
                     m_botAction.sendPrivateMessage(name, "Loaded module: " + m_eventModule.getModuleName() );
-                if(module.equals("twscript")){
-                	loadTWScript(name, quiet);
-                }
             } catch (InstantiationException ie) {
                 throw new RuntimeException("Unknown problem encountered while attempting to load the module (module: "+module+", error: "+ie.getMessage()+"). Please contact a member of TW Bot Development.");
             } catch (IllegalAccessException iae) {
@@ -571,6 +568,8 @@ public class multibot extends SubspaceBot {
                 //NullPointerException can be thrown if classmulti.newInstance() can't instantiate the class
                 throw new RuntimeException("Unable to load module '"+module+"' (NullPointerException). Please contact a member of TW Bot Development.");
             }
+        } else if(directory.isDirectory() && module.equalsIgnoreCase("twscript")) {
+        	loadTWScript(name, quiet);
         }else {
             // Not a game module; try util instead
             try {
@@ -889,7 +888,7 @@ public class multibot extends SubspaceBot {
     		for(int i=0;i<l.length;i++){
     			l[i] = l[i].replace(".class", "");
     			for(int z=0;z<l[i].length();z++)
-    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$' || l[i].contains("twscript"))
+    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$')
     					l[i] = "";
     		}
     		for(int i=0;i<l.length;i++){
@@ -900,7 +899,7 @@ public class multibot extends SubspaceBot {
     			}
     		}
     		if(!quiet){
-    			String utilityList = "TWScript utilities: ";
+    			String utilityList = "Loaded TWScript utilities: ";
     			for(String u:l){
     				if(!u.equals(""))
     					utilityList += u + ", ";
