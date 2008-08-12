@@ -24,7 +24,7 @@ import twcore.core.OperatorList;
 public class events extends MultiUtil {
     
     public OperatorList opList;
-    public static final int SPAWN_TIME = 5005;
+    public static final int SPAWN_TIME = 6010;
     
     //The lists.
     public ArrayList<String> greetMsgs = new ArrayList<String>();
@@ -36,7 +36,7 @@ public class events extends MultiUtil {
     public ArrayList<String> bClaimMsgs = new ArrayList<String>();
     public ArrayList<String> bFiredMsgs = new ArrayList<String>();
     public ArrayList<String> timerMsgs = new ArrayList<String>();
-    
+    //Ball TreeMap
     public TreeMap<Byte, Ball> ballMap = new TreeMap<Byte, Ball>();
     
     /**
@@ -74,12 +74,11 @@ public class events extends MultiUtil {
                 "| !fdropmsg <msg>   -- Adds a flag dropped message.          |",
                 "| !bclaimmsg <msg>  -- Adds a ball claimed message.          |",
                 "| !bfiredmsg <msg>  -- Adds a ball fired message.            |",
-                "| !timermsg <msg>   -- Adds a timer message.                |",
+                "| !timermsg <msg>   -- Adds a timer message.                 |",
                 "| !listmsg          -- Lists all messages.                   |",
                 "| !delmsg <#>:<#>   -- Deletes message at index (#, #).      |",
                 "| !clearmsg <#>     -- Deletes all messages of type <#>.     |",
                 "| !clearallmsg      -- Clears all messages.                  |",
-                "| !listkeys         -- Displays all available escape keys.   |",
                 "+------------------------------------------------------------+"
         };        
         return message;
@@ -137,10 +136,6 @@ public class events extends MultiUtil {
             doClearMsg(name, msg.substring(10));
         else if(msg.equalsIgnoreCase("!clearallmsg"))
             doClearAllMsg(name);
-        else if(msg.equalsIgnoreCase("!privatekeys"))
-            m_botAction.privateMessageSpam(name, CodeCompiler.getPrivateKeysMessage());
-        else if(msg.equalsIgnoreCase("!publickeys"))
-            m_botAction.privateMessageSpam(name, CodeCompiler.getPublicKeysMessage());
     }
 
     /**

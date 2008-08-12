@@ -7,7 +7,6 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
-import twcore.core.AdaptiveClassLoader;
 import twcore.core.OperatorList;
 
 /**
@@ -27,7 +26,7 @@ public class twscript extends MultiModule {
     }
     
     /**
-     * Required method that returns this utilities help menu.
+     * Required method that returns this help menu.
      */
     public String[] getModHelpMessage() {
         String[] message = {
@@ -74,6 +73,9 @@ public class twscript extends MultiModule {
             do_sysopOverride(name);
     }
     
+    /**
+     * Handles arena setups by querying the database and having the bot PM itself with the commands.
+     */
     public void doArenaSetup(String name, String message){
         try {
             ResultSet resultSet = m_botAction.SQLQuery(database, 
@@ -96,6 +98,9 @@ public class twscript extends MultiModule {
         }
     }
     
+    /**
+     * Toggles Sysop override.
+     */
     public void do_sysopOverride(String name){
         if(opList.isSysop(name)){
             if(isSysop){

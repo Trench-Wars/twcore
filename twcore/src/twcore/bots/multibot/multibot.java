@@ -556,10 +556,11 @@ public class multibot extends SubspaceBot {
                 Class<?> classmulti = m_loader.loadClass(getParentClass() + "." + lowerName + "." + lowerName);
                 m_eventModule = (MultiModule)classmulti.newInstance();
                 m_eventModule.initialize(m_botAction, moduleSettings, m_modEventReq);
-                if(module.equals("twscript"))
-                	loadTWScript();
                 if( !quiet )
                     m_botAction.sendPrivateMessage(name, "Loaded module: " + m_eventModule.getModuleName() );
+                if(module.equals("twscript")){
+                	loadTWScript(name, quiet);
+                }
             } catch (InstantiationException ie) {
                 throw new RuntimeException("Unknown problem encountered while attempting to load the module (module: "+module+", error: "+ie.getMessage()+"). Please contact a member of TW Bot Development.");
             } catch (IllegalAccessException iae) {
@@ -881,7 +882,7 @@ public class multibot extends SubspaceBot {
     /**
      * Loads the TWScript utilities.
      */
-    private void loadTWScript() {
+    private void loadTWScript(String name, boolean quiet) {
     	try{
     		File f = new File(coreRoot + "/twcore/bots/multibot/twscript");
     		String[] l = f.list();
@@ -897,6 +898,15 @@ public class multibot extends SubspaceBot {
     				util.initialize(m_botAction, m_modEventReq);
     				m_utils.put(l[i], util);
     			}
+    		}
+    		if(!quiet){
+    			String utilityList = "TWScript utilities: ";
+    			for(String u:l){
+    				if(!u.equals(""))
+    					utilityList += u + ", ";
+    			}
+    			utilityList = utilityList.substring(0, utilityList.length() - 2) + ".";
+    			m_botAction.sendSmartPrivateMessage( name, utilityList);
     		}
     	}catch(Exception e){
     		Tools.printStackTrace(e);
