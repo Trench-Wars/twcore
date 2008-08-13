@@ -101,7 +101,26 @@ public class spaceball extends MultiModule {
 	}
 
 	public String[] getModHelpMessage() {
-		String[] bleh = { "" };
+		String[] bleh = {
+				"+------------------------------------------------------------+",
+				"| SpaceBallBot v.0.96                         - author Sika  |",
+				"+------------------------------------------------------------+",
+				"| SpaceBall objectives:                                      |",
+				"|   Prevent the SpaceBall (bot) from reaching your planet's  |",
+				"|   athmosphere by hitting it with bullets and cannonballs.  |",
+				"|   Don't cross your planet's boundaries or your engines     |",
+				"|   will malfunction!!                                       |",
+				"+------------------------------------------------------------+",
+				"| Commands:                                                  |",
+				"|   !help OR !about OR !rules     - Brings up this message   |",
+				"|   !return OR !lagout OR !play   - Get in the game          |",
+				"+------------------------------------------------------------+",
+				"| Host Commands:                                             |",
+				"|   !start                        - Starts/stops the event   |",
+				"|   !die                          - Kills the bot            |",
+				"+------------------------------------------------------------+"
+				
+		};
 		return bleh;
 	}
 
