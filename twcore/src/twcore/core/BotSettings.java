@@ -113,6 +113,16 @@ public class BotSettings {
 
         m_data.put( keyName.toLowerCase(), new String( "" + data ) );
     }
+    
+    /**
+     * Overwrites default loaded data or adds new data.
+     * @param keyName Name of the field to be replaced
+     * @param data New data
+     */
+    public void put( String keyName, long data ){
+
+        m_data.put( keyName.toLowerCase(), new String( "" + data ) );
+    }
 
     /**
      * Removes specified key.
