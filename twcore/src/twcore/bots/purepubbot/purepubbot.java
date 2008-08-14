@@ -127,7 +127,6 @@ public class purepubbot extends SubspaceBot
 
     private AuxLvzTask scoreDisplay;					// Displays score lvz
     private AuxLvzTask scoreRemove;						// Removes score lvz
-    private AuxLvzConflict delaySetObj;					// Schedules a task after an amount of time
 
     private TimerTask entranceWaitTask;
     private int flagMinutesRequired;                    // Flag minutes required to win
@@ -1816,6 +1815,7 @@ public class purepubbot extends SubspaceBot
 
         if( gameOver ) {
             intermissionTime = 20000;
+            doScores(intermissionTime);
 
             int diff = 0;
             String winMsg = "";
@@ -1850,7 +1850,8 @@ public class purepubbot extends SubspaceBot
 
             freq0Score = 0;
             freq1Score = 0;
-        }
+        }	else
+        		doScores(intermissionTime);
 
 
         try {
@@ -1860,7 +1861,6 @@ public class purepubbot extends SubspaceBot
         } catch (Exception e ) {
         }
 
-        doScores(intermissionTime);
         intermissionTimer = new IntermissionTask();
         m_botAction.scheduleTask( intermissionTimer, intermissionTime );
     }
@@ -2064,11 +2064,8 @@ public class purepubbot extends SubspaceBot
         int[] objs2 = {2200,2000,(freq0Score<10 ? 60 + freq0Score : 50 + freq0Score), (freq0Score<10 ? 80 + freq1Score : 70 + freq1Score)};
         boolean[] objs2Display = {true,false,false,false};
     	scoreRemove = new AuxLvzTask(objs2, objs2Display);
-    	delaySetObj = new AuxLvzConflict(scoreRemove);
-    	scoreDisplay.init(); 								// Initialize score display
     	m_botAction.scheduleTask(scoreDisplay, 1000);		// Do score display
-    	m_botAction.scheduleTask(delaySetObj, 2000);		// Initialize score removal
-    	m_botAction.scheduleTask(scoreRemove, time-1000);	// Do score removal
+    	m_botAction.scheduleTask(scoreRemove, time-1000);	// do score removal
     	m_botAction.showObject(2100);
 
     }
@@ -2142,45 +2139,16 @@ public class purepubbot extends SubspaceBot
         }
 
         /**
-         * Initializes the task by setting up each object to show or hide
-         * using the core Objset class.
-         */
-        public void init()	{
-            for(int i=0 ; i<objNums.length ; i++)	{
-                if(showObj[i])
-                    objs.showObject(objNums[i]);
-                else
-                    objs.hideObject(objNums[i]);
-            }
-        }
-
-        /**
          * Shows and hides set objects.
          */
         public void run() {
-            m_botAction.setObjects();
+        	for(int i=0 ; i<objNums.length ; i++)	{
+                if(showObj[i])
+                    m_botAction.showObject(objNums[i]);
+                else
+                	m_botAction.hideObject(objNums[i]);
+            }
         }
-    }
-
-    /**
-     * Schedules an initialization, generally for removing an LVZ set by
-     * AuxLvzTask; used to resolve LVZ conflicts occuring from using a single
-     * Objset class.
-     */
-    private class AuxLvzConflict extends TimerTask	{
-        public AuxLvzTask myTask;
-
-        /**
-         * @param task AuxLvzTask to init on run
-         */
-        public AuxLvzConflict(AuxLvzTask task)	{
-            myTask = task;
-        }
-
-        public void run()	{
-            myTask.init();
-        }
-
     }
 
     /**
