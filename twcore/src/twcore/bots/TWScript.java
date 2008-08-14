@@ -1,8 +1,7 @@
-package twcore.bots.multibot.twscript;
+package twcore.bots;
 
 import java.sql.ResultSet;
 
-import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
@@ -12,7 +11,7 @@ import twcore.core.OperatorList;
 /**
  * @author milosh
  */
-public class twscript extends MultiUtil {
+public class TWScript extends MultiUtil {
     
     public OperatorList opList;
     public String database = "website";

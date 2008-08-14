@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.lang.StringBuilder;
 
+import twcore.bots.CodeCompiler;
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.game.Player;

@@ -1,4 +1,4 @@
-package twcore.bots.multibot.twscript;
+package twcore.bots;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

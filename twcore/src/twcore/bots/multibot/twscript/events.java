@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.ArrayList;
 
+import twcore.bots.CodeCompiler;
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.events.BallPosition;

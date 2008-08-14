@@ -11,6 +11,7 @@ import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.bots.MultiUtil;
+import twcore.bots.TWScript;
 import twcore.core.AdaptiveClassLoader;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -20,7 +21,6 @@ import twcore.core.events.*;
 import twcore.core.util.Tools;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.game.Player;
-import twcore.bots.multibot.twscript.twscript;
 
 /**
  * Bot designed for single-event hosting and event utility management.
@@ -915,7 +915,7 @@ public class multibot extends SubspaceBot {
     					l[i] = "";
     		}
     		String twslocation = "twcore.bots.multibot.twscript.twscript";
-    		twscript tws = new twscript();
+    		TWScript tws = new TWScript();
     		MultiUtil twsUtil = (MultiUtil) tws;
     		twsUtil.initialize(m_botAction, m_modEventReq);
     		m_utils.put(twslocation, twsUtil);

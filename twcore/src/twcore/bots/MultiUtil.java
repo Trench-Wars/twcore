@@ -4,7 +4,6 @@ import twcore.core.BotAction;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.util.ModuleEventRequester;
-import twcore.bots.multibot.twscript.twscript;
 import twcore.core.events.*;
 
 /**
@@ -15,7 +14,7 @@ public abstract class MultiUtil {
     protected BotAction m_botAction;
     protected OperatorList m_opList;
     protected SubspaceBot m_multiBot;
-    protected twscript m_twscript;
+    protected TWScript m_twscript;
     
     /**
      * Creates a new instance of MultiUtil.
@@ -43,7 +42,7 @@ public abstract class MultiUtil {
      * @param action BotAction in use
      * @param opList OperatorList in use
      */
-    public final void initialize( BotAction action, ModuleEventRequester modEventReq, twscript tws ){
+    public final void initialize( BotAction action, ModuleEventRequester modEventReq, TWScript tws ){
     	m_botAction = action;
     	m_opList = action.getOperatorList();
     	m_twscript = tws;
