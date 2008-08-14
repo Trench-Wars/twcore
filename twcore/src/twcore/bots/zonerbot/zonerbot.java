@@ -643,7 +643,7 @@ public class zonerbot extends SubspaceBot
   /**
    * This method allows the sender to setup a periodic
    * message to be zoned with a delay for an interval.
-   * Syntax <delay> <interval> <message>
+   * Syntax <delay>:<interval>:<message>
    * 
    * @param sender is the sender of the command.
    * @param argString is the arg string.
@@ -658,13 +658,13 @@ public class zonerbot extends SubspaceBot
 		  interval = Integer.parseInt(parts[1]);
 		  message = parts[2];
 		  
-		  PeriodicZone periodicTask = new PeriodicZone(delay,interval,sender,message);
-		  
 		  int pos = PeriodicMsgs.size()+1;
 		  for (int i = 0 ; i < PeriodicMsgs.size() ; i++)	{
 			  if (!PeriodicMsgs.containsKey(new Integer(i+1)))
 				  pos = i+1;
 		  }
+		  
+		  PeriodicZone periodicTask = new PeriodicZone(delay,interval,pos,sender,message);
 		  PeriodicMsgs.put(new Integer(pos), periodicTask);
 		  m_botAction.scheduleTask(periodicTask,1000, delay*60000);
 		  
@@ -699,6 +699,14 @@ public class zonerbot extends SubspaceBot
 				  zoner.next().toString());
 	  }
   }
+  
+  /**
+   * This method removes a periodic using it's index.
+   * Syntax <index>
+   * 
+   * @param sender is the sender of the command.
+   * @param argString is the arg string.
+   */
   
   private void doRemovePeriodicZoner(String sender, String argString)	{
 	  Integer idx;
@@ -958,14 +966,15 @@ public class zonerbot extends SubspaceBot
   }
   
   private class PeriodicZone extends TimerTask {
-	  private int m_delay,m_interval,m_time=0;
+	  private int m_delay,m_interval,m_index,m_time=0;
 	  private String m_sender,m_message;
 	  
-	  public PeriodicZone (int delay, int interval, String sender, String message)	{
+	  public PeriodicZone (int delay, int interval, int index, String sender, String message)	{
 		  m_delay = delay;
 		  m_interval = interval;
 		  m_message = message;
 		  m_sender = sender;
+		  m_index = index;
 	  }
 	  
 	  public String getMsg()	{
@@ -979,8 +988,10 @@ public class zonerbot extends SubspaceBot
 	  
 	  public void run()	{
 		  m_time += m_delay;
-		  if ( m_time/60 > m_interval)
+		  if ( m_time/60 > m_interval)	{
+			  PeriodicMsgs.remove(new Integer(m_index));
 			  this.cancel();
+		  }
 		  m_botAction.sendZoneMessage(m_message);
 	  }
   }
