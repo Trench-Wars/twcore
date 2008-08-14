@@ -98,7 +98,7 @@ public class events extends MultiUtil {
             if(p == null)return;
             Iterator<String> i = timerMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);        	
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);        	
         }
     }
     
@@ -146,7 +146,7 @@ public class events extends MultiUtil {
     public void doMassPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, msg, i.next(), twscript.isSysop);
+            CodeCompiler.handlePrivateTWScript(m_botAction, msg, i.next(), new twscript().isSysop);
     }
     
     /**
@@ -155,7 +155,7 @@ public class events extends MultiUtil {
      * @param message - The message to send
      */
     public void doPub(String name, String message){
-        CodeCompiler.handlePublicTWScript(m_botAction, message, twscript.isSysop);
+        CodeCompiler.handlePublicTWScript(m_botAction, message, new twscript().isSysop);
     }
     
     /**
@@ -477,7 +477,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = greetMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);    	
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);    	
     }
     
     /**
@@ -495,7 +495,7 @@ public class events extends MultiUtil {
             Player p = m_botAction.getPlayer(b.getCurrentCarrier());
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);
             
         }
         //Ball Caught
@@ -503,7 +503,7 @@ public class events extends MultiUtil {
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);
+                CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);
         }
         b.updateLastCarrier(playerID);
         b.updateCurrentCarrier(carrier);
@@ -518,7 +518,7 @@ public class events extends MultiUtil {
         if(killed == null || killer == null)return;
         Iterator<String> i = killMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), killer, twscript.isSysop);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), killer, new twscript().isSysop);
 
         new SpawnTimer(killed);
     }
@@ -531,7 +531,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = weapMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);
     }
     
     /**
@@ -542,7 +542,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fClaimMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);
     }
     
     /**
@@ -553,7 +553,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fDropMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);
+            CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);
     }
     
     public void cancel() {}    
@@ -564,7 +564,7 @@ public class events extends MultiUtil {
             public void run() {
                 Iterator<String> i = spawnMsgs.iterator();
                 while( i.hasNext() )
-                    CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, twscript.isSysop);
+                    CodeCompiler.handlePrivateTWScript(m_botAction, i.next(), p, new twscript().isSysop);
                 
             }
         };

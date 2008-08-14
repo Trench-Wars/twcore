@@ -16,7 +16,7 @@ public class twscript extends MultiUtil {
     
     public OperatorList opList;
     public String database = "website";
-    public static boolean isSysop = false;
+    public boolean isSysop = false;
     
     /**
      * Initializes.

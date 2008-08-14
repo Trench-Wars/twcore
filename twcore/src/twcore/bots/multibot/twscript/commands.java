@@ -206,8 +206,7 @@ public class commands extends MultiUtil {
     /**
      * A Custom Command object.
      */
-    private class CustomCommand {
-        
+    public class CustomCommand {
         public ArrayList<String> messages;
         public String command;
         public String description = "No description available.";
@@ -272,7 +271,7 @@ public class commands extends MultiUtil {
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
             while (it.hasNext())
-                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, twscript.isSysop);
+                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, new twscript().isSysop);
         }
     }
     

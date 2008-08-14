@@ -50,6 +50,7 @@ public class multibot extends SubspaceBot {
     private boolean m_followEnabled = false;
     private boolean m_doCome = false;
     private boolean m_ownerOverride = false;
+    private boolean m_smodLocked = false;
 
     public multibot(BotAction botAction) {
         super(botAction);
@@ -113,6 +114,10 @@ public class multibot extends SubspaceBot {
         int messageType = event.getMessageType();
         boolean foundCmd = false;
         boolean isER = m_opList.isER(sender);
+        if(m_smodLocked && !m_opList.isSmod(sender)){
+        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive Smod use.");
+        	return;
+        }
         if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {
 
             // Attempt to handle player commands (with oodles of TWBot backwards compatibility)
@@ -258,6 +263,8 @@ public class multibot extends SubspaceBot {
                 doFreeCmd(sender);
             else if (command.equals("!die"))
                 doDieCmd(sender);
+            else if (m_opList.isSmod(sender) && command.equals("!smodlock"))
+            	doSmodLock(sender);
             else
                 foundCommand = false;
         } catch (RuntimeException e) {
@@ -492,6 +499,21 @@ public class multibot extends SubspaceBot {
         m_botAction.sendSmartPrivateMessage(sender, "Logging Off.");
         m_botAction.sendChatMessage(MultiModule.FIRST_CHAT, "Bot Logging Off.");
         m_botAction.scheduleTask(new DieTask(sender), DIE_DELAY);
+    }
+    
+    /**
+     * This method toggles smod locking.
+     * 
+     * @param name is the sender of the command.
+     */
+    private void doSmodLock(String name) {
+    	if(m_smodLocked){
+    		m_botAction.sendSmartPrivateMessage( name, "Smod locking has been disabled.");
+    		m_smodLocked = false;
+    	} else {
+    		m_botAction.sendSmartPrivateMessage( name, "Smod locking has been enabled.");
+    		m_smodLocked = true;
+    	}
     }
 
     /**
