@@ -26,7 +26,7 @@ public class utilshipswitch extends MultiUtil {
 	
 	
 	/**
-	 * Initializes gloval variables;
+	 * Initializes global variables;
 	 */
 	
 	public void init()	{

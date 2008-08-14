@@ -14,7 +14,7 @@ import twcore.core.util.ModuleEventRequester;
 
 /**
  * A utility intended for turret sensitive events where only certain
- * ships can attach, and those could be limited or unlimted.
+ * ships can attach, and those could be limited or unlimited.
  * eg: a terrier has a limit of 1 lance, 2 javelins, 1 warbird, and
  * spiders are unlimited.
  * 
@@ -120,7 +120,7 @@ public class utilattach extends MultiUtil {
 		else if (!atchRules.get(anchor).keySet().contains(ship))
 			throw new IllegalArgumentException("Ship is not allowed to attach!");
 		else if ( limit.intValue() == 0 || limit.intValue() < -1)
-			throw new IllegalArgumentException("onlyValues -1 (unlimited)," 
+			throw new IllegalArgumentException("only Values -1 (unlimited)," 
 					+ " and 1-8 are permited");
 		
 		atchRules.get(anchor).remove(ship);
@@ -208,14 +208,15 @@ public class utilattach extends MultiUtil {
 		}	catch ( IllegalArgumentException iae )	{
 			m_botAction.sendPrivateMessage(sender, iae.getMessage());
 			}	catch ( Exception e )	{
-				m_botAction.sendChatMessage("Uh-oh, error! contact bot dev for the 'attach' util.");
+				m_botAction.sendChatMessage("Uh-oh, error! contact bot dev " +
+						"for the 'attach' util.");
 				}
 
     }
 	
 	/**
 	 * Handles incoming turret events. If the Ship is allowed, check it for
-	 * further details, else kick the turret off.
+	 * further details.
 	 */
 	
 	public void handleEvent(TurretEvent event)	{
