@@ -914,7 +914,7 @@ public class multibot extends SubspaceBot {
     				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$' || l[i].contains("twscript"))
     					l[i] = "";
     		}
-    		String twslocation = "twcore.bots.multibot.twscript.twscript";
+    		String twslocation = "twcore.bots.TWScript";
     		TWScript tws = new TWScript();
     		MultiUtil twsUtil = (MultiUtil) tws;
     		twsUtil.initialize(m_botAction, m_modEventReq);
