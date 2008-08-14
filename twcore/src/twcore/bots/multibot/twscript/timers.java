@@ -326,7 +326,7 @@ private class CustomTimer{
 		        Player p = m_botAction.getPlayer(m_botAction.getBotName());
 		        Iterator<String> msgs = messages.iterator();
 		        while( msgs.hasNext() )
-		        	CodeCompiler.handlePrivateTWScript(m_botAction, msgs.next(), p, new twscript().isSysop);
+		        	CodeCompiler.handlePrivateTWScript(m_botAction, msgs.next(), p, m_twscript.isSysop);
 		        if(rep < 0)
 		        	timers.get(name).cancelTask();
 			}
@@ -351,7 +351,7 @@ private class CustomTimer{
 		        	Player p = i.next();
 		        	Iterator<String> msgs = messages.iterator();
 		        	while( msgs.hasNext() )
-		        		CodeCompiler.handlePrivateTWScript(m_botAction, msgs.next(), p, new twscript().isSysop);
+		        		CodeCompiler.handlePrivateTWScript(m_botAction, msgs.next(), p, m_twscript.isSysop);
 		        }
 		        if(rep < 0)
 		        	timers.get(name).cancelTask();

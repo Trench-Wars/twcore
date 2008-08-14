@@ -20,6 +20,7 @@ import twcore.core.events.*;
 import twcore.core.util.Tools;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.game.Player;
+import twcore.bots.multibot.twscript.twscript;
 
 /**
  * Bot designed for single-event hosting and event utility management.
@@ -910,13 +911,18 @@ public class multibot extends SubspaceBot {
     		for(int i=0;i<l.length;i++){
     			l[i] = l[i].replace(".class", "");
     			for(int z=0;z<l[i].length();z++)
-    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$')
+    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$' || l[i].contains("twscript"))
     					l[i] = "";
     		}
+    		String twslocation = "twcore.bots.multibot.twscript.twscript";
+    		twscript tws = new twscript();
+    		MultiUtil twsUtil = (MultiUtil) tws;
+    		twsUtil.initialize(m_botAction, m_modEventReq);
+    		m_utils.put(twslocation, twsUtil);
     		for(int i=0;i<l.length;i++){
     			if(!l[i].equals("")){
     				MultiUtil util = (MultiUtil) m_loader.loadClass("twcore.bots.multibot.twscript." + l[i]).newInstance();
-    				util.initialize(m_botAction, m_modEventReq);
+    				util.initialize(m_botAction, m_modEventReq, tws);
     				m_utils.put(l[i], util);
     			}
     		}
@@ -944,7 +950,7 @@ public class multibot extends SubspaceBot {
     		for(int i=0;i<l.length;i++){
     			l[i] = l[i].replace(".class", "");
     			for(int z=0;z<l[i].length();z++)
-    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$' || l[i].contains("twscript"))
+    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$')
     					l[i] = "";
     		}
     		for(int i=0;i<l.length;i++){

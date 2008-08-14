@@ -4,6 +4,7 @@ import twcore.core.BotAction;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.util.ModuleEventRequester;
+import twcore.bots.multibot.twscript.twscript;
 import twcore.core.events.*;
 
 /**
@@ -14,6 +15,7 @@ public abstract class MultiUtil {
     protected BotAction m_botAction;
     protected OperatorList m_opList;
     protected SubspaceBot m_multiBot;
+    protected twscript m_twscript;
     
     /**
      * Creates a new instance of MultiUtil.
@@ -32,6 +34,21 @@ public abstract class MultiUtil {
         m_opList = action.getOperatorList();
         init();
         requestEvents(modEventReq);
+    }
+    
+    /**
+     * initialize() method for any TWScript module
+     * Gives the util references to BotAction and ModuleEventRequester, runs
+     * its init method, and requests appropriate events using ModuleEventRequester.
+     * @param action BotAction in use
+     * @param opList OperatorList in use
+     */
+    public final void initialize( BotAction action, ModuleEventRequester modEventReq, twscript tws ){
+    	m_botAction = action;
+    	m_opList = action.getOperatorList();
+    	m_twscript = tws;
+    	init();
+    	requestEvents(modEventReq);
     }
 
     /**
