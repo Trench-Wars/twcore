@@ -1,6 +1,5 @@
 package twcore.bots.multibot.twscript;
 
-import java.sql.ResultSet;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -44,6 +43,30 @@ public class hotspots extends MultiUtil {
         m_botAction.setPlayerPositionUpdating(0);
         m_botAction.stopSpectatingPlayer();
         watching = false;
+    }
+    
+    /**
+     * Returns help message
+     */
+    public String[] getHelpMessages() {
+        String help[] = {
+        "+------------------------------------- HotSpots -------------------------------------+", 
+        "| !addspot <x> <y> <r>    - Adds a new hotspot.<x> <y> <radius>                      |",
+        "|                         - OR: !addspot <x> <y> <r> <DestX> <DestY>                 |",
+        "|                         - OR: !addspot <x> <y> <r> <DestX> <DestY> <prize>         |",
+        "| !removespot <index>     - Removes the HotSpot at <index>                           |",
+        "| !clearspots             - Remove all hotspots.                                     |",
+        "| !listspots              - Lists your hotspots and their indices.                   |",
+        "| !addmsg <index> <text>  - Adds a TWScript message to a spot.                       |",
+        "| !removemsg <idx> <idx>  - Removes a message from a hotspot by index.               |",
+        "| !listmsg <index>        - Lists all messages for the specified HotSpot.            |",
+        "| !repeattime <ms>        - Time after which a hotspot may refire on the same player.|",
+        "| !switchtime <ms>        - How long to watch each spot before moving to the next    |",
+        "| !watch                  - Activates the module.                                    |",
+        "| !stopwatching           - Stops watching hot spots.                                |",
+        "+------------------------------------------------------------------------------------+"
+        };
+        return help;
     }
     
     /**
@@ -100,8 +123,6 @@ public class hotspots extends MultiUtil {
             do_watch(sender);
         if (message.equalsIgnoreCase("!stopwatching"))
             do_stopWatch(sender);
-        if (message.equalsIgnoreCase("!loadspots"))
-            do_loadSpots(sender);
     }
     
     /**
@@ -383,43 +404,6 @@ public class hotspots extends MultiUtil {
     }
     
     /**
-     * Loads spots for the arena from database.
-     * 
-     * @param sender
-     *            is the user of the bot.
-     */
-    public void do_loadSpots(String sender) {
-        try {
-            ResultSet resultSet = m_botAction.SQLQuery(database, 
-                    "SELECT HS.* " + "FROM tblArena A, tblSetupHotspots HS "
-                    + "WHERE A.fnArenaID = HS.fnArenaID "
-                    + "AND A.fcArenaName = '"
-                    + m_botAction.getArenaName() + "'");
-            int count = 0;
-            while (resultSet.next()) {
-                int x = resultSet.getInt("fnX");
-                int y = resultSet.getInt("fnY");
-                int r = resultSet.getInt("fnR");
-                String message = resultSet.getString("fcMessage");
-                int index = get_hotSpotIndex(x, y, r);
-                if (index == -1) {
-                    do_addHotSpot("", x + " " + y + " " + r);
-                    count++;
-                }
-                hotSpots.elementAt(get_hotSpotIndex(x, y, r)).addMessage(message);
-            }
-            m_botAction.SQLClose(resultSet);
-            if (count == 0)
-                m_botAction.sendSmartPrivateMessage(sender, "No hotspots are registered for this arena.");
-            else
-                m_botAction.sendSmartPrivateMessage(sender, count + " hotspots for this arena have been loaded.");
-            
-        } catch (Exception e) {
-            Tools.printStackTrace(e);
-        }
-    }
-    
-    /**
      * Clears all hotspots.
      * 
      * @param name
@@ -489,30 +473,7 @@ public class hotspots extends MultiUtil {
         repeatTime = time;
         m_botAction.sendPrivateMessage(sender, "Repeat time set to " + time);
     }
-    
-    /**
-     * Returns help message
-     */
-    public String[] getHelpMessages() {
-        String help[] = {
-                "HotSpot Module V2.0:", 
-                "!addspot <x> <y> <r>    - Adds a new hotspot.<x> <y> <radius>",
-                "                        - Alternative Use: !addspot <x> <y> <r> <DestX> <DestY>",
-                "                        - Alternative Use: !addspot <x> <y> <r> <DestX> <DestY> <prize>",
-                "!removespot <index>     - Removes the HotSpot at <index>",
-                "!clearspots             - Remove all hotspots.",
-                "!listspots              - Lists your hotspots",
-                "!addmsg <index> <text>  - Adds a message/command to send the player in contact with this spot",
-                "!removemsg <idx> <idx>  - Removes a message from a hotspot. <HotSpot index> <Message index>",
-                "!listmsg <index>        - Lists all messages for the specified HotSpot. <HotSpot index>",
-                "!repeattime <ms>        - Time after which a hotspot may refire on the same player.",
-                "!switchtime <ms>        - How long to watch each spot before moving to the next",
-                "!watch                  - Activates the module.",
-                "!stopwatching           - Stops watching hot spots."      
-        };
-        return help;
-    }
-    
+
     public void cancel() {
         do_clearHotSpots(null);
         m_botAction.resetReliablePositionUpdating();

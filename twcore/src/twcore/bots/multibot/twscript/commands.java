@@ -4,24 +4,20 @@ import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.lang.StringBuilder;
-import java.sql.ResultSet;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
-import twcore.core.util.Tools;
 
 /**
  * @author milosh
  */
-public class custom extends MultiUtil {
+public class commands extends MultiUtil {
     
     public OperatorList opList;
     public TreeMap<String, CustomCommand> commands;
-    
-    public String database = "website";
     
     /**
      * Initializes.
@@ -36,14 +32,14 @@ public class custom extends MultiUtil {
      */
     public String[] getHelpMessages() {
         String[] message = {
-                "!addaction <!cmd> <action>  - Adds another <action> to command <!command>",
-                "                            - If <!command> does not exist it is created.",
-                "                              Note: Not all *commands are allowed as <action>",
-                "!removeact <!cmd> <index>   - Removes action at <index> from <!cmd>",
-                "!removecmd <!cmd>           - Removes a custom command and all its actions",
-                "!listcmd                    - Shows a list of custom commands and their actions",
-                "!describe <!cmd> <text>     - Submits a description of <!cmd> that shows in help",
-                "!loadcmds                   - Loads registered commands for this arena."  
+        "+------------------------------------ Commands ------------------------------------+",
+        "| !addaction <!cmd> <action>  - Adds an <action> to command <!command>             |",
+        "|                             - If <!command> does not exist it is created.        |",
+        "| !removecmd <!cmd>           - Removes a custom command and all its actions.      |",
+        "| !removecmd <!cmd> <index>   - Removes action at <index> from <!cmd>              |",
+        "| !describe <!cmd> <text>     - Submits a description of <!cmd> that shows in help.|",
+        "| !listcmd                    - Shows a list of custom commands and their actions. |",
+        "+----------------------------------------------------------------------------------+"
         };        
         return message;
     }
@@ -107,16 +103,12 @@ public class custom extends MultiUtil {
     public void handleCommand(String name, String cmd) {
         if (cmd.startsWith("!addaction "))
             do_addAction(name, cmd.substring(11));
-        if (cmd.startsWith("!removeact "))
-            do_removeAction(name, cmd.substring(11));
         if (cmd.startsWith("!removecmd "))
             do_removeCmd(name, cmd.substring(11));
         if (cmd.equalsIgnoreCase("!listcmd"))
             do_listCmd(name);
         if (cmd.startsWith("!describe "))
             do_describe(name, cmd.substring(10));
-        if (cmd.equalsIgnoreCase("!loadcmds"))
-            do_loadCommands(name);
     }
     
     /**
@@ -158,48 +150,16 @@ public class custom extends MultiUtil {
     }
     
     /**
-     * Loads commands for the bot's current arena from database.
-     * 
-     * @param name -
-     *            user of the bot
-     */
-    public void do_loadCommands(String name) {
-        try {
-            ResultSet resultSet = m_botAction.SQLQuery(database, 
-                    "SELECT CMD.* "
-                    + "FROM tblArena A, tblSetupCommands CMD "
-                    + "WHERE A.fnArenaID = CMD.fnArenaID "
-                    + "AND A.fcArenaName = '"
-                    + m_botAction.getArenaName() + "'");
-            int count = 0;
-            while (resultSet.next()) {
-                String command = resultSet.getString("fcCommand");
-                String message = resultSet.getString("fcMessage");
-                String description = resultSet.getString("fcDescription");
-                do_addAction(m_botAction.getBotName(), command + " " + message);
-                if(description != null)
-                    do_describe(m_botAction.getBotName(), command + " " + description);
-                count++;
-            }
-            m_botAction.SQLClose(resultSet);
-            if (count == 0)
-                m_botAction.sendSmartPrivateMessage(name, "No commands are registered for this arena.");
-            else
-                m_botAction.sendSmartPrivateMessage(name, "Commands for this arena have been loaded.");
-            
-        } catch (Exception e) {
-            Tools.printStackTrace(e);
-        }
-    }
-    
-    /**
      * Removes a custom action from the specified command.
      */
-    public void do_removeAction(String name, String message) {
+    public void do_removeCmd(String name, String message) {
         int index = message.indexOf(" ");
         if (index == -1) {
-            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !removeaction <Command> <Index of Action>");
-            return;
+        	if (commands.containsKey(message)) {
+                commands.remove(message);
+                m_botAction.sendSmartPrivateMessage(name, "Command '" + message + "' removed.");
+            } else
+                m_botAction.sendSmartPrivateMessage(name, "Specified command not found. Use !listcmd to see a list of registered commands.");
         }
         String command = message.substring(0, index);
         int actionIndex;
@@ -222,24 +182,12 @@ public class custom extends MultiUtil {
     }
     
     /**
-     * Removes an entire custom command and all of its actions.
-     */
-    public void do_removeCmd(String name, String message) {
-        if (commands.containsKey(message)) {
-            commands.remove(message);
-            m_botAction.sendSmartPrivateMessage(name, "Command '" + message + "' removed.");
-        } else {
-            m_botAction.sendSmartPrivateMessage(name, "Specified command not found. Use !listcmd to see a list of registered commands.");
-        }
-    }
-    
-    /**
      * Displays a list of all custom commands and their actions(including
      * indices)
      */
     public void do_listCmd(String name) {
         if (commands.size() == 0) {
-            m_botAction.sendSmartPrivateMessage(name, "There are no custom commands.");
+            m_botAction.sendSmartPrivateMessage(name, "There are no custom commands to list.");
             return;
         }
         Iterator<CustomCommand> it = commands.values().iterator();
