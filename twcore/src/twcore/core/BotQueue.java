@@ -204,6 +204,15 @@ public class BotQueue extends Thread {
 
         return result;
     }
+    
+    int getBotCount(String className){
+    	Integer      currentBotCount = m_botTypes.get( className.toLowerCase() );
+    	if( currentBotCount == null ){
+            currentBotCount = new Integer( 0 );
+            m_botTypes.put( className.toLowerCase(), currentBotCount );
+        }
+    	return currentBotCount;
+    }
 
     /**
      * Removes a bot with no information provided.
@@ -312,7 +321,11 @@ public class BotQueue extends Thread {
      * spawnBot(String,String,String,String).
      */
     void spawnBot( String className, String messager ) {
-        spawnBot( className, null, null, messager );
+        spawnBot( className, null, null, messager);
+    }
+    
+    void maxSpawnBot( String className, String messager ) {
+    	spawnBot( className, null, null, messager);
     }
 
     /**
@@ -362,7 +375,6 @@ public class BotQueue extends Thread {
             m_botAction.sendSmartPrivateMessage( messager, "Maximum number of bots of this type (" + maxBots + ") has been reached." );
             return;
         }
-
         String botName, botPassword;
         currentBotCount = new Integer( getFreeBotNumber( botInfo ) );
         if( login == null || password == null ) {

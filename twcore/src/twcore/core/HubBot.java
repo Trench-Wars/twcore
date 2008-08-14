@@ -71,6 +71,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "handleListBots" );
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage" );
         m_commandInterpreter.registerCommand( "!forcespawn", acceptedMessages, this, "handleForceSpawnMessage" );
+        m_commandInterpreter.registerCommand( "!spawnmax", acceptedMessages, this, "handleSpawnMaxMessage" );
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess" );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
@@ -669,6 +670,20 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
         }
     }
+    
+    /**
+     * Spawns the maximum number of bots of a given type.
+     * @param messager Name of the player who sent the command
+     * @param message Bot type to spawn
+     */
+    public void maxSpawn( String messager, String message ){
+    	String className = message.trim();
+        if( className.length() > 0 ){
+            m_botQueue.maxSpawnBot( className, messager );
+        } else {
+            m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
+        }
+    }
 
     /**
      * Spawns a bot of a given type.  User interface wrapper for spawn().
@@ -712,6 +727,43 @@ public class HubBot extends SubspaceBot {
         } else {
             m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !forcespawn." );
         }
+    }
+    
+    /**
+     * Spawns the maximum number of a bot of a given type.
+     * @param messager Name of the player who sent the command
+     * @param message Bot type to spawn
+     */
+    public void handleSpawnMaxMessage( String messager, String message ){
+    	if( m_botAction.getOperatorList().isOutsider( messager ) );
+        else {
+            if( m_botAction.getOperatorList().isZH(messager) ) {
+                int allowSpawn = m_botAction.getGeneralSettings().getInt( "AllowZHSpawning" );
+                if( allowSpawn == 2 || allowSpawn == 1 && message.toLowerCase().trim().equals("matchbot") ) {
+                } else {
+                    m_botAction.sendChatMessage( 1, messager + " doesn't have access (ZHs not allowed to spawn " + (allowSpawn == 0?"bots)":"bots other than matchbot)") +
+                            ", but (s)he tried '!spawn " + message + "'");
+                    return;
+                }
+            } else {
+                m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried '!spawn " + message + "'");
+                return;
+            }
+        }
+    	BotSettings botInfo = m_botAction.getCoreData().getBotConfig(message.toLowerCase());
+    	if( botInfo == null ){
+            m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + message + ".  Invalid bot type or missing CFG file." );
+            m_botAction.sendSmartPrivateMessage( messager, "That bot type does not exist, or the CFG file for it is missing." );
+            return;
+        }
+    	Integer maxBots = botInfo.getInteger("Max Bots");
+    	if( maxBots == null ){
+            m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + message + ".  Invalid settings file. (MaxBots improperly defined)" );
+            m_botAction.sendSmartPrivateMessage( messager, "The CFG file for that bot type is invalid. (MaxBots improperly defined)" );
+            return;
+        }
+    	while(m_botQueue.getBotCount(message.toLowerCase()) < maxBots)
+    		spawn( messager, message );
     }
 
     /**
