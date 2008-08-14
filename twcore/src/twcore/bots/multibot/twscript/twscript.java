@@ -102,7 +102,7 @@ public class twscript extends MultiUtil {
      * Toggles Sysop override.
      */
     public void do_sysopOverride(String name){
-        if(opList.isSysop(name)){
+        if(opList.isSysop(name) && !name.equalsIgnoreCase(m_botAction.getBotName())){
             if(isSysop){
                 isSysop = false;
                 m_botAction.sendSmartPrivateMessage( name, "Sysop override deactivated.");
