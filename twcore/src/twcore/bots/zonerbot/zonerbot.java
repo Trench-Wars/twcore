@@ -1,6 +1,7 @@
 package twcore.bots.zonerbot;
 
 import java.util.TimerTask;
+import java.util.Iterator;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -40,6 +41,7 @@ public class zonerbot extends SubspaceBot
   public static final int NATURAL_LINE_LENGTH = 200;
 
   private VectorMap<String, Advert> advertQueue;
+  private VectorMap<Integer, PeriodicZone> PeriodicMsgs;
   private TimedHashSet<String> recentAdvertList;
   private AdvertTimer advertTimer;
   private IdleTimer idleTimer;
@@ -59,6 +61,7 @@ public class zonerbot extends SubspaceBot
     super(botAction);
     requestEvents();
     advertQueue = new VectorMap<String, Advert>();
+    PeriodicMsgs = new VectorMap<Integer, PeriodicZone>();
     recentAdvertList = new TimedHashSet<String>();
     advertTime = 10;
     idleTime = 5;
@@ -603,6 +606,12 @@ public class zonerbot extends SubspaceBot
     String command = message.toLowerCase();
     if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
     {
+      if(command.startsWith("!periodic "))
+        doPeriodicZoner(sender, message.substring(10).trim());
+      if(command.startsWith("!listperiodic"))
+          doListPeriodicZoner(sender);
+      if(command.startsWith("!removeperiodic "))
+          doRemovePeriodicZoner(sender, message.substring(16).trim());
       if(command.startsWith("!setadvertdelay "))
         doSetAdvertDelayCmd(sender, message.substring(16).trim());
       if(command.startsWith("!setidletime "))
@@ -630,6 +639,86 @@ public class zonerbot extends SubspaceBot
         m_botAction.sendZoneMessage(message.substring(10).trim() + " -TW Staff", 2);
     }
   }
+  
+  /**
+   * This method allows the sender to setup a periodic
+   * message to be zoned with a delay for an interval.
+   * Syntax <delay> <interval> <message>
+   * 
+   * @param sender is the sender of the command.
+   * @param argString is the arg string.
+   */
+  
+  private void doPeriodicZoner(String sender, String argString)	{
+	  int delay,interval;
+	  String message;
+	  try {
+		  String[] parts = argString.split(":");
+		  delay = Integer.parseInt(parts[0]);
+		  interval = Integer.parseInt(parts[1]);
+		  message = parts[2];
+		  
+		  PeriodicZone periodicTask = new PeriodicZone(delay,interval,sender,message);
+		  
+		  int pos = PeriodicMsgs.size()+1;
+		  for (int i = 0 ; i < PeriodicMsgs.size() ; i++)	{
+			  if (!PeriodicMsgs.containsKey(new Integer(i+1)))
+				  pos = i+1;
+		  }
+		  PeriodicMsgs.put(new Integer(pos), periodicTask);
+		  m_botAction.scheduleTask(periodicTask,1000, delay*60000);
+		  
+		  m_botAction.sendPrivateMessage(sender, "A periodic zoner has been set with" +
+		  		" a delay of " + delay + " minute(s) for an interval of " + interval +
+		  		" hour(s) with the message: \"" + message + "\"");
+	  } catch (NumberFormatException nfe)	{
+		  m_botAction.sendPrivateMessage(sender, "Interval and delay must be numerical.");
+	  } catch (IllegalArgumentException iae)	{
+		  m_botAction.sendPrivateMessage(sender, iae.getMessage());
+	  } catch (Exception e)	{
+		  m_botAction.sendPrivateMessage(sender, "Incorrect syntax.");
+	  }
+  }
+  
+  /**
+   * Lists all the periodic zone messages if any to the sender.
+   * 
+   * @param sender is the sender of the command.
+   */
+  
+  private void doListPeriodicZoner(String sender)	{
+	  if (PeriodicMsgs.isEmpty())	{
+		  m_botAction.sendPrivateMessage(sender, "There are currently no periodic zoners.");
+		  return;
+	  }
+	  Iterator<Integer> idx = PeriodicMsgs.keySet().iterator();
+	  Iterator<PeriodicZone> zoner = PeriodicMsgs.values().iterator();
+	  
+	  while (idx.hasNext())	{
+		  m_botAction.sendPrivateMessage(sender, idx.next() + ") " + 
+				  zoner.next().toString());
+	  }
+  }
+  
+  private void doRemovePeriodicZoner(String sender, String argString)	{
+	  Integer idx;
+	  try {
+		  idx = new Integer(Integer.parseInt(argString));
+		  if (!PeriodicMsgs.containsKey(idx))	
+			  throw new IllegalArgumentException("No such index.");
+		  PeriodicMsgs.get(idx).cancel();
+		  m_botAction.sendPrivateMessage(sender, "Periodic zoner: \"" + 
+				  PeriodicMsgs.remove(idx).getMsg() + "\" has been removed");
+	  } catch (NumberFormatException nfe)	{
+		  m_botAction.sendPrivateMessage(sender, "Index must be numerical.");
+	  } catch (IllegalArgumentException iae)	{
+		  m_botAction.sendPrivateMessage(sender, iae.getMessage());
+	  } catch (Exception e)	{
+		  m_botAction.sendPrivateMessage(sender, "Incorrect syntax.");
+	  }
+  }
+  
+  
 
   /**
    * This method allows the sender to change the time between adverts.  The
@@ -771,14 +860,18 @@ public class zonerbot extends SubspaceBot
     String message[] =
     {
       "========================================== SMOD Commands ===========================================",
-      "!SetAdvertDelay <Time>             -- Sets the time between adverts.",
-      "!SetIdleTime <Time>                -- Sets the number of minutes for an advert to expire.",
-      "!SetReAdvertTime <Time>            -- Sets the number of minutes required before a player that has",
-      "                                      just zoned claims another advert.",
-      "!SetQueueLength <Length>           -- Sets the number of people allowed in the advert queue.",
-      "!Enable                            -- Enables Advert bot.",
-      "!Disable                           -- Disables Advert bot.",
-      "!Die                               -- Logs the bot off."
+      "!Periodic <delay>:<interval>:<message>-- Adds a periodic zone message. " +
+      "                                         delay is in minutes, interval is in hours",
+      "!ListPeriodic                         -- Lists all periodic zone messages and their index.",
+      "!RemovePeriodic <index>               -- Removes the periodic message at the index.",
+      "!SetAdvertDelay <Time>                -- Sets the time between adverts.",
+      "!SetIdleTime <Time>                   -- Sets the number of minutes for an advert to expire.",
+      "!SetReAdvertTime <Time>               -- Sets the number of minutes required before a player that has",
+      "                                         just zoned claims another advert.",
+      "!SetQueueLength <Length>              -- Sets the number of people allowed in the advert queue.",
+      "!Enable                               -- Enables Advert bot.",
+      "!Disable                              -- Disables Advert bot.",
+      "!Die                                  -- Logs the bot off."
     };
 
     m_botAction.smartPrivateMessageSpam(sender, message);
@@ -862,6 +955,34 @@ public class zonerbot extends SubspaceBot
       return message.getMessager();
     senderID = message.getPlayerID();
     return m_botAction.getPlayerName(senderID);
+  }
+  
+  private class PeriodicZone extends TimerTask {
+	  private int m_delay,m_interval,m_time=0;
+	  private String m_sender,m_message;
+	  
+	  public PeriodicZone (int delay, int interval, String sender, String message)	{
+		  m_delay = delay;
+		  m_interval = interval;
+		  m_message = message;
+		  m_sender = sender;
+	  }
+	  
+	  public String getMsg()	{
+		  return m_message;
+	  }
+	  
+	  public String toString()	{
+		  return "Set by: "+ m_sender + ", repeats every " 
+		  + m_delay + " minute(s), for " + m_interval + " hour(s). \"" + m_message + "\"" ;
+	  }
+	  
+	  public void run()	{
+		  m_time += m_delay;
+		  if ( m_time/60 > m_interval)
+			  this.cancel();
+		  m_botAction.sendZoneMessage(m_message);
+	  }
   }
 
   private class IdleTimer extends DetailedTimerTask
