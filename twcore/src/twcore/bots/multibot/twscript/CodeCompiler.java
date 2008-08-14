@@ -19,38 +19,50 @@ import twcore.core.util.Tools;
  */
 public final class CodeCompiler {
     
-    public static void handlePublicTWScript(BotAction bot, String message, boolean smod){
+    public static void handlePublicTWScript(BotAction bot, String message, boolean sysop){
     	try{
         message = replacePublicKeys(bot, message);
-        if(message != null && !isAllowedPublicCommand(message) && !smod)
+        if(message != null && !isAllowedPublicCommand(message) && !sysop)
             message = null;
         if (message != null && message.indexOf('%') == -1)
-            bot.sendUnfilteredPublicMessage(message);
+        	sendMessage(bot,message, -1);
         else if(message != null && message.indexOf('%') != -1){
             int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-            if(sound != -1)
-                bot.sendUnfilteredPublicMessage(message.substring(0, message.indexOf('%')), sound);
-            else
-                bot.sendUnfilteredPublicMessage(message.substring(0, message.indexOf('%')));
+            message = message.substring(0, message.indexOf('%'));
+            sendMessage(bot,message, sound);
         }
     	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
     }
     
-    public static void handlePrivateTWScript(BotAction bot, String message, Player p, boolean smod){
+    public static void sendMessage(BotAction bot, String message, int sound){
+    	if(message.startsWith("'")){
+    		if(sound == -1)bot.sendTeamMessage(message.substring(1));
+    		else bot.sendTeamMessage(message.substring(1), sound);
+    	} else if(message.startsWith(":")){
+    		message = message.substring(1);
+    		if(message.indexOf(":") != -1){
+    			if(sound == -1) bot.sendUnfilteredPrivateMessage(message.substring(0,message.indexOf(":")), message.substring(message.indexOf(":") + 1));
+    			else bot.sendUnfilteredPrivateMessage(message.substring(0,message.indexOf(":")), message.substring(message.indexOf(":") + 1), sound);
+    		}
+    	} else {
+    		if(sound == -1)bot.sendUnfilteredPublicMessage(message);
+    		else bot.sendUnfilteredPublicMessage(message, sound);
+    	}
+    }
+    
+    public static void handlePrivateTWScript(BotAction bot, String message, Player p, boolean sysop){
     	try{
         message = replacePrivateKeys(bot, p, message);
-        if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message) && !smod)
+        if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message) && !sysop)
             message = null;
         if (message != null && message.indexOf('%') == -1)
             bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
         else if(message != null && message.indexOf('%') != -1){
             int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-            if(sound != -1)
-                bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')), sound);
-            else
-                bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message.substring(0, message.indexOf('%')));
+            message = message.substring(0, message.indexOf('%'));
+            bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message, sound);
         }
     	}catch(Exception e){
     		Tools.printStackTrace(e);

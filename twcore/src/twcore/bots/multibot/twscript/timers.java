@@ -4,9 +4,14 @@ import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TimerTask;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
+import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
 import twcore.core.util.Tools;
@@ -26,18 +31,21 @@ public class timers extends MultiUtil {
 	
 	public String[] getHelpMessages(){
 		String[] help = {
-		"+------------------------------------ Timers ------------------------------------+",
-		"| !addtimer <timer> <message>   - Adds a TWScript <message> to a timer, <name>.  |",
-		"|                               - If the timer does not exist it is created.     |",
-		"| !removetimer <timer>          - Removes the timer, <name>.                     |",
-		"| !removetimer <timer> <index>  - Removes message at <index> from <timer>        |",
-		"| !runonce <timer> <s>          - Schedules the specified timer to run one time  |",
-		"|                               - <s> seconds from the time you hit enter.       |",
-		"|",
-		"|",
-		"|",
-		"| !listtimer                  - Displays a list of timers and their messages.    |",
-		"+--------------------------------------------------------------------------------+"
+		"+------------------------------------- Timers -------------------------------------+",
+		"| !addtimer <timer> <message>     - Adds a TWScript <message> to a timer, <name>.  |",
+		"|                                 - If the timer does not exist it is created.     |",
+		"| !removetimer <timer>            - Removes the timer, <name>.                     |",
+		"| !removetimer <timer> <index>    - Removes message at <index> from <timer>        |",
+		"| !sched <timer> d:h:m:s          - Schedules the specified timer to run one time  |",
+		"|                                 - at days:hours:minutes:seconds from now.        |",
+		"| !sched <timer> d:h:m:s d:h:m:s  - Schedules the specified timer to start running |",
+		"|                                 - to start at dhms and repeate every dhms.       |",
+		"| !calendar <t> MM:DD:YYYY:h:m:s  - Schedules timer <t> to occur on a specific date|",
+		"|                                 - and time. For example, 04:28:2009:10:1:0 would |",
+		"|                                 - occur on April 28, 2009 at 10:01AM EST         |",
+		"| !canceltimer <timer>            - Cancels <timer> if scheduled.                  |",
+		"| !listtimers                     - Displays a list of timers and their messages.  |",
+		"+----------------------------------------------------------------------------------+"
 		};
 		return help;
 	}
@@ -57,10 +65,14 @@ public class timers extends MultiUtil {
             do_addTimer(name, cmd.substring(10));
         if (cmd.startsWith("!removetimer "))
             do_removeTimer(name, cmd.substring(13));
-        if (cmd.equalsIgnoreCase("!listtimer"))
-            do_listTimer(name);
-        if (cmd.startsWith("!runonce "))
-        	do_runOnce(name, cmd.substring(9));
+        if (cmd.equalsIgnoreCase("!listtimers"))
+            do_listTimers(name);
+        if (cmd.startsWith("!sched "))
+        	do_sched(name, cmd.substring(7));
+        if (cmd.startsWith("!calendar "))
+        	do_calendar(name, cmd.substring(10));
+        if (cmd.startsWith("!canceltimer "))
+        	do_cancelTimer(name, cmd.substring(13));
 	}
 	
 	public void do_addTimer(String name, String message){
@@ -81,10 +93,13 @@ public class timers extends MultiUtil {
 		int index = message.indexOf(" ");
         if (index == -1) {
         	if (timers.containsKey(message)) {
+        		if(timers.get(message).isScheduled)
+        			timers.get(message).cancelTask();
                 timers.remove(message);
                 m_botAction.sendSmartPrivateMessage(name, "Timer '" + message + "' removed.");
             } else
                 m_botAction.sendSmartPrivateMessage(name, "Specified timer not found. Use !listtimer to see a list of registered timers.");
+        	return;
         }
         String timer = message.substring(0, index);
         int actionIndex;
@@ -106,7 +121,7 @@ public class timers extends MultiUtil {
         }
 	}
 	
-	public void do_listTimer(String name){
+	public void do_listTimers(String name){
 		if (timers.size() == 0) {
             m_botAction.sendSmartPrivateMessage(name, "There are no timers to list.");
             return;
@@ -116,34 +131,164 @@ public class timers extends MultiUtil {
         while (it.hasNext()) {
             CustomTimer t = it.next();
             m_botAction.sendSmartPrivateMessage(name, "| Timer: " + t.name);
+            m_botAction.sendSmartPrivateMessage(name, "| - " + t.getScheduleString());
             Iterator<String> i = t.getMessages().iterator();
             while (i.hasNext()) {
                 String msg = i.next();
                 m_botAction.sendSmartPrivateMessage(name, "|  " + t.getMessages().indexOf(msg) + ") " + msg);
             }
         }
+        m_botAction.sendSmartPrivateMessage(name, "===================================");
 	}
 	
-	public void do_runOnce(String name, String message){
+	public void do_sched(String name, String message){
 		int index = message.indexOf(" ");
         if (index == -1) {
-        	m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !runonce <Timer> <Seconds>");
+        	m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !sched <Timer> <Days>:<Hours>:<Minutes>:<Seconds>");
         	return;
         }
         String timer = message.substring(0, index);
-        int actionIndex;
+        if(!timers.containsKey(timer)){
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' not found.");
+        	return;
+        }
+        if(timers.get(timer).isScheduled){
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' is already scheduled. Use !canceltimer <timer> to cancel.");
+        	return;
+        }
+        long[] time = new long[8];
+        String[] msgs;
+        if(message.substring(index + 1).indexOf(" ") == -1)
+        	msgs = message.substring(index + 1).split(":");
+        else
+        	msgs = message.substring(index + 1).replaceFirst(" ", ":").split(":");
         try {
-            actionIndex = Integer.parseInt(message.substring(index + 1));
+        	if(msgs.length != 4 && msgs.length != 8)
+        		throw new IllegalArgumentException();
+        	for(int i=0;i<msgs.length;i++)
+        		time[i] = Long.parseLong(msgs[i]);
         } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !runonce <Timer> <Seconds>");
+            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !sched <Timer> <Days>:<Hours>:<Minutes>:<Seconds>");
             return;
         }
-        //TODO:
+        long[] start = new long[4];
+        long[] repeat = new long[4];
+        for(int i=0;i<start.length;i++)
+        	start[i] = time[i];
+        for(int i=4;i<time.length;i++)
+        	repeat[(i-4)] = time[i];
+        if(getTimeInMillis(repeat) > 0){
+        	timers.get(timer).schedule(getTimeInMillis(start), getTimeInMillis(repeat));
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' " + timers.get(timer).getScheduleString());
+        } else{
+        	timers.get(timer).schedule(getTimeInMillis(start), -1);
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' " + timers.get(timer).getScheduleString());
+        }
+        
+	}
+	
+	public void do_calendar(String name, String message){
+		int index = message.indexOf(" ");
+        if (index == -1) {
+        	m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !calendar <Timer> <Month>:<Day>:<Year>:<Hours>:<Minutes>:<Seconds>");
+        	return;
+        }
+        String timer = message.substring(0, index);
+        if(!timers.containsKey(timer)){
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' not found.");
+        	return;
+        }
+        if(timers.get(timer).isScheduled){
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' is already scheduled. Use !canceltimer <timer> to cancel.");
+        	return;
+        }
+        int[] time = new int[6];
+        String[] msgs;
+        msgs = message.substring(index + 1).split(":");
+        try {
+        	if(msgs.length != 6)
+        		throw new IllegalArgumentException();
+        	for(int i=0;i<msgs.length;i++)
+        		time[i] = Integer.parseInt(msgs[i]);
+        } catch (Exception e) {
+            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !sched <Timer> <Days>:<Hours>:<Minutes>:<Seconds>");
+            return;
+        }
+        GregorianCalendar cal = new GregorianCalendar();
+        cal.set(time[2], time[0]-1, time[1], time[3], time[4], time[5]);
+        timers.get(timer).schedule(cal);
+    	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' " + timers.get(timer).getScheduleString());
+        
+	}
+	
+	public void do_cancelTimer(String name, String timer){
+		if(!timers.containsKey(timer)){
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' not found.");
+        	return;
+        }
+        if(!timers.get(timer).isScheduled){
+        	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' is not currently scheduled.");
+        	return;
+        }
+        timers.get(timer).cancelTask();
+        m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' has been cancelled.");
+	}
+	
+	public long getTimeInMillis(long[] time){
+		long sum = 0;
+		for(int i=0;i<time.length;i++){
+			switch(i){
+			case 0:sum += time[i] * Tools.TimeInMillis.DAY;break;
+			case 1:sum += time[i] * Tools.TimeInMillis.HOUR;break;
+			case 2:sum += time[i] * Tools.TimeInMillis.MINUTE;break;
+			case 3:sum += time[i] * Tools.TimeInMillis.SECOND;break;
+			}
+		}
+		return sum;
+	}
+	public long[] getTimeInFormat(long millis, boolean includeMilli){
+		long[] format = new long[5];
+		while(millis > Tools.TimeInMillis.DAY){
+			millis -= Tools.TimeInMillis.DAY;
+			format[0]++;
+		}
+		while(millis > Tools.TimeInMillis.HOUR){
+			millis -= Tools.TimeInMillis.HOUR;
+			format[1]++;
+		}
+		while(millis > Tools.TimeInMillis.MINUTE){
+			millis -= Tools.TimeInMillis.MINUTE;
+			format[2]++;
+		}
+		while(millis > Tools.TimeInMillis.SECOND){
+			millis -= Tools.TimeInMillis.SECOND;
+			format[3]++;
+		}
+		if(includeMilli){
+			while(millis > 0){
+				millis--; 
+				format[4]++;
+			}
+		}		
+		return format;
+	}
+	public String getTimeString(long[] time, boolean verbose){
+		if(time.length == 4){
+		if(verbose)
+			return time[0] + " days, " + time[1] + " hours, " + time[2] + " minutes, and " + time[3] + " seconds";
+		else
+			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
+		} else
+			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s:" + time[4] + "ms";
 	}
 	
 private class CustomTimer{
 	private String name;
 	private ArrayList<String> messages;
+	private boolean isScheduled = false;
+	private TimerTask task;
+	private long st, rep, millis;
+	private GregorianCalendar cal;
 	
 	private CustomTimer(String name){
 		this.name = name;
@@ -166,7 +311,86 @@ private class CustomTimer{
 		return messages;
 	}
 	
+	private void cancelTask(){
+		if(!isScheduled)return;
+		else isScheduled = false;
+		if(cal != null)cal = null;
+		task.cancel();
+	}
 	
+	private void schedule(long startTime, long repeatTime){
+		if(isScheduled)return;
+		else isScheduled = true;
+		task = new TimerTask(){
+			public void run(){
+				Iterator<Player> i = m_botAction.getPlayerIterator();
+		        while( i.hasNext() ){
+		        	Player p = i.next();
+		        	Iterator<String> msgs = messages.iterator();
+		        	while( msgs.hasNext() )
+		        		CodeCompiler.handlePrivateTWScript(m_botAction, msgs.next(), p, twscript.isSysop);
+		        }
+		        if(rep < 0)
+		        	timers.get(name).cancelTask();
+			}
+		};
+		if(repeatTime < 0){
+			m_botAction.scheduleTask(task, startTime);
+			setScheduleString(startTime, -1, (new Date()).getTime());
+		}
+		else {
+			m_botAction.scheduleTaskAtFixedRate(task, startTime, repeatTime);
+			setScheduleString(startTime, repeatTime, (new Date()).getTime());
+		}
+	}
+	
+	private void schedule(GregorianCalendar cal){
+		if(isScheduled)return;
+		else isScheduled = true;
+		task = new TimerTask(){
+			public void run(){
+				Iterator<Player> i = m_botAction.getPlayerIterator();
+		        while( i.hasNext() ){
+		        	Player p = i.next();
+		        	Iterator<String> msgs = messages.iterator();
+		        	while( msgs.hasNext() )
+		        		CodeCompiler.handlePrivateTWScript(m_botAction, msgs.next(), p, twscript.isSysop);
+		        }
+		        if(rep < 0)
+		        	timers.get(name).cancelTask();
+			}
+		};
+		m_botAction.scheduleTask(task, cal.getTimeInMillis() - System.currentTimeMillis());
+		this.cal = cal;
+
+	}
+	
+	public void setScheduleString(long st, long rep, long millis){
+		this.st = st;
+		this.rep = rep;
+		this.millis = millis;
+	}
+
+	public String getScheduleString(){
+		if(!isScheduled) return "Timer '" + name + "' is not currently scheduled.";
+		long timeLeftInMillis;
+		long[] time;
+		if(rep > 0){
+			timeLeftInMillis = st - ((new Date()).getTime() - millis);
+			if(timeLeftInMillis < 0){
+				timeLeftInMillis *= -1;
+				timeLeftInMillis %= rep;
+				timeLeftInMillis = rep - timeLeftInMillis;
+			}
+		}else
+			timeLeftInMillis = st - ((new Date()).getTime() - millis);
+		time = getTimeInFormat(timeLeftInMillis, true);
+		if(cal != null){
+			return "scheduled to fire on " + SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(cal.getTime()) + " at " + SimpleDateFormat.getTimeInstance().format(cal.getTime()) + " (" + TimeZone.getDefault().getDisplayName(true, TimeZone.SHORT) + ")";
+		}
+		return "scheduled to fire in " + getTimeString(time, false);
+		
+	}
 }
 	public void requestEvents(ModuleEventRequester req){}
 	public void cancel(){}
