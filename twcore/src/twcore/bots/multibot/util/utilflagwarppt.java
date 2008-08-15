@@ -531,7 +531,6 @@ public class utilflagwarppt extends MultiUtil {
 	 */
 
 	private void notifyFreq (Integer freq, String wpptName, boolean obtained)	{
-		m_botAction.sendPublicMessage("notifying " + freq);
 		Iterator<Player> freqPlayers = m_botAction.getFreqPlayerIterator(freq.intValue());
 		if (freqPlayers == null)
 			return;
@@ -595,7 +594,6 @@ public class utilflagwarppt extends MultiUtil {
 
     public void handleEvent(FlagClaimed event)	{
 		Integer flagID = new Integer ( event.getFlagID() );
-		m_botAction.sendPublicMessage("someone grabed flag: " + flagID);
 		int playerID = event.getPlayerID();
 		Integer rawFreq = new Integer ( m_botAction.getPlayer(playerID).getFrequency() );
 
@@ -610,11 +608,9 @@ public class utilflagwarppt extends MultiUtil {
 			if ( points.isEmpty() )
 				return;
 			if ( !freqs.containsKey(rawFreq) )	{
-				m_botAction.sendPublicMessage("adding " + rawFreq + " with " + flagID);
 				Holding_Freq newFreq = new Holding_Freq(rawFreq);
 				freqs.put(rawFreq, newFreq);
 			}
-			m_botAction.sendPublicMessage("checking " + rawFreq + " for " + flagID);
 			CheckFlag(flagID,rawFreq.intValue());
 		}
     }
