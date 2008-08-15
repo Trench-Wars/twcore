@@ -140,6 +140,8 @@ public class utilshipswitch extends MultiUtil {
 	        	doClearDisabled(sender);
 	        else if ( message.startsWith("!listdisabled"))
 				doListDisabled(sender);
+	        else
+	        	handlePlayerCommand(sender, message);
 		}	catch ( NumberFormatException nfe )	{
 			m_botAction.sendPrivateMessage(sender, "Syntax must be numerical!");
 		}	catch ( IllegalArgumentException iae )	{

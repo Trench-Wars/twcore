@@ -354,20 +354,7 @@ public class utilflagwarppt extends MultiUtil {
 	 */
 
 	public void doReleaseFlags (String sender)	{
-		Iterator<Integer> flags = m_botAction.getFlagIDIterator();
-		int freq = new Random().nextInt( 9998 );
-		if (flags == null)	{
-			m_botAction.sendPrivateMessage(sender, "There are no flags on this map.");
-			return;
-		}
-
-		m_botAction.getShip().setShip(0);
-		m_botAction.getShip().setFreq(freq);
-		while (flags.hasNext())	{
-			Integer flag = flags.next();
-			m_botAction.grabFlag(flag);
-		}
-		
+		m_botAction.resetFlagGame();
 		freqs.clear();
 		Iterator<Warp_Point>wrppts = points.values().iterator();
 		while (wrppts.hasNext())	{
@@ -549,7 +536,7 @@ public class utilflagwarppt extends MultiUtil {
 					m_botAction.sendPrivateMessage(
 							currentp.getPlayerName(),
 							"Your freq has control of the flags for "
-							+ wpptName + " pm me !goto " + wpptName + " to go there.");
+							+ wpptName + " pm me !warpto " + wpptName + " to go there.");
 				else
 					m_botAction.sendPrivateMessage(
 							currentp.getPlayerName(),
@@ -694,7 +681,7 @@ public class utilflagwarppt extends MultiUtil {
 			Player player = m_botAction.getPlayer(sender);
 			if (player == null)
 				return;
-			if (message.startsWith("!goto"));	{
+			if (message.startsWith("!warpto "));	{
 				Integer freq = new Integer (player.getFrequency());
 				if (freqs.containsKey(freq))	{
 					if (freqs.get(freq).containsWrpp(message.substring(6)))	{
