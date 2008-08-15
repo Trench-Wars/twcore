@@ -273,11 +273,9 @@ public class utilattach extends MultiUtil {
 				+ " has been reached for the ship you're tring to attach to "
 				+ "(ship : " + anchor + ")";
 		}
-		short fallbackfreq = attacher.getFrequency();
 		m_botAction.sendPrivateMessage(attacher.getPlayerID(), msg);
-		m_botAction.specWithoutLock(attacher.getPlayerID());
+		m_botAction.setShip(attacher.getPlayerID(), anchor.intValue());
 		m_botAction.setShip(attacher.getPlayerID(), turret.intValue());
-		m_botAction.setFreq(attacher.getPlayerID(), fallbackfreq);
 	}
 	
 	/**
