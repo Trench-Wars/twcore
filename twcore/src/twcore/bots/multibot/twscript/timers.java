@@ -9,7 +9,6 @@ import java.util.GregorianCalendar;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-import twcore.bots.CodeCompiler;
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.game.Player;

@@ -1,4 +1,4 @@
-package twcore.bots;
+package twcore.bots.multibot.twscript;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -96,6 +96,8 @@ public final class CodeCompiler {
             message = message.replaceFirst("@randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
         if(message.contains("@botname"))
             message = message.replace("@botname", bot.getBotName());
+        if(message.contains("@arenaname"))
+        	message = message.replace("@arenaname", bot.getArenaName());
         if(message.contains("@arenasize"))
             message = message.replace("@arenasize", Integer.toString(bot.getArenaSize()));
         if(message.contains("@playingplayers"))
@@ -205,6 +207,8 @@ public final class CodeCompiler {
             message = message.replaceFirst("@randomtile", Integer.toString((rand.nextInt( 1021 )) + 1));
         if(message.contains("@botname"))
             message = message.replace("@botname", bot.getBotName());
+        if(message.contains("@arenaname"))
+        	message = message.replace("@arenaname", bot.getArenaName());
         if(message.contains("@arenasize"))
             message = message.replace("@arenasize", Integer.toString(bot.getArenaSize()));
         if(message.contains("@playingplayers"))
@@ -486,68 +490,6 @@ public final class CodeCompiler {
     		Tools.printStackTrace(e);
     		return "-1";
     	}
-    }
-    
-    /**
-     * Gets a help message of all replacement keys
-     * @see twcore.core.util.CodeCompiler.replaceKeys()
-     * @return - A help message displaying key types.
-     */
-    public static String[] getPrivateKeysMessage(){
-        String msg[] = {
-                "+================ Private Escape Keys ================+",
-                "| @name             - The player's name.              |",
-                "| @wins             - The player's wins.              |",
-                "| @losses           - The player's losses.            |",
-                "| @frequency        - The player's frequency.         |",
-                "| @id               - The player's id(not userid)     |",
-                "| @botname          - The bot's name.                 |",
-                "| @shipnum          - The player's ship number.       |",
-                "| @shipname         - The player's ship.              |",
-                "| @shipslang        - Player's ship in vernacular.    |",
-                "| @arenasize        - Number of players in arena.     |",
-                "| @playingplayers   - Number of players in a ship.    |",
-                "| @freqsize(#)      - Number of players on freq       |",
-                "| @pfreqsize(#)     - Num. of players playing on freq |",
-                "| @shipsonfreq(#,#) - Num of players in a certain ship|",
-                "|                       on freq. (ship type, freq #)  |",
-                "| @squad            - The player's squad.             |",
-                "| @bounty           - The player's bounty.            |",
-                "| @x                - X Location(Tiles)               |",
-                "| @y                - Y Location(Tiles)               |",
-                "| @randomfreq       - A random number(0 - 9998)       |",        
-                "| @randomship       - A random number(1-8)            |",            
-                "| @randomtile       - A random number(1-1022)         |",
-                "| @randomsound      - A random ALLOWED sound number.  |",
-                "| @ping             - The player's ping in ms.        |",
-                "| @date             - The current date.               |",
-                "| @time             - The current time.               |",
-                "| @!command@@       - Issues a command to the bot, but|",
-                "|                      the player receives no message.|",
-                "+=====================================================+",
-            };
-            return msg;
-    }
-    
-    public static String[] getPublicKeysMessage(){
-        String msg[] = {
-                "+================= Public Escape Keys ================+",
-                "| @botname          - The bot's name.                 |",
-                "| @arenasize        - Number of players in arena.     |",
-                "| @playingplayers   - Number of players in a ship.    |",
-                "| @freqsize(#)      - Number of players on freq #.    |",
-                "| @pfreqsize(#)     - Num. of players in ship. Freq # |",
-                "| @shipsonfreq(#,#) - Num of players in a certain ship|",
-                "                        on freq. (ship type, freq #)  |",
-                "| @randomfreq       - A random number(0 - 9998)       |",        
-                "| @randomship       - A random number(1-8)            |",            
-                "| @randomtile       - A random number(1-1022)         |",
-                "| @randomsound      - A random ALLOWED sound number.  |",
-                "| @date             - The current date.               |",
-                "| @time             - The current time.               |",
-                "+=====================================================+",
-            };
-            return msg;
     }
     
     /**

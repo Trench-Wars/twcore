@@ -42,6 +42,70 @@ public class TWScript extends MultiUtil {
     }
     
     /**
+     * Gets a help message of all replacement keys
+     * @see twcore.core.util.CodeCompiler.replaceKeys()
+     * @return - A help message displaying key types.
+     */
+    public static String[] getPrivateKeysMessage(){
+        String msg[] = {
+                "+================ Private Escape Keys ================+",
+                "| @name             - The player's name.              |",
+                "| @wins             - The player's wins.              |",
+                "| @losses           - The player's losses.            |",
+                "| @frequency        - The player's frequency.         |",
+                "| @id               - The player's id(not userid)     |",
+                "| @botname          - The bot's name.                 |",
+                "| @shipnum          - The player's ship number.       |",
+                "| @shipname         - The player's ship.              |",
+                "| @shipslang        - Player's ship in vernacular.    |",
+                "| @arenaname        - The arena's name.               |",
+                "| @arenasize        - Number of players in arena.     |",
+                "| @playingplayers   - Number of players in a ship.    |",
+                "| @freqsize(#)      - Number of players on freq       |",
+                "| @pfreqsize(#)     - Num. of players playing on freq |",
+                "| @shipsonfreq(#,#) - Num of players in a certain ship|",
+                "|                       on freq. (ship type, freq #)  |",
+                "| @squad            - The player's squad.             |",
+                "| @bounty           - The player's bounty.            |",
+                "| @x                - X Location(Tiles)               |",
+                "| @y                - Y Location(Tiles)               |",
+                "| @randomfreq       - A random number(0 - 9998)       |",        
+                "| @randomship       - A random number(1-8)            |",            
+                "| @randomtile       - A random number(1-1022)         |",
+                "| @randomsound      - A random ALLOWED sound number.  |",
+                "| @ping             - The player's ping in ms.        |",
+                "| @date             - The current date.               |",
+                "| @time             - The current time.               |",
+                "| @!command@@       - Issues a command to the bot, but|",
+                "|                      the player receives no message.|",
+                "+=====================================================+",
+            };
+            return msg;
+    }
+    
+    public static String[] getPublicKeysMessage(){
+        String msg[] = {
+                "+================= Public Escape Keys ================+",
+                "| @botname          - The bot's name.                 |",
+                "| @arenaname        - The arena's name.               |",
+                "| @arenasize        - Number of players in arena.     |",
+                "| @playingplayers   - Number of players in a ship.    |",
+                "| @freqsize(#)      - Number of players on freq #.    |",
+                "| @pfreqsize(#)     - Num. of players in ship. Freq # |",
+                "| @shipsonfreq(#,#) - Num of players in a certain ship|",
+                "                        on freq. (ship type, freq #)  |",
+                "| @randomfreq       - A random number(0 - 9998)       |",        
+                "| @randomship       - A random number(1-8)            |",            
+                "| @randomtile       - A random number(1-1022)         |",
+                "| @randomsound      - A random ALLOWED sound number.  |",
+                "| @date             - The current date.               |",
+                "| @time             - The current time.               |",
+                "+=====================================================+",
+            };
+            return msg;
+    }
+    
+    /**
      * Handles messaging.
      */
     public void handleEvent(Message event) {
@@ -65,9 +129,9 @@ public class TWScript extends MultiUtil {
     	if (cmd.equalsIgnoreCase("!mysetup"))
     		doArenaSetup(name, name);
         if (cmd.equalsIgnoreCase("!listkeys"))
-        	m_botAction.smartPrivateMessageSpam( name, CodeCompiler.getPrivateKeysMessage());
+        	m_botAction.smartPrivateMessageSpam( name, getPrivateKeysMessage());
         if (cmd.equalsIgnoreCase("!listpubkeys"))
-        	m_botAction.smartPrivateMessageSpam(name, CodeCompiler.getPublicKeysMessage());
+        	m_botAction.smartPrivateMessageSpam(name, getPublicKeysMessage());
         if (cmd.equalsIgnoreCase("!sysoplogin"))
             do_sysopOverride(name);
     }

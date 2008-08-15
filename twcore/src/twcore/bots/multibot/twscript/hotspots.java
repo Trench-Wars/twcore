@@ -7,7 +7,6 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.core.OperatorList;
-import twcore.bots.CodeCompiler;
 import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
