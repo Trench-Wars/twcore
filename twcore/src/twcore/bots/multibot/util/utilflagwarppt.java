@@ -3,7 +3,6 @@ package twcore.bots.multibot.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Random;
 import java.util.StringTokenizer;
 
 import twcore.bots.MultiUtil;
@@ -514,10 +513,7 @@ public class utilflagwarppt extends MultiUtil {
 			else
 				m_botAction.sendArenaMessage("Freq " + freq + " " 
 						+ message + " " + wpptName);
-		} catch (Exception e) 	{
-			m_botAction.sendArenaMessage("EX Freq " + freq + " " 
-					+ message + " " + wpptName);
-		}
+		} catch (Exception e) 	{}
 	}
 
 	/**
