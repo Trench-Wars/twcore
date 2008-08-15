@@ -415,8 +415,19 @@ public class stepelim extends MultiModule {
      * @param team winning team
      */
     private void gameEnd(HashSet<String> team) {
-        Iterator<String> it = team.iterator();
-        m_botAction.sendArenaMessage( "--= " + it.next() + " has won Step-Elim!!! =--", 5 );
+        Iterator<String> itTeam;
+        Iterator<Player> itPlayer;
+        String winner;
+        
+        itTeam = team.iterator();
+        itPlayer = m_botAction.getPlayingPlayerIterator();
+        
+        if (keepDeaths)
+            winner = itPlayer.next().getPlayerName();
+        else
+            winner = itTeam.next();
+            
+        m_botAction.sendArenaMessage( "--= " + winner + " has won Step-Elim!!! =--", 5 );
         gameStop();
     }
     
@@ -543,7 +554,9 @@ public class stepelim extends MultiModule {
             m_botAction.setShip(name, shipType);
             m_botAction.setFreq(name, 0);
         }
-        roundStart();
+        //Wait one second to be sure that everyone is in.
+        timerWaitForPlayer = new TimerWaitForPlayer();
+        m_botAction.scheduleTask(timerWaitForPlayer, (1 * 1000));
     }
     
     /**
