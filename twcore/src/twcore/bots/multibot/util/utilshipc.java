@@ -58,7 +58,7 @@ public class utilshipc extends MultiUtil
 	boolean Late = true;
 	Random rand = new Random();
 	private HashMap<String, PlayerProfile> playerMap;
-	TimerTask rdy;
+	TimerTask notify;
 
 	/**
 	 * initialize variables
@@ -388,7 +388,7 @@ public class utilshipc extends MultiUtil
 		latelives=1;		numfreqs=2;
 		Late=true;			Spec.clear();
 		Exmpt.clear();		if(!playerMap.isEmpty()) playerMap.clear();
-		deathmsg = "is out with";	bclassmsg = null;	
+		deathmsg = "is out with";	bclassmsg = null;	notify.cancel();
 		
 		m_botAction.sendSmartPrivateMessage(sender, "All settings returned to default");
 		m_botAction.sendArenaMessage("Game stopped", 13);
@@ -442,7 +442,7 @@ public class utilshipc extends MultiUtil
 		m_botAction.toggleLocked();
 		m_botAction.createNumberOfTeams(numfreqs);
         
-        rdy = new TimerTask() {
+        TimerTask rdy = new TimerTask() {
             public void run() {
             	m_botAction.sendArenaMessage("Game Started!",2);
             	m_botAction.scoreResetAll();
@@ -462,6 +462,7 @@ public class utilshipc extends MultiUtil
                 m_botAction.sendPublicMacro("*prize #7");
                 m_botAction.toggleLocked();validstart=true;
                 m_botAction.sendTeamMessage("Late? PM me !lemmein to get in -" + m_botAction.getBotName(), 10);
+                startNotify();
              }
 
         };
@@ -602,6 +603,22 @@ public class utilshipc extends MultiUtil
     	
         	
         	
+    }
+	
+	/**
+	 * periodically sends a team message notifying players how to
+	 * enter the game if they arrive late
+	 */
+	
+	private void startNotify(){
+        //Timer setup.
+        notify = new TimerTask() {
+            public void run() {
+                    m_botAction.sendTeamMessage("Late and want in? pm me !lemmein to get in -" + m_botAction.getBotName() );
+            }
+        };
+        m_botAction.scheduleTaskAtFixedRate( notify, 30000, 30000 );
+
     }
     
     /**
@@ -895,5 +912,9 @@ public class utilshipc extends MultiUtil
 	      };
 	      return message;
 	  }
+	
+	public void cancel()	{
+		notify.cancel();
+	}
 
 }
