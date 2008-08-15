@@ -115,12 +115,11 @@ public class multibot extends SubspaceBot {
         int messageType = event.getMessageType();
         boolean foundCmd = false;
         boolean isER = m_opList.isER(sender);
-        if(m_smodLocked && !m_opList.isSmod(sender)){
-        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive Smod use.");
-        	return;
-        }
         if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {
-
+        	if(m_smodLocked && !m_opList.isSmod(sender)){
+            	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive Smod use.");
+            	return;
+            }
             // Attempt to handle player commands (with oodles of TWBot backwards compatibility)
             if( message.equalsIgnoreCase("!where") || message.equalsIgnoreCase("!host") || message.equalsIgnoreCase("!games") ) {
                 doWhereCmd(sender, isER);
