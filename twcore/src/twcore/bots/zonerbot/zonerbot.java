@@ -868,7 +868,7 @@ public class zonerbot extends SubspaceBot
     String message[] =
     {
       "========================================== SMOD Commands ===========================================",
-      "!Periodic <delay>:<interval>:<message>-- Adds a periodic zone message. " +
+      "!Periodic <delay>:<interval>:<message>-- Adds a periodic zone message. ",
       "                                         delay is in minutes, interval is in hours",
       "!ListPeriodic                         -- Lists all periodic zone messages and their index.",
       "!RemovePeriodic <index>               -- Removes the periodic message at the index.",
@@ -966,7 +966,8 @@ public class zonerbot extends SubspaceBot
   }
   
   private class PeriodicZone extends TimerTask {
-	  private int m_delay,m_interval,m_index,m_time=0;
+	  private int m_delay,m_interval,m_index;
+	  private double m_time=0;
 	  private String m_sender,m_message;
 	  
 	  public PeriodicZone (int delay, int interval, int index, String sender, String message)	{
