@@ -631,8 +631,9 @@ public class HubBot extends SubspaceBot {
         }
 
         if( m_botAction.getOperatorList().isHighmod( messager ) ){
-            m_botAction.sendSmartPrivateMessage( messager, "!remove <name>     - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)" );
+            m_botAction.sendSmartPrivateMessage( messager, "!remove <name>     - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)." );
             m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
+            m_botAction.sendSmartPrivateMessage( messager, "!spawnmax <type>   - Spawns the maximum amount of bots of type <type>.");
         }
 
         if( m_botAction.getOperatorList().isSmod( messager ) ){
@@ -644,14 +645,14 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isSysop( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!forcespawn <bot> <login> <password> - Force-spawn a bot (ignore count) with the specified login." );
             m_botAction.sendSmartPrivateMessage( messager, "!smartshutdown     - Shuts down all bots as they become idle, then shuts down the core." );
-            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)." );
             m_botAction.sendSmartPrivateMessage( messager, "!shutdownidlebots  - Kills all idle bots, leaving any running bots and the hub online." );
             m_botAction.sendSmartPrivateMessage( messager, "!shutdownallbots   - Kills all bots, leaving the hub online." );
         }
 
         if( m_botAction.getOperatorList().isDeveloperExact( messager ) ){
             m_botAction.sendSmartPrivateMessage( messager, "!smartshutdown     - Shuts down all bots as they become idle, then shuts down the core." );
-            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)" );
+            m_botAction.sendSmartPrivateMessage( messager, "!shutdowncore      - Does a clean shutdown of the entire core.  (Disable restart scripts first)." );
             m_botAction.sendSmartPrivateMessage( messager, "!shutdownidlebots  - Kills all idle bots, leaving any running bots and the hub online." );
             m_botAction.sendSmartPrivateMessage( messager, "!shutdownallbots   - Kills all bots, leaving the hub online." );
         }
@@ -735,21 +736,7 @@ public class HubBot extends SubspaceBot {
      * @param message Bot type to spawn
      */
     public void handleSpawnMaxMessage( String messager, String message ){
-    	if( m_botAction.getOperatorList().isOutsider( messager ) );
-        else {
-            if( m_botAction.getOperatorList().isZH(messager) ) {
-                int allowSpawn = m_botAction.getGeneralSettings().getInt( "AllowZHSpawning" );
-                if( allowSpawn == 2 || allowSpawn == 1 && message.toLowerCase().trim().equals("matchbot") ) {
-                } else {
-                    m_botAction.sendChatMessage( 1, messager + " doesn't have access (ZHs not allowed to spawn " + (allowSpawn == 0?"bots)":"bots other than matchbot)") +
-                            ", but (s)he tried '!spawn " + message + "'");
-                    return;
-                }
-            } else {
-                m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried '!spawn " + message + "'");
-                return;
-            }
-        }
+    	if( !m_botAction.getOperatorList().isHighmod( messager ) )return;
     	BotSettings botInfo = m_botAction.getCoreData().getBotConfig(message.toLowerCase());
     	if( botInfo == null ){
             m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + message + ".  Invalid bot type or missing CFG file." );
@@ -762,6 +749,11 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "The CFG file for that bot type is invalid. (MaxBots improperly defined)" );
             return;
         }
+    	if( m_botQueue.getBotCount(message.toLowerCase()) >= maxBots){
+    		m_botAction.sendChatMessage( 1, messager + " tried to spawn a new bot of type " + message + ".  Maximum number already reached (" + maxBots + ")");
+    		m_botAction.sendSmartPrivateMessage( messager, "Maximum number of bots of this type (" + maxBots + ") has been reached." );
+    		return;
+    	}
     	while(m_botQueue.getBotCount(message.toLowerCase()) < maxBots)
     		spawn( messager, message );
     }
