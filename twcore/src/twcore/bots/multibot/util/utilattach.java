@@ -248,7 +248,7 @@ public class utilattach extends MultiUtil {
 	
 	/**
 	 * Checks the attacher and the attachee to see if they have  an infinite
-	 * limit, where it passes.vIf it has a limit, check it, else kick the
+	 * limit, where it passes.If it has a limit, check it, else kick the
 	 * player off the turret.
 	 * 
 	 * @param attachee is the Anchor in question.
@@ -261,12 +261,12 @@ public class utilattach extends MultiUtil {
 		String msg = "You ship : " + turret + " cannot attach to ship : " + anchor;
 		
 		if (atchRules.get(anchor).containsKey(turret)
-				&& atchRules.get(attachee).get(turret) == -1)
+				&& atchRules.get(anchor).get(turret) == -1)
 			return;
 		else if (atchRules.get(anchor).containsKey(turret))	{
 			int lim = atchRules.get(anchor).get(turret).intValue();
 			
-			if (!hitLimit(attachee.getTurrets(),attachee.getShipType(),lim))
+			if (!hitLimit(attachee.getTurrets(),attacher.getShipType(),lim))
 				return;
 			else
 				msg = "The turret limit for your ship type : " + turret 
@@ -298,7 +298,7 @@ public class utilattach extends MultiUtil {
 			if (m_botAction.getPlayer(iter.next().intValue()).getShipType() == ship)
 				attached++;
 		}
-		if (attached >= limit)
+		if (attached-1 >= limit)
 			return true;
 		return false;
 		
