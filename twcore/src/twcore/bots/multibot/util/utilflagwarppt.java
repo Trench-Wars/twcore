@@ -374,8 +374,11 @@ public class utilflagwarppt extends MultiUtil {
 	 */
 	
 	public void doClaimedMsg( String sender, String argString )	{
-		if (argString.equals("~*"))
+		if (argString.equals("~*"))	{
 			claimedmsg = null;
+			m_botAction.sendPrivateMessage(sender, "Warp point claimed message " +
+					"has been erased.");
+		}
 		else	{
 			claimedmsg = argString;
 			m_botAction.sendPrivateMessage(sender, 
@@ -392,8 +395,11 @@ public class utilflagwarppt extends MultiUtil {
 	 */
 	
 	public void doContestedMsg( String sender, String argString )	{
-		if (argString.equals("~*"))
+		if (argString.equals("~*"))	{
 			contestedmsg = null;
+			m_botAction.sendPrivateMessage(sender, "Warp point contested message " +
+			"has been erased.");
+		}
 		else	{
 			contestedmsg = argString;
 			m_botAction.sendPrivateMessage(sender, 
@@ -525,6 +531,7 @@ public class utilflagwarppt extends MultiUtil {
 	 */
 
 	private void notifyFreq (Integer freq, String wpptName, boolean obtained)	{
+		m_botAction.sendPublicMessage("notifying " + freq);
 		Iterator<Player> freqPlayers = m_botAction.getFreqPlayerIterator(freq.intValue());
 		if (freqPlayers == null)
 			return;
@@ -588,12 +595,9 @@ public class utilflagwarppt extends MultiUtil {
 
     public void handleEvent(FlagClaimed event)	{
 		Integer flagID = new Integer ( event.getFlagID() );
+		m_botAction.sendPublicMessage("someone grabed flag: " + flagID);
 		int playerID = event.getPlayerID();
 		Integer rawFreq = new Integer ( m_botAction.getPlayer(playerID).getFrequency() );
-		
-		if (m_botAction.getPlayerName(playerID)
-				.equalsIgnoreCase(m_botAction.getBotName()))
-				return;
 
 		if (exploring && playerID == explorer)	{
 			harvested.add(flagID);
@@ -606,9 +610,11 @@ public class utilflagwarppt extends MultiUtil {
 			if ( points.isEmpty() )
 				return;
 			if ( !freqs.containsKey(rawFreq) )	{
-				Holding_Freq newFreq = new Holding_Freq(rawFreq,flagID);
+				m_botAction.sendPublicMessage("adding " + rawFreq + " with " + flagID);
+				Holding_Freq newFreq = new Holding_Freq(rawFreq);
 				freqs.put(rawFreq, newFreq);
 			}
+			m_botAction.sendPublicMessage("checking " + rawFreq + " for " + flagID);
 			CheckFlag(flagID,rawFreq.intValue());
 		}
     }
@@ -684,8 +690,9 @@ public class utilflagwarppt extends MultiUtil {
 			if (message.startsWith("!warpto "));	{
 				Integer freq = new Integer (player.getFrequency());
 				if (freqs.containsKey(freq))	{
-					if (freqs.get(freq).containsWrpp(message.substring(6)))	{
-						WarpPlayer(sender, message.substring(6));
+					String arg = message.substring(8);
+					if (freqs.get(freq).containsWrpp(arg))	{
+						WarpPlayer(sender, arg);
 					}
 				}
 			}
@@ -716,8 +723,8 @@ public class utilflagwarppt extends MultiUtil {
 			"!ListPoints         - Lists all set warppts.",
 			"!RemovePoint        - Removes a point.",
 			"!ClearPoints        - Clears all set points.",
-			"!ClaimedMsg <msg>     - Adds an arena message for claimed warp points.",
-			"!ContestedMsg <msg> - Adds an arena message for contested warp points.",
+			"!ClaimedMsg <msg>   - Adds an arena message for claimed warp points. \"~*\" Erases message",
+			"!ContestedMsg <msg> - Adds an arena message for contested warp points. \"~*\" Erases message",
 			"!ListMsg            - Lists current claimed and contested messages if any.",
 			"!Held               - Lists who's currently holding each point; -1 if no freq holds it.",
 			"!ReleaseFlags       - Releases flag ownership from all freqs.",
@@ -740,13 +747,6 @@ public class utilflagwarppt extends MultiUtil {
 			m_Freq = freq;
 			m_Wrpp = new ArrayList<String>();
 			m_Flags = new ArrayList<Integer>();
-		}
-
-		public Holding_Freq (Integer freq, Integer flag)	{
-			m_Freq = freq;
-			m_Wrpp = new ArrayList<String>();
-			m_Flags = new ArrayList<Integer>();
-			addFlag(flag);
 		}
 
 		public void addFlag (Integer flag)
