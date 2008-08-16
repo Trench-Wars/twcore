@@ -914,7 +914,8 @@ public class utilshipc extends MultiUtil
 	  }
 	
 	public void cancel()	{
-		notify.cancel();
+		if (validstart)
+			notify.cancel();
 	}
 
 }
