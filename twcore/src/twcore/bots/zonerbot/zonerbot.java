@@ -653,7 +653,7 @@ public class zonerbot extends SubspaceBot
 	  int delay,interval;
 	  String message;
 	  try {
-		  String[] parts = argString.split(":");
+		  String[] parts = argString.split(";");
 		  delay = Integer.parseInt(parts[0]);
 		  interval = Integer.parseInt(parts[1]);
 		  message = parts[2];
@@ -868,7 +868,7 @@ public class zonerbot extends SubspaceBot
     String message[] =
     {
       "========================================== SMOD Commands ===========================================",
-      "!Periodic <delay>:<interval>:<message>-- Adds a periodic zone message. To add a sound use %%%# ",
+      "!Periodic <delay>;<interval>;<message>-- Adds a periodic zone message. To add a sound use %%%# ",
       "                                         at the end. delay is in minutes, interval is in hours",
       "!ListPeriodic                         -- Lists all periodic zone messages and their index.",
       "!RemovePeriodic <index>               -- Removes the periodic message at the index.",
@@ -1004,7 +1004,7 @@ public class zonerbot extends SubspaceBot
 			} catch (Exception e) 	{
 				m_botAction.sendSmartPrivateMessage(m_sender, "There is an" +
 						" error in your sound code, it should be at the end." +
-						" Ex: \"!periodic 20:5:hello world! %%1\" . " +
+						" Ex: \"!periodic 20;5;hello world! %%1\" . " +
 						"Your periodic has been removed.");
 				PeriodicMsgs.remove(new Integer(m_index));
 				this.cancel();
