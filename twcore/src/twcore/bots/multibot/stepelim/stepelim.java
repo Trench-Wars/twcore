@@ -19,8 +19,6 @@ import twcore.core.util.ModuleEventRequester;
  * Make-over of the stepelim twbotmodule (created by Austin)
  * @author fantus
  * 
- * TODO:
- * - keepdeaths, should not get readded
  */
 public class stepelim extends MultiModule {
     private int state;
