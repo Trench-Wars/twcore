@@ -52,6 +52,7 @@ public class multibot extends SubspaceBot {
     private boolean m_doCome = false;
     private boolean m_ownerOverride = false;
     private boolean m_smodLocked = false;
+    private boolean m_sysopLocked = false;
 
     public multibot(BotAction botAction) {
         super(botAction);
@@ -116,6 +117,10 @@ public class multibot extends SubspaceBot {
         boolean foundCmd = false;
         boolean isER = m_opList.isER(sender);
         if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {
+        	if(m_sysopLocked && !m_opList.isSysop(sender)){
+        		m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive Sysop use.");
+        		return;
+        	}
         	if(m_smodLocked && !m_opList.isSmod(sender)){
             	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive Smod use.");
             	return;
@@ -265,6 +270,8 @@ public class multibot extends SubspaceBot {
                 doDieCmd(sender);
             else if (m_opList.isSmod(sender) && command.equals("!smodlock"))
             	doSmodLock(sender);
+            else if (m_opList.isSysop(sender) && command.equals("!sysoplock"))
+            	doSysopLock(sender);
             else
                 foundCommand = false;
         } catch (RuntimeException e) {
@@ -513,6 +520,21 @@ public class multibot extends SubspaceBot {
     	} else {
     		m_botAction.sendSmartPrivateMessage( name, "Smod locking has been enabled.");
     		m_smodLocked = true;
+    	}
+    }
+    
+    /**
+     * This method toggles sysop locking.
+     * 
+     * @param name is the sender of the command.
+     */
+    private void doSysopLock(String name) {
+    	if(m_sysopLocked){
+    		m_botAction.sendSmartPrivateMessage( name, "Sysop locking has been disabled.");
+    		m_sysopLocked = false;
+    	} else {
+    		m_botAction.sendSmartPrivateMessage( name, "Sysop locking has been enabled.");
+    		m_sysopLocked = true;
     	}
     }
 

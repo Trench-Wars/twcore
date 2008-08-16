@@ -15,7 +15,10 @@ public class TWScript extends MultiUtil {
     
     public OperatorList opList;
     public String database = "website";
-    public boolean isSysop = false;
+    public static final int LOWER_STAFF = 0;
+    public static final int SMOD_LEVEL = 1;
+    public static final int SYSOP_LEVEL = 2;
+    public int ACCESS_LEVEL = 0;
     
     /**
      * Initializes.
@@ -35,6 +38,7 @@ public class TWScript extends MultiUtil {
         		"| !setup <name>       - Loads <name>'s personal setup.         |",
         		"| !listkeys           - Lists private TWScript escape keys.    |",
         		"| !listpubkeys        - Lists public TWScript escape keys.     |",
+        		"| !smodlogin          - Log in for Smods.                      |",
         		"| !sysoplogin         - Log in for Sysops.                     |",
         		"+==============================================================+"
         };        
@@ -134,6 +138,8 @@ public class TWScript extends MultiUtil {
         	m_botAction.smartPrivateMessageSpam(name, getPublicKeysMessage());
         if (cmd.equalsIgnoreCase("!sysoplogin"))
             do_sysopOverride(name);
+        if (cmd.equalsIgnoreCase("!smodlogin"))
+            do_smodOverride(name);
     }
     
     /**
@@ -166,15 +172,31 @@ public class TWScript extends MultiUtil {
      */
     public void do_sysopOverride(String name){
         if(opList.isSysop(name) && !name.equalsIgnoreCase(m_botAction.getBotName())){
-            if(isSysop){
-                isSysop = false;
+            if(ACCESS_LEVEL == SYSOP_LEVEL){
+                ACCESS_LEVEL = 0;
                 m_botAction.sendSmartPrivateMessage( name, "Sysop override deactivated.");
             } else {
-                isSysop = true;
+                ACCESS_LEVEL = SYSOP_LEVEL;
                 m_botAction.sendSmartPrivateMessage( name, "Sysop override activated.");
             }
         }else
             m_botAction.sendSmartPrivateMessage( name, "Only System Operators can use this command.");
+    }
+    
+    /**
+     * Toggles Smod override.
+     */
+    public void do_smodOverride(String name){
+        if(opList.isSmod(name) && !name.equalsIgnoreCase(m_botAction.getBotName())){
+            if(ACCESS_LEVEL == SMOD_LEVEL){
+                ACCESS_LEVEL = 0;
+                m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
+            } else {
+                ACCESS_LEVEL = SMOD_LEVEL;
+                m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
+            }
+        }else
+            m_botAction.sendSmartPrivateMessage( name, "Only Super Moderators can use this command.");
     }
     
     public void cancel() {

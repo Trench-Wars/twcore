@@ -160,6 +160,7 @@ public class commands extends MultiUtil {
                 m_botAction.sendSmartPrivateMessage(name, "Command '" + message + "' removed.");
             } else
                 m_botAction.sendSmartPrivateMessage(name, "Specified command not found. Use !listcmd to see a list of registered commands.");
+        	return;
         }
         String command = message.substring(0, index);
         int actionIndex;
@@ -271,7 +272,7 @@ public class commands extends MultiUtil {
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
             while (it.hasNext())
-                CodeCompiler.handlePrivateTWScript(m_botAction, it.next(), p, m_twscript.isSysop);
+                CodeCompiler.handleTWScript(m_botAction, it.next(), p, m_twscript.ACCESS_LEVEL);
         }
     }
     
