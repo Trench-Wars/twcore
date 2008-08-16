@@ -18,6 +18,9 @@ import twcore.core.util.ModuleEventRequester;
  * 
  * Make-over of the stepelim twbotmodule (created by Austin)
  * @author fantus
+ * 
+ * TODO:
+ * - keepdeaths, should not get readded
  */
 public class stepelim extends MultiModule {
     private int state;
@@ -177,6 +180,13 @@ public class stepelim extends MultiModule {
                     m_botAction.setFreq(killed.getPlayerID(), freq);
                 m_botAction.sendArenaMessage(killedName + " is out! (" + killed.getWins() + "-" 
                         + killed.getLosses() + ")");
+                
+                //Remove player completely if its keepDeaths mode
+                if (keepDeaths) {
+                    teamOne.remove(killedName);
+                    teamTwo.remove(killedName);
+                }
+                    
                 
                 //check if it is the last round. If so the message to stick around does not need to be send.
                 if (((killed.getFrequency() == FREQ_TEAMONE && teamOne.size() > 1) ||
