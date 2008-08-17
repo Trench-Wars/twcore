@@ -3,6 +3,7 @@ package twcore.bots.multibot.util;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 import twcore.bots.MultiUtil;
@@ -25,8 +26,9 @@ import twcore.core.util.ModuleEventRequester;
 public class utilattach extends MultiUtil {
 	
 	private static final byte MAX_SHIP = 8;
-	private static final byte MIN_SHIP = 1;
+	private static final byte MIN_SHIP = 1; 
 	
+	private Random randgen = new Random();
 	private HashMap<Integer,HashMap<Integer,Integer>> atchRules;
 	
 	/**
@@ -34,7 +36,7 @@ public class utilattach extends MultiUtil {
 	 */
 	
 	public void init(){
-		atchRules= new HashMap<Integer,HashMap<Integer,Integer>>();	
+		atchRules= new HashMap<Integer,HashMap<Integer,Integer>>();
 	}
 	
 	/**
@@ -215,7 +217,7 @@ public class utilattach extends MultiUtil {
     }
 	
 	/**
-	 * Handles incoming turret events. If the Ship is allowed, check it for
+	 * Handles incoming turret events. If the anchor is monitored, check it for
 	 * further details.
 	 */
 	
@@ -258,7 +260,7 @@ public class utilattach extends MultiUtil {
 	private void checkShip(Player attachee, Player attacher)	{
 		Integer anchor = new Integer(attachee.getShipType());
 		Integer turret = new Integer(attacher.getShipType());
-		String msg = "You ship : " + turret + " cannot attach to ship : " + anchor;
+		String msg = "Your ship : " + turret + " cannot attach to ship : " + anchor;
 		
 		if (atchRules.get(anchor).containsKey(turret)
 				&& atchRules.get(anchor).get(turret) == -1)
@@ -271,11 +273,14 @@ public class utilattach extends MultiUtil {
 			else
 				msg = "The turret limit for your ship type : " + turret 
 				+ " has been reached for the ship you're tring to attach to "
-				+ "(ship : " + anchor + ")";
+				+ "(ship : " + anchor + " )";
 		}
+		
+		short freq = attacher.getFrequency();
+		short atchID = attacher.getPlayerID();
 		m_botAction.sendPrivateMessage(attacher.getPlayerID(), msg);
-		m_botAction.setShip(attacher.getPlayerID(), anchor.intValue());
-		m_botAction.setShip(attacher.getPlayerID(), turret.intValue());
+		m_botAction.setFreq(atchID, randgen.nextInt(998));
+		m_botAction.setFreq(atchID, freq);
 	}
 	
 	/**

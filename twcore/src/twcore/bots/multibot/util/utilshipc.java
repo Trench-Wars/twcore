@@ -83,7 +83,6 @@ public class utilshipc extends MultiUtil
 	public void requestEvents(ModuleEventRequester events)	{
 		events.request(this, EventRequester.PLAYER_DEATH);
 		events.request(this, EventRequester.PLAYER_ENTERED);
-		events.request(this, EventRequester.PLAYER_LEFT );
 		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 		events.request(this, EventRequester.FREQUENCY_CHANGE );
 	}
