@@ -80,6 +80,9 @@ public abstract class MultiUtil {
     public void cancel()
     {
     }
+    
+    /** This method must be overridden by TWScript utilities */
+    public void initializeTWScript(TWScript tws){}
 
     public final void handleEvent( SubspaceEvent event ){
         if( event instanceof ScoreReset )

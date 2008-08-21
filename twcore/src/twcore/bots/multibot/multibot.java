@@ -36,6 +36,7 @@ public class multibot extends SubspaceBot {
     private static final long OWNER_RESET_TIME = Tools.TimeInMillis.MINUTE * 30;    // Time in ms before
                                                                                     // new owner is set
     private OperatorList m_opList;
+    private TWScript m_twScript;
     private MultiModule m_eventModule;
     private String m_initialArena;
     private String coreRoot;
@@ -51,8 +52,8 @@ public class multibot extends SubspaceBot {
     private boolean m_followEnabled = false;
     private boolean m_doCome = false;
     private boolean m_ownerOverride = false;
-    private boolean m_smodLocked = false;
-    private boolean m_sysopLocked = false;
+    public boolean m_smodLocked = false;
+    public boolean m_sysopLocked = false;
 
     public multibot(BotAction botAction) {
         super(botAction);
@@ -515,6 +516,10 @@ public class multibot extends SubspaceBot {
      */
     private void doSmodLock(String name) {
     	if(m_smodLocked){
+    		if(m_twScript.ACCESS_LEVEL == TWScript.SMOD_LEVEL){
+    			m_botAction.sendSmartPrivateMessage( name, "Please log out with !smodlogin before unlocking");
+    			return;
+    		}
     		m_botAction.sendSmartPrivateMessage( name, "Smod locking has been disabled.");
     		m_smodLocked = false;
     	} else {
@@ -530,6 +535,10 @@ public class multibot extends SubspaceBot {
      */
     private void doSysopLock(String name) {
     	if(m_sysopLocked){
+    		if(m_twScript.ACCESS_LEVEL == TWScript.SYSOP_LEVEL){
+    			m_botAction.sendSmartPrivateMessage( name, "Please log out with !sysoplogin before unlocking");
+    			return;
+    		}
     		m_botAction.sendSmartPrivateMessage( name, "Sysop locking has been disabled.");
     		m_sysopLocked = false;
     	} else {
@@ -927,23 +936,21 @@ public class multibot extends SubspaceBot {
      */
     private void loadTWScript(String name, boolean quiet) {
     	try{
+    		m_twScript = new TWScript();
+    		MultiUtil twScript = (MultiUtil) m_twScript;
+    		twScript.initialize(m_botAction, m_modEventReq);
+    		m_utils.put("twscript", twScript);
     		File f = new File(coreRoot + "/twcore/bots/multibot/twscript");
     		String[] l = f.list();
     		for(int i=0;i<l.length;i++){
     			l[i] = l[i].replace(".class", "");
     			for(int z=0;z<l[i].length();z++)
-    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$' || l[i].contains("twscript"))
+    				if(java.lang.Character.isUpperCase(l[i].charAt(z)) || l[i].charAt(z) == '$')
     					l[i] = "";
-    		}
-    		String twslocation = "twcore.bots.TWScript";
-    		TWScript tws = new TWScript();
-    		MultiUtil twsUtil = (MultiUtil) tws;
-    		twsUtil.initialize(m_botAction, m_modEventReq);
-    		m_utils.put(twslocation, twsUtil);
-    		for(int i=0;i<l.length;i++){
     			if(!l[i].equals("")){
     				MultiUtil util = (MultiUtil) m_loader.loadClass("twcore.bots.multibot.twscript." + l[i]).newInstance();
-    				util.initialize(m_botAction, m_modEventReq, tws);
+    				util.initialize(m_botAction, m_modEventReq);
+    				util.initializeTWScript(m_twScript);
     				m_utils.put(l[i], util);
     			}
     		}

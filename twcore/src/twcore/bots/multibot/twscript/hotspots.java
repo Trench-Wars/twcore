@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import twcore.core.OperatorList;
 import twcore.bots.MultiUtil;
+import twcore.bots.TWScript;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
@@ -21,7 +22,8 @@ import twcore.core.util.Tools;
 public class hotspots extends MultiUtil {
     
     public OperatorList opList;
-        
+    public TWScript m_twscript;
+    
     public Vector<HotSpot> hotSpots;
     public HotSpot watch;
     public boolean watching;
@@ -44,6 +46,10 @@ public class hotspots extends MultiUtil {
         m_botAction.stopSpectatingPlayer();
         watching = false;
     }
+    
+    public void initializeTWScript(TWScript tws){
+		m_twscript = tws;
+	}
     
     /**
      * Returns help message
@@ -149,7 +155,7 @@ public class hotspots extends MultiUtil {
                 if (watch.getMessages() != null) {
                     Iterator<String> i = watch.getMessages().iterator();
                     while( i.hasNext() )
-                        CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.ACCESS_LEVEL);
+                        CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
                 }
             }
         }

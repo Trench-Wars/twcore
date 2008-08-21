@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.lang.StringBuilder;
 
 import twcore.bots.MultiUtil;
+import twcore.bots.TWScript;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
@@ -17,6 +18,7 @@ import twcore.core.OperatorList;
 public class commands extends MultiUtil {
     
     public OperatorList opList;
+    public TWScript m_twscript;
     public TreeMap<String, CustomCommand> commands;
     
     /**
@@ -26,6 +28,10 @@ public class commands extends MultiUtil {
         opList = m_botAction.getOperatorList();
         commands = new TreeMap<String, CustomCommand>();
     }
+    
+    public void initializeTWScript(TWScript tws){
+		m_twscript = tws;
+	}
     
     /**
      * Required method that returns this utilities help menu.
@@ -272,7 +278,7 @@ public class commands extends MultiUtil {
         public void message(Player p) {
             Iterator<String> it = messages.iterator();
             while (it.hasNext())
-                CodeCompiler.handleTWScript(m_botAction, it.next(), p, m_twscript.ACCESS_LEVEL);
+                CodeCompiler.handleTWScript(m_botAction, it.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
         }
     }
     

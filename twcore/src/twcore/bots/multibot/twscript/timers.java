@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 import twcore.bots.MultiUtil;
+import twcore.bots.TWScript;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
@@ -24,9 +25,15 @@ public class timers extends MultiUtil {
 	public OperatorList opList;
 	private TreeMap<String, CustomTimer> timers;
 	
+	public TWScript m_twscript;
+	
 	public void init(){
 		opList = m_botAction.getOperatorList();
 		timers = new TreeMap<String, CustomTimer>();
+	}
+	
+	public void initializeTWScript(TWScript tws){
+		m_twscript = tws;
 	}
 	
 	public String[] getHelpMessages(){
@@ -326,7 +333,7 @@ private class CustomTimer{
 		        Player p = m_botAction.getPlayer(m_botAction.getBotName());
 		        Iterator<String> msgs = messages.iterator();
 		        while( msgs.hasNext() )
-		        	CodeCompiler.handleTWScript(m_botAction, msgs.next(), p, m_twscript.ACCESS_LEVEL);
+		        	CodeCompiler.handleTWScript(m_botAction, msgs.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
 		        if(rep < 0)
 		        	timers.get(name).cancelTask();
 			}
@@ -351,7 +358,7 @@ private class CustomTimer{
 		        	Player p = i.next();
 		        	Iterator<String> msgs = messages.iterator();
 		        	while( msgs.hasNext() )
-		        		CodeCompiler.handleTWScript(m_botAction, msgs.next(), p, m_twscript.ACCESS_LEVEL);
+		        		CodeCompiler.handleTWScript(m_botAction, msgs.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
 		        }
 		        if(rep < 0)
 		        	timers.get(name).cancelTask();

@@ -7,6 +7,9 @@ import java.util.Random;
 import java.util.TimeZone;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.TreeMap;
+import java.text.DecimalFormat;
+import javax.swing.text.NumberFormatter;
 
 import twcore.bots.TWScript;
 import twcore.core.BotAction;
@@ -20,31 +23,46 @@ import twcore.core.util.Tools;
  * @author milosh
  */
 public final class CodeCompiler {
-        
-    public static void handleTWScript(BotAction bot, String message, Player p, int accessLevel){
-        message = replaceKeys(bot, p, message);
-        if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message, accessLevel))
-            message = null;
-        if (message != null && message.indexOf('%') == -1)
-            bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
-        else if(message != null && message.indexOf('%') != -1){
-            int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-            message = message.substring(0, message.indexOf('%'));
-            bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message, sound);
-        }
+    
+	public static DecimalFormat decForm = new DecimalFormat("0.####");
+	public static NumberFormatter format = new NumberFormatter(decForm);
+	
+    public static String handleTWScript(BotAction bot, String message, Player p, TreeMap<String, String> variables, int accessLevel){
+    	try{
+    		message = replaceKeys(bot, p, variables, message);
+    		if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message, accessLevel))
+    			message = null;
+    		if (message != null && message.indexOf('%') == -1)
+    			bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
+    		else if(message != null && message.indexOf('%') != -1){
+    			int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
+    			message = message.substring(0, message.indexOf('%'));
+    			bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message, sound);
+    		}
+    		return message;
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    		return null;
+    	}
     }
     
-    public static void handleTWScript(BotAction bot, String message, int accessLevel){
-        message = replaceKeys(bot, null, message);
-        if(message != null && !isAllowedPublicCommand(message, accessLevel))
-            message = null;
-        if (message != null && message.indexOf('%') == -1)
-        	sendMessage(bot,message, -1);
-        else if(message != null && message.indexOf('%') != -1){
-            int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-            message = message.substring(0, message.indexOf('%'));
-            sendMessage(bot,message, sound);
-        }
+    public static String handleTWScript(BotAction bot, String message, TreeMap<String, String> variables, int accessLevel){
+    	try{
+        	message = replaceKeys(bot, null, variables, message);
+        	if(message != null && !isAllowedPublicCommand(message, accessLevel))
+            	message = null;
+        	if (message != null && message.indexOf('%') == -1)
+        		sendMessage(bot,message, -1);
+        	else if(message != null && message.indexOf('%') != -1){
+            	int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
+            	message = message.substring(0, message.indexOf('%'));
+            	sendMessage(bot,message, sound);
+        	}
+			return message;
+		}catch(Exception e){
+			Tools.printStackTrace(e);
+			return null;
+		}
     }
     
     public static void sendMessage(BotAction bot, String message, int sound){
@@ -72,10 +90,19 @@ public final class CodeCompiler {
      * @param message - The original message to be changed
      * @return - The changed message. Can return null.
      */
-    public static String replaceKeys(BotAction bot, Player p, String message){
+    public static String replaceKeys(BotAction bot, Player p, TreeMap<String, String> variables, String message){
         Random rand = new Random();
         Date today = Calendar.getInstance().getTime();
         TimeZone tz = TimeZone.getDefault();
+        if(variables != null){
+        	Iterator<String> iter = variables.keySet().iterator();
+        	while( iter.hasNext() ){
+        		String varName = iter.next();
+        		String varVal = variables.get(varName);
+        		if(message.contains(varName))
+        			message = message.replace(varName, varVal);
+        	}
+        }
         if(p != null){
         	if(message.contains("@name"))
             	message = message.replace("@name", p.getPlayerName());
@@ -231,40 +258,14 @@ public final class CodeCompiler {
         s = s.substring(s.indexOf("{") + 1, s.indexOf("}")).trim();
         if (s.replace(" ", "").equals("") || s.replace(" ", "").equalsIgnoreCase("()"))
             return true;
-        String temp = "(" + s + ")";
-        String clone, chop;
-        String[] chops;
-        int index = 0, z=0;
+        String clone, temp = "(" + s + ")";
+        String[] dels = {"&&","||","&&&","|||","&&&","|||"};
         while (!(temp.trim().equalsIgnoreCase("TRUE") || temp.trim().equalsIgnoreCase("FALSE"))) {
             String lastSmallStatement = temp.substring(temp.lastIndexOf("("), temp.indexOf(")", temp.lastIndexOf("("))+1);
             clone = lastSmallStatement.substring(1, lastSmallStatement.length() - 1);
             if(clone.contains("&&") || clone.contains("||")){  	
-            	z = min(clone.indexOf("&&", index), clone.indexOf("||", index), 0);
-            	while(clone.contains("&&")){
-            		if(clone.substring(z,z+2).equals("&&")){
-            			chop = clone.substring(index, min(clone.indexOf("&&", z+2), clone.indexOf("||", z+2), clone.length()));
-            			chops = chop.split("&&");
-            			chops[0] = compileConditionalStatement(chops[0].trim());
-            			chops[1] = compileConditionalStatement(chops[1].trim());
-            			chop = compileConditionalStatement(chops[0] + "&&" + chops[1]);
-            			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf("&&", z+2), clone.indexOf("||", z+2), clone.length()));
-            		}else
-            			index = z+2;
-            		z = min(clone.indexOf("&&", index), clone.indexOf("||", index), 0);
-            	}
-            	index = 0;
-            	z = clone.indexOf("||");
-            	while(clone.contains("||")){
-            		chop = clone.substring(index, min(-1,clone.indexOf("||", z+2),clone.length()));
-            		chops = new String[2];
-            		chops[0] = chop.substring(0, chop.indexOf("||"));
-            		chops[1] = chop.substring(chop.indexOf("||") + 2);
-        			chops[0] = compileConditionalStatement(chops[0].trim());
-        			chops[1] = compileConditionalStatement(chops[1].trim());
-        			chop = compileConditionalStatement(chops[0] + "||" + chops[1]);
-        			clone = clone.substring(0, index) + chop + clone.substring(min(-1,clone.indexOf("||", z+2),clone.length()));
-        			z = min(clone.indexOf("&&", index), clone.indexOf("||", index), 0);
-            	}          	
+            	for(int i=0;i<2;i++)
+            		clone = replaceConditionalDelimiter(dels[i], clone, dels);
             }
             temp = temp.replace(lastSmallStatement, compileConditionalStatement(clone.trim()));
         }
@@ -274,34 +275,28 @@ public final class CodeCompiler {
             return false;
     }
     
-    /**
-     * A method similar to Math.min().
-     * @return The smaller number. If both numbers are equal, return z.
-     */
-    private static int min(int a, int b, int z){
-    	if(b < a && b != -1) return b;
-    	if(a < b && a != -1) return a;
-    	return z;
-    }
     
-    /**
-     * A method similar to Math.min().
-     * @return The smallest number. If two numbers are equal, return z.
-     */
-    private static int min(int a, int b, int c, int d, int e, int f, int z){
-    	ArrayList<Integer> list = new ArrayList<Integer>();
-    	int smallest = 0;
-    	list.add(a);list.add(b);list.add(c);list.add(d);list.add(e);list.add(f);
-    	Iterator<Integer> i = list.iterator();
-    	while( i.hasNext() ){
-    		int current = i.next();
-    		if(current > 0){
-    			if(smallest == 0)smallest = current;
-    			else if(current < smallest)smallest = current;
-    		}
-        }
-    	if(smallest == 0)return z;
-    	else return smallest;
+    
+    private static String replaceConditionalDelimiter(String s, String clone, String[] dels){
+    	String chop;
+    	String[] chops;
+    	int index = 0;
+    	int z = min(clone.indexOf(dels[0], index), clone.indexOf(dels[1], index), clone.indexOf(dels[2], index), clone.indexOf(dels[3], index), clone.indexOf(dels[4], index), clone.indexOf(dels[5], index), 0);
+    	while(clone.contains(s)){
+    		if(clone.substring(z,z+s.length()).equals(s)){
+    			chop = clone.substring(index, min(clone.indexOf(dels[0], z+s.length()), clone.indexOf(dels[1], z+s.length()), clone.indexOf(dels[2], z+s.length()), clone.indexOf(dels[3], z+s.length()), clone.indexOf(dels[4], z+s.length()), clone.indexOf(dels[5], z+s.length()), clone.length()));
+    			chops = new String[2];
+        		chops[0] = chop.substring(0, chop.indexOf(s));
+        		chops[1] = chop.substring(chop.indexOf(s) + s.length());
+    			chops[0] = compileConditionalStatement(chops[0].trim());
+    			chops[1] = compileConditionalStatement(chops[1].trim());
+    			chop = compileConditionalStatement(chops[0] + s + chops[1]);
+    			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf(dels[0], z+s.length()), clone.indexOf(dels[1], z+s.length()), clone.indexOf(dels[2], z+s.length()), clone.indexOf(dels[3], z+s.length()), clone.indexOf(dels[4], z+s.length()), clone.indexOf(dels[5], z+s.length()), clone.length()));
+    		}else
+    			index = z+s.length();
+    		z = min(clone.indexOf(dels[0], index), clone.indexOf(dels[1], index), clone.indexOf(dels[2], index), clone.indexOf(dels[3], index), clone.indexOf(dels[4], index), clone.indexOf(dels[5], index), 0);
+    	}
+    	return clone;
     }
     
     /**
@@ -310,7 +305,6 @@ public final class CodeCompiler {
      * @return - TRUE or FALSE
      */
     private static String compileConditionalStatement(String s) {
-    	//try{
     	if(s.startsWith("(") && s.indexOf(")") == s.length() - 1)
     		s = s.substring(1, s.length() - 1);
         if (s.trim().equalsIgnoreCase("TRUE") || s.trim().equalsIgnoreCase("FALSE"))
@@ -339,157 +333,79 @@ public final class CodeCompiler {
                 return "TRUE";
         } else if (s.contains("<")) {
             String[] temp = s.split("<");
-            try {
-                int a = Integer.parseInt(temp[0].trim());
-                int b = Integer.parseInt(temp[1].trim());
+                double a = Double.parseDouble(temp[0].trim());
+                double b = Double.parseDouble(temp[1].trim());
                 if (a < b)
                     return "TRUE";
-            } catch (Exception e) {}
         } else if (s.contains(">")) {
             String[] temp = s.split(">");
-            try {
-                int a = Integer.parseInt(temp[0].trim());
-                int b = Integer.parseInt(temp[1].trim());
+                double a = Double.parseDouble(temp[0].trim());
+                double b = Double.parseDouble(temp[1].trim());
                 if (a > b)
                     return "TRUE";
-            } catch (Exception e) {}
         } else if (s.contains("<=")) {
             String[] temp = s.split("<=");
-            try {
-                int a = Integer.parseInt(temp[0].trim());
-                int b = Integer.parseInt(temp[1].trim());
+                double a = Double.parseDouble(temp[0].trim());
+                double b = Double.parseDouble(temp[1].trim());
                 if (a < b || a == b)
                     return "TRUE";
-            } catch (Exception e) {}
         } else if (s.contains(">=")) {
             String[] temp = s.split(">=");
-            try {
-                int a = Integer.parseInt(temp[0].trim());
-                int b = Integer.parseInt(temp[1].trim());
+                double a = Double.parseDouble(temp[0].trim());
+                double b = Double.parseDouble(temp[1].trim());
                 if (a > b || a == b)
                     return "TRUE";
-            } catch (Exception e) {}
         }
         return "FALSE";
-    	/*}catch(Exception e){
-    		Tools.printStackTrace(e);
-    		return "FALSE";
-    	}*/
     }
     
+    /**
+     * This method replaces Math equations between brackets in a given message.
+     * @param s - The mesage
+     * @return - message with equations replaced by answers.
+     */
     private static String doMathStatements(String s){
-    	try{
-    	
-    	String clone, chop;
-    	int z=0, index=0;
-    	String[] chops;
+    	String clone;
+    	String[] dels = { "^","*","/","%","+","-"};
     	while (s.contains("[") && s.contains("]")) {
             String lastSmallStatement = s.substring(s.lastIndexOf("["), s.indexOf("]", s.lastIndexOf("[")) + 1);            
             clone = lastSmallStatement.substring(1, lastSmallStatement.length() - 1);
-            if(clone.contains("^") || clone.contains("*") || clone.contains("/") || clone.contains("%") || clone.contains("+") || clone.contains("-")){  	
-            	z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	while(clone.contains("^")){
-            		if(clone.substring(z,z+1).equals("^")){
-            			chop = clone.substring(index, min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            			chops = new String[2];
-                		chops[0] = chop.substring(0, chop.indexOf("^"));
-                		chops[1] = chop.substring(chop.indexOf("^") + 1);
-            			chops[0] = compileMathStatement(chops[0].trim());
-            			chops[1] = compileMathStatement(chops[1].trim());
-            			chop = compileMathStatement(chops[0] + "^" + chops[1]);
-            			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            		}else
-            			index = z+1;
-            		z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	}
-            	index = 0;
-            	z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	while(clone.contains("*")){
-            		if(clone.substring(z,z+1).equals("*")){
-            			chop = clone.substring(index, min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            			chops = new String[2];
-                		chops[0] = chop.substring(0, chop.indexOf("*"));
-                		chops[1] = chop.substring(chop.indexOf("*") + 1);
-            			chops[0] = compileMathStatement(chops[0].trim());
-            			chops[1] = compileMathStatement(chops[1].trim());
-            			chop = compileMathStatement(chops[0] + "*" + chops[1]);
-            			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            		}else
-            			index = z+1;
-            		z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	}
-            	index = 0;
-            	z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	while(clone.contains("/")){
-            		if(clone.substring(z,z+1).equals("/")){
-            			chop = clone.substring(index, min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            			chops = new String[2];
-                		chops[0] = chop.substring(0, chop.indexOf("/"));
-                		chops[1] = chop.substring(chop.indexOf("/") + 1);
-            			chops[0] = compileMathStatement(chops[0].trim());
-            			chops[1] = compileMathStatement(chops[1].trim());
-            			chop = compileMathStatement(chops[0] + "/" + chops[1]);
-            			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            		}else
-            			index = z+1;
-            		z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	}
-            	index = 0;
-            	z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	while(clone.contains("%")){
-            		if(clone.substring(z,z+1).equals("%")){
-            			chop = clone.substring(index, min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            			chops = new String[2];
-                		chops[0] = chop.substring(0, chop.indexOf("%"));
-                		chops[1] = chop.substring(chop.indexOf("%") + 1);
-            			chops[0] = compileMathStatement(chops[0].trim());
-            			chops[1] = compileMathStatement(chops[1].trim());
-            			chop = compileMathStatement(chops[0] + "%" + chops[1]);
-            			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            		}else
-            			index = z+1;
-            		z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	}
-            	index = 0;
-            	z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	while(clone.contains("+")){
-            		if(clone.substring(z,z+1).equals("+")){
-            			chop = clone.substring(index, min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            			chops = new String[2];
-                		chops[0] = chop.substring(0, chop.indexOf("+"));
-                		chops[1] = chop.substring(chop.indexOf("+") + 1);
-            			chops[0] = compileMathStatement(chops[0].trim());
-            			chops[1] = compileMathStatement(chops[1].trim());
-            			chop = compileMathStatement(chops[0] + "+" + chops[1]);
-            			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf("^", z+1), clone.indexOf("*", z+1), clone.indexOf("/", z+1), clone.indexOf("%", z+1), clone.indexOf("+", z+1), clone.indexOf("-", z+1), clone.length()));
-            		}else
-            			index = z+1;
-            		z = min(clone.indexOf("^", index), clone.indexOf("*", index), clone.indexOf("/", index), clone.indexOf("%", index), clone.indexOf("+", index), clone.indexOf("-", index), 0);
-            	}
-            	index = 0;
-            	z = clone.indexOf("-");
-            	while(clone.contains("-")){
-            		chop = clone.substring(index, min(-1,clone.indexOf("-", z+1),clone.length()));
-            		chops = new String[2];
-            		chops[0] = chop.substring(0, chop.indexOf("-"));
-            		chops[1] = chop.substring(chop.indexOf("-") + 1);
-        			chops[0] = compileMathStatement(chops[0].trim());
-        			chops[1] = compileMathStatement(chops[1].trim());
-        			chop = compileMathStatement(chops[0] + "-" + chops[1]);
-        			clone = clone.substring(0, index) + chop + clone.substring(min(-1,clone.indexOf("-", z+1),clone.length()));
-        			z = min(-1, clone.indexOf("-", index), 0);
-            	}          	
+            if(clone.contains(dels[0]) || clone.contains(dels[1]) || clone.contains(dels[2]) || clone.contains(dels[3]) || clone.contains(dels[4]) || clone.contains(dels[5])){
+            	for(int i=0;i<dels.length;i++)
+            		clone = replaceMathDelimiter(dels[i], clone, dels);      	
             }            
-            s = s.replace(lastSmallStatement, compileMathStatement(clone.trim()));
+            s = s.replace(lastSmallStatement, clone.trim());
         }
     	return s;
-    	
-    	}catch(Exception e){
-    		Tools.printStackTrace(e);
-    		return "-1";
-    	}
     }
     
+    private static String replaceMathDelimiter(String s, String clone, String[] dels){
+    	String chop;
+    	String[] chops;
+    	int index = 0;
+    	int z = min(clone.indexOf(dels[0], index), clone.indexOf(dels[1], index), clone.indexOf(dels[2], index), clone.indexOf(dels[3], index), clone.indexOf(dels[4], index), clone.indexOf(dels[5], index), 0);
+    	while(clone.contains(s)){
+    		if(clone.substring(z,z+s.length()).equals(s)){
+    			chop = clone.substring(index, min(clone.indexOf(dels[0], z+s.length()), clone.indexOf(dels[1], z+s.length()), clone.indexOf(dels[2], z+s.length()), clone.indexOf(dels[3], z+s.length()), clone.indexOf(dels[4], z+s.length()), clone.indexOf(dels[5], z+s.length()), clone.length()));
+    			chops = new String[2];
+        		chops[0] = chop.substring(0, chop.indexOf(s));
+        		chops[1] = chop.substring(chop.indexOf(s) + s.length());
+    			chops[0] = compileMathStatement(chops[0].trim());
+    			chops[1] = compileMathStatement(chops[1].trim());
+    			chop = compileMathStatement(chops[0] + s + chops[1]);
+    			clone = clone.substring(0, index) + chop + clone.substring(min(clone.indexOf(dels[0], z+s.length()), clone.indexOf(dels[1], z+s.length()), clone.indexOf(dels[2], z+s.length()), clone.indexOf(dels[3], z+s.length()), clone.indexOf(dels[4], z+s.length()), clone.indexOf(dels[5], z+s.length()), clone.length()));
+    		}else
+    			index = z+s.length();
+    		z = min(clone.indexOf(dels[0], index), clone.indexOf(dels[1], index), clone.indexOf(dels[2], index), clone.indexOf(dels[3], index), clone.indexOf(dels[4], index), clone.indexOf(dels[5], index), 0);
+    	}
+    	return clone;
+    }
+    
+    /**
+     * This method solves a simple math statement.
+     * @param s - The simple math statement.
+     * @return - The answer
+     */
     private static String compileMathStatement(String s){
     	try{
     		if(s.startsWith("[") && s.indexOf("]") == s.length() - 1)
@@ -498,9 +414,9 @@ public final class CodeCompiler {
             String a = s.substring(0, s.indexOf("+"));
             String b = s.substring(s.indexOf("+") + 1);
             try{
-                int x = Integer.parseInt(a.trim());
-                int y = Integer.parseInt(b.trim());
-                return Integer.toString(x + y);
+                double x = Double.parseDouble(a.trim());
+                double y = Double.parseDouble(b.trim());
+                return format.valueToString(x+y);
             }catch(NumberFormatException e){
                 return a + b;
             }
@@ -508,9 +424,9 @@ public final class CodeCompiler {
             String a = s.substring(0, s.indexOf("-"));
             String b = s.substring(s.indexOf("-") + 1);
             try{
-                int x = Integer.parseInt(a.trim());
-                int y = Integer.parseInt(b.trim());
-                return Integer.toString(x - y);
+                double x = Double.parseDouble(a.trim());
+                double y = Double.parseDouble(b.trim());
+                return format.valueToString(x - y);
             }catch(NumberFormatException e){
                 return "-1";
             }
@@ -518,9 +434,9 @@ public final class CodeCompiler {
             String a = s.substring(0, s.indexOf("*"));
             String b = s.substring(s.indexOf("*") + 1);
             try{
-                int x = Integer.parseInt(a.trim());
-                int y = Integer.parseInt(b.trim());
-                return Integer.toString(x * y);
+                double x = Double.parseDouble(a.trim());
+                double y = Double.parseDouble(b.trim());
+                return format.valueToString(x * y);
             }catch(NumberFormatException e){
                 return "-1";
             }
@@ -528,9 +444,9 @@ public final class CodeCompiler {
             String a = s.substring(0, s.indexOf("/"));
             String b = s.substring(s.indexOf("/") + 1);
             try{
-                int x = Integer.parseInt(a.trim());
-                int y = Integer.parseInt(b.trim());
-                return Long.toString(Math.round((double) x / (double) y));
+                double x = Double.parseDouble(a.trim());
+                double y = Double.parseDouble(b.trim());
+                return format.valueToString(x/y);
             }catch(NumberFormatException e){
                 return "-1";
             }
@@ -538,10 +454,9 @@ public final class CodeCompiler {
             String a = s.substring(0, s.indexOf("^"));
             String b = s.substring(s.indexOf("^") + 1);
             try{
-                int x = Integer.parseInt(a.trim());
-                int y = Integer.parseInt(b.trim());
-                double z = (Math.pow((double) x, (double) y));
-                return Long.toString(Math.round(z));
+                double x = Double.parseDouble(a.trim());
+                double y = Double.parseDouble(b.trim());
+                return format.valueToString(Math.pow(x,y));
             }catch(NumberFormatException e){
                 return "-1";
             }
@@ -549,16 +464,16 @@ public final class CodeCompiler {
             String a = s.substring(0, s.indexOf("%"));
             String b = s.substring(s.indexOf("%") + 1);
             try{
-                int x = Integer.parseInt(a.trim());
-                int y = Integer.parseInt(b.trim());
-                return Integer.toString(x % y);
+                double x = Double.parseDouble(a.trim());
+                double y = Double.parseDouble(b.trim());
+                return format.valueToString(x % y);
             }catch(NumberFormatException e){
                 return "-1";
             }
         } else {
             try{
-                int x = Integer.parseInt(s);
-                return Integer.toString(x);
+                double x = Double.parseDouble(s);
+                return format.valueToString(x);
             }catch(NumberFormatException e){
                 return "-1";
             }
@@ -567,6 +482,26 @@ public final class CodeCompiler {
     		Tools.printStackTrace(e);
     		return "-1";
     	}
+    }
+    
+    /**
+     * A method similar to Math.min().
+     * @return The smallest number. If two numbers are equal, return z.
+     */
+    private static int min(int a, int b, int c, int d, int e, int f, int z){
+    	ArrayList<Integer> list = new ArrayList<Integer>();
+    	int smallest = 0;
+    	list.add(a);list.add(b);list.add(c);list.add(d);list.add(e);list.add(f);
+    	Iterator<Integer> i = list.iterator();
+    	while( i.hasNext() ){
+    		int current = i.next();
+    		if(current > 0){
+    			if(smallest == 0)smallest = current;
+    			else if(current < smallest)smallest = current;
+    		}
+        }
+    	if(smallest == 0)return z;
+    	else return smallest;
     }
     
     /**
