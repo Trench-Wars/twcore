@@ -165,7 +165,7 @@ public final class CodeCompiler {
             message = message.replace("@arenasize", Integer.toString(bot.getArenaSize()));
         if(message.contains("@playingplayers"))
             message = message.replace("@playingplayers", Integer.toString(bot.getPlayingPlayers().size()));
-        if(message.contains("@freqsize(") && message.indexOf(")", message.indexOf("@freqsize(")) != -1){
+        while(message.contains("@freqsize(") && message.indexOf(")", message.indexOf("@freqsize(")) != -1){
             int beginIndex = message.indexOf("@freqsize(");
             int endIndex = message.indexOf(")", beginIndex);
             try{
@@ -176,7 +176,7 @@ public final class CodeCompiler {
                 message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
             }
         }
-        if(message.contains("@pfreqsize(") && message.indexOf(")", message.indexOf("@pfreqsize(")) != -1){
+        while(message.contains("@pfreqsize(") && message.indexOf(")", message.indexOf("@pfreqsize(")) != -1){
             int beginIndex = message.indexOf("@pfreqsize(");
             int endIndex = message.indexOf(")", beginIndex);
             try{
@@ -187,7 +187,7 @@ public final class CodeCompiler {
                 message = message.replace(message.substring(beginIndex, endIndex + 1), "0");
             }
         }
-        if(message.contains("@shipsonfreq(") && message.indexOf(")", message.indexOf("@shipsonfreq(")) != -1){
+        while(message.contains("@shipsonfreq(") && message.indexOf(")", message.indexOf("@shipsonfreq(")) != -1){
             int beginIndex = message.indexOf("@shipsonfreq(");
             int endIndex = message.indexOf(")", beginIndex);
             String temp = message.substring(beginIndex + 13, endIndex);
