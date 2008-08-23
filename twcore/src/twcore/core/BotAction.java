@@ -2679,6 +2679,26 @@ public class BotAction
             m_packetGenerator.sendLVZObjectCluster(playerID);
         }
     }
+    
+    /**
+     * Sets objects using the current objects set under BotAction's copy of Objset
+     * for a specific freq, as specified by given #.  In order for this command to
+     * work, first get the Objset with getObjectSet(), add the objects you would
+     * like set all at once, and then run the command.
+     * @param freq is the freq of players to send to.
+     */
+    public void setFreqObjects( int freq ) {
+        if( m_objectSet.toFreqSet( freq ) ) {
+            Iterator<Player> freqPlayers = getFreqPlayerIterator(freq);
+            while (freqPlayers.hasNext())	{
+            	Player current = freqPlayers.next();
+            	if (current != null)	{
+            		m_packetGenerator.setupMultipleLVZObjectToggles(current.getPlayerID(), m_objectSet.getFreqObjects( freq ) );
+            		m_packetGenerator.sendLVZObjectCluster(current.getPlayerID());
+            	}
+            }
+        }
+    }
 
 
     // ***** SQL DATABASE OPERATIONS *****

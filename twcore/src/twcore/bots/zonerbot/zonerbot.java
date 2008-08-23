@@ -650,12 +650,12 @@ public class zonerbot extends SubspaceBot
    */
   
   private void doPeriodicZoner(String sender, String argString)	{
-	  int delay,interval;
+	  int delay,life;
 	  String message;
 	  try {
 		  String[] parts = argString.split(";");
 		  delay = Integer.parseInt(parts[0]);
-		  interval = Integer.parseInt(parts[1]);
+		  life = Integer.parseInt(parts[1]);
 		  message = parts[2];
 		  
 		  int pos = PeriodicMsgs.size()+1;
@@ -664,12 +664,12 @@ public class zonerbot extends SubspaceBot
 				  pos = i+1;
 		  }
 		  
-		  PeriodicZone periodicTask = new PeriodicZone(delay,interval,pos,sender,message);
+		  PeriodicZone periodicTask = new PeriodicZone(delay,life,pos,sender,message);
 		  PeriodicMsgs.put(new Integer(pos), periodicTask);
 		  m_botAction.scheduleTask(periodicTask,1000, delay*60000);
 		  
 		  m_botAction.sendPrivateMessage(sender, "A periodic zoner has been set with" +
-		  		" a delay of " + delay + " minute(s) for an interval of " + interval +
+		  		" a delay of " + delay + " minute(s) for a life of " + life +
 		  		" hour(s) with the message: \"" + message + "\"");
 	  } catch (NumberFormatException nfe)	{
 		  m_botAction.sendPrivateMessage(sender, "Interval and delay must be numerical.");
@@ -868,8 +868,8 @@ public class zonerbot extends SubspaceBot
     String message[] =
     {
       "========================================== SMOD Commands ===========================================",
-      "!Periodic <delay>;<interval>;<message>-- Adds a periodic zone message. To add a sound use %%%# ",
-      "                                         at the end. delay is in minutes, interval is in hours",
+      "!Periodic <delay>;<life>;<message>    -- Adds a periodic zone message. To add a sound use %%# ",
+      "                                         at the end. delay is in minutes, life is in hours",
       "!ListPeriodic                         -- Lists all periodic zone messages and their index.",
       "!RemovePeriodic <index>               -- Removes the periodic message at the index.",
       "!SetAdvertDelay <Time>                -- Sets the time between adverts.",
@@ -966,13 +966,13 @@ public class zonerbot extends SubspaceBot
   }
   
   private class PeriodicZone extends TimerTask {
-	  private int m_delay,m_interval,m_index;
+	  private int m_delay,m_life,m_index;
 	  private double m_time=0;
 	  private String m_sender,m_message;
 	  
-	  public PeriodicZone (int delay, int interval, int index, String sender, String message)	{
+	  public PeriodicZone (int delay, int life, int index, String sender, String message)	{
 		  m_delay = delay;
-		  m_interval = interval;
+		  m_life = life;
 		  m_message = message;
 		  m_sender = sender;
 		  m_index = index;
@@ -984,13 +984,13 @@ public class zonerbot extends SubspaceBot
 	  
 	  public String toString()	{
 		  return "Set by: "+ m_sender + ", repeats every " 
-		  + m_delay + " minute(s), for " + m_interval + " hour(s). \"" + m_message + "\"" ;
+		  + m_delay + " minute(s), for " + m_life + " hour(s). \"" + m_message + "\"" ;
 	  }
 	  
 	  public void run()	{
 		  m_time += m_delay;
 		  int soundpos;
-		  if ( m_time/60 > m_interval)	{
+		  if ( m_time/60 > m_life)	{
 			  PeriodicMsgs.remove(new Integer(m_index));
 			  this.cancel();
 		  }

@@ -31,7 +31,8 @@ import twcore.core.util.ModuleEventRequester;
 public class utilfreqc extends MultiUtil {
 	
 	private boolean active  = false,
-					lates   = false;
+					lates   = false,
+					lagouts= false;
 					
 	private int numfreqs = 2;
 	
@@ -118,6 +119,24 @@ public class utilfreqc extends MultiUtil {
 	}
 	
 	/**
+	 * Turns on/off lagouts.
+	 * Used for games that DO NOT rely on deaths.
+	 * 
+	 * @param sender is the user of the bot.
+	 */
+	
+	public void doLagouts(String sender)	{
+		lagouts = !lagouts;
+		
+		if(lagouts)
+			m_botAction.sendArenaMessage("Lagouts have been enabled." +
+					" - " + sender,2);
+		else
+			m_botAction.sendArenaMessage("Lagouts have been disabled." +
+					" - " + sender,13);
+	}
+	
+	/**
 	 *Starts the pseudo-lock.
 	 * 
 	 * @param sender is the user of the bot.
@@ -168,16 +187,21 @@ public class utilfreqc extends MultiUtil {
 	 * @param playerName is the name of the player.
 	 */
 	
-	public void doCheckLate(String playerName)	{
-		if (!playerMap.containsKey(playerName))	{
-			Integer playerID = new Integer(m_botAction.getPlayerID(playerName));
-			PlayerProfile profile = new PlayerProfile(playerName,1,getLowest());
-			
-			specSet.remove(playerID);
+	public void doCheckPlayer(String playerName)	{
+		Integer playerID = new Integer(m_botAction.getPlayerID(playerName));
+		int freq = getLowest();
+		
+		if (lates && !playerMap.containsKey(playerName))	{
+			PlayerProfile profile = new PlayerProfile(playerName,1,freq);
 			playerMap.put(playerName, profile);
-			m_botAction.setShip(playerName, 1);
-		}
+		} else if (lagouts && playerMap.containsKey(playerName))
+			freq = playerMap.get(playerName).getFreq();
+		
+		specSet.remove(playerID);
+		m_botAction.setShip(playerName, 1);
+		m_botAction.setFreq(playerID, freq);
 	}
+	
 	
 	/**
 	 * Helper method, adds a player to the spec-tasks and
@@ -325,6 +349,8 @@ public class utilfreqc extends MultiUtil {
 			doSetFreqs( sender, message.substring(10) );
 		else if (message.startsWith("!lates"))
 			doLates( sender );
+		else if (message.startsWith("!lagouts"))
+			doLagouts( sender );
 		else if (message.startsWith("!start"))
 			doStart(sender);
 		else if (message.startsWith("!stop"))
@@ -341,8 +367,9 @@ public class utilfreqc extends MultiUtil {
 	 */
 	
 	public void handlePlayerCommand(String sender, String message)	{
-		if (active && lates && message.startsWith("!lemmein"))
-			doCheckLate(sender);
+		if (active && message.startsWith("!lemmein"))
+			if (lates || lagouts)
+				doCheckPlayer(sender);
 	}
 	
 	public String[] getHelpMessages()	{
@@ -352,7 +379,9 @@ public class utilfreqc extends MultiUtil {
 	    	  "++ships while keeping players in spec. The game can be hosted as  ++",
 	    	  "++         if it were locked, with all utils except lagout        ++",
 	    	  "!SetFreqs <#>            -- Sets the number of freqs. Default is 2",
-	    	  "!lates                   -- Toggles lates on/off. Default is off",
+	    	  "!lates                   -- Toggles lates on/off. [Default is off]",
+	    	  "!lagouts                 -- Toggles lagouts on/off. [Default is off]",
+	    	  "                         ^^ Do not use if deaths are important.",
 	    	  "!start                   -- Activates the pseudo lock.",
 	    	  "!stop                    -- Deactivates the pseudo lock.",
 	          "=FREQ-C======================================================FREQ-C=",

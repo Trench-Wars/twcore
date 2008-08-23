@@ -27,6 +27,9 @@ public class Objset {
                                 							// (Integer)PlayerID -> ((Integer)Obj# -> (String) +/-)
     Map<Integer, Map<Integer, Boolean>> m_privateUnsetObjects;  // Objects for a specific player not yet *objset
                              								   // (Integer)PlayerID -> ((Integer)Obj# -> (String) +/-)
+    Map <Integer, Map<Integer,Boolean>> m_freqObjects;		// Objects for a specific freq.
+    													   // (Integer)Freq# -> ((Integer)Obj# -> (String) +/-)
+    													  // Configured to set objects regardless of it's status.
 
     /**
      * Creates a new instantiation of Objset.  For use with LVZ object defines.
@@ -36,6 +39,7 @@ public class Objset {
         m_unsetObjects = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
         m_privateObjects = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, Boolean>>());
         m_privateUnsetObjects = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, Boolean>>());
+        m_freqObjects = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, Boolean>>());
     }
 
     /**
@@ -62,6 +66,21 @@ public class Objset {
 
         Map<Integer, Boolean> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
         playerMap.put( new Integer( object ), true );
+    }
+    
+    /**
+     * Makes a given object visible for a specific freq.
+     * @param freq is the freq of players to show object to
+     * @param object Index of object to make visible
+     */
+    public void showFreqObject( int freq, int object ) {
+
+        if( freq < 0 ) return;
+        if( !m_freqObjects.containsKey( new Integer( freq ) ) )
+            m_freqObjects.put( new Integer( freq ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
+
+        Map<Integer, Boolean> freqMap = m_freqObjects.get( new Integer( freq ) );
+        freqMap.put( new Integer( object ), true );
     }
 
     /**
@@ -98,6 +117,21 @@ public class Objset {
             if( status != null && status == true )
                 playerMap.put( new Integer( object ), false );
         } else playerMap.put( new Integer( object ), false );
+    }
+    
+    /**
+     * Makes a given object invisible to a specific freq.
+     * @param freq is the freq of players to hide object from
+     * @param object Index of object to make invisible
+     */
+    public void hideFreqObject( int freq, int object ) {
+
+    	if( freq < 0 ) return;
+        if( !m_freqObjects.containsKey( new Integer( freq ) ) )
+            m_freqObjects.put( new Integer( freq ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
+
+        Map<Integer, Boolean> freqMap = m_freqObjects.get( new Integer( freq ) );
+        freqMap.put( new Integer( object ), false );
     }
 
     /**
@@ -139,6 +173,28 @@ public class Objset {
             }
         }
     }
+    
+    /**
+     * Hides all objects that have previously been set in this Objset for the
+     * specified freq.
+     * @param freq is the freq of players to hide all objects from
+     */
+    public void hideAllFreqObjects( int freq ) {
+        if( freq < 0 ) return;
+        if( !m_freqObjects.containsKey( new Integer( freq ) ) ) return;
+
+        Map<Integer, Boolean> freqObj = m_freqObjects.get( new Integer( freq ) );
+        HashMap<Integer,Boolean> Objs = new HashMap<Integer,Boolean>();
+
+        synchronized (freqObj) {
+            Iterator<Integer> it = freqObj.keySet().iterator();
+            while( it.hasNext() ) {
+                int x = it.next();
+                Objs.put(x, false);
+            }
+        }
+        m_freqObjects.put(freq, Objs);
+    }
 
     /**
      * Checks if a given object is currently visible to everyone.
@@ -167,6 +223,21 @@ public class Objset {
         if( status ) return true;
         else return false;
     }
+    
+    /**
+     * Checks if a given object is currently visible to a specific freq.
+     * @param freq is the freq of players to check
+     * @param object Index of object to check
+     * @return True if the specified object is currently visible
+     */
+    public boolean objectFreqShown( int freq, int object ) {
+        if( freq < 0 ) return false;
+        if( !m_freqObjects.containsKey( new Integer( freq ) ) ) return false;
+        Map<Integer,Boolean> freqObj = m_freqObjects.get( new Integer( freq ) );
+        boolean status = freqObj.get( new Integer( object ) );
+        if( status ) return true;
+        else return false;
+    }
 
     /**
      * @return True if there are objects currently waiting to be set for all players.
@@ -186,6 +257,18 @@ public class Objset {
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) ) return false;
         Map<Integer,Boolean> playerObj = m_privateUnsetObjects.get( new Integer( playerId ) );
         return !playerObj.isEmpty();
+    }
+    
+    /**
+     * Returns true if there are objects to be shown for a Freq regardless of wither
+     * they are shown already.
+     * @param playerId ID of the player to check
+     * @return True if there are objects waiting to be set for the specified player
+     */
+    public boolean toFreqSet( int freq ) {
+        if( freq < 0 ) return false;
+        Map<Integer,Boolean> freqObj = m_freqObjects.get( new Integer( freq ) );
+        return !freqObj.isEmpty();
     }
 
     /**
@@ -228,6 +311,25 @@ public class Objset {
             }
         }
         playerMap.clear();
+        return theseObjects;
+    }
+    
+    /**
+     * Returns a String of all freq objects for a specific freq, parsed to
+     * work with the *objset command.
+     * @param freq is the freq to get the objects from.
+     * @return A HashMap containing a list of objects and their show or hide values
+     */
+    public HashMap<Integer,Boolean> getFreqObjects( int freq ) {
+        HashMap <Integer,Boolean> theseObjects = new HashMap<Integer,Boolean>();
+        if( freq < 0 || !m_freqObjects.containsKey( new Integer( freq ) ) ) return theseObjects;
+
+        Map<Integer, Boolean> freqObj = m_freqObjects.get( new Integer( freq ) );
+        synchronized (freqObj) {
+            for( Integer id : freqObj.keySet() ) {
+                theseObjects.put( id, freqObj.get(id) );
+            }
+        }
         return theseObjects;
     }
 }
