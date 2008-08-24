@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
+import java.util.Vector;
 
 import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
@@ -31,14 +32,15 @@ public class utilflagconquest extends MultiUtil {
 	private static final int REPEAT_TIME = SWITCH_TIME*5;
 	
 	private ArrayList<Integer> harvested;
+	private Vector<Hot_Spot> spotList;
 	private HashMap<Integer,ArrayList<Integer>> groups;
 	private HashMap<Integer,Holding_Freq> freqs;
 	private HashMap<String,Warp_Point> points;
 	private HashMap<Integer,Long> recentContacts;
-	private Objset m_Objset;
 	
+	private Objset m_Objset;
 	private Hot_Spot spot;
-	private SpotsTask checkSpot;
+	private TimerTask checkSpot;
 	private Integer gdex;
 	
 	private int explorer;
@@ -57,6 +59,7 @@ public class utilflagconquest extends MultiUtil {
 
 	public void init()	{
 		harvested = new ArrayList<Integer>();
+		spotList = new Vector<Hot_Spot>();
 		groups = new HashMap<Integer,ArrayList<Integer>>();
 		freqs = new HashMap<Integer,Holding_Freq>();
 		points = new HashMap<String,Warp_Point>();
@@ -419,14 +422,21 @@ public class utilflagconquest extends MultiUtil {
 
 	public void doReleaseFlags (String sender)	{
 		m_botAction.resetFlagGame();
+		Iterator<Integer>holdings = freqs.keySet().iterator();
+		while (holdings.hasNext())
+			m_Objset.hideAllFreqObjects(holdings.next().intValue());
 		freqs.clear();
+		
 		Iterator<Warp_Point>wrppts = points.values().iterator();
 		while (wrppts.hasNext())	{
 			Warp_Point tmpwppt = wrppts.next();
 			tmpwppt.m_Holder = -1;
+			if (tmpwppt.hasLvz)	{
+				m_botAction.hideObject(tmpwppt.m_ObjClaim);
+				m_botAction.hideObject(tmpwppt.m_ObjLost);
+				m_botAction.hideObject(tmpwppt.m_ObjContest);
+			}
 		}
-		
-		m_botAction.getShip().setShip(8);
 		m_botAction.sendPrivateMessage(sender, "Flags released from all ownership.");
 	}
 	
@@ -500,8 +510,22 @@ public class utilflagconquest extends MultiUtil {
         }else if (points.isEmpty())	{
         	m_botAction.sendPrivateMessage(sender, "No warp points to watch");
         }else	{
-        	checkSpot = new SpotsTask();
-            m_botAction.scheduleTask(checkSpot, 100);
+        	spotList.clear();
+        	for (Warp_Point warppt : points.values())
+        		if (warppt.hasSpot)
+        			for (Hot_Spot hs : warppt.m_Spots)
+        				spotList.addElement(hs);
+
+        	
+        	checkSpot = new TimerTask()	{
+        		public void run()	{
+        			spot = spotList.elementAt(0);
+        			spotList.removeElementAt(0);
+        			spotList.addElement(spot);
+        			m_botAction.moveToTile(spot.m_X, spot.m_Y);
+        		}
+        	};
+            m_botAction.scheduleTaskAtFixedRate(checkSpot, 100, SWITCH_TIME);
             m_botAction.sendPrivateMessage(sender, "Watching activated");
             watching = !watching;
         }
@@ -642,6 +666,7 @@ public class utilflagconquest extends MultiUtil {
 				wppt.setHolder(freq.m_Freq);
 				warpptMsg(freq.m_Freq,wppt.m_Name,claimedmsg);
 				if (wppt.hasLvz)	{
+					m_botAction.showObject(wppt.m_ObjClaim);
 					m_Objset.showFreqObject(freq.m_Freq, wppt.m_ObjClaim);
 					m_Objset.hideFreqObject(freq.m_Freq, wppt.m_ObjLost);
 				}
@@ -652,11 +677,12 @@ public class utilflagconquest extends MultiUtil {
 				wppt.setHolder(-1);
 				freq.removeWrpp(wppt.m_Name);
 				if (wppt.hasLvz)	{
+					m_botAction.showObject(wppt.m_ObjContest);
 					m_Objset.showFreqObject(freq.m_Freq, wppt.m_ObjLost);
 					m_Objset.hideFreqObject(freq.m_Freq, wppt.m_ObjClaim);
+				} if ( wppt.m_Ids.size() > 1)	{
+						m_botAction.showObject(wppt.m_ObjContest);
 				}
-				if ( wppt.m_Ids.size() > 1)
-					warpptMsg(freq.m_Freq,wppt.m_Name,contestedmsg);
 				notifyFreq(freq.m_Freq, wppt.m_Name,false);
 			}
 	}
@@ -674,10 +700,6 @@ public class utilflagconquest extends MultiUtil {
 		
 		if (message == null)
 			return;
-		
-		Warp_Point warppt = points.get(wpptName);
-		if (warppt.hasLvz)
-			m_botAction.showObject(warppt.m_ObjContest);
 		
 		try {
 			if ((soundpos = message.indexOf('%')) != -1)
@@ -953,35 +975,6 @@ public class utilflagconquest extends MultiUtil {
     public void cancel()	{
     	if (watching)
     		checkSpot.cancel();
-    }
-    
-    /**
-     *  Reduntant, messy, sleeping timer to check spots.
-     */
-    
-    private class SpotsTask extends TimerTask	{
-    	
-    	public SpotsTask()	{
-    	}
-    	
-    	public void run()	{
-    		Iterator<Warp_Point> iter = points.values().iterator();
-    		while (iter.hasNext())	{
-    			try	{
-    				Warp_Point current = iter.next();
-        			for (int i=0; i < current.m_Spots.size() ; i++)	{
-        				spot = current.m_Spots.get(i);
-        				m_botAction.moveToTile(
-        						current.m_Spots.get(i).m_X,
-        						current.m_Spots.get(i).m_Y);
-        				Thread.sleep(SWITCH_TIME);
-        			}
-    			}catch (InterruptedException ie)	{return;}
-    		}
-    		checkSpot = new SpotsTask();
-    		m_botAction.scheduleTask(checkSpot, SWITCH_TIME);
-    		this.cancel();
-    	}
     }
     
 
