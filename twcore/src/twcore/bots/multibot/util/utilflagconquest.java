@@ -30,6 +30,7 @@ public class utilflagconquest extends MultiUtil {
 	
 	private static final int SWITCH_TIME = 200;
 	private static final int REPEAT_TIME = SWITCH_TIME*5;
+	private static final int STIMULATION_TIME = 120000;
 	
 	private ArrayList<Integer> harvested;
 	private Vector<Hot_Spot> spotList;
@@ -41,6 +42,7 @@ public class utilflagconquest extends MultiUtil {
 	private Objset m_Objset;
 	private Hot_Spot spot;
 	private TimerTask checkSpot;
+	private TimerTask stimulant;
 	private Integer gdex;
 	
 	private int explorer;
@@ -67,7 +69,7 @@ public class utilflagconquest extends MultiUtil {
 		m_Objset = m_botAction.getObjectSet();
 		gdex = 1;
 		m_botAction.setPlayerPositionUpdating(0);
-        m_botAction.stopSpectatingPlayer();
+		m_botAction.stopSpectatingPlayer();
 	}
 
 	/**
@@ -506,6 +508,7 @@ public class utilflagconquest extends MultiUtil {
 		if (watching) {
             m_botAction.sendPrivateMessage(sender, "Watching deactivated");
             checkSpot.cancel();
+            stimulant.cancel();
             watching = !watching;
         }else if (points.isEmpty())	{
         	m_botAction.sendPrivateMessage(sender, "No warp points to watch");
@@ -515,8 +518,9 @@ public class utilflagconquest extends MultiUtil {
         		if (warppt.hasSpot)
         			for (Hot_Spot hs : warppt.m_Spots)
         				spotList.addElement(hs);
-
         	
+        	if (!spotList.isEmpty())
+        		
         	checkSpot = new TimerTask()	{
         		public void run()	{
         			spot = spotList.elementAt(0);
@@ -524,8 +528,17 @@ public class utilflagconquest extends MultiUtil {
         			spotList.addElement(spot);
         			m_botAction.moveToTile(spot.m_X, spot.m_Y);
         		}
+        	}; stimulant = new TimerTask()	{
+        		public void run()	{
+        			m_botAction.sendPrivateMessage(m_botAction.getBotName(), 
+        					"UpdatePosition");
+        		}
         	};
-            m_botAction.scheduleTaskAtFixedRate(checkSpot, 100, SWITCH_TIME);
+        	
+        	m_botAction.scheduleTaskAtFixedRate
+        	(stimulant, STIMULATION_TIME, STIMULATION_TIME);
+            m_botAction.scheduleTaskAtFixedRate
+            (checkSpot, SWITCH_TIME, SWITCH_TIME);
             m_botAction.sendPrivateMessage(sender, "Watching activated");
             watching = !watching;
         }
@@ -666,7 +679,6 @@ public class utilflagconquest extends MultiUtil {
 				wppt.setHolder(freq.m_Freq);
 				warpptMsg(freq.m_Freq,wppt.m_Name,claimedmsg);
 				if (wppt.hasLvz)	{
-					m_botAction.showObject(wppt.m_ObjClaim);
 					m_Objset.showFreqObject(freq.m_Freq, wppt.m_ObjClaim);
 					m_Objset.hideFreqObject(freq.m_Freq, wppt.m_ObjLost);
 				}
@@ -729,8 +741,9 @@ public class utilflagconquest extends MultiUtil {
 			return;
 		
 		Warp_Point warppt = points.get(wpptName);
-		if (warppt.hasLvz)
+		if (warppt.hasLvz)	{
 			m_botAction.setFreqObjects(freq);
+		}
 
 		while (freqPlayers.hasNext())	{
 			Player currentp = freqPlayers.next();
@@ -973,8 +986,11 @@ public class utilflagconquest extends MultiUtil {
 	}
     
     public void cancel()	{
-    	if (watching)
+    	m_Objset = new Objset();
+    	if (watching)	{
     		checkSpot.cancel();
+    		stimulant.cancel();
+    	}
     }
     
 

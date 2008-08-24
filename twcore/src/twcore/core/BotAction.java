@@ -2689,11 +2689,12 @@ public class BotAction
      */
     public void setFreqObjects( int freq ) {
         if( m_objectSet.toFreqSet( freq ) ) {
-            Iterator<Player> freqPlayers = getFreqPlayerIterator(freq);
+            Iterator<Player> freqPlayers = getFreqPlayerIterator( freq );
+            HashMap<Integer,Boolean> freqObjs = m_objectSet.getFreqObjects( freq );
             while (freqPlayers.hasNext())	{
             	Player current = freqPlayers.next();
             	if (current != null)	{
-            		m_packetGenerator.setupMultipleLVZObjectToggles(current.getPlayerID(), m_objectSet.getFreqObjects( freq ) );
+            		m_packetGenerator.setupMultipleLVZObjectToggles(current.getPlayerID(), freqObjs );
             		m_packetGenerator.sendLVZObjectCluster(current.getPlayerID());
             	}
             }
