@@ -45,8 +45,8 @@
 	
 	<target name="configCopy" description="Copies all the .cfg files from the src directory to the bin directory if file doesn't exist">
 		<echo>Copying Bot configuration files</echo>
-    	<copy todir="bin" overwrite="no">
-    		<fileset dir="src">
+    	<copy todir="../bin" overwrite="no">
+    		<fileset dir=".">
 		        <include name="**/**.cfg"/>
 		    </fileset>
     	</copy>
