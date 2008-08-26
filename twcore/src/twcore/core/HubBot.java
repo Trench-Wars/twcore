@@ -170,9 +170,11 @@ public class HubBot extends SubspaceBot {
         Tools.printLog("Done initializing operators from operators.cfg");
         
         // Initiate process to auto-assign operators using the subgame staff files
-        m_botAction.sendUnfilteredPublicMessage( "*getfile moderate.txt" );
-        m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile sysop.txt" );
+        m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
+        m_botAction.sendUnfilteredPublicMessage( "*getfile moderate.txt" );
+        
+        
     }
 
     /**

@@ -93,7 +93,7 @@ public class OperatorList {
 
         
         // Operators
-        for(int i = 0 ; i < operators_keys.length; i++) {
+        for(int i = operators_keys.length-1 ; i >= 0 ; i--) {
             String key = operators_keys[i];
             
             if(prop.containsKey(key)) {
@@ -102,14 +102,14 @@ public class OperatorList {
                 if(value.trim().length() > 0) {
                     StringTokenizer tokens = new StringTokenizer(value,",");
                     while(tokens.hasMoreTokens()) {
-                        operators.put( tokens.nextToken().trim(), i );
+                        operators.put( tokens.nextToken().trim().toLowerCase(), i );
                     }
                 }
             }
         }
         
         // Auto-assignment
-        for(int i = 0 ; i < auto_assign_keys.length; i++) {
+        for(int i = auto_assign_keys.length-1 ; i >= 0 ; i--) {
             String key = auto_assign_keys[i];
             
             if(prop.containsKey(key)) {
@@ -166,15 +166,16 @@ public class OperatorList {
                         
                         name = line.trim().toLowerCase();
                         
-                        // Check if the already known level of this operator is not higher 
-                        // then the level to which he's about to be added 
-                        if(operators.containsKey(name) && operators.get(name) >= level) {
-                            continue;
-                        }
-                        
                         if(autoAssignSetting2 == null || autoAssignSetting2.replace(":", "").length() == 0) {
-                            operators.put(name, level);
+                            if(operators.containsKey(name) && operators.get(name) >= level) {
+                                continue;
+                            } else {
+                                operators.put(name, level);
+                            }
                         }
+                        // If an operator is added below and he is already known in the operators map, he will
+                        // be overwritten. Because operators are read in from highest (owner) to lowest (ZH),
+                        // everyone will get the correct level
                         if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":tag ") && autoAssignSetting2.length() > 6) {
                             if(name.contains(autoAssignSetting2.toLowerCase().substring(5))) {
                                 operators.put(name, level);
