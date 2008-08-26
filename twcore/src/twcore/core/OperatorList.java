@@ -102,7 +102,7 @@ public class OperatorList {
                 if(value.trim().length() > 0) {
                     StringTokenizer tokens = new StringTokenizer(value,",");
                     while(tokens.hasMoreTokens()) {
-                        operators.put( tokens.nextToken(), i );
+                        operators.put( tokens.nextToken().trim(), i );
                     }
                 }
             }
