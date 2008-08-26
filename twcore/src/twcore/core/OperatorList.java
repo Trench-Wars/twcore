@@ -176,18 +176,18 @@ public class OperatorList {
                             operators.put(name, level);
                         }
                         if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":tag ") && autoAssignSetting2.length() > 6) {
-                            if(name.contains(autoAssignSetting2.substring(5))) {
+                            if(name.contains(autoAssignSetting2.toLowerCase().substring(5))) {
                                 operators.put(name, level);
                             }
                         }
                         if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":line")) {
                             String[] delimiters = autoAssignSetting2.substring(7).split("\" - \""); // cut off :line " and split by " - "
                             
-                            if(line.trim().startsWith(delimiters[0])) { // start area
+                            if(line.trim().toLowerCase().startsWith(delimiters[0].toLowerCase())) { // start area
                                 in_area = true;
                                 continue;
                             } 
-                            if(line.trim().startsWith(delimiters[1])) { // end area
+                            if(line.trim().toLowerCase().startsWith(delimiters[1].toLowerCase())) { // end area
                                 in_area = false;
                                 continue;
                             } 
