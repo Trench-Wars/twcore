@@ -7,8 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -70,8 +70,8 @@ public class OperatorList {
      * Creates a new instance of OperatorList.
      */
     public OperatorList(){
-        operators = Collections.synchronizedMap( new HashMap<String,Integer>() );
-        autoAssign = Collections.synchronizedMap( new HashMap<Integer,String>() );
+        operators = Collections.synchronizedMap( new LinkedHashMap<String,Integer>() );
+        autoAssign = Collections.synchronizedMap( new LinkedHashMap<Integer,String>() );
     }
     
     /**
