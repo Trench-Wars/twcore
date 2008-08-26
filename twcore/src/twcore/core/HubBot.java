@@ -1,14 +1,15 @@
 package twcore.core;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.TimerTask;
 
 import twcore.core.command.CommandInterpreter;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.FileArrived;
 import twcore.core.events.LoggedOn;
-import twcore.core.events.ArenaJoined;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
@@ -99,7 +100,8 @@ public class HubBot extends SubspaceBot {
         m_botAction.joinArena( m_botAction.getGeneralSettings().getString("Arena") );
         m_botAction.sendUnfilteredPublicMessage( "*g*misc:alertcommand" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat name" ) );
-        LoadAccessLists();
+        initOperators();
+        
         try {
             BufferedReader reader = new BufferedReader( new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) ) );
             String s = "";
@@ -138,17 +140,13 @@ public class HubBot extends SubspaceBot {
      * @param event Event received
      */
     public void handleEvent( FileArrived event ){
-        String fileName = event.getFileName();
 
-        if( fileName.compareTo( "moderate.txt" ) == 0 ) {
-            m_botAction.getOperatorList().parseFile( m_botAction.getDataFile( "moderate.txt" ), OperatorList.MODERATOR_LEVEL );
-            m_botAction.getOperatorList().changeAllMatches( "<ZH>", OperatorList.ZH_LEVEL );
-            m_botAction.getOperatorList().changeAllMatches( "<ER>", OperatorList.ER_LEVEL );
-            loadAccessConfiguration();  // Reload access from configuration files to make ZHs or ERs on conf. files the proper level again
-        } else if( fileName.compareTo( "smod.txt" ) == 0 ){
-            m_botAction.getOperatorList().parseFile( m_botAction.getDataFile( "smod.txt" ), OperatorList.SMOD_LEVEL );
-        } else if( fileName.compareTo( "sysop.txt" ) == 0 ){
-            m_botAction.getOperatorList().parseFile( m_botAction.getDataFile( "sysop.txt" ), OperatorList.SYSOP_LEVEL );
+        // Auto assign operators after the file has been downloaded from subgame
+        if(     event.getFileName().equals( "moderate.txt" ) || 
+                event.getFileName().equals( "smod.txt" ) ||
+                event.getFileName().equals( "sysop.txt" )) {
+            m_botAction.getOperatorList().autoAssignFile( m_botAction.getDataFile( event.getFileName() ) );
+            
         }
     }
 
@@ -156,19 +154,25 @@ public class HubBot extends SubspaceBot {
      * Clears all current access lists, and sets up the new lists based on access
      * CFG files and the three server-based access lists.
      */
-    public void LoadAccessLists(){
-        m_botAction.getOperatorList().clearList();
-        loadAccessConfiguration();
-        m_botAction.sendUnfilteredPublicMessage( "*getmodlist" );
+    public void initOperators(){
+        Tools.printLog("Initializing operators.cfg ...");
+        
+        try {
+            m_botAction.getOperatorList().clear();
+            m_botAction.getOperatorList().init( m_botAction.getCoreCfg("operators.cfg" ) );
+            
+        } catch (IOException ioe) {
+            System.err.println("FATAL: IO Exception occured while initializing operators from operators.cfg: "+ ioe.getMessage());
+            System.err.println("FATAL: No operators loaded, shutting down TWCore.");
+            m_botAction.die();
+        }
+        
+        Tools.printLog("Done initializing operators from operators.cfg");
+        
+        // Initiate process to auto-assign operators using the subgame staff files
+        m_botAction.sendUnfilteredPublicMessage( "*getfile moderate.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile sysop.txt" );
-    }
-
-    private void loadAccessConfiguration() {
-        m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "owners.cfg" ), OperatorList.OWNER_LEVEL );
-        m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "outsider.cfg" ), OperatorList.OUTSIDER_LEVEL );
-        m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "develop.cfg" ), OperatorList.DEV_LEVEL );
-        m_botAction.getOperatorList().parseFile( m_botAction.getCoreCfg( "highmod.cfg" ), OperatorList.HIGHMOD_LEVEL );
     }
 
     /**
@@ -231,10 +235,8 @@ public class HubBot extends SubspaceBot {
      * @param message Text of the message following the command
      */
     public void handleShowWaitingList( String messager, String message ){
-        if( m_botAction.getOperatorList().isOutsider( messager ) == true ){
+        if( m_botAction.getOperatorList().isER(messager ) == true ){
             m_botQueue.listWaitingList( messager );
-        } else {
-            m_botAction.sendChatMessage( 1, messager + " isn't an ER+, but tried !waitinglist" );
         }
     }
 
@@ -245,7 +247,7 @@ public class HubBot extends SubspaceBot {
      */
     public void handleUpdateAccess( String messager, String message ){
         if( m_botAction.getOperatorList().isSmod( messager ) == true ){
-            LoadAccessLists();
+            initOperators();
             m_botAction.sendSmartPrivateMessage( messager, "Updating access levels..." );
             m_botAction.sendChatMessage( 1, "Updating access levels at " + messager + "'s request" );
         } else {
@@ -450,10 +452,6 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage( messager, "Invalid password." );
                 m_botAction.sendChatMessage( 1, messager + " provided an invalid password for sending out the biller down message.");
                 return;
-            }
-        } else {
-            if( !m_botAction.getOperatorList().isZH(message) ) {
-                m_botAction.sendChatMessage( 1, messager + " tried to send out the biller down message.");
             }
         }
 

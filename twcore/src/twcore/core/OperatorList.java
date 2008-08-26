@@ -1,14 +1,18 @@
 package twcore.core;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.Map.Entry;
 
 import twcore.core.util.Tools;
 
@@ -35,10 +39,8 @@ import twcore.core.util.Tools;
  * </pre></code>
  */
 public class OperatorList {
-
-    Map             <String,Integer>m_accessList;
-
-    public static final int PLAYER_LEVEL = 0;
+	
+	public static final int PLAYER_LEVEL = 0;
     public static final int ZH_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
     public static final int ER_LEVEL = 3;
@@ -48,25 +50,181 @@ public class OperatorList {
     public static final int SMOD_LEVEL = 7;
     public static final int SYSOP_LEVEL = 8;
     public static final int OWNER_LEVEL = 9;
+    
+    /**
+     * This Hashmap contains all the operators
+     * Key:   Name of the operator
+     * Value: level id (0-9)
+     */
+    private static Map<String,Integer> operators;
+    
+    /**
+     * autoAssign Hashmap contains the automatic assignment rules specified in operators.cfg
+     * Key:   level id (0-9)
+     * Value: Exact value from operators.cfg
+     */
+    private static Map<Integer,String> autoAssign;
 
+    
     /**
      * Creates a new instance of OperatorList.
      */
     public OperatorList(){
-
-        m_accessList = Collections.synchronizedMap( new HashMap<String,Integer>() );
+        operators = Collections.synchronizedMap( new HashMap<String,Integer>() );
+        autoAssign = Collections.synchronizedMap( new HashMap<Integer,String>() );
     }
+    
+    /**
+     * Initializes this OperatorList by loading the operators.cfg configuration file 
+     */
+    public void init(File operatorsCfg) throws FileNotFoundException, IOException {
+        Properties prop = new Properties();
+        prop.load(new FileInputStream(operatorsCfg));
+        
+        // temporary map for reading out the configuration
+        String[] operators_keys = { 
+                 "level_player", "level_zh", "level_outsider", "level_er", "level_moderator", 
+                 "level_highmod", "level_dev", "level_smod", "level_sysop", "level_owner" 
+        };
+        String[] auto_assign_keys = {
+                "assign_player", "assign_zh", "assign_outsider", "assign_er", "assign_moderator", 
+                "assign_highmod", "assign_dev", "assign_smod", "assign_sysop", "assign_owner" 
+        };
 
-    public OperatorList(OperatorList o) {
-    	m_accessList = Collections.synchronizedMap( new HashMap<String,Integer>() );
-    	m_accessList.putAll(o.m_accessList);
+        
+        // Operators
+        for(int i = 0 ; i < operators_keys.length; i++) {
+            String key = operators_keys[i];
+            
+            if(prop.containsKey(key)) {
+                String value = prop.getProperty(key);
+                
+                if(value.trim().length() > 0) {
+                    StringTokenizer tokens = new StringTokenizer(value,",");
+                    while(tokens.hasMoreTokens()) {
+                        operators.put( tokens.nextToken(), i );
+                    }
+                }
+            }
+        }
+        
+        // Auto-assignment
+        for(int i = 0 ; i < auto_assign_keys.length; i++) {
+            String key = auto_assign_keys[i];
+            
+            if(prop.containsKey(key)) {
+                String value = prop.getProperty(key).trim();
+                
+                if(value.trim().length() > 0) {
+                    autoAssign.put(i, value);
+                }
+            }
+        }
+        
     }
+    
+    /**
+     * Carries out auto-assignment of operators using the operators on the specified file
+     * 
+     * @param data one of moderate.txt, smod.txt or sysop.txt
+     */
+    public void autoAssignFile(File data) {
+        // 1. Cycle the autoAssign hashmap
+        // 
+        
+        for(int level:autoAssign.keySet()) {
+            String autoAssignSetting = autoAssign.get(level);
+            
+            // If not defined, do nothing for this level
+            if(autoAssignSetting == null) {
+                continue;
+            }
+            
+            // If the auto assign setting starts with "moderate.txt" / "smod.txt" / "sysop.txt"
+            if(autoAssignSetting.startsWith(data.getName()) ) {
+                // Load operators from this file into this level
+                String autoAssignSetting2 = null;
+                if(autoAssignSetting.contains(":")) {
+                    autoAssignSetting2 = autoAssignSetting.substring(autoAssignSetting.indexOf(':'));
+                }
+                
+                // Read through the file and add operators
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(data));
+                    String line = null, name = null;
+                    boolean in_area = false;
+                    
+                    while (( line = br.readLine()) != null) {
+                        
+                        if( line.startsWith(" ") ||
+                            line.startsWith("-") ||
+                            line.startsWith("+") ||
+                            line.startsWith("/") ||
+                            line.startsWith("*") ||
+                            line.trim().length() == 0)
+                            continue;
+                        
+                        name = line.trim().toLowerCase();
+                        
+                        // Check if the already known level of this operator is not higher 
+                        // then the level to which he's about to be added 
+                        if(operators.containsKey(name) && operators.get(name) >= level) {
+                            continue;
+                        }
+                        
+                        if(autoAssignSetting2 == null || autoAssignSetting2.replace(":", "").length() == 0) {
+                            operators.put(name, level);
+                        }
+                        if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":tag ") && autoAssignSetting2.length() > 6) {
+                            if(name.contains(autoAssignSetting2.substring(5))) {
+                                operators.put(name, level);
+                            }
+                        }
+                        if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":line")) {
+                            String[] delimiters = autoAssignSetting2.substring(7).split("\" - \""); // cut off :line " and split by " - "
+                            
+                            if(line.trim().startsWith(delimiters[0])) { // start area
+                                in_area = true;
+                                continue;
+                            } 
+                            if(line.trim().startsWith(delimiters[1])) { // end area
+                                in_area = false;
+                                continue;
+                            } 
+                            if(in_area) {
+                                operators.put(name,level);
+                            } else {
+                                continue;
+                            }
+                        }
+                    }
+                    
+                } catch(FileNotFoundException fnfe) {
+                    
+                } catch(IOException ioe) {
+                    
+                }
+                
+                
+                // Get a quick count of added operators
+                int count = 0;
+                for(Integer l:operators.values()) {
+                    if(l == level)
+                        count++;
+                }
+                
+                Tools.printLog( "Added "+count+" operators to level "+Tools.staffNameShort(level)+" from file "+data.getName());
+            }
+        }
+    }
+    
+    
 
     /**
      * @return The entire access mapping of player names to access levels
      */
     public Map<String, Integer> getList() {
-        return m_accessList;
+        return operators;
     }
 
     /**
@@ -76,13 +234,11 @@ public class OperatorList {
      * @return Access level of the name provided
      */
     public int getAccessLevel( String name ){
-        Integer      accessLevel;
-
         if( name == null ){
-            return PLAYER_LEVEL;
+            return 0;
         }
 
-        accessLevel = m_accessList.get( name.trim().toLowerCase() );
+        Integer accessLevel = operators.get( name.trim().toLowerCase() );
         if( accessLevel == null ){
             return PLAYER_LEVEL;
         } else {
@@ -123,8 +279,6 @@ public class OperatorList {
      * NOTE: Outsider is a special status provided to coders who are not members
      * of staff.  They are able to use some bot powers that ZHs can't, but can't
      * generally use event bots.
-     * FIXME: If an Outsider also is on moderate.txt with arena permissions, they
-     * will be considered a full moderator.
      * @param name Name in question
      * @return True if player is at least an Outsider
      */
@@ -353,122 +507,40 @@ public class OperatorList {
      * @return HashSet of all players of that access level.
      */
     public HashSet<String> getAllOfAccessLevel( int accessLevel ) {
-        if( accessLevel < ZH_LEVEL || accessLevel > OWNER_LEVEL )
+        if( accessLevel < PLAYER_LEVEL || accessLevel > OWNER_LEVEL )
             return null;
 
+        
         HashSet<String> gathered = new HashSet<String>();
-        Iterator<String> i = m_accessList.keySet().iterator();
-        String player;
-
-        while( i.hasNext() ) {
-            player = (String)i.next();
-            if( player != null )
-                if( getAccessLevel( player ) == accessLevel )
-                    gathered.add( player );
+        
+        for(Entry<String,Integer> operator:operators.entrySet()) {
+            if(operator.getValue().intValue() == accessLevel) {
+                gathered.add(operator.getKey());
+            }
         }
-
+        
         return gathered;
-    }
-
-    /**
-     * Changes all players with a supplied strange pattern inside their name to
-     * a given access level.
-     * @param pattern The pattern that must be contained in the player name
-     * @param accessLevel A number corresponding to the OperatorList access standard to change to
-     */
-    public void changeAllMatches( String pattern, int accessLevel ){
-        Iterator<String>        i;
-        String          player;
-        String          tempPattern;
-
-        tempPattern = pattern.trim().toLowerCase();
-        for( i = m_accessList.keySet().iterator(); i.hasNext(); ){
-            player = (String)i.next();
-            if( player.indexOf( tempPattern ) != -1 ){
-                m_accessList.put( player, new Integer( accessLevel ) );
-            }
-        }
-    }
-
-    /**
-     * Wrapper method for parseFile(File, int).
-     *
-     * Parses an access list and sets all members on the list to a given access
-     * level.  Used in conjunction with the changeAllMatches method (using ER
-     * and ZH tags), it can successfully assign access levels to all individuals.
-     * NOTE: If someone in outsider.cfg is also on moderate.txt, and they don't
-     * have a tag of some kind, they will be set to moderator level.
-     *
-     * @param filename Filename, in String form, to parse
-     * @param accessLevel Access level to assign to
-     */
-    public void parseFile( String filename, int accessLevel ){
-        parseFile( new File( filename ), accessLevel );
-    }
-
-    /**
-     * Parses an access list and sets all members on the list to a given access
-     * level.  Used in conjunction with the changeAllMatches method (using ER
-     * and ZH tags), it can successfully assign access levels to all individuals.
-     * NOTE: If someone in outsider.cfg is also on moderate.txt, and they don't
-     * have a tag of some kind, they will be set to moderator level.
-     *
-     * @param file Filename, in String form, to parse
-     * @param accessLevel Access level to assign to
-     */
-    public void parseFile( File file, int accessLevel ){
-
-        String             name;
-        String             inBuffer;
-        char               firstCharacter;
-        LineNumberReader   lineReader;
-        Integer            oldAccessLevel;
-
-        try {
-            lineReader = new LineNumberReader( new InputStreamReader( new FileInputStream( file ) ) );
-            while( (inBuffer = lineReader.readLine()) != null ){
-                if( inBuffer.trim().length() > 0 ){
-                    firstCharacter = inBuffer.charAt( 0 );
-                    if(		firstCharacter != ' ' && 
-                    		firstCharacter != '-' && 
-                    		firstCharacter != '+' && 
-                    		firstCharacter != '/' &&
-                    		firstCharacter != '*'){
-                        name = inBuffer.trim().toLowerCase();
-                        oldAccessLevel = m_accessList.get( name );
-                        if( oldAccessLevel != null ){
-                            if( oldAccessLevel.intValue() >= accessLevel ){
-                                continue;
-                            }
-                        }
-                        m_accessList.put( inBuffer.trim().toLowerCase(), new Integer( accessLevel ) );
-                    }
-                }
-            }
-            lineReader.close();
-        } catch( Exception e ){
-            Tools.printStackTrace( e );
-        }
     }
 
     /**
      * Manually adds an operator to the access list.  For special use only.
      * (Not needed in any normal procedure.)
+     * @deprecated
      * @param name Name to add
      * @param accessLevel Access level at which to add the name
      */
     public void addOperator( String name, int accessLevel ) {
         if( accessLevel < PLAYER_LEVEL || accessLevel > OWNER_LEVEL )
             return;
-        m_accessList.remove(name);
-        m_accessList.put( name.trim().toLowerCase(), new Integer( accessLevel ) );
+        operators.remove(name);
+        operators.put(name, accessLevel);
     }
 
     /**
      * Clears the access list.
      */
-    void clearList(){
-
-        m_accessList.clear();
+    void clear(){
+        operators.clear();
+        autoAssign.clear();
     }
 }
