@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.TimerTask;
+import java.util.TreeMap;
+import java.util.Iterator;
 
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.ArenaJoined;
@@ -73,6 +75,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage" );
         m_commandInterpreter.registerCommand( "!forcespawn", acceptedMessages, this, "handleForceSpawnMessage" );
         m_commandInterpreter.registerCommand( "!spawnmax", acceptedMessages, this, "handleSpawnMaxMessage" );
+        m_commandInterpreter.registerCommand( "!autospawn", acceptedMessages, this, "handleAutoSpawnMessage" );
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess" );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators" );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList" );
@@ -634,6 +637,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage( messager, "!remove <name>     - Removes <name> bot.  MUST USE EXACT CASE!  (i.e., TWDBot)." );
             m_botAction.sendSmartPrivateMessage( messager, "!hardremove <type> - Removes all bots of <type>, and resets the bot's count." );
             m_botAction.sendSmartPrivateMessage( messager, "!spawnmax <type>   - Spawns the maximum amount of bots of type <type>.");
+            m_botAction.sendSmartPrivateMessage( messager, "!autospawn         - Spawns all bots on the autoloader that aren't currently spawned.");
         }
 
         if( m_botAction.getOperatorList().isSmod( messager ) ){
@@ -667,20 +671,6 @@ public class HubBot extends SubspaceBot {
         String className = message.trim();
         if( className.length() > 0 ){
             m_botQueue.spawnBot( className, messager );
-        } else {
-            m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
-        }
-    }
-    
-    /**
-     * Spawns the maximum number of bots of a given type.
-     * @param messager Name of the player who sent the command
-     * @param message Bot type to spawn
-     */
-    public void maxSpawn( String messager, String message ){
-    	String className = message.trim();
-        if( className.length() > 0 ){
-            m_botQueue.maxSpawnBot( className, messager );
         } else {
             m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
         }
@@ -754,12 +744,52 @@ public class HubBot extends SubspaceBot {
     		m_botAction.sendSmartPrivateMessage( messager, "Maximum number of bots of this type (" + maxBots + ") has been reached." );
     		return;
     	}
+    	m_botAction.sendSmartPrivateMessage( messager, "Spawning the maximum allowed number bots of type " + message.toLowerCase());
+    	m_botAction.sendChatMessage( 1, messager + " is in queue to spawn the maximum allowed number bots of type " + message.toLowerCase());
     	while(m_botQueue.getBotCount(message.toLowerCase()) < maxBots)
     		spawn( messager, message );
     }
-
+    
     /**
-     *
+     * Spawns all bots on the autoloader that aren't currently spawned.
+     * @param messager
+     * @param message
+     */
+    public void handleAutoSpawnMessage( String messager, String message ){
+    	if( !m_botAction.getOperatorList().isHighmod( messager ) )return;
+    	m_botAction.sendSmartPrivateMessage( messager, "Spawning all bots from the autoloader that are not currently spawned.");
+    	m_botAction.sendChatMessage( 1, messager + " is in queue to spawn all bots from the autoloader.");
+    	try{
+    		BufferedReader reader = new BufferedReader( new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) ) );
+    		TreeMap<String, Integer> autoLoads = new TreeMap<String, Integer>();
+    		String s = "";
+    		while( true ){
+    			s = reader.readLine();
+    			if( s == null || s.equals( "" ) )
+    				break;
+    			char firstChar = s.trim().charAt( 0 );
+    			if( firstChar != '#' && firstChar != '[' ){
+    				if(autoLoads.containsKey(s)){
+    					int curNum = autoLoads.get(s);
+    					autoLoads.remove(s);
+    					autoLoads.put(s, curNum + 1);
+    				} else autoLoads.put(s, 1);
+    			}
+    		}
+    		Iterator<String> it = autoLoads.keySet().iterator();
+    		while( it.hasNext() ){
+    			String botName = it.next();
+    			while(m_botQueue.getBotCount(botName) < autoLoads.get(botName))
+    	    		spawn( messager, botName );   			
+    		}		
+    	}catch(Exception e){
+    		m_botAction.sendSmartPrivateMessage( messager, e.getMessage());
+    		Tools.printStackTrace(e);
+    	}
+    }
+    
+    /**
+     * Displays the current SQL pool status.
      * @param messager
      * @param message
      */
