@@ -35,7 +35,7 @@ public class alertbot extends SubspaceBot {
     Pattern startPattern;
     String startMessage;
     String endMessage;
-	
+
 	boolean alertToChat = true;
 	
 	String sqlHost = "website";
@@ -189,6 +189,10 @@ public class alertbot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name,"Unable to disable alerts at this time.");
                 return;
             }
+        }
+        else if ( message.equalsIgnoreCase("!die") && m_botAction.getOperatorList().isHighmod( name ) ) {
+            m_botAction.sendSmartPrivateMessage(name, "See you.");
+            m_botAction.die();
         }
         else if(message.equalsIgnoreCase("!help")){
              m_botAction.sendSmartPrivateMessage(name, "!on - Activate a private alert for when the next "+ arena +" starts. The alert lasts 6 hours.");
