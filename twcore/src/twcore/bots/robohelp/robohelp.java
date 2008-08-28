@@ -88,7 +88,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload" );
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted" );
-        m_commandInterpreter.registerCommand( "!saychat", acceptedMessages, this, "handleSayChat" );
         
         acceptedMessages = Message.CHAT_MESSAGE;
 
@@ -109,14 +108,6 @@ public class robohelp extends SubspaceBot {
         acceptedMessages = Message.ARENA_MESSAGE;
 
         m_commandInterpreter.registerCommand( "Ban", acceptedMessages, this, "handleBanNumber" );
-    }
-
-    public void handleSayChat( String name, String message ) {
-        if(!opList.isSmod( name )) {
-	  return;
-	  } else {
-          m_botAction.sendChatMessage( 1, message );
-	}
     }
 
     public void handleStatus( String name, String message ){
@@ -1150,13 +1141,7 @@ public class robohelp extends SubspaceBot {
         };
         if( m_botAction.getOperatorList().isZH( playerName ) )
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
-        
-        String[] SmodHelpText = {
-                " !saychat <messages>                       - Makes the bot say the <message> in the staff chat"
-        };
-        if( m_botAction.getOperatorList().isSmod( playerName ))
-            m_botAction.remotePrivateMessageSpam( playerName, SmodHelpText );
-        
+                
         String[] OwnerHelpText = {
             " !reload                                   - Reloads the HelpResponses database from file",            
         };
