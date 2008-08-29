@@ -802,7 +802,7 @@ public class GamePacketGenerator {
 
         composePacket( data );
     }
-    
+
     /**
      * Allows bot to be able to drop bricks.
      * @param xLocation
@@ -889,7 +889,7 @@ public class GamePacketGenerator {
                 objPacket.addByte( 0x35 );  // LVZ packet type byte
                 while( m_lvzToggleCluster.size() > 0 )
                     objPacket.addLittleEndianShort( m_lvzToggleCluster.removeFirst().readLittleEndianShort(0) );
-                composePacket( objPacket );
+                composeLowPriorityPacket( objPacket );
             }
         } else {
             LinkedList <ByteArray>playerCluster = m_lvzPlayerToggleCluster.remove(playerID);
@@ -900,7 +900,7 @@ public class GamePacketGenerator {
                 objPacket.addByte( 0x35 );  // LVZ packet type byte
                 while( playerCluster.size() > 0 )
                     objPacket.addLittleEndianShort( playerCluster.removeFirst().readLittleEndianShort(0) );
-                composePacket( objPacket );
+                composeLowPriorityPacket( objPacket );
             }
         }
     }
@@ -919,7 +919,7 @@ public class GamePacketGenerator {
         objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
         objPacket.addByte( 0x35 );  // LVZ packet type byte
         objPacket.addLittleEndianShort( (short) (objVisible ? (objID & 0x7FFF) : (objID | 0x8000)) );
-        composePacket( objPacket );
+        composeLowPriorityPacket( objPacket );
     }
 
     /**
