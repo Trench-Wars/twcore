@@ -252,6 +252,10 @@ public class utilfreqc extends MultiUtil {
         	specSet.add( new Integer(player.getPlayerID()) );
 	}
 	
+	/**
+	 * Starts the notification timer.
+	 */
+	
 	private void setNotifier()	{
 		notifySpec = new TimerTask()	{
 			public void run()	{
