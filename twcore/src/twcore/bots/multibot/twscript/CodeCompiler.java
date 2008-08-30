@@ -124,6 +124,12 @@ public final class CodeCompiler {
             	message = message.replace("@losses", Integer.toString(p.getLosses()));      
         	if(message.contains("@bounty"))
             	message = message.replace("@bounty", Integer.toString(p.getBounty()));
+        	if(message.contains("@kpoints"))
+        		message = message.replace("@kpoints", Integer.toString(p.getKillPoints()));
+        	if(message.contains("@fpoints"))
+        		message = message.replace("@fpoints", Integer.toString(p.getFlagPoints()));
+        	if(message.contains("@points"))
+        		message = message.replace("@points", Integer.toString(p.getFlagPoints() + p.getKillPoints()));
         	while(message.contains("@randomsound"))
             	message = message.replaceFirst("@randomsound", Integer.toString(Tools.Sound.allowedSounds[rand.nextInt(Tools.Sound.allowedSounds.length)]));
         	if(message.contains("@id"))
