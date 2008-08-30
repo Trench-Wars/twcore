@@ -98,22 +98,21 @@ public class utilfreqc extends MultiUtil {
 					"to setting lates on/off.");
         	return;
 		}
+		
 		lates = !lates;
 		
 		if (lates)	{
+			if (notifySpec == null)
+				setNotifier();
 			m_botAction.sendArenaMessage("Lates have been enabled, pm " +
 					m_botAction.getBotName() + " to get in.  - " + sender, 2);
-			notifySpec = new TimerTask()	{
-				public void run()	{
-					m_botAction.sendTeamMessage("Late? want in? " +
-							"Pm me !lemmein to play!", 25);
-				}};
-			m_botAction.scheduleTask(notifySpec, 10000, 60000);
-		}
-		else	{
+		} else	{
+			if (!lagouts)	{
+				notifySpec.cancel();
+				notifySpec = null;
+			}
 			m_botAction.sendArenaMessage("Lates have been disabled. - " + 
 					sender,10);
-			notifySpec.cancel();
 		}
 		
 	}
@@ -126,14 +125,27 @@ public class utilfreqc extends MultiUtil {
 	 */
 	
 	public void doLagouts(String sender)	{
+		if(!active)	{
+			m_botAction.sendPrivateMessage(sender, "Settings must be active prior " +
+					"to setting lagouts on/off.");
+			return;
+		}
+			
 		lagouts = !lagouts;
 		
-		if(lagouts)
+		if(lagouts)	{
+			if (notifySpec == null)
+				setNotifier();
 			m_botAction.sendArenaMessage("Lagouts have been enabled." +
 					" - " + sender,2);
-		else
+		} else	{
+			if (!lates)	{
+				notifySpec.cancel();
+				notifySpec = null;
+			}
 			m_botAction.sendArenaMessage("Lagouts have been disabled." +
 					" - " + sender,13);
+		}
 	}
 	
 	/**
@@ -169,10 +181,12 @@ public class utilfreqc extends MultiUtil {
 	
 	public void doStop(String sender)	{
 		if (active)	{
-			if (lates)
+			if (lates || lagouts)	{
 				notifySpec.cancel();
+				notifySpec = null;
+			}
 			
-			active = false;lates = false;
+			active = false;lates = false;lagouts = false;
 			specSet.clear();
 			playerMap.clear();
 			numfreqs = 2;
@@ -196,6 +210,12 @@ public class utilfreqc extends MultiUtil {
 			playerMap.put(playerName, profile);
 		} else if (lagouts && playerMap.containsKey(playerName))
 			freq = playerMap.get(playerName).getFreq();
+		else	{
+			m_botAction.sendPrivateMessage(playerName, "Sorry but " + 
+					(lates ? "" : "lates are disabled. ") + 
+					(lagouts ? "" : "lagouts are disabled."));
+			return;
+		}
 		
 		specSet.remove(playerID);
 		m_botAction.setShip(playerName, 1);
@@ -230,6 +250,15 @@ public class utilfreqc extends MultiUtil {
         }
         else
         	specSet.add( new Integer(player.getPlayerID()) );
+	}
+	
+	private void setNotifier()	{
+		notifySpec = new TimerTask()	{
+			public void run()	{
+				m_botAction.sendTeamMessage("Late? Lagout? want in? " +
+						"Pm me !lemmein to play!", 25);
+			}};
+		m_botAction.scheduleTask(notifySpec, 10000, 60000);
 	}
 	
 	/**
@@ -376,9 +405,9 @@ public class utilfreqc extends MultiUtil {
 	      String[] message = {
 	    	  "=FREQ-C======================================================FREQ-C=",
 	    	  "++This modules enforces a 'pseudo-lock' allowing players to change++",
-	    	  "++ships while keeping players in spec. The game can be hosted as  ++",
-	    	  "++         if it were locked, with all utils except lagout        ++",
-	    	  "!SetFreqs <#>            -- Sets the number of freqs. Default is 2",
+	    	  "++ ships while keeping players in spec. The game can be hosted as ++",
+	    	  "++   if it were locked, with all utils except lagout and shipc    ++",
+	    	  "!SetFreqs <#>            -- Sets the number of freqs. [Default is 2]",
 	    	  "!lates                   -- Toggles lates on/off. [Default is off]",
 	    	  "!lagouts                 -- Toggles lagouts on/off. [Default is off]",
 	    	  "                         ^^ Do not use if deaths are important.",
