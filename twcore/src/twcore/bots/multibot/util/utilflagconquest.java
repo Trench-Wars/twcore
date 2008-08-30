@@ -28,31 +28,35 @@ import twcore.core.util.ModuleEventRequester;
 public class utilflagconquest extends MultiUtil {
 	
 	
-	private static final int SWITCH_TIME = 200;
-	private static final int REPEAT_TIME = SWITCH_TIME*5;
-	private static final int STIMULATION_TIME = 120000;
+	private static final int 					SWITCH_TIME = 200;
+	private static final int 					REPEAT_TIME = SWITCH_TIME*5;
+	private static final int					MINUTE = 60000;
+	private static final int 					STIMULATION_TIME = MINUTE*2;
 	
-	private ArrayList<Integer> harvested;
-	private Vector<Hot_Spot> spotList;
+	private ArrayList<Integer> 					harvested;
+	private Vector<Hot_Spot> 					spotList;
 	private HashMap<Integer,ArrayList<Integer>> groups;
-	private HashMap<Integer,Holding_Freq> freqs;
-	private HashMap<String,Warp_Point> points;
-	private HashMap<Integer,Long> recentContacts;
+	private HashMap<Integer,Holding_Freq> 		freqs;
+	private HashMap<String,Warp_Point> 			points;
+	private HashMap<Integer,Long> 				recentContacts;
 	
-	private Objset m_Objset;
-	private Hot_Spot spot;
-	private TimerTask checkSpot;
-	private TimerTask stimulant;
-	private Integer gdex;
+	private Objset								m_Objset;
+	private Hot_Spot 							spot;
+	private TimerTask 							checkSpot,
+												stimulant;
+	private GameTask							gameTimer;
+	private Integer 							gdex;
 	
-	private int explorer;
-	private boolean exploring,
-					spotsOnly,
-					lvzQuiet,
-					watching = false;
 	
-	private String claimedmsg = null;
-	private String contestedmsg = null;
+	private int 								explorer,
+												gameTime = -1;
+	private boolean 							exploring,
+												spotsOnly,
+												lvzQuiet,
+												watching = false;
+	
+	private String 								claimedmsg = null,
+												contestedmsg = null;
 
 
 	/**
@@ -519,7 +523,10 @@ public class utilflagconquest extends MultiUtil {
         			for (Hot_Spot hs : warppt.m_Spots)
         				spotList.addElement(hs);
         	
-        	if (!spotList.isEmpty())
+        	if (spotList.isEmpty())	{
+        		m_botAction.sendPrivateMessage(sender, "No hotspots to watch");
+        		return;
+        	}
         		
         	checkSpot = new TimerTask()	{
         		public void run()	{
@@ -531,8 +538,8 @@ public class utilflagconquest extends MultiUtil {
         	}; stimulant = new TimerTask()	{
         		public void run()	{
         			m_botAction.sendPrivateMessage(m_botAction.getBotName(), 
-        					"UpdatePosition");
-        		}
+        					"UpdatePosition");	//Keeps the bot from
+        		}							   //losing positon packets
         	};
         	
         	m_botAction.scheduleTaskAtFixedRate
@@ -581,6 +588,43 @@ public class utilflagconquest extends MultiUtil {
 	}
 	
 	/**
+	 * Toggles on/off a timed game for a specifed time
+	 * 
+	 * @param sender is the user of the bot.
+	 * @param argString is the time to be set.
+	 */
+	
+	public void doTimedGame(String sender, String argString)	{
+		if (gameTime != -1)	{
+			m_botAction.sendArenaMessage("Timed game stopped ", 2);
+			gameTime = -1;
+			gameTimer.cancel();
+			m_botAction.setTimer(0);
+			return;
+		} else if (argString == null)
+			return;
+		
+		try	{
+			int time = Integer.parseInt(argString);
+			if (time > 0 && !points.isEmpty())	{
+				gameTime = time;
+				m_botAction.sendArenaMessage("Timed game set for: " + time + " minutes", 1);
+				m_botAction.setTimer(time);
+				m_botAction.prizeAll(7);
+				doReleaseFlags(sender);
+				gameTimer = new GameTask(time);
+				m_botAction.scheduleTaskAtFixedRate(gameTimer, SWITCH_TIME, MINUTE);
+			} else
+				m_botAction.sendPrivateMessage(sender, "Time must be greater than " +
+						"zero and or there no points to capture");
+			
+		} catch (NumberFormatException nfe)	{
+			m_botAction.sendPrivateMessage(sender, "Invalid syntax");
+		}
+		
+	}
+	
+	/**
 	 * Helper method that adds a hotspot to a warppoint.
 	 * 
 	 * @param warppt is the warp point to add a hotspot to.
@@ -593,15 +637,21 @@ public class utilflagconquest extends MultiUtil {
 		StringTokenizer args = getArgTokens(argString,":");
 		int numArgs = args.countTokens();
 		
-		if (numArgs < 3 || numArgs > 3)
+		if (numArgs < 3 || numArgs > 6)
 			return false;
 		
 		int x,y,r;
 		x = Integer.parseInt(args.nextToken());
 		y = Integer.parseInt(args.nextToken());
 		r = Integer.parseInt(args.nextToken());
-		
-		warppt.addSpot(x, y, r);
+		if (args.hasMoreTokens())	{
+			int dx,dy,dr;
+			dx = Integer.parseInt(args.nextToken());
+			dy = Integer.parseInt(args.nextToken());
+			dr = Integer.parseInt(args.nextToken());
+			warppt.addSpot(x, y, r,dx,dy,dr);
+		} else
+			warppt.addSpot(x, y, r);
 			
 		return true;
 	}
@@ -637,6 +687,7 @@ public class utilflagconquest extends MultiUtil {
 			return;
 
 		while (freqList.hasNext())	{
+			boolean win = true;
 			Holding_Freq currentf = freqList.next();
 			if (currentf.m_Freq.intValue() == gainingfreq
 					&& !currentf.containsFlag(flag))	{
@@ -647,7 +698,11 @@ public class utilflagconquest extends MultiUtil {
 				while (warppts.hasNext())	{
 					Warp_Point currentwp = warppts.next();
 					checkWppt(currentwp,currentf);
+					if (gameTime != -1 && currentwp.m_Holder != currentf.m_Freq)
+						win = false;
 					}
+				if (gameTime != -1 && win)
+					declareWinner(currentf.m_Freq,false);
 			}
 			else if (currentf.containsFlag(flag)
 					&& currentf.m_Freq.intValue() != gainingfreq)	{
@@ -693,6 +748,7 @@ public class utilflagconquest extends MultiUtil {
 					m_Objset.showFreqObject(freq.m_Freq, wppt.m_ObjLost);
 					m_Objset.hideFreqObject(freq.m_Freq, wppt.m_ObjClaim);
 				} if ( wppt.m_Ids.size() > 1)	{
+						warpptMsg(freq.m_Freq,wppt.m_Name,contestedmsg);
 						m_botAction.showObject(wppt.m_ObjContest);
 				}
 				notifyFreq(freq.m_Freq, wppt.m_Name,false);
@@ -765,41 +821,54 @@ public class utilflagconquest extends MultiUtil {
 			}
 		}
 	}
+	
+	private void declareWinner(int freq, boolean rtime)	{
+		if (!rtime)	{
+			m_botAction.sendArenaMessage("Freq " + freq + 
+					" Has Captured all the flags and won this game!",5);
+			gameTimer.cancel();
+			m_botAction.setTimer(0);
+		} else
+			m_botAction.sendArenaMessage("Freq " + freq + 
+					" Has Captured the most flags!");
+		
+		m_botAction.sendArenaMessage("",101);	//Stops music if any
+		m_botAction.prizeAll(7);
+		gameTime = -1;
+		
+		try	{
+			Thread.sleep(500); 					//Wait for flag checking
+		} catch (InterruptedException ie)	{} //to complete
+		
+		doReleaseFlags("0");
+		
+		
+	}
 
 	/**
      * Warps a player within a radius of the warp point coord.
-     *
-     * @param playerName is the player to be warped.
-     * @param wppt is the warp point name.
-     * @author Cpt.Guano!
-     * @modifications Ayano
+     * 
+     * @param playerName is the name of the player.
+     * @param wppt is the name of the warp point.
      */
     private void warpPlayer(String playerName, String wppt) {
     	Warp_Point dest = points.get(wppt);
-        int radius = dest.m_DR;
-        int xWarp = -1;
-        int yWarp = -1;
 
-
-        double randRadians = Math.random() * 2 * Math.PI;
-        double randRadius = Math.random() * radius;
-        xWarp = calcXCoord(dest.m_DX, randRadians, randRadius);
-        yWarp = calcYCoord(dest.m_DY, randRadians, randRadius);
-
-        m_botAction.warpTo(playerName, xWarp, yWarp);
+        m_botAction.warpTo(playerName, dest.m_DX, dest.m_DY, dest.m_DR);
         m_botAction.sendPrivateMessage(playerName,"You have been sent to " + wppt);
     }
+    
+    /**
+     * Warps a player within a radius of the warp point coord.
+     * 
+     * @param playerName is the name of the player
+     * @param wppt is the
+     */
+    
+    private void warpPlayer(String playerName, Hot_Spot hs) {
 
-
-    private int calcXCoord(int xCoord, double randRadians, double randRadius)
-    {
-        return xCoord + (int) Math.round(randRadius * Math.sin(randRadians));
-    }
-
-
-    private int calcYCoord(int yCoord, double randRadians, double randRadius)
-    {
-        return yCoord + (int) Math.round(randRadius * Math.cos(randRadians));
+        m_botAction.warpTo(playerName, hs.m_DX, hs.m_DY, hs.m_DR);
+        m_botAction.sendPrivateMessage(playerName,"You have been sent to " + hs.m_Warppt);
     }
 
     /**
@@ -850,7 +919,7 @@ public class utilflagconquest extends MultiUtil {
     		recentContacts.put(playerID, System.currentTimeMillis());
     		if (freqs.containsKey(freq) 
     			&& freqs.get(freq).containsWrpp(spot.m_Warppt))
-    				warpPlayer(m_botAction.getPlayerName(playerID), spot.m_Warppt);
+    				warpPlayer(m_botAction.getPlayerName(playerID), spot);
     	}
     }
 
@@ -906,6 +975,10 @@ public class utilflagconquest extends MultiUtil {
         	doClearPoints(sender);
         else if( message.startsWith( "!watch" ))
         	doWatch(sender);
+        else if( message.equals( "!time"))			// Toggle
+        	doTimedGame(sender,null);
+        else if( message.startsWith( "!time "))		// Toggle
+        	doTimedGame(sender, message.substring(6));
         else if( message.startsWith( "!lvzonly" ))
         	doLvzOnly(sender);
         else if( message.startsWith( "!spotsonly" ))
@@ -921,27 +994,26 @@ public class utilflagconquest extends MultiUtil {
     /**
      * Handles player level commands.
      *
-     * @param sender
-     * @param message
+     * @param sender is the player's name
+     * @param message is the issued command.
      */
 
     public void handlePlayerCommand( String sender, String message )	{
     	if(spotsOnly)
     		return;
-		try 	{
-			Player player = m_botAction.getPlayer(sender);
-			if (player == null)
-				return;
-			if (message.startsWith("!warpto "));	{
-				Integer freq = new Integer (player.getFrequency());
-				if (freqs.containsKey(freq))	{
-					String arg = message.substring(8);
-					if (freqs.get(freq).containsWrpp(arg))	{
-						warpPlayer(sender, arg);
-					}
+    	Player player = m_botAction.getPlayer(sender);
+		if (player == null)
+			return;
+		
+		if (message.startsWith("!warpto "))	{
+			Integer freq = new Integer (player.getFrequency());
+			if (freqs.containsKey(freq))	{
+				String arg = message.substring(8);
+				if (freqs.get(freq).containsWrpp(arg))	{
+					warpPlayer(sender, arg);
 				}
 			}
-		}catch (Exception e) {}
+		}
     }
 
 	/**
@@ -961,11 +1033,13 @@ public class utilflagconquest extends MultiUtil {
 			"!ListGroups         - Lists all set group numbers and tied IDs, it's usless if you don't.",
 			"                      remember where the IDs were.",
 			"!ClearGroups        - Clears all saved groups.",
-			"!AddGroupPoint <group#>,<name>,<destx>:<desty>:<radius>",
-			"            OR <group#>,<name>,<destx>:<desty>:<radius>,<x>:<y>:<r>,<x..>:<y..>:<r..> [ect..]",
+			"!AddGroupPoint <group#>,<name>,<destX>:<destY>:<destR>",
+			" **OR <group#>,<name>,<destX>:<destY>:<destR>,<X>:<Y>:<R>,<X..>:<Y..>:<R..> [ect..]",
+			" **For variable hotspots ,<X>:<Y>:<R>:<dX>:<dY>:<dR>,<X..>:<Y..>:<R..>:<dX..>:<dY..>:<dR..> [ect..]",
 			"                    - For manual setting of flag groups-to-points; optional hotspots",
-			"!AddPoint <id1>:<id2>:<ect..>,<name>,<destx>:<desty>:<radius>",
-			"       OR <id1>:<id2>:<ect..>,<name>,<destx>:<desty>:<radius>,<x>:<y>:<r>,<x..>:<y..>:<r..> [ect..]",
+			"!AddPoint <id1>:<id2>:<ect..>,<name>,<destX>:<destY>:<destR>",
+			" **OR <id1>:<id2>:<ect..>,<name>,<destX>:<destY>:<destR>,<X>:<Y>:<R>,<X..>:<Y..>:<R..> [ect..]",
+			" **For variable hotspots ,<X>:<Y>:<R>:<dX>:<dY>:<dR>,<X..>:<Y..>:<R..>:<dX..>:<dY..>:<dR..> [ect..]",
 			"                    - For already known flagIDs; optional hotspots",
 			"!AddLvz <PointName>,<claimedLVZ>,<lostLVZ>,<ContestedLVZ>",
 			"                    - Adds lvz objects to claimed/lost/contested points.",
@@ -976,6 +1050,8 @@ public class utilflagconquest extends MultiUtil {
 			"!ContestedMsg <msg> - Adds an arena message for contested warp points. \"~*\" Erases message",
 			"!ListMsg            - Lists current claimed and contested messages if any.",
 			"!watch              - Activates/Deactivates watching if any hotspots were defined for a point.",
+			"!time <minutes>     - Starts a Timed game, declares winner at limit, or if a team holds all points.",
+			"                    - Sending nothing turns off the timer, if it's on.",
 			"!LvzOnly            - Toggles team message notification messages for claims/contests/losses.",
 			"!SpotsOnly          - Toggles manual !warpto on or off.",
 			"!Held               - Lists who's currently holding each point; -1 if no freq holds it.",
@@ -991,6 +1067,45 @@ public class utilflagconquest extends MultiUtil {
     		checkSpot.cancel();
     		stimulant.cancel();
     	}
+    	if (gameTime != -1)
+    		gameTimer.cancel();
+    }
+    
+    private class GameTask extends TimerTask	{
+    	public int m_Time;
+    	
+    	public GameTask(int time)	{
+    		m_Time = time;
+    	}
+    	
+    	public void run()	{
+    		if (m_Time > 3)
+    			m_Time--;
+    		else if (m_Time == 3)	{
+    			m_botAction.sendArenaMessage("3 minutes Remaining!!",100);
+    			m_Time--;
+    		} else if (m_Time < 3)	{
+    			m_botAction.sendArenaMessage("",100);
+    			m_Time--;
+    		} else	{
+    			declareWinner(getWinner(),true);
+    			this.cancel();
+    		}
+    	}
+    	
+    	public int getWinner()	{
+    		int freq = -1,
+    			numPoints=0;
+    		
+    		for (Holding_Freq cfreq : freqs.values())	{
+    			if (cfreq.m_Wrpp.size() > numPoints)	{
+    				numPoints = cfreq.m_Wrpp.size();
+    				freq = cfreq.m_Freq;
+    			}
+    		}
+    		return freq;
+    	}
+    	
     }
     
 
@@ -1063,6 +1178,12 @@ public class utilflagconquest extends MultiUtil {
 			m_Spots.add(new Hot_Spot(xcoord,ycoord,radius,m_DX,m_DY,m_DR,m_Name));
 		}
 		
+		public void addSpot(int xcoord, int ycoord, int radius, 
+				int destx, int desty, int destr)	{
+			hasSpot = true;
+			m_Spots.add(new Hot_Spot(xcoord,ycoord,radius,destx,desty,destr,m_Name));
+		}
+		
 		public void addObj(int claim, int lost, int contest)	{
 			hasLvz = true;
 			m_ObjClaim = claim;
@@ -1088,12 +1209,16 @@ public class utilflagconquest extends MultiUtil {
 		}
 		
 		public String toString ()	{
-			String msg = m_Name + " Flags: " + m_Ids.toString()
-					+ " DX:" + m_DX + " DY:" + m_DY + " DR:" + m_DR;
+			String msg = m_Name + " Flags: " + m_Ids.toString() + 
+			" DX:" + m_DX + " DY:" + m_DY + " DR:" + m_DR;
 			if (hasSpot)
-				for (int i = 0 ; i < m_Spots.size() ; i++)
-					msg +=  " <Hotspot X:" + m_Spots.get(i).m_X 
-					+ " Y:" + m_Spots.get(i).m_Y + " R:" + m_Spots.get(i).m_R + ">";
+				for (int i = 0 ; i < m_Spots.size() ; i++)	{
+					Hot_Spot curr = m_Spots.get(i);
+					msg +=  " <Hotspot X:" + curr.m_X + " Y:" + curr.m_Y + " R:" + 
+					curr.m_R + (curr.m_DR != m_DR ? " DX:" + curr.m_DX + " DY:" + 
+								curr.m_DY + " DR:" + curr.m_DR : "") + ">";	
+				} 
+			
 			if (hasLvz)
 				msg += " Claim:" + m_ObjClaim + " Lost:" + m_ObjLost + 
 				" Contest:" + m_ObjContest;
