@@ -822,6 +822,14 @@ public class utilflagconquest extends MultiUtil {
 		}
 	}
 	
+	/**
+	 * Declares a winner
+	 * **NOTE: There is an issue with draws / tied games.
+	 * 
+	 * @param freq is the victorious freq.
+	 * @param rtime is a wither or not there is remaining time.
+	 */
+	
 	private void declareWinner(int freq, boolean rtime)	{
 		if (!rtime)	{
 			m_botAction.sendArenaMessage("Freq " + freq + 
@@ -897,6 +905,10 @@ public class utilflagconquest extends MultiUtil {
 			checkFlag(flagID,rawFreq.intValue());
 		}
     }
+    
+    /**
+     * Handles position events.
+     */
     
     public void handleEvent ( PlayerPosition event )	{
     	if (points.isEmpty())
@@ -1061,6 +1073,10 @@ public class utilflagconquest extends MultiUtil {
 		return help;
 	}
     
+    /**
+     * Cancels timer tasks
+     */
+    
     public void cancel()	{
     	m_Objset = new Objset();
     	if (watching)	{
@@ -1070,6 +1086,13 @@ public class utilflagconquest extends MultiUtil {
     	if (gameTime != -1)
     		gameTimer.cancel();
     }
+    
+    /**
+     * Game timer task used for timed games.
+     * 
+     * @author Ayano
+     *
+     */
     
     private class GameTask extends TimerTask	{
     	public int m_Time;
@@ -1084,7 +1107,7 @@ public class utilflagconquest extends MultiUtil {
     		else if (m_Time == 3)	{
     			m_botAction.sendArenaMessage("3 minutes Remaining!!",100);
     			m_Time--;
-    		} else if (m_Time < 3)	{
+    		} else if (m_Time > 0)	{
     			m_botAction.sendArenaMessage("",100);
     			m_Time--;
     		} else	{
@@ -1093,8 +1116,8 @@ public class utilflagconquest extends MultiUtil {
     		}
     	}
     	
-    	public int getWinner()	{
-    		int freq = -1,
+    	public int getWinner()	{		//FIXME: Adjust this with related methods to
+    		int freq = -1,			   // handle tied games.
     			numPoints=0;
     		
     		for (Holding_Freq cfreq : freqs.values())	{
@@ -1111,6 +1134,7 @@ public class utilflagconquest extends MultiUtil {
 
     /**
      * Holds freq specific data.
+     * 
      * @author Ayano
      */
 
