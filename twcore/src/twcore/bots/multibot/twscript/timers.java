@@ -397,5 +397,10 @@ private class CustomTimer{
 	}
 }
 	public void requestEvents(ModuleEventRequester req){}
-	public void cancel(){}
+	public void cancel(){
+	    for(CustomTimer timer:timers.values()) {
+	        timer.cancelTask();
+	    }
+	    timers.clear();
+	}
 }
