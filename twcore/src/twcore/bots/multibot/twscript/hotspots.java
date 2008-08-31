@@ -21,6 +21,8 @@ import twcore.core.util.Tools;
  */
 public class hotspots extends MultiUtil {
     
+	private static final int STIMULATION_TIME = 30000;
+	
     public OperatorList opList;
     public TWScript m_twscript;
     
@@ -28,6 +30,7 @@ public class hotspots extends MultiUtil {
     public HotSpot watch;
     public boolean watching;
     public TimerTask changeTask;
+    public TimerTask stimulant;
     public HashMap<String, Long> recentContacts;
     
     public String database = "website";
@@ -186,7 +189,14 @@ public class hotspots extends MultiUtil {
                 }
                 m_botAction.moveToTile(watch.getX(), watch.getY());
             }
-        };
+        }; stimulant = new TimerTask()	{
+    		public void run()	{	//Notifies the server that the bot is not idle and to
+    			m_botAction.getShip().sendPositionPacket(); //continue sending position
+    		}						//packets to this client.
+    	};
+    	
+    	m_botAction.scheduleTaskAtFixedRate
+    	(stimulant, STIMULATION_TIME, STIMULATION_TIME);
         m_botAction.scheduleTaskAtFixedRate(changeTask, 2000, switchTime);
         watching = true;
     }
@@ -201,6 +211,7 @@ public class hotspots extends MultiUtil {
         }
         m_botAction.sendSmartPrivateMessage(name, "HotSpots are no longer active.");
         changeTask.cancel();
+        stimulant.cancel();
         watching = false;
     }
     
@@ -238,6 +249,7 @@ public class hotspots extends MultiUtil {
             m_botAction.sendSmartPrivateMessage(sender, "The spot at index '" + spot + "' has been removed.");
             if (hotSpots.size() == 0 && watching) {
                 changeTask.cancel();
+                stimulant.cancel();
                 m_botAction.sendSmartPrivateMessage(sender, "There are no more hotspots to watch. I'm taking a much deserved break.");
             }
         } catch (NumberFormatException e) {
@@ -418,6 +430,7 @@ public class hotspots extends MultiUtil {
         hotSpots.clear();
         if (watching) {
             changeTask.cancel();
+            stimulant.cancel();
             watching = false;
         }
         watch = null;
@@ -449,6 +462,7 @@ public class hotspots extends MultiUtil {
         if (watching) {
             watching = false;
             changeTask.cancel();
+            stimulant.cancel();
             do_watch(sender);
         }
         m_botAction.sendPrivateMessage(sender, "Switch time set to " + time);

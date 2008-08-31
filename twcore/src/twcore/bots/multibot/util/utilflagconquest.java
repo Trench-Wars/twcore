@@ -31,7 +31,7 @@ public class utilflagconquest extends MultiUtil {
 	private static final int 					SWITCH_TIME = 200;
 	private static final int 					REPEAT_TIME = SWITCH_TIME*5;
 	private static final int					MINUTE = 60000;
-	private static final int 					STIMULATION_TIME = MINUTE*2;
+	private static final int 					STIMULATION_TIME = MINUTE/2;
 	
 	private ArrayList<Integer> 					harvested;
 	private Vector<Hot_Spot> 					spotList;
@@ -537,9 +537,8 @@ public class utilflagconquest extends MultiUtil {
         		}
         	}; stimulant = new TimerTask()	{
         		public void run()	{
-        			m_botAction.sendPrivateMessage(m_botAction.getBotName(), 
-        					"UpdatePosition");	//Keeps the bot from
-        		}							   //losing positon packets
+        			m_botAction.getShip().sendPositionPacket();
+        		}
         	};
         	
         	m_botAction.scheduleTaskAtFixedRate
