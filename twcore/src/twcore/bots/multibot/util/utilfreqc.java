@@ -154,20 +154,35 @@ public class utilfreqc extends MultiUtil {
 	 * @param sender is the user of the bot.
 	 */
 	
-	public void doStart(String sender)	{
+	public void doStart(final String sender)	{
 		if (!active)	{
-			Iterator<Player> iter = m_botAction.getPlayerIterator();
-            if( iter == null ) return;
             m_botAction.toggleLocked();
             m_botAction.createNumberOfTeams(numfreqs);
-            while (iter.hasNext())	{
-            	Player player = iter.next();
-            	putPlayer(player);
-            } m_botAction.toggleLocked();
-            m_botAction.sendPrivateMessage(sender, "Settings activated.");
-            m_botAction.sendArenaMessage("Arena Locked, " +
-            		"those playing can freely switch ships.   - " + sender,1);
-            active = true;
+            TimerTask freqSetter = new TimerTask()	{
+            	public void run()	{
+            		Iterator<Player> iter = m_botAction.getPlayerIterator();
+                    if( iter == null ) return;
+                    while (iter.hasNext())	{
+                    	Player player = iter.next();
+                    	putPlayer(player);
+                    } m_botAction.toggleLocked();
+                    m_botAction.sendArenaMessage("Arena Locked, " +
+                    		"those playing can freely switch ships.   - " + sender,1);
+                    active = true;
+            	}
+            	private void putPlayer(Player player)	{
+            		String name = player.getPlayerName();
+                    if (player.isPlaying())	{
+                    	playerMap.put( name, new PlayerProfile
+                    			(name, 1 , player.getFrequency()) );
+                    	m_botAction.setShip(name, 1);
+                    }
+                    else
+                    	specSet.add( new Integer(player.getPlayerID()) );
+            	}
+            };
+            m_botAction.sendPrivateMessage(sender, "Settings activating in 3 seconds.");
+            m_botAction.scheduleTask(freqSetter, 3000);
 		} else
 			m_botAction.sendPrivateMessage(sender, "Settings already active.");
 		
@@ -233,23 +248,6 @@ public class utilfreqc extends MultiUtil {
 	private void addSpec(Integer playerID)	{
 		specSet.add(playerID);
 		m_botAction.specWithoutLock(playerID);
-	}
-	
-	/**
-	 * Helper method, places 'playing' players in the game and
-	 * keeps spectators out as if the arena were *locked.
-	 * @param player is a PlayerProfile object.
-	 */
-	
-	private void putPlayer(Player player)	{
-		String name = player.getPlayerName();
-        if (player.isPlaying())	{
-        	playerMap.put( name, new PlayerProfile
-        			(name, 1 , player.getFrequency()) );
-        	m_botAction.setShip(name, 1);
-        }
-        else
-        	specSet.add( new Integer(player.getPlayerID()) );
 	}
 	
 	/**

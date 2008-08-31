@@ -31,7 +31,7 @@ public class utilflagconquest extends MultiUtil {
 	private static final int 					SWITCH_TIME = 200;
 	private static final int 					REPEAT_TIME = SWITCH_TIME*5;
 	private static final int					MINUTE = 60000;
-	private static final int 					STIMULATION_TIME = MINUTE/2;
+	private static final int 					STIMULATION_TIME = MINUTE*2;
 	
 	private ArrayList<Integer> 					harvested;
 	private Vector<Hot_Spot> 					spotList;
@@ -537,7 +537,15 @@ public class utilflagconquest extends MultiUtil {
         		}
         	}; stimulant = new TimerTask()	{
         		public void run()	{
-        			m_botAction.getShip().sendPositionPacket();
+        			stimPack();
+        		}
+        		public void stimPack()	{
+        			m_botAction.getShip().setShip(1);
+        			TimerTask returnTask = new TimerTask()	{
+        				public void run()	{
+        					m_botAction.getShip().setShip(8);
+        				}
+        			};m_botAction.scheduleTask(returnTask, 1000);
         		}
         	};
         	
@@ -599,6 +607,7 @@ public class utilflagconquest extends MultiUtil {
 			gameTime = -1;
 			gameTimer.cancel();
 			m_botAction.setTimer(0);
+			m_botAction.sendArenaMessage("",101);	//Stops music if any
 			return;
 		} else if (argString == null)
 			return;
@@ -837,7 +846,7 @@ public class utilflagconquest extends MultiUtil {
 			m_botAction.setTimer(0);
 		} else
 			m_botAction.sendArenaMessage("Freq " + freq + 
-					" Has Captured the most flags!");
+					" Has Captured the most flags and won this game!!");
 		
 		m_botAction.sendArenaMessage("",101);	//Stops music if any
 		m_botAction.prizeAll(7);
