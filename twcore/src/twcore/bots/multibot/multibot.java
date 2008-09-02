@@ -295,7 +295,7 @@ public class multibot extends SubspaceBot {
         String currentArena = m_botAction.getArenaName();
         if (currentArena.equalsIgnoreCase(argString))
             throw new IllegalArgumentException("Bot is already in that arena.");
-        if (isPublicArena(argString) && !m_opList.isSmod(sender))
+        if (isPublicArena(argString) && !m_sysopLocked)
             throw new IllegalArgumentException("Bot can not go into public arenas.");
        	m_botAction.changeArena(argString);
         m_botAction.sendSmartPrivateMessage(sender, "Going to " + argString + ".");
