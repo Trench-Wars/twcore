@@ -78,6 +78,8 @@ public class polls extends MultiUtil {
 	public void handlePubCommands(String name, String cmd){
 		if(cmd.equalsIgnoreCase("!help"))
 			do_help(name);
+		else if(Tools.isAllDigits(cmd) && polls.size() == 1)
+			do_vote(name, polls.firstKey() + ":" + cmd);
 		else if(cmd.startsWith("!vote "))
 			do_vote(name, cmd.substring(6));
 		else if(cmd.startsWith("!results "))
@@ -206,14 +208,12 @@ public class polls extends MultiUtil {
         	m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. Example: !poll favcolor 0:0:2:0");
         	return;
         }
-        if(time.length == 4){
+        if(time.length == 4)
         	polls.get(poll).schedule(getTimeInMillis(time));
-        	m_botAction.sendSmartPrivateMessage( name, "Poll '" + poll + "' " + polls.get(poll).getScheduleString());
-        }else if(time.length == 6){
+        else if(time.length == 6){
         	GregorianCalendar cal = new GregorianCalendar();
             cal.set( time[2], time[0]-1, time[1], time[3], time[4], time[5]);
             polls.get(poll).schedule(cal);
-        	m_botAction.sendSmartPrivateMessage( name, "Poll '" + poll + "' " + polls.get(poll).getScheduleString());
         }else
         	m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. Example: !poll favcolor 0:0:2:0");	
 	}
