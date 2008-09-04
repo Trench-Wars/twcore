@@ -399,6 +399,7 @@ private class CustomPoll {
 		results.clear();
 		m_botAction.scheduleTask(task, startTime);
 		setScheduleString(startTime, (new Date()).getTime());
+		m_botAction.arenaMessageSpam(this.toStringArray());
 	}
 	
 	public void setScheduleString(long start, long millis){
@@ -418,6 +419,7 @@ private class CustomPoll {
 		};
 		results.clear();
 		m_botAction.scheduleTask(task, cal.getTimeInMillis() - System.currentTimeMillis());
+		m_botAction.arenaMessageSpam(this.toStringArray());
 		this.cal = cal;
 
 	}
