@@ -14,6 +14,7 @@ import javax.swing.text.NumberFormatter;
 import twcore.bots.TWScript;
 import twcore.core.BotAction;
 import twcore.core.game.Player;
+import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
 /**
@@ -27,7 +28,7 @@ public final class CodeCompiler {
 	public static DecimalFormat decForm = new DecimalFormat("0.####");
 	public static NumberFormatter format = new NumberFormatter(decForm);
 	
-    public static String handleTWScript(BotAction bot, String message, Player p, TreeMap<String, String> variables, int accessLevel){
+    public static void handleTWScript(BotAction bot, String message, Player p, TreeMap<String, String> variables, int accessLevel){
     	try{
     		message = replaceKeys(bot, p, variables, message);
     		if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message, accessLevel))
@@ -39,14 +40,12 @@ public final class CodeCompiler {
     			message = message.substring(0, message.indexOf('%'));
     			bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message, sound);
     		}
-    		return message;
     	}catch(Exception e){
     		Tools.printStackTrace(e);
-    		return null;
     	}
     }
     
-    public static String handleTWScript(BotAction bot, String message, TreeMap<String, String> variables, int accessLevel){
+    public static void handleTWScript(BotAction bot, String message, TreeMap<String, String> variables, int accessLevel){
     	try{
         	message = replaceKeys(bot, null, variables, message);
         	if(message != null && !isAllowedPublicCommand(message, accessLevel))
@@ -58,10 +57,8 @@ public final class CodeCompiler {
             	message = message.substring(0, message.indexOf('%'));
             	sendMessage(bot,message, sound);
         	}
-			return message;
 		}catch(Exception e){
 			Tools.printStackTrace(e);
-			return null;
 		}
     }
     
@@ -107,15 +104,11 @@ public final class CodeCompiler {
         	if(message.contains("@name"))
             	message = message.replace("@name", p.getPlayerName());
         	if(message.contains("@frequency"))
-            	message = message.replace("@frequency", Integer.toString(p.getFrequency()));
-        	while(message.contains("@randomfreq"))
-            	message = message.replaceFirst("@randomfreq", Integer.toString(rand.nextInt( 9998 )));
+            	message = message.replace("@frequency", Integer.toString(p.getFrequency()));     	
         	if(message.contains("@shipname"))
             	message = message.replace("@shipname", Tools.shipName(p.getShipType()));
         	if(message.contains("@shipnum"))
-            	message = message.replace("@shipnum", Integer.toString(p.getShipType()));
-        	while(message.contains("@randomship"))
-            	message = message.replaceFirst("@randomship", Integer.toString((rand.nextInt( 7 )) + 1));       
+            	message = message.replace("@shipnum", Integer.toString(p.getShipType()));       	       
         	if(message.contains("@shipslang"))
             	message = message.replace("@shipslang", Tools.shipNameSlang(p.getShipType()));        
         	if(message.contains("@wins"))
@@ -129,9 +122,7 @@ public final class CodeCompiler {
         	if(message.contains("@fpoints"))
         		message = message.replace("@fpoints", Integer.toString(p.getFlagPoints()));
         	if(message.contains("@points"))
-        		message = message.replace("@points", Integer.toString(p.getFlagPoints() + p.getKillPoints()));
-        	while(message.contains("@randomsound"))
-            	message = message.replaceFirst("@randomsound", Integer.toString(Tools.Sound.allowedSounds[rand.nextInt(Tools.Sound.allowedSounds.length)]));
+        		message = message.replace("@points", Integer.toString(p.getFlagPoints() + p.getKillPoints()));        	
         	if(message.contains("@id"))
             	message = message.replace("@id", Integer.toString(p.getPlayerID()));
         	if(message.contains("@ping"))
@@ -156,6 +147,24 @@ public final class CodeCompiler {
             	message = message.replace("@y", Integer.toString(p.getYTileLocation()));
             	bot.stopSpectatingPlayer();
         	}
+        }
+        while(message.contains("@randomship"))
+        	message = message.replaceFirst("@randomship", Integer.toString((rand.nextInt( 7 )) + 1));
+        while(message.contains("@randomfreq"))
+        	message = message.replaceFirst("@randomfreq", Integer.toString(rand.nextInt( 9998 )));
+        while(message.contains("@randomsound"))
+        	message = message.replaceFirst("@randomsound", Integer.toString(Tools.Sound.allowedSounds[rand.nextInt(Tools.Sound.allowedSounds.length)]));
+        while(message.contains("@randomplayer")){
+        	String ranPlayer;
+        	StringBag randomPlayerBag = new StringBag();
+        	Iterator<Player> i = bot.getPlayerIterator();
+            while (i != null && i.hasNext()) {
+                p = (Player) i.next();
+                ranPlayer = p.getPlayerName();
+                randomPlayerBag.add(ranPlayer);
+            }
+            ranPlayer = randomPlayerBag.grabAndRemove();
+        	message = message.replaceFirst("@randomplayer", ranPlayer);
         }
         if(message.contains("@date"))
             message = message.replace("@date", SimpleDateFormat.getDateInstance( SimpleDateFormat.SHORT ).format(today));
