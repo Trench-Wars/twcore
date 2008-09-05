@@ -289,7 +289,6 @@ public class enigma extends MultiModule {
     		"|  !stop <name>    - Stops a game of enigma w/<name> as winner. |",
     		"|  !cancel         - Cancels a game of enigma.                  |",
     		"|  !reset          - Resets the arena in case of bot lagout/etc.|",
-    		"|  !come           - Moves the bot in case you'd need this ???  |",
     		"|  !whatis         - Answers: what is Enigma?                   |",
     		"|  !lagout         - Want in? Type this to me to play!!!        |",
     		"|  !lagouton       - Toggles the !lagout feature ON             |",
