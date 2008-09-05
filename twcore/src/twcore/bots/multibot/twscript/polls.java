@@ -18,9 +18,13 @@ import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.util.Tools;
 
+/**
+ * @author milosh
+ */
 public class polls extends MultiUtil {
-	public TWScript m_twscript;
+	
 	public OperatorList opList;
+	public TWScript m_twscript;
 	
 	public TreeMap<String, CustomPoll> polls;
 	
@@ -39,11 +43,13 @@ public class polls extends MultiUtil {
 				"| !addpoll <poll>:<ques>        - Adds a poll named <name> with question <ques>.      |",
 				"| !addoption <poll>:<opt>:<msg> - Adds an option to <poll> with answer <opt> and a    |",
 				"|                               - TWScript <msg> that's sent to the bot if it wins.   |",
-				"| !poll <poll> d:h:m:s          - Starts poll <name> which will end in d:h:m:s        |",
-				"| !poll <poll> MM:DD:YYYY:h:m:s - Starts poll <poll> which will end at a specific date|",
-				"| !cancelpoll <poll>            - Cancels the timer and removes votes for <poll>      |",
 				"| !removepoll <poll>            - Removes <poll> and all of its options.              |",
 				"| !removepoll <poll>:<index>    - Removes option at index <index> on poll <poll>      |",
+				"| !poll <poll> d:h:m:s          - Starts poll <poll> which will end in d:h:m:s        |",
+				"| !poll <poll> MM:DD:YYYY:h:m:s - Starts poll <poll> which will end at a specific date|",
+				"| !cancelpoll <poll>            - Cancels the timer and removes votes for <poll>      |",
+				"| !vote <poll>:<#>              - Votes for option <#> on poll <poll>.                |",
+				"| !results <poll>               - Displays the results of an ended poll.              |",
 				"| !listpolls                    - Displays a list of polls and their options          |",
 				"+-------------------------------------------------------------------------------------+"
 		};
@@ -67,12 +73,12 @@ public class polls extends MultiUtil {
 			do_addPoll(name, cmd.substring(9));
 		else if(cmd.startsWith("!addoption "))
 			do_addOption(name, cmd.substring(11));
+		else if(cmd.startsWith("!removepoll "))
+			do_removePoll(name, cmd.substring(12));
 		else if(cmd.startsWith("!poll "))
 			do_poll(name, cmd.substring(6));
 		else if(cmd.startsWith("!cancelpoll "))
 			do_cancelPoll(name, cmd.substring(12));
-		else if(cmd.startsWith("!removepoll "))
-			do_removePoll(name, cmd.substring(12));
 	}
 	
 	public void handlePubCommands(String name, String cmd){
@@ -184,6 +190,40 @@ public class polls extends MultiUtil {
 		m_botAction.sendSmartPrivateMessage( name, "Option '" + option + "' added to poll '" + pollName + "'.");
 	}
 
+	public void do_removePoll(String name, String message){
+		int index = message.indexOf(":");
+        if (index == -1) {
+        	if (polls.containsKey(message)) {
+        		if(polls.get(message).isScheduled)
+        			polls.get(message).cancelTask();
+                polls.remove(message);
+                m_botAction.sendSmartPrivateMessage(name, "Poll '" + message + "' removed.");
+            } else
+                m_botAction.sendSmartPrivateMessage(name, "Specified poll not found. Use !listpolls to see a list of registered polls.");
+        	return;
+        }
+        String pollString = message.substring(0, index);
+        CustomPoll poll;
+        int actionIndex;
+        try {
+            actionIndex = Integer.parseInt(message.substring(index + 1));
+        } catch (NumberFormatException e) {
+            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !removepoll <Poll>:<Index of Message>");
+            return;
+        }
+        if (!polls.containsKey(pollString)) {
+            m_botAction.sendSmartPrivateMessage(name, "Poll '" + pollString + "' not found.");
+            return;
+        }
+        poll = polls.get(pollString);
+        if (poll.options.indexOf(actionIndex) != -1 && poll.messages.indexOf(actionIndex) != -1) {
+            poll.removeOption(actionIndex);
+            m_botAction.sendSmartPrivateMessage(name, "Option of '" + pollString + "' at index " + actionIndex + " removed.");
+        } else {
+            m_botAction.sendSmartPrivateMessage(name, "Option of '" + pollString + "' at index " + actionIndex + " not found.");
+        }
+	}
+	
 	public void do_poll(String name, String message){
 		int index = message.indexOf(" ");
         if (index == -1) {
@@ -230,40 +270,6 @@ public class polls extends MultiUtil {
         polls.get(message).cancelTask();
         m_botAction.sendSmartPrivateMessage( name, "Poll '" + message + "' has been cancelled.");
 	}
-
-	public void do_removePoll(String name, String message){
-		int index = message.indexOf(":");
-        if (index == -1) {
-        	if (polls.containsKey(message)) {
-        		if(polls.get(message).isScheduled)
-        			polls.get(message).cancelTask();
-                polls.remove(message);
-                m_botAction.sendSmartPrivateMessage(name, "Poll '" + message + "' removed.");
-            } else
-                m_botAction.sendSmartPrivateMessage(name, "Specified poll not found. Use !listpolls to see a list of registered polls.");
-        	return;
-        }
-        String pollString = message.substring(0, index);
-        CustomPoll poll;
-        int actionIndex;
-        try {
-            actionIndex = Integer.parseInt(message.substring(index + 1));
-        } catch (NumberFormatException e) {
-            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !removepoll <Poll>:<Index of Message>");
-            return;
-        }
-        if (!polls.containsKey(pollString)) {
-            m_botAction.sendSmartPrivateMessage(name, "Poll '" + pollString + "' not found.");
-            return;
-        }
-        poll = polls.get(pollString);
-        if (poll.options.indexOf(actionIndex) != -1 && poll.messages.indexOf(actionIndex) != -1) {
-            poll.removeOption(actionIndex);
-            m_botAction.sendSmartPrivateMessage(name, "Option of '" + pollString + "' at index " + actionIndex + " removed.");
-        } else {
-            m_botAction.sendSmartPrivateMessage(name, "Option of '" + pollString + "' at index " + actionIndex + " not found.");
-        }
-	}
 	
 	public void do_listPolls(String name){
 		if (polls.size() == 0) {
@@ -293,6 +299,22 @@ public class polls extends MultiUtil {
             }
         }
         m_botAction.sendSmartPrivateMessage(name, "==================================");
+	}
+	
+	public void requestEvents(ModuleEventRequester req){
+		req.request(this, EventRequester.PLAYER_ENTERED);
+	}
+	
+	public void handleEvent(PlayerEntered event){
+		String name = m_botAction.getPlayerName(event.getPlayerID());
+		if(name == null)return;
+        Iterator<CustomPoll> it = polls.values().iterator();
+		while( it.hasNext() ){
+			CustomPoll poll = it.next();
+			if(poll.isScheduled || poll.getResults() != null)
+				m_botAction.smartPrivateMessageSpam(name, poll.toStringArray());
+		}
+		return;
 	}
 	
 private class CustomPoll {
@@ -452,21 +474,6 @@ private class CustomPoll {
 	}
 	
 }
-	public void requestEvents(ModuleEventRequester req){
-		req.request(this, EventRequester.PLAYER_ENTERED);
-	}
-	
-	public void handleEvent(PlayerEntered event){
-		String name = m_botAction.getPlayerName(event.getPlayerID());
-		if(name == null)return;
-        Iterator<CustomPoll> it = polls.values().iterator();
-		while( it.hasNext() ){
-			CustomPoll poll = it.next();
-			if(poll.isScheduled || poll.getResults() != null)
-				m_botAction.smartPrivateMessageSpam(name, poll.toStringArray());
-		}
-		return;
-	}
 	
 	public long[] getTimeInFormat(long millis, boolean includeMilli){
 		long[] format = new long[5];

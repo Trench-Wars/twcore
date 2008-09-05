@@ -23,9 +23,9 @@ import twcore.core.util.Tools;
 public class timers extends MultiUtil {
 	
 	public OperatorList opList;
-	private TreeMap<String, CustomTimer> timers;
-	
 	public TWScript m_twscript;
+	
+	private TreeMap<String, CustomTimer> timers;
 	
 	public void init(){
 		opList = m_botAction.getOperatorList();
@@ -37,24 +37,24 @@ public class timers extends MultiUtil {
 	}
 	
 	public String[] getHelpMessages(){
-		String[] help = {
-		"+------------------------------------- Timers -------------------------------------+",
-		"| !addtimer <timer> <message>     - Adds a TWScript <message> to a timer, <name>.  |",
-		"|                                 - If the timer does not exist it is created.     |",
-		"| !removetimer <timer>            - Removes the timer, <name>.                     |",
-		"| !removetimer <timer> <index>    - Removes message at <index> from <timer>        |",
-		"| !sched <timer> d:h:m:s          - Schedules the specified timer to run one time  |",
-		"|                                 - at days:hours:minutes:seconds from now.        |",
-		"| !sched <timer> d:h:m:s d:h:m:s  - Schedules the specified timer to start running |",
-		"|                                 - to start at dhms and repeate every dhms.       |",
-		"| !calendar <t> MM:DD:YYYY:h:m:s  - Schedules timer <t> to occur on a specific date|",
-		"|                                 - and time. For example, 04:28:2009:10:1:0 would |",
-		"|                                 - occur on April 28, 2009 at 10:01AM EST         |",
-		"| !canceltimer <timer>            - Cancels <timer> if scheduled.                  |",
-		"| !listtimers                     - Displays a list of timers and their messages.  |",
-		"+----------------------------------------------------------------------------------+"
+		String[] message = {
+				"+--------------------------------------- Timers --------------------------------------+",
+				"| !addtimer <timer> <message>     - Adds a TWScript <message> to a timer, <name>.     |",
+				"|                                 - If the timer does not exist it is created.        |",
+				"| !removetimer <timer>            - Removes the timer, <name>.                        |",
+				"| !removetimer <timer> <index>    - Removes message at <index> from <timer>           |",
+				"| !sched <timer> d:h:m:s          - Schedules the specified timer to run one time     |",
+				"|                                 - at days:hours:minutes:seconds from now.           |",
+				"| !sched <timer> d:h:m:s d:h:m:s  - Schedules the specified timer to start running    |",
+				"|                                 - to start at dhms and repeate every dhms.          |",
+				"| !calendar <t> MM:DD:YYYY:h:m:s  - Schedules timer <t> to occur on a specific date   |",
+				"|                                 - and time. For example, 04:28:2009:10:1:0 would    |",
+				"|                                 - occur on April 28, 2009 at 10:01AM EST            |",
+				"| !canceltimer <timer>            - Cancels <timer> if scheduled.                     |",
+				"| !listtimers                     - Displays a list of timers and their messages.     |",
+				"+-------------------------------------------------------------------------------------+"
 		};
-		return help;
+		return message;
 	}
 	
 	public void handleEvent(Message event){
@@ -72,14 +72,14 @@ public class timers extends MultiUtil {
             do_addTimer(name, cmd.substring(10));
         if (cmd.startsWith("!removetimer "))
             do_removeTimer(name, cmd.substring(13));
-        if (cmd.equalsIgnoreCase("!listtimers"))
-            do_listTimers(name);
         if (cmd.startsWith("!sched "))
         	do_sched(name, cmd.substring(7));
         if (cmd.startsWith("!calendar "))
         	do_calendar(name, cmd.substring(10));
         if (cmd.startsWith("!canceltimer "))
         	do_cancelTimer(name, cmd.substring(13));
+        if (cmd.equalsIgnoreCase("!listtimers"))
+            do_listTimers(name);
 	}
 	
 	public void do_addTimer(String name, String message){
@@ -126,26 +126,6 @@ public class timers extends MultiUtil {
         } else {
             m_botAction.sendSmartPrivateMessage(name, "Message of " + timer + " at index " + actionIndex + " not found.");
         }
-	}
-	
-	public void do_listTimers(String name){
-		if (timers.size() == 0) {
-            m_botAction.sendSmartPrivateMessage(name, "There are no timers to list.");
-            return;
-        }
-        Iterator<CustomTimer> it = timers.values().iterator();
-        m_botAction.sendSmartPrivateMessage(name, "========== Custom Timers ==========");
-        while (it.hasNext()) {
-            CustomTimer t = it.next();
-            m_botAction.sendSmartPrivateMessage(name, "| Timer: " + t.name);
-            m_botAction.sendSmartPrivateMessage(name, "| - " + t.getScheduleString());
-            Iterator<String> i = t.getMessages().iterator();
-            while (i.hasNext()) {
-                String msg = i.next();
-                m_botAction.sendSmartPrivateMessage(name, "|  " + t.getMessages().indexOf(msg) + ") " + msg);
-            }
-        }
-        m_botAction.sendSmartPrivateMessage(name, "===================================");
 	}
 	
 	public void do_sched(String name, String message){
@@ -241,52 +221,24 @@ public class timers extends MultiUtil {
         m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' has been cancelled.");
 	}
 	
-	public long getTimeInMillis(long[] time){
-		long sum = 0;
-		for(int i=0;i<time.length;i++){
-			switch(i){
-			case 0:sum += time[i] * Tools.TimeInMillis.DAY;break;
-			case 1:sum += time[i] * Tools.TimeInMillis.HOUR;break;
-			case 2:sum += time[i] * Tools.TimeInMillis.MINUTE;break;
-			case 3:sum += time[i] * Tools.TimeInMillis.SECOND;break;
-			}
-		}
-		return sum;
-	}
-	public long[] getTimeInFormat(long millis, boolean includeMilli){
-		long[] format = new long[5];
-		while(millis > Tools.TimeInMillis.DAY){
-			millis -= Tools.TimeInMillis.DAY;
-			format[0]++;
-		}
-		while(millis > Tools.TimeInMillis.HOUR){
-			millis -= Tools.TimeInMillis.HOUR;
-			format[1]++;
-		}
-		while(millis > Tools.TimeInMillis.MINUTE){
-			millis -= Tools.TimeInMillis.MINUTE;
-			format[2]++;
-		}
-		while(millis > Tools.TimeInMillis.SECOND){
-			millis -= Tools.TimeInMillis.SECOND;
-			format[3]++;
-		}
-		if(includeMilli){
-			while(millis > 0){
-				millis--; 
-				format[4]++;
-			}
-		}		
-		return format;
-	}
-	public String getTimeString(long[] time, boolean verbose){
-		if(time.length == 4){
-		if(verbose)
-			return time[0] + " days, " + time[1] + " hours, " + time[2] + " minutes, and " + time[3] + " seconds";
-		else
-			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
-		} else
-			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s:" + time[4] + "ms";
+	public void do_listTimers(String name){
+		if (timers.size() == 0) {
+            m_botAction.sendSmartPrivateMessage(name, "There are no timers to list.");
+            return;
+        }
+        Iterator<CustomTimer> it = timers.values().iterator();
+        m_botAction.sendSmartPrivateMessage(name, "========== Custom Timers ==========");
+        while (it.hasNext()) {
+            CustomTimer t = it.next();
+            m_botAction.sendSmartPrivateMessage(name, "| Timer: " + t.name);
+            m_botAction.sendSmartPrivateMessage(name, "| - " + t.getScheduleString());
+            Iterator<String> i = t.getMessages().iterator();
+            while (i.hasNext()) {
+                String msg = i.next();
+                m_botAction.sendSmartPrivateMessage(name, "|  " + t.getMessages().indexOf(msg) + ") " + msg);
+            }
+        }
+        m_botAction.sendSmartPrivateMessage(name, "===================================");
 	}
 	
 private class CustomTimer{
@@ -396,6 +348,55 @@ private class CustomTimer{
 		
 	}
 }
+
+	public long getTimeInMillis(long[] time){
+		long sum = 0;
+		for(int i=0;i<time.length;i++){
+			switch(i){
+			case 0:sum += time[i] * Tools.TimeInMillis.DAY;break;
+			case 1:sum += time[i] * Tools.TimeInMillis.HOUR;break;
+			case 2:sum += time[i] * Tools.TimeInMillis.MINUTE;break;
+			case 3:sum += time[i] * Tools.TimeInMillis.SECOND;break;
+			}
+		}
+		return sum;
+	}
+	public long[] getTimeInFormat(long millis, boolean includeMilli){
+		long[] format = new long[5];
+		while(millis > Tools.TimeInMillis.DAY){
+			millis -= Tools.TimeInMillis.DAY;
+			format[0]++;
+		}
+		while(millis > Tools.TimeInMillis.HOUR){
+			millis -= Tools.TimeInMillis.HOUR;
+			format[1]++;
+		}
+		while(millis > Tools.TimeInMillis.MINUTE){
+			millis -= Tools.TimeInMillis.MINUTE;
+			format[2]++;
+		}
+		while(millis > Tools.TimeInMillis.SECOND){
+			millis -= Tools.TimeInMillis.SECOND;
+			format[3]++;
+		}
+			if(includeMilli){
+			while(millis > 0){
+				millis--; 
+				format[4]++;
+			}
+		}		
+		return format;
+	}
+	public String getTimeString(long[] time, boolean verbose){
+		if(time.length == 4){
+		if(verbose)
+			return time[0] + " days, " + time[1] + " hours, " + time[2] + " minutes, and " + time[3] + " seconds";
+		else
+			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
+		} else
+			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s:" + time[4] + "ms";
+	}
+
 	public void requestEvents(ModuleEventRequester req){}
 	public void cancel(){
 	    for(CustomTimer timer:timers.values()) {

@@ -19,11 +19,9 @@ public class commands extends MultiUtil {
     
     public OperatorList opList;
     public TWScript m_twscript;
+    
     public TreeMap<String, CustomCommand> commands;
     
-    /**
-     * Initializes.
-     */
     public void init() {
         opList = m_botAction.getOperatorList();
         commands = new TreeMap<String, CustomCommand>();
@@ -33,21 +31,43 @@ public class commands extends MultiUtil {
 		m_twscript = tws;
 	}
     
-    /**
-     * Required method that returns this utilities help menu.
-     */
     public String[] getHelpMessages() {
         String[] message = {
-        "+------------------------------------ Commands ------------------------------------+",
-        "| !addaction <!cmd> <action>  - Adds an <action> to command <!command>             |",
-        "|                             - If <!command> does not exist it is created.        |",
-        "| !removecmd <!cmd>           - Removes a custom command and all its actions.      |",
-        "| !removecmd <!cmd> <index>   - Removes action at <index> from <!cmd>              |",
-        "| !describe <!cmd> <text>     - Submits a description of <!cmd> that shows in help.|",
-        "| !listcmd                    - Shows a list of custom commands and their actions. |",
-        "+----------------------------------------------------------------------------------+"
+                "+-------------------------------------- Commands -------------------------------------+",
+                "| !addaction <!cmd> <action>  - Adds an <action> to command <!command>                |",
+                "|                             - If <!command> does not exist it is created.           |",
+                "| !removecmd <!cmd>           - Removes a custom command and all its actions.         |",
+                "| !removecmd <!cmd> <index>   - Removes action at <index> from <!cmd>                 |",
+                "| !describe <!cmd> <text>     - Submits a description of <!cmd> that shows in help.   |",
+                "| !listcmd                    - Shows a list of custom commands and their actions.    |",
+                "+-------------------------------------------------------------------------------------+"
         };        
         return message;
+    }
+    
+    public void handleEvent(Message event) {
+        String message = event.getMessage();
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        Player p = m_botAction.getPlayer(event.getPlayerID());
+        if (name == null || p == null)
+            return;
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && opList.isER(name))
+            handleCommands(name, message);
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && commands.containsKey(message))
+            commands.get(message).message(p);
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("!help"))
+            do_customHelp(name);     
+    }
+    
+    public void handleCommands(String name, String cmd) {
+        if (cmd.startsWith("!addaction "))
+            do_addAction(name, cmd.substring(11));
+        else if (cmd.startsWith("!removecmd "))
+            do_removeCmd(name, cmd.substring(11));
+        else if (cmd.startsWith("!describe "))
+            do_describe(name, cmd.substring(10));
+        else if (cmd.equalsIgnoreCase("!listcmd"))
+            do_listCmd(name);
     }
     
     /**
@@ -66,75 +86,6 @@ public class commands extends MultiUtil {
             m_botAction.sendSmartPrivateMessage(name, "|  " + padString(14, c.command) + "- " + c.description);
         }
         m_botAction.sendSmartPrivateMessage(name, "+================================================");
-    }
-    
-    /**
-     * Adds space padding to the end of a string
-     * 
-     * @param length
-     *            The length you want the string to be after padding
-     * @param s
-     *            The string to pad
-     * @return A new padded string
-     */
-    public String padString(int length, String s) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(s);
-        for (int i = s.length(); i < length; i++) {
-            builder.append(" ");
-        }
-        return builder.toString();
-    }
-    
-    /**
-     * Handles messaging.
-     */
-    public void handleEvent(Message event) {
-        String message = event.getMessage();
-        String name = m_botAction.getPlayerName(event.getPlayerID());
-        Player p = m_botAction.getPlayer(event.getPlayerID());
-        if (name == null || p == null)
-            return;
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && opList.isER(name))
-            handleCommand(name, message);
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && commands.containsKey(message))
-            commands.get(message).message(p);
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("!help"))
-            do_customHelp(name);     
-    }
-    
-    /**
-     * Handles commands.
-     */
-    public void handleCommand(String name, String cmd) {
-        if (cmd.startsWith("!addaction "))
-            do_addAction(name, cmd.substring(11));
-        if (cmd.startsWith("!removecmd "))
-            do_removeCmd(name, cmd.substring(11));
-        if (cmd.equalsIgnoreCase("!listcmd"))
-            do_listCmd(name);
-        if (cmd.startsWith("!describe "))
-            do_describe(name, cmd.substring(10));
-    }
-    
-    /**
-     * Allows the bot user to create a description for a custom command that
-     * users will see in the customized help menu.
-     */
-    public void do_describe(String name, String message) {
-        int index = message.indexOf(" ");
-        if (index == -1) {
-            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !describe <Command> <Description>");
-            return;
-        }
-        String command = message.substring(0, index);
-        String description = message.substring(index + 1);
-        if (!commands.containsKey(command)) {
-            m_botAction.sendSmartPrivateMessage(name, "Command '" + command + "' not found.");
-            return;
-        }
-        commands.get(command).describe(description);
-        m_botAction.sendSmartPrivateMessage(name, "Description changed.");
     }
     
     /**
@@ -189,6 +140,26 @@ public class commands extends MultiUtil {
     }
     
     /**
+     * Allows the bot user to create a description for a custom command that
+     * users will see in the customized help menu.
+     */
+    public void do_describe(String name, String message) {
+        int index = message.indexOf(" ");
+        if (index == -1) {
+            m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !describe <Command> <Description>");
+            return;
+        }
+        String command = message.substring(0, index);
+        String description = message.substring(index + 1);
+        if (!commands.containsKey(command)) {
+            m_botAction.sendSmartPrivateMessage(name, "Command '" + command + "' not found.");
+            return;
+        }
+        commands.get(command).describe(description);
+        m_botAction.sendSmartPrivateMessage(name, "Description changed.");
+    }
+    
+    /**
      * Displays a list of all custom commands and their actions(including
      * indices)
      */
@@ -210,78 +181,96 @@ public class commands extends MultiUtil {
         }
     }
     
-    /**
-     * A Custom Command object.
-     */
-    public class CustomCommand {
-        public ArrayList<String> messages;
-        public String command;
-        public String description = "No description available.";
+/**
+* A Custom Command object.
+*/
+private class CustomCommand {
+	private ArrayList<String> messages;
+    private String command;
+    private String description = "No description available.";
      
-        public CustomCommand(String cmd) {
-            command = cmd;
-        }
+    private CustomCommand(String cmd) {
+    	command = cmd;
+    }
         
-        /**
-         * Changes description for the customized help menu.
-         */
-        public void describe(String message) {
-            description = message;
-        }
+    /**
+     * Changes description for the customized help menu.
+     */
+    private void describe(String message) {
+        description = message;
+    }
         
-        /**
-         * Adds an action to this command.
-         */
-        public void addMessage(String message) {
-            if (messages == null)
-                messages = new ArrayList<String>();
+    /**
+     * Adds an action to this command.
+     */
+    private void addMessage(String message) {
+        if (messages == null)
+        	messages = new ArrayList<String>();
             messages.add(message);
         }
         
-        /**
-         * Removes an action from this command
-         * 
-         * @param index -
-         *            the action's index as shown by !listcmd
-         */
-        public void removeMessage(int index) {
-            if (messages != null)
-                messages.remove(index);
-            if (messages.size() == 0)
-                messages = null;
+    /**
+     * Removes an action from this command
+     * 
+     * @param index -
+     *            the action's index as shown by !listcmd
+     */
+    private void removeMessage(int index) {
+        if (messages != null)
+            messages.remove(index);
+        if (messages.size() == 0)
+            messages = null;
         }
         
-        /**
-         * Checks to see if the given index exists
-         * 
-         * @return true if it does. else false.
-         */
-        public boolean hasIndex(int index) {
-            return messages.get(index) != null;
-        }
-        
-        /**
-         * Get the entire ArrayList of actions for this command.
-         * 
-         * @return the ArrayList
-         */
-        public ArrayList<String> getMessages() {
-            return messages;
-        }
-        
-        /**
-         * Sends all messages/actions listed in this command to the user.
-         * 
-         * @param name -
-         *            the user.
-         */
-        public void message(Player p) {
-            Iterator<String> it = messages.iterator();
-            while (it.hasNext())
-                CodeCompiler.handleTWScript(m_botAction, it.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
-        }
+    /**
+     * Checks to see if the given index exists
+     * 
+     * @return true if it does. else false.
+     */
+    private boolean hasIndex(int index) {
+    	return messages.get(index) != null;
     }
+        
+    /**
+     * Get the entire ArrayList of actions for this command.
+     * 
+     * @return the ArrayList
+     */
+    private ArrayList<String> getMessages() {
+        return messages;
+    }
+        
+    /**
+     * Sends all messages/actions listed in this command to the user.
+     * 
+     * @param name -
+     *            the user.
+     */
+    private void message(Player p) {
+        Iterator<String> it = messages.iterator();
+        while (it.hasNext())
+        	CodeCompiler.handleTWScript(m_botAction, it.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+    }
+}
     
+	/**
+ 	* Adds space padding to the end of a string
+ 	* 
+ 	* @param length
+ 	*            The length you want the string to be after padding
+ 	* @param s
+ 	*            The string to pad
+ 	* @return A new padded string
+ 	*/
+	public String padString(int length, String s) {
+    	StringBuilder builder = new StringBuilder();
+    	builder.append(s);
+    	for (int i = s.length(); i < length; i++) {
+    		builder.append(" ");
+    	}
+    	return builder.toString();
+	}
+
     /**
      * Required methods.
      */

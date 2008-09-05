@@ -17,7 +17,7 @@ import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 /**
- * HotSpots 2.0 - milosh - 2.15.08
+ * @author milosh
  */
 public class hotspots extends MultiUtil {
 	
@@ -25,23 +25,17 @@ public class hotspots extends MultiUtil {
     public TWScript m_twscript;
     
     public Vector<HotSpot> hotSpots;
+    
     public HotSpot watch;
-    public boolean watching;
     public TimerTask changeTask;
-    public HashMap<String, Long> recentContacts;
-    
-    public String database = "website";
-    
+    public HashMap<String, Long> recentContacts;         
     public int switchTime = 200, repeatTime = 200;
+    public boolean watching;
     
-    /**
-     * Initializes.
-     */
     public void init() {
-        recentContacts = new HashMap<String, Long>();
         opList = m_botAction.getOperatorList();
         hotSpots = new Vector<HotSpot>();
-        // Turn off updating -- we will do it ourselves
+        recentContacts = new HashMap<String, Long>();
         m_botAction.setPlayerPositionUpdating(0);
         m_botAction.stopSpectatingPlayer();
         watching = false;
@@ -51,40 +45,27 @@ public class hotspots extends MultiUtil {
 		m_twscript = tws;
 	}
     
-    /**
-     * Returns help message
-     */
     public String[] getHelpMessages() {
-        String help[] = {
-        "+------------------------------------- HotSpots -------------------------------------+", 
-        "| !addspot <x> <y> <r>    - Adds a new hotspot.<x> <y> <radius>                      |",
-        "|                         - OR: !addspot <x> <y> <r> <DestX> <DestY>                 |",
-        "|                         - OR: !addspot <x> <y> <r> <DestX> <DestY> <prize>         |",
-        "| !removespot <index>     - Removes the HotSpot at <index>                           |",
-        "| !clearspots             - Remove all hotspots.                                     |",
-        "| !listspots              - Lists your hotspots and their indices.                   |",
-        "| !addmsg <index> <text>  - Adds a TWScript message to a spot.                       |",
-        "| !removemsg <idx> <idx>  - Removes a message from a hotspot by index.               |",
-        "| !listmsg <index>        - Lists all messages for the specified HotSpot.            |",
-        "| !repeattime <ms>        - Time after which a hotspot may refire on the same player.|",
-        "| !switchtime <ms>        - How long to watch each spot before moving to the next    |",
-        "| !watch                  - Activates the module.                                    |",
-        "| !stopwatching           - Stops watching hot spots.                                |",
-        "+------------------------------------------------------------------------------------+"
+        String[] message = {
+        		"+------------------------------------- HotSpots --------------------------------------+", 
+        		"| !addspot <x> <y> <r>    - Adds a new hotspot.<x> <y> <radius>                       |",
+        		"|                         - OR: !addspot <x> <y> <r> <DestX> <DestY>                  |",
+        		"|                         - OR: !addspot <x> <y> <r> <DestX> <DestY> <prize>          |",
+        		"| !addspotmsg <#> <msg>   - Adds a TWScript message to a spot.                        |",
+        		"| !removespot <#>         - Removes the HotSpot at the index <#>.                     |",
+        		"| !removemsg <#> <#>      - Removes a message from a hotspot by index.                |",
+        		"| !clearspots             - Remove all hotspots.                                      |",
+        		"| !repeattime <ms>        - Time after which a hotspot may refire on the same player. |",
+        		"| !switchtime <ms>        - How long to watch each spot before moving to the next     |",
+        		"| !watch                  - Activates the module.                                     |",
+        		"| !stopwatching           - Stops watching hot spots.                                 |",
+        		"| !listmsg <index>        - Lists all messages for the specified HotSpot.             |",
+        		"| !listspots              - Lists your hotspots and their indices.                    |",
+        		"+-------------------------------------------------------------------------------------+"
         };
-        return help;
+        return message;
     }
     
-    /**
-     * Requests events.
-     */
-    public void requestEvents(ModuleEventRequester modEventReq) {
-        modEventReq.request(this, EventRequester.PLAYER_POSITION);
-    }
-    
-    /**
-     * Handles messages
-     */
     public void handleEvent(Message event) {
         
         String message = event.getMessage();
@@ -92,26 +73,18 @@ public class hotspots extends MultiUtil {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             if (m_opList.isER(name))
-                handleCommand(name, message);
+                handleCommands(name, message);
         }
     }
     
-    /**
-     * handles commands
-     * 
-     * @param sender
-     *            is the user of the bot.
-     * @param message
-     *            is the command.
-     */
-    public void handleCommand(String sender, String message) {
+    public void handleCommands(String sender, String message) {
         String msg = message;
         message = message.toLowerCase();
         if (message.startsWith("!addspot "))
             do_addHotSpot(sender, message.substring(9, message.length()));
         if (message.startsWith("!removespot "))
             do_removeHotSpot(sender, message.substring(12));
-        if (message.startsWith("!addmsg "))
+        if (message.startsWith("!addspotmsg "))
             do_addMessage(sender, msg.substring(8));
         if (message.startsWith("!removemsg "))
             do_removeMessage(sender, message.substring(11));
@@ -152,8 +125,8 @@ public class hotspots extends MultiUtil {
                 // m_botAction.warpTo( event.getPlayerID(), watch.getX2(),
                 // watch.getY2() );
             	recentContacts.put(name, System.currentTimeMillis());
-                if (watch.getMessages() != null) {
-                    Iterator<String> i = watch.getMessages().iterator();
+                if (watch.messages != null) {
+                    Iterator<String> i = watch.messages.iterator();
                     while( i.hasNext() )
                         CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
                 }
@@ -184,7 +157,7 @@ public class hotspots extends MultiUtil {
                     this.cancel();
                     Tools.printStackTrace(e);
                 }
-                m_botAction.moveToTile(watch.getX(), watch.getY());
+                m_botAction.moveToTile(watch.x, watch.y);
             }
         };
         m_botAction.scheduleTaskAtFixedRate(changeTask, 2000, switchTime);
@@ -272,7 +245,7 @@ public class hotspots extends MultiUtil {
             m_botAction.sendPrivateMessage(sender, "The given HotSpot does not exist.");
             return;
         }
-        hotSpots.elementAt(index).addMessage(msg);
+        hotSpots.elementAt(index).messages.add(msg);
         m_botAction.sendSmartPrivateMessage(sender, "Message added to HotSpot at index " + index);
     }
     
@@ -302,11 +275,11 @@ public class hotspots extends MultiUtil {
             m_botAction.sendPrivateMessage(sender, "The given HotSpot does not exist.");
             return;
         }
-        if (hotSpots.elementAt(values[0]).getMessage(values[1]) == null) {
-            m_botAction.sendPrivateMessage(sender, "There is no message at the specified index.");
-        } else {
-            hotSpots.elementAt(values[0]).removeMessage(values[1]);
-            m_botAction.sendPrivateMessage(sender, "Message " + values[1] + " of HotSpot " + values[0] + " removed.");
+        try{
+        	hotSpots.elementAt(values[0]).messages.remove(values[1]);
+        	m_botAction.sendPrivateMessage(sender, "Message " + values[1] + " of HotSpot " + values[0] + " removed.");
+        }catch(ArrayIndexOutOfBoundsException e){
+        	m_botAction.sendPrivateMessage(sender, "There is no message at the specified index.");
         }
     }
     
@@ -331,11 +304,11 @@ public class hotspots extends MultiUtil {
             return;
         }
         
-        if (hotSpots.elementAt(index).getMessages() == null) {
+        if (hotSpots.elementAt(index).messages == null) {
             m_botAction.sendPrivateMessage(sender, "There are no messages assigned to this spot.");
         } else {
             int i = 0;
-            Iterator<String> it = hotSpots.elementAt(index).getMessages().iterator();
+            Iterator<String> it = hotSpots.elementAt(index).messages.iterator();
             while (it.hasNext()) {
                 String msg = it.next();
                 m_botAction.sendPrivateMessage(sender, i + ") " + msg);
@@ -381,9 +354,9 @@ public class hotspots extends MultiUtil {
                 return;
             }
             if (values.length >= 5)
-                hotSpots.elementAt(index).addMessage("*warpto " + values[3] + " " + values[4]);
+                hotSpots.elementAt(index).messages.add("*warpto " + values[3] + " " + values[4]);
             if (values.length == 6)
-                hotSpots.elementAt(index).addMessage("*prize #" + values[5]);
+                hotSpots.elementAt(index).messages.add("*prize #" + values[5]);
             m_botAction.sendSmartPrivateMessage(sender, "Changes added to existing hotspot at index " + index + ".");
         }
     }
@@ -403,7 +376,7 @@ public class hotspots extends MultiUtil {
         Iterator<HotSpot> i = hotSpots.iterator();
         while (i.hasNext()) {
             HotSpot hs = i.next();
-            if (hs.getX() == x && hs.getY() == y && hs.getR() == r)
+            if (hs.x == x && hs.y == y && hs.r == r)
                 return hotSpots.indexOf(hs);
         }
         return -1;
@@ -479,82 +452,41 @@ public class hotspots extends MultiUtil {
         repeatTime = time;
         m_botAction.sendPrivateMessage(sender, "Repeat time set to " + time);
     }
-
-    public void cancel() {
-        do_clearHotSpots(null);
-        m_botAction.resetReliablePositionUpdating();
-    }
-}
+    
+	public void requestEvents(ModuleEventRequester modEventReq) {
+    	modEventReq.request(this, EventRequester.PLAYER_POSITION);
+	}
 
 /**
  * Hot spot class that holds all related values
  */
-class HotSpot {
+private class HotSpot {
     
-    public int x, y, r;
-    public ArrayList<String> messages;
+    private int x, y, r;
+    private ArrayList<String> messages;
     
     /**
      * Creates a new hotspot with the array of values. You can still use 5/6
      * values for warping/prizing, but only 3 values are needed to create a
      * working hotspot.
      */
-    public HotSpot(int values[]) {
+    private HotSpot(int values[]) {
+    	messages = new ArrayList<String>();
         if (values.length >= 3) {
             x = values[0];
             y = values[1];
             r = values[2];
         }
         if (values.length >= 5)
-            addMessage("*warpto " + values[3] + " " + values[4]);
+            messages.add("*warpto " + values[3] + " " + values[4]);
         if (values.length == 6)
-            addMessage("*prize #" + values[5]);
-    }
-    
-    /**
-     * Add a message/command a player will receive when coming into contact with
-     * this spot.
-     */
-    public void addMessage(String message) {
-        if (messages == null)
-            messages = new ArrayList<String>();
-        messages.add(message);
-    }
-    
-    /**
-     * Get the message at a specified index. If there is none return null.
-     */
-    public String getMessage(int index) {
-        try {
-            return messages.get(index);
-        } catch (Exception e) {
-            return null;
-        }// throws ArrayIndexOutOfBounds
-    }
-    
-    /**
-     * Remove a message/command a player will receive when coming into contact
-     * with this spot.
-     */
-    public void removeMessage(int index) {
-        try {
-            messages.remove(index);
-            if (messages.size() == 0)
-                messages = null;
-        } catch (Exception e) {}
-    }
-    
-    /**
-     * Get the ArrayList of messages for this spot.
-     */
-    public ArrayList<String> getMessages() {
-        return messages;
+            messages.add("*prize #" + values[5]);
     }
     
     /**
      * Return true if the given X,Y is touching this spot. Else return false.
      */
-    public boolean inside(int playerX, int playerY) {
+    private boolean inside(int playerX, int playerY) {
         double dist = Math.sqrt(Math.pow(x * 16 - playerX, 2) + Math.pow(y * 16 - playerY, 2));
         if (Math.round(dist) <= r * 16)
             return true;
@@ -568,25 +500,10 @@ class HotSpot {
     public String toString() {
         return ("X:" + x + " Y:" + y + " Radius:" + r);
     }
-    
-    /**
-     * Returns this Hotspot's X Coordinate
-     */
-    public int getX() {
-        return x;
-    }
+}
 
-    /**
-     * Returns this Hotspot's Y Coordinate
-     */
-    public int getY() {
-        return y;
-    }
-
-    /**
-     * Returns this Hotspot's radius
-     */
-    public int getR() {
-        return r;
-    }
+	public void cancel(){
+		do_clearHotSpots(null);
+		m_botAction.resetReliablePositionUpdating();
+	}
 }

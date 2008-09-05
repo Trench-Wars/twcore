@@ -26,24 +26,20 @@ public class events extends MultiUtil {
     
     public OperatorList opList;
     public TWScript m_twscript;
-    public static final int SPAWN_TIME = 6010;
     
-    //The lists.
     public ArrayList<String> greetMsgs = new ArrayList<String>();
     public ArrayList<String> killMsgs = new ArrayList<String>();
     public ArrayList<String> spawnMsgs = new ArrayList<String>();
-    public ArrayList<String> weapMsgs = new ArrayList<String>();
+    public ArrayList<String> fireMsgs = new ArrayList<String>();
     public ArrayList<String> fClaimMsgs = new ArrayList<String>();
     public ArrayList<String> fDropMsgs = new ArrayList<String>();
     public ArrayList<String> bClaimMsgs = new ArrayList<String>();
     public ArrayList<String> bFiredMsgs = new ArrayList<String>();
     public ArrayList<String> timerMsgs = new ArrayList<String>();
-    //Ball TreeMap
-    public TreeMap<Byte, Ball> ballMap = new TreeMap<Byte, Ball>();
     
-    /**
-     * Initializes.
-     */
+    public TreeMap<Byte, Ball> ballMap = new TreeMap<Byte, Ball>();
+    public static final int SPAWN_TIME = 6010;
+    
     public void init() {
         opList = m_botAction.getOperatorList();
     }
@@ -52,55 +48,37 @@ public class events extends MultiUtil {
 		m_twscript = tws;
 	}
     
-    /**
-     * Requests which events this utility watches for.
-     */
-    public void requestEvents(ModuleEventRequester req) {
-        req.request(this, EventRequester.BALL_POSITION);
-        req.request(this, EventRequester.PLAYER_DEATH);
-        req.request(this, EventRequester.WEAPON_FIRED);
-        req.request(this, EventRequester.FLAG_CLAIMED);
-        req.request(this, EventRequester.FLAG_DROPPED);
-        req.request(this, EventRequester.PLAYER_ENTERED);
-    }
-    
-    /**
-     * Required method that returns this utilities help menu.
-     */
     public String[] getHelpMessages() {
         String[] message = {
-                "+---------------------- Events Utility ----------------------+",
-                "| !masspm <msg>     -- Sends a PM to everyone in the arena.  |",
-                "| !pub <msg>        -- Sends a public message.               |",
-                "| !greetmsg <msg>   -- Adds a greeting message.              |",
-                "| !killmsg <msg>    -- Adds a kill message.                  |",
-                "| !spawnmsg <msg>   -- Adds a spawn message.                 |",
-                "| !weapmsg <msg>    -- Adds a weapon fired message.          |",
-                "| !fclaimmsg <msg>  -- Adds a flag claimed message.          |",
-                "| !fdropmsg <msg>   -- Adds a flag dropped message.          |",
-                "| !bclaimmsg <msg>  -- Adds a ball claimed message.          |",
-                "| !bfiredmsg <msg>  -- Adds a ball fired message.            |",
-                "| !timermsg <msg>   -- Adds a timer message.                 |",
-                "| !listmsg          -- Lists all messages.                   |",
-                "| !delmsg <#>:<#>   -- Deletes message at index (#, #).      |",
-                "| !clearmsg <#>     -- Deletes all messages of type <#>.     |",
-                "| !clearallmsg      -- Clears all messages.                  |",
-                "+------------------------------------------------------------+"
+        		"+-------------------------------------- Events ---------------------------------------+",
+        		"| !masspm <msg>     - Executes a private TWScript messages to everyone in the arena.  |",
+        		"| !pub <msg>        - Executes a public TWScript message.                             |",
+        		"| !greetmsg <msg>   - Adds a TWScript message for when a player enters.               |",
+        		"| !killmsg <msg>    - Adds a TWScript message for when a player gets a kill.          |",
+        		"| !spawnmsg <msg>   - Adds a TWScript message for when a player dies.                 |",
+        		"| !firemsg <msg>    - Adds a TWScript message for when a player fires.                |",
+        		"| !fclaimmsg <msg>  - Adds a TWScript message for when a player claims a flag.        |",
+        		"| !fdropmsg <msg>   - Adds a TWScript message for when a player drops a flag.         |",
+        		"| !bclaimmsg <msg>  - Adds a TWScript message for when a player picks up a ball.      |",
+        		"| !bfiredmsg <msg>  - Adds a TWScript message for when a player fires a ball.         |",
+        		"| !timermsg <msg>   - Adds a TWScript message that will execute at 'NOTICE: Game over'|",
+        		"| !delmsg <#>:<#>   - Deletes message at index (#, #).                                |",
+        		"| !clearmsg <#>     - Deletes all TWScript messages of type <#>.                      |",
+        		"| !clearallmsg      - Clears all TWScript messages.                                   |",
+        		"| !listmsg          - Displays all message types and their messages.                  |",
+        		"+-------------------------------------------------------------------------------------+",
         };        
         return message;
     }
     
-    /**
-     * Handles messaging.
-     */
     public void handleEvent(Message event) {
         String message = event.getMessage();
         String name = m_botAction.getPlayerName(event.getPlayerID());
         int messageType = event.getMessageType();
         if(messageType == Message.PRIVATE_MESSAGE && opList.isER(name))
-            handleCommand(name, message);
+            handleCommands(name, message);
         else if(messageType == Message.ARENA_MESSAGE && message.equals("NOTICE: Game over")){
-            Player p = m_botAction.getPlayer(event.getPlayerID());
+            Player p = m_botAction.getPlayer(m_botAction.getBotName());
             if(p == null)return;
             Iterator<String> i = timerMsgs.iterator();
             while( i.hasNext() )
@@ -108,48 +86,45 @@ public class events extends MultiUtil {
         }
     }
     
-    /**
-     * Handles commands.
-     */
-    public void handleCommand(String name, String msg) {
+    public void handleCommands(String name, String msg) {
         if(msg.startsWith("!masspm "))
-            doMassPm(name, msg.substring(8));
+            do_massPm(name, msg.substring(8));
         else if(msg.startsWith("!pub "))
-            doPub(name, msg.substring(5));
+            do_pub(name, msg.substring(5));
         else if(msg.startsWith("!greetmsg "))
-        	doGreetMsg(name, msg.substring(10));
+        	do_greetMsg(name, msg.substring(10));
         else if(msg.startsWith("!killmsg "))
-            doKillMsg(name, msg.substring(9));
+            do_killMsg(name, msg.substring(9));
         else if(msg.startsWith("!spawnmsg "))
-            doSpawnMsg(name, msg.substring(10));
-        else if(msg.startsWith("!weapmsg "))
-            doWeapMsg(name, msg.substring(9));
+            do_spawnMsg(name, msg.substring(10));
+        else if(msg.startsWith("!firemsg "))
+            do_fireMsg(name, msg.substring(9));
         else if(msg.startsWith("!fclaimmsg "))
-            doFlagClaimedMsg(name, msg.substring(11));
+            do_flagClaimedMsg(name, msg.substring(11));
         else if(msg.startsWith("!fdropmsg "))
-            doFlagDroppedMsg(name, msg.substring(10));
+            do_flagDroppedMsg(name, msg.substring(10));
         else if(msg.startsWith("!bclaimmsg "))
-            doBallClaimedMsg(name, msg.substring(11));
+            do_ballClaimedMsg(name, msg.substring(11));
         else if(msg.startsWith("!bfiredmsg "))
-            doBallFiredMsg(name, msg.substring(11));
+            do_ballFiredMsg(name, msg.substring(11));
         else if(msg.startsWith("!timermsg "))
-        	doTimerMsg(name, msg.substring(10));
+        	do_timerMsg(name, msg.substring(10));
         else if(msg.equalsIgnoreCase("!listmsg"))
-            doListMsg(name);
+            do_listMsg(name);
         else if(msg.startsWith("!delmsg "))
-            doDeleteMsg(name, msg.substring(8));
+            do_deleteMsg(name, msg.substring(8));
         else if(msg.startsWith("!clearmsg "))
-            doClearMsg(name, msg.substring(10));
+            do_clearMsg(name, msg.substring(10));
         else if(msg.equalsIgnoreCase("!clearallmsg"))
-            doClearAllMsg(name);
+            do_clearAllMsg(name);
     }
-
+    
     /**
      * Sends an unfiltered private message to everyone in the arena.
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doMassPm(String name, String msg){
+    public void do_massPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() )
             CodeCompiler.handleTWScript(m_botAction, msg, i.next(), m_twscript.variables, m_twscript.ACCESS_LEVEL);
@@ -160,7 +135,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doPub(String name, String message){
+    public void do_pub(String name, String message){
         CodeCompiler.handleTWScript(m_botAction, message, m_twscript.variables, m_twscript.ACCESS_LEVEL);
     }
     
@@ -169,7 +144,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doGreetMsg(String name, String message){
+    public void do_greetMsg(String name, String message){
         if(message.length() < 220){
             greetMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Greet message added.");
@@ -182,7 +157,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doKillMsg(String name, String message){
+    public void do_killMsg(String name, String message){
         if(message.length() < 220){
             killMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Kill message added.");
@@ -195,7 +170,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doSpawnMsg(String name, String message){
+    public void do_spawnMsg(String name, String message){
         if(message.length() < 220){
             spawnMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Spawn message added.");
@@ -204,14 +179,14 @@ public class events extends MultiUtil {
     }
     
     /**
-     * Adds a message for weapon fired events.
+     * Adds a message for fireon fired events.
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doWeapMsg(String name, String message){
+    public void do_fireMsg(String name, String message){
         if(message.length() < 220){
-            weapMsgs.add(message);
-            m_botAction.sendSmartPrivateMessage( name, "Weapon fired message added.");
+            fireMsgs.add(message);
+            m_botAction.sendSmartPrivateMessage( name, "fireon fired message added.");
         } else
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
@@ -221,7 +196,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doFlagClaimedMsg(String name, String message){
+    public void do_flagClaimedMsg(String name, String message){
         if(message.length() < 220){
             fClaimMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Flag claimed message added.");
@@ -234,7 +209,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doFlagDroppedMsg(String name, String message){
+    public void do_flagDroppedMsg(String name, String message){
         if(message.length() < 220){
             fDropMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Flag dropped message added.");
@@ -247,7 +222,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doBallClaimedMsg(String name, String message){
+    public void do_ballClaimedMsg(String name, String message){
         if(message.length() < 220){
             bClaimMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Ball claimed message added.");
@@ -260,7 +235,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doBallFiredMsg(String name, String message){
+    public void do_ballFiredMsg(String name, String message){
         if(message.length() < 220){
             bFiredMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Ball fired message added.");
@@ -273,7 +248,7 @@ public class events extends MultiUtil {
      * @param name - The user of the bot
      * @param message - The message to send
      */
-    public void doTimerMsg(String name, String message){
+    public void do_timerMsg(String name, String message){
         if(message.length() < 220){
             timerMsgs.add(message);
             m_botAction.sendSmartPrivateMessage( name, "Timer message added.");
@@ -282,10 +257,87 @@ public class events extends MultiUtil {
     }
     
     /**
+     * Deletes a specific message.
+     * @param name - The user
+     * @param msg - The message to send
+     */
+    public void do_deleteMsg(String name, String message){
+        int x, y;
+        String[] msg = message.split(":");
+        try{
+            x = Integer.parseInt(msg[0]);
+            y = Integer.parseInt(msg[1]);
+            switch(x){
+            	case 0: greetMsgs.remove(y); break;
+                case 1: killMsgs.remove(y); break;
+                case 2: spawnMsgs.remove(y); break;
+                case 3: fireMsgs.remove(y); break;
+                case 4: fClaimMsgs.remove(y); break;
+                case 5: fDropMsgs.remove(y); break;
+                case 6: bClaimMsgs.remove(y); break;
+                case 7: bFiredMsgs.remove(y); break;
+                case 8: timerMsgs.remove(y); break;
+                default: throw new IndexOutOfBoundsException();
+            }
+            m_botAction.sendSmartPrivateMessage( name, "Removed message at index ( " + x +  ", " + y + " ).");
+        }catch(NumberFormatException e){
+            m_botAction.sendSmartPrivateMessage( name, "Correct usage: !delmsg #:#");
+        }catch(IndexOutOfBoundsException e){
+            m_botAction.sendSmartPrivateMessage( name, "Could not find a message at index ( " + msg[0] + ", " + msg[1] + " ).");
+        }
+    }
+    
+    /**
+     * Deletes all of a message type
+     * @param name - The user
+     * @param msg - The message to send
+     */
+    public void do_clearMsg(String name, String msg){
+        int x;
+        try{
+            x = Integer.parseInt(msg);
+            switch(x){
+            	case 0: greetMsgs.clear(); break;
+                case 1: killMsgs.clear(); break;
+                case 2: spawnMsgs.clear(); break;
+                case 3: fireMsgs.clear(); break;
+                case 4: fClaimMsgs.clear(); break;
+                case 5: fDropMsgs.clear(); break;
+                case 6: bClaimMsgs.clear(); break;
+                case 7: bFiredMsgs.clear(); break;
+                case 8: timerMsgs.clear(); break;
+                default: throw new IndexOutOfBoundsException();
+            }
+            m_botAction.sendSmartPrivateMessage( name, "Cleared all messages of type " + x + ".");
+        }catch(NumberFormatException e){
+            m_botAction.sendSmartPrivateMessage( name, "Correct usage: !clearmsg #");
+        }catch(IndexOutOfBoundsException e){
+            m_botAction.sendSmartPrivateMessage( name, "Please select a number between 0 and 8.");
+        }
+    }
+    
+    /**
+     * Deletes all messages of all types
+     * @param name - The user
+     */
+    public void do_clearAllMsg(String name){
+    	greetMsgs.clear();
+        killMsgs.clear();
+        spawnMsgs.clear();
+        fireMsgs.clear();
+        fClaimMsgs.clear();
+        fDropMsgs.clear();
+        bClaimMsgs.clear();
+        bFiredMsgs.clear();
+        timerMsgs.clear();
+        m_botAction.sendSmartPrivateMessage( name, "All messages cleared.");
+    }
+
+    /**
      * Displays a list of active messages
      * @param name - The user
      */
-    public void doListMsg(String name){
+    public void do_listMsg(String name){
         m_botAction.sendSmartPrivateMessage( name, "+---------------------Message List----------------------");
         if(greetMsgs.isEmpty())
             m_botAction.sendSmartPrivateMessage( name, "| 0) Greet: NONE");
@@ -323,12 +375,12 @@ public class events extends MultiUtil {
                 index++;
             } 
         }
-        if(weapMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 3) Weapon Fired: NONE");
+        if(fireMsgs.isEmpty())
+            m_botAction.sendSmartPrivateMessage( name, "| 3) fireon Fired: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 3) Weapon Fired: " + weapMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 3) fireon Fired: " + fireMsgs.size());
             int index = 0;
-            Iterator<String> i = weapMsgs.iterator();
+            Iterator<String> i = fireMsgs.iterator();
             while( i.hasNext() ){
                 String s = i.next();
                 m_botAction.sendSmartPrivateMessage( name, "|     - " + index + ") " + s);
@@ -399,82 +451,17 @@ public class events extends MultiUtil {
     }
     
     /**
-     * Deletes a specific message.
-     * @param name - The user
-     * @param msg - The message to send
+     * Requests which events this utility watches for.
      */
-    public void doDeleteMsg(String name, String message){
-        int x, y;
-        String[] msg = message.split(":");
-        try{
-            x = Integer.parseInt(msg[0]);
-            y = Integer.parseInt(msg[1]);
-            switch(x){
-            	case 0: greetMsgs.remove(y); break;
-                case 1: killMsgs.remove(y); break;
-                case 2: spawnMsgs.remove(y); break;
-                case 3: weapMsgs.remove(y); break;
-                case 4: fClaimMsgs.remove(y); break;
-                case 5: fDropMsgs.remove(y); break;
-                case 6: bClaimMsgs.remove(y); break;
-                case 7: bFiredMsgs.remove(y); break;
-                case 8: timerMsgs.remove(y); break;
-                default: throw new IndexOutOfBoundsException();
-            }
-            m_botAction.sendSmartPrivateMessage( name, "Removed message at index ( " + x +  ", " + y + " ).");
-        }catch(NumberFormatException e){
-            m_botAction.sendSmartPrivateMessage( name, "Correct usage: !delmsg #:#");
-        }catch(IndexOutOfBoundsException e){
-            m_botAction.sendSmartPrivateMessage( name, "Could not find a message at index ( " + msg[0] + ", " + msg[1] + " ).");
-        }
+    public void requestEvents(ModuleEventRequester req) {
+        req.request(this, EventRequester.BALL_POSITION);
+        req.request(this, EventRequester.PLAYER_DEATH);
+        req.request(this, EventRequester.WEAPON_FIRED);
+        req.request(this, EventRequester.FLAG_CLAIMED);
+        req.request(this, EventRequester.FLAG_DROPPED);
+        req.request(this, EventRequester.PLAYER_ENTERED);
     }
     
-    /**
-     * Deletes all of a message type
-     * @param name - The user
-     * @param msg - The message to send
-     */
-    public void doClearMsg(String name, String msg){
-        int x;
-        try{
-            x = Integer.parseInt(msg);
-            switch(x){
-            	case 0: greetMsgs.clear(); break;
-                case 1: killMsgs.clear(); break;
-                case 2: spawnMsgs.clear(); break;
-                case 3: weapMsgs.clear(); break;
-                case 4: fClaimMsgs.clear(); break;
-                case 5: fDropMsgs.clear(); break;
-                case 6: bClaimMsgs.clear(); break;
-                case 7: bFiredMsgs.clear(); break;
-                case 8: timerMsgs.clear(); break;
-                default: throw new IndexOutOfBoundsException();
-            }
-            m_botAction.sendSmartPrivateMessage( name, "Cleared all messages of type " + x + ".");
-        }catch(NumberFormatException e){
-            m_botAction.sendSmartPrivateMessage( name, "Correct usage: !clearmsg #");
-        }catch(IndexOutOfBoundsException e){
-            m_botAction.sendSmartPrivateMessage( name, "Please select a number between 0 and 8.");
-        }
-    }
-    
-    /**
-     * Deletes all messages of all types
-     * @param name - The user
-     */
-    public void doClearAllMsg(String name){
-    	greetMsgs.clear();
-        killMsgs.clear();
-        spawnMsgs.clear();
-        weapMsgs.clear();
-        fClaimMsgs.clear();
-        fDropMsgs.clear();
-        bClaimMsgs.clear();
-        bFiredMsgs.clear();
-        timerMsgs.clear();
-        m_botAction.sendSmartPrivateMessage( name, "All messages cleared.");
-    }
-
     /**
      * Handles PlayerEntered events.
      */
@@ -492,27 +479,25 @@ public class events extends MultiUtil {
     public void handleEvent(BallPosition event){
         byte ID = event.getBallID();
         int carrier = event.getCarrier();
-        int playerID = event.getPlayerID();
         if(!ballMap.containsKey(ID))
-                ballMap.put(ID, new Ball(-1, -1));
+                ballMap.put(ID, new Ball(-1));
         Ball b = ballMap.get(ID);        
         //Ball Fired
-        if(carrier == -1 && carrier < b.getCurrentCarrier()){
-            Player p = m_botAction.getPlayer(b.getCurrentCarrier());
+        if(carrier == -1 && carrier < b.carrier){
+            Player p = m_botAction.getPlayer(b.carrier);
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() )
                 CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
             
         }
         //Ball Caught
-        else if(b.getCurrentCarrier() == -1 && b.getCurrentCarrier() < carrier){
+        else if(b.carrier == -1 && b.carrier < carrier){
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() )
                 CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
         }
-        b.updateLastCarrier(playerID);
-        b.updateCurrentCarrier(carrier);
+        b.updatecarrier(carrier);
     }
     
     /**
@@ -530,12 +515,12 @@ public class events extends MultiUtil {
     }
     
     /**
-     * Handles weapon events
+     * Handles fireon events
      */
     public void handleEvent(WeaponFired event){
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
-        Iterator<String> i = weapMsgs.iterator();
+        Iterator<String> i = fireMsgs.iterator();
         while( i.hasNext() )
             CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
     }
@@ -562,49 +547,34 @@ public class events extends MultiUtil {
             CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
     }
     
-    public void cancel() {}    
-    
-    private class SpawnTimer {
-        Player p;
-        private TimerTask runIt = new TimerTask() {
-            public void run() {
-                Iterator<String> i = spawnMsgs.iterator();
-                while( i.hasNext() )
-                    CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+private class SpawnTimer {
+    private Player p;
+    private TimerTask runIt = new TimerTask() {
+        public void run() {
+            Iterator<String> i = spawnMsgs.iterator();
+            while( i.hasNext() )
+                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
                 
-            }
-        };
-        
-        public SpawnTimer(Player p) {
-            this.p = p;
-            m_botAction.scheduleTask(runIt, SPAWN_TIME);
         }
+    };
+        
+    public SpawnTimer(Player p) {
+        this.p = p;
+        m_botAction.scheduleTask(runIt, SPAWN_TIME);
     }
+}
     
-    private class Ball {
-        private int lastCarrier;
-        private int currentCarrier;
+private class Ball {
+        private int carrier;
         
-        private Ball(int lastCarrier, int currentCarrier){
-            this.lastCarrier = lastCarrier;
-            this.currentCarrier = currentCarrier;
+        private Ball(int carrier){
+            this.carrier = carrier;
+        }    
+        
+        private void updatecarrier(int id){
+            carrier = id;
         }
-        
-        public int getLastCarrier(){
-            return lastCarrier;
-        }
-        
-        public int getCurrentCarrier(){
-            return currentCarrier;
-        }       
-        
-        public void updateLastCarrier(int id){
-            lastCarrier = id;
-        }
-        
-        public void updateCurrentCarrier(int id){
-            currentCarrier = id;
-        }
-        
-    }
+}
+
+	public void cancel() {}  
 }
