@@ -260,7 +260,7 @@ public class TWScript extends MultiUtil {
      * Toggles Sysop override.
      */
     public void doSysopOverride(String name){
-        if(opList.isSysop(name) && !name.equalsIgnoreCase(m_botAction.getBotName())){
+        if(opList.isSysop(name) && !name.contains("Bot")){
             if(ACCESS_LEVEL == SYSOP_LEVEL){
                 ACCESS_LEVEL = 0;
                 m_botAction.sendSmartPrivateMessage( name, "Sysop override deactivated.");
@@ -277,7 +277,7 @@ public class TWScript extends MultiUtil {
      * Toggles Smod override.
      */
     public void doSmodOverride(String name){
-        if(opList.isSmod(name) && !name.equalsIgnoreCase(m_botAction.getBotName())){
+        if(opList.isSmod(name) && !name.contains("Bot")){
             if(ACCESS_LEVEL == SMOD_LEVEL){
                 ACCESS_LEVEL = 0;
                 m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
