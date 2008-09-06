@@ -52,8 +52,7 @@ public class multibot extends SubspaceBot {
     private boolean m_followEnabled = false;
     private boolean m_doCome = false;
     private boolean m_ownerOverride = false;
-    public boolean m_smodLocked = false;
-    public boolean m_sysopLocked = false;
+    public int m_accessLevel;
 
     public multibot(BotAction botAction) {
         super(botAction);
@@ -117,73 +116,67 @@ public class multibot extends SubspaceBot {
         int messageType = event.getMessageType();
         boolean foundCmd = false;
         boolean isER = m_opList.isER(sender);
-        if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {
-        	if(m_sysopLocked && !m_opList.isSysop(sender)){
-        		m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive Sysop use.");
-        		return;
-        	}
-        	if(m_smodLocked && !m_opList.isSmod(sender)){
-            	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive Smod use.");
-            	return;
-            }
-            // Attempt to handle player commands (with oodles of TWBot backwards compatibility)
-            if( message.equalsIgnoreCase("!where") || message.equalsIgnoreCase("!host") || message.equalsIgnoreCase("!games") ) {
-                doWhereCmd(sender, isER);
-                foundCmd = true;
-            } else if( message.equalsIgnoreCase("!help") && !isER ) {
-                m_botAction.sendSmartPrivateMessage(sender, "Hi, I'm a bot that helps host Trench Wars games!  Send !where to see who is hosting me, where at, and what they're hosting." );
-            } else if( isER ) {
-                if( m_owner == null && !sender.equals(m_botAction.getBotName())) {
-                    m_owner = sender;
-                    m_lastUse = System.currentTimeMillis();
-                    m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
-                    foundCmd = handleCommands(sender, message, messageType);
-                } else {
-                    if( m_owner.equals(sender) || sender.equals(m_botAction.getBotName()) ) {
-                        m_lastUse = System.currentTimeMillis();
-                        foundCmd = handleCommands(sender, message, messageType);
-                    } else {
-                        if( System.currentTimeMillis() > m_lastUse + OWNER_RESET_TIME ) {
-                            m_owner = sender;
-                            m_lastUse = System.currentTimeMillis();
-                            m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
-                            foundCmd = handleCommands(sender, message, messageType);
-                        } else {
-                            if( m_ownerOverride ) {
-                                foundCmd = handleCommands(sender, message, messageType);
-                            } else {
-                                if( message.startsWith("!") )
-                                    m_botAction.sendSmartPrivateMessage(sender, "I am owned by: " + m_owner + " - last use: " + Tools.getTimeDiffString(m_lastUse, true) + "  !mybot to claim; !override to command w/o owner change." );
-                                if( message.equalsIgnoreCase("!mybot") || message.equalsIgnoreCase("!override") )
-                                    foundCmd = handleCommands(sender, message, messageType);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // In Follow mode: decipher *locate report and change to arena
-        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE && !m_isLocked ) {
-            if( message.startsWith(m_owner + " - ") ) {
-                try {
-                    String arena = message.substring( message.indexOf("- ") + 2 );
-                    if( arena.equalsIgnoreCase( m_botAction.getArenaName()) ) {
-                        m_botAction.sendSmartPrivateMessage(m_owner, "I'm already here." );
-                        m_doCome = false;
-                        return;
-                    } else if( isPublicArena(arena) && !m_opList.isSmod(m_owner) ) {
-                        m_botAction.sendSmartPrivateMessage(m_owner, "Sorry, I can't go to public arenas." );
-                        m_doCome = false;
-                        return;
-                    }
-                    m_botAction.changeArena( arena );
-                    m_doCome = false;
-                } catch (Exception e) {
-                }
-            }
-        }
-
+        if(m_opList.getAccessLevel(sender) >= m_accessLevel){
+	        if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {
+	            // Attempt to handle player commands (with oodles of TWBot backwards compatibility)
+	            if( message.equalsIgnoreCase("!where") || message.equalsIgnoreCase("!host") || message.equalsIgnoreCase("!games") ) {
+	                doWhereCmd(sender, isER);
+	                foundCmd = true;
+	            } else if( message.equalsIgnoreCase("!help") && !isER ) {
+	                m_botAction.sendSmartPrivateMessage(sender, "Hi, I'm a bot that helps host Trench Wars games!  Send !where to see who is hosting me, where at, and what they're hosting." );
+	            } else if( isER ) {
+	                if( m_owner == null && !sender.equals(m_botAction.getBotName())) {
+	                    m_owner = sender;
+	                    m_lastUse = System.currentTimeMillis();
+	                    m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
+	                    foundCmd = handleCommands(sender, message, messageType);
+	                } else {
+	                    if( m_owner.equals(sender) || sender.equals(m_botAction.getBotName()) ) {
+	                        m_lastUse = System.currentTimeMillis();
+	                        foundCmd = handleCommands(sender, message, messageType);
+	                    } else {
+	                        if( System.currentTimeMillis() > m_lastUse + OWNER_RESET_TIME ) {
+	                            m_owner = sender;
+	                            m_lastUse = System.currentTimeMillis();
+	                            m_botAction.sendSmartPrivateMessage(sender, "You are my new owner.  Use !free (or !gtfo) to relinquish ownership." );
+	                            foundCmd = handleCommands(sender, message, messageType);
+	                        } else {
+	                            if( m_ownerOverride ) {
+	                                foundCmd = handleCommands(sender, message, messageType);
+	                            } else {
+	                                if( message.startsWith("!") )
+	                                    m_botAction.sendSmartPrivateMessage(sender, "I am owned by: " + m_owner + " - last use: " + Tools.getTimeDiffString(m_lastUse, true) + "  !mybot to claim; !override to command w/o owner change." );
+	                                if( message.equalsIgnoreCase("!mybot") || message.equalsIgnoreCase("!override") )
+	                                    foundCmd = handleCommands(sender, message, messageType);
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+	        }
+	
+	        // In Follow mode: decipher *locate report and change to arena
+	        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE && !m_isLocked ) {
+	            if( message.startsWith(m_owner + " - ") ) {
+	                try {
+	                    String arena = message.substring( message.indexOf("- ") + 2 );
+	                    if( arena.equalsIgnoreCase( m_botAction.getArenaName()) ) {
+	                        m_botAction.sendSmartPrivateMessage(m_owner, "I'm already here." );
+	                        m_doCome = false;
+	                        return;
+	                    } else if( isPublicArena(arena) && m_accessLevel < OperatorList.SYSOP_LEVEL ) {
+	                        m_botAction.sendSmartPrivateMessage(m_owner, "Sorry, I can't go to public arenas." );
+	                        m_doCome = false;
+	                        return;
+	                    }
+	                    m_botAction.changeArena( arena );
+	                    m_doCome = false;
+	                } catch (Exception e) {
+	                }
+	            }
+	        }
+        }else
+        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + m_opList.accessToString(m_accessLevel) + " use.");
         if( !foundCmd )
             handleEvent((SubspaceEvent) event);
     }
@@ -295,7 +288,7 @@ public class multibot extends SubspaceBot {
         String currentArena = m_botAction.getArenaName();
         if (currentArena.equalsIgnoreCase(argString))
             throw new IllegalArgumentException("Bot is already in that arena.");
-        if (isPublicArena(argString) && !m_sysopLocked)
+        if (isPublicArena(argString) && m_accessLevel < OperatorList.SYSOP_LEVEL)
             throw new IllegalArgumentException("Bot can not go into public arenas.");
        	m_botAction.changeArena(argString);
         m_botAction.sendSmartPrivateMessage(sender, "Going to " + argString + ".");
@@ -515,12 +508,12 @@ public class multibot extends SubspaceBot {
      * @param name is the sender of the command.
      */
     private void doSmodLock(String name) {
-    	if(m_smodLocked){
+    	if(m_accessLevel == OperatorList.SMOD_LEVEL){
     		m_botAction.sendSmartPrivateMessage( name, "Smod locking has been disabled.");
-    		m_smodLocked = false;
+    		m_accessLevel = OperatorList.ER_LEVEL;
     	} else {
     		m_botAction.sendSmartPrivateMessage( name, "Smod locking has been enabled.");
-    		m_smodLocked = true;
+    		m_accessLevel = OperatorList.SMOD_LEVEL;
     	}
     }
     
@@ -530,12 +523,12 @@ public class multibot extends SubspaceBot {
      * @param name is the sender of the command.
      */
     private void doSysopLock(String name) {
-    	if(m_sysopLocked){
+    	if(m_accessLevel == OperatorList.SYSOP_LEVEL){
     		m_botAction.sendSmartPrivateMessage( name, "Sysop locking has been disabled.");
-    		m_sysopLocked = false;
+    		m_accessLevel = OperatorList.ER_LEVEL;
     	} else {
     		m_botAction.sendSmartPrivateMessage( name, "Sysop locking has been enabled.");
-    		m_sysopLocked = true;
+    		m_accessLevel = OperatorList.SYSOP_LEVEL;
     	}
     }
 

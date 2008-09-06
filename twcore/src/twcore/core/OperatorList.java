@@ -538,6 +538,27 @@ public class OperatorList {
     }
 
     /**
+     * Gets the string form of an access level.
+     * @param accessLevel - The access level.
+     * @return - The string form of the access level.
+     */
+    public String accessToString(int accessLevel){
+    	switch(accessLevel){
+	    	case PLAYER_LEVEL: return "Player";
+	    	case ZH_LEVEL: return "ZH";
+	    	case OUTSIDER_LEVEL: return "Outsider";
+	    	case ER_LEVEL: return "ER";
+	    	case MODERATOR_LEVEL: return "Moderator";
+	    	case HIGHMOD_LEVEL: return "High Moderator";
+	    	case DEV_LEVEL: return "Developer";
+	    	case SMOD_LEVEL: return "Super Moderator";
+	    	case SYSOP_LEVEL: return "System Operator";
+	    	case OWNER_LEVEL: return "Owner";
+	    	default: return null;
+    	}
+    }
+    
+    /**
      * Clears the access list.
      */
     void clear(){
