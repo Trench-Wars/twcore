@@ -37,7 +37,7 @@ public class events extends MultiUtil {
     public ArrayList<String> bFiredMsgs = new ArrayList<String>();
     public ArrayList<String> timerMsgs = new ArrayList<String>();
     
-    public TreeMap<Byte, Ball> ballMap = new TreeMap<Byte, Ball>();
+    public TreeMap<Byte, Integer> ballMap = new TreeMap<Byte, Integer>();
     public static final int SPAWN_TIME = 6010;
     
     public void init() {
@@ -119,31 +119,19 @@ public class events extends MultiUtil {
             do_clearAllMsg(name);
     }
     
-    /**
-     * Sends an unfiltered private message to everyone in the arena.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Sends an unfiltered private message to everyone in the arena. */
     public void do_massPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() )
             CodeCompiler.handleTWScript(m_botAction, msg, i.next(), m_twscript.variables, m_twscript.ACCESS_LEVEL);
     }
     
-    /**
-     * Sends an unfiltered public message to the arena.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Executes a public TWScript message. */
     public void do_pub(String name, String message){
         CodeCompiler.handleTWScript(m_botAction, message, m_twscript.variables, m_twscript.ACCESS_LEVEL);
     }
     
-    /**
-     * Adds a message for arena entrance events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for arena entrance events. */
     public void do_greetMsg(String name, String message){
         if(message.length() < 220){
             greetMsgs.add(message);
@@ -152,11 +140,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for kill events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for kill events. */
     public void do_killMsg(String name, String message){
         if(message.length() < 220){
             killMsgs.add(message);
@@ -165,11 +149,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for spawn events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for spawn events. */
     public void do_spawnMsg(String name, String message){
         if(message.length() < 220){
             spawnMsgs.add(message);
@@ -178,24 +158,16 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for fireon fired events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for weapon fired events. */
     public void do_fireMsg(String name, String message){
         if(message.length() < 220){
             fireMsgs.add(message);
-            m_botAction.sendSmartPrivateMessage( name, "fireon fired message added.");
+            m_botAction.sendSmartPrivateMessage( name, "Weapon fired message added.");
         } else
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for flag claim events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for flag claim events. */
     public void do_flagClaimedMsg(String name, String message){
         if(message.length() < 220){
             fClaimMsgs.add(message);
@@ -204,11 +176,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for flag drop events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for flag drop events. */
     public void do_flagDroppedMsg(String name, String message){
         if(message.length() < 220){
             fDropMsgs.add(message);
@@ -217,11 +185,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for ball claimed events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for ball claimed events. */
     public void do_ballClaimedMsg(String name, String message){
         if(message.length() < 220){
             bClaimMsgs.add(message);
@@ -230,11 +194,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for ball fired events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for ball fired events. */
     public void do_ballFiredMsg(String name, String message){
         if(message.length() < 220){
             bFiredMsgs.add(message);
@@ -243,11 +203,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Adds a message for timer events.
-     * @param name - The user of the bot
-     * @param message - The message to send
-     */
+    /** Adds a message for timer events. */
     public void do_timerMsg(String name, String message){
         if(message.length() < 220){
             timerMsgs.add(message);
@@ -256,11 +212,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Please submit a message of 220 characters or less.");
     }
     
-    /**
-     * Deletes a specific message.
-     * @param name - The user
-     * @param msg - The message to send
-     */
+    /** Deletes a specific message. */
     public void do_deleteMsg(String name, String message){
         int x, y;
         String[] msg = message.split(":");
@@ -287,11 +239,7 @@ public class events extends MultiUtil {
         }
     }
     
-    /**
-     * Deletes all of a message type
-     * @param name - The user
-     * @param msg - The message to send
-     */
+    /** Deletes all of a message type */
     public void do_clearMsg(String name, String msg){
         int x;
         try{
@@ -316,10 +264,7 @@ public class events extends MultiUtil {
         }
     }
     
-    /**
-     * Deletes all messages of all types
-     * @param name - The user
-     */
+    /** Deletes all messages */
     public void do_clearAllMsg(String name){
     	greetMsgs.clear();
         killMsgs.clear();
@@ -333,10 +278,7 @@ public class events extends MultiUtil {
         m_botAction.sendSmartPrivateMessage( name, "All messages cleared.");
     }
 
-    /**
-     * Displays a list of active messages
-     * @param name - The user
-     */
+    /** Displays a list of active messages */
     public void do_listMsg(String name){
         m_botAction.sendSmartPrivateMessage( name, "+---------------------Message List----------------------");
         if(greetMsgs.isEmpty())
@@ -450,9 +392,7 @@ public class events extends MultiUtil {
         m_botAction.sendSmartPrivateMessage( name, "+-------------------------------------------------------");
     }
     
-    /**
-     * Requests which events this utility watches for.
-     */
+    /** Requests which events this utility watches for. */
     public void requestEvents(ModuleEventRequester req) {
         req.request(this, EventRequester.BALL_POSITION);
         req.request(this, EventRequester.PLAYER_DEATH);
@@ -462,9 +402,7 @@ public class events extends MultiUtil {
         req.request(this, EventRequester.PLAYER_ENTERED);
     }
     
-    /**
-     * Handles PlayerEntered events.
-     */
+    /** Handles PlayerEntered events. */
     public void handleEvent(PlayerEntered event){
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
@@ -473,36 +411,33 @@ public class events extends MultiUtil {
             CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);    	
     }
     
-    /**
-     * Handles PowerBall tracking
-     */
+    /** Handles PowerBall tracking */
     public void handleEvent(BallPosition event){
         byte ID = event.getBallID();
         int carrier = event.getCarrier();
         if(!ballMap.containsKey(ID))
-                ballMap.put(ID, new Ball(-1));
-        Ball b = ballMap.get(ID);        
+                ballMap.put(ID, new Integer(-1));
+        int b = ballMap.get(ID);
         //Ball Fired
-        if(carrier == -1 && carrier < b.carrier){
-            Player p = m_botAction.getPlayer(b.carrier);
+        if(carrier == -1 && carrier < b){
+            Player p = m_botAction.getPlayer(b);
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() )
                 CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
             
         }
         //Ball Caught
-        else if(b.carrier == -1 && b.carrier < carrier){
+        else if(b == -1 && b < carrier){
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() )
                 CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
         }
-        b.updatecarrier(carrier);
+        ballMap.remove(ID);
+        ballMap.put(ID, carrier);
     }
     
-    /**
-     * Handles death events
-     */
+    /** Handles death events */
     public void handleEvent(PlayerDeath event){
         Player killed = m_botAction.getPlayer(event.getKilleeID());
         Player killer = m_botAction.getPlayer(event.getKillerID());
@@ -514,9 +449,7 @@ public class events extends MultiUtil {
         new SpawnTimer(killed);
     }
     
-    /**
-     * Handles fireon events
-     */
+    /** Handles weapon fired events */
     public void handleEvent(WeaponFired event){
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
@@ -525,9 +458,7 @@ public class events extends MultiUtil {
             CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
     }
     
-    /**
-     * Handles flag capture events
-     */
+    /** Handles flag capture events */
     public void handleEvent(FlagClaimed event){
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
@@ -536,9 +467,7 @@ public class events extends MultiUtil {
             CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
     }
     
-    /**
-     * Handles flag drop events
-     */
+    /** Handles flag drop events */
     public void handleEvent(FlagDropped event){
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if(p == null)return;
@@ -563,18 +492,5 @@ private class SpawnTimer {
         m_botAction.scheduleTask(runIt, SPAWN_TIME);
     }
 }
-    
-private class Ball {
-        private int carrier;
-        
-        private Ball(int carrier){
-            this.carrier = carrier;
-        }    
-        
-        private void updatecarrier(int id){
-            carrier = id;
-        }
-}
-
 	public void cancel() {}  
 }

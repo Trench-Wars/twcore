@@ -70,12 +70,7 @@ public class commands extends MultiUtil {
             do_listCmd(name);
     }
     
-    /**
-     * Displays a customized help menu for commands created by this utility
-     * 
-     * @param name -
-     *            The person requesting the help menu.
-     */
+    /** Displays a customized help menu for commands created by this utility */
     public void do_customHelp(String name) {
         if (commands.size() == 0)
             return;
@@ -106,9 +101,7 @@ public class commands extends MultiUtil {
         m_botAction.sendSmartPrivateMessage(name, "Action added.");
     }
     
-    /**
-     * Removes a custom action from the specified command.
-     */
+    /** Removes a custom action from the specified command. */
     public void do_removeCmd(String name, String message) {
         int index = message.indexOf(" ");
         if (index == -1) {
@@ -159,10 +152,7 @@ public class commands extends MultiUtil {
         m_botAction.sendSmartPrivateMessage(name, "Description changed.");
     }
     
-    /**
-     * Displays a list of all custom commands and their actions(including
-     * indices)
-     */
+    /** Displays a list of all custom commands and their actions(including indices) */
     public void do_listCmd(String name) {
         if (commands.size() == 0) {
             m_botAction.sendSmartPrivateMessage(name, "There are no custom commands to list.");
@@ -180,10 +170,7 @@ public class commands extends MultiUtil {
             }
         }
     }
-    
-/**
-* A Custom Command object.
-*/
+
 private class CustomCommand {
 	private ArrayList<String> messages;
     private String command;
@@ -193,28 +180,19 @@ private class CustomCommand {
     	command = cmd;
     }
         
-    /**
-     * Changes description for the customized help menu.
-     */
+    /** Changes description for the customized help menu. */
     private void describe(String message) {
         description = message;
     }
         
-    /**
-     * Adds an action to this command.
-     */
+    /** Adds an action to this command. */
     private void addMessage(String message) {
         if (messages == null)
         	messages = new ArrayList<String>();
             messages.add(message);
         }
         
-    /**
-     * Removes an action from this command
-     * 
-     * @param index -
-     *            the action's index as shown by !listcmd
-     */
+    /** Removes an action from this command */
     private void removeMessage(int index) {
         if (messages != null)
             messages.remove(index);
@@ -222,30 +200,17 @@ private class CustomCommand {
             messages = null;
         }
         
-    /**
-     * Checks to see if the given index exists
-     * 
-     * @return true if it does. else false.
-     */
+    /** Checks to see if the given index exists */
     private boolean hasIndex(int index) {
     	return messages.get(index) != null;
     }
         
-    /**
-     * Get the entire ArrayList of actions for this command.
-     * 
-     * @return the ArrayList
-     */
+    /** Get the entire ArrayList of actions for this command. */
     private ArrayList<String> getMessages() {
         return messages;
     }
         
-    /**
-     * Sends all messages/actions listed in this command to the user.
-     * 
-     * @param name -
-     *            the user.
-     */
+    /** Sends all messages/actions listed in this command to the user. */
     private void message(Player p) {
         Iterator<String> it = messages.iterator();
         while (it.hasNext())
@@ -253,15 +218,7 @@ private class CustomCommand {
     }
 }
     
-	/**
- 	* Adds space padding to the end of a string
- 	* 
- 	* @param length
- 	*            The length you want the string to be after padding
- 	* @param s
- 	*            The string to pad
- 	* @return A new padded string
- 	*/
+	/** Adds space padding to the end of a string */
 	public String padString(int length, String s) {
     	StringBuilder builder = new StringBuilder();
     	builder.append(s);
@@ -271,9 +228,6 @@ private class CustomCommand {
     	return builder.toString();
 	}
 
-    /**
-     * Required methods.
-     */
     public void cancel() {}    
     public void requestEvents(ModuleEventRequester modEventReq) {}
     

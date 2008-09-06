@@ -127,7 +127,7 @@ public class polls extends MultiUtil {
 			m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !vote favcolor:2");
 			return;
 		}
-		if(polls.get(msg[0]).votes.size() < vote || vote < 0){
+		if(polls.get(msg[0]).votes.size() <= vote || vote < 0){
 			m_botAction.sendSmartPrivateMessage( name, "The option '" + vote + "' is not valid.");
 			return;
 		}
