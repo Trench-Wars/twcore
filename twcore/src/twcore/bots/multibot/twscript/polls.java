@@ -286,7 +286,7 @@ public class polls extends MultiUtil {
 			return;
 		}
         Iterator<CustomPoll> it = polls.values().iterator();
-        m_botAction.sendSmartPrivateMessage(name, "========== Custom Polls ==========");
+        m_botAction.sendSmartPrivateMessage(name, "==================== Custom Polls ====================");
         while (it.hasNext()) {
             CustomPoll p = it.next();
             m_botAction.sendSmartPrivateMessage(name, "| Poll: " + p.pollName);
@@ -298,7 +298,7 @@ public class polls extends MultiUtil {
                 m_botAction.sendSmartPrivateMessage(name, "|         - " + p.messages.get(p.options.indexOf(msg)));
             }
         }
-        m_botAction.sendSmartPrivateMessage(name, "==================================");
+        m_botAction.sendSmartPrivateMessage(name, "======================================================");
 	}
 	
 	public void requestEvents(ModuleEventRequester req){
@@ -461,7 +461,7 @@ private class CustomPoll {
 	private String[] toStringArray(){
 		ArrayList<String> s = new ArrayList<String>();
 		Iterator<String> i = options.iterator();
-		s.add("=========== " + pollName + " ===========");
+		s.add("===================== " + pollName + " =====================");
 		s.add("| Question: " + pollQuestion);
 		s.add("| Options:");
 		while( i.hasNext() ){
@@ -469,7 +469,11 @@ private class CustomPoll {
 			s.add("|  " + options.indexOf(op) + ") " + op + " - " + votes.get(options.indexOf(op)) + " votes.");
 		}
 		s.add("| This poll is " + getScheduleString());
-		s.add("============" + toLine(pollName) + "============");
+		s.add("======================" + toLine(pollName) + "======================");
+		if(polls.size() > 1)
+			s.add("PM me with !vote " + pollName + ":<number next to your answer> to vote -" + m_botAction.getBotName());
+		else if(polls.size() == 1)
+			s.add("PM me with the number next to your answer to vote. -" + m_botAction.getBotName());
 		return s.toArray(new String[s.size()]);
 	}
 	
