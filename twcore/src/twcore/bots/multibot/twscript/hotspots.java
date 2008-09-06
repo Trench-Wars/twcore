@@ -72,7 +72,7 @@ public class hotspots extends MultiUtil {
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
-            if (m_opList.isER(name))
+            if (opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL)
                 handleCommands(name, message);
         }
     }

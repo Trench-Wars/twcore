@@ -51,7 +51,7 @@ public class commands extends MultiUtil {
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if (name == null || p == null)
             return;
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && opList.isER(name))
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL)
             handleCommands(name, message);
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && commands.containsKey(message))
             commands.get(message).message(p);

@@ -11,8 +11,8 @@ import java.util.TreeMap;
 import java.text.DecimalFormat;
 import javax.swing.text.NumberFormatter;
 
-import twcore.bots.TWScript;
 import twcore.core.BotAction;
+import twcore.core.OperatorList;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
@@ -572,7 +572,7 @@ public final class CodeCompiler {
            s.equals("*prize #-27")    ||//Negative Rocket
            s.equals("*prize #-28"))     //Negative Portal
             return true;
-        else if (accessLevel == TWScript.SYSOP_LEVEL)return true;
+        else if (accessLevel == OperatorList.SYSOP_LEVEL)return true;
         else return false;
     }
     
@@ -600,9 +600,9 @@ public final class CodeCompiler {
     			s.equals("*lockall")    ||
     			s.equals("*specall"))
            return true;
-        else if ((accessLevel == TWScript.SMOD_LEVEL) && s.startsWith("*zone "))
+        else if ((accessLevel == OperatorList.SMOD_LEVEL) && s.startsWith("*zone "))
         	return true;
-        else if (accessLevel == TWScript.SYSOP_LEVEL)return true;
+        else if (accessLevel == OperatorList.SYSOP_LEVEL)return true;
         else return false;
     }
     

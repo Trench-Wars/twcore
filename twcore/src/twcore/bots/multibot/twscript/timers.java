@@ -63,7 +63,7 @@ public class timers extends MultiUtil {
 		int messageType = event.getMessageType();
 		
 		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
-			if(opList.isER(name))
+			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL)
 				handleCommands(name, message);
 	}
 	

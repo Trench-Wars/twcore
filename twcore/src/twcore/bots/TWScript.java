@@ -17,9 +17,6 @@ public class TWScript extends MultiUtil {
     
     public OperatorList opList;
     public String database = "website";
-    public static final int LOWER_STAFF = 0;
-    public static final int SMOD_LEVEL = 1;
-    public static final int SYSOP_LEVEL = 2;
     public int ACCESS_LEVEL = 0;
     
     public TreeMap<String, String> variables = new TreeMap<String, String>();
@@ -29,6 +26,7 @@ public class TWScript extends MultiUtil {
      */
     public void init() {
         opList = m_botAction.getOperatorList();
+        ACCESS_LEVEL = OperatorList.ER_LEVEL;
     }
     
     /**
@@ -131,7 +129,7 @@ public class TWScript extends MultiUtil {
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if (name == null || p == null)
             return;
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && opList.isER(name))
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && opList.getAccessLevel(name) >= ACCESS_LEVEL)
             handleCommand(name, message);
     }
     
@@ -161,10 +159,6 @@ public class TWScript extends MultiUtil {
             doSysopOverride(name);
         if (cmd.equalsIgnoreCase("!smodlogin"))
             doSmodOverride(name);
-        if (cmd.equals("Sysop locking has been disabled."))
-        	m_botAction.sendSmartPrivateMessage( m_botAction.getBotName(), "!sysoplock");
-        if (cmd.equals("Smod locking has been disabled."))
-        	m_botAction.sendSmartPrivateMessage( m_botAction.getBotName(), "!smodlock");
     }
     
     /**
@@ -261,13 +255,12 @@ public class TWScript extends MultiUtil {
      */
     public void doSysopOverride(String name){
         if(opList.isSysop(name) && !name.contains("Bot")){
-            if(ACCESS_LEVEL == SYSOP_LEVEL){
-                ACCESS_LEVEL = 0;
+            if(ACCESS_LEVEL == OperatorList.SYSOP_LEVEL){
+                ACCESS_LEVEL = OperatorList.ER_LEVEL;
                 m_botAction.sendSmartPrivateMessage( name, "Sysop override deactivated.");
             } else {
-                ACCESS_LEVEL = SYSOP_LEVEL;
+                ACCESS_LEVEL = OperatorList.SYSOP_LEVEL;
                 m_botAction.sendSmartPrivateMessage( name, "Sysop override activated.");
-                m_botAction.sendSmartPrivateMessage( m_botAction.getBotName(), "!sysoplock");
             }
         }else
             m_botAction.sendSmartPrivateMessage( name, "Only System Operators can use this command.");
@@ -278,13 +271,12 @@ public class TWScript extends MultiUtil {
      */
     public void doSmodOverride(String name){
         if(opList.isSmod(name) && !name.contains("Bot")){
-            if(ACCESS_LEVEL == SMOD_LEVEL){
-                ACCESS_LEVEL = 0;
+            if(ACCESS_LEVEL == OperatorList.SMOD_LEVEL){
+                ACCESS_LEVEL = OperatorList.ER_LEVEL;
                 m_botAction.sendSmartPrivateMessage( name, "Smod override deactivated.");
             } else {
-                ACCESS_LEVEL = SMOD_LEVEL;
+                ACCESS_LEVEL = OperatorList.SMOD_LEVEL;
                 m_botAction.sendSmartPrivateMessage( name, "Smod override activated.");
-                m_botAction.sendSmartPrivateMessage( m_botAction.getBotName(), "!smodlock");
             }
         }else
             m_botAction.sendSmartPrivateMessage( name, "Only Super Moderators can use this command.");

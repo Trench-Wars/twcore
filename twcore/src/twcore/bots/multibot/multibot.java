@@ -516,10 +516,6 @@ public class multibot extends SubspaceBot {
      */
     private void doSmodLock(String name) {
     	if(m_smodLocked){
-    		if(m_twScript != null && m_twScript.ACCESS_LEVEL == TWScript.SMOD_LEVEL){
-    			m_botAction.sendSmartPrivateMessage( name, "Please log out with !smodlogin before unlocking");
-    			return;
-    		}
     		m_botAction.sendSmartPrivateMessage( name, "Smod locking has been disabled.");
     		m_smodLocked = false;
     	} else {
@@ -535,10 +531,6 @@ public class multibot extends SubspaceBot {
      */
     private void doSysopLock(String name) {
     	if(m_sysopLocked){
-    		if(m_twScript != null && m_twScript.ACCESS_LEVEL == TWScript.SYSOP_LEVEL){
-    			m_botAction.sendSmartPrivateMessage( name, "Please log out with !sysoplogin before unlocking");
-    			return;
-    		}
     		m_botAction.sendSmartPrivateMessage( name, "Sysop locking has been disabled.");
     		m_sysopLocked = false;
     	} else {
