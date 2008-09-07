@@ -175,7 +175,7 @@ public class multibot extends SubspaceBot {
 	                }
 	            }
 	        }
-        }else
+        }else if(isER)
         	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + m_opList.accessToString(m_accessLevel) + " use.");
         if( !foundCmd )
             handleEvent((SubspaceEvent) event);
