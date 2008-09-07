@@ -38,7 +38,7 @@ public class chatrelaybot extends SubspaceBot {
     		int chatNumber = event.getChatNumber();
     		String sendMessage = sender + ":" + message;
     		if(chatNumber == 2) {
-    			if(m_botAction.getOperatorList().isZH(sender)) {
+    			if(m_botAction.getOperatorList().isBot(sender)) {
     				IPCMessage sendIPCMessage = new IPCMessage(sendMessage, "staff", m_botAction.getBotName());
     				m_botAction.ipcTransmit("crosszones", sendIPCMessage);
     			}

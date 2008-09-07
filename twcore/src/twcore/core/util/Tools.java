@@ -284,7 +284,7 @@ public final class Tools {
     		case OperatorList.MODERATOR_LEVEL: return "Moderator";
     		case OperatorList.ER_LEVEL: return "Event Referee";
     		case OperatorList.OUTSIDER_LEVEL: return "Outsider";
-    		case OperatorList.ZH_LEVEL: return "Zone Helper";
+    		case OperatorList.BOT_LEVEL: return "Bot";
     		case OperatorList.PLAYER_LEVEL: return "Player";
     		default: return "Unknown";
     	}
@@ -300,7 +300,7 @@ public final class Tools {
 			case OperatorList.MODERATOR_LEVEL: return "Mod";
 			case OperatorList.ER_LEVEL: return "ER";
 			case OperatorList.OUTSIDER_LEVEL: return "Outs";
-			case OperatorList.ZH_LEVEL: return "ZH";
+			case OperatorList.BOT_LEVEL: return "Bot";
 			case OperatorList.PLAYER_LEVEL: return "Player";
 			default: return "?";
 		}

@@ -75,7 +75,7 @@ public class eventbot extends SubspaceBot {
         commandInterpreter.registerCommand("!request", acceptedMessageTypes, this, "cmdRequest");
         
         // ZH+
-        int level = OperatorList.ZH_LEVEL;
+        int level = OperatorList.BOT_LEVEL;
         commandInterpreter.registerCommand("!subscribe", acceptedMessageTypes, this, "cmdSubscribe", level);
         
         // ER+
@@ -156,10 +156,10 @@ public class eventbot extends SubspaceBot {
     	
     	m_botAction.smartPrivateMessageSpam(name, startCommands);
     	
-    	if(!m_opList.isZH(name))   // Public only, not staff
+    	if(!m_opList.isBot(name))   // Public only, not staff
     	    m_botAction.smartPrivateMessageSpam(name, publicCommands);
     	
-    	if(m_opList.isZH(name))    // ZH+
+    	if(m_opList.isBot(name))    // ZH+
     	    m_botAction.smartPrivateMessageSpam(name, zhCommands);
     	
     	if(m_opList.isER(name))    // ER+
@@ -199,7 +199,7 @@ public class eventbot extends SubspaceBot {
     	}
     	
     	// Staff shouldn't make !requests
-    	if(m_botAction.getOperatorList().isZH(name)) {
+    	if(m_botAction.getOperatorList().isBot(name)) {
     		m_botAction.sendSmartPrivateMessage(name, "I'm sorry but staff can't make !requests.");
     		return;
     	}
@@ -495,7 +495,7 @@ public class eventbot extends SubspaceBot {
     	
     	if(name.equalsIgnoreCase(playername)) {
     	    m_botAction.sendSmartPrivateMessage(name, "You can't ban yourself.");
-    	} else if(m_opList.isZH(playername)) {
+    	} else if(m_opList.isBot(playername)) {
     	    m_botAction.sendSmartPrivateMessage(name, "You can't ban a staff member.");
     	} else if(isBannedPlayer(playername)) {
     		m_botAction.sendSmartPrivateMessage(name, "Player '"+playername+"' is already banned.");

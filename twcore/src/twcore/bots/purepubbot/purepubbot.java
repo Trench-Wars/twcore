@@ -559,7 +559,7 @@ public class purepubbot extends SubspaceBot
             else if(command.equals("!terr"))
                 doTerrCmd(sender);
             else if(command.startsWith("!whereis "))
-                doWhereIsCmd(sender, command.substring(9), opList.isZH(sender));
+                doWhereIsCmd(sender, command.substring(9), opList.isBot(sender));
             else if(command.startsWith("!ship "))
                 doShipCmd(sender, command.substring(6));
             else if(command.equals("!clearmines"))

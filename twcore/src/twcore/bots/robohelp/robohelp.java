@@ -373,7 +373,7 @@ public class robohelp extends SubspaceBot {
 
         lastHelpRequestName = playerName;
 
-        if( opList.isZH( playerName ) ){
+        if( opList.isBot( playerName ) ){
             return;
         }
 
@@ -418,7 +418,7 @@ public class robohelp extends SubspaceBot {
 
         lastHelpRequestName = playerName;
 
-        if( opList.isZH( playerName ) ){
+        if( opList.isBot( playerName ) ){
             String tempMessage = "Staff members: Please use :" + m_botAction.getBotName() + ":!lookup instead of ?help!";
 
             response = new String[1];
@@ -517,7 +517,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleLast( String playerName, String message ){
-        if (!opList.isZH(playerName))
+        if (!opList.isBot(playerName))
           return;
         String[]        responses;
         HelpRequest     helpRequest;
@@ -719,7 +719,7 @@ public class robohelp extends SubspaceBot {
         } else {
             if( !opList.isER( playerName ) ){
                 m_botAction.sendChatMessage( "Only ER's and above are authorized to ban." );
-            } else if( opList.isSmod( playerName ) && (opList.isZH( name ) && !opList.isSysop(name)) ){
+            } else if( opList.isSmod( playerName ) && (opList.isBot( name ) && !opList.isSysop(name)) ){
                 m_lastBanner = playerName;
                 m_banPending = true;
                 m_botAction.sendRemotePrivateMessage( name, "You have been banned for abuse as staff member. Depending on the Dean of Staff's decisions further action will be taken!" );
@@ -727,7 +727,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendUnfilteredPublicMessage( "?ban -a3 -e30 " + name );
                 m_botAction.sendChatMessage( "Staffer \"" + name + "\" has been banned for abuse." );
                 m_playerList.remove( name );
-            } else if( opList.isZH( name ) ){
+            } else if( opList.isBot( name ) ){
                 m_botAction.sendChatMessage( "Are you nuts?  You can't ban a staff member!" );
             } else {
                 helpRequest = m_playerList.get( name.toLowerCase() );
@@ -861,7 +861,7 @@ public class robohelp extends SubspaceBot {
     	// 2. Query the database
     	
     	// Only staff allowed to do this command
-    	if(opList.isZH(name)==false)
+    	if(opList.isBot(name)==false)
     		return;
     	
     	String date = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() );
@@ -938,7 +938,7 @@ public class robohelp extends SubspaceBot {
     			showPersonalStats = false;
     		}
     		
-    	} else if((opList.isZHExact(name) && message.length() == 0) || message.startsWith("zh")) {
+    	} else if((opList.isBotExact(name) && message.length() == 0) || message.startsWith("zh")) {
     		// Staffer> !mystats
         	// Staffer> !mystats zh
     		date = date + "-01";
@@ -965,7 +965,7 @@ public class robohelp extends SubspaceBot {
 			// Staffer> !mystats <name>
 			String playername = message;
 			
-			if(opList.isZH(playername)) {
+			if(opList.isBot(playername)) {
 				if(opList.isERExact(playername)) {
 					query 	  = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' AND fcUserName LIKE '"+playername+"' GROUP BY fcUserName";
 		    		rankQuery = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' AND fcUserName LIKE '"+playername+"' GROUP BY fcUserName";
@@ -1139,7 +1139,7 @@ public class robohelp extends SubspaceBot {
             " !mystats <month>-<year> [above arguments] - Returns the top/call count from specified",
             "                                             month-year. F.ex: !mystats 08-2007 mod 50"
         };
-        if( m_botAction.getOperatorList().isZH( playerName ) )
+        if( m_botAction.getOperatorList().isBot( playerName ) )
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
                 
         String[] OwnerHelpText = {

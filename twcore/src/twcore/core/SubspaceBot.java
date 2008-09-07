@@ -327,7 +327,12 @@ public abstract class SubspaceBot {
     public void handleEvent( LoggedOn event ){
 
         Tools.printLog( m_botAction.getBotName() + ": Logon not handled.  Joining #robopark" );
+        
+        // Join default arena
         m_botAction.joinArena( "#robopark" );
+        
+        // Identify as bot on the operatorlist
+        m_botAction.getOperatorList().makeBot(m_botAction.getBotName());
     }
 
     /**

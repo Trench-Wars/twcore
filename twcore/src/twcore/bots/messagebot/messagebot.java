@@ -202,7 +202,7 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "Sorry, this channel is already owned.");
     		return;
     	}
-    	if(!m_botAction.getOperatorList().isZH(name))
+    	if(!m_botAction.getOperatorList().isBot(name))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "Sorry, you need to be a ZH+ to create a channel.");
     		return;
@@ -675,7 +675,7 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !destroy <channel>            - Destroys <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !accept <channel>:<name>      - Accepts <name>'s request to join <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !decline <channel>:<name>     - Declines <name>'s request to join <channel>.");
-		    if(m_botAction.getOperatorList().isZH(name))   m_botAction.sendSmartPrivateMessage(name, "    !create <channel>             - Creates a channel with the name <channel>.");
+		    if(m_botAction.getOperatorList().isBot(name))   m_botAction.sendSmartPrivateMessage(name, "    !create <channel>             - Creates a channel with the name <channel>.");
 	    } else if(message.toLowerCase().startsWith("n")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "News interface commands:");
 	    	m_botAction.sendSmartPrivateMessage(name, "    !readnews <#>                 - PM's you news article #<#>.");

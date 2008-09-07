@@ -391,16 +391,16 @@ public class HubBot extends SubspaceBot {
         		}
         	}
 
-        	// ZHs
-        	HashSet<String> zhs = (list.getAllOfAccessLevel(OperatorList.ZH_LEVEL));
-        	if(zhs.size() > 0) {
-        		m_botAction.sendSmartPrivateMessage( messager, "ZHs ("+zhs.size()+"):");
+        	// Bots
+        	HashSet<String> bots = (list.getAllOfAccessLevel(OperatorList.BOT_LEVEL));
+        	if(bots.size() > 0) {
+        		m_botAction.sendSmartPrivateMessage( messager, "Operators that have identified themselves as bots ("+bots.size()+"):");
 
         		String pm = "  ";
 
-        		for(String zh:zhs) {
+        		for(String bot:bots) {
         			if(pm.length() < linelength) {
-        				pm += zh + ", ";
+        				pm += bot + ", ";
         			} else {
         				m_botAction.sendSmartPrivateMessage(messager, pm);
         				pm = "  ";
@@ -685,7 +685,7 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isOutsider( messager ) ){
             spawn( messager, message );
         } else {
-            if( m_botAction.getOperatorList().isZH(messager) ) {
+            if( m_botAction.getOperatorList().isBot(messager) ) {
                 int allowSpawn = m_botAction.getGeneralSettings().getInt( "AllowZHSpawning" );
                 if( allowSpawn == 2 || allowSpawn == 1 && message.toLowerCase().trim().equals("matchbot") ) {
                     spawn( messager, message );

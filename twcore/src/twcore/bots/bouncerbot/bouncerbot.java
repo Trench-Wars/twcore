@@ -89,7 +89,7 @@ public class bouncerbot extends SubspaceBot {
             if( m_opList.isSysop( event.getPlayerName() ) )
                 return;
         } else {
-            if( m_opList.isZH( event.getPlayerName() ) )
+            if( m_opList.isBot( event.getPlayerName() ) )
                 return;
         }
         if( m_invitedPlayers.contains( event.getPlayerName().toLowerCase()))

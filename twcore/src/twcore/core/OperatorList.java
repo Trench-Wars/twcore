@@ -17,6 +17,8 @@ import java.util.Map.Entry;
 import twcore.core.util.Tools;
 
 /**
+ * TODO: This needs updating
+ * 
  * Stores the access list as read from the server-based files moderate.txt, smod.txt,
  * and sysop.txt, and the bot core config files owner.cfg, outsider.cfg, and
  * highmod.cfg.  Is able to answer access-specific queries based on the information
@@ -27,7 +29,7 @@ import twcore.core.util.Tools;
  * #   Title            Description                                      Read from
  *
  * 0 - Normal player    no special privileges
- * 1 - Zone Helper      extremely limited privileges                     [moderate.txt]
+ * 1 - Bot              used for determining if player is a bot          [moderate.txt]
  * 2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]
  * 3 - Event Ref        regular privileges; first stage of real access   [moderate.txt]
  * 4 - Moderator        expanded privileges for administrative duties    [moderate.txt]
@@ -41,7 +43,7 @@ import twcore.core.util.Tools;
 public class OperatorList {
 	
 	public static final int PLAYER_LEVEL = 0;
-    public static final int ZH_LEVEL = 1;
+    public static final int BOT_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
     public static final int ER_LEVEL = 3;
     public static final int MODERATOR_LEVEL = 4;
@@ -53,7 +55,7 @@ public class OperatorList {
     
     /**
      * This Hashmap contains all the operators
-     * Key:   Name of the operator
+     * Key:   Name of the operator [lowercase]
      * Value: level id (0-9)
      */
     private static Map<String,Integer> operators;
@@ -83,11 +85,11 @@ public class OperatorList {
         
         // temporary map for reading out the configuration
         String[] operators_keys = { 
-                 "level_player", "level_zh", "level_outsider", "level_er", "level_moderator", 
+                 "level_player", "level_bot", "level_outsider", "level_er", "level_moderator", 
                  "level_highmod", "level_dev", "level_smod", "level_sysop", "level_owner" 
         };
         String[] auto_assign_keys = {
-                "assign_player", "assign_zh", "assign_outsider", "assign_er", "assign_moderator", 
+                "assign_player", "assign_bot", "assign_outsider", "assign_er", "assign_moderator", 
                 "assign_highmod", "assign_dev", "assign_smod", "assign_sysop", "assign_owner" 
         };
 
@@ -166,6 +168,12 @@ public class OperatorList {
                         
                         name = line.trim().toLowerCase();
                         
+                        // Ignore bot names that are already on the operator list as bot level
+                        if(operators.containsKey(name) && operators.get(name) == OperatorList.BOT_LEVEL) {
+                            continue;
+                        }
+                        
+                        // if we're not using auto-assign options "tag" or "line"
                         if(autoAssignSetting2 == null || autoAssignSetting2.replace(":", "").length() == 0) {
                             if(operators.containsKey(name) && operators.get(name) >= level) {
                                 continue;
@@ -173,6 +181,7 @@ public class OperatorList {
                                 operators.put(name, level);
                             }
                         }
+                        
                         // If an operator is added below and he is already known in the operators map, he will
                         // be overwritten. Because operators are read in from highest (owner) to lowest (ZH),
                         // everyone will get the correct level
@@ -248,13 +257,14 @@ public class OperatorList {
     }
 
     /**
-     * Check if a given name is at least of ZH status.
+     * Checks if a given name has at least bot operator level status. 
+     * Bots automatically make themselves the bot operator level after logging in.
      * @param name Name in question
-     * @return True if player is at least a ZH
+     * @return True if player has at least the bot operator level status
      */
-    public boolean isZH( String name ){
+    public boolean isBot( String name ){
 
-        if( getAccessLevel( name ) >= ZH_LEVEL ){
+        if( getAccessLevel( name ) >= BOT_LEVEL ){
             return true;
         } else {
             return false;
@@ -262,17 +272,29 @@ public class OperatorList {
     }
 
     /**
-     * Check if a given name is a ZH.
+     * Checks if a given name has bot operator level status.
+     * Bots automatically make themselves the bot operator level after logging in.
+     * 
      * @param name Name in question
-     * @return True if player is a ZH
+     * @return True if player has the bot operator level status
      */
-    public boolean isZHExact( String name ){
+    public boolean isBotExact( String name ){
 
-        if( getAccessLevel( name ) == ZH_LEVEL ){
+        if( getAccessLevel( name ) == BOT_LEVEL ){
             return true;
         } else {
             return false;
         }
+    }
+    
+    /**
+     * This method sets the specified name to the bot operator level status
+     * It should only be used by the SubspaceBot class for identifying themselves as bots.
+     *  
+     * @param name
+     */
+    public void makeBot( String name ) {
+        operators.put( name.toLowerCase() , OperatorList.BOT_LEVEL );
     }
 
     /**
@@ -545,7 +567,7 @@ public class OperatorList {
     public String accessToString(int accessLevel){
     	switch(accessLevel){
 	    	case PLAYER_LEVEL: return "Player";
-	    	case ZH_LEVEL: return "ZH";
+	    	case BOT_LEVEL: return "ZH";
 	    	case OUTSIDER_LEVEL: return "Outsider";
 	    	case ER_LEVEL: return "ER";
 	    	case MODERATOR_LEVEL: return "Moderator";
@@ -562,7 +584,14 @@ public class OperatorList {
      * Clears the access list.
      */
     void clear(){
-        operators.clear();
+        
+        // Custom clean method of operators
+        // Leave the bot operator list entries intact
+        for(String operator:operators.keySet()) {
+            if(operators.get(operator) != OperatorList.BOT_LEVEL) {
+                operators.remove(operator);
+            }
+        }
         autoAssign.clear();
     }
 }

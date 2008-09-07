@@ -67,7 +67,7 @@ public class bbj extends MultiModule
 		if(enabled)
 		{
 			String name = m_botAction.getPlayerName(event.getPlayerID());
-			if(m_botAction.getOperatorList().isZH(name) || !blocked.contains(name.toLowerCase()))
+			if(m_botAction.getOperatorList().isBot(name) || !blocked.contains(name.toLowerCase()))
 				return;
 			else
 				startCountDown(name);

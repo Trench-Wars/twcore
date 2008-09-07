@@ -312,7 +312,7 @@ public class zonerbot extends SubspaceBot
     Advert advert = advertQueue.get(argString.toLowerCase());
     String advertText;
 
-    if(!opList.isZH(argString))
+    if(!opList.isBot(argString))
       throw new RuntimeException("You are not authorized to view that advert.");
     if(advert == null)
       throw new RuntimeException(argString + " has not yet claimed the advert.");
@@ -553,7 +553,7 @@ public class zonerbot extends SubspaceBot
   {
     OperatorList opList = m_botAction.getOperatorList();
 
-    if(!opList.isZH(argString) || opList.isER(argString))
+    if(!opList.isBot(argString) || opList.isER(argString))
       throw new IllegalArgumentException("The player that you are granting the advert to must be a ZH.");
     doClaimCmd(argString, true);
     m_botAction.sendSmartPrivateMessage(sender, argString + " granted an advert.");

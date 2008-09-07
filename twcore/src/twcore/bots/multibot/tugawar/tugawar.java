@@ -79,7 +79,7 @@ public class tugawar extends MultiModule {
             while(results.next()) {
                 String name = results.getString("fcUserName");
                 int id = results.getInt("fnCallID");
-                if(!opList.isZH(name)) {
+                if(!opList.isBot(name)) {
                     m_botAction.SQLQueryAndClose(database, "DELETE FROM tblCall WHERE fnCallID = "+id);
                     k++;
                 }

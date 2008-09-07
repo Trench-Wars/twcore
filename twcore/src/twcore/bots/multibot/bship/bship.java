@@ -466,7 +466,7 @@ public class bship extends MultiModule implements TSChangeListener
 			m_botAction.sendPrivateMessage(name, "Nothing special going on.");
 
 			//For staff, display current main game configuration
-			if(opList.isZH(name))
+			if(opList.isBot(name))
 				m_botAction.sendPrivateMessage(name, "Setup:  Teams="+ teams +" Board="+ board
 						+" Lives="+ maxlives +" Cap Ship Locking="+ cslock + " Limit="+ cslimit);
 		}

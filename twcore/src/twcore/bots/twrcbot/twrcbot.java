@@ -200,7 +200,7 @@ public class twrcbot extends SubspaceBot {
 		            m_botAction.sendPrivateMessage(name, "You can't remove yourself.");
 		            return;
 		        }
-		        if(!m_botAction.getOperatorList().isZH(name) && m_botAction.getOperatorList().isZH(deloperator)) {
+		        if(!m_botAction.getOperatorList().isBot(name) && m_botAction.getOperatorList().isBot(deloperator)) {
 		            m_botAction.sendPrivateMessage(name, "You can't remove staff members from Operator status.");
 		            return;
 		        }
