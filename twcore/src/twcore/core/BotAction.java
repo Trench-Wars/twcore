@@ -152,7 +152,7 @@ public class BotAction
      * only method that a TimerTask must override is <i>public void run()</i>.
      * <p>See the Task Scheduling heading in BotAction source to learn about task scheduling.
      * @param task TimerTask to be executed
-     * @param delayms Length of time before execution, in milliseconds
+     * @param delayms Length of time before execution, in milliseconds (time in ms. relative to the current time)
      * @param periodms Delay between executions after the initial execution, in milliseconds
      */
     public void scheduleTaskAtFixedRate(TimerTask task, long delayms, long periodms)
