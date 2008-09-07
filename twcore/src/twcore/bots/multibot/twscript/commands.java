@@ -214,7 +214,7 @@ private class CustomCommand {
     private void message(Player p) {
         Iterator<String> it = messages.iterator();
         while (it.hasNext())
-        	CodeCompiler.handleTWScript(m_botAction, it.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+        	CodeCompiler.handleTWScript(m_botAction, it.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);
     }
 }
     

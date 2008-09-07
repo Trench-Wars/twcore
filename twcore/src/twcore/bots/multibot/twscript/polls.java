@@ -364,7 +364,7 @@ private class CustomPoll {
 			results.add("There was a tie between votes. No action taken.");
 		else{
 			results.add("Winner: " + winners.get(0) + " - " + options.get(winners.get(0)));
-			CodeCompiler.handleTWScript(m_botAction, messages.get(winners.get(0)), m_botAction.getPlayer(m_botAction.getBotName()), m_twscript.variables, m_twscript.ACCESS_LEVEL);
+			CodeCompiler.handleTWScript(m_botAction, messages.get(winners.get(0)), m_botAction.getPlayer(m_botAction.getBotName()), m_twscript, m_twscript.ACCESS_LEVEL);
 		}
 		m_botAction.arenaMessageSpam(results.toArray(new String[results.size()]));
 	}
@@ -607,5 +607,10 @@ private class NameIPMID implements Comparable<NameIPMID>{
 		return s;
 	}
 	
-	public void cancel(){}
+	public void cancel(){
+		for(CustomPoll poll:polls.values()){
+			poll.cancelTask();
+		}
+		polls.clear();
+	}
 }

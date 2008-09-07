@@ -82,7 +82,7 @@ public class events extends MultiUtil {
             if(p == null)return;
             Iterator<String> i = timerMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);        	
+                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);        	
         }
     }
     
@@ -123,12 +123,12 @@ public class events extends MultiUtil {
     public void do_massPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, msg, i.next(), m_twscript.variables, m_twscript.ACCESS_LEVEL);
+            CodeCompiler.handleTWScript(m_botAction, msg, i.next(), m_twscript, m_twscript.ACCESS_LEVEL);
     }
     
     /** Executes a public TWScript message. */
     public void do_pub(String name, String message){
-        CodeCompiler.handleTWScript(m_botAction, message, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+        CodeCompiler.handleTWScript(m_botAction, message, m_twscript, m_twscript.ACCESS_LEVEL);
     }
     
     /** Adds a message for arena entrance events. */
@@ -408,7 +408,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = greetMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);    	
+            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);    	
     }
     
     /** Handles PowerBall tracking */
@@ -423,7 +423,7 @@ public class events extends MultiUtil {
             Player p = m_botAction.getPlayer(b);
             Iterator<String> i = bFiredMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);
             
         }
         //Ball Caught
@@ -431,7 +431,7 @@ public class events extends MultiUtil {
             Player p = m_botAction.getPlayer(carrier);
             Iterator<String> i = bClaimMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);
         }
         ballMap.remove(ID);
         ballMap.put(ID, carrier);
@@ -444,7 +444,7 @@ public class events extends MultiUtil {
         if(killed == null || killer == null)return;
         Iterator<String> i = killMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, i.next(), killer, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+            CodeCompiler.handleTWScript(m_botAction, i.next(), killer, m_twscript, m_twscript.ACCESS_LEVEL);
 
         new SpawnTimer(killed);
     }
@@ -455,7 +455,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fireMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);
     }
     
     /** Handles flag capture events */
@@ -464,7 +464,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fClaimMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);
     }
     
     /** Handles flag drop events */
@@ -473,7 +473,7 @@ public class events extends MultiUtil {
         if(p == null)return;
         Iterator<String> i = fDropMsgs.iterator();
         while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+            CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);
     }
     
 private class SpawnTimer {
@@ -482,7 +482,7 @@ private class SpawnTimer {
         public void run() {
             Iterator<String> i = spawnMsgs.iterator();
             while( i.hasNext() )
-                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript.variables, m_twscript.ACCESS_LEVEL);
+                CodeCompiler.handleTWScript(m_botAction, i.next(), p, m_twscript, m_twscript.ACCESS_LEVEL);
                 
         }
     };

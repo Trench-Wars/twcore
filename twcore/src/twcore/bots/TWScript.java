@@ -20,6 +20,7 @@ public class TWScript extends MultiUtil {
     public int ACCESS_LEVEL = 0;
     
     public TreeMap<String, String> variables = new TreeMap<String, String>();
+    public TreeMap<String, String> constants = new TreeMap<String, String>();
     
     /**
      * Initializes.
@@ -27,6 +28,7 @@ public class TWScript extends MultiUtil {
     public void init() {
         opList = m_botAction.getOperatorList();
         ACCESS_LEVEL = OperatorList.ER_LEVEL;
+        addConstantVariables();
     }
     
     /**
@@ -63,6 +65,7 @@ public class TWScript extends MultiUtil {
                 "| @wins             - The player's wins.              |",
                 "| @losses           - The player's losses.            |",
                 "| @frequency        - The player's frequency.         |",
+                "| @oplevel          - The player's op access level.   |",
                 "| @id               - The player's id(not userid)     |",
                 "| @botname          - The bot's name.                 |",
                 "| @shipnum          - The player's ship number.       |",
@@ -120,6 +123,54 @@ public class TWScript extends MultiUtil {
             return msg;
     }
     
+    public static String[] getConstantsMessage(){
+    	String msg[] = {
+                "+============ Constants ============+",
+                "|     Constant          Value       |",
+                "| ----------- Op Levels ----------- |",
+                "|    _PLAYER_             0         |",
+                "|    _ZH_                 1         |",
+                "|    _OUTSIDER_           2         |",
+                "|    _ER_                 3         |",
+                "|    _MODERATOR_          4         |",
+                "|    _HIGHMOD_            5         |",
+                "|    _DEV_                6         |",
+                "|    _SMOD_               7         |",
+                "|    _SYSOP_              8         |",
+                "|    _OWNER_              9         |",
+                "| ------------- Prizes ------------ |",
+                "|    _STEALTH_            4         |",
+                "|    _CLOAK_              5         |",
+                "|    _XRADAR_             6         |",
+                "|    _WARP_               7         |",
+                "|    _FULLCHARGE_         13        |",
+                "|    _ENGINESHUTDOWN_     14        |",
+                "|    _MULTIFIRE_          15        |",
+                "|    _SUPER_              17        |",
+                "|    _SHIELDS_            18        |",
+                "|    _SHRAPNEL_           19        |",
+                "|    _ANTIWARP_           20        |",
+                "|    _REPEL_              21        |",
+                "|    _BURST_              22        |",
+                "|    _DECOY_              23        |",
+                "|    _THOR_               24        |",
+                "|    _MULTIPRIZE_         25        |",
+                "|    _BRICK_              26        |",
+                "|    _ROCKET_             27        |",
+                "|    _PORTAL_             28        |",
+                "| ----------- Math/Time ----------- |",
+                "|    _PI_               3.14159265  |",
+                "|    _E_                2.71828183  |",
+                "|    _SECOND_           1000        |",
+                "|    _MINUTE_           60000       |",
+                "|    _HOUR_             3600000     |",
+                "|    _DAY_              86400000    |",
+                "|    _WEEK_             604800000   |",
+                "+===================================+",
+    	};
+    	return msg;
+    }
+    
     /**
      * Handles messaging.
      */
@@ -154,7 +205,9 @@ public class TWScript extends MultiUtil {
         if (cmd.equalsIgnoreCase("!listkeys"))
         	m_botAction.smartPrivateMessageSpam( name, getPrivateKeysMessage());
         if (cmd.equalsIgnoreCase("!listpubkeys"))
-        	m_botAction.smartPrivateMessageSpam(name, getPublicKeysMessage());
+        	m_botAction.smartPrivateMessageSpam( name, getPublicKeysMessage());
+        if (cmd.equalsIgnoreCase("!constants"))
+        	m_botAction.smartPrivateMessageSpam( name, getConstantsMessage());
         if (cmd.equalsIgnoreCase("!sysoplogin"))
             doSysopOverride(name);
         if (cmd.equalsIgnoreCase("!smodlogin"))
@@ -184,6 +237,55 @@ public class TWScript extends MultiUtil {
         } catch (Exception e) {
             Tools.printStackTrace(e);
         }
+    }
+    
+    /**
+     * Adds constants to variables.
+     */
+    public void addConstantVariables(){
+    	//ACCESS LEVELS
+    	constants.put("_PLAYER_", Integer.toString(OperatorList.PLAYER_LEVEL));
+    	constants.put("_ZH_", Integer.toString(OperatorList.ZH_LEVEL));
+    	constants.put("_OUTSIDER_", Integer.toString(OperatorList.OUTSIDER_LEVEL));
+    	constants.put("_ER_", Integer.toString(OperatorList.ER_LEVEL));
+    	constants.put("_MODERATOR_", Integer.toString(OperatorList.MODERATOR_LEVEL));
+    	constants.put("_HIGHMOD_", Integer.toString(OperatorList.HIGHMOD_LEVEL));
+    	constants.put("_DEV_", Integer.toString(OperatorList.DEV_LEVEL));
+    	constants.put("_SMOD_", Integer.toString(OperatorList.SMOD_LEVEL));
+    	constants.put("_SYSOP_", Integer.toString(OperatorList.SYSOP_LEVEL));
+    	constants.put("_OWNER_", Integer.toString(OperatorList.OWNER_LEVEL));
+    	
+    	//PRIZES
+    	constants.put("_STEALTH_", Integer.toString(Tools.Prize.STEALTH));
+    	constants.put("_CLOAK_", Integer.toString(Tools.Prize.CLOAK));
+    	constants.put("_XRADAR_", Integer.toString(Tools.Prize.XRADAR));
+    	constants.put("_WARP_", Integer.toString(Tools.Prize.WARP));
+    	constants.put("_FULLCHARGE_", Integer.toString(Tools.Prize.FULLCHARGE));
+    	constants.put("_ENGINESHUTDOWN_", Integer.toString(Tools.Prize.ENGINE_SHUTDOWN));
+    	constants.put("_MULTIFIRE_", Integer.toString(Tools.Prize.MULTIFIRE));
+    	constants.put("_SUPER_", Integer.toString(Tools.Prize.SUPER));
+    	constants.put("_SHIELDS_", Integer.toString(Tools.Prize.SHIELDS));
+    	constants.put("_SHRAPNEL_", Integer.toString(Tools.Prize.SHRAPNEL));
+    	constants.put("_ANTIWARP_", Integer.toString(Tools.Prize.ANTIWARP));
+    	constants.put("_REPEL_", Integer.toString(Tools.Prize.REPEL));
+    	constants.put("_BURST_", Integer.toString(Tools.Prize.BURST));
+    	constants.put("_DECOY_", Integer.toString(Tools.Prize.DECOY));
+    	constants.put("_THOR_", Integer.toString(Tools.Prize.THOR));
+    	constants.put("_MULTIPRIZE_", Integer.toString(Tools.Prize.MULTIPRIZE));
+    	constants.put("_BRICK_", Integer.toString(Tools.Prize.BRICK));
+    	constants.put("_ROCKET_", Integer.toString(Tools.Prize.ROCKET));
+    	constants.put("_PORTAL_", Integer.toString(Tools.Prize.STEALTH));
+    	
+    	//MATH CONSTANTS
+    	constants.put("_PI_", Double.toString(Math.PI));
+    	constants.put("_E_", Double.toString(Math.E));
+    	
+    	//TIME CONSTANTS
+    	constants.put("_SECOND_", Integer.toString(Tools.TimeInMillis.SECOND));
+    	constants.put("_MINUTE_", Integer.toString(Tools.TimeInMillis.MINUTE));
+    	constants.put("_HOUR_", Integer.toString(Tools.TimeInMillis.HOUR));
+    	constants.put("_DAY_", Integer.toString(Tools.TimeInMillis.DAY));
+    	constants.put("_WEEK_", Integer.toString(Tools.TimeInMillis.WEEK));
     }
     
     /**

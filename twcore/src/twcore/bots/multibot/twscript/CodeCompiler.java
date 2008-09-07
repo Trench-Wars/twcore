@@ -7,10 +7,10 @@ import java.util.Random;
 import java.util.TimeZone;
 import java.util.Iterator;
 import java.util.ArrayList;
-import java.util.TreeMap;
 import java.text.DecimalFormat;
 import javax.swing.text.NumberFormatter;
 
+import twcore.bots.TWScript;
 import twcore.core.BotAction;
 import twcore.core.OperatorList;
 import twcore.core.game.Player;
@@ -27,10 +27,12 @@ public final class CodeCompiler {
     
 	public static DecimalFormat decForm = new DecimalFormat("0.####");
 	public static NumberFormatter format = new NumberFormatter(decForm);
+	public static OperatorList opList;
 	
-    public static void handleTWScript(BotAction bot, String message, Player p, TreeMap<String, String> variables, int accessLevel){
+    public static void handleTWScript(BotAction bot, String message, Player p, TWScript tws, int accessLevel){
     	try{
-    		message = replaceKeys(bot, p, variables, message);
+    		opList = bot.getOperatorList();
+    		message = replaceKeys(bot, p, tws, message);
     		if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message, accessLevel))
     			message = null;
     		if (message != null && message.indexOf('%') == -1)
@@ -45,9 +47,10 @@ public final class CodeCompiler {
     	}
     }
     
-    public static void handleTWScript(BotAction bot, String message, TreeMap<String, String> variables, int accessLevel){
+    public static void handleTWScript(BotAction bot, String message, TWScript tws, int accessLevel){
     	try{
-        	message = replaceKeys(bot, null, variables, message);
+    		opList = bot.getOperatorList();
+        	message = replaceKeys(bot, null, tws, message);
         	if(message != null && !isAllowedPublicCommand(message, accessLevel))
             	message = null;
         	if (message != null && message.indexOf('%') == -1)
@@ -87,17 +90,24 @@ public final class CodeCompiler {
      * @param message - The original message to be changed
      * @return - The changed message. Can return null.
      */
-    public static String replaceKeys(BotAction bot, Player p, TreeMap<String, String> variables, String message){
+    public static String replaceKeys(BotAction bot, Player p, TWScript tws, String message){
         Random rand = new Random();
         Date today = Calendar.getInstance().getTime();
         TimeZone tz = TimeZone.getDefault();
-        if(variables != null){
-        	Iterator<String> iter = variables.keySet().iterator();
+        if(tws != null && tws.variables != null){
+        	Iterator<String> iter = tws.variables.keySet().iterator();
         	while( iter.hasNext() ){
         		String varName = iter.next();
-        		String varVal = variables.get(varName);
+        		String varVal = tws.variables.get(varName);
         		if(message.contains(varName))
         			message = message.replace(varName, varVal);
+        	}
+        	Iterator<String> iter2 = tws.constants.keySet().iterator();
+        	while( iter2.hasNext() ){
+        		String conName = iter2.next();
+        		String conVal = tws.constants.get(conName);
+        		if(message.contains(conName))
+        			message = message.replace(conName, conVal);
         	}
         }
         if(p != null){
@@ -131,6 +141,8 @@ public final class CodeCompiler {
             	message = message.replace("@flags", Integer.toString(p.getFlagsCarried()));
         	if(message.contains("@teamflags"))
             	message = message.replace("@teamflags", Integer.toString(bot.getFlagsOnFreq(p.getFrequency())));
+        	if(message.contains("@oplevel"))
+        		message = message.replace("@oplevel", Integer.toString(opList.getAccessLevel(p.getPlayerName())));
         	if(message.contains("@squad")){
             	if(p.getSquadName().equals(""))
                 	message = message.replace("@squad", "null");
