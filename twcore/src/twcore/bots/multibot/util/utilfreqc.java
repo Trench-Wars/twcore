@@ -343,6 +343,8 @@ public class utilfreqc extends MultiUtil {
 		//Ensures compliance with others utils, *spec x 4
 		Integer playerID = new Integer (event.getPlayerID());
 		String playerName = m_botAction.getPlayerName(playerID);
+		if ( playerName.equals(m_botAction.getBotName()) )
+			return;
 		if ( specSet.contains(playerID) )
 			m_botAction.specWithoutLock(playerID.intValue());
 		else if (!playerMap.containsKey(playerName))	{ //FIXME may be of issue.

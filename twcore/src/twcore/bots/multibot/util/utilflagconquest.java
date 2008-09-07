@@ -28,10 +28,10 @@ import twcore.core.util.ModuleEventRequester;
 public class utilflagconquest extends MultiUtil {
 	
 	
-	private static final int 					SWITCH_TIME = 200;
-	private static final int 					REPEAT_TIME = SWITCH_TIME*5;
+	private static final int 					SWITCH_TIME = 500;
+	private static final int 					REPEAT_TIME = SWITCH_TIME*2;
 	private static final int					MINUTE = 60000;
-	private static final int 					STIMULATION_TIME = MINUTE*2;
+	private static final int 					STIMULATION_TIME = MINUTE/2;
 	
 	private ArrayList<Integer> 					harvested;
 	private Vector<Hot_Spot> 					spotList;
@@ -72,8 +72,7 @@ public class utilflagconquest extends MultiUtil {
 		recentContacts = new HashMap<Integer,Long>();
 		m_Objset = m_botAction.getObjectSet();
 		gdex = 1;
-		m_botAction.setPlayerPositionUpdating(0);
-		m_botAction.stopSpectatingPlayer();
+		m_botAction.stopReliablePositionUpdating();
 	}
 
 	/**
@@ -544,6 +543,7 @@ public class utilflagconquest extends MultiUtil {
         			TimerTask returnTask = new TimerTask()	{
         				public void run()	{
         					m_botAction.getShip().setShip(8);
+        					m_botAction.stopSpectatingPlayer();
         				}
         			};m_botAction.scheduleTask(returnTask, 1000);
         		}
@@ -872,6 +872,7 @@ public class utilflagconquest extends MultiUtil {
 
         m_botAction.warpTo(playerName, dest.m_DX, dest.m_DY, dest.m_DR);
         m_botAction.sendPrivateMessage(playerName,"You have been sent to " + wppt);
+        m_botAction.stopSpectatingPlayer();
     }
     
     /**
@@ -885,6 +886,7 @@ public class utilflagconquest extends MultiUtil {
 
         m_botAction.warpTo(playerName, hs.m_DX, hs.m_DY, hs.m_DR);
         m_botAction.sendPrivateMessage(playerName,"You have been sent to " + hs.m_Warppt);
+        m_botAction.stopSpectatingPlayer();
     }
 
     /**
@@ -1087,6 +1089,7 @@ public class utilflagconquest extends MultiUtil {
     
     public void cancel()	{
     	m_Objset = new Objset();
+    	m_botAction.resetReliablePositionUpdating();
     	if (watching)	{
     		checkSpot.cancel();
     		stimulant.cancel();
