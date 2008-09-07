@@ -15,7 +15,6 @@ import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.OperatorList;
-import twcore.core.util.Tools;
 
 /**
  * @author milosh
@@ -143,7 +142,7 @@ public class timers extends MultiUtil {
         	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' is already scheduled. Use !canceltimer <timer> to cancel.");
         	return;
         }
-        long[] time = new long[8];
+        int[] time = new int[8];
         String[] msgs;
         if(message.substring(index + 1).indexOf(" ") == -1)
         	msgs = message.substring(index + 1).split(":");
@@ -153,22 +152,22 @@ public class timers extends MultiUtil {
         	if(msgs.length != 4 && msgs.length != 8)
         		throw new IllegalArgumentException();
         	for(int i=0;i<msgs.length;i++)
-        		time[i] = Long.parseLong(msgs[i]);
+        		time[i] = Integer.parseInt(msgs[i]);
         } catch (Exception e) {
             m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !sched <Timer> <Days>:<Hours>:<Minutes>:<Seconds>");
             return;
         }
-        long[] start = new long[4];
-        long[] repeat = new long[4];
+        int[] start = new int[4];
+        int[] repeat = new int[4];
         for(int i=0;i<start.length;i++)
         	start[i] = time[i];
         for(int i=4;i<time.length;i++)
         	repeat[(i-4)] = time[i];
-        if(getTimeInMillis(repeat) > 0){
-        	timers.get(timer).schedule(getTimeInMillis(start), getTimeInMillis(repeat));
+        if(CodeCompiler.getTimeInMillis(repeat) > 0){
+        	timers.get(timer).schedule(CodeCompiler.getTimeInMillis(start), CodeCompiler.getTimeInMillis(repeat));
         	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' " + timers.get(timer).getScheduleString());
         } else{
-        	timers.get(timer).schedule(getTimeInMillis(start), -1);
+        	timers.get(timer).schedule(CodeCompiler.getTimeInMillis(start), -1);
         	m_botAction.sendSmartPrivateMessage( name, "Timer '" + timer + "' " + timers.get(timer).getScheduleString());
         }
         
@@ -340,62 +339,14 @@ private class CustomTimer{
 			}
 		}else
 			timeLeftInMillis = st - ((new Date()).getTime() - millis);
-		time = getTimeInFormat(timeLeftInMillis, true);
+		time = CodeCompiler.getTimeInFormat(timeLeftInMillis, true);
 		if(cal != null){
 			return "scheduled to fire on " + SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(cal.getTime()) + " at " + SimpleDateFormat.getTimeInstance().format(cal.getTime()) + " (" + TimeZone.getDefault().getDisplayName(true, TimeZone.SHORT) + ")";
 		}
-		return "scheduled to fire in " + getTimeString(time, false);
+		return "scheduled to fire in " + CodeCompiler.getTimeString(time, false);
 		
 	}
 }
-
-	public long getTimeInMillis(long[] time){
-		long sum = 0;
-		for(int i=0;i<time.length;i++){
-			switch(i){
-			case 0:sum += time[i] * Tools.TimeInMillis.DAY;break;
-			case 1:sum += time[i] * Tools.TimeInMillis.HOUR;break;
-			case 2:sum += time[i] * Tools.TimeInMillis.MINUTE;break;
-			case 3:sum += time[i] * Tools.TimeInMillis.SECOND;break;
-			}
-		}
-		return sum;
-	}
-	public long[] getTimeInFormat(long millis, boolean includeMilli){
-		long[] format = new long[5];
-		while(millis > Tools.TimeInMillis.DAY){
-			millis -= Tools.TimeInMillis.DAY;
-			format[0]++;
-		}
-		while(millis > Tools.TimeInMillis.HOUR){
-			millis -= Tools.TimeInMillis.HOUR;
-			format[1]++;
-		}
-		while(millis > Tools.TimeInMillis.MINUTE){
-			millis -= Tools.TimeInMillis.MINUTE;
-			format[2]++;
-		}
-		while(millis > Tools.TimeInMillis.SECOND){
-			millis -= Tools.TimeInMillis.SECOND;
-			format[3]++;
-		}
-			if(includeMilli){
-			while(millis > 0){
-				millis--; 
-				format[4]++;
-			}
-		}		
-		return format;
-	}
-	public String getTimeString(long[] time, boolean verbose){
-		if(time.length == 4){
-		if(verbose)
-			return time[0] + " days, " + time[1] + " hours, " + time[2] + " minutes, and " + time[3] + " seconds";
-		else
-			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
-		} else
-			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s:" + time[4] + "ms";
-	}
 
 	public void requestEvents(ModuleEventRequester req){}
 	public void cancel(){

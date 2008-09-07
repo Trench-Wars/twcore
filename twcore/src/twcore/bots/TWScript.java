@@ -129,7 +129,7 @@ public class TWScript extends MultiUtil {
                 "|     Constant          Value       |",
                 "| ----------- Op Levels ----------- |",
                 "|    _PLAYER_             0         |",
-                "|    _ZH_                 1         |",
+                "|    _BOT_                1         |",
                 "|    _OUTSIDER_           2         |",
                 "|    _ER_                 3         |",
                 "|    _MODERATOR_          4         |",
@@ -245,7 +245,7 @@ public class TWScript extends MultiUtil {
     public void addConstantVariables(){
     	//ACCESS LEVELS
     	constants.put("_PLAYER_", Integer.toString(OperatorList.PLAYER_LEVEL));
-    	constants.put("_ZH_", Integer.toString(OperatorList.BOT_LEVEL));
+    	constants.put("_BOT_", Integer.toString(OperatorList.BOT_LEVEL));
     	constants.put("_OUTSIDER_", Integer.toString(OperatorList.OUTSIDER_LEVEL));
     	constants.put("_ER_", Integer.toString(OperatorList.ER_LEVEL));
     	constants.put("_MODERATOR_", Integer.toString(OperatorList.MODERATOR_LEVEL));

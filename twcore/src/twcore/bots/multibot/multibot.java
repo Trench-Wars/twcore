@@ -175,8 +175,8 @@ public class multibot extends SubspaceBot {
 	                }
 	            }
 	        }
-        }else if(isER && (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE))
-        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + m_opList.accessToString(m_accessLevel) + " use.");
+        }else if(isER && message.startsWith("!") && (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE))
+        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + Tools.staffName(m_accessLevel) + " use.");
         if( !foundCmd )
             handleEvent((SubspaceEvent) event);
     }

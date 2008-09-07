@@ -235,7 +235,7 @@ public class polls extends MultiUtil {
         	return;
         }
         if(time.length == 4)
-        	polls.get(poll).schedule(getTimeInMillis(time));
+        	polls.get(poll).schedule(CodeCompiler.getTimeInMillis(time));
         else if(time.length == 6){
         	GregorianCalendar cal = new GregorianCalendar();
             cal.set( time[2], time[0]-1, time[1], time[3], time[4], time[5]);
@@ -438,10 +438,10 @@ private class CustomPoll {
 		long timeLeftInMillis;
 		long[] time;
 		timeLeftInMillis = start - ((new Date()).getTime() - millis);
-		time = getTimeInFormat(timeLeftInMillis, true);
+		time = CodeCompiler.getTimeInFormat(timeLeftInMillis, true);
 		if(cal != null)
 			return "Poll ends on " + SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(cal.getTime()) + " at " + SimpleDateFormat.getTimeInstance().format(cal.getTime()) + " (" + TimeZone.getDefault().getDisplayName(true, TimeZone.SHORT) + ")";
-		return "Poll ends in " + getTimeString(time, true);
+		return "Poll ends in " + CodeCompiler.getTimeString(time, true);
 	}
 	
 	private String[] toStringArray(){
@@ -516,10 +516,13 @@ private class NameIPMID implements Comparable<NameIPMID>{
 				while( it.hasNext() ){
 					NameIPMID nim = it.next();
 					if(nim.compareTo(newPlayer) > 0){
+						if(poll.playerVotes.get(nim) == vote)
+							m_botAction.sendSmartPrivateMessage( name, "You have already voted.");
+						else
+							m_botAction.sendSmartPrivateMessage( name, "Your vote has been changed.");
 						it.remove();
 						poll.playerVotes.put(newPlayer, vote);
 						poll.updateVotes();
-						m_botAction.sendSmartPrivateMessage( name, "Your vote has been changed.");
 						return;
 					}
 				}
@@ -530,73 +533,6 @@ private class NameIPMID implements Comparable<NameIPMID>{
 			}
 		}
 		m_botAction.sendSmartPrivateMessage( name, "The poll '" + data[0] + "' does not exist.");	
-	}
-
-	public long[] getTimeInFormat(long millis, boolean includeMilli){
-		long[] format = new long[5];
-		while(millis > Tools.TimeInMillis.DAY){
-			millis -= Tools.TimeInMillis.DAY;
-			format[0]++;
-		}
-		while(millis > Tools.TimeInMillis.HOUR){
-			millis -= Tools.TimeInMillis.HOUR;
-			format[1]++;
-		}
-		while(millis > Tools.TimeInMillis.MINUTE){
-			millis -= Tools.TimeInMillis.MINUTE;
-			format[2]++;
-		}
-		while(millis > Tools.TimeInMillis.SECOND){
-			millis -= Tools.TimeInMillis.SECOND;
-			format[3]++;
-		}
-		if(includeMilli){
-			while(millis > 0){
-				millis--; 
-				format[4]++;
-			}
-		}		
-		return format;
-	}
-	
-	public String getTimeString(long[] time, boolean verbose){
-		if(time.length == 4 || verbose){
-			if(verbose){
-				String s = "";
-				if(time[0] > 1)
-					s += time[0] + " days, ";
-				else if(time[0] == 1)
-					s += time[0] + " day, ";
-				if(time[1] > 1)
-					s += time[1] + " hours, ";
-				else if(time[1] == 1)
-					s += time[1] + " hour, ";
-				if(time[2] > 1)
-					s += time[2] + " minutes, and ";
-				else if(time[2] == 1)
-					s += time[2] + " minute, and ";
-				if(time[3] > 1)
-					s += time[3] + " seconds.";
-				else if(time[3] == 1)
-					s += time[3] + " second.";
-				return s;
-			}else
-				return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
-		} else
-			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s:" + time[4] + "ms";
-	}
-	
-	public long getTimeInMillis(int[] time){
-		long sum = 0;
-		for(int i=0;i<time.length;i++){
-			switch(i){
-			case 0:sum += time[i] * Tools.TimeInMillis.DAY;break;
-			case 1:sum += time[i] * Tools.TimeInMillis.HOUR;break;
-			case 2:sum += time[i] * Tools.TimeInMillis.MINUTE;break;
-			case 3:sum += time[i] * Tools.TimeInMillis.SECOND;break;
-			}
-		}
-		return sum;
 	}
 	
 	public String toLine(String msg){

@@ -94,20 +94,26 @@ public final class CodeCompiler {
         Random rand = new Random();
         Date today = Calendar.getInstance().getTime();
         TimeZone tz = TimeZone.getDefault();
-        if(tws != null && tws.variables != null){
-        	Iterator<String> iter = tws.variables.keySet().iterator();
-        	while( iter.hasNext() ){
-        		String varName = iter.next();
-        		String varVal = tws.variables.get(varName);
-        		if(message.contains(varName))
-        			message = message.replace(varName, varVal);
+        if(tws != null){
+        	if(tws.variables != null){
+	        	Iterator<String> iter = tws.variables.keySet().iterator();
+	        	while( iter.hasNext() ){
+	        		String varName = iter.next();
+	        		String varVal = tws.variables.get(varName);
+	        		if(message.contains(varName) && message.charAt(message.indexOf(varName) - 1) != '\\')
+	        			message = message.replace(varName, varVal);
+	        		else if(message.contains(varName) && message.charAt(message.indexOf(varName) - 1) == '\\')
+	        			message = message.replace("\\" + varName, varName);
+	        	}
         	}
-        	Iterator<String> iter2 = tws.constants.keySet().iterator();
-        	while( iter2.hasNext() ){
-        		String conName = iter2.next();
-        		String conVal = tws.constants.get(conName);
-        		if(message.contains(conName))
-        			message = message.replace(conName, conVal);
+        	if(tws.constants != null){
+	        	Iterator<String> iter2 = tws.constants.keySet().iterator();
+	        	while( iter2.hasNext() ){
+	        		String conName = iter2.next();
+	        		String conVal = tws.constants.get(conName);
+	        		if(message.contains(conName))
+	        			message = message.replace(conName, conVal);
+	        	}
         	}
         }
         if(p != null){
@@ -513,7 +519,7 @@ public final class CodeCompiler {
     
     /**
      * A method similar to Math.min().
-     * @return The smallest number. If two numbers are equal, return z.
+     * @return The smallest number. If two numbers are tied for smallest, return z.
      */
     private static int min(int a, int b, int c, int d, int e, int f, int z){
     	ArrayList<Integer> list = new ArrayList<Integer>();
@@ -530,6 +536,94 @@ public final class CodeCompiler {
     	if(smallest == 0)return z;
     	else return smallest;
     }
+    
+    /**
+     * Converts time in milliseconds to formatted time(d:h:m:s). If the boolean
+     * parameter is true it includes milliseconds(d:h:m:s:ms).
+     * @param millis - The time in milliseconds
+     * @param includeMilli - True if milliseconds should be included in format.
+     * @return Formatted Long Array.
+     */
+    public static long[] getTimeInFormat(long millis, boolean includeMilli){
+		long[] format = new long[5];
+		while(millis > Tools.TimeInMillis.DAY){
+			millis -= Tools.TimeInMillis.DAY;
+			format[0]++;
+		}
+		while(millis > Tools.TimeInMillis.HOUR){
+			millis -= Tools.TimeInMillis.HOUR;
+			format[1]++;
+		}
+		while(millis > Tools.TimeInMillis.MINUTE){
+			millis -= Tools.TimeInMillis.MINUTE;
+			format[2]++;
+		}
+		while(millis > Tools.TimeInMillis.SECOND){
+			millis -= Tools.TimeInMillis.SECOND;
+			format[3]++;
+		}
+		if(includeMilli){
+			while(millis > 0){
+				millis--; 
+				format[4]++;
+			}
+		}		
+		return format;
+	}
+	
+    /**
+     * Converts a long array into a formatted time string. If the boolean parameter
+     * is true it will be displayed verbosely(1 day, 2 hours, 3 minutes, and 10 seconds.)
+     * If the boolean parameter is false it will be displayed in (d:h:m:s) or (d:h:m:s)
+     * depending on the size of the array.
+     * @param time - The long array
+     * @param verbose - Determines format type. See above.
+     * @return - Formatted time String.
+     */
+	public static String getTimeString(long[] time, boolean verbose){
+		if(time.length == 4 || verbose){
+			if(verbose){
+				String s = "";
+				if(time[0] > 1)
+					s += time[0] + " days, ";
+				else if(time[0] == 1)
+					s += time[0] + " day, ";
+				if(time[1] > 1)
+					s += time[1] + " hours, ";
+				else if(time[1] == 1)
+					s += time[1] + " hour, ";
+				if(time[2] > 1)
+					s += time[2] + " minutes, and ";
+				else if(time[2] == 1)
+					s += time[2] + " minute, and ";
+				if(time[3] > 1)
+					s += time[3] + " seconds.";
+				else if(time[3] == 1)
+					s += time[3] + " second.";
+				return s;
+			}else
+				return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
+		} else
+			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s:" + time[4] + "ms";
+	}
+	
+	/**
+	 * Converts a formatted Integer array representing time into a long in milliseconds.
+	 * @param time - Integer Array
+	 * @return - Long in milliseconds.
+	 */
+	public static long getTimeInMillis(int[] time){
+		long sum = 0;
+		for(int i=0;i<time.length;i++){
+			switch(i){
+			case 0:sum += time[i] * Tools.TimeInMillis.DAY;break;
+			case 1:sum += time[i] * Tools.TimeInMillis.HOUR;break;
+			case 2:sum += time[i] * Tools.TimeInMillis.MINUTE;break;
+			case 3:sum += time[i] * Tools.TimeInMillis.SECOND;break;
+			}
+		}
+		return sum;
+	}
     
     /**
      * A white-list of allowed private commands.
