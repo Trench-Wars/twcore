@@ -28,9 +28,13 @@ public class polls extends MultiUtil {
 	
 	public TreeMap<String, CustomPoll> polls;
 	
+	public TreeMap<String, String[]> waitingForAction;
+	public ArrayList<NameIPMID> voted;
+	
 	public void init(){
 		opList = m_botAction.getOperatorList();
 		polls = new TreeMap<String, CustomPoll>();
+		waitingForAction = new TreeMap<String, String[]>();
 	}
 	
 	public void initializeTWScript(TWScript tws){
@@ -65,7 +69,8 @@ public class polls extends MultiUtil {
 			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL)
 				handleERCommands(name, message);
 			handlePubCommands(name, message);
-		}
+		} else if(messageType == Message.ARENA_MESSAGE && message.startsWith("IP:"))
+			parseIP(message);
 	}
 	
 	public void handleERCommands(String name, String cmd){
@@ -108,7 +113,6 @@ public class polls extends MultiUtil {
 	
 	public void do_vote(String name, String message){
 		String[] msg = message.split(":");
-		int vote;
 		if(msg.length != 2){
 			m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !vote favcolor:2");
 			return;
@@ -121,26 +125,8 @@ public class polls extends MultiUtil {
 			m_botAction.sendSmartPrivateMessage( name, "Poll '" + msg[0] + "' is not active.");
 			return;
 		}
-		try{
-			vote = Integer.parseInt(msg[1]);
-		}catch(NumberFormatException e){
-			m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !vote favcolor:2");
-			return;
-		}
-		if(polls.get(msg[0]).votes.size() <= vote || vote < 0){
-			m_botAction.sendSmartPrivateMessage( name, "The option '" + vote + "' is not valid.");
-			return;
-		}
-		if(polls.get(msg[0]).playerVotes.containsKey(name)){
-			polls.get(msg[0]).playerVotes.remove(name);
-			polls.get(msg[0]).playerVotes.put(name, vote);
-			polls.get(msg[0]).updateVotes();
-			m_botAction.sendSmartPrivateMessage( name, "Your vote has been changed.");
-			return;
-		}
-		polls.get(msg[0]).playerVotes.put(name, vote);
-		polls.get(msg[0]).updateVotes();
-		m_botAction.sendSmartPrivateMessage( name, "Your vote has been counted.");
+		waitingForAction.put(name, msg);
+		m_botAction.sendUnfilteredPrivateMessage(name, "*info");
 	}
 	
 	public void do_results(String name, String message){
@@ -323,7 +309,7 @@ private class CustomPoll {
 	private ArrayList<String> messages = new ArrayList<String>();
 	private ArrayList<Integer> votes = new ArrayList<Integer>();
 	private ArrayList<String> results = new ArrayList<String>();
-	private TreeMap<String, Integer> playerVotes = new TreeMap<String, Integer>();
+	private TreeMap<NameIPMID, Integer> playerVotes = new TreeMap<NameIPMID, Integer>();
 	private long start, millis;
 	private boolean isScheduled;
 	private TimerTask task;
@@ -365,21 +351,21 @@ private class CustomPoll {
 			m_botAction.sendArenaMessage("No votes were collected. The poll is declared void.");
 			return;
 		}
+		results.add("+------------------------ Results ------------------------+");
+		results.add("| Poll: " + pollQuestion);
+		i = votes.iterator();
+		index = 0;
+		while( i.hasNext() ){
+			results.add("| " + index + ") " + options.get(index) + " ( " + i.next() + " vote(s) )");
+			index++;
+		}
+		results.add("+---------------------------------------------------------+");
 		if(winners.size() > 1)
 			results.add("There was a tie between votes. No action taken.");
 		else{
 			results.add("Winner: " + winners.get(0) + " - " + options.get(winners.get(0)));
 			CodeCompiler.handleTWScript(m_botAction, messages.get(winners.get(0)), m_botAction.getPlayer(m_botAction.getBotName()), m_twscript.variables, m_twscript.ACCESS_LEVEL);
 		}
-		results.add("+------------------------ Results ------------------------+");
-		results.add("| Poll: " + pollQuestion);
-		i = votes.iterator();
-		index = 0;
-		while( i.hasNext() ){
-			results.add("| " + index + ") " + options.get(index) + " ( " + i.next() + " votes )");
-			index++;
-		}
-		results.add("+---------------------------------------------------------+");
 		m_botAction.arenaMessageSpam(results.toArray(new String[results.size()]));
 	}
 	
@@ -447,29 +433,29 @@ private class CustomPoll {
 	}
 	
 	private String getScheduleString(){
-		if(getResults() != null) return "now over.";
-		if(!isScheduled) return "not currently scheduled.";
+		if(getResults() != null) return "The poll has ended. Use '!results " + pollName + "' to see the results.";
+		if(!isScheduled) return "Not currently scheduled.";
 		long timeLeftInMillis;
 		long[] time;
 		timeLeftInMillis = start - ((new Date()).getTime() - millis);
 		time = getTimeInFormat(timeLeftInMillis, true);
 		if(cal != null)
-			return "scheduled to end on " + SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(cal.getTime()) + " at " + SimpleDateFormat.getTimeInstance().format(cal.getTime()) + " (" + TimeZone.getDefault().getDisplayName(true, TimeZone.SHORT) + ")";
-		return "scheduled to end in " + getTimeString(time, false);
+			return "Poll ends on " + SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT).format(cal.getTime()) + " at " + SimpleDateFormat.getTimeInstance().format(cal.getTime()) + " (" + TimeZone.getDefault().getDisplayName(true, TimeZone.SHORT) + ")";
+		return "Poll ends in " + getTimeString(time, true);
 	}
 	
 	private String[] toStringArray(){
 		ArrayList<String> s = new ArrayList<String>();
 		Iterator<String> i = options.iterator();
-		s.add("===================== " + pollName + " =====================");
+		s.add("============================ " + pollName + " ============================");
 		s.add("| Question: " + pollQuestion);
 		s.add("| Options:");
 		while( i.hasNext() ){
 			String op = i.next();
-			s.add("|  " + options.indexOf(op) + ") " + op + " - " + votes.get(options.indexOf(op)) + " votes.");
+			s.add("|  " + options.indexOf(op) + ") " + op);
 		}
-		s.add("| This poll is " + getScheduleString());
-		s.add("======================" + toLine(pollName) + "======================");
+		s.add("| " + getScheduleString());
+		s.add("=============================" + toLine(pollName) + "=============================");
 		if(polls.size() > 1)
 			s.add("PM me with !vote " + pollName + ":<number next to your answer> to vote -" + m_botAction.getBotName());
 		else if(polls.size() == 1)
@@ -478,7 +464,74 @@ private class CustomPoll {
 	}
 	
 }
+
+private class NameIPMID implements Comparable<NameIPMID>{
+	private String name, IP, MID;
 	
+	private NameIPMID(String name, String IP, String MID){
+		this.name = name;
+		this.IP = IP;
+		this.MID = MID;
+	}
+	
+	public int compareTo(NameIPMID nim){
+		if(nim.name.equalsIgnoreCase(this.name) ||
+		   nim.IP.equals(this.IP)               ||
+		   nim.MID.equals(this.MID))
+		return 1;
+		else return -1;
+	}
+}
+
+	public void parseIP(String message){
+		NameIPMID newPlayer;
+		String name, IP, MID;
+		String[] data;
+		int nameIndex, MIDIndex, vote;
+		nameIndex = message.indexOf("TypedName:");
+		MIDIndex = message.indexOf("MachineId:");
+		if(nameIndex == -1 || MIDIndex == -1)return;
+		name = message.substring(nameIndex+10,message.indexOf("Demo:")-2);
+		IP = message.substring(3, message.indexOf(" "));
+		MID = message.substring(MIDIndex+10);
+		if(waitingForAction.containsKey(name))
+			data = waitingForAction.remove(name);
+		else return;
+		try{
+			vote = Integer.parseInt(data[1]);
+		}catch(NumberFormatException e){
+			m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Please try again.");
+			return;
+		}
+		newPlayer = new NameIPMID(name, IP, MID);
+		Iterator<CustomPoll> i = polls.values().iterator();
+		while( i.hasNext() ){
+			CustomPoll poll = i.next();
+			if(poll.pollName.equalsIgnoreCase(data[0])){
+				if(poll.votes.size() <= vote || vote < 0){
+					m_botAction.sendSmartPrivateMessage( name, "The option '" + vote + "' is not valid.");
+					return;
+				}
+				Iterator<NameIPMID> it = poll.playerVotes.keySet().iterator();
+				while( it.hasNext() ){
+					NameIPMID nim = it.next();
+					if(nim.compareTo(newPlayer) > 0){
+						it.remove();
+						poll.playerVotes.put(newPlayer, vote);
+						poll.updateVotes();
+						m_botAction.sendSmartPrivateMessage( name, "Your vote has been changed.");
+						return;
+					}
+				}
+				poll.playerVotes.put(newPlayer, vote);
+				poll.updateVotes();
+				m_botAction.sendSmartPrivateMessage( name, "Your vote has been counted.");
+				return;
+			}
+		}
+		m_botAction.sendSmartPrivateMessage( name, "The poll '" + data[0] + "' does not exist.");	
+	}
+
 	public long[] getTimeInFormat(long millis, boolean includeMilli){
 		long[] format = new long[5];
 		while(millis > Tools.TimeInMillis.DAY){
@@ -507,11 +560,28 @@ private class CustomPoll {
 	}
 	
 	public String getTimeString(long[] time, boolean verbose){
-		if(time.length == 4){
-		if(verbose)
-			return time[0] + " days, " + time[1] + " hours, " + time[2] + " minutes, and " + time[3] + " seconds";
-		else
-			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
+		if(time.length == 4 || verbose){
+			if(verbose){
+				String s = "";
+				if(time[0] > 1)
+					s += time[0] + " days, ";
+				else if(time[0] == 1)
+					s += time[0] + " day, ";
+				if(time[1] > 1)
+					s += time[1] + " hours, ";
+				else if(time[1] == 1)
+					s += time[1] + " hour, ";
+				if(time[2] > 1)
+					s += time[2] + " minutes, and ";
+				else if(time[2] == 1)
+					s += time[2] + " minute, and ";
+				if(time[3] > 1)
+					s += time[3] + " seconds.";
+				else if(time[3] == 1)
+					s += time[3] + " second.";
+				return s;
+			}else
+				return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s";
 		} else
 			return time[0] + "d:" + time[1] + "h:" + time[2] + "m:" + time[3] + "s:" + time[4] + "ms";
 	}
