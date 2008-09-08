@@ -1,45 +1,40 @@
 [General]
-name=TWSDX
-arena=twsdx
-# twsdx
+name=TWSD
+arena=twsd
+# arena=twsd,twsd2,twsd3,twsd4,twsd5,twsd6,twsd7
 ship=3
 players=5
-minplayers=1
-# 3
+minplayers=3
 deaths=-1
 score=-1
 time=10
 rounds=3
 maxrounds=5
-aliascheck=0
-#TWD: 1
-
 winby=score
-defaulttarget=10
-blueout=1
-scoreboard_flags=1
-
-pickbyturn=1
+ondraw=extension
+extensiontime=5
+pickbyturn=0
+lineuptime=5
+points=50
 forfeit_loser_score=0
 forfeit_winner_score=50
-captainsfixed=1
-#maxping=700
-waitafterlagout=15
-specialaccess=
+captainsfixed=0
+lagoutextension=60
+blueout=1
+subdelaytime=2
 
-
-squadjoined=0
-#TWD: 1
-
-#this is to differentiate between TWD games. 1 is to ensure roster joined
-rosterjoined=0
-#TWD: 1
-
-eligibleafter=3
-shipchanges=-1
-shipswitches=-1
+matchtype=13
+captain_can_start_game=1
+storegame=1
+loggame=0
+squadjoined=1
+rosterjoined=1
+shipchanges=0
+shipswitches=0
 substitutes=3
 lagouts=3
+aliascheck=1
+eligibleafter=1
 
 [Arena] 
 safe1x=423
@@ -56,10 +51,6 @@ obj_countdown54321=2
 obj_gogogo=3
 obj_gameover=4
 
-storegame=1
-loggame=0
-matchtype=20
-
 # Lag settings
 EnableLagLimits=1
 CurPing=360
@@ -71,4 +62,9 @@ SlowS2C=4
 SlowC2S=4
 Med=100
 SpikeCount=6
+waitafterlagout=15
 
+strictmidip=0
+specialaccess=
+# TWSDX setting only to enable the flags on scoreboard
+scoreboard_flags=1
