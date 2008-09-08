@@ -370,8 +370,6 @@ public final class Ship extends Thread {
     /**
      * Sets ship type from 0-8.  0 is warbird.  If set to 8, the bot will
      * become a spectator, and cease sending any kind of position packet.
-     * (Yes, TWCore's spec ship is normally 0.  This is not the way the SS
-     * protocol normally handles it, however.)
      * @param shipType Type of ship to set to (1-8 in-game, 0 spectator)
      */
     public void setShip( int shipType ){
