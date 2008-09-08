@@ -682,20 +682,8 @@ public class HubBot extends SubspaceBot {
      * @param message Bot type to spawn
      */
     public void handleSpawnMessage( String messager, String message ){
-        if( m_botAction.getOperatorList().isOutsider( messager ) ){
+        if( m_botAction.getOperatorList().isBot( messager ) ){
             spawn( messager, message );
-        } else {
-            if( m_botAction.getOperatorList().isBot(messager) ) {
-                int allowSpawn = m_botAction.getGeneralSettings().getInt( "AllowZHSpawning" );
-                if( allowSpawn == 2 || allowSpawn == 1 && message.toLowerCase().trim().equals("matchbot") ) {
-                    spawn( messager, message );
-                } else {
-                    m_botAction.sendChatMessage( 1, messager + " doesn't have access (ZHs not allowed to spawn " + (allowSpawn == 0?"bots)":"bots other than matchbot)") +
-                            ", but (s)he tried '!spawn " + message + "'");
-                }
-            } else {
-                m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried '!spawn " + message + "'");
-            }
         }
     }
 
