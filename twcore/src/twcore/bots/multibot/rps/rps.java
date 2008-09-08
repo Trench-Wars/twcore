@@ -33,7 +33,9 @@ public class rps extends MultiModule
 
   public  String[] getModHelpMessage() {
     	String[] helpText = new String[] {
-            	""
+    			"!Start player1:player2:rounds",
+    	        "!Help",
+    	        "!Go ArenaName"
             };
         return helpText;
     }

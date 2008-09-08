@@ -33,36 +33,25 @@ public final class CodeCompiler {
     	try{
     		opList = bot.getOperatorList();
     		message = replaceKeys(bot, p, tws, message);
-    		if(message != null && message.startsWith("*") && !isAllowedPrivateCommand(message, accessLevel))
+    		if((p != null && message != null && message.startsWith("*") && !isAllowedPrivateCommand(message, accessLevel)) ||
+    		   (p == null && message != null && !isAllowedPublicCommand(message, accessLevel)))
     			message = null;
-    		if (message != null && message.indexOf('%') == -1)
-    			bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
-    		else if(message != null && message.indexOf('%') != -1){
+    		if (message != null && message.indexOf('%') == -1){
+    			if(p != null)
+    				bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message);
+    			else
+    				sendMessage(bot,message, -1);
+    		} else if(message != null && message.indexOf('%') != -1){
     			int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
     			message = message.substring(0, message.indexOf('%'));
-    			bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message, sound);
+    			if(p != null)
+    				bot.sendUnfilteredPrivateMessage(p.getPlayerName(), message, sound);
+    			else
+    				sendMessage(bot,message,sound);
     		}
     	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
-    }
-    
-    public static void handleTWScript(BotAction bot, String message, TWScript tws, int accessLevel){
-    	try{
-    		opList = bot.getOperatorList();
-        	message = replaceKeys(bot, null, tws, message);
-        	if(message != null && !isAllowedPublicCommand(message, accessLevel))
-            	message = null;
-        	if (message != null && message.indexOf('%') == -1)
-        		sendMessage(bot,message, -1);
-        	else if(message != null && message.indexOf('%') != -1){
-            	int sound = Tools.Sound.isAllowedSound( message.substring(message.indexOf('%') + 1) );
-            	message = message.substring(0, message.indexOf('%'));
-            	sendMessage(bot,message, sound);
-        	}
-		}catch(Exception e){
-			Tools.printStackTrace(e);
-		}
     }
     
     public static void sendMessage(BotAction bot, String message, int sound){
@@ -273,7 +262,7 @@ public final class CodeCompiler {
      *            The command to be compiled
      * @return - The message of the first true condition
      */
-    public static String compile(String message) throws ArrayIndexOutOfBoundsException, NullPointerException{
+    public static String compile(String message){
         String[] ifStatements = message.split(";");
         for (int i = 0; i < ifStatements.length; i++) {
             if (doConditionalStatements(ifStatements[i]))

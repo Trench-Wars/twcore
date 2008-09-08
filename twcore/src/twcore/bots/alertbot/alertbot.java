@@ -41,7 +41,7 @@ public class alertbot extends SubspaceBot {
 	String sqlHost = "website";
 	
     private static Pattern failPattern = Pattern.compile("(?!)"); // will never match anything
-    private static Pattern acceptable = Pattern.compile("^!(?:on|off|help)$",Pattern.CASE_INSENSITIVE);
+    private static Pattern acceptable = Pattern.compile("^!(?:on|off|help|die)$",Pattern.CASE_INSENSITIVE);
     private static Pattern replaceMessage = Pattern.compile("(?<!\\\\)(\\\\\\\\)*\\$arena"); // setup in case someone wants \$arena to show up
 
     public alertbot( BotAction botAction ){

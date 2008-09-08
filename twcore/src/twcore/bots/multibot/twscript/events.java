@@ -128,7 +128,7 @@ public class events extends MultiUtil {
     
     /** Executes a public TWScript message. */
     public void do_pub(String name, String message){
-        CodeCompiler.handleTWScript(m_botAction, message, m_twscript, m_twscript.ACCESS_LEVEL);
+        CodeCompiler.handleTWScript(m_botAction, message, null, m_twscript, m_twscript.ACCESS_LEVEL);
     }
     
     /** Adds a message for arena entrance events. */

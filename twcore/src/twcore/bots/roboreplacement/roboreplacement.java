@@ -157,7 +157,7 @@ public class roboreplacement extends SubspaceBot
             case 3: return "Welcome to Elimination.  We are about to start " + ships[elimShip] +
                            " elim to " + elimDeaths + ".  Get in now if you wish to play.";
             case 4: return "Welcome to Elimination.  We are currently in a " + ships[elimShip] +
-                           " elim to " + elimDeaths + ".  " + players.size() + " players left.";
+                           " elim to " + elimDeaths + ".  " + m_botAction.getPlayingPlayers() + " players left.";
             case 5: return "Welcome to Elimination.  We are currently waiting for ship voting to begin.";
             default: return "Welcome to Elimination.  A game will start when 2 players enter.";
         }
