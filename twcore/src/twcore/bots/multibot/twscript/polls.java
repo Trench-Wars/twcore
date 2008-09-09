@@ -66,7 +66,7 @@ public class polls extends MultiUtil {
 		int messageType = event.getMessageType();
 		
 		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
-			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL)
+			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName()))
 				handleERCommands(name, message);
 			handlePubCommands(name, message);
 		} else if(messageType == Message.ARENA_MESSAGE && message.startsWith("IP:"))

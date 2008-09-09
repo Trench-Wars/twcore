@@ -62,7 +62,7 @@ public class timers extends MultiUtil {
 		int messageType = event.getMessageType();
 		
 		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
-			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL)
+			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName()))
 				handleCommands(name, message);
 	}
 	

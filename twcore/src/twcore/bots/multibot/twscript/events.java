@@ -75,7 +75,7 @@ public class events extends MultiUtil {
         String message = event.getMessage();
         String name = m_botAction.getPlayerName(event.getPlayerID());
         int messageType = event.getMessageType();
-        if(messageType == Message.PRIVATE_MESSAGE && opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL)
+        if(messageType == Message.PRIVATE_MESSAGE && (opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName())))
             handleCommands(name, message);
         else if(messageType == Message.ARENA_MESSAGE && message.equals("NOTICE: Game over")){
             Player p = m_botAction.getPlayer(m_botAction.getBotName());

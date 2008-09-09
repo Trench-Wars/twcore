@@ -162,7 +162,7 @@ public class TWScript extends MultiUtil {
         Player p = m_botAction.getPlayer(event.getPlayerID());
         if (name == null || p == null)
             return;
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && opList.getAccessLevel(name) >= ACCESS_LEVEL)
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && (opList.getAccessLevel(name) >= ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName())))
             handleCommand(name, message);
     }
     

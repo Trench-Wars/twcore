@@ -89,10 +89,12 @@ public final class CodeCompiler {
 	        	while( iter.hasNext() ){
 	        		String varName = iter.next();
 	        		String varVal = tws.variables.get(varName);
-	        		if(message.contains(varName) && message.charAt(message.indexOf(varName) - 1) != '\\')
+	        		if(message.contains("\\" + varName))
+		        		message = message.replace("\\" + varName, "$_VARNAME_$");
+	        		if(message.contains(varName))
 	        			message = message.replace(varName, varVal);
-	        		else if(message.contains(varName) && message.charAt(message.indexOf(varName) - 1) == '\\')
-	        			message = message.replace("\\" + varName, varName);
+	        		if(message.contains("$_VARNAME_$"))
+	        			message = message.replace("$_VARNAME_$", varName);
 	        	}
         	}
         	if(tws.constants != null){
