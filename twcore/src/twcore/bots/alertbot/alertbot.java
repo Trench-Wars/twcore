@@ -169,8 +169,8 @@ public class alertbot extends SubspaceBot {
     public void handleCommand(String name, String message){
         if(message.equalsIgnoreCase("!on")){
             try {
-                // let's be paranoid
-                ResultSet set = m_botAction.SQLQuery(sqlHost,"REPLACE INTO tblAlerts (id,name,date) VALUES("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",ADDDATE(NOW(), INTERVAL 6 HOUR))");
+                // let's NOT be paranoid
+                ResultSet set = m_botAction.SQLQuery(sqlHost,"REPLACE INTO tblAlerts (id,name,date) VALUES("+alertBotTypeID+",\""+Tools.addSlashesToString(name)+"\",NOW())");
                 m_botAction.sendSmartPrivateMessage(name,"Alerts activated for " + botType + "." );
                 if (set != null) m_botAction.SQLClose( set );
             } catch (SQLException e) {
@@ -195,7 +195,7 @@ public class alertbot extends SubspaceBot {
             m_botAction.die();
         }
         else if(message.equalsIgnoreCase("!help")){
-             m_botAction.sendSmartPrivateMessage(name, "!on - Activate a private alert for when the next "+ arena +" starts. The alert lasts 6 hours.");
+             m_botAction.sendSmartPrivateMessage(name, "!on - Activate a private alert for when the next "+ arena +" starts.");
              m_botAction.sendSmartPrivateMessage(name, "!off - Turn the alerts off.");
              m_botAction.sendSmartPrivateMessage(name, "!help - Bring up this message.");
         }
