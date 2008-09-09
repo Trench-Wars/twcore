@@ -332,7 +332,7 @@ public abstract class SubspaceBot {
         m_botAction.joinArena( "#robopark" );
         
         // Identify as bot on the operatorlist
-        m_botAction.getOperatorList().makeBot(m_botAction.getBotName());
+        m_botAction.getOperatorList().addOperator(m_botAction.getBotName(), OperatorList.BOT_LEVEL);
     }
 
     /**

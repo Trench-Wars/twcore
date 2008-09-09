@@ -286,16 +286,6 @@ public class OperatorList {
             return false;
         }
     }
-    
-    /**
-     * This method sets the specified name to the bot operator level status
-     * It should only be used by the SubspaceBot class for identifying themselves as bots.
-     *  
-     * @param name
-     */
-    public void makeBot( String name ) {
-        operators.put( name.toLowerCase() , OperatorList.BOT_LEVEL );
-    }
 
     /**
      * Check if a given name is at least of Outsider status.
@@ -548,7 +538,6 @@ public class OperatorList {
     /**
      * Manually adds an operator to the access list.  For special use only.
      * (Not needed in any normal procedure.)
-     * @deprecated
      * @param name Name to add
      * @param accessLevel Access level at which to add the name
      */
