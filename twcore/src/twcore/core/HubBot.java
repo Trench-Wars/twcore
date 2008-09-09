@@ -314,6 +314,7 @@ public class HubBot extends SubspaceBot {
         	// Sysops
         	HashSet<String> sysops = (list.getAllOfAccessLevel(OperatorList.SYSOP_LEVEL));
         	if(sysops.size() > 0) {
+        	    m_botAction.sendSmartPrivateMessage( messager, "`");
         		m_botAction.sendSmartPrivateMessage( messager, "Sysops ("+sysops.size()+"):");
 
         		String pm = "  ";
@@ -334,6 +335,7 @@ public class HubBot extends SubspaceBot {
         	// Smods
         	HashSet<String> smods = (list.getAllOfAccessLevel(OperatorList.SMOD_LEVEL));
         	if(smods.size() > 0) {
+        	    m_botAction.sendSmartPrivateMessage( messager, "`");
         		m_botAction.sendSmartPrivateMessage( messager, "SMods ("+smods.size()+"):");
 
         		String pm = "  ";
@@ -354,6 +356,7 @@ public class HubBot extends SubspaceBot {
         	// Mods
         	HashSet<String> mods = (list.getAllOfAccessLevel(OperatorList.MODERATOR_LEVEL));
         	if(mods.size() > 0) {
+        	    m_botAction.sendSmartPrivateMessage( messager, "`");
         		m_botAction.sendSmartPrivateMessage( messager, "Mods ("+mods.size()+"):");
 
         		String pm = "  ";
@@ -374,6 +377,7 @@ public class HubBot extends SubspaceBot {
         	// ERs
         	HashSet<String> ers = (list.getAllOfAccessLevel(OperatorList.ER_LEVEL));
         	if(ers.size() > 0) {
+        	    m_botAction.sendSmartPrivateMessage( messager, "`");
         		m_botAction.sendSmartPrivateMessage( messager, "ERs ("+ers.size()+"):");
 
         		String pm = "  ";
@@ -394,6 +398,7 @@ public class HubBot extends SubspaceBot {
         	// Bots
         	HashSet<String> bots = (list.getAllOfAccessLevel(OperatorList.BOT_LEVEL));
         	if(bots.size() > 0) {
+        	    m_botAction.sendSmartPrivateMessage( messager, "`");
         		m_botAction.sendSmartPrivateMessage( messager, "Operators that have identified themselves as bots ("+bots.size()+"):");
 
         		String pm = "  ";
