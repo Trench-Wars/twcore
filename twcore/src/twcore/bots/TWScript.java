@@ -261,6 +261,7 @@ public class TWScript extends MultiUtil {
     	//MATH CONSTANTS
     	constants.put("_PI_", Double.toString(Math.PI));
     	constants.put("_E_", Double.toString(Math.E));
+    	constants.put("_MOL", "[6.022*10^23]");
     	
     	//TIME CONSTANTS
     	constants.put("_SECOND_", Integer.toString(Tools.TimeInMillis.SECOND));
