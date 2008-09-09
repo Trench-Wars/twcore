@@ -143,7 +143,7 @@ public class alertbot extends SubspaceBot {
 	                m_botAction.sendChatMessage(3, startMessage);
                 }
                 try {
-                    ResultSet set = m_botAction.SQLQuery(sqlHost,"SELECT name FROM tblAlerts WHERE id = "+alertBotTypeID+" AND date > NOW() ORDER BY date DESC LIMIT 100");
+                    ResultSet set = m_botAction.SQLQuery(sqlHost,"SELECT name FROM tblAlerts WHERE id = "+alertBotTypeID+"");
                     if (set == null) return;
                     while ( set.next() ) {
                         m_botAction.sendSmartPrivateMessage( set.getString("name"), startMessage );
