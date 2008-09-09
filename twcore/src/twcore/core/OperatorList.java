@@ -544,7 +544,6 @@ public class OperatorList {
     public void addOperator( String name, int accessLevel ) {
         if( accessLevel < PLAYER_LEVEL || accessLevel > OWNER_LEVEL )
             return;
-        operators.remove(name);
         operators.put(name, accessLevel);
     }
     
