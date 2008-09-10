@@ -26,10 +26,8 @@ public class polls extends MultiUtil {
 	public OperatorList opList;
 	public TWScript m_twscript;
 	
-	public TreeMap<String, CustomPoll> polls;
-	
+	public TreeMap<String, CustomPoll> polls;	
 	public TreeMap<String, String[]> waitingForAction;
-	public ArrayList<Voter> voted;
 	
 	public void init(){
 		opList = m_botAction.getOperatorList();
