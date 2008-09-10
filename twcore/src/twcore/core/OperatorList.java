@@ -79,7 +79,7 @@ public class OperatorList {
     /**
      * Initializes this OperatorList by loading the operators.cfg configuration file 
      */
-    public synchronized void init(File operatorsCfg) throws FileNotFoundException, IOException {
+    public void init(File operatorsCfg) throws FileNotFoundException, IOException {
         Properties prop = new Properties();
         prop.load(new FileInputStream(operatorsCfg));
         
@@ -130,7 +130,7 @@ public class OperatorList {
      * 
      * @param data one of moderate.txt, smod.txt or sysop.txt
      */
-    public synchronized void autoAssignFile(File data) {
+    public void autoAssignFile(File data) {
         // 1. Cycle the autoAssign hashmap
         // 
         
@@ -541,7 +541,7 @@ public class OperatorList {
      * @param name Name to add
      * @param accessLevel Access level at which to add the name
      */
-    public synchronized void addOperator( String name, int accessLevel ) {
+    public void addOperator( String name, int accessLevel ) {
         if( accessLevel < PLAYER_LEVEL || accessLevel > OWNER_LEVEL )
             return;
         operators.put(name, accessLevel);
@@ -550,7 +550,7 @@ public class OperatorList {
     /**
      * Clears the access list.
      */
-    public synchronized void clear(){
+    public void clear(){
         
         // Custom clean method of operators
         // Leave the bot operator list entries intact

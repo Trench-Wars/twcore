@@ -278,7 +278,8 @@ public class Session extends Thread {
         Tools.printLog( m_name + " (" + m_subspaceBot.getClass().getSimpleName() + ") logged in: " + time + " ms." );
         m_botAction.resetReliablePositionUpdating(); //starts position updating
         // Identify as bot on the operatorlist
-        m_botAction.getOperatorList().addOperator(m_botAction.getBotName(), OperatorList.BOT_LEVEL);
+        // Temporarily removed 9/9/08 -milosh
+        //m_botAction.getOperatorList().addOperator(m_botAction.getBotName(), OperatorList.BOT_LEVEL);
     }
 
     public void run(){
