@@ -29,7 +29,7 @@ public class polls extends MultiUtil {
 	public TreeMap<String, CustomPoll> polls;
 	
 	public TreeMap<String, String[]> waitingForAction;
-	public ArrayList<NameIPMID> voted;
+	public ArrayList<Voter> voted;
 	
 	public void init(){
 		opList = m_botAction.getOperatorList();
@@ -309,7 +309,7 @@ private class CustomPoll {
 	private ArrayList<String> messages = new ArrayList<String>();
 	private ArrayList<Integer> votes = new ArrayList<Integer>();
 	private ArrayList<String> results = new ArrayList<String>();
-	private TreeMap<NameIPMID, Integer> playerVotes = new TreeMap<NameIPMID, Integer>();
+	private ArrayList<Voter> playerVotes = new ArrayList<Voter>();
 	private long start, millis;
 	private boolean isScheduled;
 	private TimerTask task;
@@ -323,9 +323,10 @@ private class CustomPoll {
 	private void updateVotes(){
 		for(int i=0;i<votes.size();i++)
 			votes.set(i, 0);
-		Iterator<Integer> it = playerVotes.values().iterator();
+		Iterator<Voter> it = playerVotes.iterator();
 		while( it.hasNext() ){
-			int x = it.next();
+			Voter v = it.next();
+			int x = v.vote;
 			votes.set(x, votes.get(x) + 1);
 		}
 	}
@@ -406,11 +407,11 @@ private class CustomPoll {
 		};
 		results.clear();
 		m_botAction.scheduleTask(task, startTime);
-		setScheduleString(startTime, (new Date()).getTime());
+		setSchedule(startTime, (new Date()).getTime());
 		m_botAction.arenaMessageSpam(this.toStringArray());
 	}
 	
-	public void setScheduleString(long start, long millis){
+	public void setSchedule(long start, long millis){
 		this.start = start;
 		this.millis = millis;
 	}
@@ -465,26 +466,28 @@ private class CustomPoll {
 	
 }
 
-private class NameIPMID implements Comparable<NameIPMID>{
+private class Voter implements Comparable<Voter>{
 	private String name, IP, MID;
+	private int vote;
 	
-	private NameIPMID(String name, String IP, String MID){
+	private Voter(String name, String IP, String MID, int vote){
 		this.name = name;
 		this.IP = IP;
 		this.MID = MID;
+		this.vote = vote;
 	}
 	
-	public int compareTo(NameIPMID nim){
-		if(nim.name.equalsIgnoreCase(this.name) ||
-		   nim.IP.equals(this.IP)               ||
-		   nim.MID.equals(this.MID))
+	public int compareTo(Voter v){
+		if(v.name.equalsIgnoreCase(this.name) ||
+		   v.IP.equals(this.IP)               ||
+		   v.MID.equals(this.MID))
 		return 1;
 		else return -1;
 	}
 }
 
 	public void parseIP(String message){
-		NameIPMID newPlayer;
+		Voter newPlayer;
 		String name, IP, MID;
 		String[] data;
 		int nameIndex, MIDIndex, vote;
@@ -503,7 +506,7 @@ private class NameIPMID implements Comparable<NameIPMID>{
 			m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Please try again.");
 			return;
 		}
-		newPlayer = new NameIPMID(name, IP, MID);
+		newPlayer = new Voter(name, IP, MID, vote);
 		Iterator<CustomPoll> i = polls.values().iterator();
 		while( i.hasNext() ){
 			CustomPoll poll = i.next();
@@ -512,21 +515,21 @@ private class NameIPMID implements Comparable<NameIPMID>{
 					m_botAction.sendSmartPrivateMessage( name, "The option '" + vote + "' is not valid.");
 					return;
 				}
-				Iterator<NameIPMID> it = poll.playerVotes.keySet().iterator();
+				Iterator<Voter> it = poll.playerVotes.iterator();
 				while( it.hasNext() ){
-					NameIPMID nim = it.next();
-					if(nim.compareTo(newPlayer) > 0){
-						if(poll.playerVotes.get(nim) == vote)
+					Voter v = it.next();
+					if(v.compareTo(newPlayer) > 0){
+						if(v.vote == vote)
 							m_botAction.sendSmartPrivateMessage( name, "You have already voted.");
 						else
 							m_botAction.sendSmartPrivateMessage( name, "Your vote has been changed.");
 						it.remove();
-						poll.playerVotes.put(newPlayer, vote);
+						poll.playerVotes.add(newPlayer);
 						poll.updateVotes();
 						return;
 					}
 				}
-				poll.playerVotes.put(newPlayer, vote);
+				poll.playerVotes.add(newPlayer);
 				poll.updateVotes();
 				m_botAction.sendSmartPrivateMessage( name, "Your vote has been counted.");
 				return;
