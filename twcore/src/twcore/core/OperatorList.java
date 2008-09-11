@@ -8,9 +8,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
@@ -554,11 +556,19 @@ public class OperatorList {
         
         // Custom clean method of operators
         // Leave the bot operator list entries intact
-        for(String operator:operators.keySet()) {
-            if(operators.get(operator) != OperatorList.BOT_LEVEL) {
-                operators.remove(operator);
+        Set<Entry<String, Integer>> operatorNames = operators.entrySet();
+        
+        synchronized(operators) {
+            Iterator<Entry<String, Integer>> it = operatorNames.iterator(); // Must be in synchronized block
+            while (it.hasNext()) {
+                Entry<String, Integer> operator = it.next();
+                
+                if(operator.getValue() != OperatorList.BOT_LEVEL) {
+                    it.remove();
+                }
             }
         }
+
         autoAssign.clear();
     }
 }
