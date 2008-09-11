@@ -73,7 +73,7 @@ public class events extends MultiUtil {
     
     public void handleEvent(Message event) {
         String message = event.getMessage();
-        String name = m_botAction.getPlayerName(event.getPlayerID());
+        String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
         int messageType = event.getMessageType();
         if(messageType == Message.PRIVATE_MESSAGE && (opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName())))
             handleCommands(name, message);
