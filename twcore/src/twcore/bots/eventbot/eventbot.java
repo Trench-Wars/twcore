@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -665,16 +666,19 @@ public class eventbot extends SubspaceBot {
      * Removes any expired requests from the HashMap by comparing the date the request was made.
      */
     private void removeExpiredRequests() {
+        Set<Map.Entry<String, EventRequest>> playerRequests = requests.entrySet();
+        long now = new Date().getTime();
+        
     	synchronized(requests) {
-        	for(String playername:requests.keySet()) {
-        		EventRequest eventReq = requests.get(playername);
-        		long now = new Date().getTime();
-        		long hour = 1000*60*60;
-        		
-        		if((now - eventReq.getDate().getTime()) > hour) {
-        			requests.remove(playername);
-        		}
-        	}
+    	    Iterator<Map.Entry<String, EventRequest>> it = playerRequests.iterator();
+    	    
+    	    while (it.hasNext()) {
+                Map.Entry<String, EventRequest> request = it.next();
+                
+                if((now - request.getValue().getDate().getTime()) > Tools.TimeInMillis.HOUR) {
+                    it.remove();
+                }
+            }
     	}
     }
     
