@@ -38,7 +38,7 @@ public class timers extends MultiUtil {
 	public String[] getHelpMessages(){
 		String[] message = {
 				"+--------------------------------------- Timers --------------------------------------+",
-				"| !addtimer <timer> <message>     - Adds a TWScript <message> to a timer, <name>.     |",
+				"| !addtimer <timer>:<message>     - Adds a TWScript <message> to a timer, <name>.     |",
 				"|                                 - If the timer does not exist it is created.        |",
 				"| !removetimer <timer>            - Removes the timer, <name>.                        |",
 				"| !removetimer <timer> <index>    - Removes message at <index> from <timer>           |",
@@ -82,7 +82,7 @@ public class timers extends MultiUtil {
 	}
 	
 	public void do_addTimer(String name, String message){
-		int index = message.indexOf(" ");
+		int index = message.indexOf(":");
         if (index == -1) {
             m_botAction.sendSmartPrivateMessage(name, "Incorrect usage. Example: !addtimer birthday I was born on this day!");
             return;
