@@ -106,7 +106,7 @@ public class GamePacketInterpreter {
      */
     public void translateGamePacket( ByteArray array, boolean alreadyDecrypted ){
         int index = array.readByte( 0 ) & 0xff;
-
+        
         if( index == 0 ){
             translateSpecialPacket( array, alreadyDecrypted );
         } else {
@@ -145,123 +145,232 @@ public class GamePacketInterpreter {
         int index = array.readByte( 0 ) & 0xff;
         switch( index ){
             // 0x00 - Special packet (see translateSpecialPacket())
+            case 0x01:
+                Tools.printConnectionLog("RECV    : (0x01) PlayerID Change (" + m_session.getBotName() + ")");
+                break;
             // 0x01 - Bot's player ID has changed: Unhandled
             case 0x02:
+                Tools.printConnectionLog("RECV    : (0x02) You are now in the game (" + m_session.getBotName() + ")");
                 handleArenaJoined( array, alreadyDecrypted );
                 break;
             case 0x03:
+                Tools.printConnectionLog("RECV    : (0x03) Player(s) Entering (" + m_session.getBotName() + ")");
                 handlePlayerEntered( array, alreadyDecrypted );
                 break;
             case 0x04:
+                Tools.printConnectionLog("RECV    : (0x04) Player Leaving (" + m_session.getBotName() + ")");
                 handlePlayerLeft( array, alreadyDecrypted );
                 break;
             case 0x05:
+                Tools.printConnectionLog("RECV    : (0x05) Large Position Packet (Weapons Packet) (" + m_session.getBotName() + ")");
                 handlePlayerPosition( array, alreadyDecrypted );
                 break;
             case 0x06:
+                Tools.printConnectionLog("RECV    : (0x06) Player Death (" + m_session.getBotName() + ")");
                 handlePlayerDeath( array, alreadyDecrypted );
                 break;
             case 0x07:
+                Tools.printConnectionLog("RECV    : (0x07) Chat (" + m_session.getBotName() + ")");
                 handleChatMessage( array, alreadyDecrypted );
                 break;
             case 0x08:
+                Tools.printConnectionLog("RECV    : (0x08) Player got a Prize (" + m_session.getBotName() + ")");
                 handlePrize( array, alreadyDecrypted );
                 break;
             case 0x09:
+                Tools.printConnectionLog("RECV    : (0x09) Player Score Update (" + m_session.getBotName() + ")");
                 handleScoreUpdate( array, alreadyDecrypted );
                 break;
             case 0x0A:
+                Tools.printConnectionLog("RECV    : (0x0A) Password Packet Response (" + m_session.getBotName() + ")");
                 handlePasswordPacketResponse( array, alreadyDecrypted );
                 break;
             case 0x0B:
+                Tools.printConnectionLog("RECV    : (0x0B) Soccer Goal Made (" + m_session.getBotName() + ")");
                 handleSoccerGoal( array, alreadyDecrypted );
+                break;
+            case 0x0C:
+                Tools.printConnectionLog("RECV    : (0x0C) Player Voice (" + m_session.getBotName() + ")");
                 break;
             // 0x0C - Player Voice: Unhandled
             case 0x0D:
+                Tools.printConnectionLog("RECV    : (0x0D) Player Changed Frequency (" + m_session.getBotName() + ")");
                 handleFreqChange( array, alreadyDecrypted );
                 break;
             case 0x0E:
+                Tools.printConnectionLog("RECV    : (0x0E) Create Turret Link (" + m_session.getBotName() + ")");
                 handleTurret( array, alreadyDecrypted );
                 break;
             case 0x0F:
+                Tools.printConnectionLog("RECV    : (0x0F) Arena Settings (" + m_session.getBotName() + ")");
                 handleArenaSettings( array, alreadyDecrypted );
                 break;
             case 0x10:
+                Tools.printConnectionLog("RECV    : (0x10) File Transfer (" + m_session.getBotName() + ")");
                 handleFileArrived( array, alreadyDecrypted );
+                break;
+            case 0x11:
+                Tools.printConnectionLog("RECV    : (0x11) Unknown (" + m_session.getBotName() + ")");
                 break;
             // 0x11 - NOP?: Unhandled
             case 0x12:
+                Tools.printConnectionLog("RECV    : (0x12) Flag Position (" + m_session.getBotName() + ")");
                 handleFlagPosition( array, alreadyDecrypted );
                 break;
             case 0x13:
+                Tools.printConnectionLog("RECV    : (0x13) Flag Claim (" + m_session.getBotName() + ")");
                 handleFlagClaimed( array, alreadyDecrypted );
                 break;
             case 0x14:
+                Tools.printConnectionLog("RECV    : (0x14) Flag Victory (" + m_session.getBotName() + ")");
                 handleFlagVictory( array, alreadyDecrypted );
+                break;
+            case 0x15:
+                Tools.printConnectionLog("RECV    : (0x15) Destroy Turret Link (" + m_session.getBotName() + ")");
                 break;
             // 0x15 - Destroy Turret Link (player hits F7 to detach anyone attached): Unhandled
             case 0x16:
+                Tools.printConnectionLog("RECV    : (0x16) Drop Flag (" + m_session.getBotName() + ")");
                 handleFlagDropped( array, alreadyDecrypted );
                 break;
+            case 0x17:
+                Tools.printConnectionLog("RECV    : (0x17) Unknown (" + m_session.getBotName() + ")");
+                break;
             // 0x17 - NOP?: Unhandled
+            case 0x18:
+                Tools.printConnectionLog("RECV    : (0x18) Synchronization Request (" + m_session.getBotName() + ")");
+                break;
             // 0x18 - Synchronization Request: Unhandled (This is why bot must be a sysop)
             //        On Sync request, send 0x1A - Security checksum
             case 0x19:
+                Tools.printConnectionLog("RECV    : (0x19) Request File (" + m_session.getBotName() + ")");
                 handleFileRequest( array, alreadyDecrypted );
                 break;
             case 0x1A:
+                Tools.printConnectionLog("RECV    : (0x1A) Reset Score(s) (" + m_session.getBotName() + ")");
                 handleScoreReset( array, alreadyDecrypted );
                 break;
+            case 0x1B:
+                Tools.printConnectionLog("RECV    : (0x1B) Personal Ship Reset (" + m_session.getBotName() + ")");
+                break;
             // 0x1B - Personal ship reset: Unhandled
+            case 0x1C:
+                Tools.printConnectionLog("RECV    : (0x1C) Put Player in Spectator Mode (" + m_session.getBotName() + ")");
+                break;
             // 0x1C - Put player in spectator mode: Unhandled
             case 0x1D:
+                Tools.printConnectionLog("RECV    : (0x1D) Player Team and Ship Changed (" + m_session.getBotName() + ")");
                 handleShipFreqChange( array, alreadyDecrypted );
                 break;
             // 0x1E - Personal banner changed: Unhandled
+            case 0x1E:
+                Tools.printConnectionLog("RECV    : (0x1E) Personal Banner Changed (" + m_session.getBotName() + ")");
+                break;
             case 0x1F:
+                Tools.printConnectionLog("RECV    : (0x1F) Player Banner Changed (" + m_session.getBotName() + ")");
                 handlePlayerBanner( array, alreadyDecrypted );
+                break;
+            case 0x20:
+                Tools.printConnectionLog("RECV    : (0x20) Collected Prize (Client got one) (" + m_session.getBotName() + ")");
                 break;
             // 0x20 - Bot picked up a prize: Unhandled
             // 0x21 - A player dropped a brick: Unhandled
+            case 0x21:
+                Tools.printConnectionLog("RECV    : (0x21) Brick Dropped (" + m_session.getBotName() + ")");
+                break;
             case 0x22:
+                Tools.printConnectionLog("RECV    : (0x22) Turf Flag Update (" + m_session.getBotName() + ")");
                 handleTurfFlagUpdate( array, alreadyDecrypted );
                 break;
             case 0x23:
+                Tools.printConnectionLog("RECV    : (0x23) Flag Reward Granted (" + m_session.getBotName() + ")");
                 handleFlagReward( array, alreadyDecrypted );
                 break;
             // 0x24 - Speed game over: Unhandled
+            case 0x24:
+                Tools.printConnectionLog("RECV    : (0x24) Speed Game Over (" + m_session.getBotName() + ")");
+                break;
             // 0x25 - Bot's UFO flag toggled: Unhandled
+            case 0x25:
+                Tools.printConnectionLog("RECV    : (0x25) Toggle UFO Ship (" + m_session.getBotName() + ")");
+                break;
             // 0x26 - Unknown (probably NOP): Unhandled
+            case 0x26:
+                Tools.printConnectionLog("RECV    : (0x26) Unknown (" + m_session.getBotName() + ")");
+                break;
             // 0x27 - "Keep-Alive": Unhandled
+            case 0x27:
+                Tools.printConnectionLog("RECV    : (0x27) Keep-Alive (" + m_session.getBotName() + ")");
+                break;
             case 0x28:
+                Tools.printConnectionLog("RECV    : (0x28) Small Position Packet (" + m_session.getBotName() + ")");
                 handlePlayerPosition( array, alreadyDecrypted );
                 break;
             // 0x29 - Map information (basic): Unhandled
+            case 0x29:
+                Tools.printConnectionLog("RECV    : (0x29) Map Information (" + m_session.getBotName() + ")");
+                break;
             // 0x2A - Compressed map file: Unhandled
+            case 0x2A:
+                Tools.printConnectionLog("RECV    : (0x2A) Compressed Map File (" + m_session.getBotName() + ")");
+                break;
             // 0x2B - Set bot's KotH timer: Unhandled
+            case 0x2B:
+                Tools.printConnectionLog("RECV    : (0x2B) Set Personal KotH Timer (" + m_session.getBotName() + ")");
+                break;
             case 0x2C:  // KotH Game Reset
+                Tools.printConnectionLog("RECV    : (0x2C) KotH Game Reset (" + m_session.getBotName() + ")");
                 handleKotHReset( array, alreadyDecrypted );
                 break;
             // 0x2D - Add KotH time: Unhandled
+            case 0x2D:
+                Tools.printConnectionLog("RECV    : (0x2D) Add KotH time (" + m_session.getBotName() + ")");
+                break;
             case 0x2E:
+                Tools.printConnectionLog("RECV    : (0x2E) Power-Ball Position Update (" + m_session.getBotName() + ")");
                 handleBallPosition( array, alreadyDecrypted );
                 break;
             case 0x2F:
+                Tools.printConnectionLog("RECV    : (0x2F) Arena Directory Listing (" + m_session.getBotName() + ")");
                 handleArenaList( array, alreadyDecrypted );
                 break;
             // 0x30 - Received zone banner ads: Unhandled
+            case 0x30:
+                Tools.printConnectionLog("RECV    : (0x30) Got Zone Banner Advertisements (" + m_session.getBotName() + ")");
+                break;
             // 0x31 - Bot is past the login sequence: Unhandled
+            case 0x31:
+                Tools.printConnectionLog("RECV    : (0x31) You are now past the login sequence (" + m_session.getBotName() + ")");
+                break;
             // ** CONTINUUM SPECIFIC PACKETS BELOW **
             // 0x32 - Change bot's ship coords: Unhandled
+            case 0x32:
+                Tools.printConnectionLog("RECV    : (0x32) Change Personal Ship Coordinates (" + m_session.getBotName() + ")");
+                break;
             // 0x33 - Custom login failure message: Unhandled
+            case 0x33:
+                Tools.printConnectionLog("RECV    : (0x33) Custom Login Failure Message (" + m_session.getBotName() + ")");
+                break;
             // 0x34 - Continuum version packet: Unhandled
+            case 0x34:
+                Tools.printConnectionLog("RECV    : (0x34) Continuum Version Packet (" + m_session.getBotName() + ")");
+                break;
             // 0x35 - Object toggling: Unhandled
+            case 0x35:
+                Tools.printConnectionLog("RECV    : (0x35) Object toggling (" + m_session.getBotName() + ")");
+                break;
             // 0x36 - Received object (further info unknown): Unhandled
+            case 0x36:
+                Tools.printConnectionLog("RECV    : (0x36) Received object (further info unknown) (" + m_session.getBotName() + ")");
+                break;
             // 0x37 - Toggle whether to send damage info: Unhandled
             case 0x38:
                 handleWatchDamage( array, alreadyDecrypted );
                 break;
             // 0x3B - *sendto packet: See http://forums.minegoboom.com/viewtopic.php?p=75317#75317
+            default:
+                Tools.printLog("Received unknown packet 0x"+(index<10?"0":"")+index);
+                break;
         }
     }
 
@@ -284,36 +393,55 @@ public class GamePacketInterpreter {
         switch( index ){
             // 0x01 - Encryption request: Unhandled (sent to server in GamePacketGenerator)
             case 0x02:              // Encryption response
+                Tools.printConnectionLog("RECV BI : (0x02) Encryption Response (" + m_session.getBotName() + ")");
                 m_ssEncryption.setServerKey( array.readLittleEndianInt( 2 ) );
                 m_packetGenerator.sendPasswordPacket( false, m_playerName, m_playerPassword );
                 Tools.printLog( m_session.getBotName() + " (" + m_subspaceBot.getClass().getSimpleName() + ") is logging in ..." );
                 break;
             case 0x03:              // Reliable packet message
+                Tools.printConnectionLog("RECV BI : (0x03) Reliable Message (" + m_session.getBotName() + ")");
                 m_reliablePacketHandler.handleReliableMessage( array );
                 break;
             case 0x04:              // Reliable ACK
+                Tools.printConnectionLog("RECV BI : (0x04) Reliable ACK (" + m_session.getBotName() + ")");
                 m_reliablePacketHandler.handleAckMessage( array );
                 break;
             case 0x05:              // Sync request
+                Tools.printConnectionLog("RECV BI : (0x05) Sync Request (" + m_session.getBotName() + ")");
                 m_packetGenerator.sendSyncResponse( array.readLittleEndianInt( 2 ) );
                 break;
             case 0x06:              // Sync response
+                Tools.printConnectionLog("RECV BI : (0x06) Sync Response (" + m_session.getBotName() + ")");
                 m_packetGenerator.setServerTimeDifference( array.readLittleEndianInt( 6 ) - array.readLittleEndianInt( 2 ) );
                 break;
             case 0x07:              // Order to disconnect
+                Tools.printConnectionLog("RECV BI : (0x07) Disconnect (" + m_session.getBotName() + ")");
                 m_session.disconnect( "received bi-directional packet 0x07 from server (ordered to DC)" );
                 break;
             case 0x08:              // Small chunk body (store data in buffer until tail is received)
+                Tools.printConnectionLog("RECV BI : (0x08) Small Chunk Body (" + m_session.getBotName() + ")");
                 handleChunk( array );
                 break;
             case 0x09:              // Small chunk tail (end of data received; process chunk in buffer)
+                Tools.printConnectionLog("RECV BI : (0x09) Small Chunk Tail (" + m_session.getBotName() + ")");
                 handleChunkTail( array );
                 break;
             case 0x0A:              // Massive chunk (store data in buffer until total length received)
+                Tools.printConnectionLog("RECV BI : (0x0A) HUGE Chunk (" + m_session.getBotName() + ")");
                 handleMassiveChunkMessage( array );
+                break;
+            case 0x0B:
+                Tools.printConnectionLog("RECV BI : (0x0B) Unknown (" + m_session.getBotName() + ")");
+                break;
+            case 0x0C:
+                Tools.printConnectionLog("RECV BI : (0x0C) Unknown (" + m_session.getBotName() + ")");
+                break;
+            case 0x0D:
+                Tools.printConnectionLog("RECV BI : (0x0D) Unknown (" + m_session.getBotName() + ")");
                 break;
             // 0x0B-0x0D - Unknown (unused in protocol?)
             case 0x0E:              // Packet cluster (packet lengths and packet data repeated till end)
+                Tools.printConnectionLog("RECV BI : (0x0E) Cluster (" + m_session.getBotName() + ")");
                 int         i=2;
                 int         size;
                 ByteArray   subMessage;
@@ -326,6 +454,9 @@ public class GamePacketInterpreter {
                     i += size + 1;
                 }
                 break;
+             default:
+                 Tools.printLog("Received unknown packet 0x"+(index<10?"0":"")+index);
+                 break;
         }
     }
 

@@ -20,6 +20,9 @@ import twcore.core.OperatorList;
 public final class Tools {
     public static boolean debugging = true;
     public static String exceptionLogFilePath = null;
+    
+    private static boolean connectionLogEnabled = false;
+    private static File connectionLogFile = new File("connection.log");
 
     private Tools() {
     	/* private default constructor to prevent accidentally instantiating this class */
@@ -127,6 +130,26 @@ public final class Tools {
         String output = getTimeStamp() + "   " + value;
         System.out.println( output );
 
+    }
+    
+    public static void printConnectionLog( String line ) {
+        if(!connectionLogEnabled)
+            return;
+        
+        try {
+            FileWriter fileWriter = new FileWriter(connectionLogFile, true);
+            fileWriter.write(line + "\n");
+            fileWriter.close();
+        } catch(IOException ioe) {
+            System.err.println("Unable to write to connection log file. Please specify a correct file name in the setup.cfg : "+connectionLogFile);
+            connectionLogEnabled = false;
+            return;
+        }
+    }
+    
+    public static void setConnectionLog( boolean state , File connectionLogFile) {
+        Tools.connectionLogFile = connectionLogFile;
+        Tools.connectionLogEnabled = state;
     }
 
     /**

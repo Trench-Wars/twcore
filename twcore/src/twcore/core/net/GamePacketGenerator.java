@@ -2,14 +2,15 @@ package twcore.core.net;
 
 import java.net.DatagramPacket;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import twcore.core.util.ByteArray;
+import twcore.core.util.Tools;
 
 /**
  * Generates packets that correspond to the Subspace / Continuum protocol, and
@@ -266,6 +267,8 @@ public class GamePacketGenerator {
      * @param clientKey Key to send
      */
     public void sendClientKey( int clientKey ){
+        
+        Tools.printConnectionLog("SEND BI : (0x01) Encryption Request");
 
         ByteArray      bytearray = new ByteArray( 8 );
 
@@ -285,6 +288,8 @@ public class GamePacketGenerator {
      * @param numPacketsReceived Number of packets that have been received so far
      */
     public void sendSyncPacket( int numPacketsSent, int numPacketsReceived ){
+        
+        Tools.printConnectionLog("SEND BI : (0x05) Sync Request");
 
         ByteArray      bytearray = new ByteArray( 14 );
 
@@ -305,6 +310,8 @@ public class GamePacketGenerator {
      * @param syncTime Timestamp found in the sync request packet this packet is responding to
      */
     public void sendSyncResponse( int syncTime ){
+        
+        Tools.printConnectionLog("SEND BI : (0x06) Sync Response");
 
         ByteArray      bytearray = new ByteArray( 10 );
 
@@ -325,6 +332,8 @@ public class GamePacketGenerator {
      * @param password Bot's account password
      */
     public void sendPasswordPacket( boolean newUser, String name, String password ){
+        
+        Tools.printConnectionLog("SEND    : (0x09) Password packet");
 
         ByteArray      bytearray = new ByteArray( 101 );
 
@@ -365,6 +374,9 @@ public class GamePacketGenerator {
      * @param age Age
      */
     public void sendRegistrationForm(String realname, String email, String state, String city, int age) {
+        
+        Tools.printConnectionLog("SEND    : (0x17) Registration Form Response");
+        
     	/*
 		Field	Length	Description
 			0		1		Type byte
@@ -441,6 +453,9 @@ public class GamePacketGenerator {
      * @param ackID ACK ID of the reliable packet sent that must be returned
      */
     public void sendAck( int ackID ){
+        
+        Tools.printConnectionLog("SEND BI : (0x04) Reliable ACK");
+        
         ByteArray      bytearray = new ByteArray( 6 );
 
         bytearray.addByte( 0x00 );  // Type byte (specifies bidirectional)
@@ -463,6 +478,9 @@ public class GamePacketGenerator {
      * @param arenaName Arena name if arena type is 0xFFFD
      */
     public void sendArenaLoginPacket( byte shipType, short xResolution, short yResolution, short arenaType, String arenaName ){
+        
+        Tools.printConnectionLog("SEND    : (0x01) Arena login");
+        
         ByteArray      bytearray = new ByteArray( 26 );
 
         bytearray.addByte( 0x01 );  // Type byte
@@ -491,6 +509,8 @@ public class GamePacketGenerator {
      */
     public void sendPositionPacket( byte direction, short xVelocity, short yPosition, byte toggle,
     short xPosition, short yVelocity, short bounty, short energy, short weapon ){
+        
+        Tools.printConnectionLog("SEND    : (0x03) Position packet");
 
         byte           checksum = 0;
         ByteArray      bytearray = new ByteArray( 22 );
@@ -527,6 +547,9 @@ public class GamePacketGenerator {
      * @param message Text to send
      */
     public void sendChatPacket( byte messageType, byte soundCode, short userID, String message ){
+        
+        Tools.printConnectionLog("SEND    : (0x06) Chat message");
+        
     	if( message.length() > 243 )
     		message = message.substring(0, 242);		// (hack) Don't send more than SS can handle
 
@@ -553,6 +576,8 @@ public class GamePacketGenerator {
         ByteArray           bytearray;
         ByteArray           tempMessage;
         boolean             done = false;
+        
+        Tools.printConnectionLog("SEND BI : (0x0E) Cluster");
 
         bytearray = new ByteArray( 500 );
         bytearray.addByte( 0x00 ); // Type byte (specifies bidirectional)
@@ -609,6 +634,9 @@ public class GamePacketGenerator {
      * Sends an Arena Left packet, notifying all that the bot has left the arena.
      */
     public void sendArenaLeft(){
+        
+        Tools.printConnectionLog("SEND    : (0x02) Leave arena");
+        
         ByteArray ba = new ByteArray( 1 );
         ba.addByte( 0x02 );  // Type byte (nothing else needed)
 
@@ -620,6 +648,9 @@ public class GamePacketGenerator {
      * disconnected.
      */
     public void sendDisconnect(){
+        
+        Tools.printConnectionLog("SEND BI : (0x07) Disconnect");
+        
         ByteArray      bytearray = new ByteArray( 2 );
 
         bytearray.addByte( 0x00 ); // Type byte (specifies bidirectional)
@@ -633,6 +664,9 @@ public class GamePacketGenerator {
      * @param playerID ID of player to spectate
      */
     public void sendSpectatePacket( short playerID ) {
+        
+        Tools.printConnectionLog("SEND    : (0x08) Spectate player");
+        
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x08 );  // Type byte
         if( playerID == -1 ) {
@@ -650,6 +684,9 @@ public class GamePacketGenerator {
      * @param playerID ID of player to immediately spectate
      */
     public void sendImmediateSpectatePacket( short playerID ) {
+        
+        Tools.printConnectionLog("SEND IMM: (0x08) Spectate player");
+        
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x08 );  // Type byte
         if( playerID == -1 ) {
@@ -666,6 +703,9 @@ public class GamePacketGenerator {
      * @param flagID ID of flag to pick up
      */
     public void sendFlagRequestPacket( short flagID ) {
+        
+        Tools.printConnectionLog("SEND    : (0x13) Flag request");
+        
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x13 ); // Type byte
         bytearray.addLittleEndianShort( flagID );
@@ -677,6 +717,9 @@ public class GamePacketGenerator {
      * Sends the signal to drop all flags carried.
      */
     public void sendFlagDropPacket( ) {
+        
+        Tools.printConnectionLog("SEND    : (0x15) Drop Flags");
+        
         ByteArray   bytearray = new ByteArray( 1 );
         bytearray.addByte( 0x15 );	// Type byte
 
@@ -689,6 +732,8 @@ public class GamePacketGenerator {
      * @param banner Banner data to set as bot's banner (96 bytes, 12x8 BMP, no palette)
      */
     public void sendBannerPacket( byte[] banner ) {
+        
+        Tools.printConnectionLog("SEND    : (0x19) Set personal banner");
 
         ByteArray bytearray = new ByteArray( 97 );
         bytearray.addByte( 0x19 );			// Type byte
@@ -703,6 +748,9 @@ public class GamePacketGenerator {
      * @param ship Number of ship to change to; 0 is WB, 8 is spec
      */
     public void sendShipChangePacket( short ship ) {
+        
+        Tools.printConnectionLog("SEND    : (0x18) Set ship type");
+        
         ByteArray   bytearray = new ByteArray( 2 );
         bytearray.addByte( 0x18 );	// Type byte
         bytearray.addByte( ship );
@@ -715,6 +763,9 @@ public class GamePacketGenerator {
      * @param freq Frequency to set to
      */
     public void sendFreqChangePacket( short freq ) {
+        
+        Tools.printConnectionLog("SEND    : (0x0F) Frequency Change");
+        
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x0F ); // Type byte
         bytearray.addLittleEndianShort( freq );
@@ -728,6 +779,9 @@ public class GamePacketGenerator {
      * @param playerId PlayerID to attach to
      */
     public void sendAttachRequestPacket( short playerId ) {
+        
+        Tools.printConnectionLog("SEND    : (0x10) Attach request");
+        
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x10 );  // Type byte
         if( playerId == -1 ) {
@@ -746,6 +800,9 @@ public class GamePacketGenerator {
      * @param data Data to send
      */
     public void sendMassiveChunkPacket( ByteArray data ){
+        
+        Tools.printConnectionLog("SEND BI : (0x0A) HUGE Chunk");
+        
         int            i, totalSize, size;
         ByteArray      bytearray;
 
@@ -776,6 +833,9 @@ public class GamePacketGenerator {
      * @param fileData File data, compressed using ZLib compression
      */
     public void sendFile( String fileName, ByteArray fileData ){
+        
+        Tools.printConnectionLog("SEND    : (0x16) File transfer");
+        
         ByteArray      data;
 
         data = new ByteArray( fileData.size() + 17 );
@@ -793,6 +853,9 @@ public class GamePacketGenerator {
      * @param bounty Bot's bounty at the time of death
      */
     public void sendPlayerDeath( int playerID, int bounty ){
+       
+        Tools.printConnectionLog("SEND    : (0x05) Death message");
+        
         ByteArray      data;
 
         data = new ByteArray( 5 );
@@ -809,6 +872,9 @@ public class GamePacketGenerator {
      * @param yLocation
      */
     public void sendDropBrick( int xLocation, int yLocation ){
+        
+        Tools.printConnectionLog("SEND    : (0x1C) Drop Brick");
+        
         ByteArray      data;
 
         data = new ByteArray( 5 );
@@ -881,6 +947,9 @@ public class GamePacketGenerator {
      * @see #addLVZObjectToggle(int, int, boolean)
      */
     public void sendLVZObjectCluster( int playerID ) {
+        
+        Tools.printConnectionLog("SEND    : (0x0A) LVZ Object Cluster");
+        
         if( playerID == -1 ) {
             if( m_lvzToggleCluster.size() > 0 ) {
                 ByteArray objPacket = new ByteArray( m_lvzToggleCluster.size() * 2 + 4 );
@@ -914,6 +983,9 @@ public class GamePacketGenerator {
      * @param objVisible True if object is to be visible after being set; false if invisible
      */
     public void sendSingleLVZObjectToggle( int playerID, int objID, boolean objVisible ) {
+        
+        Tools.printConnectionLog("SEND    : (0x0A) LVZ Object Toggle");
+        
         ByteArray objPacket = new ByteArray( 6 );
         objPacket.addByte( 0x0A );  // Type byte
         objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
@@ -927,6 +999,9 @@ public class GamePacketGenerator {
      * (In Continuum this only happens when you die or the timer runs out.)
      */
     public void sendEndKoTH() {
+        
+        Tools.printConnectionLog("SEND    : (0x1E) End Personal KoTH Timer");
+        
         ByteArray objPacket = new ByteArray( 1 );
         objPacket.addByte( 0x1E );
         composePacket(objPacket);

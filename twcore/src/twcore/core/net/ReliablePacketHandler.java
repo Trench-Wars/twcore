@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import twcore.core.util.ByteArray;
+import twcore.core.util.Tools;
 
 /**
  * Handles sending and receipt of reliable packets.  Reliable packets are packets
@@ -74,7 +75,7 @@ public class ReliablePacketHandler {
      */
     public void handleReliableMessage( ByteArray message ){
 
-        ByteArray  subMessage;
+        ByteArray  subMessage = null;
         int        receivedAck;
 
         receivedAck = message.readLittleEndianInt( 2 );
@@ -86,6 +87,11 @@ public class ReliablePacketHandler {
             subMessage = new ByteArray( message.size() - 6 );
             subMessage.addPartialByteArray( message, 0, 6, message.size() - 6 );
             m_packetInterpreter.translateGamePacket( subMessage, true );
+            
+            
+            int index = subMessage.readByte( 0 );
+            Tools.printConnectionLog("RECV BI : (0x03) Containing packet 0x" + (index<10?"0":"") + index);
+            
 
             while((subMessage = m_receivedPackets.remove(new Integer(m_expectedReliable)))
             		!= null) {

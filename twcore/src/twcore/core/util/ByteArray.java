@@ -597,5 +597,9 @@ public class ByteArray {
 
 	      return (extractFrom >> shift) & mask;
 	}
+	
+	public String toString() {
+	    return new String(m_array);
+	}
 }
 

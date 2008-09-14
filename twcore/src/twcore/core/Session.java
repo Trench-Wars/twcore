@@ -1,5 +1,7 @@
 package twcore.core;
+import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -123,6 +125,28 @@ public class Session extends Thread {
 
         m_packetInterpreter.setReliablePacketHandler( m_reliablePacketHandler );
         m_packetGenerator.setReliablePacketHandler( m_reliablePacketHandler );
+        
+        // Connection Logging
+        String connectionLogFile = m_coreData.getGeneralSettings().getString("Connection Log");
+        if(connectionLogFile != null && connectionLogFile.trim().length() > 0) {
+            File logFile = new File(connectionLogFile);
+            
+            // Create connection log file if it doesn't exist
+            try {
+                if(!logFile.exists()) {
+                    logFile.createNewFile();
+                }
+            
+                if(!logFile.isFile()) {
+                    System.err.println("The specified connection log filename is invalid. Please change the file name in setup.cfg .");
+                } else {
+                    Tools.setConnectionLog(true, logFile);
+                }
+            
+            } catch(IOException ioe) {
+                System.err.println("Unable to create connection log file: "+connectionLogFile.toString());
+            }
+        }
 
         try {
         	// Private Message logging
