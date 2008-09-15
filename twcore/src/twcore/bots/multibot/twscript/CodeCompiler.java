@@ -473,6 +473,8 @@ public final class CodeCompiler {
                 return format.valueToString(x/y);
             }catch(NumberFormatException e){
                 return "-1";
+            }catch(ArithmeticException e){
+            	return "-1";
             }
         } else if(s.contains("^")){
             String a = s.substring(0, s.indexOf("^"));
@@ -493,6 +495,8 @@ public final class CodeCompiler {
                 return format.valueToString(x % y);
             }catch(NumberFormatException e){
                 return "-1";
+            }catch(ArithmeticException e){
+            	return "-1";
             }
         } else {
             try{
