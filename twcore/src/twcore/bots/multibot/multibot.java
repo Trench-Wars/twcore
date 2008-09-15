@@ -45,6 +45,7 @@ public class multibot extends SubspaceBot {
     private String m_botChat;
     private String m_owner;             // Name of present bot-user
     private long m_lastUse;             // Last time bot was used by present user
+    private String[] m_defaultUtils;
     private HashMap<String, MultiUtil> m_utils;
     AdaptiveClassLoader m_loader;
     ModuleEventRequester m_modEventReq;
@@ -69,6 +70,7 @@ public class multibot extends SubspaceBot {
         m_botChat = botSettings.getString("chat");
         m_modulePath = coreRoot + "/twcore/bots/multibot";
         m_utilPath = coreRoot + "/twcore/bots/multibot/util";
+        m_defaultUtils = botSettings.getString("defaultutils").split(",");
 
         Vector<File> repository = new Vector<File>();
         repository.add(new File(coreRoot));
@@ -438,23 +440,17 @@ public class multibot extends SubspaceBot {
         }
 
         m_isLocked = true;
-        boolean defaultUtilsLoaded = true;
-        if( !m_utils.containsKey("standard") ) {
-            doLoadCmd(sender, "standard", true);
-            defaultUtilsLoaded = false;
+        String defaultUtilsString = "";
+        for(int i=0;i<m_defaultUtils.length;i++){
+        	if( !m_utils.containsKey(m_defaultUtils[i]) ) {
+                doLoadCmd(sender, m_defaultUtils[i], true);
+                if(i == (m_defaultUtils.length - 1))
+                	defaultUtilsString += "and " + m_defaultUtils[i];
+                else
+                	defaultUtilsString += m_defaultUtils[i] + ", ";
+            }
         }
-        if( !m_utils.containsKey("warp") ) {
-            doLoadCmd(sender, "warp", true);
-            defaultUtilsLoaded = false;
-        }
-        if( !m_utils.containsKey("spec") ) {
-            doLoadCmd(sender, "spec", true);
-            defaultUtilsLoaded = false;
-        }
-        if( defaultUtilsLoaded )
-            m_botAction.sendSmartPrivateMessage(sender, "Locked." );
-        else
-            m_botAction.sendSmartPrivateMessage(sender, "Locked; standard, warp and spec utils loaded." );
+        m_botAction.sendSmartPrivateMessage(sender, "Locked; " + defaultUtilsString + " loaded." );
     }
 
     /**
