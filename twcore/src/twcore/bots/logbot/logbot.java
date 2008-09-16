@@ -897,9 +897,9 @@ public class logbot extends SubspaceBot {
     			fileName = fileName.substring(9);
     		else
     			return;
-    		String violator = logMessage.substring(logMessage.indexOf("Ext:")+5, logMessage.indexOf("(")-1);
+    		String violator = logMessage.substring(logMessage.indexOf("Ext:")+5, logMessage.indexOf("(")-1).toLowerCase();
     		
-        	if (m_opList.isOwner(violator.toLowerCase()) || op.contains(violator.toLowerCase()))
+        	if (m_opList.isOwner(violator) || op.contains(violator.toLowerCase()) || m_opList.isBot(violator))
         			return;
         	
         	else if (m_opList.isSysop(violator))	{
