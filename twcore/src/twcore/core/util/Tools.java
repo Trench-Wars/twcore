@@ -259,6 +259,8 @@ public final class Tools {
                 return "Lancaster";
             case Tools.Ship.SHARK:
                 return "Shark";
+            case 9:
+            	return "Any ship";
             default:
                 return "UFO";
         }

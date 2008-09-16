@@ -270,7 +270,7 @@ public class bannerboy extends SubspaceBot {
 		    };
 		    m_botAction.smartPrivateMessageSpam(player, helpmsg);
 		}
-		else {
+		else if(!m_botAction.getOperatorList().isBotExact(player)) {
 		    m_botAction.sendChatMessage(player + "> "+message);
 		}
 	}
