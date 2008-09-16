@@ -899,7 +899,7 @@ public class logbot extends SubspaceBot {
     			return;
     		String violator = logMessage.substring(logMessage.indexOf("Ext:")+5, logMessage.indexOf("(")-1).toLowerCase();
     		
-        	if (m_opList.isOwner(violator) || op.contains(violator.toLowerCase()) || m_opList.isBotExact(violator))
+        	if (m_opList.isOwner(violator) || op.contains(violator) || m_opList.isBotExact(violator))
         			return;
         	
         	else if (m_opList.isSysop(violator))	{
