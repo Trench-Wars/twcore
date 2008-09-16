@@ -524,7 +524,7 @@ public class GamePacketInterpreter {
         String          fileName;
 
         try {
-            fileName = message.readString( 1, 16 ).trim();
+            fileName = message.readString( 1, 16 );
             BufferedWriter fileWriter = new BufferedWriter( new FileWriter(
             m_session.getBotAction().getDataFile( fileName )));
             fileWriter.write( message.readString( 17, message.size() - 17 ) );
