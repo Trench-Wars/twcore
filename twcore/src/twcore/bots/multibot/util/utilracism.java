@@ -35,9 +35,14 @@ public class utilracism extends MultiUtil{
 	}
 	
 	public void handleEvent(Message event)
-	  {
-		watcher.handleEvent(event);
-	  }
+	{
+		int type = event.getMessageType();
+		if(type == Message.PUBLIC_MESSAGE        ||
+		   type == Message.TEAM_MESSAGE          ||
+		   type == Message.OPPOSING_TEAM_MESSAGE ||
+		   type == Message.PUBLIC_MACRO_MESSAGE)
+			watcher.handleEvent(event);
+	}
 	
 	public void cancel() {
 	}
