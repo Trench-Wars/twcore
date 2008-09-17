@@ -20,6 +20,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.Prize;
 import twcore.core.events.ScoreReset;
 import twcore.core.events.ScoreUpdate;
 import twcore.core.events.TurfFlagUpdate;
@@ -402,6 +403,18 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( PlayerPosition message ){
+        Player          player = m_playerList.get( new Integer( message.getPlayerID() ) );
+
+        if( player != null ){
+            player.updatePlayer( message );
+        }
+    }
+    
+    /**
+     * Prize event processing
+     * @param message Event object to be processed
+     */
+    public void processEvent( Prize message ){
         Player          player = m_playerList.get( new Integer( message.getPlayerID() ) );
 
         if( player != null ){

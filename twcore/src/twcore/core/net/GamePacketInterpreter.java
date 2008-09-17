@@ -599,9 +599,10 @@ public class GamePacketInterpreter {
         if( !alreadyDecrypted ) {
             m_ssEncryption.decrypt( message, message.size()-1, 1 );
         }
-
+        Prize update = new Prize( message );
+        m_arenaTracker.processEvent( update );
         if( m_requester.check( EventRequester.PRIZE ) ) {
-            m_subspaceBot.handleEvent( new Prize( message ) );
+            m_subspaceBot.handleEvent( update );
         }
     }
 

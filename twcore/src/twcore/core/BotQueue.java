@@ -479,7 +479,7 @@ public class BotQueue extends Thread {
                     for( i = m_botStable.keySet().iterator(); i.hasNext(); ){
                         key = i.next();
                         childBot = m_botStable.get( key );
-                        if( childBot.getBot().getBotState() == Session.NOT_RUNNING ){
+                        if( childBot.getBot().getBotState() == Session.NOT_RUNNING && key != null){
                             removeBot( key );
                             m_botAction.sendChatMessage( 1, key + "(" + childBot.getClassName() + ") has disconnected." );
                             childBot = null;

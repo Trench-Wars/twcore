@@ -11,6 +11,7 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.ScoreReset;
 import twcore.core.events.ScoreUpdate;
+import twcore.core.events.Prize;
 import twcore.core.util.Tools.Weapon;
 
 /**
@@ -218,11 +219,16 @@ public class Player {
             // we should be using settings to properly adjust the score.  We should also update
             // bounty as appropriate.
             // TODO: When arena settings storage class is implemented, use to properly update score & bounty.
+            m_bounty += 3;//For now we'll go with standard settings.
             m_score += message.getKilledPlayerBounty();
         } else if( message.getKilleeID() == m_playerID ){
             m_losses++;
             m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
         }
+    }
+    
+    public void updatePlayer( Prize message ){
+    	m_bounty += 1;//TODO:temporary
     }
 
     /**
