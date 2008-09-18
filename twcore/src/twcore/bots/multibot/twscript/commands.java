@@ -49,7 +49,7 @@ public class commands extends MultiUtil {
         String message = event.getMessage();
         String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
         Player p = m_botAction.getPlayer(event.getPlayerID());
-        if (p == null)return;
+        if (p == null || name == null || m_twscript == null)return;
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && (opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName())))
             handleCommands(name, message);
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && commands.containsKey(message))

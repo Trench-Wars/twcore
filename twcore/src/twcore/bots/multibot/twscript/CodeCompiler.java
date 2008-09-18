@@ -357,28 +357,36 @@ public final class CodeCompiler {
                 return "TRUE";
         } else if (s.contains("<")) {
             String[] temp = s.split("<");
+            try{
                 double a = Double.parseDouble(temp[0].trim());
                 double b = Double.parseDouble(temp[1].trim());
                 if (a < b)
                     return "TRUE";
+            }catch(NumberFormatException e){}
         } else if (s.contains(">")) {
             String[] temp = s.split(">");
+            try{
                 double a = Double.parseDouble(temp[0].trim());
                 double b = Double.parseDouble(temp[1].trim());
                 if (a > b)
                     return "TRUE";
+            }catch(NumberFormatException e){}
         } else if (s.contains("<=")) {
             String[] temp = s.split("<=");
+            try{
                 double a = Double.parseDouble(temp[0].trim());
                 double b = Double.parseDouble(temp[1].trim());
                 if (a < b || a == b)
                     return "TRUE";
+            }catch(NumberFormatException e){}
         } else if (s.contains(">=")) {
             String[] temp = s.split(">=");
+            try{
                 double a = Double.parseDouble(temp[0].trim());
                 double b = Double.parseDouble(temp[1].trim());
                 if (a > b || a == b)
                     return "TRUE";
+            }catch(NumberFormatException e){}
         }
         return "FALSE";
     }

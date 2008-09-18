@@ -62,7 +62,7 @@ public class polls extends MultiUtil {
 		String message = event.getMessage();
 		String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
 		int messageType = event.getMessageType();
-		
+		if(name == null || m_twscript == null)return;
 		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
 			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName()))
 				handleERCommands(name, message);
