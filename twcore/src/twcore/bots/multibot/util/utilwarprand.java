@@ -9,6 +9,7 @@ import java.util.TimerTask;
 import twcore.bots.MultiUtil;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.game.Player;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.util.MapRegions;
@@ -184,9 +185,11 @@ public class utilwarprand extends MultiUtil
      */
 	public void handleEvent(PlayerPosition event)
 	{
+		Player player = m_botAction.getPlayer(event.getPlayerID());
+		if(player == null)return;
 		if(active)
 		{
-			int current = regions.getRegion(m_botAction.getPlayer(event.getPlayerID()));
+			int current = regions.getRegion(player);
 			if(current != -1)
 			{
 				int dest = targetRegions[current];

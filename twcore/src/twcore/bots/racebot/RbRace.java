@@ -300,7 +300,7 @@ public class RbRace extends RaceBotExtension {
 		try {
 			ResultSet result = m_botAction.SQLQuery( m_sqlHost, "SELECT * FROM tblRace WHERE fcArena = '"+m_botAction.getArenaName()+"'" );
                         int id = -1;
-			if( result.next() )
+			if( result != null && result.next() )
                             id = result.getInt( "fnRaceID" );
                         m_botAction.SQLClose( result );
                         return id;
