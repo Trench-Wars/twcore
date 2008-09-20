@@ -83,30 +83,7 @@ public final class CodeCompiler {
         Random rand = new Random();
         Date today = Calendar.getInstance().getTime();
         TimeZone tz = TimeZone.getDefault();
-        if(tws != null){
-        	if(tws.variables != null){
-	        	Iterator<String> iter = tws.variables.keySet().iterator();
-	        	while( iter.hasNext() ){
-	        		String varName = iter.next();
-	        		String varVal = tws.variables.get(varName);
-	        		if(message.contains("\\" + varName))
-		        		message = message.replace("\\" + varName, "$_VARNAME_$");
-	        		if(message.contains(varName))
-	        			message = message.replace(varName, varVal);
-	        		if(message.contains("$_VARNAME_$"))
-	        			message = message.replace("$_VARNAME_$", varName);
-	        	}
-        	}
-        	if(tws.constants != null){
-	        	Iterator<String> iter2 = tws.constants.keySet().iterator();
-	        	while( iter2.hasNext() ){
-	        		String conName = iter2.next();
-	        		String conVal = tws.constants.get(conName);
-	        		if(message.contains(conName))
-	        			message = message.replace(conName, conVal);
-	        	}
-        	}
-        }
+        replaceVariablesAndConstants(message, tws);
         if(p != null){
         	if(message.contains("@name"))
             	message = message.replace("@name", p.getPlayerName());
@@ -238,6 +215,7 @@ public final class CodeCompiler {
         message = doMathStatements(message);
         message = message.replace("$OPEN_BRACKET$", "[");
         message = message.replace("$CLOSE_BRACKET$", "]");
+        replaceVariablesAndConstants(message, tws);
         if(message.trim().startsWith("{"))
                 message = compile(message);
         if(message != null && message.contains("@!") && message.contains("@@")){
@@ -254,6 +232,34 @@ public final class CodeCompiler {
             message = null;
         }
         return message;
+    }
+    
+    public static String replaceVariablesAndConstants(String message, TWScript tws){
+    	if(tws != null){
+        	if(tws.variables != null){
+	        	Iterator<String> iter = tws.variables.keySet().iterator();
+	        	while( iter.hasNext() ){
+	        		String varName = iter.next();
+	        		String varVal = tws.variables.get(varName);
+	        		if(message.contains("\\" + varName))
+		        		message = message.replace("\\" + varName, "$_VARNAME_$");
+	        		if(message.contains(varName))
+	        			message = message.replace(varName, varVal);
+	        		if(message.contains("$_VARNAME_$"))
+	        			message = message.replace("$_VARNAME_$", varName);
+	        	}
+        	}
+        	if(tws.constants != null){
+	        	Iterator<String> iter2 = tws.constants.keySet().iterator();
+	        	while( iter2.hasNext() ){
+	        		String conName = iter2.next();
+	        		String conVal = tws.constants.get(conName);
+	        		if(message.contains(conName))
+	        			message = message.replace(conName, conVal);
+	        	}
+        	} 	
+        }
+    	return message;
     }
         
     /**
@@ -362,7 +368,9 @@ public final class CodeCompiler {
                 double b = Double.parseDouble(temp[1].trim());
                 if (a < b)
                     return "TRUE";
-            }catch(NumberFormatException e){}
+            }catch(NumberFormatException e){
+            	return s;
+            }
         } else if (s.contains(">")) {
             String[] temp = s.split(">");
             try{
@@ -370,7 +378,9 @@ public final class CodeCompiler {
                 double b = Double.parseDouble(temp[1].trim());
                 if (a > b)
                     return "TRUE";
-            }catch(NumberFormatException e){}
+            }catch(NumberFormatException e){
+            	return s;
+            }
         } else if (s.contains("<=")) {
             String[] temp = s.split("<=");
             try{
@@ -378,7 +388,9 @@ public final class CodeCompiler {
                 double b = Double.parseDouble(temp[1].trim());
                 if (a < b || a == b)
                     return "TRUE";
-            }catch(NumberFormatException e){}
+            }catch(NumberFormatException e){
+            	return s;
+            }
         } else if (s.contains(">=")) {
             String[] temp = s.split(">=");
             try{
@@ -386,7 +398,9 @@ public final class CodeCompiler {
                 double b = Double.parseDouble(temp[1].trim());
                 if (a > b || a == b)
                     return "TRUE";
-            }catch(NumberFormatException e){}
+            }catch(NumberFormatException e){
+            	return s;
+            }
         }
         return "FALSE";
     }
@@ -460,7 +474,7 @@ public final class CodeCompiler {
                 double y = Double.parseDouble(b.trim());
                 return format.valueToString(x - y);
             }catch(NumberFormatException e){
-                return "-1";
+                return s;
             }
         } else if(s.contains("*")){
             String a = s.substring(0, s.indexOf("*"));
@@ -470,7 +484,7 @@ public final class CodeCompiler {
                 double y = Double.parseDouble(b.trim());
                 return format.valueToString(x * y);
             }catch(NumberFormatException e){
-                return "-1";
+                return s;
             }
         } else if(s.contains("/")){
             String a = s.substring(0, s.indexOf("/"));
@@ -482,7 +496,7 @@ public final class CodeCompiler {
             }catch(NumberFormatException e){
                 return "-1";
             }catch(ArithmeticException e){
-            	return "-1";
+            	return s;
             }
         } else if(s.contains("^")){
             String a = s.substring(0, s.indexOf("^"));
@@ -492,7 +506,7 @@ public final class CodeCompiler {
                 double y = Double.parseDouble(b.trim());
                 return format.valueToString(Math.pow(x,y));
             }catch(NumberFormatException e){
-                return "-1";
+                return s;
             }
         } else if(s.contains("%")){
             String a = s.substring(0, s.indexOf("%"));
@@ -504,19 +518,19 @@ public final class CodeCompiler {
             }catch(NumberFormatException e){
                 return "-1";
             }catch(ArithmeticException e){
-            	return "-1";
+            	return s;
             }
         } else {
             try{
                 double x = Double.parseDouble(s);
                 return format.valueToString(x);
             }catch(NumberFormatException e){
-                return "-1";
+                return s;
             }
         }
     	}catch(Exception e){
     		Tools.printStackTrace(e);
-    		return "-1";
+    		return s;
     	}
     }
     

@@ -119,7 +119,7 @@ public class multibot extends SubspaceBot {
         boolean foundCmd = false;
         if(sender == null)return;
         boolean isER = m_opList.isER(sender) || sender.equalsIgnoreCase(m_botAction.getBotName());
-        if(m_opList.getAccessLevel(sender) >= m_accessLevel){
+        if(m_opList.getAccessLevel(sender) >= m_accessLevel || sender.equalsIgnoreCase(m_botAction.getBotName())){
 	        if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {
 	            // Attempt to handle player commands (with oodles of TWBot backwards compatibility)
 	            if( message.equalsIgnoreCase("!where") || message.equalsIgnoreCase("!host") || message.equalsIgnoreCase("!games") ) {
