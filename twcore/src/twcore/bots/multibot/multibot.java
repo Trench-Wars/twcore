@@ -53,7 +53,7 @@ public class multibot extends SubspaceBot {
     private boolean m_followEnabled = false;
     private boolean m_doCome = false;
     private boolean m_ownerOverride = false;
-    public int m_accessLevel;
+    public int m_accessLevel = 3;
 
     public multibot(BotAction botAction) {
         super(botAction);
@@ -485,6 +485,7 @@ public class multibot extends SubspaceBot {
         doUnlockCmd(sender, false);
         doGoCmd(sender, m_initialArena);
         m_owner = null;
+        m_accessLevel = OperatorList.ER_LEVEL;
     }
 
     /**
