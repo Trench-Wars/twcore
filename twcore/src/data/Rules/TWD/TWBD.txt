@@ -21,6 +21,15 @@ captain_can_start_game=1
 lineuptime=7
 blueout=1
 
+# indicates whether or not the bot should zone for
+# matches between seeds. 0 - don't zone, other values
+# indicate how many ranks of the ladder should be zoned for.
+# (e.g. if set to 3 the bot will zone when squads within the 
+# top three play each other) zoneforladdertime sets the amount
+# of time to wait before zoning again in minutes.
+zoneforladder=2
+zoneforladdertime=90
+
 # assign the maximum number of ships allowed per shiptype.
 # -1 indicates that the ship is NOT allowed
 maxship5=1
