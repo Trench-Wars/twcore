@@ -319,9 +319,9 @@ public class events extends MultiUtil {
             } 
         }
         if(fireMsgs.isEmpty())
-            m_botAction.sendSmartPrivateMessage( name, "| 3) fireon Fired: NONE");
+            m_botAction.sendSmartPrivateMessage( name, "| 3) Weapon Fired: NONE");
         else{
-            m_botAction.sendSmartPrivateMessage( name, "| 3) fireon Fired: " + fireMsgs.size());
+            m_botAction.sendSmartPrivateMessage( name, "| 3) Weapon Fired: " + fireMsgs.size());
             int index = 0;
             Iterator<String> i = fireMsgs.iterator();
             while( i.hasNext() ){

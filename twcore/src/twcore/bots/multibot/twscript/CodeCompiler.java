@@ -83,7 +83,7 @@ public final class CodeCompiler {
         Random rand = new Random();
         Date today = Calendar.getInstance().getTime();
         TimeZone tz = TimeZone.getDefault();
-        replaceVariablesAndConstants(message, tws);
+        message = replaceVariablesAndConstants(message, tws);
         if(p != null){
         	if(message.contains("@name"))
             	message = message.replace("@name", p.getPlayerName());
@@ -215,7 +215,7 @@ public final class CodeCompiler {
         message = doMathStatements(message);
         message = message.replace("$OPEN_BRACKET$", "[");
         message = message.replace("$CLOSE_BRACKET$", "]");
-        replaceVariablesAndConstants(message, tws);
+        message = replaceVariablesAndConstants(message, tws);
         if(message.trim().startsWith("{"))
                 message = compile(message);
         if(message != null && message.contains("@!") && message.contains("@@")){
