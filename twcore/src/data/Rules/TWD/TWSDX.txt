@@ -1,13 +1,12 @@
 [General]
 name=TWSD
-arena=twsd
-# arena=twsd,twsd2,twsd3,twsd4,twsd5,twsd6,twsd7
+arena=twsd,twsd2,twsd3,twsd4,twsd5,twsd6,twsd7
 ship=3
 players=5
 minplayers=3
 deaths=-1
 score=-1
-time=10
+time=5
 rounds=3
 maxrounds=5
 winby=score
@@ -29,7 +28,7 @@ subdelaytime=2
 # (e.g. if set to 3 the bot will zone when squads within the 
 # top three play each other) zoneforladdertime sets the amount
 # of time to wait before zoning again in minutes.
-zoneforladder=2
+zoneforladder=3
 zoneforladdertime=90
 
 matchtype=13
