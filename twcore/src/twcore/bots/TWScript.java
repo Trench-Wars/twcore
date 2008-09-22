@@ -44,6 +44,7 @@ public class TWScript extends MultiUtil {
         		"| !setvar <n>:<v>     - Sets variable <n> to value <v>.        |",
         		"| !removevar <n>      - Removes variable <n>.                  |",
         		"| !listvar            - Lists the current variables.           |",
+        		"| !email <r>:<t>      - Email's <r> recipient with <t> text.   |",
         		"| !constants          - Lists TWScript constants.              |",
         		"| !listkeys           - Lists private TWScript escape keys.    |",
         		"| !listpubkeys        - Lists public TWScript escape keys.     |",
@@ -194,6 +195,22 @@ public class TWScript extends MultiUtil {
             doSysopOverride(name);
         if (cmd.equalsIgnoreCase("!smodlogin"))
             doSmodOverride(name);
+        if (cmd.startsWith("!email "))
+        	doEmail(name, cmd.substring(7));
+    }
+    
+    public void doEmail(String name, String message){
+    	String[] msg = message.split(":");
+    	if(msg.length != 2){
+    		m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !email <address>:<text>");
+    		return;
+    	}
+    	try{
+    		m_botAction.sendEmailMessage(msg[0], msg[1]);
+    		m_botAction.sendSmartPrivateMessage( name, "Message sent to " + msg[0] + ".");
+    	}catch(Exception e){
+    		m_botAction.sendSmartPrivateMessage( name, "Delivery failed. Error sending message.");
+    	}
     }
     
     /**

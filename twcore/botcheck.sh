@@ -18,7 +18,7 @@ cd $botdir
 
 if [ "$(ps x|grep $botpid|grep -v grep)" = "" ]; then
 
-  $javadir/java -cp twcore.jar:googleapi.jar:mysql-connector-java-3.1.10-bin.jar twcore.core.Start setup.cfg >> ~/log&
+  $javadir/java -cp twcore.jar:googleapi.jar:mysql-connector-java-3.1.10-bin.jar:aim.jar:mail.jar twcore.core.Start setup.cfg >> ~/log&
   echo $! > $bothome/$botscript.pid
 
 fi

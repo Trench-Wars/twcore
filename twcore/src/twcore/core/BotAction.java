@@ -24,6 +24,7 @@ import twcore.core.game.Player;
 import twcore.core.game.Ship;
 import twcore.core.lvz.Objset;
 import twcore.core.net.GamePacketGenerator;
+import twcore.core.net.Email;
 import twcore.core.util.InterProcessCommunicator;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
@@ -1042,6 +1043,20 @@ public class BotAction
                 sendArenaMessage(spam[i]);
             }
         }
+    }
+    
+    /**
+     * Sends an e-mail message. The subject will be the bot's name.
+     * @param to E-mail address of recipient
+     * @param text Body of the message
+     */
+    public void sendEmailMessage(final String to, final String text) throws Exception{
+    	String[] message = {		
+    			to,
+    			getBotName(),
+    			text
+    	};
+    	new Email(message, getGeneralSettings());
     }
 
 

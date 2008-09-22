@@ -4,13 +4,18 @@
         
     <target name="all" depends="core,bots" description="Builds the entire TWCore distribution">    	
     </target>
-    
+	
+	<property name="mail.jar" value="lib/mail.jar"/>
+	<path id="build.path">
+		<pathelement location="${mail.jar}"/>
+	</path>
+	
     <target name="core" description="Builds the TWCore core" depends="configCopy">
     	<echo>Creating Temporary Directory</echo>
     	<mkdir dir="temp"></mkdir>
     	<echo>Compiling Core (this may take a moment)</echo>
-    	<javac srcdir="src/twcore/core" destdir="temp"/>    	    
-    	<javac classpath="temp" srcdir="src/twcore/bots" destdir="temp" debug="on" debuglevel="lines,vars,source">
+    	<javac classpathref="build.path" srcdir="src/twcore/core" destdir="temp"/>    	    
+    	<javac classpathref="build.path" srcdir="src/twcore/bots" destdir="temp" debug="on" debuglevel="lines,vars,source">
     		<include name="**.java" />
     	</javac>
     	<echo>Creating Jar File</echo>
@@ -56,7 +61,7 @@
 		<javadoc 
 			access="package" 
 			author="true" 
-			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar" 
+			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar" 
 			destdir="javadoc" 
 			doctitle="Trench Wars Bot Core (TWCore) API Documentation" 
 			nodeprecated="false" 
