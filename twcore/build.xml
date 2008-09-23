@@ -6,8 +6,10 @@
     </target>
 	
 	<property name="mail.jar" value="lib/mail.jar"/>
+	<property name="activation.jar" value="lib/activation.jar"/>
 	<path id="build.path">
 		<pathelement location="${mail.jar}"/>
+		<pathelement location="${activation.jar}"/>
 	</path>
 	
     <target name="core" description="Builds the TWCore core" depends="configCopy">

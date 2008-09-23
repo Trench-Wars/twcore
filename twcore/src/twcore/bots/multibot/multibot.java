@@ -157,7 +157,9 @@ public class multibot extends SubspaceBot {
 	                }
 	            }
 	        }
-	
+        }else if(isER && message.startsWith("!") && (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE))
+        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + Tools.staffName(m_accessLevel) + " use.");
+        
 	        // In Follow mode: decipher *locate report and change to arena
 	        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE && !m_isLocked ) {
 	            if( message.startsWith(m_owner + " - ") ) {
@@ -178,8 +180,7 @@ public class multibot extends SubspaceBot {
 	                }
 	            }
 	        }
-        }else if(isER && message.startsWith("!") && (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE))
-        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + Tools.staffName(m_accessLevel) + " use.");
+
         if( !foundCmd )
             handleEvent((SubspaceEvent) event);
     }
