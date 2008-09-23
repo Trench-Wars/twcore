@@ -33,7 +33,6 @@ public class Email {
 		else
 		  	props.put("mail.transport.protocol", "smtp");
 		Session session = Session.getDefaultInstance(props, null);
-		session.setDebug(true);
 		Transport transport = session.getTransport();
 			
 		Message message = new MimeMessage(session);
