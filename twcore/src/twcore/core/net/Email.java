@@ -12,7 +12,7 @@ import twcore.core.BotSettings;
 public class Email {
 	
 	private String SMTP_HOST_NAME;
-    private int SMTP_HOST_PORT = 465;
+    private int SMTP_HOST_PORT;
     private String SMTP_AUTH_USER;
     private String SMTP_AUTH_PASS;
     private int SSL;
