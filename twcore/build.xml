@@ -63,7 +63,7 @@
 		<javadoc 
 			access="package" 
 			author="true" 
-			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar" 
+			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar;lib/activation.jar" 
 			destdir="javadoc" 
 			doctitle="Trench Wars Bot Core (TWCore) API Documentation" 
 			nodeprecated="false" 
