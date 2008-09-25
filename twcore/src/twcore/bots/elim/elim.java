@@ -359,6 +359,7 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_stats(String name, String target){
+    	target = m_botAction.getFuzzyPlayerName(target);
     	try{
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(target.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if( rs != null && rs.next() ){
