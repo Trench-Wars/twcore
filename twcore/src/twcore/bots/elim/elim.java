@@ -16,8 +16,6 @@ import java.sql.SQLException;
 
 import javax.swing.text.NumberFormatter;
 
-import java.text.ParseException;
-
 import twcore.core.BotAction;
 import twcore.core.SubspaceBot;
 import twcore.core.BotSettings;
@@ -59,6 +57,7 @@ public class elim extends SubspaceBot {
 	public TreeMap<String, ElimPlayer> losers = new TreeMap<String, ElimPlayer>();
 	public TreeMap<Integer, Integer> votes = new TreeMap<Integer, Integer>();
 	public ArrayList<String> enabled = new ArrayList<String>();
+	public ArrayList<String> scoreReset = new ArrayList<String>();
 
 	
 	//BotSettings variables
@@ -129,8 +128,10 @@ public class elim extends SubspaceBot {
 				"| !rec <name>  - Shows the wins and losses of <name>.                       |",
 				"| !lagout      - Puts you back into the game if you've lagged out. (!l)     |",
 				"| !scorereset  - Resets your arena score card to zero. No going back. (!sr) |",
+				"| !resetme     - Toggles whether your score is reset at round starts. (!rm) |",
 				"| !stats       - Shows your statistics including your rank.                 |",
 				"| !stats <name>- Shows statistics of <name>.                                |",
+				"| !rank <#>    - Returns the player at rank <#>.                            |"
 		};List<String> reg = Arrays.asList(reghelp);
 		String[] smodhelp = {
 				"+=============================== SMOD MENU =================================+",
@@ -221,10 +222,14 @@ public class elim extends SubspaceBot {
     		cmd_lagout(name);
     	else if(cmd.equalsIgnoreCase("!scorereset") || cmd.equalsIgnoreCase("!sr"))
     		cmd_scorereset(name);
+    	else if(cmd.equalsIgnoreCase("!resetme") || cmd.equalsIgnoreCase("!rm"))
+    		cmd_resetme(name);
     	else if(cmd.equalsIgnoreCase("!stats"))
     		cmd_stats(name, name);
     	else if(cmd.startsWith("!stats "))
     		cmd_stats(name, cmd.substring(7));
+    	else if(cmd.startsWith("!rank "))
+    		cmd_rank(name, cmd.substring(6));
     }
     
     public void handleSmodCommands(String name, String cmd){
@@ -337,6 +342,22 @@ public class elim extends SubspaceBot {
     	m_botAction.sendSmartPrivateMessage( name, "Your score has been reset.");
     }
     
+    public void cmd_resetme(String name){
+    	int wantsSR = 0;
+    	if(scoreReset.remove(name))
+    		m_botAction.sendSmartPrivateMessage( name, "Your score will not be reset at round starts.");
+    	else {
+    		wantsSR = 1;
+    		scoreReset.add(name);
+    		m_botAction.sendSmartPrivateMessage( name, "Your score will be reset at round starts.");
+    	}
+    	try{
+    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnScoreReset = " + wantsSR + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    	}catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
+    }
+    
     public void cmd_stats(String name, String target){
     	try{
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(target.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
@@ -348,24 +369,54 @@ public class elim extends SubspaceBot {
     			int shots = rs.getInt("fnShots");
     			int cks = rs.getInt("fnCKS");
     			int cws = rs.getInt("fnCWS");
+    			int bks = rs.getInt("fnBKS");
+    			int bws = rs.getInt("fnBWS");
+    			int gamesWon = rs.getInt("fnGamesWon");
+    			int gamesPlayed = rs.getInt("fnGamesPlayed");
     			m_botAction.SQLClose(rs);
-    			double w = kills, l = deaths, s = shots;
+    			double w = kills, l = deaths, s = shots, won = gamesWon, plyd = gamesPlayed;
     			double winRatioNum = (w/l) * 100;
     			double aimNum = (w/s) * 100;
+    			double victorRatioNum = (won/plyd) * 100;
     			String winRatio = format.valueToString(winRatioNum);
     			String aim = format.valueToString(aimNum);
+    			String victorRatio = format.valueToString(victorRatioNum);
     			String rank;
     			if(ranking == 0)
     				rank = "Not ranked";
     			else
     				rank = "#" + ranking;
     			m_botAction.sendSmartPrivateMessage( name, "=== Player: '" + target + "' Rank: " + rank + " Rating: " + rating + " ===");
-    			m_botAction.sendSmartPrivateMessage( name, "Kills: " + kills + " Deaths: " + deaths + "(" + winRatio + "%)" + " AIM:" + aim + "% CKS:" + cks + " CWS:" + cws);
+    			m_botAction.sendSmartPrivateMessage( name, "Kills: " + kills + " Deaths: " + deaths + " Ratio: (" + winRatio + "%)" + " AIM:" + aim + "% CKS:" + cks + " BKS:" + bks + " CWS:" + cws + " BWS:" + bws);
+    			m_botAction.sendSmartPrivateMessage( name, "Games Won: " + gamesWon + " Games Played: " + gamesPlayed + " Win Ratio: " + victorRatio);
     		} else {
-    			m_botAction.sendSmartPrivateMessage( name, "User '" + target + "' not found.");
     			m_botAction.SQLClose(rs);
+    			m_botAction.sendSmartPrivateMessage( name, "User '" + target + "' not found.");	
     		}
     	} catch(Exception e){
+    		Tools.printStackTrace(e);
+    	}
+    }
+    
+    public void cmd_rank(String name, String message){
+    	int rank;
+    	try{
+    		rank = Integer.parseInt(message);
+    	}catch(NumberFormatException e){
+    		m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !rank 1");
+    		return;
+    	}
+    	try{
+    		if(rank < 3)rank = 3;
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnRank, fnRating, fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " AND fnRank BETWEEN " + (rank - 2) + " AND " + (rank + 2) + " ORDER BY fnRank ASC");
+    		while(rs != null && rs.next()){
+    			int rsRank = rs.getInt("fnRank");
+    			int rsRating = rs.getInt("fnRating");
+    			String rsName = rs.getString("fcUserName");
+    			m_botAction.sendSmartPrivateMessage( name, "#" + rsRank + ") " + rsName + " - " + rsRating);
+    		}
+    		m_botAction.SQLClose(rs);
+    	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
     }
@@ -568,9 +619,12 @@ public class elim extends SubspaceBot {
     			if( rs != null && rs.next())
     				lastWinner = rs.getString("fcWinnerName");
     			m_botAction.SQLClose(rs);
-    			if(lastWinner.equalsIgnoreCase(ep.name) && ep.name.equalsIgnoreCase(winner.name))
-    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    			else
+    			if(ep.name.equalsIgnoreCase(winner.name)){
+    				if(lastWinner.equalsIgnoreCase(ep.name))
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				else
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    			}else
     				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
@@ -582,17 +636,17 @@ public class elim extends SubspaceBot {
 	    	stats.add("Winner: " + winner.name + "!");
 	    	stats.add(",-------------------------------------------------------------.");
 	    	Collections.sort(l, byWinRatio);//Best record
-	    	stats.add("| MVP:          " + l.get(l.size() - 1).name + " (" + format.valueToString(l.get(l.size() - 1).winRatio) + "% win ratio)");
-	    	stats.add("| LVP:          " + l.get(0).name + " (" + format.valueToString(l.get(0).winRatio) + "% win ratio)");
+	    	stats.add("| MVP:          " + padString(l.get(l.size() - 1).name + " (" + format.valueToString(l.get(l.size() - 1).winRatio) + "% win ratio)", 45) + "|");
+	    	stats.add("| LVP:          " + padString(l.get(0).name + " (" + format.valueToString(l.get(0).winRatio) + "% win ratio)", 45) + "|");
 	    	Collections.sort(l, byHitRatio);//Best aim
-	    	stats.add("| Best aim:     " + l.get(l.size() - 1).name + " (" + format.valueToString(l.get(l.size() - 1).hitRatio) + "% hit ratio)");
-	    	stats.add("| Worst aim:    " + l.get(0).name + " (" + format.valueToString(l.get(0).hitRatio) + "% hit ratio)");
+	    	stats.add("| Best aim:     " + padString(l.get(l.size() - 1).name + " (" + format.valueToString(l.get(l.size() - 1).hitRatio) + "% hit ratio)", 45) + "|");
+	    	stats.add("| Worst aim:    " + padString(l.get(0).name + " (" + format.valueToString(l.get(0).hitRatio) + "% hit ratio)", 45) + "|");
 	    	Collections.sort(l, byRatingChange);//Best rating change
-	    	stats.add("| Best effort:  " + l.get(l.size() - 1).name + " (" + l.get(l.size() - 1).wins + "-" + l.get(l.size() - 1).losses + ")");
-	    	stats.add("| Worst effort: " + l.get(0).name + " (" + l.get(0).wins + "-" + l.get(0).losses + ")");
+	    	stats.add("| Best effort:  " + padString(l.get(l.size() - 1).name + " (" + l.get(l.size() - 1).wins + "-" + l.get(l.size() - 1).losses + ")", 45) + "|");
+	    	stats.add("| Worst effort: " + padString(l.get(0).name + " (" + l.get(0).wins + "-" + l.get(0).losses + ")", 45) + "|");
 	    	stats.add("`-------------------------------------------------------------'");
 	    	m_botAction.arenaMessageSpam(stats.toArray(new String[stats.size()]));
-    	}catch(ParseException e){
+    	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
     	Iterator<String> s = enabled.iterator();
@@ -739,29 +793,30 @@ private class ElimPlayer{
 		wins += 1;
 		streak += 1;
 		switch(streak){
-		case 3:
+		case 5:
 			m_botAction.sendArenaMessage(name + " - " + sMessages[0] + "(" + streak + ":0)");
 			break;
-		case 5:
+		case 7:
 			m_botAction.sendArenaMessage(name + " - " + sMessages[1] + "(" + streak + ":0)");
 			break;
-		case 7:
+		case 9:
 			m_botAction.sendArenaMessage(name + " - " + sMessages[2] + "(" + streak + ":0)");
 			break;
-		case 9:
+		case 11:
 			m_botAction.sendArenaMessage(name + " - " + sMessages[3] + "(" + streak + ":0)");
 			break;
-		case 11:
+		case 13:
 			m_botAction.sendArenaMessage(name + " - " + sMessages[4] + "(" + streak + ":0)");
 			break;
-		case 13:
+		case 15:
 			m_botAction.sendArenaMessage(name + " - " + sMessages[5] + "(" + wins + ":0)");
 			break;
-		case 15:
+		case 17:
 			m_botAction.sendArenaMessage(name + " - " + sMessages[6] + "(" + wins + ":0)");
 			break;
 		}
 		if(streak > BKS){
+			BKS = streak;
 			try{
 				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnBKS = " + streak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
 			}catch(SQLException e){
@@ -952,15 +1007,18 @@ private class SpawnTimer {
     	while( i.hasNext() ){
     		Player p = i.next();
     		String name = p.getPlayerName();
-	    		try{
-	        		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-	        		if(rs != null && rs.next())
-	        			if(rs.getInt("fnElim") == 1)
-	        				enabled.add(name);
-	        		m_botAction.SQLClose(rs);
-	        	}catch(SQLException e){
-	        		Tools.printStackTrace(e);
-	        	}
+    		try{
+        		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnScoreReset, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+        		if(rs != null && rs.next()){
+        			if(rs.getInt("fnElim") == 1)
+        				enabled.add(name);
+        			if(rs.getInt("fnScoreReset") == 1)
+        				scoreReset.add(name);
+        		}
+        		m_botAction.SQLClose(rs);
+        	}catch(SQLException e){
+        		Tools.printStackTrace(e);
+        	}
     	}
     	game.moveOn();
     }
@@ -1003,11 +1061,15 @@ private class SpawnTimer {
     	if(name == null || opList.isBotExact(name))return;
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
+    	scoreReset.add(name);
     	try{
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    		if(rs != null && rs.next())
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnScoreReset, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    		if(rs != null && rs.next()){
     			if(rs.getInt("fnElim") == 0)
     				enabled.remove(name);
+    			if(rs.getInt("fnScoreReset") == 0)
+    				scoreReset.remove(name);
+    		}
     		m_botAction.SQLClose(rs);
     	}catch(SQLException e){
     		Tools.printStackTrace(e);
@@ -1017,6 +1079,7 @@ private class SpawnTimer {
     public void handleEvent(PlayerLeft event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
     	enabled.remove(name);
+    	scoreReset.remove(name);
     	if(game.isInProgress() && players.containsKey(name))
     		lagouts.put(name, players.remove(name));
     	else if(!game.isInProgress() && players.containsKey(name))
@@ -1151,6 +1214,13 @@ private class SpawnTimer {
         req.request(EventRequester.ARENA_JOINED);
     }
 
+    public String padString(String s, int length){
+    	if(s.length() == length)return s;
+    	while(s.length() < length)
+    		s += " ";
+    	return s;
+    }
+    
     public int getBotNumber(BotSettings cfg){ 
         for (int i = 1; i <= cfg.getInt("Max Bots"); i++){
             if (cfg.getString("Name" + i).equalsIgnoreCase(m_botAction.getBotName()))
