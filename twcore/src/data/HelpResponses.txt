@@ -449,7 +449,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &What &Meaning &Of &Life|The meaning of life is to play TrenchWars and die.
 &His &Nice &Ass|You have a nice ass!!
 &Her &Nice &Ass|Whoa mama!!!  You have a nice posterior!!
-&Stop &Slacking|Please pick up your monthly stats and get more active or you will get the axe from Falker and Nycler, TY.
+&Stop &Slacking|Please pick up your monthly stats and get more active or you will get the axe from one of the deans! :-[
 &Drinking &And &Driving|Please take care when operating your ship while under the influence of alcohol.
 
 # !tell who <staffmember>
