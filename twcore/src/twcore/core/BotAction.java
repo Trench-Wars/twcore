@@ -929,6 +929,48 @@ public class BotAction
         m_packetGenerator.sendChatPacket((byte) 1, (byte) soundCode, (short) 0, message);
     }
 
+    /**
+     * Sends a message to a whole frequency of players. (")
+     * @param frequency The frequency this message is to be sent to.
+     * @param message The message to be displayed.
+     */
+    public void sendUnfilteredTargetTeamMessage(int frequency, String message)
+    {
+        sendUnfilteredTargetTeamMessage(frequency, message, 0);
+    }
+
+    /**
+     * Sends a message to a whole frequency of players ("), with sound code.
+     * <code><pre><u>Sound codes:</u>
+     *  1 Beep #1           9 Listen to me   17 Under attack    25 Can't login
+     *  2 Beep #2          10 Baby crying    18 (Gibberish)     26 Beep #3
+     *  3 AT&T             11 Burp           19 Crowd: Oooo!   100 Start techno loop
+     *  4 Violent content  12 Orgasm (!)     20 Crowd: Gee!    101 Stop techno loop
+     *  5 Hallelujah       13 Scream         21 Crowd: Ohhh!   102 Play bad techno once
+     *  6 R.Reagan (long)  14 Fart #1        22 Crowd: Awww!   103 Victory bell
+     *  7 Inconceivable!   15 Fart #2        23 Game sucks     104 Goal! (or: go go go)
+     *  8 W.Churchill      16 Phone ring     24 Sheep bleat </pre></code>
+     * @param frequency The frequency this message is to be sent to.
+     * @param message The message to be sent
+     * @param soundCode Sound code to be sent along with the message (0 if none).
+     */
+    public void sendUnfilteredTargetTeamMessage(int frequency, String message, int soundCode)
+    {
+        Iterator<Integer> i;
+        int playerID;
+        String temp = message.trim();
+
+        if (temp.length() > 0) {
+            i = m_arenaTracker.getFreqIDIterator(frequency);
+            if (i != null) {
+                if( i.hasNext() ) {
+                    playerID = i.next().intValue();
+                    m_packetGenerator.sendChatPacket((byte) 4, (byte) soundCode, (short) playerID, message);
+                }
+            }
+        }
+    }
+
 
     // ***** MULTI-LINE MESSAGING *****
 
@@ -1044,14 +1086,14 @@ public class BotAction
             }
         }
     }
-    
+
     /**
      * Sends an e-mail message. The subject will be the bot's name.
      * @param to E-mail address of recipient
      * @param text Body of the message
      */
     public void sendEmailMessage(final String to, final String text) throws Exception{
-    	String[] message = {		
+    	String[] message = {
     			to,
     			getBotName(),
     			text
@@ -1184,7 +1226,7 @@ public class BotAction
             spectatePlayer(p.getPlayerID());
         }
     }
-    
+
     /**
      * Warps a player to the given tile coordinates with a radius.
      * @param playerID PlayerID of the player to be warped
@@ -1199,9 +1241,9 @@ public class BotAction
             x = ran.nextInt( (radius*2) + 1 ) + (xTiles - radius);
             y = ran.nextInt( (radius*2) + 1 ) + (yTiles - radius);
         }
-        warpTo(playerID, x, y);        
+        warpTo(playerID, x, y);
     }
-    
+
     /**
      * Warps a player to the given tile coordinates with a radius.
      * @param playerName The name of the player.
@@ -1704,15 +1746,15 @@ public class BotAction
     {
         sendUnfilteredPublicMessage("*thor " + thorAdjust);
     }
-    
+
     /**
-     * Uses the *locate command to locate a player inside this server (NOT cross-zone). 
-     * The response is given in an arena message in the form of: 
+     * Uses the *locate command to locate a player inside this server (NOT cross-zone).
+     * The response is given in an arena message in the form of:
      * [player] - [arena]
-     * 
-     * An advantage of this command in comparison to ?find is that this command can be used as many times as 
-     * necessary without the possibility of getting kicked for ?command spamming (simply because it isn't a - biller - ?command). 
-     * 
+     *
+     * An advantage of this command in comparison to ?find is that this command can be used as many times as
+     * necessary without the possibility of getting kicked for ?command spamming (simply because it isn't a - biller - ?command).
+     *
      * @param player The playername to find.
      */
     public void locatePlayer(String player) {
@@ -2342,7 +2384,7 @@ public class BotAction
         }
         return flags;
     }
-    
+
     /**
      * Drops all flags the bot is carrying.
      */
@@ -2609,6 +2651,35 @@ public class BotAction
     }
 
     /**
+     * Shows the specified LVZ object for a specific frequency, via a MANUAL "*objon #
+     * @param playerID ID of player.
+     * @param objID ID of object.
+     */
+    public void showObjectForFrequency(int frequency, int objID)
+    {
+        sendUnfilteredTargetTeamMessage(frequency, "*objon " + objID);
+    }
+
+    /**
+     * Hides the specified LVZ object for a specific player, via a MANUAL "*objoff #
+     * @param playerID ID of player.
+     * @param objID ID of object.
+     */
+    public void hideObjectForFrequency(int frequency, int objID)
+    {
+        sendUnfilteredTargetTeamMessage(frequency, "*objoff " + objID);
+    }
+
+    /**
+     * Sets objects for a particular frequency via a MANUAL "*objset
+     * @param playerID ID of player.
+     * @param String Object list with + for show and - for hide, as in "+1,-4," (must end in comma!)
+     */
+    public void setObjectsForFrequency(int frequency, String objs)
+    {
+        sendUnfilteredTargetTeamMessage(frequency, "*objset " + objs);
+    }
+    /**
      * Setup the specified LVZ object to be shown or hidden to all players.
      * @param objID ID of object.
      * @param isVisible True if object should be shown; false if hidden
@@ -2694,7 +2765,7 @@ public class BotAction
             m_packetGenerator.sendLVZObjectCluster(playerID);
         }
     }
-    
+
     /**
      * Sets objects using the current objects set under BotAction's copy of Objset
      * for a specific freq, as specified by given #.  In order for this command to
