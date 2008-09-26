@@ -63,7 +63,7 @@ import twcore.core.util.Tools;
  * TKs, informs people of messages received, and can perform any other task necessary
  * in a pub -- particularly ones that require a way to verify when a person logs on.)
  *
- * @author Cpt.Guano!  (Timed pub & specific restrictions: qan)
+ * @author qan / original idea and bot by Cpt. Guano!
  * @see pubbot; pubhub
  */
 public class purepubbot extends SubspaceBot
@@ -128,6 +128,7 @@ public class purepubbot extends SubspaceBot
     private AuxLvzTask scoreDisplay;					// Displays score lvz
     private AuxLvzTask scoreRemove;						// Removes score lvz
 
+    private ToggleTask toggleTask;                      // Toggles commands on and off at a specified interval
     private TimerTask entranceWaitTask;
     private int flagMinutesRequired;                    // Flag minutes required to win
     private int freq0Score, freq1Score;                 // # rounds won
@@ -147,7 +148,7 @@ public class purepubbot extends SubspaceBot
     private int warpPtsLeftY[]  = { 255, 260, 267, 274, 279, 263 };
     private int warpPtsRightX[] = { 537, 519, 522, 525, 529, 533 };
     private int warpPtsRightY[] = { 255, 260, 267, 274, 263, 279 };
-    
+
     // April fools map warp points
     private int warpPtsLeftX_April1[]  = { 487, 505, 502, 499, 491, 495 };
     private int warpPtsLeftY_April1[]  = { 255, 260, 267, 274, 279, 263 };
@@ -1534,6 +1535,26 @@ public class purepubbot extends SubspaceBot
     	for(int k = 0; k < commands.length; k++) {
     		handleModCommand(m_botAction.getBotName(), commands[k]);
 		}
+        String toggleInfoString = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Toggle");
+        if( toggleInfoString != null && !toggleInfoString.trim().equals("") ) {
+            String toggleSplit[] = toggleInfoString.split(":");
+            if( toggleSplit.length == 2 ) {
+                try {
+                    Integer toggleTime = Integer.parseInt(toggleSplit[1]);
+                    String toggles[] = toggleSplit[0].split(";");
+                    if( toggles.length == 2 ) {
+                        toggleTask = new ToggleTask( toggles[0].split(","),toggles[1].split(",") );
+                        m_botAction.scheduleTaskAtFixedRate(toggleTask, toggleTime * Tools.TimeInMillis.MINUTE, toggleTime * Tools.TimeInMillis.MINUTE );
+                    } else {
+                        Tools.printLog("Must have two toggles (did not find semicolon)");
+                    }
+                } catch(NumberFormatException e) {
+                    Tools.printLog("Unreadable time in toggle.");
+                }
+            } else {
+                Tools.printLog("Must have both toggles and number of minutes defined (!toggle;!toggle2:mins)");
+            }
+        }
     }
 
 
@@ -1911,14 +1932,14 @@ public class purepubbot extends SubspaceBot
         GregorianCalendar now = new GregorianCalendar();
         GregorianCalendar april1 = new GregorianCalendar(2008,GregorianCalendar.APRIL,1,0,0,0);
         GregorianCalendar april2 = new GregorianCalendar(2008,GregorianCalendar.APRIL,2,0,0,0);
-        
+
         if(now.after(april1) && now.before(april2)) {
             warpPtsLeftX = warpPtsLeftX_April1;
             warpPtsLeftY = warpPtsLeftY_April1;
             warpPtsRightX = warpPtsRightX_April1;
             warpPtsRightY = warpPtsRightY_April1;
         }
-        
+
         Iterator<?> i;
 
         if( strictFlagTime )
@@ -2441,6 +2462,39 @@ public class purepubbot extends SubspaceBot
             objs.showObject( 30 + ((seconds - seconds % 10)/10) );
             objs.showObject( 40 + (seconds % 10) );
             m_botAction.setObjects();
+        }
+    }
+
+    private class ToggleTask extends TimerTask {
+        String[] toggleOn;
+        String[] toggleOff;
+        boolean stateOn = false;
+
+        public ToggleTask( String[] on, String[] off ) {
+            toggleOn = on;
+            toggleOff = off;
+        }
+
+        public void run() {
+            if( stateOn ) {
+                stateOn = false;
+                for(int k = 0; k < toggleOff.length; k++) {
+                    if( toggleOff[k].startsWith("*") ) {
+                        m_botAction.sendUnfilteredPublicMessage( toggleOff[k] );
+                    } else {
+                        handleModCommand( m_botAction.getBotName(), toggleOff[k] );
+                    }
+                }
+            } else {
+                stateOn = true;
+                for(int k = 0; k < toggleOn.length; k++) {
+                    if( toggleOn[k].startsWith("*") ) {
+                        m_botAction.sendUnfilteredPublicMessage( toggleOn[k] );
+                    } else {
+                        handleModCommand( m_botAction.getBotName(), toggleOn[k] );
+                    }
+                }
+            }
         }
     }
 }
