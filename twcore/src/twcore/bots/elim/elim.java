@@ -57,7 +57,7 @@ public class elim extends SubspaceBot {
 	public TreeMap<String, ElimPlayer> losers = new TreeMap<String, ElimPlayer>();
 	public TreeMap<Integer, Integer> votes = new TreeMap<Integer, Integer>();
 	public ArrayList<String> enabled = new ArrayList<String>();
-	public ArrayList<String> scoreReset = new ArrayList<String>();
+	public ArrayList<String> classicMode = new ArrayList<String>();
 
 	
 	//BotSettings variables
@@ -128,7 +128,7 @@ public class elim extends SubspaceBot {
 				"| !rec <name>  - Shows the wins and losses of <name>.                       |",
 				"| !lagout      - Puts you back into the game if you've lagged out. (!l)     |",
 				"| !scorereset  - Resets your arena score card to zero. No going back. (!sr) |",
-				"| !resetme     - Toggles whether your score is reset at round starts. (!rm) |",
+				"| !classic     - Play elim the old way. Get scorereset'd and specced. (!c)  |",
 				"| !stats       - Shows your statistics including your rank.                 |",
 				"| !stats <name>- Shows statistics of <name>.                                |",
 				"| !rank <#>    - Returns the player at rank <#>.                            |"
@@ -222,8 +222,8 @@ public class elim extends SubspaceBot {
     		cmd_lagout(name);
     	else if(cmd.equalsIgnoreCase("!scorereset") || cmd.equalsIgnoreCase("!sr"))
     		cmd_scorereset(name);
-    	else if(cmd.equalsIgnoreCase("!resetme") || cmd.equalsIgnoreCase("!rm"))
-    		cmd_resetme(name);
+    	else if(cmd.equalsIgnoreCase("!classic") || cmd.equalsIgnoreCase("!c"))
+    		cmd_classic(name);
     	else if(cmd.equalsIgnoreCase("!stats"))
     		cmd_stats(name, name);
     	else if(cmd.startsWith("!stats "))
@@ -285,12 +285,12 @@ public class elim extends SubspaceBot {
     	Collections.sort(l, byRatio);
     	i = l.iterator();
     	index = 1;
-    	m_botAction.sendSmartPrivateMessage( name, "------------ Worst Records ------------");
+    	/*m_botAction.sendSmartPrivateMessage( name, "------------ Worst Records ------------");
     	while( i.hasNext() && index <= 3){
     		ElimPlayer p = i.next();
     		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
     		index++;
-    	}
+    	}*/
     }
     
     public void cmd_wl(String name){
@@ -326,13 +326,17 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_lagout(String name){
-    	if(lagouts.containsKey(name) && game.state == GameStatus.GAME_IN_PROGRESS){
-    		players.put(name, lagouts.remove(name));
-    		if(!enabled.contains(name))
-    			enabled.add(name);
-    		m_botAction.setShip(name, players.get(name).shiptype);
-    		m_botAction.setFreq(name, players.get(name).frequency);
-    		doWarpIntoElim(name);
+    	if(game.state != GameStatus.GAME_IN_PROGRESS)return;
+    	if(lagouts.containsKey(name)){
+    		if(System.currentTimeMillis() - lagouts.get(name).lagTime > 30 * Tools.TimeInMillis.SECOND){
+		    	players.put(name, lagouts.remove(name));
+		    	if(!enabled.contains(name))
+		    		enabled.add(name);
+		    	m_botAction.setShip(name, players.get(name).shiptype);
+		    	m_botAction.setFreq(name, players.get(name).frequency);
+		    	doWarpIntoElim(name);
+    		} else
+    			m_botAction.sendSmartPrivateMessage( name, "You must wait for " + ((System.currentTimeMillis() - lagouts.get(name).lagTime)/Tools.TimeInMillis.SECOND) + " more seconds.");
     	} else
     		m_botAction.sendSmartPrivateMessage( name, "You aren't in the game!");    		
     }
@@ -342,24 +346,26 @@ public class elim extends SubspaceBot {
     	m_botAction.sendSmartPrivateMessage( name, "Your score has been reset.");
     }
     
-    public void cmd_resetme(String name){
-    	int wantsSR = 0;
-    	if(scoreReset.remove(name))
-    		m_botAction.sendSmartPrivateMessage( name, "Your score will not be reset at round starts.");
+    public void cmd_classic(String name){
+    	int wantsClassic = 0;
+    	if(classicMode.remove(name))
+    		m_botAction.sendSmartPrivateMessage( name, "Your score will not be reset at round starts and you will be moved to casual at round ends.");
     	else {
-    		wantsSR = 1;
-    		scoreReset.add(name);
-    		m_botAction.sendSmartPrivateMessage( name, "Your score will be reset at round starts.");
+    		wantsClassic = 1;
+    		classicMode.add(name);
+    		m_botAction.sendSmartPrivateMessage( name, "Your score will be reset at round starts and you will be specced at round ends.");
     	}
     	try{
-    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnScoreReset = " + wantsSR + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnClassic = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
     }
     
     public void cmd_stats(String name, String target){
-    	target = m_botAction.getFuzzyPlayerName(target);
+    	String t = m_botAction.getFuzzyPlayerName(target);
+    	if(t != null)
+    		target = t;
     	try{
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(target.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if( rs != null && rs.next() ){
@@ -395,7 +401,7 @@ public class elim extends SubspaceBot {
     			m_botAction.sendSmartPrivateMessage( name, "User '" + target + "' not found.");	
     		}
     	} catch(Exception e){
-    		Tools.printStackTrace(e);
+    		m_botAction.sendSmartPrivateMessage( name, "There was a problem handling your request. Please try again.");
     	}
     }
     
@@ -758,15 +764,19 @@ public class elim extends SubspaceBot {
     		else
     			m_botAction.warpTo(name, 512, 600, 40);
     	} else
-    		m_botAction.warpTo(name, 512, 734, 90);
+    		m_botAction.warpTo(name, 512, 734, 175);
     }
     
     public void doWarpIntoCasual(String name){
-    	for(int i=0;i<9999;i++){
-    		if(m_botAction.getFrequencySize(i) == 0){
-    			m_botAction.setFreq(name, i);
-    			break;
-    		}    			
+    	if(classicMode.contains(name))
+    		m_botAction.specWithoutLock(name);
+    	else{
+	    	for(int i=0;i<9999;i++){
+	    		if(m_botAction.getFrequencySize(i) == 0){
+	    			m_botAction.setFreq(name, i);
+	    			break;
+	    		}    			
+	    	}
     	}
     }
     
@@ -774,9 +784,9 @@ public class elim extends SubspaceBot {
 private class ElimPlayer{
 	private String name;
 	private int shiptype = -1, vote = -1, frequency = -1;
-	private int wins = 0, losses = 0, shots = 0, initRating = 0, streak = 0, BKS = 0;
+	private int wins = 0, losses = 0, shots = 0, initRating = 0, streak = 0, BKS = 0, lagouts = 0;
 	private double hitRatio = 0, winRatio = 100, ratingChange = 0, w, l, s;
-	private long outOfBounds = 0;
+	private long outOfBounds = 0, lagTime = -1;
 	private boolean gotBorderWarning = false, gotChangeWarning = false;
 	private static final int MAX_POINTS = 50;
 	
@@ -788,6 +798,9 @@ private class ElimPlayer{
 	private void resetScore(){
 		wins = 0;
 		losses = 0;
+		lagouts = 0;
+		if(classicMode.contains(name))
+			m_botAction.scoreReset(name);
 	}
 	
 	private void gotWin(){
@@ -843,7 +856,6 @@ private class ElimPlayer{
 			winRatio = ((w / l) * 100);
 		else{
 			winRatio = ((w / 1) * 100);
-			winRatio += (winRatio / w);
 		}
 		double x = avg_rating - initRating;//Average Player Rating - Player Rating
 		double p = 1/(1 + Math.pow(10, (x/400)));//Probability of winning
@@ -959,7 +971,7 @@ private class GameStatus{
 					doWaitingForPlayers();
 				else if(botMode == OFF)
 					state = OFF_MODE;
-				else
+				else if(botMode == DISCONNECT)
 					new DieTask(m_botAction.getBotName());
 				break;
 		}	
@@ -1014,7 +1026,7 @@ private class SpawnTimer {
         			if(rs.getInt("fnElim") == 1)
         				enabled.add(name);
         			if(rs.getInt("fnScoreReset") == 1)
-        				scoreReset.add(name);
+        				classicMode.add(name);
         		}
         		m_botAction.SQLClose(rs);
         	}catch(SQLException e){
@@ -1062,14 +1074,14 @@ private class SpawnTimer {
     	if(name == null || opList.isBotExact(name))return;
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
-    	scoreReset.add(name);
+    	classicMode.add(name);
     	try{
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnScoreReset, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if(rs != null && rs.next()){
     			if(rs.getInt("fnElim") == 0)
     				enabled.remove(name);
     			if(rs.getInt("fnScoreReset") == 0)
-    				scoreReset.remove(name);
+    				classicMode.remove(name);
     		}
     		m_botAction.SQLClose(rs);
     	}catch(SQLException e){
@@ -1080,9 +1092,17 @@ private class SpawnTimer {
     public void handleEvent(PlayerLeft event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
     	enabled.remove(name);
-    	scoreReset.remove(name);
-    	if(game.isInProgress() && players.containsKey(name))
+    	classicMode.remove(name);
+    	if(game.isInProgress() && players.containsKey(name)){
     		lagouts.put(name, players.remove(name));
+    		lagouts.get(name).lagTime = System.currentTimeMillis();
+    		lagouts.get(name).lagouts++;
+    		if(lagouts.get(name).lagouts > 2){
+    			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
+    			losers.put(name, lagouts.remove(name));
+        		doWarpIntoCasual(name);
+    		}
+    	}
     	else if(!game.isInProgress() && players.containsKey(name))
     		players.remove(name);
     	if(players.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
@@ -1095,6 +1115,13 @@ private class SpawnTimer {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
     	if(game.isInProgress() && players.containsKey(name) && event.getShipType() == 0){
     		lagouts.put(name, players.remove(name));
+    		lagouts.get(name).lagTime = System.currentTimeMillis();
+    		lagouts.get(name).lagouts++;
+    		if(lagouts.get(name).lagouts > 2){
+    			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
+    			losers.put(name, lagouts.remove(name));
+        		doWarpIntoCasual(name);
+    		}   		
     		if(players.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
     			winner = players.get(players.firstKey());
         		game.moveOn();
