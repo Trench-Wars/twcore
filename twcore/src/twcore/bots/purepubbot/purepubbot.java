@@ -120,6 +120,7 @@ public class purepubbot extends SubspaceBot
     private boolean teamsUneven;                        // True if teams are uneven as given in MAX_FREQSIZE_DIFF
     private boolean allEntered;                         // True after bot has completed entering arena
     private boolean autoWarp;                           // Whether to add players to !warp by default
+    private boolean warpAllowed;                        // Whether !warp is allowed or not
     private int[] freqSizeInfo = {0, 0};                // Index 0: size difference; 1: # of smaller freq
     private FlagCountTask flagTimer;                    // Flag time main class
     private StartRoundTask startTimer;                  // TimerTask to start round
@@ -182,6 +183,7 @@ public class purepubbot extends SubspaceBot
         teamsUneven = false;
         allEntered = false;
         autoWarp = true;
+        warpAllowed = true;
         warpPlayers = Collections.synchronizedList( new LinkedList<String>() );
         authorizedChangePlayers = Collections.synchronizedList( new LinkedList<String>() );
         mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
@@ -597,6 +599,8 @@ public class purepubbot extends SubspaceBot
                 doSetCmd(sender, command.substring(5));
             else if(command.equals("!autowarp"))
                 doAutowarpCmd(sender);
+            else if(command.equals("!allowwarp"))
+                doAllowWarpCmd(sender);
             else if(command.equals("!die"))
                 doDieCmd(sender);
         } catch(RuntimeException e) {
@@ -810,6 +814,8 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException( "Flag Time mode is not currently running." );
         if( strictFlagTime )
             throw new RuntimeException( "You do not need to !warp in Strict Flag Time mode.  You will automatically be warped." );
+        if( !warpAllowed )
+            throw new RuntimeException( "Warping into base at round start is not currently allowed." );
 
         if( warpPlayers.contains( sender ) ) {
             warpPlayers.remove( sender );
@@ -888,7 +894,6 @@ public class purepubbot extends SubspaceBot
         }
     }
 
-
     /**
      * Turns on or off "autowarp" mode, where players opt out of warping into base,
      * rather than opting in.
@@ -902,6 +907,22 @@ public class purepubbot extends SubspaceBot
         } else {
             m_botAction.sendPrivateMessage(sender, "Players will be automatically added to the !warp list when they enter the arena.");
             autoWarp = true;
+        }
+    }
+
+    /**
+     * Turns on or off allowing players to use !warp to get into base at the start of a round.
+     *
+     * @param sender is the person issuing the command.
+     */
+    public void doAllowWarpCmd(String sender) {
+        if( warpAllowed ) {
+            m_botAction.sendPrivateMessage(sender, "Players will no longer be able to use !warp.");
+            warpAllowed = false;
+            warpPlayers.clear();
+        } else {
+            m_botAction.sendPrivateMessage(sender, "Players will be allowed to use !warp.");
+            warpAllowed = true;
         }
     }
 
@@ -1928,6 +1949,8 @@ public class purepubbot extends SubspaceBot
      * Ensures !warpers on freqs are warped all to 'their' side, but not predictably.
      */
     private void warpPlayers() {
+        if( !warpAllowed )
+            return;
         // FIXME: Small hack to use different warp coordinates with april fools map
         GregorianCalendar now = new GregorianCalendar();
         GregorianCalendar april1 = new GregorianCalendar(2008,GregorianCalendar.APRIL,1,0,0,0);
