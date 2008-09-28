@@ -27,18 +27,20 @@ blueout=1
 # (e.g. if set to 3 the bot will zone when squads within the 
 # top three play each other) zoneforladdertime sets the amount
 # of time to wait before zoning again in minutes.
-zoneforladder=2
+zoneforladder=3
 zoneforladdertime=90
 
 # assign the maximum number of ships allowed per shiptype.
 # -1 indicates that the ship is NOT allowed
-maxship5=1
-maxship8=2
 maxship4=-1
+maxship5=1
+maxship6=-1
+maxship8=2
+
 
 squadjoined=1
 rosterjoined=1
-shipchanges=2
+shipchanges=6
 shipswitches=3
 substitutes=3
 lagouts=-1
