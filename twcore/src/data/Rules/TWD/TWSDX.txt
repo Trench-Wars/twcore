@@ -76,3 +76,8 @@ strictmidip=0
 specialaccess=
 # TWSDX setting only to enable the flags on scoreboard
 scoreboard_flags=1
+
+# !rules output
+# Since these settings need to be at one line, you can specify to start a new line (new PM) using "##"
+# For example; Line 1##Line 2##Line 3
+rules_command=TWSD rules / how to play:##-------------------------##Capture the flag to get more points on each kill. The team with the most points win.
