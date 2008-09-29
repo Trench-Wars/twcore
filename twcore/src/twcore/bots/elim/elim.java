@@ -85,6 +85,7 @@ public class elim extends SubspaceBot {
 	public static final int ON = 1;
 	public static final int DISCONNECT = 2;
 	public static final int SPAWN_TIME = 5005;
+	public static final int LAGOUT_TIME = 30;
 	
     public elim(BotAction botAction) {
         super(botAction);
@@ -145,6 +146,8 @@ public class elim extends SubspaceBot {
 		help.addAll(reg);
 		if(opList.isSmod(name))
 			help.addAll(smod);
+		if(opList.isSysop(name))
+			help.add("| !greetmsg <m>- Sets arena greet message(Sysop only).                      |");
 		help.add("+===========================================================================+");
 		return help.toArray(new String[help.size()]);
 
@@ -183,12 +186,15 @@ public class elim extends SubspaceBot {
 			handleCommands(name, message);
 			if(opList.isSmod(name))
 				handleSmodCommands(name, message);
+			if(opList.isSysop(name) && message.startsWith("!greetmsg "))
+				m_botAction.sendUnfilteredPublicMessage( "?set misc:greetmessage:"+message.substring(10) );
 		}				
 		else if(messageType == Message.ARENA_MESSAGE && message.equals("Arena LOCKED"))
 			m_botAction.toggleLocked();
 		else if(messageType == Message.PUBLIC_MESSAGE &&
 				game.isVoting()                       &&
 				Tools.isAllDigits(message)            &&
+				message.length() <= 2                 &&
 				players.containsKey(name))
 			vote(name, message);
 		else if(messageType == Message.PUBLIC_MESSAGE){
@@ -328,7 +334,7 @@ public class elim extends SubspaceBot {
     public void cmd_lagout(String name){
     	if(game.state != GameStatus.GAME_IN_PROGRESS)return;
     	if(lagouts.containsKey(name)){
-    		if(System.currentTimeMillis() - lagouts.get(name).lagTime > 30 * Tools.TimeInMillis.SECOND){
+    		if(System.currentTimeMillis() - lagouts.get(name).lagTime > LAGOUT_TIME * Tools.TimeInMillis.SECOND){
 		    	players.put(name, lagouts.remove(name));
 		    	if(!enabled.contains(name))
 		    		enabled.add(name);
@@ -336,7 +342,7 @@ public class elim extends SubspaceBot {
 		    	m_botAction.setFreq(name, players.get(name).frequency);
 		    	doWarpIntoElim(name);
     		} else
-    			m_botAction.sendSmartPrivateMessage( name, "You must wait for " + ((System.currentTimeMillis() - lagouts.get(name).lagTime)/Tools.TimeInMillis.SECOND) + " more seconds.");
+    			m_botAction.sendSmartPrivateMessage( name, "You must wait for " + (LAGOUT_TIME-((System.currentTimeMillis() - lagouts.get(name).lagTime)/Tools.TimeInMillis.SECOND)) + " more seconds.");
     	} else
     		m_botAction.sendSmartPrivateMessage( name, "You aren't in the game!");    		
     }
@@ -653,6 +659,7 @@ public class elim extends SubspaceBot {
 	    	stats.add("| Worst effort: " + padString(l.get(0).name + " (" + l.get(0).wins + "-" + l.get(0).losses + ")", 45) + "|");
 	    	stats.add("`-------------------------------------------------------------'");
 	    	m_botAction.arenaMessageSpam(stats.toArray(new String[stats.size()]));
+	    	m_botAction.sendArenaMessage("", Tools.Sound.HALLELUJAH);
     	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
@@ -1053,6 +1060,8 @@ private class SpawnTimer {
     		return;
     	}
     	players.get(win).gotWin();
+    	if(players.get(loss).streak >= 7)
+    		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + players.get(loss).streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
     	players.get(loss).gotLoss();
     	if(players.get(loss).losses == deaths){
     		m_botAction.sendArenaMessage(loss + " is out. " + players.get(loss).wins + " wins " + players.get(loss).losses + " losses");

@@ -30,6 +30,7 @@ public final class CodeCompiler {
 	public static OperatorList opList;
 	
     public static void handleTWScript(BotAction bot, String message, Player p, TWScript tws, int accessLevel){
+    	String clone = message;
     	try{
     		opList = bot.getOperatorList();
     		message = replaceKeys(bot, p, tws, message);
@@ -50,7 +51,7 @@ public final class CodeCompiler {
     				sendMessage(bot,message,sound);
     		}
     	}catch(Exception e){
-    		Tools.printStackTrace(e);
+    		bot.sendChatMessage("TWScript syntax error: " + clone);
     	}
     }
     
