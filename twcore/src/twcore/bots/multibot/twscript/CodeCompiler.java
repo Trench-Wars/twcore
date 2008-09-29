@@ -216,6 +216,11 @@ public final class CodeCompiler {
         message = doMathStatements(message);
         message = message.replace("$OPEN_BRACKET$", "[");
         message = message.replace("$CLOSE_BRACKET$", "]");
+        message = message.replace("$SUBTRACT$", "-");
+        message = message.replace("$DIVIDE$", "/");
+        message = message.replace("$MULTIPLY$", "*");
+        message = message.replace("$PERCENT$", "%");
+        message = message.replace("$CARAT$", "^");
         message = replaceVariablesAndConstants(message, tws);
         if(message.trim().startsWith("{"))
                 message = compile(message);
@@ -457,81 +462,87 @@ public final class CodeCompiler {
     	try{
     		if(s.startsWith("[") && s.indexOf("]") == s.length() - 1)
         		s = s.substring(1, s.length() - 1);
-        if(s.contains("+")){
-            String a = s.substring(0, s.indexOf("+"));
-            String b = s.substring(s.indexOf("+") + 1);
-            try{
-                double x = Double.parseDouble(a.trim());
-                double y = Double.parseDouble(b.trim());
-                return format.valueToString(x+y);
-            }catch(NumberFormatException e){
-                return a + b;
-            }
-        } else if(s.contains("-")){
-            String a = s.substring(0, s.indexOf("-"));
-            String b = s.substring(s.indexOf("-") + 1);
-            try{
-                double x = Double.parseDouble(a.trim());
-                double y = Double.parseDouble(b.trim());
-                return format.valueToString(x - y);
-            }catch(NumberFormatException e){
-                return s;
-            }
-        } else if(s.contains("*")){
-            String a = s.substring(0, s.indexOf("*"));
-            String b = s.substring(s.indexOf("*") + 1);
-            try{
-                double x = Double.parseDouble(a.trim());
-                double y = Double.parseDouble(b.trim());
-                return format.valueToString(x * y);
-            }catch(NumberFormatException e){
-                return s;
-            }
-        } else if(s.contains("/")){
-            String a = s.substring(0, s.indexOf("/"));
-            String b = s.substring(s.indexOf("/") + 1);
-            try{
-                double x = Double.parseDouble(a.trim());
-                double y = Double.parseDouble(b.trim());
-                return format.valueToString(x/y);
-            }catch(NumberFormatException e){
-                return "-1";
-            }catch(ArithmeticException e){
-            	return s;
-            }
-        } else if(s.contains("^")){
-            String a = s.substring(0, s.indexOf("^"));
-            String b = s.substring(s.indexOf("^") + 1);
-            try{
-                double x = Double.parseDouble(a.trim());
-                double y = Double.parseDouble(b.trim());
-                return format.valueToString(Math.pow(x,y));
-            }catch(NumberFormatException e){
-                return s;
-            }
-        } else if(s.contains("%")){
-            String a = s.substring(0, s.indexOf("%"));
-            String b = s.substring(s.indexOf("%") + 1);
-            try{
-                double x = Double.parseDouble(a.trim());
-                double y = Double.parseDouble(b.trim());
-                return format.valueToString(x % y);
-            }catch(NumberFormatException e){
-                return "-1";
-            }catch(ArithmeticException e){
-            	return s;
-            }
-        } else {
-            try{
-                double x = Double.parseDouble(s);
-                return format.valueToString(x);
-            }catch(NumberFormatException e){
-                return s;
-            }
-        }
+	        if(s.contains("+")){
+	            String a = s.substring(0, s.indexOf("+"));
+	            String b = s.substring(s.indexOf("+") + 1);
+	            try{
+	                double x = Double.parseDouble(a.trim());
+	                double y = Double.parseDouble(b.trim());
+	                double z = x + y;
+	                return format.valueToString(z);
+	            }catch(Exception e){
+	                return a + b;
+	            }
+	        } else if(s.contains("-")){
+	            String a = s.substring(0, s.indexOf("-"));
+	            String b = s.substring(s.indexOf("-") + 1);
+	            try{
+	                double x = Double.parseDouble(a.trim());
+	                double y = Double.parseDouble(b.trim());
+	                double z = x - y;
+	                return format.valueToString(z);
+	            }catch(Exception e){
+	            	s = s.replace("-", "$SUBTRACT$");
+	                return "$OPEN_BRACKET$" + s + "$CLOSE_BRACKET$";
+	            }
+	        } else if(s.contains("*")){
+	            String a = s.substring(0, s.indexOf("*"));
+	            String b = s.substring(s.indexOf("*") + 1);
+	            try{
+	                double x = Double.parseDouble(a.trim());
+	                double y = Double.parseDouble(b.trim());
+	                double z = x * y;
+	                return format.valueToString(z);
+	            }catch(Exception e){
+	            	s = s.replace("*", "$MULTIPLY$");
+	            	return "$OPEN_BRACKET$" + s + "$CLOSE_BRACKET$";
+	            }
+	        } else if(s.contains("/")){
+	            String a = s.substring(0, s.indexOf("/"));
+	            String b = s.substring(s.indexOf("/") + 1);
+	            try{
+	                double x = Double.parseDouble(a.trim());
+	                double y = Double.parseDouble(b.trim());
+	                double z = x/y;
+	                return format.valueToString(z);
+	            }catch(Exception e){
+	            	s = s.replace("/", "$DIVIDE$");
+	            	return "$OPEN_BRACKET$" + s + "$CLOSE_BRACKET$";
+	            }
+	        } else if(s.contains("^")){
+	            String a = s.substring(0, s.indexOf("^"));
+	            String b = s.substring(s.indexOf("^") + 1);
+	            try{
+	                double x = Double.parseDouble(a.trim());
+	                double y = Double.parseDouble(b.trim());
+	                double z = Math.pow(x,y);
+	                return format.valueToString(z);
+	            }catch(Exception e){
+	            	s = s.replace("^", "$CARAT$");
+	            	return "$OPEN_BRACKET$" + s + "$CLOSE_BRACKET$";
+	            }
+	        } else if(s.contains("%")){
+	            String a = s.substring(0, s.indexOf("%"));
+	            String b = s.substring(s.indexOf("%") + 1);
+	            try{
+	                double x = Double.parseDouble(a.trim());
+	                double y = Double.parseDouble(b.trim());
+	                double z = x % y;
+	                return format.valueToString(z);
+	            }catch(Exception e){
+	            	s = s.replace("%", "$PERCENT$");
+	            	return "$OPEN_BRACKET$" + s + "$CLOSE_BRACKET$";
+	            }
+	        } else {
+	            try{
+	                double x = Double.parseDouble(s);
+	                return format.valueToString(x);
+	            }catch(Exception e){
+	            	return "$OPEN_BRACKET$" + s + "$CLOSE_BRACKET$";
+	            }
+	        }
     	}catch(Exception e){
-    		Tools.printStackTrace(e);
-    		return s;
+    		return "$OPEN_BRACKET$" + s + "$CLOSE_BRACKET$";
     	}
     }
     
