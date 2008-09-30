@@ -144,10 +144,10 @@ public class PubStatsPlayer {
 	 */
 	public boolean isExtraInfoFilled() {
 	    return 
-	        IP != null && IP.length() > 0 &&
-	        machineID != null && machineID.length() > 0 &&
-	        usage != null && usage.length() > 0 &&
-	        dateCreated != null && dateCreated.length() > 0;
+	        IP != null && IP.trim().length() > 0 &&
+	        machineID != null && machineID.trim().length() > 0 &&
+	        usage != null && usage.trim().length() > 0 &&
+	        dateCreated != null && dateCreated.trim().length() > 0;
 	    
 	}
 	
