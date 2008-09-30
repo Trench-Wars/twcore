@@ -1,48 +1,59 @@
 package twcore.core.net;
 
-import javax.mail.Session;
-import javax.mail.Message;
-import javax.mail.Transport;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.InternetAddress;
 import java.util.Properties;
 
-import twcore.core.BotSettings;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+import twcore.core.util.Tools;
 
 public class Email {
+    
+    private Properties emailProperties;
+    private String hostname;
+    private int port;
+    private String user;
+    private String password;
 	
-	private String SMTP_HOST_NAME;
-    private int SMTP_HOST_PORT;
-    private String SMTP_AUTH_USER;
-    private String SMTP_AUTH_PASS;
-    private int SSL;
-
-	public Email(String[] args, BotSettings cfg) throws Exception{
-		if(args.length != 3)return;
-		SMTP_HOST_NAME = cfg.getString("MailHost");
-		SMTP_HOST_PORT = cfg.getInt("MailPort");
-		SMTP_AUTH_USER = cfg.getString("MailUser");
-		SMTP_AUTH_PASS = cfg.getString("MailPass");
-		SSL = cfg.getInt("SSL");
-		Properties props = new Properties();
-		props.put("mail.host", SMTP_HOST_NAME);
-		if(SSL == 1){
-		   	props.put("mail.smtps.auth", "true");
-		   	props.put("mail.transport.protocol", "smtps");
-		}
-		else
-		  	props.put("mail.transport.protocol", "smtp");
-		Session session = Session.getDefaultInstance(props, null);
-		Transport transport = session.getTransport();
-			
-		Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(SMTP_AUTH_USER));
-        message.setRecipient(Message.RecipientType.TO, new InternetAddress(args[0]));
-        message.setSubject(args[1]);
-        message.setText(args[2]);
-           
-        transport.connect(SMTP_HOST_NAME, SMTP_HOST_PORT, SMTP_AUTH_USER, SMTP_AUTH_PASS);
-        transport.sendMessage(message, message.getRecipients(Message.RecipientType.TO));
-        transport.close();
+	public Email(String hostname, int port, String user, String password, boolean SSL) {
+	    emailProperties = new Properties();
+	    emailProperties.put("mail.host", hostname);
+	    
+	    if(SSL){
+	        emailProperties.put("mail.smtps.auth", "true");
+            emailProperties.put("mail.transport.protocol", "smtps");
+        } else {
+            emailProperties.put("mail.transport.protocol", "smtp");
+        }
+	    
+	    this.hostname = hostname;
+	    this.port = port;
+	    this.user = user;
+	    this.password = password;
 	}
+	
+	public void send(String from, String recipient, String subject, String text) {
+	    try {
+    		Session session = Session.getDefaultInstance(emailProperties, null);
+    		Transport transport = session.getTransport();
+    			
+    		Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(user));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(from));
+            message.setSubject(subject);
+            message.setText(text);
+               
+            transport.connect(hostname, port, user, password);
+            transport.sendMessage(message, message.getRecipients(Message.RecipientType.TO));
+            transport.close();
+	    } catch(MessagingException me) {
+	        Tools.printLog("MessagingException encountered while trying to send an email: "+me.getMessage());
+            Tools.printStackTrace(me);
+	    }
+	}
+	    
 }

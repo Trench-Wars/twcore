@@ -1093,12 +1093,9 @@ public class BotAction
      * @param text Body of the message
      */
     public void sendEmailMessage(final String to, final String text) throws Exception{
-    	String[] message = {
-    			to,
-    			getBotName(),
-    			text
-    	};
-    	new Email(message, getGeneralSettings());
+    	BotSettings cfg = this.getBotSettings();
+    	Email email = new Email(cfg.getString("MailHost"), cfg.getInt("MailPort"), cfg.getString("MailUser"), cfg.getString("MailPass"), cfg.getInt("SSL")==1);
+    	email.send(cfg.getString("MailUser"), to, getBotName(), text);
     }
 
 
