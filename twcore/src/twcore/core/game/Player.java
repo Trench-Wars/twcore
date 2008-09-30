@@ -47,7 +47,6 @@ public class Player {
     private short   m_frequency;        // Frequency player belongs to
     private short   m_wins;             // Kills  / Wins
     private short   m_losses;           // Deaths / Losses
-    private int     m_score;            // Total points
     private int     m_flagPoints;       // Points from flagging
     private int     m_killPoints;       // Points from kills
     private boolean m_acceptsAudio;     // Whether player accepts remote PMs in priv arenas
@@ -89,7 +88,6 @@ public class Player {
      */
     public Player( PlayerEntered playerEntered ){
         m_ping = 0;
-        m_score = 0;
         m_timer = 0;
         m_bounty = 0;
         m_energy = 0;
@@ -116,8 +114,6 @@ public class Player {
         m_squadName = new String( playerEntered.getSquadName() );
         m_playerName = new String( playerEntered.getPlayerName() );
 
-        m_score = m_flagPoints + m_killPoints;
-
         m_turrets = new LinkedList<Integer>();
     }
 
@@ -140,8 +136,6 @@ public class Player {
         m_squadName = new String( playerEntered.getSquadName() );
         m_playerName = new String( playerEntered.getPlayerName() );
 
-        m_score = m_flagPoints + m_killPoints;
-
         m_turrets = new LinkedList<Integer>();
     }
 
@@ -151,7 +145,6 @@ public class Player {
     public void clearPlayer(){
         m_wins = 0;
         m_ping = 0;
-        m_score = 0;
         m_timer = 0;
         m_losses = 0;
         m_bounty = 0;
@@ -201,7 +194,6 @@ public class Player {
      * Resets all score-related data for the player.
      */
     public void scoreReset(){
-        m_score = 0;
         m_wins = 0;
         m_losses = 0;
         m_killPoints = 0;
@@ -220,7 +212,7 @@ public class Player {
             // bounty as appropriate.
             // TODO: When arena settings storage class is implemented, use to properly update score & bounty.
             m_bounty += 3;//For now we'll go with standard settings.
-            m_score += message.getKilledPlayerBounty();
+            m_killPoints += message.getKilledPlayerBounty();
         } else if( message.getKilleeID() == m_playerID ){
             m_losses++;
             m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
@@ -248,7 +240,6 @@ public class Player {
         m_losses = message.getLosses();
         m_flagPoints = message.getFlagPoints();
         m_killPoints = message.getKillPoints();
-        m_score = m_flagPoints + m_killPoints;
     }
 
     /**
@@ -257,7 +248,7 @@ public class Player {
      */
     public void updatePlayer( FlagVictory message ){
         if( message.getFrequency() == m_frequency ){
-            m_score += message.getReward();
+            m_flagPoints += message.getReward();
         }
     }
 
@@ -267,7 +258,7 @@ public class Player {
      */
     public void updatePlayer( FlagReward message ){
         if( message.getFrequency() == m_frequency ){
-            m_score += message.getPoints();
+            m_flagPoints += message.getPoints();
         }
     }
 
@@ -764,7 +755,7 @@ public class Player {
      */
     public int getScore(){
 
-        return m_score;
+        return m_flagPoints + m_killPoints;
     }
 
     /**
