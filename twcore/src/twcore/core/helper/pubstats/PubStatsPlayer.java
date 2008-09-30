@@ -134,6 +134,10 @@ public class PubStatsPlayer {
 	    return this.getShipScore(this.ship);
 	}
 	
+	public void removeShipScore(short ship) {
+	    shipScores.remove(ship);
+	}
+	
 	/**
 	 * Returns whether the information from *info is filled 
 	 * @return

@@ -1,6 +1,5 @@
 package twcore.core.helper.pubstats;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,13 +27,29 @@ public class PubStatsArena {
     }
     
     /**
+     * Gets a PubStatsPlayer by the exact player name (case insensitive).
+     * 
+     * @param name the playername 
+     * @return
+     */
+    public PubStatsPlayer getPlayer(String name) {
+        for(PubStatsPlayer player : players.values()) {
+            if(player.getName().equalsIgnoreCase(name)) {
+                return player;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
      * Gets a PubStatsPlayer by the player name.
      * Returns the first found PubStatsPlayer where his name starts with the given shortName.
      * 
      * @param shortName the short playername (the name from %tickname/playerlist) 
      * @return
      */
-    public PubStatsPlayer getPlayer(String shortName) {
+    public PubStatsPlayer getPlayerOnPartialName(String shortName) {
         for(PubStatsPlayer player : players.values()) {
             if(player.getName().startsWith(shortName)) {
                 return player;
@@ -51,7 +66,7 @@ public class PubStatsArena {
      * @param longName the long playername (the name from *info)
      * @return
      */
-    public PubStatsPlayer getPlayer2(String longName) {
+    public PubStatsPlayer getPlayerOnPartialName2(String longName) {
         for(PubStatsPlayer player : players.values()) {
             if(longName.startsWith(player.getName())) {
                 return player;
