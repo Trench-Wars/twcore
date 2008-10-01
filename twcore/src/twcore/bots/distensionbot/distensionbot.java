@@ -86,7 +86,7 @@ public class distensionbot extends SubspaceBot {
     private final float LOW_RANK_FACTOR = 1.15f;           // Factor for rank increases (lvl 10+)
     private final float NORMAL_RANK_FACTOR = 1.10f;        // Factor for rank increases (lvl 25+)
     private final float HIGH_RANK_FACTOR = 1.25f;          // Factor for rank increases (lvl 50+)
-    private final float STUPIDLY_HIGH_RANK_FACTOR = 1.7f;  // Factor for rank increases (lvl 70+)
+    private final float STUPIDLY_HIGH_RANK_FACTOR = 1.6f;  // Factor for rank increases (lvl 70+)
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
@@ -105,8 +105,8 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_REQ_SHIP9 = 20;   // All ships this rank
 
     // Specials (beta only)
-    private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
-    private final int RANK_REQ_SHIP7 = 10;   // N/A (only has level for beta)
+    //private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
+    //private final int RANK_REQ_SHIP7 = 10;   // N/A (only has level for beta)
 
     // Required number of battles won to be promoted up the various ranks
     private final int WINS_REQ_RANK_CADET_4TH_CLASS = 1;
@@ -7376,6 +7376,7 @@ public class distensionbot extends SubspaceBot {
             }
 
             // BETA ONLY
+            /*
             if( DEBUG ) {
                 // Special unlocks
                 if ( rank >= RANK_REQ_SHIP6 ) {
@@ -7392,6 +7393,7 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             }
+            */
         }
 
         /**
@@ -11479,24 +11481,44 @@ public class distensionbot extends SubspaceBot {
         ShipProfile ship = new ShipProfile( -1, -1 );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( 0, 15f );
+        ship = new ShipProfile( 0, 13.1f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP2, 15.2f );
+
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP2, 13.5f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP3, 15f );
+
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP3, 13f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP4, 16f );
+
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP4, 14f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( 0, 10.7f );
+
+        ship = new ShipProfile( 0, 10f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( RANK_REQ_SHIP6, 14f );
+
+        ship = new ShipProfile( -1, 12f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( 10, 14f );       // Level 10 unlock: beta only
+
+        ship = new ShipProfile( -1, 12.8f );
         m_shipGeneralData.add( ship );
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP8, 11f );
+
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP8, 10.1f );
         m_shipGeneralData.add( ship );
+
         ship = new ShipProfile( RANK_REQ_SHIP9, 13f );
         m_shipGeneralData.add( ship );
+
+        /* PRE-RELEASE NUMBERS (slightly higher)
+        ship = new ShipProfile( 0, 15f );
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP2, 15.2f );
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP3, 15f );
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP4, 16f );
+        ship = new ShipProfile( 0, 10.7f );
+        ship = new ShipProfile( RANK_REQ_SHIP6, 14f );
+        ship = new ShipProfile( 10, 14f );       // Level 10 unlock: beta only
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP8, 11f );
+        ship = new ShipProfile( RANK_REQ_SHIP9, 13f );
+        */
 
         int upgNum;
         LinkedList<ShipUpgrade> defaultUpgs = new LinkedList<ShipUpgrade>();
@@ -12048,7 +12070,7 @@ public class distensionbot extends SubspaceBot {
         // 54: Prismatic Array 3
         // 55: 10% Vengeful Bastard 5
         // 60: Rocket 3
-        ship = new ShipProfile( RANK_REQ_SHIP6, 14f );
+        ship = new ShipProfile( -1, 14f );
         int p6a1a[] = { 8, 6,  5,  4,  4,  3, 1 };
         int p6a2a[] = { 3, 8, 10, 15, 20, 30, 1 };
         upg = new ShipUpgrade( "Orbital Force Unit       [ROT]", Tools.Prize.ROTATION, p6a1a, p6a2a );       // 20 x7
