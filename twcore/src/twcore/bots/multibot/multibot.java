@@ -117,7 +117,7 @@ public class multibot extends SubspaceBot {
         String message = event.getMessage();
         int messageType = event.getMessageType();
         boolean foundCmd = false;
-        if(sender == null)return;
+        if(sender == null)sender = "-anonymous-";
         boolean isER = m_opList.isER(sender) || sender.equalsIgnoreCase(m_botAction.getBotName());
         if(m_opList.getAccessLevel(sender) >= m_accessLevel || sender.equalsIgnoreCase(m_botAction.getBotName())){
 	        if( messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE ) {

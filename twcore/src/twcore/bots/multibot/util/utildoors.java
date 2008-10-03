@@ -106,15 +106,15 @@ public class utildoors extends MultiUtil {
 	    	String doorNums[] = argString.split(" ");
 	    	int x, doorNum;
 	    	boolean boolErrors = false;
-	
+		    	
 	   		int newDoorState = doorState;
-	   		StringBuffer message = new StringBuffer("Doors Closed: ");
+	   		StringBuffer message = new StringBuffer("Doors Opened: ");
 	   		for (x = 0; x < doorNums.length; x++) {
 	   			doorNum = 0;
 	   			try {
 	   				doorNum = Integer.parseInt(doorNums[x]);
 	   			} catch (NumberFormatException e) {}
-	   			if (doorNum < 1 || doorNum > 8) {boolErrors = true; break;}
+	   			if (doorNum < 1 || doorNum > 8) {boolErrors = true; continue;}
 	  			newDoorState = openDoor(newDoorState, doorNum);
 	   			message.append(doorNum + " ");
 	   		}
@@ -228,7 +228,7 @@ public class utildoors extends MultiUtil {
 	    m_botAction.sendUnfilteredPublicMessage("?get door:doormode");
 	}
 	
-	public void handleArenaMessage(String message) {
+	public void handleArenaMessage(String message) {		
 	    if(message.startsWith("door:doormode=")) {
 	      String doorString = message.substring(14);
 	      doorState = Integer.parseInt(doorString);
@@ -237,14 +237,14 @@ public class utildoors extends MultiUtil {
 
 	public void handleEvent(Message event) {
 	    int senderID = event.getPlayerID();
-	    String sender = m_botAction.getPlayerName(senderID);
+	    String sender = m_botAction.getPlayerName(senderID);	    
 	    String message = event.getMessage().toLowerCase().trim();
 	    int messageType = event.getMessageType();
-	
 	    if(messageType == Message.PRIVATE_MESSAGE && m_opList.isER(sender))
 	      handleCommand(sender, message);
-	    if(messageType == Message.ARENA_MESSAGE)
-	      handleArenaMessage(message);
+	    else if(messageType == Message.ARENA_MESSAGE)
+	    	handleArenaMessage(message);
+	    	
 	}
 	
 	public void cancel() {}
