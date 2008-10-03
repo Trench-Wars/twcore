@@ -8,22 +8,13 @@ import java.util.Map;
 import twcore.core.game.Player;
 
 public class PubStatsArena {
-    Map<Short,PubStatsPlayer> players = Collections.synchronizedMap(new HashMap<Short, PubStatsPlayer>());
-    // Short = Player ID
+    Map<String,PubStatsPlayer> players = Collections.synchronizedMap(new HashMap<String, PubStatsPlayer>());
+    // String = Playername (%tickname)
     
     private String name;
     
     public PubStatsArena(String name) {
         this.name = name;
-    }
-    
-    /**
-     * Returns a PubStatsPlayer matching the given id
-     * @param id
-     * @return
-     */
-    public PubStatsPlayer getPlayer(short id) {
-        return players.get(id);
     }
     
     /**
@@ -87,17 +78,17 @@ public class PubStatsArena {
         player.setKillPoints(p.getKillPoints());
         player.setLosses(p.getLosses());
         player.setWins(p.getWins());
-        players.put(p.getPlayerID(), player);
+        players.put(p.getPlayerName(), player);
         return player;
     }
     
-    public void addPlayer(short playerID, String name, String squad, int flagPoints, int killPoints, int losses, int wins, short ship) {
+    public void addPlayer(String name, String squad, int flagPoints, int killPoints, int losses, int wins, short ship) {
         PubStatsPlayer player = new PubStatsPlayer(name, squad, ship);
         player.setFlagPoints(flagPoints);
         player.setKillPoints(killPoints);
         player.setLosses(losses);
         player.setWins(wins);
-        this.players.put(playerID, player);
+        this.players.put(name, player);
     }
     
     public int size() {
@@ -122,7 +113,7 @@ public class PubStatsArena {
     /**
      * @return the players of this arena
      */
-    public Map<Short,PubStatsPlayer> getPlayers() {
+    public Map<String,PubStatsPlayer> getPlayers() {
         return players;
     }
     
