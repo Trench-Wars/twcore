@@ -9,7 +9,7 @@ import twcore.core.game.Player;
 
 public class PubStatsArena {
     Map<String,PubStatsPlayer> players = Collections.synchronizedMap(new HashMap<String, PubStatsPlayer>());
-    // String = Playername (%tickname)
+    // String = Playername (%tickname) (lowercase)
     
     private String name;
     
@@ -25,7 +25,7 @@ public class PubStatsArena {
      */
     public PubStatsPlayer getPlayer(String name) {
         for(PubStatsPlayer player : players.values()) {
-            if(player.getName().equalsIgnoreCase(name)) {
+            if(player.getName().equals(name)) {
                 return player;
             }
         }
@@ -34,7 +34,7 @@ public class PubStatsArena {
     }
     
     /**
-     * Gets a PubStatsPlayer by the player name.
+     * Gets a PubStatsPlayer by the player name (case insensitive).
      * Returns the first found PubStatsPlayer where his name starts with the given shortName.
      * 
      * @param shortName the short playername (the name from %tickname/playerlist) 
@@ -51,7 +51,7 @@ public class PubStatsArena {
     }
     
     /**
-     * Gets a PubStatsPlayer by the player name. 
+     * Gets a PubStatsPlayer by the player name (case insensitive). 
      * Returns the first found PubStatsPlayer where his name is the first part of the given longName.
      * 
      * @param longName the long playername (the name from *info)
@@ -78,7 +78,7 @@ public class PubStatsArena {
         player.setKillPoints(p.getKillPoints());
         player.setLosses(p.getLosses());
         player.setWins(p.getWins());
-        players.put(p.getPlayerName(), player);
+        players.put(p.getPlayerName().toLowerCase(), player);
         return player;
     }
     
@@ -88,7 +88,7 @@ public class PubStatsArena {
         player.setKillPoints(killPoints);
         player.setLosses(losses);
         player.setWins(wins);
-        this.players.put(name, player);
+        this.players.put(name.toLowerCase(), player);
     }
     
     public int size() {
