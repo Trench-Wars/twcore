@@ -1129,11 +1129,11 @@ private class MVPTimer {
     	String win = m_botAction.getPlayerName(event.getKillerID());
     	String loss = m_botAction.getPlayerName(event.getKilleeID());
     	Player p = m_botAction.getPlayer(win);
-    	if(opList.isBotExact(win) || opList.isBotExact(loss))return;
+    	if(opList.isBotExact(win) || opList.isBotExact(loss) || p == null)return;
     	casualPlayers.get(win).gotWin();
     	casualPlayers.get(loss).gotLoss();
     	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || !elimPlayers.containsKey(win) || !elimPlayers.containsKey(loss))return;
-    	if(p != null && p.getYTileLocation() > 550 && cfg_gameType == BASEELIM){
+    	if(p.getYTileLocation() > 550 && cfg_gameType == BASEELIM){
     		m_botAction.sendSmartPrivateMessage( win, "Kill from outside base(No count).");
     		m_botAction.sendSmartPrivateMessage( loss, "Kill from outside base(No count).");
     		return;
