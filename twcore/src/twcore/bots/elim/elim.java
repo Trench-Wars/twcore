@@ -1115,6 +1115,8 @@ private class MVPTimer {
     	while( i.hasNext() ){
     		Player p = i.next();
     		String name = p.getPlayerName();
+    		if(!opList.isBotExact(name))
+    			m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
     		try{
         		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
         		if(rs != null && rs.next()){
