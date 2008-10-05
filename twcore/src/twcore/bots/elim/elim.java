@@ -532,7 +532,7 @@ public class elim extends SubspaceBot {
     			int kills = rs.getInt("fnKills"), deaths = rs.getInt("fnDeaths");
     			m_botAction.SQLClose(rs);
     			m_botAction.SQLQueryAndClose(db, "DELETE FROM tblElimJavsRecs WHERE fnUserID = " + ID);
-    			m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths) VALUES (" + Tools.addSlashesToString(name.toLowerCase()) + ", " + kills + ", " + deaths + ")");
+    			m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "', " + kills + ", " + deaths + ")");
     			m_botAction.sendSmartPrivateMessage( name, "Your record has been updated from ?go javs. PM me with !rec to view your wins and losses.");
     		}
     		else m_botAction.SQLClose(rs);
