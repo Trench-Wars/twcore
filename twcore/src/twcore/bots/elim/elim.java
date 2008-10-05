@@ -194,7 +194,7 @@ public class elim extends SubspaceBot {
 		}				
 		else if(messageType == Message.ARENA_MESSAGE && message.equals("Arena LOCKED"))
 			m_botAction.toggleLocked();
-		else if(messageType == Message.ARENA_MESSAGE && message.startsWith("Name:") && message.contains("UserID:"))
+		else if(messageType == Message.ARENA_MESSAGE && message.contains("UserId:"))
 			doEInfo(message);
 		else if(messageType == Message.PUBLIC_MESSAGE &&
 				game.isVoting()                       &&
@@ -692,7 +692,7 @@ public class elim extends SubspaceBot {
     		}
     	}
 	    List<ElimPlayer> l = Arrays.asList(losers.values().toArray(new ElimPlayer[losers.values().size()]));
-	    Collections.sort(l, byWinRatio);//Best record
+	    Collections.sort(l, Collections.reverseOrder(byWinRatio));//Best record
 	    new MVPTimer(l.get(0).name);
 	    m_botAction.sendArenaMessage("GAME OVER. Winner: " + winner.name + "!", Tools.Sound.HALLELUJAH);
     	Iterator<String> s = enabled.iterator();
@@ -831,29 +831,14 @@ private class CasualPlayer{
 	
 	private CasualPlayer(String name){
 		this.name = name;
-		try{
-			ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnKills, fnDeaths FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
-			if(rs != null && rs.next()){
-				wins = rs.getInt("fnKills");
-				losses = rs.getInt("fnDeaths");
-				m_botAction.SQLClose(rs);
-			} else {
-				m_botAction.SQLClose(rs);
-				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "',0,0)");
-				wins = 0;
-				losses = 0;
-			}
-		}catch(SQLException e){
-			Tools.printStackTrace(e);
-		}
 	}
 	
 	private void gotWin(){
-		wins++;
+		wins += 1;
 	}
 	
 	private void gotLoss(){
-		losses++;
+		losses += 1;
 	}
 	
 	private void storeStats(){
