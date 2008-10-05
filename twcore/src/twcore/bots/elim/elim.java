@@ -52,7 +52,8 @@ public class elim extends SubspaceBot {
 	
 	//Game collections
 	public GameStatus game = new GameStatus();
-	public TreeMap<String, ElimPlayer> players = new TreeMap<String, ElimPlayer>();
+	public TreeMap<String, CasualPlayer> casualPlayers = new TreeMap<String, CasualPlayer>();
+	public TreeMap<String, ElimPlayer> elimPlayers = new TreeMap<String, ElimPlayer>();
 	public TreeMap<String, ElimPlayer> lagouts = new TreeMap<String, ElimPlayer>();
 	public TreeMap<String, ElimPlayer> losers = new TreeMap<String, ElimPlayer>();
 	public TreeMap<Integer, Integer> votes = new TreeMap<Integer, Integer>();
@@ -119,36 +120,38 @@ public class elim extends SubspaceBot {
 	public String[] getHelpMsg(String name){
 		ArrayList<String> help = new ArrayList<String>();
 		String[] reghelp = {
-				"+=============================== HELP MENU =================================+",
-				"| !help        - Displays this menu. (?)                                    |",
-				"| !play        - Toggles whether or not you wish to play. (!p)              |",
-				"| !status      - Displays the game status. (!s)                             |",
-				"| !mvp         - Shows the three players with the best and worst recs.      |",
-				"| !wl          - Shows the three players with the most and least losses.    |",
-				"| !rec         - Shows your wins and losses. (!r)                           |",
-				"| !rec <name>  - Shows the wins and losses of <name>.                       |",
-				"| !lagout      - Puts you back into the game if you've lagged out. (!l)     |",
-				"| !scorereset  - Resets your arena score card to zero. No going back. (!sr) |",
-				"| !classic     - Play elim the old way. Get scorereset'd and specced. (!c)  |",
-				"| !stats       - Shows your statistics including your rank.                 |",
-				"| !stats <name>- Shows statistics of <name>.                                |",
-				"| !rank <#>    - Returns the player at rank <#>.                            |"
+				"+=============================== HELP MENU ==================================+",
+				"| !help         - Displays this menu. (?)                                    |",
+				"| !play         - Toggles whether or not you wish to play. (!p)              |",
+				"| !lagout       - Puts you back into the game if you've lagged out. (!l)     |",
+				"| !status       - Displays the game status. (!s)                             |",
+				"| !mvp          - Shows the three players with the best and worst recs.      |",
+				"| !wl           - Shows the three players with the most and least losses.    |",
+				"| !rank <#>     - Returns the player at rank <#>.                            |",
+				"| !stats        - Shows your statistics including your rank.                 |",
+				"| !stats <name> - Shows statistics of <name>.                                |",
+				"| !rec          - Shows your wins and losses. (!r)                           |",
+				"| !rec <name>   - Shows the wins and losses of <name>.                       |",
+				"| !classic      - Toggles whether or not you'd like to be spec'd when out.   |",
+				"| !warp         - Warps you out of the safe if you're stuck.                 |",
+				"| !scorereset   - Resets your arena score card to zero. No going back. (!sr) |",
+
 		};List<String> reg = Arrays.asList(reghelp);
 		String[] smodhelp = {
-				"+=============================== SMOD MENU =================================+",
-				"| !zone        - Toggles whether or not the bot should zone for games.      |",
-				"| !stop        - Ends the current game and prevents new games from starting.|",
-				"| !off         - Prevents new games from starting once the current one ends.|",
-				"| !on          - Turns off !off mode and allows new games to begin          |",
-				"| !shutdown    - Causes the bot to disconnect once the current game ends.   |",
-				"| !die         - Causes the bot to disconnect.                              |",
+				"+=============================== SMOD MENU ==================================+",
+				"| !zone         - Toggles whether or not the bot should zone for games.      |",
+				"| !stop         - Ends the current game and prevents new games from starting.|",
+				"| !off          - Prevents new games from starting once the current one ends.|",
+				"| !on           - Turns off !off mode and allows new games to begin          |",
+				"| !shutdown     - Causes the bot to disconnect once the current game ends.   |",
+				"| !die          - Causes the bot to disconnect.                              |",
 		};List<String> smod = Arrays.asList(smodhelp);				
 		help.addAll(reg);
 		if(opList.isSmod(name))
 			help.addAll(smod);
 		if(opList.isSysop(name))
-			help.add("| !greetmsg <m>- Sets arena greet message(Sysop only).                      |");
-		help.add("+===========================================================================+");
+			help.add("| !greetmsg <m> - Sets arena greet message(Sysop only).                      |");
+		help.add("+============================================================================+");
 		return help.toArray(new String[help.size()]);
 
 	}
@@ -158,7 +161,7 @@ public class elim extends SubspaceBot {
 			case GameStatus.OFF_MODE:
 				return "Elimination is temporarily disabled.";
 			case GameStatus.WAITING_FOR_PLAYERS:
-				return "A new elimination match will begin when " + (cfg_minPlayers - players.size()) + " more player(s) enter.";
+				return "A new elimination match will begin when " + (cfg_minPlayers - elimPlayers.size()) + " more player(s) enter.";
 			case GameStatus.VOTING_ON_SHIP:
 				return "We are currently voting on ship type.";
 			case GameStatus.VOTING_ON_DEATHS:
@@ -170,7 +173,7 @@ public class elim extends SubspaceBot {
 			case GameStatus.TEN_SECONDS:
 				return "The game will begin in less than ten seconds. No more entries";
 			case GameStatus.GAME_IN_PROGRESS:
-				return "We are currently playing " + Tools.shipName(shipType) + " elim to " + deaths + ". " + players.size() + " player(s) left.";
+				return "We are currently playing " + Tools.shipName(shipType) + " elim to " + deaths + ". " + elimPlayers.size() + " player(s) left.";
 			case GameStatus.GAME_OVER:
 				return "A new elimination match will begin shortly.";
 			default: return null;
@@ -191,22 +194,20 @@ public class elim extends SubspaceBot {
 		}				
 		else if(messageType == Message.ARENA_MESSAGE && message.equals("Arena LOCKED"))
 			m_botAction.toggleLocked();
+		else if(messageType == Message.ARENA_MESSAGE && message.startsWith("Name:") && message.contains("UserID:"))
+			doEInfo(message);
 		else if(messageType == Message.PUBLIC_MESSAGE &&
 				game.isVoting()                       &&
 				Tools.isAllDigits(message)            &&
 				message.length() <= 2                 &&
-				players.containsKey(name))
+				elimPlayers.containsKey(name))
 			vote(name, message);
-		else if(messageType == Message.PUBLIC_MESSAGE){
-			if(message.equalsIgnoreCase("!play") || message.equalsIgnoreCase("!p"))
-				cmd_play(name);
-			else if(message.equalsIgnoreCase("!wl"))
-				cmd_wl(name);
-			else if(message.equalsIgnoreCase("!mvp"))
-				cmd_mvp(name);
-			else if(message.equalsIgnoreCase("!rec") || message.equalsIgnoreCase("!r"))
-				cmd_rec(name, name);
-		}
+		else if(messageType == Message.PUBLIC_MESSAGE &&
+				game.isVoting()                       &&
+				Tools.isAllDigits(message)            &&
+				message.length() <= 2                 &&
+				!elimPlayers.containsKey(name))
+			m_botAction.sendSmartPrivateMessage( name, "You must be playing to vote!");
     }
     
     public void handleCommands(String name, String cmd){
@@ -224,12 +225,14 @@ public class elim extends SubspaceBot {
     		cmd_rec(name, name);
     	else if(cmd.startsWith("!rec "))
     		cmd_rec(name, cmd.substring(5));
+    	else if(cmd.equalsIgnoreCase("!classic") || cmd.equalsIgnoreCase("!c"))
+    		cmd_classic(name);
+    	else if(cmd.equalsIgnoreCase("!warp") || cmd.equalsIgnoreCase("!w"))
+    		cmd_warp(name);
     	else if(cmd.equalsIgnoreCase("!lagout") || cmd.equalsIgnoreCase("!l"))
     		cmd_lagout(name);
     	else if(cmd.equalsIgnoreCase("!scorereset") || cmd.equalsIgnoreCase("!sr"))
     		cmd_scorereset(name);
-    	else if(cmd.equalsIgnoreCase("!classic") || cmd.equalsIgnoreCase("!c"))
-    		cmd_classic(name);
     	else if(cmd.equalsIgnoreCase("!stats"))
     		cmd_stats(name, name);
     	else if(cmd.startsWith("!stats "))
@@ -256,21 +259,21 @@ public class elim extends SubspaceBot {
     public void cmd_play(String name){
     	if(enabled.remove(name)){
     		m_botAction.sendSmartPrivateMessage( name, "You have disabled !play. Type !play again to compete.");
-    		if(players.containsKey(name) && game.state == GameStatus.GAME_IN_PROGRESS){
-    			m_botAction.sendArenaMessage(name + " is out. " + players.get(name).wins + " wins " + players.get(name).losses + " losses (Resigned)");
-        		losers.put(name, players.remove(name));        		
+    		if(elimPlayers.containsKey(name) && game.state == GameStatus.GAME_IN_PROGRESS){
+    			m_botAction.sendArenaMessage(name + " is out. " + elimPlayers.get(name).wins + " wins " + elimPlayers.get(name).losses + " losses (Resigned)");
+        		losers.put(name, elimPlayers.remove(name));        		
     		}
-    		else if(players.containsKey(name))
-    			players.remove(name);
+    		else if(elimPlayers.containsKey(name))
+    			elimPlayers.remove(name);
     		doWarpIntoCasual(name);
     	}else {
     		m_botAction.sendSmartPrivateMessage( name, "You have enabled !play. Type !play again to play casually.");
     		enabled.add(name);
     		Player p = m_botAction.getPlayer(name);
     		if(p.getShipType() > 0 && !game.isInProgress()){
-    			players.put(name, new ElimPlayer(name));
+    			elimPlayers.put(name, new ElimPlayer(name));
     			doWarpIntoElim(name);
-    			if(players.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
+    			if(elimPlayers.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
         			game.moveOn();
     		}    		
     	}
@@ -278,7 +281,7 @@ public class elim extends SubspaceBot {
     
     public void cmd_mvp(String name){
     	CompareByWinRatio byRatio = new CompareByWinRatio();
-    	List<ElimPlayer> l = Arrays.asList(players.values().toArray(new ElimPlayer[players.values().size()]));
+    	List<ElimPlayer> l = Arrays.asList(elimPlayers.values().toArray(new ElimPlayer[elimPlayers.values().size()]));
     	Collections.sort(l, Collections.reverseOrder(byRatio));
     	int index = 1;
     	Iterator<ElimPlayer> i = l.iterator();
@@ -291,17 +294,17 @@ public class elim extends SubspaceBot {
     	Collections.sort(l, byRatio);
     	i = l.iterator();
     	index = 1;
-    	/*m_botAction.sendSmartPrivateMessage( name, "------------ Worst Records ------------");
+    	m_botAction.sendSmartPrivateMessage( name, "------------ Worst Records ------------");
     	while( i.hasNext() && index <= 3){
     		ElimPlayer p = i.next();
     		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
     		index++;
-    	}*/
+    	}
     }
     
     public void cmd_wl(String name){
     	CompareByLosses byLosses = new CompareByLosses();
-    	List<ElimPlayer> l = Arrays.asList(players.values().toArray(new ElimPlayer[players.values().size()]));
+    	List<ElimPlayer> l = Arrays.asList(elimPlayers.values().toArray(new ElimPlayer[elimPlayers.values().size()]));
     	Collections.sort(l, Collections.reverseOrder(byLosses));
     	int index = 1;
     	Iterator<ElimPlayer> i = l.iterator();
@@ -314,7 +317,7 @@ public class elim extends SubspaceBot {
     	Collections.sort(l, byLosses);
     	i = l.iterator();
     	index = 1;
-    	m_botAction.sendSmartPrivateMessage( name, "------ Least Deaths --- Players: " + players.size() + "------");
+    	m_botAction.sendSmartPrivateMessage( name, "------ Least Deaths --- Players: " + elimPlayers.size() + "------");
     	while( i.hasNext() && index <= 3){
     		ElimPlayer p = i.next();
     		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
@@ -323,23 +326,34 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_rec(String name, String target){
-    	target = m_botAction.getFuzzyPlayerName(target);
-		if(target != null && players.containsKey(target)){
-    		ElimPlayer t = players.get(target);
-    		m_botAction.sendSmartPrivateMessage( name, t.name + " (" + t.wins + "-" + t.losses + ")");
-    		return;
-		}
+    	String clone = m_botAction.getFuzzyPlayerName(target);
+    	if(clone == null)clone = target;
+    	try{
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnKills, fnDeaths FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(clone.toLowerCase()) + "'");
+    		if(rs != null && rs.next()){
+    			int kills = rs.getInt("fnKills");
+    			int deaths = rs.getInt("fnDeaths");
+    			m_botAction.SQLClose(rs);
+    			m_botAction.sendSmartPrivateMessage( name, "'" + clone + "' (" + kills + "-" + deaths + ")");
+    		} else {
+    			m_botAction.SQLClose(rs);
+    			m_botAction.sendSmartPrivateMessage( name, "No record was found for '" + clone + "'.");
+    		}
+    	}catch(SQLException e){
+    		m_botAction.sendSmartPrivateMessage( name, "Error retrieving record. Please try again later. If problem persists contact a staff member.");
+    	}
     }
     
     public void cmd_lagout(String name){
     	if(game.state != GameStatus.GAME_IN_PROGRESS)return;
     	if(lagouts.containsKey(name)){
     		if(System.currentTimeMillis() - lagouts.get(name).lagTime > LAGOUT_TIME * Tools.TimeInMillis.SECOND){
-		    	players.put(name, lagouts.remove(name));
+		    	elimPlayers.put(name, lagouts.remove(name));
 		    	if(!enabled.contains(name))
 		    		enabled.add(name);
-		    	m_botAction.setShip(name, players.get(name).shiptype);
-		    	m_botAction.setFreq(name, players.get(name).frequency);
+		    	m_botAction.sendSmartPrivateMessage( name, "You have been put back into the game. You have " + (3-elimPlayers.get(name).lagouts) + " lagouts left.");
+		    	m_botAction.setShip(name, elimPlayers.get(name).shiptype);
+		    	m_botAction.setFreq(name, elimPlayers.get(name).frequency);
 		    	doWarpIntoElim(name);
     		} else
     			m_botAction.sendSmartPrivateMessage( name, "You must wait for " + (LAGOUT_TIME-((System.currentTimeMillis() - lagouts.get(name).lagTime)/Tools.TimeInMillis.SECOND)) + " more seconds.");
@@ -348,24 +362,38 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_scorereset(String name){
-    	m_botAction.scoreReset(name);
-    	m_botAction.sendSmartPrivateMessage( name, "Your score has been reset.");
+    	try{
+    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = 0, fnDeaths = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+    		m_botAction.sendSmartPrivateMessage( name, "Your wins and losses have been reset to zero.");
+    	}catch(SQLException e){
+    		m_botAction.sendSmartPrivateMessage( name, "Error resetting score. Please try again later. If the problem persists contact a staff member.");
+    	}
     }
     
     public void cmd_classic(String name){
     	int wantsClassic = 0;
     	if(classicMode.remove(name))
-    		m_botAction.sendSmartPrivateMessage( name, "Your score will not be reset at round starts and you will be moved to casual at round ends.");
+    		m_botAction.sendSmartPrivateMessage( name, "You will be moved to the casual arena when you are out.");
     	else {
     		wantsClassic = 1;
     		classicMode.add(name);
-    		m_botAction.sendSmartPrivateMessage( name, "Your score will be reset at round starts and you will be specced at round ends.");
+    		m_botAction.sendSmartPrivateMessage( name, "You will be specced when you are out.");
     	}
     	try{
-    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnClassic = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnSpecWhenOut = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     	}catch(Exception e){
     		Tools.printStackTrace(e);
     	}
+    }
+    
+    public void cmd_warp(String name){
+    	Player p = m_botAction.getPlayer(name);
+    	if(p == null)return;
+    	if((p.getYTileLocation() > 368 && p.getYTileLocation() < 394 && cfg_gameType == BASEELIM) ||
+    	   (p.getYTileLocation() > 411 && p.getYTileLocation() < 437 && cfg_gameType == ELIM))
+    		m_botAction.specificPrize(name, Tools.Prize.WARP);
+    	else
+    		m_botAction.sendSmartPrivateMessage( name, "This command is for players in the safe.");
     }
     
     public void cmd_stats(String name, String target){
@@ -407,7 +435,7 @@ public class elim extends SubspaceBot {
     			m_botAction.sendSmartPrivateMessage( name, "User '" + target + "' not found.");	
     		}
     	} catch(Exception e){
-    		m_botAction.sendSmartPrivateMessage( name, "There was a problem handling your request. Please try again.");
+    		m_botAction.sendSmartPrivateMessage( name, "There was a problem handling your request. Please try again in a minute.");
     	}
     }
     
@@ -448,7 +476,7 @@ public class elim extends SubspaceBot {
     	if(game.state != GameStatus.OFF_MODE){
     		m_botAction.sendArenaMessage("This game has been brutally killed by " + name);
     		game.state = GameStatus.OFF_MODE;
-    		Iterator<String> i = players.keySet().iterator();
+    		Iterator<String> i = elimPlayers.keySet().iterator();
     		while( i.hasNext() ){
     			doWarpIntoCasual(i.next());
     			i.remove();
@@ -473,7 +501,7 @@ public class elim extends SubspaceBot {
     	}else{
     		botMode = DISCONNECT;
     		if(game.state == GameStatus.OFF_MODE || game.state == GameStatus.WAITING_FOR_PLAYERS)
-    			new DieTask(m_botAction.getBotName());
+    			m_botAction.scheduleTask(new DieTask(name), 500);
     		else
     			m_botAction.sendSmartPrivateMessage( name, "The bot will disconnect once the current game ends.");
     	}
@@ -491,9 +519,30 @@ public class elim extends SubspaceBot {
     	botMode = ON;
     }
     
+    public void doEInfo(String message){
+    	String name, userid;
+    	int IDindex, ID;
+    	IDindex = message.indexOf("UserId:");
+    	name = message.substring(0,IDindex-2);
+    	userid = message.substring(IDindex + 8, message.indexOf("  Res:"));
+    	try{
+    		ID = Integer.parseInt(userid);
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimJavsRecs WHERE fnUserID = " + ID);
+    		if(rs != null && rs.next()){
+    			int kills = rs.getInt("fnKills"), deaths = rs.getInt("fnDeaths");
+    			m_botAction.SQLClose(rs);
+    			m_botAction.SQLQueryAndClose(db, "DELETE FROM tblElimJavsRecs WHERE fnUserID = " + ID);
+    			m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths) VALUES (" + Tools.addSlashesToString(name.toLowerCase()) + ", " + kills + ", " + deaths + ")");
+    			m_botAction.sendSmartPrivateMessage( name, "Your record has been updated from ?go javs. PM me with !rec to view your wins and losses.");
+    		}
+    		else m_botAction.SQLClose(rs);
+    	}catch(Exception e){}
+    	casualPlayers.put(name, new CasualPlayer(name));
+    }
+    
     public void doWaitingForPlayers(){
     	game.state = GameStatus.WAITING_FOR_PLAYERS;
-    	int neededPlayers = cfg_minPlayers - players.size();
+    	int neededPlayers = cfg_minPlayers - elimPlayers.size();
     	if(neededPlayers <= 0)
     		game.moveOn();
     	else
@@ -547,7 +596,7 @@ public class elim extends SubspaceBot {
     	game.state = GameStatus.TEN_SECONDS;
     	m_botAction.sendArenaMessage("Get ready. Game will start in 10 seconds");//No new entries
     	int freq = 600;
-    	Iterator<ElimPlayer> i = players.values().iterator();
+    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
     	while(i.hasNext()){
     		ElimPlayer ep = i.next();
     		Player p = m_botAction.getPlayer(ep.name);
@@ -569,7 +618,7 @@ public class elim extends SubspaceBot {
     		doWarpIntoElim(ep.name);
     		freq++;
     	}
-    	if(players.size() >= 30)
+    	if(elimPlayers.size() >= 30)
     		m_botAction.setDoors("00001000");
     	else
     		m_botAction.setDoors(255);
@@ -580,14 +629,16 @@ public class elim extends SubspaceBot {
     	game.state = GameStatus.GAME_IN_PROGRESS;
     	lagouts.clear();
     	losers.clear();
+    	avg_rating = 0;
     	m_botAction.sendArenaMessage("GO! GO! GO!", Tools.Sound.GOGOGO);
-    	Iterator<ElimPlayer> i = players.values().iterator();
+    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
     	while(i.hasNext()){
     		ElimPlayer ep = i.next();
     		ep.gotChangeWarning = false;
     		if(shrap == OFF)
     			m_botAction.specificPrize(ep.name, -Tools.Prize.SHRAPNEL);
     		ep.resetScore();
+    		m_botAction.scoreReset(ep.name);
     		try{
     			boolean newPlayer = false;
     			ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
@@ -607,14 +658,12 @@ public class elim extends SubspaceBot {
     			Tools.printStackTrace(e);
     		}
     	}
-    	avg_rating /= players.size();
+    	avg_rating /= elimPlayers.size();
     }
     
     public void doGameOver(){
     	game.state = GameStatus.GAME_OVER;
     	CompareByWinRatio byWinRatio = new CompareByWinRatio();
-    	CompareByHitRatio byHitRatio = new CompareByHitRatio();
-    	CompareByRatingChange byRatingChange = new CompareByRatingChange();
     	Iterator<ElimPlayer> i = lagouts.values().iterator();
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
@@ -634,7 +683,7 @@ public class elim extends SubspaceBot {
     			m_botAction.SQLClose(rs);
     			if(ep.name.equalsIgnoreCase(winner.name)){
     				if(lastWinner.equalsIgnoreCase(ep.name))
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     				else
     					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     			}else
@@ -643,32 +692,16 @@ public class elim extends SubspaceBot {
     			Tools.printStackTrace(e);
     		}
     	}
-    	try{
-	    	ArrayList<String> stats = new ArrayList<String>();
-	    	List<ElimPlayer> l = Arrays.asList(losers.values().toArray(new ElimPlayer[losers.values().size()]));
-	    	stats.add("Winner: " + winner.name + "!");
-	    	stats.add(",-------------------------------------------------------------.");
-	    	Collections.sort(l, byWinRatio);//Best record
-	    	stats.add("| MVP:          " + padString(l.get(l.size() - 1).name + " (" + format.valueToString(l.get(l.size() - 1).winRatio) + "% win ratio)", 45) + "|");
-	    	stats.add("| LVP:          " + padString(l.get(0).name + " (" + format.valueToString(l.get(0).winRatio) + "% win ratio)", 45) + "|");
-	    	Collections.sort(l, byHitRatio);//Best aim
-	    	stats.add("| Best aim:     " + padString(l.get(l.size() - 1).name + " (" + format.valueToString(l.get(l.size() - 1).hitRatio) + "% hit ratio)", 45) + "|");
-	    	stats.add("| Worst aim:    " + padString(l.get(0).name + " (" + format.valueToString(l.get(0).hitRatio) + "% hit ratio)", 45) + "|");
-	    	Collections.sort(l, byRatingChange);//Best rating change
-	    	stats.add("| Best effort:  " + padString(l.get(l.size() - 1).name + " (" + l.get(l.size() - 1).wins + "-" + l.get(l.size() - 1).losses + ")", 45) + "|");
-	    	stats.add("| Worst effort: " + padString(l.get(0).name + " (" + l.get(0).wins + "-" + l.get(0).losses + ")", 45) + "|");
-	    	stats.add("`-------------------------------------------------------------'");
-	    	m_botAction.arenaMessageSpam(stats.toArray(new String[stats.size()]));
-	    	m_botAction.sendArenaMessage("", Tools.Sound.HALLELUJAH);
-    	}catch(Exception e){
-    		Tools.printStackTrace(e);
-    	}
+	    List<ElimPlayer> l = Arrays.asList(losers.values().toArray(new ElimPlayer[losers.values().size()]));
+	    Collections.sort(l, byWinRatio);//Best record
+	    new MVPTimer(l.get(0).name);
+	    m_botAction.sendArenaMessage("GAME OVER. Winner: " + winner.name + "!", Tools.Sound.HALLELUJAH);
     	Iterator<String> s = enabled.iterator();
     	while( s.hasNext() ){
     		String playerName = s.next();
     		Player p = m_botAction.getPlayer(playerName);
     		if(p == null || p.getShipType() == 0)continue;
-    		players.put(playerName, new ElimPlayer(playerName));
+    		elimPlayers.put(playerName, new ElimPlayer(playerName));
     		doWarpIntoElim(playerName);
     	}
     	try{
@@ -700,8 +733,8 @@ public class elim extends SubspaceBot {
     	} catch(NumberFormatException e){
     		Tools.printStackTrace(e);//This should never happen
     	}
-    	if(players.containsKey(name))
-    		player = players.get(name);
+    	if(elimPlayers.containsKey(name))
+    		player = elimPlayers.get(name);
     	else return;
     	if(votes.containsKey(vote)){
     		if(player.vote != -1)
@@ -755,7 +788,7 @@ public class elim extends SubspaceBot {
 		}
 		//Clear votes
 		votes = new TreeMap<Integer,Integer>();
-		Iterator<ElimPlayer> it = players.values().iterator();
+		Iterator<ElimPlayer> it = elimPlayers.values().iterator();
 		while( it.hasNext() )
 			it.next().vote = -1;
     }
@@ -784,9 +817,54 @@ public class elim extends SubspaceBot {
 	    			break;
 	    		}    			
 	    	}
+	    	if(cfg_gameType == BASEELIM)
+	    		m_botAction.warpTo(name, 512, 381, 7);
+	    	else
+	    		m_botAction.warpTo(name, 512, 424, 7);
+	    	m_botAction.sendSmartPrivateMessage( name, "You're out! PM me with !warp to play casually or hang out in here until the next game.");
     	}
     }
     
+
+private class CasualPlayer{
+	private int wins = -1, losses = -1;
+	private String name;
+	
+	private CasualPlayer(String name){
+		this.name = name;
+		try{
+			ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnKills, fnDeaths FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+			if(rs != null && rs.next()){
+				wins = rs.getInt("fnKills");
+				losses = rs.getInt("fnDeaths");
+				m_botAction.SQLClose(rs);
+			} else {
+				m_botAction.SQLClose(rs);
+				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "',0,0)");
+				wins = 0;
+				losses = 0;
+			}
+		}catch(SQLException e){
+			Tools.printStackTrace(e);
+		}
+	}
+	
+	private void gotWin(){
+		wins++;
+	}
+	
+	private void gotLoss(){
+		losses++;
+	}
+	
+	private void storeStats(){
+		try{
+			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'" );
+		}catch(SQLException e){
+			Tools.printStackTrace(e);
+		}
+	}
+}
     
 private class ElimPlayer{
 	private String name;
@@ -795,7 +873,7 @@ private class ElimPlayer{
 	private double hitRatio = 0, winRatio = 100, ratingChange = 0, w, l, s;
 	private long outOfBounds = 0, lagTime = -1;
 	private boolean gotBorderWarning = false, gotChangeWarning = false;
-	private static final int MAX_POINTS = 50;
+	private static final int MAX_BONUS = 25;
 	
 	private ElimPlayer(String name){
 		this.name = name;
@@ -806,8 +884,6 @@ private class ElimPlayer{
 		wins = 0;
 		losses = 0;
 		lagouts = 0;
-		if(classicMode.contains(name))
-			m_botAction.scoreReset(name);
 	}
 	
 	private void gotWin(){
@@ -852,6 +928,21 @@ private class ElimPlayer{
 	}
 	
 	private void calculateStats(){
+		calculateRatios();
+		double x = avg_rating - initRating;//Average Player Rating - Player Rating
+		double p = 1/(1 + Math.pow(10, (x/400)));//Probability
+		double z = (((winRatio-70) * 3) / losers.size());
+		if(z > 0)
+			ratingChange =  z * (1-p);
+		else if(z < 0)
+			ratingChange =  z * (p);
+		else
+			ratingChange = z;
+		if(winner.name.equalsIgnoreCase(name))	
+			ratingChange += MAX_BONUS * (losers.size()/30) * (1 - p);
+	}
+	
+	private void calculateRatios(){
 		w = wins;
 		l = losses;
 		s = shots;
@@ -864,12 +955,6 @@ private class ElimPlayer{
 		else{
 			winRatio = ((w / 1) * 100);
 		}
-		double x = avg_rating - initRating;//Average Player Rating - Player Rating
-		double p = 1/(1 + Math.pow(10, (x/400)));//Probability of winning
-		if(winner.name.equalsIgnoreCase(name))
-			ratingChange = MAX_POINTS * (1 - p);
-		else
-			ratingChange = MAX_POINTS * (0 - p);
 	}
 	
 	private void clearBorderInfo(){
@@ -889,25 +974,10 @@ public class CompareByLosses implements Comparator<ElimPlayer> {
 
 public class CompareByWinRatio implements Comparator<ElimPlayer> {
 	public int compare(ElimPlayer a, ElimPlayer b){
+		a.calculateRatios();
+		b.calculateRatios();
 		if(a.winRatio > b.winRatio)return 1;
 		else if(a.winRatio == b.winRatio)return 0;
-		else return -1;
-	}
-}
-
-public class CompareByHitRatio implements Comparator<ElimPlayer> {
-	public int compare(ElimPlayer a, ElimPlayer b){
-		if(a.hitRatio > b.hitRatio)return 1;
-		else if(a.hitRatio == b.hitRatio)return 0;
-		else return -1;
-	}
-}
-
-public class CompareByRatingChange implements Comparator<ElimPlayer> {
-	public int compare(ElimPlayer a, ElimPlayer b){
-		if(a.name.equals(winner.name))return -1;
-		if(a.ratingChange > b.ratingChange)return 1;
-		else if(a.ratingChange == b.ratingChange)return 0;
 		else return -1;
 	}
 }
@@ -939,7 +1009,7 @@ private class GameStatus{
 	}
 	
 	private void moveOn(){
-		if(players.size() < cfg_minPlayers && state < GAME_IN_PROGRESS)
+		if(elimPlayers.size() < cfg_minPlayers && state < GAME_IN_PROGRESS)
 			state = OFF_MODE;
 		switch(state){
 			case OFF_MODE:
@@ -979,7 +1049,7 @@ private class GameStatus{
 				else if(botMode == OFF)
 					state = OFF_MODE;
 				else if(botMode == DISCONNECT)
-					new DieTask(m_botAction.getBotName());
+					m_botAction.scheduleTask(new DieTask(m_botAction.getBotName()), 500);
 				break;
 		}	
 	}
@@ -1015,6 +1085,24 @@ private class SpawnTimer {
     }
 }
 
+private class MVPTimer {
+    private String name;
+    private TimerTask runIt = new TimerTask() {
+        public void run() {
+        	m_botAction.sendArenaMessage("MVP: " + name, Tools.Sound.INCONCEIVABLE);
+        }
+    };
+        
+    public MVPTimer(String name) {
+        this.name = name;
+        m_botAction.scheduleTask(runIt, 5 * Tools.TimeInMillis.SECOND);
+    }
+}
+
+////////////////////////////////////////////////////
+//                    EVENTS                      //
+////////////////////////////////////////////////////
+
     public void handleEvent(LoggedOn event) {    	       
     	m_botAction.joinArena(cfg_arena);
     	m_botAction.specAll();
@@ -1028,11 +1116,11 @@ private class SpawnTimer {
     		Player p = i.next();
     		String name = p.getPlayerName();
     		try{
-        		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnScoreReset, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+        		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
         		if(rs != null && rs.next()){
         			if(rs.getInt("fnElim") == 1)
         				enabled.add(name);
-        			if(rs.getInt("fnScoreReset") == 1)
+        			if(rs.getInt("fnSpecWhenOut") == 1)
         				classicMode.add(name);
         		}
         		m_botAction.SQLClose(rs);
@@ -1045,35 +1133,37 @@ private class SpawnTimer {
     
     public void handleEvent(WeaponFired event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(!game.isInProgress() || !players.containsKey(name))return;
-    	players.get(name).shots += 1;   	
+    	if(!game.isInProgress() || !elimPlayers.containsKey(name))return;
+    	elimPlayers.get(name).shots += 1;   	
     }
     
     public void handleEvent(PlayerDeath event) {
     	String win = m_botAction.getPlayerName(event.getKillerID());
     	String loss = m_botAction.getPlayerName(event.getKilleeID());
     	Player p = m_botAction.getPlayer(win);
-    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || !players.containsKey(win) || !players.containsKey(loss))return;
+    	if(opList.isBotExact(win) || opList.isBotExact(loss))return;
+    	casualPlayers.get(win).gotWin();
+    	casualPlayers.get(loss).gotLoss();
+    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || !elimPlayers.containsKey(win) || !elimPlayers.containsKey(loss))return;
     	if(p != null && p.getYTileLocation() > 550 && cfg_gameType == BASEELIM){
     		m_botAction.sendSmartPrivateMessage( win, "Kill from outside base(No count).");
     		m_botAction.sendSmartPrivateMessage( loss, "Kill from outside base(No count).");
     		return;
     	}
-    	players.get(win).gotWin();
-    	if(players.get(loss).streak >= 7)
-    		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + players.get(loss).streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
-    	players.get(loss).gotLoss();
-    	if(players.get(loss).losses == deaths){
-    		m_botAction.sendArenaMessage(loss + " is out. " + players.get(loss).wins + " wins " + players.get(loss).losses + " losses");
-    		losers.put(loss, players.remove(loss));
+    	elimPlayers.get(win).gotWin();
+    	if(elimPlayers.get(loss).streak >= 7)
+    		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + elimPlayers.get(loss).streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
+    	elimPlayers.get(loss).gotLoss();
+    	if(elimPlayers.get(loss).losses == deaths){
+    		m_botAction.sendArenaMessage(loss + " is out. " + elimPlayers.get(loss).wins + " wins " + elimPlayers.get(loss).losses + " losses");
+    		losers.put(loss, elimPlayers.remove(loss));
     		doWarpIntoCasual(loss);
     	}else{
-    		m_botAction.sendSmartPrivateMessage( loss, "Record: (" + players.get(loss).wins + "-" + players.get(loss).losses + ")");
-    		players.get(loss).clearBorderInfo();
+    		elimPlayers.get(loss).clearBorderInfo();
     		new SpawnTimer(loss);
     	}
-    	if(players.size() == 1){
-    		winner = players.get(players.firstKey());
+    	if(elimPlayers.size() == 1){
+    		winner = elimPlayers.get(elimPlayers.firstKey());
     		game.moveOn();
     	}
     }
@@ -1081,15 +1171,16 @@ private class SpawnTimer {
     public void handleEvent(PlayerEntered event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
     	if(name == null || opList.isBotExact(name))return;
+    	m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
     	classicMode.add(name);
     	try{
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnScoreReset, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if(rs != null && rs.next()){
     			if(rs.getInt("fnElim") == 0)
     				enabled.remove(name);
-    			if(rs.getInt("fnScoreReset") == 0)
+    			if(rs.getInt("fnSpecWhenOut") == 0)
     				classicMode.remove(name);
     		}
     		m_botAction.SQLClose(rs);
@@ -1100,10 +1191,13 @@ private class SpawnTimer {
     
     public void handleEvent(PlayerLeft event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
+    	if(name == null || opList.isBotExact(name))return;
     	enabled.remove(name);
     	classicMode.remove(name);
-    	if(game.isInProgress() && players.containsKey(name)){
-    		lagouts.put(name, players.remove(name));
+    	casualPlayers.get(name).storeStats();
+    	casualPlayers.remove(name);
+    	if(game.isInProgress() && elimPlayers.containsKey(name)){
+    		lagouts.put(name, elimPlayers.remove(name));
     		lagouts.get(name).lagTime = System.currentTimeMillis();
     		lagouts.get(name).lagouts++;
     		if(lagouts.get(name).lagouts > 2){
@@ -1112,35 +1206,35 @@ private class SpawnTimer {
         		doWarpIntoCasual(name);
     		}
     	}
-    	else if(!game.isInProgress() && players.containsKey(name))
-    		players.remove(name);
-    	if(players.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-			winner = players.get(players.firstKey());
+    	else if(!game.isInProgress() && elimPlayers.containsKey(name))
+    		elimPlayers.remove(name);
+    	if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
+			winner = elimPlayers.get(elimPlayers.firstKey());
     		game.moveOn();
 		}
     }
     
     public void handleEvent(FrequencyShipChange event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(game.isInProgress() && players.containsKey(name) && event.getShipType() == 0){
-    		lagouts.put(name, players.remove(name));
+    	if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() == 0){
+    		lagouts.put(name, elimPlayers.remove(name));
     		lagouts.get(name).lagTime = System.currentTimeMillis();
     		lagouts.get(name).lagouts++;
-    		if(lagouts.get(name).lagouts > 2){
+    		if(lagouts.get(name).lagouts > 3){
     			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
     			losers.put(name, lagouts.remove(name));
         		doWarpIntoCasual(name);
     		}   		
-    		if(players.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-    			winner = players.get(players.firstKey());
+    		if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
+    			winner = elimPlayers.get(elimPlayers.firstKey());
         		game.moveOn();
     		}
-    	} else if(players.containsKey(name) && !game.isInProgress() && event.getShipType() == 0){
-    		players.remove(name);
-    	} else if(!players.containsKey(name) && event.getShipType() != cfg_defaultShip && event.getShipType() > 0){
+    	} else if(elimPlayers.containsKey(name) && !game.isInProgress() && event.getShipType() == 0){
+    		elimPlayers.remove(name);
+    	} else if(!elimPlayers.containsKey(name) && event.getShipType() != cfg_defaultShip && event.getShipType() > 0){
     		m_botAction.setShip(name, cfg_defaultShip);
-    	} else if(game.isInProgress() && players.containsKey(name) && event.getShipType() > 0){
-    		ElimPlayer ep = players.get(name);
+    	} else if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() > 0){
+    		ElimPlayer ep = elimPlayers.get(name);
     		if(event.getShipType() != ep.shiptype){
 	    		m_botAction.setShip(name, ep.shiptype);
 	    		doWarpIntoElim(name);
@@ -1152,28 +1246,28 @@ private class SpawnTimer {
 		    			ep.gotChangeWarning = true;
 		    		}else{
 		    			m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
-		    			losers.put(name, players.remove(name));
+		    			losers.put(name, elimPlayers.remove(name));
 		        		doWarpIntoCasual(name);
 		    		}
-		    		if(players.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-		    			winner = players.get(players.firstKey());
+		    		if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
+		    			winner = elimPlayers.get(elimPlayers.firstKey());
 		        		game.moveOn();
 		    		}
 	    		}
     		}
-    	} else if(enabled.contains(name) && !players.containsKey(name) && !game.isInProgress() && event.getShipType() > 0){
+    	} else if(enabled.contains(name) && !elimPlayers.containsKey(name) && !game.isInProgress() && event.getShipType() > 0){
     		doWarpIntoElim(name);
-    		players.put(name, new ElimPlayer(name));
-    		if(players.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
+    		elimPlayers.put(name, new ElimPlayer(name));
+    		if(elimPlayers.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
     			game.moveOn();
     	}
     }
     
     public void handleEvent(FrequencyChange event){
     	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(game.isInProgress() && players.containsKey(name)){
-    		if(event.getFrequency() != players.get(name).frequency  && event.getFrequency() != 9999){
-    			ElimPlayer ep = players.get(name);
+    	if(game.isInProgress() && elimPlayers.containsKey(name)){
+    		if(event.getFrequency() != elimPlayers.get(name).frequency  && event.getFrequency() != 9999){
+    			ElimPlayer ep = elimPlayers.get(name);
     			m_botAction.setFreq(name, ep.frequency);
     			doWarpIntoElim(name);
     			if(!ep.gotChangeWarning){
@@ -1183,11 +1277,11 @@ private class SpawnTimer {
     				ep.gotChangeWarning = true;
     			} else {		
     				m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
-    				losers.put(name, players.remove(name));
+    				losers.put(name, elimPlayers.remove(name));
     				doWarpIntoCasual(name);
     			}
     		}
-    	} else if(!players.containsKey(name) && event.getFrequency() >= 600){
+    	} else if(!elimPlayers.containsKey(name) && event.getFrequency() >= 600){
     		m_botAction.sendSmartPrivateMessage( name, "Please choose a private frequency under 600.");
     		doWarpIntoCasual(name);
     	}
@@ -1196,10 +1290,10 @@ private class SpawnTimer {
     public void handleEvent(PlayerPosition event){
     	Player p = m_botAction.getPlayer(event.getPlayerID());
     	if(p == null)return;
-    	if(p.getYTileLocation() < 400 && players.containsKey(p.getPlayerName()))
+    	if(p.getYTileLocation() < 400 && elimPlayers.containsKey(p.getPlayerName()))
     		doWarpIntoElim(p.getPlayerName()); 
     	if(cfg_gameType == BASEELIM){
-    		ElimPlayer ep = players.get(p.getPlayerName());
+    		ElimPlayer ep = elimPlayers.get(p.getPlayerName());
 	    	if(ep != null && game.isInProgress()){
 		    	if(p.getYTileLocation() < 550)
 		    		ep.clearBorderInfo();
@@ -1208,7 +1302,7 @@ private class SpawnTimer {
 		    			ep.outOfBounds = System.currentTimeMillis();
 		    		else if((System.currentTimeMillis() - ep.outOfBounds) > 20 * Tools.TimeInMillis.SECOND){
 		    			m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
-		        		losers.put(ep.name, players.remove(ep.name));
+		        		losers.put(ep.name, elimPlayers.remove(ep.name));
 		        		doWarpIntoCasual(ep.name);
 		    		}
 		    		else if((System.currentTimeMillis() - ep.outOfBounds) > 10 * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning){
@@ -1216,8 +1310,8 @@ private class SpawnTimer {
 		    			ep.gotBorderWarning = true;
 		    		}    		
 		    	}
-		    	if(players.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-		    		winner = players.get(players.firstKey());
+		    	if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
+		    		winner = elimPlayers.get(elimPlayers.firstKey());
 		    		game.moveOn();
 		    	}
     		} else {
