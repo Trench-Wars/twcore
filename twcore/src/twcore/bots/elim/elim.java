@@ -329,11 +329,15 @@ public class elim extends SubspaceBot {
     	String clone = m_botAction.getFuzzyPlayerName(target);
     	if(clone == null)clone = target;
     	try{
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnKills, fnDeaths FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(clone.toLowerCase()) + "'");
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnKills, fnDeaths FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(clone.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if(rs != null && rs.next()){
     			int kills = rs.getInt("fnKills");
     			int deaths = rs.getInt("fnDeaths");
     			m_botAction.SQLClose(rs);
+    			if(casualPlayers.containsKey(clone)){
+    				kills += casualPlayers.get(clone).wins;
+    				deaths += casualPlayers.get(clone).losses;
+    			}
     			m_botAction.sendSmartPrivateMessage( name, "'" + clone + "' (" + kills + "-" + deaths + ")");
     		} else {
     			m_botAction.SQLClose(rs);
@@ -363,7 +367,7 @@ public class elim extends SubspaceBot {
     
     public void cmd_scorereset(String name){
     	try{
-    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = 0, fnDeaths = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = 0, fnDeaths = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		m_botAction.sendSmartPrivateMessage( name, "Your wins and losses have been reset to zero.");
     	}catch(SQLException e){
     		m_botAction.sendSmartPrivateMessage( name, "Error resetting score. Please try again later. If the problem persists contact a staff member.");
@@ -532,7 +536,8 @@ public class elim extends SubspaceBot {
     			int kills = rs.getInt("fnKills"), deaths = rs.getInt("fnDeaths");
     			m_botAction.SQLClose(rs);
     			m_botAction.SQLQueryAndClose(db, "DELETE FROM tblElimJavsRecs WHERE fnUserID = " + ID);
-    			m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "', " + kills + ", " + deaths + ")");
+    			casualPlayers.get(name).wins += kills;
+    			casualPlayers.get(name).losses += deaths;    			
     			m_botAction.sendSmartPrivateMessage( name, "Your record has been updated from ?go javs. PM me with !rec to view your wins and losses.");
     		}
     		else m_botAction.SQLClose(rs);
@@ -831,6 +836,11 @@ private class CasualPlayer{
 	
 	private CasualPlayer(String name){
 		this.name = name;
+		try{
+			m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths, fnGameType) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "', 0, 0, " + cfg_gameType + ")");
+		}catch(SQLException e){
+			Tools.printStackTrace(e);
+		}
 	}
 	
 	private void gotWin(){
@@ -843,7 +853,7 @@ private class CasualPlayer{
 	
 	private void storeStats(){
 		try{
-			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'" );
+			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType );
 		}catch(SQLException e){
 			Tools.printStackTrace(e);
 		}
@@ -915,7 +925,7 @@ private class ElimPlayer{
 		calculateRatios();
 		double x = avg_rating - initRating;//Average Player Rating - Player Rating
 		double p = 1/(1 + Math.pow(10, (x/400)));//Probability
-		double z = (((winRatio-70) * 3) / losers.size());
+		double z = (((winRatio-100) * 3) / losers.size());
 		if(z > 0)
 			ratingChange =  z * (1-p);
 		else if(z < 0)
@@ -1100,8 +1110,9 @@ private class MVPTimer {
     		Player p = i.next();
     		String name = p.getPlayerName();
     		if(!opList.isBotExact(name)){
-    			m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
     			casualPlayers.put(name, new CasualPlayer(name));
+    			if(cfg_gameType == BASEELIM)
+    				m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
     		}
     		try{
         		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
@@ -1159,8 +1170,9 @@ private class MVPTimer {
     public void handleEvent(PlayerEntered event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
     	if(name == null || opList.isBotExact(name))return;
-    	m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
     	casualPlayers.put(name, new CasualPlayer(name));
+    	if(cfg_gameType == BASEELIM)
+    		m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");    	
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
     	classicMode.add(name);
