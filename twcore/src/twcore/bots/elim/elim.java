@@ -817,16 +817,16 @@ public class elim extends SubspaceBot {
 	    		}    			
 	    	}
 	    	if(cfg_gameType == BASEELIM)
-	    		m_botAction.warpTo(name, 512, 381, 7);
+	    		m_botAction.warpTo(name, 512, 381, 3);
 	    	else
-	    		m_botAction.warpTo(name, 512, 424, 7);
+	    		m_botAction.warpTo(name, 512, 424, 3);
 	    	m_botAction.sendSmartPrivateMessage( name, "You're out! PM me with !warp to play casually or hang out in here until the next game.");
     	}
     }
     
 
 private class CasualPlayer{
-	private int wins = -1, losses = -1;
+	private int wins = 0, losses = 0;
 	private String name;
 	
 	private CasualPlayer(String name){
