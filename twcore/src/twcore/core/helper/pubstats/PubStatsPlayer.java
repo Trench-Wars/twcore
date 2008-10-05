@@ -23,6 +23,11 @@ public class PubStatsPlayer {
 	private String usage;
 	private String dateCreated;
 	
+	// Information from *einfo
+    private int userID = -1;
+    private String resolution;
+    private String client;
+	
     // Score variables (overall)
     private int flagPoints;
     private int killPoints;
@@ -42,8 +47,7 @@ public class PubStatsPlayer {
     private long lastSave;
     private boolean scorereset = false;
     
-    /** The playerID in the database */
-    private int databaseID = -1;
+    
     
 	public PubStatsPlayer(String name, String squad, short ship) {
 		this.name = name;
@@ -144,6 +148,8 @@ public class PubStatsPlayer {
 	 */
 	public boolean isExtraInfoFilled() {
 	    return 
+	        userID != -1 &&
+	        resolution != null && resolution.trim().length() > 0 &&
 	        IP != null && IP.trim().length() > 0 &&
 	        machineID != null && machineID.trim().length() > 0 &&
 	        usage != null && usage.trim().length() > 0 &&
@@ -251,6 +257,48 @@ public class PubStatsPlayer {
      */
     public void setDateCreated(String dateCreated) {
         this.dateCreated = dateCreated;
+    }
+    
+    /**
+     * @return the userID
+     */
+    public int getUserID() {
+        return userID;
+    }
+
+    /**
+     * @param userID the userID to set
+     */
+    public void setUserID(int userID) {
+        this.userID = userID;
+    }
+
+    /**
+     * @return the resolution
+     */
+    public String getResolution() {
+        return resolution;
+    }
+
+    /**
+     * @param resolution the resolution to set
+     */
+    public void setResolution(String resolution) {
+        this.resolution = resolution;
+    }
+    
+    /**
+     * @return the client
+     */
+    public String getClient() {
+        return client;
+    }
+
+    /**
+     * @param client the client to set
+     */
+    public void setClient(String client) {
+        this.client = client;
     }
 
     /**
@@ -372,19 +420,7 @@ public class PubStatsPlayer {
         this.timezone = timezone;
     }
     
-    /**
-     * @return the databaseID
-     */
-    public int getDatabaseID() {
-        return databaseID;
-    }
-
-    /**
-     * @param databaseID the databaseID to set
-     */
-    public void setDatabaseID(int databaseID) {
-        this.databaseID = databaseID;
-    }
+    
     
     /**
      * @return the lastSeen
