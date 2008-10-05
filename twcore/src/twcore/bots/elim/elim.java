@@ -537,7 +537,6 @@ public class elim extends SubspaceBot {
     		}
     		else m_botAction.SQLClose(rs);
     	}catch(Exception e){}
-    	casualPlayers.put(name, new CasualPlayer(name));
     }
     
     public void doWaitingForPlayers(){
@@ -1115,8 +1114,10 @@ private class MVPTimer {
     	while( i.hasNext() ){
     		Player p = i.next();
     		String name = p.getPlayerName();
-    		if(!opList.isBotExact(name))
+    		if(!opList.isBotExact(name)){
     			m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
+    			casualPlayers.put(name, new CasualPlayer(name));
+    		}
     		try{
         		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
         		if(rs != null && rs.next()){
@@ -1174,6 +1175,7 @@ private class MVPTimer {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
     	if(name == null || opList.isBotExact(name))return;
     	m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
+    	casualPlayers.put(name, new CasualPlayer(name));
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
     	classicMode.add(name);
