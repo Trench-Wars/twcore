@@ -127,6 +127,17 @@ public class PubStatsPlayer {
 	    }
 	}
 	
+	/** 
+	 * Adds a teamkill count to the specified ship-score of this player
+	 * @param ship
+	 */
+	public void addTeamkill(short ship) {
+	    if(shipScores.containsKey(ship)) {
+	        PubStatsScore score = shipScores.get(ship);
+	        score.setTeamkills(score.getTeamkills()+1);
+	    }
+	}
+	
 	public PubStatsScore getShipScore(short ship) {
 	    if(shipScores.containsKey(ship)) {
 	        return shipScores.get(ship);

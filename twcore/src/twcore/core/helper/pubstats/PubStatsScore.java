@@ -5,6 +5,8 @@ public class PubStatsScore {
     private int killPoints;
     private int wins;
     private int losses;
+    private int teamkills;
+    
     /**
      * @return the flagPoints
      */
@@ -52,6 +54,18 @@ public class PubStatsScore {
      */
     public void setLosses(int losses) {
         this.losses = losses;
+    }
+    /**
+     * @return the teamkills
+     */
+    public int getTeamkills() {
+        return teamkills;
+    }
+    /**
+     * @param teamkills the teamkills to set
+     */
+    public void setTeamkills(int teamkills) {
+        this.teamkills = teamkills;
     }
     
     
