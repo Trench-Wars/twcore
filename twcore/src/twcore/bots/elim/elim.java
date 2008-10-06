@@ -165,11 +165,11 @@ public class elim extends SubspaceBot {
 			case GameStatus.VOTING_ON_SHIP:
 				return "We are currently voting on ship type.";
 			case GameStatus.VOTING_ON_DEATHS:
-				return "We are currently voting on number of deaths.";
+				return "We are playing " + Tools.shipName(shipType) + " elim. We are currently voting on number of deaths.";
 			case GameStatus.VOTING_ON_SHRAP:
-				return "We are currently voting on shrap.";
+				return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". We are currently voting on shrap.";
 			case GameStatus.WAITING_TO_START:
-				return "The game will start soon. Enter to play!";
+				return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". The game will start soon. Enter to play!";
 			case GameStatus.TEN_SECONDS:
 				return "The game will begin in less than ten seconds. No more entries";
 			case GameStatus.GAME_IN_PROGRESS:
@@ -411,7 +411,7 @@ public class elim extends SubspaceBot {
     			int rating = rs.getInt("fnRating");
     			int kills = rs.getInt("fnKills");
     			int deaths = rs.getInt("fnDeaths");
-    			int shots = rs.getInt("fnShots");
+    			double aimNum = rs.getDouble("fnAim");
     			int cks = rs.getInt("fnCKS");
     			int cws = rs.getInt("fnCWS");
     			int bks = rs.getInt("fnBKS");
@@ -419,9 +419,8 @@ public class elim extends SubspaceBot {
     			int gamesWon = rs.getInt("fnGamesWon");
     			int gamesPlayed = rs.getInt("fnGamesPlayed");
     			m_botAction.SQLClose(rs);
-    			double w = kills, l = deaths, s = shots, won = gamesWon, plyd = gamesPlayed;
+    			double w = kills, l = deaths, won = gamesWon, plyd = gamesPlayed;
     			double winRatioNum = (w/l) * 100;
-    			double aimNum = (w/s) * 100;
     			double victorRatioNum = (won/plyd) * 100;
     			String winRatio = format.valueToString(winRatioNum);
     			String aim = format.valueToString(aimNum);
@@ -671,7 +670,9 @@ public class elim extends SubspaceBot {
     	Iterator<ElimPlayer> i = lagouts.values().iterator();
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
-    		losers.put(ep.name, ep);
+    		ep.calculateRatios();
+    		if(ep.winRatio <= 0)
+    			losers.put(ep.name, ep);
     	}
     	lagouts.clear();
     	losers.put(winner.name, winner);
@@ -687,11 +688,11 @@ public class elim extends SubspaceBot {
     			m_botAction.SQLClose(rs);
     			if(ep.name.equalsIgnoreCase(winner.name)){
     				if(lastWinner.equalsIgnoreCase(ep.name))
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (fnAim + " + ep.hitRatio + " / 2), fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     				else
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (fnAim + " + ep.hitRatio + " / 2), fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     			}else
-    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots + ", fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (fnAim + " + ep.hitRatio + " / 2), fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
     		}
@@ -709,7 +710,7 @@ public class elim extends SubspaceBot {
     		doWarpIntoElim(playerName);
     	}
     	try{
-    		m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimGame (fnGameType, fcWinnerName, fnShipType, fnDeaths, fnNumPlayers, fnAvgRating, fdPlayed) VALUES( " + cfg_gameType + ", '" + Tools.addSlashesToString(winner.name.toLowerCase()) + "', " + shipType + ", " + deaths + ", " + losers.size() + ", " + avg_rating + ", NOW())");
+    		m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimGame (fnGameType, fcWinnerName, fnWinnerKills, fnWinnerDeaths, fnShipType, fnDeaths, fnNumPlayers, fnAvgRating, fdPlayed) VALUES( " + cfg_gameType + ", '" + Tools.addSlashesToString(winner.name.toLowerCase()) + "', " + winner.wins + ", " + winner.losses + ", " + shipType + ", " + deaths + ", " + losers.size() + ", " + avg_rating + ", NOW())");
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " ORDER BY fnRating DESC");
     		TreeMap<String, Integer> rankings = new TreeMap<String, Integer>();
     		int rank = 1;
