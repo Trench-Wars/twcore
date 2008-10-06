@@ -48,6 +48,8 @@ public class elim extends SubspaceBot {
 	public int deaths = -1;
 	public int shrap = 0;
 	public double avg_rating = -1;
+	public String lastWinner = "-anonymous-";
+	public int winStreak = 0;
 	public ElimPlayer winner;
 	
 	//Game collections
@@ -555,8 +557,7 @@ public class elim extends SubspaceBot {
     public void doVotingOnShip(){
     	game.state = GameStatus.VOTING_ON_SHIP;
     	shipType = cfg_defaultShip;
-    	if(cfg_zone == ON)
-    		m_botAction.sendZoneMessage("Next elimination match is starting. Type ?go " + cfg_arena + " to play");
+    	if(cfg_zone == ON)doElimZoner();
     	Iterator<String> it = enabled.iterator();
     	while( it.hasNext() )
     		doWarpIntoElim(it.next());
@@ -681,18 +682,16 @@ public class elim extends SubspaceBot {
     		ElimPlayer ep = i.next();
     		ep.calculateStats();
     		try{
-    			String lastWinner = "null";
-    			ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcWinnerName FROM tblElimGame WHERE fnGameType = " + cfg_gameType + " ORDER BY fnGameID DESC LIMIT 1");
-    			if( rs != null && rs.next())
-    				lastWinner = rs.getString("fcWinnerName");
-    			m_botAction.SQLClose(rs);
     			if(ep.name.equalsIgnoreCase(winner.name)){
-    				if(lastWinner.equalsIgnoreCase(ep.name))
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (fnAim + " + ep.hitRatio + " / 2), fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    				else
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (fnAim + " + ep.hitRatio + " / 2), fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				if(lastWinner.equalsIgnoreCase(ep.name)){
+    					winStreak++;
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				} else {
+    					winStreak = 1;
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				}
     			}else
-    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (fnAim + " + ep.hitRatio + " / 2), fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
     		}
@@ -701,6 +700,7 @@ public class elim extends SubspaceBot {
 	    Collections.sort(l, Collections.reverseOrder(byWinRatio));//Best record
 	    new MVPTimer(l.get(0).name);
 	    m_botAction.sendArenaMessage("GAME OVER. Winner: " + winner.name + "!", Tools.Sound.HALLELUJAH);
+	    lastWinner = winner.name;
     	Iterator<String> s = enabled.iterator();
     	while( s.hasNext() ){
     		String playerName = s.next();
@@ -796,6 +796,26 @@ public class elim extends SubspaceBot {
 		Iterator<ElimPlayer> it = elimPlayers.values().iterator();
 		while( it.hasNext() )
 			it.next().vote = -1;
+    }
+    
+    public void doElimZoner(){    		
+    	if(winStreak == 1)
+    		m_botAction.sendZoneMessage("Next elimination match is starting. Last round's winner was '" + lastWinner + "'! Type ?go " + cfg_arena + " to play");
+    	else if(winStreak > 1)
+    		switch(winStreak){
+	    		case 2:m_botAction.sendZoneMessage("Next elimination match is starting. " + lastWinner + " has won 2 back to back! Type ?go " + cfg_arena + " to play");
+	    			break;
+	    		case 3:m_botAction.sendZoneMessage(lastWinner + " is on fire with a triple! Type ?go " + cfg_arena + " to end the streak!", Tools.Sound.CROWD_OOO);
+	    			break;
+	    		case 4:m_botAction.sendZoneMessage(lastWinner + " is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage!", Tools.Sound.CROWD_GEE);
+	    			break;
+	    		case 5:m_botAction.sendZoneMessage(lastWinner + " is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness!", Tools.Sound.SCREAM);
+	    			break;
+	    		default:m_botAction.sendZoneMessage(lastWinner + " is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves!", Tools.Sound.INCONCEIVABLE);
+	    			break;
+    		}
+    	else
+    		m_botAction.sendZoneMessage("Next elimination match is starting. Type ?go " + cfg_arena + " to play");
     }
     
     public void doWarpIntoElim(String name){
