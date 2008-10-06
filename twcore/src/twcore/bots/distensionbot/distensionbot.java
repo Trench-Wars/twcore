@@ -47,6 +47,7 @@ import twcore.core.util.Tools;
  * *** Development notes ***
  *
  * Add:
+ * - ASAP: TIME-CLEARING TASK FROM DAY BEFORE!
  * - MAP: Change tiles to refer to F1 for help
  * - Dreadnought ship class (needs energy levels)
  *
@@ -59,7 +60,7 @@ public class distensionbot extends SubspaceBot {
 
     private boolean DEBUG = false;                         // Debug mode.  Generally for beta-testing.
     private final float DEBUG_MULTIPLIER = 9.2f;           // Amount of RP to give extra in debug mode
-    private final float REWARD_RATE = 1.1f;                // Multiplier for RP earned in beta "reward" time
+    private final float REWARD_RATE = 1.2f;                // Multiplier for RP earned in beta "reward" time
                                                            //   (for beta-testers, bug reporters, etc.)
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
@@ -92,14 +93,15 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_HIGHEST = 50;
     private final int RANK_0_STRENGTH = 20;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
 
-    private final int RANK_REQ_ASSAULT_SHIP2 = 15;
+    private final int RANK_REQ_ASSAULT_SHIP2 = 20;
     private final int RANK_REQ_ASSAULT_SHIP3 = 5;
-    private final int RANK_REQ_ASSAULT_SHIP4 = 25;
+    private final int RANK_REQ_ASSAULT_SHIP4 = 30;
     private final int RANK_REQ_ASSAULT_SHIP8 = 10;
-    private final int RANK_REQ_SUPPORT_SHIP2 = 6;
-    private final int RANK_REQ_SUPPORT_SHIP3 = 4;
-    private final int RANK_REQ_SUPPORT_SHIP4 = 8;
-    private final int RANK_REQ_SUPPORT_SHIP8 = 2;
+
+    private final int RANK_REQ_SUPPORT_SHIP2 = 30;
+    private final int RANK_REQ_SUPPORT_SHIP3 = 8;
+    private final int RANK_REQ_SUPPORT_SHIP4 = 20;
+    private final int RANK_REQ_SUPPORT_SHIP8 = 4;
 
 
     private final int RANK_REQ_SHIP9 = 20;   // All ships this rank
@@ -586,6 +588,14 @@ public class distensionbot extends SubspaceBot {
                 for( int i = 0; i<msgs.length; i++ )
                     m_botAction.sendUnfilteredPublicMessage( msgs[i] );
             }
+        } else {
+            if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
+                m_botAction.sendChatMessage("Distension has been loaded.  ?go #distension if you wish to play.");
+                m_botAction.sendArenaMessage("Distension has been loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  PM the bot with !intro if you are new, and refer to F1 for more detailed help.");
+            }
+
+            // TODO: Check if time should be reset -- when was bot last run?  How to do this -- DB entry?
+            // Should we create a separate table that stores information such as this?
         }
         setupTimerTasks();
     }
@@ -991,7 +1001,8 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!opsemp", acceptedMessages, this, "cmdOpsEMP" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
         m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
-        m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.HIGHMOD_LEVEL );     // BETA CMD
+        m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.OWNER_LEVEL );     // BETA CMD
+        m_commandInterpreter.registerCommand( "!awardbonus", acceptedMessages, this, "cmdAwardBonus", OperatorList.OWNER_LEVEL );
         m_commandInterpreter.registerCommand( "!info", acceptedMessages, this, "cmdInfo", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "cmdBan", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "cmdUnban", OperatorList.HIGHMOD_LEVEL );
@@ -6561,6 +6572,9 @@ public class distensionbot extends SubspaceBot {
                 }
                 if( r.next() ) {
                     dbPlayerID = r.getInt(1);     // Get index ID returned
+                    battlesWon = 0;
+                    timePlayed = 0;
+                    rewardRemaining = 0;
                     m_botAction.SQLClose(r);
                 }
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG ); }
@@ -10902,10 +10916,13 @@ public class distensionbot extends SubspaceBot {
             securingSeconds = 0;
             securingArmyID = -1;
             DistensionPlayer p = m_players.get(securerName);
-            if( sectorHoldingArmyID == 0 )
+            if( sectorHoldingArmyID == 0 ) {
                 flagObjs.showObject( LVZ_SECTOR_HOLD_FREQ0 );
-            else
+                flagObjs.hideObject( LVZ_SECTOR_HOLD_FREQ1 );
+            } else {
                 flagObjs.showObject( LVZ_SECTOR_HOLD_FREQ1 );
+                flagObjs.hideObject( LVZ_SECTOR_HOLD_FREQ0 );
+            }
             m_botAction.manuallySetObjects( flagObjs.getObjects() );
             if( p != null ) {
                 addSectorHold( p.getName() );
