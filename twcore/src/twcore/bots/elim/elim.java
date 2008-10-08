@@ -694,7 +694,7 @@ public class elim extends SubspaceBot {
     			m_botAction.SQLClose(rs);
     			if(newPlayer){
     				ep.rating = 300;
-    				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + ",1000,1,NOW())");
+    				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + ",300,1,NOW())");
     			}
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
