@@ -33,10 +33,12 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.FrequencyChange;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
+import twcore.core.util.Spy;
 
 public class elim extends SubspaceBot {
 	
 	public OperatorList opList;
+	public Spy racismWatcher;
 	public String db = "website";
 	public Random rand = new Random();
 	public static DecimalFormat decForm = new DecimalFormat("0.##");
@@ -66,7 +68,7 @@ public class elim extends SubspaceBot {
 	
 	//BotSettings variables
 	public int cfg_minPlayers, cfg_maxDeaths, cfg_defaultShip, cfg_gameType, cfg_votingLength, cfg_waitLength, cfg_zone;
-	public String cfg_arena;
+	public String cfg_arena, cfg_chats;
 	public ArrayList<Integer> cfg_shipTypes = new ArrayList<Integer>();
 	
 	//Defaults
@@ -99,6 +101,7 @@ public class elim extends SubspaceBot {
     public elim(BotAction botAction) {
         super(botAction);
         requestEvents();
+        racismWatcher = new Spy(botAction);
         BotSettings cfg = m_botAction.getBotSettings();
         opList = m_botAction.getOperatorList();
         int botnum = getBotNumber(cfg);
@@ -110,6 +113,8 @@ public class elim extends SubspaceBot {
         cfg_defaultShip = cfg.getInt("DefaultShip" + botnum);
         cfg_arena = cfg.getString("Arena" + botnum);
         cfg_gameType = cfg.getInt("GameType" + botnum);
+        cfg_chats = cfg.getString("Chats" + botnum);
+        m_botAction.sendUnfilteredPublicMessage("?chat=" + cfg_chats);
         String[] types = cfg.getString("ShipTypes" + botnum).split(",");
         try{
 	        for(int i=0;i<types.length;i++)
@@ -193,6 +198,12 @@ public class elim extends SubspaceBot {
     	String message = event.getMessage();
 		String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
 		int messageType = event.getMessageType();
+		
+		if(messageType == Message.PUBLIC_MESSAGE        ||
+				messageType == Message.TEAM_MESSAGE          ||
+				messageType == Message.OPPOSING_TEAM_MESSAGE ||
+				messageType == Message.PUBLIC_MACRO_MESSAGE)
+					racismWatcher.handleEvent(event);
 		
 		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
 			handleCommands(name, message);
@@ -594,6 +605,8 @@ public class elim extends SubspaceBot {
     public void doVotingOnShip(){
     	game.state = GameStatus.VOTING_ON_SHIP;
     	shipType = cfg_defaultShip;
+    	for(int i=1;i<=10;i++)
+    		m_botAction.sendChatMessage(i, "Next " + getGameName() + " is starting. Type ?go " + cfg_arena + " to play");
     	if(cfg_zone == ON)doElimZoner();
     	Iterator<String> it = enabled.iterator();
     	while( it.hasNext() )
@@ -684,16 +697,20 @@ public class elim extends SubspaceBot {
     			ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     			if(rs != null && rs.next()){
     				ep.ave = rs.getInt("fnAve");
+    				ep.BDK = rs.getInt("BDK");
     				ep.streak = rs.getInt("fnCKS");
-    				ep.totalWins = rs.getInt("fnKills");
-    				ep.totalLosses = rs.getInt("fnDeaths");
-    				ep.rating = rs.getInt("fnRating");
-    				ep.initRating = ep.rating;
+    				ep.BKS = rs.getInt("fnBKS");
+    				ep.lstreak = rs.getInt("fnCLS");
+    				ep.WLS = rs.getInt("fnWLS");
+    				ep.initWins = rs.getInt("fnKills");
+    				ep.initLosses = rs.getInt("fnDeaths");
+    				ep.initRating = rs.getInt("fnRating");
     			}
     			else newPlayer = true;
     			m_botAction.SQLClose(rs);
     			if(newPlayer){
-    				ep.rating = 300;
+    				ep.initRating = 300;
+    				ep.ave = 300;
     				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + ",300,1,NOW())");
     			}
     		}catch(SQLException e){
@@ -708,8 +725,7 @@ public class elim extends SubspaceBot {
     	Iterator<ElimPlayer> i = lagouts.values().iterator();
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
-    		ep.calculateStats();
-    		if((ep.initRating - ep.rating) > 0)
+    		if((((ep.getTotalWins()/ep.getTotalLosses())*ep.ave) - ep.initRating) < 0)
     			losers.put(ep.name, ep);
     	}
     	lagouts.clear();
@@ -717,19 +733,48 @@ public class elim extends SubspaceBot {
     	i = losers.values().iterator();
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
-    		ep.calculateStats();
-    		avg_rating += ep.rating;
+    		avg_rating += ep.initRating;
     		try{
     			if(ep.name.equalsIgnoreCase(winner.name)){
     				if(lastWinner.equalsIgnoreCase(ep.name)){
     					winStreak++;
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = " + ep.rating + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
+    							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
+    							", fnDeaths = fnDeaths + " + ep.losses +
+    							", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
+    							", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
+    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
+    							" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
+    							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
+    							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
+    							"fnRating = ISNULL((ROUND(fnKills/NULLIF(fnDeaths, 0)) * fnAve), 0) " + 
+    							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
+    							"' AND fnGameType = " + cfg_gameType);
     				} else {
     					winStreak = 1;
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = " + ep.rating + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
+    							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
+    							", fnDeaths = fnDeaths + " + ep.losses + 
+    							", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
+    							", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
+    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
+    							" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
+    							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
+    							", fnCWS = 1, fnRating = ISNULL((ROUND(fnKills/NULLIF(fnDeaths, 0)) * fnAve), 0) " + 
+    							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
+    							"' AND fnGameType = " + cfg_gameType);
     				}
     			}else
-    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = " + ep.rating + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
+    						"fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + 
+    						", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
+    						", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
+    						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
+    						" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
+    						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
+    						", fnCWS = 0, fnRating = ISNULL((ROUND(fnKills/NULLIF(fnDeaths, 0)) * fnAve), 0) " + 
+    						"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
+    						"' AND fnGameType = " + cfg_gameType);
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
     		}
@@ -761,7 +806,8 @@ public class elim extends SubspaceBot {
     		Iterator<String> r = rankings.keySet().iterator();
     		while( r.hasNext() ){
     			String name = r.next();
-    			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRank = " + rankings.get(name) + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+    			//TODO:set to 300
+    			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRank = " + rankings.get(name) + " WHERE (fnKills + fnDeaths) > 10 AND fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
     		}    		
     	}catch(SQLException e){
     		Tools.printStackTrace(e);
@@ -924,16 +970,26 @@ private class CasualPlayer{
     
 private class ElimPlayer{
 	private String name;
-	private int shiptype = -1, vote = -1, frequency = -1;
-	private int wins = 0, totalWins = 0, losses = 0, totalLosses = 0;
-	private int shots = 0, quickKills = 0, ave = 300, streak = 0, BKS = 0, lagouts = 0, initRating = 0, rating = 0;
-	private double hitRatio = 0, winRatio = 100, w, l, s;
+	//========================================================================
+	//Bot variables
+	//========================================================================
+	private int shiptype = -1, vote = -1, frequency = -1, lagouts = 0;
 	private long outOfBounds = 0, lagTime = -1, spawnTime = -1, killTime = -1;
 	private boolean gotBorderWarning = false, gotChangeWarning = false;
+	//========================================================================
+	//Database variables
+	//========================================================================
+	private int initRating = 0, initWins = 0, initLosses = 0, ave = 0, BKS = 0, WLS = 0, BDK = 0;
+	//========================================================================
+	//Game statistic variables
+	//========================================================================
+	private int wins = 0, losses = 0;	
+	private int shots = 0, quickKills = 0, streak = 0, lstreak = 0;
+	private int streakBreaks = 0, eliminations = 0;
+	private double hitRatio = 0, winRatio = 100;
 	
 	private ElimPlayer(String name){
-		this.name = name;
-		
+		this.name = name;	
 	}
 	
 	private void resetScore(){
@@ -948,10 +1004,10 @@ private class ElimPlayer{
 			doQuickKill();
 		}
 		else quickKills = 0;
+		lstreak = 0;
 		killTime = System.currentTimeMillis();
 		wins += 1;
-		totalWins += 1;
-		ave = ((ave * totalWins) + enemyRating)/(totalWins + 1);
+		ave = ((ave * getTotalWins()) + enemyRating)/(getTotalWins() + 1);	
 		streak += 1;
 		switch(streak){
 		case 5:
@@ -986,7 +1042,30 @@ private class ElimPlayer{
 		}
 	}
 	
-	private void doQuickKill(){
+	private int getTotalWins(){
+		return (wins + initWins);
+	}
+	
+	private void gotLoss(boolean resetStreak){
+		losses += 1;
+		lstreak += 1;
+		if(resetStreak)
+			streak = 0;
+		if(lstreak > WLS){
+			WLS = lstreak;
+			try{
+				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnWLS = " + lstreak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+			}catch(SQLException e){
+				Tools.printStackTrace(e);
+			}
+		}
+	}
+	
+	private int getTotalLosses(){
+		return (losses + initLosses) == 0 ? 1 : (losses + initLosses);
+	}
+	
+	private void doQuickKill(){	
 		switch(quickKills){
 			case 1:m_botAction.sendArenaMessage(name + " - Double kill!", Tools.Sound.CROWD_OHH);break;
 			case 2:m_botAction.sendArenaMessage(name + " - Triple kill!", Tools.Sound.CROWD_GEE);break;
@@ -995,37 +1074,27 @@ private class ElimPlayer{
 			case 5:m_botAction.sendArenaMessage(name + " - Sextuple kill!", Tools.Sound.CRYING);break;
 			case 6:m_botAction.sendArenaMessage(name + " - Septuple kill!", Tools.Sound.GAME_SUCKS);break;		
 		}
-	}
-	
-	private void gotLoss(boolean resetStreak){
-		losses += 1;
-		totalLosses += 1;
-		if(resetStreak)
-			streak = 0;
-	}
-	
-	private void calculateStats(){
-		calculateRatios();
-		if(totalLosses != 0)
-			rating = ave * (totalWins / totalLosses);
-		else rating = ave * (totalWins / 1);
-		//PriitK's original formula
-		//More information here: http://web.archive.org/web/20021007173427/http://www.dcee.net/elim/erating.html
+		try{
+			if(quickKills > BDK){
+				BDK = quickKills;
+				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnBDK = " + BDK + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+			}
+		}catch(SQLException e){
+			Tools.printStackTrace(e);
+		}
 	}
 	
 	private void calculateRatios(){
-		w = wins;
-		l = losses;
-		s = shots;
 		if(shots != 0)
-			hitRatio = ((w / s) * 100);
+			hitRatio = ((wins / shots) * 100);
+		else
+			hitRatio = ((wins / 1) * 100);
 		if(hitRatio > 100) 
 			hitRatio = 100;
 		if(losses != 0)
-			winRatio = ((w / l) * 100);
-		else{
-			winRatio = ((w / 1) * 100);
-		}
+			winRatio = ((wins / losses) * 100);
+		else
+			winRatio = ((wins / 1) * 100);
 	}
 	
 	private void clearBorderInfo(){
@@ -1242,15 +1311,18 @@ private class MVPTimer {
     		m_botAction.sendSmartPrivateMessage( loss, "Spawn kill(No count).");
     		return;
     	}
-    	w.gotWin(l.rating);
-    	if(l.streak >= 7)
+    	w.gotWin(l.initRating);
+    	if(l.streak >= 7){
+    		w.streakBreaks++;
     		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + l.streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
+    	}
     	l.gotLoss(true);
     	if(l.losses == deaths && elimPlayers.containsKey(loss)){
+    		w.eliminations++;
     		m_botAction.sendArenaMessage(loss + " is out. " + l.wins + " wins " + l.losses + " losses");
     		losers.put(loss, elimPlayers.remove(loss));
     		doWarpIntoCasual(loss);
-    	}else{
+    	}else if(elimPlayers.containsKey(loss)){
     		l.clearBorderInfo();
     		new SpawnTimer(loss);
     	}
