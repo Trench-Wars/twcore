@@ -341,9 +341,9 @@ public class elim extends SubspaceBot {
     		m_botAction.sendSmartPrivateMessage( name, "There is no game in progress.");
     		return;
     	}
-    	ArrayList<String> pNames = new ArrayList<String>();
-    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
     	m_botAction.sendSmartPrivateMessage( name, elimPlayers.size() + " players remaining:");
+    	ArrayList<String> pNames = new ArrayList<String>();
+    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();    	
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
     		pNames.add(ep.name + "(" + ep.wins + "-" + ep.losses + ")");
@@ -718,7 +718,7 @@ public class elim extends SubspaceBot {
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
     		ep.calculateStats();
-    		avg_rating += ep.ave;
+    		avg_rating += ep.rating;
     		try{
     			if(ep.name.equalsIgnoreCase(winner.name)){
     				if(lastWinner.equalsIgnoreCase(ep.name)){
@@ -926,7 +926,7 @@ private class ElimPlayer{
 	private String name;
 	private int shiptype = -1, vote = -1, frequency = -1;
 	private int wins = 0, totalWins = 0, losses = 0, totalLosses = 0;
-	private int shots = 0, quickKills = 0, ave = 0, streak = 0, BKS = 0, lagouts = 0, initRating = 0, rating = 0;
+	private int shots = 0, quickKills = 0, ave = 300, streak = 0, BKS = 0, lagouts = 0, initRating = 0, rating = 0;
 	private double hitRatio = 0, winRatio = 100, w, l, s;
 	private long outOfBounds = 0, lagTime = -1, spawnTime = -1, killTime = -1;
 	private boolean gotBorderWarning = false, gotChangeWarning = false;
@@ -950,8 +950,8 @@ private class ElimPlayer{
 		else quickKills = 0;
 		killTime = System.currentTimeMillis();
 		wins += 1;
-		ave = ((ave * totalWins) + enemyRating)/(totalWins + 1);
 		totalWins += 1;
+		ave = ((ave * totalWins) + enemyRating)/(totalWins + 1);
 		streak += 1;
 		switch(streak){
 		case 5:
@@ -997,10 +997,11 @@ private class ElimPlayer{
 		}
 	}
 	
-	private void gotLoss(){
+	private void gotLoss(boolean resetStreak){
 		losses += 1;
 		totalLosses += 1;
-		streak = 0;
+		if(resetStreak)
+			streak = 0;
 	}
 	
 	private void calculateStats(){
@@ -1244,7 +1245,7 @@ private class MVPTimer {
     	w.gotWin(l.rating);
     	if(l.streak >= 7)
     		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + l.streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
-    	l.gotLoss();
+    	l.gotLoss(true);
     	if(l.losses == deaths && elimPlayers.containsKey(loss)){
     		m_botAction.sendArenaMessage(loss + " is out. " + l.wins + " wins " + l.losses + " losses");
     		losers.put(loss, elimPlayers.remove(loss));
@@ -1333,10 +1334,16 @@ private class MVPTimer {
 	    		doWarpIntoElim(name);
 	    		if(game.state == GameStatus.GAME_IN_PROGRESS){
 		    		if(!ep.gotChangeWarning){
-		    			ep.losses += 1;
+		    			ep.gotLoss(false);
 		    			m_botAction.sendArenaMessage(name + " has attempted to change ships - +1 death");
-		    			m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
-		    			ep.gotChangeWarning = true;
+		    			if(ep.losses == deaths){
+		    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
+		    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
+		    	    		doWarpIntoCasual(ep.name);
+		    	    	}else{
+		    	    		m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
+		    	    		ep.gotChangeWarning = true;
+		    	    	}
 		    		}else{
 		    			m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
 		    			losers.put(name, elimPlayers.remove(name));
@@ -1364,10 +1371,16 @@ private class MVPTimer {
     			m_botAction.setFreq(name, ep.frequency);
     			doWarpIntoElim(name);
     			if(!ep.gotChangeWarning){
-    				ep.losses += 1;
+    				ep.gotLoss(false);
     				m_botAction.sendArenaMessage(name + " has attempted to change frequencies - +1 death");
-    				m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
-    				ep.gotChangeWarning = true;
+    				if(ep.losses == deaths){
+	    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
+	    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
+	    	    		doWarpIntoCasual(ep.name);
+	    	    	}else{
+	    	    		m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
+    					ep.gotChangeWarning = true;
+	    	    	}
     			} else {		
     				m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
     				losers.put(name, elimPlayers.remove(name));
