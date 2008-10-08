@@ -47,9 +47,10 @@ public class elim extends SubspaceBot {
 	public int shipType = -1;
 	public int deaths = -1;
 	public int shrap = 0;
-	public double avg_rating = -1;
+	public int avg_rating = 0;
 	public String lastWinner = "-anonymous-";
 	public int winStreak = 0;
+	public long lastZoner = 0;
 	public ElimPlayer winner;
 	
 	//Game collections
@@ -88,7 +89,12 @@ public class elim extends SubspaceBot {
 	public static final int ON = 1;
 	public static final int DISCONNECT = 2;
 	public static final int SPAWN_TIME = 5005;
+	public static final int SPAWN_NC = 2;
 	public static final int LAGOUT_TIME = 30;
+	public static final int LAGOUT_RETURN = 60;
+	public static final int MAX_LAGOUT = 2;
+	public static final int DOUBLE_KILL = 5;
+	public static final int MIN_ZONER = 3;
 	
     public elim(BotAction botAction) {
         super(botAction);
@@ -129,6 +135,7 @@ public class elim extends SubspaceBot {
 				"| !status       - Displays the game status. (!s)                             |",
 				"| !mvp          - Shows the three players with the best and worst recs.      |",
 				"| !wl           - Shows the three players with the most and least losses.    |",
+				"| !who          - Shows all remaining players in the game.                   |",
 				"| !rank <#>     - Returns the player at rank <#>.                            |",
 				"| !stats        - Shows your statistics including your rank.                 |",
 				"| !stats <name> - Shows statistics of <name>.                                |",
@@ -223,7 +230,9 @@ public class elim extends SubspaceBot {
     		cmd_mvp(name);
     	else if(cmd.equalsIgnoreCase("!wl"))
     		cmd_wl(name);
-    	else if(cmd.equalsIgnoreCase("!rec"))
+    	else if(cmd.equalsIgnoreCase("!who"))
+    		cmd_who(name);
+    	else if(cmd.equalsIgnoreCase("!rec") || cmd.equalsIgnoreCase("!r"))
     		cmd_rec(name, name);
     	else if(cmd.startsWith("!rec "))
     		cmd_rec(name, cmd.substring(5));
@@ -327,6 +336,29 @@ public class elim extends SubspaceBot {
     	}
     }
     
+    public void cmd_who(String name){
+    	if(!game.isInProgress()){
+    		m_botAction.sendSmartPrivateMessage( name, "There is no game in progress.");
+    		return;
+    	}
+    	ArrayList<String> pNames = new ArrayList<String>();
+    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
+    	m_botAction.sendSmartPrivateMessage( name, elimPlayers.size() + " players remaining:");
+    	while( i.hasNext() ){
+    		ElimPlayer ep = i.next();
+    		pNames.add(ep.name + "(" + ep.wins + "-" + ep.losses + ")");
+    		if(pNames.size() == 5){
+    			String message = pNames.toString();
+    			m_botAction.sendSmartPrivateMessage( name, message.substring(1, message.indexOf("]")));
+    			pNames.clear();
+    		}
+    	}
+    	if(!pNames.isEmpty()){
+    		String message = pNames.toString();
+			m_botAction.sendSmartPrivateMessage( name, message.substring(1, message.indexOf("]")));
+    	}
+    }
+    
     public void cmd_rec(String name, String target){
     	String clone = m_botAction.getFuzzyPlayerName(target);
     	if(clone == null)clone = target;
@@ -354,13 +386,16 @@ public class elim extends SubspaceBot {
     	if(game.state != GameStatus.GAME_IN_PROGRESS)return;
     	if(lagouts.containsKey(name)){
     		if(System.currentTimeMillis() - lagouts.get(name).lagTime > LAGOUT_TIME * Tools.TimeInMillis.SECOND){
-		    	elimPlayers.put(name, lagouts.remove(name));
-		    	if(!enabled.contains(name))
-		    		enabled.add(name);
-		    	m_botAction.sendSmartPrivateMessage( name, "You have been put back into the game. You have " + (3-elimPlayers.get(name).lagouts) + " lagouts left.");
-		    	m_botAction.setShip(name, elimPlayers.get(name).shiptype);
-		    	m_botAction.setFreq(name, elimPlayers.get(name).frequency);
-		    	doWarpIntoElim(name);
+    			if(System.currentTimeMillis() - lagouts.get(name).lagTime < LAGOUT_RETURN * Tools.TimeInMillis.SECOND) {
+			    	elimPlayers.put(name, lagouts.remove(name));
+			    	if(!enabled.contains(name))
+			    		enabled.add(name);
+			    	m_botAction.sendSmartPrivateMessage( name, "You have been put back into the game. You have " + (MAX_LAGOUT-elimPlayers.get(name).lagouts) + " lagouts left.");
+			    	m_botAction.setShip(name, elimPlayers.get(name).shiptype);
+			    	m_botAction.setFreq(name, elimPlayers.get(name).frequency);
+			    	doWarpIntoElim(name);
+    			} else
+    				m_botAction.sendSmartPrivateMessage( name, "You have taken too long to return. Please wait for the next game to begin.");
     		} else
     			m_botAction.sendSmartPrivateMessage( name, "You must wait for " + (LAGOUT_TIME-((System.currentTimeMillis() - lagouts.get(name).lagTime)/Tools.TimeInMillis.SECOND)) + " more seconds.");
     	} else
@@ -481,6 +516,8 @@ public class elim extends SubspaceBot {
     	if(game.state != GameStatus.OFF_MODE){
     		m_botAction.sendArenaMessage("This game has been brutally killed by " + name);
     		game.state = GameStatus.OFF_MODE;
+    		lastWinner = "-anonymous-";
+    		winStreak = 0;
     		Iterator<String> i = elimPlayers.keySet().iterator();
     		while( i.hasNext() ){
     			doWarpIntoCasual(i.next());
@@ -633,7 +670,6 @@ public class elim extends SubspaceBot {
     	game.state = GameStatus.GAME_IN_PROGRESS;
     	lagouts.clear();
     	losers.clear();
-    	avg_rating = 0;
     	m_botAction.sendArenaMessage("GO! GO! GO!", Tools.Sound.GOGOGO);
     	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
     	while(i.hasNext()){
@@ -647,22 +683,23 @@ public class elim extends SubspaceBot {
     			boolean newPlayer = false;
     			ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     			if(rs != null && rs.next()){
-    				ep.initRating = rs.getInt("fnRating");
+    				ep.ave = rs.getInt("fnAve");
     				ep.streak = rs.getInt("fnCKS");
+    				ep.totalWins = rs.getInt("fnKills");
+    				ep.totalLosses = rs.getInt("fnDeaths");
+    				ep.rating = rs.getInt("fnRating");
+    				ep.initRating = ep.rating;
     			}
-    			else {
-    				newPlayer = true;
-    				ep.initRating = 1000;
-    			}
+    			else newPlayer = true;
     			m_botAction.SQLClose(rs);
-    			if(newPlayer)
+    			if(newPlayer){
+    				ep.rating = 300;
     				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + ",1000,1,NOW())");
-    			avg_rating += ep.initRating;
+    			}
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
     		}
     	}
-    	avg_rating /= elimPlayers.size();
     }
     
     public void doGameOver(){
@@ -671,8 +708,8 @@ public class elim extends SubspaceBot {
     	Iterator<ElimPlayer> i = lagouts.values().iterator();
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
-    		ep.calculateRatios();
-    		if(ep.winRatio <= 0)
+    		ep.calculateStats();
+    		if((ep.initRating - ep.rating) > 0)
     			losers.put(ep.name, ep);
     	}
     	lagouts.clear();
@@ -681,21 +718,23 @@ public class elim extends SubspaceBot {
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
     		ep.calculateStats();
+    		avg_rating += ep.ave;
     		try{
     			if(ep.name.equalsIgnoreCase(winner.name)){
     				if(lastWinner.equalsIgnoreCase(ep.name)){
     					winStreak++;
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = " + ep.rating + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END) WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     				} else {
     					winStreak = 1;
-    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = " + ep.rating + ", fnGamesWon = fnGamesWon + 1, fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 1 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     				}
     			}else
-    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = fnRating + " + ep.ratingChange + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRating = " + ep.rating + ", fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + " ELSE ((fnAim + " + ep.hitRatio + ") / 2) END), fnCKS = " + ep.streak + ", fnCWS = 0 WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
     		}
     	}
+    	avg_rating /= losers.size();
 	    List<ElimPlayer> l = Arrays.asList(losers.values().toArray(new ElimPlayer[losers.values().size()]));
 	    Collections.sort(l, Collections.reverseOrder(byWinRatio));//Best record
 	    new MVPTimer(l.get(0).name);
@@ -798,24 +837,26 @@ public class elim extends SubspaceBot {
 			it.next().vote = -1;
     }
     
-    public void doElimZoner(){    		
+    public void doElimZoner(){
+    	if((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE))return;
     	if(winStreak == 1)
-    		m_botAction.sendZoneMessage("Next elimination match is starting. Last round's winner was '" + lastWinner + "'! Type ?go " + cfg_arena + " to play");
+    		m_botAction.sendZoneMessage("Next " + getGameName() + " is starting. Last round's winner was " + lastWinner + "! Type ?go " + cfg_arena + " to play");
     	else if(winStreak > 1)
     		switch(winStreak){
-	    		case 2:m_botAction.sendZoneMessage("Next elimination match is starting. " + lastWinner + " has won 2 back to back! Type ?go " + cfg_arena + " to play");
+	    		case 2:m_botAction.sendZoneMessage("Next " + getGameName() + " is starting. " + lastWinner + " has won 2 back to back! Type ?go " + cfg_arena + " to play");
 	    			break;
-	    		case 3:m_botAction.sendZoneMessage(lastWinner + " is on fire with a triple! Type ?go " + cfg_arena + " to end the streak!", Tools.Sound.CROWD_OOO);
+	    		case 3:m_botAction.sendZoneMessage(getGameName().toUpperCase() + ": " + lastWinner + " is on fire with a triple! Type ?go " + cfg_arena + " to end the streak!", Tools.Sound.CROWD_OOO);
 	    			break;
-	    		case 4:m_botAction.sendZoneMessage(lastWinner + " is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage!", Tools.Sound.CROWD_GEE);
+	    		case 4:m_botAction.sendZoneMessage(getGameName().toUpperCase() + ": " + lastWinner + " is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage!", Tools.Sound.CROWD_GEE);
 	    			break;
-	    		case 5:m_botAction.sendZoneMessage(lastWinner + " is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness!", Tools.Sound.SCREAM);
+	    		case 5:m_botAction.sendZoneMessage(getGameName().toUpperCase() + ": " + lastWinner + " is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness!", Tools.Sound.SCREAM);
 	    			break;
-	    		default:m_botAction.sendZoneMessage(lastWinner + " is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves!", Tools.Sound.INCONCEIVABLE);
+	    		default:m_botAction.sendZoneMessage(getGameName().toUpperCase() + ": " + lastWinner + " is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves!", Tools.Sound.INCONCEIVABLE);
 	    			break;
     		}
     	else
-    		m_botAction.sendZoneMessage("Next elimination match is starting. Type ?go " + cfg_arena + " to play");
+    		m_botAction.sendZoneMessage("Next " + getGameName() + " is starting. Type ?go " + cfg_arena + " to play");
+    	lastZoner = System.currentTimeMillis();
     }
     
     public void doWarpIntoElim(String name){
@@ -884,11 +925,11 @@ private class CasualPlayer{
 private class ElimPlayer{
 	private String name;
 	private int shiptype = -1, vote = -1, frequency = -1;
-	private int wins = 0, losses = 0, shots = 0, initRating = 0, streak = 0, BKS = 0, lagouts = 0;
-	private double hitRatio = 0, winRatio = 100, ratingChange = 0, w, l, s;
-	private long outOfBounds = 0, lagTime = -1;
+	private int wins = 0, totalWins = 0, losses = 0, totalLosses = 0;
+	private int shots = 0, quickKills = 0, ave = 0, streak = 0, BKS = 0, lagouts = 0, initRating = 0, rating = 0;
+	private double hitRatio = 0, winRatio = 100, w, l, s;
+	private long outOfBounds = 0, lagTime = -1, spawnTime = -1, killTime = -1;
 	private boolean gotBorderWarning = false, gotChangeWarning = false;
-	private static final int MAX_BONUS = 25;
 	
 	private ElimPlayer(String name){
 		this.name = name;
@@ -901,8 +942,16 @@ private class ElimPlayer{
 		lagouts = 0;
 	}
 	
-	private void gotWin(){
+	private void gotWin(int enemyRating){
+		if(System.currentTimeMillis() - killTime < (DOUBLE_KILL * Tools.TimeInMillis.SECOND)){
+			quickKills++;
+			doQuickKill();
+		}
+		else quickKills = 0;
+		killTime = System.currentTimeMillis();
 		wins += 1;
+		ave = ((ave * totalWins) + enemyRating)/(totalWins + 1);
+		totalWins += 1;
 		streak += 1;
 		switch(streak){
 		case 5:
@@ -937,24 +986,28 @@ private class ElimPlayer{
 		}
 	}
 	
+	private void doQuickKill(){
+		switch(quickKills){
+			case 1:m_botAction.sendArenaMessage(name + " - Double kill!", Tools.Sound.CROWD_OHH);break;
+			case 2:m_botAction.sendArenaMessage(name + " - Triple kill!", Tools.Sound.CROWD_GEE);break;
+			case 3:m_botAction.sendArenaMessage(name + " - Quadruple kill!", Tools.Sound.INCONCEIVABLE);break;
+			case 4:m_botAction.sendArenaMessage(name + " - Quintuple kill!", Tools.Sound.SCREAM);break;
+			case 5:m_botAction.sendArenaMessage(name + " - Sextuple kill!", Tools.Sound.CRYING);break;
+			case 6:m_botAction.sendArenaMessage(name + " - Septuple kill!", Tools.Sound.GAME_SUCKS);break;		
+		}
+	}
+	
 	private void gotLoss(){
 		losses += 1;
+		totalLosses += 1;
 		streak = 0;
 	}
 	
 	private void calculateStats(){
 		calculateRatios();
-		double x = avg_rating - initRating;//Average Player Rating - Player Rating
-		double p = 1/(1 + Math.pow(10, (x/400)));//Probability
-		double z = (((winRatio-100) * 3) / losers.size());
-		if(z > 0)
-			ratingChange =  z * (1-p);
-		else if(z < 0)
-			ratingChange =  z * (p);
-		else
-			ratingChange = z;
-		if(winner.name.equalsIgnoreCase(name))	
-			ratingChange += MAX_BONUS * (losers.size()/30) * (1 - p);
+		rating = ave * (totalWins / totalLosses);
+		//PriitK's original formula
+		//More information here: http://web.archive.org/web/20021007173427/http://www.dcee.net/elim/erating.html
 	}
 	
 	private void calculateRatios(){
@@ -1024,8 +1077,11 @@ private class GameStatus{
 	}
 	
 	private void moveOn(){
-		if(elimPlayers.size() < cfg_minPlayers && state < GAME_IN_PROGRESS)
+		if(elimPlayers.size() < cfg_minPlayers && state < GAME_IN_PROGRESS){
 			state = OFF_MODE;
+			lastWinner = "-anonymous-";
+			winStreak = 0;
+		}
 		switch(state){
 			case OFF_MODE:
 				doWaitingForPlayers();
@@ -1061,8 +1117,11 @@ private class GameStatus{
 			case GAME_OVER:
 				if(botMode == ON)
 					doWaitingForPlayers();
-				else if(botMode == OFF)
+				else if(botMode == OFF){
 					state = OFF_MODE;
+					lastWinner = "-anonymous-";
+					winStreak = 0;
+				}
 				else if(botMode == DISCONNECT)
 					m_botAction.scheduleTask(new DieTask(m_botAction.getBotName()), 500);
 				break;
@@ -1091,6 +1150,7 @@ private class SpawnTimer {
         		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
         	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
         	doWarpIntoElim(name);
+        	elimPlayers.get(name).spawnTime = System.currentTimeMillis();
         }
     };
         
@@ -1164,13 +1224,20 @@ private class MVPTimer {
     	if(opList.isBotExact(win) || opList.isBotExact(loss) || p == null)return;
     	casualPlayers.get(win).gotWin();
     	casualPlayers.get(loss).gotLoss();
-    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || !elimPlayers.containsKey(win) || !elimPlayers.containsKey(loss))return;
+    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) ||
+    		(!elimPlayers.containsKey(win) && !losers.containsKey(win) && !lagouts.containsKey(win)) ||
+    		(!elimPlayers.containsKey(loss) && !losers.containsKey(loss) && !lagouts.containsKey(loss)))return;
     	if(p.getYTileLocation() > 550 && cfg_gameType == BASEELIM){
     		m_botAction.sendSmartPrivateMessage( win, "Kill from outside base(No count).");
     		m_botAction.sendSmartPrivateMessage( loss, "Kill from outside base(No count).");
     		return;
     	}
-    	elimPlayers.get(win).gotWin();
+    	if((System.currentTimeMillis() - elimPlayers.get(loss).spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)){
+    		m_botAction.sendSmartPrivateMessage( win, "Spawn kill(No count).");
+    		m_botAction.sendSmartPrivateMessage( loss, "Spawn kill(No count).");
+    		return;
+    	}
+    	elimPlayers.get(win).gotWin(elimPlayers.get(loss).rating);
     	if(elimPlayers.get(loss).streak >= 7)
     		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + elimPlayers.get(loss).streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
     	elimPlayers.get(loss).gotLoss();
@@ -1222,7 +1289,7 @@ private class MVPTimer {
     		lagouts.put(name, elimPlayers.remove(name));
     		lagouts.get(name).lagTime = System.currentTimeMillis();
     		lagouts.get(name).lagouts++;
-    		if(lagouts.get(name).lagouts > 2){
+    		if(lagouts.get(name).lagouts >= MAX_LAGOUT){
     			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
     			losers.put(name, lagouts.remove(name));
         		doWarpIntoCasual(name);
@@ -1242,7 +1309,7 @@ private class MVPTimer {
     		lagouts.put(name, elimPlayers.remove(name));
     		lagouts.get(name).lagTime = System.currentTimeMillis();
     		lagouts.get(name).lagouts++;
-    		if(lagouts.get(name).lagouts > 3){
+    		if(lagouts.get(name).lagouts >= MAX_LAGOUT){
     			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
     			losers.put(name, lagouts.remove(name));
         		doWarpIntoCasual(name);
@@ -1372,6 +1439,12 @@ private class MVPTimer {
     	while(s.length() < length)
     		s += " ";
     	return s;
+    }
+    
+    public String getGameName(){
+    	if(cfg_gameType == ELIM)
+    		return "elim";
+    	else return "belim";
     }
     
     public int getBotNumber(BotSettings cfg){ 
