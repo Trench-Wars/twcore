@@ -1150,7 +1150,8 @@ private class SpawnTimer {
         		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
         	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
         	doWarpIntoElim(name);
-        	elimPlayers.get(name).spawnTime = System.currentTimeMillis();
+        	if(elimPlayers.containsKey(name))
+        		elimPlayers.get(name).spawnTime = System.currentTimeMillis();
         }
     };
         
@@ -1224,29 +1225,30 @@ private class MVPTimer {
     	if(opList.isBotExact(win) || opList.isBotExact(loss) || p == null)return;
     	casualPlayers.get(win).gotWin();
     	casualPlayers.get(loss).gotLoss();
-    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) ||
-    		(!elimPlayers.containsKey(win) && !losers.containsKey(win) && !lagouts.containsKey(win)) ||
-    		(!elimPlayers.containsKey(loss) && !losers.containsKey(loss) && !lagouts.containsKey(loss)))return;
+    	ElimPlayer w = findCollection(win);
+    	ElimPlayer l = findCollection(loss);
+    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || w == null || l == null)return;
     	if(p.getYTileLocation() > 550 && cfg_gameType == BASEELIM){
     		m_botAction.sendSmartPrivateMessage( win, "Kill from outside base(No count).");
     		m_botAction.sendSmartPrivateMessage( loss, "Kill from outside base(No count).");
     		return;
     	}
-    	if((System.currentTimeMillis() - elimPlayers.get(loss).spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)){
+    	if((System.currentTimeMillis() - l.spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)||
+    	   (System.currentTimeMillis() - w.spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)){
     		m_botAction.sendSmartPrivateMessage( win, "Spawn kill(No count).");
     		m_botAction.sendSmartPrivateMessage( loss, "Spawn kill(No count).");
     		return;
     	}
-    	elimPlayers.get(win).gotWin(elimPlayers.get(loss).rating);
-    	if(elimPlayers.get(loss).streak >= 7)
-    		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + elimPlayers.get(loss).streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
-    	elimPlayers.get(loss).gotLoss();
-    	if(elimPlayers.get(loss).losses == deaths){
-    		m_botAction.sendArenaMessage(loss + " is out. " + elimPlayers.get(loss).wins + " wins " + elimPlayers.get(loss).losses + " losses");
+    	w.gotWin(l.rating);
+    	if(l.streak >= 7)
+    		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + l.streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
+    	l.gotLoss();
+    	if(l.losses == deaths && elimPlayers.containsKey(loss)){
+    		m_botAction.sendArenaMessage(loss + " is out. " + l.wins + " wins " + l.losses + " losses");
     		losers.put(loss, elimPlayers.remove(loss));
     		doWarpIntoCasual(loss);
     	}else{
-    		elimPlayers.get(loss).clearBorderInfo();
+    		l.clearBorderInfo();
     		new SpawnTimer(loss);
     	}
     	if(elimPlayers.size() == 1){
@@ -1434,6 +1436,16 @@ private class MVPTimer {
         req.request(EventRequester.ARENA_JOINED);
     }
 
+    public ElimPlayer findCollection(String name){
+    	if(elimPlayers.containsKey(name))
+    		return elimPlayers.get(name);
+    	else if(losers.containsKey(name))
+    		return losers.get(name);
+    	else if(lagouts.containsKey(name))
+    		return lagouts.get(name);
+    	else return null;
+    }
+    
     public String padString(String s, int length){
     	if(s.length() == length)return s;
     	while(s.length() < length)
