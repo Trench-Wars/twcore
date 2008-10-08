@@ -114,7 +114,6 @@ public class elim extends SubspaceBot {
         cfg_arena = cfg.getString("Arena" + botnum);
         cfg_gameType = cfg.getInt("GameType" + botnum);
         cfg_chats = cfg.getString("Chats" + botnum);
-        m_botAction.sendUnfilteredPublicMessage("?chat=" + cfg_chats);
         String[] types = cfg.getString("ShipTypes" + botnum).split(",");
         try{
 	        for(int i=0;i<types.length;i++)
@@ -1256,6 +1255,7 @@ private class MVPTimer {
     	m_botAction.specAll();
     	m_botAction.receiveAllPlayerDeaths();
     	m_botAction.setPlayerPositionUpdating( 400 );
+    	m_botAction.sendUnfilteredPublicMessage("?chat=" + cfg_chats);
     }
     
     public void handleEvent(ArenaJoined event) {
