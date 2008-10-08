@@ -1005,7 +1005,9 @@ private class ElimPlayer{
 	
 	private void calculateStats(){
 		calculateRatios();
-		rating = ave * (totalWins / totalLosses);
+		if(totalLosses != 0)
+			rating = ave * (totalWins / totalLosses);
+		else rating = ave * (totalWins / 1);
 		//PriitK's original formula
 		//More information here: http://web.archive.org/web/20021007173427/http://www.dcee.net/elim/erating.html
 	}
