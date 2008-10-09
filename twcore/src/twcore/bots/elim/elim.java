@@ -739,10 +739,10 @@ public class elim extends SubspaceBot {
     					winStreak++;
     					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
     							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
-    							", fnDeaths = fnDeaths + " + ep.losses +
+    							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
     							", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
     							", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
-    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
+    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
@@ -753,7 +753,7 @@ public class elim extends SubspaceBot {
     					winStreak = 1;
     					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
     							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
-    							", fnDeaths = fnDeaths + " + ep.losses + 
+    							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
     							", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
     							", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
@@ -766,6 +766,7 @@ public class elim extends SubspaceBot {
     			}else
     				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
     						"fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + 
+    						", fnShots = fnShots + " + ep.shots +
     						", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
     						", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
     						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
@@ -794,7 +795,7 @@ public class elim extends SubspaceBot {
     	}
     	try{
     		m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimGame (fnGameType, fcWinnerName, fnWinnerKills, fnWinnerDeaths, fnShipType, fnDeaths, fnNumPlayers, fnAvgRating, fdPlayed) VALUES( " + cfg_gameType + ", '" + Tools.addSlashesToString(winner.name.toLowerCase()) + "', " + winner.wins + ", " + winner.losses + ", " + shipType + ", " + deaths + ", " + losers.size() + ", " + avg_rating + ", NOW())");
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " ORDER BY fnRating DESC");
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " AND (fnKills + fnDeaths) > 300 ORDER BY fnRating DESC");
     		TreeMap<String, Integer> rankings = new TreeMap<String, Integer>();
     		int rank = 1;
     		while( rs != null && rs.next() ){
@@ -805,8 +806,7 @@ public class elim extends SubspaceBot {
     		Iterator<String> r = rankings.keySet().iterator();
     		while( r.hasNext() ){
     			String name = r.next();
-    			//TODO:set to 300
-    			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRank = " + rankings.get(name) + " WHERE (fnKills + fnDeaths) > 10 AND fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+    			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnRank = " + rankings.get(name) + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
     		}    		
     	}catch(SQLException e){
     		Tools.printStackTrace(e);
