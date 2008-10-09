@@ -1,6 +1,7 @@
 package twcore.core.helper.pubstats;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public class PubStatsPlayer {
 	private String machineID;
 	private int timezone;
 	private String usage;
-	private String dateCreated;
+	private Date dateCreated;
 	
 	// Information from *einfo
     private int userID = -1;
@@ -164,7 +165,7 @@ public class PubStatsPlayer {
 	        IP != null && IP.trim().length() > 0 &&
 	        machineID != null && machineID.trim().length() > 0 &&
 	        usage != null && usage.trim().length() > 0 &&
-	        dateCreated != null && dateCreated.trim().length() > 0;
+	        dateCreated != null;
 	    
 	}
 	
@@ -259,14 +260,14 @@ public class PubStatsPlayer {
     /**
      * @return the dateCreated
      */
-    public String getDateCreated() {
+    public Date getDateCreated() {
         return dateCreated;
     }
 
     /**
      * @param dateCreated the dateCreated to set
      */
-    public void setDateCreated(String dateCreated) {
+    public void setDateCreated(Date dateCreated) {
         this.dateCreated = dateCreated;
     }
     
