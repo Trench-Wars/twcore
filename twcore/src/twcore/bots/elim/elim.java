@@ -696,7 +696,7 @@ public class elim extends SubspaceBot {
     			ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     			if(rs != null && rs.next()){
     				ep.ave = rs.getInt("fnAve");
-    				ep.BDK = rs.getInt("BDK");
+    				ep.BDK = rs.getInt("fnBDK");
     				ep.streak = rs.getInt("fnCKS");
     				ep.BKS = rs.getInt("fnBKS");
     				ep.lstreak = rs.getInt("fnCLS");
@@ -746,7 +746,7 @@ public class elim extends SubspaceBot {
     							" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
-    							"fnRating = ISNULL((ROUND(fnKills/NULLIF(fnDeaths, 0)) * fnAve), 0) " + 
+    							"fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
     							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
     							"' AND fnGameType = " + cfg_gameType);
     				} else {
@@ -759,7 +759,7 @@ public class elim extends SubspaceBot {
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
     							" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-    							", fnCWS = 1, fnRating = ISNULL((ROUND(fnKills/NULLIF(fnDeaths, 0)) * fnAve), 0) " + 
+    							", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
     							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
     							"' AND fnGameType = " + cfg_gameType);
     				}
@@ -771,7 +771,7 @@ public class elim extends SubspaceBot {
     						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
     						" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
     						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-    						", fnCWS = 0, fnRating = ISNULL((ROUND(fnKills/NULLIF(fnDeaths, 0)) * fnAve), 0) " + 
+    						", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
     						"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
     						"' AND fnGameType = " + cfg_gameType);
     		}catch(SQLException e){
