@@ -326,7 +326,7 @@ public class distensionbot extends SubspaceBot {
     private static final int SCORE_REQUIRED_FOR_WIN = 3;// Max # rounds (odd numbers only)
     private static final int SECTOR_CHANGE_SECONDS = 4; // Seconds it takes to secure hold or break one
     private static final int INTERMISSION_SECS = 60;    // Seconds between end of free play & start of next battle
-    private static final int PLAYERS_FOR_2_FLAGS = 24;  // Minimum # players required to activate 2 flags
+    private static final int PLAYERS_FOR_2_FLAGS = 16;  // Minimum # players required to activate 2 flags
     private static final int SUDDEN_DEATH_MINUTES = 35; // Minutes after which round ends with a truce
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
@@ -593,9 +593,13 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendChatMessage("Distension has been loaded.  ?go #distension if you wish to play.");
                 m_botAction.sendArenaMessage("Distension has been loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  PM the bot with !intro if you are new, and refer to F1 for more detailed help.");
             }
-
             // TODO: Check if time should be reset -- when was bot last run?  How to do this -- DB entry?
-            // Should we create a separate table that stores information such as this?
+            // Should we create a separate table that stores information such as this?  Or does it matter?
+            try {
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
+            } catch (SQLException e ) {  }
+            m_botAction.scoreResetAll();
+
         }
         setupTimerTasks();
     }
