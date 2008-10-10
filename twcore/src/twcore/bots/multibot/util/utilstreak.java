@@ -137,7 +137,7 @@ public class utilstreak extends MultiUtil {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
 			if (message.equalsIgnoreCase("!best"))
 				getBestStreak(name);
-			if( m_opList.isER( name )) handleCommand( name, message );
+			if( m_opList.isER( name ) || m_botAction.getBotName().equalsIgnoreCase(name)) handleCommand( name, message );
         }
     }
 
