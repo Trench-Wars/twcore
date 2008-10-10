@@ -97,6 +97,7 @@ public class elim extends SubspaceBot {
 	public static final int MAX_LAGOUT = 2;
 	public static final int DOUBLE_KILL = 5;
 	public static final int MIN_ZONER = 3;
+	public static final int MAX_OUT_OF_BOUNDS = 30;
 	
     public elim(BotAction botAction) {
         super(botAction);
@@ -740,8 +741,8 @@ public class elim extends SubspaceBot {
     					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
     							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
     							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
-    							", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
-    							", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
+    							", fnPE = fnPE + " + ep.eliminations + 
+    							", fnSB = fnSB + " + ep.streakBreaks + 
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
@@ -754,8 +755,8 @@ public class elim extends SubspaceBot {
     					m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
     							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
     							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
-    							", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
-    							", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
+    							", fnPE = fnPE + " + ep.eliminations + 
+    							", fnSB = fnSB + " + ep.streakBreaks + 
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
     							" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
@@ -767,8 +768,8 @@ public class elim extends SubspaceBot {
     				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
     						"fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + 
     						", fnShots = fnShots + " + ep.shots +
-    						", fnPlayersEliminated = fnPlayersEliminated + " + ep.eliminations + 
-    						", fnStreakBreaks = fnStreakBreaks + " + ep.streakBreaks + 
+    						", fnPE = fnPE + " + ep.eliminations + 
+    						", fnSB = fnSB + " + ep.streakBreaks + 
     						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0) THEN " + ep.hitRatio + 
     						" ELSE (((fnAim * fnShots) + " + ep.hitRatio + ") / (fnShots + 1)) END), " + 
     						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
@@ -1312,7 +1313,7 @@ private class MVPTimer {
     		return;
     	}
     	w.gotWin(l.initRating);
-    	if(l.streak >= 7){
+    	if(l.streak >= 5){
     		w.streakBreaks++;
     		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + l.streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
     	}
@@ -1478,12 +1479,12 @@ private class MVPTimer {
 		    	else if(p.getYTileLocation() > 550){    		
 		    		if(ep.outOfBounds == 0)
 		    			ep.outOfBounds = System.currentTimeMillis();
-		    		else if((System.currentTimeMillis() - ep.outOfBounds) > 20 * Tools.TimeInMillis.SECOND){
+		    		else if((System.currentTimeMillis() - ep.outOfBounds) > MAX_OUT_OF_BOUNDS * Tools.TimeInMillis.SECOND){
 		    			m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
 		        		losers.put(ep.name, elimPlayers.remove(ep.name));
 		        		doWarpIntoCasual(ep.name);
 		    		}
-		    		else if((System.currentTimeMillis() - ep.outOfBounds) > 10 * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning){
+		    		else if((System.currentTimeMillis() - ep.outOfBounds) > (MAX_OUT_OF_BOUNDS/2) * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning){
 		    			m_botAction.sendSmartPrivateMessage( ep.name, "Get in the base!");
 		    			ep.gotBorderWarning = true;
 		    		}    		
