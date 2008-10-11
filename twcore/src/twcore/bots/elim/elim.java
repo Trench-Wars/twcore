@@ -46,8 +46,10 @@ public class elim extends SubspaceBot {
 	
 	//Class variables
 	public int botMode = 1;
+	public int gameStyle = 1;
 	public int shipType = -1;
 	public int deaths = -1;
+	public int kills = -1;
 	public int shrap = 0;
 	public int avg_rating = 0;
 	public String lastWinner = "-anonymous-";
@@ -67,7 +69,7 @@ public class elim extends SubspaceBot {
 
 	
 	//BotSettings variables
-	public int cfg_minPlayers, cfg_maxDeaths, cfg_defaultShip, cfg_gameType, cfg_votingLength, cfg_waitLength, cfg_zone;
+	public int cfg_minPlayers, cfg_maxDeaths, cfg_maxKills, cfg_defaultShip, cfg_gameType, cfg_votingLength, cfg_waitLength, cfg_zone;
 	public String cfg_arena, cfg_chats;
 	public ArrayList<Integer> cfg_shipTypes = new ArrayList<Integer>();
 	
@@ -87,6 +89,7 @@ public class elim extends SubspaceBot {
 	//Enums
 	public static final int ELIM = 1;
 	public static final int BASEELIM = 2;
+	public static final int KILLRACE = 2;
 	public static final int OFF = 0;
 	public static final int ON = 1;
 	public static final int DISCONNECT = 2;
@@ -108,6 +111,7 @@ public class elim extends SubspaceBot {
         int botnum = getBotNumber(cfg);
         cfg_minPlayers = cfg.getInt("MinPlayers");
         cfg_maxDeaths = cfg.getInt("MaxDeaths");
+        cfg_maxKills = 20;
         cfg_votingLength = cfg.getInt("VotingLength");
         cfg_waitLength = (cfg.getInt("WaitLength") - 10);
         cfg_zone = cfg.getInt("SendZoner");
@@ -179,15 +183,23 @@ public class elim extends SubspaceBot {
 			case GameStatus.VOTING_ON_SHIP:
 				return "We are currently voting on ship type.";
 			case GameStatus.VOTING_ON_DEATHS:
-				return "We are playing " + Tools.shipName(shipType) + " elim. We are currently voting on number of deaths.";
+				if(gameStyle == ELIM)
+					return "We are playing " + Tools.shipName(shipType) + " elim. We are currently voting on number of deaths.";
+				else return "We are playing " + Tools.shipName(shipType) + " kill race. We are currently voting on number of kills.";
 			case GameStatus.VOTING_ON_SHRAP:
-				return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". We are currently voting on shrap.";
+				if(gameStyle == ELIM)
+					return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". We are currently voting on shrap.";
+				else return "We are playing " + Tools.shipName(shipType) + " kill race to " + kills + ". We are currently voting on shrap.";
 			case GameStatus.WAITING_TO_START:
-				return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". The game will start soon. Enter to play!";
+				if(gameStyle == ELIM)
+					return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". The game will start soon. Enter to play!";
+				else return "We are playing " + Tools.shipName(shipType) + " kill race to " + kills + ". The game will start soon. Enter to play!";
 			case GameStatus.TEN_SECONDS:
 				return "The game will begin in less than ten seconds. No more entries";
 			case GameStatus.GAME_IN_PROGRESS:
-				return "We are currently playing " + Tools.shipName(shipType) + " elim to " + deaths + ". " + elimPlayers.size() + " player(s) left.";
+				if(gameStyle == ELIM)
+					return "We are currently playing " + Tools.shipName(shipType) + " elim to " + deaths + ". " + elimPlayers.size() + " players left.";
+				else return "We are currently playing " + Tools.shipName(shipType) + " kill race to " + kills + ". " + elimPlayers.size() + " players playing.";
 			case GameStatus.GAME_OVER:
 				return "A new elimination match will begin shortly.";
 			default: return null;
@@ -211,23 +223,14 @@ public class elim extends SubspaceBot {
 				handleSmodCommands(name, message);
 			if(opList.isSysop(name) && message.startsWith("!greetmsg "))
 				m_botAction.sendUnfilteredPublicMessage( "?set misc:greetmessage:"+message.substring(10) );
-		}				
-		else if(messageType == Message.ARENA_MESSAGE && message.equals("Arena LOCKED"))
-			m_botAction.toggleLocked();
+		}
 		else if(messageType == Message.ARENA_MESSAGE && message.contains("UserId:"))
 			doEInfo(message);
 		else if(messageType == Message.PUBLIC_MESSAGE &&
 				game.isVoting()                       &&
 				Tools.isAllDigits(message)            &&
-				message.length() <= 2                 &&
-				elimPlayers.containsKey(name))
+				message.length() <= 2)
 			vote(name, message);
-		else if(messageType == Message.PUBLIC_MESSAGE &&
-				game.isVoting()                       &&
-				Tools.isAllDigits(message)            &&
-				message.length() <= 2                 &&
-				!elimPlayers.containsKey(name))
-			m_botAction.sendSmartPrivateMessage( name, "You must be playing to vote!");
     }
     
     public void handleCommands(String name, String cmd){
@@ -602,7 +605,7 @@ public class elim extends SubspaceBot {
     		m_botAction.sendArenaMessage("A new elimination match will begin when " + neededPlayers + " more player(s) enter.");
     }
     
-    public void doVotingOnShip(){
+    public void doVotingOnShip(){//TODO: make message for kill races
     	game.state = GameStatus.VOTING_ON_SHIP;
     	shipType = cfg_defaultShip;
     	for(int i=1;i<=10;i++)
@@ -615,6 +618,7 @@ public class elim extends SubspaceBot {
     	for(int i=0;i<cfg_shipTypes.size();i++){
     		s += Tools.shipName(cfg_shipTypes.get(i)) + " - " + cfg_shipTypes.get(i) + ", ";
     		votes.put(cfg_shipTypes.get(i),0);
+    		votes.put(cfg_shipTypes.get(i) + 10, 0);
     	}
     	s = s.substring(0, s.length()-2);
     	m_botAction.sendArenaMessage(s);
@@ -624,8 +628,14 @@ public class elim extends SubspaceBot {
     
     public void doVotingOnDeaths(){
     	game.state = GameStatus.VOTING_ON_DEATHS;
-    	for(int i=1;i<=cfg_maxDeaths;i++)
-    		votes.put(i, 0);
+    	deaths = -1;
+    	kills = -1;
+    	if(gameStyle == ELIM)
+    		for(int i=1;i<=cfg_maxDeaths;i++)
+    			votes.put(i, 0);
+    	else
+    		for(int i=1;i<=cfg_maxKills;i++)
+    			votes.put(i, 0);
     	game.moveOn(cfg_votingLength * Tools.TimeInMillis.SECOND);
     }
     
@@ -639,10 +649,14 @@ public class elim extends SubspaceBot {
     public void doWaitingToStart(){
     	game.state = GameStatus.WAITING_TO_START;
     	m_botAction.sendArenaMessage("Enter to play. Game will begin in " + (cfg_waitLength + 10) + " seconds");
-    	if(deaths == 1)
+    	if(deaths == 1 && gameStyle == ELIM)
     		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Die "+ deaths + " time and you are out");
-    	else
+    	else if(gameStyle == ELIM)
     		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Die "+ deaths + " times and you are out");
+    	else if(kills == 1 && gameStyle == KILLRACE)
+    		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Get "+ kills + " kill to win");
+    	else
+    		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Get "+ kills + " kills to win");
     	game.moveOn(cfg_waitLength * Tools.TimeInMillis.SECOND);
     }
     
@@ -816,6 +830,10 @@ public class elim extends SubspaceBot {
     }
     
     public void vote(String name, String message){
+    	if(!elimPlayers.containsKey(name)){
+    		m_botAction.sendSmartPrivateMessage( name, "You must be playing to vote!");
+    		return;
+    	}
     	int vote = 0;
     	ElimPlayer player;
     	try{
@@ -823,9 +841,7 @@ public class elim extends SubspaceBot {
     	} catch(NumberFormatException e){
     		Tools.printStackTrace(e);//This should never happen
     	}
-    	if(elimPlayers.containsKey(name))
-    		player = elimPlayers.get(name);
-    	else return;
+    	player = elimPlayers.get(name);
     	if(votes.containsKey(vote)){
     		if(player.vote != -1)
         		votes.put(player.vote, votes.get(player.vote) - 1);
@@ -854,18 +870,39 @@ public class elim extends SubspaceBot {
 				shipType = winners.get(rand.nextInt(winners.size()-1));
 			}else
 				shipType = winners.get(0);
-			m_botAction.sendArenaMessage("This will be " + Tools.shipName(shipType) + " elim. VOTE: How many deaths? (1-" + cfg_maxDeaths + ")");
+			gameStyle = ELIM;
+			if(shipType > 10){
+				shipType -= 10;
+				gameStyle = KILLRACE;
+			}
+			if(gameStyle == ELIM)
+				m_botAction.sendArenaMessage("This will be " + Tools.shipName(shipType) + " elim. VOTE: How many deaths? (1-" + cfg_maxDeaths + ")");
+			else
+				m_botAction.sendArenaMessage("This will be " + Tools.shipName(shipType) + " kill race. VOTE: How many kills? (1-" + cfg_maxKills + ")");
 		} else if(game.state == GameStatus.VOTING_ON_DEATHS){//The deaths vote
-			if(winners.isEmpty())
-				deaths = cfg_maxDeaths;
-			else if(winners.size() > 1)
-				deaths = winners.get(rand.nextInt(winners.size()-1));
-			else
-				deaths = winners.get(0);
-			if(cfg_gameType == ELIM || (shipType != 2 && shipType != 8))
-				m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths);
-			else
-				m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths + ". VOTE: Shrap on or off? (1-on, 0-off)");
+			if(gameStyle == ELIM){
+				if(winners.isEmpty())
+					deaths = cfg_maxDeaths;
+				else if(winners.size() > 1)
+					deaths = winners.get(rand.nextInt(winners.size()-1));
+				else
+					deaths = winners.get(0);
+				if(cfg_gameType == ELIM || (shipType != 2 && shipType != 8))
+					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths);
+				else
+					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths + ". VOTE: Shrap on or off? (1-on, 0-off)");
+			} else {
+				if(winners.isEmpty())
+					kills = cfg_maxKills;
+				else if(winners.size() > 1)
+					kills = winners.get(rand.nextInt(winners.size()-1));
+				else
+					kills = winners.get(0);
+				if(cfg_gameType == ELIM || (shipType != 2 && shipType != 8))
+					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " kill race to " + kills);
+				else
+					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " kill race to " + kills + ". VOTE: Shrap on or off? (1-on, 0-off)");
+			}
 		} else if(game.state == GameStatus.VOTING_ON_SHRAP){//Shrap vote(Only for baseelim)
 			if(winners.isEmpty() || winners.size() > 1)
 				shrap = OFF;
@@ -1294,6 +1331,7 @@ private class MVPTimer {
     public void handleEvent(PlayerDeath event) {
     	String win = m_botAction.getPlayerName(event.getKillerID());
     	String loss = m_botAction.getPlayerName(event.getKilleeID());
+    	if(win == null || loss == null)return;
     	Player p = m_botAction.getPlayer(win);
     	if(opList.isBotExact(win) || opList.isBotExact(loss) || p == null)return;
     	casualPlayers.get(win).gotWin();
@@ -1318,11 +1356,21 @@ private class MVPTimer {
     		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + l.streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
     	}
     	l.gotLoss(true);
-    	if(l.losses == deaths && elimPlayers.containsKey(loss)){
+    	if(gameStyle == ELIM && l.losses == deaths && elimPlayers.containsKey(loss)){
     		w.eliminations++;
     		m_botAction.sendArenaMessage(loss + " is out. " + l.wins + " wins " + l.losses + " losses");
     		losers.put(loss, elimPlayers.remove(loss));
     		doWarpIntoCasual(loss);
+    	}else if(gameStyle == KILLRACE && w.wins == kills && elimPlayers.containsKey(win)){
+    		Iterator<ElimPlayer> i = elimPlayers.values().iterator();
+    		while( i.hasNext() ){
+    			ElimPlayer ep = i.next();
+    			if(!ep.name.equalsIgnoreCase(w.name)){
+    				losers.put(ep.name, ep);
+    				doWarpIntoCasual(ep.name);
+    				i.remove();    				
+    			}
+    		}
     	}else if(elimPlayers.containsKey(loss)){
     		l.clearBorderInfo();
     		new SpawnTimer(loss);
@@ -1409,7 +1457,7 @@ private class MVPTimer {
 		    		if(!ep.gotChangeWarning){
 		    			ep.gotLoss(false);
 		    			m_botAction.sendArenaMessage(name + " has attempted to change ships - +1 death");
-		    			if(ep.losses == deaths){
+		    			if(ep.losses == deaths && gameStyle == ELIM){
 		    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
 		    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
 		    	    		doWarpIntoCasual(ep.name);
@@ -1446,7 +1494,7 @@ private class MVPTimer {
     			if(!ep.gotChangeWarning){
     				ep.gotLoss(false);
     				m_botAction.sendArenaMessage(name + " has attempted to change frequencies - +1 death");
-    				if(ep.losses == deaths){
+    				if(ep.losses == deaths && gameStyle == ELIM){
 	    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
 	    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
 	    	    		doWarpIntoCasual(ep.name);
