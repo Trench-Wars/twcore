@@ -1,5 +1,6 @@
 package twcore.core.helper.pubstats;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,9 +25,13 @@ public class PubStatsArena {
      * @return
      */
     public PubStatsPlayer getPlayer(String name) {
-        for(PubStatsPlayer player : players.values()) {
-            if(player.getName().equals(name)) {
-                return player;
+        Collection<PubStatsPlayer> pubstatsPlayers = players.values();
+        
+        synchronized(players) {
+            for(PubStatsPlayer player : pubstatsPlayers) {
+                if(player.getName().equals(name)) {
+                    return player;
+                }
             }
         }
         
@@ -41,9 +46,13 @@ public class PubStatsArena {
      * @return
      */
     public PubStatsPlayer getPlayerOnPartialName(String shortName) {
-        for(PubStatsPlayer player : players.values()) {
-            if(player.getName().startsWith(shortName)) {
-                return player;
+        Collection<PubStatsPlayer> pubstatsPlayers = players.values();
+        
+        synchronized(players) {
+            for(PubStatsPlayer player : pubstatsPlayers) {
+                if(player.getName().startsWith(shortName)) {
+                    return player;
+                }
             }
         }
         
@@ -58,9 +67,13 @@ public class PubStatsArena {
      * @return
      */
     public PubStatsPlayer getPlayerOnPartialName2(String longName) {
-        for(PubStatsPlayer player : players.values()) {
-            if(longName.startsWith(player.getName())) {
-                return player;
+        Collection<PubStatsPlayer> pubstatsPlayers = players.values();
+        
+        synchronized(players) {
+            for(PubStatsPlayer player : pubstatsPlayers) {
+                if(longName.startsWith(player.getName())) {
+                    return player;
+                }
             }
         }
         
@@ -99,13 +112,17 @@ public class PubStatsArena {
      * Remove all players that haven't been changed since last save. (lastSave == lastUpdated)
      */
     public void cleanOldPlayers() {
-        Iterator<PubStatsPlayer> it = players.values().iterator();
+        Collection<PubStatsPlayer> pubstatsPlayers = players.values();
         
-        while(it.hasNext()) {
-            PubStatsPlayer player = it.next();
+        synchronized(players) {
+            Iterator<PubStatsPlayer> it = pubstatsPlayers.iterator();
             
-            if(player.getLastSave() > 0 && player.getLastSave() == player.getLastUpdate()) {
-                it.remove();
+            while(it.hasNext()) {
+                PubStatsPlayer player = it.next();
+                
+                if(player.getLastSave() > 0 && player.getLastSave() == player.getLastUpdate()) {
+                    it.remove();
+                }
             }
         }
     }
