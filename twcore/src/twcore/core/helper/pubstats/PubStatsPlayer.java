@@ -16,6 +16,8 @@ public class PubStatsPlayer {
 	private String name;
 	private String squad;
 	private short ship;
+	private String banner;
+	private boolean bannerReceived;
 	
 	// Information from *info
 	private String IP;
@@ -325,6 +327,34 @@ public class PubStatsPlayer {
      */
     public void setShip(short ship) {
         this.ship = ship;
+    }
+    
+    /**
+     * @return the banner
+     */
+    public String getBanner() {
+        return banner;
+    }
+
+    /**
+     * @param banner the banner to set
+     */
+    public void setBanner(String banner) {
+        this.banner = banner;
+    }
+    
+    /**
+     * @return the bannerReceived
+     */
+    public boolean isBannerReceived() {
+        return bannerReceived;
+    }
+
+    /**
+     * @param bannerReceived the bannerReceived to set
+     */
+    public void setBannerReceived(boolean bannerReceived) {
+        this.bannerReceived = bannerReceived;
     }
 
     /**
