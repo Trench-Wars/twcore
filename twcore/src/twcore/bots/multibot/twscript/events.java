@@ -235,7 +235,7 @@ public class events extends MultiUtil {
             m_botAction.sendSmartPrivateMessage( name, "Removed message at index ( " + x +  ", " + y + " ).");
         }catch(NumberFormatException e){
             m_botAction.sendSmartPrivateMessage( name, "Correct usage: !delmsg #:#");
-        }catch(IndexOutOfBoundsException e){
+        }catch(Exception e){
             m_botAction.sendSmartPrivateMessage( name, "Could not find a message at index ( " + msg[0] + ", " + msg[1] + " ).");
         }
     }
