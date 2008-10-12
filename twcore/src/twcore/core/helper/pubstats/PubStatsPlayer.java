@@ -49,6 +49,7 @@ public class PubStatsPlayer {
     private long lastShipchange;
     private long lastSave;
     private boolean scorereset = false;
+    private boolean periodReset = false;
     
     
     
@@ -446,6 +447,20 @@ public class PubStatsPlayer {
      */
     public boolean isScorereset() {
         return scorereset;
+    }
+    
+    /**
+     * @return the periodReset
+     */
+    public boolean isPeriodReset() {
+        return periodReset;
+    }
+
+    /**
+     * @param periodReset the periodReset to set
+     */
+    public void setPeriodReset(boolean periodReset) {
+        this.periodReset = periodReset;
     }
 
     /**
