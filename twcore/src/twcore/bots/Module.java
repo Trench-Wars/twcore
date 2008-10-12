@@ -17,6 +17,7 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerBanner;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
@@ -106,6 +107,8 @@ public abstract class Module
             handleEvent((FlagDropped) event);
         else if(event instanceof FlagClaimed)
             handleEvent((FlagClaimed) event);
+        else if(event instanceof PlayerBanner)
+            handleEvent((PlayerBanner) event);
     }
 
     /**
@@ -157,6 +160,8 @@ public abstract class Module
     public void handleEvent(FlagDropped event){}
 
     public void handleEvent(FlagClaimed event){}
+    
+    public void handleEvent(PlayerBanner event){}
 
     public void handleEvent(InterProcessEvent event){}
 
