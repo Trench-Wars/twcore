@@ -288,6 +288,7 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_play(String name){
+    	if(name == null)return;
     	if(enabled.remove(name)){
     		m_botAction.sendSmartPrivateMessage( name, "You have disabled !play. Type !play again to compete.");
     		if(elimPlayers.containsKey(name) && game.state == GameStatus.GAME_IN_PROGRESS){
@@ -301,6 +302,7 @@ public class elim extends SubspaceBot {
     		m_botAction.sendSmartPrivateMessage( name, "You have enabled !play. Type !play again to play casually.");
     		enabled.add(name);
     		Player p = m_botAction.getPlayer(name);
+    		if(p == null)return;
     		if(p.getShipType() > 0 && !game.isInProgress()){
     			elimPlayers.put(name, new ElimPlayer(name));
     			doWarpIntoElim(name);
@@ -1339,7 +1341,8 @@ private class MVPTimer {
     
     public void handleEvent(WeaponFired event) {
     	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(name == null || !game.isInProgress() || !elimPlayers.containsKey(name))return;
+    	if(name == null)return;
+    	else if(!game.isInProgress() || !elimPlayers.containsKey(name))return;
     	elimPlayers.get(name).shots += 1;   	
     }
     
