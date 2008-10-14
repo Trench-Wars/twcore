@@ -1322,12 +1322,13 @@ private class MVPTimer {
     			casualPlayers.put(name, new CasualPlayer(name));
     			if(cfg_gameType == BASEELIM)
     				m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
+    			enabled.add(name);
     		}
     		try{
         		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
         		if(rs != null && rs.next()){
-        			if(rs.getInt("fnElim") == 1)
-        				enabled.add(name);
+        			if(rs.getInt("fnElim") == 0)
+        				enabled.remove(name);
         			if(rs.getInt("fnSpecWhenOut") == 1)
         				classicMode.add(name);
         		}
