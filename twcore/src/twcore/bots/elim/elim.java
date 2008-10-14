@@ -1461,7 +1461,7 @@ private class MVPTimer {
     		elimPlayers.remove(name);
     	} else if(!elimPlayers.containsKey(name) && event.getShipType() != cfg_defaultShip && event.getShipType() > 0){
     		m_botAction.setShip(name, cfg_defaultShip);
-    	} else if(!elimPlayers.containsKey(name) && event.getShipType() > 0){
+    	} else if(!elimPlayers.containsKey(name) && !enabled.contains(name) && event.getShipType() > 0){
     		m_botAction.sendUnfilteredPrivateMessage(name, "*objon 1");
     	} else if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() > 0){
     		ElimPlayer ep = elimPlayers.get(name);
