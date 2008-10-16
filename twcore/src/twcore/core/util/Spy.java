@@ -139,13 +139,13 @@ public class Spy {
       while(words.hasMoreTokens()) {
     	  word = words.nextToken();
     	  for (String i : keywords){ 
-    		  if (word.trim().equals(i.trim())) {
+    		  if (word.contains(i) || word.trim().equals(i.trim())) {
     			  return true;
     		  }
     	  }
     	  
     	  for (String i : fragments){ 
-    		  if (word.contains(i)) {
+    		  if (word.contains(i) || word.trim().equals(i.trim())) {
     			  return true;
     		  }
     	  }
