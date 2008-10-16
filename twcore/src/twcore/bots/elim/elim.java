@@ -716,15 +716,13 @@ public class elim extends SubspaceBot {
     	while(i.hasNext()){
     		ElimPlayer ep = i.next();
     		Player p = m_botAction.getPlayer(ep.name);
-    		if(p == null){
+    		if(p == null || p.getShipType() == 0){
     			i.remove();
     			continue;
     		}
     		ep.frequency = freq;
     		if(p.getFrequency() != ep.frequency)
     			m_botAction.setFreq(ep.name, freq);
-    		if(p.getShipType() == 0)
-    			i.remove();
     		ep.shiptype = p.getShipType();
     		if(shipType == ANY_SHIP){
     			if(!cfg_shipTypes.contains(p.getShipType())){
