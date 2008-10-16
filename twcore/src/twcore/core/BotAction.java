@@ -896,6 +896,7 @@ public class BotAction
      */
     public void sendUnfilteredPublicMessage(String message, int soundCode)
     {
+    	if(message.startsWith("*sendto"))return;//This would crash the zone.
         m_packetGenerator.sendChatPacket((byte) 2, (byte) soundCode, (short) 0, message);
     }
 

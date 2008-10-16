@@ -164,6 +164,29 @@ public class BotSettings {
             return null;
         }
     }
+    
+    /**
+     * Returns data associated with a specified field. 
+     * @param keyName Field to fetch from
+     * @param delimiter Delimiter to parse integers by from field
+     * @return Data associated with a specified field; null if invalid
+     */
+    public int[] getIntArray( String keyName, String delimiter ){
+    	String		value = m_data.get( keyName.toLowerCase() );
+    	if(value != null){
+    		String[] values = value.split(delimiter);
+    		int[] intArray = new int[values.length];
+    		try{
+    			for(int i=0;i<values.length;i++)
+    				intArray[i] = Integer.parseInt(values[i]);
+    		}catch(NumberFormatException e){
+    			return null;
+    		}
+    		return intArray;
+    	} else {
+    		return null;
+    	}
+    }
 
     /**
      * Returns data associated with a specified field.
