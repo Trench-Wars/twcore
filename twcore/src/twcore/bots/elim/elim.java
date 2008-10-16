@@ -1495,8 +1495,10 @@ private class MVPTimer {
     		elimPlayers.remove(name);
     	} else if(!elimPlayers.containsKey(name) && event.getShipType() != cfg_defaultShip && event.getShipType() > 0){
     		m_botAction.setShip(name, cfg_defaultShip);
-    	} else if(!elimPlayers.containsKey(name) && !enabled.contains(name) && event.getShipType() > 0){
+    	} else if(!elimPlayers.containsKey(name) && game.isInProgress() && event.getShipType() > 0){
     		m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LVZ);
+    		if(enabled.contains(name))
+    			m_botAction.sendSmartPrivateMessage( name, "You have entered casual play. Please wait for the next game to begin to participate.");
     	} else if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() > 0){
     		ElimPlayer ep = elimPlayers.get(name);
     		if(event.getShipType() != ep.shiptype){
