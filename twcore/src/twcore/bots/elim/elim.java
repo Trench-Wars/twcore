@@ -712,9 +712,9 @@ public class elim extends SubspaceBot {
     	game.state = GameStatus.TEN_SECONDS;
     	m_botAction.sendArenaMessage("Get ready. Game will start in 10 seconds");//No new entries
     	int freq = 600;
-    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
+    	Iterator<String> i = elimPlayers.keySet().iterator();
     	while(i.hasNext()){
-    		ElimPlayer ep = i.next();
+    		ElimPlayer ep = elimPlayers.get(i.next());
     		Player p = m_botAction.getPlayer(ep.name);
     		if(p == null){
     			i.remove();
@@ -723,6 +723,8 @@ public class elim extends SubspaceBot {
     		ep.frequency = freq;
     		if(p.getFrequency() != ep.frequency)
     			m_botAction.setFreq(ep.name, freq);
+    		if(p.getShipType() == 0)
+    			elimPlayers.remove(ep.name);
     		ep.shiptype = p.getShipType();
     		if(shipType == ANY_SHIP){
     			if(!cfg_shipTypes.contains(p.getShipType())){
@@ -750,9 +752,9 @@ public class elim extends SubspaceBot {
     	lagouts.clear();
     	losers.clear();
     	m_botAction.sendArenaMessage("GO! GO! GO!", Tools.Sound.GOGOGO);
-    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
+    	Iterator<String> i = elimPlayers.keySet().iterator();
     	while(i.hasNext()){
-    		ElimPlayer ep = i.next();
+    		ElimPlayer ep = elimPlayers.get(i.next());
     		ep.gotChangeWarning = false;
     		if(shrap == ON)
         		m_botAction.specificPrize(ep.name, Tools.Prize.SHRAPNEL);
@@ -860,7 +862,7 @@ public class elim extends SubspaceBot {
     	while( s.hasNext() ){
     		String playerName = s.next();
     		Player p = m_botAction.getPlayer(playerName);
-    		if(p == null || p.getShipType() == 0)continue;
+    		if(p == null)continue;
     		elimPlayers.put(playerName, new ElimPlayer(playerName));
     		doWarpIntoElim(playerName);
     	}
@@ -886,7 +888,7 @@ public class elim extends SubspaceBot {
     }
     
     public void vote(String name, String message){
-    	if(!enabled.contains(name)){
+    	if(!elimPlayers.containsKey(name)){
     		m_botAction.sendSmartPrivateMessage( name, "You must be playing to vote!");
     		return;
     	}
@@ -1437,11 +1439,15 @@ private class MVPTimer {
     		m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");    	
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
+    	if(!game.isInProgress())
+    		elimPlayers.put(name, new ElimPlayer(name));
     	try{
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if(rs != null && rs.next()){
-    			if(rs.getInt("fnElim") == 0)
+    			if(rs.getInt("fnElim") == 0){
     				enabled.remove(name);
+    				elimPlayers.remove(name);
+    			}
     			if(rs.getInt("fnSpecWhenOut") == 1)
     				classicMode.add(name);
     		}
