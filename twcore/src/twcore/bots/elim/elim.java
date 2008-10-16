@@ -1439,6 +1439,8 @@ private class MVPTimer {
     		m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");    	
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
+    	if(!game.isInProgress())
+    		elimPlayers.put(name, new ElimPlayer(name));
     	try{
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if(rs != null && rs.next()){
@@ -1493,8 +1495,6 @@ private class MVPTimer {
     			winner = elimPlayers.get(elimPlayers.firstKey());
         		game.moveOn();
     		}
-    	} else if(elimPlayers.containsKey(name) && !game.isInProgress() && event.getShipType() == 0){
-    		elimPlayers.remove(name);
     	} else if(!elimPlayers.containsKey(name) && event.getShipType() != cfg_defaultShip && event.getShipType() > 0){
     		m_botAction.setShip(name, cfg_defaultShip);
     	} else if(!elimPlayers.containsKey(name) && game.isInProgress() && event.getShipType() > 0){
