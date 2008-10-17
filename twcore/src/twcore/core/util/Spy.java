@@ -120,7 +120,7 @@ public class Spy {
      */
     public boolean isRacist(String message)
     {
-      message = message.replaceAll("[^\\p{L}]", "");
+      message = message.replaceAll("[\\p{P}]", "");
       StringTokenizer words = new StringTokenizer(message.toLowerCase(), " ");
       String word = "";
       while(words.hasMoreTokens()) {
@@ -146,9 +146,12 @@ public class Spy {
     public boolean isClean(String word){
     	try {
             ResultSet qryWord;
-            qryWord = m_botAction.SQLQuery(db, "SELECT fcWord FROM tblWhiteList WHERE fcWord='" + word + "'");
-            if (qryWord.next())
+            qryWord = m_botAction.SQLQuery(db, "SELECT fcWord FROM tblWhiteList WHERE fcWord = '" + word + "'");
+            if (qryWord != null && qryWord.next()){
+            	m_botAction.SQLClose(qryWord);
                 return true;
+            }
+            m_botAction.SQLClose(qryWord);
             return false;
         } catch (Exception e) {
             return false;
@@ -163,9 +166,12 @@ public class Spy {
     public boolean isPlayerName(String word){
     	try {
             ResultSet qryWord;
-            qryWord = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblUser WHERE fcUserName='" + word + "'");
-            if (qryWord.next())
+            qryWord = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblUser WHERE fcUserName = '" + word + "'");
+            if (qryWord != null && qryWord.next()){
+            	m_botAction.SQLClose(qryWord);
                 return true;
+            }
+            m_botAction.SQLClose(qryWord);
             return false;
         } catch (Exception e) {
             return false;

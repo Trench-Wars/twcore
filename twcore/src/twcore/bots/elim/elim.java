@@ -741,8 +741,6 @@ public class elim extends SubspaceBot {
     			ep.shiptype = shipType;
     			m_botAction.setShip(p.getPlayerName(), shipType);
     		}
-    		if(p.getYTileLocation() < (cfg_safe[1] + SAFE_HEIGHT))
-    			doWarpIntoElim(ep.name);
     		freq++;
     	}
     	if(elimPlayers.size() >= 30)
@@ -1608,6 +1606,9 @@ private class MVPTimer {
     	if(p.getYTileLocation() < (cfg_safe[1]+SAFE_HEIGHT) && elimPlayers.containsKey(p.getPlayerName())){
     		m_botAction.specificPrize(p.getPlayerName(), Tools.Prize.WARP);
     		doWarpIntoElim(p.getPlayerName()); 
+    	}
+    	else if(p.getYTileLocation() > (cfg_safe[1]+SAFE_HEIGHT) && !elimPlayers.containsKey(p.getPlayerName())){
+    		doWarpIntoCasual(p.getPlayerName());
     	}
     	if(cfg_gameType == ELIM)return;
     	ElimPlayer ep = elimPlayers.get(p.getPlayerName());
