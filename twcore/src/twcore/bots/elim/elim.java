@@ -1313,23 +1313,27 @@ private class GameStatus{
 
 private class SpawnTimer {
     private String name;
+    private boolean casual;
     private TimerTask runIt = new TimerTask() {
         public void run() {
-        	if(shrap == ON)
-        		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
-        	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
-        	doWarpIntoElim(name);
-        	if(elimPlayers.containsKey(name)){
-        		elimPlayers.get(name).spawnTime = System.currentTimeMillis();
-        		if(elimPlayers.get(name).shiptype == 8){
-        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
-        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
-        		}
-        	}
+        	if(!casual){
+	        	if(shrap == ON)
+	        		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
+	        	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
+	        	doWarpIntoElim(name);
+	        	if(elimPlayers.containsKey(name)){
+	        		elimPlayers.get(name).spawnTime = System.currentTimeMillis();
+	        		if(elimPlayers.get(name).shiptype == 8){
+	        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
+	        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
+	        		}
+	        	}
+        	}else
+        		doWarpIntoCasual(name);
         }
     };
         
-    public SpawnTimer(String name) {
+    public SpawnTimer(String name, boolean casual) {
         this.name = name;
         m_botAction.scheduleTask(runIt, SPAWN_TIME);
     }
@@ -1440,8 +1444,9 @@ private class MVPTimer {
     		}
     	}else if(elimPlayers.containsKey(loss)){
     		l.clearBorderInfo();
-    		new SpawnTimer(loss);
-    	}
+    		new SpawnTimer(loss, false);
+    	}else
+    		new SpawnTimer(loss, true);
     	if(elimPlayers.size() == 1){
     		winner = elimPlayers.get(elimPlayers.firstKey());
     		game.moveOn();
