@@ -1408,13 +1408,14 @@ private class MVPTimer {
     	String win = m_botAction.getPlayerName(event.getKillerID());
     	String loss = m_botAction.getPlayerName(event.getKilleeID());
     	if(win == null || loss == null)return;
-    	Player p = m_botAction.getPlayer(win);
-    	if(opList.isBotExact(win) || opList.isBotExact(loss) || p == null)return;
+    	Player winp = m_botAction.getPlayer(win);
+    	Player lossp = m_botAction.getPlayer(loss);
+    	if(opList.isBotExact(win) || opList.isBotExact(loss) || winp == null || lossp == null)return;
     	casualPlayers.get(win).gotWin();
     	casualPlayers.get(loss).gotLoss();
     	ElimPlayer w = findCollection(win);
     	ElimPlayer l = findCollection(loss);
-    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || w == null || l == null || p.getYTileLocation() < (cfg_safe[1] + SAFE_HEIGHT)){
+    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || w == null || l == null || winp.getYTileLocation() < (cfg_safe[1] + SAFE_HEIGHT)){
     		new SpawnTimer(loss, true);
     		return;
     	}
@@ -1424,12 +1425,14 @@ private class MVPTimer {
     		m_botAction.sendSmartPrivateMessage( loss, "Spawn kill(No count).");
     		return;
     	}
-    	w.gotWin(l.initRating);
+    	if(winp.getShipType() == 0 || elimPlayers.containsKey(win))
+    		w.gotWin(l.initRating);
     	if(l.streak >= 5){
     		w.streakBreaks++;
     		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + l.streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
     	}
-    	l.gotLoss(true);
+    	if(lossp.getShipType() == 0 || elimPlayers.containsKey(loss))
+    		l.gotLoss(true);
     	if(gameStyle == ELIM && l.losses == deaths && elimPlayers.containsKey(loss)){
     		w.eliminations++;
     		m_botAction.sendArenaMessage(loss + " is out. " + l.wins + " wins " + l.losses + " losses");
@@ -1448,7 +1451,8 @@ private class MVPTimer {
     	}else if(elimPlayers.containsKey(loss)){
     		l.clearBorderInfo();
     		new SpawnTimer(loss, false);
-    	}
+    	}else
+    		new SpawnTimer(loss, true);
     	if(elimPlayers.size() == 1){
     		winner = elimPlayers.get(elimPlayers.firstKey());
     		game.moveOn();
