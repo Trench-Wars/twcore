@@ -1594,6 +1594,7 @@ private class MVPTimer {
     		m_botAction.specificPrize(p.getPlayerName(), Tools.Prize.WARP);
     		doWarpIntoElim(p.getPlayerName()); 
     	}
+    	if(cfg_gameType == ELIM)return;
     	ElimPlayer ep = elimPlayers.get(p.getPlayerName());
 	    if(ep != null && game.isInProgress()){
 	    	if(p.getYTileLocation() < cfg_border)
