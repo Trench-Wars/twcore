@@ -1414,7 +1414,10 @@ private class MVPTimer {
     	casualPlayers.get(loss).gotLoss();
     	ElimPlayer w = findCollection(win);
     	ElimPlayer l = findCollection(loss);
-    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || w == null || l == null || p.getYTileLocation() < (cfg_safe[1] + SAFE_HEIGHT))return;
+    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || w == null || l == null || p.getYTileLocation() < (cfg_safe[1] + SAFE_HEIGHT)){
+    		new SpawnTimer(loss, true);
+    		return;
+    	}
     	if((System.currentTimeMillis() - l.spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)||
     	   (System.currentTimeMillis() - w.spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)){
     		m_botAction.sendSmartPrivateMessage( win, "Spawn kill(No count).");
@@ -1445,8 +1448,7 @@ private class MVPTimer {
     	}else if(elimPlayers.containsKey(loss)){
     		l.clearBorderInfo();
     		new SpawnTimer(loss, false);
-    	}else
-    		new SpawnTimer(loss, true);
+    	}
     	if(elimPlayers.size() == 1){
     		winner = elimPlayers.get(elimPlayers.firstKey());
     		game.moveOn();
