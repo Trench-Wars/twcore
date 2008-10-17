@@ -1468,8 +1468,11 @@ private class MVPTimer {
     		m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");    	
     	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
     	enabled.add(name);
-    	if(!game.isInProgress())
+    	if(!game.isInProgress()){
     		elimPlayers.put(name, new ElimPlayer(name));
+    		if(elimPlayers.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
+    			game.moveOn();
+    	}
     	try{
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     		if(rs != null && rs.next()){
