@@ -621,6 +621,8 @@ public class elim extends SubspaceBot {
     	else
     		m_botAction.sendSmartPrivateMessage( name, "Shutdown mode disabled. New games will be allowed to start.");
     	botMode = ON;
+    	if(game.state == GameStatus.OFF_MODE)
+    		game.moveOn();
     }
     
     public void doEInfo(String message){
@@ -656,6 +658,7 @@ public class elim extends SubspaceBot {
     public void doVotingOnShip(){
     	game.state = GameStatus.VOTING_ON_SHIP;
     	shipType = cfg_defaultShip;
+    	shrap = OFF;
     	for(int i=1;i<=10;i++)
     		m_botAction.sendChatMessage(i, "Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");
     	if(cfg_zone == ON)doElimZoner();
@@ -666,11 +669,11 @@ public class elim extends SubspaceBot {
     	for(int i=0;i<cfg_shipTypes.size();i++){
     		s += Tools.shipName(cfg_shipTypes.get(i)) + " - " + cfg_shipTypes.get(i) + ", ";
     		votes.put(cfg_shipTypes.get(i),0);
-    		votes.put(cfg_shipTypes.get(i) + 10, 0);
+    		votes.put(cfg_shipTypes.get(i) * 10, 0);
     	}
     	s = s.substring(0, s.length()-2);
     	m_botAction.sendArenaMessage(s);
-    	m_botAction.sendArenaMessage("NOTICE: To vote for a kill race add 10 to your ship vote.");
+    	m_botAction.sendArenaMessage("NOTICE: To vote for a kill race add a 0 on the end of your vote.");
     	game.moveOn(cfg_votingLength * Tools.TimeInMillis.SECOND);
     	
     }
@@ -935,7 +938,7 @@ public class elim extends SubspaceBot {
 				shipType = winners.get(0);
 			gameStyle = ELIM;
 			if(shipType > 10){
-				shipType -= 10;
+				shipType /= 10;
 				gameStyle = KILLRACE;
 			}
 			int min = 1;
@@ -953,7 +956,7 @@ public class elim extends SubspaceBot {
 					deaths = winners.get(rand.nextInt(winners.size()-1));
 				else
 					deaths = winners.get(0);
-				if(cfg_gameType == ELIM || (shipType != 2 && shipType != 8))
+				if(cfg_gameType == ELIM || shipType != 2)
 					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths);
 				else
 					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths + ". VOTE: Shrap on or off? (1-on, 0-off)");
@@ -964,7 +967,7 @@ public class elim extends SubspaceBot {
 					kills = winners.get(rand.nextInt(winners.size()-1));
 				else
 					kills = winners.get(0);
-				if(cfg_gameType == ELIM || (shipType != 2 && shipType != 8))
+				if(cfg_gameType == ELIM || shipType != 2)
 					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " kill race to " + kills);
 				else
 					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " kill race to " + kills + ". VOTE: Shrap on or off? (1-on, 0-off)");
@@ -1261,7 +1264,7 @@ private class GameStatus{
 				break;
 			case VOTING_ON_DEATHS:
 				countVotes();
-				if(cfg_gameType == ELIM || (shipType != 2 && shipType != 8)){
+				if(cfg_gameType == ELIM || shipType != 2){
 					doWaitingToStart();
 				} else {
 					doVotingOnShrap();
@@ -1316,8 +1319,13 @@ private class SpawnTimer {
         		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
         	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
         	doWarpIntoElim(name);
-        	if(elimPlayers.containsKey(name))
+        	if(elimPlayers.containsKey(name)){
         		elimPlayers.get(name).spawnTime = System.currentTimeMillis();
+        		if(elimPlayers.get(name).shiptype == 8){
+        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
+        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
+        		}
+        	}
         }
     };
         
