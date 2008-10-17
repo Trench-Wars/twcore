@@ -113,9 +113,12 @@ public class elim extends SubspaceBot {
 	public static final int MAX_FREQ = 99;     //The maximum frequency casual players can be on
 	public static final int LIMIT_STREAK = 3;  //The amount of consecutive game wins to limit minimum kill/death voting
 	public static final int MIN_FOR_STREAK = 5;//The minimum kills/deaths allowable to vote on during a game winning streak
+	public static final int INIT_RATING = 300; //The initial rating that players begin at.
+	public static final int INIT_RANKING = 300;//The number of combined kills and deaths needed to be ranked.
 	
 	//LVZ
-	public static final int CASUAL_LVZ = 1;    //Displays image showing you are in casual play
+	public static final int CASUAL_SPLASH_LVZ = 1;    //Displays temporary image below energy bar that says "This is casual play"
+	public static final int CASUAL_LOGO_LVZ = 2;      //Displays casual logo above radar.
 	
     public elim(BotAction botAction) {
         super(botAction);
@@ -151,6 +154,7 @@ public class elim extends SubspaceBot {
 	        	cfg_barspots[i] = cfg.getIntArray("Barspot" + (i+1), ",");
         }
         String[] types = cfg.getString("ShipTypes" + cfg_gameType).split(",");
+        cfg_shipTypes.clear();
         try{
 	        for(int i=0;i<types.length;i++)
 	        	cfg_shipTypes.add(Integer.parseInt(types[i]));        	
@@ -776,9 +780,9 @@ public class elim extends SubspaceBot {
     			else newPlayer = true;
     			m_botAction.SQLClose(rs);
     			if(newPlayer){
-    				ep.initRating = 300;
-    				ep.ave = 300;
-    				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + ",300,1,NOW())");
+    				ep.initRating = INIT_RATING;
+    				ep.ave = INIT_RATING;
+    				m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + "," + INIT_RATING + ",1,NOW())");
     			}
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
@@ -813,6 +817,7 @@ public class elim extends SubspaceBot {
     							", fnDK = fnDK + " + ep.doublekills +
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
+    							"fnAim = (CASE WHEN (fnAim >= 100) THEN 100 ELSE fnAim), " +
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
     							"fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
@@ -828,6 +833,7 @@ public class elim extends SubspaceBot {
     							", fnDK = fnDK + " + ep.doublekills +
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
+    							"fnAim = (CASE WHEN (fnAim >= 100) THEN 100 ELSE fnAim), " +
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
     							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
@@ -842,6 +848,7 @@ public class elim extends SubspaceBot {
     						", fnDK = fnDK + " + ep.doublekills +
     						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     						" ELSE ((fnKills/fnShots)*100) END), " + 
+    						"fnAim = (CASE WHEN (fnAim >= 100) THEN 100 ELSE fnAim), " +
     						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     						", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
     						"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
@@ -866,7 +873,7 @@ public class elim extends SubspaceBot {
     	}
     	try{
     		m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimGame (fnGameType, fcWinnerName, fnWinnerKills, fnWinnerDeaths, fnShipType, fnDeaths, fnNumPlayers, fnAvgRating, fdPlayed) VALUES( " + cfg_gameType + ", '" + Tools.addSlashesToString(winner.name.toLowerCase()) + "', " + winner.wins + ", " + winner.losses + ", " + shipType + ", " + deaths + ", " + losers.size() + ", " + avg_rating + ", NOW())");
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " AND (fnKills + fnDeaths) > 300 ORDER BY fnRating DESC");
+    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " AND (fnKills + fnDeaths) > " + INIT_RANKING + " ORDER BY fnRating DESC");
     		TreeMap<String, Integer> rankings = new TreeMap<String, Integer>();
     		int rank = 1;
     		while( rs != null && rs.next() ){
@@ -1002,16 +1009,19 @@ public class elim extends SubspaceBot {
     }
     
     public void doWarpIntoElim(String name){
-    	m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LVZ);
+    	m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LOGO_LVZ);
     	if(shipType == 6 && cfg_gameType == BASEELIM){
     		int[] xarena = cfg.getIntArray("XArena" + rand.nextInt(1), ",");
     		m_botAction.warpTo(name, xarena[0], xarena[1], xarena[2]);
     	}
-    	else
-    		m_botAction.warpTo(name, cfg_competitive[0], cfg_competitive[1], cfg_competitive[2]);
     }
     
     public void doWarpIntoCasual(String name){
+    	m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
+    	m_botAction.warpTo(name, cfg_casual[0], cfg_casual[1], cfg_casual[2]);
+    }
+    
+    public void doWarpIntoCasualSafe(String name){
     	if(classicMode.contains(name))
     		m_botAction.specWithoutLock(name);
     	else{
@@ -1022,7 +1032,8 @@ public class elim extends SubspaceBot {
 	    		}    			
 	    	}
 	    	m_botAction.warpTo(name, cfg_safe[0], cfg_safe[1], cfg_safe[2]);
-	    	m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LVZ);
+	    	m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_SPLASH_LVZ);
+	    	m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
     	}
     }
     
@@ -1344,9 +1355,9 @@ private class MVPTimer {
     
     public void handleEvent(ArenaJoined event) {
     	for(int z=0;z<4;z++){
-    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-x:" + cfg_casual[0]);
-    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-y:" + cfg_casual[1]);
-    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-radius:" + cfg_casual[2]);
+    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-x:" + cfg_competitive[0]);
+    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-y:" + cfg_competitive[1]);
+    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-radius:" + cfg_competitive[2]);
     	}
     	Iterator<Player> i = m_botAction.getPlayerIterator();
     	while( i.hasNext() ){
@@ -1408,14 +1419,14 @@ private class MVPTimer {
     		w.eliminations++;
     		m_botAction.sendArenaMessage(loss + " is out. " + l.wins + " wins " + l.losses + " losses");
     		losers.put(loss, elimPlayers.remove(loss));
-    		doWarpIntoCasual(loss);
+    		doWarpIntoCasualSafe(loss);
     	}else if(gameStyle == KILLRACE && w.wins == kills && elimPlayers.containsKey(win)){
     		Iterator<ElimPlayer> i = elimPlayers.values().iterator();
     		while( i.hasNext() ){
     			ElimPlayer ep = i.next();
     			if(!ep.name.equalsIgnoreCase(w.name)){
     				losers.put(ep.name, ep);
-    				doWarpIntoCasual(ep.name);
+    				doWarpIntoCasualSafe(ep.name);
     				i.remove();    				
     			}
     		}
@@ -1467,7 +1478,7 @@ private class MVPTimer {
     		if(lagouts.get(name).lagouts >= MAX_LAGOUT){
     			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
     			losers.put(name, lagouts.remove(name));
-        		doWarpIntoCasual(name);
+        		doWarpIntoCasualSafe(name);
     		}
     	}
     	else if(!game.isInProgress() && elimPlayers.containsKey(name))
@@ -1487,7 +1498,7 @@ private class MVPTimer {
     		if(lagouts.get(name).lagouts >= MAX_LAGOUT){
     			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
     			losers.put(name, lagouts.remove(name));
-        		doWarpIntoCasual(name);
+        		doWarpIntoCasualSafe(name);
     		}   		
     		if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
     			winner = elimPlayers.get(elimPlayers.firstKey());
@@ -1495,8 +1506,11 @@ private class MVPTimer {
     		}
     	} else if(!elimPlayers.containsKey(name) && event.getShipType() != cfg_defaultShip && event.getShipType() > 0){
     		m_botAction.setShip(name, cfg_defaultShip);
+    		doWarpIntoCasual(name);
     	} else if(!elimPlayers.containsKey(name) && game.isInProgress() && event.getShipType() > 0){
-    		m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LVZ);
+    		m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
+    		m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_SPLASH_LVZ);
+    		doWarpIntoCasual(name);
     		if(enabled.contains(name))
     			m_botAction.sendSmartPrivateMessage( name, "You have entered casual play. Please wait for the next game to begin to participate.");
     	} else if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() > 0){
@@ -1511,7 +1525,7 @@ private class MVPTimer {
 		    			if(ep.losses == deaths && gameStyle == ELIM){
 		    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
 		    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
-		    	    		doWarpIntoCasual(ep.name);
+		    	    		doWarpIntoCasualSafe(ep.name);
 		    	    	}else{
 		    	    		m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
 		    	    		ep.gotChangeWarning = true;
@@ -1519,7 +1533,7 @@ private class MVPTimer {
 		    		}else{
 		    			m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
 		    			losers.put(name, elimPlayers.remove(name));
-		        		doWarpIntoCasual(name);
+		        		doWarpIntoCasualSafe(name);
 		    		}
 		    		if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
 		    			winner = elimPlayers.get(elimPlayers.firstKey());
@@ -1548,7 +1562,7 @@ private class MVPTimer {
     				if(ep.losses == deaths && gameStyle == ELIM){
 	    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
 	    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
-	    	    		doWarpIntoCasual(ep.name);
+	    	    		doWarpIntoCasualSafe(ep.name);
 	    	    	}else{
 	    	    		m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
     					ep.gotChangeWarning = true;
@@ -1556,7 +1570,7 @@ private class MVPTimer {
     			} else {		
     				m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
     				losers.put(name, elimPlayers.remove(name));
-    				doWarpIntoCasual(name);
+    				doWarpIntoCasualSafe(name);
     			}
     		}
     	} else if(!elimPlayers.containsKey(name) && event.getFrequency() > MAX_FREQ){
@@ -1568,41 +1582,39 @@ private class MVPTimer {
     public void handleEvent(PlayerPosition event){
     	Player p = m_botAction.getPlayer(event.getPlayerID());
     	if(p == null)return;
-    	if(p.getYTileLocation() < (cfg_safe[1]+SAFE_HEIGHT) && elimPlayers.containsKey(p.getPlayerName()))
+    	if(p.getYTileLocation() < (cfg_safe[1]+SAFE_HEIGHT) && elimPlayers.containsKey(p.getPlayerName())){
+    		m_botAction.specificPrize(p.getPlayerName(), Tools.Prize.WARP);
     		doWarpIntoElim(p.getPlayerName()); 
-    	if(cfg_gameType == BASEELIM){
-    		ElimPlayer ep = elimPlayers.get(p.getPlayerName());
-	    	if(ep != null && game.isInProgress()){
-		    	if(p.getYTileLocation() < cfg_border)
-		    		ep.clearBorderInfo();
-		    	else if(p.getYTileLocation() > cfg_border){    		
-		    		if(ep.outOfBounds == 0)
-		    			ep.outOfBounds = System.currentTimeMillis();
-		    		else if((System.currentTimeMillis() - ep.outOfBounds) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND){
-		    			m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
-		        		losers.put(ep.name, elimPlayers.remove(ep.name));
-		        		doWarpIntoCasual(ep.name);
-		    		}
-		    		else if((System.currentTimeMillis() - ep.outOfBounds) > (BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning){
-		    			m_botAction.sendSmartPrivateMessage( ep.name, "Get in the base!");
-		    			ep.gotBorderWarning = true;
-		    		}    		
+    	}
+    	ElimPlayer ep = elimPlayers.get(p.getPlayerName());
+	    if(ep != null && game.isInProgress()){
+	    	if(p.getYTileLocation() < cfg_border)
+	    		ep.clearBorderInfo();
+		    else if(p.getYTileLocation() > cfg_border){    		
+		    	if(ep.outOfBounds == 0)
+		    		ep.outOfBounds = System.currentTimeMillis();
+		    	else if((System.currentTimeMillis() - ep.outOfBounds) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND){
+		    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
+		       		losers.put(ep.name, elimPlayers.remove(ep.name));
+		       		doWarpIntoCasualSafe(ep.name);
 		    	}
-		    	if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-		    		winner = elimPlayers.get(elimPlayers.firstKey());
-		    		game.moveOn();
-		    	}
-    		} else {
-    			//Barwarp
-    			if(p.getYTileLocation() > cfg_barY[0] && p.getYTileLocation() < cfg_barY[1]){
-    				for(int i=0;i<cfg_barspots.length;i++){
-    					if(p.getXTileLocation() > cfg_barspots[i][0] && p.getXTileLocation() < cfg_barspots[i][1])
-    						m_botAction.warpTo(p.getPlayerName(), cfg_barspots[i][2], cfg_barspots[i][3]);
-    				}
+		    	else if((System.currentTimeMillis() - ep.outOfBounds) > (BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning){
+		    		m_botAction.sendSmartPrivateMessage( ep.name, "Get in the base!");
+		    		ep.gotBorderWarning = true;
+		    	}    		
+		    }
+		    if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
+		    	winner = elimPlayers.get(elimPlayers.firstKey());
+		    	game.moveOn();
+		    }
+    	} else {
+    		//Barwarp
+    		if(p.getYTileLocation() > cfg_barY[0] && p.getYTileLocation() < cfg_barY[1]){
+    			for(int i=0;i<cfg_barspots.length;i++){
+    				if(p.getXTileLocation() > cfg_barspots[i][0] && p.getXTileLocation() < cfg_barspots[i][1])
+    					m_botAction.warpTo(p.getPlayerName(), cfg_barspots[i][2], cfg_barspots[i][3]);
     			}
     		}
-    	} else {
-    		//Hiders
     	}
     }
     
