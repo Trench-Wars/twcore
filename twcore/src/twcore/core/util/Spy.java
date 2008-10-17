@@ -120,6 +120,7 @@ public class Spy {
      */
     public boolean isRacist(String message)
     {
+      message = message.replaceAll("[^\\p{L}]", "");
       StringTokenizer words = new StringTokenizer(message.toLowerCase(), " ");
       String word = "";
       while(words.hasMoreTokens()) {
@@ -127,8 +128,10 @@ public class Spy {
     	  for (String i : keywords){ 
     		  if (word.trim().equalsIgnoreCase(i.trim()))
     			  return true;
-    		  else if(word.contains(i) && !isClean(word))
-    			  return true;
+    		  else if(word.contains(i)){
+    			  if(!isClean(word) && !isPlayerName(word))
+    				  return true;
+    		  }
     	  }
       }
 
@@ -152,6 +155,23 @@ public class Spy {
         }
     }
 
+    /**
+     * Searches the database to see if this word is a player name.
+     * @param word - The word to check
+     * @return True if the word is on the white list. Else false.
+     */
+    public boolean isPlayerName(String word){
+    	try {
+            ResultSet qryWord;
+            qryWord = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblUser WHERE fcUserName='" + word + "'");
+            if (qryWord.next())
+                return true;
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
     /**
      * This method gets the sender from a message Event.
      *
