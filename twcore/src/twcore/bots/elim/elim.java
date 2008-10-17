@@ -1335,6 +1335,7 @@ private class SpawnTimer {
         
     public SpawnTimer(String name, boolean casual) {
         this.name = name;
+        this.casual = casual;
         m_botAction.scheduleTask(runIt, SPAWN_TIME);
     }
 }
