@@ -1,6 +1,5 @@
 package twcore.core.util;
 
-import java.sql.ResultSet;
 import java.util.StringTokenizer;
 
 import twcore.core.BotAction;
@@ -36,8 +35,8 @@ import java.util.ArrayList;
  */
 
 public class Spy {
-	public String db = "website";
     public ArrayList<String> keywords = new ArrayList<String>(); // our banned words
+    public ArrayList<String> fragments = new ArrayList<String>(); // our banned fragments
     private BotAction   m_botAction;   // BotAction reference
 
     public Spy( BotAction botAction ) {
@@ -51,11 +50,22 @@ public class Spy {
     public void loadConfig () { 
     	BufferedReader sr;
     	String line;
+    	boolean loadWords = true;
     	try {
     		sr = new BufferedReader(new FileReader(m_botAction.getCoreCfg("racism.cfg")));
-    		while((line = sr.readLine()) != null){		   
-    		   if(!line.startsWith("[") && !line.startsWith("#"))
+    		while((line = sr.readLine()) != null)
+    		{
+    		   if(line.contains("[Words]")) { loadWords = true; }
+    		   if(line.contains("[Fragments]")) { loadWords = false; }
+    		   
+    		   if(line.startsWith("[") == false) { 
+    			   if (loadWords) {
     				   keywords.add(line.trim());
+    			   }
+    			   else {
+    				   fragments.add(line.trim());
+    			   }
+    		   }
     		}
     		sr.close();
     		sr = null;
@@ -76,8 +86,11 @@ public class Spy {
         String message = event.getMessage();
         String messageTypeString = getMessageTypeString(messageType);
 
-        if(sender != null && isRacist(message))
+        if(sender != null)
+        {
+          if(isRacist(message))
               m_botAction.sendUnfilteredPublicMessage("?cheater " + messageTypeString + ": (" + sender + "): " + message);
+        }
     }
     
     /***
@@ -120,64 +133,27 @@ public class Spy {
      */
     public boolean isRacist(String message)
     {
-      message = message.replaceAll("[\\p{P}]", "");
       StringTokenizer words = new StringTokenizer(message.toLowerCase(), " ");
       String word = "";
+      
       while(words.hasMoreTokens()) {
     	  word = words.nextToken();
     	  for (String i : keywords){ 
-    		  if (word.trim().equalsIgnoreCase(i.trim()))
+    		  if (word.trim().equals(i.trim())) {
     			  return true;
-    		  else if(word.contains(i)){
-    			  if(!isClean(word) && !isPlayerName(word))
-    				  return true;
+    		  }
+    	  }
+    	  
+    	  for (String i : fragments){ 
+    		  if (word.contains(i)) {
+    			  return true;
     		  }
     	  }
       }
 
       return false;
     }
-    
-    /**
-     * Searches the database to see if this word is on the white list.
-     * @param word - The word to check
-     * @return True if the word is on the white list. Else false.
-     */
-    public boolean isClean(String word){
-    	try {
-            ResultSet qryWord;
-            qryWord = m_botAction.SQLQuery(db, "SELECT fcWord FROM tblWhiteList WHERE fcWord = '" + word + "'");
-            if (qryWord != null && qryWord.next()){
-            	m_botAction.SQLClose(qryWord);
-                return true;
-            }
-            m_botAction.SQLClose(qryWord);
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
-    }
 
-    /**
-     * Searches the database to see if this word is a player name.
-     * @param word - The word to check
-     * @return True if the word is on the white list. Else false.
-     */
-    public boolean isPlayerName(String word){
-    	try {
-            ResultSet qryWord;
-            qryWord = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblUser WHERE fcUserName = '" + word + "'");
-            if (qryWord != null && qryWord.next()){
-            	m_botAction.SQLClose(qryWord);
-                return true;
-            }
-            m_botAction.SQLClose(qryWord);
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-    
     /**
      * This method gets the sender from a message Event.
      *
