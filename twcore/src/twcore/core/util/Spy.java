@@ -133,11 +133,16 @@ public class Spy {
      */
     public boolean isRacist(String message)
     {
-      StringTokenizer words = new StringTokenizer(message.toLowerCase(), " ");
+      // remove all special characters
+      StringTokenizer words = new StringTokenizer(message.toLowerCase(), " !?:;.,@#$%^&*()[]{}-_=+~`\"\'|\\<>/");
       String word = "";
       
       while(words.hasMoreTokens()) {
-    	  word = words.nextToken();
+    	  word = words.nextToken().trim();
+    	  
+    	  if(word.length() == 0)
+    	      continue;
+    	  
     	  for (String i : keywords){ 
     		  if (word.trim().equals(i.trim())) {
     			  return true;
