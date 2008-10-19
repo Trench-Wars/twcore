@@ -157,6 +157,10 @@ public class PubStatsPlayer {
 	    shipScores.remove(ship);
 	}
 	
+	public void removeShipScores() {
+	    shipScores.clear();
+	}
+	
 	/**
 	 * Returns whether the information from *info is filled 
 	 * @return

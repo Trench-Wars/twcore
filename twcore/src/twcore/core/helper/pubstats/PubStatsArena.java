@@ -120,7 +120,7 @@ public class PubStatsArena {
             while(it.hasNext()) {
                 PubStatsPlayer player = it.next();
                 
-                if(player.getLastSave() > 0 && player.getLastSave() == player.getLastUpdate()) {
+                if(player.getLastSave() > 0 && player.getLastSave() == player.getLastUpdate() && player.isPeriodReset() == false) {
                     it.remove();
                 }
             }
@@ -134,5 +134,20 @@ public class PubStatsArena {
         return players;
     }
     
+    /**
+     * Sets periodReset boolean to true of all players
+     */
+    public void globalScorereset() {
+        Collection<PubStatsPlayer> pubstatsPlayers = players.values();
+        
+        synchronized(players) {
+            Iterator<PubStatsPlayer> it = pubstatsPlayers.iterator();
+            
+            while(it.hasNext()) {
+                PubStatsPlayer player = it.next();
+                player.setPeriodReset(true);
+            }
+        }
+    }
 
 }
