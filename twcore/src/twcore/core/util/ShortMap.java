@@ -133,7 +133,6 @@ public class ShortMap<V> implements Map<Integer, V> {
  		return put(key.intValue(), value);
  	}
 
-	@SuppressWarnings("unchecked")
  	public synchronized V put(int key, V value) {
  		final int i = getIndex(key);
  		final Entry<V> e = getEntry(i, key);
@@ -196,7 +195,6 @@ public class ShortMap<V> implements Map<Integer, V> {
 		return getEntry(getIndex(key), key);
 	}
 
-	@SuppressWarnings("unchecked")
 	private Entry<V> getEntry(final int index, final int key) {
 		Entry<V> e = m_table[index];
 		while(e != null && e.m_key != key) {
@@ -259,7 +257,7 @@ public class ShortMap<V> implements Map<Integer, V> {
 
 		public boolean equals(Object o) {
 			if(o instanceof Map.Entry) {
-	            final Map.Entry e = (Map.Entry)o;
+	            final Map.Entry<Integer, V> e = (Map.Entry<Integer, V>)o;
 	            final Object key = e.getKey();
 	            if(key instanceof Number) {
 		            final int ko = ((Number)key).intValue();

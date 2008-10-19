@@ -555,7 +555,7 @@ public class ItemCommand<T> implements List<T>
 	 * specified collection.
 	 * @see java.util.List#containsAll(Collection)
 	 */
-	public boolean containsAll(Collection c)
+	public boolean containsAll(Collection<?> c)
 	{
 		return items.containsAll(c);
 	}
@@ -586,7 +586,7 @@ public class ItemCommand<T> implements List<T>
 	 * specified collection (optional operation).
 	 * @see java.util.List#removeAll(Collection)
 	 */
-	public boolean removeAll(Collection c)
+	public boolean removeAll(Collection<?> c)
 	{
 		return items.removeAll(c);
 	}
@@ -596,7 +596,7 @@ public class ItemCommand<T> implements List<T>
 	 * specified collection (optional operation).
 	 * @see java.util.List#retainAll(Collection)
 	 */
-	public boolean retainAll(Collection c)
+	public boolean retainAll(Collection<?> c)
 	{
 		return items.retainAll(c);
 	}

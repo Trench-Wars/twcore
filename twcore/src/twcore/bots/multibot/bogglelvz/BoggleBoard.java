@@ -1,9 +1,7 @@
 package twcore.bots.multibot.bogglelvz;
 
-import java.util.Iterator;
 import java.util.Random;
 
-import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 
 /**
@@ -30,8 +28,7 @@ public class BoggleBoard {
      */
     public void fill() {
         clear();
-        int x = 0, y = 0, z;
-        char l;
+        int x = 0, y = 0;
         
         StringBag diceBag = new StringBag();
         for (x = 0; x < m_dice.length; x++) {diceBag.add(m_dice[x]);}
