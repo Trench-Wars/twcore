@@ -7919,13 +7919,12 @@ public class distensionbot extends SubspaceBot {
             if( p == null ) return;
             int currenty = p.getYTileLocation();
             int currentx = p.getXTileLocation();
+            boolean idleinsafe = (currenty <= TOP_SAFE || currenty >= BOT_SAFE);
+            boolean idle = idleinsafe;
             if( (currenty >= TOP_ROOF && currenty <= TOP_FR ) ||
                 (currenty >= BOT_FR && currenty <= BOT_ROOF )) {
                 idlesInBase++;
-            }
-            boolean idleinsafe = (currenty <= TOP_SAFE || currenty >= BOT_SAFE);
-            boolean idle = idleinsafe;
-            if( !idle ) {
+            } else if( !idle ) {
                 // Check for people sitting in the same spot, moving in a straight line w/o changing velocity,
                 // and bouncing in the rocks without changing their rotation.
                 if( lastX >= currentx - 3 && lastX <= currentx + 3 &&
@@ -10140,6 +10139,7 @@ public class distensionbot extends SubspaceBot {
                         } else {
                             victoryMsg += "!";
                         }
+                        victoryMsg += "%" + SOUND_VICTORY;
                         // Need 50% participation or more for the win to count properly.
                         if( percentOnFreq >= .5 )
                             p.addBattleWin();
@@ -10178,7 +10178,7 @@ public class distensionbot extends SubspaceBot {
                             int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                             msgRecipients.add(p.getArenaPlayerID());
                             int pointsAdded = p.addRankPoints(modPoints,false);
-                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
+                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation).%" + SOUND_DEFEAT );
                             //m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You lost the battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation).");
                         }
                     }
@@ -10225,8 +10225,8 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendArenaMessage( roundTime + Tools.rightString( "END OF WAR STATUS   " + flagTimer.getScoreDisplay() + "   ", (spamLength - 1 - roundTime.length()) ) );
 
         // Winning and losing LVZ & sound to each team by using " msgs.  Thanks Cheese!.
-        m_botAction.sendUnfilteredTargetTeamMessage( winningArmyID, "*objon " + LVZ_VICTORY + "%" + SOUND_VICTORY );
-        m_botAction.sendUnfilteredTargetTeamMessage( (winningArmyID==0?1:0), "*objset +" + LVZ_DEFEAT + ",+" + LVZ_OPS_SHROUD_SM + ",%" + SOUND_DEFEAT );
+        //m_botAction.sendUnfilteredTargetTeamMessage( winningArmyID, "*objon " + LVZ_VICTORY + "%" + SOUND_VICTORY );
+        //m_botAction.sendUnfilteredTargetTeamMessage( (winningArmyID==0?1:0), "*objset +" + LVZ_DEFEAT + ",+" + LVZ_OPS_SHROUD_SM + ",%" + SOUND_DEFEAT );
 
         spamManyPlayers( msgRecipients, msgs );       // Send out award msgs after the endround spam
         endRoundCleanup( gameOver, minsToWin );
