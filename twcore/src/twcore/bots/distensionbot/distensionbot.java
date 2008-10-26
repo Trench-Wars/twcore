@@ -91,7 +91,7 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
-    private final int RANK_0_STRENGTH = 20;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
 
     private final int RANK_REQ_ASSAULT_SHIP2 = 20;
     private final int RANK_REQ_ASSAULT_SHIP3 = 5;
@@ -9265,7 +9265,7 @@ public class distensionbot extends SubspaceBot {
             this.energyRanks = energyRanks;
             this.upgradePointsPerRank = upPerRank;
             this.manualUpgrades = manualUpgrades;
-            maxRankForChange = 0;
+            maxRankForChange = 1000;
         }
 
         public String getTypeName() {
