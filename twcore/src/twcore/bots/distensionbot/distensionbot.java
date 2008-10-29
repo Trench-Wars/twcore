@@ -49,10 +49,8 @@ import twcore.core.util.Tools;
  * Add:
  * - ASAP: TIME-CLEARING TASK FROM DAY BEFORE!
  * - MAP: Change tiles to refer to F1 for help
+ * - Intro: Refer to colors as red and blue
  * - Dreadnought ship class (needs energy levels)
- *
- * Lower priority (in order):
- * - F1 Help -- item descriptions?
  *
  * @author dugwyler
  */
@@ -1916,6 +1914,8 @@ public class distensionbot extends SubspaceBot {
         loser.deaths++;
 
         int victorShip = victor.getShipNum();
+        if( victorShip < 1 )
+            return;     // Dump out if they spec'd just as they made this kill (safe)
         boolean isVictorWeasel = victorShip == 6;
         boolean isMaxReward = false;
         boolean isRepeatKillLight = false;
@@ -3037,8 +3037,8 @@ public class distensionbot extends SubspaceBot {
         progString = Tools.formatString(progString, 20 );
         String streakMsg = (p.getSuccessiveKills() > 1 ? "STREAK: " + p.getSuccessiveKills() : "" );
         String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-        m_botAction.sendPrivateMessage( name, "R" + p.getRank() + " " + shipname + " " + p.getShipTypeName() + "  " + (int)pointsSince + " / " + (int)pointsNext +
-                "  (" + p.getPointsToNextRank() + " to R" + (p.getRank() + 1) + ")    [" + progString + "]  "
+        m_botAction.sendPrivateMessage( name, "R-" + p.getRank() + " " + shipname + " " + p.getShipTypeName() + "  " + (int)pointsSince + " / " + (int)pointsNext +
+                "  " + p.getPointsToNextRank() + "RP to R-" + (p.getRank() + 1) + ".    [" + progString + "]  "
                 + percent + "%  UP: " + p.getUpgradePoints() + "  " + streakMsg );
     }
 
@@ -9116,13 +9116,13 @@ public class distensionbot extends SubspaceBot {
         }
 
         public int getPilotsOfShip( int shipNum ) {
-            if( shipNum < 0 && shipNum > 9 )
+            if( shipNum < 1 && shipNum > 9 )
                 return 0;
             return pilotCounts[shipNum-1];
         }
 
         public float getPercentageOfTeamInShip( int shipNum ) {
-            if( shipNum < 0 && shipNum > 9 )
+            if( shipNum < 1 && shipNum > 9 )
                 return 0.0f;
             return ((float)pilotCounts[shipNum-1] / (float)pilotsInGame);
         }
@@ -10070,9 +10070,9 @@ public class distensionbot extends SubspaceBot {
                         String victoryMsg;
                         if( gameOver ) {
                             modPoints *= 2;
-                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (double) for the final victory (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% for avarice]" : "" ) ;
+                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (double) for the final victory (" + (int)(percentOnFreq * 100) + "%% participation)" + ( avarice ? " [-75% for avarice]" : "" ) ;
                         } else {
-                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP for the victory (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% for avarice]" : "" );
+                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP for the victory (" + (int)(percentOnFreq * 100) + "%% participation)" + ( avarice ? " [-75% for avarice]" : "" );
                         }
 
                         // MVP stat checks
@@ -10178,7 +10178,7 @@ public class distensionbot extends SubspaceBot {
                             int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                             msgRecipients.add(p.getArenaPlayerID());
                             int pointsAdded = p.addRankPoints(modPoints,false);
-                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation).%" + SOUND_DEFEAT );
+                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "%% participation).%" + SOUND_DEFEAT );
                             //m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You lost the battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation).");
                         }
                     }
