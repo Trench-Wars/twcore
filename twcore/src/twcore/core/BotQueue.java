@@ -204,7 +204,7 @@ public class BotQueue extends Thread {
 
         return result;
     }
-    
+
     int getBotCount(String className){
     	Integer      currentBotCount = m_botTypes.get( className.toLowerCase() );
     	if( currentBotCount == null ){
@@ -217,20 +217,21 @@ public class BotQueue extends Thread {
     /**
      * Removes a bot with no information provided.
      * @param name Login name of bot to remove
-     * @return True if removal succeeded
+     * @return String indicating removal status
      */
-    boolean removeBot( String name ) {
+    String removeBot( String name ) {
         return removeBot( name, "" );
     }
 
     /**
      * Given the login name of a bot, removes it from the system.
      * @param name Login name of bot to remove
-     * @return True if removal succeeded
+     * @param msg Message to pass to Session for log message
+     * @return String indicating removal status
      */
-    boolean removeBot( String name, String msg ){
+    String removeBot( String name, String msg ){
         if( name == null )
-            return false;
+            return "had no name associated; no removal action taken";
         ChildBot deadBot = m_botStable.remove( name );
         if( deadBot != null ){
             Session deadSesh = deadBot.getBot();
@@ -244,9 +245,9 @@ public class BotQueue extends Thread {
             // Decrement count for this type of bot
             addToBotCount( deadBot.getClassName(), (-1) );
             deadBot = null;
-            return true;
+            return "has disconnected normally";
         }
-        return false;
+        return "not found in bot stable (possibly already disconnected)";
     }
 
     /**
@@ -323,7 +324,7 @@ public class BotQueue extends Thread {
     void spawnBot( String className, String messager ) {
         spawnBot( className, null, null, messager);
     }
-    
+
     void maxSpawnBot( String className, String messager ) {
     	spawnBot( className, null, null, messager);
     }
@@ -480,8 +481,11 @@ public class BotQueue extends Thread {
                         key = i.next();
                         childBot = m_botStable.get( key );
                         if( childBot.getBot().getBotState() == Session.NOT_RUNNING && key != null){
-                            removeBot( key );
-                            m_botAction.sendChatMessage( 1, key + "(" + childBot.getClassName() + ") has disconnected." );
+                            String removalStatus = removeBot( key );
+                            if( key == null )
+                                m_botAction.sendChatMessage( 1, "NOTICE: Unknown (null) bot disconnected without being properly released from stable." );
+                            else
+                                m_botAction.sendChatMessage( 1, key + "(" + childBot.getClassName() + ") " + removalStatus + "." );
                             childBot = null;
                         }
                     }

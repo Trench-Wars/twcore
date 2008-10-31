@@ -104,7 +104,7 @@ public class HubBot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "*g*misc:alertcommand" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat name" ) );
         initOperators();
-        
+
         try {
             BufferedReader reader = new BufferedReader( new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) ) );
             String s = "";
@@ -145,11 +145,11 @@ public class HubBot extends SubspaceBot {
     public void handleEvent( FileArrived event ){
 
         // Auto assign operators after the file has been downloaded from subgame
-        if(     event.getFileName().equals( "moderate.txt" ) || 
+        if(     event.getFileName().equals( "moderate.txt" ) ||
                 event.getFileName().equals( "smod.txt" ) ||
                 event.getFileName().equals( "sysop.txt" )) {
             m_botAction.getOperatorList().autoAssignFile( m_botAction.getDataFile( event.getFileName() ) );
-            
+
         }
     }
 
@@ -159,25 +159,25 @@ public class HubBot extends SubspaceBot {
      */
     public void initOperators(){
         Tools.printLog("Initializing operators.cfg ...");
-        
+
         try {
             m_botAction.getOperatorList().clear();
             m_botAction.getOperatorList().init( m_botAction.getCoreCfg("operators.cfg" ) );
-            
+
         } catch (IOException ioe) {
             System.err.println("FATAL: IO Exception occured while initializing operators from operators.cfg: "+ ioe.getMessage());
             System.err.println("FATAL: No operators loaded, shutting down TWCore.");
             m_botAction.die();
         }
-        
+
         Tools.printLog("Done initializing operators from operators.cfg");
-        
+
         // Initiate process to auto-assign operators using the subgame staff files
         m_botAction.sendUnfilteredPublicMessage( "*getfile sysop.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile moderate.txt" );
-        
-        
+
+
     }
 
     /**
@@ -201,13 +201,13 @@ public class HubBot extends SubspaceBot {
         if( m_botAction.getOperatorList().isHighmod( messager ) == true ){
             m_botAction.sendPrivateMessage( messager, "attempting to remove " + message + "...  " +
             (m_botAction.getGeneralSettings().getInt( "FastDisconnect" ) == 0?"  This may take 30 seconds or more.":"" ) );
-            boolean success = m_botQueue.removeBot( message, "force-disconnected by " + messager );
-            if( success ) {
-                m_botAction.sendPrivateMessage( messager, "Removed." );
-                m_botAction.sendChatMessage( 1, messager + " force-disconnected " + message );
+            String operationSuccess = m_botQueue.removeBot( message, "force-disconnected by " + messager );
+            if( operationSuccess.startsWith("has disconnected") ) {
+                m_botAction.sendPrivateMessage( messager, "'" + message + "' removed successfully." );
+                m_botAction.sendChatMessage( 1, messager + " force-disconnected " + message + ".");
                 System.gc();
             } else {
-                m_botAction.sendPrivateMessage( messager, "Bot has NOT been removed.  Use exact casing of the name, i.e., !remove TWDBot" );
+                m_botAction.sendPrivateMessage( messager, "Bot has NOT been removed.  Use exact casing of the name, i.e., !remove TWDBot." );
             }
         } else {
             m_botAction.sendChatMessage( 1, messager + " isn't a HighMod+, but tried !remove " + message );
@@ -712,7 +712,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !forcespawn." );
         }
     }
-    
+
     /**
      * Spawns the maximum number of a bot of a given type.
      * @param messager Name of the player who sent the command
@@ -742,7 +742,7 @@ public class HubBot extends SubspaceBot {
     	while(m_botQueue.getBotCount(message.toLowerCase()) < maxBots)
     		spawn( messager, message );
     }
-    
+
     /**
      * Spawns all bots on the autoloader that aren't currently spawned.
      * @param messager
@@ -773,14 +773,14 @@ public class HubBot extends SubspaceBot {
     		while( it.hasNext() ){
     			String botName = it.next();
     			while(m_botQueue.getBotCount(botName) < autoLoads.get(botName))
-    	    		spawn( messager, botName );   			
-    		}		
+    	    		spawn( messager, botName );
+    		}
     	}catch(Exception e){
     		m_botAction.sendSmartPrivateMessage( messager, e.getMessage());
     		Tools.printStackTrace(e);
     	}
     }
-    
+
     /**
      * Displays the current SQL pool status.
      * @param messager
