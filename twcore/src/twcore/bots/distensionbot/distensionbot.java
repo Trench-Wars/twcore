@@ -6449,7 +6449,7 @@ public class distensionbot extends SubspaceBot {
         private String name;    // Playername
         private int arenaPlayerID;    // ID as understood by Arena
         private int dbPlayerID; // PlayerID as found in DB (not as in Arena); -1 if not logged in
-        private int opStatus;   // 0=not op; 1=minor op (can shut down); 2=major; 3=everything; -1 if not logged in
+        private int opStatus;   // 0=not op; 1=minor op (can shut down); 2=major; 3=everything
         private int timePlayed; // Time, in minutes, played today;            -1 if not logged in
         private int shipNum;    // Current ship: 1-8, 0 if docked/spectating; -1 if not logged in
         private int lastShipNum;// Last ship used (for lagouts);              -1 if not logged in
@@ -6526,6 +6526,7 @@ public class distensionbot extends SubspaceBot {
             this.name = name;
             arenaPlayerID = m_botAction.getPlayerID(name);
             dbPlayerID = -1;
+            opStatus = 0;
             timePlayed = -1;
             shipNum = -1;
             lastShipNum = -1;
