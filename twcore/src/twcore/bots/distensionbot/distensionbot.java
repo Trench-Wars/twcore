@@ -520,7 +520,7 @@ public class distensionbot extends SubspaceBot {
             }
         } catch (SQLException e) {
             Tools.printStackTrace( "Error retrieving army data on startup!", e );
-            cmdDie("DistensionInternal", "now");
+            cmdDie(m_botAction.getBotName(), "now");
         }
         flagTimeStarted = false;
         stopFlagTime = false;
@@ -901,7 +901,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!k", acceptedMessages, this, "cmdKillMsg" );
         m_commandInterpreter.registerCommand( "!l", acceptedMessages, this, "cmdLeave" );
         m_commandInterpreter.registerCommand( "!la", acceptedMessages, this, "cmdLagout" );
-        m_commandInterpreter.registerCommand( "!mh", acceptedMessages, this, "cmdModHelp", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!mh", acceptedMessages, this, "cmdModHelp" );
         m_commandInterpreter.registerCommand( "!mu", acceptedMessages, this, "cmdMassUpgrade" );
         m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
         m_commandInterpreter.registerCommand( "!p", acceptedMessages, this, "cmdProgress" );
@@ -946,7 +946,7 @@ public class distensionbot extends SubspaceBot {
 
         // Full trigger versions
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "cmdHelp" );
-        m_commandInterpreter.registerCommand( "!modhelp", acceptedMessages, this, "cmdModHelp", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!modhelp", acceptedMessages, this, "cmdModHelp" );
         m_commandInterpreter.registerCommand( "!enlist", acceptedMessages, this, "cmdEnlist" );
         m_commandInterpreter.registerCommand( "!defect", acceptedMessages, this, "cmdDefect" );
         m_commandInterpreter.registerCommand( "!return", acceptedMessages, this, "cmdReturn" );
@@ -1009,11 +1009,11 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!info", acceptedMessages, this, "cmdInfo", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "cmdBan", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "cmdUnban", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!savedata", acceptedMessages, this, "cmdSaveData", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!diewithoutsave", acceptedMessages, this, "cmdDie", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!savedie", acceptedMessages, this, "cmdSaveDie", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!shutdowninfo", acceptedMessages, this, "cmdShutdownInfo", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!savedata", acceptedMessages, this, "cmdSaveData" );
+        m_commandInterpreter.registerCommand( "!diewithoutsave", acceptedMessages, this, "cmdDie" );
+        m_commandInterpreter.registerCommand( "!savedie", acceptedMessages, this, "cmdSaveDie" );
+        m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown" );
+        m_commandInterpreter.registerCommand( "!shutdowninfo", acceptedMessages, this, "cmdShutdownInfo" );
         m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
@@ -1180,6 +1180,9 @@ public class distensionbot extends SubspaceBot {
         if( p == null ) {
             return;
         }
+        if( p.getOpStatus() < 1 )
+            return;
+
         String[] helps = {
                 "    OPERATOR CONSOLE  ",
                 ".-----------------------",
@@ -1197,7 +1200,8 @@ public class distensionbot extends SubspaceBot {
                 "  !db-changename <oldname>:<newname>   - Changes name from oldname to newname.",
                 "  !db-addship <name>:<ship#>           - Adds ship# to name's record.",
                 "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
-                "  !db-randomarmies                     - Randomizes all armies."
+                "  !db-randomarmies                     - Randomizes all armies.",
+                "--- NOTE: DEPENDING ON YOUR STATUS, YOU MAY OR MAY NOT HAVE ACCESS TO THESE CMDS ---"
         };
         m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
         if( m_botAction.getOperatorList().isSmod(name) ) {
@@ -1439,7 +1443,7 @@ public class distensionbot extends SubspaceBot {
         if( name.startsWith("^") ) {
             // Biller down ... OH SHI--
             m_botAction.sendArenaMessage("BILLING SERVER DOWN: Automatic shutdown initiated!", Tools.Sound.LISTEN_TO_ME );
-            cmdSaveDie("DistensionBot","");
+            cmdSaveDie(m_botAction.getBotName(),"");
             return;
         }
         m_players.remove( name );
@@ -5271,6 +5275,14 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdSaveData( String name, String msg ) {
+        if( !name.equals(m_botAction.getBotName()) ) {
+            DistensionPlayer p1 = m_players.get( name );
+            if( p1 == null )
+                return;
+            if( p1.getOpStatus() < 1 )
+                return;
+        }
+
         boolean autosave = ":autosave:".equals(name);
         if( !autosave )
             m_botAction.sendArenaMessage( "Saving player data ..." ,1 );
@@ -5312,6 +5324,14 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDie( String name, String msg ) {
+        if( !name.equals(m_botAction.getBotName()) ) {
+            DistensionPlayer p1 = m_players.get( name );
+            if( p1 == null )
+                return;
+            if( p1.getOpStatus() < 1 )
+                return;
+        }
+
         // If we're sure we want to bypass saving, override.
         if( msg.equals("now") )
             m_lastSave = System.currentTimeMillis();
@@ -5371,6 +5391,14 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdSaveDie( String name, String msg ) {
+        if( !name.equals(m_botAction.getBotName()) ) {
+            DistensionPlayer p = m_players.get( name );
+            if( p == null )
+                return;
+            if( p.getOpStatus() < 1 )
+                return;
+        }
+
         cmdSaveData(name, msg);
         cmdDie(name, "shutdown");
     }
@@ -5382,6 +5410,14 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdShutdown( String name, String msg ) {
+        if( !name.equals(m_botAction.getBotName()) ) {
+            DistensionPlayer p = m_players.get( name );
+            if( p == null )
+                return;
+            if( p.getOpStatus() < 1 )
+                return;
+        }
+
         if( m_beginDelayedShutdown ) {
             m_botAction.sendPrivateMessage( name, "Shutdown cancelled." );
             m_beginDelayedShutdown = false;
@@ -5424,6 +5460,13 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdShutdownInfo( String name, String msg ) {
+        if( !name.equals(m_botAction.getBotName()) ) {
+            DistensionPlayer p = m_players.get( name );
+            if( p == null )
+                return;
+            if( p.getOpStatus() < 1 )
+                return;
+        }
         if( m_shutdownTimeMillis <= 0 )
             throw new TWCoreException( "Shutdown mode is not enabled." );
         if( m_beginDelayedShutdown )
@@ -6405,7 +6448,8 @@ public class distensionbot extends SubspaceBot {
     private class DistensionPlayer {
         private String name;    // Playername
         private int arenaPlayerID;    // ID as understood by Arena
-        private int dbPlayerID;   // PlayerID as found in DB (not as in Arena); -1 if not logged in
+        private int dbPlayerID; // PlayerID as found in DB (not as in Arena); -1 if not logged in
+        private int opStatus;   // 0=not op; 1=minor op (can shut down); 2=major; 3=everything; -1 if not logged in
         private int timePlayed; // Time, in minutes, played today;            -1 if not logged in
         private int shipNum;    // Current ship: 1-8, 0 if docked/spectating; -1 if not logged in
         private int lastShipNum;// Last ship used (for lagouts);              -1 if not logged in
@@ -6648,6 +6692,7 @@ public class distensionbot extends SubspaceBot {
                         return false;
                     dbPlayerID = r.getInt("fnID");
                     armyID = r.getInt( "fnArmyID" );
+                    opStatus = r.getInt( "fnOperator" );
                     timePlayed = r.getInt( "fnTime" );
                     battlesWon = r.getInt( "fnBattlesWon" );
                     rewardRemaining = r.getInt( "fnRewardRP" );
@@ -8531,6 +8576,13 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * @return Level of operator status.
+         */
+        public int getOpStatus() {
+            return opStatus;
+        }
+
+        /**
          * @return Returns the ship number this player is currently playing, 1-8.  0 for spec, -1 for not logged in.
          */
         public int getShipNum() {
@@ -9790,7 +9842,7 @@ public class distensionbot extends SubspaceBot {
      */
     private void doIntermission() {
         if( m_beginDelayedShutdown ) {
-            cmdDie("", "shutdown");
+            cmdDie(m_botAction.getBotName(), "shutdown");
             return;
         }
 
@@ -11649,7 +11701,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.SQLClose(r);
             } catch (SQLException e) {
                 Tools.printLog( "SQL ERROR loading primary upgrade data of ship " + shipNum );
-                cmdDie("DistensionInternal", "now");
+                cmdDie(m_botAction.getBotName(), "now");
                 return;
             }
         }
