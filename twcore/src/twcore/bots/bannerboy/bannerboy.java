@@ -35,8 +35,8 @@ public class bannerboy extends SubspaceBot {
 
 	//Boolean to track if 'talking' mode is on
 	private boolean m_talk;
-	
-	
+
+
 	// PreparedStatements
 	PreparedStatement psGetBannerID;
 	PreparedStatement psSaveBanner;
@@ -73,24 +73,34 @@ public class bannerboy extends SubspaceBot {
 		m_lastBannerSet = System.currentTimeMillis();
 
 		if( m_talk )
-			m_botAction.sendSmartPrivateMessage( m_botAction.getPlayerName( event.getPlayerID() ), "Hope you don't mind if I wear your banner. Looks good on me doesn't it?" );
+			m_botAction.sendSmartPrivateMessage( m_botAction.getPlayerName( event.getPlayerID() ), "Hope you don't mind if I wear your banner.  Looks good on me, doesn't it?  See http://www.trenchwars.org/ssbe/ to see what I'll do with it." );
 
 	}
 
+    /**
+     * Based on an arena list, select a new arena to travel to.
+     */
 	public void handleEvent( ArenaList event ) {
 
 		String currentPick = "#robopark";
-		// If arena name starts with # or less then 10 players are in it, pick a random arena again.
-		// Note: This can create an indefinite loop if there are only # arenas or there are only arenas with less then 10 players in it. 
-		while( currentPick.startsWith( "#" ) || event.getSizeOfArena( currentPick ) < 10 )  {
+		// If arena name starts with # or less than X players are in it, pick a random arena again.
+		// Every 10 iterations, X is reduced by 1, so that we settle for smaller and smaller iterations.
+        // Shame on 2d for creating this kind of loop!  Took 5 minutes to fix! -qan
+        int iterations = 0;
+        int idealSize = 10;
+		while( (currentPick.startsWith( "#" ) || currentPick.equals("") || event.getSizeOfArena( currentPick ) < idealSize) && idealSize > 0 )  {
 			String[] arenaNames = event.getArenaNames();
 			int arenaIndex = (int) (Math.random() * arenaNames.length);
 			currentPick = arenaNames[arenaIndex];
+            iterations++;
+            if( iterations % 10 == 0 )
+                idealSize--;
 		}
-		m_botAction.changeArena( currentPick );
+        if( idealSize > 0 && !currentPick.equals("") )
+            m_botAction.changeArena( currentPick );
 
 	}
-	
+
 	public void handleDisconnect() {
 	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psCheckSeen);
 	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psGetBannerID);
@@ -103,7 +113,7 @@ public class bannerboy extends SubspaceBot {
 		try {
             psGetBannerID.setString(1, getBannerString( b ));
             ResultSet rs = psGetBannerID.executeQuery();
-			
+
             if( rs.next() ) return true;
             else            return false;
 		} catch (SQLException sqle) {
@@ -158,10 +168,10 @@ public class bannerboy extends SubspaceBot {
 		int bannerId = getBannerID( banner );
 		int userId = getPlayerID( player );
 
-		if( bannerId <= 0 ) 
+		if( bannerId <= 0 )
 		    return;
 
-		if( alreadyMarked( userId, bannerId ) ) 
+		if( alreadyMarked( userId, bannerId ) )
 		    return;
 
 		try {
@@ -178,7 +188,7 @@ public class bannerboy extends SubspaceBot {
 		    psCheckSeen.setInt(1, userId);
 		    psCheckSeen.setInt(2, bannerId);
 		    ResultSet rs = psCheckSeen.executeQuery();
-			if( rs.next() ) 
+			if( rs.next() )
 			    return true;
 			else
 			    return false;
@@ -203,7 +213,7 @@ public class bannerboy extends SubspaceBot {
 
 	public void handleEvent( Message event ) {
 		if( event.getMessageType() != Message.PRIVATE_MESSAGE &&
-		    event.getMessageType() != Message.REMOTE_PRIVATE_MESSAGE) 
+		    event.getMessageType() != Message.REMOTE_PRIVATE_MESSAGE)
 		    return;
 
 		String player = m_botAction.getPlayerName( event.getPlayerID() );
@@ -226,35 +236,35 @@ public class bannerboy extends SubspaceBot {
                      };
 		        m_botAction.smartPrivateMessageSpam(player, help);
 		    } else
-		        
+
 			if(message.startsWith("!die")) {
 			    this.handleDisconnect();
 			    m_botAction.die("Disconnected by "+player);
-			} else 
-			    
+			} else
+
 			if(message.startsWith("!go ")) {
 			    String arena = message.substring(4);
-			    
+
 			    if(arena.length() > 0) {
 			        m_botAction.sendSmartPrivateMessage(player, "Going to "+arena);
 			        m_botAction.joinArena( arena );
 			    }
 			} else
-			    
+
 			if(message.startsWith("!say ")) {
 			    if(message.indexOf(':')==-1)
 			        return;
-			    
+
 			    String pieces[] = message.split( ":" );
 		        m_botAction.sendSmartPrivateMessage( pieces[0], pieces[1] );
 		        m_botAction.sendSmartPrivateMessage( player, "PM send to "+pieces[0]);
-			} else 
-			    
+			} else
+
 			if(message.startsWith("!tsay ")) {
 			    if(message.length()>0)
 			        m_botAction.sendTeamMessage( message );
-			} else 
-			    
+			} else
+
 			 if(message.startsWith("!talk")) {
 			     m_talk = !m_talk;
 			     if( m_talk ) m_botAction.sendSmartPrivateMessage( player, "Talk on" );
@@ -286,7 +296,7 @@ public class bannerboy extends SubspaceBot {
             m_botAction.die("Error while creating PreparedStatements");
             return;
         }
-        
+
 		TimerTask changeArenas = new TimerTask() {
 			public void run() {
 				m_botAction.requestArenaList();
@@ -312,10 +322,10 @@ public class bannerboy extends SubspaceBot {
 		};
 		m_botAction.scheduleTaskAtFixedRate( checkBanners, 2000, 3000 );
 	}
-	
+
 	/**
      * Handles restarting of the KOTH game
-     * 
+     *
      * @param event is the event to handle.
      */
     public void handleEvent(KotHReset event) {

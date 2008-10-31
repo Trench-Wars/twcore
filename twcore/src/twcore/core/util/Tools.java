@@ -20,7 +20,7 @@ import twcore.core.OperatorList;
 public final class Tools {
     public static boolean debugging = true;
     public static String exceptionLogFilePath = null;
-    
+
     private static boolean connectionLogEnabled = false;
     private static File connectionLogFile = new File("connection.log");
 
@@ -131,11 +131,11 @@ public final class Tools {
         System.out.println( output );
 
     }
-    
+
     public static void printConnectionLog( String line ) {
         if(!connectionLogEnabled)
             return;
-        
+
         try {
             FileWriter fileWriter = new FileWriter(connectionLogFile, true);
             fileWriter.write(line + "\n");
@@ -146,7 +146,7 @@ public final class Tools {
             return;
         }
     }
-    
+
     public static void setConnectionLog( boolean state , File connectionLogFile) {
         Tools.connectionLogFile = connectionLogFile;
         Tools.connectionLogEnabled = state;
@@ -298,7 +298,7 @@ public final class Tools {
                 return "UFO";
         }
     }
-    
+
     public static String staffName( int operatorLevel ) {
     	switch( operatorLevel ) {
     		case OperatorList.OWNER_LEVEL: return "Owner";
@@ -314,7 +314,7 @@ public final class Tools {
     		default: return "Unknown";
     	}
     }
-    
+
     public static String staffNameShort( int operatorLevel ) {
     	switch( operatorLevel ) {
 			case OperatorList.OWNER_LEVEL: return "Owner";
@@ -337,6 +337,8 @@ public final class Tools {
      * @return True if String is all digits.
      */
     public static boolean isAllDigits( String str ){
+        if( str == null || str.equals("") )
+            return false;
         try {
             for( int i = 0; i < str.length(); i++ ){
                 if( !Character.isDigit( str.charAt( i ))){
@@ -590,7 +592,7 @@ public final class Tools {
         }
         return response;
     }
-	
+
     // *** ENUMS ***
 
     // Prizes
@@ -608,7 +610,7 @@ public final class Tools {
         /**11*/ public static final int THRUST = 11;
         /**12*/ public static final int TOPSPEED = 12;
         /**13*/ public static final int FULLCHARGE = 13;
-        /**-13*/public static final int ENERGY_DEPLETED = -13;          // Puts energy to 0        
+        /**-13*/public static final int ENERGY_DEPLETED = -13;          // Puts energy to 0
         /**14*/ public static final int ENGINE_SHUTDOWN = 14;           // Shuts down engines for Prize:EngineShutdownTime
         /**-14*/public static final int ENGINE_SHUTDOWN_EXTENDED = -14; // Shuts down engines for Prize:EngineShutdownTime * 3
         /**15*/ public static final int MULTIFIRE = 15;
@@ -677,7 +679,7 @@ public final class Tools {
                 return false;
             else return true;
         }
-        
+
         /**
          * Disabled sounds( 6, 12, 26, 100, 101 )
          * @param soundString The sound to check
