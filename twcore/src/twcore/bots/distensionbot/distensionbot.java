@@ -33,6 +33,7 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.FrequencyChange;
 import twcore.core.events.TurretEvent;
+import twcore.core.events.BallPosition;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;
@@ -552,6 +553,7 @@ public class distensionbot extends SubspaceBot {
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(EventRequester.FREQUENCY_CHANGE);
         req.request(EventRequester.TURRET_EVENT);
+        req.request(EventRequester.BALL_POSITION);
         req.request(EventRequester.SOCCER_GOAL);
     }
 
@@ -579,7 +581,6 @@ public class distensionbot extends SubspaceBot {
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
             } catch (SQLException e ) {  }
-            m_botAction.scoreResetAll();
             String sendmsg = m_botSettings.getString("InitialMsg");
             if( sendmsg != null && !sendmsg.equals("")) {
                 String msgs[] = sendmsg.split(";");
@@ -596,8 +597,6 @@ public class distensionbot extends SubspaceBot {
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
             } catch (SQLException e ) {  }
-            m_botAction.scoreResetAll();
-
         }
         setupTimerTasks();
     }
@@ -902,13 +901,14 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!k", acceptedMessages, this, "cmdKillMsg" );
         m_commandInterpreter.registerCommand( "!l", acceptedMessages, this, "cmdLeave" );
         m_commandInterpreter.registerCommand( "!la", acceptedMessages, this, "cmdLagout" );
-        m_commandInterpreter.registerCommand( "!mh", acceptedMessages, this, "cmdModHelp" );
+        m_commandInterpreter.registerCommand( "!mh", acceptedMessages, this, "cmdModHelp", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!mu", acceptedMessages, this, "cmdMassUpgrade" );
         m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
         m_commandInterpreter.registerCommand( "!p", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!sca", acceptedMessages, this, "cmdScrapAll" );
+        m_commandInterpreter.registerCommand( "!sr", acceptedMessages, this, "cmdScoreReset" );
         m_commandInterpreter.registerCommand( "!st", acceptedMessages, this, "cmdShipTypes" );
         m_commandInterpreter.registerCommand( "!su", acceptedMessages, this, "cmdSummon" );
         m_commandInterpreter.registerCommand( "!t", acceptedMessages, this, "cmdTerr" );
@@ -946,7 +946,7 @@ public class distensionbot extends SubspaceBot {
 
         // Full trigger versions
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "cmdHelp" );
-        m_commandInterpreter.registerCommand( "!modhelp", acceptedMessages, this, "cmdModHelp" );
+        m_commandInterpreter.registerCommand( "!modhelp", acceptedMessages, this, "cmdModHelp", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!enlist", acceptedMessages, this, "cmdEnlist" );
         m_commandInterpreter.registerCommand( "!defect", acceptedMessages, this, "cmdDefect" );
         m_commandInterpreter.registerCommand( "!return", acceptedMessages, this, "cmdReturn" );
@@ -978,6 +978,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!lagout", acceptedMessages, this, "cmdLagout" );
         m_commandInterpreter.registerCommand( "!killmsg", acceptedMessages, this, "cmdKillMsg" );
         m_commandInterpreter.registerCommand( "!battleinfo", acceptedMessages, this, "cmdBattleInfo" );
+        m_commandInterpreter.registerCommand( "!scorereset", acceptedMessages, this, "cmdScoreReset" );
         m_commandInterpreter.registerCommand( "!summon", acceptedMessages, this, "cmdSummon" );
         m_commandInterpreter.registerCommand( "!!", acceptedMessages, this, "cmdEnergyTank" );
         m_commandInterpreter.registerCommand( "!emp", acceptedMessages, this, "cmdTargetedEMP" );
@@ -1097,6 +1098,7 @@ public class distensionbot extends SubspaceBot {
             "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
             "| !armies           !ar |  View size and strength of armies",
             "| !battleinfo       !bi |  Display current battle status",
+            "| !scorereset       !sr |  Resets your score",
             "| !clearmines       !cm |  Clear all mines, if in a mine-laying ship",
             "| !summon (Terr)    !su |  Summons others to you.  !summon s for sharks",
             "| !summon (others)  !su |  Toggles allowing summoning by Terriers",
@@ -1767,6 +1769,19 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getAttacherID() ) );
         if( p != null )
             p.checkLancAttachEvent( event.isAttaching() );
+    }
+
+    /**
+     * Warp anyone carrying the ball into base.
+     * @param event Event to handle.
+     */
+    public void handleEvent(BallPosition event) {
+        if( event.getCarrier() == -1 )
+            return;
+        Player p = m_botAction.getPlayer( event.getCarrier() );
+        if( p != null )
+            if( p.getYTileLocation() < TOP_LOW || p.getYTileLocation() > BOT_LOW )
+                m_botAction.warpRandomly( p.getPlayerID() );
     }
 
     /**
@@ -2836,13 +2851,20 @@ public class distensionbot extends SubspaceBot {
                 }
             } else {
                 pf = m_shipGeneralData.get(i);
-                if( pf.getRankUnlockedAt() == -1 )
+                if( pf.getRankUnlockedAtAssault() == -1 )
                     m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "LOCKED" );
                 else
                     if( i != 9 )
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAt() + " NEEDED"  );
+                        if( p.getShipNum() == 0 ) {
+                            m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "LOCKED"  );
+                        } else {
+                            if( p.isSupportShip() )
+                                m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtSupport() + " NEEDED (support)"  );
+                            else
+                                m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtAssault() + " NEEDED (assault)"  );
+                        }
                     else
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAt() + " NEEDED IN ALL SHIPS + Officer");
+                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtAssault() + " NEEDED IN ALL SHIPS + Officer");
             }
         }
     }
@@ -3825,17 +3847,17 @@ public class distensionbot extends SubspaceBot {
                 players++;
                 shipStrength += p2.getStrength();
             }
-            m_botAction.sendPrivateMessage(name, num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
                     + (shipStrength > 0 ? ("  " + shipStrength + " STR" + text) : "") );
             totalStrength += shipStrength;
         }
         if( team.get(0).size() > 0 ) {
             DistensionPlayer p2 = m_players.get( team.get(0).get(0) );
             players++;
-            m_botAction.sendPrivateMessage(name, "+ Ops    " + p2.getStrength() + " STR   " + p2.getName() + "(" + p2.getRank() + ")");
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "+ Ops    " + p2.getStrength() + " STR   " + p2.getName() + "(" + p2.getRank() + ")");
         }
 
-        m_botAction.sendPrivateMessage(name, players + " players, " + totalStrength + " total strength.  (STR = rank + " + RANK_0_STRENGTH + ")" );
+        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), players + " players, " + totalStrength + " total strength.  (STR = rank + " + RANK_0_STRENGTH + ")" );
         if( totalStrength == 0 && DEBUG )
             m_botAction.sendArenaMessage("0 strength found for Army " + p.getArmyID() + ".  Assisting: " + (p.isAssisting() ? "Yes" : "No") + "   Natural ID: " + p.getNaturalArmyID() );
     }
@@ -3939,6 +3961,16 @@ public class distensionbot extends SubspaceBot {
         else
             m_botAction.sendPrivateMessage( name, "The battle is not presently being waged..." );
 
+    }
+
+    /**
+     * Simple scorereset.
+     * @param name
+     * @param msg
+     */
+    public void cmdScoreReset( String name, String msg ) {
+        m_botAction.scoreReset( name );
+        m_botAction.sendPrivateMessage( name, "Score reset.  (It's like taking a shower.)", SOUND_PROMOTION );
     }
 
     /**
@@ -6231,6 +6263,19 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
+     * Spams multiple players with single-line messages including a sound.
+     * @param recipients Arena IDs of recipients of msgs
+     * @param msgs Indexed messages matching arena IDs
+     * @param sounds Indexed sounds matching arena IDs
+     */
+    public void spamManyPlayers( Vector<Integer> recipients, Vector<String> msgs, Vector<Integer> sounds ) {
+        if( recipients.size() != msgs.size() || recipients.size() != sounds.size() )
+            throw new RuntimeException( "# recipients must equal # msgs & sounds." );
+        for( int i=0; i<recipients.size(); i++ )
+            m_botAction.sendPrivateMessage( recipients.get(i), msgs.get(i), sounds.get(i) );
+    }
+
+    /**
      * Objons the same object for selected players.
      * @param recipients Arena IDs of recipients of msgs
      * @param objID ID of LVZ obj to send
@@ -7794,7 +7839,7 @@ public class distensionbot extends SubspaceBot {
                     award = rank * 5;
                 m_botAction.sendPrivateMessage( arenaPlayerID, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
                 if( shipsAvail[5] == false ) {
-                    String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + dbPlayerID + "' AND ship.fnShipNum='6'";
+                    String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + dbPlayerID + "' AND fnShipNum='6'";
 
                     try {
                         ResultSet r = m_botAction.SQLQuery( m_database, query );
@@ -9182,13 +9227,17 @@ public class distensionbot extends SubspaceBot {
      *      15(>10,1.15)       4170@20(208) 16870@30(562)  68250@40(1706) 276111@50(5522)
      */
     private class ShipProfile {
-        int rankUnlockedAt;               // Rank at which the ship becomes available; -1 if special condition
+        int rankUnlockedAtAssault;        // Rank at which the ship becomes available via assault ship unlock;
+                                          //   -1 if special condition
+        int rankUnlockedAtSupport;        // Rank at which the ship becomes available;
+                                          //   -1 if special condition
         Vector <ShipUpgrade>upgrades;     // Vector of upgrades available for this ship
         float baseRankCost;               // Points needed to reach pilot rank 1 in this ship;
         //   subsequent levels are determined by the scaling factor.
 
-        public ShipProfile( int rankUnlockedAt, float baseRankCost) {
-            this.rankUnlockedAt = rankUnlockedAt;
+        public ShipProfile( int rankUnlockedAtAssault, int rankUnlockedAtSupport, float baseRankCost) {
+            this.rankUnlockedAtAssault = rankUnlockedAtAssault;
+            this.rankUnlockedAtSupport = rankUnlockedAtSupport;
             this.baseRankCost = baseRankCost;
             upgrades = new Vector<ShipUpgrade>(NUM_UPGRADES);
         }
@@ -9208,8 +9257,12 @@ public class distensionbot extends SubspaceBot {
             return upgrades;
         }
 
-        public int getRankUnlockedAt() {
-            return rankUnlockedAt;
+        public int getRankUnlockedAtAssault() {
+            return rankUnlockedAtAssault;
+        }
+
+        public int getRankUnlockedAtSupport() {
+            return rankUnlockedAtSupport;
         }
 
         /**
@@ -9847,6 +9900,7 @@ public class distensionbot extends SubspaceBot {
 
         Vector <Integer>msgRecipients = new Vector<Integer>();
         Vector <String>msgs = new Vector<String>();
+        Vector <Integer>msgSounds = new Vector<Integer>();
         Vector <String>endRoundSpam = new Vector<String>();
         int spamLength = 80;
 
@@ -10070,9 +10124,9 @@ public class distensionbot extends SubspaceBot {
                         String victoryMsg;
                         if( gameOver ) {
                             modPoints *= 2;
-                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (double) for the final victory (" + (int)(percentOnFreq * 100) + "%% participation)" + ( avarice ? " [-75% for avarice]" : "" ) ;
+                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (double) for the final victory (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% for avarice]" : "" ) ;
                         } else {
-                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP for the victory (" + (int)(percentOnFreq * 100) + "%% participation)" + ( avarice ? " [-75% for avarice]" : "" );
+                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP for the victory (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% for avarice]" : "" );
                         }
 
                         // MVP stat checks
@@ -10139,13 +10193,13 @@ public class distensionbot extends SubspaceBot {
                         } else {
                             victoryMsg += "!";
                         }
-                        victoryMsg += "%" + SOUND_VICTORY;
                         // Need 50% participation or more for the win to count properly.
                         if( percentOnFreq >= .5 )
                             p.addBattleWin();
 
                         msgRecipients.add( p.getArenaPlayerID() );
                         msgs.add( victoryMsg );
+                        msgSounds.add( SOUND_VICTORY );
                         m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_VICTORY );
                         modPoints += bonus;
                         p.addRankPoints(modPoints,false);
@@ -10156,31 +10210,41 @@ public class distensionbot extends SubspaceBot {
                 }
             } else {
                 // For long battles, losers receive about 1/3 of the award of the winners.
-                if( minsToWin >= 15 ) {
-                    if( p.getShipNum() > 0 ) {
-                        playerRank = p.getRank();
-                        if( playerRank == 0 )
-                            playerRank = 1;
-                        points = totalPoints * ((float)playerRank / (float)totalLvls);
-                        if( winnerPercentage > 0.8f )
-                            points /= 4;
-                        else if( winnerPercentage > 0.7f )
-                            points /= 3;
-                        else if( winnerPercentage > 0.6f )
-                            points /= 3;
-                        else if( winnerPercentage > 0.5f )
-                            points /= 2;
-                        else    // They actually held more than the winning team -- give them a good bit.
-                            points = (float)points / 1.5f;
-                        Integer time = m_playerTimes.get( p.getName() );
-                        if( time != null ) {
-                            float percentOnFreq = (float)(secs - time) / (float)secs;
-                            int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
-                            msgRecipients.add(p.getArenaPlayerID());
-                            int pointsAdded = p.addRankPoints(modPoints,false);
-                            msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "%% participation).%" + SOUND_DEFEAT );
-                            //m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "You lost the battle, but fought courageously.  HQ has given you a bonus of " + modPoints + "RP (" + (int)(percentOnFreq * 100) + "% participation).");
-                        }
+                if( p.getShipNum() > 0 ) {
+                    playerRank = p.getRank();
+                    if( playerRank == 0 )
+                        playerRank = 1;
+                    points = totalPoints * ((float)playerRank / (float)totalLvls);
+                    if( minsToWin < 5 )
+                        points /= 3;
+                    else if( minsToWin < 10 )
+                        points /= 2;
+                    else if( minsToWin < 15 )
+                        points /= 1.5;
+                    else if( minsToWin >= 30 )
+                        points *= 1.25;
+
+                    if( winnerPercentage > 0.8f )
+                        points /= 4;
+                    else if( winnerPercentage > 0.7f )
+                        points /= 3;
+                    else if( winnerPercentage > 0.6f )
+                        points /= 3;
+                    else if( winnerPercentage > 0.5f )
+                        points /= 2;
+                    else    // They actually held more than the winning team -- give them a good bit.
+                        points = (float)points / 1.5f;
+                    Integer time = m_playerTimes.get( p.getName() );
+                    if( time != null ) {
+                        float percentOnFreq = (float)(secs - time) / (float)secs;
+                        int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
+                        int pointsAdded = p.addRankPoints(modPoints,false);
+                        msgRecipients.add(p.getArenaPlayerID());
+                        msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
+                        msgSounds.add( SOUND_DEFEAT );
+                        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_DEFEAT, true );
+                        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_OPS_SHROUD_LG, true );
+                        m_botAction.setObjects( p.getArenaPlayerID() );
                     }
                 }
             }
@@ -11499,34 +11563,34 @@ public class distensionbot extends SubspaceBot {
      */
     public void setupPricesFromDB() {
         // Ship 0 -- dummy (for ease of access)
-        ShipProfile ship = new ShipProfile( -1, -1 );
+        ShipProfile ship = new ShipProfile( -1, -1, -1 );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( 0, 13.1f );
+        ship = new ShipProfile( 0, -1, 13.1f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP2, 13.5f );
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP2, RANK_REQ_SUPPORT_SHIP2, 13.5f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP3, 13f );
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP3, RANK_REQ_SUPPORT_SHIP3, 13f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP4, 14f );
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP4, RANK_REQ_SUPPORT_SHIP4, 14f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( 0, 10f );
+        ship = new ShipProfile( 0, 0, 10f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( -1, 12f );
+        ship = new ShipProfile( -1, -1, 12f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( -1, 12.8f );
+        ship = new ShipProfile( -1, -1, 12.8f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP8, 10.1f );
+        ship = new ShipProfile( RANK_REQ_ASSAULT_SHIP8, RANK_REQ_SUPPORT_SHIP8, 10.1f );
         m_shipGeneralData.add( ship );
 
-        ship = new ShipProfile( RANK_REQ_SHIP9, 13f );
+        ship = new ShipProfile( RANK_REQ_SHIP9, RANK_REQ_SHIP9, 13f );
         m_shipGeneralData.add( ship );
 
         /* PRE-RELEASE NUMBERS (slightly higher)
@@ -11698,10 +11762,11 @@ public class distensionbot extends SubspaceBot {
      *
      * Prize format: Name, Prize#, Cost([]), Rank([]), # upgrades
      */
+    /*
     public void setupPrices() {
 
         // Ship 0 -- dummy (for ease of access)
-        ShipProfile ship = new ShipProfile( -1, -1 );
+        ShipProfile ship = new ShipProfile( -1, -1, -1 );
         m_shipGeneralData.add( ship );
 
         // Based on costing a bit over 300UP for level 15 in energy and recharge
@@ -12343,7 +12408,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         m_shipGeneralData.add( ship );
     }
-
+    */
 
     // ***** SHIP TYPE DATA
 
