@@ -1015,7 +1015,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown" );
         m_commandInterpreter.registerCommand( "!shutdowninfo", acceptedMessages, this, "cmdShutdownInfo" );
         m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBAddShip", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeplayer", acceptedMessages, this, "cmdDBWipePlayer", OperatorList.HIGHMOD_LEVEL );  // Not published in !help
         m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies", OperatorList.HIGHMOD_LEVEL );
@@ -1819,19 +1819,19 @@ public class distensionbot extends SubspaceBot {
                     int rank = p.getRank();
                     int bonus = 5;
                     if( rank > 10 )
-                        bonus += 10;
+                        bonus += 20;
                     if( rank > 20 )
-                        bonus += 20;
-                    if( rank > 30 )
-                        bonus += 20;
-                    if( rank > 40 )
                         bonus += 25;
-                    if( rank > 50 )
+                    if( rank > 30 )
                         bonus += 50;
+                    if( rank > 40 )
+                        bonus += 50;
+                    if( rank > 50 )
+                        bonus += 200;
                     if( rank > 60 )
-                        bonus += 75;
+                        bonus += 250;
                     if( rank > 70 )
-                        bonus += 150;
+                        bonus += 500;
                      totalBonus += p.addRankPoints( bonus );
                 }
             }
@@ -10581,7 +10581,7 @@ public class distensionbot extends SubspaceBot {
 
         // Check for Lanc enabling
         for( DistensionPlayer p : m_players.values() ) {
-            if( ((float)p.genKills / (float)mins) > 10.0f ) {
+            if( ((float)p.genKills / (float)mins) > 8.0f ) {
                 if( p.getBattlesWon() > WINS_REQ_OFFICER ) {
                     if( !p.shipIsAvailable(7) ) {
                         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "SPECIAL AWARD FOR BLOODTHIRSTY RESOLVE.  At a murderous rate of over 10 pilots a minute, you have proven you have what it takes to eviscerate the enemy rapidly.  A Lancaster is now in your !hangar." );
