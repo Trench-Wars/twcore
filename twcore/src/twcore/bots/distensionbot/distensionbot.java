@@ -10399,9 +10399,7 @@ public class distensionbot extends SubspaceBot {
                         msgRecipients.add(p.getArenaPlayerID());
                         msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
                         msgSounds.add( SOUND_DEFEAT );
-                        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_DEFEAT, true );
-                        m_botAction.setupObject( p.getArenaPlayerID(), LVZ_OPS_SHROUD_LG, true );
-                        m_botAction.sendSetupObjectsForPlayer( p.getArenaPlayerID() );
+                        m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_DEFEAT );
                     }
                 }
             }
