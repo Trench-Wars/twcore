@@ -52,6 +52,8 @@ import twcore.core.util.Tools;
  * - MAP: Change tiles to refer to F1 for help
  * - Intro: Refer to colors as red and blue
  * - Dreadnought ship class (needs energy levels)
+ * - Increase time for unlock LVZ graphics
+ * - Wall-bump sound -- remove static (ugh)
  *
  * @author dugwyler
  */
@@ -457,10 +459,24 @@ public class distensionbot extends SubspaceBot {
      */
     public distensionbot(BotAction botAction) {
         super(botAction);
-
-
-        m_botSettings = m_botAction.getBotSettings();
         m_commandInterpreter = new CommandInterpreter( botAction );
+
+        doConstructorTasks();
+    }
+
+    /**
+     * Constructor that accepts args.
+     * @param botAction Reference to available BotAction instantiation.
+     */
+    public distensionbot(BotAction botAction, String[] args) {
+        super(botAction);
+        m_commandInterpreter = new CommandInterpreter( botAction );
+
+        doConstructorTasks();
+    }
+
+    private void doConstructorTasks() {
+        m_botSettings = m_botAction.getBotSettings();
 
         m_database = m_botSettings.getString("Database");
 
@@ -535,7 +551,6 @@ public class distensionbot extends SubspaceBot {
             DEBUG = false;
         m_lastSave = System.currentTimeMillis();
     }
-
 
     /**
      * Request events that this bot requires to receive.
@@ -1003,22 +1018,22 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!opsshield", acceptedMessages, this, "cmdOpsShield" );
         m_commandInterpreter.registerCommand( "!opsemp", acceptedMessages, this, "cmdOpsEMP" );
         m_commandInterpreter.registerCommand( "!beta", acceptedMessages, this, "cmdBeta" );  // BETA CMD
-        m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.HIGHMOD_LEVEL ); // BETA CMD
+        m_commandInterpreter.registerCommand( "!msgbeta", acceptedMessages, this, "cmdMsgBeta", OperatorList.OWNER_LEVEL ); // BETA CMD
         m_commandInterpreter.registerCommand( "!grant", acceptedMessages, this, "cmdGrant", OperatorList.OWNER_LEVEL );     // BETA CMD
         m_commandInterpreter.registerCommand( "!awardbonus", acceptedMessages, this, "cmdAwardBonus", OperatorList.OWNER_LEVEL );
-        m_commandInterpreter.registerCommand( "!info", acceptedMessages, this, "cmdInfo", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "cmdBan", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "cmdUnban", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!info", acceptedMessages, this, "cmdInfo" );
+        m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "cmdBan" );
+        m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "cmdUnban" );
         m_commandInterpreter.registerCommand( "!savedata", acceptedMessages, this, "cmdSaveData" );
         m_commandInterpreter.registerCommand( "!diewithoutsave", acceptedMessages, this, "cmdDie" );
         m_commandInterpreter.registerCommand( "!savedie", acceptedMessages, this, "cmdSaveDie" );
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown" );
         m_commandInterpreter.registerCommand( "!shutdowninfo", acceptedMessages, this, "cmdShutdownInfo" );
-        m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBAddShip", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName" );
+        m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBAddShip" );
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!db-wipeplayer", acceptedMessages, this, "cmdDBWipePlayer", OperatorList.HIGHMOD_LEVEL );  // Not published in !help
-        m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies", OperatorList.HIGHMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies" );
         m_commandInterpreter.registerCommand( "!debug-getint", acceptedMessages, this, "cmdGetInt", OperatorList.DEV_LEVEL );
         m_commandInterpreter.registerCommand( "!debug-getbool", acceptedMessages, this, "cmdGetBool", OperatorList.DEV_LEVEL );
         m_commandInterpreter.registerCommand( "!debug-setvar", acceptedMessages, this, "cmdSetVar", OperatorList.DEV_LEVEL );
@@ -1177,11 +1192,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdModHelp( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null ) {
-            return;
-        }
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
         if( p.getOpStatus() < 1 )
-            return;
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         String[] helps = {
                 "    OPERATOR CONSOLE  ",
@@ -1814,7 +1828,12 @@ public class distensionbot extends SubspaceBot {
             int players = 0;
             int totalBonus = 0;
             for( DistensionPlayer p : m_players.values() ) {
-                if( p.getArmyID() == armyID && p.getShipNum() > 0 ) {
+                Player twcorePlayer = m_botAction.getPlayer( p.getArenaPlayerID() );
+                if( twcorePlayer == null )
+                    return;
+                if( p.getArmyID() == armyID && p.getShipNum() > 0 &&
+                        twcorePlayer.getYTileLocation() > TOP_LOW &&
+                        twcorePlayer.getYTileLocation() < BOT_LOW ) {
                     players++;
                     int rank = p.getRank();
                     int bonus = 5;
@@ -1832,10 +1851,11 @@ public class distensionbot extends SubspaceBot {
                         bonus += 250;
                     if( rank > 70 )
                         bonus += 500;
-                     totalBonus += p.addRankPoints( bonus );
+                    totalBonus += p.addRankPoints( bonus );
+                    m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "GOAL!  REWARD: " + totalBonus + " RP" );
                 }
             }
-            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "GOAL!  Total " + totalBonus + " RP awarded (avg " + (totalBonus / players) + ")");
+            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
         } else {
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "No points scored for goals (goals not presently active)." );
         }
@@ -5267,7 +5287,7 @@ public class distensionbot extends SubspaceBot {
     }
 
 
-    // ***** HIGHMOD+ COMMANDS
+    // ***** OPERATOR COMMANDS
 
     /**
      * Save all player data.  Sends arena msgs.
@@ -5278,9 +5298,9 @@ public class distensionbot extends SubspaceBot {
         if( !name.equals(m_botAction.getBotName()) ) {
             DistensionPlayer p1 = m_players.get( name );
             if( p1 == null )
-                return;
+                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p1.getOpStatus() < 1 )
-                return;
+                throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
 
         boolean autosave = ":autosave:".equals(name);
@@ -5327,9 +5347,9 @@ public class distensionbot extends SubspaceBot {
         if( !name.equals(m_botAction.getBotName()) ) {
             DistensionPlayer p1 = m_players.get( name );
             if( p1 == null )
-                return;
+                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p1.getOpStatus() < 1 )
-                return;
+                throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
 
         // If we're sure we want to bypass saving, override.
@@ -5394,9 +5414,9 @@ public class distensionbot extends SubspaceBot {
         if( !name.equals(m_botAction.getBotName()) ) {
             DistensionPlayer p = m_players.get( name );
             if( p == null )
-                return;
+                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p.getOpStatus() < 1 )
-                return;
+                throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
 
         cmdSaveData(name, msg);
@@ -5413,9 +5433,9 @@ public class distensionbot extends SubspaceBot {
         if( !name.equals(m_botAction.getBotName()) ) {
             DistensionPlayer p = m_players.get( name );
             if( p == null )
-                return;
+                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p.getOpStatus() < 1 )
-                return;
+                throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
 
         if( m_beginDelayedShutdown ) {
@@ -5463,9 +5483,9 @@ public class distensionbot extends SubspaceBot {
         if( !name.equals(m_botAction.getBotName()) ) {
             DistensionPlayer p = m_players.get( name );
             if( p == null )
-                return;
+                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p.getOpStatus() < 1 )
-                return;
+                throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
         if( m_shutdownTimeMillis <= 0 )
             throw new TWCoreException( "Shutdown mode is not enabled." );
@@ -5482,6 +5502,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdBan( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 2 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         DistensionPlayer player = m_players.get( msg );
         if( player == null ) {
             m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in arena ... retrieving from DB." );
@@ -5493,6 +5519,8 @@ public class distensionbot extends SubspaceBot {
         if( ! player.isBanned() ) {
             player.ban();
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' banned from playing Distension." );
+            Tools.printLog(name + " banned " + msg + " in Distension DB." );
+            m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " banned " + msg + " in Distension DB." );
         } else {
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' is already banned." );
         }
@@ -5505,6 +5533,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdUnban( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 2 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         DistensionPlayer player = m_players.get( msg );
         if( player == null ) {
             m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in arena ... retrieving from DB." );
@@ -5516,6 +5550,8 @@ public class distensionbot extends SubspaceBot {
         if( player.isBanned() ) {
             player.unban();
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' unbanned from playing Distension." );
+            Tools.printLog(name + " unbanned " + msg + " in Distension DB." );
+            m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " unbanned " + msg + " in Distension DB." );
         } else {
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' is not banned." );
         }
@@ -5529,6 +5565,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdInfo( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 1 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         if( m_players.get(msg) == null )
             throw new TWCoreException( "Player '" + msg + "' not found.  Note that you must use exact case." );
         cmdStatus( msg, null, name );
@@ -5541,6 +5583,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDBChangeName( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 2 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         String[] args = msg.split(":");
         if( args.length != 2 || args[0].equals("") || args[1].equals("") )
             throw new TWCoreException( "Syntax: !db-changename <currentname>:<newname>" );
@@ -5564,6 +5612,7 @@ public class distensionbot extends SubspaceBot {
         }
         m_botAction.sendPrivateMessage( name, "Name '" + args[0] + "' changed to '" + args[1] + "' in database." );
         Tools.printLog(name + " changed " + args[0] + "'s name to " + args[1] + " in Distension DB." );
+        m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " changed " + args[0] + "'s name to " + args[1] + " in Distension DB." );
     }
 
 
@@ -5573,6 +5622,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDBAddShip( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 2 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         String[] args = msg.split(":");
         if( args.length != 2 || args[0].equals("") || args[1].equals("") )
             throw new TWCoreException( "Syntax: !db-addship <name>:<ship#>" );
@@ -5596,6 +5651,7 @@ public class distensionbot extends SubspaceBot {
         String shipname = ( player.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(shipNumToAdd) );
         m_botAction.sendPrivateMessage( name, shipname + " has been added to " + player.getName() + "'s hangar." );
         Tools.printLog( name + " added ship #" + shipNumToAdd + " to " + args[0] + "'s hangar in Distension DB." );
+        m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " added ship #" + shipNumToAdd + " to " + args[0] + "'s hangar in Distension DB." );
     }
 
 
@@ -5605,6 +5661,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDBWipeShip( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 3 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         String[] args = msg.split(":");
         if( args.length != 2 || args[0].equals("") || args[1].equals("") )
             throw new TWCoreException( "Syntax: !db-wipeship <name>:<ship#>" );
@@ -5628,6 +5690,7 @@ public class distensionbot extends SubspaceBot {
         String shipname = ( player.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(shipNumToWipe) );
         m_botAction.sendPrivateMessage( name, shipname + " has been removed from " + player.getName() + "'s hangar." );
         Tools.printLog( name + " deleted " + args[0] + "'s ship #" + shipNumToWipe + " from Distension DB." );
+        m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " deleted " + args[0] + "'s ship #" + shipNumToWipe + " from Distension DB." );
     }
 
 
@@ -5637,6 +5700,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDBWipePlayer( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 3 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         DistensionPlayer player = m_players.get( msg );
         if( player != null )
             throw new TWCoreException( msg + " found in arena.  Player must leave arena in order to use this command." );
@@ -5649,7 +5718,8 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionPlayer WHERE fnID='" + id + "'" );
                 m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionShip WHERE fnPlayerID='" + id + "'" );
                 m_botAction.sendPrivateMessage( name, msg + " deleted from DB!" );
-                Tools.printLog(name + " deleted " + msg + " from Distension DB." );
+                Tools.printLog(name + " deleted " + msg + " from Distension DB!" );
+                m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " deleted '" + msg + "' from Distension DB." );
             } else {
                 m_botAction.sendPrivateMessage( name, "Player not found." );
             }
@@ -5665,6 +5735,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDBRandomArmies( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 2 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
         int army0Count = 0;
         int army1Count = 0;
         int totalCount = 0;
@@ -5710,7 +5786,7 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdGrant( String name, String msg ) {
-        if( !DEBUG )
+        if( !DEBUG && !( name.equals("qan") || name.equals("dugwyler") ) )
             throw new TWCoreException( "This command disabled during normal operation." );
 
         String[] args = msg.split(":");
@@ -5746,7 +5822,7 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdMsgBeta( String name, String msg ) {
-        if( !DEBUG )
+        if( !DEBUG && !( name.equals("qan") || name.equals("dugwyler") ) )
             throw new TWCoreException( "This command disabled during normal operation." );
         int players = 0;
         try {
@@ -5763,9 +5839,12 @@ public class distensionbot extends SubspaceBot {
 
         TimerTask msgTask = new TimerTask() {
             public void run() {
-                if( !m_msgBetaPlayers.isEmpty() )
-                    m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION BETA TEST: ?go #distension if you can participate." );
-                else
+                if( !m_msgBetaPlayers.isEmpty() ) {
+                    if( DEBUG )
+                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION BETA TEST: ?go #distension if you can participate." );
+                    else
+                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION STARTING: ?go #distension if you wish to play." );
+                } else
                     this.cancel();
             }
         };
@@ -7876,14 +7955,6 @@ public class distensionbot extends SubspaceBot {
                 if( rank > 1 )
                     award = rank * 4;
                 m_botAction.sendPrivateMessage( arenaPlayerID, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
-            } else if( successiveKills == 20 ) {
-                if( isWeasel )
-                    award = 8;
-                else
-                    award = 5;
-                if( rank > 1 )
-                    award = rank * 5;
-                m_botAction.sendPrivateMessage( arenaPlayerID, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
                 if( shipsAvail[5] == false ) {
                     String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + dbPlayerID + "' AND fnShipNum='6'";
 
@@ -7912,6 +7983,14 @@ public class distensionbot extends SubspaceBot {
                         return false;
                     }
                 }
+            } else if( successiveKills == 20 ) {
+                if( isWeasel )
+                    award = 8;
+                else
+                    award = 5;
+                if( rank > 1 )
+                    award = rank * 5;
+                m_botAction.sendPrivateMessage( arenaPlayerID, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
             } else if( successiveKills == 30 ) {
                 if( isWeasel )
                     award = 9;
