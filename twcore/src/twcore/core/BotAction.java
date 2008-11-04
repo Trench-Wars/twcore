@@ -2656,30 +2656,37 @@ public class BotAction
      * @param playerID ID of player.
      * @param objID ID of object.
      */
+    /*  Doesn't appear to work. -qan
     public void showObjectForFrequency(int frequency, int objID)
     {
         sendUnfilteredTargetTeamMessage(frequency, "*objon " + objID);
     }
+    */
 
     /**
      * Hides the specified LVZ object for a specific player, via a MANUAL "*objoff #
      * @param playerID ID of player.
      * @param objID ID of object.
      */
+    /*  Doesn't appear to work. -qan
     public void hideObjectForFrequency(int frequency, int objID)
     {
         sendUnfilteredTargetTeamMessage(frequency, "*objoff " + objID);
     }
+    */
 
     /**
      * Sets objects for a particular frequency via a MANUAL "*objset
      * @param playerID ID of player.
      * @param String Object list with + for show and - for hide, as in "+1,-4," (must end in comma!)
      */
+    /*  Doesn't appear to work. -qan
     public void setObjectsForFrequency(int frequency, String objs)
     {
         sendUnfilteredTargetTeamMessage(frequency, "*objset " + objs);
     }
+    */
+
     /**
      * Setup the specified LVZ object to be shown or hidden to all players.
      * @param objID ID of object.
