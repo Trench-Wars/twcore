@@ -1920,6 +1920,8 @@ public class distensionbot extends SubspaceBot {
             // If lowbies get TKd, it shouldn't hurt as much, because ... well, it's easy to TK them.
             if( rankDiff <= -RANK_DIFF_MED )
                 div *= 1.5f;
+            if( victorRank < 10 )       // Be nice to the new guys
+                div *= 2.0f;
             int loss = Math.round((float)victor.getRank() / div);
             if( DEBUG )
                 loss = Math.round((float)loss * DEBUG_MULTIPLIER);
@@ -1964,13 +1966,24 @@ public class distensionbot extends SubspaceBot {
         boolean flyingSolo = (victorArmy.getPilotsOfShip(victorShip) == 1) && (victorArmy.getPilotsInGame() >= 14 );
         boolean shipExcess = false;
         boolean shipExtremeExcess = false;
-        if( victorArmy.getPilotsInGame() >= 10 ) {
-            shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > 0.30f );
-            if( shipExcess )
-                shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > 0.45f;
+
+        if( victor.numShipsAvailable() > 3 ) {
+            float excess1;
+            float excess2;
+            if( victorShip == 1 || victorShip == 5 ) {
+                excess1 = 0.40f;
+                excess2 = 0.55f;
+            } else {
+                excess1 = 0.30f;
+                excess2 = 0.45f;
+            }
+
+            if( victorArmy.getPilotsInGame() >= 10 ) {
+                shipExcess = (victorArmy.getPercentageOfTeamInShip(victorShip) > excess1 );
+                if( shipExcess )
+                    shipExtremeExcess = victorArmy.getPercentageOfTeamInShip(victorShip) > excess2;
+            }
         }
-
-
 
         endedStreak = loser.clearSuccessiveKills();
         // Otherwise: Add points via level scheme
@@ -2191,7 +2204,7 @@ public class distensionbot extends SubspaceBot {
             msg += " [Solo " + Tools.shipNameSlang(victorShip) + ": +10%]";
         if( shipExcess ) {
             if( shipExtremeExcess ) {
-                msg += " [PALL OF " + Tools.shipNameSlang(victorShip).toUpperCase() + "S: -50%]";
+                msg += " [PALL OF " + Tools.shipNameSlang(victorShip).toUpperCase() + "S: -25%]";
             } else {
                 msg += " [Swarm of " + Tools.shipNameSlang(victorShip) + "s: -10%]";
             }
@@ -8872,6 +8885,17 @@ public class distensionbot extends SubspaceBot {
             if( shipNumToCheck < 1 || shipNumToCheck > 9 )
                 return false;
             return shipsAvail[shipNumToCheck - 1];
+        }
+
+        /**
+         * @return Total # ships available to the player.
+         */
+        public int numShipsAvailable() {
+            int num = 0;
+            for( int i = 0; i<9; i++)
+                if( shipsAvail[i] )
+                    num++;
+            return num;
         }
 
         /**
