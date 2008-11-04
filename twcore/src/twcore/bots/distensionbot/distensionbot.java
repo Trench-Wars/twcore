@@ -10376,7 +10376,7 @@ public class distensionbot extends SubspaceBot {
                         msgSounds.add( SOUND_DEFEAT );
                         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_DEFEAT, true );
                         m_botAction.setupObject( p.getArenaPlayerID(), LVZ_OPS_SHROUD_LG, true );
-                        m_botAction.setObjects( p.getArenaPlayerID() );
+                        m_botAction.sendSetupObjectsForPlayer( p.getArenaPlayerID() );
                     }
                 }
             }
