@@ -20,7 +20,7 @@ import twcore.core.util.Tools;
 
 /**
  * TODO: This needs updating
- * 
+ *
  * Stores the access list as read from the server-based files moderate.txt, smod.txt,
  * and sysop.txt, and the bot core config files owner.cfg, outsider.cfg, and
  * highmod.cfg.  Is able to answer access-specific queries based on the information
@@ -43,7 +43,7 @@ import twcore.core.util.Tools;
  * </pre></code>
  */
 public class OperatorList {
-	
+
 	public static final int PLAYER_LEVEL = 0;
     public static final int BOT_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
@@ -54,14 +54,14 @@ public class OperatorList {
     public static final int SMOD_LEVEL = 7;
     public static final int SYSOP_LEVEL = 8;
     public static final int OWNER_LEVEL = 9;
-    
+
     /**
      * This Hashmap contains all the operators
      * Key:   Name of the operator [lowercase]
      * Value: level id (0-9)
      */
     private static Map<String,Integer> operators;
-    
+
     /**
      * autoAssign Hashmap contains the automatic assignment rules specified in operators.cfg
      * Key:   level id (0-9)
@@ -69,7 +69,7 @@ public class OperatorList {
      */
     private static Map<Integer,String> autoAssign;
 
-    
+
     /**
      * Creates a new instance of OperatorList.
      */
@@ -77,32 +77,32 @@ public class OperatorList {
         operators = Collections.synchronizedMap( new LinkedHashMap<String,Integer>() );
         autoAssign = Collections.synchronizedMap( new LinkedHashMap<Integer,String>() );
     }
-    
+
     /**
-     * Initializes this OperatorList by loading the operators.cfg configuration file 
+     * Initializes this OperatorList by loading the operators.cfg configuration file
      */
     public void init(File operatorsCfg) throws FileNotFoundException, IOException {
         Properties prop = new Properties();
         prop.load(new FileInputStream(operatorsCfg));
-        
+
         // temporary map for reading out the configuration
-        String[] operators_keys = { 
-                 "level_player", "level_bot", "level_outsider", "level_er", "level_moderator", 
-                 "level_highmod", "level_dev", "level_smod", "level_sysop", "level_owner" 
+        String[] operators_keys = {
+                 "level_player", "level_bot", "level_outsider", "level_er", "level_moderator",
+                 "level_highmod", "level_dev", "level_smod", "level_sysop", "level_owner"
         };
         String[] auto_assign_keys = {
-                "assign_player", "assign_bot", "assign_outsider", "assign_er", "assign_moderator", 
-                "assign_highmod", "assign_dev", "assign_smod", "assign_sysop", "assign_owner" 
+                "assign_player", "assign_bot", "assign_outsider", "assign_er", "assign_moderator",
+                "assign_highmod", "assign_dev", "assign_smod", "assign_sysop", "assign_owner"
         };
 
-        
+
         // Operators
         for(int i = operators_keys.length-1 ; i >= 0 ; i--) {
             String key = operators_keys[i];
-            
+
             if(prop.containsKey(key)) {
                 String value = prop.getProperty(key);
-                
+
                 if(value.trim().length() > 0) {
                     StringTokenizer tokens = new StringTokenizer(value,",");
                     while(tokens.hasMoreTokens()) {
@@ -111,39 +111,39 @@ public class OperatorList {
                 }
             }
         }
-        
+
         // Auto-assignment
         for(int i = auto_assign_keys.length-1 ; i >= 0 ; i--) {
             String key = auto_assign_keys[i];
-            
+
             if(prop.containsKey(key)) {
                 String value = prop.getProperty(key).trim();
-                
+
                 if(value.trim().length() > 0) {
                     autoAssign.put(i, value);
                 }
             }
         }
-        
+
     }
-    
+
     /**
      * Carries out auto-assignment of operators using the operators on the specified file
-     * 
+     *
      * @param data one of moderate.txt, smod.txt or sysop.txt
      */
     public void autoAssignFile(File data) {
         // 1. Cycle the autoAssign hashmap
-        // 
-        
+        //
+
         for(int level:autoAssign.keySet()) {
             String autoAssignSetting = autoAssign.get(level);
-            
+
             // If not defined, do nothing for this level
             if(autoAssignSetting == null) {
                 continue;
             }
-            
+
             // If the auto assign setting starts with "moderate.txt" / "smod.txt" / "sysop.txt"
             if(autoAssignSetting.startsWith(data.getName()) ) {
                 // Load operators from this file into this level
@@ -151,15 +151,15 @@ public class OperatorList {
                 if(autoAssignSetting.contains(":")) {
                     autoAssignSetting2 = autoAssignSetting.substring(autoAssignSetting.indexOf(':'));
                 }
-                
+
                 // Read through the file and add operators
                 try {
                     BufferedReader br = new BufferedReader(new FileReader(data));
                     String line = null, name = null;
                     boolean in_area = false;
-                    
+
                     while (( line = br.readLine()) != null) {
-                        
+
                         if( line.startsWith(" ") ||
                             line.startsWith("-") ||
                             line.startsWith("+") ||
@@ -167,14 +167,14 @@ public class OperatorList {
                             line.startsWith("*") ||
                             line.trim().length() == 0)
                             continue;
-                        
+
                         name = line.trim().toLowerCase();
-                        
+
                         // Ignore bot names that are already on the operator list as bot level
                         if(operators.containsKey(name) && operators.get(name) == OperatorList.BOT_LEVEL) {
                             continue;
                         }
-                        
+
                         // if we're not using auto-assign options "tag" or "line"
                         if(autoAssignSetting2 == null || autoAssignSetting2.replace(":", "").length() == 0) {
                             if(operators.containsKey(name) && operators.get(name) >= level) {
@@ -183,7 +183,7 @@ public class OperatorList {
                                 operators.put(name, level);
                             }
                         }
-                        
+
                         // If an operator is added below and he is already known in the operators map, he will
                         // be overwritten. Because operators are read in from highest (owner) to lowest (ZH),
                         // everyone will get the correct level
@@ -194,15 +194,15 @@ public class OperatorList {
                         }
                         if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":line")) {
                             String[] delimiters = autoAssignSetting2.substring(7).split("\" - \""); // cut off :line " and split by " - "
-                            
+
                             if(line.trim().toLowerCase().startsWith(delimiters[0].toLowerCase())) { // start area
                                 in_area = true;
                                 continue;
-                            } 
+                            }
                             if(line.trim().toLowerCase().startsWith(delimiters[1].toLowerCase())) { // end area
                                 in_area = false;
                                 continue;
-                            } 
+                            }
                             if(in_area) {
                                 operators.put(name,level);
                             } else {
@@ -210,27 +210,27 @@ public class OperatorList {
                             }
                         }
                     }
-                    
+
                 } catch(FileNotFoundException fnfe) {
-                    
+
                 } catch(IOException ioe) {
-                    
+
                 }
-                
-                
+
+
                 // Get a quick count of added operators
                 int count = 0;
                 for(Integer l:operators.values()) {
                     if(l == level)
                         count++;
                 }
-                
+
                 Tools.printLog( "Added "+count+" operators to level "+Tools.staffNameShort(level)+" from file "+data.getName());
             }
         }
     }
-    
-    
+
+
 
     /**
      * @return The entire access mapping of player names to access levels
@@ -259,7 +259,7 @@ public class OperatorList {
     }
 
     /**
-     * Checks if a given name has at least bot operator level status. 
+     * Checks if a given name has at least bot operator level status.
      * Bots automatically make themselves the bot operator level after logging in.
      * @param name Name in question
      * @return True if player has at least the bot operator level status
@@ -276,7 +276,7 @@ public class OperatorList {
     /**
      * Checks if a given name has bot operator level status.
      * Bots automatically make themselves the bot operator level after logging in.
-     * 
+     *
      * @param name Name in question
      * @return True if player has the bot operator level status
      */
@@ -525,15 +525,15 @@ public class OperatorList {
         if( accessLevel < PLAYER_LEVEL || accessLevel > OWNER_LEVEL )
             return null;
 
-        
+
         HashSet<String> gathered = new HashSet<String>();
-        
+
         for(Entry<String,Integer> operator:operators.entrySet()) {
             if(operator.getValue().intValue() == accessLevel) {
                 gathered.add(operator.getKey());
             }
         }
-        
+
         return gathered;
     }
 
@@ -548,21 +548,21 @@ public class OperatorList {
             return;
         operators.put(name.toLowerCase(), accessLevel);
     }
-    
+
     /**
      * Clears the access list.
      */
     public void clear(){
-        
+
         // Custom clean method of operators
         // Leave the bot operator list entries intact
         Set<Entry<String, Integer>> operatorNames = operators.entrySet();
-        
+
         synchronized(operators) {
             Iterator<Entry<String, Integer>> it = operatorNames.iterator(); // Must be in synchronized block
             while (it.hasNext()) {
                 Entry<String, Integer> operator = it.next();
-                
+
                 if(operator.getValue() != OperatorList.BOT_LEVEL) {
                     it.remove();
                 }
@@ -570,5 +570,26 @@ public class OperatorList {
         }
 
         autoAssign.clear();
+    }
+
+    /**
+     * Retrieve names based on numeric access level.
+     * @param accessLevel
+     * @return
+     */
+    public String getAccessLevelName( int accessLevel ) {
+        switch( accessLevel ) {
+            case 0: return "Player [" + accessLevel + "]";
+            case 1: return "Bot [" + accessLevel + "]";
+            case 2: return "Outsider [" + accessLevel + "]";
+            case 3: return "ER [" + accessLevel + "]";
+            case 4: return "Mod [" + accessLevel + "]";
+            case 5: return "HighMod [" + accessLevel + "]";
+            case 6: return "Developer [" + accessLevel + "]";
+            case 7: return "SMod [" + accessLevel + "]";
+            case 8: return "Sysop [" + accessLevel + "]";
+            case 9: return "Owner [" + accessLevel + "]";
+            default: return "Unknown access level! [" + accessLevel + "]";
+        }
     }
 }
