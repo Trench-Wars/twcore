@@ -604,7 +604,8 @@ public class distensionbot extends SubspaceBot {
             }
         } else {
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
-                m_botAction.sendChatMessage("Distension has been loaded.  ?go #distension if you wish to play.");
+                m_botAction.sendChatMessage("Distension has been loaded.  ?go distension");
+                m_botAction.sendSmartPrivateMessage("MessageBot", "!announce distension:Distension is starting.  ?go distension to play." );
                 m_botAction.sendArenaMessage("Distension has been loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  PM the bot with !intro if you are new, and refer to F1 for more detailed help.");
             }
             // TODO: Check if time should be reset -- when was bot last run?  How to do this -- DB entry?
@@ -5308,7 +5309,7 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdSaveData( String name, String msg ) {
-        if( !name.equals(m_botAction.getBotName()) ) {
+        if( !(name.equals(m_botAction.getBotName()) || name.equals(":autosave:") )) {
             DistensionPlayer p1 = m_players.get( name );
             if( p1 == null )
                 throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
