@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import twcore.core.util.ByteArray;
+import twcore.core.util.Tools;
 
 /*
 47 - Arena list
@@ -27,14 +28,21 @@ public class ArenaList extends SubspaceEvent {
 
         m_arenaList = Collections.synchronizedMap( new HashMap<String, Integer>() );
 
-        while( i < array.size() ){
-            name = array.readNullTerminatedString( i );
-            i += name.length();
-            i += 1; // For the terminating null
-            size = array.readLittleEndianShort( i );
-            size = Math.abs(size);  // negative to positive
-            i += 2; // For the size
-            m_arenaList.put( name.toLowerCase(), size );
+        try {
+            while( i < array.size() ){
+                name = array.readNullTerminatedString( i );
+                i += name.length();
+                i += 1; // For the terminating null
+                size = array.readLittleEndianShort( i );
+                size = Math.abs(size);  // negative to positive
+                i += 2; // For the size
+                m_arenaList.put( name.toLowerCase(), size );
+            }
+        } catch(ArrayIndexOutOfBoundsException aioobe) {
+            Tools.printLog("ArrayIndexOutOfBoundsException occurred while interpreting ArenaList packet ("+aioobe.getMessage()+"):");
+            Tools.printLog("Hex format:");
+            array.show();
+            Tools.printLog("String format:" + array.toString());
         }
     }
 
