@@ -60,7 +60,6 @@ public class utiletc extends MultiUtil {
 		String[] arenas = event.getArenaNames();
 		for(int k = 0;k < arenas.length;k++) {
 			arenaSet.add(arenas[k]);
-			Tools.printLog("Arena: "+arenas[k]);
 		}
 				
 		if(requester != null && arenaSet.isEmpty()==false) {
