@@ -211,7 +211,7 @@ public class Player {
             // we should be using settings to properly adjust the score.  We should also update
             // bounty as appropriate.
             // TODO: When arena settings storage class is implemented, use to properly update score & bounty.
-            m_bounty += 3;//For now we'll go with standard settings.
+            m_bounty += 6;//For now we'll go with standard settings.
             m_killPoints += message.getKilledPlayerBounty();
         } else if( message.getKilleeID() == m_playerID ){
             m_losses++;
