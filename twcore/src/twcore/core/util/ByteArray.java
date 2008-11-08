@@ -3,6 +3,7 @@ package twcore.core.util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 
 /**
@@ -487,7 +488,16 @@ public class ByteArray {
     }
 
     public String readString( int index, int length ){
-        return new String(m_array, index, length).trim();
+        String result = "";
+        try {
+            result = new String(m_array, index, length, "ISO-8859-1").trim();
+        } catch(UnsupportedEncodingException uee) {
+            Tools.printLog("Unsupported charset used when decoding string (index="+index+",length="+length+") from bytearray: "+uee.getMessage());
+        } finally {
+            result = new String(m_array, index, length).trim();
+        }
+        
+        return result;
     }
 
     public String readNullTerminatedString( int index ){
