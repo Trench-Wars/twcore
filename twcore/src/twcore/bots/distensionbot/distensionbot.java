@@ -73,7 +73,8 @@ public class distensionbot extends SubspaceBot {
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 9;          // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int OPS_IDLE_TICKS_BEFORE_DOCK = 30;     // # IDLE_FREQUENCY_CHECKS in idle before Ops is docked
-    private final int LAGOUT_VALID_SECONDS = 60;           // # seconds since lagout in which you can use !lagout
+    private final int LAGOUT_VALID_SECONDS = 180;          // # seconds since lagout in which you can use !lagout
+    private final int LAGOUT_TICK = 10;                    // # seconds per "tick" of a lagout timer (internal)
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
@@ -240,6 +241,7 @@ public class distensionbot extends SubspaceBot {
     private TimerTask m_profitSharingTask;                  // For sharing profits with terrs
     private TimerTask m_scrapClearTask;                     // Clears remembered scraps
     private TimerTask m_warpPointTask;                      // Checks for special warp points
+    private TimerTask m_lagoutDecrementTask;                // Decrements lagout timers
 
     private boolean m_beginDelayedShutdown;                 // True if, at round end, a shutdown should be initiated
     private boolean m_refitMode;                            // True if kills are worth nothing (for refitting before shutdown)
@@ -345,7 +347,9 @@ public class distensionbot extends SubspaceBot {
     private int flagHybridReversionRate = 3;            // How many seconds per second held by a team presently
                                                         //    not holding advantage are taken off the clock
     private HashMap <String,Integer>m_playerTimes;      // Roundtime of player on freq
-    private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
+    //private HashMap <String,Integer>m_lagouts;          // Players who have potentially lagged out, + time they lagged out
+    private HashSet <DistensionPlayer>m_lagouts;        // Players who have lagged out
+    private HashSet <DistensionPlayer>m_lagoutRemovals; // Players who lagged out and need to be removed
     //private HashMap <String,Integer>m_lagShips;         // Ships of players who were DC'd, for !lagout use
 
     private FlagCountTask flagTimer;                    // Flag time main class
@@ -489,7 +493,9 @@ public class distensionbot extends SubspaceBot {
         m_players = Collections.synchronizedMap( new HashMap<String,DistensionPlayer>() );
         m_armies = new HashMap<Integer,DistensionArmy>();
         m_playerTimes = new HashMap<String,Integer>();
-        m_lagouts = new HashMap<String,Integer>();
+        //m_lagouts = new HashMap<String,Integer>();
+        m_lagouts = new HashSet<DistensionPlayer>();
+        m_lagoutRemovals = new HashSet<DistensionPlayer>();
         //m_lagShips = new HashMap<String,Integer>();
         m_mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         m_scrappingPlayers = Collections.synchronizedMap( new HashMap<String,Integer>() );
@@ -589,7 +595,7 @@ public class distensionbot extends SubspaceBot {
         if( DEBUG ) {
             //m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
-                m_botAction.sendChatMessage("Distension BETA initialized with new ship-type enhancements.  ?go #distension");
+                m_botAction.sendChatMessage("Distension BETA initialized with new ship-type enhancements.  ?go distension");
                 m_botAction.sendArenaMessage("Distension BETA loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
             }
             // Reset all times at each load
@@ -662,6 +668,28 @@ public class distensionbot extends SubspaceBot {
             }
         };
         m_botAction.scheduleTask( timeIncrementTask, 60000, 60000 );
+
+        m_lagoutDecrementTask = new TimerTask() {
+            public void run() {
+                for( DistensionPlayer p : m_lagouts ) {
+                    if( p != null ) {
+                        if( p.decrementLagoutTimer() ) {
+                            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Your lagout time has expired." );
+                            m_lagoutRemovals.add(p);
+                            doSwapOut(p,true);
+                        }
+                    } else {
+                        m_lagoutRemovals.add(p);
+                    }
+                }
+                if( m_lagoutRemovals.size() > 0 ) {
+                    for( DistensionPlayer p : m_lagoutRemovals )
+                        m_lagouts.remove(p);
+                    m_lagoutRemovals.clear();
+                }
+            }
+        };
+        m_botAction.scheduleTask( m_lagoutDecrementTask, LAGOUT_TICK * 1000, LAGOUT_TICK * 1000 );
 
         m_profitSharingTask = new TimerTask() {
             public void run() {
@@ -959,6 +987,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( ",21", acceptedMessages, this, "cmdOpsNav21" );
         m_commandInterpreter.registerCommand( ",22", acceptedMessages, this, "cmdOpsNav22" );
         m_commandInterpreter.registerCommand( ",3", acceptedMessages, this, "cmdOpsNav3" );
+        m_commandInterpreter.registerCommand( "!dws", acceptedMessages, this, "cmdDie" );
 
         // Full trigger versions
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "cmdHelp" );
@@ -1535,7 +1564,6 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         String name = pInternal.getPlayerName();
-        m_lagouts.remove( name );
         DistensionPlayer player = m_players.get( name );
         if( player == null ) {
             for( DistensionArmy a : m_armies.values() )
@@ -1547,6 +1575,7 @@ public class distensionbot extends SubspaceBot {
             }
             return;
         }
+        m_lagouts.remove( player );
         if( player.getShipNum() > 0 ) {
             checkFlagTimeStop();
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
@@ -1731,11 +1760,12 @@ public class distensionbot extends SubspaceBot {
             } else if( p.getShipNum() > 0 && p.getShipNum() != 9 ) {
                 doDock( p );
                 if( flagTimer != null && flagTimer.isRunning() ) {
-                    if( p.canUseLagout() ) {    // Essentially: did player spec or !dock (not !leave)
-                        if( !p.isAtMaxLagouts() ) {
-                            m_lagouts.put( p.getName(), flagTimer.getTotalSecs() );
-                            m_botAction.sendPrivateMessage( p.getName(), "Use !lagout in the next " + LAGOUT_VALID_SECONDS + " seconds to return to battle and keep participation." );
-                        }
+                    // Did...  player lagout/spec/!dock   -- OR --   !leave/don't have lagouts available ...?
+                    if( p.canUseLagout() && !p.isAtMaxLagouts() ) {
+                        //m_lagouts.put( p.getName(), flagTimer.getTotalSecs() );
+                        m_lagouts.add( p );
+                        p.setLagoutTimer( LAGOUT_VALID_SECONDS );
+                        m_botAction.sendPrivateMessage( p.getName(), "Use !lagout in the next " + LAGOUT_VALID_SECONDS + " seconds to return to battle and keep participation." );
                     } else {
                         if ( !m_waitingToEnter.isEmpty() )
                             doSwapOut( p, true );
@@ -2437,11 +2467,22 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
-     * Logs a player in / allows them to return to the game.
+     * Wrapper for real !return.  Default, not a swap-in.
      * @param name
      * @param msg
      */
     public void cmdReturn( String name, String msg ) {
+        cmdReturn( name, msg, false );
+    }
+
+
+    /**
+     * Logs a player in / allows them to return to the game.
+     * @param name
+     * @param msg
+     * @param swapIn True if this player was waiting in queue, and is now being swapped in.
+     */
+    public void cmdReturn( String name, String msg, boolean swapIn ) {
         DistensionPlayer p = m_players.get( name );
         if( p == null ) {
             p = new DistensionPlayer(name);
@@ -2456,7 +2497,7 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "You are currently in flight." );
         }
 
-        if( m_waitingToEnter.contains(p) )
+        if( m_waitingToEnter.contains(p) && !swapIn )
             throw new TWCoreException( "You're already in the queue to enter in to the battle." );
 
         if( !p.getPlayerFromDB() ) {
@@ -2473,33 +2514,35 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        int players = 0;
-        int highestTime = 0;
-        LinkedList <DistensionPlayer>dockedPlayers = new LinkedList<DistensionPlayer>();
-        for( DistensionPlayer p2 : m_players.values() ) {
-            if( p2.getShipNum() >= 0 ) {
-                players++;
-                if( p2.getArenaPlayerID() != p.getArenaPlayerID() ) {
-                    if( p2.getShipNum() == 0 )
-                        dockedPlayers.add(p2);
-                    else
-                        if( p2.getMinutesPlayed() > highestTime )
-                            highestTime = p2.getMinutesPlayed();
+        if( !swapIn ) {
+            int players = 0;
+            int highestTime = 0;
+            LinkedList <DistensionPlayer>dockedPlayers = new LinkedList<DistensionPlayer>();
+            for( DistensionPlayer p2 : m_players.values() ) {
+                if( p2.getShipNum() >= 0 ) {
+                    players++;
+                    if( p2.getArenaPlayerID() != p.getArenaPlayerID() ) {
+                        if( p2.getShipNum() == 0 && p2.getLagoutTimeRemaining() <= 0 )
+                            dockedPlayers.add(p2);  // Fair game
+                        else
+                            if( p2.getMinutesPlayed() > highestTime )
+                                highestTime = p2.getMinutesPlayed();
+                    }
                 }
             }
-        }
-        if( players >= MAX_PLAYERS ) {
-            // If a player is docked and another player wants to get in, swap them out, no matter the time
-            if( !dockedPlayers.isEmpty() ) {
-                DistensionPlayer leavingPlayer = dockedPlayers.getFirst();
-                cmdLeave(leavingPlayer.getName(), "");
-                m_botAction.sendPrivateMessage( leavingPlayer.getName(), "Another player wishes to enter the game; you have been removed to allow them to play." );
-            } else {
-                if( p.getMinutesPlayed() >= highestTime )
-                    throw new TWCoreException( "Sorry, the battle is at maximum capacity and you've flown more today than anyone else here.  Try again later." );
+            if( players >= MAX_PLAYERS ) {
+                // If a player is docked and another player wants to get in, swap them out, no matter the time
+                if( !dockedPlayers.isEmpty() ) {
+                    DistensionPlayer leavingPlayer = dockedPlayers.getFirst();
+                    cmdLeave(leavingPlayer.getName(), "");
+                    m_botAction.sendPrivateMessage( leavingPlayer.getName(), "Another player wishes to enter the game; you have been removed to allow them to play." );
+                } else {
+                    if( p.getMinutesPlayed() >= highestTime )
+                        throw new TWCoreException( "Sorry, the battle is at maximum capacity and you've flown more today than anyone else here.  Try again later." );
 
-                m_waitingToEnter.add(p);
-                throw new TWCoreException( "Pilot limit reached: " + MAX_PLAYERS + ".  You are in the queue to replace the pilot who has flown the longest at the end of the battle." );
+                    m_waitingToEnter.add(p);
+                    throw new TWCoreException( "Pilot limit reached: " + MAX_PLAYERS + ".  You are in the queue to replace the pilot who has flown the longest at the end of the battle." );
+                }
             }
         }
 
@@ -2528,7 +2571,7 @@ public class distensionbot extends SubspaceBot {
         p.setLagoutAllowed(false);
 
         if( p.getShipNum() == -1 ) {
-            throw new TWCoreException( "You are not currently in the battle.  Use !return to return to your army." );
+            throw new TWCoreException( "You are not currently in the battle." );
         } else if( p.getShipNum() > 0 ) {
             cmdDock(name,"");
         }
@@ -2631,10 +2674,9 @@ public class distensionbot extends SubspaceBot {
         } else {
             // Let those who specced before changing change into another ship and keep participation,
             // if within the time limit for a lagout
-            Integer lagoutTime = m_lagouts.get( name );
-            if( flagTimer != null && flagTimer.isRunning() &&
-                    lagoutTime != null && lagoutTime + LAGOUT_VALID_SECONDS < flagTimer.getTotalSecs() ) {
-                m_lagouts.remove( name );
+
+            if( flagTimer != null && flagTimer.isRunning() && p.getLagoutTimeRemaining() > 0 ) {
+                m_lagouts.remove( p );
                 p.incrementLagouts();
             } else {
                 m_playerTimes.remove( name );
@@ -2710,7 +2752,7 @@ public class distensionbot extends SubspaceBot {
         p.putInCurrentShip();
         p.prizeUpgradesNow();
         p.resetIdle();
-        m_lagouts.remove( name );
+        m_lagouts.remove( p );
         m_waitingToEnter.remove(p);
         if( shipNum != 9 )
             p.setLagoutAllowed(true);
@@ -3479,7 +3521,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        if( typeToChangeTo < 0 || typeToChangeTo > m_shipTypeGeneralData.size() )
+        if( typeToChangeTo < 0 || typeToChangeTo >= m_shipTypeGeneralData.size() )
             throw new TWCoreException( "I don't reckon I've ever heard of that kind of ship.  Nope, sorry.  Checked the !shiptypes yet?" );
 
         ShipTypeProfile sp = m_shipTypeGeneralData.get(typeToChangeTo);
@@ -3947,14 +3989,14 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You're already in the battle!" );
 
         if( flagTimer != null && flagTimer.isRunning() ) {
-            Integer lagoutTime = m_lagouts.get( name );
             if( p.isAtMaxLagouts() )
                 throw new TWCoreException( "Sorry, you may only lagout " + LAGOUTS_ALLOWED + " times per round." );
-            if( !p.canUseLagout() || lagoutTime == null )
-                throw new TWCoreException( "Sorry, I have no record of you having lagged out (you may not use !lagout after a disconnect)." );
-            if( lagoutTime + LAGOUT_VALID_SECONDS < flagTimer.getTotalSecs() )
-                throw new TWCoreException( "Sorry, it's been too long.  You'll have to pilot the normal way." );
-
+            if( !p.canUseLagout() )
+                throw new TWCoreException( "Sorry, you are not allowed to use lagout at this time." );
+            if( p.getLagoutTimeRemaining() <= 0 ) {
+                m_lagouts.remove( p );
+                throw new TWCoreException( "Sorry, your lagout has expired.  You'll have to pilot the normal way." );
+            }
             p.setIgnoreShipChanges(true);
 
             p.setShipNum( p.getLastShipNum() );
@@ -3968,7 +4010,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.setShip(p.getArenaPlayerID(), p.getLastShipNum());
             p.putInCurrentShip();
             p.prizeUpgradesNow();
-            m_lagouts.remove( name );
+            m_lagouts.remove( p );
             p.incrementLagouts();
             if( !flagTimeStarted || stopFlagTime ) {
                 checkFlagTimeStart();
@@ -5855,9 +5897,9 @@ public class distensionbot extends SubspaceBot {
             public void run() {
                 if( !m_msgBetaPlayers.isEmpty() ) {
                     if( DEBUG )
-                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION BETA TEST: ?go #distension if you can participate." );
+                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION BETA TEST: ?go distension if you can participate." );
                     else
-                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION STARTING: ?go #distension if you wish to play." );
+                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION STARTING: ?go distension if you wish to play." );
                 } else
                     this.cancel();
             }
@@ -5987,15 +6029,14 @@ public class distensionbot extends SubspaceBot {
     public void doSwapOut( DistensionPlayer p, boolean playerStillInArena ) {
         if( p == null || m_waitingToEnter.isEmpty() )
             return;
+        DistensionPlayer enteringPlayer = m_waitingToEnter.remove();
+        String name = enteringPlayer.getName();
+        m_botAction.sendPrivateMessage( name, "A slot has opened up.  You may now join the battle." );
+        cmdReturn( name, "", true );
         if( playerStillInArena ) {
             cmdLeave(p.getName(), "");
             m_botAction.sendPrivateMessage( p.getName(), "Another player wishes to enter the battle; you have been removed to allow them to play." );
         }
-        DistensionPlayer enteringPlayer = m_waitingToEnter.remove();
-        String name = enteringPlayer.getName();
-        m_botAction.sendPrivateMessage( name, "A slot has opened up.  You may now join the battle." );
-        enteringPlayer.setShipNum(0);
-        m_botAction.sendPrivateMessage( name, name.toUpperCase() + " authorized as a pilot of " + enteringPlayer.getArmyName().toUpperCase() + ".  Returning you to HQ." );
     }
 
     /**
@@ -6567,6 +6608,7 @@ public class distensionbot extends SubspaceBot {
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
         private int       recentlyEarnedRP;     // RP earned since changing to this ship
         private int       numLagouts;           // # lagouts this round
+        private int       lagoutTimer;          // # seconds remaining before lagout expires
         private int       currentOP;            // Current # OP points (for Tactical Ops)
         private int       maxOP;                // Max # OP points (for Tactical Ops)
         private int       currentComms;         // Current # communications saved up (for Tactical Ops)
@@ -6641,6 +6683,7 @@ public class distensionbot extends SubspaceBot {
             assistArmyID = -1;
             recentlyEarnedRP = 0;
             numLagouts = 0;
+            lagoutTimer = 0;
             bonusBuildup = 0.0;
             lastX = 0;
             lastY = 0;
@@ -7846,6 +7889,10 @@ public class distensionbot extends SubspaceBot {
                 if( this.shipNum > 0 && this.shipNum != 9 ) {
                     m_botAction.specWithoutLock( arenaPlayerID );
                     lastShipNum = this.shipNum;     // Record for lagout
+                    if( shipNum == -1 ) {               // For !leave users...
+                        lastShipNum = -1;               //   Ensure lagout is not possible
+                        setLagoutAllowed(false);
+                    }
                 } else {
                     lastShipNum = -1;               // Ensure lagout is not possible
                     setLagoutAllowed(false);
@@ -8621,6 +8668,31 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * Set time remaining in which player can lagout.
+         */
+        public void setLagoutTimer( int time ) {
+            lagoutTimer = time;
+        }
+
+        /**
+         * Decrements lagout timer.
+         * @return True if timer has expired.
+         */
+        public boolean decrementLagoutTimer() {
+            lagoutTimer =- LAGOUT_TICK;
+            if( lagoutTimer <= 0 )
+                return true;
+            return false;
+        }
+
+        /**
+         * Set lagout timer to 0.
+         */
+        public void clearLagoutTimer() {
+            lagoutTimer = 0;
+        }
+
+        /**
          * Toggles between allowing and not allowing summoning.
          * @return Status of summoning allowance.
          */
@@ -9038,6 +9110,13 @@ public class distensionbot extends SubspaceBot {
          */
         public int getBattlesWon() {
             return battlesWon;
+        }
+
+        /**
+         * @return Number of seconds remaining in which player may get back in after lagout.
+         */
+        public int getLagoutTimeRemaining() {
+            return lagoutTimer;
         }
 
         /**
@@ -9966,7 +10045,7 @@ public class distensionbot extends SubspaceBot {
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
         m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + " (goals active until then).  Score:  " + flagTimer.getScoreDisplay() + warning );
-        m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go #distension to play." );
+        m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go distension to play." );
 
         // Between rounds, switch between one and two flags
         int players = 0;
@@ -9976,8 +10055,8 @@ public class distensionbot extends SubspaceBot {
         if( m_singleFlagMode ) {
             if( players >= PLAYERS_FOR_2_FLAGS ) {
                 m_singleFlagMode = false;
+                m_botAction.sendArenaMessage( "NOTICE: The bottom sector is now OPEN.  Both flags will be in contention next round." );
             }
-            m_botAction.sendArenaMessage( "NOTICE: The bottom sector is now OPEN.  Both flags will be in contention next round." );
         } else {
             if( players < PLAYERS_FOR_2_FLAGS ) {
                 m_singleFlagMode = true;
@@ -9986,8 +10065,8 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Only one base is now in contention; the Tactical Ops console will not be required for the next battle." );
                         doDock(p);
                     }
+                m_botAction.sendArenaMessage( "NOTICE: The bottom sector is now CLOSED.  Only the top flag will be in contention next round." );
             }
-            m_botAction.sendArenaMessage( "NOTICE: The bottom sector is now CLOSED.  Only the top flag will be in contention next round." );
         }
 
         // Reset doors at the start of each round.
@@ -10683,7 +10762,7 @@ public class distensionbot extends SubspaceBot {
 
         // Check for Lanc enabling
         for( DistensionPlayer p : m_players.values() ) {
-            if( ((float)p.genKills / (float)mins) > 8.0f ) {
+            if( ((float)p.genKills / (float)mins) > 6.0f && mins > 10) {
                 if( p.getBattlesWon() > WINS_REQ_OFFICER ) {
                     if( !p.shipIsAvailable(7) ) {
                         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "SPECIAL AWARD FOR BLOODTHIRSTY RESOLVE.  At a murderous rate of over 10 pilots a minute, you have proven you have what it takes to eviscerate the enemy rapidly.  A Lancaster is now in your !hangar." );
@@ -10711,25 +10790,36 @@ public class distensionbot extends SubspaceBot {
             // Swap out players waiting to enter
             if( !m_waitingToEnter.isEmpty() ) {
                 LinkedList <DistensionPlayer>removals = new LinkedList<DistensionPlayer>();
+                int players = 0;
+                for( DistensionPlayer p : m_players.values() )
+                    if( p.getShipNum() >= 0 )
+                        players++;
+
                 for( DistensionPlayer waitingPlayer : m_waitingToEnter ) {
                     if( waitingPlayer.getShipNum() == -1 ) { // Make sure they're still waiting
+                        String name = waitingPlayer.getName();
 
-                        DistensionPlayer highestPlayer = null;
-
-                        for( DistensionPlayer p : m_players.values() ) {
-                            if( p.getShipNum() >= 0 ) {
-                                if( highestPlayer == null || p.getMinutesPlayed() > highestPlayer.getMinutesPlayed() )
-                                    highestPlayer = p;
-                            }
-                        }
-                        if( highestPlayer != null && waitingPlayer.getMinutesPlayed() < highestPlayer.getMinutesPlayed() ) {
-                            cmdLeave(highestPlayer.getName(), "");
-                            m_botAction.sendPrivateMessage( highestPlayer.getName(), "Another player wishes to enter the battle, and you have been playing the longest of any player.  Your slot has been given up to allow them to play." );
-                            String name = waitingPlayer.getName();
+                        if( players < MAX_PLAYERS ) {
                             m_botAction.sendPrivateMessage( name, "A slot has opened up.  You may now join the battle." );
-                            waitingPlayer.setShipNum(0);
-                            m_botAction.sendPrivateMessage( name, name.toUpperCase() + " authorized as a pilot of " + waitingPlayer.getArmyName().toUpperCase() + ".  Returning you to HQ." );
-                            removals.add(waitingPlayer);
+                            cmdReturn(name, "", true);
+                            players++;
+                        } else {
+                            DistensionPlayer highestPlayer = null;
+
+                            for( DistensionPlayer p : m_players.values() ) {
+                                if( p.getShipNum() >= 0 ) {
+                                    if( highestPlayer == null || p.getMinutesPlayed() > highestPlayer.getMinutesPlayed() )
+                                        highestPlayer = p;
+                                }
+                            }
+
+                            if( highestPlayer != null && waitingPlayer.getMinutesPlayed() < highestPlayer.getMinutesPlayed() ) {
+                                m_botAction.sendPrivateMessage( name, "A slot has opened up.  You may now join the battle." );
+                                cmdReturn(name, "", true);
+                                m_botAction.sendPrivateMessage( highestPlayer.getName(), "Another player wishes to enter the battle, and you have been playing the longest of any player.  Your slot has been given up to allow them to play." );
+                                cmdLeave(highestPlayer.getName(), "");
+                                removals.add(waitingPlayer);
+                            }
                         }
                     } else {
                         removals.add(waitingPlayer);
