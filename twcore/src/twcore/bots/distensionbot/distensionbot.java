@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Vector;
 import java.util.TimerTask;
 import java.util.LinkedList;
@@ -72,6 +73,7 @@ public class distensionbot extends SubspaceBot {
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 9;          // # IDLE_FREQUENCY_CHECKS in idle before player is docked
+    private final int IDLE_TICKS_DOCKED_FOR_SWAPOUT = 12;  // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int OPS_IDLE_TICKS_BEFORE_DOCK = 30;     // # IDLE_FREQUENCY_CHECKS in idle before Ops is docked
     private final int LAGOUT_VALID_SECONDS = 180;          // # seconds since lagout in which you can use !lagout
     private final int LAGOUT_TICK = 10;                    // # seconds per "tick" of a lagout timer (internal)
@@ -236,12 +238,7 @@ public class distensionbot extends SubspaceBot {
     private PrizeQueue m_prizeQueue;                        // Queuing system for prizes (so as not to crash bot)
     private SpecialAbilityTask m_specialAbilityPrizer;      // Prizer for special abilities (run once every 30s)
     private TimerTask m_entranceWaitTask;                   // For when bot first enters the arena
-    private TimerTask m_autoSaveTask;                       // For autosaving player data frequently
-    private TimerTask m_idleSpecTask;                       // For docking idlers
-    private TimerTask m_profitSharingTask;                  // For sharing profits with terrs
-    private TimerTask m_scrapClearTask;                     // Clears remembered scraps
-    private TimerTask m_warpPointTask;                      // Checks for special warp points
-    private TimerTask m_lagoutDecrementTask;                // Decrements lagout timers
+    private TimerTask m_periodicTasks;                      // Combined task for tasks that execute periodically
 
     private boolean m_beginDelayedShutdown;                 // True if, at round end, a shutdown should be initiated
     private boolean m_refitMode;                            // True if kills are worth nothing (for refitting before shutdown)
@@ -257,11 +254,11 @@ public class distensionbot extends SubspaceBot {
     private long m_lastSave;                                // Last time data was saved
 
     // LIMITING SYSTEM
+    private PlayerSlotManager m_slotManager;                // Manager for player slots
     private final int MAX_PLAYERS = 40;                     // Max # players allowed in game
-    private TimerTask timeIncrementTask;                    // Task firing every minute that increments time playing
-    private LinkedList <DistensionPlayer>m_waitingToEnter;  // List of players waiting to enter the game
 
     // ASSIST SYSTEM
+    private final int ASSIST_ADVERT_CHECK_FREQUENCY = 20;   // How many seconds between checking for an assist advert
     private final float ADVERT_WEIGHT_IMBALANCE = 0.85f;    // At what point to advert that there's an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.89f;    // At what point an army is considered imbalanced
     private final int ASSIST_NUMBERS_IMBALANCE = 3;         // # of pilot difference before considered imbalanced
@@ -271,7 +268,6 @@ public class distensionbot extends SubspaceBot {
     private long lastAssistAdvert;                          // Last time an advert was sent for assistance
     private long lastTerrSharkReward;                       // Last time a new terr or shark was given a bonus
     private boolean checkForAssistAdvert = false;           // True if armies may be unbalanced, requiring !assist advert
-    private TimerTask assistAdvertTask;                     // Task used to advert for assisting the other army
 
     // SHIP TYPE NUMBER DEFINES
     public final int SHIPTYPE_SCOUT_DEFAULT = 0;
@@ -502,7 +498,7 @@ public class distensionbot extends SubspaceBot {
         m_msgBetaPlayers = new LinkedList<String>();
         m_ignoreWarpPlayers = new LinkedList<String>();
         m_defectors = new HashMap<String,Integer>();
-        m_waitingToEnter = new LinkedList<DistensionPlayer>();
+        m_slotManager = new PlayerSlotManager();
         flagTimerObjs = m_botAction.getObjectSet();
         flagObjs = new Objset();
         playerObjs = new Objset();
@@ -640,283 +636,270 @@ public class distensionbot extends SubspaceBot {
         };
         m_botAction.scheduleTask( m_entranceWaitTask, 3000 );
 
-        if( AUTOSAVE_DELAY != 0 ) {
-            m_autoSaveTask = new TimerTask() {
-                public void run() {
-                    cmdSaveData( ":autosave:", null );
-                }
-            };
-            m_botAction.scheduleTask( m_autoSaveTask, AUTOSAVE_DELAY * 60000, AUTOSAVE_DELAY * 60000 );
-        }
-
-        if( IDLE_FREQUENCY_CHECK != 0 ) {
-            m_idleSpecTask = new TimerTask() {
-                public void run() {
-                    // Check for idlers, but only while round is going.
-                    if( flagTimer != null && flagTimer.isRunning() )
-                        for( DistensionPlayer p : m_players.values() )
-                            p.checkIdleStatus();
-                }
-            };
-            m_botAction.scheduleTask( m_idleSpecTask, IDLE_FREQUENCY_CHECK * 1000, IDLE_FREQUENCY_CHECK * 1000);
-        }
-
-        timeIncrementTask = new TimerTask() {
-            public void run() {
-                for( DistensionPlayer p : m_players.values() )
-                    p.incrementTime();
-            }
-        };
-        m_botAction.scheduleTask( timeIncrementTask, 60000, 60000 );
-
-        m_lagoutDecrementTask = new TimerTask() {
-            public void run() {
-                for( DistensionPlayer p : m_lagouts ) {
-                    if( p != null ) {
-                        if( p.decrementLagoutTimer() ) {
-                            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Your lagout time has expired." );
-                            m_lagoutRemovals.add(p);
-                            doSwapOut(p,true);
-                        }
-                    } else {
-                        m_lagoutRemovals.add(p);
-                    }
-                }
-                if( m_lagoutRemovals.size() > 0 ) {
-                    for( DistensionPlayer p : m_lagoutRemovals )
-                        m_lagouts.remove(p);
-                    m_lagoutRemovals.clear();
-                }
-            }
-        };
-        m_botAction.scheduleTask( m_lagoutDecrementTask, LAGOUT_TICK * 1000, LAGOUT_TICK * 1000 );
-
-        m_profitSharingTask = new TimerTask() {
-            public void run() {
-                int army0profits = m_armies.get(0).getProfits();
-                int army1profits = m_armies.get(1).getProfits();
-
-                for( DistensionPlayer p : m_players.values() )
-                    if( p.getArmyID() == 0 )
-                        p.shareProfits(army0profits);
-                    else
-                        p.shareProfits(army1profits);
-            }
-        };
-        m_botAction.scheduleTask( m_profitSharingTask, PROFIT_SHARING_FREQUENCY * 1000, PROFIT_SHARING_FREQUENCY * 1000 );
-
-        m_scrapClearTask = new TimerTask() {
-            public void run() {
-                m_scrappingPlayers.clear();
-            }
-        };
-        m_botAction.scheduleTask( m_scrapClearTask, SCRAP_CLEARING_FREQUENCY * 1000, SCRAP_CLEARING_FREQUENCY * 1000 );
-
-        // Check various warp points, and warp those in them
-        m_warpPointTask = new TimerTask() {
-            public void run() {
-                for( Player p : m_botAction.getPlayingPlayers() ) {
-                    // Warps from and to: center blocks; center bar to roof
-                    if( !m_ignoreWarpPlayers.remove( p.getPlayerName() ) ) { // Only warp nonrecent warpers
-                        boolean warped = false;
-                        int x = p.getXTileLocation();
-                        int y = p.getYTileLocation();
-                        if( x >= 511 && x <= 513 ) {
-                            if( y >= WARP_CENTER_0_Y_COORD - 1 && y <= WARP_CENTER_0_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_1_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_CENTER_1_Y_COORD - 1 && y <= WARP_CENTER_1_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_0_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_TO_ROOF_0_Y_COORD - 1 && y <= WARP_TO_ROOF_0_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_0_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_TO_ROOF_1_Y_COORD - 1 && y <= WARP_TO_ROOF_1_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_1_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_FROM_ROOF_0_Y_COORD - 1 && y <= WARP_FROM_ROOF_0_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_0_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_FROM_ROOF_1_Y_COORD - 1 && y <= WARP_FROM_ROOF_1_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_1_Y_COORD );
-                                warped = true;
-                            }
-                            // Warps from and to: lower shoulders to mid shoulders
-                        } else if( x >= WARP_LOWER_LEFT_X_COORD - 1 && x <= WARP_LOWER_LEFT_X_COORD + 1 ) {
-                            if( y >= WARP_LOWER_0_Y_COORD - 1 && y <= WARP_LOWER_0_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_1_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_LOWER_1_Y_COORD - 1 && y <= WARP_LOWER_1_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_0_Y_COORD );
-                                warped = true;
-                            }
-                        } else if( x >= WARP_LOWER_RIGHT_X_COORD - 1 && x <= WARP_LOWER_RIGHT_X_COORD + 1 ) {
-                            if( y >= WARP_LOWER_0_Y_COORD - 1 && y <= WARP_LOWER_0_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_1_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_LOWER_1_Y_COORD - 1 && y <= WARP_LOWER_1_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_0_Y_COORD );
-                                warped = true;
-                            }
-                        } else if( x >= WARP_MID_LEFT_X_COORD - 1 && x <= WARP_MID_LEFT_X_COORD + 1 ) {
-                            if( y >= WARP_MID_0_Y_COORD - 1 && y <= WARP_MID_0_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_1_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_MID_1_Y_COORD - 1 && y <= WARP_MID_1_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_0_Y_COORD );
-                                warped = true;
-                            }
-                        } else if( x >= WARP_MID_RIGHT_X_COORD - 1 && x <= WARP_MID_RIGHT_X_COORD + 1 ) {
-                            if( y >= WARP_MID_0_Y_COORD - 1 && y <= WARP_MID_0_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_1_Y_COORD );
-                                warped = true;
-                            } else if( y >= WARP_MID_1_Y_COORD - 1 && y <= WARP_MID_1_Y_COORD + 1 ) {
-                                m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_0_Y_COORD );
-                                warped = true;
-                            }
-                        }
-                        // Add warpers to a list and ignore them on our next pass through to prevent doublewarping.
-                        if( warped )
-                            m_ignoreWarpPlayers.add( p.getPlayerName() );
-                    }
-                }
-            }
-        };
-        m_botAction.scheduleTask( m_warpPointTask, WARP_POINT_CHECK_FREQUENCY * 1000, WARP_POINT_CHECK_FREQUENCY * 1000 );
-
         // Do not advert/reward for rectifying imbalance at the start of a game
         lastAssistReward = System.currentTimeMillis();
         lastAssistAdvert = System.currentTimeMillis();
         lastTerrSharkReward = System.currentTimeMillis();
-        assistAdvertTask = new TimerTask() {
+
+        // All tasks that are run periodically (combined into one task for efficiency)
+        m_periodicTasks = new TimerTask() {
+            int runs = 0;
             public void run() {
-                if( !checkForAssistAdvert || m_refitMode )
-                    return;
-                DistensionArmy army0 = m_armies.get(0);
-                DistensionArmy army1 = m_armies.get(1);
-                int army0Terrs = 0;
-                int army1Terrs = 0;
-                boolean army0Shark = false;
-                boolean army1Shark = false;
-                float armyStr0 = army0.getTotalStrength();
-                float armyStr1 = army1.getTotalStrength();
-                if( armyStr1 == 0 ) armyStr1 = 1;
-                if( armyStr0 == 0 ) armyStr1 = 1;
-                float armyWeight0 = armyStr0 / armyStr1;
-                float armyWeight1 = armyStr1 / armyStr0;
-                int helpOutArmy = -1;
-                int msgArmy = -1;
-                if( armyWeight1 < ADVERT_WEIGHT_IMBALANCE ) {
-                    helpOutArmy = 1;
-                    msgArmy = 0;
-                } else if( armyWeight0 < ADVERT_WEIGHT_IMBALANCE ) {
-                    helpOutArmy = 0;
-                    msgArmy = 1;
-                }
-                if( m_flagOwner[0] == helpOutArmy && m_flagOwner[1] == helpOutArmy ) {
-                    // If they're holding both flags, they don't need help.
-                    // However, don't reset assist advert time so that we check again in 20sec
-                    // if someone leaves or switches ships.
-                    checkForAssistAdvert = false;
-                    return;
+                runs++;
+
+                // Autosave
+                if( AUTOSAVE_DELAY != 0 && (runs % (AUTOSAVE_DELAY*60) == 0) ) {
+                    cmdSaveData( ":autosave:", null );
                 }
 
-                for( DistensionPlayer p : m_players.values() ) {
-                    if( p.getShipNum() == Tools.Ship.TERRIER ) {
-                        if( p.getArmyID() == 0 )
-                            army0Terrs++;
-                        else
-                            army1Terrs++;
+                // Idle check
+                if( (runs % IDLE_FREQUENCY_CHECK == 0) && flagTimer != null && flagTimer.isRunning() )
+                    for( DistensionPlayer p : m_players.values() )
+                        p.checkIdleStatus();
+
+                // Time increment
+                if( runs % 60 == 0 )
+                    for( DistensionPlayer p : m_players.values() )
+                        p.incrementTime();
+
+                // Lagout
+                if( runs % LAGOUT_TICK == 0 ) {
+                    for( DistensionPlayer p : m_lagouts ) {
+                        if( p != null ) {
+                            if( p.decrementLagoutTimer() || !p.canUseLagout() ) {
+                                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Your lagout time has expired." );
+                                m_lagoutRemovals.add(p);
+                                m_slotManager.setPlayerAsIdle(p);
+                                m_slotManager.swapInWaitingPlayers();
+                            }
+                        } else {
+                            m_lagoutRemovals.add(p);
+                            m_slotManager.removePlayer(p);
+                        }
                     }
-                    if( p.getShipNum() == Tools.Ship.SHARK ) {
-                        if( p.getArmyID() == 0 )
-                            army0Shark = true;
-                        else
-                            army1Shark = true;
+                    if( m_lagoutRemovals.size() > 0 ) {
+                        for( DistensionPlayer p : m_lagoutRemovals )
+                            m_lagouts.remove(p);
+                        m_lagoutRemovals.clear();
                     }
                 }
 
-                if( helpOutArmy != -1 ) {
-                    // Attempt to return an assister who is needed back on freq;
-                    // if none, advert an army imbalance.
-                    int maxStrToAssist = (int)Math.abs(armyStr0 - armyStr1) - 1;
-                    DistensionPlayer bestPlayer = null;
+                // Profit sharing
+                if( runs % PROFIT_SHARING_FREQUENCY == 0 ) {
+                    int army0profits = m_armies.get(0).getProfits();
+                    int army1profits = m_armies.get(1).getProfits();
+
                     for( DistensionPlayer p : m_players.values() ) {
-                        if( p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
-                            if( p.getStrength() <= (maxStrToAssist - RANK_0_STRENGTH) ) {
-                                // Don't take the only Terr!
-                                if( p.getShipNum() != Tools.Ship.TERRIER ||
-                                        ( (helpOutArmy == 0 && (army0Terrs > (m_singleFlagMode?1:2) ) ) ||
-                                                (helpOutArmy == 1 && (army1Terrs > (m_singleFlagMode?1:2)) ) ) ) {
-                                    if( bestPlayer == null )
-                                        bestPlayer = p;
-                                    else {
-                                        // Non-Terrs are always more eligible
-                                        if( bestPlayer.getShipNum() == Tools.Ship.TERRIER ) {
-                                            if( p.getShipNum() != Tools.Ship.TERRIER ) {
-                                                bestPlayer = p;
+                        if( p.getArmyID() == 0 )
+                            p.shareProfits(army0profits);
+                        else
+                            p.shareProfits(army1profits);
+                    }
+                }
+
+                // Scrap clearing
+                if( runs % SCRAP_CLEARING_FREQUENCY == 0 )
+                    m_scrappingPlayers.clear();
+
+                // Warp points
+                if( runs % WARP_POINT_CHECK_FREQUENCY == 0 ) {
+                    for( Player p : m_botAction.getPlayingPlayers() ) {
+                        // Warps from and to: center blocks; center bar to roof
+                        if( !m_ignoreWarpPlayers.remove( p.getPlayerName() ) ) { // Only warp nonrecent warpers
+                            boolean warped = false;
+                            int x = p.getXTileLocation();
+                            int y = p.getYTileLocation();
+                            if( x >= 511 && x <= 513 ) {
+                                if( y >= WARP_CENTER_0_Y_COORD - 1 && y <= WARP_CENTER_0_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_1_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_CENTER_1_Y_COORD - 1 && y <= WARP_CENTER_1_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), 512, WARP_CENTER_0_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_TO_ROOF_0_Y_COORD - 1 && y <= WARP_TO_ROOF_0_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_0_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_TO_ROOF_1_Y_COORD - 1 && y <= WARP_TO_ROOF_1_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), 512, WARP_FROM_ROOF_1_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_FROM_ROOF_0_Y_COORD - 1 && y <= WARP_FROM_ROOF_0_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_0_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_FROM_ROOF_1_Y_COORD - 1 && y <= WARP_FROM_ROOF_1_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), 512, WARP_TO_ROOF_1_Y_COORD );
+                                    warped = true;
+                                }
+                                // Warps from and to: lower shoulders to mid shoulders
+                            } else if( x >= WARP_LOWER_LEFT_X_COORD - 1 && x <= WARP_LOWER_LEFT_X_COORD + 1 ) {
+                                if( y >= WARP_LOWER_0_Y_COORD - 1 && y <= WARP_LOWER_0_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_1_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_LOWER_1_Y_COORD - 1 && y <= WARP_LOWER_1_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_MID_LEFT_X_COORD, WARP_MID_0_Y_COORD );
+                                    warped = true;
+                                }
+                            } else if( x >= WARP_LOWER_RIGHT_X_COORD - 1 && x <= WARP_LOWER_RIGHT_X_COORD + 1 ) {
+                                if( y >= WARP_LOWER_0_Y_COORD - 1 && y <= WARP_LOWER_0_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_1_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_LOWER_1_Y_COORD - 1 && y <= WARP_LOWER_1_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_MID_RIGHT_X_COORD, WARP_MID_0_Y_COORD );
+                                    warped = true;
+                                }
+                            } else if( x >= WARP_MID_LEFT_X_COORD - 1 && x <= WARP_MID_LEFT_X_COORD + 1 ) {
+                                if( y >= WARP_MID_0_Y_COORD - 1 && y <= WARP_MID_0_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_1_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_MID_1_Y_COORD - 1 && y <= WARP_MID_1_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_LEFT_X_COORD, WARP_LOWER_0_Y_COORD );
+                                    warped = true;
+                                }
+                            } else if( x >= WARP_MID_RIGHT_X_COORD - 1 && x <= WARP_MID_RIGHT_X_COORD + 1 ) {
+                                if( y >= WARP_MID_0_Y_COORD - 1 && y <= WARP_MID_0_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_1_Y_COORD );
+                                    warped = true;
+                                } else if( y >= WARP_MID_1_Y_COORD - 1 && y <= WARP_MID_1_Y_COORD + 1 ) {
+                                    m_botAction.warpTo(p.getPlayerID(), WARP_LOWER_RIGHT_X_COORD, WARP_LOWER_0_Y_COORD );
+                                    warped = true;
+                                }
+                            }
+                            // Add warpers to a list and ignore them on our next pass through to prevent doublewarping.
+                            if( warped )
+                                m_ignoreWarpPlayers.add( p.getPlayerName() );
+                        }
+                    }
+                }
+
+                // Assist advert
+                if( runs % ASSIST_ADVERT_CHECK_FREQUENCY == 0 ) {
+                    if( !checkForAssistAdvert || m_refitMode )
+                        return;
+                    DistensionArmy army0 = m_armies.get(0);
+                    DistensionArmy army1 = m_armies.get(1);
+                    int army0Terrs = 0;
+                    int army1Terrs = 0;
+                    boolean army0Shark = false;
+                    boolean army1Shark = false;
+                    float armyStr0 = army0.getTotalStrength();
+                    float armyStr1 = army1.getTotalStrength();
+                    if( armyStr1 == 0 ) armyStr1 = 1;
+                    if( armyStr0 == 0 ) armyStr1 = 1;
+                    float armyWeight0 = armyStr0 / armyStr1;
+                    float armyWeight1 = armyStr1 / armyStr0;
+                    int helpOutArmy = -1;
+                    int msgArmy = -1;
+                    if( armyWeight1 < ADVERT_WEIGHT_IMBALANCE ) {
+                        helpOutArmy = 1;
+                        msgArmy = 0;
+                    } else if( armyWeight0 < ADVERT_WEIGHT_IMBALANCE ) {
+                        helpOutArmy = 0;
+                        msgArmy = 1;
+                    }
+                    if( m_flagOwner[0] == helpOutArmy && m_flagOwner[1] == helpOutArmy ) {
+                        // If they're holding both flags, they don't need help.
+                        // However, don't reset assist advert time so that we check again in 20sec
+                        // if someone leaves or switches ships.
+                        checkForAssistAdvert = false;
+                        return;
+                    }
+
+                    for( DistensionPlayer p : m_players.values() ) {
+                        if( p.getShipNum() == Tools.Ship.TERRIER ) {
+                            if( p.getArmyID() == 0 )
+                                army0Terrs++;
+                            else
+                                army1Terrs++;
+                        }
+                        if( p.getShipNum() == Tools.Ship.SHARK ) {
+                            if( p.getArmyID() == 0 )
+                                army0Shark = true;
+                            else
+                                army1Shark = true;
+                        }
+                    }
+
+                    if( helpOutArmy != -1 ) {
+                        // Attempt to return an assister who is needed back on freq;
+                        // if none, advert an army imbalance.
+                        int maxStrToAssist = (int)Math.abs(armyStr0 - armyStr1) - 1;
+                        DistensionPlayer bestPlayer = null;
+                        for( DistensionPlayer p : m_players.values() ) {
+                            if( p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
+                                if( p.getStrength() <= (maxStrToAssist - RANK_0_STRENGTH) ) {
+                                    // Don't take the only Terr!
+                                    if( p.getShipNum() != Tools.Ship.TERRIER ||
+                                            ( (helpOutArmy == 0 && (army0Terrs > (m_singleFlagMode?1:2) ) ) ||
+                                                    (helpOutArmy == 1 && (army1Terrs > (m_singleFlagMode?1:2)) ) ) ) {
+                                        if( bestPlayer == null )
+                                            bestPlayer = p;
+                                        else {
+                                            // Non-Terrs are always more eligible
+                                            if( bestPlayer.getShipNum() == Tools.Ship.TERRIER ) {
+                                                if( p.getShipNum() != Tools.Ship.TERRIER ) {
+                                                    bestPlayer = p;
+                                                } else {
+                                                    // Choose the weakest of the two Terrs
+                                                    if( p.getStrength() < bestPlayer.getStrength() )
+                                                        bestPlayer = p;
+                                                }
                                             } else {
-                                                // Choose the weakest of the two Terrs
+                                                // Choose the weakest ship if they're both non-Terr
                                                 if( p.getStrength() < bestPlayer.getStrength() )
                                                     bestPlayer = p;
                                             }
-                                        } else {
-                                            // Choose the weakest ship if they're both non-Terr
-                                            if( p.getStrength() < bestPlayer.getStrength() )
-                                                bestPlayer = p;
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    try {
-                        if( bestPlayer != null )
-                            cmdAssist( bestPlayer.getName(), ":auto:" );
-                    } catch (TWCoreException e ) {
-                        bestPlayer = null;
+                        try {
+                            if( bestPlayer != null )
+                                cmdAssist( bestPlayer.getName(), ":auto:" );
+                        } catch (TWCoreException e ) {
+                            bestPlayer = null;
+                        }
+
+                        if( bestPlayer == null ) {
+                            if( maxStrToAssist > RANK_0_STRENGTH )  // Only display if assisting is possible
+                                m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: Pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                        }
+                        // Check if teams are imbalanced in numbers, if not strength
+                    } else {
+                        if( army0.getPilotsInGame() <= army1.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
+                            m_botAction.sendOpposingTeamMessageByFrequency( 0, "NOTICE: Your army has fewer pilots but is close in strength; if you need help, pilot lower-ranked ships to allow !assist." );
+                        else if( army1.getPilotsInGame() <= army0.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
+                            m_botAction.sendOpposingTeamMessageByFrequency( 1, "NOTICE: Your army has fewer pilots but is close in strength; if you need help, pilot lower-ranked ships to allow !assist." );
                     }
 
-                    if( bestPlayer == null ) {
-                        if( maxStrToAssist > RANK_0_STRENGTH )  // Only display if assisting is possible
-                            m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: Pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
-                    }
-                    // Check if teams are imbalanced in numbers, if not strength
-                } else {
-                    if( army0.getPilotsInGame() <= army1.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
-                        m_botAction.sendOpposingTeamMessageByFrequency( 0, "NOTICE: Your army has fewer pilots but is close in strength; if you need help, pilot lower-ranked ships to allow !assist." );
-                    else if( army1.getPilotsInGame() <= army0.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
-                        m_botAction.sendOpposingTeamMessageByFrequency( 1, "NOTICE: Your army has fewer pilots but is close in strength; if you need help, pilot lower-ranked ships to allow !assist." );
-                }
-
-                if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
-                    if( army0Terrs < 2 ) {
-                        if( army0Terrs == 1 && army0.getPilotsInGame() > 8 ) {
-                            m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
-                        } else if( army0Terrs == 0 && army0.getPilotsInGame() > 3 ) {
-                            m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                    if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
+                        if( army0Terrs < 2 ) {
+                            if( army0Terrs == 1 && army0.getPilotsInGame() > 8 ) {
+                                m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
+                            } else if( army0Terrs == 0 && army0.getPilotsInGame() > 3 ) {
+                                m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                            }
+                        }
+                        if( army1Terrs < 2 ) {
+                            if( army1Terrs == 1 && army1.getPilotsInGame() > 8 ) {
+                                m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
+                            } else if( army1Terrs == 0 && army1.getPilotsInGame() > 3 ) {
+                                m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                            }
+                        }
+                        if( !army0Shark && army0.getPilotsInGame() > 4 ) {
+                            m_botAction.sendOpposingTeamMessageByFrequency( 0, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                        }
+                        if( !army1Shark && army1.getPilotsInGame() > 4 ) {
+                            m_botAction.sendOpposingTeamMessageByFrequency( 1, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
                         }
                     }
-                    if( army1Terrs < 2 ) {
-                        if( army1Terrs == 1 && army1.getPilotsInGame() > 8 ) {
-                            m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
-                        } else if( army1Terrs == 0 && army1.getPilotsInGame() > 3 ) {
-                            m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
-                        }
-                    }
-                    if( !army0Shark && army0.getPilotsInGame() > 4 ) {
-                        m_botAction.sendOpposingTeamMessageByFrequency( 0, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
-                    }
-                    if( !army1Shark && army1.getPilotsInGame() > 4 ) {
-                        m_botAction.sendOpposingTeamMessageByFrequency( 1, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
-                    }
-                }
 
-                lastAssistAdvert = System.currentTimeMillis();
-                checkForAssistAdvert = false;
+                    lastAssistAdvert = System.currentTimeMillis();
+                    checkForAssistAdvert = false;
+                }
             }
         };
-        m_botAction.scheduleTask( assistAdvertTask, 20000, 20000 );
+        m_botAction.scheduleTask( m_periodicTasks, 1000, 1000 );
     }
 
 
@@ -1429,6 +1412,8 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdBeta( String name, String msg ) {
+        if( !DEBUG )
+            return;
         DistensionPlayer p = m_players.get( name );
         if( p == null ) {
             return;
@@ -1564,8 +1549,8 @@ public class distensionbot extends SubspaceBot {
             return;
         }
         String name = pInternal.getPlayerName();
-        DistensionPlayer player = m_players.get( name );
-        if( player == null ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null ) {
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
             Tools.printLog("Unable to find player leaving -- did not save '" + name + "'!");
@@ -1575,20 +1560,21 @@ public class distensionbot extends SubspaceBot {
             }
             return;
         }
-        m_lagouts.remove( player );
-        if( player.getShipNum() > 0 ) {
+        m_lagouts.remove( p );
+        if( p.getShipNum() > 0 ) {
             checkFlagTimeStop();
             if( System.currentTimeMillis() > lastAssistAdvert + ASSIST_REWARD_TIME )
                 checkForAssistAdvert = true;
         }
-        player.saveCurrentShipToDBNow();
-        player.savePlayerDataToDB();
-        m_specialAbilityPrizer.removePlayer( player );
-        m_waitingToEnter.remove( player );
-        doSwapOut( player, false );
+        p.saveCurrentShipToDBNow();
+        p.savePlayerDataToDB();
+        m_specialAbilityPrizer.removePlayer( p );
         m_players.remove( name );
         for( DistensionArmy a : m_armies.values() )
             a.recalculateFigures();
+        if( m_slotManager.removePlayer( p ) )                   // If they were occupying a slot ...
+            m_slotManager.placeWaitingPlayersInEmptySlots();    // Try to place someone in that slot.
+        p = null;
     }
 
 
@@ -1760,15 +1746,12 @@ public class distensionbot extends SubspaceBot {
             } else if( p.getShipNum() > 0 && p.getShipNum() != 9 ) {
                 doDock( p );
                 if( flagTimer != null && flagTimer.isRunning() ) {
-                    // Did...  player lagout/spec/!dock   -- OR --   !leave/don't have lagouts available ...?
+                    // Did...  player lagout/spec/!dock ?  (alternate: sent !leave/don't have lagouts available)
                     if( p.canUseLagout() && !p.isAtMaxLagouts() ) {
                         //m_lagouts.put( p.getName(), flagTimer.getTotalSecs() );
                         m_lagouts.add( p );
                         p.setLagoutTimer( LAGOUT_VALID_SECONDS );
                         m_botAction.sendPrivateMessage( p.getName(), "Use !lagout in the next " + LAGOUT_VALID_SECONDS + " seconds to return to battle and keep participation." );
-                    } else {
-                        if ( !m_waitingToEnter.isEmpty() )
-                            doSwapOut( p, true );
                     }
                 }
             }
@@ -2467,7 +2450,7 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
-     * Wrapper for real !return.  Default, not a swap-in.
+     * Wrapper for real !return.  Default; does not bypass waiting list checks.
      * @param name
      * @param msg
      */
@@ -2480,40 +2463,29 @@ public class distensionbot extends SubspaceBot {
      * Logs a player in / allows them to return to the game.
      * @param name
      * @param msg
-     * @param swapIn True if this player was waiting in queue, and is now being swapped in.
+     * @param bypassChecks True if this player is being placed in by the automated waiting list.
      */
-    public void cmdReturn( String name, String msg, boolean swapIn ) {
+    public void cmdReturn( String name, String msg, boolean bypassChecks ) {
         DistensionPlayer p = m_players.get( name );
         if( p == null ) {
             p = new DistensionPlayer(name);
             m_players.put( name, p );
         }
 
-        int ship = p.getShipNum();
-        if( ship != -1 ) {
-            if( ship == 0 )
-                throw new TWCoreException( "You are currently docked at " + p.getArmyName().toUpperCase() + " HQ.  You may pilot a ship at any time by hitting ESC + #.  You may !leave to record all data and stop the battle timer." );
-            else
-                throw new TWCoreException( "You are currently in flight." );
-        }
+        if( !bypassChecks ) {
+            if( m_slotManager.isPlayerAlreadyWaiting(p) )
+                throw new TWCoreException( "You are already in the queue to enter the battle.  Total pilot in queue: " + m_slotManager.getNumberWaiting() );
 
-        if( m_waitingToEnter.contains(p) && !swapIn )
-            throw new TWCoreException( "You're already in the queue to enter in to the battle." );
-
-        if( !p.getPlayerFromDB() ) {
-            if( p.isBanned() ) {
-                throw new TWCoreException( "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
-            } else {
-                // If not banned, player has not yet enlisted.  Auto-enlist.
-                try {
-                    cmdEnlist(name, "");
-                } catch (TWCoreException e) {
-                    // Explicitly shown that we throw back to FrequencyShipChange if failed
-                    throw e;
-                }
+            try {
+                m_slotManager.addOrQueuePlayer(p);
+            } catch( TWCoreException e ) {
+                throw e;
             }
+        } else {
+            m_botAction.sendPrivateMessage( name, "A slot has opened up.  Sending you to your army...", SOUND_POWERUP_RECHARGED );
         }
 
+        /*
         if( !swapIn ) {
             int players = 0;
             int highestTime = 0;
@@ -2545,6 +2517,29 @@ public class distensionbot extends SubspaceBot {
                 }
             }
         }
+        */
+
+        int ship = p.getShipNum();
+        if( ship != -1 ) {
+            if( ship == 0 )
+                throw new TWCoreException( "You are currently docked at " + p.getArmyName().toUpperCase() + " HQ.  You may pilot a ship at any time by hitting ESC + #.  You may !leave to record all data and stop the battle timer." );
+            else
+                throw new TWCoreException( "You are currently in flight." );
+        }
+
+        if( !p.getPlayerFromDB() ) {
+            if( p.isBanned() ) {
+                throw new TWCoreException( "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
+            } else {
+                // If not banned, player has not yet enlisted.  Auto-enlist.
+                try {
+                    cmdEnlist(name, "");
+                } catch (TWCoreException e) {
+                    // Explicitly shown that we throw back to FrequencyShipChange if failed
+                    throw e;
+                }
+            }
+        }
 
         m_botAction.sendPrivateMessage( name, p.getPlayerRankString() + " " + p.getName().toUpperCase() + " authorized as a pilot of " + p.getArmyName().toUpperCase() + ".  Returning you to HQ." );
         p.setShipNum( 0 );
@@ -2560,20 +2555,39 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
-     * Logs a player out, saves their time information, and opens their slot for another player.
+     * Wrapper for cmdLeave when it has not been forced on a player.
      * @param name
      * @param msg
      */
     public void cmdLeave( String name, String msg ) {
+        cmdLeave(name,msg,false);
+    }
+
+
+    /**
+     * Logs a player out, saves their time information, and opens their slot for another player.
+     * @param name
+     * @param msg
+     * @param forced True if the leave has been forced.
+     */
+    public void cmdLeave( String name, String msg, boolean forced ) {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
         p.setLagoutAllowed(false);
+        m_lagouts.remove(p);
 
         if( p.getShipNum() == -1 ) {
             throw new TWCoreException( "You are not currently in the battle." );
         } else if( p.getShipNum() > 0 ) {
             cmdDock(name,"");
+        }
+
+        if( !forced ) {
+            // Remove them from their slot
+            m_slotManager.removePlayer( p );
+        } else {
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Another player wishes to enter the battle; you have been removed to allow them to play." );
         }
 
         m_botAction.sendPrivateMessage( name, p.getName().toUpperCase() + " leaving hangars of " + p.getArmyName().toUpperCase() + ".  Time played today: " + p.getMinutesPlayed() + " min." );
@@ -2753,7 +2767,6 @@ public class distensionbot extends SubspaceBot {
         p.prizeUpgradesNow();
         p.resetIdle();
         m_lagouts.remove( p );
-        m_waitingToEnter.remove(p);
         if( shipNum != 9 )
             p.setLagoutAllowed(true);
         if( !flagTimeStarted || stopFlagTime ) {
@@ -6023,23 +6036,6 @@ public class distensionbot extends SubspaceBot {
     // ***** COMMAND ASSISTANCE METHODS
 
     /**
-     * Swaps out given player for next player waiting to enter.
-     * @param p Player to swap out
-     */
-    public void doSwapOut( DistensionPlayer p, boolean playerStillInArena ) {
-        if( p == null || m_waitingToEnter.isEmpty() )
-            return;
-        DistensionPlayer enteringPlayer = m_waitingToEnter.remove();
-        String name = enteringPlayer.getName();
-        m_botAction.sendPrivateMessage( name, "A slot has opened up.  You may now join the battle." );
-        cmdReturn( name, "", true );
-        if( playerStillInArena ) {
-            cmdLeave(p.getName(), "");
-            m_botAction.sendPrivateMessage( p.getName(), "Another player wishes to enter the battle; you have been removed to allow them to play." );
-        }
-    }
-
-    /**
      * Based on provided coords, returns location of player as a String.
      * @return Last location recorded of player, as a String
      */
@@ -6604,7 +6600,8 @@ public class distensionbot extends SubspaceBot {
         private boolean[] shipsAvail;           // Marks which ships are available
         private int[]     lastIDsKilled = { -1, -1, -1, -1 };  // ID of last player killed (feeding protection)
         private int       spawnTicks;           // # queue "ticks" until spawn
-        private int       idleTicks;            // # ticks player has been idle
+        private int       idleTicksPiloting;    // # ticks player has been idle while in ship
+        private int       idleTicksDocked;      // # ticks player has been idle while docked
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
         private int       recentlyEarnedRP;     // RP earned since changing to this ship
         private int       numLagouts;           // # lagouts this round
@@ -6679,7 +6676,8 @@ public class distensionbot extends SubspaceBot {
             currentRechargeLevel = 0;
             currentEnergyLevel = 0;
             spawnTicks = 0;
-            idleTicks = 0;
+            idleTicksPiloting = 0;
+            idleTicksDocked = 0;
             assistArmyID = -1;
             recentlyEarnedRP = 0;
             numLagouts = 0;
@@ -7898,9 +7896,12 @@ public class distensionbot extends SubspaceBot {
                     setLagoutAllowed(false);
                 }
                 turnOffProgressBar();
-            } else
-                if( this.shipNum == 0 )
+            } else {
+                if( this.shipNum == 0 ) {
                     turnOnProgressBar();
+                    m_slotManager.setPlayerAsActive(this);
+                }
+            }
 
             if( shipNum == 9 ) {
                 setLagoutAllowed(false);
@@ -7909,6 +7910,8 @@ public class distensionbot extends SubspaceBot {
             }
             this.shipNum = shipNum;
             isRespawning = false;
+            idleTicksPiloting = 0;
+            idleTicksDocked = 0;
             successiveKills = 0;
             recentlyEarnedRP = 0;
             currentOP = 0;
@@ -8132,61 +8135,70 @@ public class distensionbot extends SubspaceBot {
         public void checkIdleStatus() {
             // OPS: Always idle; they must use commands to reset idle counter
             if( shipNum == 9 ) {
-                idleTicks++;
-                if( idleTicks == OPS_IDLE_TICKS_BEFORE_DOCK - 3) {
+                idleTicksPiloting++;
+                if( idleTicksPiloting == OPS_IDLE_TICKS_BEFORE_DOCK - 3) {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not use an Ops command or say something in public chat.");
                     opsAFKNotifyTime = System.currentTimeMillis();
-                } else if( idleTicks == OPS_IDLE_TICKS_BEFORE_DOCK - 1) {
+                } else if( idleTicksPiloting == OPS_IDLE_TICKS_BEFORE_DOCK - 1) {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 1) + " seconds if you do not use an Ops command or say something in public chat.");
                     opsAFKNotifyTime = System.currentTimeMillis();
-                } else if( idleTicks >= OPS_IDLE_TICKS_BEFORE_DOCK ) {
+                } else if( idleTicksPiloting >= OPS_IDLE_TICKS_BEFORE_DOCK ) {
                     m_botAction.sendPrivateMessage(arenaPlayerID, "You have been docked for being idle at the Tactical Ops console." );
                     setLagoutAllowed(false);
                     doDock(this);
                 }
                 return;
+            } else if( shipNum > 0 ) {
+                Player p = m_botAction.getPlayer(arenaPlayerID);
+                if( p == null ) return;
+                int currenty = p.getYTileLocation();
+                int currentx = p.getXTileLocation();
+                boolean idleinsafe = (currenty <= TOP_SAFE || currenty >= BOT_SAFE);
+                boolean idle = idleinsafe;
+                if( (currenty >= TOP_ROOF && currenty <= TOP_FR ) ||
+                        (currenty >= BOT_FR && currenty <= BOT_ROOF )) {
+                    idlesInBase++;
+                } else if( !idle ) {
+                    // Check for people sitting in the same spot, moving in a straight line w/o changing velocity,
+                    // and bouncing in the rocks without changing their rotation.
+                    if( lastX >= currentx - 3 && lastX <= currentx + 3 &&
+                            lastY >= currenty - 3 && lastY <= currenty + 3 )
+                        idle = true;
+                    else if( lastXVel == p.getXVelocity() && lastYVel == p.getYVelocity() )
+                        idle = true;
+                    else if( lastRot == p.getRotation() )
+                        idle = true;
+                }
+                if( idle ) {
+                    idleTicksPiloting++;
+                    if( idleTicksPiloting == IDLE_TICKS_BEFORE_DOCK - 3)
+                        if( idleinsafe )
+                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not move out of safe or say something in public chat.");
+                        else
+                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you don't move away from your current location or say something in public chat.");
+                    if( idleTicksPiloting == IDLE_TICKS_BEFORE_DOCK - 1)
+                        if( idleinsafe )
+                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of safe or say something in public chat.");
+                        else
+                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you don't move away from your current location or say something in public chat.");
+                    else if( idleTicksPiloting >= IDLE_TICKS_BEFORE_DOCK )
+                        cmdDock(name, "");
+                } else
+                    idleTicksPiloting = 0;
+                lastX = currentx;
+                lastY = currenty;
+                lastXVel = p.getXVelocity();
+                lastYVel = p.getYVelocity();
+                lastRot = p.getRotation();
+            } else {
+                if( shipNum == 0 ) {
+                    idleTicksDocked++;
+                    if( idleTicksDocked > IDLE_TICKS_DOCKED_FOR_SWAPOUT ) {
+                        m_slotManager.setPlayerAsIdle(this);
+                        m_slotManager.swapInWaitingPlayers();
+                    }
+                }
             }
-            Player p = m_botAction.getPlayer(arenaPlayerID);
-            if( p == null ) return;
-            int currenty = p.getYTileLocation();
-            int currentx = p.getXTileLocation();
-            boolean idleinsafe = (currenty <= TOP_SAFE || currenty >= BOT_SAFE);
-            boolean idle = idleinsafe;
-            if( (currenty >= TOP_ROOF && currenty <= TOP_FR ) ||
-                (currenty >= BOT_FR && currenty <= BOT_ROOF )) {
-                idlesInBase++;
-            } else if( !idle ) {
-                // Check for people sitting in the same spot, moving in a straight line w/o changing velocity,
-                // and bouncing in the rocks without changing their rotation.
-                if( lastX >= currentx - 3 && lastX <= currentx + 3 &&
-                    lastY >= currenty - 3 && lastY <= currenty + 3 )
-                    idle = true;
-                else if( lastXVel == p.getXVelocity() && lastYVel == p.getYVelocity() )
-                    idle = true;
-                else if( lastRot == p.getRotation() )
-                    idle = true;
-            }
-            if( shipNum > 0 && idle ) {
-                idleTicks++;
-                if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 3)
-                    if( idleinsafe )
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not move out of safe or say something in public chat.");
-                    else
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you don't move away from your current location or say something in public chat.");
-                if( idleTicks == IDLE_TICKS_BEFORE_DOCK - 1)
-                    if( idleinsafe )
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of safe or say something in public chat.");
-                    else
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you don't move away from your current location or say something in public chat.");
-                else if( idleTicks >= IDLE_TICKS_BEFORE_DOCK )
-                    cmdDock(name, "");
-            } else
-                idleTicks = 0;
-            lastX = currentx;
-            lastY = currenty;
-            lastXVel = p.getXVelocity();
-            lastYVel = p.getYVelocity();
-            lastRot = p.getRotation();
         }
 
         /**
@@ -8196,11 +8208,11 @@ public class distensionbot extends SubspaceBot {
             if( shipNum == 9 ) {
                 if( System.currentTimeMillis() > opsAFKNotifyTime + 500 ) {
                     // Idle only counts if >500ms since bot notified player (not ?away automated)
-                    idleTicks = 0;
+                    idleTicksPiloting = 0;
                 }
                 opsAFKNotifyTime = 0;
             } else {
-                idleTicks = 0;
+                idleTicksPiloting = 0;
             }
         }
 
@@ -8212,7 +8224,7 @@ public class distensionbot extends SubspaceBot {
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
-            if( isSupportShip() && idleTicks < 12 ) {
+            if( isSupportShip() && idleTicksPiloting < 12 ) {
                 float sharingPercent;
                 float calcRank = Math.max(1.0f, (float)rank);
                 // Stronger supports do not receive as much profitsharing
@@ -8679,7 +8691,7 @@ public class distensionbot extends SubspaceBot {
          * @return True if timer has expired.
          */
         public boolean decrementLagoutTimer() {
-            lagoutTimer =- LAGOUT_TICK;
+            lagoutTimer -= LAGOUT_TICK;
             if( lagoutTimer <= 0 )
                 return true;
             return false;
@@ -9824,6 +9836,333 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
+     * Used to manage the player slot system.
+     */
+    private class PlayerSlotManager {
+        int[] slots = new int[MAX_PLAYERS];
+        int[] slotStatus = new int[MAX_PLAYERS];    // -1=empty; 1=active use; 0=idle use
+        LinkedList <DistensionPlayer>waitingList = new LinkedList<DistensionPlayer>();
+
+        final static int SLOT_EMPTY  = -1;
+        final static int SLOT_IDLE   =  0;
+        final static int SLOT_ACTIVE =  1;
+        final static int NO_SLOT_AVAILABLE = -1;
+
+        public PlayerSlotManager() {
+            for( int i=0; i<MAX_PLAYERS; i++ ) {
+                slots[i]=-1;
+                slotStatus[i] = SLOT_EMPTY;
+            }
+        }
+
+        /**
+         * Add player into the game,
+         * @param p
+         * @throws TWCoreException
+         */
+        public void addOrQueuePlayer( DistensionPlayer p ) throws TWCoreException {
+            int slot = getEmptySlot();
+            if( slot != NO_SLOT_AVAILABLE ) {
+                addPlayerToSpecificSlot( p, slot );
+            } else {
+
+                slot = getBestIdleSlot();
+                if( slot != NO_SLOT_AVAILABLE ) {
+                    // This should be extremely rare (idle slot found but nobody placed in it).
+                    // Queue player and wait until next assignment tick.
+                    waitingList.add( p );
+                    throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list.  Players in waiting list: " + getNumberWaiting() );
+                } else {
+                    // All slots in use; figure out if new player has highest time or not
+                    int highestTime = 0;
+                    for( int i=0; i<MAX_PLAYERS; i++ ) {
+                        Player p1 = m_botAction.getPlayer( slots[i] );
+                        if( p1 != null ) {
+                            DistensionPlayer dp = m_players.get( p1.getPlayerName() );
+                            if( dp != null ) {
+                                if( slotStatus[i] == SLOT_ACTIVE && dp.getMinutesPlayed() >= highestTime ) {
+                                    highestTime = dp.getMinutesPlayed();
+                                }
+                            }
+                        }
+                    }
+                    if( highestTime > p.getMinutesPlayed() ) {
+                        // No slots but player does not have the highest time: add to queue
+                        waitingList.add( p );
+                        throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list.  Players in waiting list: " + getNumberWaiting() );
+                    } else {
+                        // No slots + player has highest time: tough luck
+                        throw new TWCoreException( "Sorry, no play slots are available, and you've flown more today than any other pilot here.  Please try again later." );
+                    }
+                }
+            }
+        }
+
+        /**
+         * Place a player into a specific slot.
+         * @param p
+         * @param slot
+         */
+        public void addPlayerToSpecificSlot( DistensionPlayer p, int slot ) {
+            slots[slot] = p.getArenaPlayerID();
+            slotStatus[slot] = SLOT_ACTIVE;
+        }
+
+        public void setPlayerAsIdle( DistensionPlayer p ) {
+            int slot = getSlotOfPlayer(p);
+            slotStatus[slot] = SLOT_IDLE;
+        }
+
+        public void setPlayerAsActive( DistensionPlayer p ) {
+            int slot = getSlotOfPlayer(p);
+            slotStatus[slot] = SLOT_ACTIVE;
+        }
+
+        /**
+         * Remove player from their slot.
+         * @param p
+         * @return True if player could be removed from their slot.
+         */
+        public boolean removePlayer( DistensionPlayer p ) {
+            waitingList.remove(p);
+            for( int i=0; i<MAX_PLAYERS; i++ )
+                if( slots[i] == p.getArenaPlayerID() ) {
+                    slots[i]      = SLOT_EMPTY;
+                    slotStatus[i] = SLOT_EMPTY;
+                    return true;
+                }
+            return false;
+        }
+
+        /**
+         * Place all players on waiting list into empty slots.
+         */
+        public void placeWaitingPlayersInEmptySlots() {
+            if( waitingList.size() == 0 )
+                return;
+            boolean slotsRemain = true;
+            int slot = NO_SLOT_AVAILABLE;
+            while( slotsRemain && waitingList.size() > 0 ) {
+                slot = getEmptySlot();
+                if( slot != NO_SLOT_AVAILABLE ) {
+                    try {
+                        DistensionPlayer p = waitingList.remove();
+                        addPlayerToSpecificSlot( p, slot );
+                        cmdReturn( p.getName(), "", true );
+                    } catch( NoSuchElementException e ) {}
+                } else {
+                    slotsRemain = false;
+                }
+            }
+        }
+
+        /**
+         * Place waiting players into empty slots, or swap them into idle slots.  (Soft swap)
+         */
+        public void swapInWaitingPlayers() {
+            if( waitingList.size() == 0 )
+                return;
+
+            boolean slotsRemain = true;
+            int slot = NO_SLOT_AVAILABLE;
+            while( slotsRemain && waitingList.size() > 0 ) {
+                slot = getEmptySlot();
+
+                if( slot != NO_SLOT_AVAILABLE ) {
+                    DistensionPlayer p = waitingList.remove();
+                    addPlayerToSpecificSlot( p, slot );
+                    cmdReturn( p.getName(), "", true );
+                } else {
+                    slot = getBestIdleSlot();
+                    if( slot == NO_SLOT_AVAILABLE ) {
+                        slotsRemain = false;
+                    } else {
+                        DistensionPlayer p = waitingList.remove();
+                        doSwapOut( p, slot );
+                    }
+                }
+            }
+        }
+
+        /**
+         * Swaps in waiting players for active players.  Done at round end.  (Hard swap)
+         */
+        public void swapInWaitingPlayersForActives() {
+            swapInWaitingPlayers();     // First make sure we don't have any free slots
+            if( waitingList.size() == 0 )
+                return;
+
+            boolean slotsRemain = true;
+            int slot = NO_SLOT_AVAILABLE;
+            while( slotsRemain && waitingList.size() > 0 ) {
+                slot = getBestActiveSlot();
+
+                if( slot == NO_SLOT_AVAILABLE ) {
+                    slotsRemain = false;
+                } else {
+                    DistensionPlayer p = waitingList.remove();
+                    doSwapOut( p, slot );
+                }
+            }
+        }
+
+        /**
+         * Given a slot, swaps player in that slot for the one provided.
+         */
+        public void doSwapOut( DistensionPlayer swapInPlayer, int slot ) {
+            if( swapInPlayer == null )
+                return;
+            DistensionPlayer oldPlayer = getPlayerInSlot( slot );
+            cmdReturn( swapInPlayer.getName(), "", true );
+            addPlayerToSpecificSlot( swapInPlayer, slot );
+
+            if( oldPlayer != null ) {
+                cmdLeave( oldPlayer.getName(), "", true );
+            }
+        }
+
+        /**
+         * @return ID of first empty slot; -1 if no slot found.
+         */
+        public int getEmptySlot() {
+            for( int i=0; i<MAX_PLAYERS; i++ )
+                if( slotStatus[i] == SLOT_EMPTY )
+                    return i;
+            return NO_SLOT_AVAILABLE;
+        }
+
+        /**
+         * @return Slot of idle player with highest play time; -1 if not found.
+         */
+        public int getBestIdleSlot() {
+            int highestTime = 0;
+            int highestID = NO_SLOT_AVAILABLE;
+            for( int i=0; i<MAX_PLAYERS; i++ ) {
+                if( slotStatus[i] == SLOT_IDLE ) {
+                    DistensionPlayer dp = getPlayerInSlot(i);
+                    if( dp != null ) {
+                        if( dp.getMinutesPlayed() >= highestTime ) {
+                            highestTime = dp.getMinutesPlayed();
+                            highestID = i;
+                        }
+                    }
+                }
+            }
+            return highestID;
+        }
+
+        /**
+         * Gets best active slot (or idle slot, if one happens to be around when this
+         * check is done -- rare).
+         * @return Best active slot (slot with highest playtime); -1 if not found (should never happen)
+         */
+        public int getBestActiveSlot() {
+            int highestTime = 0;
+            int highestID = NO_SLOT_AVAILABLE;
+            for( int i=0; i<MAX_PLAYERS; i++ ) {
+                if( slotStatus[i] == SLOT_ACTIVE || slotStatus[i] == SLOT_IDLE ) {
+                    DistensionPlayer dp = getPlayerInSlot(i);
+                    if( dp != null ) {
+                        if( dp.getMinutesPlayed() >= highestTime ) {
+                            highestTime = dp.getMinutesPlayed();
+                            highestID = i;
+                        }
+                    }
+                }
+            }
+            return highestID;
+        }
+
+        public DistensionPlayer getPlayerInSlot( int slot ) {
+            Player p = m_botAction.getPlayer( slots[slot] );
+            if( p == null )
+                return null;
+            DistensionPlayer dp = m_players.get( p.getPlayerName() );
+            return dp;
+        }
+
+        public int getSlotOfPlayer( DistensionPlayer p ) {
+            for( int i=0; i<MAX_PLAYERS; i++ )
+                if( p.getArenaPlayerID() == slots[i] )
+                    return slots[i];
+            return -1;
+        }
+
+        public int getNumberWaiting() {
+            return waitingList.size();
+        }
+
+        public boolean isPlayerAlreadyWaiting( DistensionPlayer p ) {
+            return waitingList.contains(p);
+        }
+
+
+        /*
+         *         if( !swapIn ) {
+            int players = 0;
+            int highestTime = 0;
+            LinkedList <DistensionPlayer>dockedPlayers = new LinkedList<DistensionPlayer>();
+            for( DistensionPlayer p2 : m_players.values() ) {
+                if( p2.getShipNum() >= 0 ) {
+                    players++;
+                    if( p2.getArenaPlayerID() != p.getArenaPlayerID() ) {
+                        if( p2.getShipNum() == 0 && p2.getLagoutTimeRemaining() <= 0 )
+                            dockedPlayers.add(p2);  // Fair game
+                        else
+                            if( p2.getMinutesPlayed() > highestTime )
+                                highestTime = p2.getMinutesPlayed();
+                    }
+                }
+            }
+            if( players >= MAX_PLAYERS ) {
+                // If a player is docked and another player wants to get in, swap them out, no matter the time
+                if( !dockedPlayers.isEmpty() ) {
+                    DistensionPlayer leavingPlayer = dockedPlayers.getFirst();
+                    cmdLeave(leavingPlayer.getName(), "");
+                    m_botAction.sendPrivateMessage( leavingPlayer.getName(), "Another player wishes to enter the game; you have been removed to allow them to play." );
+                } else {
+                    if( p.getMinutesPlayed() >= highestTime )
+                        throw new TWCoreException( "Sorry, the battle is at maximum capacity and you've flown more today than anyone else here.  Try again later." );
+
+                    m_waitingToEnter.add(p);
+                    throw new TWCoreException( "Pilot limit reached: " + MAX_PLAYERS + ".  You are in the queue to replace the pilot who has flown the longest at the end of the battle." );
+                }
+            }
+        }
+
+         */
+        /**
+         * Attempts to add a player (as playing) to the slot manager.
+         * @param p Player to add
+         * @return Success of add
+         */
+        /*
+        public synchronized boolean addPlayer( DistensionPlayer p ) {
+            if( playingPlayers.size() + nonPlayingPlayers.size() < MAX_PLAYERS ) {
+                playingPlayers.add( p );
+                return true;
+            } else {
+                if( nonPlayingPlayers.size() == 0 ) {
+                    waitingPlayers.add( p );
+                    if( flagTimer != null && flagTimer.isRunning() ) {
+                        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Pilot limit reached: " + MAX_PLAYERS + ".  You are in the queue to replace the pilot who has flown the longest at the end of the next battle." );
+                        return false;
+                    } else {
+                        // attempt a swap
+                        return true;
+                    }
+                }
+
+                for( DistensionPlayer p2 : nonPlayingPlayers )
+                    ;
+                return true;
+            }
+        }
+        */
+
+    }
+
+    /**
      * Prize queuer, for preventing bot lockups.
      */
     private class PrizeQueue extends TimerTask {
@@ -10787,6 +11126,9 @@ public class distensionbot extends SubspaceBot {
 
             doScores(15000);
 
+            m_slotManager.swapInWaitingPlayersForActives();
+
+            /*
             // Swap out players waiting to enter
             if( !m_waitingToEnter.isEmpty() ) {
                 LinkedList <DistensionPlayer>removals = new LinkedList<DistensionPlayer>();
@@ -10830,6 +11172,7 @@ public class distensionbot extends SubspaceBot {
                 for( DistensionPlayer p : m_waitingToEnter )
                     m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "No suitable slot could be found for you this battle.  Please continue waiting and you will be placed in as soon as possible." );
             }
+            */
         }
         if( intermissionTime >= Tools.TimeInMillis.MINUTE && !DEBUG )
             m_botAction.setTimer( (intermissionTime + Tools.TimeInMillis.SECOND) / Tools.TimeInMillis.MINUTE );
