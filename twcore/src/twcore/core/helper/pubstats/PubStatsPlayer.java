@@ -51,6 +51,8 @@ public class PubStatsPlayer {
     private boolean scorereset = false;
     private boolean periodReset = false;
     
+    private String countryCode = null;
+    
     
     
 	public PubStatsPlayer(String name, String squad, short ship) {
@@ -481,8 +483,20 @@ public class PubStatsPlayer {
         this.timezone = timezone;
     }
     
-    
-    
+    /**
+     * @return the countryCode
+     */
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    /**
+     * @param countryCode the countryCode to set
+     */
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
     /**
      * @return the lastSeen
      */
