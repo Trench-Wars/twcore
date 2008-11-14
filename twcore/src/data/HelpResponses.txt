@@ -433,7 +433,7 @@ SayPlease|What is the magic word?
 SayTechSupport|We are sorry, but we do not have the answer to your question.  If you wish to post it on our tech support forum, please do so at: http://forums.trenchwars.org/forumdisplay.php?f=5.
 NotIllegal|Sorry, but that is not illegal in Trench Wars.
 Dontberude|Please do not be rude to the staff.
-HelpAbuse|Please do not abuse ?help unless you have a valid question.
+HelpAbuse|Please discontinue your use of the ?help command as Trench Wars Staff has deemed your requests invalid or excessive.
 CheaterAbuse|Please do not abuse ?cheater unless you have a valid cheater to report.
 AdvertAbuse|Please do not abuse ?advert.  If you would like to request an event, please PM EventBot with '!request <event>'.  For example; :EventBot:!request safewars
 Onit|We have received your ?help or ?cheater call and are currently attending to it.  Please be assured that we will assist you in any way possible.
