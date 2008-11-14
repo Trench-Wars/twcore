@@ -653,9 +653,18 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 // Idle check
-                if( (runs % IDLE_FREQUENCY_CHECK == 0) && flagTimer != null && flagTimer.isRunning() )
-                    for( DistensionPlayer p : m_players.values() )
-                        p.checkIdleStatus();
+                if( (runs % IDLE_FREQUENCY_CHECK == 0) ) {
+                    if( flagTimer != null && flagTimer.isRunning()) {
+                        for( DistensionPlayer p : m_players.values() ) {
+                            p.checkIdleStatus();
+                            p.checkIdleDockedStatus();
+                        }
+                    } else {
+                        for( DistensionPlayer p : m_players.values() ) {
+                            p.checkIdleDockedStatus();
+                        }
+                    }
+                }
 
                 // Time increment
                 if( runs % 60 == 0 )
@@ -669,7 +678,7 @@ public class distensionbot extends SubspaceBot {
                             if( p.decrementLagoutTimer() || !p.canUseLagout() ) {
                                 m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Your lagout time has expired." );
                                 m_lagoutRemovals.add(p);
-                                m_slotManager.setPlayerAsIdle(p);
+                                m_slotManager.setPlayerAsIdle( p.getArenaPlayerID() );
                                 m_slotManager.swapInWaitingPlayers();
                             }
                         } else {
@@ -2474,8 +2483,13 @@ public class distensionbot extends SubspaceBot {
 
         if( !bypassChecks ) {
             if( m_slotManager.isPlayerAlreadyWaiting(p) )
-                throw new TWCoreException( "You are already in the queue to enter the battle.  Total pilot in queue: " + m_slotManager.getNumberWaiting() );
-
+                if( m_slotManager.getNumberEmptySlots() == 0 )
+                    throw new TWCoreException( "You are already in the queue; please wait patiently and you will be AUTOMATICALLY ADDED into the battle.  Total pilots in queue: " + m_slotManager.getNumberWaiting() );
+                else {
+                    m_botAction.sendPrivateMessage("qan", "!returning player could not enter (already in queue), despite empty slots!  -- " + m_slotManager.getNumberEmptySlots() );
+                    Tools.printLog( "Distension: !returning player could not enter (already in queue), despite empty slots!  -- " + m_slotManager.getNumberEmptySlots() );
+                    throw new TWCoreException( "You are already in the queue; please wait patiently and you will be AUTOMATICALLY ADDED into the battle.  Total pilots in queue: " + m_slotManager.getNumberWaiting() );
+                }
             try {
                 m_slotManager.addOrQueuePlayer(p);
             } catch( TWCoreException e ) {
@@ -2583,9 +2597,9 @@ public class distensionbot extends SubspaceBot {
             cmdDock(name,"");
         }
 
+        m_slotManager.removePlayer( p );
         if( !forced ) {
-            // Remove them from their slot
-            m_slotManager.removePlayer( p );
+            m_slotManager.placeWaitingPlayersInEmptySlots();
         } else {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Another player wishes to enter the battle; you have been removed to allow them to play." );
         }
@@ -4640,21 +4654,16 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You must be at the Tactical Ops station to do this." );
         if( p.getPurchasedUpgrade(3) < 3 )
             throw new TWCoreException( "Your communication systems must receive the proper !upgrade before you can use this ability." );
-        if( p.getCurrentComms() < 2 )
-            throw new TWCoreException( "You need 2 communication authorizations to send a sabotaged message.  (+1 every minute)" );
+        if( p.getCurrentComms() < 1 )
+            throw new TWCoreException( "You need 1 communication authorization to send a sabotaged message.  (+1 every minute)" );
         String[] params = msg.split(" ", 2);
-        boolean success;
         if( !( params[0].equalsIgnoreCase("msg") || params[0].equalsIgnoreCase("pm") ) ) {
             throw new TWCoreException( "You must choose either msg or PM.  Example: !opssab pm t:2" );
         } else if( params[0].equalsIgnoreCase("msg") ) {
-            success = cmdOpsMsg( name, params[1], p.getOpposingArmyID() );
+            cmdOpsMsg( name, params[1], p.getOpposingArmyID() );
         } else {
-            success = cmdOpsPM( name, params[1], p.getOpposingArmyID() );
+            cmdOpsPM( name, params[1], p.getOpposingArmyID() );
         }
-
-        // The sabotage fee (the other half is charged by the method called)
-        if( success )
-            p.adjustComms(-1);
     }
 
     /**
@@ -7897,9 +7906,10 @@ public class distensionbot extends SubspaceBot {
                 }
                 turnOffProgressBar();
             } else {
+                // If we're in ship 0 going in-game, turn on the progress bar and set player as active
                 if( this.shipNum == 0 ) {
                     turnOnProgressBar();
-                    m_slotManager.setPlayerAsActive(this);
+                    m_slotManager.setPlayerAsActive( getArenaPlayerID() );
                 }
             }
 
@@ -8183,20 +8193,27 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you don't move away from your current location or say something in public chat.");
                     else if( idleTicksPiloting >= IDLE_TICKS_BEFORE_DOCK )
                         cmdDock(name, "");
-                } else
+                } else {
                     idleTicksPiloting = 0;
+                }
                 lastX = currentx;
                 lastY = currenty;
                 lastXVel = p.getXVelocity();
                 lastYVel = p.getYVelocity();
                 lastRot = p.getRotation();
-            } else {
-                if( shipNum == 0 ) {
-                    idleTicksDocked++;
-                    if( idleTicksDocked > IDLE_TICKS_DOCKED_FOR_SWAPOUT ) {
-                        m_slotManager.setPlayerAsIdle(this);
-                        m_slotManager.swapInWaitingPlayers();
-                    }
+            }
+        }
+
+        /**
+         * Checks player for idling when docked; if there are players waiting in queue, players sitting
+         * idle will be swapped out.
+         */
+        public void checkIdleDockedStatus() {
+            if( shipNum == 0 ) {
+                idleTicksDocked++;
+                if( idleTicksDocked > IDLE_TICKS_DOCKED_FOR_SWAPOUT ) {
+                    m_slotManager.setPlayerAsIdle( getArenaPlayerID() );
+                    m_slotManager.swapInWaitingPlayers();
                 }
             }
         }
@@ -9905,17 +9922,21 @@ public class distensionbot extends SubspaceBot {
          */
         public void addPlayerToSpecificSlot( DistensionPlayer p, int slot ) {
             slots[slot] = p.getArenaPlayerID();
+            if( slotStatus[slot] == SLOT_ACTIVE )
+                Tools.printLog( "Distension: Player " + p.getName() + " placed into already active slot!" );
             slotStatus[slot] = SLOT_ACTIVE;
         }
 
-        public void setPlayerAsIdle( DistensionPlayer p ) {
-            int slot = getSlotOfPlayer(p);
-            slotStatus[slot] = SLOT_IDLE;
+        public void setPlayerAsIdle( int id ) {
+            int slot = getSlotOfPlayer( id );
+            if( slot != -1 )
+                slotStatus[slot] = SLOT_IDLE;
         }
 
-        public void setPlayerAsActive( DistensionPlayer p ) {
-            int slot = getSlotOfPlayer(p);
-            slotStatus[slot] = SLOT_ACTIVE;
+        public void setPlayerAsActive( int id ) {
+            int slot = getSlotOfPlayer( id );
+            if( slot != -1 )
+                slotStatus[slot] = SLOT_ACTIVE;
         }
 
         /**
@@ -9949,7 +9970,9 @@ public class distensionbot extends SubspaceBot {
                         DistensionPlayer p = waitingList.remove();
                         addPlayerToSpecificSlot( p, slot );
                         cmdReturn( p.getName(), "", true );
-                    } catch( NoSuchElementException e ) {}
+                    } catch( NoSuchElementException e ) {
+                        Tools.printLog("Distension: tried to remove a player from empty waiting list.");
+                    }
                 } else {
                     slotsRemain = false;
                 }
@@ -9962,23 +9985,29 @@ public class distensionbot extends SubspaceBot {
         public void swapInWaitingPlayers() {
             if( waitingList.size() == 0 )
                 return;
-
             boolean slotsRemain = true;
             int slot = NO_SLOT_AVAILABLE;
             while( slotsRemain && waitingList.size() > 0 ) {
                 slot = getEmptySlot();
-
                 if( slot != NO_SLOT_AVAILABLE ) {
-                    DistensionPlayer p = waitingList.remove();
-                    addPlayerToSpecificSlot( p, slot );
-                    cmdReturn( p.getName(), "", true );
+                    try {
+                        DistensionPlayer p = waitingList.remove();
+                        addPlayerToSpecificSlot( p, slot );
+                        cmdReturn( p.getName(), "", true );
+                    } catch( NoSuchElementException e ) {
+                        Tools.printLog("Distension: tried to remove a player from empty waiting list.");
+                    }
                 } else {
                     slot = getBestIdleSlot();
                     if( slot == NO_SLOT_AVAILABLE ) {
                         slotsRemain = false;
                     } else {
-                        DistensionPlayer p = waitingList.remove();
-                        doSwapOut( p, slot );
+                        try {
+                            DistensionPlayer p = waitingList.remove();
+                            doSwapOut( p, slot );
+                        } catch( NoSuchElementException e ) {
+                            Tools.printLog("Distension: tried to remove a player from empty waiting list.");
+                        }
                     }
                 }
             }
@@ -10000,8 +10029,12 @@ public class distensionbot extends SubspaceBot {
                 if( slot == NO_SLOT_AVAILABLE ) {
                     slotsRemain = false;
                 } else {
-                    DistensionPlayer p = waitingList.remove();
-                    doSwapOut( p, slot );
+                    try {
+                        DistensionPlayer p = waitingList.remove();
+                        doSwapOut( p, slot );
+                    } catch( NoSuchElementException e ) {
+                        Tools.printLog("Distension: tried to remove a player from empty waiting list.");
+                    }
                 }
             }
         }
@@ -10013,12 +10046,11 @@ public class distensionbot extends SubspaceBot {
             if( swapInPlayer == null )
                 return;
             DistensionPlayer oldPlayer = getPlayerInSlot( slot );
-            cmdReturn( swapInPlayer.getName(), "", true );
-            addPlayerToSpecificSlot( swapInPlayer, slot );
-
             if( oldPlayer != null ) {
                 cmdLeave( oldPlayer.getName(), "", true );
             }
+            cmdReturn( swapInPlayer.getName(), "", true );
+            addPlayerToSpecificSlot( swapInPlayer, slot );
         }
 
         /**
@@ -10081,15 +10113,23 @@ public class distensionbot extends SubspaceBot {
             return dp;
         }
 
-        public int getSlotOfPlayer( DistensionPlayer p ) {
+        public int getSlotOfPlayer( int id ) {
             for( int i=0; i<MAX_PLAYERS; i++ )
-                if( p.getArenaPlayerID() == slots[i] )
-                    return slots[i];
+                if( id == slots[i] )
+                    return i;
             return -1;
         }
 
         public int getNumberWaiting() {
             return waitingList.size();
+        }
+
+        public int getNumberEmptySlots() {
+            int empties = 0;
+            for( int i=0; i<MAX_PLAYERS; i++ )
+                if( slotStatus[i] == SLOT_EMPTY )
+                    empties++;
+            return empties;
         }
 
         public boolean isPlayerAlreadyWaiting( DistensionPlayer p ) {
