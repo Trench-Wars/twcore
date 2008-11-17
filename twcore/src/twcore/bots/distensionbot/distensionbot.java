@@ -9988,7 +9988,8 @@ public class distensionbot extends SubspaceBot {
                             cmdReturn( p.getName(), "", true );
                             addPlayerToSpecificSlot( p, slot );
                         } catch( Exception e ) {
-                            Tools.printLog("Distension: " + name + " had !return initiated (placeWaitingPlayerInEmptySlots) but had already returned!" );
+		            if( p != null )
+                                Tools.printLog("Distension: " + p.getName() + " had !return initiated (placeWaitingPlayerInEmptySlots) but had already returned!" );
                         }
                     } catch( NoSuchElementException e ) {
                         Tools.printLog("Distension: tried to remove a player from empty waiting list.");
@@ -10016,7 +10017,8 @@ public class distensionbot extends SubspaceBot {
                             cmdReturn( p.getName(), "", true );
                             addPlayerToSpecificSlot( p, slot );
                         } catch( Exception e ) {
-                            Tools.printLog("Distension: " + name + " had !return initiated (swapInWaitingPlayers) but had already returned!" );
+		            if( p != null )
+                                Tools.printLog("Distension: " + p.getName() + " had !return initiated (swapInWaitingPlayers) but had already returned!" );
                         }
                     } catch( NoSuchElementException e ) {
                         Tools.printLog("Distension: tried to remove a player from empty waiting list.");
@@ -10077,7 +10079,7 @@ public class distensionbot extends SubspaceBot {
                 cmdReturn( swapInPlayer.getName(), "", true );
                 addPlayerToSpecificSlot( swapInPlayer, slot );
             } catch( Exception e ) {
-                Tools.printLog("Distension: " + name + " had !return initiated (doSwapOut) but had already returned!" );
+                Tools.printLog("Distension: " + swapInPlayer.getName() + " had !return initiated (doSwapOut) but had already returned!" );
             }
         }
 
