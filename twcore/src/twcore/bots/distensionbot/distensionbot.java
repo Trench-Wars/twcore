@@ -2491,6 +2491,7 @@ public class distensionbot extends SubspaceBot {
                     throw new TWCoreException( "You are already in the queue; please wait patiently and you will be AUTOMATICALLY ADDED into the battle.  Total pilots in queue: " + m_slotManager.getNumberWaiting() );
                 }
             try {
+                m_slotManager.removePlayer(p);    // Just in case...
                 m_slotManager.addOrQueuePlayer(p);
             } catch( TWCoreException e ) {
                 throw e;
@@ -2565,6 +2566,8 @@ public class distensionbot extends SubspaceBot {
             playerObjs.hideObject(p.getArenaPlayerID(), LVZ_PRM_PERSONAL_FLAG );
         }
         p.setPlayerObjects();
+	
+        m_slotManager.removePlayerFromWaitingListOnly(p);    // Just in case...
     }
 
 
@@ -2789,6 +2792,7 @@ public class distensionbot extends SubspaceBot {
         p.addRankPoints(0,false); // If player has enough RP to level, rank them up.
         cmdProgress( name, null );
         p.setIgnoreShipChanges(false);
+        m_slotManager.removePlayerFromWaitingListOnly(p);    // Just in case...
 
         // Make sure a player knows they can upgrade if they have no upgrades installed (such as after a refund)
         if( p.getPurchasedUpgradeLevel() == 0 && p.getUpgradePoints() >= 10 ) {
@@ -4009,7 +4013,11 @@ public class distensionbot extends SubspaceBot {
             return;
         if( p.getShipNum() == -1 ) {
             m_botAction.sendPrivateMessage( name, "You must !return before you !lagout.  Attempting to !return you automatically.  NOTE: If you were DC'd, you will not be able to !lagout." );
-            cmdReturn( name, msg );
+	    try {
+                cmdReturn( name, msg );
+            } catch( Exception e ) {
+                Tools.printLog("Distension: " + name + " had !return initiated but had already returned!" );
+            }
             return;
         }
         if( p.getShipNum() != 0 )
@@ -9956,6 +9964,14 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * Remove player from the waiting list only (not slot).  Safety precaution.
+         * @param p
+         */
+        public void removePlayerFromWaitingListOnly( DistensionPlayer p ) {
+            waitingList.remove(p);
+        }
+	
+        /**
          * Place all players on waiting list into empty slots.
          */
         public void placeWaitingPlayersInEmptySlots() {
@@ -9968,8 +9984,12 @@ public class distensionbot extends SubspaceBot {
                 if( slot != NO_SLOT_AVAILABLE ) {
                     try {
                         DistensionPlayer p = waitingList.remove();
-                        addPlayerToSpecificSlot( p, slot );
-                        cmdReturn( p.getName(), "", true );
+                        try {
+                            cmdReturn( p.getName(), "", true );
+                            addPlayerToSpecificSlot( p, slot );
+                        } catch( Exception e ) {
+                            Tools.printLog("Distension: " + name + " had !return initiated (placeWaitingPlayerInEmptySlots) but had already returned!" );
+                        }
                     } catch( NoSuchElementException e ) {
                         Tools.printLog("Distension: tried to remove a player from empty waiting list.");
                     }
@@ -9992,8 +10012,12 @@ public class distensionbot extends SubspaceBot {
                 if( slot != NO_SLOT_AVAILABLE ) {
                     try {
                         DistensionPlayer p = waitingList.remove();
-                        addPlayerToSpecificSlot( p, slot );
-                        cmdReturn( p.getName(), "", true );
+                        try {
+                            cmdReturn( p.getName(), "", true );
+                            addPlayerToSpecificSlot( p, slot );
+                        } catch( Exception e ) {
+                            Tools.printLog("Distension: " + name + " had !return initiated (swapInWaitingPlayers) but had already returned!" );
+                        }
                     } catch( NoSuchElementException e ) {
                         Tools.printLog("Distension: tried to remove a player from empty waiting list.");
                     }
@@ -10049,8 +10073,12 @@ public class distensionbot extends SubspaceBot {
             if( oldPlayer != null ) {
                 cmdLeave( oldPlayer.getName(), "", true );
             }
-            cmdReturn( swapInPlayer.getName(), "", true );
-            addPlayerToSpecificSlot( swapInPlayer, slot );
+            try {
+                cmdReturn( swapInPlayer.getName(), "", true );
+                addPlayerToSpecificSlot( swapInPlayer, slot );
+            } catch( Exception e ) {
+                Tools.printLog("Distension: " + name + " had !return initiated (doSwapOut) but had already returned!" );
+            }
         }
 
         /**
