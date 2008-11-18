@@ -1551,11 +1551,6 @@ public class distensionbot extends SubspaceBot {
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
             Tools.printLog("Unable to find player leaving -- did not save!");
-            if( DEBUG ) {
-                m_botAction.sendArenaMessage( "Unable to find player leaving -- did not save!  Notify staff immediately." );
-                m_botAction.sendUnfilteredPublicMessage("?message dugwyler:Unable to find player leaving!  Did not save.");
-            }
-            return;
         }
         String name = pInternal.getPlayerName();
         DistensionPlayer p = m_players.get( name );
@@ -1563,10 +1558,6 @@ public class distensionbot extends SubspaceBot {
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
             Tools.printLog("Unable to find player leaving -- did not save '" + name + "'!");
-            if( DEBUG ) {
-                m_botAction.sendArenaMessage( "Unable to find player leaving -- did not save '" + name + "'!  Notify staff immediately." );
-                m_botAction.sendUnfilteredPublicMessage("?message dugwyler:Unable to find player leaving!  Did not save '" + name + "'!");
-            }
             return;
         }
         m_lagouts.remove( p );
@@ -5606,7 +5597,7 @@ public class distensionbot extends SubspaceBot {
             player.ban();
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' banned from playing Distension." );
             Tools.printLog(name + " banned " + msg + " in Distension DB." );
-            m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " banned " + msg + " in Distension DB." );
+	    m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " banned " + msg + " in Distension DB." );
         } else {
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' is already banned." );
         }
@@ -5816,10 +5807,69 @@ public class distensionbot extends SubspaceBot {
 
 
     /**
-     * Randomizes army for all players.
+     * Randomizes army for all players, accounting for battles won.  Rewrite by Raible.
      * @param name
      * @param msg
      */
+    public void cmdDBRandomArmies( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p.getOpStatus() < 2 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
+        int army0Count = 0;
+        int army1Count = 0;
+        int totalCount = 0;
+        LinkedList <Integer>newArmy0 = new LinkedList<Integer>();
+        LinkedList <Integer>newArmy1 = new LinkedList<Integer>();
+        
+        double slidingProbability = 0.5f;
+        final double improbabilityStep = 0.5f / 3f;
+        // For the 1st player, army0 will have a 50% chance of getting it, if so 33% for the 2nd, if so 17% for the 3rd, if so army1 will always get the 4th,
+        // army0 will again have a 17% chance for the 5th, if not 33% for the 6th, and so forth. Either army can have at most 3 more players than the other.
+        // The SQL query sorts players descending by fnBattlesWon first so players are distributed roughly equally by their experience but randomized enough to make it interesting.
+        
+        try {
+            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnID, fnArmyID FROM tblDistensionPlayer ORDER BY fnBattlesWon DESC, fnArmyID" );
+            if( r == null )
+                throw new TWCoreException( "DB command not successful." );
+            while( r.next() ) {
+                if( Math.random() < slidingProbability ) {
+                    slidingProbability -= improbabilityStep;
+                    if( r.getInt("fnArmyID") == 1 )         // Only change army if needed
+                        newArmy0.add( r.getInt("fnID") );
+                    army0Count++;
+                } else {
+                    slidingProbability += improbabilityStep;
+                    if( r.getInt("fnArmyID") == 0 )         // Only change army if needed
+                        newArmy1.add( r.getInt("fnID") );
+                    army1Count++;
+                }
+                totalCount++;
+            }
+            m_botAction.specAll();
+            for( int pid : newArmy0 )
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='0' WHERE fnID='" + pid + "'" );
+            for( int pid : newArmy1 )
+                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='1' WHERE fnID='" + pid + "'" );
+            m_armies.get(0).manuallySetPilotsTotal( army0Count );
+            m_armies.get(1).manuallySetPilotsTotal( army1Count );
+            m_botAction.sendPrivateMessage( name, "Army reconfiguration complete; all " + totalCount + " players reassigned.  Army 0: " + army0Count + " pilots; Army 1: " + army1Count + " pilots." );
+            cmdSaveDie(name,"");
+        } catch (SQLException e ) {
+            Tools.printStackTrace( "Error getting player data from DB for !db-randomarmies.", e );
+            throw new TWCoreException( "DB command not successful." );
+        }
+    }
+    
+    
+    /**
+     * Randomizes army for all players (old version).
+     * @param name
+     * @param msg
+     */
+     /*
     public void cmdDBRandomArmies( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
@@ -5862,6 +5912,7 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "DB command not successful." );
         }
     }
+    */
 
 
     // BETA-ONLY COMMANDS
@@ -11171,7 +11222,7 @@ public class distensionbot extends SubspaceBot {
 
         // Check for Lanc enabling
         for( DistensionPlayer p : m_players.values() ) {
-            if( ((float)p.genKills / (float)mins) > 6.0f && mins > 10) {
+            if( ((float)p.genKills / (float)mins) >= 5.5f && mins > 10) {
                 if( p.getBattlesWon() > WINS_REQ_OFFICER ) {
                     if( !p.shipIsAvailable(7) ) {
                         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "SPECIAL AWARD FOR BLOODTHIRSTY RESOLVE.  At a murderous rate of over 10 pilots a minute, you have proven you have what it takes to eviscerate the enemy rapidly.  A Lancaster is now in your !hangar." );
@@ -12277,7 +12328,7 @@ public class distensionbot extends SubspaceBot {
                 }
             }
             m_botAction.SQLClose( r );
-        } catch (SQLException e) {
+        } catch (Exception e) {
             Tools.printLog( "SQL ERROR loading default upgrade data." );
             cmdDie("DistensionInternal", "now");
             return;
