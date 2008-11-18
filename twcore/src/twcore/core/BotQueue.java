@@ -234,18 +234,22 @@ public class BotQueue extends Thread {
             return "had no name associated; no removal action taken";
         ChildBot deadBot = m_botStable.remove( name );
         if( deadBot != null ){
-            Session deadSesh = deadBot.getBot();
-            if( deadSesh != null ) {
-                deadSesh.getBotAction().cancelTasks();
-                if( msg != null )
-                    deadSesh.disconnect( msg );
-                else
-                    deadSesh.disconnect( "" );
+            try {
+                Session deadSesh = deadBot.getBot();
+                if( deadSesh != null ) {
+                    deadSesh.getBotAction().cancelTasks();
+                    if( msg != null )
+                        deadSesh.disconnect( msg );
+                    else
+                        deadSesh.disconnect( "" );
+                }
+                // Decrement count for this type of bot
+                addToBotCount( deadBot.getClassName(), (-1) );
+                deadBot = null;
+                return "has disconnected normally";
+	    } catch( NullPointerException e ) {
+		return "had a disconnection problem/was already DC'd (null pointer exception thrown)";
             }
-            // Decrement count for this type of bot
-            addToBotCount( deadBot.getClassName(), (-1) );
-            deadBot = null;
-            return "has disconnected normally";
         }
         return "not found in bot stable (possibly already disconnected)";
     }
@@ -270,7 +274,7 @@ public class BotQueue extends Thread {
         while( j.hasNext() ) {
             String name = j.next();
             removeBot( name, "!hardremove by " + initiator );
-            m_botAction.sendChatMessage( 1, name + " logged off." );
+            m_botAction.sendChatMessage( 1, name + " logged off.  (!hardremove initiated.)" );
         }
         Integer numBots = m_botTypes.get( rawClassName );
         if( numBots != null )
@@ -290,7 +294,7 @@ public class BotQueue extends Thread {
         }
         for( String name : names ) {
             removeBot( name, "core shutdown" );
-            m_botAction.sendChatMessage( 1, name + " logged off." );
+            m_botAction.sendChatMessage( 1, name + " logged off.  (Core shutdown.)" );
         }
         m_botTypes.clear();
     }
@@ -312,7 +316,7 @@ public class BotQueue extends Thread {
         }
         for( String name : names ) {
             removeBot( name, "idle bot shutdown" );
-            m_botAction.sendChatMessage( 1, name + " logged off." );
+            m_botAction.sendChatMessage( 1, name + " logged off.  (Idle bot shutdown.)" );
         }
         return allBotsIdle;
     }
@@ -465,7 +469,7 @@ public class BotQueue extends Thread {
                         if( bot.getBotState() == Session.NOT_RUNNING ){
                             removeBot( bot.getBotName(), "log in failure; possible bad login/password" );
                             m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Bot failed to log in.  Verify login and password are correct." );
-                            m_botAction.sendChatMessage( 1, "Bot of type " + childBot.getClassName() + " failed to log in.  Verify login and password are correct."  );
+                            m_botAction.sendChatMessage( 1, "Bot of type " + childBot.getClassName() + " failed to log in.  Verify login and password are correct." );
                         } else {
                             m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Your new bot is named " + bot.getBotName() + "." );
                             m_botAction.sendChatMessage( 1, childBot.getCreator() + " spawned " + childBot.getBot().getBotName() + " of type " + childBot.getClassName() );
