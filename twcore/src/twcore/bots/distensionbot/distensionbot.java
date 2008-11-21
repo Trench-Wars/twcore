@@ -2599,6 +2599,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         m_botAction.sendPrivateMessage( name, p.getName().toUpperCase() + " leaving hangars of " + p.getArmyName().toUpperCase() + ".  Time played today: " + p.getMinutesPlayed() + " min." );
+        p.saveCurrentShipToDB();		// As the dock doesn't kick in fast enough, save before we change the ship #
         p.setShipNum( -1 );
         p.savePlayerDataToDB();
     }
@@ -3555,7 +3556,7 @@ public class distensionbot extends SubspaceBot {
 
         if( !realDeal ) {
             String specmsg = "So, you'd like to specialize to " + sp.getTypeName() + "?";
-            String costmsg = "It'll cost you " + cost + " RP -- 5% of your current RP -- to do it.";
+            String costmsg = "It'll cost you " + cost + " RP -- 5% of the total RP you've earned -- to do it.";
             String confirmmsg = "Use !specialize " + typeToChangeTo + ":YES if you're sure.";
             if( !p.isSpecialized() ) {
                 if( cost > 0 ) {
