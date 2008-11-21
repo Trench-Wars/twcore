@@ -55,6 +55,7 @@ import twcore.core.util.Tools;
  * - Dreadnought ship class (needs energy levels)
  * - Increase time for unlock LVZ graphics
  * - Wall-bump sound -- remove static (ugh)
+ * - Fix !unban
  *
  * @author dugwyler
  */
@@ -107,8 +108,8 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_REQ_SUPPORT_SHIP4 = 20;
     private final int RANK_REQ_SUPPORT_SHIP8 = 4;
 
-
     private final int RANK_REQ_SHIP9 = 20;   // All ships this rank
+    private final float KPM_REQ_SHIP7 = 5.25f; // Kills per minute required in order to unlock Lanc
 
     // Specials (beta only)
     //private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
@@ -1852,20 +1853,20 @@ public class distensionbot extends SubspaceBot {
                     int rank = p.getRank();
                     int bonus = 5;
                     if( rank > 10 )
-                        bonus += 20;
+                        bonus += 50;
                     if( rank > 20 )
-                        bonus += 25;
+                        bonus += 100;
                     if( rank > 30 )
-                        bonus += 50;
-                    if( rank > 40 )
-                        bonus += 50;
-                    if( rank > 50 )
                         bonus += 200;
-                    if( rank > 60 )
-                        bonus += 250;
-                    if( rank > 70 )
+                    if( rank > 40 )
                         bonus += 500;
-                    totalBonus += p.addRankPoints( bonus );
+                    if( rank > 50 )
+                        bonus += 1000;
+                    if( rank > 60 )
+                        bonus += 5000;
+                    if( rank > 70 )
+                        bonus += 10000;
+                    totalBonus += p.addRankPoints( bonus ) + (rank * 2);    // Add in rank to make it seem more random
                     m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "GOAL!  REWARD: " + totalBonus + " RP" );
                 }
             }
@@ -2557,7 +2558,7 @@ public class distensionbot extends SubspaceBot {
             playerObjs.hideObject(p.getArenaPlayerID(), LVZ_PRM_PERSONAL_FLAG );
         }
         p.setPlayerObjects();
-	
+
         m_slotManager.removePlayerFromWaitingListOnly(p);    // Just in case...
     }
 
@@ -3045,14 +3046,7 @@ public class distensionbot extends SubspaceBot {
         }
         float sharingPercent = 0;
         if( p.isSupportShip() ) {
-            float calcRank = (float)p.getRank();
-            if( shipNum == 4 )
-                if( calcRank > 10.0f )
-                    calcRank = 10.0f;
-            if( shipNum == 6 )
-                if( calcRank > 8.0f )
-                    calcRank = 8.0f;
-            sharingPercent = calcRank / 10.0f;
+            sharingPercent = p.getBaseProfitSharingPercent();
         }
         ShipTypeProfile sp = p.getShipTypeProfile();
         int chgranks = sp.ranksUntilNextRecharge(p.getRank());
@@ -5373,7 +5367,8 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdSaveData( String name, String msg ) {
-        if( !(name.equals(m_botAction.getBotName()) || name.equals(":autosave:") )) {
+        boolean autosave = ":autosave:".equals(name);
+        if( !(name.equals(m_botAction.getBotName()) || autosave) ) {
             DistensionPlayer p1 = m_players.get( name );
             if( p1 == null )
                 throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
@@ -5381,7 +5376,6 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
 
-        boolean autosave = ":autosave:".equals(name);
         if( !autosave )
             m_botAction.sendArenaMessage( "Saving player data ..." ,1 );
         int players = 0;
@@ -5824,13 +5818,13 @@ public class distensionbot extends SubspaceBot {
         int totalCount = 0;
         LinkedList <Integer>newArmy0 = new LinkedList<Integer>();
         LinkedList <Integer>newArmy1 = new LinkedList<Integer>();
-        
+
         double slidingProbability = 0.5f;
         final double improbabilityStep = 0.5f / 3f;
         // For the 1st player, army0 will have a 50% chance of getting it, if so 33% for the 2nd, if so 17% for the 3rd, if so army1 will always get the 4th,
         // army0 will again have a 17% chance for the 5th, if not 33% for the 6th, and so forth. Either army can have at most 3 more players than the other.
         // The SQL query sorts players descending by fnBattlesWon first so players are distributed roughly equally by their experience but randomized enough to make it interesting.
-        
+
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT fnID, fnArmyID FROM tblDistensionPlayer ORDER BY fnBattlesWon DESC, fnArmyID" );
             if( r == null )
@@ -5863,8 +5857,8 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "DB command not successful." );
         }
     }
-    
-    
+
+
     /**
      * Randomizes army for all players (old version).
      * @param name
@@ -5971,7 +5965,7 @@ public class distensionbot extends SubspaceBot {
             }
             m_botAction.SQLClose(r);
         } catch (SQLException e) {
-            m_botAction.sendSmartPrivateMessage( "dugwyler", e.getMessage() );
+            m_botAction.sendSmartPrivateMessage( "qan", e.getMessage() );
         }
         m_botAction.sendPrivateMessage( name, players + " players added to notify list." );
 
@@ -6452,7 +6446,7 @@ public class distensionbot extends SubspaceBot {
             desc = "Expedient rearming of Firebloom burst";
             break;
         case ABILITY_SUMMONING_AUTH:
-            desc = "Warps friendy pilots to your position";
+            desc = "Warps allies to your position w/ !summon";
             break;
         // OPS
         case OPS_INCREASE_MAX_OP:
@@ -8089,6 +8083,14 @@ public class distensionbot extends SubspaceBot {
                 if( rank > 1 )
                     award = rank * 4;
                 m_botAction.sendPrivateMessage( arenaPlayerID, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
+            } else if( successiveKills == 20 ) {
+                if( isWeasel )
+                    award = 8;
+                else
+                    award = 5;
+                if( rank > 1 )
+                    award = rank * 5;
+                m_botAction.sendPrivateMessage( arenaPlayerID, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
                 if( shipsAvail[5] == false ) {
                     String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + dbPlayerID + "' AND fnShipNum='6'";
 
@@ -8117,14 +8119,6 @@ public class distensionbot extends SubspaceBot {
                         return false;
                     }
                 }
-            } else if( successiveKills == 20 ) {
-                if( isWeasel )
-                    award = 8;
-                else
-                    award = 5;
-                if( rank > 1 )
-                    award = rank * 5;
-                m_botAction.sendPrivateMessage( arenaPlayerID, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
             } else if( successiveKills == 30 ) {
                 if( isWeasel )
                     award = 9;
@@ -8302,21 +8296,10 @@ public class distensionbot extends SubspaceBot {
          */
         public void shareProfits( int profits ) {
             if( isSupportShip() && idleTicksPiloting < 12 ) {
-                float sharingPercent;
-                float calcRank = Math.max(1.0f, (float)rank);
-                // Stronger supports do not receive as much profitsharing
-                if( shipNum == 6 || shipNum == 4 )
-                    if( rank > 12 )
-                        calcRank = 12.0f;
-                if( shipNum == 5 || shipNum == 8 || shipNum == 9 )
-                    if( rank > 40 )
-                        calcRank = 40.0f;
-
-                sharingPercent = calcRank / 10.0f;
+                float sharingPercent = getBaseProfitSharingPercent();
 
                 float baseTerrBonus = 0.0f;
                 if( shipNum == 5 ) {
-                    sharingPercent += purchasedUpgrades[8];
                     // If Terr has been in a base more than half of the time, award an additional bonus
                     if( idlesInBase * IDLE_FREQUENCY_CHECK > PROFIT_SHARING_FREQUENCY / 2 ) {
                         if( rank >= 70 )
@@ -8361,6 +8344,28 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             }
+        }
+
+        public float getBaseProfitSharingPercent() {
+            if( !isSupportShip() )
+                return 0.0f;
+
+            float sharingPercent = 0.0f;
+            float calcRank = Math.max(1.0f, (float)rank);
+            // Stronger supports do not receive as much profitsharing
+            if( shipNum == 6 || shipNum == 4 )
+                if( rank > 12 )
+                    calcRank = 12.0f;
+            if( shipNum == 5 || shipNum == 8 || shipNum == 9 )
+                if( rank > 40 )
+                    calcRank = 40.0f;
+
+            sharingPercent = calcRank / 10.0f;
+            if( shipNum == 5 )
+                sharingPercent += purchasedUpgrades[8];
+            else if( shipNum == 9 )
+                sharingPercent += purchasedUpgrades[0];
+            return sharingPercent;
         }
 
         /**
@@ -10022,7 +10027,7 @@ public class distensionbot extends SubspaceBot {
         public void removePlayerFromWaitingListOnly( DistensionPlayer p ) {
             waitingList.remove(p);
         }
-	
+
         /**
          * Place all players on waiting list into empty slots.
          */
@@ -11222,11 +11227,13 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Check for Lanc enabling
+        float rate = 0.0f;
         for( DistensionPlayer p : m_players.values() ) {
-            if( ((float)p.genKills / (float)mins) >= 5.5f && mins > 10) {
+            rate = ((float)p.genKills / (float)mins);
+            if( rate >= KPM_REQ_SHIP7 && mins > 10) {
                 if( p.getBattlesWon() > WINS_REQ_OFFICER ) {
                     if( !p.shipIsAvailable(7) ) {
-                        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "SPECIAL AWARD FOR BLOODTHIRSTY RESOLVE.  At a murderous rate of over 10 pilots a minute, you have proven you have what it takes to eviscerate the enemy rapidly.  A Lancaster is now in your !hangar." );
+                        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "SPECIAL AWARD FOR BLOODTHIRSTY RESOLVE.  At a murderous rate of over " + ((int)rate) + " pilots a minute (" + p.genKills + " kills in " + mins + " min), you have proven you have what it takes to eviscerate rapidly.  A Lancaster is now in your !hangar." );
                         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "LANCASTER: A ship designed for a brutal full-frontal offense, the Lancaster is likely to take out more than a few lesser ships before it has to rearm.  It also has an array of special weapons unique to its build.");
                         m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_UNLOCK_LANC );
                         p.addShipToDB(7);
@@ -11234,6 +11241,8 @@ public class distensionbot extends SubspaceBot {
                 }
             }
         }
+
+        cmdSaveData(":autosave:", "");
 
         if( m_beginDelayedShutdown ) {
             m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  5 minutes allowed to refit your ship if you wish.  Kills do not count during this time.  Thank you for testing!", 1 );
