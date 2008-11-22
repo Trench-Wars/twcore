@@ -96,7 +96,7 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
-    private final int RANK_0_STRENGTH = 10;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int RANK_0_STRENGTH = 50;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
 
     private final int RANK_REQ_ASSAULT_SHIP2 = 20;
     private final int RANK_REQ_ASSAULT_SHIP3 = 5;
@@ -1853,13 +1853,13 @@ public class distensionbot extends SubspaceBot {
                     int rank = p.getRank();
                     int bonus = 5;
                     if( rank > 10 )
-                        bonus += 50;
+                        bonus += 35;
                     if( rank > 20 )
-                        bonus += 100;
+                        bonus += 70;
                     if( rank > 30 )
-                        bonus += 200;
+                        bonus += 150;
                     if( rank > 40 )
-                        bonus += 500;
+                        bonus += 250;
                     if( rank > 50 )
                         bonus += 1000;
                     if( rank > 60 )
@@ -3065,7 +3065,7 @@ public class distensionbot extends SubspaceBot {
                                Tools.rightString("Army wins:  " + p.getBattlesWon() + "  |", spamLength - 50 ) );
         statusSpam.add( Tools.formatString("|      Total RP:  " + p.getRankPoints(), spamLength / 2) +
                         Tools.formatString("     Session RP:  " + p.getRecentlyEarnedRP(), (spamLength / 2) -1 ) + "|" );
-        statusSpam.add( Tools.formatString("|      Progress:  ( " + (int)pointsSince + " / " + (int)pointsNext + " )", spamLength / 2) +
+        statusSpam.add( Tools.formatString("|      Progress:  ( " + (pointsSince < 0 ? 0 : (int)pointsSince) + " / " + ((int)pointsNext + (pointsSince < 0 ? -pointsSince : 0)) + " )", spamLength / 2) +
                         Tools.formatString("     RP to next:  " + p.getPointsToNextRank(), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|                 " + "[" + progString + "]", (spamLength / 2) ) +
                         Tools.formatString("                  " + percent + "% to Rank " + (p.getRank() + 1), (spamLength / 2) -1 ) + "|" );
@@ -3156,7 +3156,8 @@ public class distensionbot extends SubspaceBot {
         progString = Tools.formatString(progString, 20 );
         String streakMsg = (p.getSuccessiveKills() > 1 ? "STREAK: " + p.getSuccessiveKills() : "" );
         String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-        m_botAction.sendPrivateMessage( name, "R-" + p.getRank() + " " + shipname + " " + p.getShipTypeName() + "  " + (int)pointsSince + " / " + (int)pointsNext +
+        m_botAction.sendPrivateMessage( name, "R-" + p.getRank() + " " + shipname + " " + p.getShipTypeName() + 
+        		"  " + (pointsSince < 0 ? 0 : (int)pointsSince) + " / " + ((int)pointsNext + (pointsSince < 0 ? -pointsSince : 0)) +
                 "  " + p.getPointsToNextRank() + "RP to R-" + (p.getRank() + 1) + ".    [" + progString + "]  "
                 + percent + "%  UP: " + p.getUpgradePoints() + "  " + streakMsg );
     }
