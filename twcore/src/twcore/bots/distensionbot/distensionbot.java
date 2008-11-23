@@ -109,7 +109,7 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_REQ_SUPPORT_SHIP8 = 4;
 
     private final int RANK_REQ_SHIP9 = 20;   // All ships this rank
-    private final float KPM_REQ_SHIP7 = 5.25f; // Kills per minute required in order to unlock Lanc
+    private final float KPM_REQ_SHIP7 = 5.0f; // Kills per minute required in order to unlock Lanc
 
     // Specials (beta only)
     //private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
@@ -1142,7 +1142,7 @@ public class distensionbot extends SubspaceBot {
             "| !summon (others)  !su |  Toggles allowing summoning by Terriers",
             "|______________________/"
             };
-            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
+            m_botAction.remotePrivateMessageSpam(name, helps);
             return;
         }
 
@@ -1158,7 +1158,7 @@ public class distensionbot extends SubspaceBot {
                     "| !battleinfo       !bi |  Display current battle status",
                     "|______________________/"
             };
-            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
+            m_botAction.remotePrivateMessageSpam(name, helps);
         } else if( shipNum == 0 ) {
             String[] helps = {
                     "     HANGAR CONSOLE",
@@ -1195,16 +1195,16 @@ public class distensionbot extends SubspaceBot {
                     "|______________________/",
                     "               -=(  Use  !help 2  for additional commands  )=-",
             };
-            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
+            m_botAction.remotePrivateMessageSpam(name, helps);
         }
 
         if( shipNum == 9 ) {
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "            -=(  Use  !opshelp (.h) for Tactical Ops commands  )=-" );
+            m_botAction.sendRemotePrivateMessage(name, "            -=(  Use  !opshelp (.h) for Tactical Ops commands  )=-" );
             p.resetIdle();
         }
 
         if( m_botAction.getOperatorList().isHighmod(name) )
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "              -=(  Use  !modhelp (!mh) for Moderator commands  )=-" );
+            m_botAction.sendRemotePrivateMessage(name, "              -=(  Use  !modhelp (!mh) for Moderator commands  )=-" );
 
     }
 
@@ -1240,9 +1240,9 @@ public class distensionbot extends SubspaceBot {
                 "  !db-randomarmies                     - Randomizes all armies.",
                 "--- NOTE: DEPENDING ON YOUR STATUS, YOU MAY OR MAY NOT HAVE ACCESS TO THESE CMDS ---"
         };
-        m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
+        m_botAction.remotePrivateMessageSpam(name, helps);
         if( m_botAction.getOperatorList().isSmod(name) ) {
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Hidden command: !db-wipeplayer <name>  - Wipes all records of a player from DB.");
+            m_botAction.sendRemotePrivateMessage(name, "Hidden command: !db-wipeplayer <name>  - Wipes all records of a player from DB.");
         }
     }
 
@@ -1290,7 +1290,7 @@ public class distensionbot extends SubspaceBot {
                     "| !opsshield <nm>  8/20 .s |  Shield <name>.  (L2)<all> = All friendlies in base",
                     "|__________________________/",
             };
-            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
+            m_botAction.remotePrivateMessageSpam(name, helps);
         } else if( msg.equalsIgnoreCase("msg") ) {
             String[] helps = {
                     "      OPS MESSAGES  -  Each uses 1 COMM, +1 if msg is a sabotage",
@@ -1314,7 +1314,7 @@ public class distensionbot extends SubspaceBot {
                     "|                       |  (False pilot counts, says there is no Terr, etc.)",
                     "|______________________/",
             };
-            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
+            m_botAction.remotePrivateMessageSpam(name, helps);
         }
     }
 
@@ -1866,8 +1866,9 @@ public class distensionbot extends SubspaceBot {
                         bonus += 5000;
                     if( rank > 70 )
                         bonus += 10000;
-                    totalBonus += p.addRankPoints( bonus ) + (rank * 2);    // Add in rank to make it seem more random
-                    m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "GOAL!  REWARD: " + totalBonus + " RP" );
+                    bonus += (rank * 2);      // Add in rank to make it seem more random
+                    totalBonus += p.addRankPoints( bonus );
+                    m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + bonus + " RP" );
                 }
             }
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
@@ -1981,6 +1982,7 @@ public class distensionbot extends SubspaceBot {
         boolean flyingSolo = (victorArmy.getPilotsOfShip(victorShip) == 1) && (victorArmy.getPilotsInGame() >= 14 );
         boolean shipExcess = false;
         boolean shipExtremeExcess = false;
+        boolean inTheRed = (victor.getPointsSinceLastRank() < 0);
 
         if( victor.numShipsAvailable() > 3 ) {
             float excess1;
@@ -2163,7 +2165,7 @@ public class distensionbot extends SubspaceBot {
         boolean revenged = loser.checkVengefulBastard( victor.getArenaPlayerID() );
         if( revenged ) {
             if( victor.wantsKillMsg() ) {
-                m_botAction.sendPrivateMessage(victor.getArenaPlayerID(), loser.getName() + " is a VENGEFUL BASTARD!" );
+                m_botAction.sendPrivateMessage(victor.getArenaPlayerID(), loser.getName() + " is a VENGEFUL B*STARD!" );
             }
             victor.setVenge( loser.getName() );
         }
@@ -2224,6 +2226,8 @@ public class distensionbot extends SubspaceBot {
                 msg += " [Swarm of " + Tools.shipNameSlang(victorShip) + "s: -10%]";
             }
         }
+        if( inTheRed )
+            msg += " [Total < rank start; 0% progress shown]";
         if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
             msg += " [x" + DEBUG_MULTIPLIER + " beta]";
         if( isFirstKill )
@@ -2238,7 +2242,7 @@ public class distensionbot extends SubspaceBot {
                     msg+= "[outside base/no inc.]";
             }
         }
-        m_botAction.sendPrivateMessage(victor.getName(), msg);
+        m_botAction.sendRemotePrivateMessage(victor.getName(), msg);
     }
 
 
@@ -2534,7 +2538,7 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "You are currently in flight." );
         }
 
-        int returnCode = p.getPlayerFromDB(); 
+        int returnCode = p.getPlayerFromDB();
         if( returnCode == 0 )
             throw new TWCoreException( "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
         if( returnCode == -1 ) {
@@ -2547,7 +2551,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        m_botAction.sendPrivateMessage( name, p.getPlayerRankString() + " " + p.getName().toUpperCase() + " authorized as a pilot of " + p.getArmyName().toUpperCase() + ".  Returning you to HQ." );
+        m_botAction.sendRemotePrivateMessage( name, p.getPlayerRankString() + " " + p.getName().toUpperCase() + " authorized as a pilot of " + p.getArmyName().toUpperCase() + ".  Returning you to HQ." );
         p.setShipNum( 0 );
         if( p.getArmyID() == 0 ) {
             playerObjs.showObject(p.getArenaPlayerID(), LVZ_PRM_PERSONAL_FLAG );
@@ -2598,7 +2602,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Another player wishes to enter the battle; you have been removed to allow them to play." );
         }
 
-        m_botAction.sendPrivateMessage( name, p.getName().toUpperCase() + " leaving hangars of " + p.getArmyName().toUpperCase() + ".  Time played today: " + p.getMinutesPlayed() + " min." );
+        m_botAction.sendRemotePrivateMessage( name, p.getName().toUpperCase() + " leaving hangars of " + p.getArmyName().toUpperCase() + ".  Time played today: " + p.getMinutesPlayed() + " min." );
         p.saveCurrentShipToDB();		// As the dock doesn't kick in fast enough, save before we change the ship #
         p.setShipNum( -1 );
         p.savePlayerDataToDB();
@@ -2655,11 +2659,15 @@ public class distensionbot extends SubspaceBot {
         // Check if Tactical Ops position is available
         if( shipNum == 9 ) {
             if( !m_refitMode ) {    // Let people change around Ops in refit mode
-                if( m_singleFlagMode )
-                    throw new TWCoreException( "Sorry, the Tactical Ops console is not active while only a single base is in contention." );
+                if( m_singleFlagMode ) {
+                    m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the Tactical Ops console is not active while only a single base is in contention." );
+                    return;
+                }
                 for( DistensionPlayer p2 : m_players.values() )
-                    if( p2.getShipNum() == 9 && p2.getArmyID() == p.getArmyID() )
-                        throw new TWCoreException( "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
+                    if( p2.getShipNum() == 9 && p2.getArmyID() == p.getArmyID() ) {
+                        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, " + p2.getName() + " is already sitting at the Tactical Ops console." );
+                        return;
+                    }
             }
             // Let Tac Ops change to spec
             if( lastShipNum > 0 )
@@ -2680,12 +2688,23 @@ public class distensionbot extends SubspaceBot {
             // If we already have more than they do (2 more needed for terr), do not allow the change
             // Remember, in this calculation the player that just changed to shark is not included, so
             // if our army already has more than the other army, the difference would be +2 after the change.
-            if( shipNum == Tools.Ship.SHARK && friendly > enemy )
-                throw new TWCoreException( "Sorry, the other army doesn't have enough Sharks flying to make you also Sharking any fair!" );
-            if( shipNum == Tools.Ship.SHARK && friendly > 3 )
-                throw new TWCoreException( "Sorry, only three Sharks are allowed per army." );
-            if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 1 )
-                throw new TWCoreException( "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
+            boolean tooMany = false;
+            if( shipNum == Tools.Ship.SHARK && friendly > enemy ) {
+                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Sharks flying to make you also Sharking any fair!" );
+                tooMany = true;
+            }
+            if( shipNum == Tools.Ship.SHARK && friendly > 3 ) {
+                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, only three Sharks are allowed per army." );
+                tooMany = true;
+            }
+            if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 1 ) {
+                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
+                tooMany = true;
+            }
+            if( tooMany ) {
+                m_botAction.setShip(p.getArenaPlayerID(), lastShipNum );
+                return;
+            }
         }
         if( lastShipNum > 0 ) {
             String shipname = (lastShipNum == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
@@ -2827,7 +2846,7 @@ public class distensionbot extends SubspaceBot {
         checkFlagTimeStop();
         if( p.saveCurrentShipToDBNow() ) {
             String shipname = (p.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status saved; you are now docked.  " + p.getRecentlyEarnedRP() + " RP earned in " + shipname + ".  Time played today: " + p.getMinutesPlayed() + " min.  !leave to stop timer." );
+            m_botAction.sendRemotePrivateMessage( p.getName(), "Ship status saved; you are now docked.  " + p.getRecentlyEarnedRP() + " RP earned in " + shipname + ".  Time played today: " + p.getMinutesPlayed() + " min.  !leave to stop timer." );
             p.setIgnoreShipChanges(false);
             p.setShipNum( 0 );
             playerObjs.hideObject(p.getArenaPlayerID(), LVZ_PRM_PERSONAL_FLAG );
@@ -2864,14 +2883,14 @@ public class distensionbot extends SubspaceBot {
             inGame = !(p.getShipNum() == -1);
 
         if( inGame )
-            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Total     Playing   Strength    Flags" );
+            m_botAction.sendRemotePrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Total     Playing   Strength    Flags" );
         else {
-            m_botAction.sendPrivateMessage( name, "ARMY ENLISTMENT TIPS" );
-            m_botAction.sendPrivateMessage( name, "--------------------" );
-            m_botAction.sendPrivateMessage( name, " - The army you choose is permanent.  You lose points when you !defect to another." );
-            m_botAction.sendPrivateMessage( name, " - Choose the army with the biggest enlistment bonus -- free points to get you started!" );
-            m_botAction.sendPrivateMessage( name, " - Don't worry about the number of players currently playing.  I'll adjust for it." );
-            m_botAction.sendPrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Total     Playing   Bonus" );
+            m_botAction.sendRemotePrivateMessage( name, "ARMY ENLISTMENT TIPS" );
+            m_botAction.sendRemotePrivateMessage( name, "--------------------" );
+            m_botAction.sendRemotePrivateMessage( name, " - The army you choose is permanent.  You lose points when you !defect to another." );
+            m_botAction.sendRemotePrivateMessage( name, " - Choose the army with the biggest enlistment bonus -- free points to get you started!" );
+            m_botAction.sendRemotePrivateMessage( name, " - Don't worry about the number of players currently playing.  I'll adjust for it." );
+            m_botAction.sendRemotePrivateMessage( name, "#   " + Tools.formatString("Army Name", 35 ) + "Total     Playing   Bonus" );
         }
         //                                                                                     #234567890#23456789#23456789012#
 
@@ -2879,7 +2898,7 @@ public class distensionbot extends SubspaceBot {
             //for( DistensionArmy a : m_armies.values() ) {
             for( int i = 0; i < 2; i++ ) {
                 DistensionArmy a = m_armies.get(i);
-                m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
+                m_botAction.sendRemotePrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
                         Tools.formatString( ""+a.getPilotsTotal(), 10 ) +
                         Tools.formatString( ""+a.getPilotsInGame(), 9 ) +
@@ -2893,7 +2912,7 @@ public class distensionbot extends SubspaceBot {
                 int bonus = 0;
                 if( a.isDefault() )
                     bonus = calcEnlistmentBonus( a );
-                m_botAction.sendPrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
+                m_botAction.sendRemotePrivateMessage( name, Tools.formatString( ""+a.getID(), 4 ) +
                         Tools.formatString( a.getName(), 38 ) +
                         Tools.formatString( ""+a.getPilotsTotal(), 10 ) +
                         Tools.formatString( ""+a.getPilotsInGame(), 9 ) +
@@ -2941,33 +2960,33 @@ public class distensionbot extends SubspaceBot {
             if( p.shipIsAvailable(i) ) {
                 if( currentShip == i ) {
                     if( i != 9 )
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "IN FLIGHT: Rank " + p.getRank() + " (" + p.getUpgradeLevel() + " upg)" );
+                        m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "IN FLIGHT: Rank " + p.getRank() + " (" + p.getUpgradeLevel() + " upg)" );
                     else
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "AT CONSOLE: Rank " + p.getRank() + " (" + p.getUpgradeLevel() + " upg)" );
+                        m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "AT CONSOLE: Rank " + p.getRank() + " (" + p.getUpgradeLevel() + " upg)" );
                 } else {
                     rank = shipRanks.get(i);
                     if( rank != null ) {
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank " + rank );
+                        m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank " + rank );
                     } else {
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank unknown" );
+                        m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "HANGAR: Rank unknown" );
                     }
                 }
             } else {
                 pf = m_shipGeneralData.get(i);
                 if( pf.getRankUnlockedAtAssault() == -1 )
-                    m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "LOCKED" );
+                    m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "LOCKED" );
                 else
                     if( i != 9 )
                         if( p.getShipNum() == 0 ) {
-                            m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "LOCKED"  );
+                            m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "LOCKED"  );
                         } else {
                             if( p.isSupportShip() )
-                                m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtSupport() + " NEEDED (support)"  );
+                                m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtSupport() + " NEEDED (support)"  );
                             else
-                                m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtAssault() + " NEEDED (assault)"  );
+                                m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtAssault() + " NEEDED (assault)"  );
                         }
                     else
-                        m_botAction.sendPrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtAssault() + " NEEDED IN ALL SHIPS + Officer");
+                        m_botAction.sendRemotePrivateMessage( name, "  " + i + "   " + shipname + "RANK " + pf.getRankUnlockedAtAssault() + " NEEDED IN ALL SHIPS + Officer");
             }
         }
     }
@@ -2998,9 +3017,12 @@ public class distensionbot extends SubspaceBot {
         else
             theName = name;
         int shipNum = p.getShipNum();
-        if( shipNum == -1 )
-            throw new TWCoreException( "I don't know who you are yet.  Please !return to your army, or !enlist if you have none." );
-
+        if( shipNum == -1 ) {
+            if( mod == null )
+                throw new TWCoreException( "I don't know who you are yet.  Please !return to your army, or !enlist if you have none." );
+            else
+                throw new TWCoreException( "This player has not returned to their hangar; nothing to see." );
+        }
 
         if( shipNum == 0 ) {
             m_botAction.sendPrivateMessage( theName, p.getPlayerRankString() + " " + p.getName().toUpperCase() + " of " + p.getArmyName() + ": DOCKED.  [Your data is saved; safe to leave arena.]" );
@@ -3064,7 +3086,7 @@ public class distensionbot extends SubspaceBot {
                                Tools.rightString("Army wins:  " + p.getBattlesWon() + "  |", spamLength - 50 ) );
         statusSpam.add( Tools.formatString("|      Total RP:  " + p.getRankPoints(), spamLength / 2) +
                         Tools.formatString("     Session RP:  " + p.getRecentlyEarnedRP(), (spamLength / 2) -1 ) + "|" );
-        statusSpam.add( Tools.formatString("|      Progress:  ( " + (pointsSince < 0 ? 0 : (int)pointsSince) + " / " + ((int)pointsNext + (pointsSince < 0 ? -pointsSince : 0)) + " )", spamLength / 2) +
+        statusSpam.add( Tools.formatString("|      Progress:  ( " + (pointsSince < 0 ? 0 : (int)pointsSince) + " / " + ((int)pointsNext + (pointsSince < 0 ? -(int)pointsSince : 0)) + " )", spamLength / 2) +
                         Tools.formatString("     RP to next:  " + p.getPointsToNextRank(), (spamLength / 2) -1 ) + "|" );
         statusSpam.add( Tools.formatString("|                 " + "[" + progString + "]", (spamLength / 2) ) +
                         Tools.formatString("                  " + percent + "% to Rank " + (p.getRank() + 1), (spamLength / 2) -1 ) + "|" );
@@ -3092,7 +3114,7 @@ public class distensionbot extends SubspaceBot {
         statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
 
         for( int i=0; i < statusSpam.size(); i++ )
-            m_botAction.sendPrivateMessage( theName, statusSpam.get(i) );
+            m_botAction.sendRemotePrivateMessage( theName, statusSpam.get(i) );
     }
 
 
@@ -3155,10 +3177,12 @@ public class distensionbot extends SubspaceBot {
         progString = Tools.formatString(progString, 20 );
         String streakMsg = (p.getSuccessiveKills() > 1 ? "STREAK: " + p.getSuccessiveKills() : "" );
         String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-        m_botAction.sendPrivateMessage( name, "R-" + p.getRank() + " " + shipname + " " + p.getShipTypeName() + 
-        		"  " + (pointsSince < 0 ? 0 : (int)pointsSince) + " / " + ((int)pointsNext + (pointsSince < 0 ? -pointsSince : 0)) +
+        m_botAction.sendPrivateMessage( name, "R-" + p.getRank() + " " + shipname + " " + p.getShipTypeName() +
+        		"  " + (pointsSince < 0 ? 0 : (int)pointsSince) + " / " + (int)((int)pointsNext + (pointsSince < 0 ? (int)-pointsSince : 0)) +
                 "  " + p.getPointsToNextRank() + "RP to R-" + (p.getRank() + 1) + ".    [" + progString + "]  "
                 + percent + "%  UP: " + p.getUpgradePoints() + "  " + streakMsg );
+        if( pointsSince < 0 )
+            m_botAction.sendPrivateMessage( name, "Below rank start RP (negative RP).  You will need " + (int)-pointsSince + "RP before you earn normal RP again.");
     }
 
 
@@ -3249,7 +3273,8 @@ public class distensionbot extends SubspaceBot {
                 + (p.getUpgradePoints() == 0?"  (Rank up for more UP)":"") );
         if( p.getRank() < 10 )
             display.add("Use !upginfo upgrade# (or !ui #) to get information on what each upgrade does.");
-        m_botAction.privateMessageSpam(p.getArenaPlayerID(), display);
+        for( String spam : display )
+            m_botAction.sendRemotePrivateMessage( name, spam );
     }
 
 
@@ -3397,6 +3422,7 @@ public class distensionbot extends SubspaceBot {
         if( currentUpgradeLevel <= 0 )
             throw new TWCoreException( "You haven't exactly upgraded that, now have you?" );
 
+        boolean isZClass = p.getShipType() == SHIPTYPE_Z_CLASS;
         int cost = upgrade.getCostDefine( currentUpgradeLevel - 1);
         if( p.modifyUpgrade( upgradeNum, -1 ) == false )
             throw new TWCoreException( "ERROR modifying upgrade " + upgradeNum + ".  Notify a mod immediately." );
@@ -3406,31 +3432,30 @@ public class distensionbot extends SubspaceBot {
         else if( upgrade.getPrizeNum() > 0 )
             m_botAction.specificPrize( name, -upgrade.getPrizeNum() );
         if( upgrade.getMaxLevel() == 1 ) {
-            m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] removed.  +" + cost + "UP to army allowance.", SOUND_SCRAP );
+            m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] removed.  +" + cost + "UP to army allowance." + (isZClass?" [ZClass; free]":""), SOUND_SCRAP );
         } else {
-            m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] downgraded to level " + (currentUpgradeLevel - 1) + ".  +" + cost + "UP to army allowance.", SOUND_SCRAP );
+            m_botAction.sendPrivateMessage( name, upgrade.getName() + " [" + getUpgradeText(upgrade.getPrizeNum()) + "] downgraded to level " + (currentUpgradeLevel - 1) + ".  +" + cost + "UP to army allowance." + (isZClass?" [ZClass; free]":""), SOUND_SCRAP );
         }
         m_scrappingPlayers.remove(name);
         m_scrappingPlayers.put(name,upgradeNum);
 
-        /* TEMPORARY: FREE SCRAP WHILE PEOPLE ADJUST TO NEW UPGRADE SYSTEM
+
         // Gun/bomb/multi is a free scrap, as sometimes you can't fire after upgrading it
         if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS || upgrade.getPrizeNum() == Tools.Prize.MULTIFIRE ) {
             m_botAction.sendPrivateMessage( name, "No rank progress lost (gun/bomb/multifire scraps are free)." );
         } else {
-            int pointsSince = player.getPointsSinceLastRank();
-            int fifteenPercentOfRank = player.getRankPointsForPercentage( 15.0f );
-            if( pointsSince >= fifteenPercentOfRank ) {
-                int points = player.getPointsSinceLastRank() - fifteenPercentOfRank;
+            int pointsSince = p.getPointsSinceLastRank();
+            int percentOfRank = p.getRankPointsForPercentage( 25.0f );
+            if( pointsSince >= percentOfRank ) {
+                int points = p.getPointsSinceLastRank() - percentOfRank;
                 if( points < 0 )
                     points = 0;
-                player.addRankPoints( -points );
-                m_botAction.sendPrivateMessage( name, "Ship returned to 15% progress; -" + points + "RP." );
+                p.addRankPoints( -points );
+                m_botAction.sendPrivateMessage( name, "Ship returned to 25% progress; -" + points + "RP.  (Use Z-Class to avoid scrap penalties.)" );
             } else {
-                m_botAction.sendPrivateMessage( name, "Scrap done within 15% of start of rank; no RP lost." );
+                m_botAction.sendPrivateMessage( name, "Scrap done within 25% of start of rank; no RP lost." );
             }
         }
-         */
     }
 
 
@@ -3514,9 +3539,9 @@ public class distensionbot extends SubspaceBot {
         if( p.getRank() < distensionbot.ShipTypeProfile.rankForTypeChoice )
             throw new TWCoreException( "You may only specialize your ship after rank " + distensionbot.ShipTypeProfile.rankForTypeChoice + ".  Patience." );
 
-        int cost = 0;
+        float cost = 0;
         if( !DEBUG && ( p.isSpecialized() || p.getRank() > distensionbot.ShipTypeProfile.rankForPaidTypeChoice ) )
-            cost = p.getRankPoints() / 20;
+            cost = (float)p.getRankPoints() * .03f;
         String[] args = msg.split(":");
         boolean realDeal = false;
         if( args.length == 2 )
@@ -3550,7 +3575,7 @@ public class distensionbot extends SubspaceBot {
 
         if( !realDeal ) {
             String specmsg = "So, you'd like to specialize to " + sp.getTypeName() + "?";
-            String costmsg = "It'll cost you " + cost + " RP -- 5% of the total RP you've earned -- to do it.";
+            String costmsg = "It'll cost you " + (int)cost + " RP -- 3% of all the total RP you've ever earned -- to do it.";
             String confirmmsg = "Use !specialize " + typeToChangeTo + ":YES if you're sure.";
             if( !p.isSpecialized() ) {
                 if( cost > 0 ) {
@@ -3574,13 +3599,13 @@ public class distensionbot extends SubspaceBot {
         // Take their RP, take their upgrades, take their UP.  Thank you, ma'am.
         p.deprizeDefaultUpgrades();
         p.setShipType( typeToChangeTo );
-        p.rankPoints -= cost;
+        p.rankPoints -= (int)cost;
         massScrap(p, 0, NUM_UPGRADES - 1 );
         p.upgPoints = sp.getTotalUPforRank(p.getRank());
         p.calculateRechargeAndEnergyLevels();
 
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You have specialized to " + sp.getTypeName().toUpperCase() + "!" );
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + cost + "RP  (5% of current)  You now have " + p.getUpgradePoints() + " UP to spend." );
+        m_botAction.sendRemotePrivateMessage( p.getName(), "You have specialized to " + sp.getTypeName().toUpperCase() + "!" );
+        m_botAction.sendRemotePrivateMessage( p.getName(), "Cost: " + (int)cost + "RP  (3% of your total RP earned)  You now have " + p.getUpgradePoints() + " UP to spend." );
         p.prizeDefaultUpgrades();
     }
 
@@ -3600,16 +3625,16 @@ public class distensionbot extends SubspaceBot {
         if( p.getShipNum() == 9 )
             throw new TWCoreException( "Tactical Ops do not specialize, as you are not in a ship!  You've been a little too long at that console, I think..." );
 
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "--- SHIP SPECIALIZATIONS ---" );
+        m_botAction.sendRemotePrivateMessage( name, "--- SHIP SPECIALIZATIONS ---" );
 
         for( int i=0; i<m_shipTypeGeneralData.size(); i++ ) {
             ShipTypeProfile sp = m_shipTypeGeneralData.get(i);
             String typeName = Tools.formatString( sp.getTypeName(), 15 );
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("", 75, "=") + "." );
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "|" + Tools.formatString( i + ": " + typeName + " - " + sp.getLineDesc(), 75) + "|" );
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "|" + Tools.formatString( "   NRG Rate: " + sp.getEnRateDesc() + "   CHG Rate: " + sp.getChgRateDesc() + "  UP/RANK: " + sp.getUPperRank() + "  (" + sp.getTotalUPforRank(p.getRank()) + "UP after change)", 75) + "|" );
+            m_botAction.sendRemotePrivateMessage( name, "." + Tools.formatString("", 75, "=") + "." );
+            m_botAction.sendRemotePrivateMessage( name, "|" + Tools.formatString( i + ": " + typeName + " - " + sp.getLineDesc(), 75) + "|" );
+            m_botAction.sendRemotePrivateMessage( name, "|" + Tools.formatString( "   NRG Rate: " + sp.getEnRateDesc() + "   CHG Rate: " + sp.getChgRateDesc() + "  UP/RANK: " + sp.getUPperRank() + "  (" + sp.getTotalUPforRank(p.getRank()) + "UP after change)", 75) + "|" );
         }
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "." + Tools.formatString("", 75, "=") + "." );
+        m_botAction.sendRemotePrivateMessage( name, "." + Tools.formatString("", 75, "=") + "." );
     }
 
 
@@ -3858,8 +3883,7 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.getNumPlaying() > 8 ) {
                     lastAssistReward = System.currentTimeMillis();
                     int rank = p.getRank();
-                    int reward = rank;
-                    if( reward == 0 ) reward = 1;
+                    int reward = Math.max( 5, rank );
 
                     if( armySizeWeight < .5 )
                         reward *= 4;
@@ -3872,16 +3896,22 @@ public class distensionbot extends SubspaceBot {
 
                     // Increased bonuses for higher ranks, as it takes more to make a dent in
                     // their to-rank amounts
-                    if( rank >= 70 )
+                    if( rank >= 70 )        // 70: 3500RP
+                        reward *= 50;
+                    else if( rank >= 60 )   // 60: 1200RP
+                        reward *= 20;
+                    else if( rank >= 50 )   // 50: 500RP
                         reward *= 10;
-                    else if( rank >= 60 )
-                        reward *= 7;
-                    else if( rank >= 50 )
+                    else if( rank >= 40 )   // 40: 240RP
+                        reward *= 8;
+                    else if( rank >= 30 )   // 30: 150RP
                         reward *= 5;
-                    else if( rank >= 40 )
+                    else if( rank >= 20 )   // 20: 80RP
                         reward *= 4;
-                    else if( rank >= 30 )
+                    else if( rank >= 10 )   // 10: 30RP
                         reward *= 3;
+                    else                    //  0: 10RP
+                        reward *= 2;
 
                     reward = p.addRankPoints(reward,false); // Show actual amount added
                     if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
@@ -3944,17 +3974,17 @@ public class distensionbot extends SubspaceBot {
                 players++;
                 shipStrength += p2.getStrength();
             }
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
+            m_botAction.sendRemotePrivateMessage(name, num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
                     + (shipStrength > 0 ? ("  " + shipStrength + " STR" + text) : "") );
             totalStrength += shipStrength;
         }
         if( team.get(0).size() > 0 ) {
             DistensionPlayer p2 = m_players.get( team.get(0).get(0) );
             players++;
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "+ Ops    " + p2.getStrength() + " STR   " + p2.getName() + "(" + p2.getRank() + ")");
+            m_botAction.sendRemotePrivateMessage(name, "+ Ops    " + p2.getStrength() + " STR   " + p2.getName() + "(" + p2.getRank() + ")");
         }
 
-        m_botAction.sendPrivateMessage(p.getArenaPlayerID(), players + " players, " + totalStrength + " total strength.  (STR = rank + " + RANK_0_STRENGTH + ")" );
+        m_botAction.sendRemotePrivateMessage(name, players + " players, " + totalStrength + " total strength.  (STR = rank + " + RANK_0_STRENGTH + ")" );
         if( totalStrength == 0 && DEBUG )
             m_botAction.sendArenaMessage("0 strength found for Army " + p.getArmyID() + ".  Assisting: " + (p.isAssisting() ? "Yes" : "No") + "   Natural ID: " + p.getNaturalArmyID() );
     }
@@ -5527,6 +5557,8 @@ public class distensionbot extends SubspaceBot {
                 m_beginDelayedShutdown = true;
                 if( DEBUG )
                     m_botAction.sendArenaMessage("--- DELAYED SHUTDOWN INITIATED ---  The beta test will stop at the next end of round.  Thank you for testing.", Tools.Sound.VICTORY_BELL );
+                else
+                    m_botAction.sendArenaMessage("--- DELAYED SHUTDOWN INITIATED ---  The game will stop at the next end of round.  Thank you for playing.", Tools.Sound.VICTORY_BELL );
             }
         };
         try {
@@ -5686,7 +5718,7 @@ public class distensionbot extends SubspaceBot {
         }
         m_botAction.sendPrivateMessage( name, "Name '" + args[0] + "' changed to '" + args[1] + "' in database." );
         Tools.printLog(name + " changed " + args[0] + "'s name to " + args[1] + " in Distension DB." );
-        m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " changed " + args[0] + "'s name to " + args[1] + " in Distension DB." );
+        m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " changed " + args[0] + "'s name to " + args[1] + " in Distension DB." );
     }
 
 
@@ -5725,7 +5757,7 @@ public class distensionbot extends SubspaceBot {
         String shipname = ( player.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(shipNumToAdd) );
         m_botAction.sendPrivateMessage( name, shipname + " has been added to " + player.getName() + "'s hangar." );
         Tools.printLog( name + " added ship #" + shipNumToAdd + " to " + args[0] + "'s hangar in Distension DB." );
-        m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " added ship #" + shipNumToAdd + " to " + args[0] + "'s hangar in Distension DB." );
+        m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " added ship #" + shipNumToAdd + " to " + args[0] + "'s hangar in Distension DB." );
     }
 
 
@@ -5764,7 +5796,7 @@ public class distensionbot extends SubspaceBot {
         String shipname = ( player.getShipNum() == 9 ? "Tactical Ops" : Tools.shipName(shipNumToWipe) );
         m_botAction.sendPrivateMessage( name, shipname + " has been removed from " + player.getName() + "'s hangar." );
         Tools.printLog( name + " deleted " + args[0] + "'s ship #" + shipNumToWipe + " from Distension DB." );
-        m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " deleted " + args[0] + "'s ship #" + shipNumToWipe + " from Distension DB." );
+        m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " deleted " + args[0] + "'s ship #" + shipNumToWipe + " from Distension DB." );
     }
 
 
@@ -5793,7 +5825,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.SQLQueryAndClose( m_database, "DELETE FROM tblDistensionShip WHERE fnPlayerID='" + id + "'" );
                 m_botAction.sendPrivateMessage( name, msg + " deleted from DB!" );
                 Tools.printLog(name + " deleted " + msg + " from Distension DB!" );
-                m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " deleted '" + msg + "' from Distension DB." );
+                m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " deleted '" + msg + "' from Distension DB." );
             } else {
                 m_botAction.sendPrivateMessage( name, "Player not found." );
             }
@@ -5853,6 +5885,7 @@ public class distensionbot extends SubspaceBot {
             m_armies.get(0).manuallySetPilotsTotal( army0Count );
             m_armies.get(1).manuallySetPilotsTotal( army1Count );
             m_botAction.sendPrivateMessage( name, "Army reconfiguration complete; all " + totalCount + " players reassigned.  Army 0: " + army0Count + " pilots; Army 1: " + army1Count + " pilots." );
+            m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " randomized armies." );
             cmdSaveDie(name,"");
         } catch (SQLException e ) {
             Tools.printStackTrace( "Error getting player data from DB for !db-randomarmies.", e );
@@ -6118,10 +6151,21 @@ public class distensionbot extends SubspaceBot {
 
     /**
      * Gets String location name based on a Y coordinate.
+     * Use if not interested in using X coord.
      * @param y Y tile coord to check.
      * @return
      */
     public String getLocation( int y ) {
+        return getLocation( -1, y );
+    }
+
+    /**
+     * Gets String location name based on an X and Y coordinate.
+     * @param x X tile coord to check.
+     * @param y Y tile coord to check.
+     * @return
+     */
+    public String getLocation( int x, int y ) {
         if( y <= TOP_SAFE || y >= BOT_SAFE )
             return "Resupplying";
         if( y <= TOP_ROOF )
@@ -6140,7 +6184,17 @@ public class distensionbot extends SubspaceBot {
             return "Bottom FR";
         if( y >= BOT_ROOF )
             return "Roofing Bottom ...";
-        return "Neutral zone";
+        if( x == -1 )
+            return "Neutral zone";
+        if( x < 374 )
+            return "Neutral zone, left Goal";
+        if( x > 649 )
+            return "Neutral zone, right Goal";
+        if( x < 439 )
+            return "Neutral zone, left side";
+        if( x > 585 )
+            return "Neutral zone, right side";
+        return "Neutral zone, center";
     }
 
     /**
@@ -6494,11 +6548,11 @@ public class distensionbot extends SubspaceBot {
      * @param recipients Arena IDs of recipients of msgs
      * @param msgs Indexed messages matching arena IDs
      */
-    public void spamManyPlayers( Vector<Integer> recipients, Vector<String> msgs ) {
+    public void spamManyPlayers( Vector<String> recipients, Vector<String> msgs ) {
         if( recipients.size() != msgs.size() )
             throw new RuntimeException( "# recipients must equal # msgs." );
         for( int i=0; i<recipients.size(); i++ )
-            m_botAction.sendPrivateMessage( recipients.get(i), msgs.get(i) );
+            m_botAction.sendRemotePrivateMessage( recipients.get(i), msgs.get(i) );
     }
 
     /**
@@ -6507,11 +6561,11 @@ public class distensionbot extends SubspaceBot {
      * @param msgs Indexed messages matching arena IDs
      * @param sounds Indexed sounds matching arena IDs
      */
-    public void spamManyPlayers( Vector<Integer> recipients, Vector<String> msgs, Vector<Integer> sounds ) {
+    public void spamManyPlayers( Vector<String> recipients, Vector<String> msgs, Vector<Integer> sounds ) {
         if( recipients.size() != msgs.size() || recipients.size() != sounds.size() )
             throw new RuntimeException( "# recipients must equal # msgs & sounds." );
         for( int i=0; i<recipients.size(); i++ )
-            m_botAction.sendPrivateMessage( recipients.get(i), msgs.get(i), sounds.get(i) );
+            m_botAction.sendRemotePrivateMessage( recipients.get(i), msgs.get(i), sounds.get(i) );
     }
 
     /**
@@ -7432,7 +7486,7 @@ public class distensionbot extends SubspaceBot {
                 // EMP ability; re-enable every 30 ticks (15 min)
                 if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 30 == 0 ) {
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_EMP );
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "Targeted EMP recharged.  !emp to use.", SOUND_POWERUP_RECHARGED );
+                    m_botAction.sendRemotePrivateMessage(name, "Targeted EMP recharged.  !emp to use.", SOUND_POWERUP_RECHARGED );
                     targetedEMP = true;
                 }
             }
@@ -7442,7 +7496,7 @@ public class distensionbot extends SubspaceBot {
                     double etChance = Math.random() * 100.0;
                     if( ((double)purchasedUpgrades[10] * 25.0) > etChance ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "Energy Tank replenished.  !! to use.", SOUND_POWERUP_RECHARGED );
+                        m_botAction.sendRemotePrivateMessage(name, "Energy Tank replenished.  !! to use.", SOUND_POWERUP_RECHARGED );
                         energyTank = true;
                     }
                 }
@@ -7490,7 +7544,7 @@ public class distensionbot extends SubspaceBot {
                 if( tick % neededTick == 0 ) {
                     if( !jumpSpace ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_JUMPSPACE );
-                        m_botAction.sendPrivateMessage( arenaPlayerID, "JumpSpace Drive ready.  PM >>> to use.", SOUND_POWERUP_RECHARGED );
+                        m_botAction.sendRemotePrivateMessage(name, "JumpSpace Drive ready.  PM >>> to use.", SOUND_POWERUP_RECHARGED );
                         jumpSpace = true;
                         prized = true;
                     }
@@ -7501,7 +7555,7 @@ public class distensionbot extends SubspaceBot {
                     double pmChance = Math.random() * 100.0;
                     if( ((double)purchasedUpgrades[14] * 15.0) > pmChance ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_PRISMATIC );
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "Prismatic Array replenished.  --- to use.", SOUND_POWERUP_RECHARGED);
+                        m_botAction.sendRemotePrivateMessage(name, "Prismatic Array replenished.  --- to use.", SOUND_POWERUP_RECHARGED);
                         prismatic = true;
                     }
                 }
@@ -7510,7 +7564,7 @@ public class distensionbot extends SubspaceBot {
                 // Allow another Comm every minute, up to max allowed
                 if( tick % 3 == 0 ) {
                     if( currentComms < DEFAULT_OP_MAX_COMMS ) {
-                        m_botAction.sendPrivateMessage( arenaPlayerID, "+1 Comm Auth." );
+                        m_botAction.sendRemotePrivateMessage(name, "+1 Comm Auth." );
                         currentComms++;
                     }
                 }
@@ -7522,7 +7576,7 @@ public class distensionbot extends SubspaceBot {
                         if( currentOP + increase > maxOP )
                             increase = maxOP - currentOP;
                         currentOP += increase;
-                        m_botAction.sendPrivateMessage( arenaPlayerID, "+" + increase + " OP  ( " + currentOP + " / " + maxOP + " )" );
+                        m_botAction.sendRemotePrivateMessage(name, "+" + increase + " OP  ( " + currentOP + " / " + maxOP + " )" );
                     }
                 }
 
@@ -7543,7 +7597,7 @@ public class distensionbot extends SubspaceBot {
                             }
                         }
                     }
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "TEAM REPORT:  " + terrs + " Terrs, " + sharks + " Sharks; " + others + " others."  );
+                    m_botAction.sendRemotePrivateMessage(name, "TEAM REPORT:  " + terrs + " Terrs, " + sharks + " Sharks; " + others + " others."  );
                 }
             }
             if( prized )
@@ -7566,7 +7620,7 @@ public class distensionbot extends SubspaceBot {
             if( rank >= 80 ) {
                 m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  FINAL RANK ATTAINED  )=-" );
                 String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
-                m_botAction.sendPrivateMessage(arenaPlayerID, "YOU ARE NOW A MASTER OF THE " + shipname.toUpperCase() + ".  ALL WILL FOREVER REMEMBER THE NAME OF " + name.toUpperCase() + " ... CONGRATULATIONS!!!", Tools.Sound.VICTORY_BELL );
+                m_botAction.sendRemotePrivateMessage(name, "YOU ARE NOW A MASTER OF THE " + shipname.toUpperCase() + ".  ALL WILL FOREVER REMEMBER THE NAME OF " + name.toUpperCase() + " ... CONGRATULATIONS!!!", Tools.Sound.VICTORY_BELL );
                 m_botAction.sendArenaMessage( name.toUpperCase() + " has become a MASTER OF THE " + shipname.toUpperCase() + ".  SALUTE THIS LIVING LEGEND!!", Tools.Sound.PLAY_MUSIC_ONCE );
                 m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_RANKUP );
                 nextRank = 999999999;
@@ -7576,9 +7630,9 @@ public class distensionbot extends SubspaceBot {
             ShipTypeProfile sp = getShipTypeProfile();
             upgPoints += sp.getUPperRank();
             if( sp.receivedEnergy(rank) )
-                m_botAction.sendPrivateMessage(arenaPlayerID, "Your ship has been fitted with additional ARMOR AND SHIELDS." );
+                m_botAction.sendRemotePrivateMessage(name, "Your ship has been fitted with additional ARMOR AND SHIELDS." );
             if( sp.receivedRecharge(rank) )
-                m_botAction.sendPrivateMessage(arenaPlayerID, "Your ship has been fitted with a more efficient SHIELD REGENERATION DRIVE." );
+                m_botAction.sendRemotePrivateMessage(name, "Your ship has been fitted with a more efficient SHIELD REGENERATION DRIVE." );
 
             rankStart = nextRank;
             nextRank = m_shipGeneralData.get( shipNum ).getNextRankCost(rank);
@@ -7589,18 +7643,18 @@ public class distensionbot extends SubspaceBot {
 
             // Add JumpSpace ability for Javs at rank 15
             if( shipNum == 2 && rank == 15 ) {
-                m_botAction.sendPrivateMessage(arenaPlayerID, "As a rank 15 Javelin, you have unlocked the JumpSpace Drive.  It will be recharged shortly; PM >>> to use." );
+                m_botAction.sendRemotePrivateMessage(name, "As a rank 15 Javelin, you have unlocked the JumpSpace Drive.  It will be recharged shortly; PM >>> to use." );
                 m_specialAbilityPrizer.addPlayer(this);
             }
 
             if( nextRank - rankPoints > 0 ) {
                 String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
                 if( numRanks > 1 )
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  " + numRanks + " RANKS UP !!  )=-  You are now a RANK " + rank + " " + shipname + ".  Next rank in " + ( nextRank - rankPoints )+ " RP.", SOUND_RANKUP );
+                    m_botAction.sendRemotePrivateMessage(name, "-=(  " + numRanks + " RANKS UP !!  )=-  You are now a RANK " + rank + " " + shipname + ".  Next rank in " + ( nextRank - rankPoints )+ " RP.", SOUND_RANKUP );
                 else
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "-=(  RANK UP!  )=-  You are now a RANK " + rank + " " + shipname + " pilot.  Next rank in " + ( nextRank - rankPoints )+ " RP.", SOUND_RANKUP );
+                    m_botAction.sendRemotePrivateMessage(name, "-=(  RANK UP!  )=-  You are now a RANK " + rank + " " + shipname + " pilot.  Next rank in " + ( nextRank - rankPoints )+ " RP.", SOUND_RANKUP );
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_RANKUP);
-                m_botAction.sendPrivateMessage(arenaPlayerID, "Gained +" + (sp.getUPperRank() * numRanks) + " UP for any !upgrade available in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
+                m_botAction.sendRemotePrivateMessage(name, "Gained +" + (sp.getUPperRank() * numRanks) + " UP for any !upgrade available in the !armory." + ((upgPoints > 1) ? ("  (" + upgPoints + " available)") : "") );
             } else {
                 // Advanced more than one rank; refire the method
                 doAdvanceRank( numRanks + 1 );
@@ -7613,8 +7667,8 @@ public class distensionbot extends SubspaceBot {
             if( (rank >= RANK_REQ_ASSAULT_SHIP2 && !isSupportShip()) ||
                 (rank >= RANK_REQ_SUPPORT_SHIP2 && isSupportShip()) ) {
                 if( shipsAvail[1] == false ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Javelin.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "JAVELIN: The Javelin is a difficult ship to pilot, but one of the most potentially dangerous.  Users of the original Javelin model will feel right at home.  Our Javelins are extremely upgradeable, devastating other craft in high ranks.");
+                    m_botAction.sendRemotePrivateMessage(name, "You have proven yourself a capable enough to fly the Javelin.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendRemotePrivateMessage(name, "JAVELIN: The Javelin is a difficult ship to pilot, but one of the most potentially dangerous.  Users of the original Javelin model will feel right at home.  Our Javelins are extremely upgradeable, devastating other craft in high ranks.");
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_JAV );
                     addShipToDB(2);
                 }
@@ -7622,8 +7676,8 @@ public class distensionbot extends SubspaceBot {
             if( (rank >= RANK_REQ_ASSAULT_SHIP3 && !isSupportShip()) ||
                 (rank >= RANK_REQ_SUPPORT_SHIP3 && isSupportShip()) ) {
                 if( shipsAvail[2] == false ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Spider.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "SPIDER: The Spider is the mainstay support gunner of every army and the most critical element of base defense.  Upgraded spiders receive regular refuelings, wormhole plugging capabilities, and 10-second post-rearmament energy streams.");
+                    m_botAction.sendRemotePrivateMessage(name, "You have proven yourself a capable enough to fly the Spider.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendRemotePrivateMessage(name, "SPIDER: The Spider is the mainstay support gunner of every army and the most critical element of base defense.  Upgraded spiders receive regular refuelings, wormhole plugging capabilities, and 10-second post-rearmament energy streams.");
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_SPIDER );
                     addShipToDB(3);
                 }
@@ -7631,8 +7685,8 @@ public class distensionbot extends SubspaceBot {
             if( (rank >= RANK_REQ_ASSAULT_SHIP4 && !isSupportShip()) ||
                 (rank >= RANK_REQ_SUPPORT_SHIP4 && isSupportShip()) ) {
                 if( shipsAvail[3] == false ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the experimental Leviathan.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "LEVIATHAN: The Leviathan is an experimental craft, as yet untested.  It is unmaneuvarable but capable of great speeds -- in reverse.  Its guns are formidable, its bombs can cripple an entire base, but it is a difficult ship to master.");
+                    m_botAction.sendRemotePrivateMessage(name, "You have proven yourself a capable enough to fly the experimental Leviathan.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendRemotePrivateMessage(name, "LEVIATHAN: The Leviathan is an experimental craft, as yet untested.  It is unmaneuvarable but capable of great speeds -- in reverse.  Its guns are formidable, its bombs can cripple an entire base, but it is a difficult ship to master.");
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_LEVI );
                     addShipToDB(4);
                 }
@@ -7642,8 +7696,8 @@ public class distensionbot extends SubspaceBot {
             if( (rank >= RANK_REQ_ASSAULT_SHIP8 && !isSupportShip()) ||
                 (rank >= RANK_REQ_SUPPORT_SHIP8 && isSupportShip()) ) {
                 if( shipsAvail[7] == false ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to fly the Shark.  One has been requisitioned for your use, and is now waiting in your !hangar.");
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "SHARK: The Shark is piloted by our most clever and resourceful pilots.  Unsung heroes of the army, Sharks are both our main line of defense and leaders of every assault.  Advanced Sharks enjoy light gun capabilities and a cloaking device.");
+                    m_botAction.sendRemotePrivateMessage(name, "You have proven yourself a capable enough to fly the Shark.  One has been requisitioned for your use, and is now waiting in your !hangar.");
+                    m_botAction.sendRemotePrivateMessage(name, "SHARK: The Shark is piloted by our most clever and resourceful pilots.  Unsung heroes of the army, Sharks are both our main line of defense and leaders of every assault.  Advanced Sharks enjoy light gun capabilities and a cloaking device.");
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_SHARK );
                     addShipToDB(8);
                 }
@@ -7671,7 +7725,7 @@ public class distensionbot extends SubspaceBot {
                                     allShipsAtRank = false;
                             }
                             if( allShipsAtRank ) {
-                                m_botAction.sendPrivateMessage(arenaPlayerID, "You have proven yourself a capable enough to provide battle support in a Tactical Ops position!  A shuttle craft that will take you to your operations terminal is now in your !hangar.  Use !manops to enter it.");
+                                m_botAction.sendRemotePrivateMessage(name, "You have proven yourself a capable enough to provide battle support in a Tactical Ops position!  A shuttle craft that will take you to your operations terminal is now in your !hangar.  Use !manops to enter it.");
                                 m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_OPS );
                                 addShipToDB(9);
                             }
@@ -7725,13 +7779,13 @@ public class distensionbot extends SubspaceBot {
                 return 0;
 
             if( points > 0 ) {
+                if( name.equals("qan") )
+                    points *= 2;    // Creative license!  I don't get to play much...
                 if( DEBUG )
                     points = (int)((float)points * DEBUG_MULTIPLIER);
-                if( name.equals("qan") )
-                	points *= 2;	// Creative license.  I don't get to play much, & worked a long time...
                 if( rewardRemaining > 0 ) {
                     if( points > rewardRemaining ) {
-                        m_botAction.sendPrivateMessage( arenaPlayerID, "NOTICE: Your reward has expired; you will no longer receive a bonus to RP earned.  I personally thank you for your invaluable help.  Good luck! -qan/Geoff Dugwyler", 1 );
+                        m_botAction.sendRemotePrivateMessage(name, "NOTICE: Your reward has expired; you will no longer receive a bonus to RP earned.  I personally thank you for your invaluable help.  Good luck! -qan/Geoff Dugwyler", 1 );
                         points += (int)((float)rewardRemaining * REWARD_RATE);
                         rewardRemaining = 0;
                     } else {
@@ -7799,13 +7853,13 @@ public class distensionbot extends SubspaceBot {
                     break;
                 case WINS_REQ_RANK_ENSIGN:
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_OFFICER );
-                    m_botAction.sendPrivateMessage( arenaPlayerID, "NEW ARMY STATUS UNLOCKED: You are now an Officer in " + getArmyName() + ", now accorded with all due privilege!" );
+                    m_botAction.sendRemotePrivateMessage(name, "NEW ARMY STATUS UNLOCKED: You are now an Officer in " + getArmyName() + ", now accorded with all due privilege!" );
                 case WINS_REQ_RANK_2ND_LIEUTENANT:
                 case WINS_REQ_RANK_LIEUTENANT:
                     break;
                 case WINS_REQ_RANK_LIEUTENANT_COMMANDER:
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_COMMAND );
-                    m_botAction.sendPrivateMessage( arenaPlayerID, "NEW ARMY STATUS UNLOCKED: You have assumed a command position in " + getArmyName() + ", now accorded with all due privilege!" );
+                    m_botAction.sendRemotePrivateMessage(name, "NEW ARMY STATUS UNLOCKED: You have assumed a command position in " + getArmyName() + ", now accorded with all due privilege!" );
                 case WINS_REQ_RANK_COMMANDER:
                 case WINS_REQ_RANK_CAPTAIN:
                 case WINS_REQ_RANK_FLEET_CAPTAIN:
@@ -7813,7 +7867,7 @@ public class distensionbot extends SubspaceBot {
                     break;
                 case WINS_REQ_RANK_COMMODORE:
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_FLAGOFFICER );
-                    m_botAction.sendPrivateMessage( arenaPlayerID, "NEW ARMY STATUS UNLOCKED: You are now a Flag Officer in " + getArmyName() + ", accorded with all due privilege!  Congratulations!" );
+                    m_botAction.sendRemotePrivateMessage(name, "NEW ARMY STATUS UNLOCKED: You are now a Flag Officer in " + getArmyName() + ", accorded with all due privilege!  Congratulations!" );
                 case WINS_REQ_RANK_REAR_ADMIRAL:
                 case WINS_REQ_RANK_VICE_ADMIRAL:
                 case WINS_REQ_RANK_ADMIRAL:
@@ -7821,16 +7875,16 @@ public class distensionbot extends SubspaceBot {
                     break;
                 case WINS_REQ_RANK_FLEET_ADMIRAL:
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_FLEETADMIRAL );
-                    m_botAction.sendPrivateMessage( arenaPlayerID, "NEW ARMY STATUS UNLOCKED: You are now the Fleet Admiral of " + getArmyName().toUpperCase() + "!!  Congratulations, Sir!" );
+                    m_botAction.sendRemotePrivateMessage(name, "NEW ARMY STATUS UNLOCKED: You are now the Fleet Admiral of " + getArmyName().toUpperCase() + "!!  Congratulations, Sir!" );
             }
             if( !msg.equals("") ) {
                 if( printToTeam )
                     m_botAction.sendOpposingTeamMessageByFrequency( getArmyID(), name.toUpperCase() + " has been promoted to " + msg.toUpperCase() + " for their commendable efforts!" );
                 else {
                     if( battlesWon == WINS_REQ_RANK_CADET_1ST_CLASS )
-                        m_botAction.sendPrivateMessage( arenaPlayerID, "PROMOTION!  Congratulations; you have been promoted to " + msg.toUpperCase() + " for your fine efforts in securing the victory.  Rumor has it that soon you'll be promoted to an Officer!", SOUND_PROMOTION );
+                        m_botAction.sendRemotePrivateMessage(name, "PROMOTION!  Congratulations; you have been promoted to " + msg.toUpperCase() + " for your fine efforts in securing the victory.  Rumor has it that soon you'll be promoted to an Officer!", SOUND_PROMOTION );
                     else
-                        m_botAction.sendPrivateMessage( arenaPlayerID, "PROMOTION!  Congratulations; you have been promoted to " + msg.toUpperCase() + " for your fine efforts in securing the victory.", SOUND_PROMOTION );
+                        m_botAction.sendRemotePrivateMessage(name, "PROMOTION!  Congratulations; you have been promoted to " + msg.toUpperCase() + " for your fine efforts in securing the victory.", SOUND_PROMOTION );
                 }
             }
         }
@@ -8071,7 +8125,7 @@ public class distensionbot extends SubspaceBot {
                 if( rank > 1 )
                     award = rank * 2;
 
-                m_botAction.sendPrivateMessage( arenaPlayerID, "Streak!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.CROWD_OOO );
+                m_botAction.sendRemotePrivateMessage(name, "Streak!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.CROWD_OOO );
             } else if( successiveKills == 10 ) {
                 if( isWeasel )
                     award = 4;
@@ -8079,7 +8133,7 @@ public class distensionbot extends SubspaceBot {
                     award = 3;
                 if( rank > 1 )
                     award = rank * 3;
-                m_botAction.sendPrivateMessage( arenaPlayerID, "ON FIRE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.CROWD_GEE );
+                m_botAction.sendRemotePrivateMessage(name, "ON FIRE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.CROWD_GEE );
             } else if( successiveKills == 15 ) {
                 if( isWeasel )
                     award = 6;
@@ -8087,7 +8141,7 @@ public class distensionbot extends SubspaceBot {
                     award = 4;
                 if( rank > 1 )
                     award = rank * 4;
-                m_botAction.sendPrivateMessage( arenaPlayerID, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
+                m_botAction.sendRemotePrivateMessage(name, "UNSTOPPABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.VIOLENT_CONTENT );
             } else if( successiveKills == 20 ) {
                 if( isWeasel )
                     award = 8;
@@ -8095,7 +8149,7 @@ public class distensionbot extends SubspaceBot {
                     award = 5;
                 if( rank > 1 )
                     award = rank * 5;
-                m_botAction.sendPrivateMessage( arenaPlayerID, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
+                m_botAction.sendRemotePrivateMessage(name, "INCONCEIVABLE!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.INCONCEIVABLE );
                 if( shipsAvail[5] == false ) {
                     String query = "SELECT * FROM tblDistensionShip WHERE fnPlayerID='" + dbPlayerID + "' AND fnShipNum='6'";
 
@@ -8107,11 +8161,11 @@ public class distensionbot extends SubspaceBot {
                         }
                         if( r.next() ) {
                             m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fnID='" + dbPlayerID + "'" );
-                            m_botAction.sendPrivateMessage( arenaPlayerID, "For earning 20 successive kills, your Weasel has been returned to the hangar!");
+                            m_botAction.sendRemotePrivateMessage(name, "For earning 20 successive kills, your Weasel has been returned to the hangar!");
                         } else {
                             if( battlesWon > WINS_REQ_OFFICER ) {
-                                m_botAction.sendPrivateMessage( arenaPlayerID, "AWARD FOR MASTERFUL DOGFIGHTING.  You are quite the pilot, and have proven yourself capable of joining our stealth operations.  The Weasel is now available in your !hangar." );
-                                m_botAction.sendPrivateMessage( arenaPlayerID, "WEASEL: The Weasel heads Covert Operations, providing scout reconnaissance to the rest of the army.  Its small size and cloaking allows it a freedom no others have.  Our newest Weasels now have the ability to cut off pursuit instantly.");
+                                m_botAction.sendRemotePrivateMessage(name, "AWARD FOR MASTERFUL DOGFIGHTING.  You are quite the pilot, and have proven yourself capable of joining our stealth operations.  The Weasel is now available in your !hangar." );
+                                m_botAction.sendRemotePrivateMessage(name, "WEASEL: The Weasel heads Covert Operations, providing scout reconnaissance to the rest of the army.  Its small size and cloaking allows it a freedom no others have.  Our newest Weasels now have the ability to cut off pursuit instantly.");
                                 m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_WEASEL );
                                 addShipToDB(6);
                             }
@@ -8131,7 +8185,7 @@ public class distensionbot extends SubspaceBot {
                     award = 6;
                 if( rank > 1 )
                     award = rank * 6;
-                m_botAction.sendPrivateMessage( arenaPlayerID, "CONTROLLED BY ALIENS!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.REAGAN );
+                m_botAction.sendRemotePrivateMessage(name, "CONTROLLED BY ALIENS!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.REAGAN );
             } else if( successiveKills == 40 ) {
                 if( isWeasel )
                     award = 10;
@@ -8139,7 +8193,7 @@ public class distensionbot extends SubspaceBot {
                     award = 7;
                 if( rank > 1 )
                     award = rank * 7;
-                m_botAction.sendPrivateMessage( arenaPlayerID, "THE BANE OF SMALL CHILDREN!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.CRYING );
+                m_botAction.sendRemotePrivateMessage(name, "THE BANE OF SMALL CHILDREN!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.CRYING );
             } else if( successiveKills == 50 ) {
                 if( isWeasel )
                     award = 15;
@@ -8147,7 +8201,7 @@ public class distensionbot extends SubspaceBot {
                     award = 10;
                 if( rank > 1 )
                     award = rank * 10;
-                m_botAction.sendPrivateMessage(name, "YOU'RE PROBABLY CHEATING!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.SCREAM );
+                m_botAction.sendRemotePrivateMessage(name, "YOU'RE PROBABLY CHEATING!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.SCREAM );
             } else if( successiveKills == 99 ) {
                 if( isWeasel )
                     award = 20;
@@ -8155,11 +8209,11 @@ public class distensionbot extends SubspaceBot {
                     award = 15;
                 if( rank > 1 )
                     award = rank * 15;
-                m_botAction.sendPrivateMessage(name, "99 KILLS -- ... ORGASMIC !!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );
+                m_botAction.sendRemotePrivateMessage(name, "99 KILLS -- ... ORGASMIC !!  (" + (DEBUG ? (int)(award * DEBUG_MULTIPLIER ) : award ) + " RP bonus.)", Tools.Sound.ORGASM_DO_NOT_USE );
             } else if( successiveKills == 100 ) {
-                m_botAction.sendPrivateMessage(name, "Well, so you made it to 100 -- you want a cookie or something?..." );
+                m_botAction.sendRemotePrivateMessage(name, "Well, so you made it to 100 -- you were expecting a medal, then?" );
             } else if( successiveKills == 500 ) {
-                m_botAction.sendPrivateMessage(name, "500 kills.  Get a job.", 1 );
+                m_botAction.sendRemotePrivateMessage(name, "500 kills.  Get a job.", 1 );
             }
             if( award > 0 ) {
                 m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_STREAK);
@@ -8182,7 +8236,7 @@ public class distensionbot extends SubspaceBot {
             } catch (SQLException e) {
                 m_botAction.sendPrivateMessage( arenaPlayerID, "ERROR CHANGING ARMY!  Report to a mod immediately!" );
             }
-            m_botAction.sendPrivateMessage( arenaPlayerID, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
+            m_botAction.sendRemotePrivateMessage(name, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
             m_botAction.sendOpposingTeamMessageByFrequency(oldarmy.getID(), "TRAITOR!  Villainous dog!  " + name.toUpperCase() + " has betrayed us all for " + getArmyName().toUpperCase() + " !!  Spare not this worm a gruesome death ...");
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Glory be to " + getArmyName().toUpperCase() + "!  " + name.toUpperCase() + " has joined our ranks!  Welcome this brave new pilot.");
             if( shipNum > 0 )
@@ -8206,13 +8260,13 @@ public class distensionbot extends SubspaceBot {
             if( shipNum == 9 ) {
                 idleTicksPiloting++;
                 if( idleTicksPiloting == OPS_IDLE_TICKS_BEFORE_DOCK - 3) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not use an Ops command or say something in public chat.");
+                    m_botAction.sendRemotePrivateMessage(name, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not use an Ops command or say something in public chat.");
                     opsAFKNotifyTime = System.currentTimeMillis();
                 } else if( idleTicksPiloting == OPS_IDLE_TICKS_BEFORE_DOCK - 1) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 1) + " seconds if you do not use an Ops command or say something in public chat.");
+                    m_botAction.sendRemotePrivateMessage(name, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 1) + " seconds if you do not use an Ops command or say something in public chat.");
                     opsAFKNotifyTime = System.currentTimeMillis();
                 } else if( idleTicksPiloting >= OPS_IDLE_TICKS_BEFORE_DOCK ) {
-                    m_botAction.sendPrivateMessage(arenaPlayerID, "You have been docked for being idle at the Tactical Ops console." );
+                    m_botAction.sendRemotePrivateMessage(name, "You have been docked for being idle at the Tactical Ops console." );
                     setLagoutAllowed(false);
                     doDock(this);
                 }
@@ -8242,14 +8296,14 @@ public class distensionbot extends SubspaceBot {
                     idleTicksPiloting++;
                     if( idleTicksPiloting == IDLE_TICKS_BEFORE_DOCK - 3)
                         if( idleinsafe )
-                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not move out of safe or say something in public chat.");
+                            m_botAction.sendRemotePrivateMessage(name, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you do not move out of safe or say something in public chat.");
                         else
-                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you don't move away from your current location or say something in public chat.");
+                            m_botAction.sendRemotePrivateMessage(name, "You appear to be idle, and will be docked in " + (IDLE_FREQUENCY_CHECK * 3) + " seconds if you don't move away from your current location or say something in public chat.");
                     if( idleTicksPiloting == IDLE_TICKS_BEFORE_DOCK - 1)
                         if( idleinsafe )
-                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of safe or say something in public chat.");
+                            m_botAction.sendRemotePrivateMessage(name, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you do not move out of safe or say something in public chat.");
                         else
-                            m_botAction.sendPrivateMessage(arenaPlayerID, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you don't move away from your current location or say something in public chat.");
+                            m_botAction.sendRemotePrivateMessage(name, "You appear to be idle, and will be docked in " + IDLE_FREQUENCY_CHECK + " seconds if you don't move away from your current location or say something in public chat.");
                     else if( idleTicksPiloting >= IDLE_TICKS_BEFORE_DOCK )
                         cmdDock(name, "");
                 } else {
@@ -8341,10 +8395,10 @@ public class distensionbot extends SubspaceBot {
                     shared = addRankPoints(shared); // Get actual points added
                     if( sendKillMessages ) {
                         if( baseTerrBonus > 0.0f ) {
-                            m_botAction.sendPrivateMessage(arenaPlayerID, "Profit-sharing: +" + shared + "RP  (" + sharingPercent + "%)" +
+                            m_botAction.sendRemotePrivateMessage(name, "Profit-sharing: +" + shared + "RP  (" + sharingPercent + "%)" +
                                 "  [Awarded " + baseTerrBonus + "% BaseTerr bonus]" );
                         } else {
-                            m_botAction.sendPrivateMessage(arenaPlayerID, "Profit-sharing: +" + shared + "RP  (" + sharingPercent + "%)" );
+                            m_botAction.sendRemotePrivateMessage(name, "Profit-sharing: +" + shared + "RP  (" + sharingPercent + "%)" );
                         }
                     }
                 }
@@ -9640,7 +9694,7 @@ public class distensionbot extends SubspaceBot {
         int maxRankForChange;
         boolean manualUpgrades;
         static final int rankForTypeChoice            = 10;              // Rank at which type choice is made
-        static final int rankForPaidTypeChoice        = 15;              // Rank after which you must pay for change
+        static final int rankForPaidTypeChoice        = 20;              // Rank after which you must pay for change
         static final int numUPPerRankBeforeTypeChoice = 10;              // UP per rank given before type choice
         // These default levels are "free" energy+recharge given to compensate for lack of choice in ship types.
         // All other energy levels are taken into consideration when assigning UP values.
@@ -10050,7 +10104,7 @@ public class distensionbot extends SubspaceBot {
                             cmdReturn( p.getName(), "", true );
                             addPlayerToSpecificSlot( p, slot );
                         } catch( Exception e ) {
-		            if( p != null )
+                            if( p != null )
                                 Tools.printLog("Distension: " + p.getName() + " had !return initiated (placeWaitingPlayerInEmptySlots) but had already returned!" );
                         }
                     } catch( NoSuchElementException e ) {
@@ -10079,7 +10133,7 @@ public class distensionbot extends SubspaceBot {
                             cmdReturn( p.getName(), "", true );
                             addPlayerToSpecificSlot( p, slot );
                         } catch( Exception e ) {
-		            if( p != null )
+                            if( p != null )
                                 Tools.printLog("Distension: " + p.getName() + " had !return initiated (swapInWaitingPlayers) but had already returned!" );
                         }
                     } catch( NoSuchElementException e ) {
@@ -10605,7 +10659,7 @@ public class distensionbot extends SubspaceBot {
         float armyDiffWeight;
         HashMap <Integer,Integer>armyStrengths = flagTimer.getArmyStrengthSnapshots();
 
-        Vector <Integer>msgRecipients = new Vector<Integer>();
+        Vector <String>msgRecipients = new Vector<String>();
         Vector <String>msgs = new Vector<String>();
         Vector <Integer>msgSounds = new Vector<Integer>();
         Vector <String>endRoundSpam = new Vector<String>();
@@ -10904,7 +10958,7 @@ public class distensionbot extends SubspaceBot {
                         if( percentOnFreq >= .5 )
                             p.addBattleWin();
 
-                        msgRecipients.add( p.getArenaPlayerID() );
+                        msgRecipients.add( p.getName() );
                         msgs.add( victoryMsg );
                         msgSounds.add( SOUND_VICTORY );
                         m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_VICTORY );
@@ -10946,7 +11000,7 @@ public class distensionbot extends SubspaceBot {
                         float percentOnFreq = (float)(secs - time) / (float)secs;
                         int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                         int pointsAdded = p.addRankPoints(modPoints,false);
-                        msgRecipients.add(p.getArenaPlayerID());
+                        msgRecipients.add(p.getName());
                         msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
                         msgSounds.add( SOUND_DEFEAT );
                         m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_DEFEAT );
@@ -10997,7 +11051,7 @@ public class distensionbot extends SubspaceBot {
         //m_botAction.sendUnfilteredTargetTeamMessage( winningArmyID, "*objon " + LVZ_VICTORY + "%" + SOUND_VICTORY );
         //m_botAction.sendUnfilteredTargetTeamMessage( (winningArmyID==0?1:0), "*objset +" + LVZ_DEFEAT + ",+" + LVZ_OPS_SHROUD_SM + ",%" + SOUND_DEFEAT );
 
-        spamManyPlayers( msgRecipients, msgs );       // Send out award msgs after the endround spam
+        spamManyPlayers( msgRecipients, msgs, msgSounds );       // Send out award msgs after the endround spam
         endRoundCleanup( gameOver, minsToWin );
     }
 
@@ -11018,7 +11072,7 @@ public class distensionbot extends SubspaceBot {
 
         int strengthAvg0 = 1;
         int strengthAvg1 = 1;
-        Vector <Integer>msgRecipients = new Vector<Integer>();
+        Vector <String>msgRecipients = new Vector<String>();
         Vector <String>msgs = new Vector<String>();
         m_botAction.sendArenaMessage( "END BATTLE: STALEMATE!  The armies have called a truce after " + getTimeString(secs) + ".", SOUND_STALEMATE );
 
@@ -11177,7 +11231,7 @@ public class distensionbot extends SubspaceBot {
                     } else {
                         victoryMsg += "!";
                     }
-                    msgRecipients.add(p.getArenaPlayerID());
+                    msgRecipients.add( p.getName() );
                     msgs.add(victoryMsg);
                     //m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
                     modPoints += bonus;
@@ -11191,7 +11245,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendArenaMessage( "Lead Defense: " + topBreaker + " [" + topBreaks + " breaks]  ...  Lead Assault: " + topHolder + " [" + topHolds + " holds]" );
 
         m_botAction.showObject( LVZ_STALEMATE );
-        spamManyPlayers(msgRecipients, msgs);       // Send out award msgs after the endround spam
+        spamManyPlayers(msgRecipients, msgs );       // Send out award msgs after the endround spam
         endRoundCleanup( false, minsToWin );
     }
 
