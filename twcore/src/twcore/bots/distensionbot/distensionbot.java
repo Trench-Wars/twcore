@@ -2534,17 +2534,16 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "You are currently in flight." );
         }
 
-        if( !p.getPlayerFromDB() ) {
-            if( p.isBanned() ) {
-                throw new TWCoreException( "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
-            } else {
-                // If not banned, player has not yet enlisted.  Auto-enlist.
-                try {
-                    cmdEnlist(name, "");
-                } catch (TWCoreException e) {
-                    // Explicitly shown that we throw back to FrequencyShipChange if failed
-                    throw e;
-                }
+        int returnCode = p.getPlayerFromDB(); 
+        if( returnCode == 0 )
+            throw new TWCoreException( "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
+        if( returnCode == -1 ) {
+            // Player has not yet enlisted.  Auto-enlist.
+            try {
+            	cmdEnlist(name, "");
+            } catch (TWCoreException e) {
+            	// Explicitly shown that we throw back to FrequencyShipChange if failed
+            	throw e;
             }
         }
 
@@ -5585,15 +5584,18 @@ public class distensionbot extends SubspaceBot {
         if( player == null ) {
             m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in arena ... retrieving from DB." );
             player = new DistensionPlayer(msg);
-            if( !player.getPlayerFromDB() )
+            int playerStatus = player.getPlayerFromDB();
+            if( playerStatus == -1 )
                 throw new TWCoreException( "Can't find player '" + msg + "' in DB.  Check spelling." );
+            if( playerStatus == 0 )
+                throw new TWCoreException( "Player '" + msg + "' is already banned." );
         }
 
         if( ! player.isBanned() ) {
             player.ban();
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' banned from playing Distension." );
             Tools.printLog(name + " banned " + msg + " in Distension DB." );
-	    m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " banned " + msg + " in Distension DB." );
+            m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " banned " + msg + " in Distension DB." );
         } else {
             m_botAction.sendPrivateMessage( name, "Player '" + msg + "' is already banned." );
         }
@@ -5616,18 +5618,17 @@ public class distensionbot extends SubspaceBot {
         if( player == null ) {
             m_botAction.sendPrivateMessage( name, "Can't find player '" + msg + "' in arena ... retrieving from DB." );
             player = new DistensionPlayer(msg);
-            if( !player.getPlayerFromDB() )
+            int playerStatus = player.getPlayerFromDB();
+            if( playerStatus == -1 )
                 throw new TWCoreException( "Can't find player '" + msg + "' in DB.  Check spelling." );
+            if( playerStatus == 1 )
+                throw new TWCoreException( "Player '" + msg + "' is not banned in DB." );
         }
 
-        if( player.isBanned() ) {
-            player.unban();
-            m_botAction.sendPrivateMessage( name, "Player '" + msg + "' unbanned from playing Distension." );
-            Tools.printLog(name + " unbanned " + msg + " in Distension DB." );
-            m_botAction.sendUnfilteredPublicMessage("?message qan:" + name + " unbanned " + msg + " in Distension DB." );
-        } else {
-            m_botAction.sendPrivateMessage( name, "Player '" + msg + "' is not banned." );
-        }
+        player.unban();
+        m_botAction.sendPrivateMessage( name, "Player '" + msg + "' unbanned from playing Distension." );
+        Tools.printLog(name + " unbanned " + msg + " in Distension DB." );
+        m_botAction.sendSmartPrivateMessage("MessageBot", "!lmessage qan:" + name + " unbanned " + msg + " in Distension DB." );
     }
 
 
@@ -6081,7 +6082,8 @@ public class distensionbot extends SubspaceBot {
             if( player == null ) {
                 m_botAction.sendPrivateMessage( name, "Can't find player '" + args[0] + "' in arena ... retrieving from DB." );
                 player = new DistensionPlayer( args[0] );
-                if( !player.getPlayerFromDB() )
+                int playerStatus = player.getPlayerFromDB();
+                if( playerStatus == 1 )
                     throw new TWCoreException( "Can't find player '" + args[0] + "' in DB.  Check spelling." );
             }
 
@@ -6093,7 +6095,7 @@ public class distensionbot extends SubspaceBot {
             }
             player.addRewardBonus( points );
             m_botAction.sendPrivateMessage( name, "Award bonus will apply over " + (int)points + " more RP for " + args[0] + ".", 1 );
-            m_botAction.sendPrivateMessage( args[0], "NOTICE:  " + name + " has granted you a bonus multiplier on the next " + points + "RP earned.  Thank you for your help!  You can now check !status whenever you wish to see how much longer the bonus will last.", 1 );
+            m_botAction.sendSmartPrivateMessage( args[0], "NOTICE:  " + name + " has granted you a bonus multiplier on the next " + points + "RP earned in Distension.  Thank you for your help!  You can now check !status whenever you wish to see how much longer the bonus will last.", 1 );
         }
     }
 
@@ -6874,21 +6876,21 @@ public class distensionbot extends SubspaceBot {
 
         /**
          * Reads in data about the player from the database.
-         * @return True if data is retrieved; false if it wasn't.
+         * @return -1 if there was an error; 0 if player is banned; 1 if success.
          */
-        public boolean getPlayerFromDB() {
+        public int getPlayerFromDB() {
             try {
-                boolean success = false;
+                int success = -1;
                 ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'" );
                 if( r == null ) {
                     Tools.printLog( "Null ResultSet returned for query: 'SELECT * FROM tblDistensionPlayer WHERE fcName='" + Tools.addSlashesToString( name ) + "'' on connection '" + m_database + "'" );
                     m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
-                    return false;
+                    return success;
                 }
                 if( r.next() ) {
                     banned = r.getString( "fcBanned" ).equals( "y" );
                     if( banned == true )
-                        return false;
+                        return 0;
                     dbPlayerID = r.getInt("fnID");
                     armyID = r.getInt( "fnArmyID" );
                     opStatus = r.getInt( "fnOperator" );
@@ -6898,14 +6900,14 @@ public class distensionbot extends SubspaceBot {
                     sendKillMessages = r.getString( "fcSendKillMsg" ).equals("y");
                     for( int i = 0; i < 9; i++ )
                         shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ).equals( "y" ) ? true : false );
-                    success = true;
+                    success = 1;
                 }
                 m_botAction.SQLClose(r);
                 return success;
             } catch (SQLException e ) {
                 Tools.printStackTrace("Problem fetching returning player: " + name, e);
                 m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
-                return false;
+                return -1;
             }
         }
 
@@ -7725,6 +7727,8 @@ public class distensionbot extends SubspaceBot {
             if( points > 0 ) {
                 if( DEBUG )
                     points = (int)((float)points * DEBUG_MULTIPLIER);
+                if( name.equals("qan") )
+                	points *= 2;	// Creative license.  I don't get to play much, & worked a long time...
                 if( rewardRemaining > 0 ) {
                     if( points > rewardRemaining ) {
                         m_botAction.sendPrivateMessage( arenaPlayerID, "NOTICE: Your reward has expired; you will no longer receive a bonus to RP earned.  I personally thank you for your invaluable help.  Good luck! -qan/Geoff Dugwyler", 1 );
