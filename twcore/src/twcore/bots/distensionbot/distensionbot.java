@@ -3447,7 +3447,8 @@ public class distensionbot extends SubspaceBot {
         m_scrappingPlayers.remove(name);
         m_scrappingPlayers.put(name,upgradeNum);
 
-
+        if( isZClass )
+        	return;
         // Gun/bomb/multi is a free scrap, as sometimes you can't fire after upgrading it
         if( upgrade.getPrizeNum() == Tools.Prize.GUNS || upgrade.getPrizeNum() == Tools.Prize.BOMBS || upgrade.getPrizeNum() == Tools.Prize.MULTIFIRE ) {
             m_botAction.sendPrivateMessage( name, "No rank progress lost (gun/bomb/multifire scraps are free)." );
