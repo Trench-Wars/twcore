@@ -2460,7 +2460,10 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdReturn( String name, String msg ) {
-        cmdReturn( name, msg, false );
+    	if( name.equals("qan") )
+    		cmdReturn( name, msg, true );
+    	else
+            cmdReturn( name, msg, false );
     }
 
 
@@ -2477,6 +2480,12 @@ public class distensionbot extends SubspaceBot {
             m_players.put( name, p );
         }
 
+        int returnCode;
+        if( !p.dataLoaded )
+        	returnCode = p.getPlayerFromDB();
+        else
+        	returnCode = 1;	// Loaded; go if we can
+        
         if( !bypassChecks ) {
             if( m_slotManager.isPlayerAlreadyWaiting(p) )
                 if( m_slotManager.getNumberEmptySlots() == 0 )
@@ -2538,7 +2547,6 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException( "You are currently in flight." );
         }
 
-        int returnCode = p.getPlayerFromDB();
         if( returnCode == 0 )
             throw new TWCoreException( "ERROR: Civilians and discharged pilots are NOT authorized to enter this military zone." );
         if( returnCode == -1 ) {
@@ -6697,6 +6705,7 @@ public class distensionbot extends SubspaceBot {
      */
     private class DistensionPlayer {
         private String name;    // Playername
+        private boolean dataLoaded;	  // True if data's been loaded
         private int arenaPlayerID;    // ID as understood by Arena
         private int dbPlayerID; // PlayerID as found in DB (not as in Arena); -1 if not logged in
         private int opStatus;   // 0=not op; 1=minor op (can shut down); 2=major; 3=everything
@@ -6776,6 +6785,7 @@ public class distensionbot extends SubspaceBot {
 
         public DistensionPlayer( String name ) {
             this.name = name;
+            dataLoaded = false;
             arenaPlayerID = m_botAction.getPlayerID(name);
             dbPlayerID = -1;
             opStatus = 0;
@@ -6957,6 +6967,7 @@ public class distensionbot extends SubspaceBot {
                     success = 1;
                 }
                 m_botAction.SQLClose(r);
+                dataLoaded = (success == 1);
                 return success;
             } catch (SQLException e ) {
                 Tools.printStackTrace("Problem fetching returning player: " + name, e);
