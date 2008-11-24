@@ -2485,7 +2485,7 @@ public class distensionbot extends SubspaceBot {
         	returnCode = p.getPlayerFromDB();
         else
         	returnCode = 1;	// Loaded; go if we can
-        
+
         if( !bypassChecks ) {
             if( m_slotManager.isPlayerAlreadyWaiting(p) )
                 if( m_slotManager.getNumberEmptySlots() == 0 )
@@ -2710,7 +2710,10 @@ public class distensionbot extends SubspaceBot {
                 tooMany = true;
             }
             if( tooMany ) {
-                m_botAction.setShip(p.getArenaPlayerID(), lastShipNum );
+                if( lastShipNum > 0 )
+                    m_botAction.setShip(p.getArenaPlayerID(), lastShipNum );
+                else
+                    m_botAction.specWithoutLock(p.getArenaPlayerID());
                 return;
             }
         }
@@ -2757,15 +2760,36 @@ public class distensionbot extends SubspaceBot {
                 int rank = Math.max(1, p.getRank());
                 if( shipNum == Tools.Ship.TERRIER ) {
                     if( ships == 0 && pilots > 3 ) {
-                        reward = rank * 5;
+                        if( rank > 50 )
+                            reward = rank * 20;
+                        else if( rank > 30 )
+                            reward = rank * 10;
+                        else if( rank > 10 )
+                            reward = rank * 5;
+                        else
+                            reward = rank * 3;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when one was badly needed." );
                     } else if( ships == 1 && pilots > 8 ){
-                        reward = rank * 3;
+                        if( rank > 50 )
+                            reward = rank * 16;
+                        else if( rank > 30 )
+                            reward = rank * 8;
+                        else if( rank > 10 )
+                            reward = rank * 4;
+                        else
+                            reward = rank * 2;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when a second one was needed." );
                     }
                 } else {
                     if( ships == 0 && pilots > 4 ) {
-                        reward = rank * 3;
+                        if( rank > 50 )
+                            reward = rank * 16;
+                        else if( rank > 30 )
+                            reward = rank * 8;
+                        else if( rank > 10 )
+                            reward = rank * 4;
+                        else
+                            reward = rank * 2;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Shark when one was badly needed." );
                     }
                 }
@@ -6958,7 +6982,12 @@ public class distensionbot extends SubspaceBot {
                         return 0;
                     dbPlayerID = r.getInt("fnID");
                     armyID = r.getInt( "fnArmyID" );
+                    // Default Op controls for upper staff
                     opStatus = r.getInt( "fnOperator" );
+                    if( opStatus == 0 && m_botAction.getOperatorList().isSysop(name) )
+                        opStatus = 2;
+                    else if( opStatus == 0 && m_botAction.getOperatorList().isSmod(name) )
+                        opStatus = 1;
                     timePlayed = r.getInt( "fnTime" );
                     battlesWon = r.getInt( "fnBattlesWon" );
                     rewardRemaining = r.getInt( "fnRewardRP" );
@@ -10989,11 +11018,11 @@ public class distensionbot extends SubspaceBot {
                         playerRank = 1;
                     points = totalPoints * ((float)playerRank / (float)totalLvls);
                     if( minsToWin < 5 )
-                        points /= 3;
+                        points /= 1.75;
                     else if( minsToWin < 10 )
-                        points /= 2;
-                    else if( minsToWin < 15 )
                         points /= 1.5;
+                    else if( minsToWin < 15 )
+                        points /= 1.25;
                     else if( minsToWin >= 30 )
                         points *= 1.25;
 
@@ -11058,10 +11087,6 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendArenaMessage( roundTime + Tools.rightString( "WAR STATUS   " + flagTimer.getScoreDisplay() + "   " + numReq + " MORE NEEDED FOR WIN", (spamLength - 1 - roundTime.length()) ) );
         else
             m_botAction.sendArenaMessage( roundTime + Tools.rightString( "END OF WAR STATUS   " + flagTimer.getScoreDisplay() + "   ", (spamLength - 1 - roundTime.length()) ) );
-
-        // Winning and losing LVZ & sound to each team by using " msgs.  Thanks Cheese!.
-        //m_botAction.sendUnfilteredTargetTeamMessage( winningArmyID, "*objon " + LVZ_VICTORY + "%" + SOUND_VICTORY );
-        //m_botAction.sendUnfilteredTargetTeamMessage( (winningArmyID==0?1:0), "*objset +" + LVZ_DEFEAT + ",+" + LVZ_OPS_SHROUD_SM + ",%" + SOUND_DEFEAT );
 
         spamManyPlayers( msgRecipients, msgs, msgSounds );       // Send out award msgs after the endround spam
         endRoundCleanup( gameOver, minsToWin );
