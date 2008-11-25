@@ -1891,7 +1891,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + bonus + " RP" );
                 }
             }
-            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
+            if( players > 0 )
+                m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
         } else {
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "No points scored for goals (goals not presently active)." );
         }
@@ -10036,6 +10037,22 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
+    
+    /**
+     * Used to sort players by times when added to queue.
+     */
+    private class PlayerTimeComparator implements java.util.Comparator {
+        public int compare( Object pl1, Object pl2 ) {
+            DistensionPlayer p1 = (DistensionPlayer)pl1;
+            DistensionPlayer p2 = (DistensionPlayer)pl2;
+            if( p1.getMinutesPlayed() < p2.getMinutesPlayed() )
+                return -1;
+            else if( p1.getMinutesPlayed() == p2.getMinutesPlayed() )
+                return 0;
+            else
+                return 1;
+        }
+    }
 
     /**
      * Used to manage the player slot system.
@@ -10044,6 +10061,7 @@ public class distensionbot extends SubspaceBot {
         int[] slots = new int[MAX_PLAYERS];
         int[] slotStatus = new int[MAX_PLAYERS];    // -1=empty; 1=active use; 0=idle use
         LinkedList <DistensionPlayer>waitingList = new LinkedList<DistensionPlayer>();
+        PlayerTimeComparator pComp = new PlayerTimeComparator();
 
         final static int SLOT_EMPTY  = -1;
         final static int SLOT_IDLE   =  0;
@@ -10058,7 +10076,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Add player into the game,
+         * Add player into the game.
          * @param p
          * @throws TWCoreException
          */
@@ -10073,6 +10091,7 @@ public class distensionbot extends SubspaceBot {
                     // This should be extremely rare (idle slot found but nobody placed in it).
                     // Queue player and wait until next assignment tick.
                     waitingList.add( p );
+                    java.util.Collections.sort(waitingList, pComp);
                     throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list.  Players in waiting list: " + getNumberWaiting() );
                 } else {
                     // All slots in use; figure out if new player has highest time or not
@@ -10091,6 +10110,7 @@ public class distensionbot extends SubspaceBot {
                     if( highestTime > p.getMinutesPlayed() ) {
                         // No slots but player does not have the highest time: add to queue
                         waitingList.add( p );
+                        java.util.Collections.sort(waitingList, pComp);
                         throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list.  Players in waiting list: " + getNumberWaiting() );
                     } else {
                         // No slots + player has highest time: tough luck
