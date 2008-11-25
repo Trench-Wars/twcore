@@ -528,7 +528,7 @@ public class distensionbot extends SubspaceBot {
 
             if( r == null ) {   // OK, we're really fucked; just kill and let the staffie try loading it again.
                 Tools.printLog( "Null ResultSet returned for query: 'SELECT fnArmyID FROM tblDistensionArmy' on connection '" + m_database + "'" );
-                cmdDie("DistensionInternal", "now");
+                cmdDie(m_botAction.getBotName(), "now");
             } else {
                 while( r.next() ) {
                     int id = r.getInt( "fnArmyID");
@@ -595,29 +595,49 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendChatMessage("Distension BETA initialized with new ship-type enhancements.  ?go distension");
                 m_botAction.sendArenaMessage("Distension BETA loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
             }
-            // Reset all times at each load
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
-            } catch (SQLException e ) {  }
-            String sendmsg = m_botSettings.getString("InitialMsg");
-            if( sendmsg != null && !sendmsg.equals("")) {
-                String msgs[] = sendmsg.split(";");
-                for( int i = 0; i<msgs.length; i++ )
-                    m_botAction.sendUnfilteredPublicMessage( msgs[i] );
-            }
         } else {
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
                 m_botAction.sendChatMessage("Distension has been loaded.  ?go distension");
                 m_botAction.sendSmartPrivateMessage("MessageBot", "!announce distension:Distension is starting.  ?go distension to play." );
                 m_botAction.sendArenaMessage("Distension has been loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  PM the bot with !intro if you are new, and refer to F1 for more detailed help.");
             }
-            // TODO: Check if time should be reset -- when was bot last run?  How to do this -- DB entry?
-            // Should we create a separate table that stores information such as this?  Or does it matter?
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
-            } catch (SQLException e ) {  }
         }
+        String sendmsg = m_botSettings.getString("InitialMsg");
+        if( sendmsg != null && !sendmsg.equals("")) {
+            String msgs[] = sendmsg.split(";");
+            for( int i = 0; i<msgs.length; i++ )
+                m_botAction.sendUnfilteredPublicMessage( msgs[i] );
+        }
+        checkForTimeReset();
         setupTimerTasks();
+        
+    }
+    
+    /**
+     * Checks if enough time has passed to reset player times, and resets them, if so.
+     */
+    public void checkForTimeReset() {
+        Integer config = m_botSettings.getInteger("ConfigNum");
+        if( config == null ) {
+            Tools.printLog("Invalid or missing ConfigNum for Distension");
+            cmdDie(m_botAction.getBotName(), "now");
+            return;
+        }
+        
+        try {
+            ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionGenData WHERE fnSettingNum='" + config + "'" );
+            if( r != null && r.next() ) {
+                java.sql.Timestamp resetTime = r.getTimestamp( "fdNextResetTime" );
+                java.sql.Timestamp currentTime = new java.sql.Timestamp(System.currentTimeMillis());
+                m_botAction.SQLClose( r );
+                if( currentTime.after( resetTime ) ) {
+                    m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
+                    java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+                    java.sql.Timestamp newResetTime = new java.sql.Timestamp( resetTime.getTime() + Tools.TimeInMillis.DAY );
+                    m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionGenData SET fdNextResetTime='" + format.format(newResetTime) + "' WHERE fnSettingNum='" + config + "'" );
+                }
+            }
+        } catch (SQLException e ) {  }        
     }
 
     /**
@@ -6179,7 +6199,7 @@ public class distensionbot extends SubspaceBot {
             exact = "  (" + x + "," + y + ")";
         if( x==0 && y==0 )
             return "Not yet spotted" + exact;
-        return getLocation(y) + exact;
+        return getLocation(x,y) + exact;
     }
 
     /**
