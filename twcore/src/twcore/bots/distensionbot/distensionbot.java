@@ -81,7 +81,7 @@ public class distensionbot extends SubspaceBot {
     private final int LAGOUTS_ALLOWED = 3;                 // # lagouts allowed per round
     private final int PROFIT_SHARING_FREQUENCY = 2 * 60;   // # seconds between adding up profit sharing for terrs
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
-    private final int WARP_POINT_CHECK_FREQUENCY = 5;      // # seconds between checking warp points for players
+    private final int WARP_POINT_CHECK_FREQUENCY = 4;      // # seconds between checking warp points for players
     private final int VENGEFUL_VALID_SECONDS = 12;         // # seconds after V.B. fire in which VB gets RP bonus
     private final int STREAK_RANK_PROXIMITY_DIVISOR = 2;   // Divisor for rank to determine streak rank prox (50 / 2 = 25 rank prox)
     private final int STREAK_RANK_PROXIMITY_MINIMUM = 10;  // Min streak rank proximity allowed
@@ -260,10 +260,10 @@ public class distensionbot extends SubspaceBot {
 
     // ASSIST SYSTEM
     private final int ASSIST_ADVERT_CHECK_FREQUENCY = 20;   // How many seconds between checking for an assist advert
-    private final float ADVERT_WEIGHT_IMBALANCE = 0.85f;    // At what point to advert that there's an imbalance
+    private final float ADVERT_WEIGHT_IMBALANCE = 0.87f;    // At what point to advert that there's an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.89f;    // At what point an army is considered imbalanced
     private final int ASSIST_NUMBERS_IMBALANCE = 3;         // # of pilot difference before considered imbalanced
-    private final int ASSIST_REWARD_TIME = 1000 * 60 * 2;   // Time between adverting and rewarding assists
+    private final int ASSIST_REWARD_TIME = (int)(1000 * 60 * 1.5); // Time between adverting and rewarding assists
     private final int TERRSHARK_REWARD_TIME = 1000 * 60 * 1;// Time between rewarding new terrs/sharks
     private long lastAssistReward;                          // Last time assister was given points
     private long lastAssistAdvert;                          // Last time an advert was sent for assistance
@@ -299,7 +299,7 @@ public class distensionbot extends SubspaceBot {
     // TACTICAL OPS DATA
     public final int DEFAULT_MAX_OP = 2;                    // Max OP points when not upgraded
     public final int DEFAULT_OP_REGEN = 1;                  // Default # OP regenerated every minute
-    public final int DEFAULT_OP_MAX_COMMS = 3;              // Max # communications Ops can save up
+    public final int DEFAULT_OP_MAX_COMMS = 5;              // Max # communications Ops can save up
     public boolean m_army0_fastRearm = false;
     public boolean m_army1_fastRearm = false;
     public RearmTask m_army0_fastRearmTask;
@@ -610,9 +610,9 @@ public class distensionbot extends SubspaceBot {
         }
         checkForTimeReset();
         setupTimerTasks();
-        
+
     }
-    
+
     /**
      * Checks if enough time has passed to reset player times, and resets them, if so.
      */
@@ -623,7 +623,7 @@ public class distensionbot extends SubspaceBot {
             cmdDie(m_botAction.getBotName(), "now");
             return;
         }
-        
+
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionGenData WHERE fnSettingNum='" + config + "'" );
             if( r != null && r.next() ) {
@@ -637,7 +637,7 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionGenData SET fdNextResetTime='" + format.format(newResetTime) + "' WHERE fnSettingNum='" + config + "'" );
                 }
             }
-        } catch (SQLException e ) {  }        
+        } catch (SQLException e ) {  }
     }
 
     /**
@@ -1866,29 +1866,31 @@ public class distensionbot extends SubspaceBot {
                 Player twcorePlayer = m_botAction.getPlayer( p.getArenaPlayerID() );
                 if( twcorePlayer == null )
                     return;
-                if( p.getArmyID() == armyID && p.getShipNum() > 0 &&
+                if( p.getArmyID() == armyID && p.getShipNum() > 0 ) {
+                    if( p.getShipNum() == 9 || (
                         twcorePlayer.getYTileLocation() > TOP_LOW &&
-                        twcorePlayer.getYTileLocation() < BOT_LOW ) {
-                    players++;
-                    int rank = p.getRank();
-                    int bonus = 5;
-                    if( rank > 10 )
-                        bonus += 35;
-                    if( rank > 20 )
-                        bonus += 70;
-                    if( rank > 30 )
-                        bonus += 150;
-                    if( rank > 40 )
-                        bonus += 250;
-                    if( rank > 50 )
-                        bonus += 1000;
-                    if( rank > 60 )
-                        bonus += 5000;
-                    if( rank > 70 )
-                        bonus += 10000;
-                    bonus += (rank * 2);      // Add in rank to make it seem more random
-                    totalBonus += p.addRankPoints( bonus );
-                    m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + bonus + " RP" );
+                        twcorePlayer.getYTileLocation() < BOT_LOW )) {
+                        players++;
+                        int rank = p.getRank();
+                        int bonus = 5;
+                        if( rank > 10 )
+                            bonus += 35;
+                        if( rank > 20 )
+                            bonus += 70;
+                        if( rank > 30 )
+                            bonus += 150;
+                        if( rank > 40 )
+                            bonus += 250;
+                        if( rank > 50 )
+                            bonus += 1000;
+                        if( rank > 60 )
+                            bonus += 5000;
+                        if( rank > 70 )
+                            bonus += 10000;
+                        bonus += (rank * 2);      // Add in rank to make it seem more random
+                        totalBonus += p.addRankPoints( bonus );
+                        m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + bonus + " RP" );
+                    }
                 }
             }
             if( players > 0 )
@@ -2510,9 +2512,9 @@ public class distensionbot extends SubspaceBot {
         if( !bypassChecks ) {
             if( m_slotManager.isPlayerAlreadyWaiting(p) )
                 if( m_slotManager.getNumberEmptySlots() == 0 )
-                    throw new TWCoreException( "You are already in the queue; please wait patiently and you will be AUTOMATICALLY ADDED into the battle.  Total pilots in queue: " + m_slotManager.getNumberWaiting() );
+                    throw new TWCoreException( "You are already in the queue; please wait patiently and you will be AUTOMATICALLY ADDED into the battle when a slot becomes available, or at the end of the round.  You are #" + m_slotManager.getWaitingListOrder(p) + " of " + m_slotManager.getNumberWaiting() + " waiting." );
                 else {
-                    m_botAction.sendPrivateMessage("qan", "!returning player could not enter (already in queue), despite empty slots!  -- " + m_slotManager.getNumberEmptySlots() );
+                    m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:!returning player could not enter (already in queue), despite empty slots!  -- " + m_slotManager.getNumberEmptySlots() );
                     Tools.printLog( "Distension: !returning player could not enter (already in queue), despite empty slots!  -- " + m_slotManager.getNumberEmptySlots() );
                     throw new TWCoreException( "You are already in the queue; please wait patiently and you will be AUTOMATICALLY ADDED into the battle.  Total pilots in queue: " + m_slotManager.getNumberWaiting() );
                 }
@@ -3185,7 +3187,6 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
             p.resetIdle();
         }
-
     }
 
 
@@ -6282,12 +6283,12 @@ public class distensionbot extends SubspaceBot {
                 else {
                     // Two armies now have enough players; start game, or continue if already started
                     if( !flagTimeStarted ) {
-                        m_botAction.sendArenaMessage( "This sector is no longer safe: a war is brewing ...  All pilots, report for duty.  You have " + getTimeString(3 * INTERMISSION_SECS) + " to prepare for the assault.");
+                        m_botAction.sendArenaMessage( "This sector is no longer safe: a war is brewing ...  All pilots, report for duty.  You have " + getTimeString(1 * INTERMISSION_SECS) + " to prepare for the assault!");
                         flagTimer = new FlagCountTask();    // Dummy, for displaying score.
                         intermissionTimer = new IntermissionTask();
-                        m_botAction.scheduleTask( intermissionTimer, (2950 * INTERMISSION_SECS) );
+                        m_botAction.scheduleTask( intermissionTimer, (950 * INTERMISSION_SECS) );
                         if( !DEBUG )
-                            m_botAction.setTimer(3);
+                            m_botAction.setTimer(1);
                         m_flagRules = (int)Math.round( Math.random() ); // Randomize starting rules
                         m_roundNum = 0;
                         flagTimeStarted = true;
@@ -6820,6 +6821,7 @@ public class distensionbot extends SubspaceBot {
         private boolean   ignoreShipChanges;    // True if all ship changes should be ignored until old ship is entered
         private boolean   rankedUpFromLastKill; // True if player ranked up from the last kill
         private boolean   allowSummon;          // True if the player will allow themselves to be summoned
+        private boolean   waiterGetsFullRound;  // True if player was waiting & still is guaranteed the option to play 1 round
         private TimerTask personalTask = null;  // Personal TimerTask for various uses
         // Round stats
         private int frKills;                    // # FR kills
@@ -6897,6 +6899,7 @@ public class distensionbot extends SubspaceBot {
             ignoreShipChanges = false;
             rankedUpFromLastKill = false;
             allowSummon = true;
+            waiterGetsFullRound = false;
             // Round stats
             frKills = 0;
             genKills = 0;
@@ -7626,8 +7629,8 @@ public class distensionbot extends SubspaceBot {
                 // Allow another Comm every minute, up to max allowed
                 if( tick % 3 == 0 ) {
                     if( currentComms < DEFAULT_OP_MAX_COMMS ) {
-                        m_botAction.sendRemotePrivateMessage(name, "+1 Comm Auth." );
                         currentComms++;
+                        m_botAction.sendRemotePrivateMessage(name, "+1 Comm Authorization  ( " + currentComms + " / " + DEFAULT_OP_MAX_COMMS + " )" );
                     }
                 }
 
@@ -7842,7 +7845,7 @@ public class distensionbot extends SubspaceBot {
 
             if( points > 0 ) {
                 if( name.equals("qan") )
-                    points *= 2;    // Creative license!  I don't get to play much...
+                    points *= 3;    // Creative license!  I don't get to play much...
                 if( DEBUG )
                     points = (int)((float)points * DEBUG_MULTIPLIER);
                 if( rewardRemaining > 0 ) {
@@ -8932,6 +8935,13 @@ public class distensionbot extends SubspaceBot {
             rewardRemaining += bonus;
         }
 
+        /**
+         * @param canPlayRound True if player gets to play 1 full round before being considered for a swapout.
+         */
+        public void setWaiterFullRoundPlayAbility( boolean canPlayRound ) {
+            waiterGetsFullRound = canPlayRound;
+        }
+
 
         // GETTERS
 
@@ -9040,6 +9050,8 @@ public class distensionbot extends SubspaceBot {
          * @return Returns strength of ship (upgrade level + default player strength).
          */
         public int getStrength() {
+            if( shipNum == 9 )
+                return getRank() + (int)(RANK_0_STRENGTH * 1.5f);
             return getRank() + RANK_0_STRENGTH;
         }
 
@@ -9384,6 +9396,10 @@ public class distensionbot extends SubspaceBot {
          */
         public int getRemainingBonus() {
             return rewardRemaining;
+        }
+
+        public boolean canPlayFullRound() {
+            return waiterGetsFullRound;
         }
 
         // PROGRESS BAR
@@ -10037,12 +10053,12 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
-    
+
     /**
      * Used to sort players by times when added to queue.
      */
-    private class PlayerTimeComparator implements java.util.Comparator {
-        public int compare( Object pl1, Object pl2 ) {
+    private class PlayerTimeComparator<T> implements java.util.Comparator<T> {
+        public int compare( T pl1, T pl2 ) {
             DistensionPlayer p1 = (DistensionPlayer)pl1;
             DistensionPlayer p2 = (DistensionPlayer)pl2;
             if( p1.getMinutesPlayed() < p2.getMinutesPlayed() )
@@ -10061,7 +10077,7 @@ public class distensionbot extends SubspaceBot {
         int[] slots = new int[MAX_PLAYERS];
         int[] slotStatus = new int[MAX_PLAYERS];    // -1=empty; 1=active use; 0=idle use
         LinkedList <DistensionPlayer>waitingList = new LinkedList<DistensionPlayer>();
-        PlayerTimeComparator pComp = new PlayerTimeComparator();
+        PlayerTimeComparator <DistensionPlayer>pComp = new PlayerTimeComparator<DistensionPlayer>();
 
         final static int SLOT_EMPTY  = -1;
         final static int SLOT_IDLE   =  0;
@@ -10092,7 +10108,8 @@ public class distensionbot extends SubspaceBot {
                     // Queue player and wait until next assignment tick.
                     waitingList.add( p );
                     java.util.Collections.sort(waitingList, pComp);
-                    throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list.  Players in waiting list: " + getNumberWaiting() );
+                    int index = waitingList.indexOf( p );
+                    throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list in order of playing time; you are " + index + " out of "+ getNumberWaiting() + " waiting." );
                 } else {
                     // All slots in use; figure out if new player has highest time or not
                     int highestTime = 0;
@@ -10111,7 +10128,8 @@ public class distensionbot extends SubspaceBot {
                         // No slots but player does not have the highest time: add to queue
                         waitingList.add( p );
                         java.util.Collections.sort(waitingList, pComp);
-                        throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list.  Players in waiting list: " + getNumberWaiting() );
+                        int index = waitingList.indexOf( p );
+                        throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list in order of playing time; you are " + index + " out of "+ getNumberWaiting() + " waiting." );
                     } else {
                         // No slots + player has highest time: tough luck
                         throw new TWCoreException( "Sorry, no play slots are available, and you've flown more today than any other pilot here.  Please try again later." );
@@ -10184,6 +10202,7 @@ public class distensionbot extends SubspaceBot {
                         try {
                             cmdReturn( p.getName(), "", true );
                             addPlayerToSpecificSlot( p, slot );
+                            p.setWaiterFullRoundPlayAbility(true);
                         } catch( Exception e ) {
                             if( p != null )
                                 Tools.printLog("Distension: " + p.getName() + " had !return initiated (placeWaitingPlayerInEmptySlots) but had already returned!" );
@@ -10213,6 +10232,7 @@ public class distensionbot extends SubspaceBot {
                         try {
                             cmdReturn( p.getName(), "", true );
                             addPlayerToSpecificSlot( p, slot );
+                            p.setWaiterFullRoundPlayAbility(true);
                         } catch( Exception e ) {
                             if( p != null )
                                 Tools.printLog("Distension: " + p.getName() + " had !return initiated (swapInWaitingPlayers) but had already returned!" );
@@ -10228,6 +10248,7 @@ public class distensionbot extends SubspaceBot {
                         try {
                             DistensionPlayer p = waitingList.remove();
                             doSwapOut( p, slot );
+                            p.setWaiterFullRoundPlayAbility(true);
                         } catch( NoSuchElementException e ) {
                             Tools.printLog("Distension: tried to remove a player from empty waiting list.");
                         }
@@ -10322,7 +10343,7 @@ public class distensionbot extends SubspaceBot {
                 if( slotStatus[i] == SLOT_ACTIVE || slotStatus[i] == SLOT_IDLE ) {
                     DistensionPlayer dp = getPlayerInSlot(i);
                     if( dp != null ) {
-                        if( dp.getMinutesPlayed() >= highestTime ) {
+                        if( !dp.canPlayFullRound() && dp.getMinutesPlayed() >= highestTime ) {
                             highestTime = dp.getMinutesPlayed();
                             highestID = i;
                         }
@@ -10361,6 +10382,10 @@ public class distensionbot extends SubspaceBot {
 
         public boolean isPlayerAlreadyWaiting( DistensionPlayer p ) {
             return waitingList.contains(p);
+        }
+
+        public int getWaitingListOrder( DistensionPlayer p ) {
+            return waitingList.indexOf(p);
         }
 
 
@@ -10650,7 +10675,7 @@ public class distensionbot extends SubspaceBot {
         String warning = "";
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
-        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + " (goals active until then).  Score:  " + flagTimer.getScoreDisplay() + warning );
+        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + (m_canScoreGoals ? "(goals active until then)":"") + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
         m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go distension to play." );
 
         // Between rounds, switch between one and two flags
@@ -10919,7 +10944,7 @@ public class distensionbot extends SubspaceBot {
             combo *= DEBUG_MULTIPLIER;
         }
         endRoundSpam.add( "|  " +
-                Tools.formatString( "Total award: " + combo + " RP", 30 ) +
+                Tools.formatString( "Total award: " + (int)combo + " RP", 30 ) +
                 Tools.formatString( (int)(percentSupport * 100.0f) + "% for " + (int)numSupport + " on support ", 23 ) +
                 Tools.formatString( "-> average " + (int)(support / numSupport) + " RP", 23 ) +      "|");
         endRoundSpam.add( "|  " +
@@ -10966,9 +10991,9 @@ public class distensionbot extends SubspaceBot {
                         String victoryMsg;
                         if( gameOver ) {
                             modPoints *= 2;
-                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (double) for the final victory (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% for avarice]" : "" ) ;
+                            victoryMsg = "Win!  Award: " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (DOUBLE) (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% avarice]" : "" ) ;
                         } else {
-                            victoryMsg = "HQ awards you " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP for the victory (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% for avarice]" : "" );
+                            victoryMsg = "Win!  Award: " + (int)(DEBUG ? modPoints * DEBUG_MULTIPLIER : modPoints ) + "RP (" + (int)(percentOnFreq * 100) + "% participation)" + ( avarice ? " [-75% avarice]" : "" );
                         }
 
                         // MVP stat checks
@@ -11023,18 +11048,31 @@ public class distensionbot extends SubspaceBot {
                             topRPEarned = p.roundRP;
                             topRPEarner = p.getName();
                         }
+                        int bonus = 0;
+                        int rankMod = 0;
+                        if( playerRank > 50 )
+                            rankMod = 5;
+                        else if( playerRank > 35 )
+                            rankMod = 3;
+                        else if( playerRank > 15 )
+                            rankMod = 2;
+                        else
+                            rankMod = 1;
 
-                        int bonus = Math.max( 1, (holds * ( playerRank / 2 ) + breaks * (playerRank / 3)) );
+
+                        bonus = Math.max( 1, ((holds * rankMod) + breaks * (int)((float)rankMod * 0.75f )) );
                         int totalDisplay = (int)(DEBUG ? (bonus + modPoints) * DEBUG_MULTIPLIER : bonus + modPoints );
                         if( holds != 0 && breaks != 0 ) {
-                            victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds and " + breaks +" sector breaks = " + totalDisplay + " RP!" ;
+                            victoryMsg += " + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " holds & " + breaks + " breaks = " + totalDisplay + " RP!" ;
                         } else if( holds != 0 ) {
-                            victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds = " + totalDisplay + "RP!";
+                            victoryMsg += " + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " holds = " + totalDisplay + "RP!";
                         } else if( breaks != 0 ) {
-                            victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + breaks +" sector breaks = " + totalDisplay + "RP!";
+                            victoryMsg += " + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + breaks +" breaks = " + totalDisplay + "RP!";
                         } else {
                             victoryMsg += "!";
                         }
+                        victoryMsg += "K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs;
+
                         // Need 50% participation or more for the win to count properly.
                         if( percentOnFreq >= .5 )
                             p.addBattleWin();
@@ -11047,42 +11085,49 @@ public class distensionbot extends SubspaceBot {
                         p.addRankPoints(modPoints,false);
                     } else {
                         if( DEBUG )
-                            m_botAction.sendSmartPrivateMessage("dugwyler", p.getName() + " had no time data attached to their name at round win." );
+                            m_botAction.sendSmartPrivateMessage("qan", p.getName() + " had no time data attached to their name at round win." );
                     }
                 }
             } else {
                 // For long battles, losers receive about 1/3 of the award of the winners.
                 if( p.getShipNum() > 0 ) {
-                    playerRank = p.getRank();
-                    if( playerRank == 0 )
-                        playerRank = 1;
-                    points = totalPoints * ((float)playerRank / (float)totalLvls);
-                    if( minsToWin < 5 )
-                        points /= 1.75;
-                    else if( minsToWin < 10 )
-                        points /= 1.5;
-                    else if( minsToWin < 15 )
-                        points /= 1.25;
-                    else if( minsToWin >= 30 )
-                        points *= 1.25;
 
-                    if( winnerPercentage > 0.8f )
-                        points /= 4;
-                    else if( winnerPercentage > 0.7f )
-                        points /= 3;
-                    else if( winnerPercentage > 0.6f )
-                        points /= 3;
-                    else if( winnerPercentage > 0.5f )
-                        points /= 2;
-                    else    // They actually held more than the winning team -- give them a good bit.
-                        points = (float)points / 1.5f;
                     Integer time = m_playerTimes.get( p.getName() );
                     if( time != null ) {
+                        playerRank = p.getRank();
+                        if( playerRank == 0 )
+                            playerRank = 1;
+                        points = totalPoints * ((float)playerRank / (float)totalLvls);
+                        if( minsToWin < 5 )
+                            points /= 1.75;
+                        else if( minsToWin < 10 )
+                            points /= 1.5;
+                        else if( minsToWin < 15 )
+                            points /= 1.25;
+                        else if( minsToWin >= 30 )
+                            points *= 1.25;
+
+                        if( winnerPercentage > 0.8f )
+                            points /= 4;
+                        else if( winnerPercentage > 0.7f )
+                            points /= 3;
+                        else if( winnerPercentage > 0.6f )
+                            points /= 3;
+                        else if( winnerPercentage > 0.5f )
+                            points /= 2;
+                        else    // They actually held more than the winning team -- give them a good bit.
+                            points = (float)points / 1.5f;
+
+                        if( p.isSupportShip() )
+                            points *= 1.25f;
+                        else
+                            points *= 0.7f;
+
                         float percentOnFreq = (float)(secs - time) / (float)secs;
                         int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                         int pointsAdded = p.addRankPoints(modPoints,false);
                         msgRecipients.add(p.getName());
-                        msgs.add( "You lost this long battle, but fought courageously.  HQ has given you a bonus of " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation)." );
+                        msgs.add( "Battle lost.  Consolation bonus: " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation).  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );
                         msgSounds.add( SOUND_DEFEAT );
                         m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_DEFEAT );
                     }
@@ -11092,7 +11137,7 @@ public class distensionbot extends SubspaceBot {
         //m_botAction.sendArenaMessage( "Lead Defense: " + topBreaker + " [" + topBreaks + " breaks]  ...  Lead Assault: " + topHolder + " [" + topHolds + " holds]" );
 
         // Print MVP data
-        endRoundSpam.add( Tools.formatString( "}======   MVPs   ", spamLength - 1, "=") + "{" );
+        endRoundSpam.add( Tools.formatString( "}======   MVPs  of  " + m_armies.get(winningArmyID).getName(), spamLength - 1, "=") + "{" );
         endRoundSpam.add( Tools.formatString( "|  Holds: " + topHolder + " [" + topHolds + "]", spamLength / 2 ) +
                           Tools.formatString(    "Breaks: " + topBreaker + " [" + topBreaks + "]", (spamLength / 2) - 1 ) + "|" );
         endRoundSpam.add( Tools.formatString( "|  FR Kills: " + topFRKiller + " [" + topFRKills + "]", spamLength / 2 ) +
@@ -11394,8 +11439,13 @@ public class distensionbot extends SubspaceBot {
             doScores(15000);
 
             m_slotManager.swapInWaitingPlayersForActives();
+            for( DistensionPlayer p : m_players.values() )
+                p.setWaiterFullRoundPlayAbility(false);     // Those who were swapped in midround were exempt from an end-round swap
+                                                            //  ... but for this round end only.
 
-            /*
+
+            /*  OLD CODE
+             *
             // Swap out players waiting to enter
             if( !m_waitingToEnter.isEmpty() ) {
                 LinkedList <DistensionPlayer>removals = new LinkedList<DistensionPlayer>();
