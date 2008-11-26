@@ -7693,7 +7693,11 @@ public class distensionbot extends SubspaceBot {
             }
             rank++;
             ShipTypeProfile sp = getShipTypeProfile();
-            upgPoints += sp.getUPperRank();
+            if( rank <= ShipTypeProfile.rankForTypeChoice )
+                upgPoints += ShipTypeProfile.numUPPerRankBeforeTypeChoice;
+            else
+                upgPoints += sp.getUPperRank();
+
             if( sp.receivedEnergy(rank) )
                 m_botAction.sendRemotePrivateMessage(name, "Your ship has been fitted with additional ARMOR AND SHIELDS." );
             if( sp.receivedRecharge(rank) )
