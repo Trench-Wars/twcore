@@ -49,13 +49,10 @@ import twcore.core.util.Tools;
  * *** Development notes ***
  *
  * Add:
- * - ASAP: TIME-CLEARING TASK FROM DAY BEFORE!
- * - MAP: Change tiles to refer to F1 for help
  * - Intro: Refer to colors as red and blue
  * - Dreadnought ship class (needs energy levels)
  * - Increase time for unlock LVZ graphics
  * - Wall-bump sound -- remove static (ugh)
- * - Fix !unban
  *
  * @author dugwyler
  */
@@ -701,6 +698,10 @@ public class distensionbot extends SubspaceBot {
                                 m_lagoutRemovals.add(p);
                                 m_slotManager.setPlayerAsIdle( p.getArenaPlayerID() );
                                 m_slotManager.swapInWaitingPlayers();
+                            } else {
+                                if( p.getLagoutTimeRemaining() == LAGOUT_TICK * 2 ) {
+                                    m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Your lagout time will expire in " + LAGOUT_TICK * 2 + " seconds, and your slot will be given away." );
+                                }
                             }
                         } else {
                             m_lagoutRemovals.add(p);
@@ -2683,7 +2684,6 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You don't own that ship.  Check your !hangar before you try flying something you don't have." );
         if( p.isRespawning() ) {
             p.isRespawning = false;
-            m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_REARMING );
         }
         m_prizeQueue.removePlayer(p);
 
@@ -2846,6 +2846,7 @@ public class distensionbot extends SubspaceBot {
 
         for( DistensionArmy a : m_armies.values() )
             a.recalculateFigures();
+        m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_REARMING );
         p.putInCurrentShip();
         p.prizeUpgradesNow();
         p.resetIdle();
@@ -10112,7 +10113,7 @@ public class distensionbot extends SubspaceBot {
                     // Queue player and wait until next assignment tick.
                     waitingList.add( p );
                     java.util.Collections.sort(waitingList, pComp);
-                    int index = waitingList.indexOf( p );
+                    int index = waitingList.indexOf( p ) + 1;
                     throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list in order of playing time; you are " + index + " out of "+ getNumberWaiting() + " waiting." );
                 } else {
                     // All slots in use; figure out if new player has highest time or not
@@ -10132,7 +10133,7 @@ public class distensionbot extends SubspaceBot {
                         // No slots but player does not have the highest time: add to queue
                         waitingList.add( p );
                         java.util.Collections.sort(waitingList, pComp);
-                        int index = waitingList.indexOf( p );
+                        int index = waitingList.indexOf( p ) + 1;
                         throw new TWCoreException( "Sorry, no playing slots are available at the moment.  You have been added to the waiting list in order of playing time; you are " + index + " out of "+ getNumberWaiting() + " waiting." );
                     } else {
                         // No slots + player has highest time: tough luck
@@ -10389,7 +10390,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         public int getWaitingListOrder( DistensionPlayer p ) {
-            return waitingList.indexOf(p);
+            return waitingList.indexOf(p) + 1;
         }
 
 
@@ -10679,7 +10680,7 @@ public class distensionbot extends SubspaceBot {
         String warning = "";
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
-        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + (m_canScoreGoals ? "(goals active until then)":"") + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + (m_canScoreGoals ? " (goals active until then)":"") + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
         m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go distension to play." );
 
         // Between rounds, switch between one and two flags
@@ -11053,18 +11054,22 @@ public class distensionbot extends SubspaceBot {
                             topRPEarner = p.getName();
                         }
                         int bonus = 0;
-                        int rankMod = 0;
-                        if( playerRank > 50 )
-                            rankMod = 5;
+                        float rankMod = 0;
+                        if( playerRank > 55 )
+                            rankMod = 3.0f;
+                        else if( playerRank > 45 )
+                            rankMod = 2.0f;
                         else if( playerRank > 35 )
-                            rankMod = 3;
+                            rankMod = 1.5f;
+                        else if( playerRank > 25 )
+                            rankMod = 1.0f;
                         else if( playerRank > 15 )
-                            rankMod = 2;
+                            rankMod = 0.75f;
                         else
-                            rankMod = 1;
+                            rankMod = 0.5f;
+                        rankMod *= p.getRank();
 
-
-                        bonus = Math.max( 1, ((holds * rankMod) + breaks * (int)((float)rankMod * 0.75f )) );
+                        bonus = Math.max( 1, (int)((holds * rankMod) + (breaks * (int)(rankMod * 0.75f ))) );
                         int totalDisplay = (int)(DEBUG ? (bonus + modPoints) * DEBUG_MULTIPLIER : bonus + modPoints );
                         if( holds != 0 && breaks != 0 ) {
                             victoryMsg += " + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " holds & " + breaks + " breaks = " + totalDisplay + " RP!" ;
@@ -11075,7 +11080,7 @@ public class distensionbot extends SubspaceBot {
                         } else {
                             victoryMsg += "!";
                         }
-                        victoryMsg += "K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs;
+                        victoryMsg += "  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs;
 
                         // Need 50% participation or more for the win to count properly.
                         if( percentOnFreq >= .5 )
