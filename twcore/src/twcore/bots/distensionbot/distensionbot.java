@@ -631,7 +631,9 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
                     java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
                     java.sql.Timestamp newResetTime = new java.sql.Timestamp( resetTime.getTime() + Tools.TimeInMillis.DAY );
-                    m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionGenData SET fdNextResetTime='" + format.format(newResetTime) + "' WHERE fnSettingNum='" + config + "'" );
+                    String query = "UPDATE tblDistensionGenData SET fdNextResetTime='" + format.format(newResetTime) + "' WHERE fnSettingNum='" + config + "'";
+                    m_botAction.SQLQueryAndClose( m_database, query );
+                    m_botAction.sendRemotePrivateMessage( "MessageBot", "!lmessage qan:Reset query: " + query );
                 }
             }
         } catch (SQLException e ) {  }
@@ -13395,7 +13397,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void handleDisconnect() {
         if( m_lastSave + 10000 > System.currentTimeMillis() )
-            cmdSaveData("DistensionBot","");
+            cmdSaveData(m_botAction.getBotName(),"");
     }
 
     public boolean isIdle() {
