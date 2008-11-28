@@ -1355,7 +1355,7 @@ public class messagebot extends SubspaceBot
      	try {
      		String query1 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 7 DAY)";
      		String query2 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"' AND fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 1 DAY)";
-     		String query3 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"'";
+     		//String query3 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(player)+"'";
      		ResultSet results = m_botAction.SQLQuery(database, query1);
      		int msgsSent = 0;
      		if(results.next()) {
@@ -1368,21 +1368,25 @@ public class messagebot extends SubspaceBot
      			plrMsgsRcvdFrmName = results.getInt("msgs");
      		}
                 m_botAction.SQLClose(results);
+            /*
      		int plrMsgsRcvd = 0;
      		results = m_botAction.SQLQuery(database, query3);
      		if(results.next()) {
      			plrMsgsRcvd = results.getInt("msgs");
      		}
                 m_botAction.SQLClose(results);
+            */
      		if(msgsSent > 100) {
      			m_botAction.sendSmartPrivateMessage(name, "Sorry, you have reached your weekly quota of 100 messages. Please wait until some of your messages reset their stats before trying to send more.");
      			return;
      		} else if(plrMsgsRcvdFrmName > 3) {
      			m_botAction.sendSmartPrivateMessage(name, "Sorry, you have reached your daily limit on messages to this player. Please wait before sending more messages.");
      			return;
+     	    /*
      		} else if(plrMsgsRcvd > 24) {
      			m_botAction.sendSmartPrivateMessage(name, "Sorry, the player's inbox is currently full. Please try to message him/her later.");
      			return;
+     	    */
      		} else if(isIgnored(player, name)) {
      			return;
      		} else {
