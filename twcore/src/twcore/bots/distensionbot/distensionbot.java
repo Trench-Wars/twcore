@@ -296,7 +296,7 @@ public class distensionbot extends SubspaceBot {
     // TACTICAL OPS DATA
     public final int DEFAULT_MAX_OP = 2;                    // Max OP points when not upgraded
     public final int DEFAULT_OP_REGEN = 1;                  // Default # OP regenerated every minute
-    public final int DEFAULT_OP_MAX_COMMS = 5;              // Max # communications Ops can save up
+    public final int DEFAULT_OP_MAX_COMMS = 1;              // Max # communications Ops can save up
     public boolean m_army0_fastRearm = false;
     public boolean m_army1_fastRearm = false;
     public RearmTask m_army0_fastRearmTask;
@@ -629,7 +629,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.SQLClose( r );
                 if( currentTime.after( resetTime ) ) {
                     m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
-                    java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+                    java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyy-MM-dd");
                     java.sql.Timestamp newResetTime = new java.sql.Timestamp( resetTime.getTime() + Tools.TimeInMillis.DAY );
                     String query = "UPDATE tblDistensionGenData SET fdNextResetTime='" + format.format(newResetTime) + "' WHERE fnSettingNum='" + config + "'";
                     m_botAction.SQLQueryAndClose( m_database, query );
@@ -989,6 +989,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( ".re", acceptedMessages, this, "cmdOpsRearm" );
         m_commandInterpreter.registerCommand( ".d", acceptedMessages, this, "cmdOpsDoor" );
         m_commandInterpreter.registerCommand( ".c", acceptedMessages, this, "cmdOpsCover" );
+        m_commandInterpreter.registerCommand( ".mi", acceptedMessages, this, "cmdOpsMine" );
         m_commandInterpreter.registerCommand( ".w", acceptedMessages, this, "cmdOpsWarp" );
         m_commandInterpreter.registerCommand( ".o", acceptedMessages, this, "cmdOpsOrb" );
         m_commandInterpreter.registerCommand( ".da", acceptedMessages, this, "cmdOpsDark" );
@@ -1057,6 +1058,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!opsrearm", acceptedMessages, this, "cmdOpsRearm" );
         m_commandInterpreter.registerCommand( "!opsdoor", acceptedMessages, this, "cmdOpsDoor" );
         m_commandInterpreter.registerCommand( "!opscover", acceptedMessages, this, "cmdOpsCover" );
+        m_commandInterpreter.registerCommand( "!opsmine", acceptedMessages, this, "cmdOpsMine" );
         m_commandInterpreter.registerCommand( "!opswarp", acceptedMessages, this, "cmdOpsWarp" );
         m_commandInterpreter.registerCommand( "!opsorb", acceptedMessages, this, "cmdOpsOrb" );
         m_commandInterpreter.registerCommand( "!opsdark", acceptedMessages, this, "cmdOpsDark" );
@@ -1302,9 +1304,8 @@ public class distensionbot extends SubspaceBot {
                     "|                 2/4/10   |                  (L2)4:FR Ent 5:Roof (L3)6:FR",
                     "| !opscover <#>       1 .c |  Deploy cover in home base.   1:MidLeft  2:MidRight",
                     "|                          |       3:Before FR    4:Flag   5:Tube     6:Entrance",
-// TODO: Implement in LVZ.  Pain in the ass.
-//                    "| !opsmine <#>        2 .mi|  False minefield @ home base. 1:FR Entrance  2:In FR",
-//                    "|                          |       3:Midbase   4:TubeTop   5:Inside/Mid Tube",
+                    "| !opsmine <#>        2 .mi|  False minefield @ home base. 1:FR Entrance  2:In FR",
+                    "|                          |       3:Midbase   4:TubeTop   5:Inside/Mid Tube",
                     "| !opsorb <nm>      2/6 .o |  Cover enemy w/ orb.  (L2)<all> = All NME in base",
                     "| !opsdark <nm>     3/8 .da|  Cone of darkness.    (L2)<all> = All NME in base",
                     "|                          |      L3: Larger cone.  L4: Larger cone, all NME.",
@@ -5069,6 +5070,146 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
+     * Allows Ops to deploy fake mines.
+     * @param
+     * @param
+     * @author Cheese (modifications by qan/dug)
+     */
+    public void cmdOpsMine(String name, String msg) {
+         DistensionPlayer p = m_players.get(name);
+         if(p == null) {
+            return;
+         }
+         if(p.getShipNum() != 9) {
+            throw new TWCoreException("You must be at the Tactical Ops station to do this.");
+         }
+         int upgLevel = p.getPurchasedUpgrade(9);
+         if(upgLevel < 1) {
+            throw new TWCoreException("You are not yet able to use this ability -- first you must install the appropriate !upgrade.");
+         }
+
+         Integer mineNum;
+         try {
+            mineNum = Integer.parseInt(msg);
+         }
+         catch (NumberFormatException e) {
+            throw new TWCoreException("Please specify an area number between 1 and 5.  Use !opshelp for more info.");
+         }
+         if(mineNum < 1 || mineNum > 5) {
+            throw new TWCoreException("Please specify an area number between 1 and 5.  Use !opshelp for more info.");
+         }
+         if(p.getCurrentOP() < 2) {
+            throw new TWCoreException("Insufficient OP; need 2.  Current: ["+p.getCurrentOP()+"/"+p.getMaxOP()+"]");
+         }
+         p.adjustOP(-2);
+
+         double mineChance;
+         if( upgLevel == 2 )
+             mineChance = 0.9;  // 90% chance of displaying any given mine
+         else
+             mineChance = 0.4;  // 40% chance of displaying any given mine
+
+         String mineName = "";
+         switch(mineNum)
+         {
+            case 1:
+               mineName+="at FR ENTRANCE";
+
+               if(p.getArmyID() % 2 == 0) {
+                   //top fr ent
+                   //400-405
+                   for( int i=400; i<406; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               } else {
+                   //bottom fr ent
+                   //470-475
+                   for( int i=470; i<476; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               }
+               break;
+            case 2:
+               mineName+="IN FR";
+
+               if(p.getArmyID() % 2 == 0) {
+                   //in top fr
+                   //410-421
+                   for( int i=410; i<422; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               } else {
+                   //in bottom fr
+                   //480-491
+                   for( int i=480; i<492; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               }
+               break;
+            case 3:
+               mineName+="at MID BASE";
+
+               if(p.getArmyID() % 2 == 0) {
+                   //top mid
+                   //430-441
+                   for( int i=430; i<442; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               } else {
+                   //bottom mid
+                   //500-511
+                   for( int i=500; i<512; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               }
+               break;
+            case 4:
+               mineName+="in TUBE TOP";
+
+               if(p.getArmyID() % 2 == 0)
+               {
+                   //top tube1
+                   //450-455
+                   for( int i=450; i<456; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               }
+               else
+               {
+                   //bottom tube1
+                   //520-525
+                   for( int i=520; i<526; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               }
+               break;
+            case 5:
+               mineName+="in TUBE BOTTOM";
+
+               if(p.getArmyID() % 2 == 0)
+               {
+                   //top tube2
+                   //460-465
+                   for( int i=460; i<466; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               }
+               else
+               {
+                   //bottom tube2
+                   //530-535
+                   for( int i=530; i<536; i++ )
+                       if( Math.random() < mineChance )
+                           m_botAction.setupObject(i, true);
+               }
+               break;
+         }
+         m_botAction.sendSetupObjects();
+         m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), "OPS deployed fake mines "+mineName+" for 60 seconds.");
+         p.resetIdle();      // Ops can only reset idle by using ops cmds and talking in pub
+    }
+
+    /**
      * Ops ability to warp a specific player to various locations in the home base.
      * @param name
      * @param msg
@@ -6567,6 +6708,9 @@ public class distensionbot extends SubspaceBot {
         case OPS_INCREASE_MAX_OP:
             desc = "Larger Tactical Ops Point reserve";
             break;
+        case OPS_COMMUNICATIONS:
+            desc = "Improved Comm system access; +2 Max Comm";
+            break;
         case OPS_REGEN_RATE:
             desc = "Regenerate +1 OP per cycle";
             break;
@@ -6788,6 +6932,7 @@ public class distensionbot extends SubspaceBot {
         private int       currentOP;            // Current # OP points (for Tactical Ops)
         private int       maxOP;                // Max # OP points (for Tactical Ops)
         private int       currentComms;         // Current # communications saved up (for Tactical Ops)
+        private int       maxComms;             // Max # communications available (controlled by Comm upgrade)
         private int       lastX;                // Last X position
         private int       lastY;                // Last Y position
         private int       lastXVel;             // Last X velocity
@@ -6853,6 +6998,7 @@ public class distensionbot extends SubspaceBot {
             currentOP = 0;
             maxOP = 0;
             currentComms = 0;
+            maxComms = 0;
             successiveKills = 0;
             currentRechargeLevel = 0;
             currentEnergyLevel = 0;
@@ -7221,10 +7367,13 @@ public class distensionbot extends SubspaceBot {
                 targetedEMP = false;
                 jumpSpace = false;
                 prismatic = false;
-                if( shipNum == 9 )
+                if( shipNum == 9 ) {
                     maxOP = DEFAULT_MAX_OP;
-                else
+                    maxComms = DEFAULT_OP_MAX_COMMS;
+                } else {
                     maxOP = 0;
+                    maxComms = 0;
+                }
                 // Setup special (aka unusual) abilities
                 Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
                 for( int i = 0; i < NUM_UPGRADES; i++ ) {
@@ -7232,6 +7381,8 @@ public class distensionbot extends SubspaceBot {
                         fastRespawn = true;
                     else if( upgrades.get( i ).getPrizeNum() == OPS_INCREASE_MAX_OP )
                         maxOP += (purchasedUpgrades[i] * 2);
+                    else if( upgrades.get( i ).getPrizeNum() == OPS_COMMUNICATIONS )
+                        maxComms += (purchasedUpgrades[i] * 2);
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_VENGEFUL_BASTARD )
                         vengefulBastard = purchasedUpgrades[i];
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_ESCAPE_POD )
@@ -7631,7 +7782,7 @@ public class distensionbot extends SubspaceBot {
             } else if( shipNum == 9 ) {
                 // Allow another Comm every minute, up to max allowed
                 if( tick % 3 == 0 ) {
-                    if( currentComms < DEFAULT_OP_MAX_COMMS ) {
+                    if( currentComms < maxComms ) {
                         currentComms++;
                         m_botAction.sendRemotePrivateMessage(name, "+1 Comm Authorization  ( " + currentComms + " / " + DEFAULT_OP_MAX_COMMS + " )" );
                     }
@@ -8063,10 +8214,11 @@ public class distensionbot extends SubspaceBot {
                 firebloom = purchasedUpgrades[10];
             if( shipNum == 9 && upgrade == 1 )
                 maxOP = (purchasedUpgrades[1] * 2) + DEFAULT_MAX_OP;
+            if( shipNum == 9 && upgrade == 3 )
+                maxComms = (purchasedUpgrades[1] * 2) + DEFAULT_OP_MAX_COMMS;
             shipDataSaved = false;
             return true;
         }
-
         /**
          * Sets the current ship player is using.
          * @param shipNum # of ship (1-8)
@@ -8872,8 +9024,8 @@ public class distensionbot extends SubspaceBot {
             currentComms += adjustment;
             if( currentComms < 0 )
                 currentComms = 0;
-            else if( currentComms > DEFAULT_OP_MAX_COMMS )
-                currentComms = DEFAULT_OP_MAX_COMMS;
+            else if( currentComms > maxComms )
+                currentComms = maxComms;
         }
 
         /**
@@ -9330,6 +9482,13 @@ public class distensionbot extends SubspaceBot {
          */
         public int getCurrentComms() {
             return currentComms;
+        }
+
+        /**
+         * @return Current communications left.
+         */
+        public int getMaxComms() {
+            return maxComms;
         }
 
         /**
@@ -13259,6 +13418,7 @@ public class distensionbot extends SubspaceBot {
         //  2: Fast rearm 1
         //  2: Comm 2 (PM)
         //  4: Warp 1 (lower base)
+        //  5: False Minefield 1
         //  7: Cover
         //  8: Profit Sharing 1
         //  9: Fast rearm 2
@@ -13274,6 +13434,7 @@ public class distensionbot extends SubspaceBot {
         // 22: Shroud 2 (all in base, sm)
         // 23: Profit Sharing 3
         // 25: Blind 1
+        // 28: False Minefield 2
         // 30: Shroud 3 (1 target, LG)
         // 31: Door Control 3 (enemy)
         // 33: Blind 2
@@ -13296,7 +13457,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Efficient Rearmament", OPS_FAST_TEAM_REARM, new int[]{12,7,10}, new int[]{2,9,17} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 20, 7, 1 );   // Consider another level offering longer cover
+        upg = new ShipUpgrade( "Emergency Base Cover", OPS_COVER, 15, 7, 1 );   // Consider another level offering longer cover
         ship.addUpgrade( upg );                                                 // via diff
         upg = new ShipUpgrade( "Security Door Systems", OPS_DOOR_CONTROL, new int[]{13,15,21}, new int[]{10,19,31} );
         ship.addUpgrade( upg );
@@ -13304,7 +13465,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Orb of Seclusion", OPS_SECLUSION, new int[]{13,18}, new int[]{12,20} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, 0, 0, -1 );
+        upg = new ShipUpgrade( "False Minefield", OPS_MINEFIELD, new int[]{9,12}, new int[]{5,28} );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Shroud of Darkness", OPS_SHROUD, new int[]{11,20,12,22}, new int[]{15,22,30,46} );
         ship.addUpgrade( upg );
