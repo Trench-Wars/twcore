@@ -161,7 +161,19 @@ public class purepubbot extends SubspaceBot
     private static final int SAFE_LEFT_Y = 482;
     private static final int SAFE_RIGHT_X = 717;
     private static final int SAFE_RIGHT_Y = 482;
-
+    
+    // Voting system
+    boolean m_votingEnabled = false;                // True if players can vote on gametype
+    long m_lastVote = System.currentTimeMillis();   // Time at which last vote was started
+    // Min time between the last vote before the next can be started
+    private static final int MIN_TIME_BETWEEN_VOTES = 5 * Tools.TimeInMillis.MINUTE;
+    // How long a vote runs for before it's stopped and the results are tallied
+    private static final int VOTE_RUN_TIME          = 1 * Tools.TimeInMillis.MINUTE;
+    HashMap <String,Integer>m_votes  = new HashMap<String,Integer>(); // Mapping of playernames
+                                                                      // to # voted.
+    Vector <VoteOption>m_voteOptions = new Vector<VoteOption>();      // Options allowed for voting
+    int m_currentVoteItem = -1;     // Current # being voted on; -1 if none
+    
 
     /**
      * Creates a new instance of purepub bot and initializes necessary data.
@@ -195,6 +207,31 @@ public class purepubbot extends SubspaceBot
             }
         };
         m_botAction.scheduleTask( entranceWaitTask, 3000 );
+        setupVotingOptions();
+    }
+    
+    /**
+     * Sets up the voting options, if voting is enabled in the CFG.
+     */
+    public void setupVotingOptions() {
+        Integer vo = m_botAction.getBotSettings().getInteger(m_botAction.getBotName() + "Voting");
+        if( vo == null || vo == 0 )
+            return;
+        VoteOption v = new VoteOption( "", "", 0.0f, 0 );   // 0th position; don't use to make it easy
+        m_voteOptions.add( v );
+        
+        v = new VoteOption( "starttimedgame","Starts the timed game", .6f, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "stoptimedgame", "Stops the timed game", .6f, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "allowlevis",    "Allows Leviathans in the arena", .55f, 2 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "removelevis",   "Disables Leviathans in the arena", .55f, 2 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "allowlevis",    "Allows Private Frequencies in the arena", .55f, 2 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "removelevis",   "Disables Private Frequencies in the arena", .55f, 2 );
+        m_voteOptions.add( v );
     }
 
     public boolean isIdle() {
@@ -2488,6 +2525,9 @@ public class purepubbot extends SubspaceBot
         }
     }
 
+    /**
+     * Task used to toggle bot options on or off.  (Define toggles inside CFG.)
+     */
     private class ToggleTask extends TimerTask {
         String[] toggleOn;
         String[] toggleOff;
@@ -2518,6 +2558,20 @@ public class purepubbot extends SubspaceBot
                     }
                 }
             }
+        }
+    }
+    
+    private class VoteOption {
+        String name;                    // Name used internally by the game for this option
+        String displayText;             // Text displayed to players listing voting options
+        float percentRequired = 0.0f;   // .50 to 1.00
+        int minVotesRequired = 0;       // Min # votes required, regardless of percentage
+        
+        public VoteOption( String name, String display, float percent, int minVotes ) {
+            this.name = name;
+            displayText = display;
+            percentRequired = percent;
+            minVotesRequired = minVotes;
         }
     }
 }
