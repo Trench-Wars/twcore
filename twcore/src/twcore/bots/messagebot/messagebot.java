@@ -802,6 +802,8 @@ public class messagebot extends SubspaceBot
                             addAnd = "";
                         else if(pieces[1].toLowerCase().startsWith("r"))
                             addAnd = " AND fnRead = 1";
+                    } else {
+                        message = message.substring(1);
                     }
                     results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
                             + Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'"+addAnd);
