@@ -104,13 +104,15 @@ public class rabbit extends MultiModule{
 						String y = x.substring(i);
 						x = x.replaceAll(y,"");
 						y = y.replaceAll("%", "");
-						int y2 = Integer.parseInt(y);
-						m_botAction.sendArenaMessage(pKiller + x, y2);
+                        try {
+                            int y2 = Integer.parseInt(y);
+                            m_botAction.sendArenaMessage(pKiller + x, y2);
+                        } catch(NumberFormatException e ) {}
 					}
 					else{
 						m_botAction.sendArenaMessage(pKiller + x);
 					}
-					
+
 					}
 				}
 			if (rabbitList.contains(pKiller) && !killMsgs.isEmpty())
@@ -121,8 +123,10 @@ public class rabbit extends MultiModule{
 					String y = x.substring(i);
 					x = x.replaceAll(y,"");
 					y = y.replaceAll("%", "");
-					int y2 = Integer.parseInt(y);
-					m_botAction.sendArenaMessage(pKilled + x, y2);
+                    try {
+                        int y2 = Integer.parseInt(y);
+					    m_botAction.sendArenaMessage(pKilled + x, y2);
+                    } catch(NumberFormatException e ) {}
 				}
 				else{
 					m_botAction.sendArenaMessage(pKilled + x);
@@ -281,7 +285,7 @@ public class rabbit extends MultiModule{
 					killMsgs.add(args[0] + "%" + args[1]);
 					m_botAction.sendPrivateMessage(name, "Flag kill message added.");
 				}
-				
+
 			}
 			catch (Exception e)
 				{
