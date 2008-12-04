@@ -174,6 +174,7 @@ public class purepubbot extends SubspaceBot
                                                                       // to # voted.
     Vector <VoteOption>m_voteOptions = new Vector<VoteOption>();      // Options allowed for voting
     int m_currentVoteItem = -1;     // Current # being voted on; -1 if none
+    TimerTask m_voteInfoAdvertTask;
 
 
     /**
@@ -209,29 +210,38 @@ public class purepubbot extends SubspaceBot
         };
         m_botAction.scheduleTask( entranceWaitTask, 3000 );
         setupVotingOptions();
+        Integer vo = m_botAction.getBotSettings().getInteger(m_botAction.getBotName() + "Voting");
+        if( vo == null || vo == 0 )
+            m_votingEnabled = false;
+        else {
+        	m_votingEnabled = true;
+        	m_voteInfoAdvertTask = new TimerTask() {
+        		public void run() {
+        			m_botAction.sendArenaMessage( "Pub voting - Type !listvotes to change options such as availability of Levis or private freqs." );
+        		}        	
+        	};
+        	m_botAction.scheduleTask( m_voteInfoAdvertTask, 5 * Tools.TimeInMillis.MINUTE, TIME_BETWEEN_VOTE_ADVERTS );
+        }
     }
 
     /**
      * Sets up the voting options, if voting is enabled in the CFG.
      */
     public void setupVotingOptions() {
-        Integer vo = m_botAction.getBotSettings().getInteger(m_botAction.getBotName() + "Voting");
-        if( vo == null || vo == 0 )
-            return;
         VoteOption v = new VoteOption( "", "", 0, 0 );   // 0th position; don't use to make it easy
         m_voteOptions.add( v );
 
-        v = new VoteOption( "starttimedgame","Starts the timed game", 60, 3 );
+        v = new VoteOption( "starttimedgame","Start the timed game", 60, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "stoptimedgame", "Stops the timed game", 60, 3 );
+        v = new VoteOption( "stoptimedgame", "Stop the timed game", 60, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "allowlevis",    "Allows Leviathans in the arena", 55, 2 );
+        v = new VoteOption( "allowlevis",    "Allow Leviathans in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "removelevis",   "Disables Leviathans in the arena", 55, 2 );
+        v = new VoteOption( "removelevis",   "Disallow Leviathans in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "allowprivfreqs",    "Allows Private Frequencies in the arena", 55, 2 );
+        v = new VoteOption( "allowprivfreqs",    "Allow Private Frequencies in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "removeprivfreqs",   "Disables Private Frequencies in the arena", 55, 2 );
+        v = new VoteOption( "removeprivfreqs",   "Disallow Private Frequencies in the arena", 55, 2 );
         m_voteOptions.add( v );
     }
 
@@ -565,8 +575,17 @@ public class purepubbot extends SubspaceBot
         int messageType = event.getMessageType();
         String message = event.getMessage().trim();
 
-        if( message == null || !message.startsWith("!") || sender == null )
+        if( message == null || sender == null )
             return;
+        
+        if( !message.startsWith("!") ) {
+        	if( m_currentVoteItem == -1 ) {
+        		return;
+        	} else {
+        		if( message.equals("1") || message.equals("2") )
+        			handleVote( sender, Integer.parseInt(message) );
+        	}
+        }
 
         message = message.toLowerCase();
         if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.PUBLIC_MESSAGE ) )
@@ -575,6 +594,7 @@ public class purepubbot extends SubspaceBot
             if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )
                 handleModCommand(sender, message);
     }
+    
 
 
     /* **********************************  COMMANDS  ************************************ */
@@ -648,6 +668,23 @@ public class purepubbot extends SubspaceBot
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
+    }
+    
+    
+    /**
+     * Handles a vote, if vote is being counted.  Does not PM player unless the vote
+     * is being changed.
+     * @param sender
+     * @param vote Number player is voting for.  1=yes, 2=no.
+     */
+    public void handleVote( String sender, Integer vote ) {
+    	if( m_votes.containsKey(sender) ) {
+    		Integer lastVote = m_votes.get(sender);
+    		if( lastVote != vote ) {
+    			m_botAction.sendPrivateMessage( sender, "Vote changed to " + (vote==1?"YES.":"NO.") );
+    		}
+    	}
+    	m_votes.put(sender, vote);
     }
 
 
@@ -1322,6 +1359,10 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendPrivateMessage( sender, "Voting on issues in pub is not currently enabled." );
             return;
         }
+        if( m_currentVoteItem != -1 ) {
+            m_botAction.sendPrivateMessage( sender, "Sorry, there's already a vote going.  Try again later." );
+            return;        	
+        }
         if( m_voteOptions.isEmpty() ) {
             m_botAction.sendPrivateMessage( sender, "Unfortunately, there are no issues on which to vote." );
             return;
@@ -1358,8 +1399,17 @@ public class purepubbot extends SubspaceBot
         }
 
         // Success.  Let's vote
+        m_votes.clear();
         m_currentVoteItem = i;
-        m_lastVote = System.currentTimeMillis();
+        
+        m_botAction.sendArenaMessage("VOTE: " + v.displayText + "?  Type 1 for yes, 2 for no.", 1);
+        
+        TimerTask t = new TimerTask() {
+        	public void run() {
+        		doEndVote();
+        	}
+        };
+        m_botAction.scheduleTask(t, VOTE_RUN_TIME );
     }
 
     /**
@@ -1400,45 +1450,94 @@ public class purepubbot extends SubspaceBot
                 return false;
             if( justChecking )
                 return true;
-            flagTimeStarted = true;
+            doStartTimeCmd(m_botAction.getBotName(), "3");
             return true;
         } else if( optionName.equals("stoptimedgame") ) {
             if( flagTimeStarted == false )
                 return false;
             if( justChecking )
                 return true;
-            flagTimeStarted = false;
+            doStopTimeCmd(m_botAction.getBotName());
             return true;
         } else if( optionName.equals("allowlevis") ) {
             if( shipWeights.get(4) == 1 )
                 return false;
             if( justChecking )
                 return true;
-            shipWeights.set(4,1);
+            //shipWeights.set(4,1);
+            doSetCmd(m_botAction.getBotName(), "4 1");
             return true;
         } else if( optionName.equals("removelevis") ) {
             if( shipWeights.get(4) == 0 )
                 return false;
             if( justChecking )
                 return true;
-            shipWeights.set(4,0);
+            //shipWeights.set(4,0);
+            doSetCmd(m_botAction.getBotName(), "4 0");
             return true;
         } else if( optionName.equals("allowprivfreqs") ) {
             if( privFreqs == true )
                 return false;
             if( justChecking )
                 return true;
-            privFreqs = true;
+            //privFreqs = true;
+            doPrivFreqsCmd(m_botAction.getBotName());	// Toggle should work properly due to check
             return true;
         } else if( optionName.equals("removeprivfreqs") ) {
             if( privFreqs == false )
                 return false;
             if( justChecking )
                 return true;
-            privFreqs = false;
+            //privFreqs = false;
+            doPrivFreqsCmd(m_botAction.getBotName());	// Toggle should work properly due to check
             return true;
         }
         return false;
+    }
+    
+    /**
+     * Ends the vote, tallying all votes cast, changing options as needed, and displaying results.
+     */
+    public void doEndVote() {
+        m_lastVote = System.currentTimeMillis();
+    	if( m_currentVoteItem < 1 || m_currentVoteItem > m_voteOptions.size() - 1 ) {
+    		m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:Invalid vote found in PurePub voting system!" + m_currentVoteItem );
+        	m_currentVoteItem = -1;
+    		return;
+    	}
+    	
+    	float yes = 0, no = 0;
+    	for( Integer vote : m_votes.values() ) {
+    		if( vote != null ) {
+    			if( vote == 1 )
+    				yes++;
+    			else if( vote == 2 )
+    				no++;
+    		}
+    	}
+    	int percentage;
+    	if( yes == 0 )
+    		percentage = 0;
+    	else if( no == 0 )
+    		percentage = 100;
+    	else
+    		percentage = Math.round( (yes / (yes + no)) * 100 );
+    	String results = "Y:" + yes + "v N:" + no + " ... " + percentage + "%";
+    	
+    	VoteOption v = m_voteOptions.get(m_currentVoteItem);
+    	if( v != null ) {
+    		if( percentage >= v.percentRequired ) {
+    			if( yes >= v.minVotesRequired ) {
+    				m_botAction.sendArenaMessage("Vote [" + v.displayText + "] passed -- " + results + " (needed " + v.percentRequired + "%)" );
+    				setVoteOption(v, false);
+    			} else {
+        			m_botAction.sendArenaMessage("Vote [" + v.displayText + "] failed -- " + results + " (needed at least " + v.minVotesRequired + " votes)" );    				
+    			}
+    		} else {
+    			m_botAction.sendArenaMessage("Vote [" + v.displayText + "] failed -- " + results + " (needed " + v.percentRequired + "%)" );
+    		}
+    	}
+    	m_currentVoteItem = -1;
     }
 
 
