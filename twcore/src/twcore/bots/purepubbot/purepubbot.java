@@ -161,19 +161,20 @@ public class purepubbot extends SubspaceBot
     private static final int SAFE_LEFT_Y = 482;
     private static final int SAFE_RIGHT_X = 717;
     private static final int SAFE_RIGHT_Y = 482;
-    
+
     // Voting system
     boolean m_votingEnabled = false;                // True if players can vote on gametype
     long m_lastVote = System.currentTimeMillis();   // Time at which last vote was started
     // Min time between the last vote before the next can be started
-    private static final int MIN_TIME_BETWEEN_VOTES = 5 * Tools.TimeInMillis.MINUTE;
+    private static final int MIN_TIME_BETWEEN_VOTES    =  5 * Tools.TimeInMillis.MINUTE;
+    private static final int TIME_BETWEEN_VOTE_ADVERTS = 20 * Tools.TimeInMillis.MINUTE;
     // How long a vote runs for before it's stopped and the results are tallied
-    private static final int VOTE_RUN_TIME          = 1 * Tools.TimeInMillis.MINUTE;
+    private static final int VOTE_RUN_TIME             =  1 * Tools.TimeInMillis.MINUTE;
     HashMap <String,Integer>m_votes  = new HashMap<String,Integer>(); // Mapping of playernames
                                                                       // to # voted.
     Vector <VoteOption>m_voteOptions = new Vector<VoteOption>();      // Options allowed for voting
     int m_currentVoteItem = -1;     // Current # being voted on; -1 if none
-    
+
 
     /**
      * Creates a new instance of purepub bot and initializes necessary data.
@@ -209,7 +210,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.scheduleTask( entranceWaitTask, 3000 );
         setupVotingOptions();
     }
-    
+
     /**
      * Sets up the voting options, if voting is enabled in the CFG.
      */
@@ -217,20 +218,20 @@ public class purepubbot extends SubspaceBot
         Integer vo = m_botAction.getBotSettings().getInteger(m_botAction.getBotName() + "Voting");
         if( vo == null || vo == 0 )
             return;
-        VoteOption v = new VoteOption( "", "", 0.0f, 0 );   // 0th position; don't use to make it easy
+        VoteOption v = new VoteOption( "", "", 0, 0 );   // 0th position; don't use to make it easy
         m_voteOptions.add( v );
-        
-        v = new VoteOption( "starttimedgame","Starts the timed game", .6f, 3 );
+
+        v = new VoteOption( "starttimedgame","Starts the timed game", 60, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "stoptimedgame", "Stops the timed game", .6f, 3 );
+        v = new VoteOption( "stoptimedgame", "Stops the timed game", 60, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "allowlevis",    "Allows Leviathans in the arena", .55f, 2 );
+        v = new VoteOption( "allowlevis",    "Allows Leviathans in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "removelevis",   "Disables Leviathans in the arena", .55f, 2 );
+        v = new VoteOption( "removelevis",   "Disables Leviathans in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "allowlevis",    "Allows Private Frequencies in the arena", .55f, 2 );
+        v = new VoteOption( "allowprivfreqs",    "Allows Private Frequencies in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "removelevis",   "Disables Private Frequencies in the arena", .55f, 2 );
+        v = new VoteOption( "removeprivfreqs",   "Disables Private Frequencies in the arena", 55, 2 );
         m_voteOptions.add( v );
     }
 
@@ -590,20 +591,24 @@ public class purepubbot extends SubspaceBot
                 doTimeCmd(sender);
             else if(command.equals("!help"))
                 doHelpCmd(sender);
-            else if(command.equals("!warp"))
+            else if(command.startsWith("!whereis "))
+                doWhereIsCmd(sender, command.substring(9), opList.isBot(sender));
+            else if(command.startsWith("!w"))
                 doWarpCmd(sender);
             else if(command.equals("!restrictions"))
                 doRestrictionsCmd(sender);
-            else if(command.equals("!team"))
+            else if(command.startsWith("!tea"))
                 doShowTeamCmd(sender);
-            else if(command.equals("!terr"))
+            else if(command.startsWith("!t"))
                 doTerrCmd(sender);
-            else if(command.startsWith("!whereis "))
-                doWhereIsCmd(sender, command.substring(9), opList.isBot(sender));
             else if(command.startsWith("!ship "))
                 doShipCmd(sender, command.substring(6));
-            else if(command.equals("!clearmines"))
+            else if(command.startsWith("!c"))
                 doClearMinesCmd(sender);
+            else if(command.startsWith("!startvote "))
+                doStartVoteCmd(sender, command.substring(11));
+            else if(command.equals("!listvotes"))
+                doListVotesCmd(sender);
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
@@ -1306,6 +1311,136 @@ public class purepubbot extends SubspaceBot
         else
             m_botAction.smartPrivateMessageSpam(sender, playerHelpMessage);
     }
+
+    /**
+     * Begins voting on a particular issue, if voting is enabled.
+     * @param sender Player sending
+     * @param argString ID of issue on which to start voting
+     */
+    public void doStartVoteCmd(String sender, String argString ) {
+        if( !m_votingEnabled ) {
+            m_botAction.sendPrivateMessage( sender, "Voting on issues in pub is not currently enabled." );
+            return;
+        }
+        if( m_voteOptions.isEmpty() ) {
+            m_botAction.sendPrivateMessage( sender, "Unfortunately, there are no issues on which to vote." );
+            return;
+        }
+        Integer i;
+        try {
+            i = Integer.parseInt( argString );
+        } catch( NumberFormatException e ) {
+            m_botAction.sendPrivateMessage( sender, "Start a vote like this: !startvote #, where # is a vote number found in !listvotes." );
+            return;
+        }
+        VoteOption v;
+        try {
+            v = m_voteOptions.get(i);
+        } catch( ArrayIndexOutOfBoundsException e ) {
+            m_botAction.sendPrivateMessage( sender, "That's not a valid vote number.  Use !startvote #, where # is a vote number found in !listvotes." );
+            return;
+        }
+        if( v == null || i == 0 ) {
+            m_botAction.sendPrivateMessage( sender, "That's not a valid vote number.  Use !startvote #, where # is a vote number found in !listvotes." );
+            return;
+        }
+        long timeTillVote = (m_lastVote + MIN_TIME_BETWEEN_VOTES) - System.currentTimeMillis();
+        if( timeTillVote > 0) {
+            m_botAction.sendPrivateMessage( sender, "Sorry, there hasn't been enough time since the last vote.  You'll need to wait another " + getTimeString((int)-(timeTillVote/1000)) + " before you can vote again." );
+            return;
+        }
+
+        boolean canSet = setVoteOption( v, true );
+
+        if( !canSet ) {
+            m_botAction.sendPrivateMessage( sender, "That option is already set the way you want it!" );
+            return;
+        }
+
+        // Success.  Let's vote
+        m_currentVoteItem = i;
+        m_lastVote = System.currentTimeMillis();
+    }
+
+    /**
+     * Begins voting on a particular issue, if voting is enabled.
+     * @param sender Player sending
+     * @param argString ID of issue on which to start voting
+     */
+    public void doListVotesCmd(String sender ) {
+        if( !m_votingEnabled ) {
+            m_botAction.sendPrivateMessage( sender, "Voting on issues in pub is not currently enabled." );
+            return;
+        }
+        if( m_voteOptions.isEmpty() ) {
+            m_botAction.sendPrivateMessage( sender, "Unfortunately, there are no issues on which to vote." );
+            return;
+        }
+        LinkedList <String>spam = new LinkedList<String>();
+
+        for( int i=1; i<m_voteOptions.size(); i++ ) {
+            VoteOption v = m_voteOptions.get(i);
+            spam.add( i + ">  " + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
+        }
+        m_botAction.privateMessageSpam(sender, spam);
+    }
+
+    /**
+     * Set a voting option once it's been voted in, or check to see if voting on it is necessary.
+     * @param v
+     * @param justChecking
+     * @return True if option was set or can be set; false if it does not need to be set or had trouble being set
+     */
+    public boolean setVoteOption( VoteOption v, boolean justChecking ) {
+        if( v == null )
+            return false;
+        String optionName = v.name;
+        if( optionName.equals("starttimedgame") ) {
+            if( flagTimeStarted == true )
+                return false;
+            if( justChecking )
+                return true;
+            flagTimeStarted = true;
+            return true;
+        } else if( optionName.equals("stoptimedgame") ) {
+            if( flagTimeStarted == false )
+                return false;
+            if( justChecking )
+                return true;
+            flagTimeStarted = false;
+            return true;
+        } else if( optionName.equals("allowlevis") ) {
+            if( shipWeights.get(4) == 1 )
+                return false;
+            if( justChecking )
+                return true;
+            shipWeights.set(4,1);
+            return true;
+        } else if( optionName.equals("removelevis") ) {
+            if( shipWeights.get(4) == 0 )
+                return false;
+            if( justChecking )
+                return true;
+            shipWeights.set(4,0);
+            return true;
+        } else if( optionName.equals("allowprivfreqs") ) {
+            if( privFreqs == true )
+                return false;
+            if( justChecking )
+                return true;
+            privFreqs = true;
+            return true;
+        } else if( optionName.equals("removeprivfreqs") ) {
+            if( privFreqs == false )
+                return false;
+            if( justChecking )
+                return true;
+            privFreqs = false;
+            return true;
+        }
+        return false;
+    }
+
 
 
 
@@ -2560,18 +2695,20 @@ public class purepubbot extends SubspaceBot
             }
         }
     }
-    
+
     private class VoteOption {
         String name;                    // Name used internally by the game for this option
         String displayText;             // Text displayed to players listing voting options
-        float percentRequired = 0.0f;   // .50 to 1.00
+        int percentRequired = 0;        // 50 to 100
         int minVotesRequired = 0;       // Min # votes required, regardless of percentage
-        
-        public VoteOption( String name, String display, float percent, int minVotes ) {
+
+        public VoteOption( String name, String display, int percent, int minVotes ) {
             this.name = name;
             displayText = display;
             percentRequired = percent;
             minVotesRequired = minVotes;
         }
     }
+
+    //pivate
 }
