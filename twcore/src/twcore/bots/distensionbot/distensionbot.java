@@ -53,6 +53,7 @@ import twcore.core.util.Tools;
  * - Dreadnought ship class (needs energy levels)
  * - Increase time for unlock LVZ graphics
  * - Wall-bump sound -- remove static (ugh)
+ * - Re-implement DC lagout
  *
  * @author dugwyler
  */
@@ -253,7 +254,7 @@ public class distensionbot extends SubspaceBot {
 
     // LIMITING SYSTEM
     private PlayerSlotManager m_slotManager;                // Manager for player slots
-    private final int MAX_PLAYERS = 40;                     // Max # players allowed in game
+    private final int MAX_PLAYERS = 36;                     // Max # players allowed in game
 
     // ASSIST SYSTEM
     private final int ASSIST_ADVERT_CHECK_FREQUENCY = 20;   // How many seconds between checking for an assist advert
@@ -580,8 +581,8 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
         m_botAction.setMessageLimit( 15, false );
         m_botAction.setReliableKills( 1 );
-        m_botAction.setPlayerPositionUpdating( 400 );
-        m_botAction.setLowPriorityPacketCap( 20 );
+        m_botAction.setPlayerPositionUpdating( 425 );
+        m_botAction.setLowPriorityPacketCap( 19 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
         m_botAction.setDoors( 240 ); // All bottom doors closed
