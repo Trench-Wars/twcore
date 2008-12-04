@@ -1878,17 +1878,17 @@ public class distensionbot extends SubspaceBot {
                         int rank = p.getRank();
                         int bonus = 5;
                         if( rank > 10 )
-                            bonus += 35;
+                            bonus += 30;
                         if( rank > 20 )
-                            bonus += 70;
+                            bonus += 60;
                         if( rank > 30 )
-                            bonus += 150;
+                            bonus += 90;
                         if( rank > 40 )
-                            bonus += 250;
+                            bonus += 150;
                         if( rank > 50 )
-                            bonus += 1000;
+                            bonus += 500;
                         if( rank > 60 )
-                            bonus += 5000;
+                            bonus += 2500;
                         if( rank > 70 )
                             bonus += 10000;
                         bonus += (rank * 2);      // Add in rank to make it seem more random
@@ -5225,6 +5225,8 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You are not yet able to use this ability -- first you must install the appropriate !upgrade." );
         int warpPoint = 0;
         String[] params = msg.split(":", 2);
+        if( params.length != 2 )
+            throw new TWCoreException( "Please provide an appropriate warp point and target.  Use !opshelp for assistance on syntax." );
         int freq = p.getArmyID();
         Player p2 = m_botAction.getPlayer(params[0]);
         if( p2 == null ) {
@@ -12688,7 +12690,7 @@ public class distensionbot extends SubspaceBot {
             while( r.next() ) {
                 ShipUpgrade su = parseUpgrade(r);
                 if( su == null ) {
-                    cmdDie("DistensionInternal", "now");
+                    cmdDie(m_botAction.getBotName(), "now");
                 } else {
                     defaultUpgs.add( su );
                 }
@@ -12696,7 +12698,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.SQLClose( r );
         } catch (Exception e) {
             Tools.printLog( "SQL ERROR loading default upgrade data." );
-            cmdDie("DistensionInternal", "now");
+            cmdDie(m_botAction.getBotName(), "now");
             return;
         }
 
@@ -12708,7 +12710,7 @@ public class distensionbot extends SubspaceBot {
                 while( r.next() ) {
                     ShipUpgrade su = parseUpgrade(r);
                     if( su == null ) {
-                        cmdDie("DistensionInternal", "now");
+                        cmdDie(m_botAction.getBotName(), "now");
                     } else {
                         ship.addUpgrade( su );
                     }
