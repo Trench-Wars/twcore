@@ -169,7 +169,7 @@ public class purepubbot extends SubspaceBot
     private static final int MIN_TIME_BETWEEN_VOTES    =  5 * Tools.TimeInMillis.MINUTE;
     private static final int TIME_BETWEEN_VOTE_ADVERTS = 20 * Tools.TimeInMillis.MINUTE;
     // How long a vote runs for before it's stopped and the results are tallied
-    private static final int VOTE_RUN_TIME             =  1 * Tools.TimeInMillis.MINUTE;
+    private static final int VOTE_RUN_TIME             = 30 * Tools.TimeInMillis.SECOND;
     HashMap <String,Integer>m_votes  = new HashMap<String,Integer>(); // Mapping of playernames
                                                                       // to # voted.
     Vector <VoteOption>m_voteOptions = new Vector<VoteOption>();      // Options allowed for voting
@@ -217,7 +217,7 @@ public class purepubbot extends SubspaceBot
         	m_votingEnabled = true;
         	m_voteInfoAdvertTask = new TimerTask() {
         		public void run() {
-        			m_botAction.sendArenaMessage( "[Pub Voting]  Type !listvotes to change options." );
+        			m_botAction.sendArenaMessage( "[Pub Voting]  !listvotes to see options; !startvote to change." );
         		}
         	};
         	m_botAction.scheduleTask( m_voteInfoAdvertTask, 5 * Tools.TimeInMillis.MINUTE, TIME_BETWEEN_VOTE_ADVERTS );
@@ -1453,8 +1453,9 @@ public class purepubbot extends SubspaceBot
         for( int i=1; i<m_voteOptions.size(); i++ ) {
             VoteOption v = m_voteOptions.get(i);
             if( setVoteOption( v, true ) )     // Only display options that can be set
-                spam.add( i + ">  " + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
+                spam.add( "#" + i + (i>9?">  ":">   ") + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
         }
+        spam.add( "To start a vote, use !startvote #  (where # is the number you want to vote on)");
         m_botAction.privateMessageSpam(sender, spam);
     }
 
@@ -1511,32 +1512,32 @@ public class purepubbot extends SubspaceBot
             doSetCmd(m_botAction.getBotName(), "4 0");
             return true;
         } else if( optionName.equals("ja1") ) {
-            if( shipWeights.get(2) == 1 )
-                return false;
-            if( justChecking )
-                return true;
-            doSetCmd(m_botAction.getBotName(), "2 1");
-            return true;
-        } else if( optionName.equals("ja2") ) {
             if( shipWeights.get(2) == 5 )
                 return false;
             if( justChecking )
                 return true;
             doSetCmd(m_botAction.getBotName(), "2 5");
             return true;
-        } else if( optionName.equals("we1") ) {
-            if( shipWeights.get(6) == 1 )
+        } else if( optionName.equals("ja2") ) {
+            if( shipWeights.get(2) == 1 )
                 return false;
             if( justChecking )
                 return true;
-            doSetCmd(m_botAction.getBotName(), "6 1");
+            doSetCmd(m_botAction.getBotName(), "2 1");
             return true;
-        } else if( optionName.equals("we2") ) {
+        } else if( optionName.equals("we1") ) {
             if( shipWeights.get(6) == 5 )
                 return false;
             if( justChecking )
                 return true;
             doSetCmd(m_botAction.getBotName(), "6 5");
+            return true;
+        } else if( optionName.equals("we2") ) {
+            if( shipWeights.get(6) == 1 )
+                return false;
+            if( justChecking )
+                return true;
+            doSetCmd(m_botAction.getBotName(), "6 1");
             return true;
         } else if( optionName.equals("pf1") ) {
             if( privFreqs == true )
@@ -1611,19 +1612,19 @@ public class purepubbot extends SubspaceBot
     		percentage = 100;
     	else
     		percentage = Math.round( (yes / (yes + no)) * 100 );
-    	String results = "Y:" + (int)yes + " v N:" + (int)no + " ... " + percentage + "%";
+    	String results = "Y:" + (int)yes + " v N:" + (int)no + "  (" + percentage + "%";
 
     	VoteOption v = m_voteOptions.get(m_currentVoteItem);
     	if( v != null ) {
     		if( percentage >= v.percentRequired ) {
     			if( yes >= v.minVotesRequired ) {
-    				m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote PASSED.  " + results + " (needed " + v.percentRequired + "%)" );
+    				m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote PASSED.  " + results + "; needed " + v.percentRequired + "%)" );
     				setVoteOption(v, false);
     			} else {
-        			m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote FAILED.  " + results + " (needed at least " + v.minVotesRequired + " votes)" );
+        			m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote FAILED.  " + results + "; needed " + v.percentRequired + "% and " + v.minVotesRequired + " votes)" );
     			}
     		} else {
-    			m_botAction.sendArenaMessage(    "[" + v.displayText + "]  Vote PASSED.  " + results + " (needed " + v.percentRequired + "%)" );
+    			m_botAction.sendArenaMessage(    "[" + v.displayText + "]  Vote PASSED.  " + results + "; needed " + v.percentRequired + "%)" );
     		}
     	}
     	m_currentVoteItem = -1;
