@@ -218,7 +218,7 @@ public class purepubbot extends SubspaceBot
         	m_voteInfoAdvertTask = new TimerTask() {
         		public void run() {
         			m_botAction.sendArenaMessage( "Pub voting - Type !listvotes to change options such as availability of Levis or private freqs." );
-        		}        	
+        		}
         	};
         	m_botAction.scheduleTask( m_voteInfoAdvertTask, 5 * Tools.TimeInMillis.MINUTE, TIME_BETWEEN_VOTE_ADVERTS );
         }
@@ -477,7 +477,7 @@ public class purepubbot extends SubspaceBot
             String playerName = m_botAction.getPlayerName(playerID);
 
             if(started) {
-                m_botAction.sendPrivateMessage(playerName, "Pure Pub enabled.  Private Freqs: [" + (privFreqs ? "OK" : "NO") + "]" + "  Timed pub: [" + (flagTimeStarted ? "ON" : "OFF") + "]" );
+                m_botAction.sendPrivateMessage(playerName, "Welcome to Pub.  Private Freqs: [" + (privFreqs ? "OK" : "NO") + "]" + "  Timed pub: [" + (flagTimeStarted ? "ON" : "OFF") + "]" );
 
                 String restrictions = "";
                 int weight;
@@ -577,7 +577,7 @@ public class purepubbot extends SubspaceBot
 
         if( message == null || sender == null )
             return;
-        
+
         if( !message.startsWith("!") ) {
         	if( m_currentVoteItem == -1 ) {
         		return;
@@ -594,7 +594,7 @@ public class purepubbot extends SubspaceBot
             if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) )
                 handleModCommand(sender, message);
     }
-    
+
 
 
     /* **********************************  COMMANDS  ************************************ */
@@ -645,10 +645,10 @@ public class purepubbot extends SubspaceBot
         try {
             if(command.startsWith("!go "))
                 doGoCmd(sender, command.substring(4));
-            else if(command.equals("!start"))
-                doStartCmd(sender);
-            else if(command.equals("!stop"))
-                doStopCmd(sender);
+            //else if(command.equals("!start"))
+            //    doStartCmd(sender);
+            //else if(command.equals("!stop"))
+            //    doStopCmd(sender);
             else if(command.equals("!privfreqs"))
                 doPrivFreqsCmd(sender);
             else if(command.startsWith("!starttime "))
@@ -669,8 +669,8 @@ public class purepubbot extends SubspaceBot
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
     }
-    
-    
+
+
     /**
      * Handles a vote, if vote is being counted.  Does not PM player unless the vote
      * is being changed.
@@ -702,7 +702,7 @@ public class purepubbot extends SubspaceBot
         String currentArena = m_botAction.getArenaName();
 
         if(started || flagTimeStarted)
-            throw new RuntimeException("Bot is currently running pure pub settings in " + currentArena + ".  Please !Stop and/or !Endtime before trying to move.");
+            throw new RuntimeException("Bot is currently running pub settings in " + currentArena + ".  Please !Stop and/or !Endtime before trying to move.");
         if(currentArena.equalsIgnoreCase(argString))
             throw new IllegalArgumentException("Bot is already in that arena.");
 
@@ -717,6 +717,7 @@ public class purepubbot extends SubspaceBot
      * @param sender is the person issuing the command.
      * @throws RuntimeException if the bot is already running pure pub settings.
      */
+    /* With !set command, !start and !stop are obsolete.
     public void doStartCmd(String sender)
     {
         if(started)
@@ -727,6 +728,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage("Pure pub settings enabled.  Ship restrictions are now in effect.", 2);
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully enabled.");
     }
+    */
 
 
     /**
@@ -736,6 +738,7 @@ public class purepubbot extends SubspaceBot
      * @throws RuntimeException if the bot is not currently running pure pub
      * settings.
      */
+    /* With !set command, !start and !stop are obsolete.
     public void doStopCmd(String sender)
     {
         if(!started)
@@ -745,6 +748,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.sendArenaMessage("Pure pub settings disabled.  Ship restrictions are no longer in effect.", 2);
         m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully disabled.");
     }
+    */
 
 
     /**
@@ -754,8 +758,6 @@ public class purepubbot extends SubspaceBot
      */
     public void doPrivFreqsCmd(String sender)
     {
-        if(!started)
-            throw new RuntimeException("Bot is not currently running pure pub settings.");
         if(!privFreqs)
         {
             m_botAction.sendArenaMessage("Private Frequencies enabled.", 2);
@@ -1304,8 +1306,8 @@ public class purepubbot extends SubspaceBot
         String[] helpMessage =
         {
                 "!go <ArenaName>   -- Moves the bot to <ArenaName>.",
-                "!start            -- Starts pure pub settings.",
-                "!stop             -- Stops pure pub settings.",
+                //"!start            -- Starts pure pub settings.",
+                //"!stop             -- Stops pure pub settings.",
                 "!privfreqs        -- Toggles private frequencies & check for imbalances.",
                 "!starttime <#>    -- Starts Flag Time game to <#> minutes",
                 "!stoptime         -- Ends Flag Time mode.",
@@ -1328,19 +1330,19 @@ public class purepubbot extends SubspaceBot
 
         String[] playerHelpMessage =
         {
-                "Hi.  I'm a bot designed to enforce pure pub rules.",
-                "I restrict ships, manage private frequencies, and run Flag Time mode.",
+                "Hi.  I'm a bot that controls features in public arenas.",
+                "I restrict ships, manage private frequencies, handle votes, run Flag Time mode.",
                 "Commands:",
-                "!time                   -- Provides time remaining when Flag Time mode.",
-                "!warp                   -- Warps you into flagroom at start of next round (flagtime)",
-                "!terr                   -- Shows terriers on the team & their last seen locations",
-                "!whereis <name>         -- Shows last seen location of <name> (if on your team)",
-                "!team                   -- Tells you which ships your team members are in.",
-                "!ship <ship#>           -- Puts you in ship <ship#>, keeping MVP status.",
-                "!clearmines             -- Clears all mines you have laid, keeping MVP status.",
-                "!restrictions           -- Lists all current ship restrictions."
-
-
+                "!time                 -- Provides time remaining when Flag Time mode.",
+                "!warp                 -- Warps you into flagroom at start of next round (flagtime)",
+                "!terr                 -- Shows terriers on the team & their last seen locations",
+                "!whereis <name>       -- Shows last seen location of <name> (if on your team)",
+                "!team                 -- Tells you which ships your team members are in.",
+                "!ship <ship#>         -- Puts you in ship <ship#>, keeping MVP status.",
+                "!clearmines           -- Clears all mines you have laid, keeping MVP status.",
+                "!restrictions         -- Lists all current ship restrictions.",
+                "!listvotes            -- Lists issues you can vote on to change the way pub's played",
+                "!startvote <num>      -- Starts voting on issue <num>.  See !listvotes for numbers.",
         };
 
         if( opList.isHighmod( sender ) )
@@ -1361,7 +1363,7 @@ public class purepubbot extends SubspaceBot
         }
         if( m_currentVoteItem != -1 ) {
             m_botAction.sendPrivateMessage( sender, "Sorry, there's already a vote going.  Try again later." );
-            return;        	
+            return;
         }
         if( m_voteOptions.isEmpty() ) {
             m_botAction.sendPrivateMessage( sender, "Unfortunately, there are no issues on which to vote." );
@@ -1401,9 +1403,9 @@ public class purepubbot extends SubspaceBot
         // Success.  Let's vote
         m_votes.clear();
         m_currentVoteItem = i;
-        
+
         m_botAction.sendArenaMessage("VOTE: " + v.displayText + "?  Type 1 for yes, 2 for no.", 1);
-        
+
         TimerTask t = new TimerTask() {
         	public void run() {
         		doEndVote();
@@ -1494,7 +1496,7 @@ public class purepubbot extends SubspaceBot
         }
         return false;
     }
-    
+
     /**
      * Ends the vote, tallying all votes cast, changing options as needed, and displaying results.
      */
@@ -1505,7 +1507,7 @@ public class purepubbot extends SubspaceBot
         	m_currentVoteItem = -1;
     		return;
     	}
-    	
+
     	float yes = 0, no = 0;
     	for( Integer vote : m_votes.values() ) {
     		if( vote != null ) {
@@ -1523,7 +1525,7 @@ public class purepubbot extends SubspaceBot
     	else
     		percentage = Math.round( (yes / (yes + no)) * 100 );
     	String results = "Y:" + yes + "v N:" + no + " ... " + percentage + "%";
-    	
+
     	VoteOption v = m_voteOptions.get(m_currentVoteItem);
     	if( v != null ) {
     		if( percentage >= v.percentRequired ) {
@@ -1531,7 +1533,7 @@ public class purepubbot extends SubspaceBot
     				m_botAction.sendArenaMessage("Vote [" + v.displayText + "] passed -- " + results + " (needed " + v.percentRequired + "%)" );
     				setVoteOption(v, false);
     			} else {
-        			m_botAction.sendArenaMessage("Vote [" + v.displayText + "] failed -- " + results + " (needed at least " + v.minVotesRequired + " votes)" );    				
+        			m_botAction.sendArenaMessage("Vote [" + v.displayText + "] failed -- " + results + " (needed at least " + v.minVotesRequired + " votes)" );
     			}
     		} else {
     			m_botAction.sendArenaMessage("Vote [" + v.displayText + "] failed -- " + results + " (needed " + v.percentRequired + "%)" );
@@ -1739,7 +1741,7 @@ public class purepubbot extends SubspaceBot
      * if there's a significant gap.
      */
     private void checkFreqSizes() {
-        if( MSG_AT_FREQSIZE_DIFF == -1 || !allEntered )
+        if( MSG_AT_FREQSIZE_DIFF == -1 || !allEntered || privFreqs )
             return;
         int freq0 = m_botAction.getPlayingFrequencySize(0);
         int freq1 = m_botAction.getPlayingFrequencySize(1);
@@ -1847,6 +1849,7 @@ public class purepubbot extends SubspaceBot
                 Tools.printLog("Must have both toggles and number of minutes defined (!toggle;!toggle2:mins)");
             }
         }
+        started = true;
     }
 
 
