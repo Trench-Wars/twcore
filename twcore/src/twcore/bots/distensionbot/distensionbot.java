@@ -966,6 +966,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!mu", acceptedMessages, this, "cmdMassUpgrade" );
         m_commandInterpreter.registerCommand( "!r", acceptedMessages, this, "cmdReturn" );
         m_commandInterpreter.registerCommand( "!p", acceptedMessages, this, "cmdProgress" );
+        m_commandInterpreter.registerCommand( "!q", acceptedMessages, this, "cmdQueue" );
         m_commandInterpreter.registerCommand( "!s", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!sc", acceptedMessages, this, "cmdScrap" );
         m_commandInterpreter.registerCommand( "!sca", acceptedMessages, this, "cmdScrapAll" );
@@ -1019,6 +1020,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!hangar", acceptedMessages, this, "cmdHangar" );
         m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "cmdStatus" );
         m_commandInterpreter.registerCommand( "!progress", acceptedMessages, this, "cmdProgress" );
+        m_commandInterpreter.registerCommand( "!queue", acceptedMessages, this, "cmdQueue" );
         m_commandInterpreter.registerCommand( ".", acceptedMessages, this, "cmdProgress" );
         m_commandInterpreter.registerCommand( "!armory", acceptedMessages, this, "cmdArmory" );
         m_commandInterpreter.registerCommand( "!armoury", acceptedMessages, this, "cmdArmory" ); // For those that can't spell
@@ -1182,6 +1184,7 @@ public class distensionbot extends SubspaceBot {
                     "| !enlist <army#>   !e  |  Enlist specifically in <army#>",
                     "| !return           ~   |  Return to your current position in the war",
                     "| !battleinfo       !bi |  Display current battle status",
+                    "| !queue            !q  |  Display your position in the waiting queue",
                     "|______________________/"
             };
             m_botAction.remotePrivateMessageSpam(name, helps);
@@ -2601,6 +2604,26 @@ public class distensionbot extends SubspaceBot {
         m_slotManager.removePlayerFromWaitingListOnly(p);    // Just in case...
     }
 
+    /**
+     * Logs a player in / allows them to return to the game.
+     * @param name
+     * @param msg
+     * @param bypassChecks True if this player is being placed in by the automated waiting list.
+     */
+    public void cmdQueue( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null )
+            throw new TWCoreException( "You are not yet in the queue." );
+
+        if( !p.dataLoaded )
+            throw new TWCoreException( "Your data has not yet been loaded.  Please !return in order to load your data." );
+
+        if( m_slotManager.isPlayerAlreadyWaiting(p) ) {
+            throw new TWCoreException( "You are #" + m_slotManager.getWaitingListOrder(p) + " of " + m_slotManager.getNumberWaiting() + " waiting." );
+        } else {
+            throw new TWCoreException( "You are not in the queue." );
+        }
+    }
 
     /**
      * Wrapper for cmdLeave when it has not been forced on a player.
