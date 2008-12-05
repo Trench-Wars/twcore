@@ -164,7 +164,7 @@ public class purepubbot extends SubspaceBot
 
     // Voting system
     boolean m_votingEnabled = false;                // True if players can vote on gametype
-    long m_lastVote = System.currentTimeMillis();   // Time at which last vote was started
+    long m_lastVote = 0;                            // Time at which last vote was started
     // Min time between the last vote before the next can be started
     private static final int MIN_TIME_BETWEEN_VOTES    =  5 * Tools.TimeInMillis.MINUTE;
     private static final int TIME_BETWEEN_VOTE_ADVERTS = 20 * Tools.TimeInMillis.MINUTE;
@@ -217,7 +217,7 @@ public class purepubbot extends SubspaceBot
         	m_votingEnabled = true;
         	m_voteInfoAdvertTask = new TimerTask() {
         		public void run() {
-        			m_botAction.sendArenaMessage( "Pub voting - Type !listvotes to change options such as availability of Levis or private freqs." );
+        			m_botAction.sendArenaMessage( "[Pub Voting]  Type !listvotes to change options." );
         		}
         	};
         	m_botAction.scheduleTask( m_voteInfoAdvertTask, 5 * Tools.TimeInMillis.MINUTE, TIME_BETWEEN_VOTE_ADVERTS );
@@ -231,17 +231,37 @@ public class purepubbot extends SubspaceBot
         VoteOption v = new VoteOption( "", "", 0, 0 );   // 0th position; don't use to make it easy
         m_voteOptions.add( v );
 
-        v = new VoteOption( "starttimedgame","Start the timed game", 60, 3 );
+        v = new VoteOption( "ti1",    "Start the timed game", 60, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "stoptimedgame", "Stop the timed game", 60, 3 );
+        v = new VoteOption( "ti2",    "Stop the timed game", 60, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "allowlevis",    "Allow Leviathans in the arena", 55, 2 );
+        v = new VoteOption( "le1",    "Allow Leviathans in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "removelevis",   "Disallow Leviathans in the arena", 55, 2 );
+        v = new VoteOption( "le2",    "Disallow Leviathans in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "allowprivfreqs",    "Allow Private Frequencies in the arena", 55, 2 );
+        v = new VoteOption( "ja1",    "Set max # Javs allowed to 20% of the team size", 65, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "removeprivfreqs",   "Disallow Private Frequencies in the arena", 55, 2 );
+        v = new VoteOption( "ja2",    "Unrestrict Javelins", 55, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "we1",    "Set max # Weasels allowed to 20% of the team size", 65, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "we2",    "Unrestrict Weasels", 55, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "pf1",    "Allow Private Frequencies in the arena", 55, 2 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "pf2",    "Disallow Private Frequencies in the arena", 55, 2 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "st1",    "Warp players to earwarps in timed game", 80, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "st2",    "Stop warping players to earwarps in timed game", 55, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "w1",     "Allow players to use !warp in timed game", 55, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "w2",     "Disable players from using !warp in timed game", 70, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "aw1",    "Set !warp on players who enter arena", 65, 3 );
+        m_voteOptions.add( v );
+        v = new VoteOption( "aw2",    "Stop setting !warp on players who enter arena", 55, 3 );
         m_voteOptions.add( v );
     }
 
@@ -1432,7 +1452,8 @@ public class purepubbot extends SubspaceBot
 
         for( int i=1; i<m_voteOptions.size(); i++ ) {
             VoteOption v = m_voteOptions.get(i);
-            spam.add( i + ">  " + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
+            if( setVoteOption( v, true ) )     // Only display options that can be set
+                spam.add( i + ">  " + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
         }
         m_botAction.privateMessageSpam(sender, spam);
     }
@@ -1447,51 +1468,117 @@ public class purepubbot extends SubspaceBot
         if( v == null )
             return false;
         String optionName = v.name;
-        if( optionName.equals("starttimedgame") ) {
+        if( optionName.equals("ti1") ) {
             if( flagTimeStarted == true )
                 return false;
             if( justChecking )
                 return true;
             doStartTimeCmd(m_botAction.getBotName(), "3");
             return true;
-        } else if( optionName.equals("stoptimedgame") ) {
+        } else if( optionName.equals("ti2") ) {
             if( flagTimeStarted == false )
                 return false;
             if( justChecking )
                 return true;
             doStopTimeCmd(m_botAction.getBotName());
             return true;
-        } else if( optionName.equals("allowlevis") ) {
+        }else if( optionName.equals("st1") ) {
+            if( strictFlagTime == true )
+                return false;
+            if( justChecking )
+                return true;
+            doStrictTimeCmd(m_botAction.getBotName());
+            return true;
+        } else if( optionName.equals("st2") ) {
+            if( strictFlagTime == false )
+                return false;
+            if( justChecking )
+                return true;
+            doStrictTimeCmd(m_botAction.getBotName());
+            return true;
+        } else if( optionName.equals("le1") ) {
             if( shipWeights.get(4) == 1 )
                 return false;
             if( justChecking )
                 return true;
-            //shipWeights.set(4,1);
             doSetCmd(m_botAction.getBotName(), "4 1");
             return true;
-        } else if( optionName.equals("removelevis") ) {
+        } else if( optionName.equals("le2") ) {
             if( shipWeights.get(4) == 0 )
                 return false;
             if( justChecking )
                 return true;
-            //shipWeights.set(4,0);
             doSetCmd(m_botAction.getBotName(), "4 0");
             return true;
-        } else if( optionName.equals("allowprivfreqs") ) {
+        } else if( optionName.equals("ja1") ) {
+            if( shipWeights.get(2) == 1 )
+                return false;
+            if( justChecking )
+                return true;
+            doSetCmd(m_botAction.getBotName(), "2 1");
+            return true;
+        } else if( optionName.equals("ja2") ) {
+            if( shipWeights.get(2) == 5 )
+                return false;
+            if( justChecking )
+                return true;
+            doSetCmd(m_botAction.getBotName(), "2 5");
+            return true;
+        } else if( optionName.equals("we1") ) {
+            if( shipWeights.get(6) == 1 )
+                return false;
+            if( justChecking )
+                return true;
+            doSetCmd(m_botAction.getBotName(), "6 1");
+            return true;
+        } else if( optionName.equals("we2") ) {
+            if( shipWeights.get(6) == 5 )
+                return false;
+            if( justChecking )
+                return true;
+            doSetCmd(m_botAction.getBotName(), "6 5");
+            return true;
+        } else if( optionName.equals("pf1") ) {
             if( privFreqs == true )
                 return false;
             if( justChecking )
                 return true;
-            //privFreqs = true;
-            doPrivFreqsCmd(m_botAction.getBotName());	// Toggle should work properly due to check
+            doPrivFreqsCmd(m_botAction.getBotName());
             return true;
-        } else if( optionName.equals("removeprivfreqs") ) {
+        } else if( optionName.equals("pf2") ) {
             if( privFreqs == false )
                 return false;
             if( justChecking )
                 return true;
-            //privFreqs = false;
-            doPrivFreqsCmd(m_botAction.getBotName());	// Toggle should work properly due to check
+            doPrivFreqsCmd(m_botAction.getBotName());
+            return true;
+        } else if( optionName.equals("w1") ) {
+            if( warpAllowed == true )
+                return false;
+            if( justChecking )
+                return true;
+            doAllowWarpCmd(m_botAction.getBotName());
+            return true;
+        } else if( optionName.equals("w2") ) {
+            if( warpAllowed == false )
+                return false;
+            if( justChecking )
+                return true;
+            doAllowWarpCmd(m_botAction.getBotName());
+            return true;
+        } else if( optionName.equals("aw1") ) {
+            if( autoWarp == true )
+                return false;
+            if( justChecking )
+                return true;
+            doAutowarpCmd(m_botAction.getBotName());
+            return true;
+        } else if( optionName.equals("aw2") ) {
+            if( autoWarp == false )
+                return false;
+            if( justChecking )
+                return true;
+            doAutowarpCmd(m_botAction.getBotName());
             return true;
         }
         return false;
@@ -1524,19 +1611,19 @@ public class purepubbot extends SubspaceBot
     		percentage = 100;
     	else
     		percentage = Math.round( (yes / (yes + no)) * 100 );
-    	String results = "Y:" + yes + "v N:" + no + " ... " + percentage + "%";
+    	String results = "Y:" + (int)yes + " v N:" + (int)no + " ... " + percentage + "%";
 
     	VoteOption v = m_voteOptions.get(m_currentVoteItem);
     	if( v != null ) {
     		if( percentage >= v.percentRequired ) {
     			if( yes >= v.minVotesRequired ) {
-    				m_botAction.sendArenaMessage("Vote [" + v.displayText + "] passed -- " + results + " (needed " + v.percentRequired + "%)" );
+    				m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote PASSED.  " + results + " (needed " + v.percentRequired + "%)" );
     				setVoteOption(v, false);
     			} else {
-        			m_botAction.sendArenaMessage("Vote [" + v.displayText + "] failed -- " + results + " (needed at least " + v.minVotesRequired + " votes)" );
+        			m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote FAILED.  " + results + " (needed at least " + v.minVotesRequired + " votes)" );
     			}
     		} else {
-    			m_botAction.sendArenaMessage("Vote [" + v.displayText + "] failed -- " + results + " (needed " + v.percentRequired + "%)" );
+    			m_botAction.sendArenaMessage(    "[" + v.displayText + "]  Vote PASSED.  " + results + " (needed " + v.percentRequired + "%)" );
     		}
     	}
     	m_currentVoteItem = -1;
