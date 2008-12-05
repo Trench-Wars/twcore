@@ -66,7 +66,7 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between a long list of spammed messages
-    private final int PRIZE_SPAM_DELAY = 15;               // Delay in ms between prizes for individual players
+    private final int PRIZE_SPAM_DELAY = 16;               // Delay in ms between prizes for individual players
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
@@ -579,10 +579,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void init() {
         m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
-        m_botAction.setMessageLimit( 15, false );
+        m_botAction.setMessageLimit( 10, false );
         m_botAction.setReliableKills( 1 );
-        m_botAction.setPlayerPositionUpdating( 425 );
-        m_botAction.setLowPriorityPacketCap( 19 );
+        m_botAction.setPlayerPositionUpdating( 575 );
+        m_botAction.setLowPriorityPacketCap( 14 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
         m_botAction.setDoors( 240 ); // All bottom doors closed
