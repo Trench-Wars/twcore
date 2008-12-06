@@ -29,6 +29,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Tools;
@@ -156,6 +157,8 @@ public class purepubbot extends SubspaceBot
     private int warpPtsRightX_April1[] = { 537, 519, 522, 525, 529, 533 };
     private int warpPtsRightY_April1[] = { 255, 260, 267, 274, 263, 279 };
 
+    private boolean useAprilFoolsPoints = false;
+
     // Warp coords for safes (for use in strict flag time mode)
     private static final int SAFE_LEFT_X = 306;
     private static final int SAFE_LEFT_Y = 482;
@@ -169,12 +172,15 @@ public class purepubbot extends SubspaceBot
     private static final int MIN_TIME_BETWEEN_VOTES    =  5 * Tools.TimeInMillis.MINUTE;
     private static final int TIME_BETWEEN_VOTE_ADVERTS = 20 * Tools.TimeInMillis.MINUTE;
     // How long a vote runs for before it's stopped and the results are tallied
-    private static final int VOTE_RUN_TIME             = 30 * Tools.TimeInMillis.SECOND;
+    private static final int VOTE_RUN_TIME             = 40 * Tools.TimeInMillis.SECOND;
     HashMap <String,Integer>m_votes  = new HashMap<String,Integer>(); // Mapping of playernames
                                                                       // to # voted.
     Vector <VoteOption>m_voteOptions = new Vector<VoteOption>();      // Options allowed for voting
     int m_currentVoteItem = -1;     // Current # being voted on; -1 if none
     TimerTask m_voteInfoAdvertTask;
+
+    // Challenge
+    LinkedList <PubChallenge>m_challenges = new LinkedList<PubChallenge>();
 
 
     /**
@@ -203,6 +209,14 @@ public class purepubbot extends SubspaceBot
         mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         shipWeights = new Vector<Integer>();
         objs = m_botAction.getObjectSet();
+
+        // Small hack to use different warp coordinates with april fools map.
+        GregorianCalendar now = new GregorianCalendar();
+        GregorianCalendar april1 = new GregorianCalendar(2008,GregorianCalendar.APRIL,1,0,0,0);
+        GregorianCalendar april2 = new GregorianCalendar(2008,GregorianCalendar.APRIL,2,0,0,0);
+        if( now.after(april1) && now.before(april2) )
+            useAprilFoolsPoints = true;
+
         entranceWaitTask = new TimerTask() {
             public void run() {
                 allEntered = true;
@@ -287,6 +301,7 @@ public class purepubbot extends SubspaceBot
         eventRequester.request(EventRequester.ARENA_LIST);
         eventRequester.request(EventRequester.ARENA_JOINED);
         eventRequester.request(EventRequester.KOTH_RESET);
+        eventRequester.request(EventRequester.PLAYER_DEATH);
     }
 
 
@@ -546,6 +561,7 @@ public class purepubbot extends SubspaceBot
         removeFromLists(playerName);
         removeFromWarpList(playerName);
         playerTimes.remove( playerName );
+        m_votes.remove(playerName);
         checkFreqSizes();
     }
 
@@ -567,8 +583,7 @@ public class purepubbot extends SubspaceBot
      *
      * @param event is the event to handle.
      */
-    public void handleEvent(FlagClaimed event)
-    {
+    public void handleEvent(FlagClaimed event) {
         if(!flagTimeStarted)
             return;
 
@@ -583,14 +598,41 @@ public class purepubbot extends SubspaceBot
         }
     }
 
+    /**
+     * Handles deaths in player challenges.
+     *
+     * @param event is the event to handle.
+     */
+    public void handleEvent(PlayerDeath event) {
+        boolean challengeFound = false;     // Players can only be in one at once
+        for( PubChallenge pc : m_challenges ) {
+            if( pc.challengeActive() ) {
+                if(        event.getKillerID() == pc.getPlayer1().getPlayerID() ) {
+                    if(    event.getKilleeID() == pc.getPlayer2().getPlayerID() ) {
+                        // P1 killed P2
+                        pc.p2Deaths++;
+                        challengeFound = true;
+                    }
+                } else if( event.getKillerID() == pc.getPlayer2().getPlayerID() ) {
+                    if(    event.getKilleeID() == pc.getPlayer1().getPlayerID() ) {
+                        // P2 killed P1
+                        pc.p1Deaths++;
+                        challengeFound = true;
+                    }
+                }
+            }
+            if( challengeFound )
+                return;
+        }
+    }
+
 
     /**
      * Handles all messages received.
      *
      * @param event is the message event to handle.
      */
-    public void handleEvent(Message event)
-    {
+    public void handleEvent(Message event) {
         String sender = getSender(event);
         int messageType = event.getMessageType();
         String message = event.getMessage().trim();
@@ -649,6 +691,10 @@ public class purepubbot extends SubspaceBot
                 doStartVoteCmd(sender, command.substring(11));
             else if(command.equals("!listvotes"))
                 doListVotesCmd(sender);
+            else if(command.startsWith("!challenge "))
+                doChallengeCmd(sender, command.substring(11));
+            else if(command.startsWith("!end "))
+                doEndCmd(sender);
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
@@ -1346,6 +1392,10 @@ public class purepubbot extends SubspaceBot
                 "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
                 "!terr             -- Shows terriers on the team & their last seen locations",
                 "!whereis <name>   -- Shows last seen location of <name>",
+                "!listvotes        -- Lists issues you can vote on to change the way pub's played",
+                "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
+                "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
+                "!end              -- Ends your current challenge"
         };
 
         String[] playerHelpMessage =
@@ -1353,16 +1403,18 @@ public class purepubbot extends SubspaceBot
                 "Hi.  I'm a bot that controls features in public arenas.",
                 "I restrict ships, manage private frequencies, handle votes, run Flag Time mode.",
                 "Commands:",
-                "!time                 -- Provides time remaining when Flag Time mode.",
-                "!warp                 -- Warps you into flagroom at start of next round (flagtime)",
-                "!terr                 -- Shows terriers on the team & their last seen locations",
-                "!whereis <name>       -- Shows last seen location of <name> (if on your team)",
-                "!team                 -- Tells you which ships your team members are in.",
-                "!ship <ship#>         -- Puts you in ship <ship#>, keeping MVP status.",
-                "!clearmines           -- Clears all mines you have laid, keeping MVP status.",
-                "!restrictions         -- Lists all current ship restrictions.",
-                "!listvotes            -- Lists issues you can vote on to change the way pub's played",
-                "!startvote <num>      -- Starts voting on issue <num>.  See !listvotes for numbers.",
+                "!time             -- Provides time remaining when Flag Time mode.",
+                "!warp             -- Warps you into flagroom at start of next round (flagtime)",
+                "!terr             -- Shows terriers on the team & their last seen locations",
+                "!whereis <name>   -- Shows last seen location of <name> (if on your team)",
+                "!team             -- Tells you which ships your team members are in.",
+                "!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
+                "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
+                "!restrictions     -- Lists all current ship restrictions.",
+                "!listvotes        -- Lists issues you can vote on to change the way pub's played",
+                "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
+                "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
+                "!end              -- Ends your current challenge"
         };
 
         if( opList.isHighmod( sender ) )
@@ -1393,7 +1445,8 @@ public class purepubbot extends SubspaceBot
         try {
             i = Integer.parseInt( argString );
         } catch( NumberFormatException e ) {
-            m_botAction.sendPrivateMessage( sender, "Start a vote like this: !startvote #, where # is a vote number found in !listvotes." );
+            m_botAction.sendPrivateMessage( sender, "Start a vote like this: !startvote #, where # is one of these vote numbers:" );
+            doListVotesCmd(sender);
             return;
         }
         VoteOption v;
@@ -1409,7 +1462,7 @@ public class purepubbot extends SubspaceBot
         }
         long timeTillVote = (m_lastVote + MIN_TIME_BETWEEN_VOTES) - System.currentTimeMillis();
         if( timeTillVote > 0) {
-            m_botAction.sendPrivateMessage( sender, "Sorry, there hasn't been enough time since the last vote.  You'll need to wait another " + getTimeString((int)-(timeTillVote/1000)) + " before you can vote again." );
+            m_botAction.sendPrivateMessage( sender, "Sorry, there hasn't been enough time since the last vote.  You'll need to wait another " + getTimeString((int)(timeTillVote/1000)) + " before you can vote again." );
             return;
         }
 
@@ -1453,9 +1506,14 @@ public class purepubbot extends SubspaceBot
         for( int i=1; i<m_voteOptions.size(); i++ ) {
             VoteOption v = m_voteOptions.get(i);
             if( setVoteOption( v, true ) )     // Only display options that can be set
-                spam.add( "#" + i + (i>9?">  ":">   ") + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
+                spam.add( "#" + i + (i>9?".   ":".    ") + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
         }
         spam.add( "To start a vote, use !startvote #  (where # is the number you want to vote on)");
+        long timeTillVote = (m_lastVote + MIN_TIME_BETWEEN_VOTES) - System.currentTimeMillis();
+        if( timeTillVote > 0) {
+            m_botAction.sendPrivateMessage( sender, "NOTE: There has been a vote within the last " + (MIN_TIME_BETWEEN_VOTES / Tools.TimeInMillis.MINUTE) + " minutes; you need to wait " + getTimeString((int)(timeTillVote/1000)) + " to start another." );
+            return;
+        }
         m_botAction.privateMessageSpam(sender, spam);
     }
 
@@ -1624,14 +1682,79 @@ public class purepubbot extends SubspaceBot
         			m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote FAILED.  " + results + "; needed " + v.percentRequired + "% and " + v.minVotesRequired + " votes)" );
     			}
     		} else {
-    			m_botAction.sendArenaMessage(    "[" + v.displayText + "]  Vote PASSED.  " + results + "; needed " + v.percentRequired + "%)" );
+    			m_botAction.sendArenaMessage(    "[" + v.displayText + "]  Vote FAILED.  " + results + "; needed " + v.percentRequired + "%)" );
     		}
     	}
     	m_currentVoteItem = -1;
     }
 
+    /**
+     * Challenges another player in pub to a tracked-kill competition.
+     * @param sender Player sending
+     * @param argString Name of the player to challenge
+     */
+    public void doChallengeCmd(String sender, String argString ) {
+        Player p1 = m_botAction.getPlayer(sender);
+        if( p1 == null )
+            return;
+        Player p2 = m_botAction.getPlayer(argString);
+        if( p2 == null )
+            p2 = m_botAction.getFuzzyPlayer(argString);
+        if( p2 == null )
+            throw new RuntimeException( "Can't locate player by name of '" + argString + "'." );
 
+        PubChallenge runningChal = null;
+        for( PubChallenge chal : m_challenges ) {
+            if( chal.challengeActive() ) {
+                if( chal.getPlayer1().getPlayerID() == p1.getPlayerID() || chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
+                    runningChal = chal;
+                } else if( chal.getPlayer1().getPlayerID() == p2.getPlayerID() || chal.getPlayer2().getPlayerID() == p2.getPlayerID() ) {
+                    throw new RuntimeException( p2.getPlayerName() + " is already involved in a challenge.  Try again later." );
+                }
+            } else {
+                if( chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
+                    // Challenge needs confirmation; do it
+                    chal.activateChallenge();
+                    return;
+                }
+            }
+        }
 
+        if( runningChal != null ) {
+            m_botAction.sendPrivateMessage( p1.getPlayerID(), "Your current challenge has been ended to run this one." );
+            m_challenges.remove(runningChal);
+            runningChal.endChallenge( p1 );
+            runningChal = null;
+        }
+
+        m_challenges.add( new PubChallenge(p1,p2) );
+        m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge recorded.  " + p2.getPlayerName() + " will now need to !challenge " + p1.getPlayerName() + " to start the challenge." );
+    }
+
+    /**
+     * Ends the current challenge.
+     * @param sender Player sending
+     * @param argString Name of the player to challenge
+     */
+    public void doEndCmd( String sender ) {
+        Player p1 = m_botAction.getPlayer(sender);
+        if( p1 == null )
+            return;
+
+        PubChallenge runningChal = null;
+        for( PubChallenge chal : m_challenges ) {
+            if( chal.challengeActive() ) {
+                if( chal.getPlayer1().getPlayerID() == p1.getPlayerID() ||
+                    chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
+                    chal.endChallenge( p1 );
+                    runningChal = chal;
+                }
+            }
+        }
+        if( runningChal == null )
+            throw new RuntimeException( "Challenge not found.  (Are you sure you have one running?)" );
+        runningChal.endChallenge( p1 );
+    }
 
     /* **********************************  SUPPORT METHODS  ************************************ */
 
@@ -2313,12 +2436,8 @@ public class purepubbot extends SubspaceBot
     private void warpPlayers() {
         if( !warpAllowed )
             return;
-        // FIXME: Small hack to use different warp coordinates with april fools map
-        GregorianCalendar now = new GregorianCalendar();
-        GregorianCalendar april1 = new GregorianCalendar(2008,GregorianCalendar.APRIL,1,0,0,0);
-        GregorianCalendar april2 = new GregorianCalendar(2008,GregorianCalendar.APRIL,2,0,0,0);
 
-        if(now.after(april1) && now.before(april2)) {
+        if( useAprilFoolsPoints ) {
             warpPtsLeftX = warpPtsLeftX_April1;
             warpPtsLeftY = warpPtsLeftY_April1;
             warpPtsRightX = warpPtsRightX_April1;
@@ -2900,5 +3019,47 @@ public class purepubbot extends SubspaceBot
         }
     }
 
-    //pivate
+    /**
+     * Class to track pub challenges.
+     * @author affirmative
+     */
+    private class PubChallenge {
+        Player p1;
+        Player p2;
+        boolean challengeActive = false;
+        int p1Deaths = 0;
+        int p2Deaths = 0;
+
+        public PubChallenge( Player challenger, Player challenged ) {
+            p1 = challenger;
+            p2 = challenged;
+        }
+
+        public void activateChallenge() {
+            challengeActive = true;
+            m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge has begun.  " + p1.getPlayerName() + " 0  -  0 " + p2.getPlayerName() );
+            m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge has begun.  " + p1.getPlayerName() + " 0  -  0 " + p2.getPlayerName() );
+        }
+
+        public void endChallenge( Player p ) {
+            if( p1Deaths > p2Deaths )
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Deaths + "  -  " + p2Deaths + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
+            else if( p2Deaths > p1Deaths )
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Deaths + "  -  " + p2Deaths + " " + p2.getPlayerName() + "  " + p2.getPlayerName().toUpperCase() + " WINS!" );
+            else
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Deaths + "  -  " + p2Deaths + " " + p2.getPlayerName() + "  TIE!" );
+        }
+
+        public boolean challengeActive() {
+            return challengeActive;
+        }
+
+        public Player getPlayer1() {
+            return p1;
+        }
+
+        public Player getPlayer2() {
+            return p2;
+        }
+    }
 }
