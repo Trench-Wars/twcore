@@ -610,13 +610,13 @@ public class purepubbot extends SubspaceBot
                 if(        event.getKillerID() == pc.getPlayer1().getPlayerID() ) {
                     if(    event.getKilleeID() == pc.getPlayer2().getPlayerID() ) {
                         // P1 killed P2
-                        pc.p2Deaths++;
+                        pc.reportKill(1);
                         challengeFound = true;
                     }
                 } else if( event.getKillerID() == pc.getPlayer2().getPlayerID() ) {
                     if(    event.getKilleeID() == pc.getPlayer1().getPlayerID() ) {
                         // P2 killed P1
-                        pc.p1Deaths++;
+                        pc.reportKill(2);
                         challengeFound = true;
                     }
                 }
@@ -687,9 +687,9 @@ public class purepubbot extends SubspaceBot
                 doShipCmd(sender, command.substring(6));
             else if(command.startsWith("!challenge "))
                 doChallengeCmd(sender, command.substring(11));
-            else if(command.startsWith("!end "))
+            else if(command.startsWith("!end"))
                 doEndCmd(sender);
-            else if(command.startsWith("!c"))
+            else if(command.startsWith("!cl"))
                 doClearMinesCmd(sender);
             else if(command.startsWith("!startvote "))
                 doStartVoteCmd(sender, command.substring(11));
@@ -3027,8 +3027,8 @@ public class purepubbot extends SubspaceBot
         Player p1;
         Player p2;
         boolean challengeActive = false;
-        int p1Deaths = 0;
-        int p2Deaths = 0;
+        int p1Points = 0;
+        int p2Points = 0;
 
         public PubChallenge( Player challenger, Player challenged ) {
             p1 = challenger;
@@ -3042,12 +3042,22 @@ public class purepubbot extends SubspaceBot
         }
 
         public void endChallenge( Player p ) {
-            if( p1Deaths > p2Deaths )
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Deaths + "  -  " + p2Deaths + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
-            else if( p2Deaths > p1Deaths )
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Deaths + "  -  " + p2Deaths + " " + p2.getPlayerName() + "  " + p2.getPlayerName().toUpperCase() + " WINS!" );
+            if( p1Points > p2Points )
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
+            else if( p2Points > p1Points )
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p2.getPlayerName().toUpperCase() + " WINS!" );
             else
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Deaths + "  -  " + p2Deaths + " " + p2.getPlayerName() + "  TIE!" );
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  TIE!" );
+        }
+
+        public void reportKill( int whoDunIt ) {
+            if( whoDunIt == 1 ) {
+                p1Points++;
+            } else {
+                p2Points++;
+            }
+            m_botAction.sendPrivateMessage( p1.getPlayerID(), p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() );
+            m_botAction.sendPrivateMessage( p2.getPlayerID(), p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() );
         }
 
         public boolean challengeActive() {
