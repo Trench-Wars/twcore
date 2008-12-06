@@ -236,6 +236,7 @@ public class purepubbot extends SubspaceBot
         	};
         	m_botAction.scheduleTask( m_voteInfoAdvertTask, 5 * Tools.TimeInMillis.MINUTE, TIME_BETWEEN_VOTE_ADVERTS );
         }
+        m_botAction.receiveAllPlayerDeaths();
     }
 
     /**
@@ -1746,6 +1747,7 @@ public class purepubbot extends SubspaceBot
             if( chal.challengeActive() ) {
                 if( chal.getPlayer1().getPlayerID() == p1.getPlayerID() ||
                     chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
+                    m_challenges.remove(chal);
                     chal.endChallenge( p1 );
                     runningChal = chal;
                 }
@@ -1753,7 +1755,6 @@ public class purepubbot extends SubspaceBot
         }
         if( runningChal == null )
             throw new RuntimeException( "Challenge not found.  (Are you sure you have one running?)" );
-        runningChal.endChallenge( p1 );
     }
 
     /* **********************************  SUPPORT METHODS  ************************************ */
@@ -3042,12 +3043,17 @@ public class purepubbot extends SubspaceBot
         }
 
         public void endChallenge( Player p ) {
-            if( p1Points > p2Points )
+            if( p1Points > p2Points ) {
                 m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
-            else if( p2Points > p1Points )
+                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
+            } else if( p2Points > p1Points ) {
                 m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p2.getPlayerName().toUpperCase() + " WINS!" );
-            else
+                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
+            } else {
                 m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  TIE!" );
+                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
+            }
+            challengeActive = false;
         }
 
         public void reportKill( int whoDunIt ) {
