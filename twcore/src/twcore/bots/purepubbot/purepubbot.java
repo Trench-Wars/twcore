@@ -236,7 +236,6 @@ public class purepubbot extends SubspaceBot
         	};
         	m_botAction.scheduleTask( m_voteInfoAdvertTask, 5 * Tools.TimeInMillis.MINUTE, TIME_BETWEEN_VOTE_ADVERTS );
         }
-        m_botAction.receiveAllPlayerDeaths();
     }
 
     /**
@@ -323,6 +322,7 @@ public class purepubbot extends SubspaceBot
         for( int i = 1; i < 9; i++ )
             shipWeights.add( new Integer( botSettings.getInt(m_botAction.getBotName() + "Ship" + i) ) );
         m_botAction.setPlayerPositionUpdating(500);
+        m_botAction.receiveAllPlayerDeaths();
     }
 
 
@@ -534,7 +534,7 @@ public class purepubbot extends SubspaceBot
                     checkFreq(playerID, player.getFrequency(), false);
                     checkFreqSizes();
                 }
-                m_botAction.sendPrivateMessage(playerName, "Commands:  !warp, !terr, !team, !ship <#>, !clearmines, !whereis <name>, !restrictions");
+                m_botAction.sendPrivateMessage(playerName, "Commands:  !warp !terr !team !ship <#> !clearmines !listvotes !startvote !challenge !end");
             }
             if(flagTimeStarted) {
                 if( flagTimer != null)
@@ -564,6 +564,14 @@ public class purepubbot extends SubspaceBot
         playerTimes.remove( playerName );
         m_votes.remove(playerName);
         checkFreqSizes();
+
+        for( PubChallenge pc : m_challenges ) {
+            if( pc.getPlayer1().getPlayerID() == event.getPlayerID() ||
+                pc.getPlayer2().getPlayerID() == event.getPlayerID() ) {
+                pc.endChallenge(pc.getPlayer1());
+            }
+        }
+
     }
 
     /**
@@ -605,17 +613,21 @@ public class purepubbot extends SubspaceBot
      * @param event is the event to handle.
      */
     public void handleEvent(PlayerDeath event) {
+        Player killer = m_botAction.getPlayer( event.getKillerID() );
+        Player killed = m_botAction.getPlayer( event.getKilleeID() );
+        if( killer == null || killed == null )
+            return;
         boolean challengeFound = false;     // Players can only be in one at once
         for( PubChallenge pc : m_challenges ) {
             if( pc.challengeActive() ) {
-                if(        event.getKillerID() == pc.getPlayer1().getPlayerID() ) {
-                    if(    event.getKilleeID() == pc.getPlayer2().getPlayerID() ) {
+                if(        killer.getPlayerID() == pc.getPlayer1().getPlayerID() ) {
+                    if(    killed.getPlayerID() == pc.getPlayer2().getPlayerID() ) {
                         // P1 killed P2
                         pc.reportKill(1);
                         challengeFound = true;
                     }
-                } else if( event.getKillerID() == pc.getPlayer2().getPlayerID() ) {
-                    if(    event.getKilleeID() == pc.getPlayer1().getPlayerID() ) {
+                } else if( killer.getPlayerID() == pc.getPlayer2().getPlayerID() ) {
+                    if(    killed.getPlayerID() == pc.getPlayer1().getPlayerID() ) {
                         // P2 killed P1
                         pc.reportKill(2);
                         challengeFound = true;
@@ -1741,17 +1753,26 @@ public class purepubbot extends SubspaceBot
         Player p1 = m_botAction.getPlayer(sender);
         if( p1 == null )
             return;
+        LinkedList <PubChallenge>deadchals = new LinkedList<PubChallenge>();
 
         PubChallenge runningChal = null;
         for( PubChallenge chal : m_challenges ) {
-            if( chal.challengeActive() ) {
-                if( chal.getPlayer1().getPlayerID() == p1.getPlayerID() ||
+            if( chal.getPlayer1() == null )
+                deadchals.add(chal);
+            else if( chal.challengeActive() ) {
+                if( chal.getPlayer2() == null )
+                    deadchals.add(chal);
+                else if( chal.getPlayer1().getPlayerID() == p1.getPlayerID() ||
                     chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
                     m_challenges.remove(chal);
                     chal.endChallenge( p1 );
                     runningChal = chal;
                 }
             }
+        }
+        for( PubChallenge dc : deadchals ) {
+            m_challenges.remove(dc);
+            dc = null;
         }
         if( runningChal == null )
             throw new RuntimeException( "Challenge not found.  (Are you sure you have one running?)" );
@@ -3037,12 +3058,37 @@ public class purepubbot extends SubspaceBot
         }
 
         public void activateChallenge() {
+            if( p1 == null ) {
+                if( p2 == null )
+                    return;
+                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge can't be activated; can't find Player 1." );
+                return;
+            }
+            else if( p2 == null ) {
+                if( p1 == null )
+                    return;
+                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge can't be activated; can't find Player 2." );
+                return;
+            }
+
             challengeActive = true;
             m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge has begun.  " + p1.getPlayerName() + " 0  -  0 " + p2.getPlayerName() );
             m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge has begun.  " + p1.getPlayerName() + " 0  -  0 " + p2.getPlayerName() );
         }
 
         public void endChallenge( Player p ) {
+            challengeActive = false;
+            if( p1 == null ) {
+                if( p2 == null )
+                    return;
+                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END.  (Player 1 left)" );
+            }
+            else if( p2 == null ) {
+                if( p1 == null )
+                    return;
+                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END.  (Player 2 left)" );
+            }
+
             if( p1Points > p2Points ) {
                 m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
                 m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
@@ -3053,7 +3099,6 @@ public class purepubbot extends SubspaceBot
                 m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  TIE!" );
                 m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
             }
-            challengeActive = false;
         }
 
         public void reportKill( int whoDunIt ) {
