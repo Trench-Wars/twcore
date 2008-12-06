@@ -685,16 +685,16 @@ public class purepubbot extends SubspaceBot
                 doTerrCmd(sender);
             else if(command.startsWith("!ship "))
                 doShipCmd(sender, command.substring(6));
+            else if(command.startsWith("!challenge "))
+                doChallengeCmd(sender, command.substring(11));
+            else if(command.startsWith("!end "))
+                doEndCmd(sender);
             else if(command.startsWith("!c"))
                 doClearMinesCmd(sender);
             else if(command.startsWith("!startvote "))
                 doStartVoteCmd(sender, command.substring(11));
             else if(command.equals("!listvotes"))
                 doListVotesCmd(sender);
-            else if(command.startsWith("!challenge "))
-                doChallengeCmd(sender, command.substring(11));
-            else if(command.startsWith("!end "))
-                doEndCmd(sender);
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
