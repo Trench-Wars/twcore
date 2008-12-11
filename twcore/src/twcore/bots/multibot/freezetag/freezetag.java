@@ -18,6 +18,7 @@ import java.util.TimerTask;
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -38,15 +39,20 @@ public class freezetag extends MultiModule {
      */
 
      //private static final int SPEC_FREQ   = 9999; //spec freq #
-     private static final int WARBIRD     = 1;    //wb ship #
-     private static final int JAVELIN     = 2;    //jav ship #
-     private static final int SPIDER      = 3;    //spid ship #
-     private static final int LEVIATHAN   = 4;    //lev ship #
-     private static final int TEAM1_FREQ  = 0;    //wb starting freq
-     private static final int TEAM2_FREQ  = 1;    //jav starting freq
-     private static final int SECS_IN_MIN = 60;   //num seconds in minute
-     private static final int MS_IN_SEC   = 1000; //num milliseconds in second
-     private static final int MIN_TIME_LIMIT = 5; //min time limit in minutes
+     private static int WARBIRD     = 1;    //wb ship #
+     private static int JAVELIN     = 2;    //jav ship #
+     private static int SPIDER      = 3;    //spid ship #
+     private static int LEVIATHAN   = 4;    //lev ship #
+     private static int TEAM1_FREQ  = 0;    //wb starting freq
+     private static int TEAM2_FREQ  = 1;    //jav starting freq
+     private static int TEAM1_WARPX = 294;
+     private static int TEAM1_WARPY = 356;
+     private static int TEAM2_WARPX = 742;
+     private static int TEAM2_WARPY = 664;
+     
+     private static int SECS_IN_MIN = 60;   //num seconds in minute
+     private static int MS_IN_SEC   = 1000; //num milliseconds in second
+     private static int MIN_TIME_LIMIT = 5; //min time limit in minutes
 
     /*
      * Here are the class-wide variables.
@@ -173,44 +179,27 @@ public class freezetag extends MultiModule {
      */
 
     public void handleEvent( PlayerDeath event ) {
-        if( isRunning ) {
-            Player p = m_botAction.getPlayer( event.getKilleeID() );
+        if (isRunning) {
+            Player p = m_botAction.getPlayer(event.getKilleeID());
+            int freq = p.getFrequency();
             int ship = p.getShipType();
-            switch( ship ) {
-                case WARBIRD:   m_botAction.setShip( event.getKilleeID(),
-                                                   SPIDER );
-                                m_botAction.setFreq( event.getKilleeID(),
-                                                   TEAM2_FREQ );
 
-                /*
-                 * Here we're preventing frozen ships from being able to warp.
-                 */
-
-                                m_botAction.sendUnfilteredPrivateMessage(
-                                          p.getPlayerName(), "*prize #-13" );
-                                break;
-                case JAVELIN:   m_botAction.setShip( event.getKilleeID(),
-                                                   LEVIATHAN );
-                                m_botAction.setFreq( event.getKilleeID(),
-                                                   TEAM1_FREQ );
-
-                /*
-                 * Again, we're preventing frozen ships from being able to warp.
-                 */
-
-                                m_botAction.sendUnfilteredPrivateMessage(
-                                          p.getPlayerName(), "*prize #-13" );
-                                break;
-                case SPIDER:    m_botAction.setShip( event.getKilleeID(),
-                                                   WARBIRD );
-                                m_botAction.setFreq( event.getKilleeID(),
-                                                   TEAM1_FREQ );
-                                break;
-                case LEVIATHAN: m_botAction.setShip( event.getKilleeID(),
-                                                     JAVELIN );
-                                m_botAction.setFreq( event.getKilleeID(),
-                                                     TEAM2_FREQ );
-                                break;
+            if (ship == WARBIRD) {
+                m_botAction.setShip(event.getKilleeID(),SPIDER);
+                m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
+                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
+            } else if (ship == JAVELIN) {
+                m_botAction.setShip(event.getKilleeID(),LEVIATHAN);
+                m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
+                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
+            } else if (ship == SPIDER || ship == LEVIATHAN) {
+                if (freq == TEAM1_FREQ) {
+                    m_botAction.setShip(event.getKilleeID(),JAVELIN);
+                    m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
+                } else if (freq == TEAM2_FREQ) {
+                    m_botAction.setShip(event.getKilleeID(),WARBIRD);
+                    m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
+                }
             }
         }
     }
@@ -228,20 +217,22 @@ public class freezetag extends MultiModule {
         if( isRunning ) {
             Player p = m_botAction.getPlayer( event.getPlayerID() );
             String name = p.getPlayerName().toLowerCase();
+            int freq = p.getFrequency();
             int ship = p.getShipType();
-            switch( ship ) {
-                case WARBIRD:   freq1SpidSet.remove( name );
-                                freq0WarbirdSet.add( name );
-                                break;
-                case JAVELIN:   freq0LevSet.remove( name );
-                                freq1JavSet.add( name );
-                                break;
-                case SPIDER:    freq0WarbirdSet.remove( name );
-                                freq1SpidSet.add( name );
-                                break;
-                case LEVIATHAN: freq1JavSet.remove( name );
-                                freq0LevSet.add( name );
-                                break;
+            if (ship == WARBIRD) {
+                freq1SpidSet.remove( name );
+                freq0WarbirdSet.add( name );
+            } else if (ship == JAVELIN) {
+                freq0LevSet.remove( name );
+                freq1JavSet.add( name );
+            } else if (ship == SPIDER || ship == LEVIATHAN) {
+                if (freq == TEAM1_FREQ) {
+                    freq1JavSet.remove( name );
+                    freq0LevSet.add( name );
+                } else if (freq == TEAM2_FREQ) {
+                    freq0WarbirdSet.remove( name );
+                    freq1SpidSet.add( name );
+                }
             }
 
             /*
@@ -344,8 +335,13 @@ public class freezetag extends MultiModule {
         if( !isRunning ) {
             m_botAction.toggleLocked();
             m_botAction.sendPrivateMessage( name, "Freeze Tag mode started." );
-            m_botAction.changeAllShipsOnFreq( 0, 1 );
-            m_botAction.changeAllShipsOnFreq( 1, 2 );
+            if (m_botAction.getArenaName().equalsIgnoreCase("tortugaft") || m_botAction.getArenaName().equalsIgnoreCase("#tortugaft")) {
+                // special settings for playing freezetag in ?go tortugaft
+                SPIDER = 4;
+            }
+            
+            m_botAction.changeAllShipsOnFreq(TEAM1_FREQ, WARBIRD);
+            m_botAction.changeAllShipsOnFreq(TEAM2_FREQ, JAVELIN);
             freq0WarbirdSet.clear();
             freq0LevSet.clear();
             freq1JavSet.clear();
@@ -404,9 +400,9 @@ public class freezetag extends MultiModule {
         Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         while( it.hasNext() ) {
             Player p = (Player)it.next();
-            if( p.getFrequency() == 0 ) {
+            if( p.getFrequency() == TEAM1_FREQ) {
                 freq0WarbirdSet.add( p.getPlayerName().toLowerCase() );
-            } else if( p.getFrequency() == 1 ) {
+            } else if( p.getFrequency() == TEAM2_FREQ) {
                 freq1JavSet.add( p.getPlayerName().toLowerCase() );
             }
         }
@@ -420,8 +416,8 @@ public class freezetag extends MultiModule {
     public void doPreGame() {
         TimerTask preGameStuff = new TimerTask() {
             public void run() {
-                m_botAction.warpFreqToLocation( 0, 294, 356 );
-                m_botAction.warpFreqToLocation( 1, 742, 664 );
+                m_botAction.warpFreqToLocation(TEAM1_FREQ, TEAM1_WARPX, TEAM1_WARPY);
+                m_botAction.warpFreqToLocation(TEAM2_FREQ, TEAM2_WARPX, TEAM2_WARPY);
                 m_botAction.sendArenaMessage( "GO GO GO !!!", 104 );
                 m_botAction.scoreResetAll();
                 m_botAction.shipResetAll();
@@ -454,23 +450,24 @@ public class freezetag extends MultiModule {
             isRunning = false;
             m_botAction.sendArenaMessage(
             "The warbirds have tagged their way to victory!", 5 );
-            m_botAction.changeAllShipsOnFreq( 0, 1 );
+            m_botAction.changeAllShipsOnFreq(TEAM1_FREQ,WARBIRD);
             if( !freq1SpidSet.isEmpty() ) {
-                m_botAction.changeAllShipsOnFreq( 1, 1 );
-                m_botAction.setFreqtoFreq( 1, 0 );
+                m_botAction.changeAllShipsOnFreq(TEAM2_FREQ,WARBIRD);
+                m_botAction.setFreqtoFreq(TEAM2_FREQ,TEAM1_FREQ);
             }
             m_botAction.toggleLocked();
         } else if( freq0WarbirdSet.size() < freq1JavSet.size() ) {
             isRunning = false;
             m_botAction.sendArenaMessage(
             "The javelins have tagged their way to victory!", 5 );
-            m_botAction.changeAllShipsOnFreq( 1, 2 );
+            m_botAction.changeAllShipsOnFreq(TEAM2_FREQ,JAVELIN);
             if( !freq0LevSet.isEmpty() ) {
-                m_botAction.changeAllShipsOnFreq( 0, 2 );
-                m_botAction.setFreqtoFreq( 0, 1 );
+                m_botAction.changeAllShipsOnFreq(TEAM1_FREQ,JAVELIN);
+                m_botAction.setFreqtoFreq(TEAM1_FREQ,TEAM2_FREQ);
             }
             m_botAction.toggleLocked();
         }
+        m_botAction.setTimer(99999);
     }
 
     /**
