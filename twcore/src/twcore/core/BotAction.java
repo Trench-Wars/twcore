@@ -2074,7 +2074,7 @@ public class BotAction
      */
     public void joinArena(String arenaName)
     {
-        if( arenaName == null && arenaName.equals("") )
+        if( arenaName == null || arenaName.equals("") )
             return;
 
         if (Tools.isAllDigits(arenaName))
