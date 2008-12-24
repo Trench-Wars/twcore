@@ -65,8 +65,10 @@ public class distensionbot extends SubspaceBot {
                                                            //   (for beta-testers, bug reporters, etc.)
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
-    private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between a long list of spammed messages
-    private final int PRIZE_SPAM_DELAY = 16;               // Delay in ms between prizes for individual players
+    private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between msgs in list, when spammed to single
+    private final int NUM_UNIVERSAL_MSGS_SPAMMED = 5;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
+    private final int PRIZE_SPAM_DELAY = 20;               // Delay in ms between prizes for individual players
+    private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
     private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
@@ -235,6 +237,7 @@ public class distensionbot extends SubspaceBot {
     private HashMap <Integer,DistensionArmy>m_armies;       // In-game data on armies  (ID -> Army)
 
     private PrizeQueue m_prizeQueue;                        // Queuing system for prizes (so as not to crash bot)
+    private UniversalSpamTask m_spamQueue;                  // Queue shared between all players for spamming msgs (!armory, !help, etc) 
     private SpecialAbilityTask m_specialAbilityPrizer;      // Prizer for special abilities (run once every 30s)
     private TimerTask m_entranceWaitTask;                   // For when bot first enters the arena
     private TimerTask m_periodicTasks;                      // Combined task for tasks that execute periodically
@@ -367,8 +370,8 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_TKD = 204;                    // TKd!
     private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
     private final int LVZ_SUDDEN_DEATH = 206;           // Sudden Death info
-    private final int LVZ_VICTORY = 207;                // Team victorious
-    private final int LVZ_DEFEAT = 208;                 // Team defeated
+    //private final int LVZ_VICTORY = 207;                // Team victorious
+    //private final int LVZ_DEFEAT = 208;                 // Team defeated
     private final int LVZ_STALEMATE = 209;              // Stalemate graphic
 
 
@@ -650,6 +653,9 @@ public class distensionbot extends SubspaceBot {
         m_prizeQueue = new PrizeQueue();
         m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, UPGRADE_DELAY, UPGRADE_DELAY);
 
+        m_spamQueue = new UniversalSpamTask();
+        m_botAction.scheduleTaskAtFixedRate(m_spamQueue, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+        
         m_entranceWaitTask = new TimerTask() {
             public void run() {
                 m_readyForPlay = true;
@@ -1158,7 +1164,7 @@ public class distensionbot extends SubspaceBot {
             "| !shiptypes        !st |  List ship types into which you may specialize",
             "| !warp             !w  |  Toggle waiting in spawn vs. being autowarped out",
             "| !basewarp         !bw |  Toggle warping into base vs. spawn at round start",
-            "| !killmsg          !k  |  Toggle kill messages on and off (+1% RP for off)",
+            "| !killmsg          !k  |  Toggle kill messages on and off (+2% RP for off)",
             "| !team             !tm |  Show all players on team and their upg. levels",
             "| !terr             !t  |  Show approximate location of all army terriers",
             "| !whereis <name>   !wh |  Show approximate location of pilot <name>",
@@ -2262,7 +2268,7 @@ public class distensionbot extends SubspaceBot {
         if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
             msg += " [x" + DEBUG_MULTIPLIER + " beta]";
         if( isFirstKill )
-            msg += " (!killmsg turns off this msg & gives +1% kill bonus)";
+            msg += " (!killmsg turns off this msg & gives +2% kill bonus)";
         int suc = victor.getSuccessiveKills();
         if( suc > 1 ) {
             msg += "  Streak: " + suc;
@@ -3795,9 +3801,9 @@ public class distensionbot extends SubspaceBot {
         if( p == null )
             return;
         if( p.sendKillMessages() )
-            m_botAction.sendPrivateMessage( name, "Messages ON: kills, repeats, profit-sharing, TKs, humiliation.  1% bonus no longer in effect.  This setting is SAVED." );
+            m_botAction.sendPrivateMessage( name, "Messages ON: kills, repeats, profit-sharing, TKs, humiliation.  2% bonus no longer in effect.  This setting is SAVED." );
         else
-            m_botAction.sendPrivateMessage( name, "Messages OFF: kills, repeats, profit-sharing, TKs, humiliation.  +1% bonus to all RP earned.  This setting is SAVED." );
+            m_botAction.sendPrivateMessage( name, "Messages OFF: kills, repeats, profit-sharing, TKs, humiliation.  +2% bonus to all RP earned.  This setting is SAVED." );
     }
 
 
@@ -6772,28 +6778,33 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
-     * Spams multiple players with single-line messages.
+     * Spams multiple players with single-line messages including a sound.
      * @param recipients Arena IDs of recipients of msgs
      * @param msgs Indexed messages matching arena IDs
+     * @param sounds Indexed sounds matching arena IDs
      */
-    public void spamManyPlayers( Vector<String> recipients, Vector<String> msgs ) {
-        if( recipients.size() != msgs.size() )
-            throw new RuntimeException( "# recipients must equal # msgs." );
-        for( int i=0; i<recipients.size(); i++ )
-            m_botAction.sendRemotePrivateMessage( recipients.get(i), msgs.get(i) );
+    public void spamManyPlayers( Vector<Integer> recipientIDs, Vector<String> msgs ) {
+        if( recipientIDs.size() != msgs.size() )
+            throw new RuntimeException( "# recipients must equal # msgs & sounds." );
+        GroupSpamTask spamTask = new GroupSpamTask();
+        for( int i=0; i<recipientIDs.size(); i++ )
+            spamTask.addSingleMsg( recipientIDs.get(i), msgs.get(i), 0 );
+        m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
     }
-
+    
     /**
      * Spams multiple players with single-line messages including a sound.
      * @param recipients Arena IDs of recipients of msgs
      * @param msgs Indexed messages matching arena IDs
      * @param sounds Indexed sounds matching arena IDs
      */
-    public void spamManyPlayers( Vector<String> recipients, Vector<String> msgs, Vector<Integer> sounds ) {
-        if( recipients.size() != msgs.size() || recipients.size() != sounds.size() )
+    public void spamManyPlayers( Vector<Integer> recipientIDs, Vector<String> msgs, Vector<Integer> sounds ) {
+        if( recipientIDs.size() != msgs.size() || recipientIDs.size() != sounds.size() )
             throw new RuntimeException( "# recipients must equal # msgs & sounds." );
-        for( int i=0; i<recipients.size(); i++ )
-            m_botAction.sendRemotePrivateMessage( recipients.get(i), msgs.get(i), sounds.get(i) );
+        GroupSpamTask spamTask = new GroupSpamTask();
+        for( int i=0; i<recipientIDs.size(); i++ )
+            spamTask.addSingleMsg( recipientIDs.get(i), msgs.get(i), sounds.get(i) );
+        m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
     }
 
     /**
@@ -6812,9 +6823,10 @@ public class distensionbot extends SubspaceBot {
      * @param msgs Array of Strings to spam
      */
     public void spamWithDelay( int arenaID, String[] msgs ) {
-        SpamTask spamTask = new SpamTask();
-        spamTask.setMsgs( arenaID, msgs );
-        m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+        //SpamTask spamTask = new SpamTask();
+        //spamTask.setMsgs( arenaID, msgs );
+        //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+        m_spamQueue.addMsgs( arenaID, msgs );
     }
 
     /**
@@ -6823,9 +6835,10 @@ public class distensionbot extends SubspaceBot {
      * @param msgs LinkedList containing msgs to spam
      */
     public void spamWithDelay( int arenaID, LinkedList<String> msgs ) {
-        SpamTask spamTask = new SpamTask();
-        spamTask.setMsgs( arenaID, msgs );
-        m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+        //SpamTask spamTask = new SpamTask();
+        //spamTask.setMsgs( arenaID, msgs );
+        //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+        m_spamQueue.addMsgs( arenaID, msgs );
     }
 
     /**
@@ -6833,6 +6846,7 @@ public class distensionbot extends SubspaceBot {
      * @param arenaID ID of person to spam
      * @param msgs Array of Strings to spam
      * @param delay Delay, in ms, to wait in between messages
+     * @deprecated
      */
     public void spamWithDelay( int arenaID, String[] msgs, int delay ) {
         SpamTask spamTask = new SpamTask();
@@ -6882,6 +6896,77 @@ public class distensionbot extends SubspaceBot {
         }
     }
 
+    /**
+     * Task used to send a spam of messages at a controlled rate to a group of people, with sound.
+     */
+    private class GroupSpamTask extends TimerTask {
+        LinkedList <String>msgs    = new LinkedList<String>();
+        LinkedList <Integer>ids    = new LinkedList<Integer>();
+        LinkedList <Integer>sounds = new LinkedList<Integer>();
+
+        /**
+         * Useful when sending out messages to a large group, to prevent all the messages
+         * from being sent at once.
+         */
+        public void addSingleMsg( int id, String msg, int sound ) {
+            ids.add( id );
+            msgs.add( msg );
+            sounds.add( sound );
+        }
+
+        public void run() {
+            if( msgs.isEmpty() ) {
+                this.cancel();
+            } else {
+                int runs = NUM_UNIVERSAL_MSGS_SPAMMED;
+                do {
+                    Integer id    = ids.remove();
+                    String msg    = msgs.remove();
+                    Integer sound = sounds.remove();
+                    if( msg != null && id != null && sound != null )
+                        m_botAction.sendUnfilteredPrivateMessage( id, msg, sound );
+                    runs--;
+                } while( !msgs.isEmpty() && runs > 0 );
+            }
+        }
+    }
+    
+    /**
+     * Task used to send message spams, shared between all players; instantiated once
+     * and kept active, ensuring there are no message buildups.
+     */
+    private class UniversalSpamTask extends TimerTask {
+        LinkedList <String>msgs = new LinkedList<String>();
+        LinkedList <Integer>ids = new LinkedList<Integer>();
+
+        public void addMsgs( int id, LinkedList<String> list ) {
+            for( String msg : list ) {
+                ids.add( id );
+                msgs.add( msg );
+            }
+        }
+
+        public void addMsgs( int id, String[] list ) {
+            for( int i = 0; i < list.length; i++ ) {
+                ids.add( id );
+                msgs.add( list[i] );
+            }
+        }
+        
+        public void run() {
+            if( !msgs.isEmpty() ) {
+                int runs = NUM_UNIVERSAL_MSGS_SPAMMED;
+                do {
+                    Integer id = ids.remove();
+                    String msg = msgs.remove();                
+                    if( msg != null && id != null )
+                        m_botAction.sendUnfilteredPrivateMessage( id, msg );
+                    runs--;
+                } while( !msgs.isEmpty() && runs > 0 );
+            }
+        }
+    }
+    
     /**
      * Task used to prize a player at a slower-than-instant rate, and warp player
      * at end/remove rearm LVZ.
@@ -6946,6 +7031,7 @@ public class distensionbot extends SubspaceBot {
         private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
         private int       currentRechargeLevel; // Current level of recharge
         private int       currentEnergyLevel;   // Current level of energy
+        private int       currentMultiEnergyLevel;  // # multi energies (default: x4 energy prizes) 
         private boolean[] shipsAvail;           // Marks which ships are available
         private int[]     lastIDsKilled = { -1, -1, -1, -1 };  // ID of last player killed (feeding protection)
         private int       spawnTicks;           // # queue "ticks" until spawn
@@ -7028,6 +7114,7 @@ public class distensionbot extends SubspaceBot {
             successiveKills = 0;
             currentRechargeLevel = 0;
             currentEnergyLevel = 0;
+            currentMultiEnergyLevel = 0;
             spawnTicks = 0;
             idleTicksPiloting = 0;
             idleTicksDocked = 0;
@@ -7561,9 +7648,11 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Prizes the default/ranked up upgrades.
+         * Prizes the default/ranked up upgrades earned through specialization 
          */
         public void prizeDefaultUpgrades() {
+            for( int i=0; i<currentMultiEnergyLevel; i++ )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.MULTIPRIZE );
             for( int i=0; i<currentEnergyLevel; i++ )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.ENERGY );
             for( int i=0; i<currentRechargeLevel; i++ )
@@ -7574,7 +7663,8 @@ public class distensionbot extends SubspaceBot {
          * Deprizes the default/ranked up upgrades.
          */
         public void deprizeDefaultUpgrades() {
-            for( int i=0; i<currentEnergyLevel; i++ )
+            int energy = getEnergyLevel();
+            for( int i=0; i<energy; i++ )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#-" + Tools.Prize.ENERGY );
             for( int i=0; i<currentRechargeLevel; i++ )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#-" + Tools.Prize.RECHARGE );
@@ -8048,7 +8138,7 @@ public class distensionbot extends SubspaceBot {
                         points = (nextRank - rankStart) / 2;
                 }
                 if( !sendKillMessages ) {
-                    bonusBuildup += points / 100;
+                    bonusBuildup += points / 50;
                     while( bonusBuildup > 1.0 ) {
                         points++;
                         bonusBuildup--;
@@ -8682,6 +8772,11 @@ public class distensionbot extends SubspaceBot {
          */
         public void calculateRechargeAndEnergyLevels() {
             currentEnergyLevel = m_shipTypeGeneralData.get(shipType).getEnergyLevel(rank);
+            // Make it work with the multiprize system
+            while( currentEnergyLevel >= MULTIPRIZE_AMOUNT ) {
+                currentEnergyLevel -= MULTIPRIZE_AMOUNT;
+                currentMultiEnergyLevel++;
+            }
             currentRechargeLevel = m_shipTypeGeneralData.get(shipType).getRechargeLevel(rank);
         }
 
@@ -9216,8 +9311,7 @@ public class distensionbot extends SubspaceBot {
             int upgLevel = 0;
             for( int i = 0; i < NUM_UPGRADES; i++ )
                 upgLevel += purchasedUpgrades[i];
-            upgLevel += currentEnergyLevel;
-            upgLevel += currentRechargeLevel;
+            upgLevel += currentEnergyLevel + (currentMultiEnergyLevel * MULTIPRIZE_AMOUNT) + currentRechargeLevel;
             return upgLevel;
         }
 
@@ -9580,7 +9674,7 @@ public class distensionbot extends SubspaceBot {
          * @return Levels of automatic energy
          */
         public int getEnergyLevel() {
-            return currentEnergyLevel;
+            return currentEnergyLevel + (currentMultiEnergyLevel * MULTIPRIZE_AMOUNT);
         }
 
         /**
@@ -10957,7 +11051,7 @@ public class distensionbot extends SubspaceBot {
         float armyDiffWeight;
         HashMap <Integer,Integer>armyStrengths = flagTimer.getArmyStrengthSnapshots();
 
-        Vector <String>msgRecipients = new Vector<String>();
+        Vector <Integer>msgRecipients = new Vector<Integer>();
         Vector <String>msgs = new Vector<String>();
         Vector <Integer>msgSounds = new Vector<Integer>();
         Vector <String>endRoundSpam = new Vector<String>();
@@ -11273,10 +11367,10 @@ public class distensionbot extends SubspaceBot {
                         if( percentOnFreq >= .5 )
                             p.addBattleWin();
 
-                        msgRecipients.add( p.getName() );
+                        msgRecipients.add( p.getArenaPlayerID() );
                         msgs.add( victoryMsg );
                         msgSounds.add( SOUND_VICTORY );
-                        m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_VICTORY );
+                        //m_botAction.showObjectForPlayer( p.getArenaPlayerID(), LVZ_VICTORY );
                         modPoints += bonus;
                         p.addRankPoints(modPoints,false);
                     } else {
@@ -11322,10 +11416,10 @@ public class distensionbot extends SubspaceBot {
                         float percentOnFreq = (float)(secs - time) / (float)secs;
                         int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                         int pointsAdded = p.addRankPoints(modPoints,false);
-                        msgRecipients.add(p.getName());
+                        msgRecipients.add( p.getArenaPlayerID() );
                         msgs.add( "Battle lost.  Consolation bonus: " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation).  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );
                         msgSounds.add( SOUND_DEFEAT );
-                        m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_DEFEAT );
+                        //m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_DEFEAT );
                     }
                 }
             }
@@ -11390,7 +11484,7 @@ public class distensionbot extends SubspaceBot {
 
         int strengthAvg0 = 1;
         int strengthAvg1 = 1;
-        Vector <String>msgRecipients = new Vector<String>();
+        Vector <Integer>msgRecipients = new Vector<Integer>();
         Vector <String>msgs = new Vector<String>();
         m_botAction.sendArenaMessage( "END BATTLE: STALEMATE!  The armies have called a truce after " + getTimeString(secs) + ".", SOUND_STALEMATE );
 
@@ -11549,7 +11643,7 @@ public class distensionbot extends SubspaceBot {
                     } else {
                         victoryMsg += "!";
                     }
-                    msgRecipients.add( p.getName() );
+                    msgRecipients.add( p.getArenaPlayerID() );
                     msgs.add(victoryMsg);
                     //m_botAction.sendPrivateMessage(p.getArenaPlayerID(), victoryMsg );
                     modPoints += bonus;
@@ -11563,7 +11657,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.sendArenaMessage( "Lead Defense: " + topBreaker + " [" + topBreaks + " breaks]  ...  Lead Assault: " + topHolder + " [" + topHolds + " holds]" );
 
         m_botAction.showObject( LVZ_STALEMATE );
-        spamManyPlayers(msgRecipients, msgs );       // Send out award msgs after the endround spam
+        spamManyPlayers( msgRecipients, msgs );       // Send out award msgs after the endround spam
         endRoundCleanup( false, minsToWin );
     }
 
