@@ -1176,7 +1176,7 @@ public class distensionbot extends SubspaceBot {
             "| !summon (others)  !su |  Toggles allowing summoning by Terriers",
             "|______________________/"
             };
-            m_botAction.remotePrivateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
             return;
         }
 
@@ -1193,7 +1193,7 @@ public class distensionbot extends SubspaceBot {
                     "| !queue            !q  |  Display your position in the waiting queue",
                     "|______________________/"
             };
-            m_botAction.remotePrivateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         } else if( shipNum == 0 ) {
             String[] helps = {
                     "     HANGAR CONSOLE",
@@ -1208,7 +1208,7 @@ public class distensionbot extends SubspaceBot {
                     "|______________________/",
                     "               -=(  Use  !help 2  for additional commands  )=-"
             };
-            m_botAction.privateMessageSpam(p.getArenaPlayerID(), helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         } else {
             String[] helps = {
                     ".-----------------------",
@@ -1230,7 +1230,7 @@ public class distensionbot extends SubspaceBot {
                     "|______________________/",
                     "               -=(  Use  !help 2  for additional commands  )=-",
             };
-            m_botAction.remotePrivateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         }
 
         if( shipNum == 9 ) {
@@ -1275,7 +1275,7 @@ public class distensionbot extends SubspaceBot {
                 "  !db-randomarmies                     - Randomizes all armies.",
                 "--- NOTE: DEPENDING ON YOUR STATUS, YOU MAY OR MAY NOT HAVE ACCESS TO THESE CMDS ---"
         };
-        m_botAction.remotePrivateMessageSpam(name, helps);
+        spamWithDelay(p.getArenaPlayerID(), helps);
         if( m_botAction.getOperatorList().isSmod(name) ) {
             m_botAction.sendRemotePrivateMessage(name, "Hidden command: !db-wipeplayer <name>  - Wipes all records of a player from DB.");
         }
@@ -1324,7 +1324,7 @@ public class distensionbot extends SubspaceBot {
                     "| !opsshield <nm>  8/20 .s |  Shield <name>.  (L2)<all> = All friendlies in base",
                     "|__________________________/",
             };
-            m_botAction.remotePrivateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         } else if( msg.equalsIgnoreCase("msg") ) {
             String[] helps = {
                     "      OPS MESSAGES  -  Each uses 1 COMM, +1 if msg is a sabotage",
@@ -1348,7 +1348,7 @@ public class distensionbot extends SubspaceBot {
                     "|                       |  (False pilot counts, says there is no Terr, etc.)",
                     "|______________________/",
             };
-            m_botAction.remotePrivateMessageSpam(name, helps);
+            spamWithDelay(p.getArenaPlayerID(), helps);
         }
     }
 
@@ -3124,7 +3124,7 @@ public class distensionbot extends SubspaceBot {
         // .=========================================================================.
         // | Pilot for People's Republic of Misanthropy.             Army wins:  50  |
         // | Total RP: 400000
-        Vector <String>statusSpam = new Vector<String>();
+        LinkedList <String>statusSpam = new LinkedList<String>();
         int spamLength = 76;
 
         String shipname = ( shipNum == 9 ? "Tactical Ops" : Tools.shipName(shipNum) );
@@ -3202,8 +3202,7 @@ public class distensionbot extends SubspaceBot {
             statusSpam.add( Tools.formatString( "| Remaining RP on which you receive a special bonus: " + bonus + "RP", spamLength -1) + "|");
         statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
 
-        for( int i=0; i < statusSpam.size(); i++ )
-            m_botAction.sendRemotePrivateMessage( theName, statusSpam.get(i) );
+        spamWithDelay(theName, statusSpam);
     }
 
 
@@ -3361,8 +3360,8 @@ public class distensionbot extends SubspaceBot {
                 + (p.getUpgradePoints() == 0?"  (Rank up for more UP)":"") );
         if( p.getRank() < 10 )
             display.add("Use !upginfo upgrade# (or !ui #) to get information on what each upgrade does.");
-        for( String spam : display )
-            m_botAction.sendRemotePrivateMessage( name, spam );
+
+        spamWithDelay( p.getArenaPlayerID(), display );
     }
 
 
@@ -4875,7 +4874,7 @@ public class distensionbot extends SubspaceBot {
         display.add( "|(Rearming) |" + makeBar( fships[0], 8) + "|" + makeBar( fterrs[0], 8) + "|" +
                                        makeBar( fsharks[0], 8) + "|" +
                                        makeBar( eships[0], 8) + "|" + makeBar( eterrs[0], 8) + "|" + makeBar( esharks[0], 8) + "|" );
-        m_botAction.privateMessageSpam( p.getArenaPlayerID(), display );
+        spamWithDelay(p.getArenaPlayerID(), display);
         p.resetIdle();      // Ops can only reset idle by using ops cmds and talking in pub
     }
 
@@ -6840,7 +6839,35 @@ public class distensionbot extends SubspaceBot {
         //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
         m_spamQueue.addMsgs( arenaID, msgs );
     }
-
+    
+    /**
+     * Spams a player with a LinkedList array based on a default delay.
+     * @param playerName Name of player to spam
+     * @param msgs Array containing msgs to spam
+     */
+    public void spamWithDelay( String playerName, String[] msgs ) {
+        Player p = m_botAction.getPlayer(playerName);
+        if( p != null )
+            m_spamQueue.addMsgs( p.getPlayerID(), msgs );
+        //SpamTask spamTask = new SpamTask();
+        //spamTask.setMsgs( arenaID, msgs );
+        //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+    }
+    
+    /**
+     * Spams a player with a LinkedList array based on a default delay.
+     * @param arenaID ID of person to spam
+     * @param msgs LinkedList containing msgs to spam
+     */
+    public void spamWithDelay( String playerName, LinkedList<String> msgs ) {
+        Player p = m_botAction.getPlayer(playerName);
+        if( p != null )
+            m_spamQueue.addMsgs( p.getPlayerID(), msgs );
+        //SpamTask spamTask = new SpamTask();
+        //spamTask.setMsgs( arenaID, msgs );
+        //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
+    }
+    
     /**
      * Spams a player with a String array based on a given delay.
      * @param arenaID ID of person to spam
@@ -8771,6 +8798,7 @@ public class distensionbot extends SubspaceBot {
          * Based on ship type, sets energy and recharge levels.
          */
         public void calculateRechargeAndEnergyLevels() {
+            currentMultiEnergyLevel = 0;
             currentEnergyLevel = m_shipTypeGeneralData.get(shipType).getEnergyLevel(rank);
             // Make it work with the multiprize system
             while( currentEnergyLevel >= MULTIPRIZE_AMOUNT ) {
