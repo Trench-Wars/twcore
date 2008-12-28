@@ -29,7 +29,11 @@ public class RacePlayer {
 					ArrayList<String> thisLap = positions.get(laps);
 					ArrayList<String> lastLap = positions.get(laps - 1);
 
-					lastLap.remove(lastLap.indexOf(name.toLowerCase()));
+                    // TODO: Implemented very BASIC check to prevent out of bounds...
+                    //       needs verification/logic check.
+					int indexOfName = lastLap.indexOf(name.toLowerCase());
+					if( indexOfName >= 0 && indexOfName < lastLap.size() )
+					    lastLap.remove(indexOfName);
 					positions.remove(laps - 1);
 					positions.add(laps - 1, lastLap);
 
@@ -42,7 +46,11 @@ public class RacePlayer {
 					ArrayList<String> thisLap = new ArrayList<String>();
 					ArrayList<String> lastLap = positions.get(laps - 1);
 
-					lastLap.remove(lastLap.indexOf(name.toLowerCase()));
+                    // TODO: Implemented very BASIC check to prevent out of bounds...
+                    //       needs verification/logic check.
+                    int indexOfName = lastLap.indexOf(name.toLowerCase());
+                    if( indexOfName >= 0 && indexOfName < lastLap.size() )
+                        lastLap.remove(indexOfName);
 					positions.remove(laps - 1);
 					positions.add(laps - 1, lastLap);
 
