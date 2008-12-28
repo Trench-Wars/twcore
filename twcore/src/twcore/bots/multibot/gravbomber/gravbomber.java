@@ -30,6 +30,7 @@ public class gravbomber extends MultiModule {
     int                 m_currentWeapon;
     int                 m_currentTurnDamage;
     int                 m_currentPlayerIndex;
+    int                 m_turnTime;
     boolean             m_gameStarted;
     boolean             m_boughtWeapon;
     Timer               m_timer;
@@ -52,6 +53,14 @@ public class gravbomber extends MultiModule {
         setupWeapons();
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat Name" ) + ",spamchat" );
         m_botAction.sendUnfilteredPublicMessage( "*relkills 1" );
+        
+        int time = m_botSettings.getInt("TurnTime");
+        if( time < 5000 ) {
+            m_botAction.sendChatMessage("Invalid turn time set for GravBomber (<5000ms)!  Ensure CFG is set up properly.  Dying...");
+            m_botAction.die();
+        } else {
+            m_turnTime = time;
+        }
     }
 
     public void requestEvents(ModuleEventRequester req) {
@@ -438,11 +447,11 @@ public class gravbomber extends MultiModule {
 
         m_turnTasks.put( playerName, new TurnTask(playerName) );
 
-    	m_timer.schedule( (TimerTask)m_turnTasks.get(playerName), m_botSettings.getInt("TurnTime") );
+    	m_timer.schedule( (TimerTask)m_turnTasks.get(playerName), m_turnTime );
 
     	//debug
     	if(m_debug){
-    	    m_botAction.sendChatMessage( 2, "Timer schedule for " + playerName + " Interval: " + m_botSettings.getInt("TurnTime") );
+    	    m_botAction.sendChatMessage( 2, "Timer schedule for " + playerName + " Interval: " + m_turnTime );
     	}
 
     	if( m_playerList.size() > 2 ){
