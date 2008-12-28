@@ -905,7 +905,9 @@ public class zonerbot extends SubspaceBot
   {
     BotSettings botSettings = m_botAction.getBotSettings();
     String initialArena = botSettings.getString("initialarena");
-	m_botAction.sendUnfilteredPublicMessage("?obscene");
+    // ?obscene is sent automatically from GamePacketInterpreter, and
+    //   should not be sent from inside any bot.
+	//m_botAction.sendUnfilteredPublicMessage("?obscene");
 /*    advertTime = botSettings.getInt("adverttime");
     idleTime = botSettings.getInt("idletime");
     recentAdvertTime = botSettings.getInt("readverttime");
