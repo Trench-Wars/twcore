@@ -9,6 +9,11 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
+/**
+ * Module for watching streaks.
+ * 
+ * @author unknown
+ */
 public class utilstreak extends MultiUtil {
 
 	HashMap<String, String> playerMap;
@@ -49,7 +54,7 @@ public class utilstreak extends MultiUtil {
     			if( j < 0 ) j = 1;
     			if( j > 100 ) j = 100;
     			startStreak( name, i, j );
-    		} catch (Exception e ) { m_botAction.sendPrivateMessage( name, "Remember: !streak <start> <update> (Btw failed to start streak.)" ); }
+    		} catch (Exception e ) { m_botAction.sendPrivateMessage( name, "Could not start streak watching.  Syntax: !streak <start> <update>" ); }
     	}
     }
 
@@ -58,7 +63,7 @@ public class utilstreak extends MultiUtil {
     		running = true;
     		streak = i;
     		reStreak = j;
-    		m_botAction.sendPrivateMessage( name, "Watching for those streaks! Starting streaks at " + i +" and updating at " + j);
+    		m_botAction.sendPrivateMessage( name, "Enabled.  Reporting streaks starting at " + i +" kills, and updating every " + j + " kills thereafter.");
     	} else m_botAction.sendPrivateMessage( name, "Already monitoring arena for streaks! $$$" );
     }
 
@@ -70,8 +75,8 @@ public class utilstreak extends MultiUtil {
 			bestStreakOwner = null;
 			running = false;
 			playerMap.clear();
-			m_botAction.sendPrivateMessage( name, "I was getting bored of watching them kill each other anyway." );
-		} else m_botAction.sendPrivateMessage( name, "I wasn't looking for streaks, was I suppost to?" );
+			m_botAction.sendPrivateMessage( name, "Disabled.  I was getting bored of watching them kill each other anyway." );
+		} else m_botAction.sendPrivateMessage( name, "I wasn't looking for streaks; was I supposed to?" );
     }
 
 	public void getBestStreak( String name ) {
@@ -103,7 +108,7 @@ public class utilstreak extends MultiUtil {
 	}
 
     public void handleEvent( PlayerDeath event ) {
-    	if( running ) {
+    	if( running && event.getKilledPlayerBounty() > 0 ) {
 	        Player theKiller  = m_botAction.getPlayer( event.getKillerID() );
 	        Player theKillee  = m_botAction.getPlayer( event.getKilleeID() );
 	        if( theKiller == null || theKillee == null )
@@ -124,7 +129,7 @@ public class utilstreak extends MultiUtil {
 	    		String ct = playerMap.get( killee );
 	    		int it = Integer.parseInt( ct );
 				if (it == bestStreak && killee.equals(bestStreakOwner)) {
-					m_botAction.sendArenaMessage("And the best Streak of the Session ends for "+killee+" ("+it+" kills)!");
+					m_botAction.sendArenaMessage("And the best streak of the session ends for "+killee+" ("+it+" kills)!");
 				}
 	    		playerMap.remove( killee );
 			}
