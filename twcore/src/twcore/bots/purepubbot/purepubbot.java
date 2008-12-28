@@ -249,10 +249,15 @@ public class purepubbot extends SubspaceBot
         m_voteOptions.add( v );
         v = new VoteOption( "ti2",    "Stop the timed game", 60, 3 );
         m_voteOptions.add( v );
-        v = new VoteOption( "le1",    "Allow Leviathans in the arena", 55, 2 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "le2",    "Disallow Leviathans in the arena", 55, 2 );
-        m_voteOptions.add( v );
+
+        // Allow the option to prevent players from voting on Levis
+        Integer vo = m_botAction.getBotSettings().getInteger(m_botAction.getBotName() + "DisableLeviVoting");
+        if( vo == null || vo == 0 ) {
+            v = new VoteOption( "le1",    "Allow Leviathans in the arena", 55, 2 );
+            m_voteOptions.add( v );
+            v = new VoteOption( "le2",    "Disallow Leviathans in the arena", 55, 2 );
+            m_voteOptions.add( v );
+        }
         v = new VoteOption( "ja1",    "Set max # Javs allowed to 20% of the team size", 65, 3 );
         m_voteOptions.add( v );
         v = new VoteOption( "ja2",    "Unrestrict Javelins", 55, 3 );
@@ -3067,7 +3072,7 @@ public class purepubbot extends SubspaceBot
             else if( p2 == null ) {
                 if( p1 == null )
                     return;
-                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge can't be activated; can't find Player 2." );
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge can't be activated; can't find Player 2." );
                 return;
             }
 
@@ -3086,7 +3091,7 @@ public class purepubbot extends SubspaceBot
             else if( p2 == null ) {
                 if( p1 == null )
                     return;
-                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END.  (Player 2 left)" );
+                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END.  (Player 2 left)" );
             }
 
             if( p1Points > p2Points ) {
