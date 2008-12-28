@@ -117,56 +117,53 @@ public class revenge extends MultiModule
     /** Handles point scoring, based upon the involved players' kill histories. */
     public void handleEvent( PlayerDeath event )
     {
-        if ( inProgress )
-        {
-            String killerName = m_botAction.getPlayerName( event.getKillerID() );
-            String killedName = m_botAction.getPlayerName( event.getKilleeID() );
+        if ( !inProgress )
+            return;
+        
+        String killerName = m_botAction.getPlayerName( event.getKillerID() );
+        String killedName = m_botAction.getPlayerName( event.getKilleeID() );
 
-            if ( killerName != null && killedName != null)
-            {
-                RevengePlayer killer = playerMap.get( killerName );
-                RevengePlayer killed = playerMap.get( killedName );
+        if ( killerName == null || killedName == null)
+            return;
+        RevengePlayer killer = playerMap.get( killerName );
+        RevengePlayer killed = playerMap.get( killedName );
 
-                if ( killed.hasKilled( killerName ) )
-                {
-                    killer.addPoints( revengeReward );
-                    m_botAction.sendPrivateMessage( killerName, "You have gained "
-                            + revengeReward + " for killing " + killedName + ". (Total: "
-                            + killer.getScore() + ")" );
+        if( killer == null || killed == null )
+            return;
 
-                    killed.removePoints( revengePenalty );
-                    m_botAction.sendPrivateMessage( killedName, "You have lost "
-                            + revengePenalty + " points for being killed by " + killerName
-                            + ". (Total: " + killed.getScore() + ")" );
-                }
-                else
-                {
-                    if ( !killer.hasKilled( killedName ) )
-                    {
-                        killer.addPoints( normalReward );
-                        m_botAction.sendPrivateMessage( killerName, "You have "
-                                + "gained " + normalReward + " points for killing "
-                                + killedName + ". (Total: " + killer.getScore() + ")");
-                        killer.addKilled(killedName );
-                    }
-                    else
-                    {
-                        killer.addPoints( alreadyKilledReward );
-                        m_botAction.sendPrivateMessage( killerName, "You have "
-                                + "gained " + alreadyKilledReward + " points for killing "
-                                + killedName + ". (Total: " + killer.getScore() + ")" );
-                    }
-                    killed.removePoints( normalPenalty );
-                    m_botAction.sendPrivateMessage( killedName, "You have lost "
-                            + normalPenalty + " points for being killed by " + killerName
-                            + ". (Total: " + killed.getScore() + ")" );
-                }
-                playerMap.remove( killerName );
-                playerMap.remove( killedName );
-                playerMap.put( killerName, killer);
-                playerMap.put( killedName, killed );
+        if ( killed.hasKilled( killerName ) ) {
+            killer.addPoints( revengeReward );
+            m_botAction.sendPrivateMessage( killerName, "You have gained "
+                    + revengeReward + " for killing " + killedName + ". (Total: "
+                    + killer.getScore() + ")" );
+
+            killed.removePoints( revengePenalty );
+            m_botAction.sendPrivateMessage( killedName, "You have lost "
+                    + revengePenalty + " points for being killed by " + killerName
+                    + ". (Total: " + killed.getScore() + ")" );
+        } else {
+            if ( !killer.hasKilled( killedName ) ) {
+                killer.addPoints( normalReward );
+                m_botAction.sendPrivateMessage( killerName, "You have "
+                        + "gained " + normalReward + " points for killing "
+                        + killedName + ". (Total: " + killer.getScore() + ")");
+                killer.addKilled(killedName );
+            } else {
+                killer.addPoints( alreadyKilledReward );
+                m_botAction.sendPrivateMessage( killerName, "You have "
+                        + "gained " + alreadyKilledReward + " points for killing "
+                        + killedName + ". (Total: " + killer.getScore() + ")" );
             }
+            killed.removePoints( normalPenalty );
+            m_botAction.sendPrivateMessage( killedName, "You have lost "
+                    + normalPenalty + " points for being killed by " + killerName
+                    + ". (Total: " + killed.getScore() + ")" );
         }
+        // These steps should be unnecessary due to how Java always passes references... 
+        //playerMap.remove( killerName );
+        //playerMap.remove( killedName );
+        //playerMap.put( killerName, killer);
+        //playerMap.put( killedName, killed );
     }
 
     /**
