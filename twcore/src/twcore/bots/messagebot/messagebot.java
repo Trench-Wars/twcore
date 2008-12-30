@@ -369,8 +369,10 @@ public class messagebot extends SubspaceBot
     	        m_botAction.sendSmartPrivateMessage( name, "That message is too long to send. Please create a message of 200 characters or less.");
     	        return;
     	    }
-    	    else
-    	        c.messageChannel(name, pieces[1]);
+    	    else {
+    	        int numMsgd = c.messageChannel(name, pieces[1]);
+                m_botAction.sendSmartPrivateMessage(name, "Message sent to " + numMsgd + " members of channel '" + channel + "'.");
+    	    }
     	}
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
@@ -1595,9 +1597,11 @@ class Channel
 	 *  are online to tell them they got a message.
 	 *  @param Name of operator.
 	 *  @param Message being sent.
+	 *  @return Number of players messaged
 	 */
-	public void messageChannel(String name, String message)
+	public int messageChannel(String name, String message)
 	{
+	    int numMsgd = 0;
 		Iterator<String> it = members.keySet().iterator();
 
 		while(it.hasNext())
@@ -1606,10 +1610,12 @@ class Channel
 			int level = members.get(player.toLowerCase()).intValue();
 			if(level > 0)
 			{
+			    numMsgd++;
 				leaveMessage(name, player, message);
 				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			}
 		}
+		return numMsgd;
 	}
 
 	/** PM's everyone on channel.
