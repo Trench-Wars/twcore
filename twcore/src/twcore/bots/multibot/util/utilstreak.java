@@ -6,6 +6,7 @@ import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
@@ -53,6 +54,7 @@ public class utilstreak extends MultiUtil {
      */
     public void requestEvents( ModuleEventRequester modEventReq ) {
         modEventReq.request(this, EventRequester.PLAYER_DEATH );
+        modEventReq.request(this, EventRequester.PLAYER_LEFT );
     }
     
     public void handleCommand( String name, String message ) {
@@ -238,6 +240,16 @@ public class utilstreak extends MultiUtil {
 	        }
 	  	}
     }
+    
+    public void handleEvent( PlayerLeft event ){
+        Player p = m_botAction.getPlayer( event.getPlayerID() );
+        if( p != null ) {
+            playerMap.remove( p.getPlayerName() );
+            negPlayerMap.remove( p.getPlayerName() );
+        }
+        
+    }
+    
 
     public void handleEvent( Message event ){
         String message = event.getMessage();
@@ -245,6 +257,8 @@ public class utilstreak extends MultiUtil {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
 			if (message.equalsIgnoreCase("!best"))
 				getBestStreak(name);
+            if (message.equalsIgnoreCase("!worst"))
+                getWorstStreak(name);
 			if( m_opList.isER( name ) || m_botAction.getBotName().equalsIgnoreCase(name)) handleCommand( name, message );
         }
     }
