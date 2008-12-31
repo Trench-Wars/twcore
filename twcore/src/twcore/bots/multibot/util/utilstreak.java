@@ -170,7 +170,7 @@ public class utilstreak extends MultiUtil {
         for( int i = 0; i < nsMessages.length; i++ ) {
             int count = negStreak + i * negReStreak;
             if( deaths == count ) {
-                out =  "Death Streak!: " + name + " (" + deaths +":0)" + nsMessages[i];
+                out =  "Death Streak!: " + name + " (0:" + deaths +")" + nsMessages[i];
             }
         }
         if (deaths > negBestStreak) {
@@ -179,7 +179,7 @@ public class utilstreak extends MultiUtil {
             if (out != null) {
                 out += " (Worst Death Streak of the Session!)";
             } else {
-                out = "Death Streak!: " + name + " (" + deaths +":0) Worst Death Streak of the Session!";
+                out = "Death Streak!: " + name + " (0:" + deaths +") Worst Death Streak of the Session!";
             }
         }
         if (out != null) {
