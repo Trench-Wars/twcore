@@ -1,11 +1,15 @@
 package twcore.bots.multibot.gangsoftw;
 
 import static twcore.core.EventRequester.PLAYER_DEATH;
+import static twcore.core.EventRequester.PLAYER_LEFT;
+import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
 import twcore.bots.MultiModule;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.game.Player;
 import twcore.core.util.StringBag;
 import java.util.HashMap;
@@ -20,6 +24,7 @@ public class gangsoftw extends MultiModule {
     private final static int DEFAULT_LEADER_DEATHS = 5;
     int m_maxLeaderDeaths = 5;
     boolean isRunning = false;
+    boolean DEBUG = false;
     
     HashMap <Integer,GangOwner>m_gangOwners = new HashMap<Integer,GangOwner>();
     TimerTask m_checkForWinnersTask;
@@ -67,24 +72,62 @@ public class gangsoftw extends MultiModule {
 
     public void requestEvents(ModuleEventRequester events) {
         events.request(this, PLAYER_DEATH);
-    }    
+        events.request(this, PLAYER_LEFT);
+        events.request(this, FREQUENCY_SHIP_CHANGE);
+    }
+    
+    public void handleEvent( PlayerLeft event ) {
+        if( !isRunning )
+            return;
+        GangOwner leavingG = m_gangOwners.get( new Integer(event.getPlayerID()) );
+        handleLeavingPlayer( leavingG );
+    }
+    
+    public void handleEvent( FrequencyShipChange event ) {
+        if( !isRunning )
+            return;
+        if( event.getShipType() == 0 ) {
+            GangOwner leavingG = m_gangOwners.get( new Integer(event.getPlayerID()) );
+            handleLeavingPlayer( leavingG );
+        }
+    }
+    
+    public void handleLeavingPlayer( GangOwner leavingG ) {
+        if( leavingG != null ) {
+            int leaderID = leavingG.getCronieTo();
+            if( leaderID != -1 ) {
+                GangOwner leaderG = m_gangOwners.get( new Integer( leaderID ) );
+                if( leaderG != null ) {
+                    if( leaderG.removeSpecificCronie( leavingG.getLeaderID() ) ) {
+                        m_botAction.sendPrivateMessage( leaderID, leavingG.getName() + " has left your gang." );
+                    }
+                }
+            } else {
+                leavingG.assignBestCronieToTakeOver();
+            }
+        }
+        m_gangOwners.remove( new Integer(leavingG.getLeaderID()) );
+    }
 
 
     public void handleEvent( PlayerDeath event ){
-        if( !isRunning ) return;
-
-        GangOwner victorG = m_gangOwners.get( event.getKillerID() );
-        GangOwner loserG  = m_gangOwners.get( event.getKilleeID() );
-        if( victorG == null || loserG == null )
+        if( !isRunning ) {
             return;
-        
-        /*
+        }
+
+        GangOwner victorG = m_gangOwners.get( new Integer(event.getKillerID()) );
+        GangOwner loserG  = m_gangOwners.get( new Integer(event.getKilleeID()) );
+        if( victorG == null ) {
+            if( DEBUG )
+                Tools.printLog( "Winner not retrieved on death" );
+            return;
         }
         if( loserG == null ) {
-            //loserG = new GangOwner(event.getKilleeID());
-            //m_gangOwners.put( new Integer(event.getKilleeID()), loserG );
-        }*/
-        
+            if( DEBUG )
+                Tools.printLog( "Loser not retrieved on death" );
+            return;
+        }
+                
         // Victor is a gang leader
         if( victorG.isGangActive() ) {
             victorG.addLeaderKill();
@@ -93,8 +136,11 @@ public class gangsoftw extends MultiModule {
                 Player victorP = m_botAction.getPlayer( event.getKillerID() );
                 */
                 Player loserP  = m_botAction.getPlayer( event.getKilleeID() );
-                if( loserP == null )
+                if( loserP == null ) {
+                    if( DEBUG )
+                        Tools.printLog( "Loser not retrieved in player record on death" );
                     return;
+                }
                 
                 if( !loserG.addLeaderDeath() )
                     return;
@@ -103,10 +149,13 @@ public class gangsoftw extends MultiModule {
                 
                 // If player has a cronie to steal
                 if( stolenCronie != -1 ) {
-                    GangOwner stolenG    = m_gangOwners.get( stolenCronie );
+                    GangOwner stolenG    = m_gangOwners.get( new Integer(stolenCronie) );
                     Player stolenCronieP = m_botAction.getPlayer( stolenCronie );
-                    if( stolenCronieP == null )
+                    if( stolenCronieP == null ) {
+                        if( DEBUG )
+                            Tools.printLog( "Stolen cronie found, but player object came up null." );
                         return;
+                    }
                     boolean success = victorG.addNewCronie( stolenCronie );
                     if( success ) {
                         m_botAction.sendArenaMessage( victorG.getName() + " recruited " + stolenCronieP.getPlayerName() + " from " + loserP.getPlayerName() + ".");
@@ -215,8 +264,25 @@ public class gangsoftw extends MultiModule {
         else if( message.startsWith( "!start" ))
             cmdStart( name, DEFAULT_LEADER_DEATHS );            
         else if( message.startsWith( "!stop" )) {
+            if( !isRunning ) {            
+                m_botAction.sendPrivateMessage(name, "Gangs of TW already stopped." );
+                return;
+            }
             m_botAction.sendArenaMessage( "Gangs of TW deactivated by " + name + "." );
+            m_gangOwners.clear();
+            try {
+                if( m_checkForWinnersTask != null ) {
+                    m_botAction.cancelTask( m_checkForWinnersTask );
+                }
+            } catch(Exception e) {
+                try {
+                    m_checkForWinnersTask.cancel();
+                } catch( Exception e2 ) {
+                }
+            }
             isRunning = false;
+        } else if( message.startsWith("!rules") ) {
+            m_botAction.arenaMessageSpam( getPlayerHelpMessage() );
         }
     }
 
@@ -229,6 +295,10 @@ public class gangsoftw extends MultiModule {
     }
     
     public void cmdStart( String name, int deaths ) {
+        if( isRunning ) {            
+            m_botAction.sendPrivateMessage(name, "Gangs of TW already started." );
+            return;
+        }
         m_maxLeaderDeaths = deaths;
         m_gangOwners.clear();
         Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
@@ -300,7 +370,7 @@ public class gangsoftw extends MultiModule {
                         display.add( Tools.formatString(".              Kills as leader: " + g.leaderKills + "  Deaths: " + g.leaderDeaths, 69 ) + "." );
                         display.add( Tools.formatString(".              Kills as cronie: " + g.cronieKills, 69 ) + "." );
                         for( int j=0; j<g.cronies.length; j++ ) {
-                            GangOwner c = m_gangOwners.get( g.cronies[0] );
+                            GangOwner c = m_gangOwners.get( g.cronies[j] );
                             if( c != null )
                                 display.add( Tools.formatString(".     Cronie " + (j+1) + ", " + c.getName() + ".  Leader K/D: " + c.leaderKills + "-" + c.leaderDeaths + "  CronieKs: " + c.cronieKills, 69 ) + "." );
                         }
@@ -311,6 +381,7 @@ public class gangsoftw extends MultiModule {
                     } else {
                         m_botAction.sendArenaMessage( "Gangs of TW has ended.", Tools.Sound.HALLELUJAH );                        
                     }
+                    m_gangOwners.clear();
                     isRunning = false;
                 }
             }
@@ -330,7 +401,8 @@ public class gangsoftw extends MultiModule {
                 "      However, it will announce the winner (so you can see stats).",
                 "!start     - starts Gangs of TW (w/ " + DEFAULT_LEADER_DEATHS + " leader deaths)",
                 "!start <#> - starts Gangs of TW w/ custom # gang leader deaths",
-                "!stop      - stops Gangs of TW"
+                "!stop      - stops Gangs of TW",
+                "!rules     - send massive rule/game info spam in arena msgs"
         };
         return help;
     }
@@ -437,6 +509,16 @@ public class gangsoftw extends MultiModule {
             return -1;
         }
         
+        public boolean removeSpecificCronie( int id ) {
+            for( int i=0; i<cronies.length; i++ ) {
+                if( cronies[i] == id ) {
+                    cronies[i] = -1;
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         /**
          * Assigns best cronie (most kills) to take over gang after leader dies.
          */
@@ -533,7 +615,7 @@ public class gangsoftw extends MultiModule {
                 m_botAction.sendPrivateMessage( leaderID, "Your cronie-in-waiting joined another gang." );
                 return true;
             }
-            return false;            
+            return false;
         }
         
         /**
@@ -547,6 +629,12 @@ public class gangsoftw extends MultiModule {
             slot--;
             if( slot < 0 || slot >= cronies.length )
                 return -1;
+            Player swapIn = m_botAction.getPlayer( swapCronie );
+            if( swapIn == null || swapIn.getShipType() < 1 ) {
+                m_botAction.sendPrivateMessage( leaderID, "That cronie is no longer available." );
+                swapCronie = -1;
+                return -1;
+            }
             int swappedOutCronie = cronies[slot];
             cronies[slot] = swapCronie;
             swapCronie = -1;
@@ -602,10 +690,11 @@ public class gangsoftw extends MultiModule {
          */
         public boolean addLeaderDeath() {
             leaderDeaths++;
-            if( leaderDeaths < DEFAULT_LEADER_DEATHS )
+            if( leaderDeaths < m_maxLeaderDeaths )
                 return true;
             m_botAction.specWithoutLock( leaderID );
             m_botAction.sendArenaMessage( leaderName + " eliminated.  Leader stats: " + leaderKills + " kills, " + leaderDeaths + " deaths.  (" + cronieKills + " kills as cronie.)");
+            assignBestCronieToTakeOver();
             return false;
         }
         
