@@ -31,15 +31,17 @@ public class utilstreak extends MultiUtil {
 		" Rampage!",
 		" Dominating!",
 		" Unstoppable!",
-		" God Like!",
+		" God-Like!",
 		" Cheater!",
+        " Probably Just AFK Killing!"
 	};
     String  nsMessages[] = {
             " Struggling!",
             " Hopeless!",
             " Getting Owned!",
             " Pathetic!",
-            " Remapped Fire Key!",
+            " Sickening Display of Failure!",
+            " Remapped the Fire Key!",
             " Probably High!",
             " AFK!",
         };
