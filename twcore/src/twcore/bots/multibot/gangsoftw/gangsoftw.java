@@ -32,6 +32,8 @@ public class gangsoftw extends MultiModule {
     StringBag winnerNames = new StringBag();
     StringBag killNames   = new StringBag();
 
+    // ***** SETUP *****
+    
     public void init() {
         winnerNames.add( "Legendary" );
         winnerNames.add( "Notorious" );
@@ -75,6 +77,55 @@ public class gangsoftw extends MultiModule {
         events.request(this, PLAYER_LEFT);
         events.request(this, FREQUENCY_SHIP_CHANGE);
     }
+    
+    public String[] getModHelpMessage() {
+        String[] help = {
+                "Gangs of TW                                   -  qan  1/1/09",
+                "NOTE: This is a basic event module done in the old-school style.",
+                "      When you start it, it assumes you have set all ships,",
+                "      done a score reset, and placed everyone on their own freq.",
+                "      However, it will announce the winner (so you can see stats).",
+                "!start     - starts Gangs of TW (w/ " + DEFAULT_LEADER_DEATHS + " leader deaths)",
+                "!start <#> - starts Gangs of TW w/ custom # gang leader deaths",
+                "!stop      - stops Gangs of TW",
+                "!rules     - send massive rule/game info spam in arena msgs"
+        };
+        return help;
+    }
+
+    public String[] getPlayerHelpMessage() {
+        String[] help = {
+                "....................................................................",
+                ".  Gangs of TW                                         qan  1/1/09 .",
+                "....................................................................",
+                ".     You've started a nasty gang.  As a gang leader, if you beat  .",
+                ".  another aspiring gang leader with no followers, they become     .",
+                ".  your cronie and will fight for you.  If they have their own     .",
+                ".  cronies and you beat them, you can steal the cronies away.      .",
+                ".  You can have up to 4 cronies, swapping out the less skilled     .",
+                ".  for better ones when you acquire them.  But if you get beaten   .",
+                ".  too many times as leader, you'll be eliminated from the game.   .",
+                ".     On the other hand, cronies can take a beating -- when they   .",
+                ".  die, it doesn't count toward their elimination deaths.  The     .",
+                ".  cronies, then, can afford to get their feet wet.  If a gang     .",
+                ".  leader happens to die, the cronie with the largest number of    .",
+                ".  kills becomes the next leader.  The dream lives on...           .",
+                ".  COMMANDS:  1 2 3 4 - swap waiting cronie   g - gang list        .",
+                ".             l       - show leaders of all gangs                  .",
+                ".             w #     - who's who on freq #   w name - playerinfo  .",
+        };
+        return help;
+    }
+    
+    public boolean isUnloadable() {
+        return true;
+    }
+
+    public void cancel() {
+    }
+
+    
+    // ***** EVENT HANDLING *****
     
     public void handleEvent( PlayerLeft event ) {
         if( !isRunning )
@@ -197,6 +248,9 @@ public class gangsoftw extends MultiModule {
             }
         }        
     }
+    
+    
+    // ***** COMMAND HANDLING *****
 
     public void handleEvent( Message event ){
         String message = event.getMessage();
@@ -218,43 +272,15 @@ public class gangsoftw extends MultiModule {
                         cmdSwap( event.getPlayerID(), 3 );
                     else if( message.equals("4") ) 
                         cmdSwap( event.getPlayerID(), 4 );
-                    else if( message.equals("c") ) 
+                    else if( message.equals("g") ) 
                         cmdListCronies( event.getPlayerID() );
+                    else if( message.startsWith("l") )
+                        cmdLeaders( event.getPlayerID() );
+                } else {
+                    if( message.startsWith("w ") )
+                        cmdWho( event.getPlayerID(), message.substring( 2 ) );
                 }
             }
-        }
-    }
-    
-    public void cmdSwap( int id, int slot ) {
-        GangOwner g = m_gangOwners.get(id);
-        if( g != null ) {
-            Player swapIn = m_botAction.getPlayer( g.getCronieInWaiting() );
-            Player swapOut = m_botAction.getPlayer( g.swapCronie( slot ) );
-            if( swapOut == null ) 
-                m_botAction.sendPrivateMessage( id, "Swap failed.  Check your cronies again (type c for a list)." );
-            else {
-                if( swapIn == null || swapOut == null )
-                    m_botAction.sendPrivateMessage( id, "Swap successful.  Good riddance." );
-                else
-                    m_botAction.sendPrivateMessage( id, swapIn.getPlayerName() + " swapped in for " + swapOut.getPlayerName() + "." );
-            }
-                
-        }
-    }
-
-    public void cmdListCronies( int id ) {
-        GangOwner g = m_gangOwners.get(id);
-        if( g != null ) {
-            LinkedList<String> display = new LinkedList<String>();
-            for( int i=0; i<g.cronies.length; i++) {
-                GangOwner c = m_gangOwners.get( g.cronies[i] );
-                if( c != null )
-                    display.add( "Slot " + (i+1) + ")  " + Tools.formatString( c.getName(), 30 ) + "  -  " + c.getTotalKills() + " kills");
-            }
-            if( display.size() > 0 )
-                m_botAction.privateMessageSpam( id, display );
-            else
-                m_botAction.sendPrivateMessage( id, "You have no cronies.  Get to work!" );
         }
     }
     
@@ -285,7 +311,137 @@ public class gangsoftw extends MultiModule {
             m_botAction.arenaMessageSpam( getPlayerHelpMessage() );
         }
     }
+    
+    public void cmdSwap( int id, int slot ) {
+        GangOwner g = m_gangOwners.get(id);
+        if( g != null ) {
+            Player swapIn = m_botAction.getPlayer( g.getCronieInWaiting() );
+            Player swapOut = m_botAction.getPlayer( g.swapCronie( slot ) );
+            if( swapOut == null ) 
+                m_botAction.sendPrivateMessage( id, "Swap failed.  Check your cronies again (type c for a list)." );
+            else {
+                if( swapIn == null || swapOut == null )
+                    m_botAction.sendPrivateMessage( id, "Swap successful.  Good riddance." );
+                else
+                    m_botAction.sendPrivateMessage( id, swapIn.getPlayerName() + " swapped in for " + swapOut.getPlayerName() + "." );
+            }
+                
+        }
+    }
 
+    public void cmdListCronies( int id ) {
+        GangOwner g = m_gangOwners.get(id);
+        LinkedList<String> display;
+        if( g.getCronieTo() != -1 ) {
+            g = m_gangOwners.get( g.getCronieTo() );
+            if( g == null ) {
+                m_botAction.sendPrivateMessage( id, "You are a cronie in a gang, but your leader can't be found.  Report to a staff member!" );
+                return;
+            }
+            display = getGangStatus( g, true );
+            if( display != null ) {
+                m_botAction.privateMessageSpam( id, display );
+            }
+            m_botAction.sendPrivateMessage( id, "You are a cronie in this gang.  Protect your leader; your deaths do not count against you." );
+        } else {
+            display = getGangStatus( g, true );
+            if( display != null ) {
+                m_botAction.privateMessageSpam( id, display );
+            }
+        }        
+    }
+        
+    public void cmdWho( int id, String message ) {
+        int matchID = -1;
+        if( Tools.isAllDigits(message) ) {
+            Integer freq = Integer.parseInt(message);
+            Iterator<Integer> i = m_botAction.getFreqIDIterator(freq);
+            if( i.hasNext() ) {
+                matchID = i.next();
+            } else {
+                m_botAction.sendPrivateMessage( id, "Freq " + freq + " not found." );               
+            }
+            
+        } else {
+            Player p = m_botAction.getFuzzyPlayer( message );
+            if( p == null ) {
+                m_botAction.sendPrivateMessage( id, "Player '" + message + "' not found." );
+                return;
+            }
+            matchID = p.getPlayerID();
+        }
+        if( matchID == -1 )
+            return;
+        GangOwner go = m_gangOwners.get( new Integer(matchID) );
+        if( go == null ) { 
+            m_botAction.sendPrivateMessage( id, "Does not appear to be playing." );
+            return;
+        }
+        
+        if( !go.isGangActive() ) {
+            matchID = go.getCronieTo();
+            go = m_gangOwners.get( new Integer(matchID) );
+        }
+        if( go == null ) { 
+            m_botAction.sendPrivateMessage( id, "Does not appear to be playing." );
+            return;
+        }
+        if( !go.isGangActive() ) {
+            m_botAction.sendPrivateMessage( id, "Does not appear to be playing." );
+            return;
+        }
+        
+        LinkedList <String>display = getGangStatus( go, false );
+        
+        if( display == null ) {
+            m_botAction.sendPrivateMessage( id, "Does not appear to be playing." );
+        } else {
+            m_botAction.privateMessageSpam( id, display );          
+        }
+    }
+    
+    public LinkedList<String> getGangStatus( GangOwner g, boolean isInGang ) {
+        if( g != null ) {
+            LinkedList<String> display = new LinkedList<String>();            
+            display.add( "LEADER:  " + Tools.formatString( g.getName(), 30 ) + "  -  Leader K/D:  " + g.getLeaderKills() + "-" + g.getLeaderDeaths() );
+            for( int i=0; i<g.cronies.length; i++) {
+                GangOwner c = m_gangOwners.get( g.cronies[i] );
+                if( c != null )
+                    display.add( "Slot " + (i+1) + ")   " + Tools.formatString( c.getName(), 30 ) + "  -  " + c.getTotalKills() + " kills");
+            }
+            if( isInGang ) {
+                GangOwner waitingG = m_gangOwners.get( g.getCronieInWaiting() );
+                if( waitingG != null ) {
+                    display.add( "  Swap)   " + Tools.formatString( waitingG.getName(), 30 ) + "  -  " + waitingG.getTotalKills() + " kills  (type slot # to swap in)");                
+                }
+            }
+            return display;
+        } else {
+            return null;
+        }
+    }
+    
+    public void cmdLeaders( int id ) {
+        LinkedList<String> leaderDisplay = new LinkedList<String>();
+        leaderDisplay.add("Gang Leaders        [Display format:  freq#:name(#deaths) ]");
+        String line = "";
+
+        int listingColumn = 0;
+        for( GangOwner g : m_gangOwners.values() ) {
+            if( g != null && g.isGangActive() ) {
+                String dispAdd = Tools.formatString( ( g.getGangFrequency() + ":" + g.getName() + "(" + g.getLeaderDeaths() + ")" ), 20 ) + "  "; 
+                if( listingColumn % 4 == 3 ) {
+                    leaderDisplay.add( line );
+                    line = dispAdd;
+                } else {
+                    line += dispAdd;
+                }
+                listingColumn++;
+            }
+        }
+        m_botAction.privateMessageSpam(id, leaderDisplay);
+    }
+    
     public void cmdStart( String name, String deaths ) {
         if( Tools.isAllDigits(deaths) ) {
             cmdStart( name, Integer.parseInt( deaths ));
@@ -390,52 +546,10 @@ public class gangsoftw extends MultiModule {
         
         m_botAction.sendArenaMessage( "Gangs of TW activated by " + name + "!  Gang leaders removed at " + deaths + " deaths." );
         isRunning = true;            
-    }   
-
-    public String[] getModHelpMessage() {
-        String[] help = {
-                "Gangs of TW                                   -  qan  1/1/09",
-                "NOTE: This is a basic event module done in the old-school style.",
-                "      When you start it, it assumes you have set all ships,",
-                "      done a score reset, and placed everyone on their own freq.",
-                "      However, it will announce the winner (so you can see stats).",
-                "!start     - starts Gangs of TW (w/ " + DEFAULT_LEADER_DEATHS + " leader deaths)",
-                "!start <#> - starts Gangs of TW w/ custom # gang leader deaths",
-                "!stop      - stops Gangs of TW",
-                "!rules     - send massive rule/game info spam in arena msgs"
-        };
-        return help;
     }
 
-    public String[] getPlayerHelpMessage() {
-        String[] help = {
-                "....................................................................",
-                ".  Gangs of TW                                         qan  1/1/09 .",
-                "....................................................................",
-                ".     You've started a nasty gang.  As a gang leader, if you beat  .",
-                ".  another aspiring gang leader with no followers, they become     .",
-                ".  your cronie and will fight for you.  If they have their own     .",
-                ".  cronies and you beat them, you can steal the cronies away.      .",
-                ".  You can have up to 4 cronies, swapping out the less skilled     .",
-                ".  for better ones when you acquire them.  But if you get beaten   .",
-                ".  too many times as leader, you'll be eliminated from the game.   .",
-                ".     On the other hand, cronies can take a beating -- when they   .",
-                ".  die, it doesn't count toward their elimination deaths.  The     .",
-                ".  cronies, then, can afford to get their feet wet.  If a gang     .",
-                ".  leader happens to die, the cronie with the largest number of    .",
-                ".  kills becomes the next leader.  The dream lives on...           .",
-                ".  COMMANDS:   1 2 3 4 - swap waiting cronie    c - cronie list    ."
-        };
-        return help;
-    }
     
-    public boolean isUnloadable() {
-        return true;
-    }
-
-    public void cancel() {
-    }
-
+    // ***** GANG CLASS *****
     
     /**
      * Keeps track of gang-related information for a particular person.  If the
@@ -699,7 +813,7 @@ public class gangsoftw extends MultiModule {
         }
         
         public void addLeaderKill() {
-            leaderDeaths++;
+            leaderKills++;
         }
         public void addCronieKill() {
             cronieKills++;
@@ -716,6 +830,15 @@ public class gangsoftw extends MultiModule {
         }
         public int getCronieInWaiting() {
             return swapCronie;
+        }
+        public int getLeaderKills() {
+            return leaderKills;
+        }
+        public int getLeaderDeaths() {
+            return leaderDeaths;
+        }
+        public int getCronieKills() {
+            return cronieKills;
         }
         public int getTotalKills() {
             return leaderKills + cronieKills;
