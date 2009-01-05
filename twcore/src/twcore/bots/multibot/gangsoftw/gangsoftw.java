@@ -408,7 +408,7 @@ public class gangsoftw extends MultiModule {
     public LinkedList<String> getGangStatus( GangOwner g, boolean isInGang ) {
         if( g != null ) {
             LinkedList<String> display = new LinkedList<String>();            
-            display.add( "LEADER:  " + Tools.formatString( g.getName(), 30 ) + "  -  Leader K/D:  " + g.getLeaderKills() + "-" + g.getLeaderDeaths() );
+            display.add( "LEADER:   " + Tools.formatString( g.getName(), 30 ) + "  -  Leader K/D:  " + g.getLeaderKills() + "-" + g.getLeaderDeaths() );
             for( int i=0; i<g.cronies.length; i++) {
                 GangOwner c = m_gangOwners.get( g.cronies[i] );
                 if( c != null )
@@ -444,6 +444,9 @@ public class gangsoftw extends MultiModule {
                 listingColumn++;
             }
         }
+        if( listingColumn % 4 < 3 )
+            leaderDisplay.add( line );
+            
         m_botAction.privateMessageSpam(id, leaderDisplay);
     }
     
@@ -755,6 +758,11 @@ public class gangsoftw extends MultiModule {
                 return -1;
             }
             int swappedOutCronie = cronies[slot];
+            GangOwner swapOut = m_gangOwners.get( new Integer( swappedOutCronie) );
+            if( swapOut == null )
+                return -1;
+            m_botAction.setFreq( cronies[slot], leaderFreq );
+            m_botAction.setFreq( swappedOutCronie, swapOut.getGangFrequency() );
             cronies[slot] = swapCronie;
             swapCronie = -1;
             Player leaderP = m_botAction.getPlayer(leaderID);
