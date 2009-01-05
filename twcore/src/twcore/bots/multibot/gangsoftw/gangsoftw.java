@@ -156,8 +156,8 @@ public class gangsoftw extends MultiModule {
             } else {
                 leavingG.assignBestCronieToTakeOver();
             }
+            m_gangOwners.remove( new Integer(leavingG.getLeaderID()) );
         }
-        m_gangOwners.remove( new Integer(leavingG.getLeaderID()) );
     }
 
 
@@ -313,6 +313,7 @@ public class gangsoftw extends MultiModule {
     }
     
     public void cmdSwap( int id, int slot ) {
+        if( !isRunning ) return;
         GangOwner g = m_gangOwners.get(id);
         if( g != null ) {
             Player swapIn = m_botAction.getPlayer( g.getCronieInWaiting() );
@@ -330,7 +331,10 @@ public class gangsoftw extends MultiModule {
     }
 
     public void cmdListCronies( int id ) {
+        if( !isRunning ) return;
         GangOwner g = m_gangOwners.get(id);
+        if( g == null )
+            return;
         LinkedList<String> display;
         if( g.getCronieTo() != -1 ) {
             g = m_gangOwners.get( g.getCronieTo() );
@@ -352,6 +356,7 @@ public class gangsoftw extends MultiModule {
     }
         
     public void cmdWho( int id, String message ) {
+        if( !isRunning ) return;
         int matchID = -1;
         if( Tools.isAllDigits(message) ) {
             Integer freq = Integer.parseInt(message);
