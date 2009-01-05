@@ -32,9 +32,10 @@ public class utilstandard extends MultiUtil {
             "!teams <numberTeams>    - Makes the requested number of teams.",
             "!door <-2 to 255>       - Changes door mode.  -2 and -1 are random/on-off modes.",
             "!restart                - Restarts the ball game. (*restart)",
+            "!warp                   - Warps everyone in the arena to a random location",
             "!dolock                 - Locks the arena (will guarantee lock; is NOT a toggle)",
             "!dounlock               - Unlocks the arena (will guarantee unlock; is NOT a toggle)",
-            "!where                  - Robo will tell you his location. Remote PM only.",
+            "!where                  - Robo will tell you his location. Remote PM only.",            
             "!setship <ship>         - Changes everyone to <ship>",
             "!setship <freq> <ship>  - Changes everyone on <freq> to <ship>",
             "!setfreq <freq>         - Changes everyone to <freq>",
@@ -90,6 +91,8 @@ public class utilstandard extends MultiUtil {
         } else if( message.startsWith( "!door " )){
             m_botAction.setDoors( getInteger( message.substring( 6 )));
             m_botAction.sendSmartPrivateMessage(name, "Door mode was set to " + message.substring(6));
+        } else if( message.startsWith( "!warp" )){
+            m_botAction.warpAllRandomly();
         } else if( message.startsWith( "!dolock" )){
             doLock = 1;
             m_botAction.toggleLocked();
