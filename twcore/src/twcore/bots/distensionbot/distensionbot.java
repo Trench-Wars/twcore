@@ -66,8 +66,8 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between msgs in list, when spammed to single
-    private final int NUM_UNIVERSAL_MSGS_SPAMMED = 5;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
-    private final int PRIZE_SPAM_DELAY = 20;               // Delay in ms between prizes for individual players
+    private final int NUM_UNIVERSAL_MSGS_SPAMMED = 3;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
+    private final int PRIZE_SPAM_DELAY = 25;               // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
@@ -366,9 +366,9 @@ public class distensionbot extends SubspaceBot {
     private final int LVZ_REARMING = 200;               // Rearming / attach at own risk
     private final int LVZ_RANKUP = 201;                 // RANK UP: Congratulations
     private final int LVZ_STREAK = 202;                 // Streak!
-    private final int LVZ_TK = 203;                     // TK!
-    private final int LVZ_TKD = 204;                    // TKd!
-    private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
+    //private final int LVZ_TK = 203;                     // TK!
+    //private final int LVZ_TKD = 204;                    // TKd!
+    //private final int LVZ_PRIZEDUP = 205;               // Strange animation showing you're prized up
     private final int LVZ_SUDDEN_DEATH = 206;           // Sudden Death info
     //private final int LVZ_VICTORY = 207;                // Team victorious
     //private final int LVZ_DEFEAT = 208;                 // Team defeated
@@ -582,10 +582,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void init() {
         m_botAction.sendUnfilteredPublicMessage("?chat=distension" );
-        m_botAction.setMessageLimit( 10, false );
+        m_botAction.setMessageLimit( 8, false );
         m_botAction.setReliableKills( 1 );
-        m_botAction.setPlayerPositionUpdating( 575 );
-        m_botAction.setLowPriorityPacketCap( 14 );
+        m_botAction.setPlayerPositionUpdating( 675 );
+        m_botAction.setLowPriorityPacketCap( 12 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
         m_botAction.setDoors( 240 ); // All bottom doors closed
@@ -1984,8 +1984,8 @@ public class distensionbot extends SubspaceBot {
                 victor.clearSuccessiveKills();
             if( loss > 0 && victor.wantsKillMsg() )
                 m_botAction.sendPrivateMessage( killer.getPlayerName(), "-" + loss + " RP for TKing " + killed.getPlayerName() + "." );
-            m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
-            m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
+            //m_botAction.showObjectForPlayer(victor.getArenaPlayerID(), LVZ_TK);
+            //m_botAction.showObjectForPlayer(loser.getArenaPlayerID(), LVZ_TKD);
             return;
         }
 
@@ -2045,9 +2045,9 @@ public class distensionbot extends SubspaceBot {
 
         // Loser is many levels above victor:
         //   Victor capped, but loser is humiliated with some point loss
-        if( rankDiff >= RANK_DIFF_MED ) {
+        if( rankDiff >= RANK_DIFF_HIGHEST ) {
 
-            points = victorRank + RANK_DIFF_MED;
+            points = victorRank + RANK_DIFF_HIGHEST;
             isMaxReward = true;
 
             // Support ships are not humiliated; assault are
@@ -7831,7 +7831,7 @@ public class distensionbot extends SubspaceBot {
          * @param tick Number of times this method has been run; used for intermittent abilities
          */
         public void prizeSpecialAbilities( int tick ) {
-            boolean prized = false;
+            //boolean prized = false;
             if( shipNum == 5 ) {
                 // Regeneration ability; each level worth an additional 8% of prizing either port or burst
                 //                       (+8% for each, up to a total of 80%)
@@ -7839,11 +7839,11 @@ public class distensionbot extends SubspaceBot {
                 double burstChance = Math.random() * 100.0;
                 if( ((double)purchasedUpgrades[11] * 9.0) > portChance && !isRespawning ) {
                     m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.PORTAL, SOUND_POWERUP_RECHARGED );
-                    prized = true;
+                    //prized = true;
                 }
                 if( ((double)purchasedUpgrades[11] * 7.0) > burstChance && !isRespawning ) {
                     m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BURST, SOUND_POWERUP_RECHARGED );
-                    prized = true;
+                    //prized = true;
                 }
                 // EMP ability; re-enable every 30 ticks (15 min)
                 if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 30 == 0 ) {
@@ -7867,21 +7867,21 @@ public class distensionbot extends SubspaceBot {
                 if( (double)purchasedUpgrades[11] * 9.0 > superChance && !isRespawning ) {
                     m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.SUPER, SOUND_POWER_ACTIVE );
                     m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_SUPER );
-                    prized = true;
+                    //prized = true;
                 }
             } else if( shipNum == 8) {
                 // Repel regen ability; each level worth an additional 25%
                 double repChance = Math.random() * 4.0;
                 if( (double)purchasedUpgrades[9] > repChance && !isRespawning ) {
                     m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.REPEL, SOUND_POWERUP_RECHARGED );
-                    prized = true;
+                    //prized = true;
                 }
             } else if( shipNum == 1) {
                 // Thor ability (every 5 minutes)
                 if( purchasedUpgrades[11] > 0 && tick % 10 == 0 ) {
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_THOR );
                     bonusPrize = Tools.Prize.THOR;
-                    prized = true;
+                    //prized = true;
                 }
             } else if( shipNum == 7 ) {
                 // Firebloom ability.
@@ -7891,7 +7891,7 @@ public class distensionbot extends SubspaceBot {
                         (firebloom == 2 && tick % 4 == 0) ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_FIREBLOOM );
                         bonusPrize = Tools.Prize.BURST;
-                        prized = true;
+                        //prized = true;
                     }
                 }
             } else if( shipNum == 2) {
@@ -7908,7 +7908,7 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_JUMPSPACE );
                         m_botAction.sendRemotePrivateMessage(name, "JumpSpace Drive ready.  PM >>> to use.", SOUND_POWERUP_RECHARGED );
                         jumpSpace = true;
-                        prized = true;
+                        //prized = true;
                     }
                 }
             } else if( shipNum == 6) {
@@ -7962,8 +7962,10 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendRemotePrivateMessage(name, "TEAM REPORT:  " + terrs + " Terrs, " + sharks + " Sharks; " + others + " others."  );
                 }
             }
+            /*
             if( prized )
                 m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_PRIZEDUP );
+            */
         }
 
 
