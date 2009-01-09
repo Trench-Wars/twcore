@@ -5629,11 +5629,16 @@ public class distensionbot extends SubspaceBot {
     public void cmdSaveData( String name, String msg ) {
         boolean autosave = ":autosave:".equals(name);
         if( !(name.equals(m_botAction.getBotName()) || autosave) ) {
+            /*
             DistensionPlayer p1 = m_players.get( name );
             if( p1 == null )
                 throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p1.getOpStatus() < 1 )
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+            */
+            if( !m_botAction.getOperatorList().isER(name) ) {
+                throw new TWCoreException("Only ER+ can use this command.");                
+            }
         }
 
         if( !autosave )
@@ -5763,11 +5768,16 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdShutdown( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
+            /*
             DistensionPlayer p = m_players.get( name );
             if( p == null )
                 throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p.getOpStatus() < 1 )
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+            */
+            if( !m_botAction.getOperatorList().isER(name) ) {
+                throw new TWCoreException("Only ER+ can use this command.");                
+            }
         }
 
         if( m_beginDelayedShutdown ) {
@@ -5815,11 +5825,16 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdShutdownInfo( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
+            /*
             DistensionPlayer p = m_players.get( name );
             if( p == null )
                 throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
             if( p.getOpStatus() < 1 )
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+            */
+            if( !m_botAction.getOperatorList().isER(name) ) {
+                throw new TWCoreException("Only ER+ can use this command.");                
+            }
         }
         if( m_shutdownTimeMillis <= 0 )
             throw new TWCoreException( "Shutdown mode is not enabled." );
