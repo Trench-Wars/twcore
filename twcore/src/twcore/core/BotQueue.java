@@ -392,8 +392,10 @@ public class BotQueue extends Thread {
 
         Session childBot = null;
         try{
+            // FIXME: KNOWN BUG - sometimes, even when it detects that a class is updated, the loader
+            //        will load the old copy/cached class.  Perhaps Java itself is caching the class on occasion?
             if( m_loader.shouldReload() ){
-                System.out.println( "Reinstantiating" );
+                System.out.println( "Reinstantiating class loader; cached classes are not up to date." );
                 resetRepository();
                 m_loader = m_loader.reinstantiate();
             }
