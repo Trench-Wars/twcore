@@ -778,8 +778,8 @@ public class messagebot extends SubspaceBot
             try {
                 LinkedList <String>messages = new LinkedList<String>();
                 LinkedList <Integer>ids = new LinkedList<Integer>();
-                ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageSystem WHERE fcName = '" +
-                    Tools.addSlashesToString(name) + "' AND fnRead = 0" );
+                ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageSystem WHERE fcName='" +
+                    Tools.addSlashesToString(name) + "' AND fnRead='0'" );
                 if( !results.next() ) {
                     m_botAction.sendSmartPrivateMessage(name, "You have no new messages.");
                     return;                    
@@ -808,11 +808,14 @@ public class messagebot extends SubspaceBot
                 messages.add( "Total " + idNum + " message" + (idNum==1?"":"s") + " displayed." );
                 SpamTask spamTask = new SpamTask();
                 spamTask.setMsgs( name, messages );
-                m_botAction.scheduleTask(spamTask, 225, 225 );
+                m_botAction.scheduleTask(spamTask, 75, 75 );
                 
                 if( !resetResults.equals("") ) {
-                    String query = "UPDATE tblMessageSystem SET fnRead=1 WHERE fcName='"+Tools.addSlashesToString(name.toLowerCase())+"' AND (" + resetResults + ")";
+                    String query = "UPDATE tblMessageSystem SET fnRead='1' WHERE fcName='"+Tools.addSlashesToString(name)+"' AND (" + resetResults + ")";
+                    Tools.printLog( query );
                     m_botAction.SQLQueryAndClose(database, query);
+                } else {
+                    Tools.printLog( "Did not need to reset." );
                 }
                 
                 /*
@@ -875,7 +878,7 @@ public class messagebot extends SubspaceBot
                 
                 SpamTask spamTask = new SpamTask();
                 spamTask.setMsgs( name, messages );
-                m_botAction.scheduleTask(spamTask, 225, 225 );
+                m_botAction.scheduleTask(spamTask, 75, 75 );
 
                 /*
 				while(results.next()) {
@@ -1027,6 +1030,7 @@ public class messagebot extends SubspaceBot
         }
 		try {
 			ResultSet results = m_botAction.SQLQuery(database, query);
+			LinkedList<String> msgs = new LinkedList<String>();
 			while(results.next())
 			{
 			    String thisMessage = "Message #" + String.valueOf(results.getInt("fnID")) +
@@ -1037,11 +1041,15 @@ public class messagebot extends SubspaceBot
 			    else
 			        thisMessage += " ]";
 
-			    m_botAction.sendSmartPrivateMessage(name, thisMessage);
+			    msgs.add( thisMessage );
 			}
-                        m_botAction.SQLClose(results);
+            SpamTask spamTask = new SpamTask();
+            spamTask.setMsgs(name, msgs);
+            m_botAction.scheduleTask(spamTask, 75, 75 );
+            
+            m_botAction.SQLClose(results);
 		} catch(Exception e) {
-			m_botAction.sendSmartPrivateMessage(name, "Error while reading message database.");
+			m_botAction.sendSmartPrivateMessage(name, "Error while reading message database during listing of msgs.");
 			Tools.printStackTrace( e );
 		}
 		m_botAction.sendSmartPrivateMessage(name, "PM me with !read to read all unread messages, or use !read <num>.");
