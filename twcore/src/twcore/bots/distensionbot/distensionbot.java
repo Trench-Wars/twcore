@@ -2740,31 +2740,7 @@ public class distensionbot extends SubspaceBot {
 
         // Check for shark and terr balance -- do not overbalance with one or the other.
         if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER && !m_refitMode ) {
-            int friendly = 0;
-            int enemy = 0;
-            for( DistensionPlayer p2 : m_players.values() ) {
-                if( p2.getShipNum() == shipNum )
-                    if( p2.getArmyID() == p.getArmyID() )
-                        friendly++;
-                    else
-                        enemy++;
-            }
-            // If we already have more than they do (2 more needed for terr), do not allow the change
-            // Remember, in this calculation the player that just changed to shark is not included, so
-            // if our army already has more than the other army, the difference would be +2 after the change.
-            boolean tooMany = false;
-            if( shipNum == Tools.Ship.SHARK && friendly > enemy ) {
-                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Sharks flying to make you also Sharking any fair!" );
-                tooMany = true;
-            }
-            if( shipNum == Tools.Ship.SHARK && friendly > 3 ) {
-                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, only three Sharks are allowed per army." );
-                tooMany = true;
-            }
-            if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 1 ) {
-                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly!" );
-                tooMany = true;
-            }
+            boolean tooMany = checkForTooManyShips(p);
             if( tooMany ) {
                 if( lastShipNum > 0 )
                     m_botAction.setShip(p.getArenaPlayerID(), lastShipNum );
@@ -2802,7 +2778,7 @@ public class distensionbot extends SubspaceBot {
         if( shipNum == 9 )
             m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " is now manning the Tactical Ops console." );
 
-        // Simple fix to cause sharks and terrs to not lose MVP
+        // Award sharks and terrs who change to needed slot w/ a bonus
         if( (lastShipNum > 0) && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) ) {
             int reward = 0;
             if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
@@ -2811,7 +2787,8 @@ public class distensionbot extends SubspaceBot {
                     if( p2.getShipNum() == shipNum )
                         if( p2.getArmyID() == p.getArmyID() )
                             ships++;
-                }
+                }                
+                ships--;    // Minus 1 for the player that just changed into the ship.
                 int pilots = p.getArmy().getPilotsInGame();
                 int rank = Math.max(1, p.getRank());
                 if( shipNum == Tools.Ship.TERRIER ) {
@@ -2898,6 +2875,41 @@ public class distensionbot extends SubspaceBot {
         if( p.getPurchasedUpgradeLevel() == 0 && p.getUpgradePoints() >= 10 ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "TIP: *** You have no upgrades installed! ***  Use !armory to see your upgrade options, and !upgrade # to upgrade a specific part of your ship.", 1 );
         }
+    }
+    
+    /**
+     * Support method for pilot and assist.  Checks if there are too many ships on a given team.
+     * @param p
+     * @return
+     */
+    public boolean checkForTooManyShips( DistensionPlayer p ) {
+        int friendly = 0;
+        int enemy = 0;
+        int shipNum = p.getShipNum();
+        for( DistensionPlayer p2 : m_players.values() ) {
+            if( p2.getShipNum() == shipNum )
+                if( p2.getArmyID() == p.getArmyID() )
+                    friendly++;
+                else
+                    enemy++;
+        }
+        // If we already have more than they do (2 more needed for terr), do not allow the change.
+        // Remember, in this calculation the player that just changed to shark is not included, so
+        // if our army already has more than the other army, the difference would be +2 after the change.
+        boolean tooMany = false;
+        if( shipNum == Tools.Ship.SHARK && friendly > enemy ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Sharks flying to make you also Sharking any fair.  Try again later." );
+            tooMany = true;
+        }
+        if( shipNum == Tools.Ship.SHARK && friendly > 3 ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, only three Sharks are allowed per army." );
+            tooMany = true;
+        }
+        if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 1 ) {
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly.  Try again later." );
+            tooMany = true;
+        }
+        return tooMany;
     }
 
 
@@ -3306,14 +3318,14 @@ public class distensionbot extends SubspaceBot {
                     if( currentUpgrade.getPrizeNum() == Tools.Prize.ENERGY ) {
                         printmsg = "--- " + Tools.formatString( "Energy          [Auto-Install]", 38);
                         printmsg += Tools.formatString("( " + ( p.getEnergyLevel() < 10 ? " " : "") + p.getEnergyLevel() + " / " +
-                                (sp.getMaxEnergyUpgs() < 10 ? " " : "") + sp.getMaxEnergyUpgs() + " )", 18);
+                                (sp.getMaxEnergyUpgs() < 10 ? " " : "") + sp.getMaxEnergyUpgs() + " )", 16);
                         int ranks = sp.ranksUntilNextEnergy(p.getRank());
                         if( ranks != -1 )
                             printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
                     } else {
                         printmsg = "--- " + Tools.formatString( "Recharge        [Auto-Install]", 38);
                         printmsg += Tools.formatString("( " + ( p.getRechargeLevel() < 10 ? " " : "") + p.getRechargeLevel() + " / " +
-                                (sp.getMaxRechargeUpgs() < 10 ? " " : "") + sp.getMaxRechargeUpgs() + " )", 18);
+                                (sp.getMaxRechargeUpgs() < 10 ? " " : "") + sp.getMaxRechargeUpgs() + " )", 16);
                         int ranks = p.getShipTypeProfile().ranksUntilNextRecharge(p.getRank());
                         if( ranks != -1 )
                             printmsg += "+1 in " + ranks + " rank" + ( ranks == 1 ? "" : "s" );
@@ -3326,14 +3338,14 @@ public class distensionbot extends SubspaceBot {
                         printCost = false;
                     } else if( currentUpgrade.getMaxLevel() == 1 ) {
                         if( purchasedUpgrades[i] == 1 ) {
-                            printmsg += "(INSTALLED)";
+                            printmsg += "(Loaded.)";
                             printCost = false;
                         } else {
-                            printmsg += "(NOT INSTALLED)   ";
+                            printmsg += "(NOT Loaded.)   ";
                         }
                     } else {
                         printmsg += Tools.formatString("( " + (purchasedUpgrades[i] < 10 ? " " : "") + purchasedUpgrades[i] + " / " +
-                                (currentUpgrade.getMaxLevel() < 10 ? " " : "") + currentUpgrade.getMaxLevel() + " )", 18);
+                                (currentUpgrade.getMaxLevel() < 10 ? " " : "") + currentUpgrade.getMaxLevel() + " )", 16);
                         if(currentUpgrade.getMaxLevel() == purchasedUpgrades[i]) {
                             printmsg += "[MAX]";
                             printCost = false;
@@ -3346,9 +3358,9 @@ public class distensionbot extends SubspaceBot {
                         int req = currentUpgrade.getRankRequired( purchasedUpgrades[i] );
                         if( req <= p.getRank() ) {
                             if( diff <= 0 )
-                                printmsg += "AVAIL!";
+                                printmsg += "* AVAIL! *";
                             else
-                                printmsg += diff + " more UP" + (diff == 1 ? "" : "s");
+                                printmsg += diff + " more UP";
                         } else
                             printmsg += "Rank " + (req < 10 ? " " : "") + req;
                     }
@@ -3872,7 +3884,8 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
-        if( p.getShipNum() == -1 )
+        int shipNum = p.getShipNum();
+        if( shipNum == -1 )
             throw new TWCoreException( "You must !return or !enlist in an army first." );
         boolean autoReturn = msg.equals(":auto:");
         if( m_refitMode )
@@ -3955,6 +3968,12 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage( name, "You have returned to " + p.getArmyName() + ".");
                     }
                 }
+                if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
+                    boolean tooMany = checkForTooManyShips(p);
+                    if( tooMany ) {
+                        m_botAction.specWithoutLock(p.getArenaPlayerID());
+                    }
+                }
             }
             return;
         }
@@ -4013,7 +4032,7 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.sendPrivateMessage( name, "SAINT BONUS!  For assisting this army in their most desperate hour, their HQ rewards you a " + reward + " RP bonus.", 1 );
                         }
                     } else {
-                        m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + reward + " RP bonus.", 1 );
+                        m_botAction.sendPrivateMessage( name, "For your assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                     }
                 }
                 p.setAssist( armyToAssist );
@@ -4029,8 +4048,12 @@ public class distensionbot extends SubspaceBot {
                 a.recalculateFigures();
             m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has left to assist the other army." );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is now assisting your army." );
-            if( DEBUG && p.getNaturalArmyID() == p.getArmyID() )
-                m_botAction.sendSmartPrivateMessage("dugwyler", "Natural ID=new Army ID in assist: " + p.getArmyID() + "  armyToAssist=" + armyToAssist );
+            
+            if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
+                boolean tooMany = checkForTooManyShips(p);
+                if( tooMany )
+                    m_botAction.specWithoutLock(p.getArenaPlayerID());
+            }
         } else {
             m_botAction.sendPrivateMessage( name, "Not overly imbalanced -- consider flying a lower-rank ship to even the battle instead! " + "(Weight: " + armySizeWeight + "; need <" + ASSIST_WEIGHT_IMBALANCE + ")" );
         }
