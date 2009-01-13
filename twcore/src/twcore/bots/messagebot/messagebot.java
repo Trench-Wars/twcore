@@ -787,11 +787,15 @@ public class messagebot extends SubspaceBot
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MMM d h:mma");
                 
                 while(results.next()) {
-                    messages.add( getMessageText(results, dateFormat) );
+                    String msg = results.getString("fcMessage");
+                    //String timestamp = results.getString("fdTimeStamp");
+
+                    String time = dateFormat.format( new Date( results.getTimestamp("fdTimeStamp").getTime() ) );
+                    //m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
+                    String channel = results.getString("fcSender");
+                    messages.add( time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + msg );
                     ids.add( results.getInt("fnID") );
-                }
-                int id = m_botAction.getPlayerID( name );
-                
+                }                
                 String resetResults = "";
                 int idNum = 0;
                 for( Integer currentID : ids ) {
@@ -803,7 +807,7 @@ public class messagebot extends SubspaceBot
                 }
                 messages.add( "Total " + idNum + " message" + (idNum==1?"":"s") + " displayed." );
                 SpamTask spamTask = new SpamTask();
-                spamTask.setMsgs( id, messages );
+                spamTask.setMsgs( name, messages );
                 m_botAction.scheduleTask(spamTask, 225, 225 );
                 
                 if( !resetResults.equals("") ) {
@@ -858,15 +862,19 @@ public class messagebot extends SubspaceBot
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MMM d h:mma");
                 int numMsgs = 0;
                 while(results.next()) {
-                    messages.add( getMessageText(results, dateFormat) );
+                    String msg = results.getString("fcMessage");
+                    //String timestamp = results.getString("fdTimeStamp");
+
+                    String time = dateFormat.format( new Date( results.getTimestamp("fdTimeStamp").getTime() ) );
+                    //m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
+                    String channel = results.getString("fcSender");
+                    messages.add( time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + msg );
                     numMsgs++;
                 }
-                int id = m_botAction.getPlayerID( name );
-                
                 messages.add( "Total " + numMsgs + " message" + (numMsgs==1?"":"s") + " displayed." );
                 
                 SpamTask spamTask = new SpamTask();
-                spamTask.setMsgs( id, messages );
+                spamTask.setMsgs( name, messages );
                 m_botAction.scheduleTask(spamTask, 225, 225 );
 
                 /*
@@ -920,10 +928,11 @@ public class messagebot extends SubspaceBot
 	/**
 	 * Support method to get the text of a given message when reading multiple message
 	 * numbers.  The way this should have been written initially.  It took 20 minutes.
+	 * (Passing a ResultSet seemed to result in erratic behavior for keeping track of
+	 * the row.)
 	 * @param rs
 	 * @param dateFormat
 	 * @return
-	 */
 	public String getMessageText( ResultSet rs, SimpleDateFormat dateFormat ) {
         try {
             String message = rs.getString("fcMessage");
@@ -938,6 +947,7 @@ public class messagebot extends SubspaceBot
             return "";
         }
 	}
+     */
 
 	/** Marks a message's status as unread.
 	 *  @param Name of player.
@@ -1521,17 +1531,11 @@ public class messagebot extends SubspaceBot
       */
      private class SpamTask extends TimerTask {
          LinkedList <String>remainingMsgs = new LinkedList<String>();
-         int arenaIDToSpam = -1;
+         String nameToSpam = "";
 
-         public void setMsgs( int id, LinkedList<String> list ) {
-             arenaIDToSpam = id;
+         public void setMsgs( String name, LinkedList<String> list ) {
+             nameToSpam = name;
              remainingMsgs = list;
-         }
-
-         public void setMsgs( int id, String[] list ) {
-             arenaIDToSpam = id;
-             for( int i = 0; i < list.length; i++ )
-                 remainingMsgs.add( list[i] );
          }
 
          public void run() {
@@ -1540,7 +1544,7 @@ public class messagebot extends SubspaceBot
              } else {
                  String msg = remainingMsgs.remove();
                  if( msg != null )
-                     m_botAction.sendUnfilteredPrivateMessage( arenaIDToSpam, msg );
+                     m_botAction.sendRemotePrivateMessage( nameToSpam, msg );
              }
          }
      }
