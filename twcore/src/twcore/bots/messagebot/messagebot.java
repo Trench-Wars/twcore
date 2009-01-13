@@ -847,14 +847,14 @@ public class messagebot extends SubspaceBot
                     } else {
                         message = message.substring(1);
                     }
-                    results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcSender = '"
+                    results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageSystem WHERE fcSender = '"
                             + Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'"+addAnd);
                 } else {
                     if( message.toLowerCase().startsWith("a"))
                         addAnd = "";
                     else if( message.toLowerCase().startsWith("r"))
                         addAnd = " AND fnRead = 1";
-                    results = m_botAction.SQLQuery(database, "SELECT fnID FROM tblMessageSystem WHERE fcName = '" +
+                    results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageSystem WHERE fcName = '" +
                             Tools.addSlashesToString(name) + "'"+addAnd);
                 }
 
@@ -904,7 +904,7 @@ public class messagebot extends SubspaceBot
 			m_botAction.sendSmartPrivateMessage(name, "That is not your message!");
 			return;
 		}
-		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID = " + messageNumber;
+		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID='" + messageNumber + "'";
 		try{
 			ResultSet results = m_botAction.SQLQuery(database, query);
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MMM d h:mma");
