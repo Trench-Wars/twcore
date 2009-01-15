@@ -835,7 +835,9 @@ public class distensionbot extends SubspaceBot {
                         helpOutArmy = 0;
                         msgArmy = 1;
                     }
-                    if( m_flagOwner[0] == helpOutArmy && m_flagOwner[1] == helpOutArmy ) {
+                    
+                    if( (m_singleFlagMode && m_flagOwner[0] == helpOutArmy) ||
+                        (!m_singleFlagMode && m_flagOwner[0] == helpOutArmy && m_flagOwner[1] == helpOutArmy ) ) {
                         // If they're holding both flags, they don't need help.
                         // However, don't reset assist advert time so that we check again in 20sec
                         // if someone leaves or switches ships.
@@ -867,12 +869,17 @@ public class distensionbot extends SubspaceBot {
                             if( p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
                                 if( p.getStrength() <= (maxStrToAssist - RANK_0_STRENGTH) ) {
                                     // Don't take the only Terr!
-                                    if( p.getShipNum() != Tools.Ship.TERRIER ||
+                                    if( p.getShipNum() != Tools.Ship.TERRIER ) {
+                                        
+                                        /*  Experiment: Terrs never auto-switched 
+                                        ||
                                             ( (helpOutArmy == 0 && (army0Terrs > (m_singleFlagMode?1:2) ) ) ||
                                                     (helpOutArmy == 1 && (army1Terrs > (m_singleFlagMode?1:2)) ) ) ) {
+                                                    */
                                         if( bestPlayer == null )
                                             bestPlayer = p;
                                         else {
+                                            /*
                                             // Non-Terrs are always more eligible
                                             if( bestPlayer.getShipNum() == Tools.Ship.TERRIER ) {
                                                 if( p.getShipNum() != Tools.Ship.TERRIER ) {
@@ -883,10 +890,12 @@ public class distensionbot extends SubspaceBot {
                                                         bestPlayer = p;
                                                 }
                                             } else {
+                                            */
                                                 // Choose the weakest ship if they're both non-Terr
-                                                if( p.getStrength() < bestPlayer.getStrength() )
-                                                    bestPlayer = p;
-                                            }
+                                            if( p.getStrength() < bestPlayer.getStrength() )
+                                                bestPlayer = p;
+                                            
+                                            // }
                                         }
                                     }
                                 }
@@ -2133,6 +2142,11 @@ public class distensionbot extends SubspaceBot {
             }
             // Check if M.A.S.T.E.R. Drive should fire (every 5 successive kills, has a chance)
             victor.checkMasterDrive();
+        }
+        
+        // Experimental: sharks get additional points for kills.
+        if( victorShip == Tools.Ship.SHARK ) {
+            points *= 1.3;
         }
 
         if( loserArmy.getPilotsInGame() != 1 ) {
@@ -3981,7 +3995,10 @@ public class distensionbot extends SubspaceBot {
         if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE && !autoReturn ) {
             if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE )
                 throw new TWCoreException( "Assisting with your current ship will only continue the imbalance!  First pilot a lower-ranked ship if you want to !assist." );
-            if( m_flagOwner[0] == armyToAssist && m_flagOwner[1] == armyToAssist )
+            if( m_singleFlagMode ) {
+                if( m_flagOwner[0] == armyToAssist )
+                    throw new TWCoreException( "While army strengths are imbalanced, that army seems to be doing fine as far as winning the battle goes!  Try again later." );
+            } else if( m_flagOwner[0] == armyToAssist && m_flagOwner[1] == armyToAssist )
                 throw new TWCoreException( "While army strengths are imbalanced, that army seems to be doing fine as far as winning the battle goes!  Try again later." );
 
             m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
@@ -4024,11 +4041,12 @@ public class distensionbot extends SubspaceBot {
                     if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
                             flagTimer != null && flagTimer.isRunning() &&
                             !flagTimer.isBeingBroken() ) {
-                        if( flagTimer.getTimeNeededForWin() - flagTimer.getSecondsHeld() <= 25 ) {
+                        float percent = (float)flagTimer.getSecondsHeld() / (float)flagTimer.getTimeNeededForWin();
+                        if( percent < .50 ) {
                             reward *= 2;
                             m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                         } else {
-                            reward *= 3.5;
+                            reward *= 3;
                             m_botAction.sendPrivateMessage( name, "SAINT BONUS!  For assisting this army in their most desperate hour, their HQ rewards you a " + reward + " RP bonus.", 1 );
                         }
                     } else {
@@ -9599,6 +9617,13 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
+         * @return True if player is "higher order" support ship (5, 8, or 4)
+         */
+        public boolean isHigherOrderSupportShip() {
+            return (shipNum == 5 || shipNum == 8 || shipNum == 4);            
+        }
+        
+        /**
          * @return True if player is currently assisting an army and is not on their original one.
          */
         public boolean isAssisting() {
@@ -11227,33 +11252,47 @@ public class distensionbot extends SubspaceBot {
 
         float totalLvlSupport = 0;
         float totalLvlAttack = 0;
+        int totalLvlLosers = 0;
         float numSupport = 0;
         float numAttack = 0;
         int bonusRanksForPointAllocation = 0;
         float adjustedRank = 0;
         for( DistensionPlayer p : m_players.values() ) {
-            if( p.getArmyID() == winningArmyID && p.getShipNum() > 0 ) {
-                Integer time = m_playerTimes.get( p.getName() );
-                float percentOnFreq = 0;
-                if( time != null )
-                    percentOnFreq = (float)(secs - time) / (float)secs;
-                adjustedRank = ((float)p.getRank() * percentOnFreq );
-                if( adjustedRank > 70 )
-                    bonusRanksForPointAllocation += 50;
-                else if( adjustedRank > 60 )
-                    bonusRanksForPointAllocation += 40;
-                else if( adjustedRank > 50 )
-                    bonusRanksForPointAllocation += 30;
-                else if( adjustedRank > 40 )
-                    bonusRanksForPointAllocation += 20;
-                else if( adjustedRank > 30 )
-                    bonusRanksForPointAllocation += 10;
-                if( p.isSupportShip() ) {
-                    totalLvlSupport += adjustedRank;
-                    numSupport++;
-                } else {
-                    totalLvlAttack += adjustedRank;
-                    numAttack++;
+            if( p.getArmyID() == winningArmyID ) {
+                if( p.getShipNum() > 0 ) {
+                    Integer time = m_playerTimes.get( p.getName() );
+                    float percentOnFreq = 0;
+                    if( time != null )
+                        percentOnFreq = (float)(secs - time) / (float)secs;
+                    adjustedRank = ((float)p.getRank() * percentOnFreq );
+                    if( adjustedRank > 70 )
+                        bonusRanksForPointAllocation += 50;
+                    else if( adjustedRank > 60 )
+                        bonusRanksForPointAllocation += 40;
+                    else if( adjustedRank > 50 )
+                        bonusRanksForPointAllocation += 30;
+                    else if( adjustedRank > 40 )
+                        bonusRanksForPointAllocation += 20;
+                    else if( adjustedRank > 30 )
+                        bonusRanksForPointAllocation += 10;
+                    if( p.isSupportShip() ) {
+                        totalLvlSupport += adjustedRank;
+                        numSupport++;
+                    } else {
+                        totalLvlAttack += adjustedRank;
+                        numAttack++;
+                    }
+                }
+            } else {                
+                if( p.isHigherOrderSupportShip() ) {
+                    if( p.getShipNum() > 0 ) {
+                        Integer time = m_playerTimes.get( p.getName() );
+                        float percentOnFreq = 0;
+                        if( time != null )
+                            percentOnFreq = (float)(secs - time) / (float)secs;
+                        adjustedRank = ((float)p.getRank() * percentOnFreq );
+                        totalLvlLosers += adjustedRank;
+                    }
                 }
             }
         }
@@ -11279,7 +11318,7 @@ public class distensionbot extends SubspaceBot {
         supportPoints = Math.round( totalPoints * percentSupport );
         percentAttack = 1.0f - percentSupport;
         attackPoints = Math.round( totalPoints * percentAttack );
-        int totalLvls = Math.round(totalLvlSupport + totalLvlAttack);
+        //int totalLvls = Math.round(totalLvlSupport + totalLvlAttack);
 
         // For display purposes only
         float attack, support, combo;
@@ -11447,15 +11486,15 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             } else {
-                // For long battles, losers receive about 1/3 of the award of the winners.
-                if( p.getShipNum() > 0 ) {
-
+                // Losers receive a fraction of the winners.
+                // Experimental: only Terr, Shark and Levi receive loser bonus.
+                if( p.isHigherOrderSupportShip() ) {
                     Integer time = m_playerTimes.get( p.getName() );
                     if( time != null ) {
                         playerRank = p.getRank();
                         if( playerRank == 0 )
                             playerRank = 1;
-                        points = totalPoints * ((float)playerRank / (float)totalLvls);
+                        points = totalPoints * ((float)playerRank / (float)totalLvlLosers);
                         if( minsToWin < 5 )
                             points /= 1.75;
                         else if( minsToWin < 10 )
@@ -11476,19 +11515,18 @@ public class distensionbot extends SubspaceBot {
                         else    // They actually held more than the winning team -- give them a good bit.
                             points = (float)points / 1.5f;
 
-                        if( p.isSupportShip() )
-                            points *= 1.25f;
-                        else
-                            points *= 0.7f;
-
                         float percentOnFreq = (float)(secs - time) / (float)secs;
                         int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
                         int pointsAdded = p.addRankPoints(modPoints,false);
                         msgRecipients.add( p.getArenaPlayerID() );
-                        msgs.add( "Battle lost.  Consolation bonus: " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation).  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );
+                        msgs.add( "Battle lost.  Essential support bonus: " + pointsAdded + "RP (" + (int)(percentOnFreq * 100) + "% participation).  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );
                         msgSounds.add( SOUND_DEFEAT );
                         //m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_DEFEAT );
                     }
+                } else {
+                    msgRecipients.add( p.getArenaPlayerID() );
+                    msgs.add( "Battle lost.  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );                    
+                    msgSounds.add( SOUND_DEFEAT );
                 }
             }
         }
@@ -12539,7 +12577,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return Total number of seconds flag has been held
+         * @return Total number of seconds needed for flag win
          */
         public int getTimeNeededForWin() {
             return flagSecondsRequired;
