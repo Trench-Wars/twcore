@@ -327,7 +327,7 @@ public class distensionbot extends SubspaceBot {
     private static final int SCORE_REQUIRED_FOR_WIN = 3;// Max # rounds (odd numbers only)
     private static final int SECTOR_CHANGE_SECONDS = 4; // Seconds it takes to secure hold or break one
     private static final int INTERMISSION_SECS = 60;    // Seconds between end of free play & start of next battle
-    private static final int PLAYERS_FOR_2_FLAGS = 16;  // Minimum # players required to activate 2 flags
+    private static final int PLAYERS_FOR_2_FLAGS = 21;  // Minimum # players required to activate 2 flags
     private static final int SUDDEN_DEATH_MINUTES = 35; // Minutes after which round ends with a truce
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
