@@ -71,7 +71,7 @@ public class elim extends SubspaceBot {
 	//BotSettings variables
 	BotSettings cfg;
 	public int cfg_minPlayers, cfg_maxDeaths, cfg_maxKills, cfg_defaultShip, cfg_gameType;
-	public int cfg_votingLength, cfg_waitLength, cfg_zone, cfg_border;
+	public int cfg_votingLength, cfg_waitLength, cfg_zone, cfg_border, cfg_casualAllowed;
 	public int[] cfg_safe, cfg_competitive, cfg_casual, cfg_barY;
 	public int[][] cfg_barspots;
 	public String cfg_arena, cfg_chats, cfg_gameName;
@@ -144,6 +144,7 @@ public class elim extends SubspaceBot {
         cfg_chats = cfg.getString("Chats" + cfg_gameType);
         cfg_safe = cfg.getIntArray("Safe" + cfg_gameType, ",");
         cfg_competitive = cfg.getIntArray("Competitive" + cfg_gameType, ",");
+        cfg_casualAllowed = cfg.getInt("CasualAllowed");
         cfg_casual = cfg.getIntArray("Casual" + cfg_gameType, ",");
         if(cfg_gameType == ELIM) cfg_gameName = "elim";
         else{
@@ -327,7 +328,10 @@ public class elim extends SubspaceBot {
     public void cmd_play(String name){
     	if(name == null)return;
     	if(enabled.remove(name)){
-    		m_botAction.sendSmartPrivateMessage( name, "You have disabled !play. Type !play again to compete.");
+            if( cfg_casualAllowed == 1 )
+                m_botAction.sendSmartPrivateMessage( name, "You have disabled !play. Type !play again to compete.");
+            else
+                m_botAction.sendSmartPrivateMessage( name, "You have disabled !play. Because casual is not enabled, you have been removed from the game. Type !play again to compete.");
     		if(elimPlayers.containsKey(name) && game.state == GameStatus.GAME_IN_PROGRESS){
     			m_botAction.sendArenaMessage(name + " is out. " + elimPlayers.get(name).wins + " wins " + elimPlayers.get(name).losses + " losses (Resigned)");
         		losers.put(name, elimPlayers.remove(name));        		
@@ -336,7 +340,10 @@ public class elim extends SubspaceBot {
     			elimPlayers.remove(name);
     		doWarpIntoCasual(name);
     	}else {
-    		m_botAction.sendSmartPrivateMessage( name, "You have enabled !play. Type !play again to play casually.");
+    	    if( cfg_casualAllowed == 1 )
+    	        m_botAction.sendSmartPrivateMessage( name, "You have enabled !play. Type !play again to play casually.");
+    	    else
+                m_botAction.sendSmartPrivateMessage( name, "You have enabled !play, and can now play in the next elimination.");
     		enabled.add(name);
     		Player p = m_botAction.getPlayer(name);
     		if(p == null)return;
@@ -474,19 +481,23 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_classic(String name){
-    	int wantsClassic = 0;
-    	if(classicMode.remove(name))
-    		m_botAction.sendSmartPrivateMessage( name, "You will be moved to the casual arena when you are out.");
-    	else {
-    		wantsClassic = 1;
-    		classicMode.add(name);
-    		m_botAction.sendSmartPrivateMessage( name, "You will be specced when you are out.");
-    	}
-    	try{
-    		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnSpecWhenOut = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    	}catch(Exception e){
-    		Tools.printStackTrace(e);
-    	}
+        if( cfg_casualAllowed == 1 ) {
+            int wantsClassic = 0;
+            if(classicMode.remove(name))
+                m_botAction.sendSmartPrivateMessage( name, "You will be moved to the casual arena when you are out.");
+            else {
+                wantsClassic = 1;
+                classicMode.add(name);
+                m_botAction.sendSmartPrivateMessage( name, "You will be specced when you are out.");
+            }
+            try{
+                m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnSpecWhenOut = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+            }catch(Exception e){
+                Tools.printStackTrace(e);
+            }
+        } else {
+            m_botAction.sendSmartPrivateMessage( name, "Casual play has been disabled.");
+        }
     }
     
     public void cmd_warp(String name){
@@ -1010,7 +1021,8 @@ public class elim extends SubspaceBot {
     }
     
     public void doWarpIntoElim(String name){
-    	m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LOGO_LVZ);
+        if( cfg_casualAllowed == 1 )
+            m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LOGO_LVZ);
     	if(shipType == 6 && cfg_gameType == BASEELIM){
     		int[] xarena = cfg.getIntArray("XArena" + rand.nextInt(1), ",");
     		m_botAction.warpTo(name, xarena[0], xarena[1], xarena[2]);
@@ -1018,12 +1030,16 @@ public class elim extends SubspaceBot {
     }
     
     public void doWarpIntoCasual(String name){
-    	m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
-    	m_botAction.warpTo(name, cfg_casual[0], cfg_casual[1], cfg_casual[2]);
+        if( cfg_casualAllowed == 1 ) {
+            m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
+            m_botAction.warpTo(name, cfg_casual[0], cfg_casual[1], cfg_casual[2]);
+        } else {
+            m_botAction.specWithoutLock(name);            
+        }
     }
     
     public void doWarpIntoCasualSafe(String name){
-    	if(classicMode.contains(name))
+    	if(cfg_casualAllowed != 1 || classicMode.contains(name))
     		m_botAction.specWithoutLock(name);
     	else{
 	    	for(int i=0;i<9999;i++){
@@ -1333,7 +1349,10 @@ private class SpawnTimer {
         
     public SpawnTimer(String name, boolean casual) {
         this.name = name;
-        this.casual = casual;
+        if( cfg_casualAllowed == 1 )
+            this.casual = casual;
+        else
+            this.casual = false;
         m_botAction.scheduleTask(runIt, SPAWN_TIME);
     }
 }
@@ -1375,17 +1394,24 @@ private class MVPTimer {
     		Player p = i.next();
     		String name = p.getPlayerName();
     		if(!opList.isBotExact(name)){
-    			casualPlayers.put(name, new CasualPlayer(name));
-    			if(cfg_gameType == BASEELIM)
-    				m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
-    			enabled.add(name);
+    		    if( cfg_casualAllowed == 1 ) {
+    		        casualPlayers.put(name, new CasualPlayer(name));
+    		        if(cfg_gameType == BASEELIM)
+    		            m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
+    		        enabled.add(name);
+    		    } else {
+    	            if(p.getShipType() > 0){
+    	                elimPlayers.put(name, new ElimPlayer(name));
+    	                doWarpIntoElim(name);
+    	            }
+    		    }
     		}
     		try{
         		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
         		if(rs != null && rs.next()){
         			if(rs.getInt("fnElim") == 0)
         				enabled.remove(name);
-        			if(rs.getInt("fnSpecWhenOut") == 1)
+        			if(cfg_casualAllowed != 1 || rs.getInt("fnSpecWhenOut") == 1)
         				classicMode.add(name);
         		}
         		m_botAction.SQLClose(rs);
@@ -1476,7 +1502,7 @@ private class MVPTimer {
     		if(rs != null && rs.next()){
     			if(rs.getInt("fnElim") == 0)
     				enabled.remove(name);
-    			if(rs.getInt("fnSpecWhenOut") == 1)
+    			if(cfg_casualAllowed != 1 || rs.getInt("fnSpecWhenOut") == 1)
     				classicMode.add(name);
     		}
     		m_botAction.SQLClose(rs);
@@ -1529,11 +1555,13 @@ private class MVPTimer {
     		m_botAction.setShip(name, cfg_defaultShip);
     		doWarpIntoCasual(name);
     	} else if(!elimPlayers.containsKey(name) && game.isInProgress() && event.getShipType() > 0){
-    		m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
-    		m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_SPLASH_LVZ);
+    	    if( cfg_casualAllowed == 1 ) {
+    	        m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
+    	        m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_SPLASH_LVZ);
+                if(enabled.contains(name))
+                    m_botAction.sendSmartPrivateMessage( name, "You have entered casual play. Please wait for the next game to begin to participate.");
+    	    }
     		doWarpIntoCasual(name);
-    		if(enabled.contains(name))
-    			m_botAction.sendSmartPrivateMessage( name, "You have entered casual play. Please wait for the next game to begin to participate.");
     	} else if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() > 0){
     		ElimPlayer ep = elimPlayers.get(name);
     		if(event.getShipType() != ep.shiptype){
