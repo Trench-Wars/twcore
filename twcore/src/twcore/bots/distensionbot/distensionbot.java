@@ -188,6 +188,9 @@ public class distensionbot extends SubspaceBot {
     private final int BOT_TUBE_NAV = 637;
     private final int BOT_MID_NAV =  678;
     private final int BOT_FR_NAV =   728;
+    private final int LEFT_GOAL_NAV  = 338;
+    private final int RIGHT_GOAL_NAV = 684;
+    
 
     // Ops !warp coords
     public final int OPS_TOP_WARP1_X = 512; // mid
@@ -2964,6 +2967,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendRemotePrivateMessage( p.getName(), "Ship status saved; you are now docked.  " + p.getRecentlyEarnedRP() + " RP earned in " + shipname + ".  Time played today: " + p.getMinutesPlayed() + " min.  !leave to stop timer." );
             p.setIgnoreShipChanges(false);
             p.setShipNum( 0 );
+            m_botAction.setFreq(p.getArenaPlayerID(), 9999);
             playerObjs.hideObject(p.getArenaPlayerID(), LVZ_PRM_PERSONAL_FLAG );
             playerObjs.hideObject(p.getArenaPlayerID(), LVZ_IP_PERSONAL_FLAG );
             p.setPlayerObjects();
@@ -4485,7 +4489,10 @@ public class distensionbot extends SubspaceBot {
     public void cmdOpsNav2(String name,String msg) { cmdOpsNav(name,2); }
     public void cmdOpsNav21(String name,String msg) { cmdOpsNav(name,21); }
     public void cmdOpsNav22(String name,String msg) { cmdOpsNav(name,22); }
+    public void cmdOpsNav23(String name,String msg) { cmdOpsNav(name,23); }
     public void cmdOpsNav3(String name,String msg) { cmdOpsNav(name,3); }
+    public void cmdOpsNav31(String name,String msg) { cmdOpsNav(name,31); }
+    public void cmdOpsNav32(String name,String msg) { cmdOpsNav(name,32); }
 
     /**
      * Sends Ops to a particular spot on the map.
@@ -4507,7 +4514,10 @@ public class distensionbot extends SubspaceBot {
                 case 2:   m_botAction.warpTo( p.getArenaPlayerID(), 512, BOT_FR_NAV ); break;
                 case 21:  m_botAction.warpTo( p.getArenaPlayerID(), 512, BOT_MID_NAV ); break;
                 case 22:  m_botAction.warpTo( p.getArenaPlayerID(), 512, BOT_TUBE_NAV ); break;
+                case 23:  m_botAction.warpTo( p.getArenaPlayerID(), 512, REARM_AREA_BOTTOM_Y ); break;
                 case 3:   m_botAction.warpTo( p.getArenaPlayerID(), 512, 512 ); break;
+                case 31:  m_botAction.warpTo( p.getArenaPlayerID(), 512, LEFT_GOAL_NAV ); break;
+                case 32:  m_botAction.warpTo( p.getArenaPlayerID(), 512, RIGHT_GOAL_NAV ); break;
             }
         } else {
             switch( spot ) {
@@ -4518,7 +4528,10 @@ public class distensionbot extends SubspaceBot {
                 case 2:   m_botAction.warpTo( p.getArenaPlayerID(), 512, TOP_FR_NAV ); break;
                 case 21:  m_botAction.warpTo( p.getArenaPlayerID(), 512, TOP_MID_NAV ); break;
                 case 22:  m_botAction.warpTo( p.getArenaPlayerID(), 512, TOP_TUBE_NAV ); break;
+                case 23:  m_botAction.warpTo( p.getArenaPlayerID(), 512, REARM_AREA_TOP_Y ); break;
                 case 3:   m_botAction.warpTo( p.getArenaPlayerID(), 512, 512 ); break;
+                case 31:  m_botAction.warpTo( p.getArenaPlayerID(), 512, RIGHT_GOAL_NAV ); break;
+                case 32:  m_botAction.warpTo( p.getArenaPlayerID(), 512, LEFT_GOAL_NAV ); break;
             }
         }
         p.resetIdle();      // Ops can only reset idle by using ops cmds and talking in pub
@@ -5749,8 +5762,9 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setDoors(0);
         // Dock Ops so they are put on the spec freq properly
         for( DistensionPlayer p : m_players.values() )
-            if( p.getShipNum() == 9 )
+            if( p.getShipNum() == 9 ) {
                 doDock( p );
+            }
         Integer id;
         Iterator <Integer>i = m_botAction.getPlayerIDIterator();
         while( i.hasNext() ) {
@@ -5763,7 +5777,10 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setObjects();
         m_botAction.manuallySetObjects(flagObjs.getObjects());
         if( !DEBUG ) {
-            m_botAction.sendArenaMessage( "Distension going down for maintenance ...", 1 );
+            m_botAction.sendArenaMessage( "Distension shutting down ...  Please play again soon!", 1 );
+            String schedule = m_botSettings.getString("ScheduleString");
+            if( schedule != null )
+                m_botAction.sendArenaMessage( "Current schedule ...  " + schedule, 1 );
         } else {
             m_botAction.sendArenaMessage( "Distension Beta Test concluded.  Thanks for testing!  Join ?chat=distension to ask questions and stay up on tests.  See this thread for bugs and suggestions: http://forums.trenchwars.org/showthread.php?t=31676" );
             m_botAction.sendArenaMessage( "Check out the top 5 ranked players in every ship at: http://www.trenchwars.org/distension   Thanks goes to Foreign for the site.", 5 );
@@ -8787,17 +8804,17 @@ public class distensionbot extends SubspaceBot {
                     // If Terr has been in a base more than half of the time, award an additional bonus
                     if( idlesInBase * IDLE_FREQUENCY_CHECK > PROFIT_SHARING_FREQUENCY / 2 ) {
                         if( rank >= 70 )
-                            baseTerrBonus = 5.0f;
-                        else if( rank >= 50 )
                             baseTerrBonus = 4.0f;
-                        else if( rank >= 40 )
+                        else if( rank >= 50 )
                             baseTerrBonus = 3.0f;
-                        else if( rank >= 30 )
+                        else if( rank >= 40 )
                             baseTerrBonus = 2.5f;
-                        else if( rank >= 20 )
+                        else if( rank >= 30 )
                             baseTerrBonus = 2.0f;
-                        else if( rank >= 15 )
+                        else if( rank >= 20 )
                             baseTerrBonus = 1.5f;
+                        else if( rank >= 15 )
+                            baseTerrBonus = 1.25f;
                         else if( rank >= 10 )
                             baseTerrBonus = 1.0f;
                         else if( rank >= 5 )
@@ -8806,10 +8823,10 @@ public class distensionbot extends SubspaceBot {
                             baseTerrBonus = 0.5f;
                         // If in base 100% of the time, double the bonus
                         if( idlesInBase * IDLE_FREQUENCY_CHECK == PROFIT_SHARING_FREQUENCY )
-                            baseTerrBonus *= 2;
+                            baseTerrBonus *= 1.5;
                         // 75%, give 1.5x
                         else if( idlesInBase * IDLE_FREQUENCY_CHECK > (float)PROFIT_SHARING_FREQUENCY / 1.5f )
-                            baseTerrBonus *= 1.5;
+                            baseTerrBonus *= 1.25;
                         sharingPercent += baseTerrBonus;
                     }
                 }
@@ -11822,7 +11839,7 @@ public class distensionbot extends SubspaceBot {
         cmdSaveData(":autosave:", "");
 
         if( m_beginDelayedShutdown ) {
-            m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  5 minutes allowed to refit your ship if you wish.  Kills do not count during this time.  Thank you for testing!", 1 );
+            m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  5 minutes allowed to refit your ship if you wish.  Kills do not count during this time.", 1 );
             cmdSaveData(m_botAction.getBotName(), "");
             m_refitMode = true;
             intermissionTime = 5 * Tools.TimeInMillis.MINUTE;
