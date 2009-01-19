@@ -42,6 +42,9 @@ public class utilobjons extends MultiUtil
 	public void Objon(String message)
 	{
 		String pieces[] = message.split(" ");
+		if( pieces.length < 2 )
+		    return;
+		
 		final String params[] = pieces[1].split(":");
 
 		if(pieces[0].equals("!objon"))
