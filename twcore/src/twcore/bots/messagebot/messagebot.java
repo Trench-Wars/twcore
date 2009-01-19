@@ -806,16 +806,15 @@ public class messagebot extends SubspaceBot
                     idNum++;
                 }
                 messages.add( "Total " + idNum + " message" + (idNum==1?"":"s") + " displayed." );
-                SpamTask spamTask = new SpamTask();
-                spamTask.setMsgs( name, messages );
-                m_botAction.scheduleTask(spamTask, 75, 75 );
                 
+                messages.add( "Now attempting to set messages to read..." );
                 if( !resetResults.equals("") ) {
-                    String query = "UPDATE tblMessageSystem SET fnRead='1' WHERE fcName='"+Tools.addSlashesToString(name)+"' AND (" + resetResults + ")";
+                    String query = "UPDATE tblMessageSystem SET fnRead='1' WHERE " + resetResults + "";
                     Tools.printLog( query );
                     m_botAction.SQLQueryAndClose(database, query);
+                    messages.add( "Set messages as read." );
                 } else {
-                    Tools.printLog( "Did not need to reset." );
+                    messages.add( "Did not set messages as read." );
                 }
                 
                 /*
@@ -831,8 +830,13 @@ public class messagebot extends SubspaceBot
                     // readMessage(name, "" + (Integer)it.next());                    
                 }
                 */
+                SpamTask spamTask = new SpamTask();
+                spamTask.setMsgs( name, messages );
+                m_botAction.scheduleTask(spamTask, 75, 75 );
                 m_botAction.SQLClose(results);
-            } catch(SQLException e) {}
+            } catch(SQLException e) {
+                Tools.printLog("Exception while trying to run SQL query in readMessage." );
+            }
             return;
         }
 		if(!isAllDigits(message)) {
