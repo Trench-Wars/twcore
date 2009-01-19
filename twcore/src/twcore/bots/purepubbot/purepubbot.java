@@ -270,10 +270,12 @@ public class purepubbot extends SubspaceBot
         m_voteOptions.add( v );
         v = new VoteOption( "pf2",    "Disallow Private Frequencies in the arena", 55, 2 );
         m_voteOptions.add( v );
-        v = new VoteOption( "st1",    "Warp players to earwarps in timed game", 80, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "st2",    "Stop warping players to earwarps in timed game", 55, 3 );
-        m_voteOptions.add( v );
+        if( vo == null || vo == 0 ) {
+            v = new VoteOption( "st1",    "Warp players to earwarps in timed game", 80, 3 );
+            m_voteOptions.add( v );
+            v = new VoteOption( "st2",    "Stop warping players to earwarps in timed game", 55, 3 );
+            m_voteOptions.add( v );
+        }
         v = new VoteOption( "w1",     "Allow players to use !warp in timed game", 55, 3 );
         m_voteOptions.add( v );
         v = new VoteOption( "w2",     "Disable players from using !warp in timed game", 70, 3 );
@@ -766,6 +768,8 @@ public class purepubbot extends SubspaceBot
     		Integer lastVote = m_votes.get(sender);
     		if( lastVote != vote ) {
     			m_botAction.sendPrivateMessage( sender, "Vote changed to " + (vote==1?"YES.":"NO.") );
+    		} else {
+                m_botAction.sendPrivateMessage( sender, "Vote already counted." );		    
     		}
     	}
     	m_votes.put(sender, vote);
