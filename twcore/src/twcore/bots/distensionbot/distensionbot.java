@@ -66,7 +66,7 @@ public class distensionbot extends SubspaceBot {
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between msgs in list, when spammed to single
-    private final int NUM_UNIVERSAL_MSGS_SPAMMED = 3;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
+    private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
     private final int PRIZE_SPAM_DELAY = 25;               // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
@@ -260,7 +260,7 @@ public class distensionbot extends SubspaceBot {
 
     // LIMITING SYSTEM
     private PlayerSlotManager m_slotManager;                // Manager for player slots
-    private final int MAX_PLAYERS = 36;                     // Max # players allowed in game
+    private int m_maxPlayers = 24;                          // Max # players allowed in game
 
     // ASSIST SYSTEM
     private final int ASSIST_ADVERT_CHECK_FREQUENCY = 20;   // How many seconds between checking for an assist advert
@@ -476,7 +476,10 @@ public class distensionbot extends SubspaceBot {
     public distensionbot(BotAction botAction, String[] args) {
         super(botAction);
         m_commandInterpreter = new CommandInterpreter( botAction );
-
+        if( Tools.isAllDigits( args[0] ) ) {
+            Integer numPlayers = Integer.parseInt( args[0] );
+            m_maxPlayers = numPlayers;
+        }
         doConstructorTasks();
     }
 
@@ -588,7 +591,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setMessageLimit( 8, false );
         m_botAction.setReliableKills( 1 );
         m_botAction.setPlayerPositionUpdating( 675 );
-        m_botAction.setLowPriorityPacketCap( 12 );
+        m_botAction.setLowPriorityPacketCap( 10 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
         m_botAction.setDoors( 240 ); // All bottom doors closed
@@ -1098,10 +1101,11 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!savedie", acceptedMessages, this, "cmdSaveDie" );
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown" );
         m_commandInterpreter.registerCommand( "!shutdowninfo", acceptedMessages, this, "cmdShutdownInfo" );
+        m_commandInterpreter.registerCommand( "!setmaxplayers", acceptedMessages, this, "cmdSetMaxPlayers" );
         m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName" );
         m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBAddShip" );
-        m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip", OperatorList.HIGHMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!db-wipeplayer", acceptedMessages, this, "cmdDBWipePlayer", OperatorList.HIGHMOD_LEVEL );  // Not published in !help
+        m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip" );
+        m_commandInterpreter.registerCommand( "!db-wipeplayer", acceptedMessages, this, "cmdDBWipePlayer" );  // Not published in !help
         m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies" );
         m_commandInterpreter.registerCommand( "!debug-getint", acceptedMessages, this, "cmdGetInt", OperatorList.DEV_LEVEL );
         m_commandInterpreter.registerCommand( "!debug-getbool", acceptedMessages, this, "cmdGetBool", OperatorList.DEV_LEVEL );
@@ -1276,6 +1280,7 @@ public class distensionbot extends SubspaceBot {
                 "| !unban <name>         |  Unbans banned player",
                 "| !shutdown <time>      |  Shuts down bot after <time>, extended to round end",
                 "| !shutdowninfo         |  Shows time until shutdown",
+                "| !setmaxplayers <#>    |  Sets player cap to #  (currently " + m_maxPlayers + ")",
                 "| !savedata             |  Saves all player data to database",
                 "| !savedie              |  Saves all player data and runs a delayed !die",
                 "| !diewithoutsave       |  Kills DistensionBot -- use !savedie instead!",
@@ -4040,20 +4045,21 @@ public class distensionbot extends SubspaceBot {
                         reward *= 3;
                     else                    //  0: 10RP
                         reward *= 2;
-
-                    reward = p.addRankPoints(reward,false); // Show actual amount added
                     if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
                             flagTimer != null && flagTimer.isRunning() &&
                             !flagTimer.isBeingBroken() ) {
                         float percent = (float)flagTimer.getSecondsHeld() / (float)flagTimer.getTimeNeededForWin();
                         if( percent < .50 ) {
                             reward *= 2;
+                            reward = p.addRankPoints(reward,false); // Show actual amount added
                             m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                         } else {
                             reward *= 3;
+                            reward = p.addRankPoints(reward,false); // Show actual amount added
                             m_botAction.sendPrivateMessage( name, "SAINT BONUS!  For assisting this army in their most desperate hour, their HQ rewards you a " + reward + " RP bonus.", 1 );
                         }
                     } else {
+                        reward = p.addRankPoints(reward,false); // Show actual amount added
                         m_botAction.sendPrivateMessage( name, "For your assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                     }
                 }
@@ -5903,6 +5909,38 @@ public class distensionbot extends SubspaceBot {
     }
 
 
+    /**
+     * Shows time at which shutdown will occur, approximately.
+     * @param name
+     * @param msg
+     */
+    public void cmdSetMaxPlayers( String name, String msg ) {
+        if( !name.equals(m_botAction.getBotName()) ) {
+            DistensionPlayer p = m_players.get( name );
+            if( p == null )
+                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+            if( p.getOpStatus() < 1 )
+                throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+        }
+        
+        if( !Tools.isAllDigits(msg) )
+            throw new TWCoreException("Give me a number.");
+        Integer num = Integer.parseInt(msg);
+        if( num < 10 || num > 50 )
+            throw new TWCoreException("Out of bounds.  Solly cholly.");
+        
+        m_maxPlayers = num;
+        int[] slots = m_slotManager.slots;
+        int[] slotStatus = m_slotManager.slotStatus;
+        LinkedList <DistensionPlayer> waiting = m_slotManager.waitingList;
+        
+        m_slotManager = new PlayerSlotManager( slots, slotStatus, waiting );
+        
+        m_botAction.sendPrivateMessage(name, "Max players set to " + num + "." );
+        m_slotManager.placeWaitingPlayersInEmptySlots();
+    }
+    
+        
     /**
      * Bans a player from playing Distension.
      * @param name
@@ -10470,8 +10508,8 @@ public class distensionbot extends SubspaceBot {
      * Used to manage the player slot system.
      */
     private class PlayerSlotManager {
-        int[] slots = new int[MAX_PLAYERS];
-        int[] slotStatus = new int[MAX_PLAYERS];    // -1=empty; 1=active use; 0=idle use
+        int[] slots = new int[m_maxPlayers];
+        int[] slotStatus = new int[m_maxPlayers];    // -1=empty; 1=active use; 0=idle use
         LinkedList <DistensionPlayer>waitingList = new LinkedList<DistensionPlayer>();
         PlayerTimeComparator <DistensionPlayer>pComp = new PlayerTimeComparator<DistensionPlayer>();
 
@@ -10481,10 +10519,16 @@ public class distensionbot extends SubspaceBot {
         final static int NO_SLOT_AVAILABLE = -1;
 
         public PlayerSlotManager() {
-            for( int i=0; i<MAX_PLAYERS; i++ ) {
+            for( int i=0; i<m_maxPlayers; i++ ) {
                 slots[i]=-1;
                 slotStatus[i] = SLOT_EMPTY;
             }
+        }
+        
+        public PlayerSlotManager( int[] slots, int[] slotStatus, LinkedList<DistensionPlayer> waitingList ) {
+            this.slots = slots;
+            this.slotStatus = slotStatus;
+            this.waitingList = waitingList;
         }
 
         /**
@@ -10509,7 +10553,7 @@ public class distensionbot extends SubspaceBot {
                 } else {
                     // All slots in use; figure out if new player has highest time or not
                     int highestTime = 0;
-                    for( int i=0; i<MAX_PLAYERS; i++ ) {
+                    for( int i=0; i<m_maxPlayers; i++ ) {
                         Player p1 = m_botAction.getPlayer( slots[i] );
                         if( p1 != null ) {
                             DistensionPlayer dp = m_players.get( p1.getPlayerName() );
@@ -10565,7 +10609,7 @@ public class distensionbot extends SubspaceBot {
          */
         public boolean removePlayer( DistensionPlayer p ) {
             waitingList.remove(p);
-            for( int i=0; i<MAX_PLAYERS; i++ )
+            for( int i=0; i<m_maxPlayers; i++ )
                 if( slots[i] == p.getArenaPlayerID() ) {
                     slots[i]      = SLOT_EMPTY;
                     slotStatus[i] = SLOT_EMPTY;
@@ -10701,7 +10745,7 @@ public class distensionbot extends SubspaceBot {
          * @return ID of first empty slot; -1 if no slot found.
          */
         public int getEmptySlot() {
-            for( int i=0; i<MAX_PLAYERS; i++ )
+            for( int i=0; i<m_maxPlayers; i++ )
                 if( slotStatus[i] == SLOT_EMPTY )
                     return i;
             return NO_SLOT_AVAILABLE;
@@ -10713,7 +10757,7 @@ public class distensionbot extends SubspaceBot {
         public int getBestIdleSlot() {
             int highestTime = 0;
             int highestID = NO_SLOT_AVAILABLE;
-            for( int i=0; i<MAX_PLAYERS; i++ ) {
+            for( int i=0; i<m_maxPlayers; i++ ) {
                 if( slotStatus[i] == SLOT_IDLE ) {
                     DistensionPlayer dp = getPlayerInSlot(i);
                     if( dp != null ) {
@@ -10735,7 +10779,7 @@ public class distensionbot extends SubspaceBot {
         public int getBestActiveSlot() {
             int highestTime = 0;
             int highestID = NO_SLOT_AVAILABLE;
-            for( int i=0; i<MAX_PLAYERS; i++ ) {
+            for( int i=0; i<m_maxPlayers; i++ ) {
                 if( slotStatus[i] == SLOT_ACTIVE || slotStatus[i] == SLOT_IDLE ) {
                     DistensionPlayer dp = getPlayerInSlot(i);
                     if( dp != null ) {
@@ -10758,7 +10802,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         public int getSlotOfPlayer( int id ) {
-            for( int i=0; i<MAX_PLAYERS; i++ )
+            for( int i=0; i<m_maxPlayers; i++ )
                 if( id == slots[i] )
                     return i;
             return -1;
@@ -10770,7 +10814,7 @@ public class distensionbot extends SubspaceBot {
 
         public int getNumberEmptySlots() {
             int empties = 0;
-            for( int i=0; i<MAX_PLAYERS; i++ )
+            for( int i=0; i<m_maxPlayers; i++ )
                 if( slotStatus[i] == SLOT_EMPTY )
                     empties++;
             return empties;
