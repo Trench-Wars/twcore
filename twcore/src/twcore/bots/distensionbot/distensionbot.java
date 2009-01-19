@@ -335,8 +335,7 @@ public class distensionbot extends SubspaceBot {
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
     private boolean m_singleFlagMode;                   // True if flag mode is working on just a single flag
-    private boolean m_canScoreGoals;                    // True if goals may be scored
-
+    
     private int m_flagRules = 0;                        // 0: Use original rules (pub-style timer)
                                                         // 1: Use hybrid rules (tug-a-war)
     private int m_freq0Score, m_freq1Score;             // # rounds won
@@ -363,6 +362,13 @@ public class distensionbot extends SubspaceBot {
     private Objset flagTimerObjs;                       // For keeping track of flagtimer objs
     private Objset flagObjs;                            // For keeping track of flag-related objs
     private Objset playerObjs;                          // For keeping track of player-specific objs
+
+    
+    // SOCCER
+    private boolean m_canScoreGoals;                    // True if goals may be scored
+    private final int m_maxFullGoals = 5;               // Max # goals "ahead" an army can be before they're penalized
+    private int m_goalsArmy0 = 0;
+    private int m_goalsArmy1 = 0;
 
 
     // ***** LVZ OBJ# DEFINES ( < 100 reserved for flag timer counter )
@@ -1890,7 +1896,37 @@ public class distensionbot extends SubspaceBot {
      */
     public void handleEvent(SoccerGoal event) {
         int armyID = event.getFrequency();
+        
         if( m_canScoreGoals ) {
+            boolean counted = true;
+            if( armyID == 0 ) {
+                m_goalsArmy0++;
+                if( m_goalsArmy0 >= m_goalsArmy1 + m_maxFullGoals )
+                    counted = false;
+            } else {
+                m_goalsArmy1++;
+                if( m_goalsArmy1 >= m_goalsArmy0 + m_maxFullGoals )
+                    counted = false;
+            }
+            DistensionArmy winA = m_armies.get(armyID);
+            DistensionArmy loseA = m_armies.get( winA.getOpposingArmyID() );
+            if( winA == null || loseA == null )
+                return;
+            
+            float winnerStr = winA.getTotalStrength();         
+            float loserStr = loseA.getTotalStrength();
+            float weight = loserStr / winnerStr;            
+            boolean avariceWeight = false;
+            
+            if( weight < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
+                avariceWeight = true;
+            }
+            
+            if( !counted ) {
+                m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  NO RP AWARD; +5 goal advantage");
+                return;
+            }
+            
             int players = 0;
             int totalBonus = 0;
             for( DistensionPlayer p : m_players.values() ) {
@@ -1903,7 +1939,7 @@ public class distensionbot extends SubspaceBot {
                         twcorePlayer.getYTileLocation() < BOT_LOW )) {
                         players++;
                         int rank = p.getRank();
-                        int bonus = 5;
+                        float bonus = 5;
                         if( rank > 10 )
                             bonus += 30;
                         if( rank > 20 )
@@ -1918,14 +1954,22 @@ public class distensionbot extends SubspaceBot {
                             bonus += 2500;
                         if( rank > 70 )
                             bonus += 10000;
-                        bonus += (rank * 2);      // Add in rank to make it seem more random
-                        totalBonus += p.addRankPoints( bonus );
-                        m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + bonus + " RP" );
+                        if( avariceWeight ) {
+                            bonus *= weight;
+                            bonus /= 2;
+                            totalBonus += p.addRankPoints( (int)bonus );
+                            m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + (int)bonus + " RP  (-50% for severe team imbalance)" );
+                        } else {
+                            bonus *= weight;
+                            bonus += (rank * 2);      // Add in rank to make it seem more random
+                            totalBonus += p.addRankPoints( (int)bonus );
+                            m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + (int)bonus + " RP" );
+                        }
                     }
                 }
             }
             if( players > 0 )
-                m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
+                m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
         } else {
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "No points scored for goals (goals not presently active)." );
         }
@@ -10044,6 +10088,16 @@ public class distensionbot extends SubspaceBot {
         public int getID() {
             return armyID;
         }
+        
+        /**
+         * @return ID of opposing army, in two army system.
+         */
+        public int getOpposingArmyID() {
+            if( armyID == 0 )
+                return 1;
+            else
+                return 0;
+        }
 
         public int getTotalStrength() {
             return totalStrength;
@@ -12145,6 +12199,8 @@ public class distensionbot extends SubspaceBot {
         }
         public void run() {
             m_canScoreGoals = true;
+            m_goalsArmy0 = 0;
+            m_goalsArmy1 = 1;
             m_botAction.warpAllRandomly();
             m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time + 1000) /1000 ) + ".  Rules: Flags worth no points; goals earn RP.", Tools.Sound.VICTORY_BELL );
         }
