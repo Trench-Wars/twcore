@@ -1353,7 +1353,9 @@ private class SpawnTimer {
             this.casual = casual;
         else
             this.casual = false;
-        m_botAction.scheduleTask(runIt, SPAWN_TIME);
+        try {
+            m_botAction.scheduleTask(runIt, SPAWN_TIME);
+        } catch( Exception e) {}
     }
 }
 
@@ -1516,7 +1518,9 @@ private class MVPTimer {
     	if(name == null || opList.isBotExact(name))return;
     	enabled.remove(name);
     	classicMode.remove(name);
-    	casualPlayers.get(name).storeStats();
+    	CasualPlayer c = casualPlayers.get(name);
+    	if( c != null )
+    	    c.storeStats();
     	casualPlayers.remove(name);
     	if(game.isInProgress() && elimPlayers.containsKey(name)){
     		lagouts.put(name, elimPlayers.remove(name));
