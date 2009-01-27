@@ -644,8 +644,9 @@ public class messagebot extends SubspaceBot
     {
     	if(message.toLowerCase().startsWith("m")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Messaging system commands:");
-            m_botAction.sendSmartPrivateMessage(name, "    !messages                     - PM's you all your message numbers.");
+            m_botAction.sendSmartPrivateMessage(name, "    !messages   (Shortcut: !msgs) - PM's you all your message numbers.");
             m_botAction.sendSmartPrivateMessage(name, "    !messages all                 - PM's you all your message numbers.");
+            m_botAction.sendSmartPrivateMessage(name, "    !messages #<channel>          - PM's you alll message numbers on <channel>.");
             m_botAction.sendSmartPrivateMessage(name, "    !read                         - Reads all unread messages.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !read <num>                   - Reads you message <num>.");
             m_botAction.sendSmartPrivateMessage(name, "    !read r                       - Reads all old/read messages.");
@@ -774,6 +775,7 @@ public class messagebot extends SubspaceBot
 	 *  @param Message number being read.
 	 */
 	public void readMessage(String name, String message) {
+	    /*
         if( message == "" ) {
             try {
                 LinkedList <String>messages = new LinkedList<String>();
@@ -830,6 +832,7 @@ public class messagebot extends SubspaceBot
                     // readMessage(name, "" + (Integer)it.next());                    
                 }
                 */
+	    /*
                 SpamTask spamTask = new SpamTask();
                 spamTask.setMsgs( name, messages );
                 m_botAction.scheduleTask(spamTask, 75, 75 );
@@ -839,9 +842,10 @@ public class messagebot extends SubspaceBot
             }
             return;
         }
+        */
 		if(!isAllDigits(message)) {
 			try {
-				String addAnd = " AND fnRead = 0";
+				String addAnd = " AND fnRead='0'";
                 ResultSet results;
                 if( message.startsWith("#") && message.length() > 1 ) {
                     String pieces[] = message.split(":", 2);
@@ -850,25 +854,36 @@ public class messagebot extends SubspaceBot
                         if(pieces[1].toLowerCase().startsWith("a"))
                             addAnd = "";
                         else if(pieces[1].toLowerCase().startsWith("r"))
-                            addAnd = " AND fnRead = 1";
+                            addAnd = " AND fnRead='1'";
                     } else {
                         message = message.substring(1);
                     }
                     results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageSystem WHERE fcSender = '"
                             + Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'"+addAnd);
                 } else {
+                    // Not a channel request; either a standard !read, or reading all messages or only read messages
                     if( message.toLowerCase().startsWith("a"))
                         addAnd = "";
                     else if( message.toLowerCase().startsWith("r"))
-                        addAnd = " AND fnRead = 1";
+                        addAnd = " AND fnRead='1'";
                     results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageSystem WHERE fcName = '" +
                             Tools.addSlashesToString(name) + "'"+addAnd);
                 }
 
                 LinkedList <String>messages = new LinkedList<String>();
+                LinkedList <Integer>ids = new LinkedList<Integer>();
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MMM d h:mma");
+
+                if( !results.next() ) {
+                    if( addAnd.equals( " AND fnRead='0'" ) )
+                        m_botAction.sendSmartPrivateMessage(name, "You have no new messages.");
+                    else
+                        m_botAction.sendSmartPrivateMessage(name, "You have no messages fitting those criteria.");
+                    return;                    
+                }
+
                 int numMsgs = 0;
-                while(results.next()) {
+                do {
                     String msg = results.getString("fcMessage");
                     //String timestamp = results.getString("fdTimeStamp");
 
@@ -876,9 +891,32 @@ public class messagebot extends SubspaceBot
                     //m_botAction.sendSmartPrivateMessage(name, timestamp + " " + message);
                     String channel = results.getString("fcSender");
                     messages.add( time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + msg );
+                    if( results.getInt("fnRead") == 0 )
+                        ids.add( results.getInt("fnID") );
                     numMsgs++;
+                } while( results.next() );
+                
+                String resetResults = "";
+                int idResetNum = 0;
+                for( Integer currentID : ids ) {
+                    if( idResetNum == 0 )
+                        resetResults += "fnID='" + currentID + "'";
+                    else
+                        resetResults += " OR fnID='" + currentID + "'";
+                    idResetNum++;
                 }
-                messages.add( "Total " + numMsgs + " message" + (numMsgs==1?"":"s") + " displayed." );
+                
+                if( idResetNum == numMsgs ) {
+                    messages.add( "Total " + numMsgs + " new message" + (numMsgs==1?"":"s") + " displayed." );
+                } else {
+                    messages.add( "Total " + numMsgs + " message" + (numMsgs==1?"":"s") + " displayed." + (idResetNum>0 ? (" (" + idResetNum + " new)") : "") );                    
+                }
+                
+                if( !resetResults.equals("") ) {
+                    String query = "UPDATE tblMessageSystem SET fnRead='1' WHERE " + resetResults + "";
+                    Tools.printLog( query );
+                    m_botAction.SQLQueryAndClose(database, query);
+                }
                 
                 SpamTask spamTask = new SpamTask();
                 spamTask.setMsgs( name, messages );
@@ -895,11 +933,13 @@ public class messagebot extends SubspaceBot
 				}
 				*/
                 m_botAction.SQLClose(results);
-			} catch(Exception e) {}
+			} catch(Exception e) {
+                Tools.printLog("Exception while trying to run SQL query in readMessage." );			    
+			}
 			return;
 		}
 		
-		// Single message handling ONLY.  This method is NO LONGER recursively (and stupidly) called.		
+		// Single message handling ONLY.  This method is NO LONGER recursively (and inefficiently) called.		
 		int messageNumber = -1;
 		try{
 			messageNumber = Integer.parseInt(message);
@@ -915,18 +955,17 @@ public class messagebot extends SubspaceBot
 		try{
 			ResultSet results = m_botAction.SQLQuery(database, query);
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MMM d h:mma");
-			if(results.next())
-			{
+			if(results.next()) {
                 message = results.getString("fcMessage");
                 String time = dateFormat.format( new Date( results.getTimestamp("fdTimeStamp").getTime() ) );
                 String channel = results.getString("fcSender");
                 m_botAction.sendSmartPrivateMessage(name, time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + message);
-                query = "UPDATE tblMessageSystem SET fnRead = 1 WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnID='" + messageNumber +"'";
-                m_botAction.SQLQuery(database, query);
-			}
-			else
-			{
-				m_botAction.sendSmartPrivateMessage(name, "Could not find that message.");
+                if( results.getInt("fnRead") == 0 ) {
+                    query = "UPDATE tblMessageSystem SET fnRead='1' WHERE fnID='" + messageNumber +"'";
+                    m_botAction.SQLQueryAndClose(database, query);
+                }
+			} else {
+				m_botAction.sendSmartPrivateMessage(name, "Could not find that message.  PM !messages to see new messages, or !messages all to see all messages.");
 			}
             m_botAction.SQLClose(results);
 		} catch(Exception e) { Tools.printStackTrace( e ); }
@@ -1026,11 +1065,17 @@ public class messagebot extends SubspaceBot
         boolean allMsgs = message.startsWith("all") || message.startsWith("*");
         String query;
         if( allMsgs ) {
-            m_botAction.sendSmartPrivateMessage(name, "You have the following messages: ");
+            m_botAction.sendSmartPrivateMessage(name, "You have the following messages:");
             query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' ORDER BY fnRead DESC";
         } else {
-            m_botAction.sendSmartPrivateMessage(name, "You have the following unread messages (use !messages all for a list of read and unread msgs): ");
-            query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnRead=0";
+            if( message.startsWith("#") && message.length() > 1 ) {
+                message = message.substring(1);
+                m_botAction.sendSmartPrivateMessage(name, "You have the following messages on channel '" + message + "':");
+                query = "SELECT * FROM tblMessageSystem WHERE fcSender = '" + Tools.addSlashesToString(message) + "' AND fcName = '" + Tools.addSlashesToString(name) + "'";
+            } else { 
+                m_botAction.sendSmartPrivateMessage(name, "You have the following unread messages (use '!msgs all' for a list of read and unread msgs):");
+                query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name.toLowerCase())+"' AND fnRead=0";
+            }
         }
 		try {
 			ResultSet results = m_botAction.SQLQuery(database, query);
