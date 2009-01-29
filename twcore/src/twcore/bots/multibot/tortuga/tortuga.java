@@ -1153,7 +1153,7 @@ public class tortuga extends MultiModule {
         Vector<BankRecord> m_bankrecords = new Vector<BankRecord>();
 
         try {
-            ResultSet r = m_botAction.SQLQuery(m_database,"SELECT fnPlayerID,fnCoins,fcPirateName from tblPiratePlayers where fcPlayerName = '" + playerName + "'");
+            ResultSet r = m_botAction.SQLQuery(m_database,"SELECT fnPlayerID,fnCoins,fcPirateName from tblPiratePlayers where fcPlayerName = '" + playerName.replace("'","\'") + "'");
             if (r == null) {fatal("Error reading player info: NULL resultset returned.");}
 
             if (r.next()) {
@@ -1334,7 +1334,7 @@ public class tortuga extends MultiModule {
     public int createPlayer(String playerName, String pirateName) {
         int newID = 0;
         try {
-            ResultSet r = m_botAction.SQLQuery(m_database,"INSERT into tblPiratePlayers(fcPlayerName,fcPirateName) values('" + playerName + "','" + Tools.addSlashes(pirateName) + "')");
+            ResultSet r = m_botAction.SQLQuery(m_database,"INSERT into tblPiratePlayers(fcPlayerName,fcPirateName) values('" + playerName.replace("'","\'") + "','" + Tools.addSlashes(pirateName) + "')");
             if (r == null) {fatal("Error inserting player: NULL resultset returned.");}
             if (r.next()) {
                 newID = r.getInt(1);
@@ -1347,7 +1347,7 @@ public class tortuga extends MultiModule {
     public int createGame() {
         int newID = 0;
         try {
-            ResultSet r = m_botAction.SQLQuery(m_database,"INSERT into tblPirateGames(fcHost,fdDate) values('" + m_host + "',now())");
+            ResultSet r = m_botAction.SQLQuery(m_database,"INSERT into tblPirateGames(fcHost,fdDate) values('" + m_host.replace("'","\'") + "',now())");
             if (r == null) {fatal("Error inserting game: NULL resultset returned.");}
             if (r.next()) {
                 newID = r.getInt(1);
