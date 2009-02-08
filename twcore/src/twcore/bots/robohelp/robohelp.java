@@ -1057,7 +1057,7 @@ public class robohelp extends SubspaceBot {
 		}
 		
 		if(showSingleStats) {
-			if(stats.size()>0) {
+			if(stats.size( )> 0 && rank.size() > 0) {
 				m_botAction.sendSmartPrivateMessage(name, " "+
 		    		Tools.formatString(rank.get(0),20)+" "+
 		    		stats.get(rank.get(0)));
