@@ -708,6 +708,11 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         //set up players, warp to safes
         m_botAction.scheduleTask(new TimerTask() {
             public void run() {
+                int maxPlayers = 64;
+                if(m_isTeams)
+                {
+                    maxPlayers = 64 * m_maxTeamSize;
+                }
                 List<Player> players = m_botAction.getPlayingPlayers();
 
                 if(players.size() < 4 * m_maxTeamSize) {
@@ -728,7 +733,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
                     count++;
                     int id = player.getPlayerID();
 
-                    if(count > 64) {
+                    if(count > maxPlayers) {
                         m_botAction.specWithoutLock(id);
                         m_botAction.sendPrivateMessage(id, "Sorry, too many players.");
                         continue;
