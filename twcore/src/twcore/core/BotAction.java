@@ -379,6 +379,9 @@ public class BotAction
      */
     public void sendPrivateMessage(String name, String message)
     {
+        if(name == null)
+            return;
+        
         int playerID = m_arenaTracker.getPlayerID(name);
         sendPrivateMessage(playerID, message, (byte) 0);
     }
@@ -414,6 +417,9 @@ public class BotAction
      */
     public void sendPrivateMessage(String name, String message, int soundCode)
     {
+        if(name == null)
+            return;
+        
         int playerID = m_arenaTracker.getPlayerID(name);
         sendPrivateMessage(playerID, message, soundCode);
     }
@@ -461,6 +467,9 @@ public class BotAction
      */
     public void sendSmartPrivateMessage(String name, String message)
     {
+        if(name == null)
+            return;
+        
         sendSmartPrivateMessage(name, message, 0);
     }
 
@@ -485,6 +494,9 @@ public class BotAction
      */
     public void sendSmartPrivateMessage(String name, String message, int soundCode)
     {
+        if(name == null)
+            return;
+        
         int playerID = m_arenaTracker.getPlayerID(name);
         if (playerID == -1)
         {
@@ -505,6 +517,9 @@ public class BotAction
      */
     public void sendRemotePrivateMessage(String name, String message)
     {
+        if(name == null)
+            return;
+        
         sendRemotePrivateMessage( name, message, 0 );
     }
 
@@ -529,6 +544,9 @@ public class BotAction
     {
         if( message == null )
             return;
+        if(name == null)
+            return;
+        
         String temp = message.trim();
         char firstChar;
 
@@ -679,6 +697,10 @@ public class BotAction
      * @param soundCode Sound code to be sent along with the message (0 if none).
      */
     public void sendOpposingTeamMessage( String playerName, String message, int soundCode ){
+        
+        if(playerName == null)
+            return;
+        
         int         playerID = m_arenaTracker.getPlayerID( playerName );
 
         sendOpposingTeamMessage( playerID, message, soundCode );
@@ -743,6 +765,9 @@ public class BotAction
      */
     public void sendSquadMessage(String squadName, String message)
     {
+        if(squadName == null)
+            return;
+        
         sendSquadMessage(squadName, message, 0);
     }
 
@@ -763,6 +788,9 @@ public class BotAction
      */
     public void sendSquadMessage(String squadName, String message, int soundCode)
     {
+        if(squadName == null)
+            return;
+        
         m_packetGenerator.sendChatPacket((byte) 7, (byte) soundCode, (short) 0, ":#" + squadName + ":" + message);
     }
 

@@ -52,7 +52,8 @@ public class BotQueue extends Thread {
         else
             SPAWN_DELAY = delay;
 
-        if (m_botAction.getGeneralSettings().getString( "Server" ).equals("localhost"))
+        if (    m_botAction.getGeneralSettings().getString( "Server" ).equals("localhost") || 
+                m_botAction.getGeneralSettings().getString( "Server" ).equals("127.0.0.1"))
             SPAWN_DELAY = 100;
 
         resetRepository();
@@ -205,6 +206,12 @@ public class BotQueue extends Thread {
         return result;
     }
 
+    /**
+     * Returns the count of bots that are spawned for the specified bot type (className)
+     * 
+     * @param className
+     * @return
+     */
     int getBotCount(String className){
     	Integer      currentBotCount = m_botTypes.get( className.toLowerCase() );
     	if( currentBotCount == null ){
@@ -322,15 +329,15 @@ public class BotQueue extends Thread {
     }
 
     /**
-     * Spawns a bot into existence based on a given class name.  Wrapper for
-     * spawnBot(String,String,String,String).
+     * Spawns a bot into existence based on a given class name.
+     * 
+     * @param className Class name of bot to spawn
+     * @param messager Name of player trying to spawn the bot. If the messager is NULL, "AutoLoader" will be reported in chat messages but no PMs will be sent.
+     * 
+     * @see BotQueue.spawnBot(String, String, String, String)
      */
     void spawnBot( String className, String messager ) {
         spawnBot( className, null, null, messager);
-    }
-
-    void maxSpawnBot( String className, String messager ) {
-    	spawnBot( className, null, null, messager);
     }
 
     /**
@@ -339,8 +346,9 @@ public class BotQueue extends Thread {
      * be properly formed.  Additionally, if a "force spawn" is not being
      * performed, the maximum number of bots of the type allowed must be
      * less than the number currently active.
+     * 
      * @param className Class name of bot to spawn
-     * @param messager Name of player trying to spawn the bot
+     * @param messager Name of player trying to spawn the bot. If the messager is NULL, "AutoLoader" will be reported in chat messages but no PMs will be sent.
      */
     void spawnBot( String className, String login, String password, String messager ){
         CoreData cdata = m_botAction.getCoreData();
@@ -348,9 +356,14 @@ public class BotQueue extends Thread {
 
         String       rawClassName = className.toLowerCase();
         BotSettings  botInfo = cdata.getBotConfig( rawClassName );
-
+        
         if( botInfo == null ){
-            m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Invalid bot type or missing CFG file." );
+            
+            if(messager != null)
+                m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Invalid bot type or missing CFG file." );
+            else
+                m_botAction.sendChatMessage( 1, "AutoLoader tried to spawn bot of type " + className + ".  Invalid bot type or missing CFG file." );
+            
             m_botAction.sendSmartPrivateMessage( messager, "That bot type does not exist, or the CFG file for it is missing." );
             return;
         }
@@ -359,13 +372,23 @@ public class BotQueue extends Thread {
         Integer      currentBotCount = m_botTypes.get( rawClassName );
 
         if( maxBots == null ){
-            m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Invalid settings file. (MaxBots improperly defined)" );
+            
+            if(messager != null)
+                m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Invalid settings file. (MaxBots improperly defined)" );
+            else
+                m_botAction.sendChatMessage( 1, "AutoLoader tried to spawn bot of type " + className + ".  Invalid settings file. (MaxBots improperly defined)" );
+            
             m_botAction.sendSmartPrivateMessage( messager, "The CFG file for that bot type is invalid. (MaxBots improperly defined)" );
             return;
         }
 
         if( login == null && maxBots.intValue() == 0 ){
-            m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Spawning for this type is disabled on this hub." );
+            
+            if(messager != null)
+                m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + className + ".  Spawning for this type is disabled on this hub." );
+            else
+                m_botAction.sendChatMessage( 1, "AutoLoader tried to spawn bot of type " + className + ".  Spawning for this type is disabled on this hub." );
+            
             m_botAction.sendSmartPrivateMessage( messager, "Bots of this type are currently disabled on this hub.  If you are running another hub, please try from it instead." );
             return;
         }
@@ -376,10 +399,16 @@ public class BotQueue extends Thread {
         }
 
         if( login == null && currentBotCount.intValue() >= maxBots.intValue() ){
-            m_botAction.sendChatMessage( 1, messager + " tried to spawn a new bot of type " + className + ".  Maximum number already reached (" + maxBots + ")" );
+            
+            if(messager != null)
+                m_botAction.sendChatMessage( 1, messager + " tried to spawn a new bot of type " + className + ".  Maximum number already reached (" + maxBots + ")" );
+            else
+                m_botAction.sendChatMessage( 1, "AutoLoader tried to spawn a new bot of type " + className + ".  Maximum number already reached (" + maxBots + ")" );
+            
             m_botAction.sendSmartPrivateMessage( messager, "Maximum number of bots of this type (" + maxBots + ") has been reached." );
             return;
         }
+        
         String botName, botPassword;
         currentBotCount = new Integer( getFreeBotNumber( botInfo ) );
         if( login == null || password == null ) {
@@ -410,13 +439,13 @@ public class BotQueue extends Thread {
             	childBot = new Session( cdata, roboClass, botName, botPassword, currentBotCount.intValue(), m_group );
         } catch( ClassNotFoundException cnfe ){
             Tools.printLog( "Class not found: " + rawClassName + ".class.  Reinstall this bot?" );
-            m_botAction.sendSmartPrivateMessage( messager, "The class file does not exist.  Cannot start bot." );
             return;
         }
 
         currentTime = System.currentTimeMillis();
         if( m_lastSpawnTime + SPAWN_DELAY > currentTime ){
             m_botAction.sendSmartPrivateMessage( messager, "Subspace only allows a certain amount of logins in a short time frame.  Please be patient while your bot waits to be spawned." );
+            
             if( m_spawnQueue.isEmpty() == false ){
                 int size = m_spawnQueue.size();
                 if( size > 1 ){
@@ -427,7 +456,11 @@ public class BotQueue extends Thread {
             } else {
                 m_botAction.sendSmartPrivateMessage( messager, "You are the only person waiting in line.  Your bot will log in shortly." );
             }
-            m_botAction.sendChatMessage( 1, messager + " in queue to spawn bot of type " + className );
+            
+            if(messager != null)
+                m_botAction.sendChatMessage( 1, messager + " in queue to spawn bot of type " + className );
+            else
+                m_botAction.sendChatMessage( 1, "AutoLoader in queue to spawn bot of type " + className );
         }
 
         ChildBot newChildBot = new ChildBot( rawClassName, messager, childBot );
@@ -474,7 +507,11 @@ public class BotQueue extends Thread {
                             m_botAction.sendChatMessage( 1, "Bot of type " + childBot.getClassName() + " failed to log in.  Verify login and password are correct." );
                         } else {
                             m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Your new bot is named " + bot.getBotName() + "." );
-                            m_botAction.sendChatMessage( 1, childBot.getCreator() + " spawned " + childBot.getBot().getBotName() + " of type " + childBot.getClassName() );
+                            
+                            if(childBot.getCreator() != null)
+                                m_botAction.sendChatMessage( 1, childBot.getCreator() + " spawned " + childBot.getBot().getBotName() + " of type " + childBot.getClassName() );
+                            else
+                                m_botAction.sendChatMessage( 1, "AutoLoader spawned " + childBot.getBot().getBotName() + " of type " + childBot.getClassName() );
                         }
 
                         m_lastSpawnTime = currentTime;

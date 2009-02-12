@@ -1,12 +1,12 @@
 package twcore.core;
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.TimerTask;
 import java.util.TreeMap;
-import java.util.Iterator;
 
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.ArenaJoined;
@@ -101,25 +101,61 @@ public class HubBot extends SubspaceBot {
     	spawnutime = new Date().getTime();
 
         m_botAction.joinArena( m_botAction.getGeneralSettings().getString("Arena") );
+        
+        // This is for the Message class where the alertcommands are stored
         m_botAction.sendUnfilteredPublicMessage( "*g*misc:alertcommand" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat name" ) );
         initOperators();
-
+        autoSpawnBots(false);
+        
+    }
+    
+    /**
+     * Reads bot types from autoload.cfg and spawns the bots
+     */
+    private void autoSpawnBots(boolean checkAlreadySpawned) {
         try {
             BufferedReader reader = new BufferedReader( new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) ) );
-            String s = "";
-            while( true ){
-                s = reader.readLine();
-                if( s == null || s.equals( "" ) ){
-                    break;
+            TreeMap<String, Integer> autoLoads = new TreeMap<String, Integer>();
+            
+            String line = "";
+            
+            while( (line = reader.readLine()) != null ){
+                if( line == null || line.length() == 0 ){
+                    continue;
                 }
-                char firstChar = s.trim().charAt( 0 );
-                if( firstChar != '#' && firstChar != '[' ){
-                    spawn( "AutoLoader", s );
+                
+                if( !line.startsWith("#") && !line.startsWith("[") ){
+                    String bottype = line.trim().toLowerCase();
+                    
+                    // Add bot to TreeMap or increase the number of bots on the TreeMap
+                    if(autoLoads.containsKey(bottype)) {
+                        autoLoads.put(bottype, autoLoads.get(bottype)+1);
+                    } else {
+                        autoLoads.put(bottype, 1);
+                    }
                 }
             }
-        } catch( Exception e ){
-            Tools.printStackTrace( "Exception while auto-loading bots", e );
+            
+            for(String bottype : autoLoads.keySet()) {
+                int number = autoLoads.get(bottype);
+                int alreadySpawned = 0;
+                
+                if(checkAlreadySpawned) {
+                    // Check the botQueue how many times the bot is already spawned
+                    alreadySpawned = m_botQueue.getBotCount(bottype);
+                }
+                
+                if(alreadySpawned < number) {
+                    for(int i = 0 ; i < (number - alreadySpawned) ; i++) {
+                        m_botQueue.spawnBot( bottype, null );
+                    }
+                }
+            }
+        } catch( FileNotFoundException fnfe ){
+            Tools.printStackTrace( "File not found: autoload.cfg  ;  ", fnfe );
+        } catch( IOException ioe) {
+            Tools.printStackTrace( "IOException occured while reading autoload.cfg : ", ioe);
         }
     }
 
@@ -145,11 +181,11 @@ public class HubBot extends SubspaceBot {
     public void handleEvent( FileArrived event ){
 
         // Auto assign operators after the file has been downloaded from subgame
-        if(     event.getFileName().equals( "moderate.txt" ) ||
+        if(     event.getFileName().equals( "moderate.txt" ) || 
                 event.getFileName().equals( "smod.txt" ) ||
                 event.getFileName().equals( "sysop.txt" )) {
             m_botAction.getOperatorList().autoAssignFile( m_botAction.getDataFile( event.getFileName() ) );
-
+            
         }
     }
 
@@ -159,25 +195,25 @@ public class HubBot extends SubspaceBot {
      */
     public void initOperators(){
         Tools.printLog("Initializing operators.cfg ...");
-
+        
         try {
             m_botAction.getOperatorList().clear();
             m_botAction.getOperatorList().init( m_botAction.getCoreCfg("operators.cfg" ) );
-
+            
         } catch (IOException ioe) {
             System.err.println("FATAL: IO Exception occured while initializing operators from operators.cfg: "+ ioe.getMessage());
             System.err.println("FATAL: No operators loaded, shutting down TWCore.");
             m_botAction.die();
         }
-
+        
         Tools.printLog("Done initializing operators from operators.cfg");
-
+        
         // Initiate process to auto-assign operators using the subgame staff files
         m_botAction.sendUnfilteredPublicMessage( "*getfile sysop.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile smod.txt" );
         m_botAction.sendUnfilteredPublicMessage( "*getfile moderate.txt" );
-
-
+        
+        
     }
 
     /**
@@ -668,27 +704,19 @@ public class HubBot extends SubspaceBot {
     }
 
     /**
-     * Spawns a bot of a given type.
-     * @param messager Name of the player who sent the command
-     * @param message Bot type to spawn
-     */
-    public void spawn( String messager, String message ){
-        String className = message.trim();
-        if( className.length() > 0 ){
-            m_botQueue.spawnBot( className, messager );
-        } else {
-            m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
-        }
-    }
-
-    /**
      * Spawns a bot of a given type.  User interface wrapper for spawn().
      * @param messager Name of the player who sent the command
      * @param message Bot type to spawn
      */
     public void handleSpawnMessage( String messager, String message ){
         if( m_botAction.getOperatorList().isBot( messager ) ){
-            spawn( messager, message );
+            String className = message.trim();
+            
+            if( className.length() > 0 ){
+                m_botQueue.spawnBot( className, messager );
+            } else {
+                m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
+            }
         }
     }
 
@@ -712,21 +740,25 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, messager + " doesn't have access, but tried to use !forcespawn." );
         }
     }
-
+    
     /**
      * Spawns the maximum number of a bot of a given type.
      * @param messager Name of the player who sent the command
      * @param message Bot type to spawn
      */
     public void handleSpawnMaxMessage( String messager, String message ){
-    	if( !m_botAction.getOperatorList().isHighmod( messager ) )return;
-    	BotSettings botInfo = m_botAction.getCoreData().getBotConfig(message.toLowerCase());
+    	if( !m_botAction.getOperatorList().isHighmod( messager ) )
+    	    return;
+    	
+    	String bottype = message.toLowerCase().trim();
+    	BotSettings botInfo = m_botAction.getCoreData().getBotConfig(bottype);
+    	Integer maxBots = botInfo.getInteger("Max Bots");
+    	
     	if( botInfo == null ){
             m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + message + ".  Invalid bot type or missing CFG file." );
             m_botAction.sendSmartPrivateMessage( messager, "That bot type does not exist, or the CFG file for it is missing." );
             return;
         }
-    	Integer maxBots = botInfo.getInteger("Max Bots");
     	if( maxBots == null ){
             m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + message + ".  Invalid settings file. (MaxBots improperly defined)" );
             m_botAction.sendSmartPrivateMessage( messager, "The CFG file for that bot type is invalid. (MaxBots improperly defined)" );
@@ -739,48 +771,33 @@ public class HubBot extends SubspaceBot {
     	}
     	m_botAction.sendSmartPrivateMessage( messager, "Spawning the maximum allowed number bots of type " + message.toLowerCase());
     	m_botAction.sendChatMessage( 1, messager + " is in queue to spawn the maximum allowed number bots of type " + message.toLowerCase());
-    	while(m_botQueue.getBotCount(message.toLowerCase()) < maxBots)
-    		spawn( messager, message );
+    	
+        if( bottype.length() > 0 ) {
+            while(m_botQueue.getBotCount(bottype) < maxBots)
+                m_botQueue.spawnBot( bottype, null);
+        } else {
+            m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawnmax <bot type>" );
+        }
     }
-
+    
     /**
      * Spawns all bots on the autoloader that aren't currently spawned.
      * @param messager
      * @param message
      */
     public void handleAutoSpawnMessage( String messager, String message ){
-    	if( !m_botAction.getOperatorList().isHighmod( messager ) )return;
+    	// Only Highmod+
+        if( !m_botAction.getOperatorList().isHighmod( messager ) )
+    	    return;
+        
     	m_botAction.sendSmartPrivateMessage( messager, "Spawning all bots from the autoloader that are not currently spawned.");
     	m_botAction.sendChatMessage( 1, messager + " is in queue to spawn all bots from the autoloader.");
-    	try{
-    		BufferedReader reader = new BufferedReader( new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) ) );
-    		TreeMap<String, Integer> autoLoads = new TreeMap<String, Integer>();
-    		String s = "";
-    		while( true ){
-    			s = reader.readLine();
-    			if( s == null || s.equals( "" ) )
-    				break;
-    			char firstChar = s.trim().charAt( 0 );
-    			if( firstChar != '#' && firstChar != '[' ){
-    				if(autoLoads.containsKey(s)){
-    					int curNum = autoLoads.get(s);
-    					autoLoads.remove(s);
-    					autoLoads.put(s, curNum + 1);
-    				} else autoLoads.put(s, 1);
-    			}
-    		}
-    		Iterator<String> it = autoLoads.keySet().iterator();
-    		while( it.hasNext() ){
-    			String botName = it.next();
-    			while(m_botQueue.getBotCount(botName) < autoLoads.get(botName))
-    	    		spawn( messager, botName );
-    		}
-    	}catch(Exception e){
-    		m_botAction.sendSmartPrivateMessage( messager, e.getMessage());
-    		Tools.printStackTrace(e);
-    	}
+    	
+    	autoSpawnBots(true);
+    	
+    	m_botAction.sendSmartPrivateMessage( messager, "Done spawning all bots from the autoloader.");
     }
-
+    
     /**
      * Displays the current SQL pool status.
      * @param messager
