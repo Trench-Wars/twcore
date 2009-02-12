@@ -240,63 +240,59 @@ public class Session extends Thread {
             return;
         }
 
+        m_coreData.getInterProcessCommunicator().removeFromAll( m_subspaceBot );
+        m_packetGenerator.sendDisconnect();
         try {
-            m_coreData.getInterProcessCommunicator().removeFromAll( m_subspaceBot );
-            m_packetGenerator.sendDisconnect();
-            try {
-                Thread.sleep( 100 );
-            } catch( InterruptedException e ){
-            }
+            Thread.sleep( 100 );
+        } catch( InterruptedException e ){
+        }
 
-            m_state = NOT_RUNNING;
-            String classname = m_subspaceBot.getClass().getSimpleName();
-            if( dcMsg == null || dcMsg.equals("") )
-                Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
-            else
-                Tools.printLog( m_name + " (" + classname + ") is disconnecting: " + dcMsg );
-            m_subspaceBot.handleDisconnect();
+        m_state = NOT_RUNNING;
+        String classname = m_subspaceBot.getClass().getSimpleName();
+        if( dcMsg == null || dcMsg.equals("") )
+            Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
+        else
+            Tools.printLog( m_name + " (" + classname + ") is disconnecting: " + dcMsg );
+        m_subspaceBot.handleDisconnect();
 
-            if(m_chatLog != null)
-            {
-                m_chatLog.flush();
-                m_chatLog.close();
-            }
+		if(m_chatLog != null)
+		{
+        	m_chatLog.flush();
+        	m_chatLog.close();
+		}
 
-            // Experimental fast disconnect mode destroys the socket immediately.
-            if( m_coreData.getGeneralSettings().getInt("FastDisconnect") == 1 ) {
-                m_group.interrupt();
-                m_socket.disconnect();
-                m_socket.close();
-                // Standard behavior: 30 second shutdown procedure
-            } else {
-                // All threads in the group should not need to be interrupted.  This group includes
-                // every bot spawned, plus BotQueue itself -- it's extremely odd that a bot disconnect
-                // order requires that all other bot threads are inactive before executing the order.
-                m_group.interrupt();
-                while( m_group.activeCount() != 0 ){
-                    try {
-                        m_group.interrupt();
-                        Thread.sleep( 100 );
-                    } catch( InterruptedException except ){
-                    }
+        // Experimental fast disconnect mode destroys the socket immediately.
+        if( m_coreData.getGeneralSettings().getInt("FastDisconnect") == 1 ) {
+            m_group.interrupt();
+            m_socket.disconnect();
+            m_socket.close();
+        // Standard behavior: 30 second shutdown procedure
+        } else {
+            // All threads in the group should not need to be interrupted.  This group includes
+            // every bot spawned, plus BotQueue itself -- it's extremely odd that a bot disconnect
+            // order requires that all other bot threads are inactive before executing the order.
+            m_group.interrupt();
+            while( m_group.activeCount() != 0 ){
+                try {
+                    m_group.interrupt();
+                    Thread.sleep( 100 );
+                } catch( InterruptedException except ){
                 }
-                if( !m_group.isDestroyed() ){
-                    m_group.destroy();
-                }
-
-                m_socket.disconnect();
-                m_socket.close();
             }
-            Tools.printLog( m_name + " (" + classname + ") disconnected gracefully." );
-            this.interrupt();
-
-            if( m_timer != null ){
-                m_timer.cancel();
-                m_timer = null;
-                m_botAction = null;
+            if( !m_group.isDestroyed() ){
+                m_group.destroy();
             }
-        } catch( Exception e ) {
-            Tools.printLog("Exception encountered while disconnecting; caught.");
+
+            m_socket.disconnect();
+            m_socket.close();
+        } 
+        Tools.printLog( m_name + " (" + classname + ") disconnected gracefully." );
+        this.interrupt();
+
+        if( m_timer != null ){
+            m_timer.cancel();
+            m_timer = null;
+            m_botAction = null;
         }
     }
 
