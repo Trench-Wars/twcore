@@ -221,7 +221,6 @@ public final class CodeCompiler {
         message = message.replace("$MULTIPLY$", "*");
         message = message.replace("$PERCENT$", "%");
         message = message.replace("$CARAT$", "^");
-        message = replaceVariablesAndConstants(message, tws);
         if(message.trim().startsWith("{"))
                 message = compile(message);
         if(message != null && message.contains("@!") && message.contains("@@")){
