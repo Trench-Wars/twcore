@@ -227,7 +227,14 @@ private class CustomCommand {
     	return builder.toString();
 	}
 
-    public void cancel() {}    
+	/**
+	 * Called when the module is unloaded
+	 * 
+	 * @see twcore.bots.MultiUtil#cancel()
+	 */
+    public void cancel() {
+        commands.clear();
+    }    
     public void requestEvents(ModuleEventRequester modEventReq) {}
     
 }
