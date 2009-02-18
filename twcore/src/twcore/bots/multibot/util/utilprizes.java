@@ -78,7 +78,7 @@ public class utilprizes extends MultiUtil
                                                    Tools.Prize.TOPSPEED,
                                                    Tools.Prize.PROXIMITY };
 
-  public double MIN_INTERVAL = 0.1;
+  public double MIN_INTERVAL = 1;
   public int MIN_FREQ = 0;
   public int MAX_FREQ = 9999;
   public int MIN_PRIZE = 1;
