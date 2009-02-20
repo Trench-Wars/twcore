@@ -9758,10 +9758,10 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return True if player is "higher order" support ship (5, 8, or 4)
+         * @return True if player is "higher order" support ship (5, 8, 9, or 4)
          */
         public boolean isHigherOrderSupportShip() {
-            return (shipNum == 5 || shipNum == 8 || shipNum == 4);            
+            return (shipNum == 5 || shipNum == 8 || shipNum == 4 || shipNum == 9 );            
         }
         
         /**
