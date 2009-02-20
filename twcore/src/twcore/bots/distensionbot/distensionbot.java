@@ -67,7 +67,7 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between msgs in list, when spammed to single
     private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
-    private final int PRIZE_SPAM_DELAY = 25;               // Delay in ms between prizes for individual players
+    private int PRIZE_SPAM_DELAY = 25;                     // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
@@ -366,7 +366,7 @@ public class distensionbot extends SubspaceBot {
     
     // SOCCER
     private boolean m_canScoreGoals;                    // True if goals may be scored
-    private final int m_maxFullGoals = 5;               // Max # goals "ahead" an army can be before they're penalized
+    private final int m_maxGoalsBeforeTaper = 2;        // Max # goals "ahead" an army can be before they're penalized slightly
     private int m_goalsArmy0 = 0;
     private int m_goalsArmy1 = 0;
 
@@ -1838,6 +1838,13 @@ public class distensionbot extends SubspaceBot {
                 checkForAssistAdvert = true;
             if( DEBUG )
                 m_botAction.sendPrivateMessage("dugwyler", event.getPlayerID() + " had null playerget in freqchange event." );
+            Player pp = m_botAction.getPlayer( event.getPlayerID() );
+            if( pp != null ) {
+                if( pp.getShipType() == 0 )
+                    m_botAction.setFreq(pp.getPlayerID(), 9999);
+                else
+                    m_botAction.specWithoutLock(pp.getPlayerID());
+            }
             return;
         }
         if( p.ignoreShipChanges() ) {       // If we've been ignoring their shipchanges and they returned to
@@ -1898,15 +1905,13 @@ public class distensionbot extends SubspaceBot {
         int armyID = event.getFrequency();
         
         if( m_canScoreGoals ) {
-            boolean counted = true;
+            int taperAmount = 0;
             if( armyID == 0 ) {
                 m_goalsArmy0++;
-                if( m_goalsArmy0 >= m_goalsArmy1 + m_maxFullGoals )
-                    counted = false;
+                taperAmount = m_goalsArmy0 - (m_goalsArmy1 + m_maxGoalsBeforeTaper); 
             } else {
                 m_goalsArmy1++;
-                if( m_goalsArmy1 >= m_goalsArmy0 + m_maxFullGoals )
-                    counted = false;
+                taperAmount = m_goalsArmy1 - (m_goalsArmy0 + m_maxGoalsBeforeTaper); 
             }
             DistensionArmy winA = m_armies.get(armyID);
             DistensionArmy loseA = m_armies.get( winA.getOpposingArmyID() );
@@ -1920,11 +1925,20 @@ public class distensionbot extends SubspaceBot {
             
             if( weight < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
                 avariceWeight = true;
+                taperAmount++;
             }
             
-            if( !counted ) {
-                m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  NO RP AWARD; +5 goal advantage");
-                return;
+            float scoreMod = 1.0f;
+            String modString = "";
+            if( taperAmount >= 0 ) {
+                switch( taperAmount ) {
+                case 0: scoreMod = .9f; modString="90%"; break;
+                case 1: scoreMod = .8f; modString="80%"; break;
+                case 2: scoreMod = .6f; modString="60%"; break;
+                case 3: scoreMod = .4f; modString="40%"; break;
+                case 4: scoreMod = .2f; modString="20%"; break;
+                default: scoreMod = .1f; modString="10%"; break;
+                }
             }
             
             int players = 0;
@@ -1955,12 +1969,12 @@ public class distensionbot extends SubspaceBot {
                         if( rank > 70 )
                             bonus += 10000;
                         if( avariceWeight ) {
-                            bonus *= weight;
+                            bonus *= (weight * scoreMod);
                             bonus /= 2;
                             totalBonus += p.addRankPoints( (int)bonus );
                             m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + (int)bonus + " RP  (-50% for severe team imbalance)" );
                         } else {
-                            bonus *= weight;
+                            bonus *= (weight * scoreMod);
                             bonus += (rank * 2);      // Add in rank to make it seem more random
                             totalBonus += p.addRankPoints( (int)bonus );
                             m_botAction.sendRemotePrivateMessage( p.getName(), "GOAL!  REWARD: " + (int)bonus + " RP" );
@@ -1968,10 +1982,14 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             }
-            if( players > 0 )
-                m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
+            if( players > 0 ) {
+                if( taperAmount >= 0 )
+                    m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")  [Tapered; " + modString + "% of possible]");
+                else
+                    m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
+            }
         } else {
-            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "No points scored for goals (goals not presently active)." );
+            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "No points scored for goal (goals not presently active)." );
         }
     }
 
@@ -2805,15 +2823,10 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Check for shark and terr balance -- do not overbalance with one or the other.
-        if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER && !m_refitMode ) {
-            boolean tooMany = checkForTooManyShips(p);
-            if( tooMany ) {
-                if( lastShipNum > 0 )
-                    m_botAction.setShip(p.getArenaPlayerID(), lastShipNum );
-                else
-                    m_botAction.specWithoutLock(p.getArenaPlayerID());
-                return;
-            }
+        if( !m_refitMode && ( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) ) {
+            boolean tooMany = checkForTooManyShips(p, shipNum);
+            if( tooMany )
+                m_botAction.specWithoutLock(p.getArenaPlayerID());
         }
         if( lastShipNum > 0 ) {
             String shipname = (lastShipNum == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
@@ -2845,7 +2858,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " is now manning the Tactical Ops console." );
 
         // Award sharks and terrs who change to needed slot w/ a bonus
-        if( (lastShipNum > 0) && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) ) {
+        if( !m_refitMode && (lastShipNum > 0) && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) ) {
             int reward = 0;
             if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
                 int ships = 0;
@@ -2948,12 +2961,11 @@ public class distensionbot extends SubspaceBot {
      * @param p
      * @return
      */
-    public boolean checkForTooManyShips( DistensionPlayer p ) {
+    public boolean checkForTooManyShips( DistensionPlayer p, int shipNumToChangeTo ) {
         int friendly = 0;
         int enemy = 0;
-        int shipNum = p.getShipNum();
         for( DistensionPlayer p2 : m_players.values() ) {
-            if( p2.getShipNum() == shipNum )
+            if( p2.getShipNum() == shipNumToChangeTo )
                 if( p2.getArmyID() == p.getArmyID() )
                     friendly++;
                 else
@@ -2963,15 +2975,15 @@ public class distensionbot extends SubspaceBot {
         // Remember, in this calculation the player that just changed to shark is not included, so
         // if our army already has more than the other army, the difference would be +2 after the change.
         boolean tooMany = false;
-        if( shipNum == Tools.Ship.SHARK && friendly > enemy ) {
+        if( shipNumToChangeTo == Tools.Ship.SHARK && friendly > enemy ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Sharks flying to make you also Sharking any fair.  Try again later." );
             tooMany = true;
         }
-        if( shipNum == Tools.Ship.SHARK && friendly > 3 ) {
+        if( shipNumToChangeTo == Tools.Ship.SHARK && friendly > 3 ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, only three Sharks are allowed per army." );
             tooMany = true;
         }
-        if( shipNum == Tools.Ship.TERRIER && friendly > enemy + 1 ) {
+        if( shipNumToChangeTo == Tools.Ship.TERRIER && friendly > enemy + 1 ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Sorry, the other army doesn't have enough Terriers to allow you to Terr fairly.  Try again later." );
             tooMany = true;
         }
@@ -4036,7 +4048,7 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
                 if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
-                    boolean tooMany = checkForTooManyShips(p);
+                    boolean tooMany = checkForTooManyShips(p, shipNum);
                     if( tooMany ) {
                         m_botAction.specWithoutLock(p.getArenaPlayerID());
                     }
@@ -4122,7 +4134,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is now assisting your army." );
             
             if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
-                boolean tooMany = checkForTooManyShips(p);
+                boolean tooMany = checkForTooManyShips(p, shipNum);
                 if( tooMany )
                     m_botAction.specWithoutLock(p.getArenaPlayerID());
             }
@@ -4493,6 +4505,7 @@ public class distensionbot extends SubspaceBot {
         double dist = Math.sqrt( Math.pow(( 8192 - (jumpx * 16) ), 2) + Math.pow(( 8192 - (jumpy * 16) ), 2) );
         if( dist >= arenaRadius ) {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Naughty!", Tools.Sound.BURP );
+            m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_JUMPSPACE );
             return;
         }
 
@@ -5606,13 +5619,13 @@ public class distensionbot extends SubspaceBot {
         String desc;
         if( blindLevel == 3 ) {
             lvzNum = LVZ_OPS_BLIND3;
-            desc = "MINOR";
+            desc = "MASSIVE";
         } else if( blindLevel == 2 ) {
             lvzNum = LVZ_OPS_BLIND2;
             desc = "MAJOR";
         } else {
             lvzNum = LVZ_OPS_BLIND1;
-            desc = "MASSIVE";
+            desc = "MINOR";
         }
 
         int freq = p.getArmyID();
@@ -5827,7 +5840,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setObjects();
         m_botAction.manuallySetObjects(flagObjs.getObjects());
         if( !DEBUG ) {
-            m_botAction.sendArenaMessage( "Distension shutting down ...  Please play again soon!", 1 );
+            m_botAction.sendArenaMessage( "Distension shutting down ...  Please play again soon.  Visit http://www.trenchwars.org/distension and join the distension MessageBot channel and ?chat=distension to stay in touch.", 1 );
             String schedule = m_botSettings.getString("ScheduleString");
             if( schedule != null )
                 m_botAction.sendArenaMessage( "Current schedule ...  " + schedule, 1 );
@@ -5973,14 +5986,23 @@ public class distensionbot extends SubspaceBot {
         if( num < 10 || num > 50 )
             throw new TWCoreException("Out of bounds.  Solly cholly.");
         
+        if( num < m_maxPlayers )
+            throw new TWCoreException("At the moment, only raising the max number of players is supported... sorry.");
+        
         m_maxPlayers = num;
-        int[] slots = m_slotManager.slots;
-        int[] slotStatus = m_slotManager.slotStatus;
+        
+        int[] slots = new int[num];
+        int[] slotStatus = new int[num];
+        for( int i=0; i<m_slotManager.slots.length; i++ ) {
+            slots[i] = m_slotManager.slots[i];
+            slotStatus[i] = m_slotManager.slotStatus[i];
+        }
         LinkedList <DistensionPlayer> waiting = m_slotManager.waitingList;
         
         m_slotManager = new PlayerSlotManager( slots, slotStatus, waiting );
         
-        m_botAction.sendPrivateMessage(name, "Max players set to " + num + "." );
+        if( !name.equals(m_botAction.getBotName()) )
+            m_botAction.sendPrivateMessage(name, "Max players set to " + num + "." );
         m_slotManager.placeWaitingPlayersInEmptySlots();
     }
     
@@ -10724,9 +10746,9 @@ public class distensionbot extends SubspaceBot {
                     try {
                         DistensionPlayer p = waitingList.remove();
                         try {
+                            p.setWaiterFullRoundPlayAbility(true);
                             cmdReturn( p.getName(), "", true );
                             addPlayerToSpecificSlot( p, slot );
-                            p.setWaiterFullRoundPlayAbility(true);
                         } catch( Exception e ) {
                             if( p != null )
                                 Tools.printLog("Distension: " + p.getName() + " had !return initiated (swapInWaitingPlayers) but had already returned!" );
@@ -10741,8 +10763,8 @@ public class distensionbot extends SubspaceBot {
                     } else {
                         try {
                             DistensionPlayer p = waitingList.remove();
-                            doSwapOut( p, slot );
                             p.setWaiterFullRoundPlayAbility(true);
+                            doSwapOut( p, slot );
                         } catch( NoSuchElementException e ) {
                             Tools.printLog("Distension: tried to remove a player from empty waiting list.");
                         }
@@ -11367,7 +11389,7 @@ public class distensionbot extends SubspaceBot {
 
         float totalLvlSupport = 0;
         float totalLvlAttack = 0;
-        int totalLvlLosers = 0;
+        float totalLvlLosers = 0;
         float numSupport = 0;
         float numAttack = 0;
         int bonusRanksForPointAllocation = 0;
@@ -11375,11 +11397,14 @@ public class distensionbot extends SubspaceBot {
         for( DistensionPlayer p : m_players.values() ) {
             if( p.getArmyID() == winningArmyID ) {
                 if( p.getShipNum() > 0 ) {
+                    adjustedRank = p.getRank();
+                    /*
                     Integer time = m_playerTimes.get( p.getName() );
                     float percentOnFreq = 0;
                     if( time != null )
                         percentOnFreq = (float)(secs - time) / (float)secs;
                     adjustedRank = ((float)p.getRank() * percentOnFreq );
+                    */
                     if( adjustedRank > 70 )
                         bonusRanksForPointAllocation += 50;
                     else if( adjustedRank > 60 )
@@ -11400,14 +11425,15 @@ public class distensionbot extends SubspaceBot {
                 }
             } else {                
                 if( p.isHigherOrderSupportShip() ) {
-                    if( p.getShipNum() > 0 ) {
+                    adjustedRank = p.getRank();
+                    /*
                         Integer time = m_playerTimes.get( p.getName() );
                         float percentOnFreq = 0;
                         if( time != null )
                             percentOnFreq = (float)(secs - time) / (float)secs;
                         adjustedRank = ((float)p.getRank() * percentOnFreq );
-                        totalLvlLosers += adjustedRank;
-                    }
+                     */
+                    totalLvlLosers += adjustedRank;
                 }
             }
         }
@@ -11600,7 +11626,7 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.sendSmartPrivateMessage("qan", p.getName() + " had no time data attached to their name at round win." );
                     }
                 }
-            } else {
+            } else if( p.getArmyID() == losingArmyID ) {
                 // Losers receive a fraction of the winners.
                 // Experimental: only Terr, Shark and Levi receive loser bonus.
                 if( p.isHigherOrderSupportShip() ) {
@@ -11937,9 +11963,11 @@ public class distensionbot extends SubspaceBot {
         cmdSaveData(":autosave:", "");
 
         if( m_beginDelayedShutdown ) {
-            m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  5 minutes allowed to refit your ship if you wish.  Kills do not count during this time.", 1 );
+            m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  5 minutes allowed to refit your ship if you wish.  Kills do not count during this time.  All players may enter.", 1 );
             cmdSaveData(m_botAction.getBotName(), "");
             m_refitMode = true;
+            PRIZE_SPAM_DELAY = 100;     // Set in order to safely resize arena
+            cmdSetMaxPlayers(m_botAction.getBotName(), "100");
             intermissionTime = 5 * Tools.TimeInMillis.MINUTE;
             m_botAction.setTimer( 5 );
         } else {
@@ -11954,53 +11982,6 @@ public class distensionbot extends SubspaceBot {
                 p.setWaiterFullRoundPlayAbility(false);     // Those who were swapped in midround were exempt from an end-round swap
                                                             //  ... but for this round end only.
 
-
-            /*  OLD CODE
-             *
-            // Swap out players waiting to enter
-            if( !m_waitingToEnter.isEmpty() ) {
-                LinkedList <DistensionPlayer>removals = new LinkedList<DistensionPlayer>();
-                int players = 0;
-                for( DistensionPlayer p : m_players.values() )
-                    if( p.getShipNum() >= 0 )
-                        players++;
-
-                for( DistensionPlayer waitingPlayer : m_waitingToEnter ) {
-                    if( waitingPlayer.getShipNum() == -1 ) { // Make sure they're still waiting
-                        String name = waitingPlayer.getName();
-
-                        if( players < MAX_PLAYERS ) {
-                            m_botAction.sendPrivateMessage( name, "A slot has opened up.  You may now join the battle." );
-                            cmdReturn(name, "", true);
-                            players++;
-                        } else {
-                            DistensionPlayer highestPlayer = null;
-
-                            for( DistensionPlayer p : m_players.values() ) {
-                                if( p.getShipNum() >= 0 ) {
-                                    if( highestPlayer == null || p.getMinutesPlayed() > highestPlayer.getMinutesPlayed() )
-                                        highestPlayer = p;
-                                }
-                            }
-
-                            if( highestPlayer != null && waitingPlayer.getMinutesPlayed() < highestPlayer.getMinutesPlayed() ) {
-                                m_botAction.sendPrivateMessage( name, "A slot has opened up.  You may now join the battle." );
-                                cmdReturn(name, "", true);
-                                m_botAction.sendPrivateMessage( highestPlayer.getName(), "Another player wishes to enter the battle, and you have been playing the longest of any player.  Your slot has been given up to allow them to play." );
-                                cmdLeave(highestPlayer.getName(), "");
-                                removals.add(waitingPlayer);
-                            }
-                        }
-                    } else {
-                        removals.add(waitingPlayer);
-                    }
-                }
-                for( DistensionPlayer p : removals )
-                    m_waitingToEnter.remove(p);
-                for( DistensionPlayer p : m_waitingToEnter )
-                    m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "No suitable slot could be found for you this battle.  Please continue waiting and you will be placed in as soon as possible." );
-            }
-            */
         }
         if( intermissionTime >= Tools.TimeInMillis.MINUTE && !DEBUG )
             m_botAction.setTimer( (intermissionTime + Tools.TimeInMillis.SECOND) / Tools.TimeInMillis.MINUTE );
