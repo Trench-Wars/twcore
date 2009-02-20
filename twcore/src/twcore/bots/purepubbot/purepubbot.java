@@ -716,7 +716,8 @@ public class purepubbot extends SubspaceBot
             else if(command.equals("!listvotes"))
                 doListVotesCmd(sender);
         } catch(RuntimeException e) {
-            m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
+            if( e != null && e.getMessage() != null )
+                m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
     }
 
@@ -1716,6 +1717,8 @@ public class purepubbot extends SubspaceBot
      * @param argString Name of the player to challenge
      */
     public void doChallengeCmd(String sender, String argString ) {
+        if( argString == null || argString.equals("") )
+            throw new RuntimeException( "Use !challenge <name> to challenge <name> to an informal pub duel (such as !challenge qan)" ); 
         Player p1 = m_botAction.getPlayer(sender);
         if( p1 == null )
             return;
