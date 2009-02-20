@@ -369,6 +369,7 @@ public class distensionbot extends SubspaceBot {
     private final int m_maxGoalsBeforeTaper = 2;        // Max # goals "ahead" an army can be before they're penalized slightly
     private int m_goalsArmy0 = 0;
     private int m_goalsArmy1 = 0;
+    private long m_timeOfLastGoal = 0;
 
 
     // ***** LVZ OBJ# DEFINES ( < 100 reserved for flag timer counter )
@@ -1327,13 +1328,14 @@ public class distensionbot extends SubspaceBot {
             String[] helps = {
                     ".--------------------------",
                     "|OBSERVATION        Cost   | Snaps view to a location based on the number.",
-                    "| ,#                  0    |  1: HomeFR  11: HomeMid  12: HomeTube  13:HomeRearm",
+                    "| ,#                  -    |  1: HomeFR  11: HomeMid  12: HomeTube  13:HomeRearm",
                     "|                          |  2: NME FR  21: NME Mid  22: NME Tube   3: Center",
                     "|COMMUNICATIONS            |",
                     "| !opsradar           1 .r |  Shows approx. location of all pilots, + Terr info",
                     "| !opsmsg <#>         1 .m |  Msg army.  See !opshelp msg (!oh msg) for avail. msgs",
                     "| !opsPM <nm>:<#>     1 .pm|  Msg specific players.  See !opshelp msg (or .h msg)",
                     "| !opssab             2 .sm|  Sabotage msg to enemy.  See !opshelp msg (or .h msg)",
+                    "| !opsstatus          - .. |  See current OP and Comm. Auths (short display)",
                     "|ACTIONS                   |",
                     "| !opsrearm           2 .re|  Fast rearm/slow enemy rearm for 20 seconds/level",
                     "| !opsdoor <#>    4/6/8 .d |  Close doors.  1:Sides  2:Tube   (L2) 3:FR  4:Flag",
@@ -1911,6 +1913,7 @@ public class distensionbot extends SubspaceBot {
         
         if( m_canScoreGoals ) {
             int taperAmount = 0;
+            //long timeBetweenGoals = 
             if( armyID == 0 ) {
                 m_goalsArmy0++;
                 taperAmount = m_goalsArmy0 - (m_goalsArmy1 + m_maxGoalsBeforeTaper); 
@@ -1989,9 +1992,9 @@ public class distensionbot extends SubspaceBot {
             }
             if( players > 0 ) {
                 if( taperAmount >= 0 )
-                    m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")  [Tapered; " + modString + "% of possible]");
+                    m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP award (avg " + (totalBonus / players) + ")  [Tapered; " + modString + " of possible]");
                 else
-                    m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP awarded for goal (avg " + (totalBonus / players) + ")");
+                    m_botAction.sendArenaMessage("Ballgame Score: [ " + m_goalsArmy0 + " - " + m_goalsArmy1 + " ]  Total " + totalBonus + " RP award (avg " + (totalBonus / players) + ")");
             }
         } else {
             m_botAction.sendOpposingTeamMessageByFrequency(armyID, "No points scored for goal (goals not presently active)." );
@@ -2833,8 +2836,10 @@ public class distensionbot extends SubspaceBot {
         // Check for shark and terr balance -- do not overbalance with one or the other.
         if( !m_refitMode && ( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) ) {
             boolean tooMany = checkForTooManyShips(p, shipNum);
-            if( tooMany )
+            if( tooMany ) {
                 m_botAction.specWithoutLock(p.getArenaPlayerID());
+                return;
+            }
         }
         if( lastShipNum > 0 ) {
             String shipname = (lastShipNum == 9 ? "Tactical Ops" : Tools.shipName(p.getShipNum()));
@@ -3320,7 +3325,7 @@ public class distensionbot extends SubspaceBot {
         if( p == null )
             return;
         if( p.getShipNum() == 9 ) {
-            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / 3 )" );
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "OP ( " + p.getCurrentOP() + " / " + p.getMaxOP() + " )   Comm authorizations ( " + p.getCurrentComms() + " / " + p.getMaxComms() + " )" );
             p.resetIdle();
         }
     }
@@ -8119,7 +8124,7 @@ public class distensionbot extends SubspaceBot {
                 if( tick % 3 == 0 ) {
                     if( currentComms < maxComms ) {
                         currentComms++;
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "+1 Comm Authorization  ( " + currentComms + " / " + DEFAULT_OP_MAX_COMMS + " )" );
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "+1 Comm Authorization  ( " + currentComms + " / " + maxComms + " )" );
                     }
                 }
 
@@ -11680,9 +11685,11 @@ public class distensionbot extends SubspaceBot {
                         //m_botAction.showObjectForPlayer(p.getArenaPlayerID(), LVZ_DEFEAT );
                     }
                 } else {
-                    msgRecipients.add( p.getArenaPlayerID() );
-                    msgs.add( "Battle lost.  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );                    
-                    msgSounds.add( SOUND_DEFEAT );
+                    if( p.getShipNum() > 0 ) {
+                        msgRecipients.add( p.getArenaPlayerID() );
+                        msgs.add( "Battle lost.  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );                    
+                        msgSounds.add( SOUND_DEFEAT );
+                    }
                 }
             }
         }
@@ -12195,6 +12202,7 @@ public class distensionbot extends SubspaceBot {
         }
         public void run() {
             m_canScoreGoals = true;
+            m_timeOfLastGoal = System.currentTimeMillis();
             m_goalsArmy0 = 0;
             m_goalsArmy1 = 1;
             m_botAction.warpAllRandomly();
@@ -12767,6 +12775,7 @@ public class distensionbot extends SubspaceBot {
                     isStarted = true;
                     isRunning = true;
                     m_canScoreGoals = false;
+                    m_timeOfLastGoal = 0;
                     String battle = "BATTLE " + roundNum;
                     if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
                         battle = "THE DECISIVE " + battle;
