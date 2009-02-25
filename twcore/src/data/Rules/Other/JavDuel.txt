@@ -24,6 +24,9 @@ blueout=0
 subdelaytime=2
 aliascheck=0
 
+# Can players use the !cap command to start game and claim captainship
+playerclaimcaptain=1
+
 matchtype=4
 storegame=0
 loggame=0

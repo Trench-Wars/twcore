@@ -10,6 +10,9 @@ rounds=1
 maxrounds=1
 aliascheck=0
 
+# Can players use the !cap command to start game and claim captainship
+playerclaimcaptain=1
+
 winby=timerace
 scoreboard_flags=1
 #this is to ensure you have a default setting if user doesn't define any
