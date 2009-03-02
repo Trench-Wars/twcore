@@ -369,7 +369,7 @@ public class distensionbot extends SubspaceBot {
     private final int m_maxGoalsBeforeTaper = 2;        // Max # goals "ahead" an army can be before they're penalized slightly
     private int m_goalsArmy0 = 0;
     private int m_goalsArmy1 = 0;
-    private long m_timeOfLastGoal = 0;
+    private long m_timeOfLastGoal = System.currentTimeMillis();
 
 
     // ***** LVZ OBJ# DEFINES ( < 100 reserved for flag timer counter )
@@ -1913,7 +1913,9 @@ public class distensionbot extends SubspaceBot {
         
         if( m_canScoreGoals ) {
             int taperAmount = 0;
-            //long timeBetweenGoals = 
+            long timeBetweenGoals;
+            float timeBetweenModifier = 1.0f;
+                                           
             if( armyID == 0 ) {
                 m_goalsArmy0++;
                 taperAmount = m_goalsArmy0 - (m_goalsArmy1 + m_maxGoalsBeforeTaper); 
@@ -1921,6 +1923,21 @@ public class distensionbot extends SubspaceBot {
                 m_goalsArmy1++;
                 taperAmount = m_goalsArmy1 - (m_goalsArmy0 + m_maxGoalsBeforeTaper); 
             }
+
+            if( m_timeOfLastGoal != 0 ) {
+                timeBetweenGoals = System.currentTimeMillis() - m_timeOfLastGoal;
+                if( timeBetweenGoals < 15000 )
+                    timeBetweenModifier = 0.5f;
+                if( timeBetweenGoals < 30000 )
+                    timeBetweenModifier = 0.8f;
+                if( timeBetweenGoals > 60000 )
+                    timeBetweenModifier = 1.25f;
+                if( timeBetweenGoals > 90000 )
+                    timeBetweenModifier = 1.5f;
+                if( timeBetweenGoals > 120000 )
+                    timeBetweenModifier = 2.0f;
+            }
+
             DistensionArmy winA = m_armies.get(armyID);
             DistensionArmy loseA = m_armies.get( winA.getOpposingArmyID() );
             if( winA == null || loseA == null )
@@ -1977,12 +1994,12 @@ public class distensionbot extends SubspaceBot {
                         if( rank > 70 )
                             bonus += 10000;
                         if( avariceWeight ) {
-                            bonus *= (weight * scoreMod);
+                            bonus *= (weight * scoreMod * timeBetweenModifier );
                             bonus /= 2;
                             totalBonus += p.addRankPoints( (int)bonus );
                             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "GOAL!  REWARD: " + (int)bonus + " RP  (-50% for severe team imbalance)" );
                         } else {
-                            bonus *= (weight * scoreMod);
+                            bonus *= (weight * scoreMod * timeBetweenModifier );
                             bonus += (rank * 2);      // Add in rank to make it seem more random
                             totalBonus += p.addRankPoints( (int)bonus );
                             m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "GOAL!  REWARD: " + (int)bonus + " RP" );
@@ -2307,7 +2324,7 @@ public class distensionbot extends SubspaceBot {
                 if( DEBUG )     // For DISPLAY purposes only; intentionally done after points added.
                     vengRP = Math.round((float)vengRP * DEBUG_MULTIPLIER);
                 if( pveng.wantsKillMsg() )
-                    m_botAction.sendPrivateMessage( pveng.getArenaPlayerID(), "Vengeful Bastard assist on " + loser.getName() + ": +" + vengRP + " RP" );
+                    m_botAction.sendPrivateMessage( pveng.getArenaPlayerID(), "Vengeful B*stard assist on " + loser.getName() + ": +" + vengRP + " RP" );
             }
         }
         // Determine if the victor's Leeching should fire (full charge prized after a kill)
@@ -5875,7 +5892,11 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.die( "mod-initiated by !shutdown");
                 }
             };
+            try {
             m_botAction.scheduleTask(dieTask, 1000);
+            } catch(IllegalStateException e) {
+                m_botAction.die( "mod-initiated by !shutdown" );
+            }
         } else {
             m_botAction.die( "!die by " + name );
         }
@@ -5991,6 +6012,9 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdSetMaxPlayers( String name, String msg ) {
+        return;
+        
+        /*
         boolean isBot = name.equals(m_botAction.getBotName());
         if( !isBot ) {
             DistensionPlayer p = m_players.get( name );
@@ -6024,6 +6048,7 @@ public class distensionbot extends SubspaceBot {
         if( !isBot )
             m_botAction.sendPrivateMessage(name, "Max players set to " + num + "." );
         m_slotManager.placeWaitingPlayersInEmptySlots();
+        */
     }
     
         
@@ -8557,7 +8582,7 @@ public class distensionbot extends SubspaceBot {
             if( shipNum == 9 && upgrade == 1 )
                 maxOP = (purchasedUpgrades[1] * 2) + DEFAULT_MAX_OP;
             if( shipNum == 9 && upgrade == 3 )
-                maxComms = (purchasedUpgrades[1] * 2) + DEFAULT_OP_MAX_COMMS;
+                maxComms = (purchasedUpgrades[3] * 2) + DEFAULT_OP_MAX_COMMS;
             shipDataSaved = false;
             return true;
         }
@@ -11989,7 +12014,7 @@ public class distensionbot extends SubspaceBot {
             cmdSaveData(m_botAction.getBotName(), "");
             m_refitMode = true;
             PRIZE_SPAM_DELAY = 100;     // Set in order to safely resize arena
-            cmdSetMaxPlayers(m_botAction.getBotName(), "100");
+            //cmdSetMaxPlayers(m_botAction.getBotName(), "100");
             intermissionTime = 5 * Tools.TimeInMillis.MINUTE;
             m_botAction.setTimer( 5 );
         } else {
@@ -12775,7 +12800,6 @@ public class distensionbot extends SubspaceBot {
                     isStarted = true;
                     isRunning = true;
                     m_canScoreGoals = false;
-                    m_timeOfLastGoal = 0;
                     String battle = "BATTLE " + roundNum;
                     if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
                         battle = "THE DECISIVE " + battle;
