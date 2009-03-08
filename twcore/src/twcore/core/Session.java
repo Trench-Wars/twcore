@@ -248,12 +248,18 @@ public class Session extends Thread {
         }
 
         m_state = NOT_RUNNING;
-        String classname = m_subspaceBot.getClass().getSimpleName();
-        if( dcMsg == null || dcMsg.equals("") )
-            Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
-        else
-            Tools.printLog( m_name + " (" + classname + ") is disconnecting: " + dcMsg );
-        m_subspaceBot.handleDisconnect();
+        
+        String classname = null;
+        
+        if(m_subspaceBot != null) {
+            classname = m_subspaceBot.getClass().getSimpleName();
+            
+            if( dcMsg == null || dcMsg.equals("") )
+                Tools.printLog( m_name + " (" + classname + ") is disconnecting..." );
+            else
+                Tools.printLog( m_name + " (" + classname + ") is disconnecting: " + dcMsg );
+            m_subspaceBot.handleDisconnect();
+        }
 
 		if(m_chatLog != null)
 		{
