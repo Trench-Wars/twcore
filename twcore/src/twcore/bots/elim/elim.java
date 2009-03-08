@@ -829,7 +829,6 @@ public class elim extends SubspaceBot {
     							", fnDK = fnDK + " + ep.doublekills +
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
-    							"fnAim = (CASE WHEN (fnAim >= 100) THEN 100 ELSE fnAim), " +
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
     							"fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
@@ -845,7 +844,6 @@ public class elim extends SubspaceBot {
     							", fnDK = fnDK + " + ep.doublekills +
     							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
-    							"fnAim = (CASE WHEN (fnAim >= 100) THEN 100 ELSE fnAim), " +
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
     							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
@@ -860,7 +858,6 @@ public class elim extends SubspaceBot {
     						", fnDK = fnDK + " + ep.doublekills +
     						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     						" ELSE ((fnKills/fnShots)*100) END), " + 
-    						"fnAim = (CASE WHEN (fnAim >= 100) THEN 100 ELSE fnAim), " +
     						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     						", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
     						"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
@@ -883,6 +880,7 @@ public class elim extends SubspaceBot {
     		elimPlayers.put(playerName, new ElimPlayer(playerName));
     		doWarpIntoElim(playerName);
     	}
+    	
     	try{
     		m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimGame (fnGameType, fcWinnerName, fnWinnerKills, fnWinnerDeaths, fnShipType, fnDeaths, fnNumPlayers, fnAvgRating, fdPlayed) VALUES( " + cfg_gameType + ", '" + Tools.addSlashesToString(winner.name.toLowerCase()) + "', " + winner.wins + ", " + winner.losses + ", " + shipType + ", " + deaths + ", " + losers.size() + ", " + avg_rating + ", NOW())");
     		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " AND (fnKills + fnDeaths) > " + INIT_RANKING + " ORDER BY fnRating DESC");
