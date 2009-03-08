@@ -463,7 +463,11 @@ public class BotQueue extends Thread {
                 m_botAction.sendChatMessage( 1, "AutoLoader in queue to spawn bot of type " + className );
         }
 
-        ChildBot newChildBot = new ChildBot( rawClassName, messager, childBot );
+        String creator;
+        if(messager != null)    creator = messager;
+        else                    creator = "AutoLoader";
+        
+        ChildBot newChildBot = new ChildBot( rawClassName, creator, childBot );
         addToBotCount( rawClassName, 1 );
         m_botStable.put( botName, newChildBot );
         m_spawnQueue.add( newChildBot );
