@@ -754,7 +754,7 @@ public class elim extends SubspaceBot {
     		}
     		freq++;
     	}
-    	if(elimPlayers.size() >= 30)
+    	if(elimPlayers.size() >= 15)
     		m_botAction.setDoors("00001000");
     	else
     		m_botAction.setDoors(255);
