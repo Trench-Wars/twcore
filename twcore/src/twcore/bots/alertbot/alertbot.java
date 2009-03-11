@@ -8,7 +8,6 @@ package twcore.bots.alertbot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import twcore.core.BotAction;
@@ -17,7 +16,6 @@ import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
@@ -27,7 +25,6 @@ public class alertbot extends SubspaceBot {
 
 
     BotSettings config;
-    boolean needsNotPlaying;
     String arena;
     int alertBotTypeID;
     String botType;
@@ -35,6 +32,7 @@ public class alertbot extends SubspaceBot {
     Pattern startPattern;
     String startMessage;
     String endMessage;
+    String chat;
 
 	boolean alertToChat = true;
 	
@@ -53,7 +51,13 @@ public class alertbot extends SubspaceBot {
         String botName = m_botAction.getBotName();
         alertBotTypeID = config.getInt( botName + "ID" );
         botType = config.getString( "type" + alertBotTypeID );
-        needsNotPlaying = config.getInt( "matchbot" + alertBotTypeID ) == 1;
+        chat = config.getString("AlertChat"+m_botAction.getBotNumber());
+        arena = config.getString( botName + "Arena" );
+        
+        // Is alerting to chat not something like "false"?
+        if(chat != null && (chat.equals("false") || chat.equals("f") || chat.equals("no") || chat.equals("n") || chat.equals("0"))) {
+            alertToChat = false;
+        }
 
         String startRegex = config.getString( "startregex" + alertBotTypeID );
         if ( startRegex == null ) {
@@ -101,17 +105,9 @@ public class alertbot extends SubspaceBot {
 
 
     public void handleEvent( LoggedOn event ){
-
-        String botName = m_botAction.getBotName();
-        arena = config.getString( botName + "Arena" );
-        String toChat = config.getString("AlertChat"+m_botAction.getBotNumber());
-        if(toChat != null) {
-        	if(toChat.equals("false") || toChat.equals("f") || toChat.equals("no") || toChat.equals("n") || toChat.equals("0"))
-        		alertToChat = false;
-        }
-        m_botAction.sendUnfilteredPublicMessage( "?chat="+ config.getString( botName + "Chat" )+",alerts,uberalerts" );
+        
+        m_botAction.sendUnfilteredPublicMessage( "?chat="+chat+",alerts" );
         m_botAction.joinArena( arena );
-
     }
 
     public void handleEvent( Message event){
@@ -127,20 +123,9 @@ public class alertbot extends SubspaceBot {
 
         else if(event.getMessageType() == Message.ARENA_MESSAGE){
             if(startPattern.matcher(message).matches()){
-                if ( needsNotPlaying ) {
-                    // find our mysterious matchbot
-                    Iterator<Player> iter = m_botAction.getPlayerIterator();
-                    if (iter != null) {
-                        while ( iter.hasNext() ) {
-                            String player = ((Player)iter.next()).getPlayerName();
-                            if (player.toLowerCase().startsWith("matchbot")) m_botAction.sendSmartPrivateMessage(player,"!notplaying");
-                        }
-                    }
-                }
                 if(alertToChat) {
 	                m_botAction.sendChatMessage(1, startMessage);
 	                m_botAction.sendChatMessage(2, startMessage);
-	                m_botAction.sendChatMessage(3, startMessage);
                 }
                 try {
                     ResultSet set = m_botAction.SQLQuery(sqlHost,"SELECT name FROM tblAlerts WHERE id = "+alertBotTypeID+"");
@@ -158,11 +143,6 @@ public class alertbot extends SubspaceBot {
                 m_botAction.sendChatMessage(2, returnMessage);
             }
             else{ return;}
-        }
-
-        // hack and a half, ty...ty
-        else if (event.getMessageType() == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("notplaying mode turned off, captains will be able to pick you") && m_botAction.getOperatorList().isSysop(m_botAction.getPlayerName(event.getPlayerID())) && m_botAction.getPlayerName(event.getPlayerID()).toLowerCase().startsWith("matchbot")) {
-            m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(event.getPlayerID()),"!notplaying");
         }
     }
 
@@ -195,9 +175,16 @@ public class alertbot extends SubspaceBot {
             m_botAction.die();
         }
         else if(message.equalsIgnoreCase("!help")){
-             m_botAction.sendSmartPrivateMessage(name, "!on - Activate a private alert for when the next "+ arena +" starts.");
-             m_botAction.sendSmartPrivateMessage(name, "!off - Turn the alerts off.");
-             m_botAction.sendSmartPrivateMessage(name, "!help - Bring up this message.");
+            String[] helpmenu = {
+                    "Hi, I'm a bot that alerts you when the next "+arena+" starts.",
+                    " !on   - turns on alerts in a private message to you",
+                    " !off  - turns off alerts",
+                    " !help - this message",
+                    "`",
+                    "Players on the ?chat="+chat+" or ?chat=alerts will also be",
+                    "alerted through the chat when the next game begins."
+            };
+            m_botAction.smartPrivateMessageSpam(name, helpmenu);
         }
     }
 
