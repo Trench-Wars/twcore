@@ -73,14 +73,10 @@ public class messagebot extends SubspaceBot
 	HashMap <String,Channel>channels;
 	//HashMap defaultChannel;
 	HashSet <String>ops;
-	HashMap <Integer,NewsArticle>news;
-	ArrayList <Integer>newsIDs;
-	int newsID;
 	CommandInterpreter m_CI;
-	TimerTask messageDeleteTask, messageBotSync, newsTask, newsChatTask;
+	TimerTask messageDeleteTask, messageBotSync;
 	public static final String IPCCHANNEL = "messages";
 	boolean bug = false;
-	boolean newsAlerts = false;
 	public String database = "website";//If you change this you must also change line ~1426
 
 	/** Constructor, requests Message and Login events.
@@ -95,16 +91,11 @@ public class messagebot extends SubspaceBot
 		channels = new HashMap<String,Channel>();
 		//defaultChannel = new HashMap();
 		ops = new HashSet<String>();
-		news = new HashMap<Integer,NewsArticle>();
-		newsIDs = new ArrayList<Integer>();
-		newsID = 0;
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
 		createTasks();
 		m_botAction.scheduleTaskAtFixedRate(messageDeleteTask, 30 * 60 * 1000, 30 * 60 * 1000);
 		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 2 * 60 * 1000, 2 * 60 * 1000);
-		m_botAction.scheduleTaskAtFixedRate(newsTask, 15 * 60 * 1000, 15 * 60 * 1000);
-		m_botAction.scheduleTaskAtFixedRate(newsChatTask, 15 * 60 * 1000, 15 * 60 * 1000);
 	}
 
 	/** This method handles an InterProcessEvent
@@ -175,17 +166,10 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!me",		 acceptedMessages, this, "myChannels");
         m_CI.registerCommand( "!die",		 acceptedMessages, this, "handleDie");
         m_CI.registerCommand( "!check",		 acceptedMessages, this, "playerLogin");
-        m_CI.registerCommand( "!addnews",	 acceptedMessages, this, "addNewsItem");
-        m_CI.registerCommand( "!delnews",	 acceptedMessages, this, "deleteNewsItem");
-        m_CI.registerCommand( "!readnews",	 acceptedMessages, this, "readNewsItem");
-        m_CI.registerCommand( "!bug",		 acceptedMessages, this, "bugMe");
-        m_CI.registerCommand( "!debug",		 acceptedMessages, this, "stopBuggingMe");
-        m_CI.registerCommand( "!alerts",	 acceptedMessages, this, "announceToAlerts");
         m_CI.registerCommand( "!ignore",	 acceptedMessages, this, "ignorePlayer");
         m_CI.registerCommand( "!unignore",	 acceptedMessages, this, "unignorePlayer");
         m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
         m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
-        m_CI.registerCommand( "!listnews",	 acceptedMessages, this, "listNews");
         m_CI.registerCommand( "!regall",	 acceptedMessages, this, "registerAll");
 
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing");
@@ -680,18 +664,12 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !accept <channel>:<name>      - Accepts <name>'s request to join <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !decline <channel>:<name>     - Declines <name>'s request to join <channel>.");
 		    if(m_botAction.getOperatorList().isBot(name))   m_botAction.sendSmartPrivateMessage(name, "    !create <channel>             - Creates a channel with the name <channel>.");
-	    } else if(message.toLowerCase().startsWith("n")) {
-	    	m_botAction.sendSmartPrivateMessage(name, "News interface commands:");
-	    	m_botAction.sendSmartPrivateMessage(name, "    !readnews <#>                 - PM's you news article #<#>.");
-	    	m_botAction.sendSmartPrivateMessage(name, "    !listnews                     - PM's you all the news article numbers.");
 	    } else if((m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) && message.toLowerCase().startsWith("smod")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Smod+ commands:");
-	        m_botAction.sendSmartPrivateMessage(name, "    !addnews <news>:<url>         - Adds a news article with <news> as the content and <url> for more info.");
-	        m_botAction.sendSmartPrivateMessage(name, "    !delnews <#>                  - Deletes news id number <#>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !go <arena>                   - Sends messagebot to <arena>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !die                          - Kills messagebot.");
         } else {
-	    	String defaultHelp = "PM me with !help channel for channel system help, !help message for message system help, !help news for news system help";
+	    	String defaultHelp = "PM me with !help channel for channel system help, !help message for message system help";
 	    	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
 	    		defaultHelp += ", !help smod for SMod command help.";
 	    	else
@@ -717,8 +695,6 @@ public class messagebot extends SubspaceBot
 	 */
 	public void handleEvent(LoggedOn event)
 	{
-		m_botAction.sendUnfilteredPublicMessage("?chat=news,superalerts");
-		m_botAction.sendUnfilteredPublicMessage("?chat=news,superalerts");
 		try {
 			m_botAction.joinArena(m_botAction.getBotSettings().getString("Default arena"));
 			m_botAction.ipcSubscribe(IPCCHANNEL);
@@ -748,21 +724,6 @@ public class messagebot extends SubspaceBot
                 m_botAction.SQLClose(results);
 			} catch(SQLException e) { Tools.printStackTrace( e ); }
 
-			query = "SELECT * FROM tblBotNews ORDER BY fnID DESC";
-			try {
-				ResultSet results = m_botAction.SQLQuery(database, query);
-				while(results.next()) {
-					String name = results.getString("fcName");
-					String content = results.getString("fcNews");
-					String date = results.getString("fdTime");
-					String url = results.getString("fcURL");
-					int id = results.getInt("fnID");
-					NewsArticle na = new NewsArticle(name, content, date, id, url);
-					news.put(id, na);
-					newsIDs.add(id);
-				}
-                m_botAction.SQLClose(results);
-			} catch(SQLException e) { Tools.printStackTrace(e); }
 			//long after = Runtime.getRuntime().freeMemory();
 			//long memUsed = before - after;
 		} catch(Exception e) {}
@@ -1262,176 +1223,9 @@ public class messagebot extends SubspaceBot
 			}
 		};
 
-        newsTask = new TimerTask() {
-        	public void run() {
-        		nextNews();
-        	}
-        };
-
-        newsChatTask = new TimerTask() {
-        	public void run() {
-        		newsAlerts();
-        	}
-        };
+       
 	}
 
-    /** Adds a news item.
-     *  @param name Name of player adding.
-     *  @param message Stuff...
-     */
-     public void addNewsItem(String name, String message) {
-     	if(!m_botAction.getOperatorList().isHighmod(name) && !ops.contains(name.toLowerCase()))
-     		return;
-     	String contents;
-     	String writer = name;
-     	String url;
-
-     	String pieces[] = message.split(":", 2);
-     	if(pieces.length == 2) {
-     		contents = pieces[0];
-     		url = pieces[1];
-     	} else {
-     		contents = message;
-     		url = "";
-     	}
-     	int id;
-     	String date;
-     	String query = "INSERT INTO tblBotNews (fnID, fcName, fcNews, fdTime, fcURL) VALUES (0, '"+Tools.addSlashesToString(writer)+"', ";
-     	query += "'"+Tools.addSlashesToString(contents)+"', NOW(), '"+Tools.addSlashesToString(url) +"')";
-     	String query2 = "SELECT fnID, fdTime FROM tblBotNews WHERE fcName = '"+Tools.addSlashesToString(writer)+"' ORDER BY fnID DESC";
-     	try {
-     		m_botAction.SQLQuery(database, query);
-     		ResultSet results = m_botAction.SQLQuery(database, query2);
-     		if(results.next()) {
-	     		date = results.getString("fdTime");
-	     		id = results.getInt("fnID");
-	     		m_botAction.SQLClose(results);
-	     	} else {
-	     	        m_botAction.SQLClose(results);
-	     		return;
-	     	}
-     	} catch(Exception e) { return; }
-     	NewsArticle na = new NewsArticle(writer, contents, date, id, url);
-     	news.put(id, na);
-     	newsIDs.add(id);
-     	m_botAction.sendSmartPrivateMessage(name, "News item added.");
-     }
-
-    /** Deletes a news item
-     *  @param name Name of player
-     *  @param id News id
-     */
-     public void deleteNewsItem(String name, String id2) {
-     	if(!m_botAction.getOperatorList().isHighmod(name) && !ops.contains(name.toLowerCase()))
-     		return;
-     	int id = 9283749;
-     	try {
-     		id = Integer.parseInt(id2);
-     	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Someone needs to go back to 1st grade to learn what a number is."); }
-     	if(id == 9283749) return;
-
-     	if(news.remove(id) != null) {
-     		String query = "DELETE FROM tblBotNews WHERE fnID = " + id;
-     		try {
-     		    m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
-     		} catch(Exception e) {
-                    m_botAction.sendSmartPrivateMessage(name, "Delete failed.");
-                    return;
-                }
-     		m_botAction.sendSmartPrivateMessage(name, "News article deleted.");
-     		newsIDs.remove(newsIDs.indexOf(id));
-     	} else {
-     		m_botAction.sendSmartPrivateMessage(name, "Invalid news id.");
-     	}
-     }
-
-    /** PM's a player with a news article.
-     *  @param name Name of player
-     *  @param id ID of article.
-     */
-     public void readNewsItem(String name, String id2) {
-     	int id = 9283749;
-     	try {
-     		id = Integer.parseInt(id2);
-     	} catch(Exception e) { m_botAction.sendSmartPrivateMessage(name, "Someone needs to go back to 1st grade to learn what a number is."); }
-     	if(id == 9283749) return;
-
-     	NewsArticle na = news.get(id);
-     	if(na == null) {
-     		m_botAction.sendSmartPrivateMessage(name, "Invalid news id.");
-     		return;
-     	}
-
-     	m_botAction.sendSmartPrivateMessage(name, na.toString());
-     	if(!na.url.equals(""))
-     		m_botAction.sendSmartPrivateMessage(name, "For more information, visit: " + na.url);
-     }
-
-    /** Gets next news article in queue.
-     */
-     public void nextNews() {
-        /*
-     	if(bug) {
-     		m_botAction.sendSmartPrivateMessage("ikrit <er>", "I should have just sent a news thing... I have " + newsIDs.size() + " news articles.");
-     	}
-        */
-     	if(newsID >= newsIDs.size()) newsID = 0;
-     	if(newsIDs.isEmpty()) return;
-
-     	NewsArticle na = news.get(newsIDs.get(newsID));
-     	m_botAction.sendChatMessage(na.toString());
-     	if(!na.url.equals(""))
-     		m_botAction.sendChatMessage("For more information, click on this link: " + na.url);
-
-     	newsID++;
-
-
-     }
-
-     public void listNews(String name, String blank) {
-     	String message = "";
-
-     	for(int k = 0;k < newsIDs.size();k++) {
-     		message += newsIDs.get(k) + ", ";
-     	}
-     	m_botAction.sendSmartPrivateMessage(name, "News IDs: ");
-     	m_botAction.sendSmartPrivateMessage(name, message);
-     }
-
-    /** Alternates the arena message between news and superalerts.
-     */
-     public void newsAlerts() {
-  		 m_botAction.sendArenaMessage("To receive news reports, join ?chat=news. -MessageBot");
-  		 newsAlerts = !newsAlerts;
-    }
-
-    /** Bugs Ikrit
-     */
-     public void bugMe(String name, String bleh) {
-         /*
-     	if(name.toLowerCase().startsWith("ikrit"))
-     		bug = true;
-        */
-     }
-
-    /** Stops bugging Ikrit
-     */
-     public void stopBuggingMe(String name, String bleh) {
-        /*
-     	if(name.toLowerCase().startsWith("ikrit"))
-     		bug = false;
-        */
-     }
-
-    /** Sends a message to ?chat=superalerts
-     */
-     public void announceToAlerts(String name, String details) {
-    	if(!m_botAction.getOperatorList().isSysop(name)) {
-    		return;
-    	}
-
-    	m_botAction.sendChatMessage(2, details);
-     }
 
      public void ignorePlayer(String name, String player) {
      	try {
@@ -2094,29 +1888,5 @@ class Channel
 	 	}
 	 }
 
-}
-
-class NewsArticle
-{
-	String writer;
-	String contents;
-	String d;
-	int id;
-	String url;
-
-	public NewsArticle(String writer, String contents, String d, int id, String url)
-	{
-		this.writer = writer;
-		this.contents = contents;
-		this.d = d;
-		this.id = id;
-		this.url = url;
-	}
-
-	public String toString()
-	{
-		String news = "Article #" + id + ": " + contents + " -" + writer;
-		return news;
-	}
 }
 
