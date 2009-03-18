@@ -1912,14 +1912,15 @@ public class distensionbot extends SubspaceBot {
         int armyID = event.getFrequency();
         
         if( m_canScoreGoals ) {
-            int taperAmount = 0;
+            int taperAmount = -1;
             long timeBetweenGoals;
             float timeBetweenModifier = 1.0f;
                                            
             if( armyID == 0 ) {
                 m_goalsArmy0++;
                 taperAmount = m_goalsArmy0 - (m_goalsArmy1 + m_maxGoalsBeforeTaper); 
-            } else {
+            }
+            if( armyID == 1 ) {
                 m_goalsArmy1++;
                 taperAmount = m_goalsArmy1 - (m_goalsArmy0 + m_maxGoalsBeforeTaper); 
             }
@@ -2827,9 +2828,12 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You're already in that ship." );
         if( !p.shipIsAvailable( shipNum ) )
             throw new TWCoreException( "You don't own that ship.  Check your !hangar before you try flying something you don't have." );
-        if( p.isRespawning() ) {
-            p.isRespawning = false;
-        }
+        
+        if( p.isRespawning() )
+            throw new TWCoreException( "You can't switch ships while rearming.  Docking your ship..." );
+        
+        p.isRespawning = false;
+        p.specialRespawn = false;
         m_prizeQueue.removePlayer(p);
 
         // Check if Tactical Ops position is available
@@ -4240,13 +4244,14 @@ public class distensionbot extends SubspaceBot {
 
         p.setIgnoreShipChanges(true);
         if( p.getShipNum() == Tools.Ship.WARBIRD )
-            m_botAction.setShip( name, 2 );
+            m_botAction.setShip( p.getArenaPlayerID(), 2 );
         else
-            m_botAction.setShip( name, 1 );
-        m_botAction.setShip( name, p.getShipNum() );
+            m_botAction.setShip( p.getArenaPlayerID(), 1 );
+        m_botAction.setShip( p.getArenaPlayerID(), p.getShipNum() );
+        m_botAction.shipReset(p.getArenaPlayerID());
         p.prizeUpgradesNow();
         m_mineClearedPlayers.add( name );
-        m_botAction.sendPrivateMessage( name, "Mines cleared.  You may do this once per battle.  Use safety areas in rearmament zone to clear mines manually." );
+        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Mines cleared.  You may do this once per battle.  Use safety areas in rearmament zone to clear mines manually." );
     }
 
     /**
@@ -8624,6 +8629,7 @@ public class distensionbot extends SubspaceBot {
             }
             this.shipNum = shipNum;
             isRespawning = false;
+            specialRespawn = false;
             idleTicksPiloting = 0;
             idleTicksDocked = 0;
             successiveKills = 0;
@@ -12229,7 +12235,7 @@ public class distensionbot extends SubspaceBot {
             m_canScoreGoals = true;
             m_timeOfLastGoal = System.currentTimeMillis();
             m_goalsArmy0 = 0;
-            m_goalsArmy1 = 1;
+            m_goalsArmy1 = 0;
             m_botAction.warpAllRandomly();
             m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time + 1000) /1000 ) + ".  Rules: Flags worth no points; goals earn RP.", Tools.Sound.VICTORY_BELL );
         }
