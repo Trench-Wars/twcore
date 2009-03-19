@@ -7517,10 +7517,10 @@ public class distensionbot extends SubspaceBot {
                     return success;
                 }
                 if( r.next() ) {
+                    dbPlayerID = r.getInt("fnID");
                     banned = r.getString( "fcBanned" ).equals( "y" );
                     if( banned == true )
                         return 0;
-                    dbPlayerID = r.getInt("fnID");
                     armyID = r.getInt( "fnArmyID" );
                     // Default Op controls for upper staff
                     opStatus = r.getInt( "fnOperator" );
@@ -8693,7 +8693,10 @@ public class distensionbot extends SubspaceBot {
          */
         public void unban() {
             try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fnID='" + dbPlayerID + "'" );
+                if( dbPlayerID != -1 ) 
+                    m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fnID='" + dbPlayerID + "'" );
+                else 
+                    m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fcName='" + name + "'" );
                 m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
                 banned = false;
             } catch (SQLException e ) {
