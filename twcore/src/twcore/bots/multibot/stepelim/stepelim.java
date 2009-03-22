@@ -652,13 +652,13 @@ public class stepelim extends MultiModule {
             roundNumber++;
             if (m_botAction.getPlayingFrequencySize(FREQ_TEAMONE) == 0) {
                 setSpectatorFreq(teamOne);
-                if (m_botAction.getPlayingFrequencySize(FREQ_TEAMTWO) != 1)
+                if (m_botAction.getFrequencySize(FREQ_TEAMTWO) != 1)
                     roundPre(teamTwo);
                 else
                     gameEnd(teamTwo);
             } else {
                 setSpectatorFreq(teamTwo);
-                if (m_botAction.getPlayingFrequencySize(FREQ_TEAMONE) != 1)
+                if (m_botAction.getFrequencySize(FREQ_TEAMONE) != 1)
                     roundPre(teamOne);
                 else
                     gameEnd(teamOne);
