@@ -16,6 +16,8 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -65,7 +67,7 @@ public class distensionbot extends SubspaceBot {
                                                            //   (for beta-testers, bug reporters, etc.)
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
-    private final int MESSAGE_SPAM_DELAY = 75;             // Delay in ms between msgs in list, when spammed to single
+    private final int MESSAGE_SPAM_DELAY = 150;             // Delay in ms between msgs in list, when spammed to single
     private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
     private int PRIZE_SPAM_DELAY = 25;                     // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
@@ -97,6 +99,11 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
     private final int RANK_0_STRENGTH = 50;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+
+    private final int ARMY_SYSTEM_STATIC = 0;              // Armies recorded in DB and do not change
+    private final int ARMY_SYSTEM_SEMISTATIC = 1;          // Player gets army for the day/week/etc.
+    private final int ARMY_SYSTEM_NONSTATIC = 2;           // Armies balanced on the fly by bot
+    private int m_armySystem = ARMY_SYSTEM_STATIC;      // Which army system is being used
 
     private final int RANK_REQ_ASSAULT_SHIP2 = 20;
     private final int RANK_REQ_ASSAULT_SHIP3 = 5;
@@ -190,7 +197,7 @@ public class distensionbot extends SubspaceBot {
     private final int BOT_FR_NAV =   728;
     private final int LEFT_GOAL_NAV  = 338;
     private final int RIGHT_GOAL_NAV = 684;
-    
+
 
     // Ops !warp coords
     public final int OPS_TOP_WARP1_X = 512; // mid
@@ -240,7 +247,7 @@ public class distensionbot extends SubspaceBot {
     private HashMap <Integer,DistensionArmy>m_armies;       // In-game data on armies  (ID -> Army)
 
     private PrizeQueue m_prizeQueue;                        // Queuing system for prizes (so as not to crash bot)
-    private UniversalSpamTask m_spamQueue;                  // Queue shared between all players for spamming msgs (!armory, !help, etc) 
+    private UniversalSpamTask m_spamQueue;                  // Queue shared between all players for spamming msgs (!armory, !help, etc)
     private SpecialAbilityTask m_specialAbilityPrizer;      // Prizer for special abilities (run once every 30s)
     private TimerTask m_entranceWaitTask;                   // For when bot first enters the arena
     private TimerTask m_periodicTasks;                      // Combined task for tasks that execute periodically
@@ -266,6 +273,7 @@ public class distensionbot extends SubspaceBot {
     private final int ASSIST_ADVERT_CHECK_FREQUENCY = 20;   // How many seconds between checking for an assist advert
     private final float ADVERT_WEIGHT_IMBALANCE = 0.87f;    // At what point to advert that there's an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.89f;    // At what point an army is considered imbalanced
+    private final float AUTOBALANCE_WEIGHT_IMBALANCE = 0.95f; // At what point an army is considered imbalanced
     private final int ASSIST_NUMBERS_IMBALANCE = 3;         // # of pilot difference before considered imbalanced
     private final int ASSIST_REWARD_TIME = (int)(1000 * 60 * 1.5); // Time between adverting and rewarding assists
     private final int TERRSHARK_REWARD_TIME = 1000 * 60 * 1;// Time between rewarding new terrs/sharks
@@ -298,6 +306,7 @@ public class distensionbot extends SubspaceBot {
     public final int ABILITY_PRISMATIC_ARRAY = -14;
     public final int ABILITY_FIREBLOOM = -15;
     public final int ABILITY_SUMMONING_AUTH = -16;
+    public final int ABILITY_BRICK = -17;
 
 
     // TACTICAL OPS DATA
@@ -335,7 +344,7 @@ public class distensionbot extends SubspaceBot {
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
     private boolean m_singleFlagMode;                   // True if flag mode is working on just a single flag
-    
+
     private int m_flagRules = 0;                        // 0: Use original rules (pub-style timer)
                                                         // 1: Use hybrid rules (tug-a-war)
     private int m_freq0Score, m_freq1Score;             // # rounds won
@@ -363,7 +372,7 @@ public class distensionbot extends SubspaceBot {
     private Objset flagObjs;                            // For keeping track of flag-related objs
     private Objset playerObjs;                          // For keeping track of player-specific objs
 
-    
+
     // SOCCER
     private boolean m_canScoreGoals;                    // True if goals may be scored
     private final int m_maxGoalsBeforeTaper = 2;        // Max # goals "ahead" an army can be before they're penalized slightly
@@ -476,9 +485,9 @@ public class distensionbot extends SubspaceBot {
 
         int players = m_botSettings.getInt("MaxPlayers");
         if( players > 0 )
-            m_maxPlayers = players;        
+            m_maxPlayers = players;
         doConstructorTasks();
-        
+
     }
 
     /**
@@ -491,7 +500,7 @@ public class distensionbot extends SubspaceBot {
         if( Tools.isAllDigits( args[0] ) ) {
             Integer numPlayers = Integer.parseInt( args[0] );
             m_maxPlayers = numPlayers;
-        }        
+        }
         m_botSettings = m_botAction.getBotSettings();
         doConstructorTasks();
     }
@@ -499,7 +508,7 @@ public class distensionbot extends SubspaceBot {
     private void doConstructorTasks() {
 
         m_database = m_botSettings.getString("Database");
-        
+
         requestEvents();
         registerCommands();
         m_botAction.SQLBackgroundQuery(m_database, null, "SELECT 1"); // Start the car.
@@ -603,7 +612,7 @@ public class distensionbot extends SubspaceBot {
         m_botAction.setMessageLimit( 8, false );
         m_botAction.setReliableKills( 1 );
         m_botAction.setPlayerPositionUpdating( 675 );
-        m_botAction.setLowPriorityPacketCap( 10 );
+        m_botAction.setLowPriorityPacketCap( 8 );
         m_botAction.specAll();
         m_botAction.resetFlagGame();
         m_botAction.setDoors( 240 ); // All bottom doors closed
@@ -646,19 +655,22 @@ public class distensionbot extends SubspaceBot {
         try {
             ResultSet r = m_botAction.SQLQuery( m_database, "SELECT * FROM tblDistensionGenData WHERE fnSettingNum='" + config + "'" );
             if( r != null && r.next() ) {
-                java.sql.Timestamp resetTime = r.getTimestamp( "fdNextResetTime" );
-                java.sql.Timestamp currentTime = new java.sql.Timestamp(System.currentTimeMillis());
+                Timestamp resetTime = r.getTimestamp( "fdNextResetTime" );
+                Timestamp currentTime = new Timestamp(System.currentTimeMillis());
                 m_botAction.SQLClose( r );
                 if( currentTime.after( resetTime ) ) {
                     m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
-                    java.text.SimpleDateFormat format = new java.text.SimpleDateFormat("yyyy-MM-dd");
-                    java.sql.Timestamp newResetTime = new java.sql.Timestamp( resetTime.getTime() + Tools.TimeInMillis.DAY );
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");                    
+                    Timestamp newResetTime = new Timestamp( resetTime.getTime() + Tools.TimeInMillis.DAY );
+                    while( newResetTime.before( currentTime ) ) {   // Make up for any skipped days.
+                        newResetTime = new Timestamp( newResetTime.getTime() + Tools.TimeInMillis.DAY );
+                    }
                     String query = "UPDATE tblDistensionGenData SET fdNextResetTime='" + format.format(newResetTime) + "' WHERE fnSettingNum='" + config + "'";
                     m_botAction.SQLQueryAndClose( m_database, query );
                     m_botAction.sendRemotePrivateMessage( "MessageBot", "!lmessage qan:Reset query: " + query );
                 }
             }
-        } catch (SQLException e ) {  }
+        } catch (SQLException e ) { }
     }
 
     /**
@@ -673,7 +685,7 @@ public class distensionbot extends SubspaceBot {
 
         m_spamQueue = new UniversalSpamTask();
         m_botAction.scheduleTaskAtFixedRate(m_spamQueue, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
-        
+
         m_entranceWaitTask = new TimerTask() {
             public void run() {
                 m_readyForPlay = true;
@@ -830,7 +842,7 @@ public class distensionbot extends SubspaceBot {
 
                 // Assist advert
                 if( runs % ASSIST_ADVERT_CHECK_FREQUENCY == 0 ) {
-                    if( !checkForAssistAdvert || m_refitMode )
+                    if( m_refitMode )
                         return;
                     DistensionArmy army0 = m_armies.get(0);
                     DistensionArmy army1 = m_armies.get(1);
@@ -845,16 +857,9 @@ public class distensionbot extends SubspaceBot {
                     float armyWeight0 = armyStr0 / armyStr1;
                     float armyWeight1 = armyStr1 / armyStr0;
                     int helpOutArmy = -1;
-                    int msgArmy = -1;
-                    if( armyWeight1 < ADVERT_WEIGHT_IMBALANCE ) {
-                        helpOutArmy = 1;
-                        msgArmy = 0;
-                    } else if( armyWeight0 < ADVERT_WEIGHT_IMBALANCE ) {
-                        helpOutArmy = 0;
-                        msgArmy = 1;
-                    }
-                    
-                    if( (m_singleFlagMode && m_flagOwner[0] == helpOutArmy) ||
+
+                    if( m_armySystem != ARMY_SYSTEM_NONSTATIC &&
+                        (m_singleFlagMode && m_flagOwner[0] == helpOutArmy) ||
                         (!m_singleFlagMode && m_flagOwner[0] == helpOutArmy && m_flagOwner[1] == helpOutArmy ) ) {
                         // If they're holding both flags, they don't need help.
                         // However, don't reset assist advert time so that we check again in 20sec
@@ -877,6 +882,39 @@ public class distensionbot extends SubspaceBot {
                                 army1Shark = true;
                         }
                     }
+                    
+                    
+                    // AUTO-SWAP SYSTEM
+                    if( m_armySystem == ARMY_SYSTEM_NONSTATIC ) {
+                        // Do swapping here.
+                        
+                        // First: are numbers imbalanced?  More than 2
+                        if( army0.getPilotsInGame() > army1.getPilotsInGame() + 1 ) {
+                            
+                        } else if( army0.getPilotsInGame() > army1.getPilotsInGame() + 1 ) {
+                            
+                        }
+                        
+                        
+                        if( armyWeight1 < AUTOBALANCE_WEIGHT_IMBALANCE )
+                            helpOutArmy = 1;
+                        else if( armyWeight0 < AUTOBALANCE_WEIGHT_IMBALANCE )
+                            helpOutArmy = 0;
+                        
+                        
+                        return;
+                    }
+                    
+                    
+                    // ASSIST SYSTEM                    
+                    int msgArmy = -1;
+                    if( armyWeight1 < ADVERT_WEIGHT_IMBALANCE ) {
+                        helpOutArmy = 1;
+                        msgArmy = 0;
+                    } else if( armyWeight0 < ADVERT_WEIGHT_IMBALANCE ) {
+                        helpOutArmy = 0;
+                        msgArmy = 1;
+                    }
 
                     if( helpOutArmy != -1 ) {
                         // Attempt to return an assister who is needed back on freq;
@@ -888,8 +926,8 @@ public class distensionbot extends SubspaceBot {
                                 if( p.getStrength() <= (maxStrToAssist - RANK_0_STRENGTH) ) {
                                     // Don't take the only Terr!
                                     if( p.getShipNum() != Tools.Ship.TERRIER ) {
-                                        
-                                        /*  Experiment: Terrs never auto-switched 
+
+                                        /*  Experiment: Terrs never auto-switched
                                         ||
                                             ( (helpOutArmy == 0 && (army0Terrs > (m_singleFlagMode?1:2) ) ) ||
                                                     (helpOutArmy == 1 && (army1Terrs > (m_singleFlagMode?1:2)) ) ) ) {
@@ -912,7 +950,7 @@ public class distensionbot extends SubspaceBot {
                                                 // Choose the weakest ship if they're both non-Terr
                                             if( p.getStrength() < bestPlayer.getStrength() )
                                                 bestPlayer = p;
-                                            
+
                                             // }
                                         }
                                     }
@@ -925,6 +963,9 @@ public class distensionbot extends SubspaceBot {
                         } catch (TWCoreException e ) {
                             bestPlayer = null;
                         }
+                        
+                        if( !checkForAssistAdvert )
+                            return;
 
                         if( bestPlayer == null ) {
                             if( maxStrToAssist > RANK_0_STRENGTH )  // Only display if assisting is possible
@@ -932,6 +973,8 @@ public class distensionbot extends SubspaceBot {
                         }
                         // Check if teams are imbalanced in numbers, if not strength
                     } else {
+                        if( !checkForAssistAdvert )
+                            return;
                         if( army0.getPilotsInGame() <= army1.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
                             m_botAction.sendOpposingTeamMessageByFrequency( 0, "NOTICE: Your army has fewer pilots but is close in strength; if you need help, pilot lower-ranked ships to allow !assist." );
                         else if( army1.getPilotsInGame() <= army0.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
@@ -1915,14 +1958,14 @@ public class distensionbot extends SubspaceBot {
             int taperAmount = -1;
             long timeBetweenGoals;
             float timeBetweenModifier = 1.0f;
-                                           
+
             if( armyID == 0 ) {
                 m_goalsArmy0++;
-                taperAmount = m_goalsArmy0 - (m_goalsArmy1 + m_maxGoalsBeforeTaper); 
+                taperAmount = m_goalsArmy0 - (m_goalsArmy1 + m_maxGoalsBeforeTaper);
             }
             if( armyID == 1 ) {
                 m_goalsArmy1++;
-                taperAmount = m_goalsArmy1 - (m_goalsArmy0 + m_maxGoalsBeforeTaper); 
+                taperAmount = m_goalsArmy1 - (m_goalsArmy0 + m_maxGoalsBeforeTaper);
             }
 
             if( m_timeOfLastGoal != 0 ) {
@@ -1943,17 +1986,17 @@ public class distensionbot extends SubspaceBot {
             DistensionArmy loseA = m_armies.get( winA.getOpposingArmyID() );
             if( winA == null || loseA == null )
                 return;
-            
-            float winnerStr = winA.getTotalStrength();         
+
+            float winnerStr = winA.getTotalStrength();
             float loserStr = loseA.getTotalStrength();
-            float weight = loserStr / winnerStr;            
+            float weight = loserStr / winnerStr;
             boolean avariceWeight = false;
-            
+
             if( weight < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
                 avariceWeight = true;
                 taperAmount++;
             }
-            
+
             float scoreMod = 1.0f;
             String modString = "";
             if( taperAmount >= 0 ) {
@@ -1966,7 +2009,7 @@ public class distensionbot extends SubspaceBot {
                 default: scoreMod = .1f; modString="10%"; break;
                 }
             }
-            
+
             int players = 0;
             int totalBonus = 0;
             for( DistensionPlayer p : m_players.values() ) {
@@ -1981,29 +2024,29 @@ public class distensionbot extends SubspaceBot {
                         int rank = p.getRank();
                         float bonus = 5;
                         if( rank > 10 )
-                            bonus += 30;
+                            bonus += 20;
                         if( rank > 20 )
-                            bonus += 60;
+                            bonus += 40;
                         if( rank > 30 )
-                            bonus += 90;
+                            bonus += 60;
                         if( rank > 40 )
-                            bonus += 150;
+                            bonus += 100;
                         if( rank > 50 )
-                            bonus += 500;
+                            bonus += 300;
                         if( rank > 60 )
-                            bonus += 2500;
+                            bonus += 1500;
                         if( rank > 70 )
-                            bonus += 10000;
+                            bonus += 2500;
                         if( avariceWeight ) {
                             bonus *= (weight * scoreMod * timeBetweenModifier );
                             bonus /= 2;
                             totalBonus += p.addRankPoints( (int)bonus );
-                            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "GOAL!  REWARD: " + (int)bonus + " RP  (-50% for severe team imbalance)" );
+                            m_spamQueue.addMsg( p.getArenaPlayerID(), "GOAL!  REWARD: " + (int)bonus + " RP  (-50% for severe team imbalance)" );
                         } else {
                             bonus *= (weight * scoreMod * timeBetweenModifier );
                             bonus += (rank * 2);      // Add in rank to make it seem more random
                             totalBonus += p.addRankPoints( (int)bonus );
-                            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "GOAL!  REWARD: " + (int)bonus + " RP" );
+                            m_spamQueue.addMsg( p.getArenaPlayerID(), "GOAL!  REWARD: " + (int)bonus + " RP" );
                         }
                     }
                 }
@@ -2239,7 +2282,7 @@ public class distensionbot extends SubspaceBot {
             // Check if M.A.S.T.E.R. Drive should fire (every 5 successive kills, has a chance)
             victor.checkMasterDrive();
         }
-        
+
         // Experimental: sharks get additional points for kills.
         if( victorShip == Tools.Ship.SHARK ) {
             points *= 1.3;
@@ -2514,6 +2557,9 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdDefect( String name, String msg ) {
+        if( m_armySystem == ARMY_SYSTEM_NONSTATIC )
+            throw new TWCoreException( "Army balance is being manipulated by a Higher Power.  You need not defect." );
+        
         if( msg == null )
             throw new TWCoreException( "If you want to defect to one of the other !armies, you've got to at least have an idea which one..." );
 
@@ -2828,10 +2874,10 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You're already in that ship." );
         if( !p.shipIsAvailable( shipNum ) )
             throw new TWCoreException( "You don't own that ship.  Check your !hangar before you try flying something you don't have." );
-        
+
         if( p.isRespawning() )
             throw new TWCoreException( "You can't switch ships while rearming.  Docking your ship..." );
-        
+
         p.isRespawning = false;
         p.specialRespawn = false;
         m_prizeQueue.removePlayer(p);
@@ -2900,7 +2946,7 @@ public class distensionbot extends SubspaceBot {
                     if( p2.getShipNum() == shipNum )
                         if( p2.getArmyID() == p.getArmyID() )
                             ships++;
-                }                
+                }
                 ships--;    // Minus 1 for the player that just changed into the ship.
                 int pilots = p.getArmy().getPilotsInGame();
                 int rank = Math.max(1, p.getRank());
@@ -2989,7 +3035,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "TIP: *** You have no upgrades installed! ***  Use !armory to see your upgrade options, and !upgrade # to upgrade a specific part of your ship.", 1 );
         }
     }
-    
+
     /**
      * Support method for pilot and assist.  Checks if there are too many ships on a given team.
      * @param p
@@ -3064,7 +3110,7 @@ public class distensionbot extends SubspaceBot {
             if( p.getShipNum() > 0 )
                 m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status was NOT logged.  Please notify a member of staff immediately!");
         }
-        
+
         p.setIgnoreShipChanges(false);
         if( p.getShipNum() > 0 )        // If player was !leaving, don't set them to ship 0...
             p.setShipNum( 0 );
@@ -3072,7 +3118,7 @@ public class distensionbot extends SubspaceBot {
         playerObjs.hideObject(p.getArenaPlayerID(), LVZ_PRM_PERSONAL_FLAG );
         playerObjs.hideObject(p.getArenaPlayerID(), LVZ_IP_PERSONAL_FLAG );
         p.setPlayerObjects();
-        
+
         DistensionArmy army = p.getArmy();
         if( army != null ) {
             army.recalculateFigures();
@@ -4003,6 +4049,9 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             return;
+        if( m_armySystem == ARMY_SYSTEM_NONSTATIC )
+            throw new TWCoreException( "Army balance is being manipulated by a Higher Power.  You need not assist." );            
+        
         int shipNum = p.getShipNum();
         if( shipNum == -1 )
             throw new TWCoreException( "You must !return or !enlist in an army first." );
@@ -4172,7 +4221,7 @@ public class distensionbot extends SubspaceBot {
                 a.recalculateFigures();
             m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has left to assist the other army." );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is now assisting your army." );
-            
+
             if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
                 boolean tooMany = checkForTooManyShips(p, shipNum);
                 if( tooMany )
@@ -4457,8 +4506,13 @@ public class distensionbot extends SubspaceBot {
         int freq = p.getArmyID();
         for( DistensionPlayer p3 : m_players.values() ) {
             if( p3.getArmyID() != freq ) {
-                m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
-                m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
+                Random r = new Random();
+                if( r.nextFloat() > 0.5f ) {
+                    m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
+                    m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
+                } else {
+                    m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN_EXTENDED );
+                }
             }
         }
         m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_EMP );
@@ -5795,7 +5849,7 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
             */
             if( !m_botAction.getOperatorList().isER(name) ) {
-                throw new TWCoreException("Only ER+ can use this command.");                
+                throw new TWCoreException("Only ER+ can use this command.");
             }
         }
 
@@ -5841,8 +5895,10 @@ public class distensionbot extends SubspaceBot {
     public void cmdDie( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
             DistensionPlayer p1 = m_players.get( name );
-            if( p1 == null )
-                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+            if( p1 == null ) {
+                cmdReturn(name, msg);
+                throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+            }
             if( p1.getOpStatus() < 1 )
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
@@ -5916,8 +5972,10 @@ public class distensionbot extends SubspaceBot {
     public void cmdSaveDie( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
             DistensionPlayer p = m_players.get( name );
-            if( p == null )
-                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+            if( p == null ) {
+                cmdReturn(name, msg);
+                throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+            }
             if( p.getOpStatus() < 1 )
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
@@ -5942,7 +6000,7 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
             */
             if( !m_botAction.getOperatorList().isER(name) ) {
-                throw new TWCoreException("Only ER+ can use this command.");                
+                throw new TWCoreException("Only ER+ can use this command.");
             }
         }
 
@@ -5999,7 +6057,7 @@ public class distensionbot extends SubspaceBot {
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
             */
             if( !m_botAction.getOperatorList().isER(name) ) {
-                throw new TWCoreException("Only ER+ can use this command.");                
+                throw new TWCoreException("Only ER+ can use this command.");
             }
         }
         if( m_shutdownTimeMillis <= 0 )
@@ -6018,7 +6076,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdSetMaxPlayers( String name, String msg ) {
         return;
-        
+
         /*
         boolean isBot = name.equals(m_botAction.getBotName());
         if( !isBot ) {
@@ -6028,18 +6086,18 @@ public class distensionbot extends SubspaceBot {
             if( p.getOpStatus() < 1 )
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
-        
+
         if( !Tools.isAllDigits(msg) )
             throw new TWCoreException("Give me a number.");
         Integer num = Integer.parseInt(msg);
         if( !isBot && (num < 10 || num > 50) )
             throw new TWCoreException("Out of bounds.  Solly cholly.");
-        
+
         if( num < m_maxPlayers )
             throw new TWCoreException("At the moment, only raising the max number of players is supported... sorry.");
-        
+
         m_maxPlayers = num;
-        
+
         int[] slots = new int[num];
         int[] slotStatus = new int[num];
         for( int i=0; i<m_slotManager.slots.length; i++ ) {
@@ -6047,16 +6105,16 @@ public class distensionbot extends SubspaceBot {
             slotStatus[i] = m_slotManager.slotStatus[i];
         }
         LinkedList <DistensionPlayer> waiting = m_slotManager.waitingList;
-        
+
         m_slotManager = new PlayerSlotManager( slots, slotStatus, waiting );
-        
+
         if( !isBot )
             m_botAction.sendPrivateMessage(name, "Max players set to " + num + "." );
         m_slotManager.placeWaitingPlayersInEmptySlots();
         */
     }
-    
-        
+
+
     /**
      * Bans a player from playing Distension.
      * @param name
@@ -6064,8 +6122,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdBan( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 2 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6098,8 +6158,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdUnban( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 2 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6129,8 +6191,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdInfo( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 1 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6147,8 +6211,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdDBChangeName( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 2 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6186,8 +6252,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdDBAddShip( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 2 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6225,8 +6293,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdDBWipeShip( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 3 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6264,8 +6334,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdDBWipePlayer( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 3 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6299,8 +6371,10 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdDBRandomArmies( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
-            throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
         if( p.getOpStatus() < 2 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
@@ -6410,8 +6484,8 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdGrant( String name, String msg ) {
-        if( !DEBUG && !( name.equals("qan") || name.equals("dugwyler") ) )
-            throw new TWCoreException( "This command disabled during normal operation." );
+        if( !( name.equals("qan") || name.equals("dugwyler") ) )
+            throw new TWCoreException( "Only the bot coder may use this command." );
 
         String[] args = msg.split(":");
         if( args.length != 2 )
@@ -6432,7 +6506,8 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        points /= DEBUG_MULTIPLIER; // Adjust by multiplier to make amount fairly exact.
+        if( DEBUG )
+            points /= DEBUG_MULTIPLIER; // Adjust by multiplier to make amount fairly exact.
 
         points = player.addRankPoints( (int)points, false );
         m_botAction.sendPrivateMessage( name, "Granted " + (int)points + "RP to " + args[0] + ".", 1 );
@@ -6483,7 +6558,9 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdSetVar( String name, String msg ) {
-        if( !DEBUG ) return;
+        if( !( name.equals("qan") || name.equals("dugwyler") ) )
+            throw new TWCoreException( "Only the bot coder may use this command." );
+        
         String[] args = msg.toLowerCase().split(":");
         if( args.length != 3 )
             throw new TWCoreException( "Improper format.  !debug-setvar player:var:value" );
@@ -6520,7 +6597,8 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdGetInt( String name, String msg ) {
-        if( !DEBUG ) return;
+        if( !( name.equals("qan") || name.equals("dugwyler") ) )
+            throw new TWCoreException( "Only the bot coder may use this command." );
         String[] args = msg.split(":");
         if( args.length != 2 )
             throw new TWCoreException( "Improper format.  !debug-getint player:var" );
@@ -6541,7 +6619,8 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdGetBool( String name, String msg ) {
-        if( !DEBUG ) return;
+        if( !( name.equals("qan") || name.equals("dugwyler") ) )
+            throw new TWCoreException( "Only the bot coder may use this command." );
         String[] args = msg.split(":");
         if( args.length != 2 )
             throw new TWCoreException( "Improper format.  !debug-getbool player:var" );
@@ -6924,7 +7003,7 @@ public class distensionbot extends SubspaceBot {
             desc = "+25% chance every 30s to recharge a full charge reserve tank";
             break;
         case ABILITY_TARGETED_EMP:
-            desc = "EMP ALL enemies (possible every 20 minutes in Terr)";
+            desc = "EMP ALL enemies (possible every 10 minutes in Terr)";
             break;
         case ABILITY_SUPER:
             desc = "+9% chance of super every 30 seconds";
@@ -6942,7 +7021,7 @@ public class distensionbot extends SubspaceBot {
             desc = "+10% chance of respawning in the exact spot you died";
             break;
         case ABILITY_LEECHING:
-            desc = "+15% chance of full charge after every kill";
+            desc = "+10% chance of full charge after every kill";
             break;
         case ABILITY_JUMPSPACE:
             desc = "Spacial Jump improvements (+regen, -cooldown)";
@@ -6961,6 +7040,9 @@ public class distensionbot extends SubspaceBot {
             break;
         case ABILITY_SUMMONING_AUTH:
             desc = "Warps allies to your position w/ !summon";
+            break;
+        case ABILITY_BRICK:
+            desc = "Brick every: L1=60s L2=30s L3=also@spawn";
             break;
         // OPS
         case OPS_INCREASE_MAX_OP:
@@ -7017,7 +7099,7 @@ public class distensionbot extends SubspaceBot {
             spamTask.addSingleMsg( recipientIDs.get(i), msgs.get(i), 0 );
         m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
     }
-    
+
     /**
      * Spams multiple players with single-line messages including a sound.
      * @param recipients Arena IDs of recipients of msgs
@@ -7066,7 +7148,7 @@ public class distensionbot extends SubspaceBot {
         //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
         m_spamQueue.addMsgs( arenaID, msgs );
     }
-    
+
     /**
      * Spams a player with a LinkedList array based on a default delay.
      * @param playerName Name of player to spam
@@ -7080,7 +7162,7 @@ public class distensionbot extends SubspaceBot {
         //spamTask.setMsgs( arenaID, msgs );
         //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
     }
-    
+
     /**
      * Spams a player with a LinkedList array based on a default delay.
      * @param arenaID ID of person to spam
@@ -7094,7 +7176,7 @@ public class distensionbot extends SubspaceBot {
         //spamTask.setMsgs( arenaID, msgs );
         //m_botAction.scheduleTask(spamTask, MESSAGE_SPAM_DELAY, MESSAGE_SPAM_DELAY );
     }
-    
+
     /**
      * Spams a player with a String array based on a given delay.
      * @param arenaID ID of person to spam
@@ -7184,7 +7266,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
     }
-    
+
     /**
      * Task used to send message spams, shared between all players; instantiated once
      * and kept active, ensuring there are no message buildups.
@@ -7193,6 +7275,11 @@ public class distensionbot extends SubspaceBot {
         LinkedList <String>msgs = new LinkedList<String>();
         LinkedList <Integer>ids = new LinkedList<Integer>();
 
+        public void addMsg( int id, String msg ) {
+            ids.add( id );
+            msgs.add( msg );
+        }
+        
         public void addMsgs( int id, LinkedList<String> list ) {
             for( String msg : list ) {
                 ids.add( id );
@@ -7206,13 +7293,13 @@ public class distensionbot extends SubspaceBot {
                 msgs.add( list[i] );
             }
         }
-        
+
         public void run() {
             if( !msgs.isEmpty() ) {
                 int runs = NUM_UNIVERSAL_MSGS_SPAMMED;
                 do {
                     Integer id = ids.remove();
-                    String msg = msgs.remove();                
+                    String msg = msgs.remove();
                     if( msg != null && id != null )
                         m_botAction.sendUnfilteredPrivateMessage( id, msg );
                     runs--;
@@ -7220,7 +7307,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
     }
-    
+
     /**
      * Task used to prize a player at a slower-than-instant rate, and warp player
      * at end/remove rearm LVZ.
@@ -7285,7 +7372,7 @@ public class distensionbot extends SubspaceBot {
         private int[]     purchasedUpgrades;    // Upgrades purchased for current ship
         private int       currentRechargeLevel; // Current level of recharge
         private int       currentEnergyLevel;   // Current level of energy
-        private int       currentMultiEnergyLevel;  // # multi energies (default: x4 energy prizes) 
+        private int       currentMultiEnergyLevel;  // # multi energies (default: x4 energy prizes)
         private boolean[] shipsAvail;           // Marks which ships are available
         private int[]     lastIDsKilled = { -1, -1, -1, -1 };  // ID of last player killed (feeding protection)
         private int       spawnTicks;           // # queue "ticks" until spawn
@@ -7306,6 +7393,8 @@ public class distensionbot extends SubspaceBot {
         private int       lastRot;              // Last rotation
         private int       idlesInBase;          // # idle checks in which a player has been in base
         private int       bonusPrize;           // # of prize to additionally prize at next spawn
+        
+        // ABILITIES
         private boolean   energyTank;           // True if player has an energy tank available
         private boolean   targetedEMP;          // True if player has targeted EMP available
         private boolean   jumpSpace;            // True if player has JumpSpace available
@@ -7316,10 +7405,14 @@ public class distensionbot extends SubspaceBot {
         private int       leeching;             // Levels of Leeching ability
         private int       masterDrive;          // Levels of M.A.S.T.E.R. Drive
         private int       firebloom;            // Levels of Firebloom
+        private int       brick;                // Levels of brick
+        
         private int       rewardRemaining;      // RP remaining over which a reward multiplier will be applied
         private long      opsAFKNotifyTime;     // Timestamp of Ops being notified of AFK
         private long      lastVengeTime;        // Timestamp of last time Vengeful Bastard fired on player
         private long      lastSummonTime;       // Timestamp of last time summon was used
+        private long      lastNeededShipChange; // Timestamp of last time they earned a bonus for changing to needed ship
+        private int       awardGivenForNeededChange;    // Amount of award given for changing to a needed ship
         private String    lastVenger;           // Name of player that last fired Vengeful Bastard on player
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
@@ -7390,6 +7483,7 @@ public class distensionbot extends SubspaceBot {
             leeching = 0;
             masterDrive = 0;
             firebloom = 0;
+            brick = 0;
             rewardRemaining = 0;
             opsAFKNotifyTime = 0;
             lastVengeTime = 0;
@@ -7521,7 +7615,33 @@ public class distensionbot extends SubspaceBot {
                     banned = r.getString( "fcBanned" ).equals( "y" );
                     if( banned == true )
                         return 0;
-                    armyID = r.getInt( "fnArmyID" );
+                    
+                    // AUTOMATIC
+                    if( m_armySystem == ARMY_SYSTEM_NONSTATIC ) { 
+                        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+                        
+                        int freq0=0, freq1=0;
+                        while( i.hasNext() ) {
+                            Player p = i.next();
+                            if( p != null ) {
+                                if( p.getFrequency() == 0 )
+                                    freq0++;
+                                else if( p.getFrequency() == 1 )
+                                    freq1++;
+                            }
+                        }
+                        if( freq0 == freq1 ) {
+                            armyID = dbPlayerID % 2;
+                        } else {
+                            if( freq0 > freq1 )
+                                armyID = 0;
+                            else
+                                armyID = 1;
+                        }
+                    } else {
+                        armyID = r.getInt( "fnArmyID" );
+                    }
+                    
                     // Default Op controls for upper staff
                     opStatus = r.getInt( "fnOperator" );
                     if( opStatus == 0 && m_botAction.getOperatorList().isSysop(name) )
@@ -7729,6 +7849,7 @@ public class distensionbot extends SubspaceBot {
                 leeching = 0;
                 masterDrive = 0;
                 firebloom = 0;
+                brick = 0;
                 bonusPrize = 0;
                 energyTank = false;
                 targetedEMP = false;
@@ -7760,6 +7881,8 @@ public class distensionbot extends SubspaceBot {
                         masterDrive = purchasedUpgrades[i];
                     else if( upgrades.get( i ).getPrizeNum() == ABILITY_FIREBLOOM )
                         firebloom = purchasedUpgrades[i];
+                    else if( upgrades.get( i ).getPrizeNum() == ABILITY_BRICK )
+                        brick = purchasedUpgrades[i];
                 }
 
                 m_botAction.SQLClose(r);
@@ -7895,6 +8018,8 @@ public class distensionbot extends SubspaceBot {
             }
             if( firebloom == 3 )
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BURST );
+            if( brick == 3 )
+                m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BRICK );
             if( warp )
                 doWarp(false);
             m_botAction.hideObjectForPlayer(arenaPlayerID, LVZ_REARMING);
@@ -7902,7 +8027,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * Prizes the default/ranked up upgrades earned through specialization 
+         * Prizes the default/ranked up upgrades earned through specialization
          */
         public void prizeDefaultUpgrades() {
             for( int i=0; i<currentMultiEnergyLevel; i++ )
@@ -8072,8 +8197,8 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BURST, SOUND_POWERUP_RECHARGED );
                     //prized = true;
                 }
-                // EMP ability; re-enable every 30 ticks (15 min)
-                if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 30 == 0 ) {
+                // EMP ability; re-enable every 20 ticks (10 min)
+                if( purchasedUpgrades[13] > 0 && !targetedEMP && tick % 20 == 0 ) {
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_EMP );
                     m_botAction.sendPrivateMessage( arenaPlayerID, "Targeted EMP recharged.  !emp to use.", SOUND_POWERUP_RECHARGED );
                     targetedEMP = true;
@@ -8112,10 +8237,10 @@ public class distensionbot extends SubspaceBot {
                 }
             } else if( shipNum == 7 ) {
                 // Firebloom ability.
-                // Every 4 minutes with lvl1, every 2 minutes with lvl2, spawn with at lvl3
+                // Every 2 minutes with lvl1, every 1 minutes with lvl2, spawn w/ @ lvl3 (+ get every minute) 
                 if( firebloom > 0 ) {
-                    if( (firebloom == 1 && tick % 8 == 0) ||
-                        (firebloom == 2 && tick % 4 == 0) ) {
+                    if( (firebloom == 1 && tick % 4 == 0) ||
+                        (firebloom >= 2 && tick % 2 == 0) ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_FIREBLOOM );
                         bonusPrize = Tools.Prize.BURST;
                         //prized = true;
@@ -8148,7 +8273,13 @@ public class distensionbot extends SubspaceBot {
                         prismatic = true;
                     }
                 }
-
+                if( brick > 0 ) {
+                    if( (brick == 1 && tick % 2 == 0) ||
+                        (brick >= 2 && tick % 1 == 0) ) {
+                        m_botAction.sendPrivateMessage( arenaPlayerID, "Brick replenished." );
+                        m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BRICK, SOUND_POWERUP_RECHARGED );                        
+                    }
+                }
             } else if( shipNum == 9 ) {
                 // Allow another Comm every minute, up to max allowed
                 if( tick % 3 == 0 ) {
@@ -8584,6 +8715,8 @@ public class distensionbot extends SubspaceBot {
                 masterDrive = purchasedUpgrades[10];
             if( shipNum == 7 && upgrade == 10 )
                 firebloom = purchasedUpgrades[10];
+            if( shipNum == 6 && upgrade == 13 )
+                brick = purchasedUpgrades[13];
             if( shipNum == 9 && upgrade == 1 )
                 maxOP = (purchasedUpgrades[1] * 2) + DEFAULT_MAX_OP;
             if( shipNum == 9 && upgrade == 3 )
@@ -8693,9 +8826,9 @@ public class distensionbot extends SubspaceBot {
          */
         public void unban() {
             try {
-                if( dbPlayerID != -1 ) 
+                if( dbPlayerID != -1 )
                     m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fnID='" + dbPlayerID + "'" );
-                else 
+                else
                     m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='n' WHERE fcName='" + name + "'" );
                 m_botAction.sendSmartPrivateMessage(name, "You are no longer banned in Distension." );
                 banned = false;
@@ -9151,7 +9284,7 @@ public class distensionbot extends SubspaceBot {
             if( leeching <= 0 )
                 return;
             double leechChance = Math.random() * 100.0;
-            if( (double)leeching * 15.0 > leechChance )
+            if( (double)leeching * 10.0 > leechChance )
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.FULLCHARGE );
         }
 
@@ -9795,9 +9928,9 @@ public class distensionbot extends SubspaceBot {
          * @return True if player is "higher order" support ship (5, 8, 9, or 4)
          */
         public boolean isHigherOrderSupportShip() {
-            return (shipNum == 5 || shipNum == 8 || shipNum == 4 || shipNum == 9 );            
+            return (shipNum == 5 || shipNum == 8 || shipNum == 4 || shipNum == 9 );
         }
-        
+
         /**
          * @return True if player is currently assisting an army and is not on their original one.
          */
@@ -10164,7 +10297,7 @@ public class distensionbot extends SubspaceBot {
         public int getID() {
             return armyID;
         }
-        
+
         /**
          * @return ID of opposing army, in two army system.
          */
@@ -10654,7 +10787,7 @@ public class distensionbot extends SubspaceBot {
                 slotStatus[i] = SLOT_EMPTY;
             }
         }
-        
+
         public PlayerSlotManager( int[] slots, int[] slotStatus, LinkedList<DistensionPlayer> waitingList ) {
             this.slots = slots;
             this.slotStatus = slotStatus;
@@ -11477,7 +11610,7 @@ public class distensionbot extends SubspaceBot {
                         numAttack++;
                     }
                 }
-            } else {                
+            } else {
                 if( p.isHigherOrderSupportShip() ) {
                     adjustedRank = p.getRank();
                     /*
@@ -11493,7 +11626,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Points to be divided up by army
-        float totalPoints = (float)(minsToWin * 0.4f) * ((float)(opposingStrengthAvg + bonusRanksForPointAllocation)) * armyDiffWeight;
+        float totalPoints = (float)(minsToWin * 0.55f) * ((float)(opposingStrengthAvg + bonusRanksForPointAllocation)) * armyDiffWeight;
 
         if( totalLvlSupport < 1.0f) totalLvlSupport = 1.0f;
         if( totalLvlAttack < 1.0f) totalLvlAttack = 1.0f;
@@ -11721,7 +11854,7 @@ public class distensionbot extends SubspaceBot {
                 } else {
                     if( p.getShipNum() > 0 ) {
                         msgRecipients.add( p.getArenaPlayerID() );
-                        msgs.add( "Battle lost.  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );                    
+                        msgs.add( "Battle lost.  K/D: " + p.genKills + "/" + p.deaths +  "  TeKs: " + p.TeKs  );
                         msgSounds.add( SOUND_DEFEAT );
                     }
                 }
@@ -13576,7 +13709,7 @@ public class distensionbot extends SubspaceBot {
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Escape Pod, +10% Chance", ABILITY_ESCAPE_POD, new int[]{12,13,14,15,20}, new int[]{25,35,45,57,75} );
         ship.addUpgrade( upg );
-        upg = new ShipUpgrade( "Targeted EMP", ABILITY_TARGETED_EMP, 40, 50, 1 );
+        upg = new ShipUpgrade( "Targeted EMP every 10 minutes", ABILITY_TARGETED_EMP, 40, 50, 1 );
         ship.addUpgrade( upg );
         upg = new ShipUpgrade( "Improved Summoning Authorization", ABILITY_SUMMONING_AUTH, 10, 20, 1 );
         ship.addUpgrade( upg );
@@ -13608,10 +13741,12 @@ public class distensionbot extends SubspaceBot {
         // 42: Decoy
         // 45: 10% Vengeful Bastard 4
         // 46: Rocket 2
-        // 50: Brick
+        // 50: Brick 1
         // 54: Prismatic Array 3
         // 55: 10% Vengeful Bastard 5
         // 60: Rocket 3
+        // 65: Brick 2
+        // 75: Brick 3 (spawn w/)
         ship = new ShipProfile( -1, 14f );
         int p6a1a[] = { 8, 6,  5,  4,  4,  3, 1 };
         int p6a2a[] = { 3, 8, 10, 15, 20, 30, 1 };
