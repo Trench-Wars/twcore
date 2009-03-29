@@ -1,0 +1,2286 @@
+package twcore.bots.bwjsbot;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.TimerTask;
+import java.util.TreeMap;
+
+import twcore.core.BotAction;
+import twcore.core.BotSettings;
+import twcore.core.EventRequester;
+import twcore.core.SubspaceBot;
+import twcore.core.events.ArenaJoined;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FlagReward;
+import twcore.core.events.FrequencyChange;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.LoggedOn;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.WeaponFired;
+import twcore.core.game.Player;
+import twcore.core.lvz.Objset;
+import twcore.core.util.Tools;
+import twcore.core.util.Spy;
+
+/**
+ * A bot for automated-hosting of:
+ * - base
+ * - wbduel
+ * - javduel
+ * - spidduel
+ * 
+ * @author fantus
+ * 
+ */
+public class bwjsbot extends SubspaceBot {
+    /* Configuration */
+    private BWJSConfig cfg;
+    
+    /* Lists */
+    private ArrayList<String> listAlert;
+    private ArrayList<String> listNotplaying;
+    
+    /* Locks */
+    private boolean lockArena;
+    private boolean lockTurn;
+    private boolean lockZoner;
+    
+    /* Racism Watcher */
+    private Spy racismWatcher;
+    
+    /* States */
+    private int state;
+    private static final int OFF = -1;
+    private static final int WAITING_FOR_CAPS = 0;
+    private static final int ADDING_PLAYERS = 1;
+    private static final int PRE_GAME = 2;
+    private static final int GAME_IN_PROGRESS = 3;
+    private static final int GAME_OVER = 4;
+    
+    /* Teams */
+    private BWJSTeam[] team;
+    private static final int ONE = 0;
+    private static final int TWO = 1;
+    
+    /* Timers */
+    private AddingTimer addingTimer;
+    private TimerTask announceMVPTimer;
+    private CapTimer capTimer;
+    private TimerTask capTimerONE;
+    private TimerTask capTimerTWO;
+    private FiveSecondTimer fiveSecondTimer;
+    private GameTimer gameTimer;
+    private TimerTask newGameTimer;
+    private UpdateTimer updateTimer;
+    private StartGameTimer startGameTimer;
+    private PreGameTimer preGameTimer;
+    private ZonerTimer zonerTimer;
+    
+    /* Other */
+    private Objset scoreboard;
+    
+    /* Some Constants */
+    private static final int ZONER_WAIT_TIME = 15;
+    private static final int FREQ_SPEC = 999;
+    private static final int FREQ_NOTPLAYING = 666;
+    private static final int IN = 0;
+    private static final int LAGOUT = 1;
+    private static final int LAGOUT_OUT = 2; //Still sub-able, but out
+    private static final int SUBBED = 3;
+    private static final int OUT = 4;
+    private static final int BASE = 1;
+    private static final int WBDUEL = 2;
+    private static final int JAVDUEL = 3;
+    private static final int SPIDDUEL = 4;
+    
+    public bwjsbot(BotAction botAction) {
+        super(botAction);
+        initialize();
+    }
+    
+    private void initialize() {
+        /* Initial state */
+        state = OFF;
+        
+        /* Lists */
+        listAlert = new ArrayList<String>();
+        listNotplaying = new ArrayList<String>();
+        listNotplaying.add(m_botAction.getBotName().toLowerCase());        
+        /* Spy */
+        racismWatcher = new Spy(m_botAction);
+        
+        /* Zoner */
+        lockZoner = false;
+        
+        /* Configuration */
+        cfg = new BWJSConfig();
+        
+        /* LVZ */
+        scoreboard = m_botAction.getObjectSet();
+        
+        /* Teams */
+        team = new BWJSTeam[2];
+        team[ONE] = new BWJSTeam(ONE);
+        team[TWO] = new BWJSTeam(TWO);
+        
+        requestEvents();        
+    }
+    
+    /* Handle Events */
+    private void requestEvents() {
+        EventRequester req = m_botAction.getEventRequester();
+        req.request(EventRequester.ARENA_JOINED);
+        req.request(EventRequester.FLAG_CLAIMED);
+        req.request(EventRequester.FLAG_REWARD);
+        req.request(EventRequester.FREQUENCY_CHANGE);
+        req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        req.request(EventRequester.LOGGED_ON);
+        req.request(EventRequester.MESSAGE);
+        req.request(EventRequester.PLAYER_DEATH);
+        req.request(EventRequester.PLAYER_ENTERED);
+        req.request(EventRequester.PLAYER_LEFT);
+        req.request(EventRequester.PLAYER_POSITION);
+        req.request(EventRequester.WEAPON_FIRED);
+    }
+    
+    public void handleEvent(ArenaJoined event) {
+        //set ReliableKills 1 (*relkills 1) to make sure that the bot receives every packet
+        m_botAction.setReliableKills(1);
+        
+        // Join Chats
+        m_botAction.sendUnfilteredPublicMessage("?chat=" + cfg.chats);
+        
+        /*
+         * Autostart
+         */
+        start();
+    }
+    
+    public void handleEvent(FlagClaimed event) {
+        if (state == GAME_IN_PROGRESS) {
+            if (getTeamNumber(event.getPlayerID()) == ONE) {
+                team[TWO].flagLost();
+                team[ONE].flagClaimed(event);
+            } else { 
+                team[ONE].flagLost();
+                team[TWO].flagClaimed(event);
+            }
+        }
+    }
+    
+    public void handleEvent(FlagReward event) {
+        if (state == GAME_IN_PROGRESS) {
+            if (event.getFrequency() == team[ONE].frequency)
+                team[ONE].flagReward(event.getPoints());
+            else
+                team[TWO].flagReward(event.getPoints());
+        }
+    }
+    
+    public void handleEvent(FrequencyChange event) {
+        if (state >= ADDING_PLAYERS && state < GAME_OVER) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            
+            if (teamNumber != -1) {
+                if (team[teamNumber].players.containsKey(id)) {
+                    if (team[teamNumber].players.get(id).p_state == IN && 
+                            event.getFrequency() != team[teamNumber].frequency)
+                        team[teamNumber].players.get(id).lagout();
+                }
+            }
+        }
+    }
+    
+    public void handleEvent(FrequencyShipChange event) {
+        if (state >= ADDING_PLAYERS && state < GAME_OVER && event.getShipType() == Tools.Ship.SPECTATOR) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            
+            if (teamNumber != -1) {
+                if (team[teamNumber].players.containsKey(id)) {
+                    if (team[teamNumber].players.get(id).p_state == IN && 
+                            event.getFrequency() != team[teamNumber].frequency)
+                        team[teamNumber].players.get(id).lagout();
+                }
+            }
+        }
+    }
+    
+    public void handleEvent(LoggedOn event) {
+        // Toggle the obscene filter to make sure that the bot receives every message
+        m_botAction.sendUnfilteredPublicMessage("?obscene");
+        
+        m_botAction.joinArena(cfg.arena);
+    }
+    
+    public void handleEvent(Message event) {
+        /* Racism Watcher */
+        racismWatcher.handleEvent(event);
+        
+        /* Arena Lock-O-Matic */
+        if (event.getMessageType() == Message.ARENA_MESSAGE) {
+            if (event.getMessage().equals("Arena UNLOCKED") && lockArena)
+                m_botAction.toggleLocked();
+            if (event.getMessage().equals("Arena LOCKED") && !lockArena)
+                m_botAction.toggleLocked();
+        }
+        
+        /* Handle Commands */
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE)
+            handleCommand(event);
+    }
+    
+    public void handleEvent(PlayerDeath event) {
+        if (state == GAME_IN_PROGRESS) {
+            int killeeID = event.getKilleeID();
+            int killerID = event.getKillerID();
+            
+            if (team[ONE].players.containsKey(killeeID)) 
+                team[ONE].players.get(killeeID).killed();
+            else if (team[TWO].players.containsKey(killeeID))
+                team[TWO].players.get(killeeID).killed();
+                        
+            if (team[ONE].players.containsKey(killerID)) 
+                team[ONE].players.get(killerID).killer(event);
+            else if (team[TWO].players.containsKey(killerID))
+                team[TWO].players.get(killerID).killer(event);
+        }
+    }
+    
+    public void handleEvent(PlayerEntered event) {
+        if (state > OFF) {
+            int id = event.getPlayerID();
+            if (listNotplaying.contains(m_botAction.getPlayerName(id).toLowerCase()))
+                m_botAction.setFreq(id, FREQ_NOTPLAYING);
+            else
+                m_botAction.setFreq(id, FREQ_SPEC);
+            
+            if (id == team[ONE].captainID)
+                m_botAction.cancelTask(capTimerONE);
+            else if (id == team[TWO].captainID)
+                m_botAction.cancelTask(capTimerTWO);
+        }
+    }
+    
+    public void handleEvent(PlayerLeft event) {
+        if (state >= ADDING_PLAYERS && state < GAME_OVER) {
+            int id = event.getPlayerID();
+            final int teamNumber = getTeamNumber(id);
+            
+            if (teamNumber != -1) {
+                if (team[teamNumber].players.containsKey(id)) {
+                    if (team[teamNumber].players.get(id).p_state == IN)
+                        team[teamNumber].players.get(id).lagout();
+                }
+                
+                if (team[teamNumber].captainID == id) {
+                    m_botAction.sendArenaMessage("NOTICE: The captain of " + team[teamNumber].name + 
+                            " has left the arnea. " + 
+                            team[teamNumber].captainName + " will get removed as captain after 1 minute.");
+                    if (teamNumber == ONE) {
+                        capTimerONE = new TimerTask() {
+                            public void run() {
+                                team[teamNumber].removeCap();
+                            }
+                        };
+                        m_botAction.scheduleTask(capTimerONE, Tools.TimeInMillis.MINUTE);
+                    } else if (teamNumber == TWO) {
+                        capTimerTWO = new TimerTask() {
+                            public void run() {
+                                team[teamNumber].removeCap();
+                            }
+                        };
+                        m_botAction.scheduleTask(capTimerTWO, Tools.TimeInMillis.MINUTE);
+                    }
+                }
+            }
+        }
+    }
+    
+    public void handleEvent(PlayerPosition event) {
+        /*
+         * Warp players back to their safe
+         */
+        if (state == PRE_GAME) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            int x_coord = event.getXLocation() / 16;
+            int y_coord = event.getYLocation() / 16;
+
+            if (teamNumber == ONE) {
+                if (x_coord != cfg.warpSpots[0] || y_coord != cfg.warpSpots[1])
+                    m_botAction.warpTo(id, cfg.warpSpots[0], cfg.warpSpots[1]);
+            } else if (teamNumber == TWO) {
+                if (x_coord != cfg.warpSpots[2] || y_coord != cfg.warpSpots[3])
+                    m_botAction.warpTo(id, cfg.warpSpots[2], cfg.warpSpots[3]);
+            }
+        } 
+    }
+    
+    public void handleEvent(WeaponFired event) {
+        if (state == GAME_IN_PROGRESS) {
+            int id = event.getPlayerID();
+            int freq = m_botAction.getPlayer(id).getFrequency();
+            
+            if (event.getWeaponType() == WeaponFired.WEAPON_REPEL) {
+                if (freq == team[ONE].frequency)
+                    team[ONE].players.get(id).repelUsed();
+                else
+                    team[TWO].players.get(id).repelUsed();
+            }   
+        }
+    }
+    
+    /* Handle Commands */
+    private void handleCommand(Message event) {
+        String message = event.getMessage().toLowerCase();
+        
+        if (message.startsWith("!add"))
+            cmd_add(event);
+        else if (message.startsWith("!cap"))
+            cmd_cap(event);
+        else if (message.startsWith("!change "))
+            cmd_change(event);
+        else if (message.startsWith("!help"))
+            cmd_help(event);
+        else if (message.startsWith("!lagout"))
+            cmd_lagout(event);
+        else if (message.startsWith("!list"))
+            cmd_list(event);
+        else if (message.startsWith("!myfreq"))
+            cmd_myfreq(event);
+        else if (message.startsWith("!notplaying"))
+            cmd_notplaying(event);
+        else if (message.startsWith("!ready"))
+            cmd_ready(event);
+        else if (message.startsWith("!remove "))
+            cmd_remove(event);
+        else if (message.startsWith("!removecap"))
+            cmd_removecap(event);
+        else if (message.startsWith("!start"))
+            cmd_start(event);
+        else if (message.startsWith("!status"))
+            cmd_status(event);
+        else if (message.startsWith("!stop"))
+            cmd_stop(event);
+        else if (message.startsWith("!subscribe"))
+            cmd_subscribe(event);
+        else if (message.startsWith("!sub "))
+            cmd_sub(event);
+        else if (message.startsWith("!switch "))
+            cmd_switch(event);
+    }
+    
+    private void cmd_add(Message event) {
+        if (state > OFF && state < GAME_OVER) {
+            int messagerID = event.getPlayerID();
+            int teamNumber = getTeamNumber(messagerID);
+            String[] message = event.getMessage().substring(5).split(":");
+            Player player = m_botAction.getFuzzyPlayer(message[0]);
+            int shipType = cfg.defaultShipType;
+            
+            //Check if the messager on one of the teams
+            if (teamNumber == -1)
+                return;
+            
+            //Check if the messager is a captain
+            if (team[teamNumber].captainID != messagerID)
+                return;
+
+            
+            /* Messager is captain */
+            
+            if (message.length > 1) {
+                try {shipType = Integer.parseInt(message[1]);} catch (Exception e) {};
+                if (shipType < 0 || shipType > 8)
+                    shipType = cfg.defaultShipType;
+            }
+            
+            if (state == PRE_GAME) {
+                m_botAction.sendPrivateMessage(messagerID, "Impossible to add a player at this point of the game." +
+                " Wait until the game has started before adding more players.");
+                return;
+            }
+            
+            
+            if (state == ADDING_PLAYERS) {
+                if ((teamNumber == ONE && !lockTurn) || (teamNumber == TWO && lockTurn)) {
+                    m_botAction.sendPrivateMessage(messagerID, "Not your turn to pick!");
+                    return;
+                }
+            }
+            
+            if (state == GAME_IN_PROGRESS || state == ADDING_PLAYERS) {
+                if (player == null) {
+                    m_botAction.sendPrivateMessage(messagerID, "Unknown player, please try again.");
+                    return;
+                }
+                
+                if (listNotplaying.contains(player.getPlayerName().toLowerCase())) {
+                    m_botAction.sendPrivateMessage(messagerID, "Cannot add, player is set to not playing.");
+                    return;
+                }
+                
+                if (team[teamNumber].players.size() == cfg.maxPlayers) {
+                    m_botAction.sendPrivateMessage(messagerID, "Max number of players on your team already reached.");
+                    return;
+                }
+                
+                if (team[teamNumber].players.containsKey((int) player.getPlayerID())) {
+                    if (team[teamNumber].players.get((int) player.getPlayerID()).p_state < SUBBED || 
+                            cfg.gameType != BASE) {
+                        m_botAction.sendPrivateMessage(messagerID, "Player already on your team, check !list.");
+                        return;
+                    }
+                }
+                
+                if (team[otherTeamNumber(teamNumber)].players.containsKey((int) player.getPlayerID())) {
+                    m_botAction.sendPrivateMessage(messagerID, "Player already on the other team.");
+                    return;
+                }
+                
+                if (player.getPlayerID() == team[otherTeamNumber(teamNumber)].captainID) {
+                    m_botAction.sendPrivateMessage(messagerID, "Cannot add the captain of the other team");
+                    return;
+                }
+                
+                if (team[teamNumber].ships(shipType) >= cfg.maxShips[shipType] && cfg.maxShips[shipType] != -1) {
+                    m_botAction.sendPrivateMessage(messagerID, 
+                            "Could not add this player as " + Tools.shipName(shipType) +
+                            ", team already reached the maximum number of " + Tools.shipName(shipType) + "s allowed.");
+                    return;
+                }                
+                
+                //All checks done
+                team[teamNumber].addPlayer(player, shipType);
+                if (state == ADDING_PLAYERS) {
+                    lockTurn = !lockTurn;
+                    alternatePicking();
+                }
+            }   
+        }
+    }
+    
+    private void cmd_cap(Message event) {
+        if (state > OFF) {
+            int messagerID = event.getPlayerID();
+            int teamNumber = getTeamNumber(messagerID);
+            String messager = m_botAction.getPlayerName(messagerID);
+            String message = event.getMessage();
+            
+            //People on not playing list cannot get captain spot.
+            if (listNotplaying.contains(messager.toLowerCase())) {
+                msgCaps(messager);
+                return;
+            }
+            
+            //Captain spots already taken
+            if (team[ONE].captainID != -1 && team[TWO].captainID != -1) {
+                msgCaps(messager);
+                return;
+            }
+            
+            //Messager already on one of the teams
+            if (teamNumber != -1) {
+                if (team[teamNumber].captainID != -1) {
+                    msgCaps(messager);
+                } else {
+                    //Team is in need of a captain!
+                    setCaptain(messager, messagerID, teamNumber);
+                }
+                return;
+            }
+            
+            //Messager on neither of the teams
+            if (teamNumber == -1) {
+                
+                /*
+                 * Set teamNumber to the number of the team that is in need of a captain
+                 * Additional check if the messager is not already a captain. (not needed though)
+                 */
+                if (team[ONE].captainID == -1 && team[TWO].captainID != messagerID) 
+                    teamNumber = ONE;
+                else if (team[TWO].captainID == -1 && team[ONE].captainID != messagerID)
+                    teamNumber = TWO;
+                else {
+                    msgCaps(messager);
+                    return;
+                }
+                
+                if (state == WAITING_FOR_CAPS) {
+                    if (message.length() > 5 && !racismWatcher.isRacist(message))
+                        team[teamNumber].name = message.substring(5);
+                    m_botAction.cancelTask(capTimer);
+                    capTimer = new CapTimer();
+                    m_botAction.scheduleTask(capTimer, Tools.TimeInMillis.MINUTE);
+                }
+                setCaptain(messager, messagerID, teamNumber);
+                return;
+            }
+        }
+    }
+    
+    private void cmd_change(Message event) {
+        if ((state == ADDING_PLAYERS || state == GAME_IN_PROGRESS) && cfg.gameType == BASE) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            int shipType;
+            String[] message = event.getMessage().substring(8).split(":");
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (team[teamNumber].captainID != id)
+                return;
+            
+            if (message.length < 2)
+                return;
+            
+            BWJSPlayer player = team[teamNumber].searchPlayer(message[0]);
+            
+            if (player == null) {
+                m_botAction.sendPrivateMessage(id, "Unknown player");
+                return;
+            }
+            
+            try { shipType = Integer.parseInt(message[1]);} catch (Exception e) { 
+                m_botAction.sendPrivateMessage(id, "Unknown Ship");
+                return;
+            }
+            
+            if (shipType < 1 || shipType > 8) {
+                m_botAction.sendPrivateMessage(id, "Unknown Ship");
+                return;
+            }
+            
+            if (team[teamNumber].ships(shipType) >= cfg.maxShips[shipType] && cfg.maxShips[shipType] != -1) {
+                m_botAction.sendPrivateMessage(id, 
+                        "Could not change this player to " + Tools.shipName(shipType) +
+                        ", team already reached the maximum number of " + Tools.shipName(shipType) + "s allowed.");
+                return;
+            }
+            
+            player.change(shipType);
+        }
+    }
+    
+    private void cmd_help(Message event) {
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        ArrayList<String> help = new ArrayList<String>();
+        if (state == WAITING_FOR_CAPS) {
+            help.add("!cap                      -- Become captain of a team!");
+            help.add("!cap <teamname>           -- Become captain and set your own teamname!");
+            help.add("!removecap                -- Removes you as a captain.");
+        } else if (state >= ADDING_PLAYERS) {
+            help.add("!add <player>             -- Adds player");
+            if (cfg.gameType == BASE)
+                help.add("!add <player>:<ship>      -- Adds player in the specified ship");
+            help.add("!cap                      -- Become captain of a team / shows current captains!");
+            if (cfg.gameType == BASE)
+                help.add("!change <player>:<ship>   -- Sets the player in the specified ship");
+            help.add("!lagout                   -- Puts you back into the game if you have lagged out.");
+            help.add("!list                     -- Lists all players on this team");
+            help.add("!myfreq                   -- Puts you on your team's frequency");
+            if (state == ADDING_PLAYERS) { 
+                help.add("!ready                    -- Use this when you're done setting your lineup");
+                help.add("!remove <player>          -- Removes specified player)");
+            }
+            help.add("!removecap                -- Removes you as a captain.");
+            help.add("!sub <playerA>:<playerB>  -- Substitutes <playerA> with <playerB>");
+            if (cfg.gameType == BASE)
+                help.add("!switch <player>:<player> -- Exchanges the ship of both players");
+        }
+        help.add("!status                   -- Display status and score");
+        if (state != OFF) {
+            help.add("!notplaying               -- Toggles not playing mode.");
+            help.add("!subscribe                -- Toggles alerts in private messages.");
+        }
+        
+        if (m_botAction.getOperatorList().isSmod(name)) {
+            help.add("SMOD commands:");
+            help.add("!start                    -- starts the bot");
+            help.add("!stop                     -- stops the bot");
+            help.add("!die                      -- disconnects the bot");
+        }
+        
+        String[] spam = help.toArray(new String[help.size()]);
+        m_botAction.privateMessageSpam(name, spam);
+    }
+    
+    private void cmd_lagout(Message event) {
+        if (state == ADDING_PLAYERS || state == GAME_IN_PROGRESS) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (!team[teamNumber].players.containsKey(id))
+                return;
+            
+            if (team[teamNumber].players.get(id).p_state == LAGOUT ||
+                    team[teamNumber].players.get(id).p_state == LAGOUT_OUT)
+                team[teamNumber].players.get(id).lagin();
+        }
+    }
+    
+    private void cmd_list(Message event) {
+        if (state >= ADDING_PLAYERS && state < GAME_OVER) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            ArrayList<String> list = new ArrayList<String>();
+            
+            if (teamNumber == -1)
+                return;
+            
+            list.add(team[teamNumber].name + " (captain: " + team[teamNumber].captainName + ")");
+            for (BWJSPlayer p : team[teamNumber].players.values()) 
+                list.add(p.p_name + " - " + Tools.shipName(p.p_currentShip) + " - " + p.getStatus());
+            
+            String[] spam = list.toArray(new String[list.size()]);
+            m_botAction.privateMessageSpam(id, spam);
+        }
+    }
+    
+    private void cmd_myfreq(Message event) {
+        if (state > OFF) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (team[teamNumber].players.containsKey(id)) {
+                if (team[teamNumber].players.get(id).p_state != IN)
+                    m_botAction.setFreq(id, team[teamNumber].frequency);
+            } else if (team[teamNumber].captainID == id)
+                m_botAction.setFreq(id, team[teamNumber].frequency);
+                
+        }
+    }
+    
+    private void cmd_notplaying(Message event) {
+        if (state != OFF) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            String name = m_botAction.getPlayerName(id);
+            
+            if (listNotplaying.contains(name.toLowerCase())) {
+                listNotplaying.remove(name.toLowerCase());
+                m_botAction.sendPrivateMessage(id, "You have been removed from the not playing list.");
+                m_botAction.setFreq(id, FREQ_SPEC);
+                return;
+            }
+            
+            listNotplaying.add(name.toLowerCase());
+            m_botAction.sendPrivateMessage(id, "You have been added to the not playing list. " +
+                    "(Captains will be unable to add or sub you in.)");
+            m_botAction.specWithoutLock(id);
+            m_botAction.setFreq(id, FREQ_NOTPLAYING);
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (team[teamNumber].captainID == id)
+                team[teamNumber].removeCap();
+            
+            if (state == ADDING_PLAYERS) {
+                if (team[teamNumber].players.containsKey(id)) {
+                    m_botAction.sendArenaMessage(name + " has been removed from the game. (not playing)");
+                    team[teamNumber].players.remove(id);
+                }
+                return;
+            }
+            
+            if (state > ADDING_PLAYERS && state < GAME_OVER) {
+                if (team[teamNumber].players.containsKey(id)) {
+                    m_botAction.sendArenaMessage(name + " has been removed from the game. (not playing)");
+                    team[teamNumber].players.get(id).out();
+                }
+                return;
+            }
+        }
+    }
+    
+    private void cmd_ready(Message event) {
+        if (state == ADDING_PLAYERS) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (id == team[teamNumber].captainID)
+                team[teamNumber].ready();
+            
+            if (team[ONE].ready && team[TWO].ready) {
+                checkLineup();
+            }
+        } 
+    }
+    
+    private void cmd_remove(Message event) {
+        if (state == ADDING_PLAYERS) {
+            int messagerID = event.getPlayerID();
+            int teamNumber = getTeamNumber(messagerID);
+            String message = event.getMessage().substring(8);
+            
+            //Check if messager is on team
+            if (teamNumber == -1)
+                return;
+            
+            //Check if messager is the captain
+            if (team[teamNumber].captainID != messagerID)
+                return;
+            
+            if (message.equals("")) {
+                m_botAction.sendPrivateMessage(messagerID, "Specify a player.");
+                return;
+            }
+            
+            BWJSPlayer player = team[teamNumber].searchPlayer(message);
+            
+            if (player == null) {
+                m_botAction.sendPrivateMessage(messagerID, "Player could not be found, try again.");
+                return;
+            }
+            
+            team[teamNumber].remove(player);
+        }
+    }
+    
+    private void cmd_removecap(Message event) {
+        if (state > OFF && state < GAME_OVER) {
+            int messagerID = event.getPlayerID();
+            int teamNumber = getTeamNumber(messagerID);
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (team[teamNumber].captainID == messagerID)
+                team[teamNumber].removeCap();
+        }
+    }
+    
+    private void cmd_start(Message event) {
+        String messager = m_botAction.getPlayerName(event.getPlayerID());
+        if (m_botAction.getOperatorList().isSmod(messager)) {
+            if (state == OFF)
+                start();
+            else 
+                m_botAction.sendPrivateMessage(messager, "Bot already turned on");
+        }   
+    }
+    
+    private void cmd_status(Message event) {
+        int id = event.getPlayerID();
+        
+        if (state == OFF) {
+            m_botAction.sendPrivateMessage(id, "Bot turned off, no games can be started at the moment.");
+        } else if (state == WAITING_FOR_CAPS) {
+            m_botAction.sendPrivateMessage(id, "A new game will start when two people message me with !cap");
+        } else if (state == ADDING_PLAYERS) {
+            m_botAction.sendPrivateMessage(id, "We are currently arranging lineups");
+        } else if (state == PRE_GAME) {
+            m_botAction.sendPrivateMessage(id, "We are currently starting the game");
+        } else if (state == GAME_IN_PROGRESS) {
+            m_botAction.sendPrivateMessage(id, "We are currently playing, " + (cfg.time - cfg.timeLeft / 60) +
+                    " minutes played.");
+            m_botAction.sendPrivateMessage(id, "Score " + team[ONE].name + " vs. " + team[TWO].name + ": " +
+                    score());
+        } else if (state == GAME_OVER) {
+            m_botAction.sendPrivateMessage(id, "We are currently ending the game");
+        }   
+    }
+    
+    private void cmd_stop(Message event) {
+        String messager = m_botAction.getPlayerName(event.getPlayerID());
+        if (m_botAction.getOperatorList().isSmod(messager)) {
+            if (state != OFF) {
+                m_botAction.sendArenaMessage("Bot has been stopped by " + messager);
+                state = OFF;
+                reset();
+                unlockArena();
+            }
+            else 
+                m_botAction.sendPrivateMessage(messager, "Bot already turned off");
+        } 
+    }
+    
+    private void cmd_sub(Message event) {
+        if (state == GAME_IN_PROGRESS) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            String[] message = event.getMessage().substring(5).split(":");
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (id != team[teamNumber].captainID)
+                return;
+            
+            if (message.length < 2)
+                return;
+            
+            if (team[teamNumber].substitutesLeft == 0) {
+                m_botAction.sendPrivateMessage(id, "Could not sub, you have 0 subtitutes left.");
+                return;
+            }
+            
+            BWJSPlayer playerOne = team[teamNumber].searchPlayer(message[0]);
+            
+            if (playerOne == null) {
+                m_botAction.sendPrivateMessage(id, "Player could not be found, try again.");
+                return;
+            }
+            
+            Player playerTwo = m_botAction.getFuzzyPlayer(message[1]);
+            
+            if (playerTwo == null) {
+                m_botAction.sendPrivateMessage(id, "Substitute could not be found, try again.");
+                return;
+            }
+            
+            if (team[otherTeamNumber(teamNumber)].players.containsKey((int) playerTwo.getPlayerID())) {
+                m_botAction.sendPrivateMessage(id, "Substitute is already on the other team.");
+                return;
+            }
+            
+            if (team[teamNumber].players.containsKey((int) playerTwo.getPlayerID())) {
+                int tmp_state = team[teamNumber].players.get((int) playerTwo.getPlayerID()).p_state;
+                if (cfg.gameType != BASE || tmp_state < SUBBED) {
+                    m_botAction.sendPrivateMessage(id, "Substitute is/was already playing for you team.");
+                    return;
+                }
+            }
+            
+            team[teamNumber].sub(playerOne, playerTwo);
+            m_botAction.sendPrivateMessage(id, "Your substitute has been taking into progress.");
+        }
+    }
+    
+    private void cmd_subscribe(Message event) {
+        if (state != OFF) {
+            String playerName = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
+            if (listAlert.contains(playerName)) {
+                listAlert.remove(playerName);
+                m_botAction.sendPrivateMessage(playerName, "You have been removed from the alert list.");
+            }
+            else {
+                listAlert.add(playerName);
+                m_botAction.sendPrivateMessage(playerName, "You have been added to the alert list.");
+            }
+        }
+    }
+    
+    private void cmd_switch(Message event) {
+        if ((state == ADDING_PLAYERS || state == GAME_IN_PROGRESS) && cfg.gameType == BASE) {
+            int id = event.getPlayerID();
+            int teamNumber = getTeamNumber(id);
+            String[] message = event.getMessage().substring(8).split(":");
+            
+            if (teamNumber == -1)
+                return;
+            
+            if (team[teamNumber].captainID != id)
+                return;
+            
+            if (message.length < 2)
+                return;
+            
+            BWJSPlayer playerOne = team[teamNumber].searchPlayer(message[0]);
+            BWJSPlayer playerTwo = team[teamNumber].searchPlayer(message[1]);
+            
+            if (playerOne == null || playerTwo == null) {
+                m_botAction.sendPrivateMessage(id, "Unknown players");
+                return;
+            }
+            
+            
+            team[teamNumber].switchPlayers(playerOne, playerTwo);
+        }
+    }
+    
+    /* Game states */
+    private void start() {
+        lockArena();
+        lockDoors();
+        setSpecAndFreq();
+        
+        startWaitingForCaps();
+    }
+    
+    private void startWaitingForCaps() {
+        reset();
+        
+        state = WAITING_FOR_CAPS;
+        m_botAction.sendArenaMessage("A new game will start when two people message me with !cap -" + 
+                m_botAction.getBotName(), Tools.Sound.BEEP2);
+    }
+    
+    private void startAddingPlayers() {
+        state = ADDING_PLAYERS;
+        
+        m_botAction.cancelTask(capTimer);
+        
+        addingTimer = new AddingTimer();
+        
+        m_botAction.sendArenaMessage("Captains you have 5 minutes to set up your lineup correctly!", Tools.Sound.BEEP2);
+        m_botAction.scheduleTask(addingTimer, 5 * Tools.TimeInMillis.MINUTE);
+        
+        newGameAlert();
+        
+        alternatePicking();
+    }
+    
+    private void startPreGame() {
+        state = PRE_GAME;
+        m_botAction.resetFlagGame();
+        m_botAction.shipResetAll();
+        m_botAction.scoreResetAll();
+        
+        team[ONE].warpTo(cfg.warpSpots[0], cfg.warpSpots[1]);
+        team[TWO].warpTo(cfg.warpSpots[2], cfg.warpSpots[3]);
+        
+        m_botAction.showObject(cfg.objects[0]);
+        
+        fiveSecondTimer = new FiveSecondTimer();
+        startGameTimer = new StartGameTimer();
+        
+        m_botAction.scheduleTask(fiveSecondTimer, 5 * Tools.TimeInMillis.SECOND);
+        m_botAction.scheduleTask(startGameTimer, 10 * Tools.TimeInMillis.SECOND);
+    }
+    
+    private void startGame() {
+        state = GAME_IN_PROGRESS;
+        
+        scoreboard = m_botAction.getObjectSet();
+        
+        m_botAction.shipResetAll();
+        m_botAction.scoreResetAll();
+        
+        team[ONE].warpTo(cfg.warpSpots[4], cfg.warpSpots[5]);
+        team[TWO].warpTo(cfg.warpSpots[6], cfg.warpSpots[7]);
+        
+        m_botAction.showObject(cfg.objects[2]);
+        m_botAction.sendArenaMessage("Go go go!!!", Tools.Sound.GOGOGO);
+        
+        cfg.timeLeft = cfg.time * 60;
+        updateTimer = new UpdateTimer();
+        m_botAction.scheduleTaskAtFixedRate(updateTimer, 2 * Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
+        
+        m_botAction.setTimer(cfg.time);
+        gameTimer = new GameTimer();
+        m_botAction.scheduleTask(gameTimer, Tools.TimeInMillis.MINUTE * cfg.time);
+    }
+    
+    private void gameOver() {
+        state = GAME_OVER;
+        
+        //Cancel all timers
+        m_botAction.cancelTask(gameTimer);
+        m_botAction.cancelTask(updateTimer);
+        m_botAction.cancelTask(capTimerONE);
+        m_botAction.cancelTask(capTimerTWO);
+        
+        //Determine winner
+        int teamNumber = -1;
+        
+        if (cfg.gameType == BASE) {
+            if (team[ONE].flagTime >= cfg.timeTarget)
+                teamNumber = ONE;
+            else if (team[TWO].flagTime >= cfg.timeTarget)
+                teamNumber = TWO;
+        } else {
+            if (team[ONE].isDead())
+                teamNumber = TWO;
+            else if (team[TWO].isDead())
+                teamNumber = ONE;
+        }
+        
+        m_botAction.sendArenaMessage("Result of " + team[ONE].name + " vs. " + team[TWO].name + ": " + score());
+        
+        displayScores();
+        
+        if (teamNumber != -1)
+            m_botAction.sendArenaMessage(team[teamNumber].name + " wins the game!", Tools.Sound.HALLELUJAH);
+        else 
+            m_botAction.sendArenaMessage("A draw?!", Tools.Sound.GIBBERISH);
+        
+        announceMVPTimer = new TimerTask() {
+            public void run() {
+                m_botAction.sendArenaMessage("MVP: " + getMVP() + "!");
+            }
+        };
+        
+        newGameTimer = new TimerTask() {
+            public void run() {
+                startWaitingForCaps();
+            }
+        };
+        
+        m_botAction.scheduleTask(announceMVPTimer, 10 * Tools.TimeInMillis.SECOND);
+        m_botAction.scheduleTask(newGameTimer, 20 * Tools.TimeInMillis.SECOND);
+    }
+    
+    /* Other commands */
+    private void alternatePicking() {
+        if (team[ONE].players.size() <= team[TWO].players.size() && team[ONE].players.size() < cfg.maxPlayers) {
+            m_botAction.sendArenaMessage(team[ONE].captainName + " pick a player!", Tools.Sound.BEEP3);
+            if (team[TWO].players.size() == cfg.maxPlayers)
+                lockTurn = false;
+            else 
+                lockTurn = true;
+            
+        } else if (team[TWO].players.size() < cfg.maxPlayers) {
+            m_botAction.sendArenaMessage(team[TWO].captainName + " pick a player!", Tools.Sound.BEEP3);
+            if (team[ONE].players.size() == cfg.maxPlayers)
+                lockTurn = true;
+            else 
+                lockTurn = false;
+        }
+    }
+    
+    private void checkIfInBase() {
+        for (BWJSTeam i : team) {
+            for (BWJSPlayer p : i.players.values())
+                p.checkIfInBase();
+        }
+    }
+    
+    private void checkLineup() {
+        state = PRE_GAME;
+        if (team[ONE].players.size() >= cfg.minPlayers && team[TWO].players.size() >= cfg.minPlayers) {
+            m_botAction.cancelTask(addingTimer);
+            m_botAction.sendArenaMessage("Lineups are ok! Game will start in 30 seconds!", Tools.Sound.CROWD_OOO);
+            preGameTimer = new PreGameTimer();
+            m_botAction.scheduleTask(preGameTimer, 30 * Tools.TimeInMillis.SECOND);
+        } else {
+            m_botAction.sendArenaMessage("Lineups are NOT ok! :( Game has been reset.", Tools.Sound.CROWD_GEE);
+            startWaitingForCaps();
+        }
+    }
+    
+    private void displayScores() {
+        ArrayList<String> spam = new ArrayList<String>();
+        if (cfg.gameType == BASE) {
+            spam.add(",---------------------------------+------+------+-----------+------+------+-----------+----.");
+            spam.add("|                               K |    D |   TK |    Points |   FT |  TeK |    Rating | LO |");
+        } else  if (cfg.gameType == JAVDUEL){
+            spam.add(",---------------------------------+------+------+-----------+----.");
+            spam.add("|                               K |    D |   TK |    Rating | LO |");
+        } else {
+            spam.add(",---------------------------------+------+-----------+----.");
+            spam.add("|                               K |    D |    Rating | LO |");
+        }
+        
+        spam.addAll(team[ONE].getScores());
+        
+        if (cfg.gameType == BASE)
+            spam.add("+---------------------------------+------+------+-----------+------+------+-----------+----+");
+        else if (cfg.gameType == JAVDUEL)
+            spam.add("+---------------------------------+------+------+-----------+----+");
+        else
+            spam.add("+---------------------------------+------+-----------+----+");
+        
+        spam.addAll(team[TWO].getScores());
+        
+        if (cfg.gameType == BASE)
+            spam.add("`---------------------------------+------+------+-----------+------+------+-----------+----'");
+        else if (cfg.gameType == JAVDUEL)
+            spam.add("`---------------------------------+------+------+-----------+----'");
+        else
+            spam.add("`---------------------------------+------+-----------+----'");
+        
+        m_botAction.arenaMessageSpam(spam.toArray(new String[spam.size()]));
+    }
+    
+    private String getMVP() {
+        String mvp = "";
+        int highestRating = 0;
+        
+        for (BWJSTeam i : team) {
+            for (BWJSPlayer p : i.players.values()) {
+                if (highestRating < p.getRating()) {
+                    highestRating = p.getRating();
+                    mvp = p.p_name;
+                }
+            }   
+        }
+        
+        return mvp;
+    }
+    
+    private int getTeamNumber(int playerID) {
+        if (team[ONE].players.containsKey(playerID) || team[ONE].captainID == playerID)
+            return ONE;
+        else if (team[TWO].players.containsKey(playerID) || team[TWO].captainID == playerID)
+            return TWO;
+        return -1;
+    }
+    
+    private void lockArena() {
+        lockArena = true;
+        m_botAction.toggleLocked();
+    }
+    
+    private void unlockArena() {
+        lockArena = false;
+        m_botAction.toggleLocked();
+    }
+    
+    private void lockDoors() {
+        m_botAction.setDoors(255);
+    }
+    
+    private void msgCaps(String name) {
+        m_botAction.sendPrivateMessage(name, team[ONE].captainName + " is captain of " + team[ONE].name + ".");
+        m_botAction.sendPrivateMessage(name, team[TWO].captainName + " is captain of " + team[TWO].name + ".");
+    }
+    
+    private void newGameAlert() {
+        //Alert Chats
+        for (int i = 1; i < 11; i++)
+            m_botAction.sendChatMessage(i, "A game of " + cfg.gameTypeString + " is starting! Type ?go " +
+                    m_botAction.getArenaName() + " to play.");
+        
+        //Alert Subscribers
+        if (listAlert.size() > 0) {
+            for (int i = 0; i < listAlert.size(); i++)
+                m_botAction.sendSmartPrivateMessage(listAlert.get(i), "A game of " + cfg.gameTypeString +
+                        " is starting! Type ?go " + m_botAction.getArenaName() + " to play.");
+        }
+        
+        //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
+        if (!lockZoner && cfg.allowZoner) {
+            m_botAction.sendZoneMessage("A game of " + cfg.gameTypeString + " is starting! Type ?go " +
+                    m_botAction.getArenaName() + " to play. -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
+            lockZoner = true;
+            zonerTimer = new ZonerTimer();
+            m_botAction.scheduleTask(zonerTimer, ZONER_WAIT_TIME * Tools.TimeInMillis.MINUTE);
+        }
+    }
+    
+    private int otherTeamNumber(int teamNumber) {
+        if (teamNumber == ONE)
+            return TWO;
+        else if (teamNumber == TWO)
+            return ONE;
+        else
+            return -1;
+    }
+    
+    private void reset() {
+        /* Reset */
+        //Teams
+        team[ONE].reset();
+        team[TWO].reset();
+        
+        //Scoreboard
+        scoreboard.hideAllObjects();
+        m_botAction.setObjects();
+        
+        //Timers
+        m_botAction.cancelTask(addingTimer);
+        m_botAction.cancelTask(capTimer);
+        m_botAction.cancelTask(capTimerONE);
+        m_botAction.cancelTask(capTimerTWO);
+        m_botAction.cancelTask(fiveSecondTimer);
+        m_botAction.cancelTask(gameTimer);
+        m_botAction.cancelTask(updateTimer);
+        m_botAction.cancelTask(startGameTimer);
+        m_botAction.cancelTask(preGameTimer);
+        
+        setSpecAndFreq();
+    }
+    
+    private String score() {
+        String score = "";
+        if (cfg.timeTarget != 0) {
+            String team1Minutes = String.format("%02d", (int)Math.floor( team[ONE].flagTime / 60.0 ));
+            String team2Minutes = String.format("%02d", (int)Math.floor( team[TWO].flagTime / 60.0 ));
+            String team1Seconds = String.format("%02d", (team[ONE].flagTime - 
+                    (int)Math.floor( team[ONE].flagTime / 60.0 ) * 60));
+            String team2Seconds = String.format("%02d", (team[TWO].flagTime - 
+                    (int)Math.floor( team[TWO].flagTime / 60.0 ) * 60));
+            
+            score = team1Minutes + ":" + team1Seconds + " - " + team2Minutes + ":" + team2Seconds;  
+        } else
+            score = team[TWO].getDeaths() + " - " + team[ONE].getDeaths();
+        
+        return score;
+    }
+    
+    private void setCaptain(String name, int id, int teamNumber) {
+        team[teamNumber].captainID = id;
+        team[teamNumber].captainName = name;
+        m_botAction.sendArenaMessage(name + " is assigned as captain for " +
+                team[teamNumber].name, Tools.Sound.BEEP1);
+        
+        if (state == WAITING_FOR_CAPS) {
+            if (team[ONE].captainID != -1 && team[TWO].captainID != -1)
+                startAddingPlayers();
+        }
+    }
+    
+    /**
+     * Scoreboard copy/paste from matchbot code, with small adjustments.
+     */
+    private void updateScoreboard() {
+        scoreboard.hideAllObjects();
+        /*
+         * Base
+         */
+        if (cfg.timeTarget != 0) {
+            int team1Minutes = (int)Math.floor( team[ONE].flagTime / 60.0 );
+            int team2Minutes = (int)Math.floor( team[TWO].flagTime / 60.0 );
+            int team1Seconds = team[ONE].flagTime - team1Minutes * 60;
+            int team2Seconds = team[TWO].flagTime - team2Minutes * 60;
+            
+            //Team 1
+            scoreboard.showObject( 100 + team1Seconds % 10 );
+            scoreboard.showObject( 110 + (team1Seconds - team1Seconds % 10)/10 );
+            scoreboard.showObject( 130 + team1Minutes % 10 );
+            scoreboard.showObject( 140 + (team1Minutes - team1Minutes % 10)/10 );
+
+            //Team 2
+            scoreboard.showObject( 200 + team2Seconds % 10 );
+            scoreboard.showObject( 210 + (team2Seconds - team2Seconds % 10)/10 );
+            scoreboard.showObject( 230 + team2Minutes % 10 );
+            scoreboard.showObject( 240 + (team2Minutes - team2Minutes % 10)/10 );
+            
+            //Flag status
+            if(team[ONE].flag) {
+                scoreboard.showObject(740);
+                scoreboard.showObject(743);
+                scoreboard.hideObject(741);
+                scoreboard.hideObject(742);
+            } else if(team[TWO].flag) {
+                scoreboard.showObject(741);
+                scoreboard.showObject(742);
+                scoreboard.hideObject(743);
+                scoreboard.hideObject(740);
+            } else {
+                scoreboard.showObject(740);
+                scoreboard.showObject(742);
+                scoreboard.hideObject(741);
+                scoreboard.hideObject(743);
+            }
+        }
+        /* 
+         * Wbduel, javduel, spidduel
+         */
+        else {
+            String scoreTeam1 = "" + team[TWO].getDeaths();
+            String scoreTeam2 = "" + team[ONE].getDeaths();
+            
+            for (int i = scoreTeam1.length() - 1; i > -1; i--)
+                scoreboard.showObject(
+                        Integer.parseInt("" + scoreTeam1.charAt(i)) + 100 + (scoreTeam1.length() - 1 - i) * 10);
+            for (int i = scoreTeam2.length() - 1; i > -1; i--)
+                scoreboard.showObject(
+                        Integer.parseInt("" + scoreTeam2.charAt(i)) + 200 + (scoreTeam2.length() - 1 - i) * 10);
+        }
+        
+        /*
+         * Game Time Left
+         */
+        if (cfg.timeLeft >= 0) {
+            int seconds = cfg.timeLeft % 60;
+            int minutes = (cfg.timeLeft - seconds) / 60;
+            scoreboard.showObject(730 + ((minutes - minutes % 10) / 10));
+            scoreboard.showObject(720 + (minutes % 10));
+            scoreboard.showObject(710 + ((seconds - seconds % 10) / 10));
+            scoreboard.showObject(700 + (seconds % 10));
+        }
+        
+        /*
+         * Show Team Names
+         */
+        String n1 = team[ONE].name.toLowerCase();
+        String n2 = team[TWO].name.toLowerCase();
+        if (n1.equalsIgnoreCase("Freq 0"))
+            n1 = "freq0";
+        if (n2.equalsIgnoreCase("Freq 1"))
+            n2 = "freq1";
+        
+        String s1 = "", s2 = "";
+
+        for (int i = 0; i < n1.length(); i++)
+            if ((n1.charAt(i) >= '0') && (n1.charAt(i) <= 'z') && (s1.length() < 5))
+                s1 = s1 + n1.charAt(i);
+
+        for (int i = 0; i < n2.length(); i++)
+            if ((n2.charAt(i) >= '0') && (n2.charAt(i) <= 'z') && (s2.length() < 5))
+                s2 = s2 + n2.charAt(i);
+
+        for (int i = 0; i < s1.length(); i++) {
+            int t = new Integer(Integer.toString(
+                    ((s1.getBytes()[i]) - 97) + 30) + Integer.toString(i + 0)).intValue();
+            if (t < -89) {
+                t = new Integer(Integer.toString(((s1.getBytes()[i])) + 30) + Integer.toString(i + 0)).intValue();
+                t -= 220;
+            }
+            scoreboard.showObject(t);
+        }
+        
+        for (int i = 0; i < s2.length(); i++) {
+            int t = new Integer(Integer.toString(
+                    ((s2.getBytes()[i]) - 97) + 30) + Integer.toString(i + 5)).intValue();
+            if (t < -89) {
+                t = new Integer(Integer.toString(((s2.getBytes()[i])) + 30) + Integer.toString(i + 5)).intValue();
+                t -= 220;
+            }
+            scoreboard.showObject(t);
+        }
+        
+        //Display everything
+        m_botAction.setObjects();
+    }
+    
+    /**
+     * Specs all the players in the arena and sets them to their frequency. The not playing players on the 
+     * "not playing"-freq, the rest on the spectator-freq. 
+     * 
+     */
+    private void setSpecAndFreq() {
+        for (Iterator<Player> it = m_botAction.getPlayerIterator(); it.hasNext();) {
+            Player i = it.next();
+            int id = i.getPlayerID();
+            int freq = i.getFrequency();
+            if (i.getShipType() != Tools.Ship.SPECTATOR)
+                m_botAction.specWithoutLock(id);
+            if (listNotplaying.contains(i.getPlayerName().toLowerCase()) && freq != FREQ_NOTPLAYING)
+                m_botAction.setFreq(id, FREQ_NOTPLAYING);
+            else if (freq != FREQ_SPEC)
+                m_botAction.setFreq(id, FREQ_SPEC);
+        }
+    }
+    
+    /* Game Classes */
+    private class BWJSConfig {
+        private int gameType;
+        private boolean allowZoner;
+        private boolean announceShipType;
+        private boolean inBase;
+        private int defaultShipType;
+        private int maxDeaths;
+        private int maxLagouts;
+        private int maxPlayers;
+        private int[] maxShips;
+        private int maxSubs;
+        private int minPlayers;
+        private int[] objects;
+        private int outOfBorderTime;
+        private int time;
+        private int timeLeft;
+        private int timeTarget;
+        private int[] warpSpots;
+        private int yborder;
+        private String arena;
+        private String chats;
+        private String gameTypeString;
+        
+        private BWJSConfig() {
+            BotSettings botSettings = m_botAction.getBotSettings();
+            int botNumber = m_botAction.getBotNumber();
+            int tmpAnnounceShipCounter; 
+            String[] maxShipsString;
+            String[] objectsString;
+            String[] warpSpotsString;
+            
+            //Arena
+            arena = botSettings.getString("Arena" + botNumber);
+            
+            //Game Type
+            gameTypeString = botSettings.getString("GameType" + botNumber);
+            if (gameTypeString.equals("base"))
+                gameType = BASE;
+            else if (gameTypeString.equals("wbduel"))
+                gameType = WBDUEL;
+            else if (gameTypeString.equals("javduel"))
+                gameType = JAVDUEL;
+            else if (gameTypeString.equals("spidduel"))
+                gameType = SPIDDUEL;
+            else
+                m_botAction.die();
+            
+            //Allow Zoner
+            allowZoner = (botSettings.getInt("SendZoner" + botNumber) == 1);
+            
+            //Chats
+            chats = botSettings.getString("Chats" + gameType);
+            
+            //Default Ship Type
+            defaultShipType = botSettings.getInt("DefaultShipType" + gameType);
+            
+            //Max Deaths
+            maxDeaths = botSettings.getInt("MaxDeaths" + gameType);
+            
+            //Max Lagouts
+            maxLagouts = botSettings.getInt("MaxLagouts" + gameType);
+            
+            //Max Players
+            maxPlayers = botSettings.getInt("MaxPlayers" + gameType);
+            
+            //Max Ships
+            maxShips = new int[9];
+            maxShipsString = botSettings.getString("MaxShips" + gameType).split(",");
+            tmpAnnounceShipCounter = 0; //Counter for Announce Ship Type
+            for (int i = Tools.Ship.WARBIRD; i <= maxShipsString.length; i++) {
+                maxShips[i] = Integer.parseInt(maxShipsString[i - 1]);
+                if (maxShips[i] != 0)
+                    tmpAnnounceShipCounter++;
+            }
+            
+            //Max Amount of Substitutes Allowed
+            maxSubs = botSettings.getInt("MaxSubs" + gameType);
+            
+            //Announce Ship Type
+            if (tmpAnnounceShipCounter > 1)
+                announceShipType = true;
+            else
+                announceShipType = false;
+            
+            //Min Players
+            minPlayers = botSettings.getInt("MinPlayers" + gameType);
+            
+            //LVZ Objects
+            objectsString = botSettings.getString("Objects" + gameType).split(",");
+            objects = new int[objectsString.length];
+            for (int i = 0; i < objectsString.length; i++) 
+                objects[i] = Integer.parseInt(objectsString[i]);
+            
+            //Time
+            time = botSettings.getInt("Time" + gameType);
+
+            //Time Target
+            timeTarget = botSettings.getInt("TimeTarget" + gameType);
+            
+            //Warp Spots
+            warpSpots = new int[8];
+            warpSpotsString = botSettings.getString("WarpSpots" + gameType).split(",");
+            for (int i = 0; i < warpSpotsString.length; i++)
+                warpSpots[i] = Integer.parseInt(warpSpotsString[i]);
+            
+            //YBorder
+            yborder = botSettings.getInt("Yborder" + gameType);
+            if (yborder != -1)
+                inBase = true;
+            else
+                inBase = false;
+            outOfBorderTime = botSettings.getInt("OutOfBorderTime" + gameType);
+        }
+    }
+    
+    private class BWJSPlayer {
+        /* Variables */
+        private Player p_player;
+        private String p_name;
+        private int p_id;
+        private boolean p_countDeaths;
+        private int p_currentShip;
+        private int p_state;
+        private int p_maxDeaths;
+        private int p_lagouts;
+        private int p_frequency;
+        private int p_ships[][];
+        private int p_outOfBorderTime;
+        private TimerTask p_lagoutTimer;
+        
+        
+        /* Constants */
+        private final static int SCORE = 0;
+        private final static int DEATHS = 1;
+        private final static int WARBIRD_KILL = 2;
+        private final static int JAVELIN_KILL = 3;
+        private final static int SPIDER_KILL = 4;
+        private final static int LEVIATHAN_KILL = 5;
+        private final static int TERRIER_KILL = 6;
+        private final static int WEASEL_KILL = 7;
+        private final static int LANCASTER_KILL = 8;
+        private final static int SHARK_KILL = 9;
+        private final static int WARBIRD_TEAMKILL = 10;
+        private final static int JAVELIN_TEAMKILL = 11;
+        private final static int SPIDER_TEAMKILL = 12;
+        private final static int LEVIATHAN_TEAMKILL = 13;
+        private final static int TERRIER_TEAMKILL = 14;
+        private final static int WEASEL_TEAMKILL = 15;
+        private final static int LANCASTER_TEAMKILL = 16;
+        private final static int SHARK_TEAMKILL = 17;
+        private final static int FLAGS_CLAIMED = 18;
+        //private final static int RATING = 19;
+        private final static int REPELS_USED = 20;
+        //private final static int SHOTS_FIRED = 22;
+        
+        private BWJSPlayer (Player player, int shipType, int maxDeaths, int frequency) {
+            p_ships = new int[9][22];
+            p_player = player;
+            p_name = p_player.getPlayerName();
+            p_id = p_player.getPlayerID();
+            p_currentShip = shipType;
+            p_maxDeaths = maxDeaths;
+            p_frequency = frequency;
+            p_outOfBorderTime = cfg.outOfBorderTime;
+            p_lagouts = 0;
+            
+            if (p_maxDeaths == 0)
+                p_countDeaths = false;
+            else
+                p_countDeaths = true;
+            
+            m_botAction.scoreReset(p_id);
+            addPlayer();
+        }
+        
+        private void addPlayer() {
+            p_state = IN;
+            if (m_botAction.getPlayer(p_id) != null) {
+                m_botAction.setShip(p_id, p_currentShip);
+                m_botAction.setFreq(p_id, p_frequency);
+            }
+            p_outOfBorderTime = cfg.outOfBorderTime;
+        }
+        
+        private void change(int shipType) {
+            m_botAction.sendArenaMessage(p_name + " changed from " + Tools.shipName(p_currentShip) +
+                    " to " + Tools.shipName(shipType));
+            p_currentShip = shipType;
+            if (m_botAction.getPlayer(p_id) != null)
+                m_botAction.setShip(p_id, shipType);
+        }
+        
+        private void checkIfInBase() {
+            if (p_state == IN) {
+                if (p_player.getYTileLocation() > cfg.yborder)
+                    p_outOfBorderTime--;
+                
+                if (p_outOfBorderTime == (cfg.outOfBorderTime / 2)) 
+                    m_botAction.sendPrivateMessage(p_id, "Go to base! You have " + p_outOfBorderTime / 2 +
+                            " seconds before you'll get removed from the game!", Tools.Sound.BEEP3);
+                else if (p_outOfBorderTime == 0) {
+                    if (p_countDeaths)
+                        p_ships[p_currentShip][DEATHS] = cfg.maxDeaths;
+                    out();
+                }
+            }
+        }
+        
+        private void checkOut() {
+            if (p_maxDeaths == getDeaths() && p_countDeaths)
+                out();
+        }
+        
+        private void flagClaimed() {
+            p_ships[p_currentShip][FLAGS_CLAIMED]++;
+        }
+        
+        private void flagReward(short points) {
+            p_ships[p_currentShip][SCORE] += points;
+        }
+        
+        private int getDeaths() {
+            int deaths = 0;
+            for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++)
+                deaths += p_ships[i][DEATHS];
+            return deaths;
+        }
+        
+        private int getFlagsClaimed() {
+            int flags = 0;
+            for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++) {
+                flags += p_ships[i][FLAGS_CLAIMED];
+            }
+            return flags;
+        }
+    
+        private int getKills() {
+            int kills = 0;
+            for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++) {
+                for (int j = WARBIRD_KILL; j <= SHARK_KILL; j++)
+                    kills += p_ships[i][j];
+            }
+            return kills;
+        }
+        
+        private int getLagouts() {
+            return p_lagouts;
+        }
+        
+        private int getRating() {
+            /*
+             * From statistics.java
+             * warbird: .45Points * (.07wb + .07jav + .05spid + 0.12terr + .05x + .06lanc + .08shark - .04deaths)
+             * jav: .6Points * (.05wb + .06jav + .066spid + 0.14terr + .07x + .05lanc + .09shark - .05deaths - 
+             *          (.07wbTK + .07javTK + .06spiderTK + .13terrTK + .06WeaselTK + .07LancTK + .09SharkTK))
+             * spiders: .4points * (.06wb + .06jav + .04spid + .09terr + .05x + .05lanc + .089shark - .05deaths)
+             * terr: 2.45points * (.03wb + .03jav + .036spid + .12terr + .35x + .025lanc + .052shark - .21deaths)
+             * weasel: .8points * (sum(.09allships) - 0.05deaths)
+             * lanc: .6Points * (.07wb + .07jav + .055spid + 0.12terr + .05x + .06lanc + .08shark - .04deaths)
+             * shark: points * (.65*repels/death + .005terr + .0015shark + sum(.001allotherships) - 0.001deaths - 
+             *          (.07(allothershipstks) + .72spider + .5x + .15terrtk + .08sharkTK)))
+             */
+            int[] rating = new int[9];
+            rating[Tools.Ship.WARBIRD] = (int) (
+                    .45 * p_ships[Tools.Ship.WARBIRD][SCORE] * 
+                    
+                    (.07 * p_ships[Tools.Ship.WARBIRD][WARBIRD_KILL] + 
+                    .07 * p_ships[Tools.Ship.WARBIRD][JAVELIN_KILL] + 
+                    .05 * p_ships[Tools.Ship.WARBIRD][SPIDER_KILL] +
+                    .12 * p_ships[Tools.Ship.WARBIRD][TERRIER_KILL] +
+                    .05 * p_ships[Tools.Ship.WARBIRD][WEASEL_KILL] +
+                    .06 * p_ships[Tools.Ship.WARBIRD][LANCASTER_KILL] +
+                    .08 * p_ships[Tools.Ship.WARBIRD][SHARK_KILL] -
+                    .04 * getDeaths())
+                    
+            );
+            
+            rating[Tools.Ship.JAVELIN] = (int) (
+                    .6 * p_ships[Tools.Ship.JAVELIN][SCORE] * 
+                    
+                    (.05 * p_ships[Tools.Ship.JAVELIN][WARBIRD_KILL] + 
+                    .06 * p_ships[Tools.Ship.JAVELIN][JAVELIN_KILL] + 
+                    .066 * p_ships[Tools.Ship.JAVELIN][SPIDER_KILL] +
+                    .14 * p_ships[Tools.Ship.JAVELIN][TERRIER_KILL] +
+                    .07 * p_ships[Tools.Ship.JAVELIN][WEASEL_KILL] +
+                    .05 * p_ships[Tools.Ship.JAVELIN][LANCASTER_KILL] +
+                    .09 * p_ships[Tools.Ship.JAVELIN][SHARK_KILL] -
+                    .05 * getDeaths() - (
+                            .07 * p_ships[Tools.Ship.JAVELIN][WARBIRD_TEAMKILL] + 
+                            .07 * p_ships[Tools.Ship.JAVELIN][JAVELIN_TEAMKILL] + 
+                            .06 * p_ships[Tools.Ship.JAVELIN][SPIDER_TEAMKILL] +
+                            .13 * p_ships[Tools.Ship.JAVELIN][TERRIER_TEAMKILL] +
+                            .06 * p_ships[Tools.Ship.JAVELIN][WEASEL_TEAMKILL] +
+                            .07 * p_ships[Tools.Ship.JAVELIN][LANCASTER_TEAMKILL] +
+                            .09 * p_ships[Tools.Ship.JAVELIN][SHARK_TEAMKILL]
+                                        )
+                    )
+            );
+            
+            rating[Tools.Ship.SPIDER] = (int) (
+                    .4 * p_ships[Tools.Ship.SPIDER][SCORE] * 
+                    
+                    (.06 * p_ships[Tools.Ship.SPIDER][WARBIRD_KILL] + 
+                    .06 * p_ships[Tools.Ship.SPIDER][JAVELIN_KILL] + 
+                    .04 * p_ships[Tools.Ship.SPIDER][SPIDER_KILL] +
+                    .09 * p_ships[Tools.Ship.SPIDER][TERRIER_KILL] +
+                    .05 * p_ships[Tools.Ship.SPIDER][WEASEL_KILL] +
+                    .05 * p_ships[Tools.Ship.SPIDER][LANCASTER_KILL] +
+                    .089 * p_ships[Tools.Ship.SPIDER][SHARK_KILL] -
+                    .05 * getDeaths()
+                    )
+            );
+            
+            rating[Tools.Ship.TERRIER] = (int) (
+                    2.45 * p_ships[Tools.Ship.TERRIER][SCORE] * 
+                    
+                    (.03 * p_ships[Tools.Ship.TERRIER][WARBIRD_KILL] + 
+                    .03 * p_ships[Tools.Ship.TERRIER][JAVELIN_KILL] + 
+                    .036 * p_ships[Tools.Ship.TERRIER][SPIDER_KILL] +
+                    .12 * p_ships[Tools.Ship.TERRIER][TERRIER_KILL] +
+                    .35 * p_ships[Tools.Ship.TERRIER][WEASEL_KILL] +
+                    .025 * p_ships[Tools.Ship.TERRIER][LANCASTER_KILL] +
+                    .052 * p_ships[Tools.Ship.TERRIER][SHARK_KILL] -
+                    .21 * getDeaths()
+                    )
+            );
+            
+            rating[Tools.Ship.WEASEL] = (int) (
+                    2.45 * p_ships[Tools.Ship.WEASEL][SCORE] * (.09 * getKills() - .21 * getDeaths()));
+            
+            rating[Tools.Ship.LANCASTER] = (int) (
+                    .6 * p_ships[Tools.Ship.LANCASTER][SCORE] * 
+                    
+                    (.07 * p_ships[Tools.Ship.LANCASTER][WARBIRD_KILL] + 
+                    .07 * p_ships[Tools.Ship.LANCASTER][JAVELIN_KILL] + 
+                    .055 * p_ships[Tools.Ship.LANCASTER][SPIDER_KILL] +
+                    .12 * p_ships[Tools.Ship.LANCASTER][TERRIER_KILL] +
+                    .05 * p_ships[Tools.Ship.LANCASTER][WEASEL_KILL] +
+                    .06 * p_ships[Tools.Ship.LANCASTER][LANCASTER_KILL] +
+                    .08 * p_ships[Tools.Ship.LANCASTER][SHARK_KILL] -
+                    .04 * getDeaths()
+                    )
+            );
+            
+            int tmpShark;
+            if (getDeaths() != 0)
+                tmpShark = p_ships[Tools.Ship.SHARK][REPELS_USED] / getDeaths();
+            else
+                tmpShark = 0;
+                
+            rating[Tools.Ship.SHARK] = (int) (
+                    p_ships[Tools.Ship.SHARK][SCORE] * 
+                    
+                    (.065 * (tmpShark) +
+                    .001 * p_ships[Tools.Ship.SHARK][WARBIRD_KILL] + 
+                    .001 * p_ships[Tools.Ship.SHARK][JAVELIN_KILL] + 
+                    .001 * p_ships[Tools.Ship.SHARK][SPIDER_KILL] +
+                    .005 * p_ships[Tools.Ship.SHARK][TERRIER_KILL] +
+                    .001 * p_ships[Tools.Ship.SHARK][WEASEL_KILL] +
+                    .001 * p_ships[Tools.Ship.SHARK][LANCASTER_KILL] +
+                    .0015 * p_ships[Tools.Ship.SHARK][SHARK_KILL] -
+                    .001 * getDeaths() - (
+                            .07 * p_ships[Tools.Ship.SHARK][WARBIRD_TEAMKILL] + 
+                            .07 * p_ships[Tools.Ship.SHARK][JAVELIN_TEAMKILL] + 
+                            .072 * p_ships[Tools.Ship.SHARK][SPIDER_TEAMKILL] +
+                            .15 * p_ships[Tools.Ship.SHARK][TERRIER_TEAMKILL] +
+                            .05 * p_ships[Tools.Ship.SHARK][WEASEL_TEAMKILL] +
+                            .07 * p_ships[Tools.Ship.SHARK][LANCASTER_TEAMKILL] +
+                            .08 * p_ships[Tools.Ship.SHARK][SHARK_TEAMKILL]
+                                        )
+                    )
+            );
+            
+            int totalRating = 0;
+            for (int i = 0; i < rating.length; i++)
+                totalRating += rating[i];
+            return totalRating;
+        }
+        
+        private int getScore() {
+            int score = 0;
+            for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++) {
+                score += p_ships[i][SCORE];
+            }
+            return score;
+        }
+        
+        private int getTeamKills() {
+            int kills = 0;
+            for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++) {
+                for (int j = WARBIRD_TEAMKILL; j <= SHARK_TEAMKILL; j++)
+                    kills += p_ships[i][j];
+            }
+            return kills;
+        }
+        
+        private int getTerrKills() {
+            int kills = 0;
+            for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++) {
+                kills += p_ships[i][TERRIER_KILL];
+            }
+            return kills;
+        }
+    
+        private String getStatus() {
+            switch (p_state) {
+                case (IN) : return "IN";
+                case (LAGOUT) : return "LAGGED OUT";
+                case (LAGOUT_OUT) : return "LAGGED OUT";
+                case (SUBBED) : return "SUBSTITUTED";
+                case (OUT) : return "OUT";
+            }
+            return "";
+        }
+        
+        private void killed() {
+            p_ships[p_currentShip][DEATHS]++;
+            p_outOfBorderTime = cfg.outOfBorderTime;
+            checkOut();
+        }
+        
+        private void killer(PlayerDeath event) {
+            int ship = 0;
+            int killeeShip = m_botAction.getPlayer(event.getKilleeID()).getShipType();
+            int killeeFreq = m_botAction.getPlayer(event.getKilleeID()).getFrequency();
+            
+            if (p_frequency != killeeFreq) {
+                switch (killeeShip) {
+                    case Tools.Ship.WARBIRD : ship = WARBIRD_KILL; break;
+                    case Tools.Ship.JAVELIN : ship = JAVELIN_KILL; break;
+                    case Tools.Ship.SPIDER : ship = SPIDER_KILL; break;
+                    case Tools.Ship.LEVIATHAN : ship = LEVIATHAN_KILL; break;
+                    case Tools.Ship.TERRIER : ship = TERRIER_KILL; break;
+                    case Tools.Ship.WEASEL : ship = WEASEL_KILL; break;
+                    case Tools.Ship.LANCASTER : ship = LANCASTER_KILL; break;
+                    case Tools.Ship.SHARK : ship = SHARK_KILL; break;
+                }
+            } else {
+                switch (killeeShip) {
+                    case Tools.Ship.WARBIRD : ship = WARBIRD_TEAMKILL; break;
+                    case Tools.Ship.JAVELIN : ship = JAVELIN_TEAMKILL; break;
+                    case Tools.Ship.SPIDER : ship = SPIDER_TEAMKILL; break;
+                    case Tools.Ship.LEVIATHAN : ship = LEVIATHAN_TEAMKILL; break;
+                    case Tools.Ship.TERRIER : ship = TERRIER_TEAMKILL; break;
+                    case Tools.Ship.WEASEL : ship = WEASEL_TEAMKILL; break;
+                    case Tools.Ship.LANCASTER : ship = LANCASTER_TEAMKILL; break;
+                    case Tools.Ship.SHARK : ship = SHARK_TEAMKILL; break;
+                }
+            }
+            p_ships[p_currentShip][ship]++;
+            p_ships[p_currentShip][SCORE] += event.getKilledPlayerBounty(); 
+        }
+        
+        private void lagin() {
+            m_botAction.sendArenaMessage(p_player.getPlayerName() + " returned from his or her lagout.");
+            m_botAction.cancelTask(p_lagoutTimer);
+            addPlayer();
+        }
+        
+        private void lagout() {
+            p_state = LAGOUT;
+            if (state == GAME_IN_PROGRESS) { 
+                p_lagouts++;
+                p_ships[p_currentShip][DEATHS]++;
+                m_botAction.sendArenaMessage(p_name + " lagged out or specced. (+1 death)");
+            
+                if ((cfg.maxLagouts != -1) && p_lagouts >= cfg.maxLagouts) {
+                    out();
+                } else {
+                    m_botAction.sendPrivateMessage(p_name, "PM me \"!lagout\" to get back in.");
+                }
+            } else {
+                m_botAction.sendArenaMessage(p_name + " lagged out or specced.");
+                m_botAction.sendPrivateMessage(p_name, "PM me \"!lagout\" to get back in.");
+            }
+            
+            /*
+             * Lagout Timer:
+             * People will still be able to return from their lagout, 
+             * but after one minute the player will be counted out 
+             * until he or she returns from his or her lagout.
+             */
+            p_lagoutTimer = new TimerTask() {
+                public void run() {
+                    p_state = LAGOUT_OUT;
+                }
+            };
+            if (p_state != OUT)
+                m_botAction.scheduleTask(p_lagoutTimer, Tools.TimeInMillis.MINUTE);
+        }
+        
+        private void out() {
+            p_state = OUT;
+            if (m_botAction.getPlayer(p_id) != null) {
+                m_botAction.spec(p_id);
+                m_botAction.setFreq(p_id, p_frequency);
+            }
+            
+            if (p_outOfBorderTime == 0 && cfg.yborder != -1) 
+                m_botAction.sendArenaMessage(p_name + " is out, (too long outside of base). " + 
+                        getKills() + " wins " + getDeaths() + " losses");
+            else if ((cfg.maxLagouts != -1) && p_lagouts >= cfg.maxLagouts && getDeaths() != cfg.maxDeaths)
+                m_botAction.sendArenaMessage(p_name+ " is out, (too many lagouts). " + 
+                        getKills() + " wins " + getDeaths() + " losses. (NOTICE: player can still be subbed)");
+            else if (getDeaths() != p_maxDeaths && p_countDeaths)
+                m_botAction.sendArenaMessage(p_name + " is out. " + 
+                        getKills() + " wins " + getDeaths() + " losses. (NOTICE: player can still be subbed)");
+            else
+                m_botAction.sendArenaMessage(p_name + " is out. " + 
+                        getKills() + " wins " + getDeaths() + " losses");
+        }
+    
+        private void repelUsed() {
+            p_ships[p_currentShip][REPELS_USED]++;
+        }
+    
+        private void sub() {
+            p_state = SUBBED;
+            if (m_botAction.getPlayer(p_id) != null) {
+                m_botAction.specWithoutLock(p_id);
+                m_botAction.setFreq(p_id, p_frequency);
+            }
+        }
+    }
+        
+    private class BWJSTeam {
+        private boolean flag;
+        private boolean ready;
+        private int captainID;
+        private int flagTime;
+        private int frequency;
+        private int number;
+        private int substitutesLeft;
+        private String name;
+        private String captainName;
+        private TreeMap<Integer, BWJSPlayer> players;
+        
+        
+        private BWJSTeam(int teamNumber) {
+            number = teamNumber;
+            players = new TreeMap<Integer, BWJSPlayer>();
+            reset();
+        }
+        
+        private void addPlayer(Player player, int shipType) {
+            if (cfg.announceShipType) 
+                m_botAction.sendArenaMessage(player.getPlayerName() +
+                        " is in for team " + name + " as a " + Tools.shipName(shipType) + ".");
+            else
+                m_botAction.sendArenaMessage(player.getPlayerName() +
+                        " is in for team " + name + ".");
+            
+            if (!players.containsKey((int)player.getPlayerID()))
+                players.put((int) player.getPlayerID(), new BWJSPlayer(player, shipType, cfg.maxDeaths, frequency));
+            else {
+                players.get((int) player.getPlayerID()).p_currentShip = shipType;
+                players.get((int) player.getPlayerID()).addPlayer();
+            }
+        }
+        
+        private void addTimePoint() {
+            if (flag)
+                flagTime++;
+        }
+        
+        private void flagClaimed(FlagClaimed event) {
+            flag = true;
+            players.get((int) event.getPlayerID()).flagClaimed();
+        }
+        
+        private void flagLost() {
+            flag = false;
+        }
+        
+        private void flagReward(short points) {
+            for (BWJSPlayer i : players.values())
+                i.flagReward(points);
+        }
+        
+        private int getDeaths() {
+            int deaths = 0;
+            
+            for (BWJSPlayer i : players.values())
+                deaths += i.getDeaths();
+            
+            return deaths;
+        }
+        
+        private int getFlagsClaimed() {
+            int flags = 0;
+            
+            for (BWJSPlayer i : players.values())
+                flags += i.getFlagsClaimed();
+            
+            return flags;
+        }
+        
+        private int getKills() {
+            int kills = 0;
+            
+            for (BWJSPlayer i : players.values())
+                kills += i.getKills();
+            
+            return kills;
+        }
+        
+        private int getLagouts() {
+            int lagouts = 0;
+            
+            for (BWJSPlayer i : players.values())
+                lagouts += i.getLagouts();
+            
+            return lagouts;
+        }
+        
+        private int getRating() {
+            int rating = 0;
+            
+            for (BWJSPlayer i : players.values())
+                rating += i.getRating();
+            
+            return rating;
+        }
+        
+        private int getTeamKills() {
+            int kills = 0;
+            
+            for (BWJSPlayer i : players.values())
+                kills += i.getTeamKills();
+            
+            return kills;
+        }
+        
+        private int getTerrKills() {
+            int kills = 0;
+            
+            for (BWJSPlayer i : players.values())
+                kills += i.getTerrKills();
+            
+            return kills;
+        }
+        
+        private int getScore() {
+            int score = 0;
+            
+            for (BWJSPlayer i : players.values())
+                score += i.getScore();
+            
+            return score;
+        }
+        
+        private ArrayList<String> getScores() {
+            ArrayList<String> out = new ArrayList<String>();
+            
+            if (cfg.gameType == BASE) {
+                out.add("|                          ,------+------+------+-----------+------+------+-----------+----+");
+                
+                out.add("| " + Tools.formatString(name, 23) + " /  " +
+                        Tools.rightString(Integer.toString(getKills()), 4) + " | " +
+                        Tools.rightString(Integer.toString(getDeaths()), 4) + " | " +
+                        Tools.rightString(Integer.toString(getTeamKills()), 4) + " | " +
+                        Tools.rightString(Integer.toString(getScore()), 9) + " | " +
+                        Tools.rightString(Integer.toString(getFlagsClaimed()), 4) + " | " +
+                        Tools.rightString(Integer.toString(getTerrKills()), 4) + " | " +
+                        Tools.rightString(Integer.toString(getRating()), 9) + " | " +
+                        Tools.rightString(Integer.toString(getLagouts()), 2) + " |");
+                out.add("+------------------------'        |      |      |           |      |      |           |    |");
+                
+                for (BWJSPlayer p : players.values()) {
+                    out.add("|  " + Tools.formatString(p.p_name, 25) + " "
+                            + Tools.rightString(Integer.toString(p.getKills()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getDeaths()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getTeamKills()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getScore()), 9) + " | "
+                            + Tools.rightString(Integer.toString(p.getFlagsClaimed()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getTerrKills()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getRating()), 9) + " | "
+                            + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " |");
+                }
+            } else  if (cfg.gameType == JAVDUEL){
+                out.add("|                          ,------+------+------+-----------+----+");
+                out.add("| " + Tools.formatString(name, 23) + " /  "
+                        + Tools.rightString(Integer.toString(getKills()), 4) + " | "
+                        + Tools.rightString(Integer.toString(getDeaths()), 4) + " | "
+                        + Tools.rightString(Integer.toString(getTeamKills()), 4) + " | "
+                        + Tools.rightString(Integer.toString(getRating()), 9) + " | "
+                        + Tools.rightString(Integer.toString(getLagouts()), 2) + " |");
+                out.add("+------------------------'        |      |      |           |    |");
+
+                for (BWJSPlayer p : players.values()) {
+                    out.add("|  " + Tools.formatString(p.p_name, 25) + " "
+                            + Tools.rightString(Integer.toString(p.getKills()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getDeaths()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getTeamKills()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getRating()), 9) + " | "
+                            + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " |");
+                }
+            } else {
+                out.add("|                          ,------+------+-----------+----+");
+                out.add("| " + Tools.formatString(name, 23) + " /  "
+                        + Tools.rightString(Integer.toString(getKills()), 4) + " | "
+                        + Tools.rightString(Integer.toString(getDeaths()), 4) + " | "
+                        + Tools.rightString(Integer.toString(getRating()), 9) + " | "
+                        + Tools.rightString(Integer.toString(getLagouts()), 2) + " |");
+                out.add("+------------------------'        |      |           |    |");
+
+                for (BWJSPlayer p : players.values()) {
+                    out.add("|  " + Tools.formatString(p.p_name, 25) + " "
+                            + Tools.rightString(Integer.toString(p.getKills()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getDeaths()), 4) + " | "
+                            + Tools.rightString(Integer.toString(p.getRating()), 9) + " | "
+                            + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " |");
+                }
+            }
+            return out;
+        }
+        
+        private boolean isDead() {
+            for (BWJSPlayer i : players.values()) {
+                if (i.p_state < LAGOUT_OUT)
+                    return false;
+            }
+            return true;
+        }
+        
+        private void notReady() {
+            ready = false;
+            m_botAction.sendArenaMessage(name + " is NOT ready to begin.");
+        }
+        
+        private void ready() {
+            if (!ready) {
+                if (players.size() >= cfg.minPlayers) {
+                    m_botAction.sendArenaMessage(name + " is ready to begin.");
+                    ready = true;
+                } else
+                    m_botAction.sendPrivateMessage(captainID, "Cannot ready, not enough players in.");
+            } else
+                notReady();
+        }
+
+        private void remove(BWJSPlayer player) {
+            players.remove(player.p_id);
+            m_botAction.sendArenaMessage(player.p_name + " has been removed from " + name);
+            if (m_botAction.getPlayer(player.p_id) != null) {
+                m_botAction.specWithoutLock(player.p_id);
+                m_botAction.setFreq(player.p_id, FREQ_SPEC);
+            }
+        }
+        
+        private void removeCap() {
+            m_botAction.sendArenaMessage(captainName +
+                    " has been removed as captain of " + name + ".", Tools.Sound.CROWD_AWW);
+            captainID = -1;
+            captainName = "[nobody]";
+        }
+        
+        private void reset() {
+            captainName = "[nobody]";
+            captainID = -1;
+            frequency = number;
+            flag = false;
+            flagTime = 0;
+            name = "Freq " + frequency;
+            players.clear();
+            ready = false;
+            substitutesLeft = cfg.maxSubs;
+        }
+        
+        private BWJSPlayer searchPlayer(String playerName) {
+            BWJSPlayer best = null;
+            for (BWJSPlayer p : players.values()) {
+                if (p.p_name.toLowerCase().startsWith(playerName.toLowerCase())) {
+                    if (best == null)
+                        best = p;
+                    else if (best.p_name.toLowerCase().compareTo(p.p_name.toLowerCase()) > 0)
+                        best = p;
+                }
+            }
+            return best;
+        }
+        
+        private int ships(int shipType) {
+            int count = 0;
+            for (BWJSPlayer p : players.values()) {
+                if (p.p_state < SUBBED && p.p_currentShip == shipType)
+                    count++;
+            }
+            return count;
+        }
+        
+        private void sub(BWJSPlayer playerOne, Player playerTwo) {
+            int shipType = playerOne.p_currentShip;
+            int maxDeaths;
+            
+            if (playerOne.p_maxDeaths == -1)
+                maxDeaths = -1;
+            else
+                maxDeaths = playerOne.p_maxDeaths - playerOne.getDeaths();
+            
+            //Removing player
+            playerOne.sub();
+            
+            //Adding substitute
+            if (cfg.gameType == BASE) {
+                if (players.containsKey((int) playerTwo.getPlayerID()))
+                    players.get((int) playerTwo.getPlayerID()).addPlayer();
+                else
+                    players.put((int) playerTwo.getPlayerID(), 
+                            new BWJSPlayer(playerTwo, shipType, maxDeaths, frequency));
+            } else {
+                players.put((int) playerTwo.getPlayerID(), 
+                        new BWJSPlayer(playerTwo, shipType, maxDeaths, frequency));
+            }
+            m_botAction.sendPrivateMessage(playerTwo.getPlayerID(), "You are subbed in the game.");
+            
+            if (maxDeaths == -1)
+                m_botAction.sendArenaMessage(playerOne.p_name + " has been substituted by " +
+                        playerTwo.getPlayerName());
+            else 
+                m_botAction.sendArenaMessage(playerOne.p_name + " has been substituted by " +
+                        playerTwo.getPlayerName() + ", with " + maxDeaths + " deaths left");
+            
+            substitutesLeft--;
+            
+            if (substitutesLeft >= 0)
+                m_botAction.sendSmartPrivateMessage(captainName, "You have " + substitutesLeft + "substitutes left.");
+            
+        }
+        
+        private void switchPlayers(BWJSPlayer playerOne, BWJSPlayer playerTwo) {
+            m_botAction.sendArenaMessage(playerOne.p_name + " (" + Tools.shipName(playerOne.p_currentShip) + ") and "
+                    + playerTwo.p_name + " (" + Tools.shipName(playerTwo.p_currentShip) + ") switched ships.");
+            
+            int playerOneShipType = playerTwo.p_currentShip;
+            int playerTwoShipType = playerOne.p_currentShip;
+            
+            playerOne.p_currentShip = playerOneShipType;
+            playerTwo.p_currentShip = playerTwoShipType;
+            
+            if (m_botAction.getPlayer(playerOne.p_id) != null)
+                playerOne.addPlayer();
+            if (m_botAction.getPlayer(playerTwo.p_id) != null)
+                playerTwo.addPlayer();
+        }
+        
+        private void warpTo(int x_coord, int y_coord) {
+            for (BWJSPlayer i : players.values())
+                m_botAction.warpTo((int) i.p_player.getPlayerID(), x_coord, y_coord);
+        }
+    }
+
+    /* Timer Classes */
+    private class AddingTimer extends TimerTask {
+        public void run() {
+            m_botAction.sendArenaMessage("Time is up! Checking lineups..");
+            checkLineup();
+        }
+    }
+    
+    private class CapTimer extends TimerTask {
+        public void run() {
+            if (team[ONE].captainID == -1)
+                team[TWO].removeCap();
+            else
+                team[ONE].removeCap();
+        }
+    }
+    
+    private class FiveSecondTimer extends TimerTask {
+        public void run() {
+            m_botAction.showObject(cfg.objects[1]);
+        }
+    }
+    
+    private class GameTimer extends TimerTask {
+        public void run() {
+            gameOver();
+        }
+    }
+    
+    private class UpdateTimer extends TimerTask {
+        public void run() {
+            cfg.timeLeft--;
+            
+            if (cfg.timeTarget != 0) {
+                team[ONE].addTimePoint();
+                team[TWO].addTimePoint();
+                
+                if (team[ONE].flagTime == (cfg.timeTarget * 60) || team[TWO].flagTime == (cfg.timeTarget * 60))
+                    gameOver();
+            } else {
+                if (team[ONE].isDead() || team[TWO].isDead())
+                    gameOver();
+            }
+            
+            if (cfg.inBase)
+                checkIfInBase();
+            
+            updateScoreboard();
+        }
+    }
+    
+    private class StartGameTimer extends TimerTask {
+        public void run() {
+            startGame();
+        }
+    }
+    
+    private class PreGameTimer extends TimerTask {
+        public void run() {
+            startPreGame();
+        }
+    }
+
+    private class ZonerTimer extends TimerTask {
+        public void run() {
+            lockZoner = false;
+        }
+    }
+}
