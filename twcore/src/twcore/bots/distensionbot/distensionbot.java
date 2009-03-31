@@ -99,6 +99,9 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
     private final int RANK_0_STRENGTH = 50;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final float TERR_STRENGTH_MULTIPLIER = 1.75f;  // How much a terr's strength is multiplied by (for calculation purposes)
+    private final float SHARK_STRENGTH_MULTIPLIER = 1.4f;  // How much a terr's strength is multiplied by
+    private final float OPS_STRENGTH_MULTIPLIER = 1.5f;    // How much a terr's strength is multiplied by
 
     private final int ARMY_SYSTEM_STATIC = 0;              // Armies recorded in DB and do not change
     private final int ARMY_SYSTEM_SEMISTATIC = 1;          // Player gets army for the day/week/etc.
@@ -660,7 +663,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.SQLClose( r );
                 if( currentTime.after( resetTime ) ) {
                     m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnTime='0' WHERE 1" );
-                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");                    
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
                     Timestamp newResetTime = new Timestamp( resetTime.getTime() + Tools.TimeInMillis.DAY );
                     while( newResetTime.before( currentTime ) ) {   // Make up for any skipped days.
                         newResetTime = new Timestamp( newResetTime.getTime() + Tools.TimeInMillis.DAY );
@@ -846,21 +849,28 @@ public class distensionbot extends SubspaceBot {
                         return;
                     DistensionArmy army0 = m_armies.get(0);
                     DistensionArmy army1 = m_armies.get(1);
-                    int army0Terrs = 0;
-                    int army1Terrs = 0;
-                    boolean army0Shark = false;
-                    boolean army1Shark = false;
-                    float armyStr0 = army0.getTotalStrength();
-                    float armyStr1 = army1.getTotalStrength();
-                    if( armyStr1 == 0 ) armyStr1 = 1;
-                    if( armyStr0 == 0 ) armyStr1 = 1;
-                    float armyWeight0 = armyStr0 / armyStr1;
-                    float armyWeight1 = armyStr1 / armyStr0;
-                    int helpOutArmy = -1;
+                    int[] armyTerrs = {0,0};
+                    //int army0Terrs = 0;
+                    //int army1Terrs = 0;
+                    boolean[] armyHasShark = {false,false};
+                    //boolean army0Shark = false;
+                    //boolean army1Shark = false;
+                    //float armyStr0 = army0.getTotalStrength();
+                    //float armyStr1 = army1.getTotalStrength();
+                    float[] armyStr = { army0.getTotalStrength(), army1.getTotalStrength() };
+                    if( armyStr[1] == 0 ) armyStr[1] = 1;
+                    if( armyStr[0] == 0 ) armyStr[0] = 1;
+                    float[] armyWeight = { armyStr[0] / armyStr[1], armyStr[1] / armyStr[0] };
+                    //float armyWeight0 = armyStr[0] / armyStr[1];
+                    //float armyWeight1 = armyStr[1] / armyStr[0];
+                    int downArmy = -1;
+                    int upArmy = -1;
+                    int[] armyPilots = {army0.getPilotsInGame(),army1.getPilotsInGame()};
+                    int strDiff = Math.abs((int)(armyStr[0] - armyStr[1]));
 
                     if( m_armySystem != ARMY_SYSTEM_NONSTATIC &&
-                        (m_singleFlagMode && m_flagOwner[0] == helpOutArmy) ||
-                        (!m_singleFlagMode && m_flagOwner[0] == helpOutArmy && m_flagOwner[1] == helpOutArmy ) ) {
+                        (m_singleFlagMode && m_flagOwner[0] == downArmy) ||
+                        (!m_singleFlagMode && m_flagOwner[0] == downArmy && m_flagOwner[1] == downArmy ) ) {
                         // If they're holding both flags, they don't need help.
                         // However, don't reset assist advert time so that we check again in 20sec
                         // if someone leaves or switches ships.
@@ -871,58 +881,100 @@ public class distensionbot extends SubspaceBot {
                     for( DistensionPlayer p : m_players.values() ) {
                         if( p.getShipNum() == Tools.Ship.TERRIER ) {
                             if( p.getArmyID() == 0 )
-                                army0Terrs++;
+                                armyTerrs[0]++;
                             else
-                                army1Terrs++;
+                                armyTerrs[1]++;
                         }
                         if( p.getShipNum() == Tools.Ship.SHARK ) {
                             if( p.getArmyID() == 0 )
-                                army0Shark = true;
+                                armyHasShark[0] = true;
                             else
-                                army1Shark = true;
+                                armyHasShark[1] = true;
                         }
                     }
-                    
-                    
+
+
                     // AUTO-SWAP SYSTEM
+                    /*
+                     *
+
+            ARE TEAMS NUMERICALLY IMBALANCED?
+
+            yes                                 no
+
+        ARE WEIGHTS CLOSE?
+
+    yes         no
+
+                MOVE OVER #
+            PLAYERS TO OTHER SIDE
+                     */
                     if( m_armySystem == ARMY_SYSTEM_NONSTATIC ) {
+                        // Army 0: 400  Army 1: 600   Diff: 200
+                        // Army 0 is also down 1 or more people.
+                        // Conclusion: Take a str close to 100 from 1 and give to 0
+
                         // Do swapping here.
-                        
-                        // First: are numbers imbalanced?  More than 2
-                        if( army0.getPilotsInGame() > army1.getPilotsInGame() + 1 ) {
-                            
-                        } else if( army0.getPilotsInGame() > army1.getPilotsInGame() + 1 ) {
-                            
+
+                        if( armyWeight[1] < AUTOBALANCE_WEIGHT_IMBALANCE ) {
+                            downArmy = 1;
+                            upArmy = 0;
+                        } else if( armyWeight[0] < AUTOBALANCE_WEIGHT_IMBALANCE ) {
+                            downArmy = 0;
+                            upArmy = 1;
                         }
-                        
-                        
-                        if( armyWeight1 < AUTOBALANCE_WEIGHT_IMBALANCE )
-                            helpOutArmy = 1;
-                        else if( armyWeight0 < AUTOBALANCE_WEIGHT_IMBALANCE )
-                            helpOutArmy = 0;
-                        
-                        
+
+                        // An army is down in terms of strength
+                        if( downArmy != -1 ) {
+                            // If army with more strength also has more people...
+                            if( armyPilots[upArmy] > armyPilots[downArmy] ) {
+                                // Try to find someone who can simply be transferred over
+                                DistensionPlayer swapP = findPlayerClosestToStrOnArmy( upArmy, strDiff, -1 );
+                                if( swapP != null ) {
+                                    swapP.doDefect(downArmy);
+                                    return;
+                                }
+                            } else {
+                                // Failed to find someone of small enough strength to transfer over, 
+                                // or army w/ greater strength has equal # players:
+                                //      Need instead to swap players around
+                                
+                            }
+
+                        // Strengths even, numbers not.
+                        } else {
+
+                        }
+
+
+
+                        if( army0.getPilotsInGame() > army1.getPilotsInGame() + 1 ) {
+
+                        } else if( army0.getPilotsInGame() > army1.getPilotsInGame() + 1 ) {
+
+                        }
+
                         return;
                     }
-                    
-                    
-                    // ASSIST SYSTEM                    
+
+
+                    // ASSIST SYSTEM
                     int msgArmy = -1;
-                    if( armyWeight1 < ADVERT_WEIGHT_IMBALANCE ) {
-                        helpOutArmy = 1;
+                    if( armyWeight[1] < ADVERT_WEIGHT_IMBALANCE ) {
+                        downArmy = 1;
                         msgArmy = 0;
-                    } else if( armyWeight0 < ADVERT_WEIGHT_IMBALANCE ) {
-                        helpOutArmy = 0;
+                    } else if( armyWeight[0] < ADVERT_WEIGHT_IMBALANCE ) {
+                        downArmy = 0;
                         msgArmy = 1;
                     }
 
-                    if( helpOutArmy != -1 ) {
+                    if( downArmy != -1 ) {
                         // Attempt to return an assister who is needed back on freq;
                         // if none, advert an army imbalance.
-                        int maxStrToAssist = (int)Math.abs(armyStr0 - armyStr1) - 1;
+                        int maxStrToAssist = strDiff - 1;
                         DistensionPlayer bestPlayer = null;
                         for( DistensionPlayer p : m_players.values() ) {
-                            if( p.isAssisting() && p.getNaturalArmyID() == helpOutArmy ) {
+                            if( p.isAssisting() && p.getNaturalArmyID() == downArmy ) {
                                 if( p.getStrength() <= (maxStrToAssist - RANK_0_STRENGTH) ) {
                                     // Don't take the only Terr!
                                     if( p.getShipNum() != Tools.Ship.TERRIER ) {
@@ -963,44 +1015,37 @@ public class distensionbot extends SubspaceBot {
                         } catch (TWCoreException e ) {
                             bestPlayer = null;
                         }
-                        
+
                         if( !checkForAssistAdvert )
                             return;
 
                         if( bestPlayer == null ) {
                             if( maxStrToAssist > RANK_0_STRENGTH )  // Only display if assisting is possible
-                                m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: Pilot lower rank ships, or use !assist " + helpOutArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
+                                m_botAction.sendOpposingTeamMessageByFrequency( msgArmy, "IMBALANCE: Pilot lower rank ships, or use !assist " + downArmy + "  (max assist rank: " + (maxStrToAssist - RANK_0_STRENGTH) + ").   [ " + army0.getTotalStrength() + " vs " + army1.getTotalStrength() + " ]");
                         }
                         // Check if teams are imbalanced in numbers, if not strength
                     } else {
                         if( !checkForAssistAdvert )
                             return;
-                        if( army0.getPilotsInGame() <= army1.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
+                        if( armyPilots[0] <= armyPilots[1] - ASSIST_NUMBERS_IMBALANCE )
                             m_botAction.sendOpposingTeamMessageByFrequency( 0, "NOTICE: Your army has fewer pilots but is close in strength; if you need help, pilot lower-ranked ships to allow !assist." );
-                        else if( army1.getPilotsInGame() <= army0.getPilotsInGame() - ASSIST_NUMBERS_IMBALANCE )
+                        else if( armyPilots[1] <= armyPilots[0] - ASSIST_NUMBERS_IMBALANCE )
                             m_botAction.sendOpposingTeamMessageByFrequency( 1, "NOTICE: Your army has fewer pilots but is close in strength; if you need help, pilot lower-ranked ships to allow !assist." );
                     }
 
                     if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
-                        if( army0Terrs < 2 ) {
-                            if( army0Terrs == 1 && army0.getPilotsInGame() > 8 ) {
-                                m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
-                            } else if( army0Terrs == 0 && army0.getPilotsInGame() > 3 ) {
-                                m_botAction.sendOpposingTeamMessageByFrequency( 0, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+
+                        for( int i=0; i<2; i++ ) {
+                            if( armyTerrs[i] < 2 ) {
+                                if( armyTerrs[i] == 1 && armyPilots[i] > 8 ) {
+                                    m_botAction.sendOpposingTeamMessageByFrequency( i, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
+                                } else if( armyTerrs[i] == 0 && armyPilots[i] > 3 ) {
+                                    m_botAction.sendOpposingTeamMessageByFrequency( i, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                                }
                             }
-                        }
-                        if( army1Terrs < 2 ) {
-                            if( army1Terrs == 1 && army1.getPilotsInGame() > 8 ) {
-                                m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED: One additional Terrier pilot requested by HQ.  Switch ships to receive a bonus." );
-                            } else if( army1Terrs == 0 && army1.getPilotsInGame() > 3 ) {
-                                m_botAction.sendOpposingTeamMessageByFrequency( 1, "TERR NEEDED!: Terrier pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                            if( !armyHasShark[i] && armyPilots[i] > 4 ) {
+                                m_botAction.sendOpposingTeamMessageByFrequency( 0, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
                             }
-                        }
-                        if( !army0Shark && army0.getPilotsInGame() > 4 ) {
-                            m_botAction.sendOpposingTeamMessageByFrequency( 0, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
-                        }
-                        if( !army1Shark && army1.getPilotsInGame() > 4 ) {
-                            m_botAction.sendOpposingTeamMessageByFrequency( 1, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
                         }
                     }
 
@@ -1008,9 +1053,30 @@ public class distensionbot extends SubspaceBot {
                     checkForAssistAdvert = false;
                 }
             }
+
+            private DistensionPlayer findPlayerClosestToStrOnArmy( int armyID, int str, int ship ) {
+                DistensionPlayer closestP = null;
+                int closestDistance = 9999;
+                for( DistensionPlayer p : m_players.values() ) {
+                    if( p.getArmyID() == armyID &&
+                      ( (ship == -1 && !p.isHighestOrderSupportShip()) || (ship == p.getShipNum() ) ) ) {
+                        int distance = Math.abs( p.getStrength() - str);
+                        if( distance < closestDistance) {
+                            closestP = p;
+                            closestDistance = distance;
+                        }
+                    }
+                }
+                // If we're not close enough, we've got nothing.  A swap is now the only way.
+                if( closestDistance >= str )
+                    return null;
+                return closestP;
+            }
         };
         m_botAction.scheduleTask( m_periodicTasks, 1000, 1000 );
     }
+
+
 
 
     /**
@@ -1953,7 +2019,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void handleEvent(SoccerGoal event) {
         int armyID = event.getFrequency();
-        
+
         if( m_canScoreGoals ) {
             int taperAmount = -1;
             long timeBetweenGoals;
@@ -2559,7 +2625,7 @@ public class distensionbot extends SubspaceBot {
     public void cmdDefect( String name, String msg ) {
         if( m_armySystem == ARMY_SYSTEM_NONSTATIC )
             throw new TWCoreException( "Army balance is being manipulated by a Higher Power.  You need not defect." );
-        
+
         if( msg == null )
             throw new TWCoreException( "If you want to defect to one of the other !armies, you've got to at least have an idea which one..." );
 
@@ -3463,7 +3529,7 @@ public class distensionbot extends SubspaceBot {
         else if( shipNum == 0 )
             throw new TWCoreException( "If you want to see the armory's selection for a ship, you'll need to pilot one first." );
 
-        m_botAction.sendPrivateMessage( name, " #  Name                                  Curr /  Max       UP      Requirements" );
+        m_botAction.sendPrivateMessage( name, " #  Name                                  Curr /  Max     UP        Requirements" );
         Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
         ShipUpgrade currentUpgrade;
         int[] purchasedUpgrades = p.getPurchasedUpgrades();
@@ -4050,15 +4116,15 @@ public class distensionbot extends SubspaceBot {
         if( p == null )
             return;
         if( m_armySystem == ARMY_SYSTEM_NONSTATIC )
-            throw new TWCoreException( "Army balance is being manipulated by a Higher Power.  You need not assist." );            
-        
+            throw new TWCoreException( "Army balance is being manipulated by a Higher Power.  You need not assist." );
+
         int shipNum = p.getShipNum();
         if( shipNum == -1 )
             throw new TWCoreException( "You must !return or !enlist in an army first." );
         boolean autoReturn = msg.equals(":auto:");
         if( m_refitMode )
             if( !autoReturn )
-                throw new TWCoreException( "Assisting is not necessary during refit mode.  However, your kindness and generosity have been duly noted.  In a log file." );
+                throw new TWCoreException( "I assure you that assisting is not necessary during refit mode.  However, your 'kindness' and 'generosity' have been duly noted.  In a log file.  So that you may be 'rewarded' later on..." );
         if( p.isRespawning() )
             throw new TWCoreException( "Please wait until your current ship is rearmed before attempting to assist." );
         int armyToAssist = -1;
@@ -6560,7 +6626,7 @@ public class distensionbot extends SubspaceBot {
     public void cmdSetVar( String name, String msg ) {
         if( !( name.equals("qan") || name.equals("dugwyler") ) )
             throw new TWCoreException( "Only the bot coder may use this command." );
-        
+
         String[] args = msg.toLowerCase().split(":");
         if( args.length != 3 )
             throw new TWCoreException( "Improper format.  !debug-setvar player:var:value" );
@@ -7279,7 +7345,7 @@ public class distensionbot extends SubspaceBot {
             ids.add( id );
             msgs.add( msg );
         }
-        
+
         public void addMsgs( int id, LinkedList<String> list ) {
             for( String msg : list ) {
                 ids.add( id );
@@ -7393,7 +7459,7 @@ public class distensionbot extends SubspaceBot {
         private int       lastRot;              // Last rotation
         private int       idlesInBase;          // # idle checks in which a player has been in base
         private int       bonusPrize;           // # of prize to additionally prize at next spawn
-        
+
         // ABILITIES
         private boolean   energyTank;           // True if player has an energy tank available
         private boolean   targetedEMP;          // True if player has targeted EMP available
@@ -7406,7 +7472,7 @@ public class distensionbot extends SubspaceBot {
         private int       masterDrive;          // Levels of M.A.S.T.E.R. Drive
         private int       firebloom;            // Levels of Firebloom
         private int       brick;                // Levels of brick
-        
+
         private int       rewardRemaining;      // RP remaining over which a reward multiplier will be applied
         private long      opsAFKNotifyTime;     // Timestamp of Ops being notified of AFK
         private long      lastVengeTime;        // Timestamp of last time Vengeful Bastard fired on player
@@ -7615,11 +7681,11 @@ public class distensionbot extends SubspaceBot {
                     banned = r.getString( "fcBanned" ).equals( "y" );
                     if( banned == true )
                         return 0;
-                    
+
                     // AUTOMATIC
-                    if( m_armySystem == ARMY_SYSTEM_NONSTATIC ) { 
+                    if( m_armySystem == ARMY_SYSTEM_NONSTATIC ) {
                         Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
-                        
+
                         int freq0=0, freq1=0;
                         while( i.hasNext() ) {
                             Player p = i.next();
@@ -7641,7 +7707,7 @@ public class distensionbot extends SubspaceBot {
                     } else {
                         armyID = r.getInt( "fnArmyID" );
                     }
-                    
+
                     // Default Op controls for upper staff
                     opStatus = r.getInt( "fnOperator" );
                     if( opStatus == 0 && m_botAction.getOperatorList().isSysop(name) )
@@ -8237,7 +8303,7 @@ public class distensionbot extends SubspaceBot {
                 }
             } else if( shipNum == 7 ) {
                 // Firebloom ability.
-                // Every 2 minutes with lvl1, every 1 minutes with lvl2, spawn w/ @ lvl3 (+ get every minute) 
+                // Every 2 minutes with lvl1, every 1 minutes with lvl2, spawn w/ @ lvl3 (+ get every minute)
                 if( firebloom > 0 ) {
                     if( (firebloom == 1 && tick % 4 == 0) ||
                         (firebloom >= 2 && tick % 2 == 0) ) {
@@ -8277,7 +8343,7 @@ public class distensionbot extends SubspaceBot {
                     if( (brick == 1 && tick % 2 == 0) ||
                         (brick >= 2 && tick % 1 == 0) ) {
                         m_botAction.sendPrivateMessage( arenaPlayerID, "Brick replenished." );
-                        m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BRICK, SOUND_POWERUP_RECHARGED );                        
+                        m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BRICK, SOUND_POWERUP_RECHARGED );
                     }
                 }
             } else if( shipNum == 9 ) {
@@ -8795,10 +8861,10 @@ public class distensionbot extends SubspaceBot {
         public void setupSpecialAbilities() {
             if( (shipNum == 3 && (purchasedUpgrades[10] > 0 || purchasedUpgrades[11] > 0)) ||
                     (shipNum == 5 && (purchasedUpgrades[11] > 0 || purchasedUpgrades[13] > 0)) ||
-                    (shipNum == 8 && (purchasedUpgrades[9] > 0) ) ||
+                    (shipNum == 8 && purchasedUpgrades[9] > 0 ) ||
                     (shipNum == 2 && ((purchasedUpgrades[9] > 0) || rank >= 15) ) ||
-                    (shipNum == 1 && (purchasedUpgrades[11] > 0) ) ||
-                    (shipNum == 6 && (purchasedUpgrades[14] > 0) ) ||
+                    (shipNum == 1 && purchasedUpgrades[11] > 0 ) ||
+                    (shipNum == 6 && (purchasedUpgrades[14] > 0 || (purchasedUpgrades[13] > 0 && purchasedUpgrades[13] < 3) ) ) ||
                     (shipNum == 7 && (purchasedUpgrades[10] > 0 && purchasedUpgrades[10] < 3)) ||
                     (shipNum == 9) )
                 m_specialAbilityPrizer.addPlayer(this);
@@ -8964,14 +9030,19 @@ public class distensionbot extends SubspaceBot {
             oldarmy.adjustPilotsTotal(-1);
             setArmy( armyID );
             getArmy().adjustPilotsTotal(1);
-            try {
-                m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID=" + armyID + " WHERE fnID='" + dbPlayerID + "'" );
-            } catch (SQLException e) {
-                m_botAction.sendPrivateMessage( arenaPlayerID, "ERROR CHANGING ARMY!  Report to a mod immediately!" );
+            if( m_armySystem != ARMY_SYSTEM_NONSTATIC ) {
+                try {
+                    m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID=" + armyID + " WHERE fnID='" + dbPlayerID + "'" );
+                } catch (SQLException e) {
+                    m_botAction.sendPrivateMessage( arenaPlayerID, "ERROR CHANGING ARMY!  Report to a mod immediately!" );
+                }
+                m_botAction.sendPrivateMessage(arenaPlayerID, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
+                m_botAction.sendOpposingTeamMessageByFrequency(oldarmy.getID(), "TRAITOR!  Villainous dog!  " + name.toUpperCase() + " has betrayed us all for " + getArmyName().toUpperCase() + " !!  Spare not this worm a gruesome death ...");
+                m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Glory be to " + getArmyName().toUpperCase() + "!  " + name.toUpperCase() + " has joined our ranks!  Welcome this brave new pilot.");
+            } else {
+                m_botAction.sendArenaMessage(name + " auto-switched to " + getArmy().getName() + " (" + armyID + ")." );
+                m_botAction.sendPrivateMessage(arenaPlayerID, "You have been moved to the other army to maintain balance." );                
             }
-            m_botAction.sendPrivateMessage(arenaPlayerID, "So you're defecting to " + getArmyName().toUpperCase() + "?  Can't blame you.  You'll be pilot #" + getArmy().getPilotsTotal() + "." );
-            m_botAction.sendOpposingTeamMessageByFrequency(oldarmy.getID(), "TRAITOR!  Villainous dog!  " + name.toUpperCase() + " has betrayed us all for " + getArmyName().toUpperCase() + " !!  Spare not this worm a gruesome death ...");
-            m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Glory be to " + getArmyName().toUpperCase() + "!  " + name.toUpperCase() + " has joined our ranks!  Welcome this brave new pilot.");
             if( shipNum > 0 )
                 m_botAction.setFreq(arenaPlayerID, armyID);
             if( getArmyID() == 0 ) {
@@ -9720,11 +9791,22 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return Returns strength of ship (upgrade level + default player strength).
+         * @return Returns strength of ship (upgrade level + default player strength) * ship multiplier.
          */
         public int getStrength() {
-            if( shipNum == 9 )
-                return getRank() + (int)(RANK_0_STRENGTH * 1.5f);
+            float str = getRank() + RANK_0_STRENGTH;
+            switch(shipNum) {
+            case 5: return (int)(str * TERR_STRENGTH_MULTIPLIER);
+            case 8: return (int)(str * SHARK_STRENGTH_MULTIPLIER);
+            case 9: return (int)(str * OPS_STRENGTH_MULTIPLIER);
+            }
+            return (int)str;
+        }
+
+        /**
+         * @return Returns unmultiplied strength of ship (upgrade level + default player strength).
+         */
+        public int getUnmultipliedStrength() {
             return getRank() + RANK_0_STRENGTH;
         }
 
@@ -9928,6 +10010,15 @@ public class distensionbot extends SubspaceBot {
          * @return True if player is "higher order" support ship (5, 8, 9, or 4)
          */
         public boolean isHigherOrderSupportShip() {
+            return (shipNum == 5 || shipNum == 8 || shipNum == 4 || shipNum == 9 );
+        }
+
+        /**
+         * @return True if player is "highest order" support ship (5, 8, or 9) -- the
+         * ones that should not be transferred in balance swaps w/o being swapped with
+         * another of their exact type
+         */
+        public boolean isHighestOrderSupportShip() {
             return (shipNum == 5 || shipNum == 8 || shipNum == 4 || shipNum == 9 );
         }
 
