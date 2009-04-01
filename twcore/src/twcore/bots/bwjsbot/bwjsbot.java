@@ -110,6 +110,7 @@ public class bwjsbot extends SubspaceBot {
         listAlert = new ArrayList<String>();
         listNotplaying = new ArrayList<String>();
         listNotplaying.add(m_botAction.getBotName().toLowerCase());        
+        
         /* Spy */
         racismWatcher = new Spy(m_botAction);
         
@@ -230,6 +231,10 @@ public class bwjsbot extends SubspaceBot {
                 m_botAction.toggleLocked();
         }
         
+        /* Obscene block */
+        if(event.getMessageType() == Message.ARENA_MESSAGE && event.getMessage().equals("Obscenity block ON"))
+            m_botAction.sendUnfilteredPublicMessage("?obscene");
+        
         /* Handle Commands */
         if (event.getMessageType() == Message.PRIVATE_MESSAGE)
             handleCommand(event);
@@ -255,11 +260,18 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(PlayerEntered event) {
         if (state > OFF) {
             int id = event.getPlayerID();
+            
+            //Welcome incoming player and send status message
+            m_botAction.sendPrivateMessage(id, "Welcome to " + cfg.gameTypeString);
+            cmd_status(id);
+            
+            //Set player to the correct freq
             if (listNotplaying.contains(m_botAction.getPlayerName(id).toLowerCase()))
                 m_botAction.setFreq(id, FREQ_NOTPLAYING);
             else
                 m_botAction.setFreq(id, FREQ_SPEC);
             
+            //A captain has returned! Cancel the remove task
             if (id == team[ONE].captainID)
                 m_botAction.cancelTask(capTimerONE);
             else if (id == team[TWO].captainID)
@@ -272,31 +284,39 @@ public class bwjsbot extends SubspaceBot {
             int id = event.getPlayerID();
             final int teamNumber = getTeamNumber(id);
             
-            if (teamNumber != -1) {
-                if (team[teamNumber].players.containsKey(id)) {
-                    if (team[teamNumber].players.get(id).p_state == IN)
-                        team[teamNumber].players.get(id).lagout();
-                }
+            //If player was in neither of the teams, do nothing
+            if (teamNumber == -1)
+                return;
+            
+            //Player lagged out
+            if (team[teamNumber].players.containsKey(id)) {
+                if(team[teamNumber].players.get(id).p_state == IN)
+                    team[teamNumber].players.get(id).lagout();
+            }
+            
+            /*
+             * Captain lagged out
+             * Task: remove player as captain after 1 minute; notify arena
+             */
+            if (isCaptain(id)) {
+                m_botAction.sendArenaMessage("NOTICE: The captain of " +
+                        team[teamNumber].name + " has left the arena. " +
+                        team[teamNumber].captainName + " will get removed as captain after 1 minute.");
                 
-                if (team[teamNumber].captainID == id) {
-                    m_botAction.sendArenaMessage("NOTICE: The captain of " + team[teamNumber].name + 
-                            " has left the arnea. " + 
-                            team[teamNumber].captainName + " will get removed as captain after 1 minute.");
-                    if (teamNumber == ONE) {
-                        capTimerONE = new TimerTask() {
-                            public void run() {
-                                team[teamNumber].removeCap();
-                            }
-                        };
-                        m_botAction.scheduleTask(capTimerONE, Tools.TimeInMillis.MINUTE);
-                    } else if (teamNumber == TWO) {
-                        capTimerTWO = new TimerTask() {
-                            public void run() {
-                                team[teamNumber].removeCap();
-                            }
-                        };
-                        m_botAction.scheduleTask(capTimerTWO, Tools.TimeInMillis.MINUTE);
-                    }
+                if (teamNumber == ONE) {
+                    capTimerONE = new TimerTask() {
+                        public void run() {
+                            team[teamNumber].removeCap();
+                        }
+                    };
+                    m_botAction.scheduleTask(capTimerONE, Tools.TimeInMillis.MINUTE);
+                } else if (teamNumber == TWO) {
+                    capTimerTWO = new TimerTask() {
+                        public void run() {
+                            team[teamNumber].removeCap();
+                        }
+                    };
+                    m_botAction.scheduleTask(capTimerTWO, Tools.TimeInMillis.MINUTE);
                 }
             }
         }
@@ -304,14 +324,14 @@ public class bwjsbot extends SubspaceBot {
     
     public void handleEvent(PlayerPosition event) {
         /*
-         * Warp players back to their safe
+         * Warp players back to their safe during pre game
          */
         if (state == PRE_GAME) {
             int id = event.getPlayerID();
             int teamNumber = getTeamNumber(id);
             int x_coord = event.getXLocation() / 16;
             int y_coord = event.getYLocation() / 16;
-
+            
             if (teamNumber == ONE) {
                 if (x_coord != cfg.warpSpots[0] || y_coord != cfg.warpSpots[1])
                     m_botAction.warpTo(id, cfg.warpSpots[0], cfg.warpSpots[1]);
@@ -325,14 +345,11 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(WeaponFired event) {
         if (state == GAME_IN_PROGRESS) {
             int id = event.getPlayerID();
-            int freq = m_botAction.getPlayer(id).getFrequency();
+            int teamNumber = getTeamNumber(id);
             
-            if (event.getWeaponType() == WeaponFired.WEAPON_REPEL) {
-                if (freq == team[ONE].frequency)
-                    team[ONE].players.get(id).repelUsed();
-                else
-                    team[TWO].players.get(id).repelUsed();
-            }   
+            //Repel fired
+            if (event.getWeaponType() == WeaponFired.WEAPON_REPEL)
+                team[teamNumber].players.get(id).repelUsed();
         }
     }
     
@@ -340,12 +357,30 @@ public class bwjsbot extends SubspaceBot {
     private void handleCommand(Message event) {
         String message = event.getMessage().toLowerCase();
         
-        if (message.startsWith("!add"))
-            cmd_add(event);
-        else if (message.startsWith("!cap"))
+        //Captain commands
+        if (isCaptain(event.getPlayerID())) {
+            if (cfg.gameType == BASE) {
+                if (message.startsWith("!change "))
+                    cmd_change(event);
+                else if (message.startsWith("!switch "))
+                    cmd_switch(event);
+            }
+            
+            if (message.startsWith("!add"))
+                cmd_add(event);
+            else if (message.startsWith("!ready"))
+                cmd_ready(event);
+            else if (message.startsWith("!remove "))
+                cmd_remove(event);
+            else if (message.startsWith("!removecap"))
+                cmd_removecap(event);
+            else if (message.startsWith("!sub "))
+                cmd_sub(event);
+        }
+        
+        //Player commands
+        if (message.startsWith("!cap"))
             cmd_cap(event);
-        else if (message.startsWith("!change "))
-            cmd_change(event);
         else if (message.startsWith("!help"))
             cmd_help(event);
         else if (message.startsWith("!lagout"))
@@ -356,24 +391,18 @@ public class bwjsbot extends SubspaceBot {
             cmd_myfreq(event);
         else if (message.startsWith("!notplaying"))
             cmd_notplaying(event);
-        else if (message.startsWith("!ready"))
-            cmd_ready(event);
-        else if (message.startsWith("!remove "))
-            cmd_remove(event);
-        else if (message.startsWith("!removecap"))
-            cmd_removecap(event);
-        else if (message.startsWith("!start"))
-            cmd_start(event);
         else if (message.startsWith("!status"))
-            cmd_status(event);
-        else if (message.startsWith("!stop"))
-            cmd_stop(event);
+            cmd_status(event.getPlayerID());
         else if (message.startsWith("!subscribe"))
             cmd_subscribe(event);
-        else if (message.startsWith("!sub "))
-            cmd_sub(event);
-        else if (message.startsWith("!switch "))
-            cmd_switch(event);
+        
+        //Staff Commands
+        if (m_botAction.getOperatorList().isSmod(m_botAction.getPlayerName(event.getPlayerID()))) {
+            if (message.startsWith("!start"))
+                cmd_start(event);
+            else if (message.startsWith("!stop"))
+                cmd_stop(event);
+        }
     }
     
     private void cmd_add(Message event) {
@@ -384,30 +413,21 @@ public class bwjsbot extends SubspaceBot {
             Player player = m_botAction.getFuzzyPlayer(message[0]);
             int shipType = cfg.defaultShipType;
             
-            //Check if the messager on one of the teams
-            if (teamNumber == -1)
-                return;
-            
-            //Check if the messager is a captain
-            if (team[teamNumber].captainID != messagerID)
-                return;
-
-            
-            /* Messager is captain */
-            
+            //Check if ship type is specified
             if (message.length > 1) {
                 try {shipType = Integer.parseInt(message[1]);} catch (Exception e) {};
                 if (shipType < 0 || shipType > 8)
                     shipType = cfg.defaultShipType;
             }
             
+            //Adding players during PRE_GAME is not allowed
             if (state == PRE_GAME) {
-                m_botAction.sendPrivateMessage(messagerID, "Impossible to add a player at this point of the game." +
+                m_botAction.sendPrivateMessage(messagerID, "Not possible to add a player at this point of the game." +
                 " Wait until the game has started before adding more players.");
                 return;
             }
             
-            
+            //Check if its his or her turn to pick
             if (state == ADDING_PLAYERS) {
                 if ((teamNumber == ONE && !lockTurn) || (teamNumber == TWO && lockTurn)) {
                     m_botAction.sendPrivateMessage(messagerID, "Not your turn to pick!");
@@ -415,22 +435,28 @@ public class bwjsbot extends SubspaceBot {
                 }
             }
             
+            //Adding players is allowed in this state, doing further checks
             if (state == GAME_IN_PROGRESS || state == ADDING_PLAYERS) {
+                //Check if player is found
                 if (player == null) {
                     m_botAction.sendPrivateMessage(messagerID, "Unknown player, please try again.");
                     return;
                 }
                 
+                //Check if player is on the not playing list
                 if (listNotplaying.contains(player.getPlayerName().toLowerCase())) {
                     m_botAction.sendPrivateMessage(messagerID, "Cannot add, player is set to not playing.");
                     return;
                 }
                 
+                //Check if maximum player amount is reached
                 if (team[teamNumber].players.size() == cfg.maxPlayers) {
                     m_botAction.sendPrivateMessage(messagerID, "Max number of players on your team already reached.");
                     return;
                 }
                 
+                //Check if player is already on the team
+                //With exception of BASE games where a subbed player can be re-added.
                 if (team[teamNumber].players.containsKey((int) player.getPlayerID())) {
                     if (team[teamNumber].players.get((int) player.getPlayerID()).p_state < SUBBED || 
                             cfg.gameType != BASE) {
@@ -439,16 +465,19 @@ public class bwjsbot extends SubspaceBot {
                     }
                 }
                 
+                //Check if player is already on the other team
                 if (team[otherTeamNumber(teamNumber)].players.containsKey((int) player.getPlayerID())) {
                     m_botAction.sendPrivateMessage(messagerID, "Player already on the other team.");
                     return;
                 }
                 
+                //Check if player is a captain on the other team
                 if (player.getPlayerID() == team[otherTeamNumber(teamNumber)].captainID) {
                     m_botAction.sendPrivateMessage(messagerID, "Cannot add the captain of the other team");
                     return;
                 }
                 
+                //Check if the ship type max is reached
                 if (team[teamNumber].ships(shipType) >= cfg.maxShips[shipType] && cfg.maxShips[shipType] != -1) {
                     m_botAction.sendPrivateMessage(messagerID, 
                             "Could not add this player as " + Tools.shipName(shipType) +
@@ -456,13 +485,15 @@ public class bwjsbot extends SubspaceBot {
                     return;
                 }                
                 
-                //All checks done
+                /* All checks done */
                 team[teamNumber].addPlayer(player, shipType);
+                
+                //Toggle turn
                 if (state == ADDING_PLAYERS) {
                     lockTurn = !lockTurn;
                     alternatePicking();
                 }
-            }   
+            }
         }
     }
     
@@ -532,22 +563,21 @@ public class bwjsbot extends SubspaceBot {
             int shipType;
             String[] message = event.getMessage().substring(8).split(":");
             
-            if (teamNumber == -1)
+            //Check if command is properly used
+            if (message.length < 2) {
+                m_botAction.sendPrivateMessage(id, "Error: !change <player1>:<#shiptype>");
                 return;
-            
-            if (team[teamNumber].captainID != id)
-                return;
-            
-            if (message.length < 2)
-                return;
+            }
             
             BWJSPlayer player = team[teamNumber].searchPlayer(message[0]);
             
+            //Check if player could be found
             if (player == null) {
                 m_botAction.sendPrivateMessage(id, "Unknown player");
                 return;
             }
             
+            //Check if the shipType is correct
             try { shipType = Integer.parseInt(message[1]);} catch (Exception e) { 
                 m_botAction.sendPrivateMessage(id, "Unknown Ship");
                 return;
@@ -558,6 +588,7 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
+            //Check if the change is allowed
             if (team[teamNumber].ships(shipType) >= cfg.maxShips[shipType] && cfg.maxShips[shipType] != -1) {
                 m_botAction.sendPrivateMessage(id, 
                         "Could not change this player to " + Tools.shipName(shipType) +
@@ -570,30 +601,36 @@ public class bwjsbot extends SubspaceBot {
     }
     
     private void cmd_help(Message event) {
-        String name = m_botAction.getPlayerName(event.getPlayerID());
+        int id = event.getPlayerID();
+        String name = m_botAction.getPlayerName(id);
         ArrayList<String> help = new ArrayList<String>();
         if (state == WAITING_FOR_CAPS) {
             help.add("!cap                      -- Become captain of a team!");
             help.add("!cap <teamname>           -- Become captain and set your own teamname!");
-            help.add("!removecap                -- Removes you as a captain.");
+            if (isCaptain(id))
+                help.add("!removecap                -- Removes you as a captain.");
         } else if (state >= ADDING_PLAYERS) {
-            help.add("!add <player>             -- Adds player");
-            if (cfg.gameType == BASE)
-                help.add("!add <player>:<ship>      -- Adds player in the specified ship");
+            if (isCaptain(id)) {
+                help.add("!add <player>             -- Adds player");
+                if (cfg.gameType == BASE)
+                    help.add("!add <player>:<ship>      -- Adds player in the specified ship");
+            }
             help.add("!cap                      -- Become captain of a team / shows current captains!");
-            if (cfg.gameType == BASE)
+            if (cfg.gameType == BASE && isCaptain(id))
                 help.add("!change <player>:<ship>   -- Sets the player in the specified ship");
             help.add("!lagout                   -- Puts you back into the game if you have lagged out.");
             help.add("!list                     -- Lists all players on this team");
             help.add("!myfreq                   -- Puts you on your team's frequency");
-            if (state == ADDING_PLAYERS) { 
+            if (state == ADDING_PLAYERS && isCaptain(id)) { 
                 help.add("!ready                    -- Use this when you're done setting your lineup");
                 help.add("!remove <player>          -- Removes specified player)");
             }
-            help.add("!removecap                -- Removes you as a captain.");
-            help.add("!sub <playerA>:<playerB>  -- Substitutes <playerA> with <playerB>");
-            if (cfg.gameType == BASE)
-                help.add("!switch <player>:<player> -- Exchanges the ship of both players");
+            if (isCaptain(id)) {
+                help.add("!removecap                -- Removes you as a captain.");
+                help.add("!sub <playerA>:<playerB>  -- Substitutes <playerA> with <playerB>");
+                if (cfg.gameType == BASE)
+                    help.add("!switch <player>:<player> -- Exchanges the ship of both players");
+            }
         }
         help.add("!status                   -- Display status and score");
         if (state != OFF) {
@@ -617,9 +654,11 @@ public class bwjsbot extends SubspaceBot {
             int id = event.getPlayerID();
             int teamNumber = getTeamNumber(id);
             
+            //Check if player is in
             if (teamNumber == -1)
                 return;
             
+            //Extra check, player could be a captain who is not playing
             if (!team[teamNumber].players.containsKey(id))
                 return;
             
@@ -635,12 +674,18 @@ public class bwjsbot extends SubspaceBot {
             int teamNumber = getTeamNumber(id);
             ArrayList<String> list = new ArrayList<String>();
             
-            if (teamNumber == -1)
-                return;
-            
-            list.add(team[teamNumber].name + " (captain: " + team[teamNumber].captainName + ")");
-            for (BWJSPlayer p : team[teamNumber].players.values()) 
-                list.add(p.p_name + " - " + Tools.shipName(p.p_currentShip) + " - " + p.getStatus());
+            if (teamNumber == -1) {
+                for (int i = 0; i < 2; i++) {
+                    list.add(team[i].name + " (captain: " + team[i].captainName + ")");
+                    for (BWJSPlayer p : team[i].players.values()) 
+                        list.add(p.p_name + " - " + Tools.shipName(p.p_currentShip) + " - " + p.getStatus());
+                    list.add("");
+                }
+            } else {
+                list.add(team[teamNumber].name + " (captain: " + team[teamNumber].captainName + ")");
+                for (BWJSPlayer p : team[teamNumber].players.values()) 
+                    list.add(p.p_name + " - " + Tools.shipName(p.p_currentShip) + " - " + p.getStatus());
+            }
             
             String[] spam = list.toArray(new String[list.size()]);
             m_botAction.privateMessageSpam(id, spam);
@@ -652,6 +697,7 @@ public class bwjsbot extends SubspaceBot {
             int id = event.getPlayerID();
             int teamNumber = getTeamNumber(id);
             
+            //Check if player is on either of the teams
             if (teamNumber == -1)
                 return;
             
@@ -686,7 +732,7 @@ public class bwjsbot extends SubspaceBot {
             if (teamNumber == -1)
                 return;
             
-            if (team[teamNumber].captainID == id)
+            if (isCaptain(id))
                 team[teamNumber].removeCap();
             
             if (state == ADDING_PLAYERS) {
@@ -702,25 +748,18 @@ public class bwjsbot extends SubspaceBot {
                     m_botAction.sendArenaMessage(name + " has been removed from the game. (not playing)");
                     team[teamNumber].players.get(id).out();
                 }
-                return;
             }
         }
     }
     
     private void cmd_ready(Message event) {
         if (state == ADDING_PLAYERS) {
-            int id = event.getPlayerID();
-            int teamNumber = getTeamNumber(id);
+            int teamNumber = getTeamNumber(event.getPlayerID());
             
-            if (teamNumber == -1)
-                return;
+            team[teamNumber].ready();
             
-            if (id == team[teamNumber].captainID)
-                team[teamNumber].ready();
-            
-            if (team[ONE].ready && team[TWO].ready) {
+            if (team[ONE].ready && team[TWO].ready)
                 checkLineup();
-            }
         } 
     }
     
@@ -756,60 +795,51 @@ public class bwjsbot extends SubspaceBot {
     
     private void cmd_removecap(Message event) {
         if (state > OFF && state < GAME_OVER) {
-            int messagerID = event.getPlayerID();
-            int teamNumber = getTeamNumber(messagerID);
+            int teamNumber = getTeamNumber(event.getPlayerID());
             
-            if (teamNumber == -1)
-                return;
-            
-            if (team[teamNumber].captainID == messagerID)
-                team[teamNumber].removeCap();
+            team[teamNumber].removeCap();
         }
     }
     
     private void cmd_start(Message event) {
-        String messager = m_botAction.getPlayerName(event.getPlayerID());
-        if (m_botAction.getOperatorList().isSmod(messager)) {
-            if (state == OFF)
-                start();
-            else 
-                m_botAction.sendPrivateMessage(messager, "Bot already turned on");
-        }   
+        if (state == OFF)
+            start();
+        else
+            m_botAction.sendPrivateMessage(m_botAction.getPlayerName(event.getPlayerID()), "Bot already turned on");
     }
     
-    private void cmd_status(Message event) {
-        int id = event.getPlayerID();
-        
+    private void cmd_status(int id) {
         if (state == OFF) {
-            m_botAction.sendPrivateMessage(id, "Bot turned off, no games can be started at the moment.");
+            m_botAction.sendPrivateMessage(id, "Bot turned off, no games can be started at this moment.");
         } else if (state == WAITING_FOR_CAPS) {
             m_botAction.sendPrivateMessage(id, "A new game will start when two people message me with !cap");
         } else if (state == ADDING_PLAYERS) {
-            m_botAction.sendPrivateMessage(id, "We are currently arranging lineups");
+            m_botAction.sendPrivateMessage(id, "Teams: " + team[ONE].name + " vs. " + team[TWO].name + 
+                    ". We are currently arranging lineups");
         } else if (state == PRE_GAME) {
-            m_botAction.sendPrivateMessage(id, "We are currently starting the game");
+            m_botAction.sendPrivateMessage(id, "Teams: " + team[ONE].name + " vs. " + team[TWO].name + 
+                    ". We are currently starting the game");
         } else if (state == GAME_IN_PROGRESS) {
-            m_botAction.sendPrivateMessage(id, "We are currently playing, " + (cfg.time - cfg.timeLeft / 60) +
+            m_botAction.sendPrivateMessage(id, "Game is in progress, " + (cfg.time - cfg.timeLeft / 60) +
                     " minutes played.");
             m_botAction.sendPrivateMessage(id, "Score " + team[ONE].name + " vs. " + team[TWO].name + ": " +
                     score());
         } else if (state == GAME_OVER) {
-            m_botAction.sendPrivateMessage(id, "We are currently ending the game");
-        }   
+            m_botAction.sendPrivateMessage(id, "Teams: " + team[ONE].name + " vs. " + team[TWO].name + 
+            ". We are currently ending the game");
+        }
     }
     
     private void cmd_stop(Message event) {
         String messager = m_botAction.getPlayerName(event.getPlayerID());
-        if (m_botAction.getOperatorList().isSmod(messager)) {
-            if (state != OFF) {
-                m_botAction.sendArenaMessage("Bot has been stopped by " + messager);
-                state = OFF;
-                reset();
-                unlockArena();
-            }
-            else 
-                m_botAction.sendPrivateMessage(messager, "Bot already turned off");
-        } 
+        if (state != OFF) {
+            m_botAction.sendArenaMessage("Bot has been stopped by " + messager);
+            state = OFF;
+            reset();
+            unlockArena();
+        }
+        else
+            m_botAction.sendPrivateMessage(messager, "Bot already turned off");
     }
     
     private void cmd_sub(Message event) {
@@ -818,15 +848,13 @@ public class bwjsbot extends SubspaceBot {
             int teamNumber = getTeamNumber(id);
             String[] message = event.getMessage().substring(5).split(":");
             
-            if (teamNumber == -1)
+            //Check if command is properly used
+            if (message.length < 2) {
+                m_botAction.sendPrivateMessage(id, "Error: !sub <player1>:<player2>");
                 return;
+            }
             
-            if (id != team[teamNumber].captainID)
-                return;
-            
-            if (message.length < 2)
-                return;
-            
+            //Check if team has any substitutes left
             if (team[teamNumber].substitutesLeft == 0) {
                 m_botAction.sendPrivateMessage(id, "Could not sub, you have 0 subtitutes left.");
                 return;
@@ -834,6 +862,7 @@ public class bwjsbot extends SubspaceBot {
             
             BWJSPlayer playerOne = team[teamNumber].searchPlayer(message[0]);
             
+            //Check if player can be found
             if (playerOne == null) {
                 m_botAction.sendPrivateMessage(id, "Player could not be found, try again.");
                 return;
@@ -841,16 +870,19 @@ public class bwjsbot extends SubspaceBot {
             
             Player playerTwo = m_botAction.getFuzzyPlayer(message[1]);
             
+            //Check if player two can be found
             if (playerTwo == null) {
                 m_botAction.sendPrivateMessage(id, "Substitute could not be found, try again.");
                 return;
             }
             
+            //Check if subtitute is available
             if (team[otherTeamNumber(teamNumber)].players.containsKey((int) playerTwo.getPlayerID())) {
                 m_botAction.sendPrivateMessage(id, "Substitute is already on the other team.");
                 return;
             }
             
+            //Check if subtitute is available 
             if (team[teamNumber].players.containsKey((int) playerTwo.getPlayerID())) {
                 int tmp_state = team[teamNumber].players.get((int) playerTwo.getPlayerID()).p_state;
                 if (cfg.gameType != BASE || tmp_state < SUBBED) {
@@ -884,23 +916,20 @@ public class bwjsbot extends SubspaceBot {
             int teamNumber = getTeamNumber(id);
             String[] message = event.getMessage().substring(8).split(":");
             
-            if (teamNumber == -1)
+            //Check if command is properly used
+            if (message.length < 2) {
+                m_botAction.sendPrivateMessage(id, "Error: !switch <player1>:<player2>");
                 return;
-            
-            if (team[teamNumber].captainID != id)
-                return;
-            
-            if (message.length < 2)
-                return;
+            }
             
             BWJSPlayer playerOne = team[teamNumber].searchPlayer(message[0]);
             BWJSPlayer playerTwo = team[teamNumber].searchPlayer(message[1]);
             
+            //Check if players can be found
             if (playerOne == null || playerTwo == null) {
                 m_botAction.sendPrivateMessage(id, "Unknown players");
                 return;
             }
-            
             
             team[teamNumber].switchPlayers(playerOne, playerTwo);
         }
@@ -1122,6 +1151,24 @@ public class bwjsbot extends SubspaceBot {
         else if (team[TWO].players.containsKey(playerID) || team[TWO].captainID == playerID)
             return TWO;
         return -1;
+    }
+    
+    /**
+     * Check if playerID is captain or not
+     * 
+     * @param playerID int playerID
+     * @return true: captain; false: not a captain;
+     */
+    private boolean isCaptain(int playerID) {
+        //Check if "playerID" is on one of the teams
+        if (getTeamNumber(playerID) == -1)
+            return false;
+        
+        //Check if "playerID" is the captain
+        if (team[getTeamNumber(playerID)].captainID != playerID)
+            return true;
+        else
+            return false;
     }
     
     private void lockArena() {
