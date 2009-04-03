@@ -827,7 +827,7 @@ public class elim extends SubspaceBot {
     							", fnPE = fnPE + " + ep.eliminations + 
     							", fnSB = fnSB + " + ep.streakBreaks + 
     							", fnDK = fnDK + " + ep.doublekills +
-    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    							", fnAve = " + Math.round(ep.ave) + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
@@ -842,7 +842,7 @@ public class elim extends SubspaceBot {
     							", fnPE = fnPE + " + ep.eliminations + 
     							", fnSB = fnSB + " + ep.streakBreaks + 
     							", fnDK = fnDK + " + ep.doublekills +
-    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    							", fnAve = " + Math.round(ep.ave) + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
@@ -856,7 +856,7 @@ public class elim extends SubspaceBot {
     						", fnPE = fnPE + " + ep.eliminations + 
     						", fnSB = fnSB + " + ep.streakBreaks +
     						", fnDK = fnDK + " + ep.doublekills +
-    						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    						", fnAve = " + Math.round(ep.ave) + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     						" ELSE ((fnKills/fnShots)*100) END), " + 
     						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     						", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
@@ -1098,7 +1098,8 @@ private class ElimPlayer{
 	//========================================================================
 	//Database variables
 	//========================================================================
-	private int initRating = 0, initWins = 0, initLosses = 0, ave = 0, BKS = 0, WLS = 0, BDK = 0;
+	private int initRating = 0, initWins = 0, initLosses = 0, BKS = 0, WLS = 0, BDK = 0;
+	private float ave = 0;
 	//========================================================================
 	//Game statistic variables
 	//========================================================================
