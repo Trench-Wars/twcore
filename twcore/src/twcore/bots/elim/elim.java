@@ -521,7 +521,7 @@ public class elim extends SubspaceBot {
     			int rating = rs.getInt("fnRating");
     			int kills = rs.getInt("fnKills");
     			int deaths = rs.getInt("fnDeaths");
-    			int ave = rs.getInt("fnAve");
+    			float ave = rs.getFloat("fnAve");
     			double aimNum = rs.getDouble("fnAim");
     			int cks = rs.getInt("fnCKS");
     			int cls = rs.getInt("fnCLS");
@@ -541,7 +541,7 @@ public class elim extends SubspaceBot {
     			else
     				rank = "#" + ranking;
     			m_botAction.sendSmartPrivateMessage( name, "=== Player: '" + target + "' Rank: " + rank + " Rating: " + rating + " ===");
-    			m_botAction.sendSmartPrivateMessage( name, "Kills: " + kills + " Deaths: " + deaths + " Ave: " + ave + " AIM:" + aim + "% CKS:" + cks + " BKS:" + bks + " CLS:" + cls + " WLS:" + wls + " BWS:" + bws);
+    			m_botAction.sendSmartPrivateMessage( name, "Kills: " + kills + " Deaths: " + deaths + " Ave: " + Math.round(ave) + " AIM:" + aim + "% CKS:" + cks + " BKS:" + bks + " CLS:" + cls + " WLS:" + wls + " BWS:" + bws);
     			m_botAction.sendSmartPrivateMessage( name, "Games Won: " + gamesWon + " Games Played: " + gamesPlayed + " PE:" + pe + " DK:" + dk + " SB:" + sb);
     		} else {
     			m_botAction.SQLClose(rs);
@@ -779,7 +779,7 @@ public class elim extends SubspaceBot {
     			boolean newPlayer = false;
     			ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
     			if(rs != null && rs.next()){
-    				ep.ave = rs.getInt("fnAve");
+    				ep.ave = rs.getFloat("fnAve");
     				ep.BDK = rs.getInt("fnBDK");
     				ep.streak = rs.getInt("fnCKS");
     				ep.BKS = rs.getInt("fnBKS");
@@ -808,7 +808,7 @@ public class elim extends SubspaceBot {
     	Iterator<ElimPlayer> i = lagouts.values().iterator();
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
-    		if((((ep.getTotalWins()/ep.getTotalLosses())*ep.ave) - ep.initRating) < 0)
+    		if(((((float)ep.getTotalWins()/(float)ep.getTotalLosses())*ep.ave) - ep.initRating) < 0)
     			losers.put(ep.name, ep);
     	}
     	lagouts.clear();
@@ -827,7 +827,7 @@ public class elim extends SubspaceBot {
     							", fnPE = fnPE + " + ep.eliminations + 
     							", fnSB = fnSB + " + ep.streakBreaks + 
     							", fnDK = fnDK + " + ep.doublekills +
-    							", fnAve = " + Math.round(ep.ave) + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
@@ -842,7 +842,7 @@ public class elim extends SubspaceBot {
     							", fnPE = fnPE + " + ep.eliminations + 
     							", fnSB = fnSB + " + ep.streakBreaks + 
     							", fnDK = fnDK + " + ep.doublekills +
-    							", fnAve = " + Math.round(ep.ave) + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     							" ELSE ((fnKills/fnShots)*100) END), " + 
     							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     							", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
@@ -856,7 +856,7 @@ public class elim extends SubspaceBot {
     						", fnPE = fnPE + " + ep.eliminations + 
     						", fnSB = fnSB + " + ep.streakBreaks +
     						", fnDK = fnDK + " + ep.doublekills +
-    						", fnAve = " + Math.round(ep.ave) + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
     						" ELSE ((fnKills/fnShots)*100) END), " + 
     						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
     						", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
@@ -1127,7 +1127,7 @@ private class ElimPlayer{
 		lstreak = 0;
 		killTime = System.currentTimeMillis();
 		wins += 1;
-		ave = ((ave * getTotalWins()) + enemyRating)/(getTotalWins() + 1);	
+		ave = ((ave * (float)getTotalWins()) + (float)enemyRating)/((float)getTotalWins() + 1f);	
 		streak += 1;
 		if(streak >= STREAK_INIT && (streak - STREAK_INIT)%STREAK_REPEAT == 0){
 			int i = (streak-STREAK_INIT)/STREAK_REPEAT;
