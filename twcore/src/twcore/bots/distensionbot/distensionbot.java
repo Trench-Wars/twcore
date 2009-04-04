@@ -66,7 +66,7 @@ public class distensionbot extends SubspaceBot {
     private final float REWARD_RATE = 1.2f;                // Multiplier for RP earned in beta "reward" time
                                                            //   (for beta-testers, bug reporters, etc.)
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
-    private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
+    private final int AUTOSAVE_DELAY = 3;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 150;             // Delay in ms between msgs in list, when spammed to single
     private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
     private int PRIZE_SPAM_DELAY = 25;                     // Delay in ms between prizes for individual players
