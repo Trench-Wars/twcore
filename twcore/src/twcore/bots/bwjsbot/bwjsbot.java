@@ -213,9 +213,6 @@ public class bwjsbot extends SubspaceBot {
     }
     
     public void handleEvent(LoggedOn event) {
-        // Toggle the obscene filter to make sure that the bot receives every message
-        m_botAction.sendUnfilteredPublicMessage("?obscene");
-        
         m_botAction.joinArena(cfg.arena);
     }
     
@@ -230,10 +227,6 @@ public class bwjsbot extends SubspaceBot {
             if (event.getMessage().equals("Arena LOCKED") && !lockArena)
                 m_botAction.toggleLocked();
         }
-        
-        /* Obscene block */
-        if(event.getMessageType() == Message.ARENA_MESSAGE && event.getMessage().equals("Obscenity block ON"))
-            m_botAction.sendUnfilteredPublicMessage("?obscene");
         
         /* Handle Commands */
         if (event.getMessageType() == Message.PRIVATE_MESSAGE)
