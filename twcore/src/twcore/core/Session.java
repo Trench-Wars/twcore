@@ -315,14 +315,38 @@ public class Session extends Thread {
         prepare();
         m_initialTime = System.currentTimeMillis();
         long currentTime;
+        
+        twcore.core.BotSettings settings = m_botAction.getBotSettings();
+
         long lastSyncTime = 0;
-        final int SYNC_TIME = 30000;
+        Integer set = null;
+        if( settings != null )
+            set = settings.getInteger( "dbg-SyncTime" );
+        int SYNC_TIME;
+        if( set == null )
+            SYNC_TIME = 30000;
+        else
+            SYNC_TIME = set;
 
         long lastResendTime = 0;
-        final int RESEND_TIME = 750;
-
+        set = null;
+        if( settings != null )
+            set = settings.getInteger( "dbg-ResendTime" );
+        int RESEND_TIME;
+        if( set == null )
+            RESEND_TIME = 750;
+        else
+            RESEND_TIME = set;        
+        
         long lastPacketTime = 0;
-        final int TIMEOUT_DELAY = 60000;
+        set = null;
+        if( settings != null )
+            set = settings.getInteger( "dbg-TimeoutDelay" );
+        int TIMEOUT_DELAY;
+        if( set == null )
+            TIMEOUT_DELAY = 60000;
+        else
+            TIMEOUT_DELAY = set;        
         int clientKey = (int)(-Math.random() * Integer.MAX_VALUE);
 
         m_packetInterpreter.setSubspaceBot( m_subspaceBot );
