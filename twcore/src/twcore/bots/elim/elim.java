@@ -114,7 +114,7 @@ public class elim extends SubspaceBot {
 	public static final int LIMIT_STREAK = 3;  //The amount of consecutive game wins to limit minimum kill/death voting
 	public static final int MIN_FOR_STREAK = 5;//The minimum kills/deaths allowable to vote on during a game winning streak
 	public static final int INIT_RATING = 300; //The initial rating that players begin at.
-	public static final int INIT_RANKING = 300;//The number of combined kills and deaths needed to be ranked.
+	public static final int INIT_RANKING = 500;//The number of combined kills and deaths needed to be ranked.
 	
 	//LVZ
 	public static final int CASUAL_SPLASH_LVZ = 1;    //Displays temporary image below energy bar that says "This is casual play"
