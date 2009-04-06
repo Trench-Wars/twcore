@@ -357,9 +357,9 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_mvp(String name){
-    	CompareByWinRatio byRatio = new CompareByWinRatio();
+    	CompareByWinsLossesAccuracy byMVP = new CompareByWinsLossesAccuracy();
     	List<ElimPlayer> l = Arrays.asList(elimPlayers.values().toArray(new ElimPlayer[elimPlayers.values().size()]));
-    	Collections.sort(l, Collections.reverseOrder(byRatio));
+    	Collections.sort(l, Collections.reverseOrder(byMVP));
     	int index = 1;
     	Iterator<ElimPlayer> i = l.iterator();
     	m_botAction.sendSmartPrivateMessage( name, "------------- Best Records ------------");
@@ -368,7 +368,7 @@ public class elim extends SubspaceBot {
     		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
     		index++;
     	}
-    	Collections.sort(l, byRatio);
+    	Collections.sort(l, byMVP);
     	i = l.iterator();
     	index = 1;
     	m_botAction.sendSmartPrivateMessage( name, "------------ Worst Records ------------");
@@ -804,7 +804,7 @@ public class elim extends SubspaceBot {
     
     public void doGameOver(){
     	game.state = GameStatus.GAME_OVER;
-    	CompareByWinRatio byWinRatio = new CompareByWinRatio();
+    	CompareByWinsLossesAccuracy byMVP = new CompareByWinsLossesAccuracy();
     	Iterator<ElimPlayer> i = lagouts.values().iterator();
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
@@ -868,7 +868,7 @@ public class elim extends SubspaceBot {
     	}
     	avg_rating /= losers.size();
 	    List<ElimPlayer> l = Arrays.asList(losers.values().toArray(new ElimPlayer[losers.values().size()]));
-	    Collections.sort(l, Collections.reverseOrder(byWinRatio));//Best record
+	    Collections.sort(l, Collections.reverseOrder(byMVP));//Best record
 	    new MVPTimer(l.get(0).name);
 	    m_botAction.sendArenaMessage("GAME OVER. Winner: " + winner.name + "!", Tools.Sound.HALLELUJAH);
 	    lastWinner = winner.name;
@@ -1080,7 +1080,9 @@ private class CasualPlayer{
 	
 	private void storeStats(){
 		try{
-			m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType );
+			// avoid unnecessary updates to the database
+			if (wins != 0 && losses != 0)
+				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType );
 		}catch(SQLException e){
 			Tools.printStackTrace(e);
 		}
@@ -1106,7 +1108,7 @@ private class ElimPlayer{
 	private int wins = 0, losses = 0;	
 	private int shots = 0, quickKills = 0, streak = 0, lstreak = 0;
 	private int streakBreaks = 0, eliminations = 0, doublekills = 0;
-	private double hitRatio = 0, winRatio = 100;
+	private double hitRatio = 0;
 	
 	private ElimPlayer(String name){
 		this.name = name;	
@@ -1190,15 +1192,11 @@ private class ElimPlayer{
 	
 	private void calculateRatios(){
 		if(shots != 0)
-			hitRatio = ((wins / shots) * 100);
+			hitRatio = (((double)wins / shots) * 100);
 		else
-			hitRatio = ((wins / 1) * 100);
+			hitRatio = (((double)wins / 1) * 100);
 		if(hitRatio > 100) 
 			hitRatio = 100;
-		if(losses != 0)
-			winRatio = ((wins / losses) * 100);
-		else
-			winRatio = ((wins / 1) * 100);
 	}
 	
 	private void clearBorderInfo(){
@@ -1222,16 +1220,23 @@ public class CompareAlphabetical implements Comparator<ElimPlayer> {
 	}
 }
 
-public class CompareByWinRatio implements Comparator<ElimPlayer> {
-	public int compare(ElimPlayer a, ElimPlayer b){
+public class CompareByWinsLossesAccuracy implements Comparator<ElimPlayer> {
+	public int compare(ElimPlayer a,ElimPlayer b) {
+		// compare by wins first
+		if (a.wins > b.wins)return 1;
+		else if(a.wins < b.wins)return -1;
+		// least losses
+		else if(a.losses < b.losses)return 1;
+		else if(a.losses > b.losses)return -1;
+		// try accuracy
 		a.calculateRatios();
 		b.calculateRatios();
-		if(a.winRatio > b.winRatio)return 1;
-		else if(a.winRatio == b.winRatio)return 0;
-		else return -1;
+		if(a.hitRatio > b.hitRatio)return 1;
+		else if(a.hitRatio < b.hitRatio)return -1;
+		// they did equally well...we leave it to the underlying implementation of Collections.sort for a pseudorandom pick
+		return 0;
 	}
 }
-
 private class GameStatus{
 	private static final int OFF_MODE = -1;
 	private static final int WAITING_FOR_PLAYERS = 0;
