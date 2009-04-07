@@ -240,7 +240,7 @@ public class robohelp extends SubspaceBot {
 
     public void handleEvent( LoggedOn event ){
         m_botAction.joinArena( "#robopark" );
-        m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + m_botAction.getGeneralSettings().getString( "Chat Name" ) );
+        m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) );
         m_botAction.sendUnfilteredPublicMessage( "?blogin " + m_botSettings.getString( "Banpassword" ) );
         m_botAction.ipcSubscribe(ZONE_CHANNEL);
     }
@@ -1082,7 +1082,7 @@ public class robohelp extends SubspaceBot {
             }
             m_botAction.SQLClose( result );
         } catch ( Exception e ) {
-        	m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
+        	//m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
         	Tools.printStackTrace(e);
         }
     }
@@ -1100,7 +1100,7 @@ public class robohelp extends SubspaceBot {
             } else
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
         } catch ( Exception e ) { 
-        	m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
+        	//m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
         	Tools.printStackTrace(e);
         }
     }
