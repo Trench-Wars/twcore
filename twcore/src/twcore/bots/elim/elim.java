@@ -1081,7 +1081,7 @@ private class CasualPlayer{
 	private void storeStats(){
 		try{
 			// avoid unnecessary updates to the database
-			if (wins != 0 && losses != 0)
+			if (wins != 0 || losses != 0)
 				m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType );
 		}catch(SQLException e){
 			Tools.printStackTrace(e);
