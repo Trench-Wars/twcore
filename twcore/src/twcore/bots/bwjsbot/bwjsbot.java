@@ -395,6 +395,8 @@ public class bwjsbot extends SubspaceBot {
                 cmd_start(event);
             else if (message.startsWith("!stop"))
                 cmd_stop(event);
+            else if (message.startsWith("!die"))
+                m_botAction.die();
         }
     }
     
@@ -1158,7 +1160,7 @@ public class bwjsbot extends SubspaceBot {
             return false;
         
         //Check if "playerID" is the captain
-        if (team[getTeamNumber(playerID)].captainID != playerID)
+        if (team[getTeamNumber(playerID)].captainID == playerID)
             return true;
         else
             return false;
