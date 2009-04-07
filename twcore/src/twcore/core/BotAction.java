@@ -1097,10 +1097,7 @@ public class BotAction
         }
         else
         {
-            for (int i = 0; i < spam.length; i++)
-            {
-                sendPrivateMessage(playerID, spam[i]);
-            }
+            privateMessageSpam(playerName, spam);
         }
     }
 
