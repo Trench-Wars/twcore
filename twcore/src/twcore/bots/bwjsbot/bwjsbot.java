@@ -447,6 +447,13 @@ public class bwjsbot extends SubspaceBot {
                 
                 String playerName = player.getPlayerName().toLowerCase();
                 
+                //Check if player is a bot
+                if (m_botAction.getOperatorList().isBotExact(playerName)) {
+                    m_botAction.sendPrivateMessage(messager, "Bots don't play.");
+                    return;
+                }
+                    
+                
                 //Check if player is on the not playing list
                 if (listNotplaying.contains(playerName)) {
                     m_botAction.sendPrivateMessage(messager, "Cannot add, player is set to not playing.");
@@ -730,6 +737,7 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "You have been added to the not playing list. " +
                     "(Captains will be unable to add or sub you in.)");
             m_botAction.specWithoutLock(name);
+            m_botAction.setFreq(name, FREQ_NOTPLAYING);
             
             if (teamNumber == -1)
                 return;
@@ -1421,7 +1429,7 @@ public class bwjsbot extends SubspaceBot {
                 m_botAction.specWithoutLock(id);
             if (listNotplaying.contains(i.getPlayerName().toLowerCase()) && freq != FREQ_NOTPLAYING)
                 m_botAction.setFreq(id, FREQ_NOTPLAYING);
-            else if (freq != FREQ_SPEC) {
+            else if (freq != FREQ_SPEC && freq != FREQ_NOTPLAYING) {
                 m_botAction.setShip(id, 1);
                 m_botAction.specWithoutLock(id);
             }
