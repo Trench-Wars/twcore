@@ -1078,8 +1078,10 @@ public class bwjsbot extends SubspaceBot {
                 teamNumber = TWO;
             
             if (teamNumber != -1) {
-                m_botAction.sendArenaMessage(team[teamNumber].captainName + " pick a player!", Tools.Sound.BEEP3);
-                team[teamNumber].pickingTurn = true;
+                if (team[teamNumber].players.size() != cfg.maxPlayers) {
+                    m_botAction.sendArenaMessage(team[teamNumber].captainName + " pick a player!", Tools.Sound.BEEP3);
+                    team[teamNumber].pickingTurn = true;
+                }
             }
         }
     }
@@ -1540,9 +1542,8 @@ public class bwjsbot extends SubspaceBot {
     
     private class BWJSPlayer {
         /* Variables */
-        private Player p_player;
+        //private Player p_player;
         private String p_name;
-        private int p_id;
         private boolean p_countDeaths;
         private int p_currentShip;
         private int p_state;
@@ -1579,11 +1580,9 @@ public class bwjsbot extends SubspaceBot {
         private final static int REPELS_USED = 20;
         //private final static int SHOTS_FIRED = 22;
         
-        private BWJSPlayer (Player player, int shipType, int maxDeaths, int frequency) {
+        private BWJSPlayer (String player, int shipType, int maxDeaths, int frequency) {
             p_ships = new int[9][22];
-            p_player = player;
-            p_name = p_player.getPlayerName();
-            p_id = p_player.getPlayerID();
+            p_name = player;
             p_currentShip = shipType;
             p_maxDeaths = maxDeaths;
             p_frequency = frequency;
@@ -1596,15 +1595,15 @@ public class bwjsbot extends SubspaceBot {
             else
                 p_countDeaths = true;
             
-            m_botAction.scoreReset(p_id);
+            m_botAction.scoreReset(p_name);
             addPlayer();
         }
         
         private void addPlayer() {
             p_state = IN;
-            if (m_botAction.getPlayer(p_id) != null) {
-                m_botAction.setShip(p_id, p_currentShip);
-                m_botAction.setFreq(p_id, p_frequency);
+            if (m_botAction.getPlayer(p_name) != null) {
+                m_botAction.setShip(p_name, p_currentShip);
+                m_botAction.setFreq(p_name, p_frequency);
             }
             p_outOfBorderTime = cfg.outOfBorderTime;
             p_outOfBorderWarning = false;
@@ -1614,17 +1613,17 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.sendArenaMessage(p_name + " changed from " + Tools.shipName(p_currentShip) +
                     " to " + Tools.shipName(shipType));
             p_currentShip = shipType;
-            if (m_botAction.getPlayer(p_id) != null)
-                m_botAction.setShip(p_id, shipType);
+            if (m_botAction.getPlayer(p_name) != null)
+                m_botAction.setShip(p_name, shipType);
         }
         
         private void checkIfInBase() {
             if (p_state == IN) {
-                if (p_player.getYTileLocation() > cfg.yborder)
+                if (m_botAction.getPlayer(p_name).getYTileLocation() > cfg.yborder)
                     p_outOfBorderTime--;
                 
                 if (p_outOfBorderTime == (cfg.outOfBorderTime / 2) && p_outOfBorderWarning) {
-                    m_botAction.sendPrivateMessage(p_id, "Go to base! You have " + p_outOfBorderTime +
+                    m_botAction.sendPrivateMessage(p_name, "Go to base! You have " + p_outOfBorderTime +
                             " seconds before you'll get removed from the game!", Tools.Sound.BEEP3);
                     p_outOfBorderWarning = true;
                 }
@@ -1883,7 +1882,7 @@ public class bwjsbot extends SubspaceBot {
         }
         
         private void lagin() {
-            m_botAction.sendArenaMessage(p_player.getPlayerName() + " returned from his or her lagout.");
+            m_botAction.sendArenaMessage(p_name + " returned from his or her lagout.");
             m_botAction.cancelTask(p_lagoutTimer);
             addPlayer();
         }
@@ -1922,9 +1921,9 @@ public class bwjsbot extends SubspaceBot {
         
         private void out() {
             p_state = OUT;
-            if (m_botAction.getPlayer(p_id) != null) {
-                m_botAction.spec(p_id);
-                m_botAction.setFreq(p_id, p_frequency);
+            if (m_botAction.getPlayer(p_name) != null) {
+                m_botAction.spec(p_name);
+                m_botAction.setFreq(p_name, p_frequency);
             }
             
             if (p_outOfBorderTime == 0 && cfg.yborder != -1) 
@@ -1947,9 +1946,9 @@ public class bwjsbot extends SubspaceBot {
     
         private void sub() {
             p_state = SUBBED;
-            if (m_botAction.getPlayer(p_id) != null) {
-                m_botAction.specWithoutLock(p_id);
-                m_botAction.setFreq(p_id, p_frequency);
+            if (m_botAction.getPlayer(p_name) != null) {
+                m_botAction.specWithoutLock(p_name);
+                m_botAction.setFreq(p_name, p_frequency);
             }
         }
     }
@@ -1982,7 +1981,7 @@ public class bwjsbot extends SubspaceBot {
                         " is in for team " + name + ".");
             
             if (!players.containsKey(player.getPlayerName().toLowerCase()))
-                players.put(player.getPlayerName().toLowerCase(), new BWJSPlayer(player, shipType, cfg.maxDeaths, frequency));
+                players.put(player.getPlayerName().toLowerCase(), new BWJSPlayer(player.getPlayerName(), shipType, cfg.maxDeaths, frequency));
             else {
                 players.get(player.getPlayerName().toLowerCase()).p_currentShip = shipType;
                 players.get(player.getPlayerName().toLowerCase()).addPlayer();
@@ -2178,9 +2177,9 @@ public class bwjsbot extends SubspaceBot {
         private void remove(BWJSPlayer player) {
             players.remove(player.p_name.toLowerCase());
             m_botAction.sendArenaMessage(player.p_name + " has been removed from " + name);
-            if (m_botAction.getPlayer(player.p_id) != null) {
-                m_botAction.specWithoutLock(player.p_id);
-                m_botAction.setFreq(player.p_id, FREQ_SPEC);
+            if (m_botAction.getPlayer(player.p_name) != null) {
+                m_botAction.specWithoutLock(player.p_name);
+                m_botAction.setFreq(player.p_name, FREQ_SPEC);
             }
             determineNextPick();
         }
@@ -2243,10 +2242,10 @@ public class bwjsbot extends SubspaceBot {
                     players.get(playerTwo.getPlayerName().toLowerCase()).addPlayer();
                 else
                     players.put(playerTwo.getPlayerName().toLowerCase(), 
-                            new BWJSPlayer(playerTwo, shipType, maxDeaths, frequency));
+                            new BWJSPlayer(playerTwo.getPlayerName(), shipType, maxDeaths, frequency));
             } else {
                 players.put(playerTwo.getPlayerName().toLowerCase(), 
-                        new BWJSPlayer(playerTwo, shipType, maxDeaths, frequency));
+                        new BWJSPlayer(playerTwo.getPlayerName(), shipType, maxDeaths, frequency));
             }
             m_botAction.sendPrivateMessage(playerTwo.getPlayerID(), "You are subbed in the game.");
             
@@ -2274,15 +2273,17 @@ public class bwjsbot extends SubspaceBot {
             playerOne.p_currentShip = playerOneShipType;
             playerTwo.p_currentShip = playerTwoShipType;
             
-            if (m_botAction.getPlayer(playerOne.p_id) != null)
+            if (m_botAction.getPlayer(playerOne.p_name) != null)
                 playerOne.addPlayer();
-            if (m_botAction.getPlayer(playerTwo.p_id) != null)
+            if (m_botAction.getPlayer(playerTwo.p_name) != null)
                 playerTwo.addPlayer();
         }
         
         private void warpTo(int x_coord, int y_coord) {
-            for (BWJSPlayer i : players.values())
-                m_botAction.warpTo((int) i.p_player.getPlayerID(), x_coord, y_coord);
+            for (BWJSPlayer i : players.values()) {
+                int playerID = m_botAction.getPlayerID(i.p_name);
+                m_botAction.warpTo(playerID, x_coord, y_coord);
+            }
         }
     }
 
