@@ -1019,6 +1019,7 @@ public class bwjsbot extends SubspaceBot {
         state = GAME_OVER;
         
         //Cancel all timers
+        m_botAction.setTimer(0);
         m_botAction.cancelTask(gameTimer);
         m_botAction.cancelTask(updateTimer);
         m_botAction.cancelTask(capTimerONE);
