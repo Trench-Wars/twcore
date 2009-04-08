@@ -262,8 +262,11 @@ public class bwjsbot extends SubspaceBot {
             cmd_status(name);
             
             //Set player to the correct freq
-            if (listNotplaying.contains(name))
+            if (listNotplaying.contains(name)) {
                 m_botAction.setFreq(name, FREQ_NOTPLAYING);
+                m_botAction.sendPrivateMessage(name, "You are currently listed as not playing. " +
+                		"Message me with !notplaying if you want to be able to get picked/subbed in again.");
+            }
             
             //A captain has returned! Cancel the remove task
             if (team[ONE].captainName.equalsIgnoreCase(name))
@@ -727,7 +730,6 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "You have been added to the not playing list. " +
                     "(Captains will be unable to add or sub you in.)");
             m_botAction.specWithoutLock(name);
-            m_botAction.setFreq(name, FREQ_NOTPLAYING);
             
             if (teamNumber == -1)
                 return;
@@ -740,7 +742,6 @@ public class bwjsbot extends SubspaceBot {
                     m_botAction.sendArenaMessage(name + " has been removed from the game. (not playing)");
                     team[teamNumber].players.remove(name);
                 }
-                return;
             }
             
             if (state > ADDING_PLAYERS && state < GAME_OVER) {
@@ -749,6 +750,8 @@ public class bwjsbot extends SubspaceBot {
                     team[teamNumber].players.get(name).out();
                 }
             }
+            
+            m_botAction.setFreq(name, FREQ_NOTPLAYING);
         }
     }
     
@@ -1542,7 +1545,6 @@ public class bwjsbot extends SubspaceBot {
     
     private class BWJSPlayer {
         /* Variables */
-        //private Player p_player;
         private String p_name;
         private boolean p_countDeaths;
         private int p_currentShip;
