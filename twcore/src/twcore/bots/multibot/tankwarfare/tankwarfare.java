@@ -31,12 +31,12 @@ public class tankwarfare extends MultiModule {
     public final static int GAME_IN_PROGRESS = 2;
     public final static int GAME_END = 3;
     
-    public boolean returnFlagWarning = true;
-    public boolean allowReplaceFlag = true;
+    public boolean[] returnFlagWarning;
+    public boolean allowReplaceFlag;
     
     public TimerTask searchFlag;
     public TimerTask moveAround;
-    public TimerTask timerReturnTeam;
+    public TimerTask[] timerReturnFlagWarning;
     public FlagSet flagOne;
     public FlagSet flagTwo;
     public FlagSet flagBogus;
@@ -90,6 +90,17 @@ public class tankwarfare extends MultiModule {
         
         //Flag carrier
         flagCarrier = new String[2];
+        
+        //Warnings
+        returnFlagWarning = new boolean[2];
+        returnFlagWarning[0] = true;
+        returnFlagWarning[1] = true;
+        
+        //Flag replace lock
+        allowReplaceFlag = true;
+        
+        //Timer
+        timerReturnFlagWarning = new TimerTask[2];
     }
     
     private void start() {
@@ -220,17 +231,26 @@ public class tankwarfare extends MultiModule {
                             m_botAction.sendArenaMessage("Score: " + score[0] + " - " + score[1]);
                             replaceFlag(flagID);
                             checkGameOver();
-                        } else if (returnFlagWarning) {
-                            returnFlagWarning = false;
+                        } else if (returnFlagWarning[playerFreq]) {
+                            returnFlagWarning[playerFreq] = false;
                             m_botAction.sendArenaMessage(
                                     name[playerFreq] + " almost scored a point, but where is their own flag? " +
                             		"Quick find it before they will retreive their flag!", Tools.Sound.CROWD_GEE);
-                            timerReturnTeam = new TimerTask() {
-                                public void run() {
-                                    returnFlagWarning = true;
-                                }
-                            };
-                            m_botAction.scheduleTask(timerReturnTeam, 30 * Tools.TimeInMillis.SECOND);
+                            if (playerFreq == 0) {
+                                timerReturnFlagWarning[0] = new TimerTask() {
+                                    public void run() {
+                                        returnFlagWarning[0] = true;
+                                    }
+                                };
+                                m_botAction.scheduleTask(timerReturnFlagWarning[0], 1 * Tools.TimeInMillis.MINUTE);
+                            } else {
+                                timerReturnFlagWarning[1] = new TimerTask() {
+                                    public void run() {
+                                        returnFlagWarning[1] = true;
+                                    }
+                                };
+                                m_botAction.scheduleTask(timerReturnFlagWarning[1], 1 * Tools.TimeInMillis.MINUTE);
+                            }   
                         }    
                     } else if (allowReplaceFlag) {
                         m_botAction.sendArenaMessage(name[playerFreq] + " retrieved their flag! Good job " +
