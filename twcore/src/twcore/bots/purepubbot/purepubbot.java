@@ -986,6 +986,15 @@ public class purepubbot extends SubspaceBot
             throw new RuntimeException( "You do not need to !warp in Strict Flag Time mode.  You will automatically be warped." );
         if( !warpAllowed )
             throw new RuntimeException( "Warping into base at round start is not currently allowed." );
+        
+        // Terrs and Levis can't warp into base if Levis are enabled
+        if( shipWeights.get(Tools.Ship.LEVIATHAN) > 0 ) {
+            Player p = m_botAction.getPlayer( sender );
+            if( p.getShipType() == Tools.Ship.LEVIATHAN )            
+                throw new RuntimeException( "Leviathans can not warp in to base at round start." );
+            if( p.getShipType() == Tools.Ship.TERRIER )
+                throw new RuntimeException( "Terriers can not warp into base at round start while Leviathans are enabled." );                
+        }
 
         if( warpPlayers.contains( sender ) ) {
             warpPlayers.remove( sender );
