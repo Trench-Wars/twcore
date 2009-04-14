@@ -1669,7 +1669,7 @@ public class bwjsbot extends SubspaceBot {
                 if (m_botAction.getPlayer(p_name).getYTileLocation() > cfg.yborder)
                     p_outOfBorderTime--;
                 
-                if (p_outOfBorderTime == (cfg.outOfBorderTime / 2) && p_outOfBorderWarning) {
+                if (p_outOfBorderTime == (cfg.outOfBorderTime / 2) && !p_outOfBorderWarning) {
                     m_botAction.sendPrivateMessage(p_name, "Go to base! You have " + p_outOfBorderTime +
                             " seconds before you'll get removed from the game!", Tools.Sound.BEEP3);
                     p_outOfBorderWarning = true;
