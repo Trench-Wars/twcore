@@ -411,6 +411,13 @@ public class bwjsbot extends SubspaceBot {
         if (state > OFF && state < GAME_OVER) {
             String messager = m_botAction.getPlayerName(event.getPlayerID());
             int teamNumber = getTeamNumber(messager);
+            
+            //Specify player
+            if (event.getMessage().length() < 5) {
+                m_botAction.sendPrivateMessage(messager, "Error: !add <player>");
+                return;
+            }
+            
             String[] message = event.getMessage().substring(5).split(":");
             Player player = m_botAction.getFuzzyPlayer(message[0]);
             int shipType = cfg.defaultShipType;
@@ -571,6 +578,13 @@ public class bwjsbot extends SubspaceBot {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             int teamNumber = getTeamNumber(name);
             int shipType;
+            
+            //Specify players
+            if (event.getMessage().length() < 8) {
+                m_botAction.sendPrivateMessage(name, "Error: !change <player1>:<#shiptype>");
+                return;
+            }
+            
             String[] message = event.getMessage().substring(8).split(":");
             
             //Check if command is properly used
@@ -792,6 +806,14 @@ public class bwjsbot extends SubspaceBot {
         if (state == ADDING_PLAYERS) {
             String messager = m_botAction.getPlayerName(event.getPlayerID());
             int teamNumber = getTeamNumber(messager);
+            
+            
+            //Specify player
+            if (event.getMessage().length() < 8) {
+                m_botAction.sendPrivateMessage(messager, "Error: !remove <player>");
+                return;
+            }   
+                
             String message = event.getMessage().substring(8);
             
             if (message.equals("")) {
@@ -860,6 +882,13 @@ public class bwjsbot extends SubspaceBot {
         if (state == GAME_IN_PROGRESS) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             int teamNumber = getTeamNumber(name);
+            
+            //Specify players
+            if (event.getMessage().length() < 5) {
+                m_botAction.sendPrivateMessage(name, "Error: !sub <player1>:<player2>");
+                return;
+            }
+            
             String[] message = event.getMessage().substring(5).split(":");
             
             //Check if command is properly used
@@ -928,6 +957,13 @@ public class bwjsbot extends SubspaceBot {
         if ((state == ADDING_PLAYERS || state == GAME_IN_PROGRESS) && cfg.gameType == BASE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             int teamNumber = getTeamNumber(name);
+            
+            //Specify players
+            if (event.getMessage().length() < 8) {
+                m_botAction.sendPrivateMessage(name, "Error: !switch <player1>:<player2>");
+                return;
+            }
+            
             String[] message = event.getMessage().substring(8).split(":");
             
             //Check if command is properly used
