@@ -3,13 +3,11 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Apr 01, 2009 at 05:24 PM
+-- Generation Time: Apr 14, 2009 at 10:49 AM
 -- Server version: 5.0.45
 -- PHP Version: 5.2.8
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
-
--- --------------------------------------------------------
 
 --
 -- Table structure for table `tblElimCasualRecs`
@@ -21,8 +19,9 @@ CREATE TABLE `tblElimCasualRecs` (
   `fnKills` int(10) NOT NULL default '0',
   `fnDeaths` int(10) NOT NULL default '0',
   `fnGameType` int(10) NOT NULL default '0',
-  PRIMARY KEY  (`fnIndex`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=13989 ;
+  PRIMARY KEY  (`fnIndex`),
+  KEY `tblElimCasualRecs_user_type` (`fcUserName`,`fnGameType`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=15507 ;
 
 -- --------------------------------------------------------
 
@@ -44,7 +43,7 @@ CREATE TABLE `tblElimGame` (
   PRIMARY KEY  (`fnGameID`),
   KEY `fdGamePlayed` (`fcWinnerName`),
   KEY `fnGameTypeID` (`fnGameType`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 PACK_KEYS=0 AUTO_INCREMENT=22946 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 PACK_KEYS=0 AUTO_INCREMENT=25725 ;
 
 -- --------------------------------------------------------
 
@@ -80,7 +79,7 @@ CREATE TABLE `tblElimPlayer` (
   `fnSB` int(10) NOT NULL default '0',
   `fnPE` int(10) NOT NULL default '0',
   `fnDK` int(10) NOT NULL default '0',
-  `fnAve` int(5) NOT NULL default '300',
+  `fnAve` float NOT NULL default '300',
   `fnAim` decimal(5,2) NOT NULL default '100.00',
   `fnCKS` int(5) NOT NULL default '0',
   `fnCLS` int(5) NOT NULL default '0',
@@ -92,5 +91,6 @@ CREATE TABLE `tblElimPlayer` (
   `fnElim` int(3) NOT NULL default '0',
   `fnSpecWhenOut` int(3) NOT NULL default '0',
   `ftUpdated` datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY  (`fnIndex`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5611 ;
+  PRIMARY KEY  (`fnIndex`),
+  KEY `tblElimPlayer_user_type` (`fcUserName`,`fnGameType`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6700 ;
