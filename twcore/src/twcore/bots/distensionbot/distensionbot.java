@@ -4570,17 +4570,28 @@ public class distensionbot extends SubspaceBot {
         if( !p.useTargetedEMP() )
             throw new TWCoreException( "You have no EMP charged.  Average recharge time: 15 minutes." );
         int freq = p.getArmyID();
+        
+        GroupSpamTask emp0 = new GroupSpamTask();
+        GroupSpamTask emp1 = new GroupSpamTask();
+        GroupSpamTask emp2 = new GroupSpamTask();
+
         for( DistensionPlayer p3 : m_players.values() ) {
             if( p3.getArmyID() != freq ) {
                 Random r = new Random();
-                if( r.nextFloat() > 0.5f ) {
-                    m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENERGY_DEPLETED );
-                    m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN );
+                if( r.nextFloat() > 0.2f ) {
+                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.PLAY_MUSIC_ONCE );
+                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENGINE_SHUTDOWN, 0 );
                 } else {
-                    m_botAction.specificPrize( p3.getArenaPlayerID(), Tools.Prize.ENGINE_SHUTDOWN_EXTENDED );
+                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.PLAY_MUSIC_ONCE );
+                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENGINE_SHUTDOWN_EXTENDED, 0 );
                 }
+                emp1.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, 0 );
+                emp2.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.STOP_MUSIC );
             }
         }
+        m_botAction.scheduleTask(emp0, MESSAGE_SPAM_DELAY, 75 );
+        m_botAction.scheduleTask(emp1, Tools.TimeInMillis.SECOND * 3, MESSAGE_SPAM_DELAY );
+        m_botAction.scheduleTask(emp2, Tools.TimeInMillis.SECOND * 6, MESSAGE_SPAM_DELAY );
         m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_EMP );
         m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on the enemy!" );
         m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on your army!" );
@@ -9366,7 +9377,7 @@ public class distensionbot extends SubspaceBot {
          * 7 successive kills = MDlvl * 6%  (6%, 12%, 18%, 24%, 30%)
          */
         public void checkMasterDrive() {
-            if( masterDrive <= 0 || successiveKills < 5 )
+            if( masterDrive <= 0 || successiveKills < 2 )
                 return;
             double masterChance = Math.random() * 100.0;
             boolean fired = false;
