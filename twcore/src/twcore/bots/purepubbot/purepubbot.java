@@ -180,6 +180,7 @@ public class purepubbot extends SubspaceBot
     TimerTask m_voteInfoAdvertTask;
 
     // Challenge
+    boolean m_challengeEnabled = false;
     LinkedList <PubChallenge>m_challenges = new LinkedList<PubChallenge>();
 
 
@@ -541,7 +542,15 @@ public class purepubbot extends SubspaceBot
                     checkFreq(playerID, player.getFrequency(), false);
                     checkFreqSizes();
                 }
-                m_botAction.sendPrivateMessage(playerName, "Commands:  !warp !terr !team !ship <#> !clearmines !listvotes !startvote !challenge !end");
+                String cmds = "";
+                if( warpAllowed )
+                    cmds += "!warp ";
+                cmds += "!terr !team !ship <#> !clearmines";
+                if( m_votingEnabled )
+                    cmds += " !listvotes !startvote";
+                if( m_challengeEnabled )
+                    cmds += " !challenge !end";
+                m_botAction.sendPrivateMessage(playerName, "Commands:  " + cmds );
             }
             if(flagTimeStarted) {
                 if( flagTimer != null)
@@ -1726,6 +1735,8 @@ public class purepubbot extends SubspaceBot
      * @param argString Name of the player to challenge
      */
     public void doChallengeCmd(String sender, String argString ) {
+        if( !m_challengeEnabled )
+            throw new RuntimeException( "Player challenges are not currently allowed." );
         if( argString == null || argString.equals("") )
             throw new RuntimeException( "Use !challenge <name> to challenge <name> to an informal pub duel (such as !challenge qan)" ); 
         Player p1 = m_botAction.getPlayer(sender);
@@ -1771,6 +1782,8 @@ public class purepubbot extends SubspaceBot
      * @param argString Name of the player to challenge
      */
     public void doEndCmd( String sender ) {
+        if( !m_challengeEnabled )
+            throw new RuntimeException( "Player challenges are not currently allowed." );
         Player p1 = m_botAction.getPlayer(sender);
         if( p1 == null )
             return;
