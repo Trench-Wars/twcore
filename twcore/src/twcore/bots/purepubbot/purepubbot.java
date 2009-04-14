@@ -439,6 +439,13 @@ public class purepubbot extends SubspaceBot
                         if( !freq0List.contains(pname) && !freq1List.contains(pname) && !warpPlayers.contains(pname) )
                             if( p.getShipType() != Tools.Ship.SPECTATOR )
                                 doWarpCmd(pname);
+                    
+                    // Terrs and Levis can't warp into base if Levis are enabled
+                    if( shipWeights.get(Tools.Ship.LEVIATHAN) > 0 ) {                        
+                        if( p.getShipType() == Tools.Ship.LEVIATHAN || p.getShipType() == Tools.Ship.TERRIER )            
+                            warpPlayers.remove( pname );
+                    }
+
                 }
             }
         } catch (Exception e) {
@@ -493,6 +500,11 @@ public class purepubbot extends SubspaceBot
                     if( !freq0List.contains(pname) && !freq1List.contains(pname) && !warpPlayers.contains(pname) )
                         if( p.getShipType() != Tools.Ship.SPECTATOR )
                             doWarpCmd(pname);
+                // Terrs and Levis can't warp into base if Levis are enabled
+                if( shipWeights.get(Tools.Ship.LEVIATHAN) > 0 ) {                        
+                    if( p.getShipType() == Tools.Ship.LEVIATHAN || p.getShipType() == Tools.Ship.TERRIER )            
+                        warpPlayers.remove( pname );
+                }
             }
         } catch (Exception e) {
         }
