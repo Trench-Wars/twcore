@@ -67,7 +67,7 @@ public class forumbot extends SubspaceBot {
         // Prepared statements
         psUserGroupID = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "SELECT usergroupid FROM user WHERE username = ? LIMIT 0,1");
         psActivateUser = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "UPDATE user SET usergroupid = ? WHERE username = ?");
-        psInfoUser = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "SELECT u.userid, ug.title, u.username, u.email, u.posts, u.birthday, u.ipaddress FROM user u, usergroup ug WHERE u.usergroupid = ug.usergroupid AND u.username = ?");
+        psInfoUser = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "SELECT u.userid, u.usergroupid, ug.title, u.username, u.email, u.posts, u.birthday, u.ipaddress FROM user u, usergroup ug WHERE u.usergroupid = ug.usergroupid AND u.username = ?");
         psValidateUser = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "SELECT username, password, salt FROM user WHERE username = ?");
         
         // Schedule the timertask to clear out the expired login attempts
@@ -98,6 +98,9 @@ public class forumbot extends SubspaceBot {
                 cmdGo(name, message);
             } else if(message.startsWith("!die") && isSMod) {
                 cmdDie(name, message);
+            } else if(!message.startsWith("!help")) {
+                // Invalid command
+                m_botAction.sendSmartPrivateMessage(name, "Invalid command.");
             } else {
                 cmdHelp(name, message);
             }
@@ -163,7 +166,7 @@ public class forumbot extends SubspaceBot {
     }
     
     private void cmdActivate(String name, String message) {
-        message = message.substring(9);
+        message = message.substring(9).trim(); // Impossible to substring(10) because command may be called without any parameters
 
         // !activate
         if(message.length() == 0) {
@@ -191,7 +194,7 @@ public class forumbot extends SubspaceBot {
                 
                 if(amount >= 3) {
                     m_botAction.sendSmartPrivateMessage(name, "You've tried to activate your forum account using an incorrect username / password too many times.");
-                    m_botAction.sendSmartPrivateMessage(name, "You can try again in "+MAX_LOGIN_ATTEMPT_EXPIRE+" minutes, starting now.");
+                    m_botAction.sendSmartPrivateMessage(name, "You can try again in "+MAX_LOGIN_ATTEMPT_EXPIRE+" minutes.");
                     return;
                 }
             }
@@ -215,7 +218,6 @@ public class forumbot extends SubspaceBot {
                 
             } else {
                 // Valid username & password
-                m_botAction.sendSmartPrivateMessage(name, "Username / password combination successfully validated.");
                 activateForumAccount(user, name);
             }
         }
@@ -326,15 +328,15 @@ public class forumbot extends SubspaceBot {
             psInfoUser.setString(1, user);
             ResultSet rsInfoUser = psInfoUser.executeQuery();
             if(rsInfoUser.next()) {
-                m_botAction.sendSmartPrivateMessage(name, "Username [id]: "+rsInfoUser.getString("username")+" ["+rsInfoUser.getInt("userid")+"]");
-                m_botAction.sendSmartPrivateMessage(name, "Usergroup:     "+rsInfoUser.getString("title"));
+                m_botAction.sendSmartPrivateMessage(name, "  Username [id]:    "+rsInfoUser.getString("username")+" ["+rsInfoUser.getInt("userid")+"]");
+                m_botAction.sendSmartPrivateMessage(name, "  Usergroup [id]:   "+rsInfoUser.getString("title")+" ["+rsInfoUser.getInt("usergroupid")+"]");
                 // smod + forum admin
-                m_botAction.sendSmartPrivateMessage(name, "E-mail:        "+((isSModerator || isForumAdmin) ? rsInfoUser.getString("email") : "[hidden]"));
-                m_botAction.sendSmartPrivateMessage(name, "Nr. of posts:  "+rsInfoUser.getInt("posts"));
+                m_botAction.sendSmartPrivateMessage(name, "  E-mail:           "+((isSModerator || isForumAdmin) ? rsInfoUser.getString("email") : "[hidden]"));
+                m_botAction.sendSmartPrivateMessage(name, "  Nr. of posts:     "+rsInfoUser.getInt("posts"));
                 // mod + forum admin
-                m_botAction.sendSmartPrivateMessage(name, "Birthdate:     "+((isModerator || isForumAdmin) ? rsInfoUser.getString("birthday") : "[hidden]"));
+                m_botAction.sendSmartPrivateMessage(name, "  Birthdate:        "+((isModerator || isForumAdmin) ? rsInfoUser.getString("birthday") : "[hidden]"));
                 // smod + forum admin
-                m_botAction.sendSmartPrivateMessage(name, "IP:            "+((isSModerator || isForumAdmin) ? rsInfoUser.getString("ipaddress") : "[hidden]"));
+                m_botAction.sendSmartPrivateMessage(name, "  IP:               "+((isSModerator || isForumAdmin) ? rsInfoUser.getString("ipaddress") : "[hidden]"));
             } else {
                 m_botAction.sendSmartPrivateMessage(name, "The specified forum name was not found.");
             }
