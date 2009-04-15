@@ -875,7 +875,6 @@ public class messagebot extends SubspaceBot
                 
                 if( !resetResults.equals("") ) {
                     String query = "UPDATE tblMessageSystem SET fnRead='1' WHERE " + resetResults + "";
-                    Tools.printLog( query );
                     m_botAction.SQLQueryAndClose(database, query);
                 }
                 
