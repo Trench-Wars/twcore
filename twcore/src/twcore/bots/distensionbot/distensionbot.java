@@ -4215,16 +4215,19 @@ public class distensionbot extends SubspaceBot {
         if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE && !autoReturn ) {
             if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE )
                 throw new TWCoreException( "Assisting with your current ship will only continue the imbalance!  First pilot a lower-ranked ship if you want to !assist." );
-            if( m_singleFlagMode ) {
-                if( m_flagOwner[0] == armyToAssist )
+            boolean gameGoing = flagTimer != null && flagTimer.isRunning();
+            if( gameGoing ) {
+                if( m_singleFlagMode ) {
+                    if( m_flagOwner[0] == armyToAssist )
+                        throw new TWCoreException( "While army strengths are imbalanced, that army seems to be doing fine as far as winning the battle goes!  Try again later." );
+                } else if( m_flagOwner[0] == armyToAssist && m_flagOwner[1] == armyToAssist )
                     throw new TWCoreException( "While army strengths are imbalanced, that army seems to be doing fine as far as winning the battle goes!  Try again later." );
-            } else if( m_flagOwner[0] == armyToAssist && m_flagOwner[1] == armyToAssist )
-                throw new TWCoreException( "While army strengths are imbalanced, that army seems to be doing fine as far as winning the battle goes!  Try again later." );
+            }
 
             m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
             if( p.getShipNum() != 0 ) {
                 if( System.currentTimeMillis() > lastAssistReward + ASSIST_REWARD_TIME ||
-                        m_botAction.getNumPlaying() > 8 ) {
+                        m_botAction.getNumPlaying() > 8) {
                     lastAssistReward = System.currentTimeMillis();
                     int rank = p.getRank();
                     int reward = Math.max( 5, rank );
@@ -4256,8 +4259,7 @@ public class distensionbot extends SubspaceBot {
                         reward *= 3;
                     else                    //  0: 10RP
                         reward *= 2;
-                    if( m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
-                            flagTimer != null && flagTimer.isRunning() &&
+                    if( gameGoing && m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
                             !flagTimer.isBeingBroken() ) {
                         float percent = (float)flagTimer.getSecondsHeld() / (float)flagTimer.getTimeNeededForWin();
                         if( percent < .50 ) {
@@ -4270,6 +4272,8 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.sendPrivateMessage( name, "SAINT BONUS!  For assisting this army in their most desperate hour, their HQ rewards you a " + reward + " RP bonus.", 1 );
                         }
                     } else {
+                        if( !gameGoing )
+                            reward /= 2;
                         reward = p.addRankPoints(reward,false); // Show actual amount added
                         m_botAction.sendPrivateMessage( name, "For your assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                     }
