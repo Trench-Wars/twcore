@@ -231,7 +231,7 @@ public class tankwarfare extends MultiModule {
                             m_botAction.sendArenaMessage("Score: " + score[0] + " - " + score[1]);
                             replaceFlag(flagID);
                             checkGameOver();
-                        } else if (returnFlagWarning[playerFreq]) {
+                        } else if (returnFlagWarning[playerFreq] && !isInFlagroom(playerFreq)) {
                             returnFlagWarning[playerFreq] = false;
                             m_botAction.sendArenaMessage(
                                     name[playerFreq] + " almost scored a point, but where is their own flag? " +
