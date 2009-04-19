@@ -197,7 +197,7 @@ public class robohelp extends SubspaceBot {
         if( message.startsWith( "activated #" ) ){
             number = message.substring( message.indexOf( ' ' ) );
             if( m_banPending == true && number != null ){
-                m_botAction.sendUnfilteredPublicMessage( "?bancomment " + number + " Ban by " + m_lastBanner + " for abusing the alert commands" );
+                m_botAction.sendUnfilteredPublicMessage( "?bancomment " + number + " Ban by " + m_lastBanner + " for abusing the alert commands.  Mod: CHANGE THIS COMMENT & don't forget to ADD YOUR NAME." );
                 m_banPending = false;
                 m_lastBanner = null;
             }
