@@ -935,10 +935,10 @@ public class distensionbot extends SubspaceBot {
                                     return;
                                 }
                             } else {
-                                // Failed to find someone of small enough strength to transfer over, 
+                                // Failed to find someone of small enough strength to transfer over,
                                 // or army w/ greater strength has equal # players:
                                 //      Need instead to swap players around
-                                
+
                             }
 
                         // Strengths even, numbers not.
@@ -1231,6 +1231,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!debug-getint", acceptedMessages, this, "cmdGetInt", OperatorList.DEV_LEVEL );
         m_commandInterpreter.registerCommand( "!debug-getbool", acceptedMessages, this, "cmdGetBool", OperatorList.DEV_LEVEL );
         m_commandInterpreter.registerCommand( "!debug-setvar", acceptedMessages, this, "cmdSetVar", OperatorList.DEV_LEVEL );
+        m_commandInterpreter.registerCommand( "!debug-settimeout", acceptedMessages, this, "cmdSetTimeout", OperatorList.SMOD_LEVEL );
 
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleArenaMessage" );
@@ -4574,7 +4575,7 @@ public class distensionbot extends SubspaceBot {
         if( !p.useTargetedEMP() )
             throw new TWCoreException( "You have no EMP charged.  Average recharge time: 15 minutes." );
         int freq = p.getArmyID();
-        
+
         GroupSpamTask emp0 = new GroupSpamTask();
         GroupSpamTask emp1 = new GroupSpamTask();
         GroupSpamTask emp2 = new GroupSpamTask();
@@ -6632,6 +6633,42 @@ public class distensionbot extends SubspaceBot {
     }
 
     // HARDCORE COMMANDS (DEBUG)
+
+    /**
+     * Sets a variable.
+     * @param name
+     * @param msg
+     */
+    public void cmdSetTimeout( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
+        if( p.getOpStatus() < 2 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
+        Integer olddelay = m_botSettings.getInteger("dbg-TimeoutDelay");
+
+        try {
+            // Parse first as int
+            Integer value = Integer.parseInt( msg );
+            if( value == null )
+                throw new TWCoreException("Unable to read '" + msg + "'" );
+            if( value < 1000 )
+                throw new TWCoreException("Value too small." );
+            if( value > 10000 )
+                throw new TWCoreException("Value too large." );
+            m_botSettings.put("dbg-TimeoutDelay", value);
+            m_botSettings.save();
+            if( olddelay == null )
+                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Timeout delay set to " + msg + "ms.  This will not take effect until the bot is restarted." );
+            else
+                m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "Timeout delay set to " + msg + "ms (old value=" + olddelay +"ms).  This will not take effect until the bot is restarted." );
+        } catch (NumberFormatException e) {
+            throw new TWCoreException("Unable to parse value '" + msg + "' as a number.");
+        }
+    }
 
     /**
      * Sets a variable.
@@ -9056,7 +9093,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendOpposingTeamMessageByFrequency(armyID, "Glory be to " + getArmyName().toUpperCase() + "!  " + name.toUpperCase() + " has joined our ranks!  Welcome this brave new pilot.");
             } else {
                 m_botAction.sendArenaMessage(name + " auto-switched to " + getArmy().getName() + " (" + armyID + ")." );
-                m_botAction.sendPrivateMessage(arenaPlayerID, "You have been moved to the other army to maintain balance." );                
+                m_botAction.sendPrivateMessage(arenaPlayerID, "You have been moved to the other army to maintain balance." );
             }
             if( shipNum > 0 )
                 m_botAction.setFreq(arenaPlayerID, armyID);
