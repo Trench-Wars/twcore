@@ -203,9 +203,10 @@ public class elim extends SubspaceBot {
 		help.addAll(reg);
 		if(opList.isSmod(name))
 			help.addAll(smod);
-		if(opList.isSysop(name))
+		if(opList.isSysop(name)) {
 			help.add("| !updatecfg    - Updates the bot to the most current CFG file.              |");
 			help.add("| !greetmsg <m> - Sets arena greet message(Sysop only).                      |");
+		}
 		help.add("+============================================================================+");
 		return help.toArray(new String[help.size()]);
 
