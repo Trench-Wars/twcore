@@ -2,7 +2,7 @@
 
 <project name="twcore" default="all" basedir=".">
         
-    <target name="all" depends="core,bots" description="Builds the entire TWCore distribution">    	
+    <target name="all" depends="clean,core,bots" description="Builds the entire TWCore distribution">    	
     </target>
 	
 	<property name="mail.jar" value="lib/mail.jar"/>
