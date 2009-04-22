@@ -61,7 +61,7 @@ public class BotSettings {
                         equalsIndex = line.indexOf( '=' );
 
                         // Allow // comments on the same line as data to make it easier to document CFGs
-                        int commentIndex = line.indexOf("//");
+                        int commentIndex = line.indexOf(" //");
                         if( commentIndex != -1 ) {
                             line = line.substring(0,commentIndex);
                             line.trim();
