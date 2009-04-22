@@ -7,9 +7,12 @@ import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.PlayerDeath;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.game.Flag;
+import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
@@ -31,6 +34,14 @@ public class tankwarfare extends MultiModule {
     public final static int GAME_IN_PROGRESS = 2;
     public final static int GAME_END = 3;
     
+    public final static String RULES = "RULES: This will be a capture the flag game. " +
+    		"For those who are not familiar with CTF: Players will be divided in two teams. " +
+    		"Each team has its own territory. The flag is placed in the rear of your team's area, " +
+    		"(you will get spawned near your team's flag at start). The object of the game is " +
+    		"to sneak into the opposing team's territory, grab the flag and return with it to " +
+    		"your own flag-area. Notice: You can only score when your own flag is in your team's flag-area. " +
+    		"So protect it at all cost! Plus terriers cannot enter enemy flagroom, nor can they carry flags.";
+    
     public boolean[] returnFlagWarning;
     public boolean allowReplaceFlag;
     
@@ -47,6 +58,7 @@ public class tankwarfare extends MultiModule {
     public int[] score;
     public String[] flagCarrier;
     public String[] name;
+    public String[] leviathan;
     
     public void cancel() {
         m_botAction.cancelTasks();
@@ -90,6 +102,11 @@ public class tankwarfare extends MultiModule {
         
         //Flag carrier
         flagCarrier = new String[2];
+        
+        //Leviathanders
+        leviathan = new String[2];
+        leviathan[0] = "";
+        leviathan[1] = "";
         
         //Warnings
         returnFlagWarning = new boolean[2];
@@ -137,6 +154,9 @@ public class tankwarfare extends MultiModule {
     private void stop() {
         state = STOPPED;
         m_botAction.cancelTasks();
+        
+        leviathan[0] = "";
+        leviathan[1] = "";
     }
     
     public String[] getModHelpMessage() {
@@ -145,6 +165,10 @@ public class tankwarfare extends MultiModule {
                 "!stop                  -- Stops the current game",
                 "!target <#>            -- Amount of captured flags needed in order to win. (Default 3)",
                 "!team <left>:<right>   -- Renames the teams",
+                "!setlevi <name>        -- Sets name to leviathan. (NOTICE: only 1 leviathan per team is allowed, " +
+                    "players cannot set themselves to leviathan)",
+                "!pmrules               -- Private messages the rules",
+                "!displayrules          -- Displays the rules in a arenamessage",     
                 "NOTICE: The bot will NOT lock the arena itself, late entries are no problem for this module."
         };
         return message;
@@ -159,20 +183,74 @@ public class tankwarfare extends MultiModule {
 
     public void requestEvents(ModuleEventRequester eventRequester) {
         eventRequester.request(this, EventRequester.FLAG_CLAIMED);
+        eventRequester.request(this, EventRequester.PLAYER_ENTERED);
         eventRequester.request(this, EventRequester.PLAYER_POSITION);
+        eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+    }
+    
+    public void handleEvent(PlayerEntered event) {
+        if (state == GAME_IN_PROGRESS) {
+            if (event.getShipType() == Tools.Ship.LEVIATHAN)
+                m_botAction.setShip(event.getPlayerID(), 1);
+        }
     }
     
     public void handleEvent(PlayerPosition event) {
         /*
-         * FlagID   -- Team
-         * ----------------
-         * 0        -- One
-         * 1        -- Two
-         * 2        -- Bogus
-         * 
-         * Coords[Team][x/y][1/2]
+         * This method is divided into two parts, the handling terrier location part and the handling of the flag carrier
+         * part.
          */
         if (state == GAME_IN_PROGRESS) {
+            Player p = m_botAction.getPlayer(event.getPlayerID());
+            int playerID = event.getPlayerID();
+            int playerFreq = m_botAction.getPlayer(playerID).getFrequency();
+            String playerName = m_botAction.getPlayerName(playerID);
+            int coord_x = event.getXLocation() / 16;
+            int coord_y = event.getYLocation() / 16;
+            
+            
+            //TERRIER
+            if (p.getShipType() == Tools.Ship.TERRIER) {
+                if (flagCarrier[0].equalsIgnoreCase(playerName)) {
+                    flagCarrier[0] = "";
+                    m_botAction.shipReset(playerName);
+                } else if (flagCarrier[1].equalsIgnoreCase(playerName)) {
+                    flagCarrier[1] = "";
+                    m_botAction.shipReset(playerName);
+                }
+                
+                //Switch playerFreq to enemy freq
+                int enemyFreq;
+                if (playerFreq == 0)
+                    enemyFreq = 1;
+                else
+                    enemyFreq = 0;
+                
+                if (coord_x > coords[enemyFreq][0][0] && coord_x < coords[enemyFreq][0][1]) {
+                    if (coord_y < coords[enemyFreq][1][0] && coord_y > coords[enemyFreq][1][1]) {
+                        m_botAction.sendPrivateMessage(playerName, "Terriers may not enter the flagroom area!");
+                        
+                        if (enemyFreq == 0)
+                            m_botAction.warpTo(playerName, 200, 513);
+                        else
+                            m_botAction.warpTo(playerName, 820, 513);
+                    }
+                }
+                
+                return;
+            }
+            
+            //FLAG CARRIER
+            /* 
+             * FlagID   -- Team
+             * ----------------
+             * 0        -- One
+             * 1        -- Two
+             * 2        -- Bogus
+             * 
+             * Coords[Team][x/y][1/2]
+             * 
+             */
             Flag flagOne = m_botAction.getFlag(FLAG_ONE);
             Flag flagTwo = m_botAction.getFlag(FLAG_TWO);
             
@@ -182,11 +260,6 @@ public class tankwarfare extends MultiModule {
             boolean hasFlag = false;
             boolean hasEnemyFlag = false;
             int flagID = 2;
-            int playerID = event.getPlayerID();
-            int playerFreq = m_botAction.getPlayer(playerID).getFrequency();
-            String playerName = m_botAction.getPlayerName(playerID);
-            int coord_x = event.getXLocation() / 16;
-            int coord_y = event.getYLocation() / 16;
             
             if (flagOne.carried()) {
                 flagID = FLAG_ONE;
@@ -218,7 +291,7 @@ public class tankwarfare extends MultiModule {
                 return;
             
             
-            //Check if a flag is returned
+            //Check if a player enters his team's flag area
             if (coord_x > coords[playerFreq][0][0] && coord_x < coords[playerFreq][0][1]) {
                 if (coord_y < coords[playerFreq][1][0] && coord_y > coords[playerFreq][1][1]) {
                     if (hasEnemyFlag) {
@@ -296,6 +369,20 @@ public class tankwarfare extends MultiModule {
         }
     }
     
+    public void handleEvent(FrequencyShipChange event) {
+        if (state > STOPPED && event.getShipType() == Tools.Ship.LEVIATHAN) {
+            Player p = m_botAction.getPlayer(event.getPlayerID());
+            String name = p.getPlayerName();
+            int freq = p.getFrequency();
+            
+            if (!name.equalsIgnoreCase(leviathan[freq])) {
+                m_botAction.sendPrivateMessage(name, 
+                        "The use of leviathan is prohibited, you have been set to another ship.");
+                m_botAction.setShip(name, 1);
+            }
+        }
+    }
+    
     public void handleEvent(Message event) {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE)
             handleCommand(m_botAction.getPlayerName(event.getPlayerID()), event.getMessage());
@@ -311,9 +398,67 @@ public class tankwarfare extends MultiModule {
                 cmd_target(messager, message.substring(8));
             else if (message.startsWith("!team "))
                 cmd_nameTeams(messager, message.substring(6));
+            else if (message.startsWith("!displayrules"))
+                cmd_displayRules();
+            else if (message.startsWith("!pmrules"))
+                cmd_pmRules(messager);
+            else if (message.startsWith("!setlevi "))
+                cmd_setLeviathan(messager, message.substring(9));
         }
     }
   
+    private void cmd_displayRules() {
+        String rules = RULES;
+        while (!rules.isEmpty()) {
+            System.out.println(rules.length());
+            int endIndex = 0;
+            if (rules.length() < 100)
+                endIndex = rules.length();
+            else {
+                for (int i = 100; i > 0; i--) {
+                    if (rules.charAt(i) == ' ') {
+                        endIndex = i;
+                        break;
+                    }   
+                }
+                if (endIndex == 0)
+                    endIndex = rules.length();
+            }
+            m_botAction.sendArenaMessage(rules.substring(0, endIndex));
+
+            if (endIndex == rules.length())
+                rules = rules.substring(endIndex);
+            else
+                rules = rules.substring(endIndex + 1);
+        }
+    }
+    
+    private void cmd_pmRules(String messager) {
+        String rules = RULES;
+        while (!rules.isEmpty()) {
+            System.out.println(rules.length());
+            int endIndex = 0;
+            if (rules.length() < 100)
+                endIndex = rules.length();
+            else {
+                for (int i = 100; i > 0; i--) {
+                    if (rules.charAt(i) == ' ') {
+                        endIndex = i;
+                        break;
+                    }   
+                }
+                if (endIndex == 0)
+                    endIndex = rules.length();
+            }
+            m_botAction.sendPrivateMessage(messager, rules.substring(0, endIndex));
+            
+            if (endIndex == rules.length())
+                rules = rules.substring(endIndex);
+            else
+                rules = rules.substring(endIndex + 1);
+        }
+    }
+    
     private void cmd_nameTeams(String messager, String names) {
         String[] teamName = names.split(":");
         
@@ -331,6 +476,32 @@ public class tankwarfare extends MultiModule {
         name[1] = teamName[1];
         
         m_botAction.sendPrivateMessage(messager, "New team names: " + name[0] + " and " + name[1]);
+    }
+    
+    private void cmd_setLeviathan(String messager, String name) {
+        if (name.isEmpty()) {
+            m_botAction.sendPrivateMessage(messager, "Please specify a player");
+            return;
+        }
+        
+        Player p = m_botAction.getFuzzyPlayer(name);
+        
+        if (p == null) {
+            m_botAction.sendPrivateMessage(messager, "Player not found");
+            return;
+        }
+        
+        //Remove old leviathan
+        if (leviathan[p.getFrequency()] != "")
+            m_botAction.setShip(leviathan[p.getFrequency()], 0);
+        
+        //Set new leviathan
+        leviathan[p.getFrequency()] = p.getPlayerName().toLowerCase();
+        m_botAction.setShip(p.getPlayerName(), Tools.Ship.LEVIATHAN);
+        
+        //Notify host
+        m_botAction.sendPrivateMessage(messager, p.getPlayerName() + " has been set to leviathan for freq "
+                + p.getFrequency());
     }
     
     private void cmd_start(String messager) {
@@ -390,6 +561,19 @@ public class tankwarfare extends MultiModule {
         state = GAME_IN_PROGRESS;
         m_botAction.warpFreqToLocation(0, 251, 513);
         m_botAction.warpFreqToLocation(1, 773, 513);
+        
+        
+        for (Iterator<Player> i = m_botAction.getPlayingPlayerIterator(); i.hasNext();) {
+            Player p = i.next();
+            
+            if (p.getShipType() == Tools.Ship.LEVIATHAN) {
+                if (!p.getPlayerName().equalsIgnoreCase(leviathan[p.getFrequency()])) {
+                    m_botAction.sendPrivateMessage(p.getPlayerName(), 
+                        "The use of leviathan is prohibited, you have been set to another ship.");
+                    m_botAction.setShip(p.getPlayerID(), 1);
+                }   
+            }   
+        }
         
         m_botAction.sendArenaMessage("Go go go!!", Tools.Sound.GOGOGO);
         
