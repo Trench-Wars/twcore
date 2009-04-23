@@ -46,7 +46,7 @@ public class forumbot extends SubspaceBot {
     private static final int MAX_LOGIN_ATTEMPT_EXPIRE = 15; // minutes
     
     // Prepared Statements
-    private PreparedStatement psUserGroupID, psActivateUser, psInfoUser, psValidateUser;
+    private PreparedStatement psUserGroupID, psActivateUser, psInfoUser, psValidateUser, psKeepAlive;
     
     // Keeps track of login attempts
     private HashMap<String, String> loginAttempts = new HashMap<String, String>();
@@ -56,6 +56,7 @@ public class forumbot extends SubspaceBot {
     private ArrayList<String> forumAdmins = new ArrayList<String>();
 
     private CleanLoginAttempts cleanLoginAttemptsTask = new CleanLoginAttempts();
+    private KeepAliveConnection keepAliveConnection = new KeepAliveConnection();
     
     public forumbot(BotAction botAction) {
         super(botAction);
@@ -69,9 +70,13 @@ public class forumbot extends SubspaceBot {
         psActivateUser = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "UPDATE user SET usergroupid = ? WHERE username = ?");
         psInfoUser = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "SELECT u.userid, u.usergroupid, ug.title, u.username, u.email, u.posts, u.birthday, u.ipaddress FROM user u, usergroup ug WHERE u.usergroupid = ug.usergroupid AND u.username = ?");
         psValidateUser = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "SELECT username, password, salt FROM user WHERE username = ?");
+        psKeepAlive = m_botAction.createPreparedStatement(DATABASE, UNIQUECONNECTIONID, "SHOW DATABASES");
         
         // Schedule the timertask to clear out the expired login attempts
         m_botAction.scheduleTaskAtFixedRate(cleanLoginAttemptsTask, 10 * Tools.TimeInMillis.MINUTE, Tools.TimeInMillis.MINUTE);
+        
+        // Schedule the timertask to keep alive the database connection
+        m_botAction.scheduleTaskAtFixedRate(keepAliveConnection, 5 * Tools.TimeInMillis.MINUTE, 5 * Tools.TimeInMillis.MINUTE);
     }
 
 
@@ -112,7 +117,8 @@ public class forumbot extends SubspaceBot {
         if(     psUserGroupID == null ||
                 psActivateUser == null ||
                 psInfoUser == null ||
-                psValidateUser == null) {
+                psValidateUser == null ||
+                psKeepAlive == null) {
             Tools.printLog("forumbot: One or more PreparedStatements are null! Disconnecting bot.");
             m_botAction.die("Error while initializing PreparedStatements");
         }
@@ -370,6 +376,7 @@ public class forumbot extends SubspaceBot {
             m_botAction.closePreparedStatement(DATABASE, UNIQUECONNECTIONID, psActivateUser);
             m_botAction.closePreparedStatement(DATABASE, UNIQUECONNECTIONID, psInfoUser);
             m_botAction.closePreparedStatement(DATABASE, UNIQUECONNECTIONID, psValidateUser);
+            m_botAction.closePreparedStatement(DATABASE, UNIQUECONNECTIONID, psKeepAlive);
             m_botAction.die();
         }
     }
@@ -511,6 +518,20 @@ public class forumbot extends SubspaceBot {
                 if(diff > (Tools.TimeInMillis.MINUTE*MAX_LOGIN_ATTEMPT_EXPIRE)) {
                     iter.remove();
                 }
+            }
+        }
+    }
+    
+    /**
+     * This TimerTask executes psKeepAlive which just sends a query to the database to keep the connection alive  
+     * @author Maverick
+     */
+    class KeepAliveConnection extends TimerTask {
+        public void run() {
+            try {
+                psKeepAlive.execute();
+            } catch(SQLException sqle) {
+                // No need to do anything here
             }
         }
     }
