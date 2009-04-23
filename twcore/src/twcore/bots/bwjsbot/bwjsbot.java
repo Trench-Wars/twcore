@@ -1975,7 +1975,7 @@ public class bwjsbot extends SubspaceBot {
         private void out() {
             p_state = OUT;
             if (m_botAction.getPlayer(p_name) != null) {
-                m_botAction.spec(p_name);
+                m_botAction.specWithoutLock(p_name);
                 m_botAction.setFreq(p_name, p_frequency);
             }
             
