@@ -366,6 +366,26 @@ public final class CodeCompiler {
             String[] temp = s.split("~~");
             if (temp[0].trim().equalsIgnoreCase(temp[1].trim()) || temp[0].trim().toLowerCase().startsWith(temp[1].trim().toLowerCase()) || temp[1].trim().toLowerCase().startsWith(temp[0].trim().toLowerCase()))
                 return "TRUE";
+        } else if (s.contains("<=")) {
+            String[] temp = s.split("<=");
+            try{
+                double a = Double.parseDouble(temp[0].trim());
+                double b = Double.parseDouble(temp[1].trim());
+                if (a < b || a == b)
+                    return "TRUE";
+            }catch(NumberFormatException e){
+                return s;
+            }
+        } else if (s.contains(">=")) {
+            String[] temp = s.split(">=");
+            try{
+                double a = Double.parseDouble(temp[0].trim());
+                double b = Double.parseDouble(temp[1].trim());
+                if (a > b || a == b)
+                    return "TRUE";
+            }catch(NumberFormatException e){
+                return s;
+            }
         } else if (s.contains("<")) {
             String[] temp = s.split("<");
             try{
@@ -386,27 +406,7 @@ public final class CodeCompiler {
             }catch(NumberFormatException e){
             	return s;
             }
-        } else if (s.contains("<=")) {
-            String[] temp = s.split("<=");
-            try{
-                double a = Double.parseDouble(temp[0].trim());
-                double b = Double.parseDouble(temp[1].trim());
-                if (a < b || a == b)
-                    return "TRUE";
-            }catch(NumberFormatException e){
-            	return s;
-            }
-        } else if (s.contains(">=")) {
-            String[] temp = s.split(">=");
-            try{
-                double a = Double.parseDouble(temp[0].trim());
-                double b = Double.parseDouble(temp[1].trim());
-                if (a > b || a == b)
-                    return "TRUE";
-            }catch(NumberFormatException e){
-            	return s;
-            }
-        }
+        } 
         return "FALSE";
     }
     
